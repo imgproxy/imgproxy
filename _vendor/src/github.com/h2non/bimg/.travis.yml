@@ -1,0 +1,98 @@
+language: go
+
+dist: trusty
+sudo: false
+
+go:
+  - 1.6
+  - 1.7
+  - 1.8
+  - tip
+
+env:
+  - LIBVIPS=7.42.3
+  - LIBVIPS=8.2.3
+  - LIBVIPS=8.3.3
+  - LIBVIPS=8.4.5
+  - LIBVIPS=8.5.5
+  - LIBVIPS=master
+
+matrix:
+  allow_failures:
+    - env: LIBVIPS=7.42.3
+    - env: LIBVIPS=8.2.3
+    - env: LIBVIPS=8.3.3
+
+cache:
+  apt:
+  directories:
+    - $HOME/libvips
+
+addons:
+  apt:
+    packages:
+      - gobject-introspection
+      - gtk-doc-tools
+      - libcfitsio3-dev
+      - libfftw3-dev
+      - libgif-dev
+      - libgs-dev
+      - libgsf-1-dev
+      - libmatio-dev
+      - libopenslide-dev
+      - liborc-0.4-dev
+      - libpango1.0-dev
+      - libpoppler-glib-dev
+      - libwebp-dev
+
+# VIPS 8.3.3 requires Poppler 0.30 which is not released on Trusty.
+before_install:
+  - >
+    test "$LIBVIPS" != "master" -a "$LIBVIPS" \< "8.5" \
+        && wget http://www.vips.ecs.soton.ac.uk/supported/${LIBVIPS%.*}/vips-${LIBVIPS}.tar.gz -O vips.tgz \
+        || echo ":-)"
+  - >
+    test "$LIBVIPS" != "master" -a "$LIBVIPS" \> "8.5" \
+        && wget https://github.com/jcupitt/libvips/releases/download/v${LIBVIPS}/vips-${LIBVIPS}.tar.gz -O vips.tgz \
+        || echo ":-)"
+  - >
+    test $LIBVIPS == "master"\
+        && wget https://github.com/jcupitt/libvips/archive/${LIBVIPS}.tar.gz -O vips.tgz \
+        || echo ":-)"
+  - mkdir libvips
+  - tar xf vips.tgz -C libvips --strip-components 1
+  - cd libvips
+  - test -f autogen.sh && ./autogen.sh || ./bootstrap.sh
+  - >
+    CXXFLAGS=-D_GLIBCXX_USE_CXX11_ABI=0
+    ./configure
+    --disable-debug
+    --disable-dependency-tracking
+    --disable-introspection
+    --disable-static
+    --enable-gtk-doc-html=no
+    --enable-gtk-doc=no
+    --enable-pyvips8=no
+    --without-orc
+    --without-python
+    --prefix=$HOME/libvips
+    $1
+  - make
+  - make install
+  - cd ..
+  - export PATH=$PATH:$HOME/libvips/bin
+  - export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:$HOME/libvips/lib/pkgconfig
+  - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/libvips/lib
+  - vips --vips-version
+
+before_script:
+  - go get -u github.com/golang/lint/golint
+
+script:
+  - diff -u <(echo -n) <(gofmt -s -d ./)
+  - diff -u <(echo -n) <(go vet ./)
+  - diff -u <(echo -n) <(golint ./)
+  - go test -v -race -covermode=atomic -coverprofile=coverage.out
+
+after_success:
+  - goveralls -coverprofile=coverage.out -service=travis-ci

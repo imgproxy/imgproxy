@@ -1,0 +1,12 @@
+bind: ":8080"
+read_timeout: 10
+write_timeout: 10
+
+# key and salt are hex-encoded
+key: 943b421c9eb07c830af81030552c86009268de4e532ba2ee2eab8247c6da0881
+salt: 520f986b998545b4785e0defbc4f3c1203f22de2374a3d53cb7a7fe9fea309c5
+
+max_src_dimension: 4096
+
+quality: 80
+compression: 6
