@@ -43,7 +43,7 @@ func absPathToFile(path string) string {
 
 func init() {
 	cpath := flag.String(
-		"config", "../config.yml", "path to configuration file",
+		"config", "./config.yml", "path to configuration file",
 	)
 	flag.Parse()
 

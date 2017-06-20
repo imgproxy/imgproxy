@@ -42,7 +42,7 @@ If you're using `gopkg.in`, you can still rely in the `v0` without worrying abou
 - Zoom
 - Thumbnail
 - Extract area
-- Watermark (using text or image)
+- Watermark (text only)
 - Gaussian blur effect
 - Custom output color space (RGB, grayscale...)
 - Format conversion (with additional quality/compression settings)

@@ -1,0 +1,10 @@
+hash: de73486dba2fd32ca4e577ba7baa1552e33431fa2a88c1f34ba9b7af77e9c75b
+updated: 2017-06-20T17:49:53.147746484+03:00
+imports:
+- name: github.com/h2non/bimg
+  version: 45f8993550e71ee7b8001d40c681c6c9fa822357
+- name: github.com/tj/go-debug
+  version: ff4a55a20a86994118644bbddc6a216da193cc13
+- name: gopkg.in/yaml.v2
+  version: cd8b52f8269e0feb286dfeef29f8fe4d5b397e0b
+testImports: []
