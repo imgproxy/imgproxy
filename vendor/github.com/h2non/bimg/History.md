@@ -1,4 +1,14 @@
 
+## v1.0.10 / 2017-06-25
+
+  * Merge pull request #164 from greut/length
+  * Add Image.Length()
+  * Merge pull request #163 from greut/libvips856
+  * Run libvips 8.5.6 on Travis.
+  * Merge pull request #161 from henry-blip/master
+  * Expose vips cache memory management functions.
+  * feat(docs): add watermark image note in features
+
 ## v1.0.9 / 2017-05-25
 
   * Merge pull request #156 from Dynom/SmartCropToGravity

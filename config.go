@@ -1,93 +1,125 @@
 package main
 
 import (
+	"bytes"
 	"encoding/hex"
 	"flag"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
-
-	"gopkg.in/yaml.v2"
+	"strconv"
 )
-
-type config struct {
-	Bind         string
-	ReadTimeout  int `yaml:"read_timeout"`
-	WriteTimeout int `yaml:"write_timeout"`
-
-	Key     string
-	Salt    string
-	KeyBin  []byte
-	SaltBin []byte
-
-	MaxSrcDimension int `yaml:"max_src_dimension"`
-
-	Quality     int
-	Compression int
-}
-
-var conf = config{
-	Bind:            ":8080",
-	MaxSrcDimension: 4096,
-}
 
 func absPathToFile(path string) string {
 	if filepath.IsAbs(path) {
 		return path
 	}
 
-	appPath, _ := filepath.Abs(filepath.Dir(os.Args[0]))
+	appPath, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	if err != nil {
+		log.Fatalln(err)
+	}
+
 	return filepath.Join(appPath, path)
 }
 
+func intEnvConfig(i *int, name string) {
+	if env, err := strconv.Atoi(os.Getenv(name)); err == nil {
+		*i = env
+	}
+}
+
+func strEnvConfig(s *string, name string) {
+	if env := os.Getenv(name); len(env) > 0 {
+		*s = env
+	}
+}
+
+func hexEnvConfig(b *[]byte, name string) {
+	var err error
+
+	if env := os.Getenv(name); len(env) > 0 {
+		if *b, err = hex.DecodeString(env); err != nil {
+			log.Fatalf("%s expected to be hex-encoded string\n", name)
+		}
+	}
+}
+
+func hexFileConfig(b *[]byte, filepath string) {
+	if len(filepath) == 0 {
+		return
+	}
+
+	fullfp := absPathToFile(filepath)
+	f, err := os.Open(fullfp)
+	if err != nil {
+		log.Fatalf("Can't open file %s\n", fullfp)
+	}
+
+	src, err := ioutil.ReadAll(f)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	src = bytes.TrimSpace(src)
+
+	dst := make([]byte, hex.DecodedLen(len(src)))
+	n, err := hex.Decode(dst, src)
+	if err != nil {
+		log.Fatalf("%s expected to contain hex-encoded string\n", fullfp)
+	}
+
+	*b = dst[:n]
+}
+
+type config struct {
+	Bind         string
+	ReadTimeout  int
+	WriteTimeout int
+
+	MaxSrcDimension int
+
+	Quality     int
+	Compression int
+
+	Key  []byte
+	Salt []byte
+}
+
+var conf = config{
+	Bind:            ":8080",
+	ReadTimeout:     10,
+	WriteTimeout:    10,
+	MaxSrcDimension: 4096,
+	Quality:         80,
+	Compression:     6,
+}
+
 func init() {
-	cpath := flag.String(
-		"config", "./config.yml", "path to configuration file",
-	)
+	keypath := flag.String("keypath", "", "path of the file with hex-encoded key")
+	saltpath := flag.String("saltpath", "", "path of the file with hex-encoded salt")
 	flag.Parse()
 
-	file, err := os.Open(absPathToFile(*cpath))
-	if err != nil {
-		log.Fatalln(err)
-	}
-	defer file.Close()
+	strEnvConfig(&conf.Bind, "IMGPROXY_BIND")
+	intEnvConfig(&conf.ReadTimeout, "IMGPROXY_READ_TIMEOUT")
+	intEnvConfig(&conf.WriteTimeout, "IMGPROXY_WRITE_TIMEOUT")
 
-	cdata, err := ioutil.ReadAll(file)
-	if err != nil {
-		log.Fatalln(err)
-	}
+	intEnvConfig(&conf.MaxSrcDimension, "IMGPROXY_MAX_SRC_DIMENSION")
 
-	err = yaml.Unmarshal(cdata, &conf)
-	if err != nil {
-		log.Fatalln(err)
-	}
+	intEnvConfig(&conf.Quality, "IMGPROXY_QUALITY")
+	intEnvConfig(&conf.Compression, "IMGPROXY_COMPRESSION")
 
-	if len(conf.Bind) == 0 {
-		conf.Bind = ":8080"
-	}
+	hexEnvConfig(&conf.Key, "IMGPROXY_KEY")
+	hexEnvConfig(&conf.Salt, "IMGPROXY_SALT")
 
-	if conf.MaxSrcDimension == 0 {
-		conf.MaxSrcDimension = 4096
-	}
+	hexFileConfig(&conf.Key, *keypath)
+	hexFileConfig(&conf.Salt, *saltpath)
 
-	if conf.KeyBin, err = hex.DecodeString(conf.Key); err != nil {
-		log.Fatalln("Invalid key. Key should be encoded to hex")
+	if len(conf.Key) == 0 {
+		log.Fatalln("Key is not defined")
 	}
-
-	if conf.SaltBin, err = hex.DecodeString(conf.Salt); err != nil {
-		log.Fatalln("Invalid salt. Salt should be encoded to hex")
-	}
-
-	if conf.MaxSrcDimension == 0 {
-		conf.MaxSrcDimension = 4096
-	}
-
-	if conf.Quality == 0 {
-		conf.Quality = 80
-	}
-
-	if conf.Compression == 0 {
-		conf.Compression = 6
+	if len(conf.Salt) == 0 {
+		log.Fatalln("Salt is not defined")
 	}
 }

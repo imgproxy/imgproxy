@@ -130,6 +130,22 @@ func Shutdown() {
 	}
 }
 
+// VipsCacheSetMaxMem Sets the maximum amount of tracked memory allowed before the vips operation cache
+// begins to drop entries.
+func VipsCacheSetMaxMem(maxCacheMem int) {
+	C.vips_cache_set_max_mem(C.size_t(maxCacheMem))
+}
+
+// VipsCacheSetMax sets the maximum number of operations to keep in the vips operation cache.
+func VipsCacheSetMax(maxCacheSize int) {
+	C.vips_cache_set_max(C.int(maxCacheSize))
+}
+
+// VipsCacheDropAll drops the vips operation cache, freeing the allocated memory.
+func VipsCacheDropAll() {
+	C.vips_cache_drop_all()
+}
+
 // VipsDebugInfo outputs to stdout libvips collected data. Useful for debugging.
 func VipsDebugInfo() {
 	C.im__print_all()

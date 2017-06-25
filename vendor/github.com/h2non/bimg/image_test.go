@@ -475,6 +475,17 @@ func TestImageSmartCrop(t *testing.T) {
 	Write("fixtures/test_smart_crop.jpg", buf)
 }
 
+func TestImageLength(t *testing.T) {
+	i := initImage("test.jpg")
+
+	actual := i.Length()
+	expected := 53653
+
+	if expected != actual {
+		t.Errorf("Size in Bytes of the image doesn't correspond. %d != %d", expected, actual)
+	}
+}
+
 func initImage(file string) *Image {
 	buf, _ := imageBuf(file)
 	return NewImage(buf)

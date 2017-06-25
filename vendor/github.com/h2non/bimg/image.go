@@ -217,7 +217,12 @@ func (i *Image) Size() (ImageSize, error) {
 	return Size(i.buffer)
 }
 
-// Image returns the current resultant image image buffer.
+// Image returns the current resultant image buffer.
 func (i *Image) Image() []byte {
 	return i.buffer
+}
+
+// Length returns the size in bytes of the image buffer.
+func (i *Image) Length() int {
+	return len(i.buffer)
 }

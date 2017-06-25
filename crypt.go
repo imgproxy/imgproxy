@@ -13,8 +13,8 @@ func validatePath(token, path string) error {
 		return errors.New("Invalid token encoding")
 	}
 
-	mac := hmac.New(sha256.New, conf.KeyBin)
-	mac.Write(conf.SaltBin)
+	mac := hmac.New(sha256.New, conf.Key)
+	mac.Write(conf.Salt)
 	mac.Write([]byte(path))
 	expectedMAC := mac.Sum(nil)
 

@@ -2,10 +2,30 @@
 
 Tiny, fast and secure server for processing remote images.
 
+Full README is on the way.
+
+### How to configure
+
+Imgproxy is 12factor-ready and can be configured with env variables:
+
+* IMGPROXY_BIND - TCP address to listen on. Default: :8080;
+* IMGPROXY_READ_TIMEOUT - the maximum duration (seconds) for reading the entire request, including the body. Default: 10;
+* IMGPROXY_WRITE_TIMEOUT - the maximum duration (seconds) for writing the response. Default: 10;
+* IMGPROXY_MAX_SRC_DIMENSION - the maximum dimension of source image. Images with larger size will be rejected. Default: 4096;
+* IMGPROXY_QUALITY - quality of a result image. Default: 80;
+* IMGPROXY_COMPRESSION - compression of a result image. Default: 6;
+* IMGPROXY_KEY - hex-encoded key
+* IMGPROXY_SALT - hex-encoded salt
+
+You can also specify paths to a files with hex-encoded key and salt:
+
+```
+imgproxy -keypath /path/to/file/with/key -salt /path/to/file/with/salt
+```
+
 ### How to generate url path
 
-Full README is on the way. Here is a short sample which shows how to generate url
-path for imgproxy.
+Here is a short ruby sample which shows how to generate url path for imgproxy.
 
 ```ruby
 require 'openssl'
