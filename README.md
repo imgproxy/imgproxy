@@ -4,6 +4,21 @@ Tiny, fast and secure server for processing remote images.
 
 Full README is on the way.
 
+### How to install
+
+1. Install [vips](https://github.com/jcupitt/libvips). On macOS you can do:
+
+```
+$ brew tap homebrew/science
+$ brew install vips
+```
+
+2. Install imgproxy itself
+
+```
+$ go get github.com/DarthSim/imgproxy
+```
+
 ### How to configure
 
 Imgproxy is 12factor-ready and can be configured with env variables:
