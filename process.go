@@ -67,7 +67,6 @@ func processImage(p []byte, po processingOptions) ([]byte, error) {
 	opts := bimg.Options{
 		Interpolator: bimg.Bicubic,
 		Quality:      conf.Quality,
-		Compression:  conf.Compression,
 		Gravity:      po.gravity,
 		Enlarge:      po.enlarge,
 		Type:         po.format,

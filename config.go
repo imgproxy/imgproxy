@@ -66,7 +66,6 @@ type config struct {
 	MaxSrcDimension int
 
 	Quality         int
-	Compression     int
 	GZipCompression int
 
 	Key  []byte
@@ -79,7 +78,6 @@ var conf = config{
 	WriteTimeout:    10,
 	MaxSrcDimension: 4096,
 	Quality:         80,
-	Compression:     6,
 	GZipCompression: 5,
 }
 
@@ -95,7 +93,6 @@ func init() {
 	intEnvConfig(&conf.MaxSrcDimension, "IMGPROXY_MAX_SRC_DIMENSION")
 
 	intEnvConfig(&conf.Quality, "IMGPROXY_QUALITY")
-	intEnvConfig(&conf.Compression, "IMGPROXY_COMPRESSION")
 	intEnvConfig(&conf.GZipCompression, "IMGPROXY_GZIP_COMPRESSION")
 
 	hexEnvConfig(&conf.Key, "IMGPROXY_KEY")
@@ -109,5 +106,33 @@ func init() {
 	}
 	if len(conf.Salt) == 0 {
 		log.Fatalln("Salt is not defined")
+	}
+
+	if len(conf.Bind) == 0 {
+		log.Fatalln("Bind address is not defined")
+	}
+
+	if conf.ReadTimeout <= 0 {
+		log.Fatalf("Read timeout should be greater than 0, now - %d\n", conf.ReadTimeout)
+	}
+
+	if conf.WriteTimeout <= 0 {
+		log.Fatalf("Write timeout should be greater than 0, now - %d\n", conf.WriteTimeout)
+	}
+
+	if conf.MaxSrcDimension <= 0 {
+		log.Fatalf("Max src dimension should be greater than 0, now - %d\n", conf.MaxSrcDimension)
+	}
+
+	if conf.Quality <= 0 {
+		log.Fatalf("Quality should be greater than 0, now - %d\n", conf.Quality)
+	} else if conf.Quality > 100 {
+		log.Fatalf("Quality can't be greater than 100, now - %d\n", conf.Quality)
+	}
+
+	if conf.GZipCompression < 0 {
+		log.Fatalf("GZip compression should be greater than or quual to 0, now - %d\n", conf.GZipCompression)
+	} else if conf.GZipCompression > 9 {
+		log.Fatalf("GZip compression can't be greater than 9, now - %d\n", conf.GZipCompression)
 	}
 }
