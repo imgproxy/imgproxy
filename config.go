@@ -7,22 +7,8 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"path/filepath"
 	"strconv"
 )
-
-func absPathToFile(path string) string {
-	if filepath.IsAbs(path) {
-		return path
-	}
-
-	appPath, err := filepath.Abs(filepath.Dir(os.Args[0]))
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	return filepath.Join(appPath, path)
-}
 
 func intEnvConfig(i *int, name string) {
 	if env, err := strconv.Atoi(os.Getenv(name)); err == nil {
@@ -51,10 +37,9 @@ func hexFileConfig(b *[]byte, filepath string) {
 		return
 	}
 
-	fullfp := absPathToFile(filepath)
-	f, err := os.Open(fullfp)
+	f, err := os.Open(filepath)
 	if err != nil {
-		log.Fatalf("Can't open file %s\n", fullfp)
+		log.Fatalf("Can't open file %s\n", filepath)
 	}
 
 	src, err := ioutil.ReadAll(f)
@@ -67,7 +52,7 @@ func hexFileConfig(b *[]byte, filepath string) {
 	dst := make([]byte, hex.DecodedLen(len(src)))
 	n, err := hex.Decode(dst, src)
 	if err != nil {
-		log.Fatalf("%s expected to contain hex-encoded string\n", fullfp)
+		log.Fatalf("%s expected to contain hex-encoded string\n", filepath)
 	}
 
 	*b = dst[:n]
