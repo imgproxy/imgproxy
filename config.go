@@ -80,8 +80,9 @@ type config struct {
 
 	MaxSrcDimension int
 
-	Quality     int
-	Compression int
+	Quality         int
+	Compression     int
+	GZipCompression int
 
 	Key  []byte
 	Salt []byte
@@ -94,6 +95,7 @@ var conf = config{
 	MaxSrcDimension: 4096,
 	Quality:         80,
 	Compression:     6,
+	GZipCompression: 5,
 }
 
 func init() {
@@ -109,6 +111,7 @@ func init() {
 
 	intEnvConfig(&conf.Quality, "IMGPROXY_QUALITY")
 	intEnvConfig(&conf.Compression, "IMGPROXY_COMPRESSION")
+	intEnvConfig(&conf.GZipCompression, "IMGPROXY_GZIP_COMPRESSION")
 
 	hexEnvConfig(&conf.Key, "IMGPROXY_KEY")
 	hexEnvConfig(&conf.Salt, "IMGPROXY_SALT")

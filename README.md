@@ -14,6 +14,7 @@ Imgproxy is 12factor-ready and can be configured with env variables:
 * IMGPROXY_MAX_SRC_DIMENSION - the maximum dimension of source image. Images with larger size will be rejected. Default: 4096;
 * IMGPROXY_QUALITY - quality of a result image. Default: 80;
 * IMGPROXY_COMPRESSION - compression of a result image. Default: 6;
+* IMGPROXY_COMPRESSION - GZip compression level. Default: 5;
 * IMGPROXY_KEY - hex-encoded key
 * IMGPROXY_SALT - hex-encoded salt
 

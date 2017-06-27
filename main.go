@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"compress/gzip"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -88,12 +89,25 @@ func logResponse(status int, msg string) {
 	log.Printf("|\033[7;%dm %d \033[0m| %s\n", color, status, msg)
 }
 
-func respondWithImage(rw http.ResponseWriter, data []byte, imgURL string, po processingOptions) {
+func respondWithImage(r *http.Request, rw http.ResponseWriter, data []byte, imgURL string, po processingOptions) {
 	logResponse(200, fmt.Sprintf("Processed: %s; %+v", imgURL, po))
 
-	rw.WriteHeader(200)
+	gzipped := strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") && conf.GZipCompression > 0
+
 	rw.Header().Set("Content-Type", imageContentType(data))
-	rw.Write(data)
+	if gzipped {
+		rw.Header().Set("Content-Encoding", "gzip")
+	}
+
+	rw.WriteHeader(200)
+
+	if gzipped {
+		gz, _ := gzip.NewWriterLevel(rw, conf.GZipCompression)
+		gz.Write(data)
+		gz.Close()
+	} else {
+		rw.Write(data)
+	}
 }
 
 func respondWithError(rw http.ResponseWriter, status int, err error, msg string) {
@@ -129,7 +143,7 @@ func (h httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respondWithImage(rw, b, imgURL, procOpt)
+	respondWithImage(r, rw, b, imgURL, procOpt)
 }
 
 func main() {
