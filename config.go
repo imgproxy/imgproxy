@@ -70,6 +70,8 @@ type config struct {
 
 	Key  []byte
 	Salt []byte
+
+	Secret string
 }
 
 var conf = config{
@@ -100,6 +102,8 @@ func init() {
 
 	hexFileConfig(&conf.Key, *keypath)
 	hexFileConfig(&conf.Salt, *saltpath)
+
+	strEnvConfig(&conf.Secret, "IMGPROXY_SECRET")
 
 	if len(conf.Key) == 0 {
 		log.Fatalln("Key is not defined")

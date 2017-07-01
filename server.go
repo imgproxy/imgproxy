@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"compress/gzip"
+	"crypto/subtle"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -116,8 +117,24 @@ func respondWithError(rw http.ResponseWriter, status int, err error, msg string)
 	rw.Write([]byte(msg))
 }
 
+func repondWithForbidden(rw http.ResponseWriter) {
+	logResponse(403, "Invalid secret")
+
+	rw.WriteHeader(403)
+	rw.Write([]byte("Forbidden"))
+}
+
+func checkSecret(s string) bool {
+	return len(conf.Secret) == 0 || subtle.ConstantTimeCompare([]byte(s), []byte(conf.Secret)) == 1
+}
+
 func (h httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	log.Printf("GET: %s\n", r.URL.RequestURI())
+
+	if !checkSecret(r.Header.Get("X-Imgproxy-Secret")) {
+		repondWithForbidden(rw)
+		return
+	}
 
 	imgURL, procOpt, err := parsePath(r)
 	if err != nil {
