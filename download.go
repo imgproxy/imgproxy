@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"image"
+	"io"
 	"net/http"
 
 	_ "image/gif"
@@ -11,10 +12,39 @@ import (
 	_ "image/png"
 )
 
-const chunkSize = 4096
+type netReader struct {
+	reader io.Reader
+	buf    *bytes.Buffer
+}
 
-func checkTypeAndDimensions(b []byte) error {
-	imgconf, _, err := image.DecodeConfig(bytes.NewReader(b))
+func newNetReader(r io.Reader) *netReader {
+	return &netReader{
+		reader: r,
+		buf:    bytes.NewBuffer([]byte{}),
+	}
+}
+
+func (r *netReader) Read(p []byte) (n int, err error) {
+	n, err = r.reader.Read(p)
+	if err == nil {
+		r.buf.Write(p[:n])
+	}
+	return
+}
+
+func (r *netReader) ReadAll() ([]byte, error) {
+	if _, err := r.buf.ReadFrom(r.reader); err != nil {
+		return []byte{}, err
+	}
+	return r.buf.Bytes(), nil
+}
+
+func (r *netReader) GrowBuf(s int) {
+	r.buf.Grow(s)
+}
+
+func checkTypeAndDimensions(r io.Reader) error {
+	imgconf, _, err := image.DecodeConfig(r)
 	if err != nil {
 		return err
 	}
@@ -25,27 +55,17 @@ func checkTypeAndDimensions(b []byte) error {
 }
 
 func readAndCheckImage(res *http.Response) ([]byte, error) {
-	b := make([]byte, chunkSize)
-	n, err := res.Body.Read(b)
-	if err != nil {
+	nr := newNetReader(res.Body)
+
+	if err := checkTypeAndDimensions(nr); err != nil {
 		return nil, err
 	}
-
-	if err = checkTypeAndDimensions(b[:n]); err != nil {
-		return nil, err
-	}
-
-	buf := bytes.NewBuffer(b[:n])
 
 	if res.ContentLength > 0 {
-		buf.Grow(int(res.ContentLength))
+		nr.GrowBuf(int(res.ContentLength))
 	}
 
-	if _, err = buf.ReadFrom(res.Body); err != nil {
-		return nil, err
-	}
-
-	return buf.Bytes(), nil
+	return nr.ReadAll()
 }
 
 func downloadImage(url string) ([]byte, error) {
