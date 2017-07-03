@@ -126,7 +126,10 @@ func repondWithForbidden(rw http.ResponseWriter) {
 }
 
 func checkSecret(s string) bool {
-	return len(conf.Secret) == 0 || subtle.ConstantTimeCompare([]byte(s), []byte(conf.Secret)) == 1
+	if len(conf.Secret) == 0 {
+		return true
+	}
+	return strings.HasPrefix(s, "Bearer ") && subtle.ConstantTimeCompare([]byte(strings.TrimPrefix(s, "Bearer ")), []byte(conf.Secret)) == 1
 }
 
 func (h httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
@@ -134,7 +137,7 @@ func (h httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	t := time.Now()
 
-	if !checkSecret(r.Header.Get("X-Imgproxy-Secret")) {
+	if !checkSecret(r.Header.Get("Authorization")) {
 		repondWithForbidden(rw)
 		return
 	}
