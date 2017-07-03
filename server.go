@@ -93,6 +93,8 @@ func logResponse(status int, msg string) {
 func respondWithImage(r *http.Request, rw http.ResponseWriter, data []byte, imgURL string, po processingOptions, startTime time.Time) {
 	gzipped := strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") && conf.GZipCompression > 0
 
+	rw.Header().Set("Expires", time.Now().Add(time.Second*time.Duration(conf.TTL)).Format(http.TimeFormat))
+	rw.Header().Set("Cache-Control", fmt.Sprintf("Cache-Control: max-age=%d", conf.TTL))
 	rw.Header().Set("Content-Type", imageContentType(data))
 	if gzipped {
 		rw.Header().Set("Content-Encoding", "gzip")
