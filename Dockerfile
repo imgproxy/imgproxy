@@ -12,7 +12,7 @@ RUN mkdir /lib64 && ln -s /lib/libc.musl-x86_64.so.1 /lib64/ld-linux-x86-64.so.2
 ADD . /go/src/github.com/DarthSim/imgproxy
 
 RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories \
-  && apk add --no-cache --update bash vips \
+  && apk add --no-cache --update bash vips ca-certificates \
   && apk add --no-cache --virtual .build-deps curl gcc musl-dev fftw-dev vips-dev \
   && curl -L "$GO_DOWNLOAD_URL" -o /golang.tar.gz \
   && echo "$GO_DOWNLOAD_SHA_256  /golang.tar.gz" | sha256sum -c - \
