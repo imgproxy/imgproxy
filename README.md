@@ -1,23 +1,43 @@
 # Imgproxy
 
-Tiny, fast and secure server for processing remote images.
+Fast and secure micro-service for resizing and converting remote images.
 
-Full README is on the way.
+Imgproxy does one thing, and it does it well: resizing of remote images. It works great when you need to resize some images on the fly to make them look good on your web page. The main principles of Imgproxy are simplicity, speed, and security.
+
+#### Simlicity
+
+One of the things I believe in is: "The best feature is the one you don't need to implement." That's why I implemented only features that most of us need. Rotation, flip, flop, etc. are cool, but I don't think that you want to process your web page images that ways, especially when you can do this with CSS.
+
+#### Speed
+
+Imgproxy uses probably the most efficient image processing library - libvips. It's fast and requires low memory footprint. Thus it allows processing a massive amount of images on the fly.
+
+Also, imgproxy uses native Go's net/http routing for an absolute speed.
+
+#### Security
+
+Processing of remote images is a quite vulnerable thing. There are many ways to attack you, so it's a good idea to take measures to prevent attacks. There is what imgproxy does:
+
+* It checks image type and dimensions while downloading, so the image won't be fully downloaded if it has an unknown format or too big dimensions. Thus imgproxy protects you from image bombs like https://www.bamsoftware.com/hacks/deflate.html
+
+* Imgproxy protects its URL path with a signature, so it can't be easily compromised by an attacker. Thus imgproxy doesn't allow to use itself by third-party applications.
+
+* Imgproxy supports authorization by HTTP header. This prevents using imgproxy directly by an attacker but allows to use it through CDN or a caching server.
 
 ### How to install
 
 1. Install [vips](https://github.com/jcupitt/libvips). On macOS you can do:
 
-```
-$ brew tap homebrew/science
-$ brew install vips
-```
+  ```
+  $ brew tap homebrew/science
+  $ brew install vips
+  ```
 
 2. Install imgproxy itself
 
-```
-$ go get github.com/DarthSim/imgproxy
-```
+  ```
+  $ go get github.com/DarthSim/imgproxy
+  ```
 
 ### How to configure
 

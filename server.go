@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type httpHandler struct{}
@@ -89,9 +90,7 @@ func logResponse(status int, msg string) {
 	log.Printf("|\033[7;%dm %d \033[0m| %s\n", color, status, msg)
 }
 
-func respondWithImage(r *http.Request, rw http.ResponseWriter, data []byte, imgURL string, po processingOptions) {
-	logResponse(200, fmt.Sprintf("Processed: %s; %+v", imgURL, po))
-
+func respondWithImage(r *http.Request, rw http.ResponseWriter, data []byte, imgURL string, po processingOptions, startTime time.Time) {
 	gzipped := strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") && conf.GZipCompression > 0
 
 	rw.Header().Set("Content-Type", imageContentType(data))
@@ -108,6 +107,8 @@ func respondWithImage(r *http.Request, rw http.ResponseWriter, data []byte, imgU
 	} else {
 		rw.Write(data)
 	}
+
+	logResponse(200, fmt.Sprintf("Processed in %s: %s; %+v", time.Since(startTime), imgURL, po))
 }
 
 func respondWithError(rw http.ResponseWriter, status int, err error, msg string) {
@@ -130,6 +131,8 @@ func checkSecret(s string) bool {
 
 func (h httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	log.Printf("GET: %s\n", r.URL.RequestURI())
+
+	t := time.Now()
 
 	if !checkSecret(r.Header.Get("X-Imgproxy-Secret")) {
 		repondWithForbidden(rw)
@@ -159,5 +162,5 @@ func (h httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respondWithImage(r, rw, b, imgURL, procOpt)
+	respondWithImage(r, rw, b, imgURL, procOpt, t)
 }
