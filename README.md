@@ -55,7 +55,7 @@ Imgproxy is 12factor-ready and can be configured with env variables:
 You can also specify paths to a files with hex-encoded key and salt:
 
 ```
-imgproxy -keypath /path/to/file/with/key -salt /path/to/file/with/salt
+imgproxy -keypath /path/to/file/with/key -saltpath /path/to/file/with/salt
 ```
 
 ### How to generate url path
