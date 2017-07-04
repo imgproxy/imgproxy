@@ -62,8 +62,8 @@ type config struct {
 	Bind         string
 	ReadTimeout  int
 	WriteTimeout int
-
-	TTL int
+	Concurrency  int
+	TTL          int
 
 	MaxSrcDimension int
 
@@ -80,6 +80,7 @@ var conf = config{
 	Bind:            ":8080",
 	ReadTimeout:     10,
 	WriteTimeout:    10,
+	Concurrency:     100,
 	TTL:             3600,
 	MaxSrcDimension: 4096,
 	Quality:         80,
@@ -94,6 +95,7 @@ func init() {
 	strEnvConfig(&conf.Bind, "IMGPROXY_BIND")
 	intEnvConfig(&conf.ReadTimeout, "IMGPROXY_READ_TIMEOUT")
 	intEnvConfig(&conf.WriteTimeout, "IMGPROXY_WRITE_TIMEOUT")
+	intEnvConfig(&conf.Concurrency, "IMGPROXY_CONCURRENCY")
 
 	intEnvConfig(&conf.TTL, "IMGPROXY_TTL")
 
@@ -127,6 +129,10 @@ func init() {
 
 	if conf.WriteTimeout <= 0 {
 		log.Fatalf("Write timeout should be greater than 0, now - %d\n", conf.WriteTimeout)
+	}
+
+	if conf.Concurrency <= 0 {
+		log.Fatalf("Concurrency should be greater than 0, now - %d\n", conf.Concurrency)
 	}
 
 	if conf.TTL <= 0 {

@@ -16,7 +16,13 @@ import (
 	"time"
 )
 
-type httpHandler struct{}
+type httpHandler struct {
+	sem chan struct{}
+}
+
+func newHttpHandler() httpHandler {
+	return httpHandler{make(chan struct{}, conf.Concurrency)}
+}
 
 func parsePath(r *http.Request) (string, processingOptions, error) {
 	var po processingOptions
@@ -134,8 +140,19 @@ func checkSecret(s string) bool {
 	return strings.HasPrefix(s, "Bearer ") && subtle.ConstantTimeCompare([]byte(strings.TrimPrefix(s, "Bearer ")), []byte(conf.Secret)) == 1
 }
 
+func (h *httpHandler) lock() {
+	h.sem <- struct{}{}
+}
+
+func (h *httpHandler) unlock() {
+	defer func() { <-h.sem }()
+}
+
 func (h httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	log.Printf("GET: %s\n", r.URL.RequestURI())
+
+	h.lock()
+	defer h.unlock()
 
 	t := time.Now()
 

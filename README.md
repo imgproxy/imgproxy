@@ -85,6 +85,7 @@ You can easily generate key and salt with `openssl enc -aes-256-cbc -P -md sha25
 * IMGPROXY_BIND - TCP address to listen on. Default: :8080;
 * IMGPROXY_READ_TIMEOUT - the maximum duration (seconds) for reading the entire request, including the body. Default: 10;
 * IMGPROXY_WRITE_TIMEOUT - the maximum duration (seconds) for writing the response. Default: 10;
+* IMGPROXY_CONCURRENCY - the maximum images to be processed simultaneously. Default: 100;
 
 #### Security
 

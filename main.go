@@ -9,7 +9,7 @@ import (
 func main() {
 	s := &http.Server{
 		Addr:           conf.Bind,
-		Handler:        httpHandler{},
+		Handler:        newHttpHandler(),
 		ReadTimeout:    time.Duration(conf.ReadTimeout) * time.Second,
 		WriteTimeout:   time.Duration(conf.WriteTimeout) * time.Second,
 		MaxHeaderBytes: 1 << 20,
