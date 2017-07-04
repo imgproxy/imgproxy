@@ -78,7 +78,7 @@ You can also specify paths to a files with hex-encoded key and salt (useful in a
 $ imgproxy -keypath /path/to/file/with/key -saltpath /path/to/file/with/salt
 ```
 
-You can easily generate key and salt with `openssl enc -aes-256-cbc -P -md sha256`.
+You can easily generate random key/salt with `xxd -g 2 -l 64 -p /dev/random | tr -d '\n'`.
 
 #### Server
 
