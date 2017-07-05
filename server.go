@@ -1,20 +1,26 @@
 package main
 
 import (
-	"bytes"
 	"compress/gzip"
 	"crypto/subtle"
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"image"
 	"log"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/h2non/bimg"
 )
+
+var mimes = map[bimg.ImageType]string{
+	bimg.JPEG: "image/jpeg",
+	bimg.PNG:  "image/png",
+	bimg.WEBP: "image/webp",
+}
 
 type httpHandler struct {
 	sem chan struct{}
@@ -77,11 +83,6 @@ func parsePath(r *http.Request) (string, processingOptions, error) {
 	return string(filename), po, nil
 }
 
-func imageContentType(b []byte) string {
-	_, imgtype, _ := image.DecodeConfig(bytes.NewReader(b))
-	return fmt.Sprintf("image/%s", imgtype)
-}
-
 func logResponse(status int, msg string) {
 	var color int
 
@@ -101,7 +102,7 @@ func respondWithImage(r *http.Request, rw http.ResponseWriter, data []byte, imgU
 
 	rw.Header().Set("Expires", time.Now().Add(time.Second*time.Duration(conf.TTL)).Format(http.TimeFormat))
 	rw.Header().Set("Cache-Control", fmt.Sprintf("Cache-Control: max-age=%d", conf.TTL))
-	rw.Header().Set("Content-Type", imageContentType(data))
+	rw.Header().Set("Content-Type", mimes[po.format])
 	if gzipped {
 		rw.Header().Set("Content-Encoding", "gzip")
 	}
