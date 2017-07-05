@@ -174,7 +174,7 @@ func (h httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	b, err := downloadImage(imgURL)
 	if err != nil {
-		respondWithError(rw, 404, err, "Image is unreacable")
+		respondWithError(rw, 404, err, "Image is unreachable")
 		return
 	}
 

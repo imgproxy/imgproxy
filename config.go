@@ -59,11 +59,12 @@ func hexFileConfig(b *[]byte, filepath string) {
 }
 
 type config struct {
-	Bind         string
-	ReadTimeout  int
-	WriteTimeout int
-	Concurrency  int
-	TTL          int
+	Bind            string
+	ReadTimeout     int
+	WriteTimeout    int
+	DownloadTimeout int
+	Concurrency     int
+	TTL             int
 
 	MaxSrcDimension int
 
@@ -80,6 +81,7 @@ var conf = config{
 	Bind:            ":8080",
 	ReadTimeout:     10,
 	WriteTimeout:    10,
+	DownloadTimeout: 5,
 	Concurrency:     100,
 	TTL:             3600,
 	MaxSrcDimension: 4096,
@@ -95,6 +97,7 @@ func init() {
 	strEnvConfig(&conf.Bind, "IMGPROXY_BIND")
 	intEnvConfig(&conf.ReadTimeout, "IMGPROXY_READ_TIMEOUT")
 	intEnvConfig(&conf.WriteTimeout, "IMGPROXY_WRITE_TIMEOUT")
+	intEnvConfig(&conf.DownloadTimeout, "IMGPROXY_DOWNLOAD_TIMEOUT")
 	intEnvConfig(&conf.Concurrency, "IMGPROXY_CONCURRENCY")
 
 	intEnvConfig(&conf.TTL, "IMGPROXY_TTL")
@@ -129,6 +132,10 @@ func init() {
 
 	if conf.WriteTimeout <= 0 {
 		log.Fatalf("Write timeout should be greater than 0, now - %d\n", conf.WriteTimeout)
+	}
+
+	if conf.DownloadTimeout <= 0 {
+		log.Fatalf("Download timeout should be greater than 0, now - %d\n", conf.DownloadTimeout)
 	}
 
 	if conf.Concurrency <= 0 {

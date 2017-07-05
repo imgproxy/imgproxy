@@ -3,14 +3,21 @@ package main
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"image"
 	"io"
+	"io/ioutil"
 	"net/http"
+	"time"
 
 	_ "image/gif"
 	_ "image/jpeg"
 	_ "image/png"
 )
+
+var downloadClient = http.Client{
+	Timeout: time.Duration(conf.DownloadTimeout) * time.Second,
+}
 
 type netReader struct {
 	reader io.Reader
@@ -69,11 +76,16 @@ func readAndCheckImage(res *http.Response) ([]byte, error) {
 }
 
 func downloadImage(url string) ([]byte, error) {
-	res, err := http.Get(url)
+	res, err := downloadClient.Get(url)
 	if err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
+
+	if res.StatusCode != 200 {
+		body, _ := ioutil.ReadAll(res.Body)
+		return nil, fmt.Errorf("Can't download image; Status: %d; %s", res.StatusCode, string(body))
+	}
 
 	return readAndCheckImage(res)
 }
