@@ -1,61 +1,69 @@
-# Imgproxy
+# imgproxy
 
-Fast and secure microservice for resizing and converting remote images.
+imgproxy is a fast and secure standalone server for resizing and converting remote images. The main principles of imgproxy are simplicity, speed, and security.
 
-<a href="https://evilmartians.com/?utm_source=overmind">
+imgproxy can be used to provide a fast and secure way to replace all the image resizing code of your web application (like calling ImageMagick or GraphicsMagick, or using libraries), while also being able to resize everything on the fly, fast and easy. imgproxy is also indispensable when handling lots of image resizing, especially when images come from a remote source.
+
+imgproxy does one thing — resizing remote images — and does it well. It works great when you need to resize multiple images on the fly to make them match your application design without preparing a ton of cached resized images or re-doing it every time the design changes.
+
+imgproxy is a Go application, ready to be installed and used in any Unix environment — also ready to be containerized using Docker.
+
+<a href="https://evilmartians.com/?utm_source=imgproxy">
 <img src="https://evilmartians.com/badges/sponsored-by-evil-martians.svg" alt="Sponsored by Evil Martians" width="236" height="54">
 </a>
 
-Imgproxy does one thing, and it does it well: resizing of remote images. It works great when you need to resize some images on the fly to make them look good on your web page. The main principles of Imgproxy are simplicity, speed, and security.
-
 #### Simplicity
 
-One of the things I believe in is: "The best feature is the one you don't need to implement." That's why I implemented only features that most of us need.
+> "No code is better than no code."
 
-* Rotation, flip, flop, etc. are good, but it's better to do this with CSS;
-* Caching is good, but it's better to use CDN or caching server for this;
-* HTTPS is good, but it's better to use TCP proxy-server like NGINX.
+imgproxy only includes the must-have features for image processing, fine-tuning and security. Specifically,
+
+* It would be great to be able to rotate, flip and apply masks to images, but in most of the cases, it is possible — and is much easier — to do that using CSS3.
+* It may be great to have built-in HTTP caching of some kind, but it is way better to use a Content-Delivery Network or a caching proxy server for this, as you will have to do this sooner or later in the production environment.
+* It might be useful to have everything built in — such as HTTPS support — but an easy way to solve that would be just to use a proxying HTTP server such as nginx.
 
 #### Speed
 
-Imgproxy uses probably the most efficient image processing library - libvips. It's fast and requires low memory footprint. Thus it allows processing a massive amount of images on the fly.
+imgproxy uses probably the most efficient image processing library there is, called `libvips`. It is screaming fast and has a very low memory footprint; with it, we can handle the processing for a massive amount of images on the fly.
 
-Also, imgproxy uses native Go's net/http routing for an absolute speed.
+imgproxy also uses native Go's `net/http` routing for the best HTTP networking support.
 
 #### Security
 
-Processing of remote images is a quite vulnerable thing. There are many ways to attack you, so it's a good idea to take measures to prevent attacks. There is what imgproxy does:
+Massive processing of remote images is a potentially dangerous thing, security-wise. There are many attack vectors, so it is a good idea to consider attack prevention measures first. Here is how imgproxy can help:
 
-* It checks image type and dimensions while downloading, so the image won't be fully downloaded if it has an unknown format or too big dimensions. Thus imgproxy protects you from image bombs like https://www.bamsoftware.com/hacks/deflate.html
+* imgproxy checks image type _and_ "real" dimensions when downloading, so the image will not be fully downloaded if it has an unknown format or the dimensions are too big (there is a setting for that). That is how imgproxy protects you from so called "image bombs" like those described at  https://www.bamsoftware.com/hacks/deflate.html.
 
-* Imgproxy protects its URL path with a signature, so it can't be easily compromised by an attacker. Thus imgproxy doesn't allow to use itself by third-party applications.
+* imgproxy protects image URLs with a signature, so an attacker cannot cause a denial-of-service attack by requesting multiple image resizes.
 
-* Imgproxy supports authorization by HTTP header. This prevents using imgproxy directly by an attacker but allows to use it through CDN or a caching server.
+* imgproxy supports authorization by an HTTP header. That prevents using imgproxy directly by an attacker but allows to use it through a CDN or a caching server — just by adding a header to a proxy or CDN config.
 
 ## Installation
 
-There are two ways you can currently install imgproxy:
+There are two ways you can install imgproxy:
 
 #### From the source
 
-1. Install [vips](https://github.com/jcupitt/libvips)
+1. First, install [vips](https://github.com/jcupitt/libvips):
 
   ```bash
   # macOS
   $ brew tap homebrew/science
   $ brew install vips
 
-  # Ubintu
+  # Ubuntu
   $ sudo apt-get install libvips
   ```
 
-2. Install imgproxy itself
+2. Next, install imgproxy itself:
 
   ```bash
-  $ go get github.com/DarthSim/imgproxy
+  $ go get -f -u github.com/DarthSim/imgproxy
   ```
 
 #### Docker
+
+imgproxy can (and should) be used as a standalone application inside a Docker container. It is ready to be dockerized, plug and play:
 
 ```bash
 $ docker build -t imgproxy .
@@ -63,105 +71,109 @@ $ docker build -t imgproxy .
 
 ## Configuration
 
-Imgproxy is 12factor-ready and can be configured with env variables.
+imgproxy is [Twelve-Factor-App](https://12factor.net/)-ready and can be configured using `ENV` variables.
 
-#### Path signature
+#### URL signature
 
-Imgproxy requires all paths to be signed with key and salt:
+imgproxy requires all URLs to be signed with a key and salt:
 
-* IMGPROXY_KEY - (**required**) hex-encoded key;
-* IMGPROXY_SALT - (**required**) hex-encoded salt;
+* `IMGPROXY_KEY` - (**required**) hex-encoded key;
+* `IMGPROXY_SALT` - (**required**) hex-encoded salt;
 
-You can also specify paths to a files with hex-encoded key and salt (useful in a development evironment):
+You can also specify paths to files with a hex-encoded key and salt (useful in a development environment):
 
 ```bash
 $ imgproxy -keypath /path/to/file/with/key -saltpath /path/to/file/with/salt
 ```
 
-You can easily generate random key/salt with `xxd -g 2 -l 64 -p /dev/random | tr -d '\n'`.
+If you need a random key/salt pair real fast, you can quickly generate it using, for example, the following snippet:
+
+```bash
+$ xxd -g 2 -l 64 -p /dev/random | tr -d '\n'
+```
 
 #### Server
 
-* IMGPROXY_BIND - TCP address to listen on. Default: :8080;
-* IMGPROXY_READ_TIMEOUT - the maximum duration (seconds) for reading the entire request, including the body. Default: 10;
-* IMGPROXY_WRITE_TIMEOUT - the maximum duration (seconds) for writing the response. Default: 10;
-* IMGPROXY_CONCURRENCY - the maximum images to be processed simultaneously. Default: 100;
+* `IMGPROXY_BIND` — TCP address to listen on. Default: `:8080`;
+* `IMGPROXY_READ_TIMEOUT` — the maximum duration (in seconds) for reading the entire image request, including the body. Default: `10`;
+* `IMGPROXY_WRITE_TIMEOUT` — the maximum duration (in seconds) for writing the response. Default: `10`;
+* `IMGPROXY_CONCURRENCY` — the maximum number of image requests to be processed simultaneously. Default: `100`;
 
 #### Security
 
-Imgproxy protects you from image bombs. Here you can specify maximum image dimension which you're ready to process:
+imgproxy protects you from so-called image bombs. Here is how you can specify maximum image dimensions which you consider reasonable:
 
-* IMGPROXY_MAX_SRC_DIMENSION - the maximum dimension of source image. Images with larger size will be rejected. Default: 4096;
+* `IMGPROXY_MAX_SRC_DIMENSION` — the maximum dimensions of the source image, in pixels, for both width and height. Images with larger real size will be rejected. Default: `4096`;
 
-Also you can specify secret to enable authorization with HTTP `Authorization` header:
+You can also specify a secret to enable authorization with the HTTP `Authorization` header:
 
-* IMGPROXY_SECRET - auth token. If specified, request should contain `Authorization: Bearer %secret%` header;
+* `IMGPROXY_SECRET` — the authorization token. If specified, request should contain the `Authorization: Bearer %secret%` header;
 
 #### Compression
 
-* IMGPROXY_QUALITY - quality of a result image. Default: 80;
-* IMGPROXY_GZIP_COMPRESSION - GZip compression level. Default: 5;
+* `IMGPROXY_QUALITY` — quality of the resulting image, percentage. Default: `80`;
+* `IMGPROXY_GZIP_COMPRESSION` — GZip compression level. Default: `5`;
 
-## Generating url
+## Generating the URL
 
-Url path should contain signature and resizing params like this:
+The URL should contain the signature and resize parameters, like this:
 
 ```
 /%signature/%resizing_type/%width/%height/%gravity/%enlarge/%encoded_url.%extension
 ```
 
-#### Resizing type
+#### Resizing types
 
-Imgproxy supports the following resizing types:
+imgproxy supports the following resizing types:
 
-* `fit` - resizes image keeping aspect ratio to fit given size;
-* `fill` - resizes image keeping aspect ratio to fill given size and crops projecting parts;
-* `crop` - crops image to given size;
-* `force` - resizes image to given size breaking aspect ratio.
+* `fit` — resizes the image while keeping aspect ratio to fit given size;
+* `fill` — resizes the image while keeping aspect ratio to fill given size and cropping projecting parts;
+* `crop` — crops the image to a given size;
+* `force` — resizes the image to a given size without maintaining the aspect ratio.
 
 #### Width and height
 
-Width and height define size of the result image. The result dimensions may be not equal to the given depending on what resizing type was applied.
+Width and height parameters define the size of the resulting image. Depending on the resizing type applied, the dimensions may differ from the requested ones.
 
 #### Gravity
 
-When imgproxy needs to cut some parts of the image, it's guided by gravity. The following values are supported:
+When imgproxy needs to cut some parts of the image, it is guided by the gravity. The following values are supported:
 
-* `no` - north (top edge);
-* `so` - south (bottom edge);
-* `ea` - east (right edge);
-* `we` - west (left edge);
-* `ce` - center;
-* `sm` - smart. Vips detects the most interesting section of the image and considers it as the center of the result image. **Note:** This value applicable only to the crop resizing.
+* `no` — north (top edge);
+* `so` — south (bottom edge);
+* `ea` — east (right edge);
+* `we` — west (left edge);
+* `ce` — center;
+* `sm` — smart. `vips` detects the most "interesting" section of the image and considers it as the center of the resulting image. **Note:** This value is only applicable with the `crop` resizing type.
 
 #### Enlarge
 
-This param is `0`, imgproxy won't enlarge image if it's smaller that given size. With any other value imgproxy will enlarge image.
+If set to `0`, imgproxy will not enlarge the image if it is smaller than the given size. With any other value, imgproxy will enlarge the image.
 
-#### Encoded url
+#### Encoded URL
 
-The source url should be encoded with url-safe base64. Encoded url can be splitted with `/` for your needs.
+The source URL should be encoded with URL-safe Base64. The encoded URL can be split with `/` for your needs.
 
 #### Extension
 
-Extension specifies the format of the result image. Imgproxy supports only `jpg` and `png` as the most popular web-image formats.
+Extension specifies the format of the resulting image. At the moment, imgproxy supports only `jpg` and `png`, them being the most popular and useful web image formats.
 
 #### Signature
 
-Signature is a url-safe base64-encoded HMAC digest of the rest of the path including leading `/`.
+Signature is a URL-safe Base64-encoded HMAC digest of the rest of the path including the leading `/`. Here's how it is calculated:
 
-* Take the path after signature - `/%resizing_type/%width/%height/%gravity/%enlarge/%encoded_url.%extension`;
+* Take the path after the signature — `/%resizing_type/%width/%height/%gravity/%enlarge/%encoded_url.%extension`;
 * Add salt to the beginning;
-* Calc HMAC digest using SHA256;
-* Encode the result with url-secure base64.
+* Calculate the HMAC digest using SHA256;
+* Encode the result with URL-secure Base64.
 
-You can find code snippets in the `examples` folder.
+You can find helpful code snippets in the `examples` folder.
 
-## Source images formats support
+## Source image formats support
 
-Imgproxy supports only three most popular images formats: PNG, JPEG and GIF.
+imgproxy supports only the three most popular image formats of the moment: PNG, JPEG, and GIF.
 
-**Known issue:** Libvips may not support some kinds of JPEG, if you met this issue, you may need to build libvips with ImageMagick or GraphicMagick support. See https://github.com/jcupitt/libvips#imagemagick-or-optionally-graphicsmagick
+**Known issue:** `libvips` may not support some types of JPEG; if you stumble upon this issue, you may need to build `libvips` with ImageMagick or GraphicMagick support. See https://github.com/jcupitt/libvips#imagemagick-or-optionally-graphicsmagick
 
 ## Special thanks
 
@@ -173,6 +185,6 @@ Sergey "DarthSim" Aleksandrovich
 
 ## License
 
-Imgproxy is licensed under the MIT license.
+imgproxy is licensed under the MIT license.
 
 See LICENSE for the full license text.
