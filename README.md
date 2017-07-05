@@ -174,8 +174,6 @@ You can find helpful code snippets in the `examples` folder.
 
 imgproxy supports only the three most popular image formats of the moment: PNG, JPEG, and GIF.
 
-**Known issue:** `libvips` may not support some types of JPEG; if you stumble upon this issue, you may need to build `libvips` with ImageMagick or GraphicMagick support. See https://github.com/jcupitt/libvips#imagemagick-or-optionally-graphicsmagick
-
 ## Special thanks
 
 Special thanks to [h2non](https://github.com/h2non) and all authors and contributors of [bimg](https://github.com/h2non/bimg).

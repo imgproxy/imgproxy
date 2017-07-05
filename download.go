@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"errors"
 	"fmt"
@@ -20,13 +21,13 @@ var downloadClient = http.Client{
 }
 
 type netReader struct {
-	reader io.Reader
+	reader *bufio.Reader
 	buf    *bytes.Buffer
 }
 
 func newNetReader(r io.Reader) *netReader {
 	return &netReader{
-		reader: r,
+		reader: bufio.NewReader(r),
 		buf:    bytes.NewBuffer([]byte{}),
 	}
 }
@@ -37,6 +38,10 @@ func (r *netReader) Read(p []byte) (n int, err error) {
 		r.buf.Write(p[:n])
 	}
 	return
+}
+
+func (r *netReader) Peek(n int) ([]byte, error) {
+	return r.reader.Peek(n)
 }
 
 func (r *netReader) ReadAll() ([]byte, error) {
