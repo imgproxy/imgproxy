@@ -44,7 +44,7 @@ There are two ways you can install imgproxy:
 
 #### From the source
 
-1. First, install [vips](https://github.com/jcupitt/libvips):
+1. First, install [libvips](https://github.com/jcupitt/libvips):
 
   ```bash
   # macOS
@@ -152,7 +152,7 @@ When imgproxy needs to cut some parts of the image, it is guided by the gravity.
 * `ea` — east (right edge);
 * `we` — west (left edge);
 * `ce` — center;
-* `sm` — smart. `vips` detects the most "interesting" section of the image and considers it as the center of the resulting image. **Note:** This value is only applicable with the `crop` resizing type.
+* `sm` — smart. `libvips` detects the most "interesting" section of the image and considers it as the center of the resulting image. **Note:** This value is only applicable with the `crop` resizing type.
 
 #### Enlarge
 
