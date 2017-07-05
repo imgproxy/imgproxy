@@ -1,10 +1,17 @@
 hash: de73486dba2fd32ca4e577ba7baa1552e33431fa2a88c1f34ba9b7af77e9c75b
-updated: 2017-06-25T23:28:17.564332341+03:00
+updated: 2017-07-06T01:19:28.013165848+06:00
 imports:
 - name: github.com/h2non/bimg
   version: 32e459e416aa4abab45ba854298602cb9682256d
 - name: github.com/tj/go-debug
   version: ff4a55a20a86994118644bbddc6a216da193cc13
+- name: golang.org/x/image
+  version: 426cfd8eeb6e08ab1932954e09e3c2cb2bc6e36d
+  subpackages:
+  - riff
+  - vp8
+  - vp8l
+  - webp
 - name: gopkg.in/yaml.v2
   version: cd8b52f8269e0feb286dfeef29f8fe4d5b397e0b
 testImports: []

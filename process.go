@@ -19,6 +19,7 @@ var imageTypes = map[string]bimg.ImageType{
 	"jpeg": bimg.JPEG,
 	"jpg":  bimg.JPEG,
 	"png":  bimg.PNG,
+	"webp": bimg.WEBP,
 }
 
 var gravityTypes = map[string]bimg.Gravity{

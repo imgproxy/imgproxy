@@ -55,6 +55,13 @@ There are two ways you can install imgproxy:
   $ sudo apt-get install libvips
   ```
 
+  **Note:** Most libvips packages come with WebP support. If you want libvips to support WebP on macOS, you need to install it this way:
+
+  ```bash
+  $ brew tap homebrew/science
+  $ brew install vips --with-webp
+  ```
+
 2. Next, install imgproxy itself:
 
   ```bash
@@ -157,7 +164,7 @@ The source URL should be encoded with URL-safe Base64. The encoded URL can be sp
 
 #### Extension
 
-Extension specifies the format of the resulting image. At the moment, imgproxy supports only `jpg` and `png`, them being the most popular and useful web image formats.
+Extension specifies the format of the resulting image. At the moment, imgproxy supports only `jpg`, `png` and `webp`, them being the most popular and useful web image formats.
 
 #### Signature
 
@@ -172,7 +179,7 @@ You can find helpful code snippets in the `examples` folder.
 
 ## Source image formats support
 
-imgproxy supports only the three most popular image formats of the moment: PNG, JPEG, and GIF.
+imgproxy supports only the three most popular image formats of the moment: PNG, JPEG, GIF and WebP.
 
 ## Special thanks
 
