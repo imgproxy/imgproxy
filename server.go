@@ -181,7 +181,7 @@ func (h httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	b, err = processImage(b, procOpt)
 	if err != nil {
-		respondWithError(rw, 500, err, "Error occured while processing image")
+		respondWithError(rw, 500, err, "Error occurred while processing image")
 		return
 	}
 
