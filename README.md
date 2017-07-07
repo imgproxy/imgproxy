@@ -84,8 +84,8 @@ imgproxy is [Twelve-Factor-App](https://12factor.net/)-ready and can be configur
 
 imgproxy requires all URLs to be signed with a key and salt:
 
-* `IMGPROXY_KEY` - (**required**) hex-encoded key;
-* `IMGPROXY_SALT` - (**required**) hex-encoded salt;
+* `IMGPROXY_KEY` — (**required**) hex-encoded key;
+* `IMGPROXY_SALT` — (**required**) hex-encoded salt;
 
 You can also specify paths to files with a hex-encoded key and salt (useful in a development environment):
 
@@ -179,7 +179,7 @@ You can find helpful code snippets in the `examples` folder.
 
 ## Source image formats support
 
-imgproxy supports only the three most popular image formats of the moment: PNG, JPEG, GIF and WebP.
+imgproxy supports only the most popular image formats of the moment: PNG, JPEG, GIF and WebP.
 
 ## Special thanks
 
