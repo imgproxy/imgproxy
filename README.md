@@ -74,6 +74,31 @@ imgproxy can (and should) be used as a standalone application inside a Docker co
 
 ```bash
 $ docker build -t imgproxy .
+$ docker run -e IMGPROXY_KEY=$YOUR_KEY -e IMGPROXY_SALT=$YOUR_SALT -p 8080:8080 -t imgproxy
+```
+
+You can also pull the image from Docker Hub:
+
+```bash
+$ docker pull darthsim/imgproxy:latest
+$ docker run -e IMGPROXY_KEY=$YOUR_KEY -e IMGPROXY_SALT=$YOUR_SALT -p 8080:8080 -t darthsim/imgproxy
+```
+
+#### Heroku
+
+imgproxy can be deployed to Heroku with the click of the button:
+
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
+
+However, you can do it manually with a few steps:
+
+```bash
+$ git clone https://github.com/DarthSim/imgproxy.git && cd imgproxy
+$ heroku git:remote -a your-application
+$ heroku config:set BUILDPACK_URL=https://github.com/DarthSim/heroku-buildpack-imgproxy.git \
+                    IMGPROXY_KEY=$YOUR_KEY \
+                    IMGPROXY_SALT=$YOUR_SALT
+$ git push heroku master
 ```
 
 ## Configuration
