@@ -64,6 +64,7 @@ type config struct {
 	WriteTimeout    int
 	DownloadTimeout int
 	Concurrency     int
+	MaxClients      int
 	TTL             int
 
 	MaxSrcDimension int
@@ -99,6 +100,7 @@ func init() {
 	intEnvConfig(&conf.WriteTimeout, "IMGPROXY_WRITE_TIMEOUT")
 	intEnvConfig(&conf.DownloadTimeout, "IMGPROXY_DOWNLOAD_TIMEOUT")
 	intEnvConfig(&conf.Concurrency, "IMGPROXY_CONCURRENCY")
+	intEnvConfig(&conf.MaxClients, "IMGPROXY_MAX_CLIENTS")
 
 	intEnvConfig(&conf.TTL, "IMGPROXY_TTL")
 
@@ -140,6 +142,10 @@ func init() {
 
 	if conf.Concurrency <= 0 {
 		log.Fatalf("Concurrency should be greater than 0, now - %d\n", conf.Concurrency)
+	}
+
+	if conf.MaxClients <= 0 {
+		conf.MaxClients = conf.Concurrency * 2
 	}
 
 	if conf.TTL <= 0 {

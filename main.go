@@ -2,13 +2,20 @@ package main
 
 import (
 	"log"
+	"net"
 	"net/http"
 	"time"
+
+	"golang.org/x/net/netutil"
 )
 
 func main() {
+	l, err := net.Listen("tcp", conf.Bind)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	s := &http.Server{
-		Addr:           conf.Bind,
 		Handler:        newHttpHandler(),
 		ReadTimeout:    time.Duration(conf.ReadTimeout) * time.Second,
 		WriteTimeout:   time.Duration(conf.WriteTimeout) * time.Second,
@@ -17,5 +24,5 @@ func main() {
 
 	log.Printf("Starting server at %s\n", conf.Bind)
 
-	log.Fatal(s.ListenAndServe())
+	log.Fatal(s.Serve(netutil.LimitListener(l, conf.MaxClients)))
 }
