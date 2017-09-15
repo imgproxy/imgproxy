@@ -178,6 +178,13 @@ func (i *Image) Colourspace(c Interpretation) ([]byte, error) {
 	return i.Process(options)
 }
 
+// Trim removes the background from the picture. It can result in a 0x0 output
+// if the image is all background.
+func (i *Image) Trim() ([]byte, error) {
+	options := Options{Trim: true}
+	return i.Process(options)
+}
+
 // Process processes the image based on the given transformation options,
 // talking with libvips bindings accordingly and returning the resultant
 // image buffer.

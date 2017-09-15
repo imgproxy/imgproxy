@@ -3,6 +3,7 @@ package bimg
 import (
 	"bytes"
 	"crypto/md5"
+	"fmt"
 	"image"
 	"image/jpeg"
 	"io/ioutil"
@@ -391,6 +392,65 @@ func TestResizePngWithTransparency(t *testing.T) {
 	}
 
 	Write("fixtures/transparent_out.png", newImg)
+}
+
+func TestRotationAndFlip(t *testing.T) {
+	files := []struct {
+		Name  string
+		Angle Angle
+		Flip  bool
+	}{
+		{"Landscape_1", 0, false},
+		{"Landscape_2", 0, true},
+		{"Landscape_3", D180, false},
+		{"Landscape_4", D180, true},
+		{"Landscape_5", D90, true},
+		{"Landscape_6", D90, false},
+		{"Landscape_7", D270, true},
+		{"Landscape_8", D270, false},
+		{"Portrait_1", 0, false},
+		{"Portrait_2", 0, true},
+		{"Portrait_3", D180, false},
+		{"Portrait_4", D180, true},
+		{"Portrait_5", D90, true},
+		{"Portrait_6", D90, false},
+		{"Portrait_7", D270, true},
+		{"Portrait_8", D270, false},
+	}
+
+	for _, file := range files {
+		img, err := os.Open(fmt.Sprintf("fixtures/exif/%s.jpg", file.Name))
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		buf, err := ioutil.ReadAll(img)
+		if err != nil {
+			t.Fatal(err)
+		}
+		img.Close()
+
+		image, _, err := loadImage(buf)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		angle, flip := calculateRotationAndFlip(image, D0)
+		if angle != file.Angle {
+			t.Errorf("Rotation for %v expected to be %v. got %v", file.Name, file.Angle, angle)
+		}
+		if flip != file.Flip {
+			t.Errorf("Flip for %v expected to be %v. got %v", file.Name, file.Flip, flip)
+		}
+
+		// Visual debugging.
+		newImg, err := Resize(buf, Options{})
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		Write(fmt.Sprintf("fixtures/exif/%s_out.jpg", file.Name), newImg)
+	}
 }
 
 func TestIfBothSmartCropOptionsAreIdentical(t *testing.T) {

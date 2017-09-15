@@ -457,8 +457,8 @@ func TestFluentInterface(t *testing.T) {
 
 func TestImageSmartCrop(t *testing.T) {
 
-	if !(VipsMajorVersion >= 8 && VipsMinorVersion > 4) {
-		t.Skipf("Skipping this test, libvips doesn't meet version requirement %s > 8.4", VipsVersion)
+	if !(VipsMajorVersion >= 8 && VipsMinorVersion >= 5) {
+		t.Skipf("Skipping this test, libvips doesn't meet version requirement %s >= 8.5", VipsVersion)
 	}
 
 	i := initImage("northern_cardinal_bird.jpg")
@@ -473,6 +473,26 @@ func TestImageSmartCrop(t *testing.T) {
 	}
 
 	Write("fixtures/test_smart_crop.jpg", buf)
+}
+
+func TestImageTrim(t *testing.T) {
+
+	if !(VipsMajorVersion >= 8 && VipsMinorVersion >= 6) {
+		t.Skipf("Skipping this test, libvips doesn't meet version requirement %s >= 8.6", VipsVersion)
+	}
+
+	i := initImage("transparent.png")
+	buf, err := i.Trim()
+	if err != nil {
+		t.Errorf("Cannot process the image: %#v", err)
+	}
+
+	err = assertSize(buf, 250, 208)
+	if err != nil {
+		t.Errorf("The image wasn't trimmed.")
+	}
+
+	Write("fixtures/transparent_trim.png", buf)
 }
 
 func TestImageLength(t *testing.T) {

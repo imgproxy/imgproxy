@@ -6,3 +6,4 @@ bin
 /*.webp
 /fixtures/*_out.*
 /.idea/
+fixtures/test_vertical_*.jpg

@@ -35,7 +35,7 @@ If you're using `gopkg.in`, you can still rely in the `v0` without worrying abou
 
 - Resize
 - Enlarge
-- Crop (including smart crop support)
+- Crop (including smart crop support, libvips 8.5+)
 - Rotate (with auto-rotate based on EXIF orientation)
 - Flip (with auto-flip based on EXIF metadata)
 - Flop
@@ -47,6 +47,7 @@ If you're using `gopkg.in`, you can still rely in the `v0` without worrying abou
 - Custom output color space (RGB, grayscale...)
 - Format conversion (with additional quality/compression settings)
 - EXIF metadata (size, alpha channel, profile, orientation...)
+- Trim (libvips 8.6+)
 
 ## Prerequisites
 
@@ -132,7 +133,7 @@ if err != nil {
 }
 
 size, err := bimg.NewImage(newImage).Size()
-if size.Width == 400 && size.Height == 300 {
+if size.Width == 800 && size.Height == 600 {
   fmt.Println("The image size is valid")
 }
 

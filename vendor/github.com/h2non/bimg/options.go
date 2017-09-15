@@ -204,6 +204,8 @@ type Options struct {
 	NoAutoRotate   bool
 	NoProfile      bool
 	Interlace      bool
+	StripMetadata  bool
+	Trim           bool
 	Extend         Extend
 	Rotate         Angle
 	Background     Color
@@ -215,4 +217,5 @@ type Options struct {
 	Interpretation Interpretation
 	GaussianBlur   GaussianBlur
 	Sharpen        Sharpen
+	OutputICC      string
 }

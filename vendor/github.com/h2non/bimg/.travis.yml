@@ -7,14 +7,16 @@ go:
   - 1.6
   - 1.7
   - 1.8
+  - 1.9
   - tip
 
 env:
   - LIBVIPS=7.42.3
   - LIBVIPS=8.2.3
   - LIBVIPS=8.3.3
-  - LIBVIPS=8.4.5
-  - LIBVIPS=8.5.6
+  - LIBVIPS=8.4.6
+  - LIBVIPS=8.5.8
+  - LIBVIPS=8.6.0-alpha4
   - LIBVIPS=master
 
 matrix:
@@ -22,6 +24,7 @@ matrix:
     - env: LIBVIPS=7.42.3
     - env: LIBVIPS=8.2.3
     - env: LIBVIPS=8.3.3
+    - env: LIBVIPS=8.6.0-alpha4
 
 cache:
   apt:
@@ -48,15 +51,15 @@ addons:
 # VIPS 8.3.3 requires Poppler 0.30 which is not released on Trusty.
 before_install:
   - >
-    test "$LIBVIPS" != "master" -a "$LIBVIPS" \< "8.5" \
+    test "$LIBVIPS" != "master" -a "$LIBVIPS" \< "8.4" \
         && wget http://www.vips.ecs.soton.ac.uk/supported/${LIBVIPS%.*}/vips-${LIBVIPS}.tar.gz -O vips.tgz \
         || echo ":-)"
   - >
-    test "$LIBVIPS" != "master" -a "$LIBVIPS" \> "8.5" \
-        && wget https://github.com/jcupitt/libvips/releases/download/v${LIBVIPS}/vips-${LIBVIPS}.tar.gz -O vips.tgz \
+    test "$LIBVIPS" != "master" -a "$LIBVIPS" \> "8.4" \
+        && wget https://github.com/jcupitt/libvips/archive/v${LIBVIPS}.tar.gz -O vips.tgz \
         || echo ":-)"
   - >
-    test $LIBVIPS == "master"\
+    test $LIBVIPS == "master" \
         && wget https://github.com/jcupitt/libvips/archive/${LIBVIPS}.tar.gz -O vips.tgz \
         || echo ":-)"
   - mkdir libvips
