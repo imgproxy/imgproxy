@@ -10,7 +10,7 @@ ADD . /go/src/github.com/DarthSim/imgproxy
 
 RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories \
   && apk add --no-cache --update bash vips ca-certificates \
-  && apk add --no-cache --virtual .build-deps go=1.8.3-r0 gcc musl-dev fftw-dev vips-dev \
+  && apk add --no-cache --virtual .build-deps go gcc musl-dev fftw-dev vips-dev \
   && cd /go/src/github.com/DarthSim/imgproxy \
   && go build -v -o /usr/local/bin/imgproxy \
   && apk del --purge .build-deps \
