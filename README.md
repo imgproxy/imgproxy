@@ -1,5 +1,8 @@
 # imgproxy
 
+<img align="right" width="200" height="200" title="imgproxy logo"
+     src="https://cdn.rawgit.com/DarthSim/imgproxy/master/logo.svg">
+
 imgproxy is a fast and secure standalone server for resizing and converting remote images. The main principles of imgproxy are simplicity, speed, and security.
 
 imgproxy can be used to provide a fast and secure way to replace all the image resizing code of your web application (like calling ImageMagick or GraphicsMagick, or using libraries), while also being able to resize everything on the fly, fast and easy. imgproxy is also indispensable when handling lots of image resizing, especially when images come from a remote source.
