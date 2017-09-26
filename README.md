@@ -55,7 +55,7 @@ There are two ways you can install imgproxy:
   $ brew install vips
 
   # Ubuntu
-  $ sudo apt-get install libvips
+  $ sudo apt-get install libvips-dev
   ```
 
   **Note:** Most libvips packages come with WebP support. If you want libvips to support WebP on macOS, you need to install it this way:
