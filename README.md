@@ -3,6 +3,8 @@
 <img align="right" width="200" height="200" title="imgproxy logo"
      src="https://cdn.rawgit.com/DarthSim/imgproxy/master/logo.svg">
 
+[![Build Status](https://travis-ci.org/DarthSim/imgproxy.svg?branch=feature%2Fdrop-bimg)](https://travis-ci.org/DarthSim/imgproxy)
+
 imgproxy is a fast and secure standalone server for resizing and converting remote images. The main principles of imgproxy are simplicity, speed, and security.
 
 imgproxy can be used to provide a fast and secure way to replace all the image resizing code of your web application (like calling ImageMagick or GraphicsMagick, or using libraries), while also being able to resize everything on the fly, fast and easy. imgproxy is also indispensable when handling lots of image resizing, especially when images come from a remote source.
@@ -47,7 +49,7 @@ There are two ways you can install imgproxy:
 
 #### From the source
 
-1. First, install [libvips](https://github.com/jcupitt/libvips):
+1. First, install [libvips](https://github.com/jcupitt/libvips).
 
   ```bash
   # macOS
@@ -213,6 +215,8 @@ imgproxy supports only the most popular image formats of the moment: PNG, JPEG, 
 ## Author
 
 Sergey "DarthSim" Aleksandrovich
+
+Many thanks to @romashamin for the awesome logo.
 
 ## License
 
