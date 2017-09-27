@@ -5,6 +5,9 @@
 #define VIPS_SUPPORT_SMARTCROP \
   (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 5))
 
+#define VIPS_SUPPORT_GIF \
+  VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 3)
+
 enum types {
 	JPEG = 0,
   PNG,
@@ -70,7 +73,11 @@ vips_pngload_buffer_go(void *buf, size_t len, VipsImage **out)
 int
 vips_gifload_buffer_go(void *buf, size_t len, VipsImage **out)
 {
+#if VIPS_SUPPORT_GIF
   return vips_gifload_buffer(buf, len, out, "access", VIPS_ACCESS_RANDOM, NULL);
+#else
+  return 0;
+#endif
 }
 
 int
