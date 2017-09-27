@@ -160,7 +160,7 @@ func calcCrop(width, height int, po processingOptions) (left, top int) {
 }
 
 func processImage(data []byte, imgtype imageType, po processingOptions) ([]byte, error) {
-	defer runtime.KeepAlive(data)
+	defer keepAlive(data)
 
 	err := C.int(0)
 
