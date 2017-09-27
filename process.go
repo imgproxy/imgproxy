@@ -2,6 +2,7 @@ package main
 
 /*
 #cgo pkg-config: vips
+#cgo LDFLAGS: -s -w
 #include "vips.h"
 */
 import "C"
