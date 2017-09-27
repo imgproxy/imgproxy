@@ -5,9 +5,6 @@
 #define VIPS_SUPPORT_SMARTCROP \
   (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 5))
 
-#define VIPS_SUPPORT_RESIZE_KERNEL \
-  (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION > 3) || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION == 3 && VIPS_MICRO_VERSION >= 1))
-
 enum types {
 	JPEG = 0,
   PNG,
@@ -19,6 +16,12 @@ int
 vips_initialize()
 {
   return vips_init("imgproxy");
+}
+
+void
+swap_and_clear(VipsImage **in, VipsImage *out) {
+  g_object_unref((gpointer) *in);
+  *in = out;
 }
 
 int
@@ -56,35 +59,31 @@ int
 vips_jpegload_buffer_go(void *buf, size_t len, VipsImage **out)
 {
   return vips_jpegload_buffer(buf, len, out, "access", VIPS_ACCESS_RANDOM, NULL);
-};
+}
 
 int
 vips_pngload_buffer_go(void *buf, size_t len, VipsImage **out)
 {
   return vips_pngload_buffer(buf, len, out, "access", VIPS_ACCESS_RANDOM, NULL);
-};
+}
 
 int
 vips_gifload_buffer_go(void *buf, size_t len, VipsImage **out)
 {
   return vips_gifload_buffer(buf, len, out, "access", VIPS_ACCESS_RANDOM, NULL);
-};
+}
 
 int
 vips_webpload_buffer_go(void *buf, size_t len, VipsImage **out)
 {
   return vips_webpload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, NULL);
-};
+}
 
 int
 vips_resize_go(VipsImage *in, VipsImage **out, double scale)
 {
-#if VIPS_SUPPORT_RESIZE_KERNEL
-  return vips_resize(in, out, scale, "kernel", VIPS_KERNEL_LANCZOS3, NULL);
-#else
   return vips_resize(in, out, scale, NULL);
-#endif
-};
+}
 
 int
 vips_support_smartcrop() {
@@ -108,12 +107,42 @@ int
 vips_colourspace_go(VipsImage *in, VipsImage **out, VipsInterpretation space)
 {
   return vips_colourspace(in, out, space, NULL);
-};
+}
 
 int
 vips_extract_area_go(VipsImage *in, VipsImage **out, int left, int top, int width, int height)
 {
   return vips_extract_area(in, out, left, top, width, height, NULL);
+}
+
+int
+vips_process_image(VipsImage **img, int resize, double scale, int crop, int smart, int left, int top, int width, int height)
+{
+  VipsImage *tmp;
+  int err;
+
+  if (resize > 0) {
+    err = vips_resize_go(*img, &tmp, scale);
+    swap_and_clear(img, tmp);
+    if (err> 0) { return 1; }
+  }
+
+  if (crop > 0) {
+    if (smart > 0) {
+      err = vips_smartcrop_go(*img, &tmp, width, height);
+      swap_and_clear(img, tmp);
+      if (err> 0) { return 1; }
+    } else {
+      vips_extract_area_go(*img, &tmp, left, top, width, height);
+      swap_and_clear(img, tmp);
+      if (err> 0) { return 1; }
+    }
+  }
+
+  err = vips_colourspace_go(*img, &tmp, VIPS_INTERPRETATION_sRGB);
+  swap_and_clear(img, tmp);
+
+  return err;
 }
 
 int
@@ -129,6 +158,14 @@ vips_pngsave_go(VipsImage *in, void **buf, size_t *len)
 }
 
 int
-vips_webpsave_go(VipsImage *in, void **buf, size_t *len, int strip, int quality) {
+vips_webpsave_go(VipsImage *in, void **buf, size_t *len, int strip, int quality)
+{
 	return vips_webpsave_buffer(in, buf, len, "strip", strip, "Q", quality, NULL);
+}
+
+void
+vips_cleanup()
+{
+  vips_thread_shutdown();
+  vips_error_clear();
 }

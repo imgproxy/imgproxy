@@ -76,6 +76,8 @@ type processingOptions struct {
 	format  imageType
 }
 
+var vipsSupportSmartcrop bool
+
 func initVips() {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
@@ -88,6 +90,8 @@ func initVips() {
 	C.vips_concurrency_set(1)
 	C.vips_cache_set_max_mem(100 * 1024 * 1024) // 100Mb
 	C.vips_cache_set_max(500)
+
+	vipsSupportSmartcrop = C.vips_support_smartcrop() == 1
 }
 
 func vipsTypeSupportedLoad(imgtype imageType) bool {
@@ -165,13 +169,9 @@ func processImage(data []byte, imgtype imageType, po processingOptions) ([]byte,
 
 	err := C.int(0)
 
-	var img, tmpImg *C.struct__VipsImage
+	var img *C.struct__VipsImage
 
-	// Cleanup after all
-	defer func() {
-		C.vips_thread_shutdown()
-		C.vips_error_clear()
-	}()
+	defer C.vips_cleanup()
 
 	// Load the image
 	switch imgtype {
@@ -203,43 +203,35 @@ func processImage(data []byte, imgtype imageType, po processingOptions) ([]byte,
 	}
 
 	if po.width != imgWidth || po.height != imgHeight {
-		// Resize image for "fill" and "fit"
-		if po.resize == FILL || po.resize == FIT {
-			scale := calcScale(imgWidth, imgHeight, po)
-			err = C.vips_resize_go(img, &tmpImg, C.double(scale))
-			C.g_object_unref(C.gpointer(img))
-			img = tmpImg
-			if err != 0 {
-				return nil, vipsError()
-			}
-		}
-		// Crop image for "fill" and "crop"
-		if po.resize == FILL || po.resize == CROP {
-			if po.gravity == SMART && C.vips_support_smartcrop() == 1 {
-				err = C.vips_smartcrop_go(img, &tmpImg, C.int(po.width), C.int(po.height))
-				C.g_object_unref(C.gpointer(img))
-				img = tmpImg
-				if err != 0 {
-					return nil, vipsError()
-				}
-			} else {
-				left, top := calcCrop(int(img.Xsize), int(img.Ysize), po)
-				err = C.vips_extract_area_go(img, &tmpImg, C.int(left), C.int(top), C.int(po.width), C.int(po.height))
-				C.g_object_unref(C.gpointer(img))
-				img = tmpImg
-				if err != 0 {
-					return nil, vipsError()
-				}
-			}
-		}
-	}
+		var (
+			pResize, pCrop               int
+			pScale                       float64
+			pSmart                       int
+			pLeft, pTop, pWidth, pHeight int
+		)
 
-	// Convert to sRGB colour space
-	err = C.vips_colourspace_go(img, &tmpImg, C.VIPS_INTERPRETATION_sRGB)
-	C.g_object_unref(C.gpointer(img))
-	img = tmpImg
-	if err != 0 {
-		return nil, vipsError()
+		if po.resize == FILL || po.resize == FIT {
+			pResize = 1
+			pScale = calcScale(imgWidth, imgHeight, po)
+		} else {
+			pScale = 1.0
+		}
+
+		if po.resize == FILL || po.resize == CROP {
+			pCrop = 1
+			pWidth, pHeight = po.width, po.height
+
+			if po.gravity == SMART && vipsSupportSmartcrop {
+				pSmart = 1
+			} else {
+				pLeft, pTop = calcCrop(round(float64(imgWidth)*pScale), round(float64(imgHeight)*pScale), po)
+			}
+		}
+
+		err = C.vips_process_image(&img, C.int(pResize), C.double(pScale), C.int(pCrop), C.int(pSmart), C.int(pLeft), C.int(pTop), C.int(pWidth), C.int(pHeight))
+		if err != 0 {
+			return nil, vipsError()
+		}
 	}
 
 	// Finally, save
