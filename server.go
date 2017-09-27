@@ -12,21 +12,19 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/h2non/bimg"
 )
 
-var mimes = map[bimg.ImageType]string{
-	bimg.JPEG: "image/jpeg",
-	bimg.PNG:  "image/png",
-	bimg.WEBP: "image/webp",
+var mimes = map[imageType]string{
+	JPEG: "image/jpeg",
+	PNG:  "image/png",
+	WEBP: "image/webp",
 }
 
 type httpHandler struct {
 	sem chan struct{}
 }
 
-func newHttpHandler() httpHandler {
+func newHTTPHandler() httpHandler {
 	return httpHandler{make(chan struct{}, conf.Concurrency)}
 }
 
@@ -47,7 +45,11 @@ func parsePath(r *http.Request) (string, processingOptions, error) {
 		return "", po, err
 	}
 
-	po.resize = parts[1]
+	if r, ok := resizeTypes[parts[1]]; ok {
+		po.resize = r
+	} else {
+		return "", po, fmt.Errorf("Invalid resize type: %s", parts[1])
+	}
 
 	if po.width, err = strconv.Atoi(parts[2]); err != nil {
 		return "", po, fmt.Errorf("Invalid width: %s", parts[2])
@@ -73,6 +75,10 @@ func parsePath(r *http.Request) (string, processingOptions, error) {
 		po.format = f
 	} else {
 		return "", po, fmt.Errorf("Invalid image format: %s", filenameParts[1])
+	}
+
+	if !vipsTypeSupportedSave(po.format) {
+		return "", po, errors.New("Resulting image type not supported")
 	}
 
 	filename, err := base64.RawURLEncoding.DecodeString(filenameParts[0])
@@ -173,13 +179,13 @@ func (h httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	b, err := downloadImage(imgURL)
+	b, imgtype, err := downloadImage(imgURL)
 	if err != nil {
 		respondWithError(rw, 404, err, "Image is unreachable")
 		return
 	}
 
-	b, err = processImage(b, procOpt)
+	b, err = processImage(b, imgtype, procOpt)
 	if err != nil {
 		respondWithError(rw, 500, err, "Error occurred while processing image")
 		return

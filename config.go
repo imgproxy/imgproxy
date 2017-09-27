@@ -167,4 +167,6 @@ func init() {
 	} else if conf.GZipCompression > 9 {
 		log.Fatalf("GZip compression can't be greater than 9, now - %d\n", conf.GZipCompression)
 	}
+
+	initVips()
 }

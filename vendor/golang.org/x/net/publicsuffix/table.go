@@ -5,7 +5,7 @@ package publicsuffix
 const version = "publicsuffix.org's public_suffix_list.dat, git revision 38b238d6324042f2c2e6270459d1f4ccfe789fba (2017-08-28T20:09:01Z)"
 
 const (
-	nodesBitsChildren   = 9
+	nodesBitsChildren   = 10
 	nodesBitsICANN      = 1
 	nodesBitsTextOffset = 15
 	nodesBitsTextLength = 6
@@ -489,8 +489,8 @@ const text = "bifukagawalterbihorologyukuhashimoichinosekigaharaxastronomy-gat" 
 // An I denotes an ICANN domain.
 //
 // The layout within the uint32, from MSB to LSB, is:
-//	[ 1 bits] unused
-//	[ 9 bits] children index
+//	[ 0 bits] unused
+//	[10 bits] children index
 //	[ 1 bits] ICANN bit
 //	[15 bits] text index
 //	[ 6 bits] text length
@@ -9412,7 +9412,7 @@ var children = [...]uint32{
 	0x835e0d2,
 }
 
-// max children 494 (capacity 511)
+// max children 494 (capacity 1023)
 // max text offset 28750 (capacity 32767)
 // max text length 36 (capacity 63)
 // max hi 8407 (capacity 16383)
