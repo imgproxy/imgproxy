@@ -11,6 +11,7 @@ import (
 	"errors"
 	"log"
 	"math"
+	"os"
 	"runtime"
 	"unsafe"
 )
@@ -90,6 +91,11 @@ func initVips() {
 	C.vips_concurrency_set(1)
 	C.vips_cache_set_max_mem(100 * 1024 * 1024) // 100Mb
 	C.vips_cache_set_max(500)
+
+	if len(os.Getenv("IMGPROXY_DEBUG_VIPS")) > 0 {
+		C.vips_cache_set_dump(C.gboolean(1))
+		C.vips_cache_set_trace(C.gboolean(1))
+	}
 
 	vipsSupportSmartcrop = C.vips_support_smartcrop() == 1
 }
