@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"runtime"
 	"strconv"
 )
 
@@ -83,7 +84,7 @@ var conf = config{
 	ReadTimeout:     10,
 	WriteTimeout:    10,
 	DownloadTimeout: 5,
-	Concurrency:     100,
+	Concurrency:     runtime.NumCPU() * 2,
 	TTL:             3600,
 	MaxSrcDimension: 4096,
 	Quality:         80,
@@ -145,7 +146,7 @@ func init() {
 	}
 
 	if conf.MaxClients <= 0 {
-		conf.MaxClients = conf.Concurrency * 2
+		conf.MaxClients = conf.Concurrency * 5
 	}
 
 	if conf.TTL <= 0 {
