@@ -146,8 +146,10 @@ vips_process_image(VipsImage **img, int resize, double scale, int crop, int smar
     }
   }
 
-  err = vips_colourspace_go(*img, &tmp, VIPS_INTERPRETATION_sRGB);
-  swap_and_clear(img, tmp);
+  if (vips_image_guess_interpretation(*img) != VIPS_INTERPRETATION_sRGB) {
+    err = vips_colourspace_go(*img, &tmp, VIPS_INTERPRETATION_sRGB);
+    swap_and_clear(img, tmp);
+  }
 
   return err;
 }
