@@ -3,7 +3,7 @@
 <img align="right" width="200" height="200" title="imgproxy logo"
      src="https://cdn.rawgit.com/DarthSim/imgproxy/master/logo.svg">
 
-[![Build Status](https://travis-ci.org/DarthSim/imgproxy.svg?branch=feature%2Fdrop-bimg)](https://travis-ci.org/DarthSim/imgproxy)
+[![Build Status](https://api.travis-ci.org/DarthSim/imgproxy.svg?branch=master)](https://travis-ci.org/DarthSim/imgproxy)
 
 imgproxy is a fast and secure standalone server for resizing and converting remote images. The main principles of imgproxy are simplicity, speed, and security.
 
