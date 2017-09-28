@@ -13,7 +13,7 @@ import (
 func main() {
 	// Force garbage collection
 	go func() {
-		for _ = range time.Tick(time.Second) {
+		for _ = range time.Tick(10 * time.Second) {
 			debug.FreeOSMemory()
 		}
 	}()

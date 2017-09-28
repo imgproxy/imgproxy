@@ -88,7 +88,6 @@ func initVips() {
 		log.Fatalln("unable to start vips!")
 	}
 
-	C.vips_concurrency_set(1)
 	C.vips_cache_set_max_mem(100 * 1024 * 1024) // 100Mb
 	C.vips_cache_set_max(500)
 
@@ -98,6 +97,13 @@ func initVips() {
 	}
 
 	vipsSupportSmartcrop = C.vips_support_smartcrop() == 1
+}
+
+func randomAccessRequired(po processingOptions) int {
+	if po.gravity == SMART {
+		return 1
+	}
+	return 0
 }
 
 func vipsTypeSupportedLoad(imgtype imageType) bool {
@@ -173,6 +179,10 @@ func calcCrop(width, height int, po processingOptions) (left, top int) {
 func processImage(data []byte, imgtype imageType, po processingOptions) ([]byte, error) {
 	defer keepAlive(data)
 
+	if po.gravity == SMART && !vipsSupportSmartcrop {
+		return nil, errors.New("Smart crop is not supported by used version of libvips")
+	}
+
 	err := C.int(0)
 
 	var img *C.struct__VipsImage
@@ -183,13 +193,13 @@ func processImage(data []byte, imgtype imageType, po processingOptions) ([]byte,
 	// Load the image
 	switch imgtype {
 	case JPEG:
-		err = C.vips_jpegload_buffer_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), &img)
+		err = C.vips_jpegload_buffer_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), &img, C.int(randomAccessRequired(po)))
 	case PNG:
-		err = C.vips_pngload_buffer_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), &img)
+		err = C.vips_pngload_buffer_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), &img, C.int(randomAccessRequired(po)))
 	case GIF:
-		err = C.vips_gifload_buffer_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), &img)
+		err = C.vips_gifload_buffer_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), &img, C.int(randomAccessRequired(po)))
 	case WEBP:
-		err = C.vips_webpload_buffer_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), &img)
+		err = C.vips_webpload_buffer_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), &img, C.int(randomAccessRequired(po)))
 	}
 	if err != 0 {
 		return nil, vipsError()
@@ -228,7 +238,7 @@ func processImage(data []byte, imgtype imageType, po processingOptions) ([]byte,
 			pCrop = 1
 			pWidth, pHeight = po.width, po.height
 
-			if po.gravity == SMART && vipsSupportSmartcrop {
+			if po.gravity == SMART {
 				pSmart = 1
 			} else {
 				pLeft, pTop = calcCrop(round(float64(imgWidth)*pScale), round(float64(imgHeight)*pScale), po)

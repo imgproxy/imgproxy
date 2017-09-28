@@ -26,6 +26,12 @@ clear_image(VipsImage **in) {
   g_clear_object(in);
 }
 
+VipsAccess
+access_mode(int random) {
+  if (random > 0) return VIPS_ACCESS_RANDOM;
+  return VIPS_ACCESS_SEQUENTIAL;
+}
+
 void
 swap_and_clear(VipsImage **in, VipsImage *out) {
   clear_image(in);
@@ -64,31 +70,31 @@ vips_type_find_save_go(int imgtype) {
 }
 
 int
-vips_jpegload_buffer_go(void *buf, size_t len, VipsImage **out)
+vips_jpegload_buffer_go(void *buf, size_t len, VipsImage **out, int random)
 {
-  return vips_jpegload_buffer(buf, len, out, "access", VIPS_ACCESS_RANDOM, NULL);
+  return vips_jpegload_buffer(buf, len, out, "access", access_mode(random), NULL);
 }
 
 int
-vips_pngload_buffer_go(void *buf, size_t len, VipsImage **out)
+vips_pngload_buffer_go(void *buf, size_t len, VipsImage **out, int random)
 {
-  return vips_pngload_buffer(buf, len, out, "access", VIPS_ACCESS_RANDOM, NULL);
+  return vips_pngload_buffer(buf, len, out, "access", access_mode(random), NULL);
 }
 
 int
-vips_gifload_buffer_go(void *buf, size_t len, VipsImage **out)
+vips_gifload_buffer_go(void *buf, size_t len, VipsImage **out, int random)
 {
 #if VIPS_SUPPORT_GIF
-  return vips_gifload_buffer(buf, len, out, "access", VIPS_ACCESS_RANDOM, NULL);
+  return vips_gifload_buffer(buf, len, out, "access", access_mode(random), NULL);
 #else
   return 0;
 #endif
 }
 
 int
-vips_webpload_buffer_go(void *buf, size_t len, VipsImage **out)
+vips_webpload_buffer_go(void *buf, size_t len, VipsImage **out, int random)
 {
-  return vips_webpload_buffer(buf, len, out, "access", VIPS_ACCESS_RANDOM, NULL);
+  return vips_webpload_buffer(buf, len, out, "access", access_mode(random), NULL);
 }
 
 int
