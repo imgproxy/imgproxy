@@ -176,6 +176,7 @@ func processImage(data []byte, imgtype imageType, po processingOptions) ([]byte,
 	err := C.int(0)
 
 	var img *C.struct__VipsImage
+	defer C.clear_image(&img)
 
 	defer C.vips_cleanup()
 
@@ -241,8 +242,11 @@ func processImage(data []byte, imgtype imageType, po processingOptions) ([]byte,
 	}
 
 	// Finally, save
-	imgsize := C.size_t(0)
 	var ptr unsafe.Pointer
+	defer C.g_free(C.gpointer(ptr))
+
+	imgsize := C.size_t(0)
+
 	switch po.format {
 	case JPEG:
 		err = C.vips_jpegsave_go(img, &ptr, &imgsize, 1, C.int(conf.Quality), 0)
@@ -255,10 +259,7 @@ func processImage(data []byte, imgtype imageType, po processingOptions) ([]byte,
 		return nil, vipsError()
 	}
 
-	C.g_object_unref(C.gpointer(img))
-
 	buf := C.GoBytes(ptr, C.int(imgsize))
-	C.g_free(C.gpointer(ptr))
 
 	return buf, nil
 }

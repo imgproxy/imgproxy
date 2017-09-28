@@ -22,8 +22,13 @@ vips_initialize()
 }
 
 void
+clear_image(VipsImage **in) {
+  g_clear_object(in);
+}
+
+void
 swap_and_clear(VipsImage **in, VipsImage *out) {
-  g_object_unref((gpointer) *in);
+  clear_image(in);
   *in = out;
 }
 

@@ -4,12 +4,20 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"runtime/debug"
 	"time"
 
 	"golang.org/x/net/netutil"
 )
 
 func main() {
+	// Force garbage collection
+	go func() {
+		for _ = range time.Tick(time.Second) {
+			debug.FreeOSMemory()
+		}
+	}()
+
 	l, err := net.Listen("tcp", conf.Bind)
 	if err != nil {
 		log.Fatal(err)
