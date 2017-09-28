@@ -83,7 +83,7 @@ vips_gifload_buffer_go(void *buf, size_t len, VipsImage **out)
 int
 vips_webpload_buffer_go(void *buf, size_t len, VipsImage **out)
 {
-  return vips_webpload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, NULL);
+  return vips_webpload_buffer(buf, len, out, "access", VIPS_ACCESS_RANDOM, NULL);
 }
 
 int
