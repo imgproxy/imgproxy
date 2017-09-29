@@ -57,6 +57,9 @@ There are two ways you can install imgproxy:
   $ brew install vips
 
   # Ubuntu
+  # Ubuntu apt repository contains a pretty old version of libvips.
+  # It's recommended to use PPA with an up to date version.
+  $ sudo add-apt-repository ppa:dhor/myway
   $ sudo apt-get install libvips-dev
   ```
 
