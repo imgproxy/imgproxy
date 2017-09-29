@@ -167,8 +167,7 @@ imgproxy supports the following resizing types:
 
 * `fit` — resizes the image while keeping aspect ratio to fit given size;
 * `fill` — resizes the image while keeping aspect ratio to fill given size and cropping projecting parts;
-* `crop` — crops the image to a given size;
-* `force` — resizes the image to a given size without maintaining the aspect ratio.
+* `crop` — crops the image to a given size.
 
 #### Width and height
 
@@ -183,7 +182,7 @@ When imgproxy needs to cut some parts of the image, it is guided by the gravity.
 * `ea` — east (right edge);
 * `we` — west (left edge);
 * `ce` — center;
-* `sm` — smart. `libvips` detects the most "interesting" section of the image and considers it as the center of the resulting image. **Note:** This value is only applicable with the `crop` resizing type.
+* `sm` — smart. `libvips` detects the most "interesting" section of the image and considers it as the center of the resulting image.
 
 #### Enlarge
 
