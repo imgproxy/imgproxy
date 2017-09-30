@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"flag"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -95,6 +96,10 @@ func init() {
 	keypath := flag.String("keypath", "", "path of the file with hex-encoded key")
 	saltpath := flag.String("saltpath", "", "path of the file with hex-encoded salt")
 	flag.Parse()
+
+	if port := os.Getenv("PORT"); len(port) > 0 {
+		conf.Bind = fmt.Sprintf(":%s", port)
+	}
 
 	strEnvConfig(&conf.Bind, "IMGPROXY_BIND")
 	intEnvConfig(&conf.ReadTimeout, "IMGPROXY_READ_TIMEOUT")

@@ -17,8 +17,7 @@
     }
   },
   "buildpacks": [
-    {
-      "url": "https://github.com/DarthSim/heroku-buildpack-imgproxy"
-    }
+    { "url": "https://github.com/heroku/heroku-buildpack-apt" },
+    { "url": "https://github.com/heroku/heroku-buildpack-go" }
   ]
 }
