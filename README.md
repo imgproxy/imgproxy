@@ -102,10 +102,10 @@ However, you can do it manually with a few steps:
 
 ```bash
 $ git clone https://github.com/DarthSim/imgproxy.git && cd imgproxy
-$ heroku git:remote -a your-application
-$ heroku config:set BUILDPACK_URL=https://github.com/DarthSim/heroku-buildpack-imgproxy.git \
-                    IMGPROXY_KEY=$YOUR_KEY \
-                    IMGPROXY_SALT=$YOUR_SALT
+$ heroku create your-application
+$ heroku buildpacks:add https://github.com/heroku/heroku-buildpack-apt
+$ heroku buildpacks:add https://github.com/heroku/heroku-buildpack-go
+$ heroku config:set IMGPROXY_KEY=$YOUR_KEY IMGPROXY_SALT=$YOUR_SALT
 $ git push heroku master
 ```
 
