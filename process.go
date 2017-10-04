@@ -176,7 +176,7 @@ func calcCrop(width, height int, po processingOptions) (left, top int) {
 	return
 }
 
-func processImage(data []byte, imgtype imageType, po processingOptions) ([]byte, error) {
+func processImage(data []byte, imgtype imageType, po processingOptions, t *timer) ([]byte, error) {
 	defer keepAlive(data)
 
 	if po.gravity == SMART && !vipsSupportSmartcrop {
@@ -204,6 +204,8 @@ func processImage(data []byte, imgtype imageType, po processingOptions) ([]byte,
 	if err != 0 {
 		return nil, vipsError()
 	}
+
+	t.Check()
 
 	imgWidth := int(img.Xsize)
 	imgHeight := int(img.Ysize)
@@ -251,6 +253,8 @@ func processImage(data []byte, imgtype imageType, po processingOptions) ([]byte,
 		}
 	}
 
+	t.Check()
+
 	// Finally, save
 	var ptr unsafe.Pointer
 	defer C.g_free(C.gpointer(ptr))
@@ -268,6 +272,8 @@ func processImage(data []byte, imgtype imageType, po processingOptions) ([]byte,
 	if err != 0 {
 		return nil, vipsError()
 	}
+
+	t.Check()
 
 	buf := C.GoBytes(ptr, C.int(imgsize))
 

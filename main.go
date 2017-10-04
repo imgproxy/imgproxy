@@ -26,7 +26,6 @@ func main() {
 	s := &http.Server{
 		Handler:        newHTTPHandler(),
 		ReadTimeout:    time.Duration(conf.ReadTimeout) * time.Second,
-		WriteTimeout:   time.Duration(conf.WriteTimeout) * time.Second,
 		MaxHeaderBytes: 1 << 20,
 	}
 

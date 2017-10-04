@@ -92,9 +92,9 @@ func parsePath(r *http.Request) (string, processingOptions, error) {
 func logResponse(status int, msg string) {
 	var color int
 
-	if status > 500 {
+	if status >= 500 {
 		color = 31
-	} else if status > 400 {
+	} else if status >= 400 {
 		color = 33
 	} else {
 		color = 32
@@ -103,7 +103,7 @@ func logResponse(status int, msg string) {
 	log.Printf("|\033[7;%dm %d \033[0m| %s\n", color, status, msg)
 }
 
-func respondWithImage(r *http.Request, rw http.ResponseWriter, data []byte, imgURL string, po processingOptions, startTime time.Time) {
+func respondWithImage(r *http.Request, rw http.ResponseWriter, data []byte, imgURL string, po processingOptions, duration time.Duration) {
 	gzipped := strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") && conf.GZipCompression > 0
 
 	rw.Header().Set("Expires", time.Now().Add(time.Second*time.Duration(conf.TTL)).Format(http.TimeFormat))
@@ -123,21 +123,14 @@ func respondWithImage(r *http.Request, rw http.ResponseWriter, data []byte, imgU
 		rw.Write(data)
 	}
 
-	logResponse(200, fmt.Sprintf("Processed in %s: %s; %+v", time.Since(startTime), imgURL, po))
+	logResponse(200, fmt.Sprintf("Processed in %s: %s; %+v", duration, imgURL, po))
 }
 
-func respondWithError(rw http.ResponseWriter, status int, err error, msg string) {
-	logResponse(status, err.Error())
+func respondWithError(rw http.ResponseWriter, err imgproxyError) {
+	logResponse(err.StatusCode, err.Message)
 
-	rw.WriteHeader(status)
-	rw.Write([]byte(msg))
-}
-
-func repondWithForbidden(rw http.ResponseWriter) {
-	logResponse(403, "Invalid secret")
-
-	rw.WriteHeader(403)
-	rw.Write([]byte("Forbidden"))
+	rw.WriteHeader(err.StatusCode)
+	rw.Write([]byte(err.PublicMessage))
 }
 
 func checkSecret(s string) bool {
@@ -147,49 +140,63 @@ func checkSecret(s string) bool {
 	return strings.HasPrefix(s, "Bearer ") && subtle.ConstantTimeCompare([]byte(strings.TrimPrefix(s, "Bearer ")), []byte(conf.Secret)) == 1
 }
 
-func (h *httpHandler) lock() {
-	h.sem <- struct{}{}
+func (h *httpHandler) lock(t *timer) {
+	select {
+	case h.sem <- struct{}{}:
+		// Go ahead
+	case <-t.Timer:
+		panic(t.TimeoutErr())
+	}
 }
 
 func (h *httpHandler) unlock() {
-	defer func() { <-h.sem }()
+	<-h.sem
 }
 
 func (h httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	log.Printf("GET: %s\n", r.URL.RequestURI())
 
-	h.lock()
+	defer func() {
+		if r := recover(); r != nil {
+			if err, ok := r.(imgproxyError); ok {
+				respondWithError(rw, err)
+			} else {
+				respondWithError(rw, newUnexpectedError(r.(error), 4))
+			}
+		}
+	}()
+
+	t := startTimer(time.Duration(conf.WriteTimeout) * time.Second)
+
+	h.lock(t)
 	defer h.unlock()
 
-	t := time.Now()
-
 	if !checkSecret(r.Header.Get("Authorization")) {
-		repondWithForbidden(rw)
-		return
+		panic(invalidSecretErr)
 	}
 
 	imgURL, procOpt, err := parsePath(r)
 	if err != nil {
-		respondWithError(rw, 404, err, "Invalid image url")
-		return
+		panic(newError(404, err.Error(), "Invalid image url"))
 	}
 
 	if _, err = url.ParseRequestURI(imgURL); err != nil {
-		respondWithError(rw, 404, err, "Invalid image url")
-		return
+		panic(newError(404, err.Error(), "Invalid image url"))
 	}
 
 	b, imgtype, err := downloadImage(imgURL)
 	if err != nil {
-		respondWithError(rw, 404, err, "Image is unreachable")
-		return
+		panic(newError(404, err.Error(), "Image is unreachable"))
 	}
 
-	b, err = processImage(b, imgtype, procOpt)
+	t.Check()
+
+	b, err = processImage(b, imgtype, procOpt, t)
 	if err != nil {
-		respondWithError(rw, 500, err, "Error occurred while processing image")
-		return
+		panic(newError(500, err.Error(), "Error occurred while processing image"))
 	}
 
-	respondWithImage(r, rw, b, imgURL, procOpt, t)
+	t.Check()
+
+	respondWithImage(r, rw, b, imgURL, procOpt, t.Since())
 }
