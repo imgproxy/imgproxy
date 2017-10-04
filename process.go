@@ -257,7 +257,7 @@ func processImage(data []byte, imgtype imageType, po processingOptions, t *timer
 
 	// Finally, save
 	var ptr unsafe.Pointer
-	defer C.g_free(C.gpointer(ptr))
+	defer C.g_free_go(&ptr)
 
 	imgsize := C.size_t(0)
 

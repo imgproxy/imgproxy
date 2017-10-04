@@ -26,6 +26,11 @@ clear_image(VipsImage **in) {
   g_clear_object(in);
 }
 
+void
+g_free_go(void **buf) {
+  g_free(*buf);
+}
+
 VipsAccess
 access_mode(int random) {
   if (random > 0) return VIPS_ACCESS_RANDOM;
