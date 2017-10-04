@@ -9,15 +9,14 @@
   VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 3)
 
 enum types {
-	JPEG = 0,
+  JPEG = 0,
   PNG,
-	WEBP,
-	GIF
+  WEBP,
+  GIF
 };
 
 int
-vips_initialize()
-{
+vips_initialize() {
   return vips_init("imgproxy");
 }
 
@@ -54,10 +53,10 @@ vips_type_find_load_go(int imgtype) {
   if (imgtype == WEBP) {
     return vips_type_find("VipsOperation", "webpload");
   }
-	if (imgtype == GIF) {
-		return vips_type_find("VipsOperation", "gifload");
-	}
-	return 0;
+  if (imgtype == GIF) {
+    return vips_type_find("VipsOperation", "gifload");
+  }
+  return 0;
 }
 
 int
@@ -68,27 +67,24 @@ vips_type_find_save_go(int imgtype) {
   if (imgtype == PNG) {
     return vips_type_find("VipsOperation", "pngsave_buffer");
   }
-	if (imgtype == WEBP) {
-		return vips_type_find("VipsOperation", "webpsave_buffer");
-	}
-	return 0;
+  if (imgtype == WEBP) {
+    return vips_type_find("VipsOperation", "webpsave_buffer");
+  }
+  return 0;
 }
 
 int
-vips_jpegload_buffer_go(void *buf, size_t len, VipsImage **out, int random)
-{
+vips_jpegload_buffer_go(void *buf, size_t len, VipsImage **out, int random) {
   return vips_jpegload_buffer(buf, len, out, "access", access_mode(random), NULL);
 }
 
 int
-vips_pngload_buffer_go(void *buf, size_t len, VipsImage **out, int random)
-{
+vips_pngload_buffer_go(void *buf, size_t len, VipsImage **out, int random) {
   return vips_pngload_buffer(buf, len, out, "access", access_mode(random), NULL);
 }
 
 int
-vips_gifload_buffer_go(void *buf, size_t len, VipsImage **out, int random)
-{
+vips_gifload_buffer_go(void *buf, size_t len, VipsImage **out, int random) {
 #if VIPS_SUPPORT_GIF
   return vips_gifload_buffer(buf, len, out, "access", access_mode(random), NULL);
 #else
@@ -97,50 +93,45 @@ vips_gifload_buffer_go(void *buf, size_t len, VipsImage **out, int random)
 }
 
 int
-vips_webpload_buffer_go(void *buf, size_t len, VipsImage **out, int random)
-{
+vips_webpload_buffer_go(void *buf, size_t len, VipsImage **out, int random) {
   return vips_webpload_buffer(buf, len, out, "access", access_mode(random), NULL);
 }
 
 int
-vips_resize_go(VipsImage *in, VipsImage **out, double scale)
-{
+vips_resize_go(VipsImage *in, VipsImage **out, double scale) {
   return vips_resize(in, out, scale, NULL);
 }
 
 int
 vips_support_smartcrop() {
 #if VIPS_SUPPORT_SMARTCROP
-	return 1;
+  return 1;
 #else
-	return 0;
+  return 0;
 #endif
 }
 
 int
 vips_smartcrop_go(VipsImage *in, VipsImage **out, int width, int height) {
 #if VIPS_SUPPORT_SMARTCROP
-	return vips_smartcrop(in, out, width, height, NULL);
+  return vips_smartcrop(in, out, width, height, NULL);
 #else
-	return 0;
+  return 0;
 #endif
 }
 
 int
-vips_colourspace_go(VipsImage *in, VipsImage **out, VipsInterpretation space)
-{
+vips_colourspace_go(VipsImage *in, VipsImage **out, VipsInterpretation space) {
   return vips_colourspace(in, out, space, NULL);
 }
 
 int
-vips_extract_area_go(VipsImage *in, VipsImage **out, int left, int top, int width, int height)
-{
+vips_extract_area_go(VipsImage *in, VipsImage **out, int left, int top, int width, int height) {
   return vips_extract_area(in, out, left, top, width, height, NULL);
 }
 
 int
-vips_process_image(VipsImage **img, int resize, double scale, int crop, int smart, int left, int top, int width, int height)
-{
+vips_process_image(VipsImage **img, int resize, double scale, int crop, int smart, int left, int top, int width, int height) {
   VipsImage *tmp;
   int err;
 
@@ -171,26 +162,22 @@ vips_process_image(VipsImage **img, int resize, double scale, int crop, int smar
 }
 
 int
-vips_jpegsave_go(VipsImage *in, void **buf, size_t *len, int strip, int quality, int interlace)
-{
+vips_jpegsave_go(VipsImage *in, void **buf, size_t *len, int strip, int quality, int interlace) {
   return vips_jpegsave_buffer(in, buf, len, "strip", strip, "Q", quality, "optimize_coding", TRUE, "interlace", interlace, NULL);
 }
 
 int
-vips_pngsave_go(VipsImage *in, void **buf, size_t *len)
-{
+vips_pngsave_go(VipsImage *in, void **buf, size_t *len) {
   return vips_pngsave_buffer(in, buf, len, "filter", VIPS_FOREIGN_PNG_FILTER_NONE, NULL);
 }
 
 int
-vips_webpsave_go(VipsImage *in, void **buf, size_t *len, int strip, int quality)
-{
-	return vips_webpsave_buffer(in, buf, len, "strip", strip, "Q", quality, NULL);
+vips_webpsave_go(VipsImage *in, void **buf, size_t *len, int strip, int quality) {
+  return vips_webpsave_buffer(in, buf, len, "strip", strip, "Q", quality, NULL);
 }
 
 void
-vips_cleanup()
-{
+vips_cleanup() {
   vips_thread_shutdown();
   vips_error_clear();
 }
