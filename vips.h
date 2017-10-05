@@ -22,7 +22,7 @@ vips_initialize() {
 
 void
 clear_image(VipsImage **in) {
-  g_clear_object(in);
+  if (G_IS_OBJECT(*in)) g_clear_object(in);
 }
 
 void
