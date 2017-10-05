@@ -8,6 +8,8 @@
 #define VIPS_SUPPORT_GIF \
   VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 3)
 
+#define EXIF_ORIENTATION "exif-ifd0-Orientation"
+
 enum types {
   JPEG = 0,
   PNG,
@@ -98,6 +100,46 @@ vips_webpload_buffer_go(void *buf, size_t len, VipsImage **out, int random) {
 }
 
 int
+vips_get_exif_orientation(VipsImage *image) {
+	const char *orientation;
+
+	if (
+		vips_image_get_typeof(image, EXIF_ORIENTATION) != 0 &&
+		!vips_image_get_string(image, EXIF_ORIENTATION, &orientation)
+	) return atoi(&orientation[0]);
+
+	return 1;
+}
+
+int
+vips_exif_rotate(VipsImage **img, int orientation) {
+  int err;
+  int angle = VIPS_ANGLE_D0;
+  gboolean flip = FALSE;
+
+  VipsImage *tmp;
+
+  if (orientation == 3 || orientation == 4) angle = VIPS_ANGLE_D180;
+  if (orientation == 5 || orientation == 6) angle = VIPS_ANGLE_D90;
+  if (orientation == 7 || orientation == 8) angle = VIPS_ANGLE_D270;
+  if (orientation == 2 || orientation == 4 || orientation == 5 || orientation == 7) {
+    flip = TRUE;
+  }
+
+  err = vips_rot(*img, &tmp, angle, NULL);
+  swap_and_clear(img, tmp);
+  if (err > 0) { return err; }
+
+  if (flip) {
+    err = vips_flip(*img, &tmp, VIPS_DIRECTION_HORIZONTAL, NULL);
+    swap_and_clear(img, tmp);
+    if (err > 0) { return err; }
+  }
+
+  return 0;
+}
+
+int
 vips_resize_go(VipsImage *in, VipsImage **out, double scale) {
   return vips_resize(in, out, scale, NULL);
 }
@@ -135,21 +177,27 @@ vips_process_image(VipsImage **img, int resize, double scale, int crop, int smar
   VipsImage *tmp;
   int err;
 
+  int exif_orientation = vips_get_exif_orientation(*img);
+  if (exif_orientation > 1) {
+    vips_exif_rotate(img, exif_orientation);
+    if (err > 0) { return 1; }
+  }
+
   if (resize > 0) {
     err = vips_resize_go(*img, &tmp, scale);
     swap_and_clear(img, tmp);
-    if (err> 0) { return 1; }
+    if (err > 0) { return 1; }
   }
 
   if (crop > 0) {
     if (smart > 0) {
       err = vips_smartcrop_go(*img, &tmp, width, height);
       swap_and_clear(img, tmp);
-      if (err> 0) { return 1; }
+      if (err > 0) { return 1; }
     } else {
       vips_extract_area_go(*img, &tmp, left, top, width, height);
       swap_and_clear(img, tmp);
-      if (err> 0) { return 1; }
+      if (err > 0) { return 1; }
     }
   }
 
