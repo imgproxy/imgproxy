@@ -69,10 +69,10 @@ type config struct {
 	MaxClients      int
 	TTL             int
 
-	MaxSrcDimension int
-
-	Quality         int
-	GZipCompression int
+	MaxSrcDimension  int
+	MaxSrcResolution int
+	Quality          int
+	GZipCompression  int
 
 	Key  []byte
 	Salt []byte
@@ -81,15 +81,16 @@ type config struct {
 }
 
 var conf = config{
-	Bind:            ":8080",
-	ReadTimeout:     10,
-	WriteTimeout:    10,
-	DownloadTimeout: 5,
-	Concurrency:     runtime.NumCPU() * 2,
-	TTL:             3600,
-	MaxSrcDimension: 4096,
-	Quality:         80,
-	GZipCompression: 5,
+	Bind:             ":8080",
+	ReadTimeout:      10,
+	WriteTimeout:     10,
+	DownloadTimeout:  5,
+	Concurrency:      runtime.NumCPU() * 2,
+	TTL:              3600,
+	MaxSrcDimension:  4096,
+	MaxSrcResolution: 65,
+	Quality:          80,
+	GZipCompression:  5,
 }
 
 func init() {
@@ -111,7 +112,7 @@ func init() {
 	intEnvConfig(&conf.TTL, "IMGPROXY_TTL")
 
 	intEnvConfig(&conf.MaxSrcDimension, "IMGPROXY_MAX_SRC_DIMENSION")
-
+	intEnvConfig(&conf.MaxSrcResolution, "IMGPROXY_MAX_SRC_RESOLUTION")
 	intEnvConfig(&conf.Quality, "IMGPROXY_QUALITY")
 	intEnvConfig(&conf.GZipCompression, "IMGPROXY_GZIP_COMPRESSION")
 
@@ -160,6 +161,10 @@ func init() {
 
 	if conf.MaxSrcDimension <= 0 {
 		log.Fatalf("Max src dimension should be greater than 0, now - %d\n", conf.MaxSrcDimension)
+	}
+
+	if conf.MaxSrcResolution <= 0 {
+		log.Fatalf("Max src resolution should be greater than 0, now - %d\n", conf.MaxSrcResolution)
 	}
 
 	if conf.Quality <= 0 {
