@@ -77,7 +77,7 @@ func parsePath(r *http.Request) (string, processingOptions, error) {
 		return "", po, fmt.Errorf("Invalid image format: %s", filenameParts[1])
 	}
 
-	if !vipsTypeSupportedSave(po.format) {
+	if !vipsTypeSupportSave[po.format] {
 		return "", po, errors.New("Resulting image type not supported")
 	}
 

@@ -78,6 +78,8 @@ type processingOptions struct {
 }
 
 var vipsSupportSmartcrop bool
+var vipsTypeSupportLoad = make(map[imageType]bool)
+var vipsTypeSupportSave = make(map[imageType]bool)
 
 func initVips() {
 	runtime.LockOSThread()
@@ -97,6 +99,29 @@ func initVips() {
 	}
 
 	vipsSupportSmartcrop = C.vips_support_smartcrop() == 1
+
+	if int(C.vips_type_find_load_go(C.JPEG)) != 0 {
+		vipsTypeSupportLoad[JPEG] = true
+	}
+	if int(C.vips_type_find_load_go(C.PNG)) != 0 {
+		vipsTypeSupportLoad[PNG] = true
+	}
+	if int(C.vips_type_find_load_go(C.WEBP)) != 0 {
+		vipsTypeSupportLoad[WEBP] = true
+	}
+	if int(C.vips_type_find_load_go(C.GIF)) != 0 {
+		vipsTypeSupportLoad[GIF] = true
+	}
+
+	if int(C.vips_type_find_save_go(C.JPEG)) != 0 {
+		vipsTypeSupportSave[JPEG] = true
+	}
+	if int(C.vips_type_find_save_go(C.PNG)) != 0 {
+		vipsTypeSupportSave[PNG] = true
+	}
+	if int(C.vips_type_find_save_go(C.WEBP)) != 0 {
+		vipsTypeSupportSave[WEBP] = true
+	}
 }
 
 func randomAccessRequired(po processingOptions) int {
@@ -104,32 +129,6 @@ func randomAccessRequired(po processingOptions) int {
 		return 1
 	}
 	return 0
-}
-
-func vipsTypeSupportedLoad(imgtype imageType) bool {
-	switch imgtype {
-	case JPEG:
-		return int(C.vips_type_find_load_go(C.JPEG)) != 0
-	case PNG:
-		return int(C.vips_type_find_load_go(C.PNG)) != 0
-	case WEBP:
-		return int(C.vips_type_find_load_go(C.WEBP)) != 0
-	case GIF:
-		return int(C.vips_type_find_load_go(C.GIF)) != 0
-	}
-	return false
-}
-
-func vipsTypeSupportedSave(imgtype imageType) bool {
-	switch imgtype {
-	case JPEG:
-		return int(C.vips_type_find_save_go(C.JPEG)) != 0
-	case PNG:
-		return int(C.vips_type_find_save_go(C.PNG)) != 0
-	case WEBP:
-		return int(C.vips_type_find_save_go(C.WEBP)) != 0
-	}
-	return false
 }
 
 func round(f float64) int {
