@@ -24,8 +24,8 @@ type httpHandler struct {
 	sem chan struct{}
 }
 
-func newHTTPHandler() httpHandler {
-	return httpHandler{make(chan struct{}, conf.Concurrency)}
+func newHTTPHandler() *httpHandler {
+	return &httpHandler{make(chan struct{}, conf.Concurrency)}
 }
 
 func parsePath(r *http.Request) (string, processingOptions, error) {
@@ -153,7 +153,7 @@ func (h *httpHandler) unlock() {
 	<-h.sem
 }
 
-func (h httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	log.Printf("GET: %s\n", r.URL.RequestURI())
 
 	defer func() {
