@@ -143,9 +143,10 @@ $ xxd -g 2 -l 64 -p /dev/random | tr -d '\n'
 
 #### Security
 
-imgproxy protects you from so-called image bombs. Here is how you can specify maximum image dimensions which you consider reasonable:
+imgproxy protects you from so-called image bombs. Here is how you can specify maximum image dimensions and resolution which you consider reasonable:
 
-* `IMGPROXY_MAX_SRC_DIMENSION` — the maximum dimensions of the source image, in pixels, for both width and height. Images with larger real size will be rejected. Default: `4096`;
+* `IMGPROXY_MAX_SRC_DIMENSION` — the maximum dimensions of the source image, in pixels, for both width and height. Images with larger real size will be rejected. Default: `8192`;
+* `IMGPROXY_MAX_SRC_RESOLUTION` — the maximum resolution of the source image, in megapixels. Images with larger real size will be rejected. Default: `16.8`;
 
 You can also specify a secret to enable authorization with the HTTP `Authorization` header:
 

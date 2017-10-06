@@ -18,6 +18,12 @@ func intEnvConfig(i *int, name string) {
 	}
 }
 
+func megaIntEnvConfig(f *int, name string) {
+	if env, err := strconv.ParseFloat(os.Getenv(name), 64); err == nil {
+		*f = int(env * 1000000)
+	}
+}
+
 func strEnvConfig(s *string, name string) {
 	if env := os.Getenv(name); len(env) > 0 {
 		*s = env
@@ -69,7 +75,8 @@ type config struct {
 	MaxClients      int
 	TTL             int
 
-	MaxSrcDimension int
+	MaxSrcDimension  int
+	MaxSrcResolution int
 
 	Quality         int
 	GZipCompression int
@@ -81,15 +88,16 @@ type config struct {
 }
 
 var conf = config{
-	Bind:            ":8080",
-	ReadTimeout:     10,
-	WriteTimeout:    10,
-	DownloadTimeout: 5,
-	Concurrency:     runtime.NumCPU() * 2,
-	TTL:             3600,
-	MaxSrcDimension: 4096,
-	Quality:         80,
-	GZipCompression: 5,
+	Bind:             ":8080",
+	ReadTimeout:      10,
+	WriteTimeout:     10,
+	DownloadTimeout:  5,
+	Concurrency:      runtime.NumCPU() * 2,
+	TTL:              3600,
+	MaxSrcDimension:  8192,
+	MaxSrcResolution: 16800000,
+	Quality:          80,
+	GZipCompression:  5,
 }
 
 func init() {
@@ -111,6 +119,7 @@ func init() {
 	intEnvConfig(&conf.TTL, "IMGPROXY_TTL")
 
 	intEnvConfig(&conf.MaxSrcDimension, "IMGPROXY_MAX_SRC_DIMENSION")
+	megaIntEnvConfig(&conf.MaxSrcResolution, "IMGPROXY_MAX_SRC_RESOLUTION")
 
 	intEnvConfig(&conf.Quality, "IMGPROXY_QUALITY")
 	intEnvConfig(&conf.GZipCompression, "IMGPROXY_GZIP_COMPRESSION")
@@ -160,6 +169,10 @@ func init() {
 
 	if conf.MaxSrcDimension <= 0 {
 		log.Fatalf("Max src dimension should be greater than 0, now - %d\n", conf.MaxSrcDimension)
+	}
+
+	if conf.MaxSrcResolution <= 0 {
+		log.Fatalf("Max src resolution should be greater than 0, now - %d\n", conf.MaxSrcResolution)
 	}
 
 	if conf.Quality <= 0 {
