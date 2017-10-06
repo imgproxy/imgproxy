@@ -93,8 +93,11 @@ func initVips() {
 	C.vips_cache_set_max_mem(100 * 1024 * 1024) // 100Mb
 	C.vips_cache_set_max(500)
 
-	if len(os.Getenv("IMGPROXY_DEBUG_VIPS")) > 0 {
-		C.vips_cache_set_dump(C.gboolean(1))
+	if len(os.Getenv("IMGPROXY_VIPS_LEAK_CHECK")) > 0 {
+		C.vips_leak_set(C.gboolean(1))
+	}
+
+	if len(os.Getenv("IMGPROXY_VIPS_CACHE_TRACE")) > 0 {
 		C.vips_cache_set_trace(C.gboolean(1))
 	}
 
