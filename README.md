@@ -207,7 +207,7 @@ Signature is a URL-safe Base64-encoded HMAC digest of the rest of the path inclu
 * Take the path after the signature — `/%resizing_type/%width/%height/%gravity/%enlarge/%encoded_url.%extension`;
 * Add salt to the beginning;
 * Calculate the HMAC digest using SHA256;
-* Encode the result with URL-secure Base64.
+* Encode the result with URL-safe Base64.
 
 You can find helpful code snippets in the `examples` folder.
 
