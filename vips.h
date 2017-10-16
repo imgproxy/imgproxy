@@ -111,52 +111,45 @@ vips_support_smartcrop() {
 int
 vips_process_image(VipsImage **img, gboolean resize, double scale, gboolean crop, gboolean smart, int left, int top, int width, int height, VipsAngle angle, gboolean flip) {
   VipsImage *tmp;
-  int err;
 
   if (resize && scale != 1.0) {
-    err = vips_resize(*img, &tmp, scale, NULL);
+    if (vips_resize(*img, &tmp, scale, NULL)) return 1;
     swap_and_clear(img, tmp);
-    if (err > 0) { return 1; }
+  }
+
+  if (vips_image_guess_interpretation(*img) != VIPS_INTERPRETATION_sRGB) {
+    if (vips_colourspace(*img, &tmp, VIPS_INTERPRETATION_sRGB, NULL)) return 1;
+    swap_and_clear(img, tmp);
   }
 
   if (angle != VIPS_ANGLE_D0 || flip) {
-    tmp = vips_image_copy_memory(*img);
+    if (!(tmp = vips_image_copy_memory(*img))) return 1;
     swap_and_clear(img, tmp);
-    if (tmp == NULL) { return 1; }
 
     if (angle != VIPS_ANGLE_D0) {
-      err = vips_rot(*img, &tmp, angle, NULL);
+      if (vips_rot(*img, &tmp, angle, NULL)) return 1;
       swap_and_clear(img, tmp);
-      if (err > 0) { return err; }
     }
 
     if (flip) {
-      err = vips_flip(*img, &tmp, VIPS_DIRECTION_HORIZONTAL, NULL);
+      if (vips_flip(*img, &tmp, VIPS_DIRECTION_HORIZONTAL, NULL)) return 1;
       swap_and_clear(img, tmp);
-      if (err > 0) { return err; }
     }
   }
 
   if (crop) {
     if (smart) {
       #if VIPS_SUPPORT_SMARTCROP
-      err = vips_smartcrop(*img, &tmp, width, height, NULL);
+      if (vips_smartcrop(*img, &tmp, width, height, NULL)) return 1;
       swap_and_clear(img, tmp);
-      if (err > 0) { return 1; }
       #endif
     } else {
-      vips_extract_area(*img, &tmp, left, top, width, height, NULL);
+      if (vips_extract_area(*img, &tmp, left, top, width, height, NULL)) return 1;
       swap_and_clear(img, tmp);
-      if (err > 0) { return 1; }
     }
   }
 
-  if (vips_image_guess_interpretation(*img) != VIPS_INTERPRETATION_sRGB) {
-    err = vips_colourspace(*img, &tmp, VIPS_INTERPRETATION_sRGB, NULL);
-    swap_and_clear(img, tmp);
-  }
-
-  return err;
+  return 0;
 }
 
 int
