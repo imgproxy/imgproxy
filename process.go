@@ -19,11 +19,11 @@ import (
 type imageType int
 
 const (
-	UNKNOWN imageType = iota
-	JPEG
-	PNG
-	WEBP
-	GIF
+	UNKNOWN = C.UNKNOWN
+	JPEG    = C.JPEG
+	PNG     = C.PNG
+	WEBP    = C.WEBP
+	GIF     = C.GIF
 )
 
 var imageTypes = map[string]imageType{
@@ -138,6 +138,33 @@ func round(f float64) int {
 	return int(f + .5)
 }
 
+func extractMeta(img *C.VipsImage) (int, int, int, int) {
+	width := int(img.Xsize)
+	height := int(img.Ysize)
+
+	angle := C.VIPS_ANGLE_D0
+	flip := C.FALSE
+
+	orientation := C.vips_get_exif_orientation(img)
+	if orientation >= 5 && orientation <= 8 {
+		width, height = height, width
+	}
+	if orientation == 3 || orientation == 4 {
+		angle = C.VIPS_ANGLE_D180
+	}
+	if orientation == 5 || orientation == 6 {
+		angle = C.VIPS_ANGLE_D90
+	}
+	if orientation == 7 || orientation == 8 {
+		angle = C.VIPS_ANGLE_D270
+	}
+	if orientation == 2 || orientation == 4 || orientation == 5 || orientation == 7 {
+		flip = C.TRUE
+	}
+
+	return width, height, angle, flip
+}
+
 func calcScale(width, height int, po processingOptions) float64 {
 	if (po.width == width && po.height == height) || (po.resize != FILL && po.resize != FIT) {
 		return 1
@@ -193,24 +220,14 @@ func processImage(data []byte, imgtype imageType, po processingOptions, t *timer
 	defer C.vips_cleanup()
 
 	// Load the image
-	switch imgtype {
-	case JPEG:
-		err = C.vips_jpegload_buffer_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), &img, C.int(randomAccessRequired(po)))
-	case PNG:
-		err = C.vips_pngload_buffer_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), &img, C.int(randomAccessRequired(po)))
-	case GIF:
-		err = C.vips_gifload_buffer_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), &img, C.int(randomAccessRequired(po)))
-	case WEBP:
-		err = C.vips_webpload_buffer_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), &img, C.int(randomAccessRequired(po)))
-	}
+	err = C.vips_load_buffer(unsafe.Pointer(&data[0]), C.size_t(len(data)), C.int(imgtype), &img)
 	if err != 0 {
 		return nil, vipsError()
 	}
 
 	t.Check()
 
-	imgWidth := int(img.Xsize)
-	imgHeight := int(img.Ysize)
+	imgWidth, imgHeight, angle, flip := extractMeta(img)
 
 	// Ensure we won't crop out of bounds
 	if !po.enlarge || po.resize == CROP {
@@ -224,10 +241,10 @@ func processImage(data []byte, imgtype imageType, po processingOptions, t *timer
 	}
 
 	if po.width != imgWidth || po.height != imgHeight {
+		pResize, pCrop, pSmart := C.FALSE, C.FALSE, C.FALSE
+
 		var (
-			pResize, pCrop               int
 			pScale                       float64
-			pSmart                       int
 			pLeft, pTop, pWidth, pHeight int
 		)
 
@@ -249,7 +266,7 @@ func processImage(data []byte, imgtype imageType, po processingOptions, t *timer
 			}
 		}
 
-		err = C.vips_process_image(&img, C.int(pResize), C.double(pScale), C.int(pCrop), C.int(pSmart), C.int(pLeft), C.int(pTop), C.int(pWidth), C.int(pHeight))
+		err = C.vips_process_image(&img, C.gboolean(pResize), C.double(pScale), C.gboolean(pCrop), C.gboolean(pSmart), C.int(pLeft), C.int(pTop), C.int(pWidth), C.int(pHeight), C.VipsAngle(angle), C.gboolean(flip))
 		if err != 0 {
 			return nil, vipsError()
 		}
