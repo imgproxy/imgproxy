@@ -139,7 +139,7 @@ vips_smartcrop_go(VipsImage *in, VipsImage **out, int width, int height) {
 #if VIPS_SUPPORT_SMARTCROP
   return vips_smartcrop(in, out, width, height, NULL);
 #else
-  return 1
+  return 1;
 #endif
 }
 
