@@ -186,6 +186,25 @@ func calcScale(width, height int, po processingOptions) float64 {
 	return math.Max(wr, hr)
 }
 
+func calcShink(scale float64, imgtype imageType) int {
+	shrink := int(1.0 / scale)
+
+	if imgtype != JPEG {
+		return shrink
+	}
+
+	switch {
+	case shrink >= 16:
+		return 8
+	case shrink >= 8:
+		return 4
+	case shrink >= 4:
+		return 2
+	}
+
+	return 1
+}
+
 func calcCrop(width, height int, po processingOptions) (left, top int) {
 	left = (width - po.width + 1) / 2
 	top = (height - po.height + 1) / 2
@@ -224,7 +243,7 @@ func processImage(data []byte, imgtype imageType, po processingOptions, t *timer
 	defer C.vips_cleanup()
 
 	// Load the image
-	err = C.vips_load_buffer(unsafe.Pointer(&data[0]), C.size_t(len(data)), C.int(imgtype), &img)
+	err = C.vips_load_buffer(unsafe.Pointer(&data[0]), C.size_t(len(data)), C.int(imgtype), 1, &img)
 	if err != 0 {
 		return nil, vipsError()
 	}
@@ -245,18 +264,13 @@ func processImage(data []byte, imgtype imageType, po processingOptions, t *timer
 	}
 
 	if po.width != imgWidth || po.height != imgHeight {
-		pResize, pCrop, pSmart := C.FALSE, C.FALSE, C.FALSE
+		pCrop, pSmart := 0, 0
+		pScale := 1.0
 
-		var (
-			pScale                       float64
-			pLeft, pTop, pWidth, pHeight int
-		)
+		var pLeft, pTop, pWidth, pHeight int
 
 		if po.resize == FILL || po.resize == FIT {
-			pResize = 1
 			pScale = calcScale(imgWidth, imgHeight, po)
-		} else {
-			pScale = 1.0
 		}
 
 		if po.resize == FILL || po.resize == CROP {
@@ -270,7 +284,22 @@ func processImage(data []byte, imgtype imageType, po processingOptions, t *timer
 			}
 		}
 
-		err = C.vips_process_image(&img, C.gboolean(pResize), C.double(pScale), C.gboolean(pCrop), C.gboolean(pSmart), C.int(pLeft), C.int(pTop), C.int(pWidth), C.int(pHeight), C.VipsAngle(angle), C.gboolean(flip))
+		// Do some shrink-on-load
+		if pScale < 1.0 {
+			if imgtype == JPEG || imgtype == WEBP {
+				shrink := calcShink(pScale, imgtype)
+				pScale = pScale * float64(shrink)
+
+				var tmp *C.struct__VipsImage
+				err = C.vips_load_buffer(unsafe.Pointer(&data[0]), C.size_t(len(data)), C.int(imgtype), C.int(shrink), &tmp)
+				if err != 0 {
+					return nil, vipsError()
+				}
+				C.swap_and_clear(&img, tmp)
+			}
+		}
+
+		err = C.vips_process_image(&img, C.double(pScale), C.gboolean(pCrop), C.gboolean(pSmart), C.int(pLeft), C.int(pTop), C.int(pWidth), C.int(pHeight), C.VipsAngle(angle), C.gboolean(flip))
 		if err != 0 {
 			return nil, vipsError()
 		}

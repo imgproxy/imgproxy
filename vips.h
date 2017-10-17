@@ -71,13 +71,19 @@ vips_type_find_save_go(int imgtype) {
 }
 
 int
-vips_load_buffer(void *buf, size_t len, int imgtype, VipsImage **out) {
+vips_load_buffer(void *buf, size_t len, int imgtype, int shrink, VipsImage **out) {
   switch (imgtype) {
     case JPEG:
+      if (shrink > 1) {
+        return vips_jpegload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, "shrink", shrink, NULL);
+      }
       return vips_jpegload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, NULL);
     case PNG:
       return vips_pngload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, NULL);
     case WEBP:
+      if (shrink > 1) {
+        return vips_webpload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, "shrink", shrink, NULL);
+      }
       return vips_webpload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, NULL);
     #if VIPS_SUPPORT_GIF
     case GIF:
@@ -109,10 +115,10 @@ vips_support_smartcrop() {
 }
 
 int
-vips_process_image(VipsImage **img, gboolean resize, double scale, gboolean crop, gboolean smart, int left, int top, int width, int height, VipsAngle angle, gboolean flip) {
+vips_process_image(VipsImage **img, double scale, gboolean crop, gboolean smart, int left, int top, int width, int height, VipsAngle angle, gboolean flip) {
   VipsImage *tmp;
 
-  if (resize && scale != 1.0) {
+  if (scale != 1.0) {
     if (vips_resize(*img, &tmp, scale, NULL)) return 1;
     swap_and_clear(img, tmp);
   }
