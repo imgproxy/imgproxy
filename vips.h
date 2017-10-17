@@ -140,6 +140,9 @@ vips_process_image(VipsImage **img, gboolean resize, double scale, gboolean crop
   if (crop) {
     if (smart) {
       #if VIPS_SUPPORT_SMARTCROP
+      if (!(tmp = vips_image_copy_memory(*img))) return 1;
+      swap_and_clear(img, tmp);
+
       if (vips_smartcrop(*img, &tmp, width, height, NULL)) return 1;
       swap_and_clear(img, tmp);
       #endif
