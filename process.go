@@ -127,6 +127,10 @@ func initVips() {
 	}
 }
 
+func shutdownVips() {
+	C.vips_shutdown()
+}
+
 func randomAccessRequired(po processingOptions) int {
 	if po.gravity == SMART {
 		return 1

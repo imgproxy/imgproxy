@@ -4,6 +4,8 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os"
+	"os/signal"
 	"runtime/debug"
 	"time"
 
@@ -29,7 +31,16 @@ func main() {
 		MaxHeaderBytes: 1 << 20,
 	}
 
-	log.Printf("Starting server at %s\n", conf.Bind)
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt, os.Kill)
 
-	log.Fatal(s.Serve(netutil.LimitListener(l, conf.MaxClients)))
+	go func() {
+		log.Printf("Starting server at %s\n", conf.Bind)
+		log.Fatal(s.Serve(netutil.LimitListener(l, conf.MaxClients)))
+	}()
+
+	<-stop
+
+	shutdownVips()
+	shutdownServer(s)
 }
