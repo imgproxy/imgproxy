@@ -142,12 +142,12 @@ func round(f float64) int {
 	return int(f + .5)
 }
 
-func extractMeta(img *C.VipsImage) (int, int, int, int) {
+func extractMeta(img *C.VipsImage) (int, int, int, bool) {
 	width := int(img.Xsize)
 	height := int(img.Ysize)
 
 	angle := C.VIPS_ANGLE_D0
-	flip := C.FALSE
+	flip := false
 
 	orientation := C.vips_get_exif_orientation(img)
 	if orientation >= 5 && orientation <= 8 {
@@ -163,7 +163,7 @@ func extractMeta(img *C.VipsImage) (int, int, int, int) {
 		angle = C.VIPS_ANGLE_D270
 	}
 	if orientation == 2 || orientation == 4 || orientation == 5 || orientation == 7 {
-		flip = C.TRUE
+		flip = true
 	}
 
 	return width, height, angle, flip
@@ -229,24 +229,18 @@ func calcCrop(width, height int, po processingOptions) (left, top int) {
 }
 
 func processImage(data []byte, imgtype imageType, po processingOptions, t *timer) ([]byte, error) {
+	defer C.vips_cleanup()
 	defer keepAlive(data)
 
 	if po.gravity == SMART && !vipsSupportSmartcrop {
 		return nil, errors.New("Smart crop is not supported by used version of libvips")
 	}
 
-	err := C.int(0)
-
-	var img *C.struct__VipsImage
-	defer C.clear_image(&img)
-
-	defer C.vips_cleanup()
-
-	// Load the image
-	err = C.vips_load_buffer(unsafe.Pointer(&data[0]), C.size_t(len(data)), C.int(imgtype), 1, &img)
-	if err != 0 {
-		return nil, vipsError()
+	img, err := vipsLoadImage(data, imgtype, 1)
+	if err != nil {
+		return nil, err
 	}
+	defer C.clear_image(&img)
 
 	t.Check()
 
@@ -264,56 +258,93 @@ func processImage(data []byte, imgtype imageType, po processingOptions, t *timer
 	}
 
 	if po.width != imgWidth || po.height != imgHeight {
-		pCrop, pSmart := 0, 0
-		pScale := 1.0
-
-		var pLeft, pTop, pWidth, pHeight int
-
 		if po.resize == FILL || po.resize == FIT {
-			pScale = calcScale(imgWidth, imgHeight, po)
+			scale := calcScale(imgWidth, imgHeight, po)
+
+			// Do some shrink-on-load
+			if scale < 1.0 {
+				if imgtype == JPEG || imgtype == WEBP {
+					shrink := calcShink(scale, imgtype)
+					scale = scale * float64(shrink)
+
+					if tmp, e := vipsLoadImage(data, imgtype, shrink); e == nil {
+						C.swap_and_clear(&img, tmp)
+					} else {
+						return nil, e
+					}
+				}
+			}
+
+			if err = vipsResize(&img, scale); err != nil {
+				return nil, err
+			}
 		}
+
+		if err = vipsFixColourspace(&img); err != nil {
+			return nil, err
+		}
+
+		t.Check()
+
+		if angle != C.VIPS_ANGLE_D0 || flip {
+			if err = vipsImageCopyMemory(&img); err != nil {
+				return nil, err
+			}
+
+			if angle != C.VIPS_ANGLE_D0 {
+				if err = vipsRotate(&img, angle); err != nil {
+					return nil, err
+				}
+			}
+
+			if flip {
+				if err = vipsFlip(&img); err != nil {
+					return nil, err
+				}
+			}
+		}
+
+		t.Check()
 
 		if po.resize == FILL || po.resize == CROP {
-			pCrop = 1
-			pWidth, pHeight = po.width, po.height
-
 			if po.gravity == SMART {
-				pSmart = 1
-			} else {
-				pLeft, pTop = calcCrop(round(float64(imgWidth)*pScale), round(float64(imgHeight)*pScale), po)
-			}
-		}
-
-		// Do some shrink-on-load
-		if pScale < 1.0 {
-			if imgtype == JPEG || imgtype == WEBP {
-				shrink := calcShink(pScale, imgtype)
-				pScale = pScale * float64(shrink)
-
-				var tmp *C.struct__VipsImage
-				err = C.vips_load_buffer(unsafe.Pointer(&data[0]), C.size_t(len(data)), C.int(imgtype), C.int(shrink), &tmp)
-				if err != 0 {
-					return nil, vipsError()
+				if err = vipsImageCopyMemory(&img); err != nil {
+					return nil, err
 				}
-				C.swap_and_clear(&img, tmp)
+				if err = vipsSmartCrop(&img, po.width, po.height); err != nil {
+					return nil, err
+				}
+			} else {
+				left, top := calcCrop(int(img.Xsize), int(img.Ysize), po)
+				if err = vipsCrop(&img, left, top, po.width, po.height); err != nil {
+					return nil, err
+				}
 			}
-		}
-
-		err = C.vips_process_image(&img, C.double(pScale), C.gboolean(pCrop), C.gboolean(pSmart), C.int(pLeft), C.int(pTop), C.int(pWidth), C.int(pHeight), C.VipsAngle(angle), C.gboolean(flip))
-		if err != 0 {
-			return nil, vipsError()
 		}
 	}
 
 	t.Check()
 
-	// Finally, save
+	return vipsSaveImage(img, po.format)
+}
+
+func vipsLoadImage(data []byte, imgtype imageType, shrink int) (*C.struct__VipsImage, error) {
+	var img *C.struct__VipsImage
+	if C.vips_load_buffer(unsafe.Pointer(&data[0]), C.size_t(len(data)), C.int(imgtype), C.int(shrink), &img) != 0 {
+		return nil, vipsError()
+	}
+	return img, nil
+}
+
+func vipsSaveImage(img *C.struct__VipsImage, imgtype imageType) ([]byte, error) {
 	var ptr unsafe.Pointer
 	defer C.g_free_go(&ptr)
 
+	err := C.int(0)
+
 	imgsize := C.size_t(0)
 
-	switch po.format {
+	switch imgtype {
 	case JPEG:
 		err = C.vips_jpegsave_go(img, &ptr, &imgsize, 1, C.int(conf.Quality), 0)
 	case PNG:
@@ -325,11 +356,84 @@ func processImage(data []byte, imgtype imageType, po processingOptions, t *timer
 		return nil, vipsError()
 	}
 
-	t.Check()
+	return C.GoBytes(ptr, C.int(imgsize)), nil
+}
 
-	buf := C.GoBytes(ptr, C.int(imgsize))
+func vipsResize(img **C.struct__VipsImage, scale float64) error {
+	var tmp *C.struct__VipsImage
 
-	return buf, nil
+	if C.vips_resize_go(*img, &tmp, C.double(scale)) != 0 {
+		return vipsError()
+	}
+
+	C.swap_and_clear(img, tmp)
+	return nil
+}
+
+func vipsRotate(img **C.struct__VipsImage, angle int) error {
+	var tmp *C.struct__VipsImage
+
+	if C.vips_rot_go(*img, &tmp, C.VipsAngle(angle)) != 0 {
+		return vipsError()
+	}
+
+	C.swap_and_clear(img, tmp)
+	return nil
+}
+
+func vipsFlip(img **C.struct__VipsImage) error {
+	var tmp *C.struct__VipsImage
+
+	if C.vips_flip_horizontal_go(*img, &tmp) != 0 {
+		return vipsError()
+	}
+
+	C.swap_and_clear(img, tmp)
+	return nil
+}
+
+func vipsCrop(img **C.struct__VipsImage, left, top, width, height int) error {
+	var tmp *C.struct__VipsImage
+
+	if C.vips_extract_area_go(*img, &tmp, C.int(left), C.int(top), C.int(width), C.int(height)) != 0 {
+		return vipsError()
+	}
+
+	C.swap_and_clear(img, tmp)
+	return nil
+}
+
+func vipsSmartCrop(img **C.struct__VipsImage, width, height int) error {
+	var tmp *C.struct__VipsImage
+
+	if C.vips_smartcrop_go(*img, &tmp, C.int(width), C.int(height)) != 0 {
+		return vipsError()
+	}
+
+	C.swap_and_clear(img, tmp)
+	return nil
+}
+
+func vipsFixColourspace(img **C.struct__VipsImage) error {
+	var tmp *C.struct__VipsImage
+
+	if C.vips_image_guess_interpretation(*img) != C.VIPS_INTERPRETATION_sRGB {
+		if C.vips_colourspace_go(*img, &tmp, C.VIPS_INTERPRETATION_sRGB) != 0 {
+			return vipsError()
+		}
+		C.swap_and_clear(img, tmp)
+	}
+
+	return nil
+}
+
+func vipsImageCopyMemory(img **C.struct__VipsImage) error {
+	var tmp *C.struct__VipsImage
+	if tmp = C.vips_image_copy_memory(*img); tmp == nil {
+		return vipsError()
+	}
+	C.swap_and_clear(img, tmp)
+	return nil
 }
 
 func vipsError() error {

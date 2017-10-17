@@ -115,50 +115,37 @@ vips_support_smartcrop() {
 }
 
 int
-vips_process_image(VipsImage **img, double scale, gboolean crop, gboolean smart, int left, int top, int width, int height, VipsAngle angle, gboolean flip) {
-  VipsImage *tmp;
+vips_resize_go(VipsImage *in, VipsImage **out, double scale) {
+  return vips_resize(in, out, scale, NULL);
+}
 
-  if (scale != 1.0) {
-    if (vips_resize(*img, &tmp, scale, NULL)) return 1;
-    swap_and_clear(img, tmp);
-  }
+int
+vips_colourspace_go(VipsImage *in, VipsImage **out, VipsInterpretation cs) {
+  return vips_colourspace(in, out, cs, NULL);
+}
 
-  if (vips_image_guess_interpretation(*img) != VIPS_INTERPRETATION_sRGB) {
-    if (vips_colourspace(*img, &tmp, VIPS_INTERPRETATION_sRGB, NULL)) return 1;
-    swap_and_clear(img, tmp);
-  }
+int
+vips_rot_go(VipsImage *in, VipsImage **out, VipsAngle angle) {
+  return vips_rot(in, out, angle, NULL);
+}
 
-  if (angle != VIPS_ANGLE_D0 || flip) {
-    if (!(tmp = vips_image_copy_memory(*img))) return 1;
-    swap_and_clear(img, tmp);
+int
+vips_flip_horizontal_go(VipsImage *in, VipsImage **out) {
+  return vips_flip(in, out, VIPS_DIRECTION_HORIZONTAL, NULL);
+}
 
-    if (angle != VIPS_ANGLE_D0) {
-      if (vips_rot(*img, &tmp, angle, NULL)) return 1;
-      swap_and_clear(img, tmp);
-    }
+int
+vips_smartcrop_go(VipsImage *in, VipsImage **out, int width, int height) {
+#if VIPS_SUPPORT_SMARTCROP
+  return vips_smartcrop(in, out, width, height, NULL);
+#else
+  return 1
+#endif
+}
 
-    if (flip) {
-      if (vips_flip(*img, &tmp, VIPS_DIRECTION_HORIZONTAL, NULL)) return 1;
-      swap_and_clear(img, tmp);
-    }
-  }
-
-  if (crop) {
-    if (smart) {
-      #if VIPS_SUPPORT_SMARTCROP
-      if (!(tmp = vips_image_copy_memory(*img))) return 1;
-      swap_and_clear(img, tmp);
-
-      if (vips_smartcrop(*img, &tmp, width, height, NULL)) return 1;
-      swap_and_clear(img, tmp);
-      #endif
-    } else {
-      if (vips_extract_area(*img, &tmp, left, top, width, height, NULL)) return 1;
-      swap_and_clear(img, tmp);
-    }
-  }
-
-  return 0;
+int
+vips_extract_area_go(VipsImage *in, VipsImage **out, int left, int top, int width, int height) {
+  return vips_extract_area(in, out, left, top, width, height, NULL);
 }
 
 int
