@@ -127,9 +127,9 @@ vips_image_hasalpha_go(VipsImage * in) {
 #if VIPS_SUPPORT_HASALPHA
   return vips_image_hasalpha(in);
 #else
-  return( image->Bands == 2 ||
-		      (image->Bands == 4 && image->Type != VIPS_INTERPRETATION_CMYK) ||
-		      image->Bands > 4 );
+  return( in->Bands == 2 ||
+		      (in->Bands == 4 && in->Type != VIPS_INTERPRETATION_CMYK) ||
+		      in->Bands > 4 );
 #endif
 }
 
