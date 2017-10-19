@@ -114,6 +114,26 @@ vips_support_smartcrop() {
 #endif
 }
 
+VipsBandFormat
+vips_band_format(VipsImage *in) {
+  return in->BandFmt;
+}
+
+int
+vips_premultiply_go(VipsImage *in, VipsImage **out) {
+  return vips_premultiply(in, out, NULL);
+}
+
+int
+vips_unpremultiply_go(VipsImage *in, VipsImage **out) {
+  return vips_unpremultiply(in, out, NULL);
+}
+
+int
+vips_cast_go(VipsImage *in, VipsImage **out, VipsBandFormat format) {
+  return vips_cast(in, out, format, NULL);
+}
+
 int
 vips_resize_go(VipsImage *in, VipsImage **out, double scale) {
   return vips_resize(in, out, scale, NULL);

@@ -275,8 +275,24 @@ func processImage(data []byte, imgtype imageType, po processingOptions, t *timer
 				}
 			}
 
+			have_premultiplied := false
+			var bandFormat C.VipsBandFormat
+
+			if vipsImageHasAlpha(img) {
+				if bandFormat, err = vipsPremultiply(&img); err != nil {
+					return nil, err
+				}
+				have_premultiplied = true
+			}
+
 			if err = vipsResize(&img, scale); err != nil {
 				return nil, err
+			}
+
+			if have_premultiplied {
+				if err = vipsUnpremultiply(&img, bandFormat); err != nil {
+					return nil, err
+				}
 			}
 		}
 
@@ -357,6 +373,39 @@ func vipsSaveImage(img *C.struct__VipsImage, imgtype imageType) ([]byte, error) 
 	}
 
 	return C.GoBytes(ptr, C.int(imgsize)), nil
+}
+
+func vipsImageHasAlpha(img *C.struct__VipsImage) bool {
+	return C.vips_image_hasalpha(img) > 0
+}
+
+func vipsPremultiply(img **C.struct__VipsImage) (C.VipsBandFormat, error) {
+	var tmp *C.struct__VipsImage
+
+	format := C.vips_band_format(*img)
+
+	if C.vips_premultiply_go(*img, &tmp) != 0 {
+		return 0, vipsError()
+	}
+
+	C.swap_and_clear(img, tmp)
+	return format, nil
+}
+
+func vipsUnpremultiply(img **C.struct__VipsImage, format C.VipsBandFormat) error {
+	var tmp *C.struct__VipsImage
+
+	if C.vips_unpremultiply_go(*img, &tmp) != 0 {
+		return vipsError()
+	}
+	C.swap_and_clear(img, tmp)
+
+	if C.vips_cast_go(*img, &tmp, format) != 0 {
+		return vipsError()
+	}
+	C.swap_and_clear(img, tmp)
+
+	return nil
 }
 
 func vipsResize(img **C.struct__VipsImage, scale float64) error {
