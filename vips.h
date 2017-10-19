@@ -5,6 +5,9 @@
 #define VIPS_SUPPORT_SMARTCROP \
   (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 5))
 
+#define VIPS_SUPPORT_HASALPHA \
+  (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 5))
+
 #define VIPS_SUPPORT_GIF \
   VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 3)
 
@@ -117,6 +120,17 @@ vips_support_smartcrop() {
 VipsBandFormat
 vips_band_format(VipsImage *in) {
   return in->BandFmt;
+}
+
+gboolean
+vips_image_hasalpha_go(VipsImage * in) {
+#if VIPS_SUPPORT_HASALPHA
+  return vips_image_hasalpha(in);
+#else
+  return( image->Bands == 2 ||
+		      (image->Bands == 4 && image->Type != VIPS_INTERPRETATION_CMYK) ||
+		      image->Bands > 4 );
+#endif
 }
 
 int

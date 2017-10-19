@@ -376,7 +376,7 @@ func vipsSaveImage(img *C.struct__VipsImage, imgtype imageType) ([]byte, error) 
 }
 
 func vipsImageHasAlpha(img *C.struct__VipsImage) bool {
-	return C.vips_image_hasalpha(img) > 0
+	return C.vips_image_hasalpha_go(img) > 0
 }
 
 func vipsPremultiply(img **C.struct__VipsImage) (C.VipsBandFormat, error) {
