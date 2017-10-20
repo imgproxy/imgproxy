@@ -13,6 +13,9 @@ imgproxy does one thing — resizing remote images — and does it well. It work
 
 imgproxy is a Go application, ready to be installed and used in any Unix environment — also ready to be containerized using Docker.
 
+See this article for a good intro and all the juicy details! [imgproxy:
+Resize your images instantly and securely](https://evilmartians.com/chronicles/introducing-imgproxy)
+
 <a href="https://evilmartians.com/?utm_source=imgproxy">
 <img src="https://evilmartians.com/badges/sponsored-by-evil-martians.svg" alt="Sponsored by Evil Martians" width="236" height="54">
 </a>
