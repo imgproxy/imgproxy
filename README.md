@@ -218,6 +218,10 @@ You can find helpful code snippets in the `examples` folder.
 
 imgproxy supports only the most popular image formats of the moment: PNG, JPEG, GIF and WebP.
 
+## Deployment
+
+There is a special endpoint `/health`, which returns HTTP Status `200 OK` after server successfully starts. This can be used to check container readiness.   
+
 ## Author
 
 Sergey "DarthSim" Aleksandrovich

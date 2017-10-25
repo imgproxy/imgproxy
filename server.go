@@ -175,6 +175,12 @@ func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		panic(invalidSecretErr)
 	}
 
+	if r.URL.Path == "/health" {
+		rw.WriteHeader(200);
+		rw.Write([]byte("imgproxy is running"));
+		return
+	}
+
 	imgURL, procOpt, err := parsePath(r)
 	if err != nil {
 		panic(newError(404, err.Error(), "Invalid image url"))
