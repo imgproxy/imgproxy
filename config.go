@@ -188,4 +188,5 @@ func init() {
 	}
 
 	initVips()
+	initDownloading()
 }

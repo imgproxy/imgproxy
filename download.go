@@ -18,9 +18,7 @@ import (
 	_ "golang.org/x/image/webp"
 )
 
-var downloadClient = http.Client{
-	Timeout: time.Duration(conf.DownloadTimeout) * time.Second,
-}
+var downloadClient *http.Client
 
 type netReader struct {
 	reader *bufio.Reader
@@ -55,6 +53,12 @@ func (r *netReader) ReadAll() ([]byte, error) {
 
 func (r *netReader) GrowBuf(s int) {
 	r.buf.Grow(s)
+}
+
+func initDownloading() {
+	downloadClient = &http.Client{
+		Timeout: time.Duration(conf.DownloadTimeout) * time.Second,
+	}
 }
 
 func checkTypeAndDimensions(r io.Reader) (imageType, error) {
