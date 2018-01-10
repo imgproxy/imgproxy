@@ -100,7 +100,6 @@ var conf = config{
 	MaxSrcResolution: 16800000,
 	Quality:          80,
 	GZipCompression:  5,
-	LocalFileSystemRoot: "",
 }
 
 func init() {
