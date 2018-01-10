@@ -144,7 +144,7 @@ $ xxd -g 2 -l 64 -p /dev/random | tr -d '\n'
 * `IMGPROXY_CONCURRENCY` — the maximum number of image requests to be processed simultaneously. Default: double number of CPU cores;
 * `IMGPROXY_MAX_CLIENTS` — the maximum number of simultaneous active connections. Default: `IMGPROXY_CONCURRENCY * 5`;
 * `IMGPROXY_TTL` — duration in seconds sent in `Expires` and `Cache-Control: max-age` headers. Default: `3600` (1 hour);
-* `IMGPROXY_LOCAL_FILESYSTEM_ROOT` — root directory path for serving images from local filesystem via `local:///image.ext`. Default: disabled
+* `IMGPROXY_LOCAL_FILESYSTEM_ROOT` — root of the local filesystem. See [Serving local files](#serving-local-files). Keep empty to disable serving of local files.
 
 #### Security
 
@@ -215,6 +215,13 @@ Signature is a URL-safe Base64-encoded HMAC digest of the rest of the path inclu
 * Encode the result with URL-safe Base64.
 
 You can find helpful code snippets in the `examples` folder.
+
+## Serving local files
+
+Imgproxy can process files from your local filesystem. To use this feature do the following:
+
+1. Set `IMGPROXY_LOCAL_FILESYSTEM_ROOT` to your images directory path.
+2. Use `local:///path/to/image.jpg` as the source image url.
 
 ## Source image formats support
 
