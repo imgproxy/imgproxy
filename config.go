@@ -85,6 +85,8 @@ type config struct {
 	Salt []byte
 
 	Secret string
+
+	LocalFileSystemRoot string
 }
 
 var conf = config{
@@ -98,6 +100,7 @@ var conf = config{
 	MaxSrcResolution: 16800000,
 	Quality:          80,
 	GZipCompression:  5,
+	LocalFileSystemRoot: "",
 }
 
 func init() {
@@ -131,6 +134,8 @@ func init() {
 	hexFileConfig(&conf.Salt, *saltpath)
 
 	strEnvConfig(&conf.Secret, "IMGPROXY_SECRET")
+
+	strEnvConfig(&conf.LocalFileSystemRoot, "IMGPROXY_LOCAL_FILESYSTEM_ROOT")
 
 	if len(conf.Key) == 0 {
 		log.Fatalln("Key is not defined")
@@ -185,6 +190,20 @@ func init() {
 		log.Fatalf("GZip compression should be greater than or quual to 0, now - %d\n", conf.GZipCompression)
 	} else if conf.GZipCompression > 9 {
 		log.Fatalf("GZip compression can't be greater than 9, now - %d\n", conf.GZipCompression)
+	}
+
+	if conf.LocalFileSystemRoot != "" {
+		stat, err := os.Stat(conf.LocalFileSystemRoot)
+		if err != nil {
+			log.Fatalf("Cannot use local directory: %s", err)
+		} else {
+			if !stat.IsDir() {
+				log.Fatalf("Cannot use local directory: not a directory")
+			}
+		}
+		if conf.LocalFileSystemRoot == "/" {
+			log.Print("Exposing root via IMGPROXY_LOCAL_FILESYSTEM_ROOT is unsafe")
+		}
 	}
 
 	initVips()
