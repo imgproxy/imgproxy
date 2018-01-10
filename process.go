@@ -275,25 +275,29 @@ func processImage(data []byte, imgtype imageType, po processingOptions, t *timer
 				}
 			}
 
-			have_premultiplied := false
+			premultiplied := false
 			var bandFormat C.VipsBandFormat
 
 			if vipsImageHasAlpha(img) {
 				if bandFormat, err = vipsPremultiply(&img); err != nil {
 					return nil, err
 				}
-				have_premultiplied = true
+				premultiplied = true
 			}
 
 			if err = vipsResize(&img, scale); err != nil {
 				return nil, err
 			}
 
-			if have_premultiplied {
+			if premultiplied {
 				if err = vipsUnpremultiply(&img, bandFormat); err != nil {
 					return nil, err
 				}
 			}
+		}
+
+		if err = vipsImportColourProfile(&img); err != nil {
+			return nil, err
 		}
 
 		if err = vipsFixColourspace(&img); err != nil {
@@ -460,6 +464,24 @@ func vipsSmartCrop(img **C.struct__VipsImage, width, height int) error {
 	}
 
 	C.swap_and_clear(img, tmp)
+	return nil
+}
+
+func vipsImportColourProfile(img **C.struct__VipsImage) error {
+	var tmp *C.struct__VipsImage
+
+	if C.vips_need_icc_import(*img) > 0 {
+		profile, err := cmykProfilePath()
+		if err != nil {
+			return err
+		}
+
+		if C.vips_icc_import_go(*img, &tmp, C.CString(profile)) != 0 {
+			return vipsError()
+		}
+		C.swap_and_clear(img, tmp)
+	}
+
 	return nil
 }
 

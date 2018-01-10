@@ -154,6 +154,16 @@ vips_resize_go(VipsImage *in, VipsImage **out, double scale) {
 }
 
 int
+vips_need_icc_import(VipsImage *in) {
+  return in->Type == VIPS_INTERPRETATION_CMYK;
+}
+
+int
+vips_icc_import_go(VipsImage *in, VipsImage **out, char *profile) {
+  return vips_icc_import(in, out, "input_profile", "cmyk.icm", "embedded", TRUE, "pcs", VIPS_PCS_XYZ, NULL);
+}
+
+int
 vips_colourspace_go(VipsImage *in, VipsImage **out, VipsInterpretation cs) {
   return vips_colourspace(in, out, cs, NULL);
 }
