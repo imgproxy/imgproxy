@@ -160,7 +160,7 @@ vips_need_icc_import(VipsImage *in) {
 
 int
 vips_icc_import_go(VipsImage *in, VipsImage **out, char *profile) {
-  return vips_icc_import(in, out, "input_profile", "cmyk.icm", "embedded", TRUE, "pcs", VIPS_PCS_XYZ, NULL);
+  return vips_icc_import(in, out, "input_profile", profile, "embedded", TRUE, "pcs", VIPS_PCS_XYZ, NULL);
 }
 
 int
