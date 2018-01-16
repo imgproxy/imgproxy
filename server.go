@@ -34,17 +34,28 @@ func parsePath(r *http.Request) (string, processingOptions, error) {
 
 	path := r.URL.Path
 	parts := strings.Split(strings.TrimPrefix(path, "/"), "/")
-
+	for k, v := range r.URL.Query() {
+		if k == "width" && len(v) > 0 {
+			parts[2] = v[0]
+		}
+		if k == "height" && len(v) > 0 {
+			parts[3] = v[0]
+		}
+	}
 	if len(parts) < 7 {
 		return "", po, errors.New("Invalid path")
 	}
 
 	token := parts[0]
 
-	if err = validatePath(token, strings.TrimPrefix(path, fmt.Sprintf("/%s", token))); err != nil {
-		return "", po, err
-	}
+	errOnlyURL := validatePath(token, parts[6])
+	errWholePath := validatePath(token, strings.TrimPrefix(path, fmt.Sprintf("/%s", token)))
 
+	if errOnlyURL != nil {
+		if errWholePath != nil {
+			return "", po, fmt.Errorf("Invalid TOKEN: %s || %s", errWholePath, errOnlyURL)
+		}
+	}
 	if r, ok := resizeTypes[parts[1]]; ok {
 		po.resize = r
 	} else {
@@ -85,7 +96,6 @@ func parsePath(r *http.Request) (string, processingOptions, error) {
 	if err != nil {
 		return "", po, errors.New("Invalid filename encoding")
 	}
-
 	return string(filename), po, nil
 }
 
@@ -176,8 +186,8 @@ func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.URL.Path == "/health" {
-		rw.WriteHeader(200);
-		rw.Write([]byte("imgproxy is running"));
+		rw.WriteHeader(200)
+		rw.Write([]byte("imgproxy is running"))
 		return
 	}
 
