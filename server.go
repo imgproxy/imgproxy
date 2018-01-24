@@ -12,6 +12,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/itchio/go-brotli/enc"
 )
 
 var mimes = map[imageType]string{
@@ -105,20 +107,32 @@ func logResponse(status int, msg string) {
 
 func respondWithImage(r *http.Request, rw http.ResponseWriter, data []byte, imgURL string, po processingOptions, duration time.Duration) {
 	gzipped := strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") && conf.GZipCompression > 0
+	brotli := strings.Contains(r.Header.Get("Accept-Encoding"), "br")&& conf.BrotliCompression > 0
 
 	rw.Header().Set("Expires", time.Now().Add(time.Second*time.Duration(conf.TTL)).Format(http.TimeFormat))
 	rw.Header().Set("Cache-Control", fmt.Sprintf("max-age=%d, public", conf.TTL))
 	rw.Header().Set("Content-Type", mimes[po.format])
-	if gzipped {
+
+	if gzipped && !brotli {
 		rw.Header().Set("Content-Encoding", "gzip")
+	}
+
+	if brotli && brotli {
+		rw.Header().Set("Content-Encoding", "br")
 	}
 
 	rw.WriteHeader(200)
 
-	if gzipped {
+	if gzipped && !brotli {
 		gz, _ := gzip.NewWriterLevel(rw, conf.GZipCompression)
 		gz.Write(data)
 		gz.Close()
+	} else if brotli && gzipped {
+		br := enc.NewBrotliWriter(rw, &enc.BrotliWriterOptions{
+			Quality: conf.BrotliCompression,
+		})
+		br.Write(data)
+		br.Close()
 	} else {
 		rw.Write(data)
 	}

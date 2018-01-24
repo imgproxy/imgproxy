@@ -161,6 +161,7 @@ You can also specify a secret to enable authorization with the HTTP `Authorizati
 
 * `IMGPROXY_QUALITY` — quality of the resulting image, percentage. Default: `80`;
 * `IMGPROXY_GZIP_COMPRESSION` — GZip compression level. Default: `5`;
+* `IMGPROXY_BROTLI_COMPRESSION` — Brotli compression level. Default: `7`;
 
 ## Generating the URL
 

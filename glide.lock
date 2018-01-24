@@ -1,17 +1,21 @@
-hash: 0ef57dd15f41e8f5181f43ff93b7c420e63c8bb2174a8c879ffd56dd98bed659
-updated: 2017-09-27T13:53:20.123821976+06:00
+hash: 6f6127a0cf496b73165fb29c3f6d3f603ec25e1bf0984c0de6d1818dc7438ea7
+updated: 2018-01-24T09:46:25.658055+01:00
 imports:
+- name: github.com/itchio/go-brotli
+  version: 29899a447037af0c68028d70df58ac2faebf280c
+  subpackages:
+  - enc
 - name: golang.org/x/image
-  version: 334384d9e19178a0488c9360d94d183c1ef0f711
+  version: 12117c17ca67ffa1ce22e9409f3b0b0a93ac08c7
   subpackages:
   - riff
   - vp8
   - vp8l
   - webp
 - name: golang.org/x/net
-  version: 0a9397675ba34b2845f758fe3cd68828369c6517
+  version: 0ed95abb35c445290478a5348a7b38bb154135fd
   subpackages:
   - netutil
 - name: gopkg.in/yaml.v2
-  version: cd8b52f8269e0feb286dfeef29f8fe4d5b397e0b
+  version: d670f9405373e636a5a2765eea47fac0c9bc91a4
 testImports: []

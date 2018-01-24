@@ -80,6 +80,7 @@ type config struct {
 
 	Quality         int
 	GZipCompression int
+	BrotliCompression int
 
 	Key  []byte
 	Salt []byte
@@ -100,6 +101,7 @@ var conf = config{
 	MaxSrcResolution: 16800000,
 	Quality:          80,
 	GZipCompression:  5,
+	BrotliCompression:7,
 }
 
 func init() {
@@ -125,6 +127,7 @@ func init() {
 
 	intEnvConfig(&conf.Quality, "IMGPROXY_QUALITY")
 	intEnvConfig(&conf.GZipCompression, "IMGPROXY_GZIP_COMPRESSION")
+	intEnvConfig(&conf.BrotliCompression, "IMGPROXY_BROTLI_COMPRESSION")
 
 	hexEnvConfig(&conf.Key, "IMGPROXY_KEY")
 	hexEnvConfig(&conf.Salt, "IMGPROXY_SALT")
@@ -189,6 +192,12 @@ func init() {
 		log.Fatalf("GZip compression should be greater than or quual to 0, now - %d\n", conf.GZipCompression)
 	} else if conf.GZipCompression > 9 {
 		log.Fatalf("GZip compression can't be greater than 9, now - %d\n", conf.GZipCompression)
+	}
+
+	if conf.BrotliCompression < 0 {
+		log.Fatalf("Brotli compression should be greater than or quual to 0, now - %d\n", conf.BrotliCompression)
+	} else if conf.BrotliCompression > 11 {
+		log.Fatalf("Brotli compression can't be greater than 11, now - %d\n", conf.BrotliCompression)
 	}
 
 	if conf.LocalFileSystemRoot != "" {
