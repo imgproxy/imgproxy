@@ -1,0 +1,77 @@
+
+# This .travis.yml file looks complicated, because it is! Here's what it does:
+#   - Build a `gbr` binary for darwin/amd64, linux/386+amd64, and windows/386+amd64
+#     (windows builds are cross-compiled from linux thanks to mingw-w64)
+#   - Run `go test` for all packages on darwin/amd64 and linux/amd64
+#   - Works even though cgo crosscompilation is a bit of a mess
+
+# this installs go via gimme, travis's go downloader
+# gimme is able to build cross-compiling go toolchains,
+# but does not support cgo afaict, so we're only using
+# it to get gox to do our bidding.
+language: go
+go: 
+  - 1.8.x
+  - 1.7.x
+  - 1.6.x
+env:
+  - BROTLI_OS=linux BROTLI_ARCH=amd64
+  - BROTLI_OS=linux BROTLI_ARCH=amd64
+  - BROTLI_OS=linux BROTLI_ARCH=amd64
+
+matrix:
+  # A true build matrix would be combinatorial - here we're only interested in
+  # a few, specific build configurations.
+  include:
+   # at the time of this writing, travis has a semi-experimental osx option
+   # builds run slower, but it's really handy because cross-compiling OSX
+   # binaries got increasingly hard over the years
+   - os: osx
+     go: 1.8.x
+     env: BROTLI_OS=darwin BROTLI_ARCH=amd64
+   # thankfully, ubuntu 12.04 has a multilib variant of gcc readily available
+   - os: linux
+     go: 1.8.x
+     env: BROTLI_OS=linux BROTLI_ARCH=386
+     addons:
+       apt:
+         packages:
+           - gcc-multilib
+           - g++-multilib
+   - os: linux
+     go: 1.8.x
+     env: BROTLI_OS=windows BROTLI_ARCH=386 TRIPLET=i686-w64-mingw32
+     addons:
+       apt:
+         packages:
+           # there's a meta-package but I could never get it to work on ubuntu 12.04
+           # (current travis-ci linux distribution at the time of this commit)
+           - gcc-mingw-w64-i686
+           - g++-mingw-w64-i686
+           - binutils-mingw-w64-i686
+   - os: linux
+     go: 1.8.x
+     env: BROTLI_OS=windows BROTLI_ARCH=amd64 TRIPLET=x86_64-w64-mingw32
+     addons:
+       apt:
+         packages:
+           - gcc-mingw-w64-x86-64
+           - g++-mingw-w64-x86-64
+           - binutils-mingw-w64-x86-64
+install:
+  - go get -u github.com/golang/lint/golint
+  - go get -u golang.org/x/tools/cmd/goimports
+  # gox lets us cross-compile pretty easily
+  - go get github.com/mitchellh/gox
+  - export OSARCH=$BROTLI_OS/$BROTLI_ARCH
+  - if [[ -n $TRIPLET ]]; then export CC=$TRIPLET-gcc; export CXX=$TRIPLET-g++; fi
+  # for an ldflags explanation, cf. https://github.com/kothar/brotli-go/issues/1#issuecomment-156091015
+  # BROTLI_EXT is just handy to be able to call `file` later
+  - if [[ $BROTLI_OS = windows ]]; then export BROTLI_LDFLAGS="$BROTLI_LDFLAGS -extldflags \"-Wl,--allow-multiple-definition\""; export BROTLI_EXT=".exe"; fi
+script:
+  - if [[ $OSARCH = "linux/amd64" || $OSARCH = "darwin/amd64" ]]; then go vet ./...; fi
+  - if [[ $OSARCH = "linux/amd64" || $OSARCH = "darwin/amd64" ]]; then diff <(goimports -d .) <(printf ""); fi
+  - if [[ $OSARCH = "linux/amd64" || $OSARCH = "darwin/amd64" ]]; then diff <(golint ./...) <(printf ""); fi
+  - if [[ $OSARCH = "linux/amd64" || $OSARCH = "darwin/amd64" ]]; then go test -v -cpu=2 ./...; fi
+  - if [[ $OSARCH = "linux/amd64" || $OSARCH = "darwin/amd64" ]]; then go test -v -cpu=1,2,4 -short -race ./...; fi
+  - (cd gbr && gox -osarch "$OSARCH" -ldflags "$BROTLI_LDFLAGS" -cgo -output="gbr" && file gbr${BROTLI_EXT})

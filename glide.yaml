@@ -4,3 +4,6 @@ import:
 - package: golang.org/x/net
   subpackages:
   - netutil
+- package: github.com/itchio/go-brotli
+  subpackages:
+  - enc

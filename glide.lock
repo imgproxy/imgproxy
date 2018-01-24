@@ -1,6 +1,10 @@
-hash: 0ef57dd15f41e8f5181f43ff93b7c420e63c8bb2174a8c879ffd56dd98bed659
-updated: 2018-01-24T09:39:30.478257+01:00
+hash: 6f6127a0cf496b73165fb29c3f6d3f603ec25e1bf0984c0de6d1818dc7438ea7
+updated: 2018-01-24T09:46:25.658055+01:00
 imports:
+- name: github.com/itchio/go-brotli
+  version: 29899a447037af0c68028d70df58ac2faebf280c
+  subpackages:
+  - enc
 - name: golang.org/x/image
   version: 12117c17ca67ffa1ce22e9409f3b0b0a93ac08c7
   subpackages:
