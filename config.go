@@ -30,6 +30,18 @@ func strEnvConfig(s *string, name string) {
 	}
 }
 
+func boolEnvConfig(b *bool, name string) {
+	*b = false
+	if env := os.Getenv(name); len(env) > 0 {
+		bVal, err := strconv.ParseBool(env)
+		if err != nil {
+			*b = false
+			return
+		}
+		*b = bVal
+	}
+}
+
 func hexEnvConfig(b *[]byte, name string) {
 	var err error
 
@@ -87,6 +99,7 @@ type config struct {
 	Secret string
 
 	LocalFileSystemRoot string
+	CacheFiles          bool
 }
 
 var conf = config{
@@ -100,6 +113,7 @@ var conf = config{
 	MaxSrcResolution: 16800000,
 	Quality:          80,
 	GZipCompression:  5,
+	CacheFiles:       false,
 }
 
 func init() {
@@ -135,6 +149,7 @@ func init() {
 	strEnvConfig(&conf.Secret, "IMGPROXY_SECRET")
 
 	strEnvConfig(&conf.LocalFileSystemRoot, "IMGPROXY_LOCAL_FILESYSTEM_ROOT")
+	boolEnvConfig(&conf.CacheFiles, "IMGPROXY_CACHE_FILES")
 
 	if len(conf.Key) == 0 {
 		log.Fatalln("Key is not defined")
