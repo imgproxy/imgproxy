@@ -222,7 +222,7 @@ You can find helpful code snippets in the `examples` folder.
 
 imgproxy can process files from your local filesystem. To use this feature do the following:
 
-1. Set `IMGPROXY_LOCAL_FILESYSTEM_ROOT`| to your images directory path.
+1. Set `IMGPROXY_LOCAL_FILESYSTEM_ROOT` to your images directory path.
 2. Use `local:///path/to/image.jpg` as the source image url. The path should be relative to the filesystem root value
 
 ## Source image formats support
