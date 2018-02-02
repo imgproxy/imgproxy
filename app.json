@@ -3,7 +3,7 @@
   "description": "Fast and secure standalone server for resizing and converting remote images.",
   "keywords": ["image", "resize-images", "crop-image", "microservice", "docker", "jpeg", "png", "libvips"],
   "repository": "https://github.com/DarthSim/imgproxy",
-  "stack": "heroku-16",
+  "stack": "container",
   "env": {
     "IMGPROXY_KEY": {
       "description": "Hex-encoded secret key for signing URLs.",
@@ -16,8 +16,5 @@
       "required": true
     }
   },
-  "buildpacks": [
-    { "url": "https://github.com/heroku/heroku-buildpack-apt" },
-    { "url": "https://github.com/heroku/heroku-buildpack-go" }
-  ]
+  "image": "darthsim/imgproxy"
 }
