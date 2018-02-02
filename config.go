@@ -99,7 +99,7 @@ type config struct {
 	Secret string
 
 	LocalFileSystemRoot string
-	CacheFiles          bool
+	ETagEnabled         bool
 }
 
 var conf = config{
@@ -113,7 +113,7 @@ var conf = config{
 	MaxSrcResolution: 16800000,
 	Quality:          80,
 	GZipCompression:  5,
-	CacheFiles:       false,
+	ETagEnabled:      false,
 }
 
 func init() {
@@ -149,7 +149,7 @@ func init() {
 	strEnvConfig(&conf.Secret, "IMGPROXY_SECRET")
 
 	strEnvConfig(&conf.LocalFileSystemRoot, "IMGPROXY_LOCAL_FILESYSTEM_ROOT")
-	boolEnvConfig(&conf.CacheFiles, "IMGPROXY_CACHE_FILES")
+	boolEnvConfig(&conf.ETagEnabled, "IMGPROXY_USE_ETAG")
 
 	if len(conf.Key) == 0 {
 		log.Fatalln("Key is not defined")

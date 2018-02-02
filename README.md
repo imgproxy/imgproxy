@@ -144,8 +144,9 @@ $ xxd -g 2 -l 64 -p /dev/random | tr -d '\n'
 * `IMGPROXY_CONCURRENCY` — the maximum number of image requests to be processed simultaneously. Default: double number of CPU cores;
 * `IMGPROXY_MAX_CLIENTS` — the maximum number of simultaneous active connections. Default: `IMGPROXY_CONCURRENCY * 5`;
 * `IMGPROXY_TTL` — duration in seconds sent in `Expires` and `Cache-Control: max-age` headers. Default: `3600` (1 hour);
-* `IMGPROXY_CACHE_FILES` — boolean value, sets whether a response sould be cached or not. If `false`, then ImgProxy will always return the status 200 and an
-   image file. If `true`, then 304 (Not Modified) will be returned in case if a client has actual locally cached copy. The caching is based on `ETag` header. Defaul is `false`.
+* `IMGPROXY_USE_ETAG` — boolean. Shows whether a response should be cached or not. If the variable is not presented, then ImgProxy will always return an
+   image file with 200 status code. If the var is set, then the response will get the `ETag` header with current body hash sum and this value could be used by browser for
+   caching purposes. Then, if a new request provides `If-None-Match` value, the status 304 (Not Modified) will be returned. Default is `false`
 * `IMGPROXY_LOCAL_FILESYSTEM_ROOT` — root of the local filesystem. See [Serving local files](#serving-local-files). Keep empty to disable serving of local files.
 
 #### Security
@@ -223,7 +224,7 @@ You can find helpful code snippets in the `examples` folder.
 imgproxy can process files from your local filesystem. To use this feature do the following:
 
 1. Set `IMGPROXY_LOCAL_FILESYSTEM_ROOT` to your images directory path.
-2. Use `local:///path/to/image.jpg` as the source image url. The path should be relative to the filesystem root value
+2. Use `local:///path/to/image.jpg` as the source image url.
 
 ## Source image formats support
 

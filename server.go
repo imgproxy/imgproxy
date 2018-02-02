@@ -2,7 +2,6 @@ package main
 
 import (
 	"compress/gzip"
-	"crypto/sha1"
 	"crypto/subtle"
 	"encoding/base64"
 	"errors"
@@ -105,29 +104,12 @@ func logResponse(status int, msg string) {
 }
 
 func respondWithImage(r *http.Request, rw http.ResponseWriter, data []byte, imgURL string, po processingOptions, duration time.Duration) {
+	gzipped := strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") && conf.GZipCompression > 0
 
 	rw.Header().Set("Expires", time.Now().Add(time.Second*time.Duration(conf.TTL)).Format(http.TimeFormat))
 	rw.Header().Set("Cache-Control", fmt.Sprintf("max-age=%d, public", conf.TTL))
 	rw.Header().Set("Content-Type", mimes[po.format])
-
-	if conf.CacheFiles {
-
-		// calculate current ETag value using sha1 hashing function
-		currentEtagValue := fmt.Sprintf("%x", sha1.Sum(data))
-		rw.Header().Set("ETag", currentEtagValue)
-
-		// if client has its own locally cached copy of this file, then return 304, no need to send it again over the network
-		if currentEtagValue == r.Header.Get("If-None-Match") {
-			rw.WriteHeader(304)
-			logResponse(304, fmt.Sprintf("Returned cached image in %s: %s; %+v", duration, imgURL, po))
-			return
-		}
-
-	}
-
 	rw.Header().Set("Last-Modified", time.Now().Format(http.TimeFormat))
-
-	gzipped := strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") && conf.GZipCompression > 0
 
 	if gzipped {
 		rw.Header().Set("Content-Encoding", "gzip")
@@ -216,6 +198,14 @@ func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	t.Check()
+
+	match := isETagMatching(b, &procOpt, &rw, r)
+	if match {
+		// if client has its own locally cached copy of this file, then return 304, no need to send it again over the network
+		rw.WriteHeader(304)
+		logResponse(304, fmt.Sprintf("Returned 'Not Modified' instead of actual image in %s: %s; %+v", t.Since(), imgURL, procOpt))
+		return
+	}
 
 	b, err = processImage(b, imgtype, procOpt, t)
 	if err != nil {
