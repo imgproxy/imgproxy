@@ -69,12 +69,12 @@ var resizeTypes = map[string]resizeType{
 }
 
 type processingOptions struct {
-	resize  resizeType
-	width   int
-	height  int
-	gravity gravityType
-	enlarge bool
-	format  imageType
+	Resize  resizeType
+	Width   int
+	Height  int
+	Gravity gravityType
+	Enlarge bool
+	Format  imageType
 }
 
 var vipsSupportSmartcrop bool
@@ -132,7 +132,7 @@ func shutdownVips() {
 }
 
 func randomAccessRequired(po processingOptions) int {
-	if po.gravity == SMART {
+	if po.Gravity == SMART {
 		return 1
 	}
 	return 0
@@ -170,16 +170,16 @@ func extractMeta(img *C.VipsImage) (int, int, int, bool) {
 }
 
 func calcScale(width, height int, po processingOptions) float64 {
-	if (po.width == width && po.height == height) || (po.resize != FILL && po.resize != FIT) {
+	if (po.Width == width && po.Height == height) || (po.Resize != FILL && po.Resize != FIT) {
 		return 1
 	}
 
-	fsw, fsh, fow, foh := float64(width), float64(height), float64(po.width), float64(po.height)
+	fsw, fsh, fow, foh := float64(width), float64(height), float64(po.Width), float64(po.Height)
 
 	wr := fow / fsw
 	hr := foh / fsh
 
-	if po.resize == FIT {
+	if po.Resize == FIT {
 		return math.Min(wr, hr)
 	}
 
@@ -206,22 +206,22 @@ func calcShink(scale float64, imgtype imageType) int {
 }
 
 func calcCrop(width, height int, po processingOptions) (left, top int) {
-	left = (width - po.width + 1) / 2
-	top = (height - po.height + 1) / 2
+	left = (width - po.Width + 1) / 2
+	top = (height - po.Height + 1) / 2
 
-	if po.gravity == NORTH {
+	if po.Gravity == NORTH {
 		top = 0
 	}
 
-	if po.gravity == EAST {
-		left = width - po.width
+	if po.Gravity == EAST {
+		left = width - po.Width
 	}
 
-	if po.gravity == SOUTH {
-		top = height - po.height
+	if po.Gravity == SOUTH {
+		top = height - po.Height
 	}
 
-	if po.gravity == WEST {
+	if po.Gravity == WEST {
 		left = 0
 	}
 
@@ -232,7 +232,7 @@ func processImage(data []byte, imgtype imageType, po processingOptions, t *timer
 	defer C.vips_cleanup()
 	defer keepAlive(data)
 
-	if po.gravity == SMART && !vipsSupportSmartcrop {
+	if po.Gravity == SMART && !vipsSupportSmartcrop {
 		return nil, errors.New("Smart crop is not supported by used version of libvips")
 	}
 
@@ -247,18 +247,18 @@ func processImage(data []byte, imgtype imageType, po processingOptions, t *timer
 	imgWidth, imgHeight, angle, flip := extractMeta(img)
 
 	// Ensure we won't crop out of bounds
-	if !po.enlarge || po.resize == CROP {
-		if imgWidth < po.width {
-			po.width = imgWidth
+	if !po.Enlarge || po.Resize == CROP {
+		if imgWidth < po.Width {
+			po.Width = imgWidth
 		}
 
-		if imgHeight < po.height {
-			po.height = imgHeight
+		if imgHeight < po.Height {
+			po.Height = imgHeight
 		}
 	}
 
-	if po.width != imgWidth || po.height != imgHeight {
-		if po.resize == FILL || po.resize == FIT {
+	if po.Width != imgWidth || po.Height != imgHeight {
+		if po.Resize == FILL || po.Resize == FIT {
 			scale := calcScale(imgWidth, imgHeight, po)
 
 			// Do some shrink-on-load
@@ -326,17 +326,17 @@ func processImage(data []byte, imgtype imageType, po processingOptions, t *timer
 
 		t.Check()
 
-		if po.resize == FILL || po.resize == CROP {
-			if po.gravity == SMART {
+		if po.Resize == FILL || po.Resize == CROP {
+			if po.Gravity == SMART {
 				if err = vipsImageCopyMemory(&img); err != nil {
 					return nil, err
 				}
-				if err = vipsSmartCrop(&img, po.width, po.height); err != nil {
+				if err = vipsSmartCrop(&img, po.Width, po.Height); err != nil {
 					return nil, err
 				}
 			} else {
 				left, top := calcCrop(int(img.Xsize), int(img.Ysize), po)
-				if err = vipsCrop(&img, left, top, po.width, po.height); err != nil {
+				if err = vipsCrop(&img, left, top, po.Width, po.Height); err != nil {
 					return nil, err
 				}
 			}
@@ -345,7 +345,7 @@ func processImage(data []byte, imgtype imageType, po processingOptions, t *timer
 
 	t.Check()
 
-	return vipsSaveImage(img, po.format)
+	return vipsSaveImage(img, po.Format)
 }
 
 func vipsLoadImage(data []byte, imgtype imageType, shrink int) (*C.struct__VipsImage, error) {

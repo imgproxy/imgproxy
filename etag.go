@@ -25,22 +25,16 @@ func isETagMatching(b []byte, po *processingOptions, rw *http.ResponseWriter, r 
 	return false
 }
 
-// function calculates the SHA checksum for the current image and current Processing Options.
-// Principal is very simple: if an original image is the same and PO are the same, then
+// the function calculates the SHA checksum for the current image and current Processing Options.
+// The principal is very simple: if an original image is the same and POs are the same, then
 // the checksum must be always identical. But if PO has some different parameters, the
-// checksum must be different event if the orinal image matches
+// checksum must be different even if original images match
 func calculateHashSumFor(b []byte, po *processingOptions) string {
 	hash := sha1.New()
 
+	// SHA checksum consists of image, porcessing options and random value, generated on server startup.
 	hash.Write(b)
-
-	binary.Write(hash, binary.LittleEndian, po.enlarge)
-	binary.Write(hash, binary.LittleEndian, po.format)
-	binary.Write(hash, binary.LittleEndian, po.gravity)
-	binary.Write(hash, binary.LittleEndian, po.height)
-	binary.Write(hash, binary.LittleEndian, po.width)
-	binary.Write(hash, binary.LittleEndian, po.resize)
-
+	binary.Write(hash, binary.LittleEndian, *po)
 	hash.Write([]byte(conf.Salt))
 
 	return fmt.Sprintf("%x", hash.Sum(nil))
