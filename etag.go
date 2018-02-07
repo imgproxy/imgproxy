@@ -28,15 +28,14 @@ func init() {
 // Note that the calculated ETag is saved to outcoming response with "ETag" header.
 func isETagMatching(b []byte, po *processingOptions, rw *http.ResponseWriter, r *http.Request) bool {
 
-	if conf.ETagEnabled {
-
-		// calculate current ETag value using sha1 hashing function
-		currentEtagValue := calculateHashSumFor(b, po)
-		(*rw).Header().Set("ETag", currentEtagValue)
-		return currentEtagValue == r.Header.Get("If-None-Match")
+	if !conf.ETagEnabled {
+		return false
 	}
 
-	return false
+	// calculate current ETag value using sha1 hashing function
+	currentEtagValue := calculateHashSumFor(b, po)
+	(*rw).Header().Set("ETag", currentEtagValue)
+	return currentEtagValue == r.Header.Get("If-None-Match")
 }
 
 // the function calculates the SHA checksum for the current image and current Processing Options.

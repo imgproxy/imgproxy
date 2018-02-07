@@ -199,8 +199,7 @@ func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	t.Check()
 
-	match := isETagMatching(b, &procOpt, &rw, r)
-	if match {
+	if isETagMatching(b, &procOpt, &rw, r) {
 		// if client has its own locally cached copy of this file, then return 304, no need to send it again over the network
 		rw.WriteHeader(304)
 		logResponse(304, fmt.Sprintf("Returned 'Not Modified' instead of actual image in %s: %s; %+v", t.Since(), imgURL, procOpt))
