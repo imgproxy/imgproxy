@@ -12,7 +12,7 @@ RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/reposit
   && apk add --no-cache --update bash vips ca-certificates \
   && apk add --no-cache --virtual .build-deps go gcc musl-dev fftw-dev vips-dev \
   && cd /go/src/github.com/DarthSim/imgproxy \
-  && go build -v -o /usr/local/bin/imgproxy \
+  && CGO_LDFLAGS_ALLOW="-s|-w" go build -v -o /usr/local/bin/imgproxy \
   && apk del --purge .build-deps \
   && rm -rf /var/cache/apk*
 
