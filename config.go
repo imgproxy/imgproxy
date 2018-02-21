@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"crypto/rand"
 	"encoding/hex"
 	"flag"
 	"fmt"
@@ -95,6 +96,7 @@ type config struct {
 
 	LocalFileSystemRoot string
 	ETagEnabled         bool
+	RandomValue         []byte
 }
 
 var conf = config{
@@ -213,6 +215,13 @@ func init() {
 		if conf.LocalFileSystemRoot == "/" {
 			log.Print("Exposing root via IMGPROXY_LOCAL_FILESYSTEM_ROOT is unsafe")
 		}
+	}
+
+	if conf.ETagEnabled {
+		conf.RandomValue = make([]byte, 16)
+		rand.Read(conf.RandomValue)
+		log.Printf("ETag support is activated. The random value was generated to be used for ETag calculation: %s\n",
+			fmt.Sprintf("%x", conf.RandomValue))
 	}
 
 	initVips()
