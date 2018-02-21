@@ -32,13 +32,8 @@ func strEnvConfig(s *string, name string) {
 
 func boolEnvConfig(b *bool, name string) {
 	*b = false
-	if env := os.Getenv(name); len(env) > 0 {
-		bVal, err := strconv.ParseBool(env)
-		if err != nil {
-			*b = false
-			return
-		}
-		*b = bVal
+	if env, err := strconv.ParseBool(os.Getenv(name)); err == nil {
+		*b = env
 	}
 }
 
