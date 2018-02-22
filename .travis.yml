@@ -15,4 +15,4 @@ install:
   - tar -xzvf vips-$VIPS_VERSION.tar.gz
   - pushd vips-$VIPS_VERSION && ./configure --prefix=/usr && make && sudo make install && popd
 script:
-  - go build
+  - CGO_LDFLAGS_ALLOW="-s|-w" go build
