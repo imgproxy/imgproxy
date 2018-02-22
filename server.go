@@ -69,9 +69,12 @@ func parsePath(r *http.Request) (string, processingOptions, error) {
 
 	filenameParts := strings.Split(strings.Join(parts[6:], ""), ".")
 
+	log.Println(filenameParts)
+	log.Println(imageTypes[filenameParts[1]])
+
 	if len(filenameParts) < 2 {
 		po.Format = imageTypes["jpg"]
-	} else if f, ok := imageTypes[filenameParts[1]]; ok {
+	} else if f, ok := imageTypes[strings.ToLower(filenameParts[1])]; ok {
 		po.Format = f
 	} else {
 		return "", po, fmt.Errorf("Invalid image format: %s", filenameParts[1])

@@ -144,9 +144,7 @@ $ xxd -g 2 -l 64 -p /dev/random | tr -d '\n'
 * `IMGPROXY_CONCURRENCY` — the maximum number of image requests to be processed simultaneously. Default: double number of CPU cores;
 * `IMGPROXY_MAX_CLIENTS` — the maximum number of simultaneous active connections. Default: `IMGPROXY_CONCURRENCY * 5`;
 * `IMGPROXY_TTL` — duration in seconds sent in `Expires` and `Cache-Control: max-age` headers. Default: `3600` (1 hour);
-* `IMGPROXY_USE_ETAG` — boolean. Shows whether a response should be cached or not. If the variable is not presented, then ImgProxy will always return an
-   image file with 200 status code. If the var is set, then the response will get the `ETag` header with current body hash sum and this value could be used by browser for
-   caching purposes. Then, if a new request provides `If-None-Match` value, the status 304 (Not Modified) will be returned. Default is `false`
+* `IMGPROXY_USE_ETAG` — when true, enables using [ETag](https://en.wikipedia.org/wiki/HTTP_ETag) header for the cache control. Default: false; 
 * `IMGPROXY_LOCAL_FILESYSTEM_ROOT` — root of the local filesystem. See [Serving local files](#serving-local-files). Keep empty to disable serving of local files.
 
 #### Security
