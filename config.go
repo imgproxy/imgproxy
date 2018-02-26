@@ -95,8 +95,9 @@ type config struct {
 	Secret string
 
 	LocalFileSystemRoot string
-	ETagEnabled         bool
-	RandomValue         []byte
+
+	ETagEnabled   bool
+	ETagSignature []byte
 }
 
 var conf = config{
@@ -146,6 +147,7 @@ func init() {
 	strEnvConfig(&conf.Secret, "IMGPROXY_SECRET")
 
 	strEnvConfig(&conf.LocalFileSystemRoot, "IMGPROXY_LOCAL_FILESYSTEM_ROOT")
+
 	boolEnvConfig(&conf.ETagEnabled, "IMGPROXY_USE_ETAG")
 
 	if len(conf.Key) == 0 {
@@ -218,10 +220,10 @@ func init() {
 	}
 
 	if conf.ETagEnabled {
-		conf.RandomValue = make([]byte, 16)
-		rand.Read(conf.RandomValue)
+		conf.ETagSignature = make([]byte, 16)
+		rand.Read(conf.ETagSignature)
 		log.Printf("ETag support is activated. The random value was generated to be used for ETag calculation: %s\n",
-			fmt.Sprintf("%x", conf.RandomValue))
+			fmt.Sprintf("%x", conf.ETagSignature))
 	}
 
 	initVips()

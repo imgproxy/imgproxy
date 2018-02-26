@@ -109,7 +109,6 @@ func respondWithImage(r *http.Request, rw http.ResponseWriter, data []byte, imgU
 	rw.Header().Set("Expires", time.Now().Add(time.Second*time.Duration(conf.TTL)).Format(http.TimeFormat))
 	rw.Header().Set("Cache-Control", fmt.Sprintf("max-age=%d, public", conf.TTL))
 	rw.Header().Set("Content-Type", mimes[po.Format])
-	rw.Header().Set("Last-Modified", time.Now().Format(http.TimeFormat))
 
 	if gzipped {
 		rw.Header().Set("Content-Encoding", "gzip")
@@ -199,12 +198,16 @@ func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	t.Check()
 
-	if isETagMatching(b, &procOpt, &rw, r) {
-		// if client has its own locally cached copy of this file, then return 304, no need to send it again over the network
-		rw.WriteHeader(304)
-		logResponse(304, fmt.Sprintf("Returned 'Not Modified' instead of actual image in %s: %s; %+v", t.Since(), imgURL, procOpt))
-		return
+	if conf.ETagEnabled {
+		eTag := calcETag(b, &procOpt)
+		rw.Header().Set("ETag", eTag)
+
+		if eTag == r.Header.Get("If-None-Match") {
+			panic(notModifiedErr)
+		}
 	}
+
+	t.Check()
 
 	b, err = processImage(b, imgtype, procOpt, t)
 	if err != nil {
