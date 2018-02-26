@@ -46,38 +46,38 @@ func parsePath(r *http.Request) (string, processingOptions, error) {
 	}
 
 	if r, ok := resizeTypes[parts[1]]; ok {
-		po.resize = r
+		po.Resize = r
 	} else {
 		return "", po, fmt.Errorf("Invalid resize type: %s", parts[1])
 	}
 
-	if po.width, err = strconv.Atoi(parts[2]); err != nil {
+	if po.Width, err = strconv.Atoi(parts[2]); err != nil {
 		return "", po, fmt.Errorf("Invalid width: %s", parts[2])
 	}
 
-	if po.height, err = strconv.Atoi(parts[3]); err != nil {
+	if po.Height, err = strconv.Atoi(parts[3]); err != nil {
 		return "", po, fmt.Errorf("Invalid height: %s", parts[3])
 	}
 
 	if g, ok := gravityTypes[parts[4]]; ok {
-		po.gravity = g
+		po.Gravity = g
 	} else {
 		return "", po, fmt.Errorf("Invalid gravity: %s", parts[4])
 	}
 
-	po.enlarge = parts[5] != "0"
+	po.Enlarge = parts[5] != "0"
 
 	filenameParts := strings.Split(strings.Join(parts[6:], ""), ".")
 
 	if len(filenameParts) < 2 {
-		po.format = imageTypes["jpg"]
+		po.Format = imageTypes["jpg"]
 	} else if f, ok := imageTypes[filenameParts[1]]; ok {
-		po.format = f
+		po.Format = f
 	} else {
 		return "", po, fmt.Errorf("Invalid image format: %s", filenameParts[1])
 	}
 
-	if !vipsTypeSupportSave[po.format] {
+	if !vipsTypeSupportSave[po.Format] {
 		return "", po, errors.New("Resulting image type not supported")
 	}
 
@@ -108,7 +108,9 @@ func respondWithImage(r *http.Request, rw http.ResponseWriter, data []byte, imgU
 
 	rw.Header().Set("Expires", time.Now().Add(time.Second*time.Duration(conf.TTL)).Format(http.TimeFormat))
 	rw.Header().Set("Cache-Control", fmt.Sprintf("max-age=%d, public", conf.TTL))
-	rw.Header().Set("Content-Type", mimes[po.format])
+	rw.Header().Set("Content-Type", mimes[po.Format])
+	rw.Header().Set("Last-Modified", time.Now().Format(http.TimeFormat))
+
 	if gzipped {
 		rw.Header().Set("Content-Encoding", "gzip")
 	}
@@ -176,8 +178,8 @@ func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.URL.Path == "/health" {
-		rw.WriteHeader(200);
-		rw.Write([]byte("imgproxy is running"));
+		rw.WriteHeader(200)
+		rw.Write([]byte("imgproxy is running"))
 		return
 	}
 
@@ -196,6 +198,13 @@ func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	t.Check()
+
+	if isETagMatching(b, &procOpt, &rw, r) {
+		// if client has its own locally cached copy of this file, then return 304, no need to send it again over the network
+		rw.WriteHeader(304)
+		logResponse(304, fmt.Sprintf("Returned 'Not Modified' instead of actual image in %s: %s; %+v", t.Since(), imgURL, procOpt))
+		return
+	}
 
 	b, err = processImage(b, imgtype, procOpt, t)
 	if err != nil {

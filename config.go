@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"crypto/rand"
 	"encoding/hex"
 	"flag"
 	"fmt"
@@ -27,6 +28,13 @@ func megaIntEnvConfig(f *int, name string) {
 func strEnvConfig(s *string, name string) {
 	if env := os.Getenv(name); len(env) > 0 {
 		*s = env
+	}
+}
+
+func boolEnvConfig(b *bool, name string) {
+	*b = false
+	if env, err := strconv.ParseBool(os.Getenv(name)); err == nil {
+		*b = env
 	}
 }
 
@@ -87,6 +95,8 @@ type config struct {
 	Secret string
 
 	LocalFileSystemRoot string
+	ETagEnabled         bool
+	RandomValue         []byte
 }
 
 var conf = config{
@@ -100,6 +110,7 @@ var conf = config{
 	MaxSrcResolution: 16800000,
 	Quality:          80,
 	GZipCompression:  5,
+	ETagEnabled:      false,
 }
 
 func init() {
@@ -135,6 +146,7 @@ func init() {
 	strEnvConfig(&conf.Secret, "IMGPROXY_SECRET")
 
 	strEnvConfig(&conf.LocalFileSystemRoot, "IMGPROXY_LOCAL_FILESYSTEM_ROOT")
+	boolEnvConfig(&conf.ETagEnabled, "IMGPROXY_USE_ETAG")
 
 	if len(conf.Key) == 0 {
 		log.Fatalln("Key is not defined")
@@ -203,6 +215,13 @@ func init() {
 		if conf.LocalFileSystemRoot == "/" {
 			log.Print("Exposing root via IMGPROXY_LOCAL_FILESYSTEM_ROOT is unsafe")
 		}
+	}
+
+	if conf.ETagEnabled {
+		conf.RandomValue = make([]byte, 16)
+		rand.Read(conf.RandomValue)
+		log.Printf("ETag support is activated. The random value was generated to be used for ETag calculation: %s\n",
+			fmt.Sprintf("%x", conf.RandomValue))
 	}
 
 	initVips()
