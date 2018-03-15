@@ -12,6 +12,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	nanoid "github.com/matoous/go-nanoid"
 )
 
 var mimes = map[imageType]string{
@@ -103,7 +105,7 @@ func logResponse(status int, msg string) {
 	log.Printf("|\033[7;%dm %d \033[0m| %s\n", color, status, msg)
 }
 
-func respondWithImage(r *http.Request, rw http.ResponseWriter, data []byte, imgURL string, po processingOptions, duration time.Duration) {
+func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, data []byte, imgURL string, po processingOptions, duration time.Duration) {
 	gzipped := strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") && conf.GZipCompression > 0
 
 	rw.Header().Set("Expires", time.Now().Add(time.Second*time.Duration(conf.TTL)).Format(http.TimeFormat))
@@ -124,11 +126,11 @@ func respondWithImage(r *http.Request, rw http.ResponseWriter, data []byte, imgU
 		rw.Write(data)
 	}
 
-	logResponse(200, fmt.Sprintf("Processed in %s: %s; %+v", duration, imgURL, po))
+	logResponse(200, fmt.Sprintf("[%s] Processed in %s: %s; %+v", reqID, duration, imgURL, po))
 }
 
-func respondWithError(rw http.ResponseWriter, err imgproxyError) {
-	logResponse(err.StatusCode, err.Message)
+func respondWithError(reqID string, rw http.ResponseWriter, err imgproxyError) {
+	logResponse(err.StatusCode, fmt.Sprintf("[%s] %s", reqID, err.Message))
 
 	rw.WriteHeader(err.StatusCode)
 	rw.Write([]byte(err.PublicMessage))
@@ -157,14 +159,16 @@ func (h *httpHandler) unlock() {
 }
 
 func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	log.Printf("GET: %s\n", r.URL.RequestURI())
+	reqID, _ := nanoid.Nanoid()
+
+	log.Printf("[%s] GET: %s\n", reqID, r.URL.RequestURI())
 
 	defer func() {
 		if r := recover(); r != nil {
 			if err, ok := r.(imgproxyError); ok {
-				respondWithError(rw, err)
+				respondWithError(reqID, rw, err)
 			} else {
-				respondWithError(rw, newUnexpectedError(r.(error), 4))
+				respondWithError(reqID, rw, newUnexpectedError(r.(error), 4))
 			}
 		}
 	}()
@@ -218,5 +222,5 @@ func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	t.Check()
 
-	respondWithImage(r, rw, b, imgURL, procOpt, t.Since())
+	respondWithImage(reqID, r, rw, b, imgURL, procOpt, t.Since())
 }
