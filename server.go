@@ -142,7 +142,7 @@ func checkSecret(s string) bool {
 }
 
 func (h *httpHandler) lock() {
-	t := startTimer(time.Duration(conf.WaitTimeout) * time.Second)
+	t := startTimer(time.Duration(conf.WaitTimeout)*time.Second, "Waiting")
 
 	select {
 	case h.sem <- struct{}{}:
@@ -173,7 +173,7 @@ func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		panic(invalidSecretErr)
 	}
 
-	t := startTimer(time.Duration(conf.WriteTimeout) * time.Second)
+	t := startTimer(time.Duration(conf.WriteTimeout)*time.Second, "Processing")
 
 	h.lock()
 	defer h.unlock()
