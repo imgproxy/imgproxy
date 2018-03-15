@@ -141,7 +141,9 @@ func checkSecret(s string) bool {
 	return strings.HasPrefix(s, "Bearer ") && subtle.ConstantTimeCompare([]byte(strings.TrimPrefix(s, "Bearer ")), []byte(conf.Secret)) == 1
 }
 
-func (h *httpHandler) lock(t *timer) {
+func (h *httpHandler) lock() {
+	t := startTimer(time.Duration(conf.WaitTimeout) * time.Second)
+
 	select {
 	case h.sem <- struct{}{}:
 		// Go ahead
@@ -169,7 +171,7 @@ func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	t := startTimer(time.Duration(conf.WriteTimeout) * time.Second)
 
-	h.lock(t)
+	h.lock()
 	defer h.unlock()
 
 	if !checkSecret(r.Header.Get("Authorization")) {
