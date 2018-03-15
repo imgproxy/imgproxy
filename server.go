@@ -169,14 +169,14 @@ func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
+	if !checkSecret(r.Header.Get("Authorization")) {
+		panic(invalidSecretErr)
+	}
+
 	t := startTimer(time.Duration(conf.WriteTimeout) * time.Second)
 
 	h.lock()
 	defer h.unlock()
-
-	if !checkSecret(r.Header.Get("Authorization")) {
-		panic(invalidSecretErr)
-	}
 
 	if r.URL.Path == "/health" {
 		rw.WriteHeader(200)
