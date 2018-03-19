@@ -144,14 +144,7 @@ func checkSecret(s string) bool {
 }
 
 func (h *httpHandler) lock() {
-	t := startTimer(time.Duration(conf.WaitTimeout)*time.Second, "Waiting")
-
-	select {
-	case h.sem <- struct{}{}:
-		// Go ahead
-	case <-t.Timer:
-		panic(t.TimeoutErr())
-	}
+	h.sem <- struct{}{}
 }
 
 func (h *httpHandler) unlock() {
@@ -177,8 +170,6 @@ func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		panic(invalidSecretErr)
 	}
 
-	t := startTimer(time.Duration(conf.WriteTimeout)*time.Second, "Processing")
-
 	h.lock()
 	defer h.unlock()
 
@@ -187,6 +178,8 @@ func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		rw.Write([]byte("imgproxy is running"))
 		return
 	}
+
+	t := startTimer(time.Duration(conf.WriteTimeout)*time.Second, "Processing")
 
 	imgURL, procOpt, err := parsePath(r)
 	if err != nil {
