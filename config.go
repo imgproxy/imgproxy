@@ -179,7 +179,7 @@ func init() {
 	}
 
 	if conf.MaxClients <= 0 {
-		conf.MaxClients = conf.Concurrency * 5
+		conf.MaxClients = conf.Concurrency * 10
 	}
 
 	if conf.TTL <= 0 {
