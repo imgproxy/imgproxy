@@ -27,6 +27,7 @@ func newUnexpectedError(err error, skip int) imgproxyError {
 
 var (
 	invalidSecretErr = newError(403, "Invalid secret", "Forbidden")
+	invalidMethodErr = newError(422, "Invalid request method", "Method doesn't allowed")
 )
 
 func stacktrace(skip int) string {

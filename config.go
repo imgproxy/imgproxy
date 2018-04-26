@@ -95,6 +95,8 @@ type config struct {
 
 	Secret string
 
+	AllowOrigin string
+
 	LocalFileSystemRoot string
 
 	ETagEnabled   bool
@@ -146,6 +148,8 @@ func init() {
 	hexFileConfig(&conf.Salt, *saltpath)
 
 	strEnvConfig(&conf.Secret, "IMGPROXY_SECRET")
+
+	strEnvConfig(&conf.AllowOrigin, "IMGPROXY_ALLOW_ORIGIN")
 
 	strEnvConfig(&conf.LocalFileSystemRoot, "IMGPROXY_LOCAL_FILESYSTEM_ROOT")
 

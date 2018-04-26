@@ -105,6 +105,13 @@ func logResponse(status int, msg string) {
 	log.Printf("|\033[7;%dm %d \033[0m| %s\n", color, status, msg)
 }
 
+func writeCORS(rw http.ResponseWriter) {
+	if len(conf.AllowOrigin) > 0 {
+		rw.Header().Set("Access-Control-Allow-Origin", conf.AllowOrigin)
+		rw.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONs")
+	}
+}
+
 func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, data []byte, imgURL string, po processingOptions, duration time.Duration) {
 	gzipped := strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") && conf.GZipCompression > 0
 
@@ -136,6 +143,11 @@ func respondWithError(reqID string, rw http.ResponseWriter, err imgproxyError) {
 	rw.Write([]byte(err.PublicMessage))
 }
 
+func respondWithOptions(reqID string, rw http.ResponseWriter) {
+	logResponse(200, fmt.Sprintf("[%s] Respond with options", reqID))
+	rw.WriteHeader(200)
+}
+
 func checkSecret(s string) bool {
 	if len(conf.Secret) == 0 {
 		return true
@@ -154,8 +166,6 @@ func (h *httpHandler) unlock() {
 func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	reqID, _ := nanoid.Nanoid()
 
-	log.Printf("[%s] GET: %s\n", reqID, r.URL.RequestURI())
-
 	defer func() {
 		if r := recover(); r != nil {
 			if err, ok := r.(imgproxyError); ok {
@@ -165,6 +175,19 @@ func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}()
+
+	log.Printf("[%s] %s: %s\n", reqID, r.Method, r.URL.RequestURI())
+
+	writeCORS(rw)
+
+	if r.Method == http.MethodOptions {
+		respondWithOptions(reqID, rw)
+		return
+	}
+
+	if r.Method != http.MethodGet {
+		panic(invalidMethodErr)
+	}
 
 	if !checkSecret(r.Header.Get("Authorization")) {
 		panic(invalidSecretErr)
