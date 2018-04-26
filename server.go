@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"compress/gzip"
 	"crypto/subtle"
 	"encoding/base64"
@@ -119,19 +120,24 @@ func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, dat
 	rw.Header().Set("Cache-Control", fmt.Sprintf("max-age=%d, public", conf.TTL))
 	rw.Header().Set("Content-Type", mimes[po.Format])
 
+	dataToRespond := data
+
 	if gzipped {
+		var buf bytes.Buffer
+
+		gz, _ := gzip.NewWriterLevel(&buf, conf.GZipCompression)
+		gz.Write(data)
+		gz.Close()
+
+		dataToRespond = buf.Bytes()
+
 		rw.Header().Set("Content-Encoding", "gzip")
 	}
 
-	rw.WriteHeader(200)
+	rw.Header().Set("Content-Length", strconv.Itoa(len(dataToRespond)))
 
-	if gzipped {
-		gz, _ := gzip.NewWriterLevel(rw, conf.GZipCompression)
-		gz.Write(data)
-		gz.Close()
-	} else {
-		rw.Write(data)
-	}
+	rw.WriteHeader(200)
+	rw.Write(dataToRespond)
 
 	logResponse(200, fmt.Sprintf("[%s] Processed in %s: %s; %+v", reqID, duration, imgURL, po))
 }
