@@ -106,7 +106,9 @@ func readAndCheckImage(res *http.Response) ([]byte, imageType, error) {
 }
 
 func downloadImage(url string) ([]byte, imageType, error) {
-	res, err := downloadClient.Get(url)
+	fullURL := fmt.Sprintf("%s%s", conf.BaseURL, url)
+
+	res, err := downloadClient.Get(fullURL)
 	if err != nil {
 		return nil, UNKNOWN, err
 	}

@@ -164,6 +164,10 @@ You can also specify a secret to enable authorization with the HTTP `Authorizati
 * `IMGPROXY_QUALITY` — quality of the resulting image, percentage. Default: `80`;
 * `IMGPROXY_GZIP_COMPRESSION` — GZip compression level. Default: `5`;
 
+#### Miscellaneous
+
+* `IMGPROXY_BASE_URL` - base URL part which will be added to every requestsd image URL. For example, if base URL is `http://example.com/images` and `/path/to/image.png` is requested, imgproxy will download the image from `http://example.com/images/path/to/image.png`. Default: blank.
+
 ## Generating the URL
 
 The URL should contain the signature and resize parameters, like this:

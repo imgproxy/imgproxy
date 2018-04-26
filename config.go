@@ -101,6 +101,8 @@ type config struct {
 
 	ETagEnabled   bool
 	ETagSignature []byte
+
+	BaseURL string
 }
 
 var conf = config{
@@ -154,6 +156,8 @@ func init() {
 	strEnvConfig(&conf.LocalFileSystemRoot, "IMGPROXY_LOCAL_FILESYSTEM_ROOT")
 
 	boolEnvConfig(&conf.ETagEnabled, "IMGPROXY_USE_ETAG")
+
+	strEnvConfig(&conf.BaseURL, "IMGPROXY_BASE_URL")
 
 	if len(conf.Key) == 0 {
 		log.Fatalln("Key is not defined")
