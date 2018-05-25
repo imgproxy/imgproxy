@@ -1,6 +1,6 @@
 ## v1.1.5.1
 
-- Fixed autorotation when image is not resazed
+- Fixed autorotation when image is not resized
 
 ## v1.1.5
 
