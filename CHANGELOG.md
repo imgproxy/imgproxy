@@ -1,3 +1,7 @@
+## v1.1.5.1
+
+- Fixed autorotation when image is not resazed
+
 ## v1.1.5
 
 - Add CORS headers

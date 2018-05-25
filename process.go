@@ -295,55 +295,55 @@ func processImage(data []byte, imgtype imageType, po processingOptions, t *timer
 				}
 			}
 		}
+	}
 
-		if err = vipsImportColourProfile(&img); err != nil {
+	if err = vipsImportColourProfile(&img); err != nil {
+		return nil, err
+	}
+
+	if err = vipsFixColourspace(&img); err != nil {
+		return nil, err
+	}
+
+	t.Check()
+
+	if angle != C.VIPS_ANGLE_D0 || flip {
+		if err = vipsImageCopyMemory(&img); err != nil {
 			return nil, err
 		}
 
-		if err = vipsFixColourspace(&img); err != nil {
-			return nil, err
-		}
-
-		t.Check()
-
-		if angle != C.VIPS_ANGLE_D0 || flip {
-			if err = vipsImageCopyMemory(&img); err != nil {
+		if angle != C.VIPS_ANGLE_D0 {
+			if err = vipsRotate(&img, angle); err != nil {
 				return nil, err
 			}
-
-			if angle != C.VIPS_ANGLE_D0 {
-				if err = vipsRotate(&img, angle); err != nil {
-					return nil, err
-				}
-			}
-
-			if flip {
-				if err = vipsFlip(&img); err != nil {
-					return nil, err
-				}
-			}
 		}
 
-		t.Check()
-
-		if po.Resize == FILL || po.Resize == CROP {
-			if po.Gravity == SMART {
-				if err = vipsImageCopyMemory(&img); err != nil {
-					return nil, err
-				}
-				if err = vipsSmartCrop(&img, po.Width, po.Height); err != nil {
-					return nil, err
-				}
-			} else {
-				left, top := calcCrop(int(img.Xsize), int(img.Ysize), po)
-				if err = vipsCrop(&img, left, top, po.Width, po.Height); err != nil {
-					return nil, err
-				}
+		if flip {
+			if err = vipsFlip(&img); err != nil {
+				return nil, err
 			}
 		}
 	}
 
 	t.Check()
+
+	if (po.Width != imgWidth || po.Height != imgHeight) && (po.Resize == FILL || po.Resize == CROP) {
+		if po.Gravity == SMART {
+			if err = vipsImageCopyMemory(&img); err != nil {
+				return nil, err
+			}
+			if err = vipsSmartCrop(&img, po.Width, po.Height); err != nil {
+				return nil, err
+			}
+		} else {
+			left, top := calcCrop(int(img.Xsize), int(img.Ysize), po)
+			if err = vipsCrop(&img, left, top, po.Width, po.Height); err != nil {
+				return nil, err
+			}
+		}
+
+		t.Check()
+	}
 
 	return vipsSaveImage(img, po.Format)
 }
