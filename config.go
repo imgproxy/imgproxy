@@ -99,6 +99,8 @@ type config struct {
 
 	LocalFileSystemRoot string
 
+	S3Enabled bool
+
 	ETagEnabled   bool
 	ETagSignature []byte
 
@@ -117,6 +119,7 @@ var conf = config{
 	Quality:          80,
 	GZipCompression:  5,
 	ETagEnabled:      false,
+	S3Enabled:        false,
 }
 
 func init() {
@@ -154,6 +157,8 @@ func init() {
 	strEnvConfig(&conf.AllowOrigin, "IMGPROXY_ALLOW_ORIGIN")
 
 	strEnvConfig(&conf.LocalFileSystemRoot, "IMGPROXY_LOCAL_FILESYSTEM_ROOT")
+
+	boolEnvConfig(&conf.S3Enabled, "IMGPROXY_USE_S3")
 
 	boolEnvConfig(&conf.ETagEnabled, "IMGPROXY_USE_ETAG")
 
