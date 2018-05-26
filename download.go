@@ -15,6 +15,8 @@ import (
 	_ "image/jpeg"
 	_ "image/png"
 
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3"
 	_ "golang.org/x/image/webp"
 )
 
@@ -61,6 +63,10 @@ func initDownloading() {
 	}
 	if conf.LocalFileSystemRoot != "" {
 		transport.RegisterProtocol("local", http.NewFileTransport(http.Dir(conf.LocalFileSystemRoot)))
+	}
+	if conf.S3Enabled {
+		svc := s3.New(session.New())
+		transport.RegisterProtocol("s3", NewS3Transport(svc))
 	}
 	downloadClient = &http.Client{
 		Timeout:   time.Duration(conf.DownloadTimeout) * time.Second,
