@@ -1,3 +1,7 @@
+## v1.1.6
+
+- Added progressive JPEG and interlaced PNG support
+
 ## v1.1.5.1
 
 - Fixed autorotation when image is not resized
