@@ -87,6 +87,8 @@ type config struct {
 	MaxSrcDimension  int
 	MaxSrcResolution int
 
+	JpegProgressive bool
+	PngInterlaced   bool
 	Quality         int
 	GZipCompression int
 
@@ -140,6 +142,8 @@ func init() {
 	intEnvConfig(&conf.MaxSrcDimension, "IMGPROXY_MAX_SRC_DIMENSION")
 	megaIntEnvConfig(&conf.MaxSrcResolution, "IMGPROXY_MAX_SRC_RESOLUTION")
 
+	boolEnvConfig(&conf.JpegProgressive, "IMGPROXY_JPEG_PROGRESSIVE")
+	boolEnvConfig(&conf.PngInterlaced, "IMGPROXY_PNG_INTERLACED")
 	intEnvConfig(&conf.Quality, "IMGPROXY_QUALITY")
 	intEnvConfig(&conf.GZipCompression, "IMGPROXY_GZIP_COMPRESSION")
 

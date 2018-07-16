@@ -163,6 +163,8 @@ You can also specify a secret to enable authorization with the HTTP `Authorizati
 
 * `IMGPROXY_QUALITY` — quality of the resulting image, percentage. Default: `80`;
 * `IMGPROXY_GZIP_COMPRESSION` — GZip compression level. Default: `5`;
+* `IMGPROXY_JPEG_PROGRESSIVE` — when true, enables progressive compression of JPEG. Default: false;
+* `IMGPROXY_PNG_INTERLACED` — when true, enables interlaced compression of PNG. Default: false;
 
 #### Miscellaneous
 

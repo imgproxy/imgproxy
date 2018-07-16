@@ -81,6 +81,14 @@ var vipsSupportSmartcrop bool
 var vipsTypeSupportLoad = make(map[imageType]bool)
 var vipsTypeSupportSave = make(map[imageType]bool)
 
+type cConfig struct {
+	Quality         C.int
+	JpegProgressive C.int
+	PngInterlaced   C.int
+}
+
+var cConf cConfig
+
 func initVips() {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
@@ -124,6 +132,16 @@ func initVips() {
 	}
 	if int(C.vips_type_find_save_go(C.WEBP)) != 0 {
 		vipsTypeSupportSave[WEBP] = true
+	}
+
+	cConf.Quality = C.int(conf.Quality)
+
+	if conf.JpegProgressive {
+		cConf.JpegProgressive = C.int(1)
+	}
+
+	if conf.PngInterlaced {
+		cConf.PngInterlaced = C.int(1)
 	}
 }
 
@@ -366,11 +384,11 @@ func vipsSaveImage(img *C.struct__VipsImage, imgtype imageType) ([]byte, error) 
 
 	switch imgtype {
 	case JPEG:
-		err = C.vips_jpegsave_go(img, &ptr, &imgsize, 1, C.int(conf.Quality), 0)
+		err = C.vips_jpegsave_go(img, &ptr, &imgsize, 1, cConf.Quality, cConf.JpegProgressive)
 	case PNG:
-		err = C.vips_pngsave_go(img, &ptr, &imgsize)
+		err = C.vips_pngsave_go(img, &ptr, &imgsize, cConf.PngInterlaced)
 	case WEBP:
-		err = C.vips_webpsave_go(img, &ptr, &imgsize, 1, C.int(conf.Quality))
+		err = C.vips_webpsave_go(img, &ptr, &imgsize, 1, cConf.Quality)
 	}
 	if err != 0 {
 		return nil, vipsError()
