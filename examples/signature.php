@@ -23,7 +23,7 @@ $extension = 'png';
 $url = 'http://img.example.com/pretty/image.jpg';
 $encodedUrl = rtrim(strtr(base64_encode($url), '+/', '-_'), '=');
 
-$path = sprintf("/%s/%d/%d/%s/%d/%s.%s", $resize, $width, $height, $gravity, $enlarge, $encodedUrl, $extension);
+$path = "/{$resize}/{$width}/{$height}/{$gravity}/{$enlarge}/{$encodedUrl}.{$extension}";
 
 $signature = rtrim(strtr(base64_encode(hash_hmac('sha256', $saltBin.$path, $keyBin, true)), '+/', '-_'), '=');
 
