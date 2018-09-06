@@ -12,6 +12,8 @@ import (
 	"golang.org/x/net/netutil"
 )
 
+const version = "1.1.7"
+
 func main() {
 	// Force garbage collection
 	go func() {

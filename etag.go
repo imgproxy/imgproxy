@@ -1,7 +1,7 @@
 package main
 
 import (
-	"crypto/sha1"
+	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
 )
@@ -9,12 +9,13 @@ import (
 var notModifiedErr = newError(304, "Not modified", "Not modified")
 
 func calcETag(b []byte, po *processingOptions) string {
-	footprint := sha1.Sum(b)
+	footprint := sha256.Sum256(b)
 
-	hash := sha1.New()
+	hash := sha256.New()
 	hash.Write(footprint[:])
+	hash.Write([]byte(version))
+	binary.Write(hash, binary.LittleEndian, conf)
 	binary.Write(hash, binary.LittleEndian, *po)
-	hash.Write(conf.ETagSignature)
 
 	return fmt.Sprintf("%x", hash.Sum(nil))
 }

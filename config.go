@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"crypto/rand"
 	"encoding/hex"
 	"flag"
 	"fmt"
@@ -101,8 +100,7 @@ type config struct {
 
 	LocalFileSystemRoot string
 
-	ETagEnabled   bool
-	ETagSignature []byte
+	ETagEnabled bool
 
 	BaseURL string
 }
@@ -124,7 +122,13 @@ var conf = config{
 func init() {
 	keypath := flag.String("keypath", "", "path of the file with hex-encoded key")
 	saltpath := flag.String("saltpath", "", "path of the file with hex-encoded salt")
+	showVersion := flag.Bool("v", false, "show version")
 	flag.Parse()
+
+	if *showVersion {
+		fmt.Println(version)
+		os.Exit(0)
+	}
 
 	if port := os.Getenv("PORT"); len(port) > 0 {
 		conf.Bind = fmt.Sprintf(":%s", port)
@@ -230,13 +234,6 @@ func init() {
 		if conf.LocalFileSystemRoot == "/" {
 			log.Print("Exposing root via IMGPROXY_LOCAL_FILESYSTEM_ROOT is unsafe")
 		}
-	}
-
-	if conf.ETagEnabled {
-		conf.ETagSignature = make([]byte, 16)
-		rand.Read(conf.ETagSignature)
-		log.Printf("ETag support is activated. The random value was generated to be used for ETag calculation: %s\n",
-			fmt.Sprintf("%x", conf.ETagSignature))
 	}
 
 	initVips()
