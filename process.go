@@ -128,15 +128,29 @@ func extractMeta(img *C.VipsImage) (int, int, int, bool) {
 	return width, height, angle, flip
 }
 
-func calcScale(width, height int, po processingOptions) float64 {
-	if (po.Width == width && po.Height == height) || (po.Resize != resizeFill && po.Resize != resizeFit) {
-		return 1
-	}
+func needToScale(width, height int, po processingOptions) bool {
+	return ((po.Width != 0 && po.Width != width) || (po.Height != 0 && po.Height != height)) &&
+		(po.Resize == resizeFill || po.Resize == resizeFit)
+}
 
+func needToCrop(width, height int, po processingOptions) bool {
+	return (po.Width != width || po.Height != height) &&
+		(po.Resize == resizeFill || po.Resize == resizeCrop)
+}
+
+func calcScale(width, height int, po processingOptions) float64 {
 	fsw, fsh, fow, foh := float64(width), float64(height), float64(po.Width), float64(po.Height)
 
 	wr := fow / fsw
 	hr := foh / fsh
+
+	if po.Width == 0 {
+		return hr
+	}
+
+	if po.Height == 0 {
+		return wr
+	}
 
 	if po.Resize == resizeFit {
 		return math.Min(wr, hr)
@@ -216,42 +230,43 @@ func processImage(data []byte, imgtype imageType, po processingOptions, t *timer
 		}
 	}
 
-	if po.Width != imgWidth || po.Height != imgHeight {
-		if po.Resize == resizeFill || po.Resize == resizeFit {
-			scale := calcScale(imgWidth, imgHeight, po)
+	if needToScale(imgWidth, imgHeight, po) {
+		scale := calcScale(imgWidth, imgHeight, po)
 
-			// Do some shrink-on-load
-			if scale < 1.0 {
-				if imgtype == imageTypeJPEG || imgtype == imageTypeWEBP {
-					shrink := calcShink(scale, imgtype)
-					scale = scale * float64(shrink)
+		// Do some shrink-on-load
+		if scale < 1.0 {
+			if imgtype == imageTypeJPEG || imgtype == imageTypeWEBP {
+				shrink := calcShink(scale, imgtype)
+				scale = scale * float64(shrink)
 
-					if tmp, e := vipsLoadImage(data, imgtype, shrink); e == nil {
-						C.swap_and_clear(&img, tmp)
-					} else {
-						return nil, e
-					}
+				if tmp, e := vipsLoadImage(data, imgtype, shrink); e == nil {
+					C.swap_and_clear(&img, tmp)
+				} else {
+					return nil, e
 				}
 			}
+		}
 
-			premultiplied := false
-			var bandFormat C.VipsBandFormat
+		premultiplied := false
+		var bandFormat C.VipsBandFormat
 
-			if vipsImageHasAlpha(img) {
-				if bandFormat, err = vipsPremultiply(&img); err != nil {
-					return nil, err
-				}
-				premultiplied = true
-			}
-
-			if err = vipsResize(&img, scale); err != nil {
+		if vipsImageHasAlpha(img) {
+			if bandFormat, err = vipsPremultiply(&img); err != nil {
 				return nil, err
 			}
+			premultiplied = true
+		}
 
-			if premultiplied {
-				if err = vipsUnpremultiply(&img, bandFormat); err != nil {
-					return nil, err
-				}
+		if err = vipsResize(&img, scale); err != nil {
+			return nil, err
+		}
+
+		// Update actual image size after resize
+		imgWidth, imgHeight, _, _ = extractMeta(img)
+
+		if premultiplied {
+			if err = vipsUnpremultiply(&img, bandFormat); err != nil {
+				return nil, err
 			}
 		}
 	}
@@ -286,7 +301,15 @@ func processImage(data []byte, imgtype imageType, po processingOptions, t *timer
 
 	t.Check()
 
-	if (po.Width != imgWidth || po.Height != imgHeight) && (po.Resize == resizeFill || po.Resize == resizeCrop) {
+	if po.Width == 0 {
+		po.Width = imgWidth
+	}
+
+	if po.Height == 0 {
+		po.Height = imgHeight
+	}
+
+	if needToCrop(imgWidth, imgHeight, po) {
 		if po.Gravity == gravitySmart {
 			if err = vipsImageCopyMemory(&img); err != nil {
 				return nil, err
@@ -295,7 +318,7 @@ func processImage(data []byte, imgtype imageType, po processingOptions, t *timer
 				return nil, err
 			}
 		} else {
-			left, top := calcCrop(int(img.Xsize), int(img.Ysize), po)
+			left, top := calcCrop(imgWidth, imgHeight, po)
 			if err = vipsCrop(&img, left, top, po.Width, po.Height); err != nil {
 				return nil, err
 			}
