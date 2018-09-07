@@ -46,5 +46,5 @@ func stacktrace(skip int) string {
 }
 
 func warning(f string, args ...interface{}) {
-	log.Printf("[WARNING] %s", fmt.Sprintf(f, args...))
+	log.Printf("\033[1;33m[WARNING]\033[0m %s", fmt.Sprintf(f, args...))
 }
