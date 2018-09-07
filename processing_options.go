@@ -408,9 +408,11 @@ func parsePath(r *http.Request) (string, processingOptions, error) {
 		return "", processingOptions{}, errors.New("Invalid path")
 	}
 
-	// if err := validatePath(parts[0], strings.TrimPrefix(path, fmt.Sprintf("/%s", parts[0]))); err != nil {
-	// 	return "", processingOptions{}, err
-	// }
+	if !conf.AllowInsecure {
+		if err := validatePath(parts[0], strings.TrimPrefix(path, fmt.Sprintf("/%s", parts[0]))); err != nil {
+			return "", processingOptions{}, err
+		}
+	}
 
 	if _, ok := resizeTypes[parts[1]]; ok {
 		return parsePathSimple(parts[1:])

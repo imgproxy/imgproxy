@@ -114,6 +114,8 @@ type config struct {
 	MaxSrcDimension  int
 	MaxSrcResolution int
 
+	AllowInsecure bool
+
 	JpegProgressive bool
 	PngInterlaced   bool
 	Quality         int
@@ -147,6 +149,7 @@ var conf = config{
 	IgnoreSslVerification: false,
 	MaxSrcDimension:       8192,
 	MaxSrcResolution:      16800000,
+	AllowInsecure:         false,
 	Quality:               80,
 	GZipCompression:       5,
 	ETagEnabled:           false,
@@ -179,6 +182,8 @@ func init() {
 
 	intEnvConfig(&conf.MaxSrcDimension, "IMGPROXY_MAX_SRC_DIMENSION")
 	megaIntEnvConfig(&conf.MaxSrcResolution, "IMGPROXY_MAX_SRC_RESOLUTION")
+
+	boolEnvConfig(&conf.AllowInsecure, "IMGPROXY_ALLOW_INSECURE")
 
 	boolEnvConfig(&conf.JpegProgressive, "IMGPROXY_JPEG_PROGRESSIVE")
 	boolEnvConfig(&conf.PngInterlaced, "IMGPROXY_PNG_INTERLACED")
@@ -248,6 +253,10 @@ func init() {
 
 	if conf.MaxSrcResolution <= 0 {
 		log.Fatalf("Max src resolution should be greater than 0, now - %d\n", conf.MaxSrcResolution)
+	}
+
+	if conf.AllowInsecure {
+		warning("Token validation is disabled. Hope you know what you're doing")
 	}
 
 	if conf.Quality <= 0 {
