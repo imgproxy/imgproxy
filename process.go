@@ -166,13 +166,15 @@ func calcShink(scale float64, imgtype imageType) int {
 		return shrink
 	}
 
-	switch {
-	case shrink >= 16:
-		return 8
-	case shrink >= 8:
-		return 4
-	case shrink >= 4:
-		return 2
+	if imgtype != imageTypeWEBP {
+		switch {
+		case shrink >= 16:
+			return 8
+		case shrink >= 8:
+			return 4
+		case shrink >= 4:
+			return 2
+		}
 	}
 
 	return 1
@@ -235,8 +237,7 @@ func processImage(data []byte, imgtype imageType, po processingOptions, t *timer
 
 		// Do some shrink-on-load
 		if scale < 1.0 {
-			if imgtype == imageTypeJPEG || imgtype == imageTypeWEBP {
-				shrink := calcShink(scale, imgtype)
+			if shrink := calcShink(scale, imgtype); shrink != 1 {
 				scale = scale * float64(shrink)
 
 				if tmp, e := vipsLoadImage(data, imgtype, shrink); e == nil {
