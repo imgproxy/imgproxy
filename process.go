@@ -62,21 +62,6 @@ const (
 	CROP
 )
 
-var resizeTypes = map[string]resizeType{
-	"fit":  FIT,
-	"fill": FILL,
-	"crop": CROP,
-}
-
-type processingOptions struct {
-	Resize  resizeType
-	Width   int
-	Height  int
-	Gravity gravityType
-	Enlarge bool
-	Format  imageType
-}
-
 var vipsSupportSmartcrop bool
 var vipsTypeSupportLoad = make(map[imageType]bool)
 var vipsTypeSupportSave = make(map[imageType]bool)

@@ -5,8 +5,6 @@ import (
 	"compress/gzip"
 	"context"
 	"crypto/subtle"
-	"encoding/base64"
-	"errors"
 	"fmt"
 	"log"
 	"net"
@@ -61,67 +59,6 @@ func shutdownServer(s *http.Server) {
 	defer close()
 
 	s.Shutdown(ctx)
-}
-
-func parsePath(r *http.Request) (string, processingOptions, error) {
-	var po processingOptions
-	var err error
-
-	path := r.URL.Path
-	parts := strings.Split(strings.TrimPrefix(path, "/"), "/")
-
-	if len(parts) < 7 {
-		return "", po, errors.New("Invalid path")
-	}
-
-	token := parts[0]
-
-	if err = validatePath(token, strings.TrimPrefix(path, fmt.Sprintf("/%s", token))); err != nil {
-		return "", po, err
-	}
-
-	if r, ok := resizeTypes[parts[1]]; ok {
-		po.Resize = r
-	} else {
-		return "", po, fmt.Errorf("Invalid resize type: %s", parts[1])
-	}
-
-	if po.Width, err = strconv.Atoi(parts[2]); err != nil {
-		return "", po, fmt.Errorf("Invalid width: %s", parts[2])
-	}
-
-	if po.Height, err = strconv.Atoi(parts[3]); err != nil {
-		return "", po, fmt.Errorf("Invalid height: %s", parts[3])
-	}
-
-	if g, ok := gravityTypes[parts[4]]; ok {
-		po.Gravity = g
-	} else {
-		return "", po, fmt.Errorf("Invalid gravity: %s", parts[4])
-	}
-
-	po.Enlarge = parts[5] != "0"
-
-	filenameParts := strings.Split(strings.Join(parts[6:], ""), ".")
-
-	if len(filenameParts) < 2 {
-		po.Format = imageTypes["jpg"]
-	} else if f, ok := imageTypes[filenameParts[1]]; ok {
-		po.Format = f
-	} else {
-		return "", po, fmt.Errorf("Invalid image format: %s", filenameParts[1])
-	}
-
-	if !vipsTypeSupportSave[po.Format] {
-		return "", po, errors.New("Resulting image type not supported")
-	}
-
-	filename, err := base64.RawURLEncoding.DecodeString(filenameParts[0])
-	if err != nil {
-		return "", po, errors.New("Invalid filename encoding")
-	}
-
-	return string(filename), po, nil
 }
 
 func logResponse(status int, msg string) {
