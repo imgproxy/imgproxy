@@ -80,16 +80,16 @@ func checkTypeAndDimensions(r io.Reader) (imageType, error) {
 	imgtype, imgtypeOk := imageTypes[imgtypeStr]
 
 	if err != nil {
-		return UNKNOWN, err
+		return imageTypeUnknown, err
 	}
 	if imgconf.Width > conf.MaxSrcDimension || imgconf.Height > conf.MaxSrcDimension {
-		return UNKNOWN, errors.New("Source image is too big")
+		return imageTypeUnknown, errors.New("Source image is too big")
 	}
 	if imgconf.Width*imgconf.Height > conf.MaxSrcResolution {
-		return UNKNOWN, errors.New("Source image is too big")
+		return imageTypeUnknown, errors.New("Source image is too big")
 	}
 	if !imgtypeOk || !vipsTypeSupportLoad[imgtype] {
-		return UNKNOWN, errors.New("Source image type not supported")
+		return imageTypeUnknown, errors.New("Source image type not supported")
 	}
 
 	return imgtype, nil
@@ -100,7 +100,7 @@ func readAndCheckImage(res *http.Response) ([]byte, imageType, error) {
 
 	imgtype, err := checkTypeAndDimensions(nr)
 	if err != nil {
-		return nil, UNKNOWN, err
+		return nil, imageTypeUnknown, err
 	}
 
 	if res.ContentLength > 0 {
@@ -117,13 +117,13 @@ func downloadImage(url string) ([]byte, imageType, error) {
 
 	res, err := downloadClient.Get(fullURL)
 	if err != nil {
-		return nil, UNKNOWN, err
+		return nil, imageTypeUnknown, err
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode != 200 {
 		body, _ := ioutil.ReadAll(res.Body)
-		return nil, UNKNOWN, fmt.Errorf("Can't download image; Status: %d; %s", res.StatusCode, string(body))
+		return nil, imageTypeUnknown, fmt.Errorf("Can't download image; Status: %d; %s", res.StatusCode, string(body))
 	}
 
 	return readAndCheckImage(res)

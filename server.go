@@ -19,9 +19,9 @@ import (
 )
 
 var mimes = map[imageType]string{
-	JPEG: "image/jpeg",
-	PNG:  "image/png",
-	WEBP: "image/webp",
+	imageTypeJPEG: "image/jpeg",
+	imageTypePNG:  "image/png",
+	imageTypeWEBP: "image/webp",
 }
 
 type httpHandler struct {

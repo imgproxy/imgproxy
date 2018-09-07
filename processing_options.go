@@ -1,7 +1,12 @@
 package main
 
+/*
+#cgo LDFLAGS: -s -w
+#include <image_types.h>
+*/
+import "C"
+
 import (
-	"C"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -10,10 +15,56 @@ import (
 	"strings"
 )
 
+type imageType int
+
+const (
+	imageTypeUnknown = C.UNKNOWN
+	imageTypeJPEG    = C.JPEG
+	imageTypePNG     = C.PNG
+	imageTypeWEBP    = C.WEBP
+	imageTypeGIF     = C.GIF
+)
+
+var imageTypes = map[string]imageType{
+	"jpeg": imageTypeJPEG,
+	"jpg":  imageTypeJPEG,
+	"png":  imageTypePNG,
+	"webp": imageTypeWEBP,
+	"gif":  imageTypeGIF,
+}
+
+type gravityType int
+
+const (
+	gravityCenter gravityType = iota
+	gravityNorth
+	gravityEast
+	gravitySouth
+	gravityWest
+	gravitySmart
+)
+
+var gravityTypes = map[string]gravityType{
+	"ce": gravityCenter,
+	"no": gravityNorth,
+	"ea": gravityEast,
+	"so": gravitySouth,
+	"we": gravityWest,
+	"sm": gravitySmart,
+}
+
+type resizeType int
+
+const (
+	resizeFit resizeType = iota
+	resizeFill
+	resizeCrop
+)
+
 var resizeTypes = map[string]resizeType{
-	"fit":  FIT,
-	"fill": FILL,
-	"crop": CROP,
+	"fit":  resizeFit,
+	"fill": resizeFill,
+	"crop": resizeCrop,
 }
 
 type processingOptions struct {
@@ -23,21 +74,25 @@ type processingOptions struct {
 	Gravity gravityType
 	Enlarge bool
 	Format  imageType
+	Blur    float32
+	Sharpen float32
 }
 
 func defaultProcessingOptions() processingOptions {
 	return processingOptions{
-		Resize:  FIT,
+		Resize:  resizeFit,
 		Width:   0,
 		Height:  0,
-		Gravity: CENTER,
+		Gravity: gravityCenter,
 		Enlarge: false,
-		Format:  JPEG,
+		Format:  imageTypeJPEG,
+		Blur:    0,
+		Sharpen: 0,
 	}
 }
 
-func decodeUrl(parts []string) (string, imageType, error) {
-	var imgType imageType = JPEG
+func decodeURL(parts []string) (string, imageType, error) {
+	var imgType imageType = imageTypeJPEG
 
 	urlParts := strings.Split(strings.Join(parts, ""), ".")
 
@@ -218,7 +273,7 @@ func parsePathAdvanced(parts []string) (string, processingOptions, error) {
 		}
 	}
 
-	url, imgType, err := decodeUrl(parts[urlStart:])
+	url, imgType, err := decodeURL(parts[urlStart:])
 	if err != nil {
 		return "", po, err
 	}
@@ -256,7 +311,7 @@ func parsePathSimple(parts []string) (string, processingOptions, error) {
 		return "", po, err
 	}
 
-	url, imgType, err := decodeUrl(parts[5:])
+	url, imgType, err := decodeURL(parts[5:])
 	if err != nil {
 		return "", po, err
 	}
