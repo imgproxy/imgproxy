@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/hex"
 	"flag"
@@ -10,6 +11,7 @@ import (
 	"os"
 	"runtime"
 	"strconv"
+	"strings"
 )
 
 func intEnvConfig(i *int, name string) {
@@ -73,6 +75,32 @@ func hexFileConfig(b *[]byte, filepath string) {
 	*b = dst[:n]
 }
 
+func presetEnvConfig(p *presets, name string) {
+	if env := os.Getenv(name); len(env) > 0 {
+		presetStrings := strings.Split(env, ",")
+
+		for _, presetStr := range presetStrings {
+			parsePreset(p, presetStr)
+		}
+	}
+}
+
+func presetFileConfig(p *presets, filepath string) {
+	if len(filepath) == 0 {
+		return
+	}
+
+	f, err := os.Open(filepath)
+	if err != nil {
+		log.Fatalf("Can't open file %s\n", filepath)
+	}
+
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		parsePreset(p, scanner.Text())
+	}
+}
+
 type config struct {
 	Bind            string
 	ReadTimeout     int
@@ -105,6 +133,8 @@ type config struct {
 	ETagEnabled bool
 
 	BaseURL string
+
+	Presets presets
 }
 
 var conf = config{
@@ -123,8 +153,9 @@ var conf = config{
 }
 
 func init() {
-	keypath := flag.String("keypath", "", "path of the file with hex-encoded key")
-	saltpath := flag.String("saltpath", "", "path of the file with hex-encoded salt")
+	keyPath := flag.String("keypath", "", "path of the file with hex-encoded key")
+	saltPath := flag.String("saltpath", "", "path of the file with hex-encoded salt")
+	presetsPath := flag.String("presets", "", "path of the file with presets")
 	showVersion := flag.Bool("v", false, "show version")
 	flag.Parse()
 
@@ -157,8 +188,8 @@ func init() {
 	hexEnvConfig(&conf.Key, "IMGPROXY_KEY")
 	hexEnvConfig(&conf.Salt, "IMGPROXY_SALT")
 
-	hexFileConfig(&conf.Key, *keypath)
-	hexFileConfig(&conf.Salt, *saltpath)
+	hexFileConfig(&conf.Key, *keyPath)
+	hexFileConfig(&conf.Salt, *saltPath)
 
 	strEnvConfig(&conf.Secret, "IMGPROXY_SECRET")
 
@@ -171,6 +202,10 @@ func init() {
 	boolEnvConfig(&conf.ETagEnabled, "IMGPROXY_USE_ETAG")
 
 	strEnvConfig(&conf.BaseURL, "IMGPROXY_BASE_URL")
+
+	conf.Presets = make(presets)
+	presetEnvConfig(&conf.Presets, "IMGPROXY_PRESETS")
+	presetFileConfig(&conf.Presets, *presetsPath)
 
 	if len(conf.Key) == 0 {
 		log.Fatalln("Key is not defined")

@@ -15,6 +15,8 @@ import (
 	"strings"
 )
 
+type urlOptions map[string][]string
+
 type imageType int
 
 const (
@@ -242,6 +244,22 @@ func applySharpenOption(po *processingOptions, args []string) error {
 	return nil
 }
 
+func applyPresetOption(po *processingOptions, args []string) error {
+	for _, preset := range args {
+		if p, ok := conf.Presets[preset]; ok {
+			for name, pargs := range p {
+				if err := applyProcessingOption(po, name, pargs); err != nil {
+					return err
+				}
+			}
+		} else {
+			return fmt.Errorf("Unknown asset: %s", preset)
+		}
+	}
+
+	return nil
+}
+
 func applyFormatOption(po *processingOptions, imgType imageType) error {
 	if !vipsTypeSupportSave[imgType] {
 		return errors.New("Resulting image type not supported")
@@ -286,30 +304,53 @@ func applyProcessingOption(po *processingOptions, name string, args []string) er
 		if err := applySharpenOption(po, args); err != nil {
 			return err
 		}
+	case "preset":
+		if err := applyPresetOption(po, args); err != nil {
+			return err
+		}
 	}
 
 	return nil
 }
 
-func parsePathAdvanced(parts []string) (string, processingOptions, error) {
-	var urlStart int
+func parseURLOptions(opts []string) (urlOptions, []string) {
+	parsed := make(urlOptions)
+	urlStart := len(opts) + 1
 
-	po := defaultProcessingOptions()
-
-	for i, part := range parts {
-		args := strings.Split(part, ":")
+	for i, opt := range opts {
+		args := strings.Split(opt, ":")
 
 		if len(args) == 1 {
 			urlStart = i
 			break
 		}
 
-		if err := applyProcessingOption(&po, args[0], args[1:]); err != nil {
+		parsed[args[0]] = args[1:]
+	}
+
+	var rest []string
+
+	if urlStart < len(opts) {
+		rest = opts[urlStart:]
+	} else {
+		rest = []string{}
+	}
+
+	return parsed, rest
+}
+
+func parsePathAdvanced(parts []string) (string, processingOptions, error) {
+	po := defaultProcessingOptions()
+
+	options, urlParts := parseURLOptions(parts)
+
+	for name, args := range options {
+		if err := applyProcessingOption(&po, name, args); err != nil {
 			return "", po, err
 		}
 	}
 
-	url, imgType, err := decodeURL(parts[urlStart:])
+	url, imgType, err := decodeURL(urlParts)
 	if err != nil {
 		return "", po, err
 	}
