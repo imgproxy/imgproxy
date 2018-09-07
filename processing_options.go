@@ -214,6 +214,34 @@ func applyGravityOption(po *processingOptions, args []string) error {
 	return nil
 }
 
+func applyBlurOption(po *processingOptions, args []string) error {
+	if len(args) > 1 {
+		return fmt.Errorf("Invalid blur arguments: %v", args)
+	}
+
+	if b, err := strconv.ParseFloat(args[0], 32); err == nil || b >= 0 {
+		po.Blur = float32(b)
+	} else {
+		return fmt.Errorf("Invalid blur: %s", args[0])
+	}
+
+	return nil
+}
+
+func applySharpenOption(po *processingOptions, args []string) error {
+	if len(args) > 1 {
+		return fmt.Errorf("Invalid sharpen arguments: %v", args)
+	}
+
+	if s, err := strconv.ParseFloat(args[0], 32); err == nil || s >= 0 {
+		po.Sharpen = float32(s)
+	} else {
+		return fmt.Errorf("Invalid sharpen: %s", args[0])
+	}
+
+	return nil
+}
+
 func applyFormatOption(po *processingOptions, imgType imageType) error {
 	if !vipsTypeSupportSave[imgType] {
 		return errors.New("Resulting image type not supported")
@@ -248,6 +276,14 @@ func applyProcessingOption(po *processingOptions, name string, args []string) er
 		}
 	case "gravity":
 		if err := applyGravityOption(po, args); err != nil {
+			return err
+		}
+	case "blur":
+		if err := applyBlurOption(po, args); err != nil {
+			return err
+		}
+	case "sharpen":
+		if err := applySharpenOption(po, args); err != nil {
 			return err
 		}
 	}

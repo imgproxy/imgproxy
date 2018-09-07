@@ -181,6 +181,16 @@ vips_smartcrop_go(VipsImage *in, VipsImage **out, int width, int height) {
 }
 
 int
+vips_gaussblur_go(VipsImage *in, VipsImage **out, double sigma) {
+  return vips_gaussblur(in, out, sigma, NULL);
+}
+
+int
+vips_sharpen_go(VipsImage *in, VipsImage **out, double sigma) {
+  return vips_sharpen(in, out, "sigma", sigma, NULL);
+}
+
+int
 vips_extract_area_go(VipsImage *in, VipsImage **out, int left, int top, int width, int height) {
   return vips_extract_area(in, out, left, top, width, height, NULL);
 }

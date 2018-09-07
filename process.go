@@ -304,6 +304,20 @@ func processImage(data []byte, imgtype imageType, po processingOptions, t *timer
 		t.Check()
 	}
 
+	if po.Blur > 0 {
+		if err = vipsBlur(&img, po.Blur); err != nil {
+			return nil, err
+		}
+	}
+
+	if po.Sharpen > 0 {
+		if err = vipsSharpen(&img, po.Sharpen); err != nil {
+			return nil, err
+		}
+	}
+
+	t.Check()
+
 	return vipsSaveImage(img, po.Format)
 }
 
@@ -419,6 +433,28 @@ func vipsSmartCrop(img **C.struct__VipsImage, width, height int) error {
 	var tmp *C.struct__VipsImage
 
 	if C.vips_smartcrop_go(*img, &tmp, C.int(width), C.int(height)) != 0 {
+		return vipsError()
+	}
+
+	C.swap_and_clear(img, tmp)
+	return nil
+}
+
+func vipsBlur(img **C.struct__VipsImage, sigma float32) error {
+	var tmp *C.struct__VipsImage
+
+	if C.vips_gaussblur_go(*img, &tmp, C.double(sigma)) != 0 {
+		return vipsError()
+	}
+
+	C.swap_and_clear(img, tmp)
+	return nil
+}
+
+func vipsSharpen(img **C.struct__VipsImage, sigma float32) error {
+	var tmp *C.struct__VipsImage
+
+	if C.vips_sharpen_go(*img, &tmp, C.double(sigma)) != 0 {
 		return vipsError()
 	}
 
