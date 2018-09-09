@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <vips/vips.h>
 #include <vips/vips7compat.h>
-#include <image_types.h>
+#include "image_types.h"
 
 #define VIPS_SUPPORT_SMARTCROP \
   (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 5))
