@@ -8,17 +8,25 @@ go:
   - tip
 
 env:
-  - VIPS_VERSION=8.4.6
-  - VIPS_VERSION=8.5.8
+  - VIPS_VERSION=8.3
+  - VIPS_VERSION=8.4
+  - VIPS_VERSION=8.5
+  - VIPS_VERSION=8.6
+  - VIPS_VERSION=master
+
+matrix:
+  allow_failures:
+    - env: VIPS_VERSION=master
 
 cache: apt
 
 install:
   - sudo apt-get -qq update
-  - sudo apt-get install -y build-essential libxml2-dev libfftw3-dev gobject-introspection libglib2.0-dev libwebp-dev libgif-dev
-  - wget https://github.com/jcupitt/libvips/releases/download/v$VIPS_VERSION/vips-$VIPS_VERSION.tar.gz
-  - tar -xzvf vips-$VIPS_VERSION.tar.gz
-  - pushd vips-$VIPS_VERSION
+  - sudo apt-get install -y build-essential libxml2-dev libfftw3-dev gobject-introspection libglib2.0-dev libwebp-dev libgif-dev gtk-doc-tools
+  - wget https://github.com/jcupitt/libvips/archive/$VIPS_VERSION.zip
+  - unzip $VIPS_VERSION.zip
+  - pushd libvips-$VIPS_VERSION
+  - test -f autogen.sh && ./autogen.sh || ./bootstrap.sh
   - >
     ./configure
     --prefix=/usr
