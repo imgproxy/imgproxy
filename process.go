@@ -248,7 +248,7 @@ func calcCrop(width, height int, po processingOptions) (left, top int) {
 
 func processImage(data []byte, imgtype imageType, po processingOptions, t *timer) ([]byte, error) {
 	defer C.vips_cleanup()
-	defer keepAlive(data)
+	defer runtime.KeepAlive(data)
 
 	if po.Gravity == SMART && !vipsSupportSmartcrop {
 		return nil, errors.New("Smart crop is not supported by used version of libvips")

@@ -3,11 +3,13 @@ package main
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"crypto/subtle"
 	"encoding/base64"
 	"errors"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -15,6 +17,7 @@ import (
 	"time"
 
 	nanoid "github.com/matoous/go-nanoid"
+	"golang.org/x/net/netutil"
 )
 
 var mimes = map[imageType]string{
@@ -29,6 +32,35 @@ type httpHandler struct {
 
 func newHTTPHandler() *httpHandler {
 	return &httpHandler{make(chan struct{}, conf.Concurrency)}
+}
+
+func startServer() *http.Server {
+	l, err := net.Listen("tcp", conf.Bind)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	s := &http.Server{
+		Handler:        newHTTPHandler(),
+		ReadTimeout:    time.Duration(conf.ReadTimeout) * time.Second,
+		MaxHeaderBytes: 1 << 20,
+	}
+
+	go func() {
+		log.Printf("Starting server at %s\n", conf.Bind)
+		log.Fatal(s.Serve(netutil.LimitListener(l, conf.MaxClients)))
+	}()
+
+	return s
+}
+
+func shutdownServer(s *http.Server) {
+	log.Println("Shutting down the server...")
+
+	ctx, close := context.WithTimeout(context.Background(), 5*time.Second)
+	defer close()
+
+	s.Shutdown(ctx)
 }
 
 func parsePath(r *http.Request) (string, processingOptions, error) {
