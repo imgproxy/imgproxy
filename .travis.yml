@@ -10,7 +10,7 @@ env:
   - VIPS_VERSION=8.5.8
 install:
   - sudo apt-get -qq update
-  - sudo apt-get install -y build-essential libxml2-dev libfftw3-dev libmagickwand-dev libopenexr-dev liborc-0.4-0 gobject-introspection libgsf-1-dev libglib2.0-dev liborc-0.4-dev
+  - sudo apt-get install -y build-essential libxml2-dev libfftw3-dev gobject-introspection libglib2.0-dev libwebp-dev libgif-dev
   - wget https://github.com/jcupitt/libvips/releases/download/v$VIPS_VERSION/vips-$VIPS_VERSION.tar.gz
   - tar -xzvf vips-$VIPS_VERSION.tar.gz
   - pushd vips-$VIPS_VERSION && ./configure --prefix=/usr && make && sudo make install && popd
