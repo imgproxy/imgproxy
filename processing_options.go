@@ -87,6 +87,33 @@ type processingOptions struct {
 	Sharpen float32
 }
 
+func (it imageType) String() string {
+	for k, v := range imageTypes {
+		if v == it {
+			return k
+		}
+	}
+	return ""
+}
+
+func (gt gravityType) String() string {
+	for k, v := range gravityTypes {
+		if v == gt {
+			return k
+		}
+	}
+	return ""
+}
+
+func (rt resizeType) String() string {
+	for k, v := range resizeTypes {
+		if v == rt {
+			return k
+		}
+	}
+	return ""
+}
+
 func decodeURL(parts []string) (string, imageType, error) {
 	var imgType imageType = imageTypeJPEG
 
