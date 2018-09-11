@@ -44,6 +44,7 @@ const (
 	gravitySouth
 	gravityWest
 	gravitySmart
+	gravityFocusPoint
 )
 
 var gravityTypes = map[string]gravityType{
@@ -53,6 +54,12 @@ var gravityTypes = map[string]gravityType{
 	"so": gravitySouth,
 	"we": gravityWest,
 	"sm": gravitySmart,
+	"fp": gravityFocusPoint,
+}
+
+type gravity struct {
+	Type gravityType
+	X, Y float64
 }
 
 type resizeType int
@@ -73,7 +80,7 @@ type processingOptions struct {
 	Resize  resizeType
 	Width   int
 	Height  int
-	Gravity gravityType
+	Gravity gravity
 	Enlarge bool
 	Format  imageType
 	Blur    float32
@@ -190,14 +197,30 @@ func applyResizeOption(po *processingOptions, args []string) error {
 }
 
 func applyGravityOption(po *processingOptions, args []string) error {
-	if len(args) > 1 {
-		return fmt.Errorf("Invalid resize arguments: %v", args)
-	}
-
 	if g, ok := gravityTypes[args[0]]; ok {
-		po.Gravity = g
+		po.Gravity.Type = g
 	} else {
 		return fmt.Errorf("Invalid gravity: %s", args[0])
+	}
+
+	if po.Gravity.Type == gravityFocusPoint {
+		if len(args) != 3 {
+			return fmt.Errorf("Invalid gravity arguments: %v", args)
+		}
+
+		if x, err := strconv.ParseFloat(args[1], 64); err == nil && x >= 0 && x <= 1 {
+			po.Gravity.X = x
+		} else {
+			return fmt.Errorf("Invalid gravity X: %s", args[1])
+		}
+
+		if y, err := strconv.ParseFloat(args[2], 64); err == nil && y >= 0 && y <= 1 {
+			po.Gravity.Y = y
+		} else {
+			return fmt.Errorf("Invalid gravity Y: %s", args[2])
+		}
+	} else if len(args) > 1 {
+		return fmt.Errorf("Invalid gravity arguments: %v", args)
 	}
 
 	return nil
@@ -333,7 +356,7 @@ func defaultProcessingOptions() (processingOptions, error) {
 		Resize:  resizeFit,
 		Width:   0,
 		Height:  0,
-		Gravity: gravityCenter,
+		Gravity: gravity{Type: gravityCenter},
 		Enlarge: false,
 		Format:  imageTypeJPEG,
 		Blur:    0,

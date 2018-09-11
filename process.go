@@ -91,7 +91,7 @@ func shutdownVips() {
 }
 
 func randomAccessRequired(po processingOptions) int {
-	if po.Gravity == gravitySmart {
+	if po.Gravity.Type == gravitySmart {
 		return 1
 	}
 	return 0
@@ -184,20 +184,28 @@ func calcCrop(width, height int, po processingOptions) (left, top int) {
 	left = (width - po.Width + 1) / 2
 	top = (height - po.Height + 1) / 2
 
-	if po.Gravity == gravityNorth {
+	if po.Gravity.Type == gravityNorth {
 		top = 0
 	}
 
-	if po.Gravity == gravityEast {
+	if po.Gravity.Type == gravityEast {
 		left = width - po.Width
 	}
 
-	if po.Gravity == gravitySouth {
+	if po.Gravity.Type == gravitySouth {
 		top = height - po.Height
 	}
 
-	if po.Gravity == gravityWest {
+	if po.Gravity.Type == gravityWest {
 		left = 0
+	}
+
+	if po.Gravity.Type == gravityFocusPoint {
+		pointX := int(math.Round(float64(width) * po.Gravity.X))
+		pointY := int(math.Round(float64(height) * po.Gravity.Y))
+
+		left = maxInt(0, minInt(pointX-po.Width/2, width-po.Width))
+		top = maxInt(0, minInt(pointY-po.Height/2, height-po.Height))
 	}
 
 	return
@@ -207,7 +215,7 @@ func processImage(data []byte, imgtype imageType, po processingOptions, t *timer
 	defer C.vips_cleanup()
 	defer runtime.KeepAlive(data)
 
-	if po.Gravity == gravitySmart && !vipsSupportSmartcrop {
+	if po.Gravity.Type == gravitySmart && !vipsSupportSmartcrop {
 		return nil, errors.New("Smart crop is not supported by used version of libvips")
 	}
 
@@ -311,7 +319,7 @@ func processImage(data []byte, imgtype imageType, po processingOptions, t *timer
 	}
 
 	if needToCrop(imgWidth, imgHeight, po) {
-		if po.Gravity == gravitySmart {
+		if po.Gravity.Type == gravitySmart {
 			if err = vipsImageCopyMemory(&img); err != nil {
 				return nil, err
 			}
