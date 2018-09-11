@@ -121,6 +121,9 @@ type config struct {
 	Quality         int
 	GZipCompression int
 
+	EnableWebpDetection bool
+	EnforceWebp         bool
+
 	Key  []byte
 	Salt []byte
 
@@ -189,6 +192,9 @@ func init() {
 	boolEnvConfig(&conf.PngInterlaced, "IMGPROXY_PNG_INTERLACED")
 	intEnvConfig(&conf.Quality, "IMGPROXY_QUALITY")
 	intEnvConfig(&conf.GZipCompression, "IMGPROXY_GZIP_COMPRESSION")
+
+	boolEnvConfig(&conf.EnableWebpDetection, "IMGPROXY_ENABLE_WEBP_DETECTION")
+	boolEnvConfig(&conf.EnforceWebp, "IMGPROXY_ENFORCE_WEBP")
 
 	hexEnvConfig(&conf.Key, "IMGPROXY_KEY")
 	hexEnvConfig(&conf.Salt, "IMGPROXY_SALT")

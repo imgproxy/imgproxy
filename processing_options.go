@@ -114,29 +114,25 @@ func (rt resizeType) String() string {
 	return ""
 }
 
-func decodeURL(parts []string) (string, imageType, error) {
-	var imgType imageType = imageTypeJPEG
+func decodeURL(parts []string) (string, string, error) {
+	var extension string
 
 	urlParts := strings.Split(strings.Join(parts, ""), ".")
 
 	if len(urlParts) > 2 {
-		return "", 0, errors.New("Invalid url encoding")
+		return "", "", errors.New("Invalid url encoding")
 	}
 
 	if len(urlParts) == 2 {
-		if f, ok := imageTypes[urlParts[1]]; ok {
-			imgType = f
-		} else {
-			return "", 0, fmt.Errorf("Invalid image format: %s", urlParts[1])
-		}
+		extension = urlParts[1]
 	}
 
 	url, err := base64.RawURLEncoding.DecodeString(urlParts[0])
 	if err != nil {
-		return "", 0, errors.New("Invalid url encoding")
+		return "", "", errors.New("Invalid url encoding")
 	}
 
-	return string(url), imgType, nil
+	return string(url), extension, nil
 }
 
 func applyWidthOption(po *processingOptions, args []string) error {
@@ -297,18 +293,35 @@ func applyPresetOption(po *processingOptions, args []string) error {
 	return nil
 }
 
-func applyFormatOption(po *processingOptions, imgType imageType) error {
-	if !vipsTypeSupportSave[imgType] {
-		return errors.New("Resulting image type not supported")
+func applyFormatOption(po *processingOptions, args []string) error {
+	if len(args) > 1 {
+		return fmt.Errorf("Invalid format arguments: %v", args)
 	}
 
-	po.Format = imgType
+	if conf.EnforceWebp && po.Format == imageTypeWEBP {
+		// Webp is enforced and already set as format
+		return nil
+	}
+
+	if f, ok := imageTypes[args[0]]; ok {
+		po.Format = f
+	} else {
+		return fmt.Errorf("Invalid image format: %s", args[0])
+	}
+
+	if !vipsTypeSupportSave[po.Format] {
+		return errors.New("Resulting image type not supported")
+	}
 
 	return nil
 }
 
 func applyProcessingOption(po *processingOptions, name string, args []string) error {
 	switch name {
+	case "format":
+		if err := applyFormatOption(po, args); err != nil {
+			return err
+		}
 	case "resize":
 		if err := applyResizeOption(po, args); err != nil {
 			return err
@@ -376,7 +389,7 @@ func parseURLOptions(opts []string) (urlOptions, []string) {
 	return parsed, rest
 }
 
-func defaultProcessingOptions() (processingOptions, error) {
+func defaultProcessingOptions(acceptHeader string) (processingOptions, error) {
 	var err error
 
 	po := processingOptions{
@@ -390,6 +403,10 @@ func defaultProcessingOptions() (processingOptions, error) {
 		Sharpen: 0,
 	}
 
+	if (conf.EnableWebpDetection || conf.EnforceWebp) && strings.Contains(acceptHeader, "image/webp") {
+		po.Format = imageTypeWEBP
+	}
+
 	if _, ok := conf.Presets["default"]; ok {
 		err = applyPresetOption(&po, []string{"default"})
 	}
@@ -397,8 +414,8 @@ func defaultProcessingOptions() (processingOptions, error) {
 	return po, err
 }
 
-func parsePathAdvanced(parts []string) (string, processingOptions, error) {
-	po, err := defaultProcessingOptions()
+func parsePathAdvanced(parts []string, acceptHeader string) (string, processingOptions, error) {
+	po, err := defaultProcessingOptions(acceptHeader)
 	if err != nil {
 		return "", po, err
 	}
@@ -411,26 +428,28 @@ func parsePathAdvanced(parts []string) (string, processingOptions, error) {
 		}
 	}
 
-	url, imgType, err := decodeURL(urlParts)
+	url, extension, err := decodeURL(urlParts)
 	if err != nil {
 		return "", po, err
 	}
 
-	if err := applyFormatOption(&po, imgType); err != nil {
-		return "", po, errors.New("Resulting image type not supported")
+	if len(extension) > 0 {
+		if err := applyFormatOption(&po, []string{extension}); err != nil {
+			return "", po, errors.New("Resulting image type not supported")
+		}
 	}
 
 	return string(url), po, nil
 }
 
-func parsePathSimple(parts []string) (string, processingOptions, error) {
+func parsePathSimple(parts []string, acceptHeader string) (string, processingOptions, error) {
 	var err error
 
 	if len(parts) < 6 {
 		return "", processingOptions{}, errors.New("Invalid path")
 	}
 
-	po, err := defaultProcessingOptions()
+	po, err := defaultProcessingOptions(acceptHeader)
 	if err != nil {
 		return "", po, err
 	}
@@ -453,13 +472,15 @@ func parsePathSimple(parts []string) (string, processingOptions, error) {
 		return "", po, err
 	}
 
-	url, imgType, err := decodeURL(parts[5:])
+	url, extension, err := decodeURL(parts[5:])
 	if err != nil {
 		return "", po, err
 	}
 
-	if err := applyFormatOption(&po, imgType); err != nil {
-		return "", po, errors.New("Resulting image type not supported")
+	if len(extension) > 0 {
+		if err := applyFormatOption(&po, []string{extension}); err != nil {
+			return "", po, errors.New("Resulting image type not supported")
+		}
 	}
 
 	return string(url), po, nil
@@ -468,6 +489,11 @@ func parsePathSimple(parts []string) (string, processingOptions, error) {
 func parsePath(r *http.Request) (string, processingOptions, error) {
 	path := r.URL.Path
 	parts := strings.Split(strings.TrimPrefix(path, "/"), "/")
+
+	var acceptHeader string
+	if h, ok := r.Header["Accept"]; ok {
+		acceptHeader = h[0]
+	}
 
 	if len(parts) < 3 {
 		return "", processingOptions{}, errors.New("Invalid path")
@@ -480,8 +506,8 @@ func parsePath(r *http.Request) (string, processingOptions, error) {
 	}
 
 	if _, ok := resizeTypes[parts[1]]; ok {
-		return parsePathSimple(parts[1:])
+		return parsePathSimple(parts[1:], acceptHeader)
 	} else {
-		return parsePathAdvanced(parts[1:])
+		return parsePathAdvanced(parts[1:], acceptHeader)
 	}
 }
