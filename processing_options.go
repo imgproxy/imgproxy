@@ -80,19 +80,6 @@ type processingOptions struct {
 	Sharpen float32
 }
 
-func defaultProcessingOptions() processingOptions {
-	return processingOptions{
-		Resize:  resizeFit,
-		Width:   0,
-		Height:  0,
-		Gravity: gravityCenter,
-		Enlarge: false,
-		Format:  imageTypeJPEG,
-		Blur:    0,
-		Sharpen: 0,
-	}
-}
-
 func decodeURL(parts []string) (string, imageType, error) {
 	var imgType imageType = imageTypeJPEG
 
@@ -339,8 +326,32 @@ func parseURLOptions(opts []string) (urlOptions, []string) {
 	return parsed, rest
 }
 
+func defaultProcessingOptions() (processingOptions, error) {
+	var err error
+
+	po := processingOptions{
+		Resize:  resizeFit,
+		Width:   0,
+		Height:  0,
+		Gravity: gravityCenter,
+		Enlarge: false,
+		Format:  imageTypeJPEG,
+		Blur:    0,
+		Sharpen: 0,
+	}
+
+	if _, ok := conf.Presets["default"]; ok {
+		err = applyPresetOption(&po, []string{"default"})
+	}
+
+	return po, err
+}
+
 func parsePathAdvanced(parts []string) (string, processingOptions, error) {
-	po := defaultProcessingOptions()
+	po, err := defaultProcessingOptions()
+	if err != nil {
+		return "", po, err
+	}
 
 	options, urlParts := parseURLOptions(parts)
 
@@ -363,11 +374,15 @@ func parsePathAdvanced(parts []string) (string, processingOptions, error) {
 }
 
 func parsePathSimple(parts []string) (string, processingOptions, error) {
-	var po processingOptions
 	var err error
 
 	if len(parts) < 6 {
-		return "", po, errors.New("Invalid path")
+		return "", processingOptions{}, errors.New("Invalid path")
+	}
+
+	po, err := defaultProcessingOptions()
+	if err != nil {
+		return "", po, err
 	}
 
 	po.Resize = resizeTypes[parts[0]]
