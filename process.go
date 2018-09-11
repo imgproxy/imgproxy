@@ -201,8 +201,8 @@ func calcCrop(width, height int, po processingOptions) (left, top int) {
 	}
 
 	if po.Gravity.Type == gravityFocusPoint {
-		pointX := int(math.Round(float64(width) * po.Gravity.X))
-		pointY := int(math.Round(float64(height) * po.Gravity.Y))
+		pointX := int(float64(width) * po.Gravity.X)
+		pointY := int(float64(height) * po.Gravity.Y)
 
 		left = maxInt(0, minInt(pointX-po.Width/2, width-po.Width))
 		top = maxInt(0, minInt(pointY-po.Height/2, height-po.Height))
