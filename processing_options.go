@@ -280,10 +280,8 @@ func applySharpenOption(po *processingOptions, args []string) error {
 func applyPresetOption(po *processingOptions, args []string) error {
 	for _, preset := range args {
 		if p, ok := conf.Presets[preset]; ok {
-			for name, pargs := range p {
-				if err := applyProcessingOption(po, name, pargs); err != nil {
-					return err
-				}
+			if err := applyProcessingOptions(po, p); err != nil {
+				return err
 			}
 		} else {
 			return fmt.Errorf("Unknown asset: %s", preset)
@@ -358,6 +356,18 @@ func applyProcessingOption(po *processingOptions, name string, args []string) er
 		if err := applyPresetOption(po, args); err != nil {
 			return err
 		}
+	default:
+		return fmt.Errorf("Unknown processing option: %s", name)
+	}
+
+	return nil
+}
+
+func applyProcessingOptions(po *processingOptions, options urlOptions) error {
+	for name, args := range options {
+		if err := applyProcessingOption(po, name, args); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -422,10 +432,8 @@ func parsePathAdvanced(parts []string, acceptHeader string) (string, processingO
 
 	options, urlParts := parseURLOptions(parts)
 
-	for name, args := range options {
-		if err := applyProcessingOption(&po, name, args); err != nil {
-			return "", po, err
-		}
+	if err := applyProcessingOptions(&po, options); err != nil {
+		return "", po, err
 	}
 
 	url, extension, err := decodeURL(urlParts)

@@ -75,7 +75,7 @@ func hexFileConfig(b *[]byte, filepath string) {
 	*b = dst[:n]
 }
 
-func presetEnvConfig(p *presets, name string) {
+func presetEnvConfig(p presets, name string) {
 	if env := os.Getenv(name); len(env) > 0 {
 		presetStrings := strings.Split(env, ",")
 
@@ -85,7 +85,7 @@ func presetEnvConfig(p *presets, name string) {
 	}
 }
 
-func presetFileConfig(p *presets, filepath string) {
+func presetFileConfig(p presets, filepath string) {
 	if len(filepath) == 0 {
 		return
 	}
@@ -98,6 +98,10 @@ func presetFileConfig(p *presets, filepath string) {
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
 		parsePreset(p, scanner.Text())
+	}
+
+	if err := scanner.Err(); err != nil {
+		log.Fatalf("Failed to read presets file: %s", err)
 	}
 }
 
@@ -215,8 +219,8 @@ func init() {
 	strEnvConfig(&conf.BaseURL, "IMGPROXY_BASE_URL")
 
 	conf.Presets = make(presets)
-	presetEnvConfig(&conf.Presets, "IMGPROXY_PRESETS")
-	presetFileConfig(&conf.Presets, *presetsPath)
+	presetEnvConfig(conf.Presets, "IMGPROXY_PRESETS")
+	presetFileConfig(conf.Presets, *presetsPath)
 
 	if len(conf.Key) == 0 {
 		log.Fatalln("Key is not defined")
@@ -294,6 +298,8 @@ func init() {
 			log.Print("Exposing root via IMGPROXY_LOCAL_FILESYSTEM_ROOT is unsafe")
 		}
 	}
+
+	checkPresets(conf.Presets)
 
 	initVips()
 	initDownloading()
