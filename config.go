@@ -118,8 +118,6 @@ type config struct {
 	MaxSrcDimension  int
 	MaxSrcResolution int
 
-	AllowInsecure bool
-
 	JpegProgressive bool
 	PngInterlaced   bool
 	Quality         int
@@ -128,8 +126,9 @@ type config struct {
 	EnableWebpDetection bool
 	EnforceWebp         bool
 
-	Key  []byte
-	Salt []byte
+	Key           []byte
+	Salt          []byte
+	AllowInsecure bool
 
 	Secret string
 
@@ -190,8 +189,6 @@ func init() {
 	intEnvConfig(&conf.MaxSrcDimension, "IMGPROXY_MAX_SRC_DIMENSION")
 	megaIntEnvConfig(&conf.MaxSrcResolution, "IMGPROXY_MAX_SRC_RESOLUTION")
 
-	boolEnvConfig(&conf.AllowInsecure, "IMGPROXY_ALLOW_INSECURE")
-
 	boolEnvConfig(&conf.JpegProgressive, "IMGPROXY_JPEG_PROGRESSIVE")
 	boolEnvConfig(&conf.PngInterlaced, "IMGPROXY_PNG_INTERLACED")
 	intEnvConfig(&conf.Quality, "IMGPROXY_QUALITY")
@@ -223,10 +220,12 @@ func init() {
 	presetFileConfig(conf.Presets, *presetsPath)
 
 	if len(conf.Key) == 0 {
-		log.Fatalln("Key is not defined")
+		warning("Key is not defined, so signature checking is disabled")
+		conf.AllowInsecure = true
 	}
 	if len(conf.Salt) == 0 {
-		log.Fatalln("Salt is not defined")
+		warning("Salt is not defined, so signature checking is disabled")
+		conf.AllowInsecure = true
 	}
 
 	if len(conf.Bind) == 0 {
@@ -263,10 +262,6 @@ func init() {
 
 	if conf.MaxSrcResolution <= 0 {
 		log.Fatalf("Max src resolution should be greater than 0, now - %d\n", conf.MaxSrcResolution)
-	}
-
-	if conf.AllowInsecure {
-		warning("Token validation is disabled. Hope you know what you're doing")
 	}
 
 	if conf.Quality <= 0 {
