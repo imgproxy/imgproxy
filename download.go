@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"image"
@@ -59,9 +60,15 @@ func initDownloading() {
 	transport := &http.Transport{
 		Proxy: http.ProxyFromEnvironment,
 	}
+
+	if conf.IgnoreSslVerification {
+		transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	}
+
 	if conf.LocalFileSystemRoot != "" {
 		transport.RegisterProtocol("local", http.NewFileTransport(http.Dir(conf.LocalFileSystemRoot)))
 	}
+
 	downloadClient = &http.Client{
 		Timeout:   time.Duration(conf.DownloadTimeout) * time.Second,
 		Transport: transport,

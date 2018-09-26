@@ -98,6 +98,8 @@ type config struct {
 
 	AllowOrigin string
 
+	IgnoreSslVerification bool
+
 	LocalFileSystemRoot string
 
 	ETagEnabled bool
@@ -106,17 +108,18 @@ type config struct {
 }
 
 var conf = config{
-	Bind:             ":8080",
-	ReadTimeout:      10,
-	WriteTimeout:     10,
-	DownloadTimeout:  5,
-	Concurrency:      runtime.NumCPU() * 2,
-	TTL:              3600,
-	MaxSrcDimension:  8192,
-	MaxSrcResolution: 16800000,
-	Quality:          80,
-	GZipCompression:  5,
-	ETagEnabled:      false,
+	Bind:                  ":8080",
+	ReadTimeout:           10,
+	WriteTimeout:          10,
+	DownloadTimeout:       5,
+	Concurrency:           runtime.NumCPU() * 2,
+	TTL:                   3600,
+	IgnoreSslVerification: false,
+	MaxSrcDimension:       8192,
+	MaxSrcResolution:      16800000,
+	Quality:               80,
+	GZipCompression:       5,
+	ETagEnabled:           false,
 }
 
 func init() {
@@ -160,6 +163,8 @@ func init() {
 	strEnvConfig(&conf.Secret, "IMGPROXY_SECRET")
 
 	strEnvConfig(&conf.AllowOrigin, "IMGPROXY_ALLOW_ORIGIN")
+
+	boolEnvConfig(&conf.IgnoreSslVerification, "IMGPROXY_IGNORE_SSL_VERIFICATION")
 
 	strEnvConfig(&conf.LocalFileSystemRoot, "IMGPROXY_LOCAL_FILESYSTEM_ROOT")
 
@@ -220,6 +225,10 @@ func init() {
 		log.Fatalf("GZip compression should be greater than or quual to 0, now - %d\n", conf.GZipCompression)
 	} else if conf.GZipCompression > 9 {
 		log.Fatalf("GZip compression can't be greater than 9, now - %d\n", conf.GZipCompression)
+	}
+
+	if conf.IgnoreSslVerification {
+		log.Println("Ignoring SSL verification is very unsafe. Hope you know what you're doing")
 	}
 
 	if conf.LocalFileSystemRoot != "" {
