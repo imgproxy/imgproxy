@@ -235,8 +235,8 @@ imgproxy can process files from your local filesystem. To use this feature do th
 imgproxy can process files from S3 buckets. To use this feature do the following:
 
 1. Set `IMGPROXY_USE_S3` to `true`.
-2. Ensure you pass `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` as environment variables (or any other auth mechanism supported by aws-sdk-go). The credentials need to be able to read from any of the `BUCKET_NAME` given in the source URLs (see below).
-3. Use `s3://{BUCKET_NAME}/{OBJECT_KEY}` as the source image url
+2. Ensure you pass `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` as environment variables. Other authentication mechanisms supported by the AWS sdk (environment, session, or instance role credentials) are also supported. The credentials need to be able to read from any of the `bucket_name` variables given in the source URLs (see below).
+3. Use `s3://%bucket_name/%object_key` as the source image url
 
 ## Source image formats support
 
