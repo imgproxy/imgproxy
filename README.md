@@ -152,13 +152,20 @@ $ xxd -g 2 -l 64 -p /dev/random | tr -d '\n'
 
 imgproxy protects you from so-called image bombs. Here is how you can specify maximum image dimensions and resolution which you consider reasonable:
 
-* `IMGPROXY_ALLOW_ORIGIN` - when set, enables CORS headers with provided origin. CORS headers are disabled by default.
 * `IMGPROXY_MAX_SRC_DIMENSION` — the maximum dimensions of the source image, in pixels, for both width and height. Images with larger real size will be rejected. Default: `8192`;
 * `IMGPROXY_MAX_SRC_RESOLUTION` — the maximum resolution of the source image, in megapixels. Images with larger real size will be rejected. Default: `16.8`;
 
 You can also specify a secret to enable authorization with the HTTP `Authorization` header:
 
 * `IMGPROXY_SECRET` — the authorization token. If specified, request should contain the `Authorization: Bearer %secret%` header;
+
+imgproxy doesn't send CORS headers by default. To enable CORS headers, specify allowed origin:
+
+* `IMGPROXY_ALLOW_ORIGIN` - when set, enables CORS headers with provided origin. CORS headers are disabled by default.
+
+When you use imgproxy in development, it would be useful to ignore SSL verification:
+
+* `IMGPROXY_IGNORE_SSL_VERIFICATION` - when true, disables SSL verification, so imgproxy can be used in development with self-signed SSL certificates.
 
 #### Compression
 
