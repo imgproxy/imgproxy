@@ -98,8 +98,10 @@ func initVips() {
 		log.Fatalln("unable to start vips!")
 	}
 
-	C.vips_cache_set_max_mem(100 * 1024 * 1024) // 100Mb
-	C.vips_cache_set_max(500)
+	// Disable libvips cache. Since processing pipeline is fine tuned, we won't get much profit from it.
+	// Enabled cache can cause SIGSEGV on Musl-based systems like Alpine.
+	C.vips_cache_set_max_mem(0)
+	C.vips_cache_set_max(0)
 
 	if len(os.Getenv("IMGPROXY_VIPS_LEAK_CHECK")) > 0 {
 		C.vips_leak_set(C.gboolean(1))
