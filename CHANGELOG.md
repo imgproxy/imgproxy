@@ -1,3 +1,11 @@
+## v1.1.8
+
+- Disabled libvips cache to prevent SIGSEGV on Alpine
+
+## v1.1.7
+
+- Improved ETag generation
+
 ## v1.1.6
 
 - Added progressive JPEG and interlaced PNG support
