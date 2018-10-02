@@ -277,7 +277,7 @@ func init() {
 	}
 
 	if conf.IgnoreSslVerification {
-		log.Println("Ignoring SSL verification is very unsafe. Hope you know what you're doing")
+		warning("Ignoring SSL verification is very unsafe")
 	}
 
 	if conf.LocalFileSystemRoot != "" {
