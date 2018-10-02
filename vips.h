@@ -191,6 +191,14 @@ vips_sharpen_go(VipsImage *in, VipsImage **out, double sigma) {
 }
 
 int
+vips_flatten_go(VipsImage *in, VipsImage **out, double r, double g, double b) {
+  VipsArrayDouble *bg = vips_array_double_newv(3, r, g, b);
+  int res = vips_flatten(in, out, "background", bg, NULL);
+  vips_area_unref((VipsArea *)bg);
+  return res;
+}
+
+int
 vips_extract_area_go(VipsImage *in, VipsImage **out, int left, int top, int width, int height) {
   return vips_extract_area(in, out, left, top, width, height, NULL);
 }

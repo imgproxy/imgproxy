@@ -76,15 +76,19 @@ var resizeTypes = map[string]resizeType{
 	"crop": resizeCrop,
 }
 
+type color struct{ R, G, B uint8 }
+
 type processingOptions struct {
-	Resize  resizeType
-	Width   int
-	Height  int
-	Gravity gravity
-	Enlarge bool
-	Format  imageType
-	Blur    float32
-	Sharpen float32
+	Resize     resizeType
+	Width      int
+	Height     int
+	Gravity    gravity
+	Enlarge    bool
+	Format     imageType
+	Flatten    bool
+	Background color
+	Blur       float32
+	Sharpen    float32
 }
 
 func (it imageType) String() string {
@@ -249,6 +253,34 @@ func applyGravityOption(po *processingOptions, args []string) error {
 	return nil
 }
 
+func applyBackgroundOption(po *processingOptions, args []string) error {
+	if len(args) != 3 {
+		return fmt.Errorf("Invalid background arguments: %v", args)
+	}
+
+	if r, err := strconv.ParseUint(args[0], 10, 8); err == nil && r >= 0 && r <= 255 {
+		po.Background.R = uint8(r)
+	} else {
+		return fmt.Errorf("Invalid background red channel: %s", args[1])
+	}
+
+	if g, err := strconv.ParseUint(args[1], 10, 8); err == nil && g >= 0 && g <= 255 {
+		po.Background.G = uint8(g)
+	} else {
+		return fmt.Errorf("Invalid background green channel: %s", args[1])
+	}
+
+	if b, err := strconv.ParseUint(args[2], 10, 8); err == nil && b >= 0 && b <= 255 {
+		po.Background.B = uint8(b)
+	} else {
+		return fmt.Errorf("Invalid background blue channel: %s", args[2])
+	}
+
+	po.Flatten = true
+
+	return nil
+}
+
 func applyBlurOption(po *processingOptions, args []string) error {
 	if len(args) > 1 {
 		return fmt.Errorf("Invalid blur arguments: %v", args)
@@ -342,6 +374,10 @@ func applyProcessingOption(po *processingOptions, name string, args []string) er
 		}
 	case "gravity":
 		if err := applyGravityOption(po, args); err != nil {
+			return err
+		}
+	case "background":
+		if err := applyBackgroundOption(po, args); err != nil {
 			return err
 		}
 	case "blur":

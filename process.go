@@ -239,6 +239,8 @@ func processImage(data []byte, imgtype imageType, po processingOptions, t *timer
 		}
 	}
 
+	hasAlpha := vipsImageHasAlpha(img)
+
 	if needToScale(imgWidth, imgHeight, po) {
 		scale := calcScale(imgWidth, imgHeight, po)
 
@@ -259,7 +261,7 @@ func processImage(data []byte, imgtype imageType, po processingOptions, t *timer
 		premultiplied := false
 		var bandFormat C.VipsBandFormat
 
-		if vipsImageHasAlpha(img) {
+		if hasAlpha {
 			if bandFormat, err = vipsPremultiply(&img); err != nil {
 				return nil, err
 			}
@@ -334,6 +336,12 @@ func processImage(data []byte, imgtype imageType, po processingOptions, t *timer
 		}
 
 		t.Check()
+	}
+
+	if hasAlpha && po.Flatten {
+		if err = vipsFlatten(&img, po.Background); err != nil {
+			return nil, err
+		}
 	}
 
 	if po.Blur > 0 {
@@ -469,6 +477,17 @@ func vipsSmartCrop(img **C.struct__VipsImage, width, height int) error {
 	}
 
 	C.swap_and_clear(img, tmp)
+	return nil
+}
+
+func vipsFlatten(img **C.struct__VipsImage, bg color) error {
+	var tmp *C.struct__VipsImage
+
+	if C.vips_flatten_go(*img, &tmp, C.double(bg.R), C.double(bg.G), C.double(bg.B)) != 0 {
+		return vipsError()
+	}
+	C.swap_and_clear(img, tmp)
+
 	return nil
 }
 
