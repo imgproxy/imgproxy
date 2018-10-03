@@ -7,13 +7,13 @@
   "env": {
     "IMGPROXY_KEY": {
       "description": "Hex-encoded secret key for signing URLs.",
-      "value": "c84285e0bec255fe163410fcedfe61e256f04a7f93ee25470c4ffd1fdc2aa964",
-      "required": true
+      "value": "",
+      "required": false
     },
     "IMGPROXY_SALT": {
       "description": "Hex-encoded secret salt for signing URLs.",
-      "value": "83237eac0f5bb1cfa98d54b00c7057820843b8f0ca390edc7f6b99138cb14937",
-      "required": true
+      "value": "",
+      "required": false
     }
   },
   "image": "darthsim/imgproxy"
