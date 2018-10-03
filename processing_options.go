@@ -182,19 +182,19 @@ func applySizeOption(po *processingOptions, args []string) (err error) {
 		return fmt.Errorf("Invalid size arguments: %v", args)
 	}
 
-	if len(args) >= 1 {
+	if len(args) >= 1 && len(args[0]) > 0 {
 		if err = applyWidthOption(po, args[0:1]); err != nil {
 			return
 		}
 	}
 
-	if len(args) >= 2 {
+	if len(args) >= 2 && len(args[1]) > 0 {
 		if err = applyHeightOption(po, args[1:2]); err != nil {
 			return
 		}
 	}
 
-	if len(args) == 3 {
+	if len(args) == 3 && len(args[2]) > 0 {
 		if err = applyEnlargeOption(po, args[2:3]); err != nil {
 			return
 		}
