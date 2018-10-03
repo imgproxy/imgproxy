@@ -248,7 +248,6 @@ func processImage(data []byte, imgtype imageType, po processingOptions, t *timer
 		if scale < 1.0 {
 			if shrink := calcShink(scale, imgtype); shrink != 1 {
 				scale = scale * float64(shrink)
-				log.Printf("Scale: %f, Shrink: %d", scale, shrink)
 
 				if tmp, e := vipsLoadImage(data, imgtype, shrink); e == nil {
 					C.swap_and_clear(&img, tmp)
