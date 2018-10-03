@@ -203,15 +203,29 @@ func applySizeOption(po *processingOptions, args []string) (err error) {
 	return nil
 }
 
-func applyResizeOption(po *processingOptions, args []string) error {
-	if len(args) > 4 {
-		return fmt.Errorf("Invalid resize arguments: %v", args)
+func applyResizingTypeOption(po *processingOptions, args []string) error {
+	if len(args) > 1 {
+		return fmt.Errorf("Invalid resizing type arguments: %v", args)
 	}
 
 	if r, ok := resizeTypes[args[0]]; ok {
 		po.Resize = r
 	} else {
 		return fmt.Errorf("Invalid resize type: %s", args[0])
+	}
+
+	return nil
+}
+
+func applyResizeOption(po *processingOptions, args []string) error {
+	if len(args) > 4 {
+		return fmt.Errorf("Invalid resize arguments: %v", args)
+	}
+
+	if len(args[0]) > 0 {
+		if err := applyResizingTypeOption(po, args[0:1]); err != nil {
+			return err
+		}
 	}
 
 	if len(args) > 1 {
@@ -354,6 +368,10 @@ func applyProcessingOption(po *processingOptions, name string, args []string) er
 		}
 	case "resize":
 		if err := applyResizeOption(po, args); err != nil {
+			return err
+		}
+	case "resizing_type":
+		if err := applyResizingTypeOption(po, args); err != nil {
 			return err
 		}
 	case "size":
