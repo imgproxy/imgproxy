@@ -362,51 +362,51 @@ func applyFormatOption(po *processingOptions, args []string) error {
 
 func applyProcessingOption(po *processingOptions, name string, args []string) error {
 	switch name {
-	case "format":
+	case "format", "f", "ext":
 		if err := applyFormatOption(po, args); err != nil {
 			return err
 		}
-	case "resize":
+	case "resize", "rs":
 		if err := applyResizeOption(po, args); err != nil {
 			return err
 		}
-	case "resizing_type":
+	case "resizing_type", "rt":
 		if err := applyResizingTypeOption(po, args); err != nil {
 			return err
 		}
-	case "size":
+	case "size", "s":
 		if err := applySizeOption(po, args); err != nil {
 			return err
 		}
-	case "width":
+	case "width", "w":
 		if err := applyWidthOption(po, args); err != nil {
 			return err
 		}
-	case "height":
+	case "height", "h":
 		if err := applyHeightOption(po, args); err != nil {
 			return err
 		}
-	case "enlarge":
+	case "enlarge", "el":
 		if err := applyEnlargeOption(po, args); err != nil {
 			return err
 		}
-	case "gravity":
+	case "gravity", "g":
 		if err := applyGravityOption(po, args); err != nil {
 			return err
 		}
-	case "background":
+	case "background", "bg":
 		if err := applyBackgroundOption(po, args); err != nil {
 			return err
 		}
-	case "blur":
+	case "blur", "bl":
 		if err := applyBlurOption(po, args); err != nil {
 			return err
 		}
-	case "sharpen":
+	case "sharpen", "sh":
 		if err := applySharpenOption(po, args); err != nil {
 			return err
 		}
-	case "preset":
+	case "preset", "pr":
 		if err := applyPresetOption(po, args); err != nil {
 			return err
 		}
