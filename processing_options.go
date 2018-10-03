@@ -508,7 +508,7 @@ func parsePathSimple(parts []string, acceptHeader string) (string, processingOpt
 		return "", po, err
 	}
 
-	if err = applyGravityOption(&po, parts[3:4]); err != nil {
+	if err = applyGravityOption(&po, strings.Split(parts[3], ":")); err != nil {
 		return "", po, err
 	}
 
@@ -551,7 +551,7 @@ func parsePath(r *http.Request) (string, processingOptions, error) {
 
 	if _, ok := resizeTypes[parts[1]]; ok {
 		return parsePathSimple(parts[1:], acceptHeader)
-	} else {
-		return parsePathAdvanced(parts[1:], acceptHeader)
 	}
+
+	return parsePathAdvanced(parts[1:], acceptHeader)
 }
