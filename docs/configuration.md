@@ -30,7 +30,7 @@ $ echo $(xxd -g 2 -l 64 -p /dev/random | tr -d '\n')
 * `IMGPROXY_CONCURRENCY` — the maximum number of image requests to be processed simultaneously. Default: double number of CPU cores;
 * `IMGPROXY_MAX_CLIENTS` — the maximum number of simultaneous active connections. Default: `IMGPROXY_CONCURRENCY * 10`;
 * `IMGPROXY_TTL` — duration in seconds sent in `Expires` and `Cache-Control: max-age` headers. Default: `3600` (1 hour);
-* `IMGPROXY_USE_ETAG` — when true, enables using [ETag](https://en.wikipedia.org/wiki/HTTP_ETag) header for the cache control. Default: false;
+* `IMGPROXY_USE_ETAG` — when `true`, enables using [ETag](https://en.wikipedia.org/wiki/HTTP_ETag) header for the cache control. Default: false;
 
 ### Security
 
@@ -103,6 +103,14 @@ imgproxy can serve your local images, but this feature is disabled by default. T
 * `IMGPROXY_LOCAL_FILESYSTEM_ROOT` — the root of the local filesystem. Keep empty to disable serving of local files.
 
 Check out [Serving local files](../docs/serving_local_files.md) guide to get more info.
+
+### Serving files from Amazon S3
+
+imgproxy can process files from Amazon S3 buckets, but this feature is disabled by default. To enable it, set `IMGPROXY_USE_S3` as `true`:
+
+* `IMGPROXY_USE_S3` — when `true`, enables fetching the images from Amazon S3 buckets. Default: false.
+
+Check out [Serving files from S3](../docs/serving_files_from_s3.md) guide to get more info.
 
 ### Miscellaneous
 

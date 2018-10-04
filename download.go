@@ -69,6 +69,10 @@ func initDownloading() {
 		transport.RegisterProtocol("local", http.NewFileTransport(http.Dir(conf.LocalFileSystemRoot)))
 	}
 
+	if conf.S3Enabled {
+		transport.RegisterProtocol("s3", newS3Transport())
+	}
+
 	downloadClient = &http.Client{
 		Timeout:   time.Duration(conf.DownloadTimeout) * time.Second,
 		Transport: transport,
