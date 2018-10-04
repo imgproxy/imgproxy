@@ -79,16 +79,17 @@ var resizeTypes = map[string]resizeType{
 type color struct{ R, G, B uint8 }
 
 type processingOptions struct {
-	Resize     resizeType
-	Width      int
-	Height     int
-	Gravity    gravity
-	Enlarge    bool
-	Format     imageType
-	Flatten    bool
-	Background color
-	Blur       float32
-	Sharpen    float32
+	Resize      resizeType
+	Width       int
+	Height      int
+	Gravity     gravity
+	Enlarge     bool
+	Format      imageType
+	Flatten     bool
+	Background  color
+	Blur        float32
+	Sharpen     float32
+	UsedPresets []string
 }
 
 func (it imageType) String() string {
@@ -116,6 +117,19 @@ func (rt resizeType) String() string {
 		}
 	}
 	return ""
+}
+
+func (po *processingOptions) isPresetUsed(name string) bool {
+	for _, usedName := range po.UsedPresets {
+		if usedName == name {
+			return true
+		}
+	}
+	return false
+}
+
+func (po *processingOptions) presetUsed(name string) {
+	po.UsedPresets = append(po.UsedPresets, name)
 }
 
 func decodeURL(parts []string) (string, string, error) {
@@ -326,6 +340,12 @@ func applySharpenOption(po *processingOptions, args []string) error {
 func applyPresetOption(po *processingOptions, args []string) error {
 	for _, preset := range args {
 		if p, ok := conf.Presets[preset]; ok {
+			if po.isPresetUsed(preset) {
+				return fmt.Errorf("Recursive preset usage is detected: %s", preset)
+			}
+
+			po.presetUsed(preset)
+
 			if err := applyProcessingOptions(po, p); err != nil {
 				return err
 			}
@@ -457,14 +477,15 @@ func defaultProcessingOptions(acceptHeader string) (processingOptions, error) {
 	var err error
 
 	po := processingOptions{
-		Resize:  resizeFit,
-		Width:   0,
-		Height:  0,
-		Gravity: gravity{Type: gravityCenter},
-		Enlarge: false,
-		Format:  imageTypeJPEG,
-		Blur:    0,
-		Sharpen: 0,
+		Resize:      resizeFit,
+		Width:       0,
+		Height:      0,
+		Gravity:     gravity{Type: gravityCenter},
+		Enlarge:     false,
+		Format:      imageTypeJPEG,
+		Blur:        0,
+		Sharpen:     0,
+		UsedPresets: make([]string, 0),
 	}
 
 	if (conf.EnableWebpDetection || conf.EnforceWebp) && strings.Contains(acceptHeader, "image/webp") {
