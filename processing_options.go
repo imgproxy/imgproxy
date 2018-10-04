@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -78,6 +79,13 @@ var resizeTypes = map[string]resizeType{
 
 type color struct{ R, G, B uint8 }
 
+var hexColorRegex = regexp.MustCompile("^([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$")
+
+const (
+	hexColorLongFormat  = "%02x%02x%02x"
+	hexColorShortFormat = "%1x%1x%1x"
+)
+
 type processingOptions struct {
 	Resize      resizeType
 	Width       int
@@ -117,6 +125,25 @@ func (rt resizeType) String() string {
 		}
 	}
 	return ""
+}
+
+func colorFromHex(hexcolor string) (color, error) {
+	c := color{}
+
+	if !hexColorRegex.MatchString(hexcolor) {
+		return c, fmt.Errorf("Invalid hex color: %s", hexcolor)
+	}
+
+	if len(hexcolor) == 3 {
+		fmt.Sscanf(hexcolor, hexColorShortFormat, &c.R, &c.G, &c.B)
+		c.R *= 17
+		c.G *= 17
+		c.B *= 17
+	} else {
+		fmt.Sscanf(hexcolor, hexColorLongFormat, &c.R, &c.G, &c.B)
+	}
+
+	return c, nil
 }
 
 func (po *processingOptions) isPresetUsed(name string) bool {
@@ -282,29 +309,41 @@ func applyGravityOption(po *processingOptions, args []string) error {
 }
 
 func applyBackgroundOption(po *processingOptions, args []string) error {
-	if len(args) != 3 {
+	switch len(args) {
+	case 1:
+		if len(args[0]) == 0 {
+			po.Flatten = false
+		} else if c, err := colorFromHex(args[0]); err == nil {
+			po.Flatten = true
+			po.Background = c
+		} else {
+			return fmt.Errorf("Invalid background argument: %s", err)
+		}
+
+	case 3:
+		po.Flatten = true
+
+		if r, err := strconv.ParseUint(args[0], 10, 8); err == nil && r >= 0 && r <= 255 {
+			po.Background.R = uint8(r)
+		} else {
+			return fmt.Errorf("Invalid background red channel: %s", args[0])
+		}
+
+		if g, err := strconv.ParseUint(args[1], 10, 8); err == nil && g >= 0 && g <= 255 {
+			po.Background.G = uint8(g)
+		} else {
+			return fmt.Errorf("Invalid background green channel: %s", args[1])
+		}
+
+		if b, err := strconv.ParseUint(args[2], 10, 8); err == nil && b >= 0 && b <= 255 {
+			po.Background.B = uint8(b)
+		} else {
+			return fmt.Errorf("Invalid background blue channel: %s", args[2])
+		}
+
+	default:
 		return fmt.Errorf("Invalid background arguments: %v", args)
 	}
-
-	if r, err := strconv.ParseUint(args[0], 10, 8); err == nil && r >= 0 && r <= 255 {
-		po.Background.R = uint8(r)
-	} else {
-		return fmt.Errorf("Invalid background red channel: %s", args[1])
-	}
-
-	if g, err := strconv.ParseUint(args[1], 10, 8); err == nil && g >= 0 && g <= 255 {
-		po.Background.G = uint8(g)
-	} else {
-		return fmt.Errorf("Invalid background green channel: %s", args[1])
-	}
-
-	if b, err := strconv.ParseUint(args[2], 10, 8); err == nil && b >= 0 && b <= 255 {
-		po.Background.B = uint8(b)
-	} else {
-		return fmt.Errorf("Invalid background blue channel: %s", args[2])
-	}
-
-	po.Flatten = true
 
 	return nil
 }
