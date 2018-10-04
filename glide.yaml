@@ -1,7 +1,8 @@
 package: github.com/DarthSim/imgproxy
 import:
-- package: gopkg.in/yaml.v2
 - package: golang.org/x/net
   subpackages:
   - netutil
 - package: github.com/matoous/go-nanoid
+- package: github.com/aws/aws-sdk-go
+  version: ^1.15.47

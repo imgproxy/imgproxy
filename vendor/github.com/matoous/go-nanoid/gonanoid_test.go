@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-var urlLength = len(defaults.Alphabet)
+var urlLength = len(defaultAlphabet)
 
 // Test that nanoid generates URL friendly IDs
 // it ('generates URL-friendly IDs')
@@ -16,11 +16,11 @@ func TestGeneratesURLFriendlyIDs(t *testing.T) {
 		if err != nil {
 			t.Errorf("Nanoid error: %v", err)
 		}
-		if len(id) != defaults.Size {
+		if len(id) != defaultSize {
 			t.Errorf(
 				"TestGeneratesURLFriendlyIDs error: length of id %v should be %v, got %v",
 				id,
-				defaults.Size,
+				defaultSize,
 				id,
 			)
 		}
@@ -28,12 +28,12 @@ func TestGeneratesURLFriendlyIDs(t *testing.T) {
 		runeID := []rune(id)
 
 		for j := 0; j < len(runeID); j++ {
-			res := strings.Contains(defaults.Alphabet, string(runeID[j]))
+			res := strings.Contains(defaultAlphabet, string(runeID[j]))
 			if !res {
 				t.Errorf(
 					"GeneratesURLFriendlyIds error: char %v should be contained in %v",
 					string(runeID[j]),
-					defaults.Alphabet,
+					defaultAlphabet,
 				)
 			}
 		}
