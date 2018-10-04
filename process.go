@@ -90,13 +90,6 @@ func shutdownVips() {
 	C.vips_shutdown()
 }
 
-func randomAccessRequired(po processingOptions) int {
-	if po.Gravity.Type == gravitySmart {
-		return 1
-	}
-	return 0
-}
-
 func round(f float64) int {
 	return int(f + .5)
 }
