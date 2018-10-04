@@ -12,7 +12,7 @@ const version = "1.1.7"
 func main() {
 	// Force garbage collection
 	go func() {
-		for _ = range time.Tick(10 * time.Second) {
+		for range time.Tick(10 * time.Second) {
 			debug.FreeOSMemory()
 		}
 	}()
