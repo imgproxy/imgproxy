@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"sync"
 	"time"
 
 	nanoid "github.com/matoous/go-nanoid"
@@ -19,12 +18,6 @@ var (
 		imageTypeJPEG: "image/jpeg",
 		imageTypePNG:  "image/png",
 		imageTypeWEBP: "image/webp",
-	}
-
-	responseBufPool = sync.Pool{
-		New: func() interface{} {
-			return new(bytes.Buffer)
-		},
 	}
 
 	authHeaderMust []byte
