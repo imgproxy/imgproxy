@@ -70,7 +70,7 @@ When WebP support detection is enabled, take care to configure your CDN or cachi
 
 ### Presets
 
-Read about presets in the [Presets](../docs/presets.md) guide.
+Read about presets in the [Presets](./presets.md) guide.
 
 There are two ways to define presets:
 
@@ -102,7 +102,7 @@ imgproxy can serve your local images, but this feature is disabled by default. T
 
 * `IMGPROXY_LOCAL_FILESYSTEM_ROOT` — the root of the local filesystem. Keep empty to disable serving of local files.
 
-Check out [Serving local files](../docs/serving_local_files.md) guide to get more info.
+Check out [Serving local files](./serving_local_files.md) guide to get more info.
 
 ### Serving files from Amazon S3
 
@@ -110,7 +110,7 @@ imgproxy can process files from Amazon S3 buckets, but this feature is disabled 
 
 * `IMGPROXY_USE_S3` — when `true`, enables fetching the images from Amazon S3 buckets. Default: false.
 
-Check out [Serving files from S3](../docs/serving_files_from_s3.md) guide to get more info.
+Check out [Serving files from S3](./serving_files_from_s3.md) guide to get more info.
 
 ### Miscellaneous
 

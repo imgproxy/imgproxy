@@ -1,6 +1,6 @@
 # Generating the URL (Advanced)
 
-This guide describes the advanced URL format that supports all the imgproxy features. Read our [Generating the URL (Basic)](../docs/generating_the_url_basic.md) guide to get info about basic URL format that is compatible with the first version of imgproxy.
+This guide describes the advanced URL format that supports all the imgproxy features. Read our [Generating the URL (Basic)](./generating_the_url_basic.md) guide to get info about basic URL format that is compatible with the first version of imgproxy.
 
 ### Format definition
 
@@ -16,7 +16,7 @@ Check out the [example](#example) at the end of this guide.
 
 Signature protects your URL from being changed by an attacker. It's highly recommended to sign imgproxy URLs in production.
 
-If you set up [URL signature](../docs/configuration.md#url-signature), check out [Signing the URL](../docs/signing_the_url.md) guide to know how to sign your URLs. Otherwise, use any string here.
+If you set up [URL signature](./configuration.md#url-signature), check out [Signing the URL](./signing_the_url.md) guide to know how to sign your URLs. Otherwise, use any string here.
 
 #### Processing options
 
@@ -26,7 +26,7 @@ Processing options should be specified as URL parts divided by slashes (`/`). Pr
 %option_name:%argument1:%argument2:...:argumentN
 ```
 
-Processing options should not be treated as a processing pipeline. Processing pipeline of imgproxy is fixed to provide you a maximum performance. Read more about it in [About processing pipeline](../docs/about_processing_pipeline.md) guide.
+Processing options should not be treated as a processing pipeline. Processing pipeline of imgproxy is fixed to provide you a maximum performance. Read more about it in [About processing pipeline](./about_processing_pipeline.md) guide.
 
 imgproxy supports the following processing options:
 
@@ -142,7 +142,7 @@ Default: disabled
 
 Defines presets to be used by imgproxy. Feel free to use as many presets in a single URL as you need.
 
-Read more about presets in our [Presets](../docs/presets.md) guide.
+Read more about presets in our [Presets](./presets.md) guide.
 
 Default: empty
 
@@ -164,7 +164,7 @@ The source URL should be encoded with URL-safe Base64. The encoded URL can be sp
 
 Extension specifies the format of the resulting image. At the moment, imgproxy supports only `jpg`, `png` and `webp`, them being the most popular and useful web image formats.
 
-The extension part can be omitted. In this case, if the format is not defined by processing options, imgproxy will use `jpg` by default. You also can [enable WebP support detection](../docs/configuration.md#webp-support-detection) to use it as default resulting format when possible.
+The extension part can be omitted. In this case, if the format is not defined by processing options, imgproxy will use `jpg` by default. You also can [enable WebP support detection](./configuration.md#webp-support-detection) to use it as default resulting format when possible.
 
 ### Example
 

@@ -9,7 +9,7 @@ URL signature checking is disabled by default, but it's highly recommended to en
 * `IMGPROXY_KEY` — hex-encoded key;
 * `IMGPROXY_SALT` — hex-encoded salt;
 
-Read our [Configuration](../docs/configuration.md#url-signature) guide to find more ways to set key and salt.
+Read our [Configuration](./configuration.md#url-signature) guide to find more ways to set key and salt.
 
 If you need a random key/salt pair real fast, you can quickly generate it using, for example, the following snippet:
 
@@ -22,15 +22,15 @@ $ echo $(xxd -g 2 -l 64 -p /dev/random | tr -d '\n')
 Signature is a URL-safe Base64-encoded HMAC digest of the rest of the path including the leading `/`. Here's how it is calculated:
 
 * Take the path after the signature:
-  * For [basic URL format](../docs/generating_the_url_basic.md) - `/%resizing_type/%width/%height/%gravity/%enlarge/%encoded_url.%extension`;
-  * For [advanced URL format](../docs/generating_the_url_advanced.md) - `/%processing_options/%encoded_url.%extension`;
+  * For [basic URL format](./generating_the_url_basic.md) - `/%resizing_type/%width/%height/%gravity/%enlarge/%encoded_url.%extension`;
+  * For [advanced URL format](./generating_the_url_advanced.md) - `/%processing_options/%encoded_url.%extension`;
 * Add salt to the beginning;
 * Calculate the HMAC digest using SHA256;
 * Encode the result with URL-safe Base64.
 
 ### Example
 
-You can find helpful code snippets in the [examples](../../examples) folder. And here is a step-by-step example of calculating URL signature:
+You can find helpful code snippets in the [examples](../examples) folder. And here is a step-by-step example of calculating URL signature:
 
 Assume that you have the following unsigned URL:
 

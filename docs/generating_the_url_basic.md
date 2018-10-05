@@ -1,6 +1,6 @@
 # Generating the URL (Basic)
 
-This guide describes the simple URL format that is easy to use but doesn't support the whole range of imgproxy features. This URL format is mostly backward-compatible with the first version of imgproxy. Read our [Generating the URL (Advanced)](../docs/generating_the_url_advanced.md) guide to get info about advanced URL format.
+This guide describes the simple URL format that is easy to use but doesn't support the whole range of imgproxy features. This URL format is mostly backward-compatible with the first version of imgproxy. Read our [Generating the URL (Advanced)](./generating_the_url_advanced.md) guide to get info about advanced URL format.
 
 ### Format definition
 
@@ -16,7 +16,7 @@ Check out the [example](#example) at the end of this guide.
 
 Signature protects your URL from being changed by an attacker. It's highly recommended to sign imgproxy URLs in production.
 
-If you set up [URL signature](../docs/configuration.md#url-signature), check out [Signing the URL](../docs/signing_the_url.md) guide to know how to sign your URLs. Otherwise, use any string here.
+If you set up [URL signature](./configuration.md#url-signature), check out [Signing the URL](./signing_the_url.md) guide to know how to sign your URLs. Otherwise, use any string here.
 
 #### Resizing types
 
@@ -54,7 +54,7 @@ The source URL should be encoded with URL-safe Base64. The encoded URL can be sp
 
 Extension specifies the format of the resulting image. At the moment, imgproxy supports only `jpg`, `png` and `webp`, them being the most popular and useful web image formats.
 
-The extension part can be omitted. In this case, imgproxy will use `jpg` by default. You also can [enable WebP support detection](../docs/configuration.md#webp-support-detection) to use it as default resulting format when possible.
+The extension part can be omitted. In this case, imgproxy will use `jpg` by default. You also can [enable WebP support detection](./configuration.md#webp-support-detection) to use it as default resulting format when possible.
 
 ### Example
 
