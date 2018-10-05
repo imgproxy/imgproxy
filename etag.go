@@ -3,20 +3,47 @@ package main
 import (
 	"context"
 	"crypto/sha256"
-	"encoding/binary"
-	"fmt"
+	"encoding/hex"
+	"encoding/json"
+	"hash"
+	"sync"
 )
 
 var notModifiedErr = newError(304, "Not modified", "Not modified")
 
+type eTagCalc struct {
+	hash hash.Hash
+	enc  *json.Encoder
+}
+
+var eTagCalcPool = sync.Pool{
+	New: func() interface{} {
+		h := sha256.New()
+
+		enc := json.NewEncoder(h)
+		enc.SetEscapeHTML(false)
+		enc.SetIndent("", "")
+
+		return &eTagCalc{h, enc}
+	},
+}
+
 func calcETag(ctx context.Context) []byte {
-	footprint := sha256.Sum256(getImageData(ctx).Bytes())
+	c := eTagCalcPool.Get().(*eTagCalc)
+	defer eTagCalcPool.Put(c)
 
-	hash := sha256.New()
-	hash.Write(footprint[:])
-	hash.Write([]byte(version))
-	binary.Write(hash, binary.LittleEndian, conf)
-	binary.Write(hash, binary.LittleEndian, *getProcessingOptions(ctx))
+	c.hash.Reset()
+	c.hash.Write(getImageData(ctx).Bytes())
+	footprint := c.hash.Sum(nil)
 
-	return []byte(fmt.Sprintf("%x", hash.Sum(nil)))
+	c.hash.Reset()
+	c.hash.Write(footprint)
+	c.hash.Write([]byte(version))
+	c.enc.Encode(conf)
+	c.enc.Encode(getProcessingOptions(ctx))
+
+	etag := make([]byte, 64)
+	hex.Encode(etag, c.hash.Sum(nil))
+
+	return etag
 }
