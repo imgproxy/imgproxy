@@ -7,13 +7,16 @@ package main
 import "C"
 
 import (
+	"context"
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"net/http"
+	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/valyala/fasthttp"
 )
 
 type urlOptions map[string][]string
@@ -100,6 +103,18 @@ type processingOptions struct {
 	UsedPresets []string
 }
 
+const (
+	imageURLCtxKey          = ctxKey("imageUrl")
+	processingOptionsCtxKey = ctxKey("processingOptions")
+)
+
+var (
+	errInvalidURLEncoding                 = errors.New("Invalid url encoding")
+	errInvalidPath                        = errors.New("Invalid path")
+	errInvalidImageURL                    = errors.New("Invalid image url")
+	errResultingImageFormatIsNotSupported = errors.New("Resulting image format is not supported")
+)
+
 func (it imageType) String() string {
 	for k, v := range imageTypes {
 		if v == it {
@@ -165,7 +180,7 @@ func decodeURL(parts []string) (string, string, error) {
 	urlParts := strings.Split(strings.Join(parts, ""), ".")
 
 	if len(urlParts) > 2 {
-		return "", "", errors.New("Invalid url encoding")
+		return "", "", errInvalidURLEncoding
 	}
 
 	if len(urlParts) == 2 {
@@ -174,7 +189,7 @@ func decodeURL(parts []string) (string, string, error) {
 
 	url, err := base64.RawURLEncoding.DecodeString(urlParts[0])
 	if err != nil {
-		return "", "", errors.New("Invalid url encoding")
+		return "", "", errInvalidURLEncoding
 	}
 
 	return string(url), extension, nil
@@ -413,7 +428,7 @@ func applyFormatOption(po *processingOptions, args []string) error {
 	}
 
 	if !vipsTypeSupportSave[po.Format] {
-		return errors.New("Resulting image type not supported")
+		return errResultingImageFormatIsNotSupported
 	}
 
 	return nil
@@ -524,7 +539,7 @@ func defaultProcessingOptions(acceptHeader string) (processingOptions, error) {
 		Format:      imageTypeJPEG,
 		Blur:        0,
 		Sharpen:     0,
-		UsedPresets: make([]string, 0),
+		UsedPresets: make([]string, 0, len(conf.Presets)),
 	}
 
 	if (conf.EnableWebpDetection || conf.EnforceWebp) && strings.Contains(acceptHeader, "image/webp") {
@@ -557,7 +572,7 @@ func parsePathAdvanced(parts []string, acceptHeader string) (string, processingO
 
 	if len(extension) > 0 {
 		if err := applyFormatOption(&po, []string{extension}); err != nil {
-			return "", po, errors.New("Resulting image type not supported")
+			return "", po, err
 		}
 	}
 
@@ -568,7 +583,7 @@ func parsePathSimple(parts []string, acceptHeader string) (string, processingOpt
 	var err error
 
 	if len(parts) < 6 {
-		return "", processingOptions{}, errors.New("Invalid path")
+		return "", processingOptions{}, errInvalidPath
 	}
 
 	po, err := defaultProcessingOptions(acceptHeader)
@@ -601,35 +616,56 @@ func parsePathSimple(parts []string, acceptHeader string) (string, processingOpt
 
 	if len(extension) > 0 {
 		if err := applyFormatOption(&po, []string{extension}); err != nil {
-			return "", po, errors.New("Resulting image type not supported")
+			return "", po, err
 		}
 	}
 
 	return string(url), po, nil
 }
 
-func parsePath(r *http.Request) (string, processingOptions, error) {
-	path := r.URL.Path
+func parsePath(ctx context.Context, rctx *fasthttp.RequestCtx) (context.Context, error) {
+	path := string(rctx.RequestURI())
 	parts := strings.Split(strings.TrimPrefix(path, "/"), "/")
 
 	var acceptHeader string
-	if h, ok := r.Header["Accept"]; ok {
-		acceptHeader = h[0]
+	if h := rctx.Request.Header.Peek("Accept"); len(h) > 0 {
+		acceptHeader = string(h)
 	}
 
 	if len(parts) < 3 {
-		return "", processingOptions{}, errors.New("Invalid path")
+		return ctx, errInvalidPath
 	}
 
 	if !conf.AllowInsecure {
 		if err := validatePath(parts[0], strings.TrimPrefix(path, fmt.Sprintf("/%s", parts[0]))); err != nil {
-			return "", processingOptions{}, err
+			return ctx, err
 		}
 	}
 
+	var imageURL string
+	var po processingOptions
+	var err error
+
 	if _, ok := resizeTypes[parts[1]]; ok {
-		return parsePathSimple(parts[1:], acceptHeader)
+		imageURL, po, err = parsePathSimple(parts[1:], acceptHeader)
+	} else {
+		imageURL, po, err = parsePathAdvanced(parts[1:], acceptHeader)
 	}
 
-	return parsePathAdvanced(parts[1:], acceptHeader)
+	if _, err = url.ParseRequestURI(imageURL); err != nil {
+		return ctx, errInvalidImageURL
+	}
+
+	ctx = context.WithValue(ctx, imageURLCtxKey, imageURL)
+	ctx = context.WithValue(ctx, processingOptionsCtxKey, &po)
+
+	return ctx, err
+}
+
+func getImageURL(ctx context.Context) string {
+	return ctx.Value(imageURLCtxKey).(string)
+}
+
+func getprocessingOptions(ctx context.Context) *processingOptions {
+	return ctx.Value(processingOptionsCtxKey).(*processingOptions)
 }

@@ -33,6 +33,10 @@
   branch = "master"
   name = "github.com/matoous/go-nanoid"
 
+[[constraint]]
+  branch = "master"
+  name = "github.com/valyala/fasthttp"
+
 [prune]
   go-tests = true
   unused-packages = true

@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"crypto/tls"
 	"errors"
 	"fmt"
@@ -10,6 +11,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"sync"
 	"time"
 
 	_ "image/gif"
@@ -19,17 +21,27 @@ import (
 	_ "golang.org/x/image/webp"
 )
 
-var downloadClient *http.Client
+var (
+	downloadClient  *http.Client
+	imageTypeCtxKey = ctxKey("imageType")
+	imageDataCtxKey = ctxKey("imageData")
+)
+
+var downloadBufPool = sync.Pool{
+	New: func() interface{} {
+		return new(bytes.Buffer)
+	},
+}
 
 type netReader struct {
 	reader *bufio.Reader
 	buf    *bytes.Buffer
 }
 
-func newNetReader(r io.Reader) *netReader {
+func newNetReader(r io.Reader, buf *bytes.Buffer) *netReader {
 	return &netReader{
 		reader: bufio.NewReader(r),
-		buf:    bytes.NewBuffer([]byte{}),
+		buf:    buf,
 	}
 }
 
@@ -45,15 +57,11 @@ func (r *netReader) Peek(n int) ([]byte, error) {
 	return r.reader.Peek(n)
 }
 
-func (r *netReader) ReadAll() ([]byte, error) {
+func (r *netReader) ReadAll() error {
 	if _, err := r.buf.ReadFrom(r.reader); err != nil {
-		return []byte{}, err
+		return err
 	}
-	return r.buf.Bytes(), nil
-}
-
-func (r *netReader) GrowBuf(s int) {
-	r.buf.Grow(s)
+	return nil
 }
 
 func initDownloading() {
@@ -99,36 +107,49 @@ func checkTypeAndDimensions(r io.Reader) (imageType, error) {
 	return imgtype, nil
 }
 
-func readAndCheckImage(res *http.Response) ([]byte, imageType, error) {
-	nr := newNetReader(res.Body)
+func readAndCheckImage(ctx context.Context, res *http.Response) (context.Context, context.CancelFunc, error) {
+	buf := downloadBufPool.Get().(*bytes.Buffer)
+	cancel := func() {
+		buf.Reset()
+		downloadBufPool.Put(buf)
+	}
+
+	nr := newNetReader(res.Body, buf)
 
 	imgtype, err := checkTypeAndDimensions(nr)
 	if err != nil {
-		return nil, imageTypeUnknown, err
+		return ctx, cancel, err
 	}
 
-	if res.ContentLength > 0 {
-		nr.GrowBuf(int(res.ContentLength))
+	if err = nr.ReadAll(); err == nil {
+		ctx = context.WithValue(ctx, imageTypeCtxKey, imgtype)
+		ctx = context.WithValue(ctx, imageDataCtxKey, nr.buf)
 	}
 
-	b, err := nr.ReadAll()
-
-	return b, imgtype, err
+	return ctx, cancel, err
 }
 
-func downloadImage(url string) ([]byte, imageType, error) {
-	fullURL := fmt.Sprintf("%s%s", conf.BaseURL, url)
+func downloadImage(ctx context.Context) (context.Context, context.CancelFunc, error) {
+	url := fmt.Sprintf("%s%s", conf.BaseURL, getImageURL(ctx))
 
-	res, err := downloadClient.Get(fullURL)
+	res, err := downloadClient.Get(url)
 	if err != nil {
-		return nil, imageTypeUnknown, err
+		return ctx, func() {}, err
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode != 200 {
 		body, _ := ioutil.ReadAll(res.Body)
-		return nil, imageTypeUnknown, fmt.Errorf("Can't download image; Status: %d; %s", res.StatusCode, string(body))
+		return ctx, func() {}, fmt.Errorf("Can't download image; Status: %d; %s", res.StatusCode, string(body))
 	}
 
-	return readAndCheckImage(res)
+	return readAndCheckImage(ctx, res)
+}
+
+func getImageType(ctx context.Context) imageType {
+	return ctx.Value(imageTypeCtxKey).(imageType)
+}
+
+func getImageData(ctx context.Context) *bytes.Buffer {
+	return ctx.Value(imageDataCtxKey).(*bytes.Buffer)
 }

@@ -1,20 +1,21 @@
 package main
 
 import (
+	"log"
 	"os"
 	"os/signal"
-	"runtime/debug"
-	"time"
+
+	"net/http"
+	_ "net/http/pprof"
 )
 
 const version = "2.0.0"
 
+type ctxKey string
+
 func main() {
-	// Force garbage collection
 	go func() {
-		for range time.Tick(10 * time.Second) {
-			debug.FreeOSMemory()
-		}
+		log.Println(http.ListenAndServe("localhost:6060", nil))
 	}()
 
 	s := startServer()

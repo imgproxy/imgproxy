@@ -8,6 +8,7 @@ package main
 import "C"
 
 import (
+	"context"
 	"errors"
 	"log"
 	"math"
@@ -121,17 +122,17 @@ func extractMeta(img *C.VipsImage) (int, int, int, bool) {
 	return width, height, angle, flip
 }
 
-func needToScale(width, height int, po processingOptions) bool {
+func needToScale(width, height int, po *processingOptions) bool {
 	return ((po.Width != 0 && po.Width != width) || (po.Height != 0 && po.Height != height)) &&
 		(po.Resize == resizeFill || po.Resize == resizeFit)
 }
 
-func needToCrop(width, height int, po processingOptions) bool {
+func needToCrop(width, height int, po *processingOptions) bool {
 	return (po.Width != width || po.Height != height) &&
 		(po.Resize == resizeFill || po.Resize == resizeCrop)
 }
 
-func calcScale(width, height int, po processingOptions) float64 {
+func calcScale(width, height int, po *processingOptions) float64 {
 	fsw, fsh, fow, foh := float64(width), float64(height), float64(po.Width), float64(po.Height)
 
 	wr := fow / fsw
@@ -172,7 +173,7 @@ func calcShink(scale float64, imgtype imageType) int {
 	return 1
 }
 
-func calcCrop(width, height int, po processingOptions) (left, top int) {
+func calcCrop(width, height int, po *processingOptions) (left, top int) {
 	left = (width - po.Width + 1) / 2
 	top = (height - po.Height + 1) / 2
 
@@ -203,9 +204,12 @@ func calcCrop(width, height int, po processingOptions) (left, top int) {
 	return
 }
 
-func processImage(data []byte, imgtype imageType, po processingOptions, t *timer) ([]byte, error) {
+func processImage(ctx context.Context) ([]byte, error) {
 	defer C.vips_cleanup()
-	defer runtime.KeepAlive(data)
+
+	data := getImageData(ctx).Bytes()
+	po := getprocessingOptions(ctx)
+	imgtype := getImageType(ctx)
 
 	if po.Gravity.Type == gravitySmart && !vipsSupportSmartcrop {
 		return nil, errors.New("Smart crop is not supported by used version of libvips")
@@ -217,7 +221,7 @@ func processImage(data []byte, imgtype imageType, po processingOptions, t *timer
 	}
 	defer C.clear_image(&img)
 
-	t.Check()
+	checkTimeout(ctx)
 
 	imgWidth, imgHeight, angle, flip := extractMeta(img)
 
@@ -282,7 +286,7 @@ func processImage(data []byte, imgtype imageType, po processingOptions, t *timer
 		return nil, err
 	}
 
-	t.Check()
+	checkTimeout(ctx)
 
 	if angle != C.VIPS_ANGLE_D0 || flip {
 		if err = vipsImageCopyMemory(&img); err != nil {
@@ -302,7 +306,7 @@ func processImage(data []byte, imgtype imageType, po processingOptions, t *timer
 		}
 	}
 
-	t.Check()
+	checkTimeout(ctx)
 
 	if po.Width == 0 {
 		po.Width = imgWidth
@@ -327,7 +331,7 @@ func processImage(data []byte, imgtype imageType, po processingOptions, t *timer
 			}
 		}
 
-		t.Check()
+		checkTimeout(ctx)
 	}
 
 	if hasAlpha && po.Flatten {
@@ -348,7 +352,7 @@ func processImage(data []byte, imgtype imageType, po processingOptions, t *timer
 		}
 	}
 
-	t.Check()
+	checkTimeout(ctx)
 
 	return vipsSaveImage(img, po.Format)
 }
