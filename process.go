@@ -208,7 +208,7 @@ func processImage(ctx context.Context) ([]byte, error) {
 	defer C.vips_cleanup()
 
 	data := getImageData(ctx).Bytes()
-	po := getprocessingOptions(ctx)
+	po := getProcessingOptions(ctx)
 	imgtype := getImageType(ctx)
 
 	if po.Gravity.Type == gravitySmart && !vipsSupportSmartcrop {

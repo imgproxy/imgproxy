@@ -83,7 +83,7 @@ func writeCORS(rctx *fasthttp.RequestCtx) {
 func respondWithImage(ctx context.Context, reqID string, rctx *fasthttp.RequestCtx, data []byte) {
 	rctx.SetStatusCode(200)
 
-	po := getprocessingOptions(ctx)
+	po := getProcessingOptions(ctx)
 
 	rctx.SetContentType(mimes[po.Format])
 	rctx.Response.Header.Set("Cache-Control", fmt.Sprintf("max-age=%d, public", conf.TTL))
@@ -185,14 +185,14 @@ func serveHTTP(rctx *fasthttp.RequestCtx) {
 
 	checkTimeout(ctx)
 
-	// if conf.ETagEnabled {
-	// 	eTag := calcETag(b, &procOpt)
-	// 	rw.Header().Set("ETag", eTag)
+	if conf.ETagEnabled {
+		eTag := calcETag(ctx)
+		rctx.Response.Header.SetBytesV("ETag", eTag)
 
-	// 	if eTag == r.Header.Get("If-None-Match") {
-	// 		panic(notModifiedErr)
-	// 	}
-	// }
+		if bytes.Equal(eTag, rctx.Request.Header.Peek("If-None-Match")) {
+			panic(notModifiedErr)
+		}
+	}
 
 	checkTimeout(ctx)
 

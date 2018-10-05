@@ -666,6 +666,6 @@ func getImageURL(ctx context.Context) string {
 	return ctx.Value(imageURLCtxKey).(string)
 }
 
-func getprocessingOptions(ctx context.Context) *processingOptions {
+func getProcessingOptions(ctx context.Context) *processingOptions {
 	return ctx.Value(processingOptionsCtxKey).(*processingOptions)
 }
