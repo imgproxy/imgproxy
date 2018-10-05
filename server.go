@@ -113,9 +113,7 @@ func respondWithOptions(reqID string, rctx *fasthttp.RequestCtx) {
 
 func prepareAuthHeaderMust() []byte {
 	if len(authHeaderMust) == 0 {
-		buf := bytes.NewBufferString("Bearer ")
-		buf.WriteString(conf.Secret)
-		authHeaderMust = []byte(conf.Secret)
+		authHeaderMust = []byte(fmt.Sprintf("Bearer %s", conf.Secret))
 	}
 
 	return authHeaderMust
