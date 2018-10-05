@@ -6,5 +6,7 @@ imgproxy
 glide.yaml
 glide.lock
 
+docs/
 LICENSE
 README.md
+CHANGELOG.md
