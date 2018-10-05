@@ -25,6 +25,9 @@ var (
 	healthRequestURI = []byte("/health")
 
 	serverMutex mutex
+
+	errInvalidMethod = newError(422, "Invalid request method", "Method doesn't allowed")
+	errInvalidSecret = newError(403, "Invalid secret", "Forbidden")
 )
 
 func startServer() *fasthttp.Server {
@@ -146,11 +149,11 @@ func serveHTTP(rctx *fasthttp.RequestCtx) {
 	}
 
 	if !rctx.IsGet() {
-		panic(invalidMethodErr)
+		panic(errInvalidMethod)
 	}
 
 	if !checkSecret(rctx) {
-		panic(invalidSecretErr)
+		panic(errInvalidSecret)
 	}
 
 	serverMutex.Lock()
@@ -183,7 +186,7 @@ func serveHTTP(rctx *fasthttp.RequestCtx) {
 		rctx.Response.Header.SetBytesV("ETag", eTag)
 
 		if bytes.Equal(eTag, rctx.Request.Header.Peek("If-None-Match")) {
-			panic(notModifiedErr)
+			panic(errNotModified)
 		}
 	}
 

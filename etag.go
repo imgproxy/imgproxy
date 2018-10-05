@@ -9,7 +9,7 @@ import (
 	"sync"
 )
 
-var notModifiedErr = newError(304, "Not modified", "Not modified")
+var errNotModified = newError(304, "Not modified", "Not modified")
 
 type eTagCalc struct {
 	hash hash.Hash

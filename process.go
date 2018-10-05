@@ -17,9 +17,13 @@ import (
 	"unsafe"
 )
 
-var vipsSupportSmartcrop bool
-var vipsTypeSupportLoad = make(map[imageType]bool)
-var vipsTypeSupportSave = make(map[imageType]bool)
+var (
+	vipsSupportSmartcrop bool
+	vipsTypeSupportLoad  = make(map[imageType]bool)
+	vipsTypeSupportSave  = make(map[imageType]bool)
+
+	errSmartCropNotSupported = errors.New("Smart crop is not supported by used version of libvips")
+)
 
 type cConfig struct {
 	Quality         C.int
@@ -212,7 +216,7 @@ func processImage(ctx context.Context) ([]byte, error) {
 	imgtype := getImageType(ctx)
 
 	if po.Gravity.Type == gravitySmart && !vipsSupportSmartcrop {
-		return nil, errors.New("Smart crop is not supported by used version of libvips")
+		return nil, errSmartCropNotSupported
 	}
 
 	img, err := vipsLoadImage(data, imgtype, 1)

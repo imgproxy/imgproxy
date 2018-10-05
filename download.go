@@ -25,6 +25,10 @@ var (
 	downloadClient  *http.Client
 	imageTypeCtxKey = ctxKey("imageType")
 	imageDataCtxKey = ctxKey("imageData")
+
+	errSourceDimensionsTooBig      = errors.New("Source image dimensions are too big")
+	errSourceResolutionTooBig      = errors.New("Source image resolution are too big")
+	errSourceImageTypeNotSupported = errors.New("Source image type not supported")
 )
 
 var downloadBufPool = sync.Pool{
@@ -95,13 +99,13 @@ func checkTypeAndDimensions(r io.Reader) (imageType, error) {
 		return imageTypeUnknown, err
 	}
 	if imgconf.Width > conf.MaxSrcDimension || imgconf.Height > conf.MaxSrcDimension {
-		return imageTypeUnknown, errors.New("Source image is too big")
+		return imageTypeUnknown, errSourceDimensionsTooBig
 	}
 	if imgconf.Width*imgconf.Height > conf.MaxSrcResolution {
-		return imageTypeUnknown, errors.New("Source image is too big")
+		return imageTypeUnknown, errSourceResolutionTooBig
 	}
 	if !imgtypeOk || !vipsTypeSupportLoad[imgtype] {
-		return imageTypeUnknown, errors.New("Source image type not supported")
+		return imageTypeUnknown, errSourceImageTypeNotSupported
 	}
 
 	return imgtype, nil

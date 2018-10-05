@@ -26,11 +26,6 @@ func newUnexpectedError(err error, skip int) imgproxyError {
 	return imgproxyError{500, msg, "Internal error"}
 }
 
-var (
-	invalidSecretErr = newError(403, "Invalid secret", "Forbidden")
-	invalidMethodErr = newError(422, "Invalid request method", "Method doesn't allowed")
-)
-
 func stacktrace(skip int) string {
 	callers := make([]uintptr, 10)
 	n := runtime.Callers(skip+1, callers)
