@@ -8,14 +8,14 @@ import (
 )
 
 var (
-	errInvalidToken       = errors.New("Invalid token")
-	errInvalidURLEncoding = errors.New("Invalid token encoding")
+	errInvalidToken         = errors.New("Invalid token")
+	errInvalidTokenEncoding = errors.New("Invalid token encoding")
 )
 
 func validatePath(token, path string) error {
 	messageMAC, err := base64.RawURLEncoding.DecodeString(token)
 	if err != nil {
-		return errInvalidURLEncoding
+		return errInvalidTokenEncoding
 	}
 
 	mac := hmac.New(sha256.New, conf.Key)

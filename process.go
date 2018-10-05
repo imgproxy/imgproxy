@@ -95,10 +95,6 @@ func shutdownVips() {
 	C.vips_shutdown()
 }
 
-func round(f float64) int {
-	return int(f + .5)
-}
-
 func extractMeta(img *C.VipsImage) (int, int, int, bool) {
 	width := int(img.Xsize)
 	height := int(img.Ysize)
