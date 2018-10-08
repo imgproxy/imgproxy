@@ -5,14 +5,15 @@
 All-You-Ever-Wanted release! :tada:
 
 - Key and salt are not required anymore. When key or salt is not specified, signature checking is disabled;
-- [New advanced URL format](./docs/generating_the_url_advanced.md). Unleash full power of imgproxy v2.0;
-- [Presets](./docs/presets.md), Shorten your urls by reusing processing options;
+- [New advanced URL format](./docs/generating_the_url_advanced.md). Unleash the full power of imgproxy v2.0;
+- [Presets](./docs/presets.md). Shorten your urls by reusing processing options;
 - [Serving images from Amazon S3](./docs/serving_files_from_s3.md). Thanks to [@crohr](https://github.com/crohr), now we have a way to serve files from private S3 buckets;
-- [Autoconverting to WebP when supported by browser](./docs/configuration.md#webp-support-detection) (disabled by default); Use WebP as resulting format when browser supports it;
+- [Autoconverting to WebP when supported by browser](./docs/configuration.md#webp-support-detection) (disabled by default). Use WebP as resulting format when browser supports it;
 - [Gaussian blur](./docs/generating_the_url_advanced.md#blur) and [sharpen](./docs/generating_the_url_advanced.md#sharpen) filters. Make your images look better than before;
 - [Focus point gravity](./docs/generating_the_url_advanced.md#gravity). Tell imgproxy what point will be the center of the image;
 - [Background color](./docs/generating_the_url_advanced.md#background). Control the color of background when converting PNG with alpha-channel to JPEG;
-- Calc resulting width/height automaticly when one specified as zero.
+- Imgproxy calcs resulting width/height automaticly when one specified as zero;
+- Memory usage is optimized.
 
 ## v1.1.8
 
