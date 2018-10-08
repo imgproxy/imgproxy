@@ -11,7 +11,7 @@ $ docker pull darthsim/imgproxy:latest
 $ docker run -p 8080:8080 -it darthsim/imgproxy
 ```
 
-You can also build you own image. imgproxy is ready to be dockerized, plug and play:
+You can also build your own image. imgproxy is ready to be dockerized, plug and play:
 
 ```bash
 $ docker build -t imgproxy .
@@ -20,7 +20,7 @@ $ docker run -p 8080:8080 -it imgproxy
 
 ### Heroku
 
-imgproxy can be deployed to Heroku with the click of the button:
+imgproxy can be deployed to Heroku with a click of a button:
 
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
 
@@ -61,4 +61,3 @@ $ git push heroku master
   ```bash
   $ go get -f -u github.com/DarthSim/imgproxy
   ```
-

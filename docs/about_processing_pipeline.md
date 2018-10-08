@@ -1,15 +1,15 @@
-# About processing pipeline
+# About the processing pipeline
 
-imgproxy has a fixed processing pipeline that tuned for maximum performance. When you process an image with imgproxy, it does the following things:
+imgproxy has a specific processing pipeline tuned for maximum performance. When you process an image with imgproxy, it does the following:
 
-* If source image format allows shrink-on-load, imgproxy uses it to quickly resize image to the size closest to desired;
-* If it's needed to resize an image with alpha-channel, imgproxy premultiplies one to handle alpha correctly;
-* Resize image to desired size;
-* If image colorspace need to be fixed, imgproxy does this;
-* Rotate/flip image according to EXIF metadata;
-* Crop image using specified gravity;
-* Fill image background if some background color was specified;
-* Apply gaussian blur and sharpen filters;
-* And finally save the image to the desired format.
+* If the source image format allows shrink-on-load, imgproxy uses it to quickly resize the image to the size that is closest to desired;
+* If it is needed to resize an image with an alpha-channel, imgproxy premultiplies one to handle alpha correctly;
+* imgproxy resizes the image to the desired size;
+* If the image colorspace need to be fixed, imgproxy fixes it;
+* imgproxy rotates/flip the image according to EXIF metadata;
+* imgproxy crops the image using specified gravity;
+* imgproxy fills the image background if the background color was specified;
+* imgproxy applies gaussian blur and sharpen filters;
+* And finally, imgproxy saves the image to the desired format.
 
-This pipeline with using a sequential access to source image data allows to highly reduce memory and CPU usage, that makes imgproxy so awesome.
+This pipeline with using sequential access to source image data allows to significantly reduce memory and CPU usage — one of the reasons imgproxy is so performant.

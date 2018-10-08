@@ -1,3 +1,7 @@
 # Health check
 
-There is a special endpoint `/health`, which returns HTTP Status `200 OK` after the server successfully starts. This can be used for readiness/liveness probe in your containers system such as Kubernetes.
+imgproxy comes with a built-in health check HTTP endpoint at `/health`.
+
+`GET /health` returns HTTP Status `200 OK` if the server is started successfully.
+
+You can use this for readiness/liveness probe in when deploying with a container orchestration system such as Kubernetes.
