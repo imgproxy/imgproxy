@@ -624,7 +624,7 @@ func parsePathSimple(parts []string, acceptHeader string) (string, processingOpt
 }
 
 func parsePath(ctx context.Context, rctx *fasthttp.RequestCtx) (context.Context, error) {
-	path := string(rctx.RequestURI())
+	path := string(rctx.Path())
 	parts := strings.Split(strings.TrimPrefix(path, "/"), "/")
 
 	var acceptHeader string

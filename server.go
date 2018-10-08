@@ -22,7 +22,7 @@ var (
 
 	authHeaderMust []byte
 
-	healthRequestURI = []byte("/health")
+	healthPath = []byte("/health")
 
 	serverMutex mutex
 
@@ -139,7 +139,7 @@ func serveHTTP(rctx *fasthttp.RequestCtx) {
 		}
 	}()
 
-	log.Printf("[%s] %s: %s\n", reqID, rctx.Method(), rctx.RequestURI())
+	log.Printf("[%s] %s: %s\n", reqID, rctx.Method(), rctx.Path())
 
 	writeCORS(rctx)
 
@@ -159,7 +159,7 @@ func serveHTTP(rctx *fasthttp.RequestCtx) {
 	serverMutex.Lock()
 	defer serverMutex.Unock()
 
-	if bytes.Equal(rctx.RequestURI(), healthRequestURI) {
+	if bytes.Equal(rctx.Path(), healthPath) {
 		rctx.SetStatusCode(200)
 		rctx.SetBodyString("imgproxy is running")
 		return
