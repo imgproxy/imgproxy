@@ -527,7 +527,7 @@ func parseURLOptions(opts []string) (urlOptions, []string) {
 	return parsed, rest
 }
 
-func defaultProcessingOptions(acceptHeader string) (processingOptions, error) {
+func defaultProcessingOptions(acceptHeader string) (*processingOptions, error) {
 	var err error
 
 	po := processingOptions{
@@ -550,10 +550,10 @@ func defaultProcessingOptions(acceptHeader string) (processingOptions, error) {
 		err = applyPresetOption(&po, []string{"default"})
 	}
 
-	return po, err
+	return &po, err
 }
 
-func parsePathAdvanced(parts []string, acceptHeader string) (string, processingOptions, error) {
+func parsePathAdvanced(parts []string, acceptHeader string) (string, *processingOptions, error) {
 	po, err := defaultProcessingOptions(acceptHeader)
 	if err != nil {
 		return "", po, err
@@ -561,7 +561,7 @@ func parsePathAdvanced(parts []string, acceptHeader string) (string, processingO
 
 	options, urlParts := parseURLOptions(parts)
 
-	if err := applyProcessingOptions(&po, options); err != nil {
+	if err := applyProcessingOptions(po, options); err != nil {
 		return "", po, err
 	}
 
@@ -571,7 +571,7 @@ func parsePathAdvanced(parts []string, acceptHeader string) (string, processingO
 	}
 
 	if len(extension) > 0 {
-		if err := applyFormatOption(&po, []string{extension}); err != nil {
+		if err := applyFormatOption(po, []string{extension}); err != nil {
 			return "", po, err
 		}
 	}
@@ -579,11 +579,11 @@ func parsePathAdvanced(parts []string, acceptHeader string) (string, processingO
 	return string(url), po, nil
 }
 
-func parsePathSimple(parts []string, acceptHeader string) (string, processingOptions, error) {
+func parsePathSimple(parts []string, acceptHeader string) (string, *processingOptions, error) {
 	var err error
 
 	if len(parts) < 6 {
-		return "", processingOptions{}, errInvalidPath
+		return "", nil, errInvalidPath
 	}
 
 	po, err := defaultProcessingOptions(acceptHeader)
@@ -593,19 +593,19 @@ func parsePathSimple(parts []string, acceptHeader string) (string, processingOpt
 
 	po.Resize = resizeTypes[parts[0]]
 
-	if err = applyWidthOption(&po, parts[1:2]); err != nil {
+	if err = applyWidthOption(po, parts[1:2]); err != nil {
 		return "", po, err
 	}
 
-	if err = applyHeightOption(&po, parts[2:3]); err != nil {
+	if err = applyHeightOption(po, parts[2:3]); err != nil {
 		return "", po, err
 	}
 
-	if err = applyGravityOption(&po, strings.Split(parts[3], ":")); err != nil {
+	if err = applyGravityOption(po, strings.Split(parts[3], ":")); err != nil {
 		return "", po, err
 	}
 
-	if err = applyEnlargeOption(&po, parts[4:5]); err != nil {
+	if err = applyEnlargeOption(po, parts[4:5]); err != nil {
 		return "", po, err
 	}
 
@@ -615,7 +615,7 @@ func parsePathSimple(parts []string, acceptHeader string) (string, processingOpt
 	}
 
 	if len(extension) > 0 {
-		if err := applyFormatOption(&po, []string{extension}); err != nil {
+		if err := applyFormatOption(po, []string{extension}); err != nil {
 			return "", po, err
 		}
 	}
@@ -643,7 +643,7 @@ func parsePath(ctx context.Context, rctx *fasthttp.RequestCtx) (context.Context,
 	}
 
 	var imageURL string
-	var po processingOptions
+	var po *processingOptions
 	var err error
 
 	if _, ok := resizeTypes[parts[1]]; ok {
@@ -657,7 +657,7 @@ func parsePath(ctx context.Context, rctx *fasthttp.RequestCtx) (context.Context,
 	}
 
 	ctx = context.WithValue(ctx, imageURLCtxKey, imageURL)
-	ctx = context.WithValue(ctx, processingOptionsCtxKey, &po)
+	ctx = context.WithValue(ctx, processingOptionsCtxKey, po)
 
 	return ctx, err
 }
