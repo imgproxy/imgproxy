@@ -8,11 +8,6 @@ import (
 
 var timerSinceCtxKey = ctxKey("timerSince")
 
-type timer struct {
-	StartTime time.Time
-	Timer     <-chan time.Time
-}
-
 func startTimer(d time.Duration) (context.Context, context.CancelFunc) {
 	return context.WithTimeout(
 		context.WithValue(context.Background(), timerSinceCtxKey, time.Now()),
