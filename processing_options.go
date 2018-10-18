@@ -652,6 +652,10 @@ func parsePath(ctx context.Context, rctx *fasthttp.RequestCtx) (context.Context,
 		imageURL, po, err = parsePathAdvanced(parts[1:], acceptHeader)
 	}
 
+	if err != nil {
+		return ctx, err
+	}
+
 	if _, err = url.ParseRequestURI(imageURL); err != nil {
 		return ctx, errInvalidImageURL
 	}
