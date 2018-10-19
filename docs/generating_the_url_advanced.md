@@ -95,6 +95,10 @@ When imgproxy needs to cut some parts of the image, it is guided by the gravity.
 * `so`: south (bottom edge);
 * `ea`: east (right edge);
 * `we`: west (left edge);
+* `noea`: north-east (top-right corner);
+* `nowe`: north-west (top-left corner);
+* `soea`: south-east (bottom-right corner);
+* `sowe`: south-west (bottom-left corner);
 * `ce`: center;
 * `sm`: smart. `libvips` detects the most "interesting" section of the image and considers it as the center of the resulting image;
 * `fp:%x:%y`: focus point. `x` and `y` are floating point numbers between 0 and 1 that define the coordinates of the center of the resulting image. Treat 0 and 1 as right/left for `x` and top/bottom for `y`.
@@ -132,6 +136,29 @@ Default: disabled
 When set, imgproxy will apply the sharpen filter to the resulting image. `sigma` the size of a mask imgproxy will use.
 
 As an approximate guideline, use 0.5 sigma for 4 pixels/mm (display resolution), 1.0 for 12 pixels/mm and 1.5 for 16 pixels/mm (300 dpi == 12 pixels/mm).
+
+Default: disabled
+
+##### Watermark
+
+`watermark:%opacity:%position:%x_offset:%y_offset`
+`wm:%opacity:%position:%x_offset:%y_offset`
+
+Puts watermark on the processed image.
+
+* `opacity` - watermark opacity modifier. Final opacity is calculated like `base_opacity * opacity`. It's highly recommended to set this argument as `1` and adjust opacity with `IMGPROXY_WATERMARK_OPACITY` since this would optimize performance and memory usage.
+* `position` - (optional) specifies the position of the watermark. Available values:
+  * `ce`: (default) center;
+  * `no`: north (top edge);
+  * `so`: south (bottom edge);
+  * `ea`: east (right edge);
+  * `we`: west (left edge);
+  * `noea`: north-east (top-right corner);
+  * `nowe`: north-west (top-left corner);
+  * `soea`: south-east (bottom-right corner);
+  * `sowe`: south-west (bottom-left corner);
+  * `re`: replicate watermark to fill the whole image;
+* `x_offset`, `y_offset` - (optional) specify watermark offset by X and Y axes. Not applicable to `re` position.
 
 Default: disabled
 

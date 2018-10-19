@@ -60,6 +60,7 @@ Massive processing of remote images is a potentially dangerous thing, security-w
    * [Security](./docs/configuration.md#security)
    * [Compression](./docs/configuration.md#compression)
    * [WebP support detection](./docs/configuration.md#webp-support-detection)
+   * [Watermark](./docs/configuration.md#watermark)
    * [Presets](./docs/configuration.md#presets)
    * [Serving local files](./docs/configuration.md#serving-local-files)
    * [Serving files from Amazon S3](./docs/configuration.md#serving-files-from-amazon-s3)
@@ -68,12 +69,13 @@ Massive processing of remote images is a potentially dangerous thing, security-w
    * [Basic](./docs/generating_the_url_basic.md)
    * [Advanced](./docs/generating_the_url_advanced.md)
    * [Signing the URL](./docs/signing_the_url.md)
-5. [Presets](./docs/presets.md)
-6. [Serving local files](./docs/serving_local_files.md)
-7. [Serving files from Amazon S3](./docs/serving_files_from_s3.md)
-7. [Source image formats support](./docs/source_image_formats_support.md)
-8. [About processing pipeline](./docs/about_processing_pipeline.md)
-9. [Health check](./docs/healthcheck.md)
+5. [Watermark](./docs/watermark.md)
+6. [Presets](./docs/presets.md)
+7. [Serving local files](./docs/serving_local_files.md)
+8. [Serving files from Amazon S3](./docs/serving_files_from_s3.md)
+9. [Source image formats support](./docs/source_image_formats_support.md)
+10. [About processing pipeline](./docs/about_processing_pipeline.md)
+11. [Health check](./docs/healthcheck.md)
 
 ## Author
 

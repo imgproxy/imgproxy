@@ -69,6 +69,15 @@ When WebP support detection is enabled, please take care to configure your CDN o
 
 **Warning**: Headers cannot be signed. This means that an attacker can bypass your CDN cache by changing the `Accept` HTTP header. Have this in mind when configuring your production caching setup.
 
+### Watermark
+
+* `IMGPROXY_WATERMARK_DATA` - Base64-encoded image data. You can easily calculate it with `base64 tmp/watermark.png | tr -d '\n'`;
+* `IMGPROXY_WATERMARK_PATH` - path to the locally stored image;
+* `IMGPROXY_WATERMARK_URL` - watermark image URL;
+* `IMGPROXY_WATERMARK_OPACITY` - watermark base opacity.
+
+Read more about watermarks in the [Watermark](./watermark.md) guide.
+
 ### Presets
 
 Read about imgproxy presets in the [Presets](./presets.md) guide.
