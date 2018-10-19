@@ -204,6 +204,41 @@ vips_extract_area_go(VipsImage *in, VipsImage **out, int left, int top, int widt
 }
 
 int
+vips_replicate_go(VipsImage *in, VipsImage **out, int across, int down) {
+  return vips_replicate(in, out, across, down, NULL);
+}
+
+int
+vips_embed_go(VipsImage *in, VipsImage **out, int x, int y, int width, int height) {
+  return vips_embed(in, out, x, y, width, height, NULL);
+}
+
+int
+vips_extract_band_go(VipsImage *in, VipsImage **out, int band, int band_num) {
+  return vips_extract_band(in, out, band, "n", band_num, NULL);
+}
+
+int
+vips_bandjoin_go (VipsImage *in1, VipsImage *in2, VipsImage **out) {
+  return vips_bandjoin2(in1, in2, out, NULL);
+}
+
+int
+vips_bandjoin_const_go (VipsImage *in, VipsImage **out, double c) {
+  return vips_bandjoin_const1(in, out, c, NULL);
+}
+
+int
+vips_linear_go (VipsImage *in, VipsImage **out, double a, double b) {
+  return vips_linear1(in, out, a, b, NULL);
+}
+
+int
+vips_ifthenelse_go(VipsImage *cond, VipsImage *in1, VipsImage *in2, VipsImage **out) {
+  return vips_ifthenelse(cond, in1, in2, out, "blend", TRUE, NULL);
+}
+
+int
 vips_jpegsave_go(VipsImage *in, void **buf, size_t *len, int strip, int quality, int interlace) {
   return vips_jpegsave_buffer(in, buf, len, "strip", strip, "Q", quality, "optimize_coding", TRUE, "interlace", interlace, NULL);
 }

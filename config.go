@@ -20,6 +20,12 @@ func intEnvConfig(i *int, name string) {
 	}
 }
 
+func floatEnvConfig(i *float64, name string) {
+	if env, err := strconv.ParseFloat(os.Getenv(name), 64); err == nil {
+		*i = env
+	}
+}
+
 func megaIntEnvConfig(f *int, name string) {
 	if env, err := strconv.ParseFloat(os.Getenv(name), 64); err == nil {
 		*f = int(env * 1000000)
@@ -144,6 +150,11 @@ type config struct {
 	BaseURL string
 
 	Presets presets
+
+	WatermarkData    string
+	WatermarkPath    string
+	WatermarkURL     string
+	WatermarkOpacity float64
 }
 
 var conf = config{
@@ -161,6 +172,7 @@ var conf = config{
 	GZipCompression:       5,
 	ETagEnabled:           false,
 	S3Enabled:             false,
+	WatermarkOpacity:      1,
 }
 
 func init() {
@@ -222,6 +234,11 @@ func init() {
 	conf.Presets = make(presets)
 	presetEnvConfig(conf.Presets, "IMGPROXY_PRESETS")
 	presetFileConfig(conf.Presets, *presetsPath)
+
+	strEnvConfig(&conf.WatermarkData, "IMGPROXY_WATERMARK_DATA")
+	strEnvConfig(&conf.WatermarkPath, "IMGPROXY_WATERMARK_PATH")
+	strEnvConfig(&conf.WatermarkURL, "IMGPROXY_WATERMARK_URL")
+	floatEnvConfig(&conf.WatermarkOpacity, "IMGPROXY_WATERMARK_OPACITY")
 
 	if len(conf.Key) == 0 {
 		warning("Key is not defined, so signature checking is disabled")
@@ -300,6 +317,12 @@ func init() {
 
 	checkPresets(conf.Presets)
 
-	initVips()
+	if conf.WatermarkOpacity <= 0 {
+		log.Fatalln("Watermark opacity should be greater than 0")
+	} else if conf.WatermarkOpacity > 1 {
+		log.Fatalln("Watermark opacity should be less than or equal to 1")
+	}
+
 	initDownloading()
+	initVips()
 }

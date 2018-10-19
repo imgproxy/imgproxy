@@ -47,21 +47,29 @@ const (
 	gravityEast
 	gravitySouth
 	gravityWest
+	gravityNorthWest
+	gravityNorthEast
+	gravitySouthWest
+	gravitySouthEast
 	gravitySmart
 	gravityFocusPoint
 )
 
 var gravityTypes = map[string]gravityType{
-	"ce": gravityCenter,
-	"no": gravityNorth,
-	"ea": gravityEast,
-	"so": gravitySouth,
-	"we": gravityWest,
-	"sm": gravitySmart,
-	"fp": gravityFocusPoint,
+	"ce":   gravityCenter,
+	"no":   gravityNorth,
+	"ea":   gravityEast,
+	"so":   gravitySouth,
+	"we":   gravityWest,
+	"nowe": gravityNorthWest,
+	"noea": gravityNorthEast,
+	"sowe": gravitySouthWest,
+	"soea": gravitySouthEast,
+	"sm":   gravitySmart,
+	"fp":   gravityFocusPoint,
 }
 
-type gravity struct {
+type gravityOptions struct {
 	Type gravityType
 	X, Y float64
 }
@@ -89,17 +97,29 @@ const (
 	hexColorShortFormat = "%1x%1x%1x"
 )
 
+type watermarkOptions struct {
+	Enabled   bool
+	Opacity   float64
+	Replicate bool
+	Gravity   gravityType
+	OffsetX   int
+	OffsetY   int
+}
+
 type processingOptions struct {
-	Resize      resizeType
-	Width       int
-	Height      int
-	Gravity     gravity
-	Enlarge     bool
-	Format      imageType
-	Flatten     bool
-	Background  color
-	Blur        float32
-	Sharpen     float32
+	Resize     resizeType
+	Width      int
+	Height     int
+	Gravity    gravityOptions
+	Enlarge    bool
+	Format     imageType
+	Flatten    bool
+	Background color
+	Blur       float32
+	Sharpen    float32
+
+	Watermark watermarkOptions
+
 	UsedPresets []string
 }
 
@@ -411,6 +431,43 @@ func applyPresetOption(po *processingOptions, args []string) error {
 	return nil
 }
 
+func applyWatermarkOption(po *processingOptions, args []string) error {
+	if o, err := strconv.ParseFloat(args[0], 64); err == nil && o >= 0 && o <= 1 {
+		po.Watermark.Enabled = o > 0
+		po.Watermark.Opacity = o
+	} else {
+		return fmt.Errorf("Invalid watermark opacity: %s", args[0])
+	}
+
+	if len(args) > 1 {
+		if args[1] == "re" {
+			po.Watermark.Replicate = true
+		} else if g, ok := gravityTypes[args[1]]; ok && g != gravityFocusPoint {
+			po.Watermark.Gravity = g
+		} else {
+			return fmt.Errorf("Invalid watermark position: %s", args[1])
+		}
+	}
+
+	if len(args) > 2 {
+		if x, err := strconv.Atoi(args[2]); err == nil {
+			po.Watermark.OffsetX = x
+		} else {
+			return fmt.Errorf("Invalid watermark X offset: %s", args[2])
+		}
+	}
+
+	if len(args) > 3 {
+		if y, err := strconv.Atoi(args[3]); err == nil {
+			po.Watermark.OffsetY = y
+		} else {
+			return fmt.Errorf("Invalid watermark Y offset: %s", args[3])
+		}
+	}
+
+	return nil
+}
+
 func applyFormatOption(po *processingOptions, args []string) error {
 	if len(args) > 1 {
 		return fmt.Errorf("Invalid format arguments: %v", args)
@@ -480,6 +537,10 @@ func applyProcessingOption(po *processingOptions, name string, args []string) er
 		if err := applySharpenOption(po, args); err != nil {
 			return err
 		}
+	case "watermark", "wm":
+		if err := applyWatermarkOption(po, args); err != nil {
+			return err
+		}
 	case "preset", "pr":
 		if err := applyPresetOption(po, args); err != nil {
 			return err
@@ -534,11 +595,12 @@ func defaultProcessingOptions(acceptHeader string) (*processingOptions, error) {
 		Resize:      resizeFit,
 		Width:       0,
 		Height:      0,
-		Gravity:     gravity{Type: gravityCenter},
+		Gravity:     gravityOptions{Type: gravityCenter},
 		Enlarge:     false,
 		Format:      imageTypeJPEG,
 		Blur:        0,
 		Sharpen:     0,
+		Watermark:   watermarkOptions{Opacity: 1, Replicate: false, Gravity: gravityCenter},
 		UsedPresets: make([]string, 0, len(conf.Presets)),
 	}
 

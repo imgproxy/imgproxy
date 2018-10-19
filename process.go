@@ -22,13 +22,16 @@ var (
 	vipsTypeSupportLoad  = make(map[imageType]bool)
 	vipsTypeSupportSave  = make(map[imageType]bool)
 
+	watermark *C.struct__VipsImage
+
 	errSmartCropNotSupported = errors.New("Smart crop is not supported by used version of libvips")
 )
 
 type cConfig struct {
-	Quality         C.int
-	JpegProgressive C.int
-	PngInterlaced   C.int
+	Quality          C.int
+	JpegProgressive  C.int
+	PngInterlaced    C.int
+	WatermarkOpacity C.double
 }
 
 var cConf cConfig
@@ -89,9 +92,16 @@ func initVips() {
 	if conf.PngInterlaced {
 		cConf.PngInterlaced = C.int(1)
 	}
+
+	cConf.WatermarkOpacity = C.double(conf.WatermarkOpacity)
+
+	if err := vipsPrepareWatermark(); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func shutdownVips() {
+	C.clear_image(&watermark)
 	C.vips_shutdown()
 }
 
@@ -174,31 +184,33 @@ func calcShink(scale float64, imgtype imageType) int {
 }
 
 func calcCrop(width, height int, po *processingOptions) (left, top int) {
-	left = (width - po.Width + 1) / 2
-	top = (height - po.Height + 1) / 2
-
-	if po.Gravity.Type == gravityNorth {
-		top = 0
-	}
-
-	if po.Gravity.Type == gravityEast {
-		left = width - po.Width
-	}
-
-	if po.Gravity.Type == gravitySouth {
-		top = height - po.Height
-	}
-
-	if po.Gravity.Type == gravityWest {
-		left = 0
-	}
-
 	if po.Gravity.Type == gravityFocusPoint {
 		pointX := int(float64(width) * po.Gravity.X)
 		pointY := int(float64(height) * po.Gravity.Y)
 
 		left = maxInt(0, minInt(pointX-po.Width/2, width-po.Width))
 		top = maxInt(0, minInt(pointY-po.Height/2, height-po.Height))
+
+		return
+	}
+
+	left = (width - po.Width + 1) / 2
+	top = (height - po.Height + 1) / 2
+
+	if po.Gravity.Type == gravityNorth || po.Gravity.Type == gravityNorthEast || po.Gravity.Type == gravityNorthWest {
+		top = 0
+	}
+
+	if po.Gravity.Type == gravityEast || po.Gravity.Type == gravityNorthEast || po.Gravity.Type == gravitySouthEast {
+		left = width - po.Width
+	}
+
+	if po.Gravity.Type == gravitySouth || po.Gravity.Type == gravitySouthEast || po.Gravity.Type == gravitySouthWest {
+		top = height - po.Height
+	}
+
+	if po.Gravity.Type == gravityWest || po.Gravity.Type == gravityNorthWest || po.Gravity.Type == gravitySouthWest {
+		left = 0
 	}
 
 	return
@@ -354,7 +366,71 @@ func processImage(ctx context.Context) ([]byte, error) {
 
 	checkTimeout(ctx)
 
+	if po.Watermark.Enabled {
+		if err = vipsApplyWatermark(&img, &po.Watermark); err != nil {
+			return nil, err
+		}
+	}
+
 	return vipsSaveImage(img, po.Format)
+}
+
+func vipsPrepareWatermark() error {
+	data, imgtype, cancel, err := watermarkData()
+	defer cancel()
+
+	if err != nil {
+		return err
+	}
+
+	if data == nil {
+		return nil
+	}
+
+	if C.vips_load_buffer(unsafe.Pointer(&data[0]), C.size_t(len(data)), C.int(imgtype), 1, &watermark) != 0 {
+		return vipsError()
+	}
+
+	var tmp *C.struct__VipsImage
+
+	if cConf.WatermarkOpacity < 1 {
+		if vipsImageHasAlpha(watermark) {
+			var alpha *C.struct__VipsImage
+			defer C.clear_image(&alpha)
+
+			if C.vips_extract_band_go(watermark, &tmp, (*watermark).Bands-1, 1) != 0 {
+				return vipsError()
+			}
+			C.swap_and_clear(&alpha, tmp)
+
+			if C.vips_extract_band_go(watermark, &tmp, 0, (*watermark).Bands-1) != 0 {
+				return vipsError()
+			}
+			C.swap_and_clear(&watermark, tmp)
+
+			if C.vips_linear_go(alpha, &tmp, cConf.WatermarkOpacity, 0) != 0 {
+				return vipsError()
+			}
+			C.swap_and_clear(&alpha, tmp)
+
+			if C.vips_bandjoin_go(watermark, alpha, &tmp) != 0 {
+				return vipsError()
+			}
+			C.swap_and_clear(&watermark, tmp)
+		} else {
+			if C.vips_bandjoin_const_go(watermark, &tmp, cConf.WatermarkOpacity*255) != 0 {
+				return vipsError()
+			}
+			C.swap_and_clear(&watermark, tmp)
+		}
+	}
+
+	if tmp = C.vips_image_copy_memory(watermark); tmp == nil {
+		return vipsError()
+	}
+	C.swap_and_clear(&watermark, tmp)
+
+	return nil
 }
 
 func vipsLoadImage(data []byte, imgtype imageType, shrink int) (*C.struct__VipsImage, error) {
@@ -546,6 +622,145 @@ func vipsImageCopyMemory(img **C.struct__VipsImage) error {
 		return vipsError()
 	}
 	C.swap_and_clear(img, tmp)
+	return nil
+}
+
+func vipsReplicateWatermark(width, height C.int) (wm *C.struct__VipsImage, err error) {
+	var tmp *C.struct__VipsImage
+	defer C.clear_image(&tmp)
+
+	if C.vips_replicate_go(watermark, &tmp, 1+width/watermark.Xsize, 1+height/watermark.Ysize) != 0 {
+		err = vipsError()
+		return
+	}
+
+	if C.vips_extract_area_go(tmp, &wm, 0, 0, width, height) != 0 {
+		err = vipsError()
+		return
+	}
+
+	return
+}
+
+func vipsEmbedWatermark(gravity gravityType, width, height C.int, offX, offY C.int) (wm *C.struct__VipsImage, err error) {
+	wmWidth := watermark.Xsize
+	wmHeight := watermark.Ysize
+
+	left := (width-wmWidth+1)/2 + offX
+	top := (height-wmHeight+1)/2 + offY
+
+	if gravity == gravityNorth || gravity == gravityNorthEast || gravity == gravityNorthWest {
+		top = offY
+	}
+
+	if gravity == gravityEast || gravity == gravityNorthEast || gravity == gravitySouthEast {
+		left = width - wmWidth - offX
+	}
+
+	if gravity == gravitySouth || gravity == gravitySouthEast || gravity == gravitySouthWest {
+		top = height - wmHeight - offY
+	}
+
+	if gravity == gravityWest || gravity == gravityNorthWest || gravity == gravitySouthWest {
+		left = offX
+	}
+
+	if left > width {
+		left = width - wmWidth
+	} else if left < -wmWidth {
+		left = 0
+	}
+
+	if top > height {
+		top = height - wmHeight
+	} else if top < -wmHeight {
+		top = 0
+	}
+
+	if C.vips_embed_go(watermark, &wm, left, top, width, height) != 0 {
+		err = vipsError()
+		return
+	}
+
+	return
+}
+
+func vipsApplyWatermark(img **C.struct__VipsImage, opts *watermarkOptions) error {
+	if watermark == nil {
+		return nil
+	}
+
+	var wm, wmAlpha, tmp *C.struct__VipsImage
+	var err error
+
+	defer C.clear_image(&wm)
+	defer C.clear_image(&wmAlpha)
+
+	imgW := (*img).Xsize
+	imgH := (*img).Ysize
+
+	if opts.Replicate {
+		if wm, err = vipsReplicateWatermark(imgW, imgH); err != nil {
+			return err
+		}
+	} else {
+		if wm, err = vipsEmbedWatermark(opts.Gravity, imgW, imgH, C.int(opts.OffsetX), C.int(opts.OffsetY)); err != nil {
+			return err
+		}
+	}
+
+	if C.vips_extract_band_go(wm, &tmp, (*wm).Bands-1, 1) != 0 {
+		return vipsError()
+	}
+	C.swap_and_clear(&wmAlpha, tmp)
+
+	if C.vips_extract_band_go(wm, &tmp, 0, (*wm).Bands-1) != 0 {
+		return vipsError()
+	}
+	C.swap_and_clear(&wm, tmp)
+
+	if C.vips_image_guess_interpretation(*img) != C.vips_image_guess_interpretation(wm) {
+		if C.vips_colourspace_go(wm, &tmp, C.vips_image_guess_interpretation(*img)) != 0 {
+			return vipsError()
+		}
+		C.swap_and_clear(&wm, tmp)
+	}
+
+	if opts.Opacity < 1 {
+		if C.vips_linear_go(wmAlpha, &tmp, C.double(opts.Opacity), 0) != 0 {
+			return vipsError()
+		}
+		C.swap_and_clear(&wmAlpha, tmp)
+	}
+
+	var imgAlpha *C.struct__VipsImage
+	defer C.clear_image(&imgAlpha)
+
+	hasAlpha := vipsImageHasAlpha(*img)
+
+	if hasAlpha {
+		if C.vips_extract_band_go(*img, &imgAlpha, (**img).Bands-1, 1) != 0 {
+			return vipsError()
+		}
+
+		if C.vips_extract_band_go(*img, &tmp, 0, (**img).Bands-1) != 0 {
+			return vipsError()
+		}
+		C.swap_and_clear(img, tmp)
+	}
+
+	if C.vips_ifthenelse_go(wmAlpha, wm, *img, &tmp) != 0 {
+		return vipsError()
+	}
+	C.swap_and_clear(img, tmp)
+
+	if hasAlpha {
+		if C.vips_bandjoin_go(*img, imgAlpha, &tmp) != 0 {
+			return vipsError()
+		}
+		C.swap_and_clear(img, tmp)
+	}
+
 	return nil
 }
 
