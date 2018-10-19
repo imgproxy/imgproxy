@@ -442,7 +442,7 @@ func applyWatermarkOption(po *processingOptions, args []string) error {
 	if len(args) > 1 {
 		if args[1] == "re" {
 			po.Watermark.Replicate = true
-		} else if g, ok := gravityTypes[args[1]]; ok && g != gravityFocusPoint {
+		} else if g, ok := gravityTypes[args[1]]; ok && g != gravityFocusPoint && g != gravitySmart {
 			po.Watermark.Gravity = g
 		} else {
 			return fmt.Errorf("Invalid watermark position: %s", args[1])
