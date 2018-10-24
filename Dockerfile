@@ -16,6 +16,15 @@ RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/reposit
   && apk del --purge .build-deps \
   && rm -rf /var/cache/apk*
 
+FROM alpine:edge
+
+RUN \
+  && echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories \
+  && apk --no-cache add ca-certificates bash vips \
+  && rm -rf /var/cache/apk*
+
+COPY --from=0 /usr/local/bin/imgproxy /usr/local/bin
+
 CMD ["imgproxy"]
 
 EXPOSE 8080
