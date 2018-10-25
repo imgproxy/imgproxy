@@ -10,3 +10,6 @@ docs/
 LICENSE
 README.md
 CHANGELOG.md
+
+Dockerfile
+.dockerignore
