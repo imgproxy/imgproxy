@@ -1,0 +1,32 @@
+language: go
+go_import_path: github.com/newrelic/go-agent
+go:
+    - 1.3
+    - 1.4    
+    - 1.5    
+    - 1.6    
+    - 1.7
+    - 1.8    
+    - 1.9
+    - tip
+
+# Skip the install step. Don't `go get` dependencies. Only build with the
+# code in vendor/
+install: true
+
+matrix:
+  allow_failures:
+    - go: tip
+
+# golint has dependencies that only work on Go 1.7 or later. See also
+# https://github.com/golang/lint/issues/400.
+before_script:
+  - GO_FILES=$(find . -iname '*.go' -type f | grep -v /vendor/)
+  - DO_GOLINT=$(echo $TRAVIS_GO_VERSION | perl -wne 'chomp; if (/^[0-9]+\.[0-9]+/) { my ($major, $minor) = split /\./; print "new" if $minor >= 7 || $major > 1 } elsif (/^tip$/) { print "new" }' | grep new > /dev/null; echo $?)
+  - if [[ "$DO_GOLINT" -eq "0" ]]; then go get github.com/golang/lint/golint; fi
+
+script:
+  - if [ -n "$(gofmt -s -l $GO_FILES)" ]; then echo "1"; fi; # gofmt
+  - go test -v -race ./... # go test
+  - go vet ./... # go vet
+  - if [[ "$DO_GOLINT" -eq 0 ]]; then golint -set_exit_status $(go list ./...); fi # golint

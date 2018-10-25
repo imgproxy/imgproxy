@@ -155,6 +155,9 @@ type config struct {
 	WatermarkPath    string
 	WatermarkURL     string
 	WatermarkOpacity float64
+
+	NewRelicAppName string
+	NewRelicKey     string
 }
 
 var conf = config{
@@ -240,6 +243,9 @@ func init() {
 	strEnvConfig(&conf.WatermarkURL, "IMGPROXY_WATERMARK_URL")
 	floatEnvConfig(&conf.WatermarkOpacity, "IMGPROXY_WATERMARK_OPACITY")
 
+	strEnvConfig(&conf.NewRelicAppName, "IMGPROXY_NEW_RELIC_APP_NAME")
+	strEnvConfig(&conf.NewRelicKey, "IMGPROXY_NEW_RELIC_KEY")
+
 	if len(conf.Key) == 0 {
 		warning("Key is not defined, so signature checking is disabled")
 		conf.AllowInsecure = true
@@ -324,5 +330,6 @@ func init() {
 	}
 
 	initDownloading()
+	initNewrelic()
 	initVips()
 }

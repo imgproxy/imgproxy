@@ -136,6 +136,11 @@ func readAndCheckImage(ctx context.Context, res *http.Response) (context.Context
 func downloadImage(ctx context.Context) (context.Context, context.CancelFunc, error) {
 	url := fmt.Sprintf("%s%s", conf.BaseURL, getImageURL(ctx))
 
+	if newRelicEnabled {
+		newRelicCancel := startNewRelicSegment(ctx, "Downloading image")
+		defer newRelicCancel()
+	}
+
 	res, err := downloadClient.Get(url)
 	if err != nil {
 		return ctx, func() {}, err

@@ -65,6 +65,22 @@
   revision = "3de1538a83bcb1749aa54482113e5cd06e4fb938"
 
 [[projects]]
+  digest = "1:01f60ec456e70c9be269902c08fa189a9d47056a419c4a91a02f19df5e36ab59"
+  name = "github.com/newrelic/go-agent"
+  packages = [
+    ".",
+    "internal",
+    "internal/cat",
+    "internal/jsonx",
+    "internal/logger",
+    "internal/sysinfo",
+    "internal/utilization",
+  ]
+  pruneopts = "UT"
+  revision = "46d73e6be8b4faeee70850d0df829e4fe00d6819"
+  version = "v2.1.0"
+
+[[projects]]
   digest = "1:72b36febaabad58e1864de2b43de05689ce27a2c9a582a61a25e71a31ba23d0b"
   name = "golang.org/x/image"
   packages = [
@@ -91,6 +107,7 @@
     "github.com/aws/aws-sdk-go/aws/session",
     "github.com/aws/aws-sdk-go/service/s3",
     "github.com/matoous/go-nanoid",
+    "github.com/newrelic/go-agent",
     "golang.org/x/image/webp",
     "golang.org/x/net/netutil",
   ]

@@ -194,6 +194,14 @@ func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		panic(errInvalidSecret)
 	}
 
+	ctx := context.Background()
+
+	if newRelicEnabled {
+		var newRelicCancel context.CancelFunc
+		ctx, newRelicCancel = startNewRelicTransaction(ctx, rw, r)
+		defer newRelicCancel()
+	}
+
 	h.lock()
 	defer h.unlock()
 
@@ -203,7 +211,7 @@ func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx, timeoutCancel := startTimer(time.Duration(conf.WriteTimeout) * time.Second)
+	ctx, timeoutCancel := startTimer(ctx, time.Duration(conf.WriteTimeout)*time.Second)
 	defer timeoutCancel()
 
 	ctx, err := parsePath(ctx, r)
@@ -214,6 +222,9 @@ func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	ctx, downloadcancel, err := downloadImage(ctx)
 	defer downloadcancel()
 	if err != nil {
+		if newRelicEnabled {
+			sendErrorToNewRelic(ctx, err)
+		}
 		panic(newError(404, err.Error(), "Image is unreachable"))
 	}
 
@@ -232,6 +243,9 @@ func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	imageData, err := processImage(ctx)
 	if err != nil {
+		if newRelicEnabled {
+			sendErrorToNewRelic(ctx, err)
+		}
 		panic(newError(500, err.Error(), "Error occurred while processing image"))
 	}
 

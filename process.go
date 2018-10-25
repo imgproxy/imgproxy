@@ -217,6 +217,11 @@ func calcCrop(width, height int, po *processingOptions) (left, top int) {
 }
 
 func processImage(ctx context.Context) ([]byte, error) {
+	if newRelicEnabled {
+		newRelicCancel := startNewRelicSegment(ctx, "Processing image")
+		defer newRelicCancel()
+	}
+
 	defer C.vips_cleanup()
 
 	data := getImageData(ctx).Bytes()

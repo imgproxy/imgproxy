@@ -122,6 +122,15 @@ imgproxy can process files from Amazon S3 buckets, but this feature is disabled 
 
 Check out the [Serving files from S3](./serving_files_from_s3.md) guide to learn more.
 
+### New Relic metrics
+
+imgproxy can send its metrics to New Relic. Specify your New Relic license key to activate this feature:
+
+* `IMGPROXY_NEW_RELIC_KEY` - New Relic license key;
+* `IMGPROXY_NEW_RELIC_APP_NAME` - application name. If not specified, `imgproxy` will be used as the application name.
+
+Check out the [New Relic](./new_relic.md) guide to learn more.
+
 ### Miscellaneous
 
 * `IMGPROXY_BASE_URL`: base URL prefix that will be added to every requested image URL. For example, if the base URL is `http://example.com/images` and `/path/to/image.png` is requested, imgproxy will download the source image from `http://example.com/images/path/to/image.png`. Default: blank.
