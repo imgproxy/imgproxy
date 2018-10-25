@@ -10,6 +10,7 @@ imgproxy has a specific processing pipeline tuned for maximum performance. When 
 * imgproxy crops the image using specified gravity;
 * imgproxy fills the image background if the background color was specified;
 * imgproxy applies gaussian blur and sharpen filters;
+* imgproxy adds watermark if one was specified;
 * And finally, imgproxy saves the image to the desired format.
 
 This pipeline with using sequential access to source image data allows to significantly reduce memory and CPU usage — one of the reasons imgproxy is so performant.
