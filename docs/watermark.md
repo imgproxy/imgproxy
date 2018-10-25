@@ -16,8 +16,10 @@ You can also specify the base opacity of watermark with `IMGPROXY_WATERMARK_OPAC
 
 Watermarks are only available with [advanced URL format](generating_the_url_advanced.md). Use `watermark` processing option to put the watermark on the processed image:
 
-`watermark:%opacity:%position:%x_offset:%y_offset`
-`wm:%opacity:%position:%x_offset:%y_offset`
+```
+watermark:%opacity:%position:%x_offset:%y_offset
+wm:%opacity:%position:%x_offset:%y_offset
+```
 
 Where arguments are:
 

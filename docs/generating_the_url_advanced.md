@@ -32,22 +32,28 @@ imgproxy supports the following processing options:
 
 ##### Resize
 
-`resize:%resizing_type:%width:%height:%enlarge`
-`rs:%resizing_type:%width:%height:%enlarge`
+```
+resize:%resizing_type:%width:%height:%enlarge
+rs:%resizing_type:%width:%height:%enlarge
+```
 
 Meta-option that defines the [resizing type](#resizing-type), [width](#width), [height](#height), and [enlarge](#enlarge). All arguments are optional and can be omited to use their default values.
 
 ##### Size
 
-`size:%width:%height:%enlarge`
-`s:%width:%height:%enlarge`
+```
+size:%width:%height:%enlarge
+s:%width:%height:%enlarge
+```
 
 Meta-option that defines the [width](#width), [height](#height), and [enlarge](#enlarge). All arguments are optional and can be omited to use their default values.
 
 ##### Resizing type
 
-`resizing_type:%resizing_type`
-`rt:%resizing_type`
+```
+resizing_type:%resizing_type
+rt:%resizing_type
+```
 
 Defines how imgproxy will resize the source image. Supported resizing types are:
 
@@ -59,8 +65,10 @@ Default: `fit`
 
 ##### Width
 
-`width:%width`
-`w:%width`
+```
+width:%width
+w:%width
+```
 
 Defines the width of the resulting image. When set to `0`, imgproxy will calculate the resulting width using the defined height and source aspect ratio. When set to `0` and the `crop` resizing type is used, imgproxy will use the full width of the source image.
 
@@ -68,8 +76,10 @@ Default: `0`
 
 ##### Height
 
-`height:%height`
-`h:%height`
+```
+height:%height
+h:%height
+```
 
 Defines the height of the resulting image. When set to `0`, imgproxy will calculate resulting height using the defined width and source aspect ratio. When set to `0` and `crop` resizing type is used, imgproxy will use the full height of the source image.
 
@@ -77,8 +87,10 @@ Default: `0`
 
 ##### Enlarge
 
-`enlarge:%enlarge`
-`el:%enlarge`
+```
+enlarge:%enlarge
+el:%enlarge
+```
 
 If set to `0`, imgproxy will not enlarge the image if it is smaller than the given size. With any other value, imgproxy will enlarge the image.
 
@@ -86,8 +98,10 @@ Default: `0`
 
 ##### Gravity
 
-`gravity:%gravity`
-`g:%gravity`
+```
+gravity:%gravity
+g:%gravity
+```
 
 When imgproxy needs to cut some parts of the image, it is guided by the gravity. The following values are supported:
 
@@ -107,11 +121,13 @@ Default: `ce`
 
 ##### Background
 
-`background:%R:%G:%B`
-`bg:%R:%G:%B`
+```
+background:%R:%G:%B
+bg:%R:%G:%B
 
-`background:%hex_color`
-`bg:%hex_color`
+background:%hex_color
+bg:%hex_color
+```
 
 When set, imgproxy will fill the resulting image background with the specified color. `R`, `G`, and `B` are red, green and blue channel values of the background color (0-255). `hex_color` is a hex-coded value of the color. Useful when you convert an image with alpha-channel to JPEG.
 
@@ -121,8 +137,10 @@ Default: disabled
 
 ##### Blur
 
-`blur:%sigma`
-`bl:%sigma`
+```
+blur:%sigma
+bl:%sigma
+```
 
 When set, imgproxy will apply the gaussian blur filter to the resulting image. `sigma` defines the size of a mask imgproxy will use.
 
@@ -130,8 +148,10 @@ Default: disabled
 
 ##### Sharpen
 
-`sharpen:%sigma`
-`sh:%sigma`
+```
+sharpen:%sigma
+sh:%sigma
+```
 
 When set, imgproxy will apply the sharpen filter to the resulting image. `sigma` the size of a mask imgproxy will use.
 
@@ -141,8 +161,10 @@ Default: disabled
 
 ##### Watermark
 
-`watermark:%opacity:%position:%x_offset:%y_offset`
-`wm:%opacity:%position:%x_offset:%y_offset`
+```
+watermark:%opacity:%position:%x_offset:%y_offset
+wm:%opacity:%position:%x_offset:%y_offset
+```
 
 Puts watermark on the processed image.
 
@@ -164,8 +186,10 @@ Default: disabled
 
 ##### Preset
 
-`preset:%preset_name1:%preset_name2:...:%preset_nameN`
-`pr:%preset_name1:%preset_name2:...:%preset_nameN`
+```
+preset:%preset_name1:%preset_name2:...:%preset_nameN
+pr:%preset_name1:%preset_name2:...:%preset_nameN
+```
 
 Defines a list of presets to be used by imgproxy. Feel free to use as many presets in a single URL as you need.
 
@@ -175,9 +199,11 @@ Default: empty
 
 ##### Format
 
-`format:%extension`
-`f:%extension`
-`ext:%extension`
+```
+format:%extension
+f:%extension
+ext:%extension
+```
 
 Specifies the resulting image format. Alias for [extension](#extension) URL part.
 
