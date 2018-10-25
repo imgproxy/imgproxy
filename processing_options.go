@@ -11,12 +11,11 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
-
-	"github.com/valyala/fasthttp"
 )
 
 type urlOptions map[string][]string
@@ -685,13 +684,13 @@ func parsePathSimple(parts []string, acceptHeader string) (string, *processingOp
 	return string(url), po, nil
 }
 
-func parsePath(ctx context.Context, rctx *fasthttp.RequestCtx) (context.Context, error) {
-	path := string(rctx.Path())
+func parsePath(ctx context.Context, r *http.Request) (context.Context, error) {
+	path := r.URL.Path
 	parts := strings.Split(strings.TrimPrefix(path, "/"), "/")
 
 	var acceptHeader string
-	if h := rctx.Request.Header.Peek("Accept"); len(h) > 0 {
-		acceptHeader = string(h)
+	if h, ok := r.Header["Accept"]; ok {
+		acceptHeader = h[0]
 	}
 
 	if len(parts) < 3 {

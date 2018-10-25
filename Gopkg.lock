@@ -57,52 +57,12 @@
   revision = "0b12d6b5"
 
 [[projects]]
-  digest = "1:cdbed6a7b574b13bbabcd8c36c5be56d6444789bab21fcd37d39655eab0b2141"
-  name = "github.com/klauspost/compress"
-  packages = [
-    "flate",
-    "gzip",
-    "zlib",
-  ]
-  pruneopts = "UT"
-  revision = "b939724e787a27c0005cabe3f78e7ed7987ac74f"
-  version = "v1.4.0"
-
-[[projects]]
-  digest = "1:4ea0668d490ca32a38366453a486e2e8c60fbdaf1f2607c96b4a093d8a5c8de7"
-  name = "github.com/klauspost/cpuid"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "ae7887de9fa5d2db4eaa8174a7eff2c1ac00f2da"
-  version = "v1.1"
-
-[[projects]]
   branch = "master"
   digest = "1:97e35d2efabea52337e58f96e8b798fd461bf42d2519beb50f485029c6ad6aa5"
   name = "github.com/matoous/go-nanoid"
   packages = ["."]
   pruneopts = "UT"
   revision = "3de1538a83bcb1749aa54482113e5cd06e4fb938"
-
-[[projects]]
-  digest = "1:c468422f334a6b46a19448ad59aaffdfc0a36b08fdcc1c749a0b29b6453d7e59"
-  name = "github.com/valyala/bytebufferpool"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "e746df99fe4a3986f4d4f79e13c1e0117ce9c2f7"
-  version = "v1.0.0"
-
-[[projects]]
-  branch = "master"
-  digest = "1:7c1085da40cd79011bff52dde0c8e489d3947bd296bc8361aa71285b44b79737"
-  name = "github.com/valyala/fasthttp"
-  packages = [
-    ".",
-    "fasthttputil",
-    "stackless",
-  ]
-  pruneopts = "UT"
-  revision = "8dfc881b9ec613747a4b7bb8ebe7504b3a18a409"
 
 [[projects]]
   digest = "1:72b36febaabad58e1864de2b43de05689ce27a2c9a582a61a25e71a31ba23d0b"
@@ -131,7 +91,6 @@
     "github.com/aws/aws-sdk-go/aws/session",
     "github.com/aws/aws-sdk-go/service/s3",
     "github.com/matoous/go-nanoid",
-    "github.com/valyala/fasthttp",
     "golang.org/x/image/webp",
     "golang.org/x/net/netutil",
   ]

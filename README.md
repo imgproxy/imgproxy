@@ -35,7 +35,7 @@ imgproxy only includes the must-have features for image processing, fine-tuning 
 
 imgproxy uses probably the most efficient image processing library there is, called `libvips`. It is screaming fast and has a very low memory footprint; with it, we can handle the processing for a massive amount of images on the fly.
 
-imgproxy also uses [fasthttp](https://github.com/valyala/fasthttp) for the best HTTP networking speed and less memory usage.
+imgproxy also uses native Go's `net/http` routing for the best HTTP networking support.
 
 #### Security
 
