@@ -341,6 +341,11 @@ func processImage(ctx context.Context) ([]byte, error) {
 			if err = vipsSmartCrop(&img, po.Width, po.Height); err != nil {
 				return nil, err
 			}
+			// Applying additional modifications after smart crop causes SIGSEGV on Alpine
+			// so we have to copy memory after it
+			if err = vipsImageCopyMemory(&img); err != nil {
+				return nil, err
+			}
 		} else {
 			left, top := calcCrop(imgWidth, imgHeight, po)
 			if err = vipsCrop(&img, left, top, po.Width, po.Height); err != nil {
