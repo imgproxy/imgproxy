@@ -635,26 +635,25 @@ func vipsImageCopyMemory(img **C.struct__VipsImage) error {
 	return nil
 }
 
-func vipsReplicateWatermark(width, height C.int) (wm *C.struct__VipsImage, err error) {
+func vipsReplicate(img **C.struct__VipsImage, width, height C.int) error {
 	var tmp *C.struct__VipsImage
-	defer C.clear_image(&tmp)
 
-	if C.vips_replicate_go(watermark, &tmp, 1+width/watermark.Xsize, 1+height/watermark.Ysize) != 0 {
-		err = vipsError()
-		return
+	if C.vips_replicate_go(*img, &tmp, 1+width/(*img).Xsize, 1+height/(*img).Ysize) != 0 {
+		return vipsError()
 	}
+	C.swap_and_clear(img, tmp)
 
-	if C.vips_extract_area_go(tmp, &wm, 0, 0, width, height) != 0 {
-		err = vipsError()
-		return
+	if C.vips_extract_area_go(*img, &tmp, 0, 0, width, height) != 0 {
+		return vipsError()
 	}
+	C.swap_and_clear(img, tmp)
 
-	return
+	return nil
 }
 
-func vipsEmbedWatermark(gravity gravityType, width, height C.int, offX, offY C.int) (wm *C.struct__VipsImage, err error) {
-	wmWidth := watermark.Xsize
-	wmHeight := watermark.Ysize
+func vipsEmbed(img **C.struct__VipsImage, gravity gravityType, width, height C.int, offX, offY C.int) error {
+	wmWidth := (*img).Xsize
+	wmHeight := (*img).Ysize
 
 	left := (width-wmWidth+1)/2 + offX
 	top := (height-wmHeight+1)/2 + offY
@@ -687,9 +686,34 @@ func vipsEmbedWatermark(gravity gravityType, width, height C.int, offX, offY C.i
 		top = 0
 	}
 
-	if C.vips_embed_go(watermark, &wm, left, top, width, height) != 0 {
+	var tmp *C.struct__VipsImage
+	if C.vips_embed_go(*img, &tmp, left, top, width, height) != 0 {
+		return vipsError()
+	}
+	C.swap_and_clear(img, tmp)
+
+	return nil
+}
+
+func vipsResizeWatermark(width, height int) (wm *C.struct__VipsImage, err error) {
+	wmW := float64(watermark.Xsize)
+	wmH := float64(watermark.Ysize)
+
+	wr := float64(width) / wmW
+	hr := float64(height) / wmH
+
+	scale := math.Min(wr, hr)
+
+	if wmW*scale < 1 {
+		scale = 1 / wmW
+	}
+
+	if wmH*scale < 1 {
+		scale = 1 / wmH
+	}
+
+	if C.vips_resize_go(watermark, &wm, C.double(scale)) != 0 {
 		err = vipsError()
-		return
 	}
 
 	return
@@ -709,12 +733,25 @@ func vipsApplyWatermark(img **C.struct__VipsImage, opts *watermarkOptions) error
 	imgW := (*img).Xsize
 	imgH := (*img).Ysize
 
+	if opts.Scale == 0 {
+		if wm = C.vips_image_copy_memory(watermark); wm == nil {
+			return vipsError()
+		}
+	} else {
+		wmW := maxInt(int(float64(imgW)*opts.Scale), 1)
+		wmH := maxInt(int(float64(imgH)*opts.Scale), 1)
+
+		if wm, err = vipsResizeWatermark(wmW, wmH); err != nil {
+			return err
+		}
+	}
+
 	if opts.Replicate {
-		if wm, err = vipsReplicateWatermark(imgW, imgH); err != nil {
+		if err = vipsReplicate(&wm, imgW, imgH); err != nil {
 			return err
 		}
 	} else {
-		if wm, err = vipsEmbedWatermark(opts.Gravity, imgW, imgH, C.int(opts.OffsetX), C.int(opts.OffsetY)); err != nil {
+		if err = vipsEmbed(&wm, opts.Gravity, imgW, imgH, C.int(opts.OffsetX), C.int(opts.OffsetY)); err != nil {
 			return err
 		}
 	}

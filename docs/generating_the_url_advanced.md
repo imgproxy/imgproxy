@@ -162,8 +162,8 @@ Default: disabled
 ##### Watermark
 
 ```
-watermark:%opacity:%position:%x_offset:%y_offset
-wm:%opacity:%position:%x_offset:%y_offset
+watermark:%opacity:%position:%x_offset:%y_offset:%scale
+wm:%opacity:%position:%x_offset:%y_offset:%scale
 ```
 
 Puts watermark on the processed image.
@@ -180,7 +180,8 @@ Puts watermark on the processed image.
   * `soea`: south-east (bottom-right corner);
   * `sowe`: south-west (bottom-left corner);
   * `re`: replicate watermark to fill the whole image;
-* `x_offset`, `y_offset` - (optional) specify watermark offset by X and Y axes. Not applicable to `re` position.
+* `x_offset`, `y_offset` - (optional) specify watermark offset by X and Y axes. Not applicable to `re` position;
+* `scale` - (optional) floating point number that defines watermark size relative to the resulting image size. When set to `0` or omitted, watermark size won't be changed.
 
 Default: disabled
 

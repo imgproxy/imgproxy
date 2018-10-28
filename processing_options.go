@@ -103,6 +103,7 @@ type watermarkOptions struct {
 	Gravity   gravityType
 	OffsetX   int
 	OffsetY   int
+	Scale     float64
 }
 
 type processingOptions struct {
@@ -431,6 +432,10 @@ func applyPresetOption(po *processingOptions, args []string) error {
 }
 
 func applyWatermarkOption(po *processingOptions, args []string) error {
+	if len(args) > 7 {
+		return fmt.Errorf("Invalid watermark arguments: %v", args)
+	}
+
 	if o, err := strconv.ParseFloat(args[0], 64); err == nil && o >= 0 && o <= 1 {
 		po.Watermark.Enabled = o > 0
 		po.Watermark.Opacity = o
@@ -438,7 +443,7 @@ func applyWatermarkOption(po *processingOptions, args []string) error {
 		return fmt.Errorf("Invalid watermark opacity: %s", args[0])
 	}
 
-	if len(args) > 1 {
+	if len(args) > 1 && len(args[1]) > 0 {
 		if args[1] == "re" {
 			po.Watermark.Replicate = true
 		} else if g, ok := gravityTypes[args[1]]; ok && g != gravityFocusPoint && g != gravitySmart {
@@ -448,7 +453,7 @@ func applyWatermarkOption(po *processingOptions, args []string) error {
 		}
 	}
 
-	if len(args) > 2 {
+	if len(args) > 2 && len(args[2]) > 0 {
 		if x, err := strconv.Atoi(args[2]); err == nil {
 			po.Watermark.OffsetX = x
 		} else {
@@ -456,11 +461,19 @@ func applyWatermarkOption(po *processingOptions, args []string) error {
 		}
 	}
 
-	if len(args) > 3 {
+	if len(args) > 3 && len(args[3]) > 0 {
 		if y, err := strconv.Atoi(args[3]); err == nil {
 			po.Watermark.OffsetY = y
 		} else {
 			return fmt.Errorf("Invalid watermark Y offset: %s", args[3])
+		}
+	}
+
+	if len(args) > 4 && len(args[4]) > 0 {
+		if s, err := strconv.ParseFloat(args[4], 64); err == nil && s >= 0 {
+			po.Watermark.Scale = s
+		} else {
+			return fmt.Errorf("Invalid watermark scale: %s", args[4])
 		}
 	}
 
