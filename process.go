@@ -137,30 +137,33 @@ func needToScale(width, height int, po *processingOptions) bool {
 		(po.Resize == resizeFill || po.Resize == resizeFit)
 }
 
-func needToCrop(width, height int, po *processingOptions) bool {
-	return (po.Width != width || po.Height != height) &&
-		(po.Resize == resizeFill || po.Resize == resizeCrop)
-}
-
 func calcScale(width, height int, po *processingOptions) float64 {
-	fsw, fsh, fow, foh := float64(width), float64(height), float64(po.Width), float64(po.Height)
+	srcW, srcH := float64(width), float64(height)
 
-	wr := fow / fsw
-	hr := foh / fsh
+	wr := float64(po.Width) / srcW
+	hr := float64(po.Height) / srcH
+
+	var scale float64
 
 	if po.Width == 0 {
-		return hr
+		scale = hr
+	} else if po.Height == 0 {
+		scale = wr
+	} else if po.Resize == resizeFit {
+		scale = math.Min(wr, hr)
+	} else {
+		scale = math.Max(wr, hr)
 	}
 
-	if po.Height == 0 {
-		return wr
+	if srcW*scale < 1 {
+		scale = 1 / srcW
 	}
 
-	if po.Resize == resizeFit {
-		return math.Min(wr, hr)
+	if srcH*scale < 1 {
+		scale = 1 / srcH
 	}
 
-	return math.Max(wr, hr)
+	return scale
 }
 
 func calcShink(scale float64, imgtype imageType) int {
@@ -333,7 +336,7 @@ func processImage(ctx context.Context) ([]byte, error) {
 		po.Height = imgHeight
 	}
 
-	if needToCrop(imgWidth, imgHeight, po) {
+	if po.Width < imgWidth || po.Height < imgHeight {
 		if po.Gravity.Type == gravitySmart {
 			if err = vipsImageCopyMemory(&img); err != nil {
 				return nil, err
