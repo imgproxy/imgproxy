@@ -112,6 +112,7 @@ func respondWithImage(ctx context.Context, reqID string, r *http.Request, rw htt
 		rw.Header().Set("Content-Encoding", "gzip")
 
 		buf := responseBufPool.Get().(*bytes.Buffer)
+		buf.Reset()
 		defer responseBufPool.Put(buf)
 
 		gzipData(data, buf)
