@@ -22,7 +22,7 @@ $ docker run -p 8080:8080 -it imgproxy
 
 imgproxy can be deployed to Heroku with a click of a button:
 
-[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/DarthSim/imgproxy)
 
 However, you can do it manually with a few steps:
 
