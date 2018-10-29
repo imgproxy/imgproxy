@@ -198,6 +198,19 @@ Read more about presets in the [Presets](./presets.md) guide.
 
 Default: empty
 
+##### Cache buster
+
+```
+cachebuster:%string
+cb:%string
+```
+
+Cache buster doesn't affect image processing but it's changing allows to bypass CDN, proxy server and browser cache. Useful when you have changed some things that are not reflected in the URL like image quality settings, presets or watermark data.
+
+It's highly recommended to prefer `cachebuster` option over URL query string because the option can be properly signed.
+
+Default: empty
+
 ##### Format
 
 ```

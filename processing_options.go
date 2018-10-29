@@ -118,6 +118,8 @@ type processingOptions struct {
 	Blur       float32
 	Sharpen    float32
 
+	CacheBuster string
+
 	Watermark watermarkOptions
 
 	UsedPresets []string
@@ -503,6 +505,16 @@ func applyFormatOption(po *processingOptions, args []string) error {
 	return nil
 }
 
+func applyCacheBusterOption(po *processingOptions, args []string) error {
+	if len(args) > 1 {
+		return fmt.Errorf("Invalid cache buster arguments: %v", args)
+	}
+
+	po.CacheBuster = args[0]
+
+	return nil
+}
+
 func applyProcessingOption(po *processingOptions, name string, args []string) error {
 	switch name {
 	case "format", "f", "ext":
@@ -555,6 +567,10 @@ func applyProcessingOption(po *processingOptions, name string, args []string) er
 		}
 	case "preset", "pr":
 		if err := applyPresetOption(po, args); err != nil {
+			return err
+		}
+	case "cachebuster", "cb":
+		if err := applyCacheBusterOption(po, args); err != nil {
 			return err
 		}
 	default:
