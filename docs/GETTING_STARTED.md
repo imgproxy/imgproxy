@@ -13,7 +13,7 @@ $ docker run -p 8080:8080 -it darthsim/imgproxy
 
 If you don't have docker, you can use Heroku for a quick start.
 
-[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/DarthSim/imgproxy)
 
 Check out our [installation guide](./installation.md) for more details and instructions.
 
