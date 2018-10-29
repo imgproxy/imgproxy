@@ -141,6 +141,10 @@ func downloadImage(ctx context.Context) (context.Context, context.CancelFunc, er
 		defer newRelicCancel()
 	}
 
+	if prometheusEnabled {
+		defer startPrometheusDuration(prometheusDownloadDuration)()
+	}
+
 	res, err := downloadClient.Get(url)
 	if err != nil {
 		return ctx, func() {}, err

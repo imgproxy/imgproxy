@@ -10,8 +10,9 @@ import (
 )
 
 var (
-	newRelicApp     newrelic.Application
-	newRelicEnabled bool
+	newRelicEnabled = false
+
+	newRelicApp newrelic.Application
 
 	newRelicTransactionCtxKey = ctxKey("newRelicTransaction")
 )

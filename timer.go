@@ -28,6 +28,10 @@ func checkTimeout(ctx context.Context) {
 			sendTimeoutToNewRelic(ctx, d)
 		}
 
+		if prometheusEnabled {
+			incrementPrometheusErrorsTotal("timeout")
+		}
+
 		panic(newError(503, fmt.Sprintf("Timeout after %v", d), "Timeout"))
 	default:
 		// Go ahead

@@ -158,6 +158,8 @@ type config struct {
 
 	NewRelicAppName string
 	NewRelicKey     string
+
+	PrometheusBind string
 }
 
 var conf = config{
@@ -246,6 +248,8 @@ func init() {
 	strEnvConfig(&conf.NewRelicAppName, "IMGPROXY_NEW_RELIC_APP_NAME")
 	strEnvConfig(&conf.NewRelicKey, "IMGPROXY_NEW_RELIC_KEY")
 
+	strEnvConfig(&conf.PrometheusBind, "IMGPROXY_PROMETHEUS_BIND")
+
 	if len(conf.Key) == 0 {
 		warning("Key is not defined, so signature checking is disabled")
 		conf.AllowInsecure = true
@@ -329,7 +333,12 @@ func init() {
 		log.Fatalln("Watermark opacity should be less than or equal to 1")
 	}
 
+	if len(conf.PrometheusBind) > 0 && conf.PrometheusBind == conf.Bind {
+		log.Fatalln("Can't use the same binding for the main server and Prometheus")
+	}
+
 	initDownloading()
 	initNewrelic()
+	initPrometheus()
 	initVips()
 }

@@ -225,6 +225,10 @@ func processImage(ctx context.Context) ([]byte, error) {
 		defer newRelicCancel()
 	}
 
+	if prometheusEnabled {
+		defer startPrometheusDuration(prometheusProcessingDuration)()
+	}
+
 	defer C.vips_cleanup()
 
 	data := getImageData(ctx).Bytes()

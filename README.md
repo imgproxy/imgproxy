@@ -65,6 +65,7 @@ Massive processing of remote images is a potentially dangerous thing, security-w
    * [Serving local files](./docs/configuration.md#serving-local-files)
    * [Serving files from Amazon S3](./docs/configuration.md#serving-files-from-amazon-s3)
    * [New Relic metrics](./docs/configuration.md#new-relic-metrics)
+   * [Prometheus metrics](./docs/configuration.md#prometheus-metrics)
    * [Miscellaneous](./docs/configuration.md#miscellaneous)
 4. [Generating the URL](./docs/generating_the_url_basic.md)
    * [Basic](./docs/generating_the_url_basic.md)
@@ -75,9 +76,10 @@ Massive processing of remote images is a potentially dangerous thing, security-w
 7. [Serving local files](./docs/serving_local_files.md)
 8. [Serving files from Amazon S3](./docs/serving_files_from_s3.md)
 9. [New Relic](./docs/new_relic.md)
-10. [Source image formats support](./docs/source_image_formats_support.md)
-11. [About processing pipeline](./docs/about_processing_pipeline.md)
-12. [Health check](./docs/healthcheck.md)
+10. [Prometheus](./docs/prometheus.md)
+11. [Source image formats support](./docs/source_image_formats_support.md)
+12. [About processing pipeline](./docs/about_processing_pipeline.md)
+13. [Health check](./docs/healthcheck.md)
 
 ## Author
 

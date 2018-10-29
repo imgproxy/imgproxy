@@ -131,6 +131,14 @@ imgproxy can send its metrics to New Relic. Specify your New Relic license key t
 
 Check out the [New Relic](./new_relic.md) guide to learn more.
 
+### Prometheus metrics
+
+imgproxy can collect its metrics for Prometheus. Specify binding for Prometheus metrics server to activate this feature:
+
+* `IMGPROXY_PROMETHEUS_BIND`: prometheus metrics server binding. Can't be the same as `IMGPROXY_BIND`. Default: blank.
+
+Check out the [Prometheus](./prometheus.md) guide to learn more.
+
 ### Miscellaneous
 
 * `IMGPROXY_BASE_URL`: base URL prefix that will be added to every requested image URL. For example, if the base URL is `http://example.com/images` and `/path/to/image.png` is requested, imgproxy will download the source image from `http://example.com/images/path/to/image.png`. Default: blank.

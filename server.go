@@ -203,6 +203,11 @@ func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		defer newRelicCancel()
 	}
 
+	if prometheusEnabled {
+		prometheusRequestsTotal.Inc()
+		defer startPrometheusDuration(prometheusRequestDuration)()
+	}
+
 	h.lock()
 	defer h.unlock()
 
@@ -226,6 +231,9 @@ func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		if newRelicEnabled {
 			sendErrorToNewRelic(ctx, err)
 		}
+		if prometheusEnabled {
+			incrementPrometheusErrorsTotal("download")
+		}
 		panic(newError(404, err.Error(), "Image is unreachable"))
 	}
 
@@ -246,6 +254,9 @@ func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if newRelicEnabled {
 			sendErrorToNewRelic(ctx, err)
+		}
+		if prometheusEnabled {
+			incrementPrometheusErrorsTotal("processing")
 		}
 		panic(newError(500, err.Error(), "Error occurred while processing image"))
 	}
