@@ -64,6 +64,7 @@ Massive processing of remote images is a potentially dangerous thing, security-w
    * [Presets](./docs/configuration.md#presets)
    * [Serving local files](./docs/configuration.md#serving-local-files)
    * [Serving files from Amazon S3](./docs/configuration.md#serving-files-from-amazon-s3)
+   * [Serving files from Google Cloud Storage](./docs/configuration.md#serving-files-from-google-cloud-storage)
    * [New Relic metrics](./docs/configuration.md#new-relic-metrics)
    * [Prometheus metrics](./docs/configuration.md#prometheus-metrics)
    * [Miscellaneous](./docs/configuration.md#miscellaneous)
@@ -75,11 +76,12 @@ Massive processing of remote images is a potentially dangerous thing, security-w
 6. [Presets](./docs/presets.md)
 7. [Serving local files](./docs/serving_local_files.md)
 8. [Serving files from Amazon S3](./docs/serving_files_from_s3.md)
-9. [New Relic](./docs/new_relic.md)
-10. [Prometheus](./docs/prometheus.md)
-11. [Source image formats support](./docs/source_image_formats_support.md)
-12. [About processing pipeline](./docs/about_processing_pipeline.md)
-13. [Health check](./docs/healthcheck.md)
+9. [Serving files from Google Cloud Storage](./docs/serving_files_from_google_cloud_storage.md)
+10. [New Relic](./docs/new_relic.md)
+11. [Prometheus](./docs/prometheus.md)
+12. [Source image formats support](./docs/source_image_formats_support.md)
+13. [About processing pipeline](./docs/about_processing_pipeline.md)
+14. [Health check](./docs/healthcheck.md)
 
 ## Author
 

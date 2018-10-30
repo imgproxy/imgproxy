@@ -85,6 +85,10 @@ func initDownloading() {
 		transport.RegisterProtocol("s3", newS3Transport())
 	}
 
+	if len(conf.GCSKey) > 0 {
+		transport.RegisterProtocol("gs", newGCSTransport())
+	}
+
 	downloadClient = &http.Client{
 		Timeout:   time.Duration(conf.DownloadTimeout) * time.Second,
 		Transport: transport,

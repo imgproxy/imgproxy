@@ -122,6 +122,14 @@ imgproxy can process files from Amazon S3 buckets, but this feature is disabled 
 
 Check out the [Serving files from S3](./serving_files_from_s3.md) guide to learn more.
 
+### Serving files from Google Cloud Storage
+
+imgproxy can process files from Google Cloud Storage buckets, but this feature is disabled by default. To enable it, set `IMGPROXY_GCS_KEY` to the content of Google Cloud JSON key:
+
+* `IMGPROXY_GCS_KEY`: Google Cloud JSON key. When set, enables image fetching from Google Cloud Storage buckets. Default: blank.
+
+Check out the [Serving files from Google Cloud Storage](./serving_files_from_google_cloud_storage.md) guide to learn more.
+
 ### New Relic metrics
 
 imgproxy can send its metrics to New Relic. Specify your New Relic license key to activate this feature:
