@@ -129,6 +129,7 @@ type config struct {
 	Key           []byte
 	Salt          []byte
 	AllowInsecure bool
+	SignatureSize int
 
 	Secret string
 
@@ -157,6 +158,7 @@ var conf = config{
 	MaxSrcDimension:       8192,
 	MaxSrcResolution:      16800000,
 	AllowInsecure:         false,
+	SignatureSize:         0,
 	Quality:               80,
 	GZipCompression:       5,
 	ETagEnabled:           false,
@@ -201,6 +203,7 @@ func init() {
 
 	hexEnvConfig(&conf.Key, "IMGPROXY_KEY")
 	hexEnvConfig(&conf.Salt, "IMGPROXY_SALT")
+	intEnvConfig(&conf.SignatureSize, "IMGPROXY_SIGNATURE_SIZE")
 
 	hexFileConfig(&conf.Key, *keyPath)
 	hexFileConfig(&conf.Salt, *saltPath)

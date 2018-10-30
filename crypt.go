@@ -18,14 +18,20 @@ func validatePath(token, path string) error {
 		return errInvalidTokenEncoding
 	}
 
-	mac := hmac.New(sha256.New, conf.Key)
-	mac.Write(conf.Salt)
-	mac.Write([]byte(path))
-	expectedMAC := mac.Sum(nil)
-
-	if !hmac.Equal(messageMAC, expectedMAC) {
+	if !hmac.Equal(messageMAC, signatureFor(path)) {
 		return errInvalidToken
 	}
 
 	return nil
+}
+
+func signatureFor(str string) []byte {
+	mac := hmac.New(sha256.New, conf.Key)
+	mac.Write(conf.Salt)
+	mac.Write([]byte(str))
+	expectedMAC := mac.Sum(nil)
+	if conf.SignatureSize > 0 {
+		return expectedMAC[:conf.SignatureSize]
+	}
+	return expectedMAC
 }
