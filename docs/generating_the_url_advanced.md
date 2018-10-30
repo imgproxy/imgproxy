@@ -119,6 +119,17 @@ When imgproxy needs to cut some parts of the image, it is guided by the gravity.
 
 Default: `ce`
 
+##### Quality
+
+```
+quality:%quality
+q:%quality
+```
+
+Redefines quality of the resulting image, percentage.
+
+Default: value from the environment variable.
+
 ##### Background
 
 ```

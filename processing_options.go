@@ -113,6 +113,7 @@ type processingOptions struct {
 	Gravity    gravityOptions
 	Enlarge    bool
 	Format     imageType
+	Quality    int
 	Flatten    bool
 	Background color
 	Blur       float32
@@ -345,6 +346,20 @@ func applyGravityOption(po *processingOptions, args []string) error {
 	return nil
 }
 
+func applyQualityOption(po *processingOptions, args []string) error {
+	if len(args) > 1 {
+		return fmt.Errorf("Invalid quality arguments: %v", args)
+	}
+
+	if q, err := strconv.Atoi(args[0]); err == nil && q > 0 && q <= 100 {
+		po.Quality = q
+	} else {
+		return fmt.Errorf("Invalid quality: %s", args[0])
+	}
+
+	return nil
+}
+
 func applyBackgroundOption(po *processingOptions, args []string) error {
 	switch len(args) {
 	case 1:
@@ -549,6 +564,10 @@ func applyProcessingOption(po *processingOptions, name string, args []string) er
 		if err := applyGravityOption(po, args); err != nil {
 			return err
 		}
+	case "quality", "q":
+		if err := applyQualityOption(po, args); err != nil {
+			return err
+		}
 	case "background", "bg":
 		if err := applyBackgroundOption(po, args); err != nil {
 			return err
@@ -625,6 +644,7 @@ func defaultProcessingOptions(acceptHeader string) (*processingOptions, error) {
 		Height:      0,
 		Gravity:     gravityOptions{Type: gravityCenter},
 		Enlarge:     false,
+		Quality:     conf.Quality,
 		Format:      imageTypeJPEG,
 		Blur:        0,
 		Sharpen:     0,

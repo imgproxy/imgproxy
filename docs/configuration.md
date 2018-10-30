@@ -53,7 +53,7 @@ When you use imgproxy in a development environment, it can be useful to ignore S
 
 ### Compression
 
-* `IMGPROXY_QUALITY`: quality of the resulting image, percentage. Default: `80`;
+* `IMGPROXY_QUALITY`: default quality of the resulting image, percentage. Default: `80`;
 * `IMGPROXY_GZIP_COMPRESSION`: GZip compression level. Default: `5`;
 * `IMGPROXY_JPEG_PROGRESSIVE` : when true, enables progressive JPEG compression. Default: false;
 * `IMGPROXY_PNG_INTERLACED`: when true, enables interlaced PNG compression. Default: false;

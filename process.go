@@ -28,7 +28,6 @@ var (
 )
 
 type cConfig struct {
-	Quality          C.int
 	JpegProgressive  C.int
 	PngInterlaced    C.int
 	WatermarkOpacity C.double
@@ -82,8 +81,6 @@ func initVips() {
 	if int(C.vips_type_find_save_go(imageTypeWEBP)) != 0 {
 		vipsTypeSupportSave[imageTypeWEBP] = true
 	}
-
-	cConf.Quality = C.int(conf.Quality)
 
 	if conf.JpegProgressive {
 		cConf.JpegProgressive = C.int(1)
@@ -389,7 +386,7 @@ func processImage(ctx context.Context) ([]byte, error) {
 		}
 	}
 
-	return vipsSaveImage(img, po.Format)
+	return vipsSaveImage(img, po.Format, po.Quality)
 }
 
 func vipsPrepareWatermark() error {
@@ -458,7 +455,7 @@ func vipsLoadImage(data []byte, imgtype imageType, shrink int) (*C.struct__VipsI
 	return img, nil
 }
 
-func vipsSaveImage(img *C.struct__VipsImage, imgtype imageType) ([]byte, error) {
+func vipsSaveImage(img *C.struct__VipsImage, imgtype imageType, quality int) ([]byte, error) {
 	var ptr unsafe.Pointer
 	defer C.g_free_go(&ptr)
 
@@ -468,11 +465,11 @@ func vipsSaveImage(img *C.struct__VipsImage, imgtype imageType) ([]byte, error) 
 
 	switch imgtype {
 	case imageTypeJPEG:
-		err = C.vips_jpegsave_go(img, &ptr, &imgsize, 1, cConf.Quality, cConf.JpegProgressive)
+		err = C.vips_jpegsave_go(img, &ptr, &imgsize, 1, C.int(quality), cConf.JpegProgressive)
 	case imageTypePNG:
 		err = C.vips_pngsave_go(img, &ptr, &imgsize, cConf.PngInterlaced)
 	case imageTypeWEBP:
-		err = C.vips_webpsave_go(img, &ptr, &imgsize, 1, cConf.Quality)
+		err = C.vips_webpsave_go(img, &ptr, &imgsize, 1, C.int(quality))
 	}
 	if err != 0 {
 		return nil, vipsError()
