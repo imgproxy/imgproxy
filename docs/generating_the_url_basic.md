@@ -50,6 +50,21 @@ When set to `0`, imgproxy will not enlarge the image if it is smaller than the g
 
 The source URL should be encoded with URL-safe Base64. The encoded URL can be split with `/` for your needs.
 
+#### Plain URL
+
+When `IMGPROXY_PLAIN_SOURCE_URL` is enabled URL is expected to be without encoding.
+However URL extension must be set to target format and original file extension
+must be placed in front of URL:
+
+```
+# original -> prepared
+path/to/file.png -> png/path/to/file.png # without conversion
+path/to/file.png -> png/path/to/file.jpg # convert to jpg
+# malformed URLs
+path/to/file -> /path/to/file.jpg
+path/to/file. -> ./path/to/file.jpg # dot must be kept
+```
+
 #### Extension
 
 Extension specifies the format of the resulting image. At the moment, imgproxy supports only `jpg`, `png` and `webp`, them being the most popular and useful image formats on the Web.

@@ -174,7 +174,7 @@ func (po *processingOptions) presetUsed(name string) {
 	po.UsedPresets = append(po.UsedPresets, name)
 }
 
-func decodeURL(parts []string) (string, string, error) {
+func decodeBase64URL(parts []string) (string, string, error) {
 	var extension string
 
 	urlParts := strings.Split(strings.Join(parts, ""), ".")
@@ -193,6 +193,34 @@ func decodeURL(parts []string) (string, string, error) {
 	}
 
 	return string(url), extension, nil
+}
+
+func decodePlainURL(parts []string) (string, string, error) {
+	if len(parts) < 2 {
+		return "", "", errInvalidURLEncoding
+	}
+	sourceExtension, pathParts := parts[0], parts[1:len(parts)-1]
+	filanameParts := strings.Split(parts[len(parts)-1], ".")
+	if len(filanameParts) < 2 {
+		return "", "", errInvalidURLEncoding
+	}
+	basenameParts := filanameParts[:len(filanameParts)-1]
+	extension := filanameParts[len(filanameParts)-1]
+	filename := strings.Join(basenameParts, ".")
+	if sourceExtension == "." {
+		filename += "."
+	} else if len(sourceExtension) > 0 {
+		filename += "." + sourceExtension
+	}
+	return strings.Join(append(pathParts, filename), "/"), extension, nil
+}
+
+func decodeURL(parts []string) (string, string, error) {
+	if conf.PlainSourceURL {
+		return decodePlainURL(parts)
+	} else {
+		return decodeBase64URL(parts)
+	}
 }
 
 func applyWidthOption(po *processingOptions, args []string) error {

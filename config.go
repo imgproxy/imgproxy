@@ -143,6 +143,8 @@ type config struct {
 
 	BaseURL string
 
+	PlainSourceURL bool
+
 	Presets presets
 }
 
@@ -161,6 +163,7 @@ var conf = config{
 	GZipCompression:       5,
 	ETagEnabled:           false,
 	S3Enabled:             false,
+	PlainSourceURL:        false,
 }
 
 func init() {
@@ -218,6 +221,7 @@ func init() {
 	boolEnvConfig(&conf.ETagEnabled, "IMGPROXY_USE_ETAG")
 
 	strEnvConfig(&conf.BaseURL, "IMGPROXY_BASE_URL")
+	boolEnvConfig(&conf.PlainSourceURL, "IMGPROXY_PLAIN_SOURCE_URL")
 
 	conf.Presets = make(presets)
 	presetEnvConfig(conf.Presets, "IMGPROXY_PRESETS")
