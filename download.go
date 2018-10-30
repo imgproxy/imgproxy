@@ -149,7 +149,14 @@ func downloadImage(ctx context.Context) (context.Context, context.CancelFunc, er
 		defer startPrometheusDuration(prometheusDownloadDuration)()
 	}
 
-	res, err := downloadClient.Get(url)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return ctx, func() {}, err
+	}
+
+	req.Header.Set("User-Agent", conf.UserAgent)
+
+	res, err := downloadClient.Do(req)
 	if err != nil {
 		return ctx, func() {}, err
 	}

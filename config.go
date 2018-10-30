@@ -140,6 +140,8 @@ type config struct {
 
 	AllowOrigin string
 
+	UserAgent string
+
 	IgnoreSslVerification bool
 
 	LocalFileSystemRoot string
@@ -176,6 +178,7 @@ var conf = config{
 	AllowInsecure:         false,
 	Quality:               80,
 	GZipCompression:       5,
+	UserAgent:             fmt.Sprintf("imgproxy/%s", version),
 	ETagEnabled:           false,
 	S3Enabled:             false,
 	WatermarkOpacity:      1,
@@ -226,6 +229,8 @@ func init() {
 	strEnvConfig(&conf.Secret, "IMGPROXY_SECRET")
 
 	strEnvConfig(&conf.AllowOrigin, "IMGPROXY_ALLOW_ORIGIN")
+
+	strEnvConfig(&conf.UserAgent, "IMGPROXY_USER_AGENT")
 
 	boolEnvConfig(&conf.IgnoreSslVerification, "IMGPROXY_IGNORE_SSL_VERIFICATION")
 
