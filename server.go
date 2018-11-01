@@ -26,6 +26,12 @@ var (
 		imageTypeWEBP: "image/webp",
 	}
 
+	contentDispositions = map[imageType]string{
+		imageTypeJPEG: "inline; filename=\"image.jpg\"",
+		imageTypePNG:  "inline; filename=\"image.png\"",
+		imageTypeWEBP: "inline; filename=\"image.webp\"",
+	}
+
 	authHeaderMust []byte
 
 	imgproxyIsRunningMsg = []byte("imgproxy is running")
@@ -105,6 +111,7 @@ func respondWithImage(ctx context.Context, reqID string, r *http.Request, rw htt
 	rw.Header().Set("Expires", time.Now().Add(time.Second*time.Duration(conf.TTL)).Format(http.TimeFormat))
 	rw.Header().Set("Cache-Control", fmt.Sprintf("max-age=%d, public", conf.TTL))
 	rw.Header().Set("Content-Type", mimes[po.Format])
+	rw.Header().Set("Content-Disposition", contentDispositions[po.Format])
 
 	dataToRespond := data
 
