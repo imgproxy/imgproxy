@@ -77,7 +77,7 @@ There are two ways to define presets:
 
 ##### Using an environment variable
 
-* `IMGPROXY_PRESETS`: set of preset definitions, comma-divided. Example: `default=resize_type:fill/enlarge:1,sharp=sharpen:0.7,blurry=blur:2`. Default: blank.
+* `IMGPROXY_PRESETS`: set of preset definitions, comma-divided. Example: `default=resizing_type:fill/enlarge:1,sharp=sharpen:0.7,blurry=blur:2`. Default: blank.
 
 ##### Using a command line argument
 
@@ -88,7 +88,7 @@ $ imgproxy -presets /path/to/file/with/presets
 The file should contain preset definitions, one per line. Lines starting with `#` are treated as comments. Example:
 
 ```
-default=resize_type:fill/enlarge:1
+default=resizing_type:fill/enlarge:1
 
 # Sharpen the image to make it look better
 sharp=sharpen:0.7
