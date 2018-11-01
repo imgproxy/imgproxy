@@ -30,7 +30,7 @@ func signatureFor(str string) []byte {
 	mac.Write(conf.Salt)
 	mac.Write([]byte(str))
 	expectedMAC := mac.Sum(nil)
-	if conf.SignatureSize > 0 {
+	if conf.SignatureSize < 32 {
 		return expectedMAC[:conf.SignatureSize]
 	}
 	return expectedMAC

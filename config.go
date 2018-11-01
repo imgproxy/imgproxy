@@ -158,7 +158,7 @@ var conf = config{
 	MaxSrcDimension:       8192,
 	MaxSrcResolution:      16800000,
 	AllowInsecure:         false,
-	SignatureSize:         0,
+	SignatureSize:         32,
 	Quality:               80,
 	GZipCompression:       5,
 	ETagEnabled:           false,
@@ -233,6 +233,9 @@ func init() {
 	if len(conf.Salt) == 0 {
 		warning("Salt is not defined, so signature checking is disabled")
 		conf.AllowInsecure = true
+	}
+	if conf.SignatureSize < 1 || conf.SignatureSize > 32 {
+		log.Fatalf("Signature size should be within 1 and 32, now - %d\n", conf.SignatureSize)
 	}
 
 	if len(conf.Bind) == 0 {

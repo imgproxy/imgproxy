@@ -8,7 +8,7 @@ imgproxy allows URLs to be signed with a key and salt. This feature is disabled 
 
 * `IMGPROXY_KEY`: hex-encoded key;
 * `IMGPROXY_SALT`: hex-encoded salt;
-* `IMGPROXY_SIGNATURE_SIZE`: number of bytes to use for signature before encoding to Base64. Default: `0`, no limit;
+* `IMGPROXY_SIGNATURE_SIZE`: number of bytes to use for signature before encoding to Base64. Default: 32;
 
 You can also specify paths to files with a hex-encoded key and salt (useful in a development environment):
 
