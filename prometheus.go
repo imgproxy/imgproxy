@@ -20,6 +20,10 @@ var (
 )
 
 func initPrometheus() {
+	if len(conf.PrometheusBind) == 0 {
+		return
+	}
+
 	prometheusRequestsTotal = prometheus.NewCounter(prometheus.CounterOpts{
 		Name: "requests_total",
 		Help: "A counter of the total number of HTTP requests imgproxy processed.",
