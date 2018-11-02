@@ -11,6 +11,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"sync"
 	"time"
 
@@ -29,6 +30,7 @@ var (
 	errSourceDimensionsTooBig      = errors.New("Source image dimensions are too big")
 	errSourceResolutionTooBig      = errors.New("Source image resolution are too big")
 	errSourceImageTypeNotSupported = errors.New("Source image type not supported")
+	errInvalidImageURL             = errors.New("Invalid image url")
 )
 
 var downloadBufPool = sync.Pool{
@@ -134,9 +136,13 @@ func readAndCheckImage(ctx context.Context, res *http.Response) (context.Context
 }
 
 func downloadImage(ctx context.Context) (context.Context, context.CancelFunc, error) {
-	url := fmt.Sprintf("%s%s", conf.BaseURL, getImageURL(ctx))
+	imageURL := fmt.Sprintf("%s%s", conf.BaseURL, getImageURL(ctx))
 
-	res, err := downloadClient.Get(url)
+	if _, urlErr := url.ParseRequestURI(imageURL); urlErr != nil {
+		return ctx, func() {}, errInvalidImageURL
+	}
+
+	res, err := downloadClient.Get(imageURL)
 	if err != nil {
 		return ctx, func() {}, err
 	}
