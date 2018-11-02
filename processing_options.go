@@ -811,10 +811,12 @@ func parsePath(ctx context.Context, r *http.Request) (context.Context, error) {
 			return ctx, err
 		}
 	}
-	headers := &processingHeaders{}
-	headers.Accept = r.Header.Get("Accept")
-	headers.Width = r.Header.Get("Width")
-	headers.ViewportWidth = r.Header.Get("Viewport-Width")
+
+	headers := &processingHeaders{
+		Accept:        r.Header.Get("Accept"),
+		Width:         r.Header.Get("Width"),
+		ViewportWidth: r.Header.Get("Viewport-Width"),
+	}
 
 	var imageURL string
 	var po *processingOptions
