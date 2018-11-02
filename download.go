@@ -11,7 +11,6 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"net/url"
 	"sync"
 	"time"
 
@@ -136,13 +135,9 @@ func readAndCheckImage(ctx context.Context, res *http.Response) (context.Context
 }
 
 func downloadImage(ctx context.Context) (context.Context, context.CancelFunc, error) {
-	imageURL := fmt.Sprintf("%s%s", conf.BaseURL, getImageURL(ctx))
+	url := fmt.Sprintf("%s%s", conf.BaseURL, getImageURL(ctx))
 
-	if _, urlErr := url.ParseRequestURI(imageURL); urlErr != nil {
-		return ctx, func() {}, errInvalidImageURL
-	}
-
-	res, err := downloadClient.Get(imageURL)
+	res, err := downloadClient.Get(url)
 	if err != nil {
 		return ctx, func() {}, err
 	}
