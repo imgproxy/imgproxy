@@ -131,4 +131,4 @@ jobs:
             export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/root/vips/<< parameters.vips_version >>/lib
             export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/root/vips/<< parameters.vips_version >>/lib/pkgconfig
             export CGO_LDFLAGS_ALLOW="-s|-w"
-            go build -v
+            go test -v
