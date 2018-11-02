@@ -30,6 +30,12 @@ const (
 	imageTypeGIF     = C.GIF
 )
 
+type processingHeaders struct {
+	Accept        string
+	Width         string
+	ViewportWidth string
+}
+
 var imageTypes = map[string]imageType{
 	"jpeg": imageTypeJPEG,
 	"jpg":  imageTypeJPEG,
@@ -635,7 +641,7 @@ func parseURLOptions(opts []string) (urlOptions, []string) {
 	return parsed, rest
 }
 
-func defaultProcessingOptions(acceptHeader string) (*processingOptions, error) {
+func defaultProcessingOptions(headers *processingHeaders) (*processingOptions, error) {
 	var err error
 
 	po := processingOptions{
@@ -652,10 +658,21 @@ func defaultProcessingOptions(acceptHeader string) (*processingOptions, error) {
 		UsedPresets: make([]string, 0, len(conf.Presets)),
 	}
 
-	if (conf.EnableWebpDetection || conf.EnforceWebp) && strings.Contains(acceptHeader, "image/webp") {
+	if (conf.EnableWebpDetection || conf.EnforceWebp) && strings.Contains(headers.Accept, "image/webp") {
 		po.Format = imageTypeWEBP
 	}
-
+	if len(headers.ViewportWidth) > 0 && conf.EnableClientHints {
+		po.Width, err = strconv.Atoi(headers.ViewportWidth)
+		if err != nil {
+			po.Width = 0
+		}
+	}
+	if len(headers.Width) > 0 && conf.EnableClientHints {
+		po.Width, err = strconv.Atoi(headers.Width)
+		if err != nil {
+			po.Width = 0
+		}
+	}
 	if _, ok := conf.Presets["default"]; ok {
 		err = applyPresetOption(&po, []string{"default"})
 	}
@@ -663,8 +680,8 @@ func defaultProcessingOptions(acceptHeader string) (*processingOptions, error) {
 	return &po, err
 }
 
-func parsePathAdvanced(parts []string, acceptHeader string) (string, *processingOptions, error) {
-	po, err := defaultProcessingOptions(acceptHeader)
+func parsePathAdvanced(parts []string, headers *processingHeaders) (string, *processingOptions, error) {
+	po, err := defaultProcessingOptions(headers)
 	if err != nil {
 		return "", po, err
 	}
@@ -689,14 +706,14 @@ func parsePathAdvanced(parts []string, acceptHeader string) (string, *processing
 	return string(url), po, nil
 }
 
-func parsePathSimple(parts []string, acceptHeader string) (string, *processingOptions, error) {
+func parsePathSimple(parts []string, headers *processingHeaders) (string, *processingOptions, error) {
 	var err error
 
 	if len(parts) < 6 {
 		return "", nil, errInvalidPath
 	}
 
-	po, err := defaultProcessingOptions(acceptHeader)
+	po, err := defaultProcessingOptions(headers)
 	if err != nil {
 		return "", po, err
 	}
@@ -737,11 +754,6 @@ func parsePath(ctx context.Context, r *http.Request) (context.Context, error) {
 	path := r.URL.Path
 	parts := strings.Split(strings.TrimPrefix(path, "/"), "/")
 
-	var acceptHeader string
-	if h, ok := r.Header["Accept"]; ok {
-		acceptHeader = h[0]
-	}
-
 	if len(parts) < 3 {
 		return ctx, errInvalidPath
 	}
@@ -751,15 +763,30 @@ func parsePath(ctx context.Context, r *http.Request) (context.Context, error) {
 			return ctx, err
 		}
 	}
+	headers := &processingHeaders{
+		Accept:        "",
+		Width:         "",
+		ViewportWidth: "",
+	}
+	if h := r.Header["Accept"]; len(h) > 0 {
+		headers.Accept = string(h[0])
+	}
+
+	if wh := r.Header["Width"]; len(wh) > 0 {
+		headers.Width = string(wh[0])
+	}
+	if vph := r.Header["Viewport-Width"]; len(vph) > 0 {
+		headers.ViewportWidth = string(vph[0])
+	}
 
 	var imageURL string
 	var po *processingOptions
 	var err error
 
 	if _, ok := resizeTypes[parts[1]]; ok {
-		imageURL, po, err = parsePathSimple(parts[1:], acceptHeader)
+		imageURL, po, err = parsePathSimple(parts[1:], headers)
 	} else {
-		imageURL, po, err = parsePathAdvanced(parts[1:], acceptHeader)
+		imageURL, po, err = parsePathAdvanced(parts[1:], headers)
 	}
 
 	if err != nil {

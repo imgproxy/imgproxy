@@ -131,6 +131,7 @@ type config struct {
 
 	EnableWebpDetection bool
 	EnforceWebp         bool
+	EnableClientHints   bool
 
 	Key           []byte
 	Salt          []byte
@@ -166,12 +167,12 @@ type config struct {
 }
 
 var conf = config{
-	Bind:                  ":8080",
-	ReadTimeout:           10,
-	WriteTimeout:          10,
-	DownloadTimeout:       5,
-	Concurrency:           runtime.NumCPU() * 2,
-	TTL:                   3600,
+	Bind:            ":8080",
+	ReadTimeout:     10,
+	WriteTimeout:    10,
+	DownloadTimeout: 5,
+	Concurrency:     runtime.NumCPU() * 2,
+	TTL:             3600,
 	IgnoreSslVerification: false,
 	MaxSrcDimension:       8192,
 	MaxSrcResolution:      16800000,
@@ -219,6 +220,7 @@ func init() {
 
 	boolEnvConfig(&conf.EnableWebpDetection, "IMGPROXY_ENABLE_WEBP_DETECTION")
 	boolEnvConfig(&conf.EnforceWebp, "IMGPROXY_ENFORCE_WEBP")
+	boolEnvConfig(&conf.EnableClientHints, "IMGPROXY_ENABLE_CLIENT_HINTS")
 
 	hexEnvConfig(&conf.Key, "IMGPROXY_KEY")
 	hexEnvConfig(&conf.Salt, "IMGPROXY_SALT")
