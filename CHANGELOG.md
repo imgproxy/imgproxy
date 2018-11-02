@@ -1,5 +1,17 @@
 # Changelog
 
+## v2.0.3
+
+Fixed URL validation when IMGPROXY_BASE_URL is used
+
+## v2.0.2
+
+Fixed smart crop + blur/sharpen SIGSEGV on Alpine
+
+## v2.0.1
+
+Minor fixes
+
 ## v2.0.0
 
 All-You-Ever-Wanted release! :tada:
