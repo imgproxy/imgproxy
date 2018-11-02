@@ -662,15 +662,13 @@ func defaultProcessingOptions(headers *processingHeaders) (*processingOptions, e
 		po.Format = imageTypeWEBP
 	}
 	if conf.EnableClientHints && len(headers.ViewportWidth) > 0 {
-		po.Width, err = strconv.Atoi(headers.ViewportWidth)
-		if err != nil {
-			po.Width = 0
+		if vw, err = strconv.Atoi(headers.ViewportWidth); err == nil {
+			po.Width = w
 		}
 	}
-	if len(headers.Width) > 0 && conf.EnableClientHints {
-		po.Width, err = strconv.Atoi(headers.Width)
-		if err != nil {
-			po.Width = 0
+	if conf.EnableClientHints && len(headers.Width) > 0 {
+		if w, err = strconv.Atoi(headers.Width); err == nil {
+			po.Width = w
 		}
 	}
 	if _, ok := conf.Presets["default"]; ok {
@@ -763,19 +761,16 @@ func parsePath(ctx context.Context, r *http.Request) (context.Context, error) {
 			return ctx, err
 		}
 	}
-	headers := &processingHeaders{
-		Accept:        "",
-		Width:         "",
-		ViewportWidth: "",
-	}
-	if h := r.Header["Accept"]; len(h) > 0 {
+	headers := &processingHeaders{}
+	
+	if h := r.Header["Accept"]; {
 		headers.Accept = string(h[0])
 	}
 
-	if wh := r.Header["Width"]; len(wh) > 0 {
+	if wh := r.Header["Width"]; {
 		headers.Width = string(wh[0])
 	}
-	if vph := r.Header["Viewport-Width"]; len(vph) > 0 {
+	if vph := r.Header["Viewport-Width"]; {
 		headers.ViewportWidth = string(vph[0])
 	}
 

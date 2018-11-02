@@ -69,6 +69,9 @@ imgproxy can use the `Accept` HTTP header to detect if the browser supports WebP
 When WebP support detection is enabled, please take care to configure your CDN or caching proxy to take the `Accept` HTTP header into account while caching.
 
 
+**Warning**: Headers cannot be signed. This means that an attacker can bypass your CDN cache by changing the `Accept` HTTP headers. Have this in mind when configuring your production caching setup.
+
+
 ## Client Hints support
 
 imgproxy can use the `Width` or `Viewport-Width` HTTP header to determine the width of the image container using Client Hints when the width argument is ommited. 
@@ -76,7 +79,7 @@ imgproxy can use the `Width` or `Viewport-Width` HTTP header to determine the wi
 * `IMGPROXY_ENABLE_CLIENT_HINTS`: enables Client Hints support when the width is ommited for automatic responsive images . Read [here](https://developers.google.com/web/updates/2015/09/automating-resource-selection-with-client-hints) details about Client Hints.
 
 
-**Warning**: Headers cannot be signed. This means that an attacker can bypass your CDN cache by changing the `Accept`,`Width` or `Viewport-Width` HTTP headers. Have this in mind when configuring your production caching setup.
+**Warning**: Headers cannot be signed. This means that an attacker can bypass your CDN cache by changing the `Width` or `Viewport-Width` HTTP headers. Have this in mind when configuring your production caching setup.
 
 
 ### Watermark

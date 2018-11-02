@@ -167,12 +167,12 @@ type config struct {
 }
 
 var conf = config{
-	Bind:            ":8080",
-	ReadTimeout:     10,
-	WriteTimeout:    10,
-	DownloadTimeout: 5,
-	Concurrency:     runtime.NumCPU() * 2,
-	TTL:             3600,
+	Bind:                  ":8080",
+	ReadTimeout:           10,
+	WriteTimeout:          10,
+	DownloadTimeout:       5,
+	Concurrency:           runtime.NumCPU() * 2,
+	TTL:                   3600,
 	IgnoreSslVerification: false,
 	MaxSrcDimension:       8192,
 	MaxSrcResolution:      16800000,
