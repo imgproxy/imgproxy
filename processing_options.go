@@ -661,7 +661,7 @@ func defaultProcessingOptions(headers *processingHeaders) (*processingOptions, e
 	if (conf.EnableWebpDetection || conf.EnforceWebp) && strings.Contains(headers.Accept, "image/webp") {
 		po.Format = imageTypeWEBP
 	}
-	if len(headers.ViewportWidth) > 0 && conf.EnableClientHints {
+	if conf.EnableClientHints && len(headers.ViewportWidth) > 0 {
 		po.Width, err = strconv.Atoi(headers.ViewportWidth)
 		if err != nil {
 			po.Width = 0
