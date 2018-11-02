@@ -8,6 +8,7 @@ imgproxy allows URLs to be signed with a key and salt. This feature is disabled 
 
 * `IMGPROXY_KEY`: hex-encoded key;
 * `IMGPROXY_SALT`: hex-encoded salt;
+* `IMGPROXY_SIGNATURE_SIZE`: number of bytes to use for signature before encoding to Base64. Default: 32;
 
 You can also specify paths to files with a hex-encoded key and salt (useful in a development environment):
 
@@ -87,7 +88,7 @@ There are two ways to define presets:
 
 ##### Using an environment variable
 
-* `IMGPROXY_PRESETS`: set of preset definitions, comma-divided. Example: `default=resize_type:fill/enlarge:1,sharp=sharpen:0.7,blurry=blur:2`. Default: blank.
+* `IMGPROXY_PRESETS`: set of preset definitions, comma-divided. Example: `default=resizing_type:fill/enlarge:1,sharp=sharpen:0.7,blurry=blur:2`. Default: blank.
 
 ##### Using a command line argument
 
@@ -98,7 +99,7 @@ $ imgproxy -presets /path/to/file/with/presets
 The file should contain preset definitions, one per line. Lines starting with `#` are treated as comments. Example:
 
 ```
-default=resize_type:fill/enlarge:1
+default=resizing_type:fill/enlarge:1
 
 # Sharpen the image to make it look better
 sharp=sharpen:0.7

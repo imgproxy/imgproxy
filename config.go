@@ -135,6 +135,7 @@ type config struct {
 	Key           []byte
 	Salt          []byte
 	AllowInsecure bool
+	SignatureSize int
 
 	Secret string
 
@@ -176,6 +177,7 @@ var conf = config{
 	MaxSrcDimension:       8192,
 	MaxSrcResolution:      16800000,
 	AllowInsecure:         false,
+	SignatureSize:         32,
 	Quality:               80,
 	GZipCompression:       5,
 	UserAgent:             fmt.Sprintf("imgproxy/%s", version),
@@ -222,6 +224,7 @@ func init() {
 
 	hexEnvConfig(&conf.Key, "IMGPROXY_KEY")
 	hexEnvConfig(&conf.Salt, "IMGPROXY_SALT")
+	intEnvConfig(&conf.SignatureSize, "IMGPROXY_SIGNATURE_SIZE")
 
 	hexFileConfig(&conf.Key, *keyPath)
 	hexFileConfig(&conf.Salt, *saltPath)
@@ -264,6 +267,9 @@ func init() {
 	if len(conf.Salt) == 0 {
 		warning("Salt is not defined, so signature checking is disabled")
 		conf.AllowInsecure = true
+	}
+	if conf.SignatureSize < 1 || conf.SignatureSize > 32 {
+		log.Fatalf("Signature size should be within 1 and 32, now - %d\n", conf.SignatureSize)
 	}
 
 	if len(conf.Bind) == 0 {
