@@ -73,10 +73,10 @@ When WebP support detection is enabled, please take care to configure your CDN o
 
 ### Watermark
 
-* `IMGPROXY_WATERMARK_DATA` - Base64-encoded image data. You can easily calculate it with `base64 tmp/watermark.png | tr -d '\n'`;
-* `IMGPROXY_WATERMARK_PATH` - path to the locally stored image;
-* `IMGPROXY_WATERMARK_URL` - watermark image URL;
-* `IMGPROXY_WATERMARK_OPACITY` - watermark base opacity.
+* `IMGPROXY_WATERMARK_DATA`: Base64-encoded image data. You can easily calculate it with `base64 tmp/watermark.png | tr -d '\n'`;
+* `IMGPROXY_WATERMARK_PATH`: path to the locally stored image;
+* `IMGPROXY_WATERMARK_URL`: watermark image URL;
+* `IMGPROXY_WATERMARK_OPACITY`: watermark base opacity.
 
 Read more about watermarks in the [Watermark](./watermark.md) guide.
 
@@ -136,8 +136,8 @@ Check out the [Serving files from Google Cloud Storage](./serving_files_from_goo
 
 imgproxy can send its metrics to New Relic. Specify your New Relic license key to activate this feature:
 
-* `IMGPROXY_NEW_RELIC_KEY` - New Relic license key;
-* `IMGPROXY_NEW_RELIC_APP_NAME` - application name. If not specified, `imgproxy` will be used as the application name.
+* `IMGPROXY_NEW_RELIC_KEY`: New Relic license key;
+* `IMGPROXY_NEW_RELIC_APP_NAME`: application name. If not specified, `imgproxy` will be used as the application name.
 
 Check out the [New Relic](./new_relic.md) guide to learn more.
 

@@ -241,15 +241,33 @@ There are two ways to specify source url:
 
 ##### Plain
 
-The source URL can be provided as is forwarded by `/plain/` part. If the sorce URL contains query string or `@`, you need to escape it.
+The source URL can be provided as is, prendended by `/plain/` part:
 
-When using plain source URL, you can specify the [extension](#extension) after `@`.
+```
+/plain/http://example.com/images/curiosity.jpg
+```
+
+**Note:** If the sorce URL contains query string or `@`, you need to escape it.
+
+When using plain source URL, you can specify the [extension](#extension) after `@`:
+
+```
+/plain/http://example.com/images/curiosity.jpg@png
+```
 
 ##### Base64 encoded
 
-The source URL can be encoded with URL-safe Base64. The encoded URL can be split with `/` for your needs.
+The source URL can be encoded with URL-safe Base64. The encoded URL can be split with `/` for your needs:
 
-When using encoded source URL, you can specify the [extension](#extension) after `.`.
+```
+/aHR0cDovL2V4YW1w/bGUuY29tL2ltYWdl/cy9jdXJpb3NpdHku/anBn
+```
+
+When using encoded source URL, you can specify the [extension](#extension) after `.`:
+
+```
+/aHR0cDovL2V4YW1w/bGUuY29tL2ltYWdl/cy9jdXJpb3NpdHku/anBn.png
+```
 
 #### Extension
 
