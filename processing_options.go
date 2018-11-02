@@ -662,12 +662,12 @@ func defaultProcessingOptions(headers *processingHeaders) (*processingOptions, e
 		po.Format = imageTypeWEBP
 	}
 	if conf.EnableClientHints && len(headers.ViewportWidth) > 0 {
-		if vw, err = strconv.Atoi(headers.ViewportWidth); err == nil {
-			po.Width = w
+		if vw, err := strconv.Atoi(headers.ViewportWidth); err == nil {
+			po.Width = vw
 		}
 	}
 	if conf.EnableClientHints && len(headers.Width) > 0 {
-		if w, err = strconv.Atoi(headers.Width); err == nil {
+		if w, err := strconv.Atoi(headers.Width); err == nil {
 			po.Width = w
 		}
 	}
@@ -762,17 +762,9 @@ func parsePath(ctx context.Context, r *http.Request) (context.Context, error) {
 		}
 	}
 	headers := &processingHeaders{}
-	
-	if h := r.Header["Accept"]; {
-		headers.Accept = string(h[0])
-	}
-
-	if wh := r.Header["Width"]; {
-		headers.Width = string(wh[0])
-	}
-	if vph := r.Header["Viewport-Width"]; {
-		headers.ViewportWidth = string(vph[0])
-	}
+	headers.Accept = r.Header.Get("Accept")
+	headers.Width = r.Header.Get("Width")
+	headers.ViewportWidth = r.Header.Get("Viewport-Width")
 
 	var imageURL string
 	var po *processingOptions
