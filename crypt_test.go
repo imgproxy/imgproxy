@@ -8,7 +8,9 @@ import (
 )
 
 func TestSignatureFor(t *testing.T) {
-	oldSignatureSize := conf.SignatureSize
+	oldConf := conf
+	defer func() { conf = oldConf }()
+
 	base64Signature := func(x string) string { return base64.RawURLEncoding.EncodeToString(signatureFor(x)) }
 	conf.Key = []byte("test-key")
 	conf.Salt = []byte("test-salt")
@@ -17,5 +19,4 @@ func TestSignatureFor(t *testing.T) {
 	conf.SignatureSize = 8
 	assert.Equal(t, "dtLwhdnPPis", base64Signature("asd"))
 	assert.Equal(t, "8x1xvzxVqZ0", base64Signature("qwe"))
-	conf.SignatureSize = oldSignatureSize
 }

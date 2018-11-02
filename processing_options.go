@@ -12,6 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
@@ -22,11 +23,11 @@ type urlOptions map[string][]string
 type imageType int
 
 const (
-	imageTypeUnknown = C.UNKNOWN
-	imageTypeJPEG    = C.JPEG
-	imageTypePNG     = C.PNG
-	imageTypeWEBP    = C.WEBP
-	imageTypeGIF     = C.GIF
+	imageTypeUnknown = imageType(C.UNKNOWN)
+	imageTypeJPEG    = imageType(C.JPEG)
+	imageTypePNG     = imageType(C.PNG)
+	imageTypeWEBP    = imageType(C.WEBP)
+	imageTypeGIF     = imageType(C.GIF)
 )
 
 var imageTypes = map[string]imageType{
@@ -125,12 +126,16 @@ type processingOptions struct {
 	UsedPresets []string
 }
 
+type applyOptionFunc func(po *processingOptions, args []string) error
+
 const (
 	imageURLCtxKey          = ctxKey("imageUrl")
 	processingOptionsCtxKey = ctxKey("processingOptions")
+	urlTokenPlain           = "plain"
 )
 
 var (
+	errInvalidImageURL                    = errors.New("Invalid image url")
 	errInvalidURLEncoding                 = errors.New("Invalid url encoding")
 	errInvalidPath                        = errors.New("Invalid path")
 	errResultingImageFormatIsNotSupported = errors.New("Resulting image format is not supported")
@@ -163,6 +168,19 @@ func (rt resizeType) String() string {
 	return ""
 }
 
+func (po *processingOptions) isPresetUsed(name string) bool {
+	for _, usedName := range po.UsedPresets {
+		if usedName == name {
+			return true
+		}
+	}
+	return false
+}
+
+func (po *processingOptions) presetUsed(name string) {
+	po.UsedPresets = append(po.UsedPresets, name)
+}
+
 func colorFromHex(hexcolor string) (color, error) {
 	c := color{}
 
@@ -182,21 +200,8 @@ func colorFromHex(hexcolor string) (color, error) {
 	return c, nil
 }
 
-func (po *processingOptions) isPresetUsed(name string) bool {
-	for _, usedName := range po.UsedPresets {
-		if usedName == name {
-			return true
-		}
-	}
-	return false
-}
-
-func (po *processingOptions) presetUsed(name string) {
-	po.UsedPresets = append(po.UsedPresets, name)
-}
-
-func decodeURL(parts []string) (string, string, error) {
-	var extension string
+func decodeBase64URL(parts []string) (string, string, error) {
+	var format string
 
 	urlParts := strings.Split(strings.Join(parts, ""), ".")
 
@@ -204,16 +209,63 @@ func decodeURL(parts []string) (string, string, error) {
 		return "", "", errInvalidURLEncoding
 	}
 
-	if len(urlParts) == 2 {
-		extension = urlParts[1]
+	if len(urlParts) == 2 && len(urlParts[1]) > 0 {
+		format = urlParts[1]
 	}
 
-	url, err := base64.RawURLEncoding.DecodeString(urlParts[0])
+	imageURL, err := base64.RawURLEncoding.DecodeString(urlParts[0])
 	if err != nil {
 		return "", "", errInvalidURLEncoding
 	}
 
-	return string(url), extension, nil
+	fullURL := fmt.Sprintf("%s%s", conf.BaseURL, string(imageURL))
+
+	if _, err := url.ParseRequestURI(fullURL); err != nil {
+		return "", "", errInvalidImageURL
+	}
+
+	return fullURL, format, nil
+}
+
+func decodePlainURL(parts []string) (string, string, error) {
+	var format string
+
+	urlParts := strings.Split(strings.Join(parts, "/"), "@")
+
+	if len(urlParts) > 2 {
+		return "", "", errInvalidURLEncoding
+	}
+
+	if len(urlParts) == 2 && len(urlParts[1]) > 0 {
+		format = urlParts[1]
+	}
+
+	fullURL := fmt.Sprintf("%s%s", conf.BaseURL, urlParts[0])
+
+	if _, err := url.ParseRequestURI(fullURL); err == nil {
+		return fullURL, format, nil
+	}
+
+	if unescaped, err := url.PathUnescape(urlParts[0]); err == nil {
+		fullURL := fmt.Sprintf("%s%s", conf.BaseURL, unescaped)
+		if _, err := url.ParseRequestURI(fullURL); err == nil {
+			return fullURL, format, nil
+		}
+	}
+
+	return "", "", errInvalidImageURL
+}
+
+func decodeURL(parts []string) (string, string, error) {
+	if len(parts) == 0 {
+		return "", "", errInvalidURLEncoding
+	}
+
+	if parts[0] == urlTokenPlain && len(parts) > 1 {
+		return decodePlainURL(parts[1:])
+	}
+
+	return decodeBase64URL(parts)
 }
 
 func applyWidthOption(po *processingOptions, args []string) error {
@@ -684,7 +736,7 @@ func parsePathAdvanced(parts []string, acceptHeader string) (string, *processing
 		}
 	}
 
-	return string(url), po, nil
+	return url, po, nil
 }
 
 func parsePathSimple(parts []string, acceptHeader string) (string, *processingOptions, error) {
@@ -728,7 +780,7 @@ func parsePathSimple(parts []string, acceptHeader string) (string, *processingOp
 		}
 	}
 
-	return string(url), po, nil
+	return url, po, nil
 }
 
 func parsePath(ctx context.Context, r *http.Request) (context.Context, error) {

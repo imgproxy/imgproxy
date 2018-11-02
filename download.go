@@ -29,7 +29,6 @@ var (
 	errSourceDimensionsTooBig      = errors.New("Source image dimensions are too big")
 	errSourceResolutionTooBig      = errors.New("Source image resolution are too big")
 	errSourceImageTypeNotSupported = errors.New("Source image type not supported")
-	errInvalidImageURL             = errors.New("Invalid image url")
 )
 
 var downloadBufPool = sync.Pool{
@@ -139,7 +138,7 @@ func readAndCheckImage(ctx context.Context, res *http.Response) (context.Context
 }
 
 func downloadImage(ctx context.Context) (context.Context, context.CancelFunc, error) {
-	url := fmt.Sprintf("%s%s", conf.BaseURL, getImageURL(ctx))
+	url := getImageURL(ctx)
 
 	if newRelicEnabled {
 		newRelicCancel := startNewRelicSegment(ctx, "Downloading image")

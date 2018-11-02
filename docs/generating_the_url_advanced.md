@@ -4,10 +4,11 @@ This guide describes the advanced URL format that allows the use of all the imgp
 
 ### Format definition
 
-The advanced URL should contain the signature, processing options, and encoded source URL, like this:
+The advanced URL should contain the signature, processing options, and source URL, like this:
 
 ```
-/%signature/%processing_options/%encoded_url.%extension
+/%signature/%processing_options/plain/%source_url@%extension
+/%signature/%processing_options/%encoded_source_url.%extension
 ```
 
 Check out the [example](#example) at the end of this guide.
@@ -234,9 +235,21 @@ Specifies the resulting image format. Alias for [extension](#extension) URL part
 
 Default: `jpg`
 
-#### Encoded URL
+#### Source URL
 
-The source URL should be encoded with URL-safe Base64. The encoded URL can be split with `/` for your needs.
+There are two ways to specify source url:
+
+##### Plain
+
+The source URL can be provided as is forwarded by `/plain/` part. If the sorce URL contains query string or `@`, you need to escape it.
+
+When using plain source URL, you can specify the [extension](#extension) after `@`.
+
+##### Base64 encoded
+
+The source URL can be encoded with URL-safe Base64. The encoded URL can be split with `/` for your needs.
+
+When using encoded source URL, you can specify the [extension](#extension) after `.`.
 
 #### Extension
 
@@ -249,10 +262,16 @@ The extension part can be omitted. In this case, if the format is not defined by
 Signed imgproxy URL that uses `sharp` preset, resizes `http://example.com/images/curiosity.jpg` to fill `300x400` area with smart gravity without enlarging, and then converts the image to `png`:
 
 ```
-http://imgproxy.example.com/AfrOrF3gWeDA6VOlDG4TzxMv39O7MXnF4CXpKUwGqRM/preset:sharp/resize:fill:300:400:0/gravity:sm/aHR0cDovL2V4YW1w/bGUuY29tL2ltYWdl/cy9jdXJpb3NpdHku/anBn.png
+http://imgproxy.example.com/AfrOrF3gWeDA6VOlDG4TzxMv39O7MXnF4CXpKUwGqRM/preset:sharp/resize:fill:300:400:0/gravity:sm/plain/http://example.com/images/curiosity.jpg@png
 ```
 
 The same URL with shortcuts will look like this:
+
+```
+http://imgproxy.example.com/AfrOrF3gWeDA6VOlDG4TzxMv39O7MXnF4CXpKUwGqRM/pr:sharp/rs:fill:300:400:0/g:sm/plain/http://example.com/images/curiosity.jpg@png
+```
+
+The same URL with Base64-encoded source URL will look like this:
 
 ```
 http://imgproxy.example.com/AfrOrF3gWeDA6VOlDG4TzxMv39O7MXnF4CXpKUwGqRM/pr:sharp/rs:fill:300:400:0/g:sm/aHR0cDovL2V4YW1w/bGUuY29tL2ltYWdl/cy9jdXJpb3NpdHku/anBn.png
