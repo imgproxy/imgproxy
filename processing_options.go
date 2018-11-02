@@ -11,7 +11,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
@@ -111,7 +110,6 @@ const (
 var (
 	errInvalidURLEncoding                 = errors.New("Invalid url encoding")
 	errInvalidPath                        = errors.New("Invalid path")
-	errInvalidImageURL                    = errors.New("Invalid image url")
 	errResultingImageFormatIsNotSupported = errors.New("Resulting image format is not supported")
 )
 
@@ -654,10 +652,6 @@ func parsePath(ctx context.Context, rctx *fasthttp.RequestCtx) (context.Context,
 
 	if err != nil {
 		return ctx, err
-	}
-
-	if _, err = url.ParseRequestURI(imageURL); err != nil {
-		return ctx, errInvalidImageURL
 	}
 
 	ctx = context.WithValue(ctx, imageURLCtxKey, imageURL)
