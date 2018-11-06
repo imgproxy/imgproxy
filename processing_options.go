@@ -754,7 +754,7 @@ func parsePathAdvanced(parts []string, headers *processingHeaders) (string, *pro
 	return url, po, nil
 }
 
-func parsePathSimple(parts []string, headers *processingHeaders) (string, *processingOptions, error) {
+func parsePathBasic(parts []string, headers *processingHeaders) (string, *processingOptions, error) {
 	var err error
 
 	if len(parts) < 6 {
@@ -823,7 +823,7 @@ func parsePath(ctx context.Context, r *http.Request) (context.Context, error) {
 	var err error
 
 	if _, ok := resizeTypes[parts[1]]; ok {
-		imageURL, po, err = parsePathSimple(parts[1:], headers)
+		imageURL, po, err = parsePathBasic(parts[1:], headers)
 	} else {
 		imageURL, po, err = parsePathAdvanced(parts[1:], headers)
 	}

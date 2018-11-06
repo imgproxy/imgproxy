@@ -86,7 +86,9 @@ func presetEnvConfig(p presets, name string) {
 		presetStrings := strings.Split(env, ",")
 
 		for _, presetStr := range presetStrings {
-			parsePreset(p, presetStr)
+			if err := parsePreset(p, presetStr); err != nil {
+				log.Fatalln(err)
+			}
 		}
 	}
 }
@@ -103,7 +105,9 @@ func presetFileConfig(p presets, filepath string) {
 
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
-		parsePreset(p, scanner.Text())
+		if err := parsePreset(p, scanner.Text()); err != nil {
+			log.Fatalln(err)
+		}
 	}
 
 	if err := scanner.Err(); err != nil {
@@ -340,7 +344,9 @@ func init() {
 		}
 	}
 
-	checkPresets(conf.Presets)
+	if err := checkPresets(conf.Presets); err != nil {
+		log.Fatalln(err)
+	}
 
 	if conf.WatermarkOpacity <= 0 {
 		log.Fatalln("Watermark opacity should be greater than 0")
