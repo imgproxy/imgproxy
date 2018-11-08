@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"bytes"
 	"context"
 	"crypto/tls"
@@ -35,37 +34,6 @@ var downloadBufPool = sync.Pool{
 	New: func() interface{} {
 		return new(bytes.Buffer)
 	},
-}
-
-type netReader struct {
-	reader *bufio.Reader
-	buf    *bytes.Buffer
-}
-
-func newNetReader(r io.Reader, buf *bytes.Buffer) *netReader {
-	return &netReader{
-		reader: bufio.NewReader(r),
-		buf:    buf,
-	}
-}
-
-func (r *netReader) Read(p []byte) (n int, err error) {
-	n, err = r.reader.Read(p)
-	if err == nil {
-		r.buf.Write(p[:n])
-	}
-	return
-}
-
-func (r *netReader) Peek(n int) ([]byte, error) {
-	return r.reader.Peek(n)
-}
-
-func (r *netReader) ReadAll() error {
-	if _, err := r.buf.ReadFrom(r.reader); err != nil {
-		return err
-	}
-	return nil
 }
 
 func initDownloading() {
@@ -122,16 +90,14 @@ func readAndCheckImage(ctx context.Context, res *http.Response) (context.Context
 		downloadBufPool.Put(buf)
 	}
 
-	nr := newNetReader(res.Body, buf)
-
-	imgtype, err := checkTypeAndDimensions(nr)
+	imgtype, err := checkTypeAndDimensions(io.TeeReader(res.Body, buf))
 	if err != nil {
 		return ctx, cancel, err
 	}
 
-	if err = nr.ReadAll(); err == nil {
+	if _, err = buf.ReadFrom(res.Body); err == nil {
 		ctx = context.WithValue(ctx, imageTypeCtxKey, imgtype)
-		ctx = context.WithValue(ctx, imageDataCtxKey, nr.buf)
+		ctx = context.WithValue(ctx, imageDataCtxKey, buf)
 	}
 
 	return ctx, cancel, err
