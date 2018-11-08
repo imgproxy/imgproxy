@@ -63,21 +63,31 @@ func initDownloading() {
 	}
 }
 
+func checkDimensions(width, height int) error {
+	if width > conf.MaxSrcDimension || height > conf.MaxSrcDimension {
+		return errSourceDimensionsTooBig
+	}
+
+	if width*height > conf.MaxSrcResolution {
+		return errSourceResolutionTooBig
+	}
+
+	return nil
+}
+
 func checkTypeAndDimensions(r io.Reader) (imageType, error) {
 	imgconf, imgtypeStr, err := image.DecodeConfig(r)
-	imgtype, imgtypeOk := imageTypes[imgtypeStr]
-
 	if err != nil {
 		return imageTypeUnknown, err
 	}
-	if imgconf.Width > conf.MaxSrcDimension || imgconf.Height > conf.MaxSrcDimension {
-		return imageTypeUnknown, errSourceDimensionsTooBig
-	}
-	if imgconf.Width*imgconf.Height > conf.MaxSrcResolution {
-		return imageTypeUnknown, errSourceResolutionTooBig
-	}
+
+	imgtype, imgtypeOk := imageTypes[imgtypeStr]
 	if !imgtypeOk || !vipsTypeSupportLoad[imgtype] {
 		return imageTypeUnknown, errSourceImageTypeNotSupported
+	}
+
+	if err = checkDimensions(imgconf.Width, imgconf.Height); err != nil {
+		return imageTypeUnknown, err
 	}
 
 	return imgtype, nil

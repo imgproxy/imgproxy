@@ -24,12 +24,14 @@ var (
 		imageTypeJPEG: "image/jpeg",
 		imageTypePNG:  "image/png",
 		imageTypeWEBP: "image/webp",
+		imageTypeGIF:  "image/gif",
 	}
 
 	contentDispositions = map[imageType]string{
 		imageTypeJPEG: "inline; filename=\"image.jpg\"",
 		imageTypePNG:  "inline; filename=\"image.png\"",
 		imageTypeWEBP: "inline; filename=\"image.webp\"",
+		imageTypeGIF:  "inline; filename=\"image.gif\"",
 	}
 
 	authHeaderMust []byte

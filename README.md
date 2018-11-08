@@ -79,7 +79,7 @@ Massive processing of remote images is a potentially dangerous thing, security-w
 9. [Serving files from Google Cloud Storage](./docs/serving_files_from_google_cloud_storage.md)
 10. [New Relic](./docs/new_relic.md)
 11. [Prometheus](./docs/prometheus.md)
-12. [Source image formats support](./docs/source_image_formats_support.md)
+12. [Image formats support](./docs/image_formats_support.md)
 13. [About processing pipeline](./docs/about_processing_pipeline.md)
 14. [Health check](./docs/healthcheck.md)
 

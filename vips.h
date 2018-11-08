@@ -10,7 +10,10 @@
   (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 5))
 
 #define VIPS_SUPPORT_GIF \
-  VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 3)
+  (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 3))
+
+#define VIPS_SUPPORT_MAGICK \
+  (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 7))
 
 #define EXIF_ORIENTATION "exif-ifd0-Orientation"
 
@@ -38,16 +41,16 @@ swap_and_clear(VipsImage **in, VipsImage *out) {
 int
 vips_type_find_load_go(int imgtype) {
   if (imgtype == JPEG) {
-    return vips_type_find("VipsOperation", "jpegload");
+    return vips_type_find("VipsOperation", "jpegload_buffer");
   }
   if (imgtype == PNG) {
-    return vips_type_find("VipsOperation", "pngload");
+    return vips_type_find("VipsOperation", "pngload_buffer");
   }
   if (imgtype == WEBP) {
-    return vips_type_find("VipsOperation", "webpload");
+    return vips_type_find("VipsOperation", "webpload_buffer");
   }
   if (imgtype == GIF) {
-    return vips_type_find("VipsOperation", "gifload");
+    return vips_type_find("VipsOperation", "gifload_buffer");
   }
   return 0;
 }
@@ -63,30 +66,40 @@ vips_type_find_save_go(int imgtype) {
   if (imgtype == WEBP) {
     return vips_type_find("VipsOperation", "webpsave_buffer");
   }
+  if (imgtype == GIF) {
+    return vips_type_find("VipsOperation", "magicksave_buffer");
+  }
   return 0;
 }
 
 int
-vips_load_buffer(void *buf, size_t len, int imgtype, int shrink, VipsImage **out) {
-  switch (imgtype) {
-    case JPEG:
-      if (shrink > 1) {
-        return vips_jpegload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, "shrink", shrink, NULL);
-      }
-      return vips_jpegload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, NULL);
-    case PNG:
-      return vips_pngload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, NULL);
-    case WEBP:
-      if (shrink > 1) {
-        return vips_webpload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, "shrink", shrink, NULL);
-      }
-      return vips_webpload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, NULL);
-    #if VIPS_SUPPORT_GIF
-    case GIF:
-      return vips_gifload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, NULL);
-    #endif
+vips_jpegload_go(void *buf, size_t len, int shrink, VipsImage **out) {
+  if (shrink > 1) {
+    return vips_jpegload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, "shrink", shrink, NULL);
   }
-  return 1;
+  return vips_jpegload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, NULL);
+}
+
+int
+vips_pngload_go(void *buf, size_t len, VipsImage **out) {
+  return vips_pngload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, NULL);
+}
+
+int
+vips_webpload_go(void *buf, size_t len, int shrink, VipsImage **out) {
+  if (shrink > 1) {
+    return vips_webpload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, "shrink", shrink, NULL);
+  }
+  return vips_webpload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, NULL);
+}
+
+int
+vips_gifload_go(void *buf, size_t len, int pages, VipsImage **out) {
+  #if VIPS_SUPPORT_GIF
+    return vips_gifload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, "n", pages, NULL);
+  #else
+    return 1;
+  #endif
 }
 
 int
@@ -239,6 +252,11 @@ vips_ifthenelse_go(VipsImage *cond, VipsImage *in1, VipsImage *in2, VipsImage **
 }
 
 int
+vips_arrayjoin_go(VipsImage **in, VipsImage **out, int n) {
+  return vips_arrayjoin(in, out, n, "across", 1, NULL);
+}
+
+int
 vips_jpegsave_go(VipsImage *in, void **buf, size_t *len, int strip, int quality, int interlace) {
   return vips_jpegsave_buffer(in, buf, len, "strip", strip, "Q", quality, "optimize_coding", TRUE, "interlace", interlace, NULL);
 }
@@ -251,6 +269,15 @@ vips_pngsave_go(VipsImage *in, void **buf, size_t *len, int interlace) {
 int
 vips_webpsave_go(VipsImage *in, void **buf, size_t *len, int strip, int quality) {
   return vips_webpsave_buffer(in, buf, len, "strip", strip, "Q", quality, NULL);
+}
+
+int
+vips_gifsave_go(VipsImage *in, void **buf, size_t *len) {
+#if VIPS_SUPPORT_MAGICK
+  return vips_magicksave_buffer(in, buf, len, "format", "gif", NULL);
+#else
+  return 1;
+#endif
 }
 
 void
