@@ -223,9 +223,16 @@ func calcCrop(width, height int, po *processingOptions) (left, top int) {
 
 func transformImage(ctx context.Context, img **C.struct__VipsImage, data []byte, po *processingOptions, imgtype imageType) error {
 	var err error
-
-	imgWidth, imgHeight, angle, flip := extractMeta(*img)
-
+ 
+	imgWidth, imgHeight, angle, flip := extractMeta(*img) 
+	if po.Dpr != 1 {
+		if po.Width != 0 {
+			po.Width = int(float32(po.Width) * po.Dpr)
+		}  
+		if po.Height != 0 {
+			po.Height = int(float32(po.Height) * po.Dpr)
+		} 
+	}
 	// Ensure we won't crop out of bounds
 	if !po.Enlarge || po.Resize == resizeCrop {
 		if imgWidth < po.Width {
