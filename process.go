@@ -450,15 +450,22 @@ func processImage(ctx context.Context) ([]byte, error) {
 		defer startPrometheusDuration(prometheusProcessingDuration)()
 	}
 
-	po := getProcessingOptions(ctx)
-
 	defer C.vips_cleanup()
 
+	po := getProcessingOptions(ctx)
 	data := getImageData(ctx).Bytes()
 	imgtype := getImageType(ctx)
 
 	if po.Gravity.Type == gravitySmart && !vipsSupportSmartcrop {
 		return nil, errSmartCropNotSupported
+	}
+
+	if po.Format == imageTypeUnknown {
+		if vipsTypeSupportSave[imgtype] {
+			po.Format = imgtype
+		} else {
+			po.Format = imageTypeJPEG
+		}
 	}
 
 	img, err := vipsLoadImage(data, imgtype, 1, po.Format == imageTypeGIF)

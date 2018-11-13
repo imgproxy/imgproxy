@@ -275,7 +275,7 @@ Extension specifies the format of the resulting image. At the moment, imgproxy s
 
 **Note:** Read about GIF support [here](./image_formats_support.md#gif-support).
 
-The extension part can be omitted. In this case, if the format is not defined by processing options, imgproxy will use `jpg` by default. You can also [enable WebP support detection](./configuration.md#webp-support-detection) to use it as default resulting format when possible.
+The extension part can be omitted. In this case, imgproxy will use source image format as resulting one. If source image format is not supported as resulting, imgproxy will use `jpg`. You also can [enable WebP support detection](./configuration.md#webp-support-detection) to use it as default resulting format when possible.
 
 ### Example
 

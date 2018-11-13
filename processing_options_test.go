@@ -37,7 +37,7 @@ func (s *ProcessingOptionsTestSuite) TestParseBase64URLWithoutExtension() {
 
 	require.Nil(s.T(), err)
 	assert.Equal(s.T(), imageURL, getImageURL(ctx))
-	assert.Equal(s.T(), imageTypeJPEG, getProcessingOptions(ctx).Format)
+	assert.Equal(s.T(), imageTypeUnknown, getProcessingOptions(ctx).Format)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParseBase64URLWithBase() {
@@ -78,7 +78,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePlainURLWithoutExtension() {
 
 	require.Nil(s.T(), err)
 	assert.Equal(s.T(), imageURL, getImageURL(ctx))
-	assert.Equal(s.T(), imageTypeJPEG, getProcessingOptions(ctx).Format)
+	assert.Equal(s.T(), imageTypeUnknown, getProcessingOptions(ctx).Format)
 }
 func (s *ProcessingOptionsTestSuite) TestParsePlainURLEscaped() {
 	imageURL := "http://images.dev/lorem/ipsum.jpg?param=value"
