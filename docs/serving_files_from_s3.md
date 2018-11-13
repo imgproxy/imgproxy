@@ -8,6 +8,12 @@ imgproxy can process images from S3 buckets. To use this feature, do the followi
 4. _(optional)_ Specify S3 endpoint with `IMGPROXY_S3_ENDPOINT`;
 5. Use `s3://%bucket_name/%file_key` as the source image URL.
 
+If you need to specify version of the source object, you can use query string of the source URL:
+
+```
+s3://%bucket_name/%file_key?%version_id
+```
+
 ### Setup credentials
 
 There are three ways to specify your AWS credentials. The credentials need to have read rights for all of the buckets given in the source URLs.

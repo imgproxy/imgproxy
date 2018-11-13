@@ -33,6 +33,11 @@ func (t s3Transport) RoundTrip(req *http.Request) (resp *http.Response, err erro
 		Bucket: aws.String(req.URL.Host),
 		Key:    aws.String(req.URL.Path),
 	}
+
+	if len(req.URL.RawQuery) > 0 {
+		input.VersionId = aws.String(req.URL.RawQuery)
+	}
+
 	s3req, _ := t.svc.GetObjectRequest(input)
 
 	s3err := s3req.Send()

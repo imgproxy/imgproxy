@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"cloud.google.com/go/storage"
@@ -27,6 +28,11 @@ func newGCSTransport() http.RoundTripper {
 func (t gcsTransport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
 	bkt := t.client.Bucket(req.URL.Host)
 	obj := bkt.Object(strings.TrimPrefix(req.URL.Path, "/"))
+
+	if g, err := strconv.ParseInt(req.URL.RawQuery, 10, 64); err == nil && g > 0 {
+		obj = obj.Generation(g)
+	}
+
 	reader, err := obj.NewReader(context.Background())
 
 	if err != nil {
