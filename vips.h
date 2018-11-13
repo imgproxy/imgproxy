@@ -98,6 +98,7 @@ vips_gifload_go(void *buf, size_t len, int pages, VipsImage **out) {
   #if VIPS_SUPPORT_GIF
     return vips_gifload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, "n", pages, NULL);
   #else
+    vips_error("vips_gifload_go", "Loading GIF is not supported");
     return 1;
   #endif
 }
@@ -111,6 +112,7 @@ vips_get_exif_orientation(VipsImage *image) {
 		!vips_image_get_string(image, EXIF_ORIENTATION, &orientation)
 	) return atoi(&orientation[0]);
 
+  vips_error("vips_get_exif_orientation", "Can't get EXIF orientation");
 	return 1;
 }
 
@@ -189,6 +191,7 @@ vips_smartcrop_go(VipsImage *in, VipsImage **out, int width, int height) {
 #if VIPS_SUPPORT_SMARTCROP
   return vips_smartcrop(in, out, width, height, NULL);
 #else
+  vips_error("vips_smartcrop_go", "Smart crop is not supported");
   return 1;
 #endif
 }
@@ -276,6 +279,7 @@ vips_gifsave_go(VipsImage *in, void **buf, size_t *len) {
 #if VIPS_SUPPORT_MAGICK
   return vips_magicksave_buffer(in, buf, len, "format", "gif", NULL);
 #else
+  vips_error("vips_gifsave_go", "Saving GIF is not supported");
   return 1;
 #endif
 }
