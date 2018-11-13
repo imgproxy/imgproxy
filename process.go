@@ -245,7 +245,19 @@ func processImage(ctx context.Context) ([]byte, error) {
 	checkTimeout(ctx)
 
 	imgWidth, imgHeight, angle, flip := extractMeta(img)
+	if po.Dpr > 1 {
+		if po.Width != 0 {
+			po.Width = int(float32(po.Width) * po.Dpr)
+		} else {
+			po.Width = int(float32(imgWidth) * po.Dpr)
+		}
 
+		if po.Height != 0 {
+			po.Height = int(float32(po.Height) * po.Dpr)
+		} else {
+			po.Height = int(float32(imgHeight) * po.Dpr)
+		}
+	}
 	// Ensure we won't crop out of bounds
 	if !po.Enlarge || po.Resize == resizeCrop {
 		if imgWidth < po.Width {

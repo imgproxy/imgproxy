@@ -34,6 +34,7 @@ type processingHeaders struct {
 	Accept        string
 	Width         string
 	ViewportWidth string
+	DPR           string
 }
 
 var imageTypes = map[string]imageType{
@@ -122,6 +123,7 @@ type processingOptions struct {
 	Quality    int
 	Flatten    bool
 	Background color
+	Dpr        float32
 	Blur       float32
 	Sharpen    float32
 
@@ -470,6 +472,19 @@ func applyBlurOption(po *processingOptions, args []string) error {
 	return nil
 }
 
+func applyDprOption(po *processingOptions, args []string) error {
+	if len(args) > 1 {
+		return fmt.Errorf("Invalid dpr arguments: %v", args)
+	}
+
+	if d, err := strconv.ParseFloat(args[0], 32); err == nil || (d >= 1 || d <= 8) {
+		po.Dpr = float32(d)
+	} else {
+		return fmt.Errorf("Invalid dpr: %s", args[0])
+	}
+
+	return nil
+}
 func applySharpenOption(po *processingOptions, args []string) error {
 	if len(args) > 1 {
 		return fmt.Errorf("Invalid sharpen arguments: %v", args)
@@ -648,6 +663,10 @@ func applyProcessingOption(po *processingOptions, name string, args []string) er
 		if err := applyCacheBusterOption(po, args); err != nil {
 			return err
 		}
+	case "dpr":
+		if err := applyDprOption(po, args); err != nil {
+			return err
+		}
 	default:
 		return fmt.Errorf("Unknown processing option: %s", name)
 	}
@@ -704,6 +723,7 @@ func defaultProcessingOptions(headers *processingHeaders) (*processingOptions, e
 		Format:      imageTypeJPEG,
 		Blur:        0,
 		Sharpen:     0,
+		Dpr:         1,
 		Watermark:   watermarkOptions{Opacity: 1, Replicate: false, Gravity: gravityCenter},
 		UsedPresets: make([]string, 0, len(conf.Presets)),
 	}
@@ -719,6 +739,11 @@ func defaultProcessingOptions(headers *processingHeaders) (*processingOptions, e
 	if conf.EnableClientHints && len(headers.Width) > 0 {
 		if w, err := strconv.Atoi(headers.Width); err == nil {
 			po.Width = w
+		}
+	}
+	if conf.EnableClientHints && len(headers.DPR) > 0 {
+		if dpr, err := strconv.ParseFloat(headers.DPR, 32); err == nil || (dpr > 1 && dpr <= 8) {
+			po.Dpr = float32(dpr)
 		}
 	}
 	if _, ok := conf.Presets["default"]; ok {
@@ -816,6 +841,7 @@ func parsePath(ctx context.Context, r *http.Request) (context.Context, error) {
 		Accept:        r.Header.Get("Accept"),
 		Width:         r.Header.Get("Width"),
 		ViewportWidth: r.Header.Get("Viewport-Width"),
+		DPR:           r.Header.Get("DPR"),
 	}
 
 	var imageURL string
