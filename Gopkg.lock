@@ -276,6 +276,14 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:b521f10a2d8fa85c04a8ef4e62f2d1e14d303599a55d64dabf9f5a02f84d35eb"
+  name = "golang.org/x/sync"
+  packages = ["errgroup"]
+  pruneopts = "UT"
+  revision = "42b317875d0fa942474b76e1b46a6060d720ae6e"
+
+[[projects]]
+  branch = "master"
   digest = "1:fbacfb57e3d052810813bca2d48c22fbde916ecfc4a2bac08df30ed6e9e59759"
   name = "golang.org/x/sys"
   packages = ["unix"]
@@ -408,6 +416,7 @@
     "github.com/stretchr/testify/suite",
     "golang.org/x/image/webp",
     "golang.org/x/net/netutil",
+    "golang.org/x/sync/errgroup",
     "google.golang.org/api/option",
   ]
   solver-name = "gps-cdcl"

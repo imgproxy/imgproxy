@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"bytes"
 	"context"
 	"crypto/tls"
@@ -37,37 +36,6 @@ var downloadBufPool = sync.Pool{
 	},
 }
 
-type netReader struct {
-	reader *bufio.Reader
-	buf    *bytes.Buffer
-}
-
-func newNetReader(r io.Reader, buf *bytes.Buffer) *netReader {
-	return &netReader{
-		reader: bufio.NewReader(r),
-		buf:    buf,
-	}
-}
-
-func (r *netReader) Read(p []byte) (n int, err error) {
-	n, err = r.reader.Read(p)
-	if err == nil {
-		r.buf.Write(p[:n])
-	}
-	return
-}
-
-func (r *netReader) Peek(n int) ([]byte, error) {
-	return r.reader.Peek(n)
-}
-
-func (r *netReader) ReadAll() error {
-	if _, err := r.buf.ReadFrom(r.reader); err != nil {
-		return err
-	}
-	return nil
-}
-
 func initDownloading() {
 	transport := &http.Transport{
 		Proxy: http.ProxyFromEnvironment,
@@ -95,21 +63,31 @@ func initDownloading() {
 	}
 }
 
+func checkDimensions(width, height int) error {
+	if width > conf.MaxSrcDimension || height > conf.MaxSrcDimension {
+		return errSourceDimensionsTooBig
+	}
+
+	if width*height > conf.MaxSrcResolution {
+		return errSourceResolutionTooBig
+	}
+
+	return nil
+}
+
 func checkTypeAndDimensions(r io.Reader) (imageType, error) {
 	imgconf, imgtypeStr, err := image.DecodeConfig(r)
-	imgtype, imgtypeOk := imageTypes[imgtypeStr]
-
 	if err != nil {
 		return imageTypeUnknown, err
 	}
-	if imgconf.Width > conf.MaxSrcDimension || imgconf.Height > conf.MaxSrcDimension {
-		return imageTypeUnknown, errSourceDimensionsTooBig
-	}
-	if imgconf.Width*imgconf.Height > conf.MaxSrcResolution {
-		return imageTypeUnknown, errSourceResolutionTooBig
-	}
+
+	imgtype, imgtypeOk := imageTypes[imgtypeStr]
 	if !imgtypeOk || !vipsTypeSupportLoad[imgtype] {
 		return imageTypeUnknown, errSourceImageTypeNotSupported
+	}
+
+	if err = checkDimensions(imgconf.Width, imgconf.Height); err != nil {
+		return imageTypeUnknown, err
 	}
 
 	return imgtype, nil
@@ -122,16 +100,14 @@ func readAndCheckImage(ctx context.Context, res *http.Response) (context.Context
 		downloadBufPool.Put(buf)
 	}
 
-	nr := newNetReader(res.Body, buf)
-
-	imgtype, err := checkTypeAndDimensions(nr)
+	imgtype, err := checkTypeAndDimensions(io.TeeReader(res.Body, buf))
 	if err != nil {
 		return ctx, cancel, err
 	}
 
-	if err = nr.ReadAll(); err == nil {
+	if _, err = buf.ReadFrom(res.Body); err == nil {
 		ctx = context.WithValue(ctx, imageTypeCtxKey, imgtype)
-		ctx = context.WithValue(ctx, imageDataCtxKey, nr.buf)
+		ctx = context.WithValue(ctx, imageDataCtxKey, buf)
 	}
 
 	return ctx, cancel, err

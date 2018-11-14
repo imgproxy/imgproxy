@@ -3,8 +3,16 @@
 imgproxy can process images from S3 buckets. To use this feature, do the following:
 
 1. Set `IMGPROXY_USE_S3` environment variable as `true`;
-2. [Setup credentials](#setup-credentials) to grant access to your bucket;
-3. Use `s3://%bucket_name/%file_key` as the source image URL.
+1. Specify AWS region with `IMGPROXY_S3_REGION` or `AWS_REGION`;
+3. [Setup credentials](#setup-credentials) to grant access to your bucket;
+4. _(optional)_ Specify S3 endpoint with `IMGPROXY_S3_ENDPOINT`;
+5. Use `s3://%bucket_name/%file_key` as the source image URL.
+
+If you need to specify version of the source object, you can use query string of the source URL:
+
+```
+s3://%bucket_name/%file_key?%version_id
+```
 
 ### Setup credentials
 

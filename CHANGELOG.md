@@ -1,5 +1,23 @@
 # Changelog
 
+## v2.1.0
+
+- [Plain source URLs](./docs/generating_the_url_advanced.md#plain) support;
+- [Serving images from Google Cloud Storage](./docs/serving_files_from_google_cloud_storage.md);
+- [Full support of GIFs](./docs/image_formats_support.md) including animated ones;
+- [Watermarks](./docs/watermark.md);
+- [New Relic](./docs/new_relic.md) metrics;
+- [Prometheus](./docs/prometheus.md) metrics;
+- [Cache buster](./docs/generating_the_url_advanced.md#cache-buster) option;
+- [Quality](./docs/generating_the_url_advanced.md#quality) option;
+- Support for custom [Amazon S3](./docs/serving_files_from_s3.md) endpoints;
+- Support for [Amazon S3](./docs/serving_files_from_s3.md) versioning;
+- [Client hints](./docs/configuration.md#client-hints-support) support;
+- Using source image format when one is not specified in the URL;
+- Sending `User-Agent` header when downloading a source image;
+- Setting proper filename in `Content-Disposition` header in the response;
+- Truncated signature support.
+
 ## v2.0.3
 
 Fixed URL validation when IMGPROXY_BASE_URL is used

@@ -15,6 +15,8 @@ import (
 	"os"
 	"runtime"
 	"unsafe"
+
+	"golang.org/x/sync/errgroup"
 )
 
 var (
@@ -80,6 +82,9 @@ func initVips() {
 	}
 	if int(C.vips_type_find_save_go(C.int(imageTypeWEBP))) != 0 {
 		vipsTypeSupportSave[imageTypeWEBP] = true
+	}
+	if int(C.vips_type_find_save_go(C.int(imageTypeGIF))) != 0 {
+		vipsTypeSupportSave[imageTypeGIF] = true
 	}
 
 	if conf.JpegProgressive {
@@ -216,46 +221,16 @@ func calcCrop(width, height int, po *processingOptions) (left, top int) {
 	return
 }
 
-func processImage(ctx context.Context) ([]byte, error) {
-	if newRelicEnabled {
-		newRelicCancel := startNewRelicSegment(ctx, "Processing image")
-		defer newRelicCancel()
-	}
-
-	if prometheusEnabled {
-		defer startPrometheusDuration(prometheusProcessingDuration)()
-	}
-
-	defer C.vips_cleanup()
-
-	data := getImageData(ctx).Bytes()
-	po := getProcessingOptions(ctx)
-	imgtype := getImageType(ctx)
-
-	if po.Gravity.Type == gravitySmart && !vipsSupportSmartcrop {
-		return nil, errSmartCropNotSupported
-	}
-
-	img, err := vipsLoadImage(data, imgtype, 1)
-	if err != nil {
-		return nil, err
-	}
-	defer C.clear_image(&img)
-
-	checkTimeout(ctx)
-
-	imgWidth, imgHeight, angle, flip := extractMeta(img)
-	if po.Dpr > 1 {
+func transformImage(ctx context.Context, img **C.struct__VipsImage, data []byte, po *processingOptions, imgtype imageType) error {
+	var err error
+ 
+	imgWidth, imgHeight, angle, flip := extractMeta(*img)
+	if po.Dpr != 1 {
 		if po.Width != 0 {
 			po.Width = int(float32(po.Width) * po.Dpr)
-		} else {
-			po.Width = int(float32(imgWidth) * po.Dpr)
-		}
-
+		} 
 		if po.Height != 0 {
 			po.Height = int(float32(po.Height) * po.Dpr)
-		} else {
-			po.Height = int(float32(imgHeight) * po.Dpr)
 		}
 	}
 	// Ensure we won't crop out of bounds
@@ -269,20 +244,20 @@ func processImage(ctx context.Context) ([]byte, error) {
 		}
 	}
 
-	hasAlpha := vipsImageHasAlpha(img)
+	hasAlpha := vipsImageHasAlpha(*img)
 
 	if needToScale(imgWidth, imgHeight, po) {
 		scale := calcScale(imgWidth, imgHeight, po)
 
 		// Do some shrink-on-load
-		if scale < 1.0 {
+		if scale < 1.0 && data != nil {
 			if shrink := calcShink(scale, imgtype); shrink != 1 {
 				scale = scale * float64(shrink)
 
-				if tmp, e := vipsLoadImage(data, imgtype, shrink); e == nil {
-					C.swap_and_clear(&img, tmp)
+				if tmp, err := vipsLoadImage(data, imgtype, shrink, false); err == nil {
+					C.swap_and_clear(img, tmp)
 				} else {
-					return nil, e
+					return err
 				}
 			}
 		}
@@ -291,50 +266,46 @@ func processImage(ctx context.Context) ([]byte, error) {
 		var bandFormat C.VipsBandFormat
 
 		if hasAlpha {
-			if bandFormat, err = vipsPremultiply(&img); err != nil {
-				return nil, err
+			if bandFormat, err = vipsPremultiply(img); err != nil {
+				return err
 			}
 			premultiplied = true
 		}
 
-		if err = vipsResize(&img, scale); err != nil {
-			return nil, err
+		if err = vipsResize(img, scale); err != nil {
+			return err
 		}
 
 		// Update actual image size after resize
-		imgWidth, imgHeight, _, _ = extractMeta(img)
+		imgWidth, imgHeight, _, _ = extractMeta(*img)
 
 		if premultiplied {
-			if err = vipsUnpremultiply(&img, bandFormat); err != nil {
-				return nil, err
+			if err = vipsUnpremultiply(img, bandFormat); err != nil {
+				return err
 			}
 		}
 	}
 
-	if err = vipsImportColourProfile(&img); err != nil {
-		return nil, err
-	}
-
-	if err = vipsFixColourspace(&img); err != nil {
-		return nil, err
+	if err = vipsImportColourProfile(img); err != nil {
+		return err
 	}
 
 	checkTimeout(ctx)
 
 	if angle != C.VIPS_ANGLE_D0 || flip {
-		if err = vipsImageCopyMemory(&img); err != nil {
-			return nil, err
+		if err = vipsImageCopyMemory(img); err != nil {
+			return err
 		}
 
 		if angle != C.VIPS_ANGLE_D0 {
-			if err = vipsRotate(&img, angle); err != nil {
-				return nil, err
+			if err = vipsRotate(img, angle); err != nil {
+				return err
 			}
 		}
 
 		if flip {
-			if err = vipsFlip(&img); err != nil {
-				return nil, err
+			if err = vipsFlip(img); err != nil {
+				return err
 			}
 		}
 	}
@@ -351,21 +322,21 @@ func processImage(ctx context.Context) ([]byte, error) {
 
 	if po.Width < imgWidth || po.Height < imgHeight {
 		if po.Gravity.Type == gravitySmart {
-			if err = vipsImageCopyMemory(&img); err != nil {
-				return nil, err
+			if err = vipsImageCopyMemory(img); err != nil {
+				return err
 			}
-			if err = vipsSmartCrop(&img, po.Width, po.Height); err != nil {
-				return nil, err
+			if err = vipsSmartCrop(img, po.Width, po.Height); err != nil {
+				return err
 			}
 			// Applying additional modifications after smart crop causes SIGSEGV on Alpine
 			// so we have to copy memory after it
-			if err = vipsImageCopyMemory(&img); err != nil {
-				return nil, err
+			if err = vipsImageCopyMemory(img); err != nil {
+				return err
 			}
 		} else {
 			left, top := calcCrop(imgWidth, imgHeight, po)
-			if err = vipsCrop(&img, left, top, po.Width, po.Height); err != nil {
-				return nil, err
+			if err = vipsCrop(img, left, top, po.Width, po.Height); err != nil {
+				return err
 			}
 		}
 
@@ -373,29 +344,160 @@ func processImage(ctx context.Context) ([]byte, error) {
 	}
 
 	if hasAlpha && po.Flatten {
-		if err = vipsFlatten(&img, po.Background); err != nil {
-			return nil, err
+		if err = vipsFlatten(img, po.Background); err != nil {
+			return err
 		}
 	}
 
 	if po.Blur > 0 {
-		if err = vipsBlur(&img, po.Blur); err != nil {
-			return nil, err
+		if err = vipsBlur(img, po.Blur); err != nil {
+			return err
 		}
 	}
 
 	if po.Sharpen > 0 {
-		if err = vipsSharpen(&img, po.Sharpen); err != nil {
-			return nil, err
+		if err = vipsSharpen(img, po.Sharpen); err != nil {
+			return err
 		}
 	}
 
 	checkTimeout(ctx)
 
 	if po.Watermark.Enabled {
-		if err = vipsApplyWatermark(&img, &po.Watermark); err != nil {
+		if err = vipsApplyWatermark(img, &po.Watermark); err != nil {
+			return err
+		}
+	}
+
+	if err = vipsFixColourspace(img); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func transformGif(ctx context.Context, img **C.struct__VipsImage, po *processingOptions) error {
+	imgWidth := int((*img).Xsize)
+	imgHeight := int((*img).Ysize)
+
+	// Double check dimensions because gif may have many frames
+	if err := checkDimensions(imgWidth, imgHeight); err != nil {
+		return err
+	}
+
+	frameHeight, err := vipsGetInt(*img, "page-height")
+	if err != nil {
+		return err
+	}
+
+	delay, err := vipsGetInt(*img, "gif-delay")
+	if err != nil {
+		return err
+	}
+
+	loop, err := vipsGetInt(*img, "gif-loop")
+	if err != nil {
+		return err
+	}
+
+	framesCount := imgHeight / frameHeight
+
+	frames := make([]*C.struct__VipsImage, framesCount)
+	defer func() {
+		for _, frame := range frames {
+			C.clear_image(&frame)
+		}
+	}()
+
+	var errg errgroup.Group
+
+	for i := 0; i < framesCount; i++ {
+		ind := i
+		errg.Go(func() error {
+			var frame *C.struct__VipsImage
+
+			if err := vipsExtract(*img, &frame, 0, ind*frameHeight, imgWidth, frameHeight); err != nil {
+				return err
+			}
+
+			if err := transformImage(ctx, &frame, nil, po, imageTypeGIF); err != nil {
+				return err
+			}
+
+			frames[ind] = frame
+
+			return nil
+		})
+	}
+
+	if err := errg.Wait(); err != nil {
+		return err
+	}
+
+	checkTimeout(ctx)
+
+	if err := vipsArrayjoin(frames, img); err != nil {
+		return err
+	}
+
+	vipsSetInt(*img, "page-height", int(frames[0].Ysize))
+	vipsSetInt(*img, "gif-delay", delay)
+	vipsSetInt(*img, "gif-loop", loop)
+
+	return nil
+}
+
+func processImage(ctx context.Context) ([]byte, error) {
+	if newRelicEnabled {
+		newRelicCancel := startNewRelicSegment(ctx, "Processing image")
+		defer newRelicCancel()
+	}
+
+	if prometheusEnabled {
+		defer startPrometheusDuration(prometheusProcessingDuration)()
+	}
+
+	defer C.vips_cleanup()
+
+	po := getProcessingOptions(ctx)
+	data := getImageData(ctx).Bytes()
+	imgtype := getImageType(ctx)
+
+	if po.Gravity.Type == gravitySmart && !vipsSupportSmartcrop {
+		return nil, errSmartCropNotSupported
+	}
+
+	if po.Format == imageTypeUnknown {
+		if vipsTypeSupportSave[imgtype] {
+			po.Format = imgtype
+		} else {
+			po.Format = imageTypeJPEG
+		}
+	}
+
+	img, err := vipsLoadImage(data, imgtype, 1, po.Format == imageTypeGIF)
+	if err != nil {
+		return nil, err
+	}
+	defer C.clear_image(&img)
+
+	if imgtype == imageTypeGIF && po.Format == imageTypeGIF {
+		if err := transformGif(ctx, &img, po); err != nil {
 			return nil, err
 		}
+	} else {
+		if err := transformImage(ctx, &img, data, po, imgtype); err != nil {
+			return nil, err
+		}
+	}
+
+	checkTimeout(ctx)
+
+	if po.Format == imageTypeGIF {
+		if err := vipsCastUchar(&img); err != nil {
+			return nil, err
+		}
+		checkTimeout(ctx)
 	}
 
 	return vipsSaveImage(img, po.Format, po.Quality)
@@ -413,8 +515,9 @@ func vipsPrepareWatermark() error {
 		return nil
 	}
 
-	if C.vips_load_buffer(unsafe.Pointer(&data[0]), C.size_t(len(data)), C.int(imgtype), 1, &watermark) != 0 {
-		return vipsError()
+	watermark, err = vipsLoadImage(data, imgtype, 1, false)
+	if err != nil {
+		return err
 	}
 
 	var tmp *C.struct__VipsImage
@@ -459,11 +562,30 @@ func vipsPrepareWatermark() error {
 	return nil
 }
 
-func vipsLoadImage(data []byte, imgtype imageType, shrink int) (*C.struct__VipsImage, error) {
+func vipsLoadImage(data []byte, imgtype imageType, shrink int, allPages bool) (*C.struct__VipsImage, error) {
 	var img *C.struct__VipsImage
-	if C.vips_load_buffer(unsafe.Pointer(&data[0]), C.size_t(len(data)), C.int(imgtype), C.int(shrink), &img) != 0 {
+
+	err := C.int(0)
+
+	pages := C.int(1)
+	if allPages {
+		pages = -1
+	}
+
+	switch imgtype {
+	case imageTypeJPEG:
+		err = C.vips_jpegload_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), C.int(shrink), &img)
+	case imageTypePNG:
+		err = C.vips_pngload_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), &img)
+	case imageTypeWEBP:
+		err = C.vips_webpload_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), C.int(shrink), &img)
+	case imageTypeGIF:
+		err = C.vips_gifload_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), pages, &img)
+	}
+	if err != 0 {
 		return nil, vipsError()
 	}
+
 	return img, nil
 }
 
@@ -482,6 +604,8 @@ func vipsSaveImage(img *C.struct__VipsImage, imgtype imageType, quality int) ([]
 		err = C.vips_pngsave_go(img, &ptr, &imgsize, cConf.PngInterlaced)
 	case imageTypeWEBP:
 		err = C.vips_webpsave_go(img, &ptr, &imgsize, 1, C.int(quality))
+	case imageTypeGIF:
+		err = C.vips_gifsave_go(img, &ptr, &imgsize)
 	}
 	if err != 0 {
 		return nil, vipsError()
@@ -490,8 +614,31 @@ func vipsSaveImage(img *C.struct__VipsImage, imgtype imageType, quality int) ([]
 	return C.GoBytes(ptr, C.int(imgsize)), nil
 }
 
+func vipsArrayjoin(in []*C.struct__VipsImage, out **C.struct__VipsImage) error {
+	var tmp *C.struct__VipsImage
+
+	if C.vips_arrayjoin_go(&in[0], &tmp, C.int(len(in))) != 0 {
+		return vipsError()
+	}
+
+	C.swap_and_clear(out, tmp)
+	return nil
+}
+
 func vipsImageHasAlpha(img *C.struct__VipsImage) bool {
 	return C.vips_image_hasalpha_go(img) > 0
+}
+
+func vipsGetInt(img *C.struct__VipsImage, name string) (int, error) {
+	var i C.int
+	if C.vips_image_get_int(img, C.CString(name), &i) != 0 {
+		return 0, vipsError()
+	}
+	return int(i), nil
+}
+
+func vipsSetInt(img *C.struct__VipsImage, name string, value int) {
+	C.vips_image_set_int(img, C.CString(name), C.int(value))
 }
 
 func vipsPremultiply(img **C.struct__VipsImage) (C.VipsBandFormat, error) {
@@ -519,6 +666,19 @@ func vipsUnpremultiply(img **C.struct__VipsImage, format C.VipsBandFormat) error
 		return vipsError()
 	}
 	C.swap_and_clear(img, tmp)
+
+	return nil
+}
+
+func vipsCastUchar(img **C.struct__VipsImage) error {
+	var tmp *C.struct__VipsImage
+
+	if C.vips_image_get_format(*img) != C.VIPS_FORMAT_UCHAR {
+		if C.vips_cast_go(*img, &tmp, C.VIPS_FORMAT_UCHAR) != 0 {
+			return vipsError()
+		}
+		C.swap_and_clear(img, tmp)
+	}
 
 	return nil
 }
@@ -564,6 +724,13 @@ func vipsCrop(img **C.struct__VipsImage, left, top, width, height int) error {
 	}
 
 	C.swap_and_clear(img, tmp)
+	return nil
+}
+
+func vipsExtract(in *C.struct__VipsImage, out **C.struct__VipsImage, left, top, width, height int) error {
+	if C.vips_extract_area_go(in, out, C.int(left), C.int(top), C.int(width), C.int(height)) != 0 {
+		return vipsError()
+	}
 	return nil
 }
 
@@ -782,8 +949,10 @@ func vipsApplyWatermark(img **C.struct__VipsImage, opts *watermarkOptions) error
 	}
 	C.swap_and_clear(&wm, tmp)
 
-	if C.vips_image_guess_interpretation(*img) != C.vips_image_guess_interpretation(wm) {
-		if C.vips_colourspace_go(wm, &tmp, C.vips_image_guess_interpretation(*img)) != 0 {
+	imgInterpolation := C.vips_image_guess_interpretation(*img)
+
+	if imgInterpolation != C.vips_image_guess_interpretation(wm) {
+		if C.vips_colourspace_go(wm, &tmp, imgInterpolation) != 0 {
 			return vipsError()
 		}
 		C.swap_and_clear(&wm, tmp)
@@ -795,6 +964,8 @@ func vipsApplyWatermark(img **C.struct__VipsImage, opts *watermarkOptions) error
 		}
 		C.swap_and_clear(&wmAlpha, tmp)
 	}
+
+	imgFormat := C.vips_image_get_format(*img)
 
 	var imgAlpha *C.struct__VipsImage
 	defer C.clear_image(&imgAlpha)
@@ -819,6 +990,13 @@ func vipsApplyWatermark(img **C.struct__VipsImage, opts *watermarkOptions) error
 
 	if hasAlpha {
 		if C.vips_bandjoin_go(*img, imgAlpha, &tmp) != 0 {
+			return vipsError()
+		}
+		C.swap_and_clear(img, tmp)
+	}
+
+	if imgFormat != C.vips_image_get_format(*img) {
+		if C.vips_cast_go(*img, &tmp, imgFormat) != 0 {
 			return vipsError()
 		}
 		C.swap_and_clear(img, tmp)

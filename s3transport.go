@@ -15,7 +15,17 @@ type s3Transport struct {
 }
 
 func newS3Transport() http.RoundTripper {
-	return s3Transport{s3.New(session.New())}
+	s3Conf := aws.NewConfig()
+
+	if len(conf.S3Region) != 0 {
+		s3Conf.WithRegion(conf.S3Region)
+	}
+
+	if len(conf.S3Endpoint) != 0 {
+		s3Conf.WithEndpoint(conf.S3Endpoint)
+	}
+
+	return s3Transport{s3.New(session.New(), s3Conf)}
 }
 
 func (t s3Transport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
@@ -23,6 +33,11 @@ func (t s3Transport) RoundTrip(req *http.Request) (resp *http.Response, err erro
 		Bucket: aws.String(req.URL.Host),
 		Key:    aws.String(req.URL.Path),
 	}
+
+	if len(req.URL.RawQuery) > 0 {
+		input.VersionId = aws.String(req.URL.RawQuery)
+	}
+
 	s3req, _ := t.svc.GetObjectRequest(input)
 
 	s3err := s3req.Send()

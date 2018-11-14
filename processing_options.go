@@ -720,7 +720,7 @@ func defaultProcessingOptions(headers *processingHeaders) (*processingOptions, e
 		Gravity:     gravityOptions{Type: gravityCenter},
 		Enlarge:     false,
 		Quality:     conf.Quality,
-		Format:      imageTypeJPEG,
+		Format:      imageTypeUnknown,
 		Blur:        0,
 		Sharpen:     0,
 		Dpr:         1,

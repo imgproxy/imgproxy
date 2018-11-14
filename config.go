@@ -152,6 +152,8 @@ type config struct {
 
 	LocalFileSystemRoot string
 	S3Enabled           bool
+	S3Region            string
+	S3Endpoint          string
 	GCSKey              string
 
 	ETagEnabled bool
@@ -246,6 +248,9 @@ func init() {
 	strEnvConfig(&conf.LocalFileSystemRoot, "IMGPROXY_LOCAL_FILESYSTEM_ROOT")
 
 	boolEnvConfig(&conf.S3Enabled, "IMGPROXY_USE_S3")
+	strEnvConfig(&conf.S3Region, "IMGPROXY_S3_REGION")
+	strEnvConfig(&conf.S3Endpoint, "IMGPROXY_S3_ENDPOINT")
+
 	strEnvConfig(&conf.GCSKey, "IMGPROXY_GCS_KEY")
 
 	boolEnvConfig(&conf.ETagEnabled, "IMGPROXY_USE_ETAG")
