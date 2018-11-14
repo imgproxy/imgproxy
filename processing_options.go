@@ -702,6 +702,7 @@ func defaultProcessingOptions(headers *processingHeaders) (*processingOptions, e
 		Enlarge:     false,
 		Quality:     conf.Quality,
 		Format:      imageTypeUnknown,
+		Background:  color{255, 255, 255},
 		Blur:        0,
 		Sharpen:     0,
 		Watermark:   watermarkOptions{Opacity: 1, Replicate: false, Gravity: gravityCenter},
