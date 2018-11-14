@@ -742,7 +742,11 @@ func defaultProcessingOptions(headers *processingHeaders) (*processingOptions, e
 		}
 	}
 	if conf.EnableClientHints && len(headers.DPR) > 0 {
+<<<<<<< HEAD
 		if dpr, err := strconv.ParseFloat(headers.DPR, 32); err == nil || (dpr > 0 && dpr <= 8) {
+=======
+		if dpr, err := strconv.ParseFloat(headers.DPR, 32); err == nil || (dpr > 1 && dpr <= 8) {
+>>>>>>> a93166a07b1ddf923f641e5ac3853eb7f3cf0765
 			po.Dpr = float32(dpr)
 		}
 	}
