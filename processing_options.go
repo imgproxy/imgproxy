@@ -477,7 +477,7 @@ func applyDprOption(po *processingOptions, args []string) error {
 		return fmt.Errorf("Invalid dpr arguments: %v", args)
 	}
 
-	if d, err := strconv.ParseFloat(args[0], 32); err == nil || (d > 0 || d != 1) {
+	if d, err := strconv.ParseFloat(args[0], 32); err == nil || (d > 0 && d != 1) {
 		po.Dpr = float32(d)
 	} else {
 		return fmt.Errorf("Invalid dpr: %s", args[0])
@@ -742,11 +742,7 @@ func defaultProcessingOptions(headers *processingHeaders) (*processingOptions, e
 		}
 	}
 	if conf.EnableClientHints && len(headers.DPR) > 0 {
-<<<<<<< HEAD
 		if dpr, err := strconv.ParseFloat(headers.DPR, 32); err == nil || (dpr > 0 && dpr <= 8) {
-=======
-		if dpr, err := strconv.ParseFloat(headers.DPR, 32); err == nil || (dpr > 1 && dpr <= 8) {
->>>>>>> a93166a07b1ddf923f641e5ac3853eb7f3cf0765
 			po.Dpr = float32(dpr)
 		}
 	}
