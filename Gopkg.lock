@@ -18,6 +18,14 @@
   version = "v0.31.0"
 
 [[projects]]
+  digest = "1:e92f5581902c345eb4ceffdcd4a854fb8f73cf436d47d837d1ec98ef1fe0a214"
+  name = "github.com/StackExchange/wmi"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "5d049714c4a64225c3c79a7cf7d02f7fb5b96338"
+  version = "1.0.0"
+
+[[projects]]
   digest = "1:8fba2026253919f58e3afc3a965269fb854987c602aa96db89463ad33783d43b"
   name = "github.com/aws/aws-sdk-go"
   packages = [
@@ -66,6 +74,25 @@
   revision = "3a771d992973f24aa725d07868b467d1ddfceafb"
 
 [[projects]]
+  digest = "1:a9ef0c82c0459e56e52a374cff03bc7b21a2e76bd957cc368fafd23ca0ba0b45"
+  name = "github.com/bugsnag/bugsnag-go"
+  packages = [
+    ".",
+    "errors",
+  ]
+  pruneopts = "UT"
+  revision = "3f5889f222e9c07aa1f62c5e8c202e402ce574cd"
+  version = "v1.3.2"
+
+[[projects]]
+  digest = "1:3049c43c6d1cfaa347acd27d6342187f8f38d9f416bbba7b02b43f82848302d2"
+  name = "github.com/bugsnag/panicwrap"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "4009b2b7c78d820cc4a2e42f035bb557ce4ae45b"
+  version = "v1.2.0"
+
+[[projects]]
   digest = "1:ffe9824d294da03b391f44e1ae8281281b4afc1bdaa9588c9097785e3af10cec"
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
@@ -80,6 +107,17 @@
   pruneopts = "UT"
   revision = "7b294651033cd7d9e7f0d9ffa1b75ed1e198e737"
   version = "v1.38.3"
+
+[[projects]]
+  digest = "1:64a5a67c69b70c2420e607a8545d674a23778ed9c3e80607bfd17b77c6c87f6a"
+  name = "github.com/go-ole/go-ole"
+  packages = [
+    ".",
+    "oleutil",
+  ]
+  pruneopts = "UT"
+  revision = "a41e3c4b706f6ae8dfbff342b06e40fa4d2d0506"
+  version = "v1.2.1"
 
 [[projects]]
   digest = "1:5d1b5a25486fc7d4e133646d834f6fca7ba1cef9903d40e7aa786c41b89e9e91"
@@ -97,6 +135,14 @@
   version = "v1.2.0"
 
 [[projects]]
+  digest = "1:3a26588bc48b96825977c1b3df964f8fd842cd6860cc26370588d3563433cf11"
+  name = "github.com/google/uuid"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "d460ce9f8df2e77fb1ba55ca87fafed96c607494"
+  version = "v1.0.0"
+
+[[projects]]
   digest = "1:e145e9710a10bc114a6d3e2738aadf8de146adaa031854ffdf7bbfe15da85e63"
   name = "github.com/googleapis/gax-go"
   packages = ["."]
@@ -105,11 +151,27 @@
   version = "v2.0.0"
 
 [[projects]]
+  digest = "1:103c6cb41de817046391e740f9c66aa65819e9144968f84b1fffea7caf8f2c89"
+  name = "github.com/honeybadger-io/honeybadger-go"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "cff309ec4b9ffb7d7d9051d4cb18ebbd4b3e84f5"
+  version = "v0.4.0"
+
+[[projects]]
   digest = "1:e22af8c7518e1eab6f2eab2b7d7558927f816262586cd6ed9f349c97a6c285c4"
   name = "github.com/jmespath/go-jmespath"
   packages = ["."]
   pruneopts = "UT"
   revision = "0b12d6b5"
+
+[[projects]]
+  branch = "master"
+  digest = "1:caf6db28595425c0e0f2301a00257d11712f65c1878e12cffc42f6b9a9cf3f23"
+  name = "github.com/kardianos/osext"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "ae77be60afb1dcacde03767a8c37337fad28ac14"
 
 [[projects]]
   branch = "master"
@@ -142,6 +204,14 @@
   pruneopts = "UT"
   revision = "46d73e6be8b4faeee70850d0df829e4fe00d6819"
   version = "v2.1.0"
+
+[[projects]]
+  digest = "1:e5d0bd87abc2781d14e274807a470acd180f0499f8bf5bb18606e9ec22ad9de9"
+  name = "github.com/pborman/uuid"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "adf5a7427709b9deb95d29d3fa8a2bf9cfd388f1"
+  version = "v1.2"
 
 [[projects]]
   digest = "1:0028cb19b2e4c3112225cd871870f2d9cf49b9b4276531f03438a88e94be86fe"
@@ -195,6 +265,18 @@
   ]
   pruneopts = "UT"
   revision = "185b4288413d2a0dd0806f78c90dde719829e5ae"
+
+[[projects]]
+  digest = "1:d0c064d8db7da0a052c5a24ceae9c36f2ed345f26f55e58268ee8a5308b5a103"
+  name = "github.com/shirou/gopsutil"
+  packages = [
+    "internal/common",
+    "load",
+    "mem",
+  ]
+  pruneopts = "UT"
+  revision = "3ec50d2876a36047b2ca39f955ba88fb7a455e92"
+  version = "v2.18.10"
 
 [[projects]]
   digest = "1:5110e3d4f130772fd39e6ce8208ad1955b242ccfcc8ad9d158857250579c82f4"
@@ -284,9 +366,12 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:fbacfb57e3d052810813bca2d48c22fbde916ecfc4a2bac08df30ed6e9e59759"
+  digest = "1:a5090ea95e2600b2a369df77359c5871948f12bc8f0632db0342f5acc5e30c1d"
   name = "golang.org/x/sys"
-  packages = ["unix"]
+  packages = [
+    "unix",
+    "windows",
+  ]
   pruneopts = "UT"
   revision = "d69651ed3497faee15a5363a89578e9991f6d5e2"
 
@@ -407,6 +492,8 @@
     "github.com/aws/aws-sdk-go/aws",
     "github.com/aws/aws-sdk-go/aws/session",
     "github.com/aws/aws-sdk-go/service/s3",
+    "github.com/bugsnag/bugsnag-go",
+    "github.com/honeybadger-io/honeybadger-go",
     "github.com/matoous/go-nanoid",
     "github.com/newrelic/go-agent",
     "github.com/prometheus/client_golang/prometheus",

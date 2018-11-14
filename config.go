@@ -171,6 +171,11 @@ type config struct {
 	NewRelicKey     string
 
 	PrometheusBind string
+
+	BugsnagKey     string
+	BugsnagStage   string
+	HoneybadgerKey string
+	HoneybadgerEnv string
 }
 
 var conf = config{
@@ -191,6 +196,8 @@ var conf = config{
 	ETagEnabled:           false,
 	S3Enabled:             false,
 	WatermarkOpacity:      1,
+	BugsnagStage:          "production",
+	HoneybadgerEnv:        "production",
 }
 
 func init() {
@@ -270,6 +277,11 @@ func init() {
 	strEnvConfig(&conf.NewRelicKey, "IMGPROXY_NEW_RELIC_KEY")
 
 	strEnvConfig(&conf.PrometheusBind, "IMGPROXY_PROMETHEUS_BIND")
+
+	strEnvConfig(&conf.BugsnagKey, "IMGPROXY_BUGSNAG_KEY")
+	strEnvConfig(&conf.BugsnagStage, "IMGPROXY_BUGSNAG_STAGE")
+	strEnvConfig(&conf.HoneybadgerKey, "IMGPROXY_HONEYBADGER_KEY")
+	strEnvConfig(&conf.HoneybadgerEnv, "IMGPROXY_HONEYBADGER_ENV")
 
 	if len(conf.Key) == 0 {
 		warning("Key is not defined, so signature checking is disabled")
@@ -366,5 +378,6 @@ func init() {
 	initDownloading()
 	initNewrelic()
 	initPrometheus()
+	initErrorsReporting()
 	initVips()
 }

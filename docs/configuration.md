@@ -73,7 +73,7 @@ When WebP support detection is enabled, please take care to configure your CDN o
 
 ## Client Hints support
 
-imgproxy can use the `Width` or `Viewport-Width` HTTP header to determine the width of the image container using Client Hints when the width argument is ommited. 
+imgproxy can use the `Width` or `Viewport-Width` HTTP header to determine the width of the image container using Client Hints when the width argument is ommited.
 
 * `IMGPROXY_ENABLE_CLIENT_HINTS`: enables Client Hints support when the width is ommited for automatic responsive images . Read [here](https://developers.google.com/web/updates/2015/09/automating-resource-selection-with-client-hints) details about Client Hints.
 
@@ -156,6 +156,15 @@ imgproxy can collect its metrics for Prometheus. Specify binding for Prometheus 
 * `IMGPROXY_PROMETHEUS_BIND`: prometheus metrics server binding. Can't be the same as `IMGPROXY_BIND`. Default: blank.
 
 Check out the [Prometheus](./prometheus.md) guide to learn more.
+
+### Errors reporting
+
+imgproxy can report occurred errors to Bugsnag or Honeybadger:
+
+* `IMGPROXY_BUGSNAG_KEY`: Bugsnag API key. When provided, enables errors reporting to Bugsnag;
+* `IMGPROXY_BUGSNAG_STAGE`: Bugsnag stage to report to. Default: production;
+* `IMGPROXY_HONEYBADGER_KEY`: Honeybadger API key. When provided, enables errors reporting to Honeybadger;
+* `IMGPROXY_HONEYBADGER_ENV`: Honeybadger env to report to. Default: production.
 
 ### Miscellaneous
 
