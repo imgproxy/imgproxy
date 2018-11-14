@@ -157,6 +157,15 @@ imgproxy can collect its metrics for Prometheus. Specify binding for Prometheus 
 
 Check out the [Prometheus](./prometheus.md) guide to learn more.
 
+### Errors reporting
+
+imgproxy can report occurred errors to Bugsnag or Honeybadger:
+
+* `IMGPROXY_BUGSNAG_KEY`: Bugsnag API key. When provided, enables errors reporting to Bugsnag;
+* `IMGPROXY_BUGSNAG_STAGE`: Bugsnag stage to report to. Default: production;
+* `IMGPROXY_HONEYBADGER_KEY`: Honeybadger API key. When provided, enables errors reporting to Honeybadger;
+* `IMGPROXY_HONEYBADGER_ENV`: Honeybadger env to report to. Default: production.
+
 ### Miscellaneous
 
 * `IMGPROXY_BASE_URL`: base URL prefix that will be added to every requested image URL. For example, if the base URL is `http://example.com/images` and `/path/to/image.png` is requested, imgproxy will download the source image from `http://example.com/images/path/to/image.png`. Default: blank.

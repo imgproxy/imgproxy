@@ -178,11 +178,19 @@ func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	reqID, _ := nanoid.Nanoid()
 
 	defer func() {
-		if r := recover(); r != nil {
-			if err, ok := r.(imgproxyError); ok {
-				respondWithError(reqID, rw, err)
+		if rerr := recover(); rerr != nil {
+			if err, ok := rerr.(error); ok {
+				if err != errNotModified {
+					reportError(err, r)
+				}
+
+				if ierr, ok := err.(imgproxyError); ok {
+					respondWithError(reqID, rw, ierr)
+				} else {
+					respondWithError(reqID, rw, newUnexpectedError(err, 4))
+				}
 			} else {
-				respondWithError(reqID, rw, newUnexpectedError(r.(error), 4))
+				panic(rerr)
 			}
 		}
 	}()

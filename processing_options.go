@@ -721,6 +721,7 @@ func defaultProcessingOptions(headers *processingHeaders) (*processingOptions, e
 		Enlarge:     false,
 		Quality:     conf.Quality,
 		Format:      imageTypeUnknown,
+		Background:  color{255, 255, 255},
 		Blur:        0,
 		Sharpen:     0,
 		Dpr:         1,

@@ -343,7 +343,7 @@ func transformImage(ctx context.Context, img **C.struct__VipsImage, data []byte,
 		checkTimeout(ctx)
 	}
 
-	if hasAlpha && po.Flatten {
+	if hasAlpha && (po.Flatten || po.Format == imageTypeJPEG) {
 		if err = vipsFlatten(img, po.Background); err != nil {
 			return err
 		}
