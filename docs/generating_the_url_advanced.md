@@ -158,6 +158,16 @@ When set, imgproxy will apply the gaussian blur filter to the resulting image. `
 
 Default: disabled
 
+##### Dpr
+
+```
+dpr:%dpr 
+```
+
+When set, imgproxy will multiply the image dimensions according to this factor for HiDPI (Retina) devices. The value must be greater than 0.
+
+Default: `1`
+
 ##### Sharpen
 
 ```

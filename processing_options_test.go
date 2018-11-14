@@ -307,7 +307,15 @@ func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedSharpen() {
 	po := getProcessingOptions(ctx)
 	assert.Equal(s.T(), float32(0.2), po.Sharpen)
 }
+func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedDpr() {
+	req := s.getRequest("http://example.com/unsafe/dpr:2/plain/http://images.dev/lorem/ipsum.jpg")
+	ctx, err := parsePath(context.Background(), req)
 
+	require.Nil(s.T(), err)
+
+	po := getProcessingOptions(ctx)
+	assert.Equal(s.T(), float32(2), po.Dpr)
+}
 func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedWatermark() {
 	req := s.getRequest("http://example.com/unsafe/watermark:0.5:soea:10:20:0.6/plain/http://images.dev/lorem/ipsum.jpg")
 	ctx, err := parsePath(context.Background(), req)
@@ -498,6 +506,30 @@ func (s *ProcessingOptionsTestSuite) TestParsePathViewportWidthHeaderRedefine() 
 
 	po := getProcessingOptions(ctx)
 	assert.Equal(s.T(), 150, po.Width)
+}
+
+func (s *ProcessingOptionsTestSuite) TestParsePathDprHeader() {
+	conf.EnableClientHints = true
+
+	req := s.getRequest("http://example.com/unsafe/plain/http://images.dev/lorem/ipsum.jpg@png")
+	req.Header.Set("DPR", "2")
+	ctx, err := parsePath(context.Background(), req)
+
+	require.Nil(s.T(), err)
+
+	po := getProcessingOptions(ctx)
+	assert.Equal(s.T(), float32(2), po.Dpr)
+}
+
+func (s *ProcessingOptionsTestSuite) TestParsePathDprHeaderDisabled() {
+	req := s.getRequest("http://example.com/unsafe/plain/http://images.dev/lorem/ipsum.jpg@png")
+	req.Header.Set("DPR", "2")
+	ctx, err := parsePath(context.Background(), req)
+
+	require.Nil(s.T(), err)
+
+	po := getProcessingOptions(ctx)
+	assert.Equal(s.T(), float32(1), po.Dpr)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathSigned() {
