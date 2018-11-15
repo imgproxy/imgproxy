@@ -10,7 +10,9 @@ imgproxy allows URLs to be signed with a key and salt. This feature is disabled 
 * `IMGPROXY_SALT`: hex-encoded salt;
 * `IMGPROXY_SIGNATURE_SIZE`: number of bytes to use for signature before encoding to Base64. Default: 32;
 
-You can also specify paths to files with a hex-encoded key and salt (useful in a development environment):
+You can specify multiple key/salt pairs by dividing keys and salts with comma (`,`). imgproxy will check URL signatures with each pair. Useful when you need to change key/salt pair in your application with zero downtime.
+
+You can also specify paths to files with a hex-encoded keys and salts, one by line (useful in a development environment):
 
 ```bash
 $ imgproxy -keypath /path/to/file/with/key -saltpath /path/to/file/with/salt

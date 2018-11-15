@@ -2,11 +2,9 @@ package main
 
 import (
 	"bufio"
-	"bytes"
 	"encoding/hex"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"runtime"
@@ -45,17 +43,25 @@ func boolEnvConfig(b *bool, name string) {
 	}
 }
 
-func hexEnvConfig(b *[]byte, name string) {
+func hexEnvConfig(b *[]securityKey, name string) {
 	var err error
 
 	if env := os.Getenv(name); len(env) > 0 {
-		if *b, err = hex.DecodeString(env); err != nil {
-			log.Fatalf("%s expected to be hex-encoded string\n", name)
+		parts := strings.Split(env, ",")
+
+		keys := make([]securityKey, len(parts))
+
+		for i, part := range parts {
+			if keys[i], err = hex.DecodeString(part); err != nil {
+				log.Fatalf("%s expected to be hex-encoded strings. Invalid: %s\n", name, part)
+			}
 		}
+
+		*b = keys
 	}
 }
 
-func hexFileConfig(b *[]byte, filepath string) {
+func hexFileConfig(b *[]securityKey, filepath string) {
 	if len(filepath) == 0 {
 		return
 	}
@@ -65,20 +71,28 @@ func hexFileConfig(b *[]byte, filepath string) {
 		log.Fatalf("Can't open file %s\n", filepath)
 	}
 
-	src, err := ioutil.ReadAll(f)
-	if err != nil {
-		log.Fatalln(err)
+	keys := []securityKey{}
+
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		part := scanner.Text()
+
+		if len(part) == 0 {
+			continue
+		}
+
+		if key, err := hex.DecodeString(part); err == nil {
+			keys = append(keys, key)
+		} else {
+			log.Fatalf("%s expected to contain hex-encoded strings. Invalid: %s\n", filepath, part)
+		}
 	}
 
-	src = bytes.TrimSpace(src)
-
-	dst := make([]byte, hex.DecodedLen(len(src)))
-	n, err := hex.Decode(dst, src)
-	if err != nil {
-		log.Fatalf("%s expected to contain hex-encoded string\n", filepath)
+	if err := scanner.Err(); err != nil {
+		log.Fatalf("Failed to read file %s: %s", filepath, err)
 	}
 
-	*b = dst[:n]
+	*b = keys
 }
 
 func presetEnvConfig(p presets, name string) {
@@ -137,8 +151,8 @@ type config struct {
 	EnforceWebp         bool
 	EnableClientHints   bool
 
-	Key           []byte
-	Salt          []byte
+	Keys          []securityKey
+	Salts         []securityKey
 	AllowInsecure bool
 	SignatureSize int
 
@@ -237,12 +251,12 @@ func init() {
 	boolEnvConfig(&conf.EnforceWebp, "IMGPROXY_ENFORCE_WEBP")
 	boolEnvConfig(&conf.EnableClientHints, "IMGPROXY_ENABLE_CLIENT_HINTS")
 
-	hexEnvConfig(&conf.Key, "IMGPROXY_KEY")
-	hexEnvConfig(&conf.Salt, "IMGPROXY_SALT")
+	hexEnvConfig(&conf.Keys, "IMGPROXY_KEY")
+	hexEnvConfig(&conf.Salts, "IMGPROXY_SALT")
 	intEnvConfig(&conf.SignatureSize, "IMGPROXY_SIGNATURE_SIZE")
 
-	hexFileConfig(&conf.Key, *keyPath)
-	hexFileConfig(&conf.Salt, *saltPath)
+	hexFileConfig(&conf.Keys, *keyPath)
+	hexFileConfig(&conf.Salts, *saltPath)
 
 	strEnvConfig(&conf.Secret, "IMGPROXY_SECRET")
 
@@ -283,14 +297,18 @@ func init() {
 	strEnvConfig(&conf.HoneybadgerKey, "IMGPROXY_HONEYBADGER_KEY")
 	strEnvConfig(&conf.HoneybadgerEnv, "IMGPROXY_HONEYBADGER_ENV")
 
-	if len(conf.Key) == 0 {
-		warning("Key is not defined, so signature checking is disabled")
+	if len(conf.Keys) != len(conf.Salts) {
+		log.Fatalf("Number of keys and number of salts should be equal. Keys: %d, salts: %d", len(conf.Keys), len(conf.Salts))
+	}
+	if len(conf.Keys) == 0 {
+		warning("No keys defined, so signature checking is disabled")
 		conf.AllowInsecure = true
 	}
-	if len(conf.Salt) == 0 {
-		warning("Salt is not defined, so signature checking is disabled")
+	if len(conf.Salts) == 0 {
+		warning("No salts defined, so signature checking is disabled")
 		conf.AllowInsecure = true
 	}
+
 	if conf.SignatureSize < 1 || conf.SignatureSize > 32 {
 		log.Fatalf("Signature size should be within 1 and 32, now - %d\n", conf.SignatureSize)
 	}

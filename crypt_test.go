@@ -12,8 +12,8 @@ type CryptTestSuite struct{ MainTestSuite }
 func (s *CryptTestSuite) SetupTest() {
 	s.MainTestSuite.SetupTest()
 
-	conf.Key = []byte("test-key")
-	conf.Salt = []byte("test-salt")
+	conf.Keys = []securityKey{securityKey("test-key")}
+	conf.Salts = []securityKey{securityKey("test-salt")}
 }
 
 func (s *CryptTestSuite) TestValidatePath() {
@@ -30,6 +30,20 @@ func (s *CryptTestSuite) TestValidatePathTruncated() {
 
 func (s *CryptTestSuite) TestValidatePathInvalid() {
 	err := validatePath("dtLwhdnPPis", "asd")
+	assert.Error(s.T(), err)
+}
+
+func (s *CryptTestSuite) TestValidatePathMultiplePairs() {
+	conf.Keys = append(conf.Keys, securityKey("test-key2"))
+	conf.Salts = append(conf.Salts, securityKey("test-salt2"))
+
+	err := validatePath("dtLwhdnPPiu_epMl1LrzheLpvHas-4mwvY6L3Z8WwlY", "asd")
+	assert.Nil(s.T(), err)
+
+	err = validatePath("jbDffNPt1-XBgDccsaE-XJB9lx8JIJqdeYIZKgOqZpg", "asd")
+	assert.Nil(s.T(), err)
+
+	err = validatePath("dtLwhdnPPis", "asd")
 	assert.Error(s.T(), err)
 }
 

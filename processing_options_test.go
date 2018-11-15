@@ -533,8 +533,8 @@ func (s *ProcessingOptionsTestSuite) TestParsePathDprHeaderDisabled() {
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathSigned() {
-	conf.Key = []byte("test-key")
-	conf.Salt = []byte("test-salt")
+	conf.Keys = []securityKey{securityKey("test-key")}
+	conf.Salts = []securityKey{securityKey("test-salt")}
 	conf.AllowInsecure = false
 
 	req := s.getRequest("http://example.com/HcvNognEV1bW6f8zRqxNYuOkV0IUf1xloRb57CzbT4g/width:150/plain/http://images.dev/lorem/ipsum.jpg@png")
@@ -544,8 +544,8 @@ func (s *ProcessingOptionsTestSuite) TestParsePathSigned() {
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathSignedInvalid() {
-	conf.Key = []byte("test-key")
-	conf.Salt = []byte("test-salt")
+	conf.Keys = []securityKey{securityKey("test-key")}
+	conf.Salts = []securityKey{securityKey("test-salt")}
 	conf.AllowInsecure = false
 
 	req := s.getRequest("http://example.com/unsafe/width:150/plain/http://images.dev/lorem/ipsum.jpg@png")
