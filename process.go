@@ -134,27 +134,41 @@ func extractMeta(img *C.VipsImage) (int, int, int, bool) {
 	return width, height, angle, flip
 }
 
-func needToScale(width, height int, po *processingOptions) bool {
-	return ((po.Width != 0 && po.Width != width) || (po.Height != 0 && po.Height != height)) &&
-		(po.Resize == resizeFill || po.Resize == resizeFit)
-}
-
 func calcScale(width, height int, po *processingOptions) float64 {
-	srcW, srcH := float64(width), float64(height)
-
-	wr := float64(po.Width) / srcW
-	hr := float64(po.Height) / srcH
+	// If we're going only to crop, we need only to scale down to DPR.
+	// Scaling up while cropping is not optimal on this stage, we'll do it later if needed.
+	if po.Resize == resizeCrop {
+		if po.Dpr < 1 {
+			return po.Dpr
+		}
+		return 1
+	}
 
 	var scale float64
 
-	if po.Width == 0 {
-		scale = hr
-	} else if po.Height == 0 {
-		scale = wr
-	} else if po.Resize == resizeFit {
-		scale = math.Min(wr, hr)
+	srcW, srcH := float64(width), float64(height)
+
+	if (po.Width == 0 || po.Width == width) && (po.Height == 0 || po.Height == height) {
+		scale = 1
 	} else {
-		scale = math.Max(wr, hr)
+		wr := float64(po.Width) / srcW
+		hr := float64(po.Height) / srcH
+
+		if po.Width == 0 {
+			scale = hr
+		} else if po.Height == 0 {
+			scale = wr
+		} else if po.Resize == resizeFit {
+			scale = math.Min(wr, hr)
+		} else {
+			scale = math.Max(wr, hr)
+		}
+	}
+
+	scale = scale * po.Dpr
+
+	if !po.Enlarge && scale > 1 {
+		return 1
 	}
 
 	if srcW*scale < 1 {
@@ -188,67 +202,73 @@ func calcShink(scale float64, imgtype imageType) int {
 	return 1
 }
 
-func calcCrop(width, height int, po *processingOptions) (left, top int) {
-	if po.Gravity.Type == gravityFocusPoint {
-		pointX := int(float64(width) * po.Gravity.X)
-		pointY := int(float64(height) * po.Gravity.Y)
+func calcCrop(width, height, cropWidth, cropHeight int, gravity *gravityOptions) (left, top int) {
+	if gravity.Type == gravityFocusPoint {
+		pointX := int(float64(width) * gravity.X)
+		pointY := int(float64(height) * gravity.Y)
 
-		left = maxInt(0, minInt(pointX-po.Width/2, width-po.Width))
-		top = maxInt(0, minInt(pointY-po.Height/2, height-po.Height))
+		left = maxInt(0, minInt(pointX-cropWidth/2, width-cropWidth))
+		top = maxInt(0, minInt(pointY-cropHeight/2, height-cropHeight))
 
 		return
 	}
 
-	left = (width - po.Width + 1) / 2
-	top = (height - po.Height + 1) / 2
+	left = (width - cropWidth + 1) / 2
+	top = (height - cropHeight + 1) / 2
 
-	if po.Gravity.Type == gravityNorth || po.Gravity.Type == gravityNorthEast || po.Gravity.Type == gravityNorthWest {
+	if gravity.Type == gravityNorth || gravity.Type == gravityNorthEast || gravity.Type == gravityNorthWest {
 		top = 0
 	}
 
-	if po.Gravity.Type == gravityEast || po.Gravity.Type == gravityNorthEast || po.Gravity.Type == gravitySouthEast {
-		left = width - po.Width
+	if gravity.Type == gravityEast || gravity.Type == gravityNorthEast || gravity.Type == gravitySouthEast {
+		left = width - cropWidth
 	}
 
-	if po.Gravity.Type == gravitySouth || po.Gravity.Type == gravitySouthEast || po.Gravity.Type == gravitySouthWest {
-		top = height - po.Height
+	if gravity.Type == gravitySouth || gravity.Type == gravitySouthEast || gravity.Type == gravitySouthWest {
+		top = height - cropHeight
 	}
 
-	if po.Gravity.Type == gravityWest || po.Gravity.Type == gravityNorthWest || po.Gravity.Type == gravitySouthWest {
+	if gravity.Type == gravityWest || gravity.Type == gravityNorthWest || gravity.Type == gravitySouthWest {
 		left = 0
 	}
 
 	return
 }
 
+func resizeImage(img **C.struct__VipsImage, scale float64, hasAlpha bool) error {
+	var err error
+
+	premultiplied := false
+	var bandFormat C.VipsBandFormat
+
+	if hasAlpha {
+		if bandFormat, err = vipsPremultiply(img); err != nil {
+			return err
+		}
+		premultiplied = true
+	}
+
+	if err = vipsResize(img, scale); err != nil {
+		return err
+	}
+
+	if premultiplied {
+		if err = vipsUnpremultiply(img, bandFormat); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func transformImage(ctx context.Context, img **C.struct__VipsImage, data []byte, po *processingOptions, imgtype imageType) error {
 	var err error
- 
-	imgWidth, imgHeight, angle, flip := extractMeta(*img)
-	if po.Dpr != 1 {
-		if po.Width != 0 {
-			po.Width = int(float32(po.Width) * po.Dpr)
-		} 
-		if po.Height != 0 {
-			po.Height = int(float32(po.Height) * po.Dpr)
-		}
-	}
-	// Ensure we won't crop out of bounds
-	if !po.Enlarge || po.Resize == resizeCrop {
-		if imgWidth < po.Width {
-			po.Width = imgWidth
-		}
 
-		if imgHeight < po.Height {
-			po.Height = imgHeight
-		}
-	}
+	imgWidth, imgHeight, angle, flip := extractMeta(*img)
 
 	hasAlpha := vipsImageHasAlpha(*img)
 
-	if needToScale(imgWidth, imgHeight, po) {
-		scale := calcScale(imgWidth, imgHeight, po)
-
+	if scale := calcScale(imgWidth, imgHeight, po); scale != 1 {
 		// Do some shrink-on-load
 		if scale < 1.0 && data != nil {
 			if shrink := calcShink(scale, imgtype); shrink != 1 {
@@ -262,28 +282,12 @@ func transformImage(ctx context.Context, img **C.struct__VipsImage, data []byte,
 			}
 		}
 
-		premultiplied := false
-		var bandFormat C.VipsBandFormat
-
-		if hasAlpha {
-			if bandFormat, err = vipsPremultiply(img); err != nil {
-				return err
-			}
-			premultiplied = true
-		}
-
-		if err = vipsResize(img, scale); err != nil {
+		if err = resizeImage(img, scale, hasAlpha); err != nil {
 			return err
 		}
 
 		// Update actual image size after resize
 		imgWidth, imgHeight, _, _ = extractMeta(*img)
-
-		if premultiplied {
-			if err = vipsUnpremultiply(img, bandFormat); err != nil {
-				return err
-			}
-		}
 	}
 
 	if err = vipsImportColourProfile(img); err != nil {
@@ -312,20 +316,31 @@ func transformImage(ctx context.Context, img **C.struct__VipsImage, data []byte,
 
 	checkTimeout(ctx)
 
-	if po.Width == 0 {
-		po.Width = imgWidth
+	cropW, cropH := po.Width, po.Height
+
+	if po.Dpr < 1 || (po.Dpr > 1 && po.Resize != resizeCrop) {
+		cropW = int(float64(cropW) * po.Dpr)
+		cropH = int(float64(cropH) * po.Dpr)
 	}
 
-	if po.Height == 0 {
-		po.Height = imgHeight
+	if cropW == 0 {
+		cropW = imgWidth
+	} else {
+		cropW = minInt(cropW, imgWidth)
 	}
 
-	if po.Width < imgWidth || po.Height < imgHeight {
+	if cropH == 0 {
+		cropH = imgHeight
+	} else {
+		cropH = minInt(cropH, imgHeight)
+	}
+
+	if cropW < imgWidth || cropH < imgHeight {
 		if po.Gravity.Type == gravitySmart {
 			if err = vipsImageCopyMemory(img); err != nil {
 				return err
 			}
-			if err = vipsSmartCrop(img, po.Width, po.Height); err != nil {
+			if err = vipsSmartCrop(img, cropW, cropH); err != nil {
 				return err
 			}
 			// Applying additional modifications after smart crop causes SIGSEGV on Alpine
@@ -334,13 +349,23 @@ func transformImage(ctx context.Context, img **C.struct__VipsImage, data []byte,
 				return err
 			}
 		} else {
-			left, top := calcCrop(imgWidth, imgHeight, po)
-			if err = vipsCrop(img, left, top, po.Width, po.Height); err != nil {
+			left, top := calcCrop(imgWidth, imgHeight, cropW, cropH, &po.Gravity)
+			if err = vipsCrop(img, left, top, cropW, cropH); err != nil {
 				return err
 			}
 		}
 
 		checkTimeout(ctx)
+	}
+
+	if po.Enlarge && po.Resize == resizeCrop && po.Dpr > 1 {
+		// We didn't enlarge the image before, because is wasn't optimal. Now it's time to do it
+		if err = resizeImage(img, po.Dpr, hasAlpha); err != nil {
+			return err
+		}
+		if err = vipsImageCopyMemory(img); err != nil {
+			return err
+		}
 	}
 
 	if hasAlpha && (po.Flatten || po.Format == imageTypeJPEG) {

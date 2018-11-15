@@ -117,13 +117,13 @@ type processingOptions struct {
 	Resize     resizeType
 	Width      int
 	Height     int
+	Dpr        float64
 	Gravity    gravityOptions
 	Enlarge    bool
 	Format     imageType
 	Quality    int
 	Flatten    bool
 	Background color
-	Dpr        float32
 	Blur       float32
 	Sharpen    float32
 
@@ -140,6 +140,7 @@ const (
 	imageURLCtxKey          = ctxKey("imageUrl")
 	processingOptionsCtxKey = ctxKey("processingOptions")
 	urlTokenPlain           = "plain"
+	maxClientHintDPR        = 8
 )
 
 var (
@@ -374,6 +375,20 @@ func applyResizeOption(po *processingOptions, args []string) error {
 	return nil
 }
 
+func applyDprOption(po *processingOptions, args []string) error {
+	if len(args) > 1 {
+		return fmt.Errorf("Invalid dpr arguments: %v", args)
+	}
+
+	if d, err := strconv.ParseFloat(args[0], 64); err == nil || (d > 0 && d != 1) {
+		po.Dpr = d
+	} else {
+		return fmt.Errorf("Invalid dpr: %s", args[0])
+	}
+
+	return nil
+}
+
 func applyGravityOption(po *processingOptions, args []string) error {
 	if g, ok := gravityTypes[args[0]]; ok {
 		po.Gravity.Type = g
@@ -472,19 +487,6 @@ func applyBlurOption(po *processingOptions, args []string) error {
 	return nil
 }
 
-func applyDprOption(po *processingOptions, args []string) error {
-	if len(args) > 1 {
-		return fmt.Errorf("Invalid dpr arguments: %v", args)
-	}
-
-	if d, err := strconv.ParseFloat(args[0], 32); err == nil || (d > 0 && d != 1) {
-		po.Dpr = float32(d)
-	} else {
-		return fmt.Errorf("Invalid dpr: %s", args[0])
-	}
-
-	return nil
-}
 func applySharpenOption(po *processingOptions, args []string) error {
 	if len(args) > 1 {
 		return fmt.Errorf("Invalid sharpen arguments: %v", args)
@@ -631,6 +633,10 @@ func applyProcessingOption(po *processingOptions, name string, args []string) er
 		if err := applyEnlargeOption(po, args); err != nil {
 			return err
 		}
+	case "dpr":
+		if err := applyDprOption(po, args); err != nil {
+			return err
+		}
 	case "gravity", "g":
 		if err := applyGravityOption(po, args); err != nil {
 			return err
@@ -661,10 +667,6 @@ func applyProcessingOption(po *processingOptions, name string, args []string) er
 		}
 	case "cachebuster", "cb":
 		if err := applyCacheBusterOption(po, args); err != nil {
-			return err
-		}
-	case "dpr":
-		if err := applyDprOption(po, args); err != nil {
 			return err
 		}
 	default:
@@ -743,8 +745,8 @@ func defaultProcessingOptions(headers *processingHeaders) (*processingOptions, e
 		}
 	}
 	if conf.EnableClientHints && len(headers.DPR) > 0 {
-		if dpr, err := strconv.ParseFloat(headers.DPR, 32); err == nil || (dpr > 0 && dpr <= 8) {
-			po.Dpr = float32(dpr)
+		if dpr, err := strconv.ParseFloat(headers.DPR, 64); err == nil || (dpr > 0 && dpr <= maxClientHintDPR) {
+			po.Dpr = dpr
 		}
 	}
 	if _, ok := conf.Presets["default"]; ok {
