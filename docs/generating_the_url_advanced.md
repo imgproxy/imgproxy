@@ -161,7 +161,7 @@ Default: disabled
 ##### Dpr
 
 ```
-dpr:%dpr 
+dpr:%dpr
 ```
 
 When set, imgproxy will multiply the image dimensions according to this factor for HiDPI (Retina) devices. The value must be greater than 0.
