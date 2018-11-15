@@ -75,7 +75,7 @@ When WebP support detection is enabled, please take care to configure your CDN o
 
 ## Client Hints support
 
-imgproxy can use the `Width`, `Viewport-Width` or `DPR` HTTP header to determine the width of the image container using Client Hints when the width/dpr argument is ommited.
+imgproxy can use the `Width`, `Viewport-Width` or `DPR` HTTP headers to determine default width and DPR options using Client Hints. This feature is disabled by default and can be enabled by the following option:
 
 * `IMGPROXY_ENABLE_CLIENT_HINTS`: enables Client Hints support when the width is ommited for automatic responsive images . Read [here](https://developers.google.com/web/updates/2015/09/automating-resource-selection-with-client-hints) details about Client Hints.
 
