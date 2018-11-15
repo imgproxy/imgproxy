@@ -8,15 +8,17 @@
 - [Watermarks](./docs/watermark.md);
 - [New Relic](./docs/new_relic.md) metrics;
 - [Prometheus](./docs/prometheus.md) metrics;
+- [DPR](./docs/generating_the_url_advanced.md#dpr) option (thanks to [selul](https://github.com/selul));
 - [Cache buster](./docs/generating_the_url_advanced.md#cache-buster) option;
 - [Quality](./docs/generating_the_url_advanced.md#quality) option;
 - Support for custom [Amazon S3](./docs/serving_files_from_s3.md) endpoints;
 - Support for [Amazon S3](./docs/serving_files_from_s3.md) versioning;
-- [Client hints](./docs/configuration.md#client-hints-support) support;
+- [Client hints](./docs/configuration.md#client-hints-support) support (thanks to [selul](https://github.com/selul));
 - Using source image format when one is not specified in the URL;
 - Sending `User-Agent` header when downloading a source image;
 - Setting proper filename in `Content-Disposition` header in the response;
-- Truncated signature support.
+- Truncated signature support (thanks to [printercu](https://github.com/printercu));
+- `IMGPROXY_MAX_SRC_DIMENSION` is **deprecated**, use `IMGPROXY_MAX_SRC_RESOLUTION` instead.
 
 ## v2.0.3
 
