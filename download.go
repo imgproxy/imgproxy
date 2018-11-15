@@ -64,7 +64,7 @@ func initDownloading() {
 }
 
 func checkDimensions(width, height int) error {
-	if width > conf.MaxSrcDimension || height > conf.MaxSrcDimension {
+	if conf.MaxSrcDimension > 0 && (width > conf.MaxSrcDimension || height > conf.MaxSrcDimension) {
 		return errSourceDimensionsTooBig
 	}
 

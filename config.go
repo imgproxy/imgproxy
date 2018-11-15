@@ -200,7 +200,6 @@ var conf = config{
 	Concurrency:           runtime.NumCPU() * 2,
 	TTL:                   3600,
 	IgnoreSslVerification: false,
-	MaxSrcDimension:       8192,
 	MaxSrcResolution:      16800000,
 	AllowInsecure:         false,
 	SignatureSize:         32,
@@ -341,8 +340,10 @@ func init() {
 		log.Fatalf("TTL should be greater than 0, now - %d\n", conf.TTL)
 	}
 
-	if conf.MaxSrcDimension <= 0 {
-		log.Fatalf("Max src dimension should be greater than 0, now - %d\n", conf.MaxSrcDimension)
+	if conf.MaxSrcDimension < 0 {
+		log.Fatalf("Max src dimension should be greater than or equal to 0, now - %d\n", conf.MaxSrcDimension)
+	} else if conf.MaxSrcDimension > 0 {
+		warning("IMGPROXY_MAX_SRC_DIMENSION is deprecated and can be removed in future versions. Use IMGPROXY_MAX_SRC_RESOLUTION")
 	}
 
 	if conf.MaxSrcResolution <= 0 {
