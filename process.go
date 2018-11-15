@@ -425,7 +425,7 @@ func transformGif(ctx context.Context, img **C.struct__VipsImage, po *processing
 		return err
 	}
 
-	framesCount := imgHeight / frameHeight
+	framesCount := minInt(imgHeight/frameHeight, conf.MaxGifFrames)
 
 	frames := make([]*C.struct__VipsImage, framesCount)
 	defer func() {

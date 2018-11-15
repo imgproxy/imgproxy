@@ -4,7 +4,7 @@
 
 - [Plain source URLs](./docs/generating_the_url_advanced.md#plain) support;
 - [Serving images from Google Cloud Storage](./docs/serving_files_from_google_cloud_storage.md);
-- [Full support of GIFs](./docs/image_formats_support.md) including animated ones;
+- [Full support of GIFs](./docs/image_formats_support.md#gif-support) including animated ones;
 - [Watermarks](./docs/watermark.md);
 - [New Relic](./docs/new_relic.md) metrics;
 - [Prometheus](./docs/prometheus.md) metrics;

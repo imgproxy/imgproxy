@@ -141,6 +141,7 @@ type config struct {
 
 	MaxSrcDimension  int
 	MaxSrcResolution int
+	MaxGifFrames     int
 
 	JpegProgressive bool
 	PngInterlaced   bool
@@ -201,6 +202,7 @@ var conf = config{
 	TTL:                   3600,
 	IgnoreSslVerification: false,
 	MaxSrcResolution:      16800000,
+	MaxGifFrames:          1,
 	AllowInsecure:         false,
 	SignatureSize:         32,
 	Quality:               80,
@@ -240,6 +242,7 @@ func init() {
 
 	intEnvConfig(&conf.MaxSrcDimension, "IMGPROXY_MAX_SRC_DIMENSION")
 	megaIntEnvConfig(&conf.MaxSrcResolution, "IMGPROXY_MAX_SRC_RESOLUTION")
+	intEnvConfig(&conf.MaxGifFrames, "IMGPROXY_MAX_GIF_FRAMES")
 
 	boolEnvConfig(&conf.JpegProgressive, "IMGPROXY_JPEG_PROGRESSIVE")
 	boolEnvConfig(&conf.PngInterlaced, "IMGPROXY_PNG_INTERLACED")
@@ -348,6 +351,10 @@ func init() {
 
 	if conf.MaxSrcResolution <= 0 {
 		log.Fatalf("Max src resolution should be greater than 0, now - %d\n", conf.MaxSrcResolution)
+	}
+
+	if conf.MaxGifFrames <= 0 {
+		log.Fatalf("Max GIF frames should be greater than 0, now - %d\n", conf.MaxGifFrames)
 	}
 
 	if conf.Quality <= 0 {
