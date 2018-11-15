@@ -314,7 +314,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedDpr() {
 	require.Nil(s.T(), err)
 
 	po := getProcessingOptions(ctx)
-	assert.Equal(s.T(), float32(2), po.Dpr)
+	assert.Equal(s.T(), 2.0, po.Dpr)
 }
 func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedWatermark() {
 	req := s.getRequest("http://example.com/unsafe/watermark:0.5:soea:10:20:0.6/plain/http://images.dev/lorem/ipsum.jpg")
@@ -518,7 +518,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathDprHeader() {
 	require.Nil(s.T(), err)
 
 	po := getProcessingOptions(ctx)
-	assert.Equal(s.T(), float32(2), po.Dpr)
+	assert.Equal(s.T(), 2.0, po.Dpr)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathDprHeaderDisabled() {
@@ -529,7 +529,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathDprHeaderDisabled() {
 	require.Nil(s.T(), err)
 
 	po := getProcessingOptions(ctx)
-	assert.Equal(s.T(), float32(1), po.Dpr)
+	assert.Equal(s.T(), 1.0, po.Dpr)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathSigned() {
