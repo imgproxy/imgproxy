@@ -135,7 +135,8 @@ Check out the [Serving local files](./serving_local_files.md) guide to learn mor
 
 imgproxy can process files from Amazon S3 buckets, but this feature is disabled by default. To enable it, set `IMGPROXY_USE_S3` to `true`:
 
-* `IMGPROXY_USE_S3`: when `true`, enables image fetching from Amazon S3 buckets. Default: false.
+* `IMGPROXY_USE_S3`: when `true`, enables image fetching from Amazon S3 buckets. Default: false;
+* `IMGPROXY_S3_ENDPOINT`: custom S3 endpoint to being used by imgproxy.
 
 Check out the [Serving files from S3](./serving_files_from_s3.md) guide to learn more.
 
@@ -152,7 +153,7 @@ Check out the [Serving files from Google Cloud Storage](./serving_files_from_goo
 imgproxy can send its metrics to New Relic. Specify your New Relic license key to activate this feature:
 
 * `IMGPROXY_NEW_RELIC_KEY`: New Relic license key;
-* `IMGPROXY_NEW_RELIC_APP_NAME`: application name. If not specified, `imgproxy` will be used as the application name.
+* `IMGPROXY_NEW_RELIC_APP_NAME`: New Relic application name. Default: `imgproxy`.
 
 Check out the [New Relic](./new_relic.md) guide to learn more.
 
@@ -160,7 +161,7 @@ Check out the [New Relic](./new_relic.md) guide to learn more.
 
 imgproxy can collect its metrics for Prometheus. Specify binding for Prometheus metrics server to activate this feature:
 
-* `IMGPROXY_PROMETHEUS_BIND`: prometheus metrics server binding. Can't be the same as `IMGPROXY_BIND`. Default: blank.
+* `IMGPROXY_PROMETHEUS_BIND`: Prometheus metrics server binding. Can't be the same as `IMGPROXY_BIND`. Default: blank.
 
 Check out the [Prometheus](./prometheus.md) guide to learn more.
 
@@ -169,9 +170,9 @@ Check out the [Prometheus](./prometheus.md) guide to learn more.
 imgproxy can report occurred errors to Bugsnag or Honeybadger:
 
 * `IMGPROXY_BUGSNAG_KEY`: Bugsnag API key. When provided, enables errors reporting to Bugsnag;
-* `IMGPROXY_BUGSNAG_STAGE`: Bugsnag stage to report to. Default: production;
+* `IMGPROXY_BUGSNAG_STAGE`: Bugsnag stage to report to. Default: `production`;
 * `IMGPROXY_HONEYBADGER_KEY`: Honeybadger API key. When provided, enables errors reporting to Honeybadger;
-* `IMGPROXY_HONEYBADGER_ENV`: Honeybadger env to report to. Default: production.
+* `IMGPROXY_HONEYBADGER_ENV`: Honeybadger env to report to. Default: `production`.
 
 ### Miscellaneous
 
