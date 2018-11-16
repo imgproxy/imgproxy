@@ -212,6 +212,12 @@ func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		panic(errInvalidSecret)
 	}
 
+	if r.URL.RequestURI() == healthPath {
+		rw.WriteHeader(200)
+		rw.Write(imgproxyIsRunningMsg)
+		return
+	}
+
 	ctx := context.Background()
 
 	if newRelicEnabled {
@@ -227,12 +233,6 @@ func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	h.lock()
 	defer h.unlock()
-
-	if r.URL.RequestURI() == healthPath {
-		rw.WriteHeader(200)
-		rw.Write(imgproxyIsRunningMsg)
-		return
-	}
 
 	ctx, timeoutCancel := startTimer(ctx, time.Duration(conf.WriteTimeout)*time.Second)
 	defer timeoutCancel()
