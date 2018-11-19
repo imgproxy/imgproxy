@@ -18,7 +18,7 @@
 - Sending `User-Agent` header when downloading a source image;
 - Setting proper filename in `Content-Disposition` header in the response;
 - Truncated signature support (thanks to [printercu](https://github.com/printercu));
-- imgproxy uses source image format by default (used to use `jpg`);
+- imgproxy uses source image format by default for the resulting image;
 - `IMGPROXY_MAX_SRC_DIMENSION` is **deprecated**, use `IMGPROXY_MAX_SRC_RESOLUTION` instead.
 
 ## v2.0.3
