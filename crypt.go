@@ -8,16 +8,16 @@ import (
 )
 
 var (
-	errInvalidToken         = errors.New("Invalid token")
-	errInvalidTokenEncoding = errors.New("Invalid token encoding")
+	errInvalidSignature         = errors.New("Invalid signature")
+	errInvalidSignatureEncoding = errors.New("Invalid signature encoding")
 )
 
 type securityKey []byte
 
-func validatePath(token, path string) error {
-	messageMAC, err := base64.RawURLEncoding.DecodeString(token)
+func validatePath(signature, path string) error {
+	messageMAC, err := base64.RawURLEncoding.DecodeString(signature)
 	if err != nil {
-		return errInvalidTokenEncoding
+		return errInvalidSignatureEncoding
 	}
 
 	for i := 0; i < len(conf.Keys); i++ {
@@ -26,7 +26,7 @@ func validatePath(token, path string) error {
 		}
 	}
 
-	return errInvalidToken
+	return errInvalidSignature
 }
 
 func signatureFor(str string, pairInd int) []byte {

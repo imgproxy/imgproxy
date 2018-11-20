@@ -555,7 +555,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathSignedInvalid() {
 	_, err := parsePath(context.Background(), req)
 
 	require.Error(s.T(), err)
-	assert.Equal(s.T(), errInvalidToken.Error(), err.Error())
+	assert.Equal(s.T(), errInvalidSignature.Error(), err.Error())
 }
 
 func TestProcessingOptions(t *testing.T) {
