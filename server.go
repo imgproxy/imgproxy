@@ -135,7 +135,7 @@ func respondWithImage(ctx context.Context, reqID string, r *http.Request, rw htt
 	logResponse(200, fmt.Sprintf("[%s] Processed in %s: %s; %+v", reqID, getTimerSince(ctx), getImageURL(ctx), po))
 }
 
-func respondWithError(reqID string, rw http.ResponseWriter, err imgproxyError) {
+func respondWithError(reqID string, rw http.ResponseWriter, err *imgproxyError) {
 	logResponse(err.StatusCode, fmt.Sprintf("[%s] %s", reqID, err.Message))
 
 	rw.WriteHeader(err.StatusCode)
@@ -145,6 +145,11 @@ func respondWithError(reqID string, rw http.ResponseWriter, err imgproxyError) {
 func respondWithOptions(reqID string, rw http.ResponseWriter) {
 	logResponse(200, fmt.Sprintf("[%s] Respond with options", reqID))
 	rw.WriteHeader(200)
+}
+
+func respondWithNotModified(reqID string, rw http.ResponseWriter) {
+	logResponse(200, fmt.Sprintf("[%s] Not modified", reqID))
+	rw.WriteHeader(304)
 }
 
 func prepareAuthHeaderMust() []byte {
@@ -180,11 +185,9 @@ func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	defer func() {
 		if rerr := recover(); rerr != nil {
 			if err, ok := rerr.(error); ok {
-				if err != errNotModified {
-					reportError(err, r)
-				}
+				reportError(err, r)
 
-				if ierr, ok := err.(imgproxyError); ok {
+				if ierr, ok := err.(*imgproxyError); ok {
 					respondWithError(reqID, rw, ierr)
 				} else {
 					respondWithError(reqID, rw, newUnexpectedError(err, 4))
@@ -239,7 +242,7 @@ func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	ctx, err := parsePath(ctx, r)
 	if err != nil {
-		panic(newError(404, err.Error(), "Invalid image url"))
+		panic(err)
 	}
 
 	ctx, downloadcancel, err := downloadImage(ctx)
@@ -251,7 +254,7 @@ func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		if prometheusEnabled {
 			incrementPrometheusErrorsTotal("download")
 		}
-		panic(newError(404, err.Error(), "Image is unreachable"))
+		panic(err)
 	}
 
 	checkTimeout(ctx)
@@ -261,7 +264,8 @@ func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		rw.Header().Set("ETag", eTag)
 
 		if eTag == r.Header.Get("If-None-Match") {
-			panic(errNotModified)
+			respondWithNotModified(reqID, rw)
+			return
 		}
 	}
 
@@ -275,7 +279,7 @@ func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		if prometheusEnabled {
 			incrementPrometheusErrorsTotal("processing")
 		}
-		panic(newError(500, err.Error(), "Error occurred while processing image"))
+		panic(err)
 	}
 
 	checkTimeout(ctx)

@@ -9,8 +9,6 @@ import (
 	"sync"
 )
 
-var errNotModified = newError(304, "Not modified", "Not modified")
-
 type eTagCalc struct {
 	hash hash.Hash
 	enc  *json.Encoder

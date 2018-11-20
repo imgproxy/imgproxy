@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
-	"errors"
 	"fmt"
 	"image"
 	"io"
@@ -25,10 +24,12 @@ var (
 	imageTypeCtxKey = ctxKey("imageType")
 	imageDataCtxKey = ctxKey("imageData")
 
-	errSourceDimensionsTooBig      = errors.New("Source image dimensions are too big")
-	errSourceResolutionTooBig      = errors.New("Source image resolution are too big")
-	errSourceImageTypeNotSupported = errors.New("Source image type not supported")
+	errSourceDimensionsTooBig      = newError(422, "Source image dimensions are too big", "Invalid source image")
+	errSourceResolutionTooBig      = newError(422, "Source image resolution are too big", "Invalid source image")
+	errSourceImageTypeNotSupported = newError(422, "Source image type not supported", "Invalid source image")
 )
+
+const msgSourceImageIsUnreachable = "Source image is unreachable"
 
 var downloadBufPool = sync.Pool{
 	New: func() interface{} {
@@ -78,7 +79,7 @@ func checkDimensions(width, height int) error {
 func checkTypeAndDimensions(r io.Reader) (imageType, error) {
 	imgconf, imgtypeStr, err := image.DecodeConfig(r)
 	if err != nil {
-		return imageTypeUnknown, err
+		return imageTypeUnknown, errSourceImageTypeNotSupported
 	}
 
 	imgtype, imgtypeOk := imageTypes[imgtypeStr]
@@ -105,12 +106,14 @@ func readAndCheckImage(ctx context.Context, res *http.Response) (context.Context
 		return ctx, cancel, err
 	}
 
-	if _, err = buf.ReadFrom(res.Body); err == nil {
-		ctx = context.WithValue(ctx, imageTypeCtxKey, imgtype)
-		ctx = context.WithValue(ctx, imageDataCtxKey, buf)
+	if _, err = buf.ReadFrom(res.Body); err != nil {
+		return ctx, cancel, newError(404, err.Error(), msgSourceImageIsUnreachable)
 	}
 
-	return ctx, cancel, err
+	ctx = context.WithValue(ctx, imageTypeCtxKey, imgtype)
+	ctx = context.WithValue(ctx, imageDataCtxKey, buf)
+
+	return ctx, cancel, nil
 }
 
 func downloadImage(ctx context.Context) (context.Context, context.CancelFunc, error) {
@@ -127,20 +130,21 @@ func downloadImage(ctx context.Context) (context.Context, context.CancelFunc, er
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return ctx, func() {}, err
+		return ctx, func() {}, newError(404, err.Error(), msgSourceImageIsUnreachable)
 	}
 
 	req.Header.Set("User-Agent", conf.UserAgent)
 
 	res, err := downloadClient.Do(req)
 	if err != nil {
-		return ctx, func() {}, err
+		return ctx, func() {}, newError(404, err.Error(), msgSourceImageIsUnreachable)
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode != 200 {
 		body, _ := ioutil.ReadAll(res.Body)
-		return ctx, func() {}, fmt.Errorf("Can't download image; Status: %d; %s", res.StatusCode, string(body))
+		msg := fmt.Sprintf("Can't download image; Status: %d; %s", res.StatusCode, string(body))
+		return ctx, func() {}, newError(404, msg, msgSourceImageIsUnreachable)
 	}
 
 	return readAndCheckImage(ctx, res)

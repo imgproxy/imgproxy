@@ -13,17 +13,17 @@ type imgproxyError struct {
 	PublicMessage string
 }
 
-func (e imgproxyError) Error() string {
+func (e *imgproxyError) Error() string {
 	return e.Message
 }
 
-func newError(status int, msg string, pub string) imgproxyError {
-	return imgproxyError{status, msg, pub}
+func newError(status int, msg string, pub string) *imgproxyError {
+	return &imgproxyError{status, msg, pub}
 }
 
-func newUnexpectedError(err error, skip int) imgproxyError {
+func newUnexpectedError(err error, skip int) *imgproxyError {
 	msg := fmt.Sprintf("Unexpected error: %s\n%s", err, stacktrace(skip+1))
-	return imgproxyError{500, msg, "Internal error"}
+	return &imgproxyError{500, msg, "Internal error"}
 }
 
 func stacktrace(skip int) string {

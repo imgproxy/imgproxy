@@ -141,13 +141,16 @@ const (
 	processingOptionsCtxKey = ctxKey("processingOptions")
 	urlTokenPlain           = "plain"
 	maxClientHintDPR        = 8
+
+	msgForbidden  = "Forbidden"
+	msgInvalidURL = "Invalid URL"
 )
 
 var (
 	errInvalidImageURL                    = errors.New("Invalid image url")
 	errInvalidURLEncoding                 = errors.New("Invalid url encoding")
-	errInvalidPath                        = errors.New("Invalid path")
 	errResultingImageFormatIsNotSupported = errors.New("Resulting image format is not supported")
+	errInvalidPath                        = newError(404, "Invalid path", msgInvalidURL)
 )
 
 func (it imageType) String() string {
@@ -836,7 +839,7 @@ func parsePath(ctx context.Context, r *http.Request) (context.Context, error) {
 
 	if !conf.AllowInsecure {
 		if err := validatePath(parts[0], strings.TrimPrefix(path, fmt.Sprintf("/%s", parts[0]))); err != nil {
-			return ctx, err
+			return ctx, newError(403, err.Error(), msgForbidden)
 		}
 	}
 
@@ -858,13 +861,13 @@ func parsePath(ctx context.Context, r *http.Request) (context.Context, error) {
 	}
 
 	if err != nil {
-		return ctx, err
+		return ctx, newError(404, err.Error(), msgInvalidURL)
 	}
 
 	ctx = context.WithValue(ctx, imageURLCtxKey, imageURL)
 	ctx = context.WithValue(ctx, processingOptionsCtxKey, po)
 
-	return ctx, err
+	return ctx, nil
 }
 
 func getImageURL(ctx context.Context) string {
