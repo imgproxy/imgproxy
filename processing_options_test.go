@@ -57,7 +57,8 @@ func (s *ProcessingOptionsTestSuite) TestParseBase64URLInvalid() {
 	req := s.getRequest(fmt.Sprintf("http://example.com/unsafe/size:100:100/%s.png", base64.RawURLEncoding.EncodeToString([]byte(imageURL))))
 	_, err := parsePath(context.Background(), req)
 
-	assert.Equal(s.T(), errInvalidImageURL, err)
+	require.Error(s.T(), err)
+	assert.Equal(s.T(), errInvalidImageURL.Error(), err.Error())
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePlainURL() {
@@ -119,7 +120,8 @@ func (s *ProcessingOptionsTestSuite) TestParsePlainURLInvalid() {
 	req := s.getRequest(fmt.Sprintf("http://example.com/unsafe/size:100:100/plain/%s@png", imageURL))
 	_, err := parsePath(context.Background(), req)
 
-	assert.Equal(s.T(), errInvalidImageURL, err)
+	require.Error(s.T(), err)
+	assert.Equal(s.T(), errInvalidImageURL.Error(), err.Error())
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePlainURLEscapedInvalid() {
@@ -127,7 +129,8 @@ func (s *ProcessingOptionsTestSuite) TestParsePlainURLEscapedInvalid() {
 	req := s.getRequest(fmt.Sprintf("http://example.com/unsafe/size:100:100/plain/%s@png", url.PathEscape(imageURL)))
 	_, err := parsePath(context.Background(), req)
 
-	assert.Equal(s.T(), errInvalidImageURL, err)
+	require.Error(s.T(), err)
+	assert.Equal(s.T(), errInvalidImageURL.Error(), err.Error())
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathBasic() {
@@ -551,7 +554,8 @@ func (s *ProcessingOptionsTestSuite) TestParsePathSignedInvalid() {
 	req := s.getRequest("http://example.com/unsafe/width:150/plain/http://images.dev/lorem/ipsum.jpg@png")
 	_, err := parsePath(context.Background(), req)
 
-	require.Equal(s.T(), errInvalidToken, err)
+	require.Error(s.T(), err)
+	assert.Equal(s.T(), errInvalidToken.Error(), err.Error())
 }
 
 func TestProcessingOptions(t *testing.T) {
