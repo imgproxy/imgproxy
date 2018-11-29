@@ -109,10 +109,9 @@ vips_get_exif_orientation(VipsImage *image) {
 
 	if (
 		vips_image_get_typeof(image, EXIF_ORIENTATION) != 0 &&
-		!vips_image_get_string(image, EXIF_ORIENTATION, &orientation)
+		vips_image_get_string(image, EXIF_ORIENTATION, &orientation) == 0
 	) return atoi(&orientation[0]);
 
-  vips_error("vips_get_exif_orientation", "Can't get EXIF orientation");
 	return 1;
 }
 
