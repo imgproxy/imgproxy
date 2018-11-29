@@ -1,5 +1,10 @@
 # Changelog
 
+## v2.1.1
+
+- Fixed EXIF orientation fetching;
+- When libvips failed to save PNG, imgproxy will try to save is without embedded ICC profile.
+
 ## v2.1.0
 
 - [Plain source URLs](./docs/generating_the_url_advanced.md#plain) support;
