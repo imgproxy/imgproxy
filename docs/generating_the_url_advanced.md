@@ -281,7 +281,7 @@ When using encoded source URL, you can specify the [extension](#extension) after
 
 #### Extension
 
-Extension specifies the format of the resulting image. At the moment, imgproxy supports only `jpg`, `png`, `webp`, and `gif`, them being the most popular and useful image formats on the Web.
+Extension specifies the format of the resulting image. At the moment, imgproxy supports only `jpg`, `png`, `webp`, `gif`, and `ico`, them being the most popular and useful image formats on the Web.
 
 **Note:** Read about GIF support [here](./image_formats_support.md#gif-support).
 
