@@ -25,6 +25,7 @@ var (
 		imageTypePNG:  "image/png",
 		imageTypeWEBP: "image/webp",
 		imageTypeGIF:  "image/gif",
+		imageTypeICO:  "image/x-icon",
 	}
 
 	contentDispositions = map[imageType]string{
@@ -32,6 +33,7 @@ var (
 		imageTypePNG:  "inline; filename=\"image.png\"",
 		imageTypeWEBP: "inline; filename=\"image.webp\"",
 		imageTypeGIF:  "inline; filename=\"image.gif\"",
+		imageTypeICO:  "inline; filename=\"favicon.ico\"",
 	}
 
 	authHeaderMust []byte

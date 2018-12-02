@@ -74,6 +74,9 @@ func initVips() {
 		vipsTypeSupportLoad[imageTypeGIF] = true
 	}
 
+	// we load ICO with github.com/mat/besticon/ico and send decoded data to vips
+	vipsTypeSupportLoad[imageTypeICO] = true
+
 	if int(C.vips_type_find_save_go(C.int(imageTypeJPEG))) != 0 {
 		vipsTypeSupportSave[imageTypeJPEG] = true
 	}
@@ -85,6 +88,9 @@ func initVips() {
 	}
 	if int(C.vips_type_find_save_go(C.int(imageTypeGIF))) != 0 {
 		vipsTypeSupportSave[imageTypeGIF] = true
+	}
+	if int(C.vips_type_find_save_go(C.int(imageTypeICO))) != 0 {
+		vipsTypeSupportSave[imageTypeICO] = true
 	}
 
 	if conf.JpegProgressive {
@@ -606,6 +612,13 @@ func vipsLoadImage(data []byte, imgtype imageType, shrink int, allPages bool) (*
 		err = C.vips_webpload_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), C.int(shrink), &img)
 	case imageTypeGIF:
 		err = C.vips_gifload_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), pages, &img)
+	case imageTypeICO:
+		rawData, width, height, icoErr := icoData(data)
+		if icoErr != nil {
+			return nil, icoErr
+		}
+
+		img = C.vips_image_new_from_memory_copy(unsafe.Pointer(&rawData[0]), C.size_t(width*height*4), C.int(width), C.int(height), 4, C.VIPS_FORMAT_UCHAR)
 	}
 	if err != 0 {
 		return nil, vipsError()
@@ -634,6 +647,8 @@ func vipsSaveImage(img *C.struct__VipsImage, imgtype imageType, quality int) ([]
 		err = C.vips_webpsave_go(img, &ptr, &imgsize, 1, C.int(quality))
 	case imageTypeGIF:
 		err = C.vips_gifsave_go(img, &ptr, &imgsize)
+	case imageTypeICO:
+		err = C.vips_icosave_go(img, &ptr, &imgsize)
 	}
 	if err != 0 {
 		return nil, vipsError()

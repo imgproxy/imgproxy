@@ -3,5 +3,6 @@ enum types {
   JPEG,
   PNG,
   WEBP,
-  GIF
+  GIF,
+  ICO
 };

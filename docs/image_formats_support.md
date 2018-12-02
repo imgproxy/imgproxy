@@ -5,7 +5,8 @@ At the moment, imgproxy supports only the most popular Web image formats:
 * PNG;
 * JPEG;
 * WebP;
-* GIF.
+* GIF;
+* ICO.
 
 ## GIF support
 
@@ -16,3 +17,7 @@ Since processing of animated GIFs is pretty heavy, only one frame is processed b
 * `IMGPROXY_MAX_GIF_FRAMES`: the maximum of animated GIF frames to being processed. Default: `1`.
 
 **Note:** imgproxy summarizes all GIF frames resolutions while checking source image resolution.
+
+## ICO support
+
+imgproxy supports ICO output only when using libvips 8.7.0+ compiled with ImageMagick support. Official imgproxy Docker image supports ICO out of the box.

@@ -174,6 +174,14 @@
   revision = "ae77be60afb1dcacde03767a8c37337fad28ac14"
 
 [[projects]]
+  digest = "1:d33e9f151ad66f61e320511ee3a2189178b78e2d1e93f098801b4ecf6154474a"
+  name = "github.com/mat/besticon"
+  packages = ["ico"]
+  pruneopts = "UT"
+  revision = "257c937cf48f690c78c900f895e9fc4027962ac2"
+  version = "v3.8.0"
+
+[[projects]]
   branch = "master"
   digest = "1:97e35d2efabea52337e58f96e8b798fd461bf42d2519beb50f485029c6ad6aa5"
   name = "github.com/matoous/go-nanoid"
@@ -314,9 +322,10 @@
   version = "v0.18.0"
 
 [[projects]]
-  digest = "1:72b36febaabad58e1864de2b43de05689ce27a2c9a582a61a25e71a31ba23d0b"
+  digest = "1:16d8d746fb42f8318537e77dbf22745c180db4f5b61b59a89e0fb8101bb3303e"
   name = "golang.org/x/image"
   packages = [
+    "bmp",
     "riff",
     "vp8",
     "vp8l",
@@ -494,6 +503,7 @@
     "github.com/aws/aws-sdk-go/service/s3",
     "github.com/bugsnag/bugsnag-go",
     "github.com/honeybadger-io/honeybadger-go",
+    "github.com/mat/besticon/ico",
     "github.com/matoous/go-nanoid",
     "github.com/newrelic/go-agent",
     "github.com/prometheus/client_golang/prometheus",
