@@ -209,7 +209,8 @@ func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if r.Method != http.MethodGet {
+	// Only allow post/get
+	if r.Method != http.MethodGet && r.Method != http.MethodPost {
 		panic(errInvalidMethod)
 	}
 
@@ -247,8 +248,9 @@ func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	ctx, downloadcancel, err := downloadImage(ctx)
-	defer downloadcancel()
+	// If get, download URL
+	ctx, cancel, err := processIncomingImageRequest(ctx, r)
+	defer cancel()
 	if err != nil {
 		if newRelicEnabled {
 			sendErrorToNewRelic(ctx, err)

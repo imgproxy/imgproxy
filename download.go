@@ -95,19 +95,19 @@ func checkTypeAndDimensions(r io.Reader) (imageType, error) {
 	return imgtype, nil
 }
 
-func readAndCheckImage(ctx context.Context, res *http.Response) (context.Context, context.CancelFunc, error) {
+func readAndCheckImage(ctx context.Context, r io.ReadCloser) (context.Context, context.CancelFunc, error) {
 	buf := downloadBufPool.Get().(*bytes.Buffer)
 	cancel := func() {
 		buf.Reset()
 		downloadBufPool.Put(buf)
 	}
 
-	imgtype, err := checkTypeAndDimensions(io.TeeReader(res.Body, buf))
+	imgtype, err := checkTypeAndDimensions(io.TeeReader(r, buf))
 	if err != nil {
 		return ctx, cancel, err
 	}
 
-	if _, err = buf.ReadFrom(res.Body); err != nil {
+	if _, err = buf.ReadFrom(r); err != nil {
 		return ctx, cancel, newError(404, err.Error(), msgSourceImageIsUnreachable)
 	}
 
@@ -115,6 +115,15 @@ func readAndCheckImage(ctx context.Context, res *http.Response) (context.Context
 	ctx = context.WithValue(ctx, imageDataCtxKey, buf)
 
 	return ctx, cancel, nil
+}
+
+func processIncomingImageRequest(ctx context.Context, req *http.Request) (context.Context, context.CancelFunc, error) {
+	if req.Method == http.MethodGet {
+		return downloadImage(ctx)
+	} else {
+		return readAndCheckImage(ctx, req.Body)
+	}
+
 }
 
 func downloadImage(ctx context.Context) (context.Context, context.CancelFunc, error) {
@@ -148,7 +157,7 @@ func downloadImage(ctx context.Context) (context.Context, context.CancelFunc, er
 		return ctx, func() {}, newError(404, msg, msgSourceImageIsUnreachable)
 	}
 
-	return readAndCheckImage(ctx, res)
+	return readAndCheckImage(ctx, res.Body)
 }
 
 func getImageType(ctx context.Context) imageType {

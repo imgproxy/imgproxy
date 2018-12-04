@@ -1,0 +1,12 @@
+{
+    "go.buildOnSave": "workspace",
+    "go.lintOnSave": "workspace",
+    "go.useLanguageServer":false,
+    "go.toolsEnvVars": {
+        "CGO_LDFLAGS_ALLOW": "-s|-w"
+    },
+
+    "go.delveConfig": {
+        "apiVersion": 2,
+    }
+}
