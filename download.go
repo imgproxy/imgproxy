@@ -120,10 +120,9 @@ func readAndCheckImage(ctx context.Context, r io.ReadCloser) (context.Context, c
 func processIncomingImageRequest(ctx context.Context, req *http.Request) (context.Context, context.CancelFunc, error) {
 	if req.Method == http.MethodGet {
 		return downloadImage(ctx)
-	} else {
-		return readAndCheckImage(ctx, req.Body)
 	}
-
+	// Post - return only image
+	return readAndCheckImage(ctx, req.Body)
 }
 
 func downloadImage(ctx context.Context) (context.Context, context.CancelFunc, error) {
