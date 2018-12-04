@@ -1,5 +1,4 @@
 FROM alpine:edge
-LABEL maintainer="Sergey Alexandrovich <darthsim@gmail.com>"
 
 ENV GOPATH /go
 ENV PATH /usr/local/go/bin:$PATH
@@ -72,7 +71,7 @@ RUN cd /root \
 # Final image
 
 FROM alpine:edge
-LABEL maintainer="Sergey Alexandrovich <darthsim@gmail.com>"
+
 
 RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories \
   && apk --no-cache upgrade \

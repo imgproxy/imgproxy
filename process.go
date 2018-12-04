@@ -35,6 +35,7 @@ type cConfig struct {
 	WatermarkOpacity C.double
 }
 
+// Image final width and height
 type ImageSize struct {
 	Width  int
 	Height int

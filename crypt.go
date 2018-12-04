@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"errors"
+	"log"
 )
 
 var (
@@ -23,6 +24,8 @@ func validatePath(signature, path string) error {
 	for i := 0; i < len(conf.Keys); i++ {
 		if hmac.Equal(messageMAC, signatureFor(path, i)) {
 			return nil
+		} else {
+			log.Println("Expected", signatureFor(path, i), " got ", messageMAC)
 		}
 	}
 
