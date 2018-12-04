@@ -2,7 +2,7 @@ package main
 
 import (
 	"crypto/hmac"
-	"crypto/md5"
+	"crypto/sha256"
 	"encoding/base64"
 	"errors"
 )
@@ -30,7 +30,7 @@ func validatePath(signature, path string) error {
 }
 
 func signatureFor(str string, pairInd int) []byte {
-	mac := hmac.New(md5.New, conf.Keys[pairInd])
+	mac := hmac.New(sha256.New, conf.Keys[pairInd])
 	mac.Write(conf.Salts[pairInd])
 	mac.Write([]byte(str))
 	expectedMAC := mac.Sum(nil)

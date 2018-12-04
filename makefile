@@ -16,10 +16,9 @@ build:
 debug:
 	CGO_LDFLAGS_ALLOW="-s|-w" dlv debug --listen=127.0.0.1:2345 --log
 
+test: 
+	CGO_LDFLAGS_ALLOW="-s|-w" go test -v
 
 # dev run
-dev:
-	CGO_LDFLAGS_ALLOW="-s|-w" go run -v main.go
-
-run: build
+dev: build
 	./imgproxy
