@@ -35,6 +35,11 @@ type cConfig struct {
 	WatermarkOpacity C.double
 }
 
+type ImageSize struct {
+	Width  int
+	Height int
+}
+
 var cConf cConfig
 
 func initVips() {
@@ -267,7 +272,7 @@ func resizeImage(img **C.struct__VipsImage, scale float64, hasAlpha bool) error 
 	return nil
 }
 
-func transformImage(ctx context.Context, img **C.struct__VipsImage, data []byte, po *processingOptions, imgtype imageType) error {
+func transformImage(ctx context.Context, img **C.struct__VipsImage, data []byte, po *processingOptions, imgtype imageType, s *ImageSize) error {
 	var err error
 
 	imgWidth, imgHeight, angle, flip := extractMeta(*img)
@@ -294,6 +299,10 @@ func transformImage(ctx context.Context, img **C.struct__VipsImage, data []byte,
 
 		// Update actual image size after resize
 		imgWidth, imgHeight, _, _ = extractMeta(*img)
+
+		// Update image size struct
+		s.Width = imgWidth
+		s.Height = imgHeight
 	}
 
 	if err = vipsImportColourProfile(img); err != nil {
@@ -407,7 +416,7 @@ func transformImage(ctx context.Context, img **C.struct__VipsImage, data []byte,
 	return nil
 }
 
-func transformGif(ctx context.Context, img **C.struct__VipsImage, po *processingOptions) error {
+func transformGif(ctx context.Context, img **C.struct__VipsImage, po *processingOptions, size *ImageSize) error {
 	imgWidth := int((*img).Xsize)
 	imgHeight := int((*img).Ysize)
 
@@ -451,7 +460,7 @@ func transformGif(ctx context.Context, img **C.struct__VipsImage, po *processing
 				return err
 			}
 
-			if err := transformImage(ctx, &frame, nil, po, imageTypeGIF); err != nil {
+			if err := transformImage(ctx, &frame, nil, po, imageTypeGIF, size); err != nil {
 				return err
 			}
 
@@ -478,7 +487,9 @@ func transformGif(ctx context.Context, img **C.struct__VipsImage, po *processing
 	return nil
 }
 
-func processImage(ctx context.Context) ([]byte, error) {
+func processImage(ctx context.Context) ([]byte, ImageSize, error) {
+	var size = ImageSize{Width: 0, Height: 0}
+
 	if newRelicEnabled {
 		newRelicCancel := startNewRelicSegment(ctx, "Processing image")
 		defer newRelicCancel()
@@ -495,7 +506,7 @@ func processImage(ctx context.Context) ([]byte, error) {
 	imgtype := getImageType(ctx)
 
 	if po.Gravity.Type == gravitySmart && !vipsSupportSmartcrop {
-		return nil, errSmartCropNotSupported
+		return nil, size, errSmartCropNotSupported
 	}
 
 	if po.Format == imageTypeUnknown {
@@ -508,17 +519,17 @@ func processImage(ctx context.Context) ([]byte, error) {
 
 	img, err := vipsLoadImage(data, imgtype, 1, po.Format == imageTypeGIF)
 	if err != nil {
-		return nil, err
+		return nil, size, err
 	}
 	defer C.clear_image(&img)
 
 	if imgtype == imageTypeGIF && po.Format == imageTypeGIF {
-		if err := transformGif(ctx, &img, po); err != nil {
-			return nil, err
+		if err := transformGif(ctx, &img, po, &size); err != nil {
+			return nil, size, err
 		}
 	} else {
-		if err := transformImage(ctx, &img, data, po, imgtype); err != nil {
-			return nil, err
+		if err := transformImage(ctx, &img, data, po, imgtype, &size); err != nil {
+			return nil, size, err
 		}
 	}
 
@@ -526,12 +537,14 @@ func processImage(ctx context.Context) ([]byte, error) {
 
 	if po.Format == imageTypeGIF {
 		if err := vipsCastUchar(&img); err != nil {
-			return nil, err
+			return nil, size, err
 		}
 		checkTimeout(ctx)
 	}
 
-	return vipsSaveImage(img, po.Format, po.Quality)
+	imgData, err := vipsSaveImage(img, po.Format, po.Quality)
+
+	return imgData, size, err
 }
 
 func vipsPrepareWatermark() error {

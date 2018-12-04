@@ -109,13 +109,14 @@ func writeCORS(rw http.ResponseWriter) {
 	}
 }
 
-func respondWithImage(ctx context.Context, reqID string, r *http.Request, rw http.ResponseWriter, data []byte) {
+func respondWithImage(ctx context.Context, reqID string, r *http.Request, rw http.ResponseWriter, data []byte, size ImageSize) {
 	po := getProcessingOptions(ctx)
 
 	rw.Header().Set("Expires", time.Now().Add(time.Second*time.Duration(conf.TTL)).Format(http.TimeFormat))
 	rw.Header().Set("Cache-Control", fmt.Sprintf("max-age=%d, public", conf.TTL))
 	rw.Header().Set("Content-Type", mimes[po.Format])
 	rw.Header().Set("Content-Disposition", contentDispositions[po.Format])
+	rw.Header().Set("X-is", fmt.Sprintf("%d:%d", size.Width, size.Height))
 
 	dataToRespond := data
 
@@ -275,7 +276,7 @@ func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	checkTimeout(ctx)
 
-	imageData, err := processImage(ctx)
+	imageData, imgSize, err := processImage(ctx)
 	if err != nil {
 		if newRelicEnabled {
 			sendErrorToNewRelic(ctx, err)
@@ -288,5 +289,5 @@ func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	checkTimeout(ctx)
 
-	respondWithImage(ctx, reqID, r, rw, imageData)
+	respondWithImage(ctx, reqID, r, rw, imageData, imgSize)
 }
