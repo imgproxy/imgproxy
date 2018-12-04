@@ -413,6 +413,13 @@ func transformImage(ctx context.Context, img **C.struct__VipsImage, data []byte,
 		return err
 	}
 
+	// Update actual image size after resize
+	imgWidth, imgHeight, _, _ = extractMeta(*img)
+
+	// Update image size struct
+	s.Width = imgWidth
+	s.Height = imgHeight
+
 	return nil
 }
 
