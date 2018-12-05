@@ -17,7 +17,7 @@ import (
 	"golang.org/x/net/netutil"
 )
 
-const healthPath = "/health"
+const healthPath = "/"
 
 var (
 	mimes = map[imageType]string{
