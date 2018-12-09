@@ -18,11 +18,12 @@ func newS3Transport() http.RoundTripper {
 	s3Conf := aws.NewConfig()
 
 	if len(conf.S3Region) != 0 {
-		s3Conf.WithRegion(conf.S3Region)
+		s3Conf.Region = aws.String(conf.S3Region)
 	}
 
 	if len(conf.S3Endpoint) != 0 {
-		s3Conf.WithEndpoint(conf.S3Endpoint)
+		s3Conf.Endpoint = aws.String(conf.S3Endpoint)
+		s3Conf.S3ForcePathStyle = aws.Bool(true)
 	}
 
 	return s3Transport{s3.New(session.New(), s3Conf)}
