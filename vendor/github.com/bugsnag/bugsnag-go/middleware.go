@@ -2,7 +2,6 @@ package bugsnag
 
 import (
 	"net/http"
-	"strings"
 )
 
 type (
@@ -64,34 +63,11 @@ func catchMiddlewarePanic(event *Event, config *Configuration, next func() error
 func httpRequestMiddleware(event *Event, config *Configuration) error {
 	for _, datum := range event.RawData {
 		if request, ok := datum.(*http.Request); ok {
-			proto := "http://"
-			if request.TLS != nil {
-				proto = "https://"
-			}
-
 			event.MetaData.Update(MetaData{
 				"request": {
-					"clientIp":   request.RemoteAddr,
-					"httpMethod": request.Method,
-					"url":        proto + request.Host + request.RequestURI,
-					"params":     request.URL.Query(),
-					"headers":    request.Header,
+					"params": request.URL.Query(),
 				},
 			})
-
-			// Default context to Path
-			if event.Context == "" {
-				event.Context = request.URL.Path
-			}
-
-			// Default user.id to IP so that users-affected works.
-			if event.User == nil {
-				ip := request.RemoteAddr
-				if idx := strings.LastIndex(ip, ":"); idx != -1 {
-					ip = ip[:idx]
-				}
-				event.User = &User{Id: ip}
-			}
 		}
 	}
 	return nil

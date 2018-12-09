@@ -136,7 +136,7 @@ func (s sanitizer) sanitizeMap(v reflect.Value) interface{} {
 		newKey := fmt.Sprintf("%v", key.Interface())
 
 		if s.shouldRedact(newKey) {
-			val = "[REDACTED]"
+			val = "[FILTERED]"
 		}
 
 		ret[newKey] = val
@@ -165,7 +165,7 @@ func (s sanitizer) sanitizeStruct(v reflect.Value, t reflect.Type) interface{} {
 		}
 
 		if s.shouldRedact(name) {
-			ret[name] = "[REDACTED]"
+			ret[name] = "[FILTERED]"
 		} else {
 			sanitized := s.Sanitize(val.Interface())
 			if str, ok := sanitized.(string); ok {
@@ -184,7 +184,7 @@ func (s sanitizer) sanitizeStruct(v reflect.Value, t reflect.Type) interface{} {
 
 func (s sanitizer) shouldRedact(key string) bool {
 	for _, filter := range s.Filters {
-		if strings.Contains(strings.ToLower(filter), strings.ToLower(key)) {
+		if strings.Contains(strings.ToLower(key), strings.ToLower(filter)) {
 			return true
 		}
 	}
