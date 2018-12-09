@@ -26,7 +26,13 @@ func newS3Transport() http.RoundTripper {
 		s3Conf.S3ForcePathStyle = aws.Bool(true)
 	}
 
-	return s3Transport{s3.New(session.New(), s3Conf)}
+	sess := session.New()
+
+	if sess.Config.Region == nil || len(*sess.Config.Region) == 0 {
+		sess.Config.Region = aws.String("us-west-1")
+	}
+
+	return s3Transport{s3.New(sess, s3Conf)}
 }
 
 func (t s3Transport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
