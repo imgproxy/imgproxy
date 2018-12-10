@@ -1,5 +1,13 @@
 # Changelog
 
+## v2.1.3
+
+- [Minio support](./docs/serving_files_from_s3.md#minio)
+
+## v2.1.2
+
+- ICO support
+
 ## v2.1.1
 
 - Fixed EXIF orientation fetching;
