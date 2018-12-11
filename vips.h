@@ -12,6 +12,9 @@
 #define VIPS_SUPPORT_GIF \
   (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 3))
 
+#define VIPS_SUPPORT_SVG \
+  (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 3))
+
 #define VIPS_SUPPORT_MAGICK \
   (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 7))
 
@@ -51,6 +54,9 @@ vips_type_find_load_go(int imgtype) {
   }
   if (imgtype == GIF) {
     return vips_type_find("VipsOperation", "gifload_buffer");
+  }
+  if (imgtype == SVG) {
+    return vips_type_find("VipsOperation", "svgload_buffer");
   }
   return 0;
 }
@@ -102,6 +108,16 @@ vips_gifload_go(void *buf, size_t len, int pages, VipsImage **out) {
     return vips_gifload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, "n", pages, NULL);
   #else
     vips_error("vips_gifload_go", "Loading GIF is not supported");
+    return 1;
+  #endif
+}
+
+int
+vips_svgload_go(void *buf, size_t len, double scale, VipsImage **out) {
+  #if VIPS_SUPPORT_SVG
+    return vips_svgload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, "scale", scale, NULL);
+  #else
+    vips_error("vips_svgload_go", "Loading SVG is not supported");
     return 1;
   #endif
 }

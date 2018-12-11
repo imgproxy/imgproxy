@@ -29,6 +29,7 @@ const (
 	imageTypeWEBP    = imageType(C.WEBP)
 	imageTypeGIF     = imageType(C.GIF)
 	imageTypeICO     = imageType(C.ICO)
+	imageTypeSVG     = imageType(C.SVG)
 )
 
 type processingHeaders struct {
@@ -45,6 +46,7 @@ var imageTypes = map[string]imageType{
 	"webp": imageTypeWEBP,
 	"gif":  imageTypeGIF,
 	"ico":  imageTypeICO,
+	"svg":  imageTypeSVG,
 }
 
 type gravityType int

@@ -73,6 +73,9 @@ func initVips() {
 	if int(C.vips_type_find_load_go(C.int(imageTypeGIF))) != 0 {
 		vipsTypeSupportLoad[imageTypeGIF] = true
 	}
+	if int(C.vips_type_find_load_go(C.int(imageTypeSVG))) != 0 {
+		vipsTypeSupportLoad[imageTypeSVG] = true
+	}
 
 	// we load ICO with github.com/mat/besticon/ico and send decoded data to vips
 	vipsTypeSupportLoad[imageTypeICO] = true
@@ -140,7 +143,7 @@ func extractMeta(img *C.VipsImage) (int, int, int, bool) {
 	return width, height, angle, flip
 }
 
-func calcScale(width, height int, po *processingOptions) float64 {
+func calcScale(width, height int, po *processingOptions, imgtype imageType) float64 {
 	// If we're going only to crop, we need only to scale down to DPR.
 	// Scaling up while cropping is not optimal on this stage, we'll do it later if needed.
 	if po.Resize == resizeCrop {
@@ -173,7 +176,7 @@ func calcScale(width, height int, po *processingOptions) float64 {
 
 	scale = scale * po.Dpr
 
-	if !po.Enlarge && scale > 1 {
+	if !po.Enlarge && scale > 1 && imgtype != imageTypeSVG {
 		return 1
 	}
 
@@ -274,22 +277,31 @@ func transformImage(ctx context.Context, img **C.struct__VipsImage, data []byte,
 
 	hasAlpha := vipsImageHasAlpha(*img)
 
-	if scale := calcScale(imgWidth, imgHeight, po); scale != 1 {
-		// Do some shrink-on-load
-		if scale < 1.0 && data != nil {
-			if shrink := calcShink(scale, imgtype); shrink != 1 {
-				scale = scale * float64(shrink)
+	if scale := calcScale(imgWidth, imgHeight, po, imgtype); scale != 1 {
+		if imgtype == imageTypeSVG && data != nil {
+			// Load SVG with desired scale
+			if tmp, err := vipsLoadImage(data, imgtype, 1, scale, false); err == nil {
+				C.swap_and_clear(img, tmp)
+			} else {
+				return err
+			}
+		} else {
+			// Do some shrink-on-load
+			if scale < 1.0 && data != nil {
+				if shrink := calcShink(scale, imgtype); shrink != 1 {
+					scale = scale * float64(shrink)
 
-				if tmp, err := vipsLoadImage(data, imgtype, shrink, false); err == nil {
-					C.swap_and_clear(img, tmp)
-				} else {
-					return err
+					if tmp, err := vipsLoadImage(data, imgtype, shrink, 1.0, false); err == nil {
+						C.swap_and_clear(img, tmp)
+					} else {
+						return err
+					}
 				}
 			}
-		}
 
-		if err = resizeImage(img, scale, hasAlpha); err != nil {
-			return err
+			if err = resizeImage(img, scale, hasAlpha); err != nil {
+				return err
+			}
 		}
 
 		// Update actual image size after resize
@@ -506,7 +518,7 @@ func processImage(ctx context.Context) ([]byte, error) {
 		}
 	}
 
-	img, err := vipsLoadImage(data, imgtype, 1, po.Format == imageTypeGIF)
+	img, err := vipsLoadImage(data, imgtype, 1, 1.0, po.Format == imageTypeGIF)
 	if err != nil {
 		return nil, err
 	}
@@ -546,7 +558,7 @@ func vipsPrepareWatermark() error {
 		return nil
 	}
 
-	watermark, err = vipsLoadImage(data, imgtype, 1, false)
+	watermark, err = vipsLoadImage(data, imgtype, 1, 1.0, false)
 	if err != nil {
 		return err
 	}
@@ -593,7 +605,7 @@ func vipsPrepareWatermark() error {
 	return nil
 }
 
-func vipsLoadImage(data []byte, imgtype imageType, shrink int, allPages bool) (*C.struct__VipsImage, error) {
+func vipsLoadImage(data []byte, imgtype imageType, shrink int, svgScale float64, allPages bool) (*C.struct__VipsImage, error) {
 	var img *C.struct__VipsImage
 
 	err := C.int(0)
@@ -612,6 +624,8 @@ func vipsLoadImage(data []byte, imgtype imageType, shrink int, allPages bool) (*
 		err = C.vips_webpload_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), C.int(shrink), &img)
 	case imageTypeGIF:
 		err = C.vips_gifload_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), pages, &img)
+	case imageTypeSVG:
+		err = C.vips_svgload_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), C.double(svgScale), &img)
 	case imageTypeICO:
 		rawData, width, height, icoErr := icoData(data)
 		if icoErr != nil {

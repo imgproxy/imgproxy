@@ -4,5 +4,6 @@ enum types {
   PNG,
   WEBP,
   GIF,
-  ICO
+  ICO,
+  SVG
 };
