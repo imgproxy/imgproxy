@@ -149,6 +149,13 @@ vips_band_format(VipsImage *in) {
 }
 
 gboolean
+vips_is_animated_gif(VipsImage * in) {
+  return( vips_image_get_typeof(in, "page-height") != G_TYPE_INVALID &&
+          vips_image_get_typeof(in, "gif-delay") != G_TYPE_INVALID &&
+          vips_image_get_typeof(in, "gif-loop") != G_TYPE_INVALID );
+}
+
+gboolean
 vips_image_hasalpha_go(VipsImage * in) {
 #if VIPS_SUPPORT_HASALPHA
   return vips_image_hasalpha(in);

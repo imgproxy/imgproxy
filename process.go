@@ -524,7 +524,7 @@ func processImage(ctx context.Context) ([]byte, error) {
 	}
 	defer C.clear_image(&img)
 
-	if imgtype == imageTypeGIF && po.Format == imageTypeGIF {
+	if imgtype == imageTypeGIF && po.Format == imageTypeGIF && vipsIsAnimatedGif(img) {
 		if err := transformGif(ctx, &img, po); err != nil {
 			return nil, err
 		}
@@ -680,6 +680,10 @@ func vipsArrayjoin(in []*C.struct__VipsImage, out **C.struct__VipsImage) error {
 
 	C.swap_and_clear(out, tmp)
 	return nil
+}
+
+func vipsIsAnimatedGif(img *C.struct__VipsImage) bool {
+	return C.vips_is_animated_gif(img) > 0
 }
 
 func vipsImageHasAlpha(img *C.struct__VipsImage) bool {
