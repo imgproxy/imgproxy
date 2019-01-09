@@ -117,22 +117,24 @@ func respondWithImage(ctx context.Context, reqID string, r *http.Request, rw htt
 	rw.Header().Set("Content-Type", mimes[po.Format])
 	rw.Header().Set("Content-Disposition", contentDispositions[po.Format])
 
-	dataToRespond := data
-
 	if conf.GZipCompression > 0 && strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
-		rw.Header().Set("Content-Encoding", "gzip")
-
 		buf := responseBufPool.Get().(*bytes.Buffer)
-		buf.Reset()
 		defer responseBufPool.Put(buf)
 
-		gzipData(data, buf)
-		dataToRespond = buf.Bytes()
-	}
+		buf.Reset()
 
-	rw.Header().Set("Content-Length", strconv.Itoa(len(dataToRespond)))
-	rw.WriteHeader(200)
-	rw.Write(dataToRespond)
+		gzipData(data, buf)
+
+		rw.Header().Set("Content-Encoding", "gzip")
+		rw.Header().Set("Content-Length", strconv.Itoa(buf.Len()))
+
+		rw.WriteHeader(200)
+		buf.WriteTo(rw)
+	} else {
+		rw.Header().Set("Content-Length", strconv.Itoa(len(data)))
+		rw.WriteHeader(200)
+		rw.Write(data)
+	}
 
 	logResponse(200, fmt.Sprintf("[%s] Processed in %s: %s; %+v", reqID, getTimerSince(ctx), getImageURL(ctx), po))
 }

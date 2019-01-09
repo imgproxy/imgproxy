@@ -18,6 +18,8 @@ var gzipPool = sync.Pool{
 
 func gzipData(data []byte, w io.Writer) {
 	gz := gzipPool.Get().(*gzip.Writer)
+	defer gzipPool.Put(gz)
+
 	gz.Reset(w)
 	gz.Write(data)
 	gz.Close()

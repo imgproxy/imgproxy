@@ -51,6 +51,8 @@ func initVips() {
 	C.vips_cache_set_max_mem(0)
 	C.vips_cache_set_max(0)
 
+	C.vips_concurrency_set(1)
+
 	if len(os.Getenv("IMGPROXY_VIPS_LEAK_CHECK")) > 0 {
 		C.vips_leak_set(C.gboolean(1))
 	}
@@ -491,6 +493,9 @@ func transformGif(ctx context.Context, img **C.struct__VipsImage, po *processing
 }
 
 func processImage(ctx context.Context) ([]byte, error) {
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+
 	if newRelicEnabled {
 		newRelicCancel := startNewRelicSegment(ctx, "Processing image")
 		defer newRelicCancel()
@@ -692,14 +697,21 @@ func vipsImageHasAlpha(img *C.struct__VipsImage) bool {
 
 func vipsGetInt(img *C.struct__VipsImage, name string) (int, error) {
 	var i C.int
-	if C.vips_image_get_int(img, C.CString(name), &i) != 0 {
+
+	cname := C.CString(name)
+	defer C.free(unsafe.Pointer(cname))
+
+	if C.vips_image_get_int(img, cname, &i) != 0 {
 		return 0, vipsError()
 	}
 	return int(i), nil
 }
 
 func vipsSetInt(img *C.struct__VipsImage, name string, value int) {
-	C.vips_image_set_int(img, C.CString(name), C.int(value))
+	cname := C.CString(name)
+	defer C.free(unsafe.Pointer(cname))
+
+	C.vips_image_set_int(img, cname, C.int(value))
 }
 
 func vipsPremultiply(img **C.struct__VipsImage) (C.VipsBandFormat, error) {
@@ -848,7 +860,10 @@ func vipsImportColourProfile(img **C.struct__VipsImage) error {
 			return err
 		}
 
-		if C.vips_icc_import_go(*img, &tmp, C.CString(profile)) != 0 {
+		cprofile := C.CString(profile)
+		defer C.free(unsafe.Pointer(cprofile))
+
+		if C.vips_icc_import_go(*img, &tmp, cprofile) != 0 {
 			return vipsError()
 		}
 		C.swap_and_clear(img, tmp)
