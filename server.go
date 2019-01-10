@@ -8,6 +8,8 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/url"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -17,7 +19,10 @@ import (
 	"golang.org/x/net/netutil"
 )
 
-const healthPath = "/health"
+const (
+	healthPath                         = "/health"
+	contextDispositionFilenameFallback = "image"
+)
 
 var (
 	mimes = map[imageType]string{
@@ -28,12 +33,12 @@ var (
 		imageTypeICO:  "image/x-icon",
 	}
 
-	contentDispositions = map[imageType]string{
-		imageTypeJPEG: "inline; filename=\"image.jpg\"",
-		imageTypePNG:  "inline; filename=\"image.png\"",
-		imageTypeWEBP: "inline; filename=\"image.webp\"",
-		imageTypeGIF:  "inline; filename=\"image.gif\"",
-		imageTypeICO:  "inline; filename=\"favicon.ico\"",
+	contentDispositionsFmt = map[imageType]string{
+		imageTypeJPEG: "inline; filename=\"%s.jpg\"",
+		imageTypePNG:  "inline; filename=\"%s.png\"",
+		imageTypeWEBP: "inline; filename=\"%s.webp\"",
+		imageTypeGIF:  "inline; filename=\"%s.gif\"",
+		imageTypeICO:  "inline; filename=\"%s.ico\"",
 	}
 
 	authHeaderMust []byte
@@ -109,13 +114,27 @@ func writeCORS(rw http.ResponseWriter) {
 	}
 }
 
+func contentDisposition(imageURL string, imgtype imageType) string {
+	url, err := url.Parse(imageURL)
+	if err != nil {
+		return fmt.Sprintf(contentDispositionsFmt[imgtype], contextDispositionFilenameFallback)
+	}
+
+	_, filename := filepath.Split(url.Path)
+	if len(filename) == 0 {
+		return fmt.Sprintf(contentDispositionsFmt[imgtype], contextDispositionFilenameFallback)
+	}
+
+	return fmt.Sprintf(contentDispositionsFmt[imgtype], strings.TrimSuffix(filename, filepath.Ext(filename)))
+}
+
 func respondWithImage(ctx context.Context, reqID string, r *http.Request, rw http.ResponseWriter, data []byte) {
 	po := getProcessingOptions(ctx)
 
 	rw.Header().Set("Expires", time.Now().Add(time.Second*time.Duration(conf.TTL)).Format(http.TimeFormat))
 	rw.Header().Set("Cache-Control", fmt.Sprintf("max-age=%d, public", conf.TTL))
 	rw.Header().Set("Content-Type", mimes[po.Format])
-	rw.Header().Set("Content-Disposition", contentDispositions[po.Format])
+	rw.Header().Set("Content-Disposition", contentDisposition(getImageURL(ctx), po.Format))
 
 	if conf.GZipCompression > 0 && strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
 		buf := responseBufPool.Get().(*bytes.Buffer)
