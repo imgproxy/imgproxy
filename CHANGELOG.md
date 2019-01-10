@@ -1,5 +1,12 @@
 # Changelog
 
+## v2.1.4
+
+- SVG sources support;
+- Fixed support for not animated GIFs;
+- Proper filename in the `Content-Disposition` header;
+- Memory usage optimizations.
+
 ## v2.1.3
 
 - [Minio support](./docs/serving_files_from_s3.md#minio)
