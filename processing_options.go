@@ -98,7 +98,7 @@ var resizeTypes = map[string]resizeType{
 	"crop": resizeCrop,
 }
 
-type color struct{ R, G, B uint8 }
+type rgbColor struct{ R, G, B uint8 }
 
 var hexColorRegex = regexp.MustCompile("^([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$")
 
@@ -127,7 +127,7 @@ type processingOptions struct {
 	Format     imageType
 	Quality    int
 	Flatten    bool
-	Background color
+	Background rgbColor
 	Blur       float32
 	Sharpen    float32
 
@@ -197,8 +197,8 @@ func (po *processingOptions) presetUsed(name string) {
 	po.UsedPresets = append(po.UsedPresets, name)
 }
 
-func colorFromHex(hexcolor string) (color, error) {
-	c := color{}
+func colorFromHex(hexcolor string) (rgbColor, error) {
+	c := rgbColor{}
 
 	if !hexColorRegex.MatchString(hexcolor) {
 		return c, fmt.Errorf("Invalid hex color: %s", hexcolor)
@@ -730,7 +730,7 @@ func defaultProcessingOptions(headers *processingHeaders) (*processingOptions, e
 		Enlarge:     false,
 		Quality:     conf.Quality,
 		Format:      imageTypeUnknown,
-		Background:  color{255, 255, 255},
+		Background:  rgbColor{255, 255, 255},
 		Blur:        0,
 		Sharpen:     0,
 		Dpr:         1,

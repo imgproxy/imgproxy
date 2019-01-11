@@ -817,7 +817,7 @@ func vipsSmartCrop(img **C.struct__VipsImage, width, height int) error {
 	return nil
 }
 
-func vipsFlatten(img **C.struct__VipsImage, bg color) error {
+func vipsFlatten(img **C.struct__VipsImage, bg rgbColor) error {
 	var tmp *C.struct__VipsImage
 
 	if C.vips_flatten_go(*img, &tmp, C.double(bg.R), C.double(bg.G), C.double(bg.B)) != 0 {

@@ -2,7 +2,7 @@ package main
 
 import (
 	"image"
-	goColor "image/color"
+	"image/color"
 	"io"
 )
 
@@ -16,7 +16,7 @@ func init() {
 			return image.NewRGBA(image.Rect(0, 0, 1, 1)), nil
 		},
 		func(io.Reader) (image.Config, error) {
-			return image.Config{ColorModel: goColor.RGBAModel, Width: 1, Height: 1}, nil
+			return image.Config{ColorModel: color.RGBAModel, Width: 1, Height: 1}, nil
 		},
 	)
 }

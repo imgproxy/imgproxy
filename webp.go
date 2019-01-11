@@ -9,7 +9,7 @@ package main
 import (
 	"errors"
 	"image"
-	goColor "image/color"
+	"image/color"
 	"io"
 
 	"golang.org/x/image/riff"
@@ -69,7 +69,7 @@ func decodeWebpConfig(r io.Reader) (image.Config, error) {
 			fh, err := d.DecodeFrameHeader()
 
 			return image.Config{
-				ColorModel: goColor.YCbCrModel,
+				ColorModel: color.YCbCrModel,
 				Width:      fh.Width,
 				Height:     fh.Height,
 			}, err
@@ -96,7 +96,7 @@ func decodeWebpConfig(r io.Reader) (image.Config, error) {
 			heightMinusOne := uint32(buf[7]) | uint32(buf[8])<<8 | uint32(buf[9])<<16
 
 			return image.Config{
-				ColorModel: goColor.NYCbCrAModel,
+				ColorModel: color.NYCbCrAModel,
 				Width:      int(widthMinusOne) + 1,
 				Height:     int(heightMinusOne) + 1,
 			}, nil
