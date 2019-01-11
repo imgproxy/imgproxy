@@ -17,7 +17,6 @@ import (
 	_ "image/png"
 
 	_ "github.com/mat/besticon/ico"
-	_ "golang.org/x/image/webp"
 )
 
 var (
