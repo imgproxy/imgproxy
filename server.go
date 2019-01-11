@@ -5,7 +5,6 @@ import (
 	"context"
 	"crypto/subtle"
 	"fmt"
-	"log"
 	"net"
 	"net/http"
 	"net/url"
@@ -66,7 +65,7 @@ func newHTTPHandler() *httpHandler {
 func startServer() *http.Server {
 	l, err := net.Listen("tcp", conf.Bind)
 	if err != nil {
-		log.Fatal(err)
+		logFatal(err.Error())
 	}
 	s := &http.Server{
 		Handler:        newHTTPHandler(),
@@ -75,9 +74,9 @@ func startServer() *http.Server {
 	}
 
 	go func() {
-		log.Printf("Starting server at %s\n", conf.Bind)
+		logNotice("Starting server at %s", conf.Bind)
 		if err := s.Serve(netutil.LimitListener(l, conf.MaxClients)); err != nil && err != http.ErrServerClosed {
-			log.Fatalln(err)
+			logFatal(err.Error())
 		}
 	}()
 
@@ -85,26 +84,12 @@ func startServer() *http.Server {
 }
 
 func shutdownServer(s *http.Server) {
-	log.Println("Shutting down the server...")
+	logNotice("Shutting down the server...")
 
 	ctx, close := context.WithTimeout(context.Background(), 5*time.Second)
 	defer close()
 
 	s.Shutdown(ctx)
-}
-
-func logResponse(status int, msg string) {
-	var color int
-
-	if status >= 500 {
-		color = 31
-	} else if status >= 400 {
-		color = 33
-	} else {
-		color = 32
-	}
-
-	log.Printf("|\033[7;%dm %d \033[0m| %s\n", color, status, msg)
 }
 
 func writeCORS(rw http.ResponseWriter) {
@@ -155,23 +140,23 @@ func respondWithImage(ctx context.Context, reqID string, r *http.Request, rw htt
 		rw.Write(data)
 	}
 
-	logResponse(200, fmt.Sprintf("[%s] Processed in %s: %s; %+v", reqID, getTimerSince(ctx), getImageURL(ctx), po))
+	logResponse(reqID, 200, fmt.Sprintf("Processed in %s: %s; %+v", getTimerSince(ctx), getImageURL(ctx), po))
 }
 
 func respondWithError(reqID string, rw http.ResponseWriter, err *imgproxyError) {
-	logResponse(err.StatusCode, fmt.Sprintf("[%s] %s", reqID, err.Message))
+	logResponse(reqID, err.StatusCode, err.Message)
 
 	rw.WriteHeader(err.StatusCode)
 	rw.Write([]byte(err.PublicMessage))
 }
 
 func respondWithOptions(reqID string, rw http.ResponseWriter) {
-	logResponse(200, fmt.Sprintf("[%s] Respond with options", reqID))
+	logResponse(reqID, 200, "Respond with options")
 	rw.WriteHeader(200)
 }
 
 func respondWithNotModified(reqID string, rw http.ResponseWriter) {
-	logResponse(200, fmt.Sprintf("[%s] Not modified", reqID))
+	logResponse(reqID, 200, "Not modified")
 	rw.WriteHeader(304)
 }
 
@@ -221,7 +206,7 @@ func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	log.Printf("[%s] %s: %s\n", reqID, r.Method, r.URL.RequestURI())
+	logRequest(reqID, r)
 
 	writeCORS(rw)
 

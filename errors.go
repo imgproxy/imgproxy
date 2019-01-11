@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"runtime"
 	"strings"
 )
@@ -38,8 +37,4 @@ func stacktrace(skip int) string {
 	}
 
 	return strings.Join(lines, "\n")
-}
-
-func warning(f string, args ...interface{}) {
-	log.Printf("\033[1;33m[WARNING]\033[0m %s", fmt.Sprintf(f, args...))
 }

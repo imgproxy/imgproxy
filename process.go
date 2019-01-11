@@ -10,7 +10,6 @@ import "C"
 import (
 	"context"
 	"errors"
-	"log"
 	"math"
 	"os"
 	"runtime"
@@ -43,7 +42,7 @@ func initVips() {
 
 	if err := C.vips_initialize(); err != 0 {
 		C.vips_shutdown()
-		log.Fatalln("unable to start vips!")
+		logFatal("unable to start vips!")
 	}
 
 	// Disable libvips cache. Since processing pipeline is fine tuned, we won't get much profit from it.
@@ -109,7 +108,7 @@ func initVips() {
 	cConf.WatermarkOpacity = C.double(conf.WatermarkOpacity)
 
 	if err := vipsPrepareWatermark(); err != nil {
-		log.Fatal(err)
+		logFatal(err.Error())
 	}
 }
 
@@ -659,7 +658,7 @@ func vipsSaveImage(img *C.struct__VipsImage, imgtype imageType, quality int) ([]
 		err = C.vips_jpegsave_go(img, &ptr, &imgsize, 1, C.int(quality), cConf.JpegProgressive)
 	case imageTypePNG:
 		if err = C.vips_pngsave_go(img, &ptr, &imgsize, cConf.PngInterlaced, 1); err != 0 {
-			warning("Failed to save PNG; Trying not to embed icc profile")
+			logWarning("Failed to save PNG; Trying not to embed icc profile")
 			err = C.vips_pngsave_go(img, &ptr, &imgsize, cConf.PngInterlaced, 0)
 		}
 	case imageTypeWEBP:

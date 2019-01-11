@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"log"
 	"net/http"
 	"time"
 
@@ -33,7 +32,7 @@ func initNewrelic() {
 	newRelicApp, err = newrelic.NewApplication(config)
 
 	if err != nil {
-		log.Fatalf("Can't init New Relic agent: %s", err)
+		logFatal("Can't init New Relic agent: %s", err)
 	}
 
 	newRelicEnabled = true

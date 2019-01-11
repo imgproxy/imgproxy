@@ -177,6 +177,15 @@ imgproxy can report occurred errors to Bugsnag, Honeybadger and Sentry:
 * `IMGPROXY_SENTRY_ENVIRONMENT`: Sentry environment to report to. Default: `production`.
 * `IMGPROXY_SENTRY_RELEASE`: Sentry release to report to. Default: `imgproxy/{imgproxy version}`.
 
+### Syslog
+
+imgproxy can send logs to syslog, but this feature is disabled by default. To enable it, set `IMGPROXY_SYSLOG_ENABLE` to `true`:
+
+* `IMGPROXY_SYSLOG_ENABLE`: when `true`, enables sending logs to syslog;
+* `IMGPROXY_SYSLOG_LEVEL`: maximum log level to send to syslog. Known levels are: `crit`, `error`, `warning` and `notice`. Default: `notice`;
+* `IMGPROXY_SYSLOG_NETWORK`: network that will be used to connect to syslog. When blank, the local syslog server will be used. Known networks are `tcp`, `tcp4`, `tcp6`, `udp`, `udp4`, `udp6`, `ip`, `ip4`, `ip6`, `unix`, `unixgram` and `unixpacket`. Default: blank;
+* `IMGPROXY_SYSLOG_ADDRESS`: address of the syslog service. Not used if `IMGPROXY_SYSLOG_NETWORK` is blank. Default: blank;
+
 ### Miscellaneous
 
 * `IMGPROXY_BASE_URL`: base URL prefix that will be added to every requested image URL. For example, if the base URL is `http://example.com/images` and `/path/to/image.png` is requested, imgproxy will download the source image from `http://example.com/images/path/to/image.png`. Default: blank.

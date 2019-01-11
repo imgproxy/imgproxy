@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"runtime"
 	"strconv"
@@ -53,7 +52,7 @@ func hexEnvConfig(b *[]securityKey, name string) {
 
 		for i, part := range parts {
 			if keys[i], err = hex.DecodeString(part); err != nil {
-				log.Fatalf("%s expected to be hex-encoded strings. Invalid: %s\n", name, part)
+				logFatal("%s expected to be hex-encoded strings. Invalid: %s\n", name, part)
 			}
 		}
 
@@ -68,7 +67,7 @@ func hexFileConfig(b *[]securityKey, filepath string) {
 
 	f, err := os.Open(filepath)
 	if err != nil {
-		log.Fatalf("Can't open file %s\n", filepath)
+		logFatal("Can't open file %s\n", filepath)
 	}
 
 	keys := []securityKey{}
@@ -84,12 +83,12 @@ func hexFileConfig(b *[]securityKey, filepath string) {
 		if key, err := hex.DecodeString(part); err == nil {
 			keys = append(keys, key)
 		} else {
-			log.Fatalf("%s expected to contain hex-encoded strings. Invalid: %s\n", filepath, part)
+			logFatal("%s expected to contain hex-encoded strings. Invalid: %s\n", filepath, part)
 		}
 	}
 
 	if err := scanner.Err(); err != nil {
-		log.Fatalf("Failed to read file %s: %s", filepath, err)
+		logFatal("Failed to read file %s: %s", filepath, err)
 	}
 
 	*b = keys
@@ -101,7 +100,7 @@ func presetEnvConfig(p presets, name string) {
 
 		for _, presetStr := range presetStrings {
 			if err := parsePreset(p, presetStr); err != nil {
-				log.Fatalln(err)
+				logFatal(err.Error())
 			}
 		}
 	}
@@ -114,18 +113,18 @@ func presetFileConfig(p presets, filepath string) {
 
 	f, err := os.Open(filepath)
 	if err != nil {
-		log.Fatalf("Can't open file %s\n", filepath)
+		logFatal("Can't open file %s\n", filepath)
 	}
 
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
 		if err := parsePreset(p, scanner.Text()); err != nil {
-			log.Fatalln(err)
+			logFatal(err.Error())
 		}
 	}
 
 	if err := scanner.Err(); err != nil {
-		log.Fatalf("Failed to read presets file: %s", err)
+		logFatal("Failed to read presets file: %s", err)
 	}
 }
 
@@ -221,6 +220,8 @@ var conf = config{
 }
 
 func init() {
+	initSyslog()
+
 	keyPath := flag.String("keypath", "", "path of the file with hex-encoded key")
 	saltPath := flag.String("saltpath", "", "path of the file with hex-encoded salt")
 	presetsPath := flag.String("presets", "", "path of the file with presets")
@@ -308,39 +309,39 @@ func init() {
 	strEnvConfig(&conf.SentryRelease, "IMGPROXY_SENTRY_RELEASE")
 
 	if len(conf.Keys) != len(conf.Salts) {
-		log.Fatalf("Number of keys and number of salts should be equal. Keys: %d, salts: %d", len(conf.Keys), len(conf.Salts))
+		logFatal("Number of keys and number of salts should be equal. Keys: %d, salts: %d", len(conf.Keys), len(conf.Salts))
 	}
 	if len(conf.Keys) == 0 {
-		warning("No keys defined, so signature checking is disabled")
+		logWarning("No keys defined, so signature checking is disabled")
 		conf.AllowInsecure = true
 	}
 	if len(conf.Salts) == 0 {
-		warning("No salts defined, so signature checking is disabled")
+		logWarning("No salts defined, so signature checking is disabled")
 		conf.AllowInsecure = true
 	}
 
 	if conf.SignatureSize < 1 || conf.SignatureSize > 32 {
-		log.Fatalf("Signature size should be within 1 and 32, now - %d\n", conf.SignatureSize)
+		logFatal("Signature size should be within 1 and 32, now - %d\n", conf.SignatureSize)
 	}
 
 	if len(conf.Bind) == 0 {
-		log.Fatalln("Bind address is not defined")
+		logFatal("Bind address is not defined")
 	}
 
 	if conf.ReadTimeout <= 0 {
-		log.Fatalf("Read timeout should be greater than 0, now - %d\n", conf.ReadTimeout)
+		logFatal("Read timeout should be greater than 0, now - %d\n", conf.ReadTimeout)
 	}
 
 	if conf.WriteTimeout <= 0 {
-		log.Fatalf("Write timeout should be greater than 0, now - %d\n", conf.WriteTimeout)
+		logFatal("Write timeout should be greater than 0, now - %d\n", conf.WriteTimeout)
 	}
 
 	if conf.DownloadTimeout <= 0 {
-		log.Fatalf("Download timeout should be greater than 0, now - %d\n", conf.DownloadTimeout)
+		logFatal("Download timeout should be greater than 0, now - %d\n", conf.DownloadTimeout)
 	}
 
 	if conf.Concurrency <= 0 {
-		log.Fatalf("Concurrency should be greater than 0, now - %d\n", conf.Concurrency)
+		logFatal("Concurrency should be greater than 0, now - %d\n", conf.Concurrency)
 	}
 
 	if conf.MaxClients <= 0 {
@@ -348,65 +349,65 @@ func init() {
 	}
 
 	if conf.TTL <= 0 {
-		log.Fatalf("TTL should be greater than 0, now - %d\n", conf.TTL)
+		logFatal("TTL should be greater than 0, now - %d\n", conf.TTL)
 	}
 
 	if conf.MaxSrcDimension < 0 {
-		log.Fatalf("Max src dimension should be greater than or equal to 0, now - %d\n", conf.MaxSrcDimension)
+		logFatal("Max src dimension should be greater than or equal to 0, now - %d\n", conf.MaxSrcDimension)
 	} else if conf.MaxSrcDimension > 0 {
-		warning("IMGPROXY_MAX_SRC_DIMENSION is deprecated and can be removed in future versions. Use IMGPROXY_MAX_SRC_RESOLUTION")
+		logWarning("IMGPROXY_MAX_SRC_DIMENSION is deprecated and can be removed in future versions. Use IMGPROXY_MAX_SRC_RESOLUTION")
 	}
 
 	if conf.MaxSrcResolution <= 0 {
-		log.Fatalf("Max src resolution should be greater than 0, now - %d\n", conf.MaxSrcResolution)
+		logFatal("Max src resolution should be greater than 0, now - %d\n", conf.MaxSrcResolution)
 	}
 
 	if conf.MaxGifFrames <= 0 {
-		log.Fatalf("Max GIF frames should be greater than 0, now - %d\n", conf.MaxGifFrames)
+		logFatal("Max GIF frames should be greater than 0, now - %d\n", conf.MaxGifFrames)
 	}
 
 	if conf.Quality <= 0 {
-		log.Fatalf("Quality should be greater than 0, now - %d\n", conf.Quality)
+		logFatal("Quality should be greater than 0, now - %d\n", conf.Quality)
 	} else if conf.Quality > 100 {
-		log.Fatalf("Quality can't be greater than 100, now - %d\n", conf.Quality)
+		logFatal("Quality can't be greater than 100, now - %d\n", conf.Quality)
 	}
 
 	if conf.GZipCompression < 0 {
-		log.Fatalf("GZip compression should be greater than or quual to 0, now - %d\n", conf.GZipCompression)
+		logFatal("GZip compression should be greater than or quual to 0, now - %d\n", conf.GZipCompression)
 	} else if conf.GZipCompression > 9 {
-		log.Fatalf("GZip compression can't be greater than 9, now - %d\n", conf.GZipCompression)
+		logFatal("GZip compression can't be greater than 9, now - %d\n", conf.GZipCompression)
 	}
 
 	if conf.IgnoreSslVerification {
-		warning("Ignoring SSL verification is very unsafe")
+		logWarning("Ignoring SSL verification is very unsafe")
 	}
 
 	if conf.LocalFileSystemRoot != "" {
 		stat, err := os.Stat(conf.LocalFileSystemRoot)
 		if err != nil {
-			log.Fatalf("Cannot use local directory: %s", err)
+			logFatal("Cannot use local directory: %s", err)
 		} else {
 			if !stat.IsDir() {
-				log.Fatalf("Cannot use local directory: not a directory")
+				logFatal("Cannot use local directory: not a directory")
 			}
 		}
 		if conf.LocalFileSystemRoot == "/" {
-			log.Print("Exposing root via IMGPROXY_LOCAL_FILESYSTEM_ROOT is unsafe")
+			logNotice("Exposing root via IMGPROXY_LOCAL_FILESYSTEM_ROOT is unsafe")
 		}
 	}
 
 	if err := checkPresets(conf.Presets); err != nil {
-		log.Fatalln(err)
+		logFatal(err.Error())
 	}
 
 	if conf.WatermarkOpacity <= 0 {
-		log.Fatalln("Watermark opacity should be greater than 0")
+		logFatal("Watermark opacity should be greater than 0")
 	} else if conf.WatermarkOpacity > 1 {
-		log.Fatalln("Watermark opacity should be less than or equal to 1")
+		logFatal("Watermark opacity should be less than or equal to 1")
 	}
 
 	if len(conf.PrometheusBind) > 0 && conf.PrometheusBind == conf.Bind {
-		log.Fatalln("Can't use the same binding for the main server and Prometheus")
+		logFatal("Can't use the same binding for the main server and Prometheus")
 	}
 
 	initDownloading()

@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -19,7 +18,7 @@ func newGCSTransport() http.RoundTripper {
 	client, err := storage.NewClient(context.Background(), option.WithCredentialsJSON([]byte(conf.GCSKey)))
 
 	if err != nil {
-		log.Fatalf("Can't create GCS client: %s", err)
+		logFatal("Can't create GCS client: %s", err)
 	}
 
 	return gcsTransport{client}

@@ -70,6 +70,7 @@ Massive processing of remote images is a potentially dangerous thing, security-w
    * [New Relic metrics](./docs/configuration.md#new-relic-metrics)
    * [Prometheus metrics](./docs/configuration.md#prometheus-metrics)
    * [Error reporting](./docs/configuration.md#error-reporting)
+   * [Syslog](./docs/configuration.md#syslog)
    * [Miscellaneous](./docs/configuration.md#miscellaneous)
 4. [Generating the URL](./docs/generating_the_url_basic.md)
    * [Basic](./docs/generating_the_url_basic.md)

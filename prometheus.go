@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"net/http"
 	"time"
 
@@ -65,9 +64,9 @@ func initPrometheus() {
 	}
 
 	go func() {
-		log.Printf("Starting Prometheus server at %s\n", s.Addr)
+		logNotice("Starting Prometheus server at %s\n", s.Addr)
 		if err := s.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalln(err)
+			logFatal(err.Error())
 		}
 	}()
 }
