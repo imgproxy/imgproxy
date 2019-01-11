@@ -266,7 +266,7 @@ func (r *Request) SetReaderBody(reader io.ReadSeeker) {
 
 // Presign returns the request's signed URL. Error will be returned
 // if the signing fails. The expire parameter is only used for presigned Amazon
-// S3 API requests. All other AWS services will use a fixed expriation
+// S3 API requests. All other AWS services will use a fixed expiration
 // time of 15 minutes.
 //
 // It is invalid to create a presigned URL with a expire duration 0 or less. An
@@ -286,7 +286,7 @@ func (r *Request) Presign(expire time.Duration) (string, error) {
 // PresignRequest behaves just like presign, with the addition of returning a
 // set of headers that were signed. The expire parameter is only used for
 // presigned Amazon S3 API requests. All other AWS services will use a fixed
-// expriation time of 15 minutes.
+// expiration time of 15 minutes.
 //
 // It is invalid to create a presigned URL with a expire duration 0 or less. An
 // error is returned if expire duration is 0 or less.

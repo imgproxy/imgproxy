@@ -19,7 +19,11 @@ type Logger interface {
 }
 
 // ShimLogger implements Logger and does nothing.
-type ShimLogger struct{}
+type ShimLogger struct {
+	// IsDebugEnabled is useful as it allows DebugEnabled code paths to be
+	// tested.
+	IsDebugEnabled bool
+}
 
 // Error allows ShimLogger to implement Logger.
 func (s ShimLogger) Error(string, map[string]interface{}) {}
@@ -34,7 +38,7 @@ func (s ShimLogger) Info(string, map[string]interface{}) {}
 func (s ShimLogger) Debug(string, map[string]interface{}) {}
 
 // DebugEnabled allows ShimLogger to implement Logger.
-func (s ShimLogger) DebugEnabled() bool { return false }
+func (s ShimLogger) DebugEnabled() bool { return s.IsDebugEnabled }
 
 type logFile struct {
 	l       *log.Logger
@@ -66,7 +70,7 @@ func (f *logFile) fire(level, msg string, ctx map[string]interface{}) {
 		ctx,
 	})
 	if nil == err {
-		f.l.Printf(string(js))
+		f.l.Print(string(js))
 	} else {
 		f.l.Printf("unable to marshal log entry: %v", err)
 	}

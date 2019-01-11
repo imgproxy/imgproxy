@@ -15,7 +15,7 @@ const (
 	spanCategoryGeneric                = "generic"
 )
 
-// SpanEvent represents a span event, neccessary to support Distributed Tracing.
+// SpanEvent represents a span event, necessary to support Distributed Tracing.
 type SpanEvent struct {
 	TraceID         string
 	GUID            string

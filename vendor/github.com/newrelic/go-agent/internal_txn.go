@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"reflect"
+	"strings"
 	"sync"
 	"time"
 
@@ -39,13 +40,12 @@ type txn struct {
 	internal.TxnData
 }
 
-func newTxn(input txnInput, req *http.Request, name string) *txn {
+func newTxn(input txnInput, name string) *txn {
 	txn := &txn{
 		txnInput: input,
 	}
 	txn.Start = time.Now()
 	txn.Name = name
-	txn.IsWeb = nil != req
 	txn.Attrs = internal.NewAttributes(input.attrConfig)
 
 	if input.Config.DistributedTracer.Enabled {
@@ -60,22 +60,15 @@ func newTxn(input txnInput, req *http.Request, name string) *txn {
 		if txn.BetterCAT.Sampled {
 			txn.BetterCAT.Priority += 1.0
 		}
-		txn.SpanEventsEnabled = input.Config.SpanEvents.Enabled
+		txn.SpanEventsEnabled = txn.Config.SpanEvents.Enabled && txn.Reply.CollectSpanEvents
 	}
 
-	if nil != req {
-		txn.Queuing = internal.QueueDuration(req.Header, txn.Start)
-		internal.RequestAgentAttributes(txn.Attrs, req)
-	}
-	txn.Attrs.Agent.HostDisplayName = txn.Config.HostDisplayName
+	txn.Attrs.Agent.Add(internal.AttributeHostDisplayName, txn.Config.HostDisplayName, nil)
 	txn.TxnTrace.Enabled = txn.txnTracesEnabled()
 	txn.TxnTrace.SegmentThreshold = txn.Config.TransactionTracer.SegmentThreshold
 	txn.StackTraceThreshold = txn.Config.TransactionTracer.StackTraceThreshold
 	txn.SlowQueriesEnabled = txn.slowQueriesEnabled()
 	txn.SlowQueryThreshold = txn.Config.DatastoreTracer.SlowQuery.Threshold
-	if nil != req && nil != req.URL {
-		txn.CleanURL = internal.SafeURL(req.URL)
-	}
 
 	// Synthetics support is tied up with a transaction's Old CAT field,
 	// CrossProcess. To support Synthetics with either BetterCAT or Old CAT,
@@ -83,9 +76,59 @@ func newTxn(input txnInput, req *http.Request, name string) *txn {
 	// the top-level configuration.
 	doOldCAT := txn.Config.CrossApplicationTracer.Enabled
 	noGUID := txn.Config.DistributedTracer.Enabled
-	txn.CrossProcess.InitFromHTTPRequest(doOldCAT, noGUID, input.Reply, req)
+	txn.CrossProcess.Init(doOldCAT, noGUID, input.Reply)
 
 	return txn
+}
+
+type requestWrap struct{ request *http.Request }
+
+func (r requestWrap) Header() http.Header { return r.request.Header }
+func (r requestWrap) URL() *url.URL       { return r.request.URL }
+func (r requestWrap) Method() string      { return r.request.Method }
+
+func (r requestWrap) Transport() TransportType {
+	if strings.HasPrefix(r.request.Proto, "HTTP") {
+		if r.request.TLS != nil {
+			return TransportHTTPS
+		}
+		return TransportHTTP
+	}
+	return TransportUnknown
+
+}
+
+func (txn *txn) SetWebRequest(r WebRequest) error {
+	txn.Lock()
+	defer txn.Unlock()
+
+	if txn.finished {
+		return errAlreadyEnded
+	}
+
+	// Any call to SetWebRequest should indicate a web transaction.
+	txn.IsWeb = true
+
+	if nil == r {
+		return nil
+	}
+	if h := r.Header(); nil != h {
+		txn.Queuing = internal.QueueDuration(h, txn.Start)
+
+		if p := h.Get(DistributedTracePayloadHeader); p != "" {
+			txn.acceptDistributedTracePayloadLocked(r.Transport(), p)
+		}
+
+		txn.CrossProcess.InboundHTTPRequest(h)
+	}
+
+	internal.RequestAgentAttributes(txn.Attrs, r.Method(), r.Header())
+
+	if u := r.URL(); nil != u {
+		txn.CleanURL = internal.SafeURL(u)
+	}
+
+	return nil
 }
 
 func (txn *txn) slowQueriesEnabled() bool {
@@ -180,7 +223,7 @@ func (txn *txn) MergeIntoHarvest(h *internal.Harvest) {
 		h.SlowSQLs.Merge(txn.SlowQueries, txn.TxnEvent)
 	}
 
-	if txn.BetterCAT.Sampled && txn.Config.SpanEvents.Enabled {
+	if txn.BetterCAT.Sampled && txn.SpanEventsEnabled {
 		h.SpanEvents.MergeFromTransaction(&txn.TxnData)
 	}
 }
@@ -358,10 +401,10 @@ func (txn *txn) End() error {
 
 	if txn.Config.Logger.DebugEnabled() {
 		txn.Config.Logger.Debug("transaction ended", map[string]interface{}{
-			"name":        txn.FinalName,
-			"duration_ms": txn.Duration.Seconds() * 1000.0,
-			"ignored":     txn.ignore,
-			"run":         txn.Reply.RunID,
+			"name":          txn.FinalName,
+			"duration_ms":   txn.Duration.Seconds() * 1000.0,
+			"ignored":       txn.ignore,
+			"app_connected": "" != txn.Reply.RunID,
 		})
 	}
 
@@ -737,7 +780,7 @@ func (txn *txn) CreateDistributedTracePayload() (payload DistributedTracePayload
 		p.TrustedAccountKey = txn.Reply.TrustedAccountKey
 	}
 
-	if txn.BetterCAT.Sampled && txn.Config.SpanEvents.Enabled {
+	if txn.BetterCAT.Sampled && txn.SpanEventsEnabled {
 		p.ID = txn.CurrentSpanIdentifier()
 	}
 
@@ -758,11 +801,17 @@ var (
 	errOutboundPayloadCreated   = errors.New("outbound payload already created")
 	errAlreadyAccepted          = errors.New("AcceptDistributedTracePayload has already been called")
 	errInboundPayloadDTDisabled = errors.New("DistributedTracer must be enabled to accept an inbound payload")
+	errTrustedAccountKey        = errors.New("trusted account key missing or does not match")
 )
 
 func (txn *txn) AcceptDistributedTracePayload(t TransportType, p interface{}) error {
 	txn.Lock()
 	defer txn.Unlock()
+
+	return txn.acceptDistributedTracePayloadLocked(t, p)
+}
+
+func (txn *txn) acceptDistributedTracePayloadLocked(t TransportType, p interface{}) error {
 
 	if !txn.BetterCAT.Enabled {
 		return errInboundPayloadDTDisabled
@@ -820,7 +869,7 @@ func (txn *txn) AcceptDistributedTracePayload(t TransportType, p interface{}) er
 	}
 	if receivedTrustKey != txn.Reply.TrustedAccountKey {
 		txn.AcceptPayloadUntrustedAccount = true
-		return internal.ErrTrustedAccountKey{Message: "trusted account key missing or does not match"}
+		return errTrustedAccountKey
 	}
 
 	if 0 != payload.Priority {

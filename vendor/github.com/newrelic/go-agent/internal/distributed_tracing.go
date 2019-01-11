@@ -139,14 +139,6 @@ func (e ErrPayloadMissingField) Error() string {
 	return fmt.Sprintf("payload is missing required fields: %s", e.message)
 }
 
-// ErrTrustedAccountKey indicates we don't trust the account, per the
-// new trusted_account_key routine.
-type ErrTrustedAccountKey struct{ Message string }
-
-func (e ErrTrustedAccountKey) Error() string {
-	return fmt.Sprintf("trusted account key error: %s", e.Message)
-}
-
 // ErrUnsupportedPayloadVersion indicates that the major version number is
 // unknown.
 type ErrUnsupportedPayloadVersion struct{ version int }

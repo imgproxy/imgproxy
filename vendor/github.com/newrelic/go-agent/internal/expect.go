@@ -102,6 +102,21 @@ type WantSlowQuery struct {
 	Params       map[string]interface{}
 }
 
+// HarvestTestinger is implemented by the app.  It sets an empty test harvest
+// and modifies the connect reply if a callback is provided.
+type HarvestTestinger interface {
+	HarvestTesting(replyfn func(*ConnectReply))
+}
+
+// HarvestTesting allows integration packages to test instrumentation.
+func HarvestTesting(app interface{}, replyfn func(*ConnectReply)) {
+	ta, ok := app.(HarvestTestinger)
+	if !ok {
+		panic("HarvestTesting type assertion failure")
+	}
+	ta.HarvestTesting(replyfn)
+}
+
 // Expect exposes methods that allow for testing whether the correct data was
 // captured.
 type Expect interface {
@@ -450,7 +465,7 @@ func ExpectSpanEventsAbsent(v Validator, events *spanEvents, names []string) {
 // ExpectSpanEvents allows testing of span events.  It passes if events exactly matches expect.
 func ExpectSpanEvents(v Validator, events *spanEvents, expect []WantEvent) {
 	if len(events.events.events) != len(expect) {
-		v.Error("number of txn events does not match",
+		v.Error("number of span events does not match",
 			len(events.events.events), len(expect))
 		return
 	}
@@ -463,7 +478,7 @@ func ExpectSpanEvents(v Validator, events *spanEvents, expect []WantEvent) {
 				e.Intrinsics = mergeAttributes(map[string]interface{}{
 					// The following intrinsics should always be present in
 					// span events:
-					"type":      "Transaction",
+					"type":      "Span",
 					"timestamp": MatchAnything,
 					"duration":  MatchAnything,
 				}, e.Intrinsics)

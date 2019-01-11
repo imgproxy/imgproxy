@@ -86,8 +86,6 @@ func (as *adaptiveSampler) ComputeSampled(priority float32, now time.Time) bool 
 			return true
 		}
 		return false
-	} else if as.currentPeriod.numSampled > as.Target {
-		return false
 	}
 
 	if priority >= as.priorityMin {

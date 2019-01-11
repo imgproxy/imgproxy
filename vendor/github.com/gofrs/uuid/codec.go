@@ -191,7 +191,7 @@ func (u *UUID) decodePlain(t []byte) error {
 	case 36:
 		return u.decodeCanonical(t)
 	default:
-		return fmt.Errorf("uuid: incorrrect UUID length: %s", t)
+		return fmt.Errorf("uuid: incorrect UUID length: %s", t)
 	}
 }
 
