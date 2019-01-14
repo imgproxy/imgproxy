@@ -5,12 +5,14 @@ import (
 	"strings"
 
 	"github.com/bugsnag/bugsnag-go"
+	"github.com/getsentry/raven-go"
 	"github.com/honeybadger-io/honeybadger-go"
 )
 
 var (
 	bugsnagEnabled     bool
 	honeybadgerEnabled bool
+	sentryEnabled      bool
 
 	headersReplacer = strings.NewReplacer("-", "_")
 )
@@ -31,6 +33,14 @@ func initErrorsReporting() {
 		})
 		honeybadgerEnabled = true
 	}
+
+	if len(conf.SentryDSN) > 0 {
+		raven.SetDSN(conf.SentryDSN)
+		raven.SetEnvironment(conf.SentryEnvironment)
+		raven.SetRelease(conf.SentryRelease)
+
+		sentryEnabled = true
+	}
 }
 
 func reportError(err error, req *http.Request) {
@@ -47,5 +57,10 @@ func reportError(err error, req *http.Request) {
 		}
 
 		honeybadger.Notify(err, req.URL, headers)
+	}
+
+	if sentryEnabled {
+		raven.SetHttpContext(raven.NewHttp(req))
+		raven.CaptureError(err, nil)
 	}
 }

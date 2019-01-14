@@ -69,7 +69,7 @@ Massive processing of remote images is a potentially dangerous thing, security-w
    * [Serving files from Google Cloud Storage](./docs/configuration.md#serving-files-from-google-cloud-storage)
    * [New Relic metrics](./docs/configuration.md#new-relic-metrics)
    * [Prometheus metrics](./docs/configuration.md#prometheus-metrics)
-   * [Errors reporting](./docs/configuration.md#errors-reporting)
+   * [Error reporting](./docs/configuration.md#error-reporting)
    * [Miscellaneous](./docs/configuration.md#miscellaneous)
 4. [Generating the URL](./docs/generating_the_url_basic.md)
    * [Basic](./docs/generating_the_url_basic.md)

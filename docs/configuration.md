@@ -165,14 +165,17 @@ imgproxy can collect its metrics for Prometheus. Specify binding for Prometheus 
 
 Check out the [Prometheus](./prometheus.md) guide to learn more.
 
-### Errors reporting
+### Error reporting
 
-imgproxy can report occurred errors to Bugsnag or Honeybadger:
+imgproxy can report occurred errors to Bugsnag, Honeybadger and Sentry:
 
-* `IMGPROXY_BUGSNAG_KEY`: Bugsnag API key. When provided, enables errors reporting to Bugsnag;
+* `IMGPROXY_BUGSNAG_KEY`: Bugsnag API key. When provided, enables error reporting to Bugsnag;
 * `IMGPROXY_BUGSNAG_STAGE`: Bugsnag stage to report to. Default: `production`;
-* `IMGPROXY_HONEYBADGER_KEY`: Honeybadger API key. When provided, enables errors reporting to Honeybadger;
+* `IMGPROXY_HONEYBADGER_KEY`: Honeybadger API key. When provided, enables error reporting to Honeybadger;
 * `IMGPROXY_HONEYBADGER_ENV`: Honeybadger env to report to. Default: `production`.
+* `IMGPROXY_SENTRY_DSN`: Sentry project DSN. When provided, enables error reporting to Sentry;
+* `IMGPROXY_SENTRY_ENVIRONMENT`: Sentry environment to report to. Default: `production`.
+* `IMGPROXY_SENTRY_RELEASE`: Sentry release to report to. Default: `imgproxy/{imgproxy version}`.
 
 ### Miscellaneous
 

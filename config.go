@@ -187,10 +187,13 @@ type config struct {
 
 	PrometheusBind string
 
-	BugsnagKey     string
-	BugsnagStage   string
-	HoneybadgerKey string
-	HoneybadgerEnv string
+	BugsnagKey        string
+	BugsnagStage      string
+	HoneybadgerKey    string
+	HoneybadgerEnv    string
+	SentryDSN         string
+	SentryEnvironment string
+	SentryRelease     string
 }
 
 var conf = config{
@@ -213,6 +216,8 @@ var conf = config{
 	WatermarkOpacity:      1,
 	BugsnagStage:          "production",
 	HoneybadgerEnv:        "production",
+	SentryEnvironment:     "production",
+	SentryRelease:         fmt.Sprintf("imgproxy/%s", version),
 }
 
 func init() {
@@ -298,6 +303,9 @@ func init() {
 	strEnvConfig(&conf.BugsnagStage, "IMGPROXY_BUGSNAG_STAGE")
 	strEnvConfig(&conf.HoneybadgerKey, "IMGPROXY_HONEYBADGER_KEY")
 	strEnvConfig(&conf.HoneybadgerEnv, "IMGPROXY_HONEYBADGER_ENV")
+	strEnvConfig(&conf.SentryDSN, "IMGPROXY_SENTRY_DSN")
+	strEnvConfig(&conf.SentryEnvironment, "IMGPROXY_SENTRY_ENVIRONMENT")
+	strEnvConfig(&conf.SentryRelease, "IMGPROXY_SENTRY_RELEASE")
 
 	if len(conf.Keys) != len(conf.Salts) {
 		log.Fatalf("Number of keys and number of salts should be equal. Keys: %d, salts: %d", len(conf.Keys), len(conf.Salts))
