@@ -1,5 +1,11 @@
 # Changelog
 
+# v2.1.5
+
+- [Sentry support](./docs/configuration.md#error-reporting) (thanks to [@koenpunt](https://github.com/koenpunt));
+- Fixed detection of some kind of WebP images;
+- [Syslog support](./docs/configuration.md#syslog).
+
 ## v2.1.4
 
 - SVG sources support;
