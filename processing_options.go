@@ -229,7 +229,7 @@ func decodeBase64URL(parts []string) (string, string, error) {
 		format = urlParts[1]
 	}
 
-	imageURL, err := base64.RawURLEncoding.DecodeString(urlParts[0])
+	imageURL, err := base64.RawURLEncoding.DecodeString(strings.TrimRight(urlParts[0], "="))
 	if err != nil {
 		return "", "", errInvalidURLEncoding
 	}
