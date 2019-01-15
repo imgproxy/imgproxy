@@ -219,14 +219,14 @@ func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		panic(errInvalidMethod)
 	}
 
-	if !checkSecret(r) {
-		panic(errInvalidSecret)
-	}
-
 	if r.URL.RequestURI() == healthPath {
 		rw.WriteHeader(200)
 		rw.Write(imgproxyIsRunningMsg)
 		return
+	}
+
+	if !checkSecret(r) {
+		panic(errInvalidSecret)
 	}
 
 	ctx := context.Background()
