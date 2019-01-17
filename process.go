@@ -648,6 +648,10 @@ func vipsLoadImage(data []byte, imgtype imageType, shrink int, svgScale float64,
 func vipsSaveImage(img *C.struct__VipsImage, imgtype imageType, quality int) ([]byte, context.CancelFunc, error) {
 	var ptr unsafe.Pointer
 
+	cancel := func() {
+		C.g_free_go(&ptr)
+	}
+
 	err := C.int(0)
 
 	imgsize := C.size_t(0)
@@ -668,16 +672,12 @@ func vipsSaveImage(img *C.struct__VipsImage, imgtype imageType, quality int) ([]
 		err = C.vips_icosave_go(img, &ptr, &imgsize)
 	}
 	if err != 0 {
-		return nil, func() {}, vipsError()
+		return nil, cancel, vipsError()
 	}
 
 	const maxBufSize = ^uint32(0)
 
 	b := (*[maxBufSize]byte)(ptr)[:int(imgsize):int(imgsize)]
-
-	cancel := func() {
-		C.g_free_go(&ptr)
-	}
 
 	return b, cancel, nil
 }
