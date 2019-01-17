@@ -121,6 +121,8 @@ func respondWithImage(ctx context.Context, reqID string, r *http.Request, rw htt
 	rw.Header().Set("Content-Type", mimes[po.Format])
 	rw.Header().Set("Content-Disposition", contentDisposition(getImageURL(ctx), po.Format))
 
+	addVaryHeader(rw)
+
 	if conf.GZipCompression > 0 && strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
 		buf := responseGzipBufPool.get()
 		defer responseGzipBufPool.put(buf)
@@ -143,6 +145,26 @@ func respondWithImage(ctx context.Context, reqID string, r *http.Request, rw htt
 	}
 
 	logResponse(reqID, 200, fmt.Sprintf("Processed in %s: %s; %+v", getTimerSince(ctx), getImageURL(ctx), po))
+}
+
+func addVaryHeader(rw http.ResponseWriter) {
+	vary := make([]string, 0)
+
+	if conf.EnableWebpDetection || conf.EnforceWebp {
+		vary = append(vary, "Accept")
+	}
+
+	if conf.GZipCompression > 0 {
+		vary = append(vary, "Accept-Encoding")
+	}
+
+	if conf.EnableClientHints {
+		vary = append(vary, "DPR", "Viewport-Width", "Width")
+	}
+
+	if len(vary) > 0 {
+		rw.Header().Set("Vary", strings.Join(vary, ", "))
+	}
 }
 
 func respondWithError(reqID string, rw http.ResponseWriter, err *imgproxyError) {
@@ -221,14 +243,14 @@ func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		panic(errInvalidMethod)
 	}
 
-	if !checkSecret(r) {
-		panic(errInvalidSecret)
-	}
-
 	if r.URL.RequestURI() == healthPath {
 		rw.WriteHeader(200)
 		rw.Write(imgproxyIsRunningMsg)
 		return
+	}
+
+	if !checkSecret(r) {
+		panic(errInvalidSecret)
 	}
 
 	ctx := context.Background()
