@@ -193,6 +193,10 @@ type config struct {
 	SentryDSN         string
 	SentryEnvironment string
 	SentryRelease     string
+
+	FreeMemoryInterval int
+	DownloadBufferSize int
+	GZipBufferSize     int
 }
 
 var conf = config{
@@ -217,6 +221,7 @@ var conf = config{
 	HoneybadgerEnv:        "production",
 	SentryEnvironment:     "production",
 	SentryRelease:         fmt.Sprintf("imgproxy/%s", version),
+	FreeMemoryInterval:    10,
 }
 
 func init() {
@@ -307,6 +312,10 @@ func init() {
 	strEnvConfig(&conf.SentryDSN, "IMGPROXY_SENTRY_DSN")
 	strEnvConfig(&conf.SentryEnvironment, "IMGPROXY_SENTRY_ENVIRONMENT")
 	strEnvConfig(&conf.SentryRelease, "IMGPROXY_SENTRY_RELEASE")
+
+	intEnvConfig(&conf.FreeMemoryInterval, "IMGPROXY_FREE_MEMORY_INTERVAL")
+	intEnvConfig(&conf.DownloadBufferSize, "IMGPROXY_DOWNLOAD_BUFFER_SIZE")
+	intEnvConfig(&conf.GZipBufferSize, "IMGPROXY_GZIP_BUFFER_SIZE")
 
 	if len(conf.Keys) != len(conf.Salts) {
 		logFatal("Number of keys and number of salts should be equal. Keys: %d, salts: %d", len(conf.Keys), len(conf.Salts))
@@ -408,6 +417,22 @@ func init() {
 
 	if len(conf.PrometheusBind) > 0 && conf.PrometheusBind == conf.Bind {
 		logFatal("Can't use the same binding for the main server and Prometheus")
+	}
+
+	if conf.FreeMemoryInterval <= 0 {
+		logFatal("Free memory interval should be greater than zero")
+	}
+
+	if conf.DownloadBufferSize < 0 {
+		logFatal("Download buffer size should be greater than or quual to 0")
+	} else if conf.DownloadBufferSize > int(^uint32(0)) {
+		logFatal("Download buffer size can't be creater than %d", ^uint32(0))
+	}
+
+	if conf.GZipBufferSize < 0 {
+		logFatal("GZip buffer size should be greater than or quual to 0")
+	} else if conf.GZipBufferSize > int(^uint32(0)) {
+		logFatal("GZip buffer size can't be creater than %d", ^uint32(0))
 	}
 
 	initDownloading()

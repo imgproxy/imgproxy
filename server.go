@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"crypto/subtle"
 	"fmt"
@@ -11,7 +10,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	nanoid "github.com/matoous/go-nanoid"
@@ -46,13 +44,10 @@ var (
 
 	errInvalidMethod = newError(422, "Invalid request method", "Method doesn't allowed")
 	errInvalidSecret = newError(403, "Invalid secret", "Forbidden")
-)
 
-var responseBufPool = sync.Pool{
-	New: func() interface{} {
-		return new(bytes.Buffer)
-	},
-}
+	responseGzipBufPool *bufPool
+	responseGzipPool    *gzipPool
+)
 
 type httpHandler struct {
 	sem chan struct{}
@@ -71,6 +66,11 @@ func startServer() *http.Server {
 		Handler:        newHTTPHandler(),
 		ReadTimeout:    time.Duration(conf.ReadTimeout) * time.Second,
 		MaxHeaderBytes: 1 << 20,
+	}
+
+	if conf.GZipCompression > 0 {
+		responseGzipBufPool = newBufPool(conf.Concurrency, conf.GZipBufferSize)
+		responseGzipPool = newGzipPool(conf.Concurrency)
 	}
 
 	go func() {
@@ -122,12 +122,14 @@ func respondWithImage(ctx context.Context, reqID string, r *http.Request, rw htt
 	rw.Header().Set("Content-Disposition", contentDisposition(getImageURL(ctx), po.Format))
 
 	if conf.GZipCompression > 0 && strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
-		buf := responseBufPool.Get().(*bytes.Buffer)
-		defer responseBufPool.Put(buf)
+		buf := responseGzipBufPool.get()
+		defer responseGzipBufPool.put(buf)
 
-		buf.Reset()
+		gz := responseGzipPool.get(buf)
+		defer responseGzipPool.put(gz)
 
-		gzipData(data, buf)
+		gz.Write(data)
+		gz.Close()
 
 		rw.Header().Set("Content-Encoding", "gzip")
 		rw.Header().Set("Content-Length", strconv.Itoa(buf.Len()))
@@ -279,7 +281,8 @@ func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	checkTimeout(ctx)
 
-	imageData, err := processImage(ctx)
+	imageData, processcancel, err := processImage(ctx)
+	defer processcancel()
 	if err != nil {
 		if newRelicEnabled {
 			sendErrorToNewRelic(ctx, err)

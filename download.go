@@ -9,7 +9,6 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"sync"
 	"time"
 
 	_ "image/gif"
@@ -31,11 +30,7 @@ var (
 
 const msgSourceImageIsUnreachable = "Source image is unreachable"
 
-var downloadBufPool = sync.Pool{
-	New: func() interface{} {
-		return new(bytes.Buffer)
-	},
-}
+var downloadBufPool *bufPool
 
 func initDownloading() {
 	transport := &http.Transport{
@@ -62,6 +57,8 @@ func initDownloading() {
 		Timeout:   time.Duration(conf.DownloadTimeout) * time.Second,
 		Transport: transport,
 	}
+
+	downloadBufPool = newBufPool(conf.Concurrency, conf.DownloadBufferSize)
 }
 
 func checkDimensions(width, height int) error {
@@ -95,10 +92,9 @@ func checkTypeAndDimensions(r io.Reader) (imageType, error) {
 }
 
 func readAndCheckImage(ctx context.Context, res *http.Response) (context.Context, context.CancelFunc, error) {
-	buf := downloadBufPool.Get().(*bytes.Buffer)
+	buf := downloadBufPool.get()
 	cancel := func() {
-		buf.Reset()
-		downloadBufPool.Put(buf)
+		downloadBufPool.put(buf)
 	}
 
 	imgtype, err := checkTypeAndDimensions(io.TeeReader(res.Body, buf))

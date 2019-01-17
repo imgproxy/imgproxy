@@ -491,7 +491,7 @@ func transformGif(ctx context.Context, img **C.struct__VipsImage, po *processing
 	return nil
 }
 
-func processImage(ctx context.Context) ([]byte, error) {
+func processImage(ctx context.Context) ([]byte, context.CancelFunc, error) {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 
@@ -511,7 +511,7 @@ func processImage(ctx context.Context) ([]byte, error) {
 	imgtype := getImageType(ctx)
 
 	if po.Gravity.Type == gravitySmart && !vipsSupportSmartcrop {
-		return nil, errSmartCropNotSupported
+		return nil, func() {}, errSmartCropNotSupported
 	}
 
 	if po.Format == imageTypeUnknown {
@@ -524,17 +524,17 @@ func processImage(ctx context.Context) ([]byte, error) {
 
 	img, err := vipsLoadImage(data, imgtype, 1, 1.0, po.Format == imageTypeGIF)
 	if err != nil {
-		return nil, err
+		return nil, func() {}, err
 	}
 	defer C.clear_image(&img)
 
 	if imgtype == imageTypeGIF && po.Format == imageTypeGIF && vipsIsAnimatedGif(img) {
 		if err := transformGif(ctx, &img, po); err != nil {
-			return nil, err
+			return nil, func() {}, err
 		}
 	} else {
 		if err := transformImage(ctx, &img, data, po, imgtype); err != nil {
-			return nil, err
+			return nil, func() {}, err
 		}
 	}
 
@@ -542,7 +542,7 @@ func processImage(ctx context.Context) ([]byte, error) {
 
 	if po.Format == imageTypeGIF {
 		if err := vipsCastUchar(&img); err != nil {
-			return nil, err
+			return nil, func() {}, err
 		}
 		checkTimeout(ctx)
 	}
@@ -645,9 +645,8 @@ func vipsLoadImage(data []byte, imgtype imageType, shrink int, svgScale float64,
 	return img, nil
 }
 
-func vipsSaveImage(img *C.struct__VipsImage, imgtype imageType, quality int) ([]byte, error) {
+func vipsSaveImage(img *C.struct__VipsImage, imgtype imageType, quality int) ([]byte, context.CancelFunc, error) {
 	var ptr unsafe.Pointer
-	defer C.g_free_go(&ptr)
 
 	err := C.int(0)
 
@@ -669,10 +668,18 @@ func vipsSaveImage(img *C.struct__VipsImage, imgtype imageType, quality int) ([]
 		err = C.vips_icosave_go(img, &ptr, &imgsize)
 	}
 	if err != 0 {
-		return nil, vipsError()
+		return nil, func() {}, vipsError()
 	}
 
-	return C.GoBytes(ptr, C.int(imgsize)), nil
+	const maxBufSize = ^uint32(0)
+
+	b := (*[maxBufSize]byte)(ptr)[:int(imgsize):int(imgsize)]
+
+	cancel := func() {
+		C.g_free_go(&ptr)
+	}
+
+	return b, cancel, nil
 }
 
 func vipsArrayjoin(in []*C.struct__VipsImage, out **C.struct__VipsImage) error {

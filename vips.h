@@ -325,6 +325,6 @@ vips_icosave_go(VipsImage *in, void **buf, size_t *len) {
 
 void
 vips_cleanup() {
-  vips_thread_shutdown();
   vips_error_clear();
+  vips_thread_shutdown();
 }
