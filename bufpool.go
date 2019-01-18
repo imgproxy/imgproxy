@@ -29,10 +29,10 @@ func newBufPool(n int, size int) *bufPool {
 func (p *bufPool) grow() {
 	var buf *bytes.Buffer
 
-	if p.size == 0 {
-		buf = new(bytes.Buffer)
-	} else {
-		buf = bytes.NewBuffer(make([]byte, p.size, p.size))
+	buf = new(bytes.Buffer)
+
+	if p.size > 0 {
+		buf.Grow(p.size)
 	}
 
 	p.top = &bufPoolEntry{buf: buf, next: p.top}

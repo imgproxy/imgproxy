@@ -9,6 +9,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"time"
 
 	_ "image/gif"
@@ -100,6 +101,12 @@ func readAndCheckImage(ctx context.Context, res *http.Response) (context.Context
 	imgtype, err := checkTypeAndDimensions(io.TeeReader(res.Body, buf))
 	if err != nil {
 		return ctx, cancel, err
+	}
+
+	if cls := res.Header.Get("Content-Length"); len(cls) > 0 {
+		if cl, err := strconv.Atoi(cls); err == nil && cl > buf.Len() && cl > buf.Cap() {
+			buf.Grow(cl - buf.Len())
+		}
 	}
 
 	if _, err = buf.ReadFrom(res.Body); err != nil {
