@@ -186,6 +186,14 @@ imgproxy can send logs to syslog, but this feature is disabled by default. To en
 * `IMGPROXY_SYSLOG_NETWORK`: network that will be used to connect to syslog. When blank, the local syslog server will be used. Known networks are `tcp`, `tcp4`, `tcp6`, `udp`, `udp4`, `udp6`, `ip`, `ip4`, `ip6`, `unix`, `unixgram` and `unixpacket`. Default: blank;
 * `IMGPROXY_SYSLOG_ADDRESS`: address of the syslog service. Not used if `IMGPROXY_SYSLOG_NETWORK` is blank. Default: blank;
 
+### Memory usage tweaks
+
+**Warning:** It's highly recommended to read [Memory usage tweaks](./memory_usage_tweaks.md) guide before changing this settings.
+
+* `IMGPROXY_DOWNLOAD_BUFFER_SIZE`: the initial size (in bytes) of a single download buffer. When zero, initializes empty download buffers. Default: `0`;
+* `IMGPROXY_GZIP_BUFFER_SIZE`: the initial size (in bytes) of a single GZip buffer. When zero, initializes empty GZip buffers. Makes sense only when GZip compression is enabled. Default: `0`;
+* `IMGPROXY_FREE_MEMORY_INTERVAL`: the interval (in seconds) at which unused memory will be returned to the OS. Default: `10`.
+
 ### Miscellaneous
 
 * `IMGPROXY_BASE_URL`: base URL prefix that will be added to every requested image URL. For example, if the base URL is `http://example.com/images` and `/path/to/image.png` is requested, imgproxy will download the source image from `http://example.com/images/path/to/image.png`. Default: blank.
