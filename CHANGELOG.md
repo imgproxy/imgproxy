@@ -1,6 +1,12 @@
 # Changelog
 
-# v2.1.5
+## v2.2.0
+
+- Optimized memory usage. [Memory usage tweaks](./docs/memory_usage_tweaks.md);
+- `Vary` header is set when WebP detection, client hints or GZip compression are enabled;
+- Health check doesn't require `Authorization` header anymore.
+
+## v2.1.5
 
 - [Sentry support](./docs/configuration.md#error-reporting) (thanks to [@koenpunt](https://github.com/koenpunt));
 - Fixed detection of some kind of WebP images;
