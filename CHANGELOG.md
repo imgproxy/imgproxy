@@ -1,5 +1,10 @@
 # Changelog
 
+## v2.2.1
+
+- Source file size limit;
+- More memory usage optimizations.
+
 ## v2.2.0
 
 - Optimized memory usage. [Memory usage tweaks](./docs/memory_usage_tweaks.md);
