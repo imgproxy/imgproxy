@@ -41,6 +41,7 @@ $ echo $(xxd -g 2 -l 64 -p /dev/random | tr -d '\n')
 imgproxy protects you from so-called image bombs. Here is how you can specify maximum image resolution which you consider reasonable:
 
 * `IMGPROXY_MAX_SRC_RESOLUTION`: the maximum resolution of the source image, in megapixels. Images with larger actual size will be rejected. Default: `16.8`;
+* `IMGPROXY_MAX_SRC_FILE_SIZE`: the maximum size of the source image, in bytes. Images with larger file size will be rejected. When `0`, file size check is disabled. Default: `0`;
 
 imgproxy can process animated GIFs, but since this operation is pretty heavy, only one frame is processed by default. You can increase the maximum of GIF frames to process with the following variable:
 

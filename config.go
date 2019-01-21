@@ -140,6 +140,7 @@ type config struct {
 
 	MaxSrcDimension  int
 	MaxSrcResolution int
+	MaxSrcFileSize   int
 	MaxGifFrames     int
 
 	JpegProgressive bool
@@ -253,6 +254,7 @@ func init() {
 
 	intEnvConfig(&conf.MaxSrcDimension, "IMGPROXY_MAX_SRC_DIMENSION")
 	megaIntEnvConfig(&conf.MaxSrcResolution, "IMGPROXY_MAX_SRC_RESOLUTION")
+	intEnvConfig(&conf.MaxSrcFileSize, "IMGPROXY_MAX_SRC_FILE_SIZE")
 	intEnvConfig(&conf.MaxGifFrames, "IMGPROXY_MAX_GIF_FRAMES")
 
 	boolEnvConfig(&conf.JpegProgressive, "IMGPROXY_JPEG_PROGRESSIVE")
@@ -369,6 +371,10 @@ func init() {
 
 	if conf.MaxSrcResolution <= 0 {
 		logFatal("Max src resolution should be greater than 0, now - %d\n", conf.MaxSrcResolution)
+	}
+
+	if conf.MaxSrcFileSize < 0 {
+		logFatal("Max src file size should be greater than or equal to 0, now - %d\n", conf.MaxSrcFileSize)
 	}
 
 	if conf.MaxGifFrames <= 0 {

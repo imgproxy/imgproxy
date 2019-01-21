@@ -25,13 +25,34 @@ var (
 	imageDataCtxKey = ctxKey("imageData")
 
 	errSourceDimensionsTooBig      = newError(422, "Source image dimensions are too big", "Invalid source image")
-	errSourceResolutionTooBig      = newError(422, "Source image resolution are too big", "Invalid source image")
+	errSourceResolutionTooBig      = newError(422, "Source image resolution is too big", "Invalid source image")
+	errSourceFileTooBig            = newError(422, "Source image file is too big", "Invalid source image")
 	errSourceImageTypeNotSupported = newError(422, "Source image type not supported", "Invalid source image")
 )
 
 const msgSourceImageIsUnreachable = "Source image is unreachable"
 
 var downloadBufPool *bufPool
+
+type limitReader struct {
+	r    io.ReadCloser
+	left int
+}
+
+func (lr *limitReader) Read(p []byte) (n int, err error) {
+	n, err = lr.r.Read(p)
+	lr.left = lr.left - n
+
+	if err == nil && lr.left < 0 {
+		err = errSourceFileTooBig
+	}
+
+	return
+}
+
+func (lr *limitReader) Close() error {
+	return lr.r.Close()
+}
 
 func initDownloading() {
 	transport := &http.Transport{
@@ -76,8 +97,11 @@ func checkDimensions(width, height int) error {
 
 func checkTypeAndDimensions(r io.Reader) (imageType, error) {
 	imgconf, imgtypeStr, err := image.DecodeConfig(r)
-	if err != nil {
+	if err == image.ErrFormat {
 		return imageTypeUnknown, errSourceImageTypeNotSupported
+	}
+	if err != nil {
+		return imageTypeUnknown, err
 	}
 
 	imgtype, imgtypeOk := imageTypes[imgtypeStr]
@@ -98,7 +122,13 @@ func readAndCheckImage(ctx context.Context, res *http.Response) (context.Context
 		downloadBufPool.put(buf)
 	}
 
-	imgtype, err := checkTypeAndDimensions(io.TeeReader(res.Body, buf))
+	body := res.Body
+
+	if conf.MaxSrcFileSize > 0 {
+		body = &limitReader{r: body, left: conf.MaxSrcFileSize}
+	}
+
+	imgtype, err := checkTypeAndDimensions(io.TeeReader(body, buf))
 	if err != nil {
 		return ctx, cancel, err
 	}
@@ -116,7 +146,7 @@ func readAndCheckImage(ctx context.Context, res *http.Response) (context.Context
 		buf.Grow(contentLength - buf.Len())
 	}
 
-	if _, err = buf.ReadFrom(res.Body); err != nil {
+	if _, err = buf.ReadFrom(body); err != nil {
 		return ctx, cancel, newError(404, err.Error(), msgSourceImageIsUnreachable)
 	}
 
