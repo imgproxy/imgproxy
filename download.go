@@ -103,10 +103,17 @@ func readAndCheckImage(ctx context.Context, res *http.Response) (context.Context
 		return ctx, cancel, err
 	}
 
-	if cls := res.Header.Get("Content-Length"); len(cls) > 0 {
-		if cl, err := strconv.Atoi(cls); err == nil && cl > buf.Len() && cl > buf.Cap() {
-			buf.Grow(cl - buf.Len())
-		}
+	var contentLength int
+
+	if res.ContentLength > 0 {
+		contentLength = int(res.ContentLength)
+	} else {
+		// ContentLength wasn't set properly, trying to parse the header
+		contentLength, _ = strconv.Atoi(res.Header.Get("Content-Length"))
+	}
+
+	if contentLength > buf.Cap() {
+		buf.Grow(contentLength - buf.Len())
 	}
 
 	if _, err = buf.ReadFrom(res.Body); err != nil {
