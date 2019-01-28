@@ -674,6 +674,7 @@ func vipsSaveImage(img *C.struct__VipsImage, imgtype imageType, quality int) ([]
 		err = C.vips_jpegsave_go(img, &ptr, &imgsize, 1, C.int(quality), cConf.JpegProgressive)
 	case imageTypePNG:
 		if err = C.vips_pngsave_go(img, &ptr, &imgsize, cConf.PngInterlaced, 1); err != 0 {
+			C.g_free_go(&ptr)
 			logWarning("Failed to save PNG; Trying not to embed icc profile")
 			err = C.vips_pngsave_go(img, &ptr, &imgsize, cConf.PngInterlaced, 0)
 		}
@@ -685,6 +686,7 @@ func vipsSaveImage(img *C.struct__VipsImage, imgtype imageType, quality int) ([]
 		err = C.vips_icosave_go(img, &ptr, &imgsize)
 	}
 	if err != 0 {
+		C.g_free_go(&ptr)
 		return nil, cancel, vipsError()
 	}
 
