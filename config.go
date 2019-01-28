@@ -441,9 +441,9 @@ func init() {
 		logFatal("GZip buffer size can't be creater than %d", ^uint32(0))
 	}
 
-	initDownloading()
 	initNewrelic()
 	initPrometheus()
+	initDownloading()
 	initErrorsReporting()
 	initVips()
 }

@@ -16,6 +16,8 @@ var (
 	prometheusRequestDuration    prometheus.Histogram
 	prometheusDownloadDuration   prometheus.Histogram
 	prometheusProcessingDuration prometheus.Histogram
+	prometheusBuffersTotal       *prometheus.CounterVec
+	prometheusBufferSize         *prometheus.HistogramVec
 )
 
 func initPrometheus() {
@@ -48,12 +50,24 @@ func initPrometheus() {
 		Help: "A histogram of the image processing latency.",
 	})
 
+	prometheusBuffersTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "buffers_total",
+		Help: "A counter of the total number of buffers imgproxy allocated.",
+	}, []string{"type"})
+
+	prometheusBufferSize = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Name: "buffer_size_megabytes",
+		Help: "A histogram of the buffer size in megabytes.",
+	}, []string{"type"})
+
 	prometheus.MustRegister(
 		prometheusRequestsTotal,
 		prometheusErrorsTotal,
 		prometheusRequestDuration,
 		prometheusDownloadDuration,
 		prometheusProcessingDuration,
+		prometheusBuffersTotal,
+		prometheusBufferSize,
 	)
 
 	prometheusEnabled = true
@@ -80,4 +94,13 @@ func startPrometheusDuration(m prometheus.Histogram) func() {
 
 func incrementPrometheusErrorsTotal(t string) {
 	prometheusErrorsTotal.With(prometheus.Labels{"type": t}).Inc()
+}
+
+func incrementBuffersTotal(t string) {
+	prometheusBuffersTotal.With(prometheus.Labels{"type": t}).Inc()
+}
+
+func observeBufferSize(t string, cap int) {
+	size := float64(cap) / 1024.0 / 1024.0
+	prometheusBufferSize.With(prometheus.Labels{"type": t}).Observe(size)
 }

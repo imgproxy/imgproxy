@@ -7,6 +7,7 @@ import (
 
 type bufPool struct {
 	mutex sync.Mutex
+	name  string
 	size  int
 	top   *bufPoolEntry
 }
@@ -16,8 +17,8 @@ type bufPoolEntry struct {
 	next *bufPoolEntry
 }
 
-func newBufPool(n int, size int) *bufPool {
-	pool := bufPool{size: size}
+func newBufPool(name string, n int, size int) *bufPool {
+	pool := bufPool{name: name, size: size}
 
 	for i := 0; i < n; i++ {
 		pool.grow()
@@ -36,6 +37,10 @@ func (p *bufPool) grow() {
 	}
 
 	p.top = &bufPoolEntry{buf: buf, next: p.top}
+
+	if prometheusEnabled {
+		incrementBuffersTotal(p.name)
+	}
 }
 
 func (p *bufPool) get() *bytes.Buffer {
@@ -59,4 +64,8 @@ func (p *bufPool) put(buf *bytes.Buffer) {
 	defer p.mutex.Unlock()
 
 	p.top = &bufPoolEntry{buf: buf, next: p.top}
+
+	if prometheusEnabled {
+		observeBufferSize(p.name, buf.Cap())
+	}
 }

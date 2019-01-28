@@ -80,7 +80,7 @@ func initDownloading() {
 		Transport: transport,
 	}
 
-	downloadBufPool = newBufPool(conf.Concurrency, conf.DownloadBufferSize)
+	downloadBufPool = newBufPool("download", conf.Concurrency, conf.DownloadBufferSize)
 }
 
 func checkDimensions(width, height int) error {

@@ -69,7 +69,7 @@ func startServer() *http.Server {
 	}
 
 	if conf.GZipCompression > 0 {
-		responseGzipBufPool = newBufPool(conf.Concurrency, conf.GZipBufferSize)
+		responseGzipBufPool = newBufPool("gzip", conf.Concurrency, conf.GZipBufferSize)
 		responseGzipPool = newGzipPool(conf.Concurrency)
 	}
 
