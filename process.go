@@ -36,6 +36,8 @@ type cConfig struct {
 
 var cConf cConfig
 
+var cstrings map[string]*C.char
+
 func initVips() {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
@@ -115,6 +117,17 @@ func initVips() {
 func shutdownVips() {
 	C.clear_image(&watermark)
 	C.vips_shutdown()
+}
+
+func cachedCString(str string) *C.char {
+	if cstr, ok := cstrings[str]; ok {
+		return cstr
+	}
+
+	cstr := C.CString(str)
+	cstrings[str] = cstr
+
+	return cstr
 }
 
 func extractMeta(img *C.VipsImage) (int, int, int, bool) {
@@ -704,20 +717,14 @@ func vipsImageHasAlpha(img *C.struct__VipsImage) bool {
 func vipsGetInt(img *C.struct__VipsImage, name string) (int, error) {
 	var i C.int
 
-	cname := C.CString(name)
-	defer C.free(unsafe.Pointer(cname))
-
-	if C.vips_image_get_int(img, cname, &i) != 0 {
+	if C.vips_image_get_int(img, cachedCString(name), &i) != 0 {
 		return 0, vipsError()
 	}
 	return int(i), nil
 }
 
 func vipsSetInt(img *C.struct__VipsImage, name string, value int) {
-	cname := C.CString(name)
-	defer C.free(unsafe.Pointer(cname))
-
-	C.vips_image_set_int(img, cname, C.int(value))
+	C.vips_image_set_int(img, cachedCString(name), C.int(value))
 }
 
 func vipsPremultiply(img **C.struct__VipsImage) (C.VipsBandFormat, error) {
@@ -866,10 +873,7 @@ func vipsImportColourProfile(img **C.struct__VipsImage) error {
 			return err
 		}
 
-		cprofile := C.CString(profile)
-		defer C.free(unsafe.Pointer(cprofile))
-
-		if C.vips_icc_import_go(*img, &tmp, cprofile) != 0 {
+		if C.vips_icc_import_go(*img, &tmp, cachedCString(profile)) != 0 {
 			return vipsError()
 		}
 		C.swap_and_clear(img, tmp)
