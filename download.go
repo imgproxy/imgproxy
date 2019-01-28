@@ -8,6 +8,7 @@ import (
 	"image"
 	"io"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"strconv"
 	"time"
@@ -56,7 +57,11 @@ func (lr *limitReader) Close() error {
 
 func initDownloading() {
 	transport := &http.Transport{
-		Proxy: http.ProxyFromEnvironment,
+		Proxy:               http.ProxyFromEnvironment,
+		MaxIdleConns:        conf.Concurrency,
+		MaxIdleConnsPerHost: conf.Concurrency,
+		DisableCompression:  true,
+		Dial:                (&net.Dialer{KeepAlive: 600 * time.Second}).Dial,
 	}
 
 	if conf.IgnoreSslVerification {
@@ -176,10 +181,12 @@ func downloadImage(ctx context.Context) (context.Context, context.CancelFunc, er
 	req.Header.Set("User-Agent", conf.UserAgent)
 
 	res, err := downloadClient.Do(req)
+	if res != nil {
+		defer res.Body.Close()
+	}
 	if err != nil {
 		return ctx, func() {}, newError(404, err.Error(), msgSourceImageIsUnreachable)
 	}
-	defer res.Body.Close()
 
 	if res.StatusCode != 200 {
 		body, _ := ioutil.ReadAll(res.Body)
