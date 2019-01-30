@@ -118,6 +118,10 @@ func (p *bufPool) Get(size int) *bytes.Buffer {
 
 	buf.Reset()
 
+	if size > 0 && size > buf.Cap() {
+		buf.Grow(size)
+	}
+
 	return buf
 }
 
