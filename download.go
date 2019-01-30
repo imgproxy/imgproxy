@@ -122,9 +122,22 @@ func checkTypeAndDimensions(r io.Reader) (imageType, error) {
 }
 
 func readAndCheckImage(ctx context.Context, res *http.Response) (context.Context, context.CancelFunc, error) {
-	buf := downloadBufPool.get()
+	var contentLength int
+
+	if res.ContentLength > 0 {
+		contentLength = int(res.ContentLength)
+	} else {
+		// ContentLength wasn't set properly, trying to parse the header
+		contentLength, _ = strconv.Atoi(res.Header.Get("Content-Length"))
+	}
+
+	buf := downloadBufPool.get(contentLength)
 	cancel := func() {
 		downloadBufPool.put(buf)
+	}
+
+	if contentLength > buf.Cap() {
+		buf.Grow(contentLength - buf.Len())
 	}
 
 	body := res.Body
@@ -136,19 +149,6 @@ func readAndCheckImage(ctx context.Context, res *http.Response) (context.Context
 	imgtype, err := checkTypeAndDimensions(io.TeeReader(body, buf))
 	if err != nil {
 		return ctx, cancel, err
-	}
-
-	var contentLength int
-
-	if res.ContentLength > 0 {
-		contentLength = int(res.ContentLength)
-	} else {
-		// ContentLength wasn't set properly, trying to parse the header
-		contentLength, _ = strconv.Atoi(res.Header.Get("Content-Length"))
-	}
-
-	if contentLength > buf.Cap() {
-		buf.Grow(contentLength - buf.Len())
 	}
 
 	if _, err = buf.ReadFrom(body); err != nil {
