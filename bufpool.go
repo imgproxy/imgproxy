@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"math"
 	"sort"
 	"sync"
 )
@@ -58,27 +57,29 @@ func (p *bufPool) new() *bytes.Buffer {
 }
 
 func (p *bufPool) calibrateAndClean() {
-	var score float64
-
 	sort.Sort(p.calls)
 
-	pos := 0.95 * float64(p.callInd+1)
+	pos := int(float64(len(p.calls)) * 0.95)
+	score := p.calls[pos]
 
-	if pos < 1.0 {
-		score = float64(p.calls[0])
-	} else if pos >= float64(p.callInd) {
-		score = float64(p.calls[p.callInd-1])
-	} else {
-		lower := float64(p.calls[int(pos)-1])
-		upper := float64(p.calls[int(pos)])
-		score = lower + (pos-math.Floor(pos))*(upper-lower)
+	p.callInd = 0
+	p.throughput = 64
+
+	for {
+		if p.throughput > score {
+			break
+		}
+		p.throughput <<= 1
 	}
 
-	p.throughput = int(score)
-	p.callInd = 0
+	for i, buf := range p.buffers {
+		if buf != nil && buf.Cap() > p.throughput {
+			p.buffers[i] = nil
+		}
+	}
 }
 
-func (p *bufPool) get(size int) *bytes.Buffer {
+func (p *bufPool) Get(size int) *bytes.Buffer {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
@@ -120,15 +121,17 @@ func (p *bufPool) get(size int) *bytes.Buffer {
 	return buf
 }
 
-func (p *bufPool) put(buf *bytes.Buffer) {
+func (p *bufPool) Put(buf *bytes.Buffer) {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
-	p.calls[p.callInd] = buf.Cap()
-	p.callInd++
+	if buf.Len() > 0 {
+		p.calls[p.callInd] = buf.Len()
+		p.callInd++
 
-	if p.callInd == len(p.calls) {
-		p.calibrateAndClean()
+		if p.callInd == len(p.calls) {
+			p.calibrateAndClean()
+		}
 	}
 
 	if p.throughput > 0 && buf.Cap() > p.throughput {
@@ -139,7 +142,7 @@ func (p *bufPool) put(buf *bytes.Buffer) {
 		if b == nil {
 			p.buffers[i] = buf
 
-			if prometheusEnabled {
+			if prometheusEnabled && buf.Cap() > 0 {
 				observeBufferSize(p.name, buf.Cap())
 			}
 

@@ -124,11 +124,11 @@ func respondWithImage(ctx context.Context, reqID string, r *http.Request, rw htt
 	addVaryHeader(rw)
 
 	if conf.GZipCompression > 0 && strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
-		buf := responseGzipBufPool.get(0)
-		defer responseGzipBufPool.put(buf)
+		buf := responseGzipBufPool.Get(0)
+		defer responseGzipBufPool.Put(buf)
 
-		gz := responseGzipPool.get(buf)
-		defer responseGzipPool.put(gz)
+		gz := responseGzipPool.Get(buf)
+		defer responseGzipPool.Put(gz)
 
 		gz.Write(data)
 		gz.Close()

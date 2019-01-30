@@ -39,7 +39,7 @@ func (p *gzipPool) grow() {
 	}
 }
 
-func (p *gzipPool) get(w io.Writer) *gzip.Writer {
+func (p *gzipPool) Get(w io.Writer) *gzip.Writer {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
@@ -55,7 +55,7 @@ func (p *gzipPool) get(w io.Writer) *gzip.Writer {
 	return gz
 }
 
-func (p *gzipPool) put(gz *gzip.Writer) {
+func (p *gzipPool) Put(gz *gzip.Writer) {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 

@@ -131,9 +131,9 @@ func readAndCheckImage(ctx context.Context, res *http.Response) (context.Context
 		contentLength, _ = strconv.Atoi(res.Header.Get("Content-Length"))
 	}
 
-	buf := downloadBufPool.get(contentLength)
+	buf := downloadBufPool.Get(contentLength)
 	cancel := func() {
-		downloadBufPool.put(buf)
+		downloadBufPool.Put(buf)
 	}
 
 	if contentLength > buf.Cap() {
