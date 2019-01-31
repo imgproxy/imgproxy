@@ -59,5 +59,7 @@ func (p *gzipPool) Put(gz *gzip.Writer) {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
+	gz.Reset(ioutil.Discard)
+
 	p.top = &gzipPoolEntry{gz: gz, next: p.top}
 }
