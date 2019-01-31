@@ -39,18 +39,6 @@ func newBufPool(name string, n int, defaultSize int) *bufPool {
 	return &pool
 }
 
-func (p *bufPool) new() *bytes.Buffer {
-	var buf *bytes.Buffer
-
-	buf = new(bytes.Buffer)
-
-	if p.defaultSize > 0 {
-		buf.Grow(p.defaultSize)
-	}
-
-	return buf
-}
-
 func (p *bufPool) calibrateAndClean() {
 	sort.Sort(p.calls)
 
