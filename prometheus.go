@@ -52,18 +52,18 @@ func initPrometheus() {
 	})
 
 	prometheusBufferSize = prometheus.NewHistogramVec(prometheus.HistogramOpts{
-		Name: "buffer_size_megabytes",
-		Help: "A histogram of the buffer size in megabytes.",
+		Name: "buffer_size_bytes",
+		Help: "A histogram of the buffer size in bytes.",
 	}, []string{"type"})
 
 	prometheusBufferDefaultSize = prometheus.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "buffer_default_size_megabytes",
-		Help: "A gauge of the buffer default size in megabytes.",
+		Name: "buffer_default_size_bytes",
+		Help: "A gauge of the buffer default size in bytes.",
 	}, []string{"type"})
 
 	prometheusBufferMaxSize = prometheus.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "buffer_max_size_megabytes",
-		Help: "A gauge of the buffer max size in megabytes.",
+		Name: "buffer_max_size_bytes",
+		Help: "A gauge of the buffer max size in bytes.",
 	}, []string{"type"})
 
 	prometheus.MustRegister(
@@ -103,17 +103,14 @@ func incrementPrometheusErrorsTotal(t string) {
 	prometheusErrorsTotal.With(prometheus.Labels{"type": t}).Inc()
 }
 
-func observePrometheusBufferSize(t string, cap int) {
-	size := float64(cap) / 1024.0 / 1024.0
-	prometheusBufferSize.With(prometheus.Labels{"type": t}).Observe(size)
+func observePrometheusBufferSize(t string, size int) {
+	prometheusBufferSize.With(prometheus.Labels{"type": t}).Observe(float64(size))
 }
 
-func setPrometheusBufferDefaultSize(t string, cap int) {
-	size := float64(cap) / 1024.0 / 1024.0
-	prometheusBufferDefaultSize.With(prometheus.Labels{"type": t}).Set(size)
+func setPrometheusBufferDefaultSize(t string, size int) {
+	prometheusBufferDefaultSize.With(prometheus.Labels{"type": t}).Set(float64(size))
 }
 
-func setPrometheusBufferMaxSize(t string, cap int) {
-	size := float64(cap) / 1024.0 / 1024.0
-	prometheusBufferMaxSize.With(prometheus.Labels{"type": t}).Set(size)
+func setPrometheusBufferMaxSize(t string, size int) {
+	prometheusBufferMaxSize.With(prometheus.Labels{"type": t}).Set(float64(size))
 }
