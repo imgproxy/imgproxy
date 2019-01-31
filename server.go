@@ -137,7 +137,7 @@ func respondWithImage(ctx context.Context, reqID string, r *http.Request, rw htt
 		rw.Header().Set("Content-Length", strconv.Itoa(buf.Len()))
 
 		rw.WriteHeader(200)
-		buf.WriteTo(rw)
+		rw.Write(buf.Bytes())
 	} else {
 		rw.Header().Set("Content-Length", strconv.Itoa(len(data)))
 		rw.WriteHeader(200)
