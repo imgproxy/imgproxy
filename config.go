@@ -435,17 +435,17 @@ func init() {
 	if conf.DownloadBufferSize < 0 {
 		logFatal("Download buffer size should be greater than or equal to 0")
 	} else if conf.DownloadBufferSize > int(^uint32(0)) {
-		logFatal("Download buffer size can't be creater than %d", ^uint32(0))
+		logFatal("Download buffer size can't be greater than %d", ^uint32(0))
 	}
 
 	if conf.GZipBufferSize < 0 {
 		logFatal("GZip buffer size should be greater than or equal to 0")
 	} else if conf.GZipBufferSize > int(^uint32(0)) {
-		logFatal("GZip buffer size can't be creater than %d", ^uint32(0))
+		logFatal("GZip buffer size can't be greater than %d", ^uint32(0))
 	}
 
 	if conf.BufferPoolCalibrationThreshold < 64 {
-		logFatal("Buffer pool calibration threshhold should be greater than or equal to 64")
+		logFatal("Buffer pool calibration threshold should be greater than or equal to 64")
 	}
 
 	initNewrelic()

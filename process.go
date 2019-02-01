@@ -426,11 +426,7 @@ func transformImage(ctx context.Context, img **C.struct__VipsImage, data []byte,
 		}
 	}
 
-	if err = vipsFixColourspace(img); err != nil {
-		return err
-	}
-
-	return nil
+	return vipsFixColourspace(img)
 }
 
 func transformGif(ctx context.Context, img **C.struct__VipsImage, po *processingOptions) error {

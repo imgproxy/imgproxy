@@ -33,7 +33,7 @@ func initPrometheus() {
 
 	prometheusErrorsTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Name: "errors_total",
-		Help: "A counter of the occured errors separated by type.",
+		Help: "A counter of the occurred errors separated by type.",
 	}, []string{"type"})
 
 	prometheusRequestDuration = prometheus.NewHistogram(prometheus.HistogramOpts{
