@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.2.2
+
+- Memory usage optimizations.
+
 ## v2.2.1
 
 - Source file size limit;
