@@ -30,7 +30,7 @@ func newBufPool(name string, n int, defaultSize int) *bufPool {
 		name:        name,
 		defaultSize: defaultSize,
 		buffers:     make([]*bytes.Buffer, n),
-		calls:       make(intSlice, 1024),
+		calls:       make(intSlice, conf.BufferPoolCalibrationThreshold),
 	}
 
 	for i := range pool.buffers {

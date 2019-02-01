@@ -195,34 +195,36 @@ type config struct {
 	SentryEnvironment string
 	SentryRelease     string
 
-	FreeMemoryInterval int
-	DownloadBufferSize int
-	GZipBufferSize     int
+	FreeMemoryInterval             int
+	DownloadBufferSize             int
+	GZipBufferSize                 int
+	BufferPoolCalibrationThreshold int
 }
 
 var conf = config{
-	Bind:                  ":8080",
-	ReadTimeout:           10,
-	WriteTimeout:          10,
-	DownloadTimeout:       5,
-	Concurrency:           runtime.NumCPU() * 2,
-	TTL:                   3600,
-	IgnoreSslVerification: false,
-	MaxSrcResolution:      16800000,
-	MaxGifFrames:          1,
-	AllowInsecure:         false,
-	SignatureSize:         32,
-	Quality:               80,
-	GZipCompression:       5,
-	UserAgent:             fmt.Sprintf("imgproxy/%s", version),
-	ETagEnabled:           false,
-	S3Enabled:             false,
-	WatermarkOpacity:      1,
-	BugsnagStage:          "production",
-	HoneybadgerEnv:        "production",
-	SentryEnvironment:     "production",
-	SentryRelease:         fmt.Sprintf("imgproxy/%s", version),
-	FreeMemoryInterval:    10,
+	Bind:                           ":8080",
+	ReadTimeout:                    10,
+	WriteTimeout:                   10,
+	DownloadTimeout:                5,
+	Concurrency:                    runtime.NumCPU() * 2,
+	TTL:                            3600,
+	IgnoreSslVerification:          false,
+	MaxSrcResolution:               16800000,
+	MaxGifFrames:                   1,
+	AllowInsecure:                  false,
+	SignatureSize:                  32,
+	Quality:                        80,
+	GZipCompression:                5,
+	UserAgent:                      fmt.Sprintf("imgproxy/%s", version),
+	ETagEnabled:                    false,
+	S3Enabled:                      false,
+	WatermarkOpacity:               1,
+	BugsnagStage:                   "production",
+	HoneybadgerEnv:                 "production",
+	SentryEnvironment:              "production",
+	SentryRelease:                  fmt.Sprintf("imgproxy/%s", version),
+	FreeMemoryInterval:             10,
+	BufferPoolCalibrationThreshold: 1024,
 }
 
 func init() {
@@ -318,6 +320,7 @@ func init() {
 	intEnvConfig(&conf.FreeMemoryInterval, "IMGPROXY_FREE_MEMORY_INTERVAL")
 	intEnvConfig(&conf.DownloadBufferSize, "IMGPROXY_DOWNLOAD_BUFFER_SIZE")
 	intEnvConfig(&conf.GZipBufferSize, "IMGPROXY_GZIP_BUFFER_SIZE")
+	intEnvConfig(&conf.BufferPoolCalibrationThreshold, "IMGPROXY_BUFFER_POOL_CALIBRATION_THRESHOLD")
 
 	if len(conf.Keys) != len(conf.Salts) {
 		logFatal("Number of keys and number of salts should be equal. Keys: %d, salts: %d", len(conf.Keys), len(conf.Salts))
@@ -388,7 +391,7 @@ func init() {
 	}
 
 	if conf.GZipCompression < 0 {
-		logFatal("GZip compression should be greater than or quual to 0, now - %d\n", conf.GZipCompression)
+		logFatal("GZip compression should be greater than or equal to 0, now - %d\n", conf.GZipCompression)
 	} else if conf.GZipCompression > 9 {
 		logFatal("GZip compression can't be greater than 9, now - %d\n", conf.GZipCompression)
 	}
@@ -430,15 +433,19 @@ func init() {
 	}
 
 	if conf.DownloadBufferSize < 0 {
-		logFatal("Download buffer size should be greater than or quual to 0")
+		logFatal("Download buffer size should be greater than or equal to 0")
 	} else if conf.DownloadBufferSize > int(^uint32(0)) {
 		logFatal("Download buffer size can't be creater than %d", ^uint32(0))
 	}
 
 	if conf.GZipBufferSize < 0 {
-		logFatal("GZip buffer size should be greater than or quual to 0")
+		logFatal("GZip buffer size should be greater than or equal to 0")
 	} else if conf.GZipBufferSize > int(^uint32(0)) {
 		logFatal("GZip buffer size can't be creater than %d", ^uint32(0))
+	}
+
+	if conf.BufferPoolCalibrationThreshold < 64 {
+		logFatal("Buffer pool calibration threshhold should be greater than or equal to 64")
 	}
 
 	initNewrelic()
