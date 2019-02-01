@@ -12,4 +12,7 @@ imgproxy will collect the following metrics:
 * `request_duration_seconds` - a histogram of the response latency (seconds);
 * `download_duration_seconds` - a histogram of the source image downloading latency (seconds);
 * `processing_duration_seconds` - a histogram of the image processing latency (seconds);
+* `buffer_size_bytes` - a histogram of the download/gzip buffers sizes (bytes);
+* `buffer_default_size_bytes` - calibrated default buffer size (bytes);
+* `buffer_max_size_bytes` - calibrated maximum buffer size (bytes);
 * Some useful Go metrics like memstats and goroutines count.
