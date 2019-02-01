@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"runtime"
 	"sort"
 	"sync"
 )
@@ -58,10 +59,17 @@ func (p *bufPool) calibrateAndClean() {
 	p.defaultSize = maxInt(p.defaultSize, p.calls[0])
 	p.maxSize = maxInt(p.defaultSize, p.maxSize)
 
+	cleaned := false
+
 	for i, buf := range p.buffers {
 		if buf != nil && buf.Cap() > p.maxSize {
 			p.buffers[i] = nil
+			cleaned = true
 		}
+	}
+
+	if cleaned {
+		runtime.GC()
 	}
 
 	if prometheusEnabled {
