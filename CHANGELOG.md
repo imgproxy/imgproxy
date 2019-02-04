@@ -1,5 +1,10 @@
 # Changelog
 
+## v2.2.3
+
+- Fixed critical bug with cached C strings;
+- Simple filesystem transport withh less memory usage.
+
 ## v2.2.2
 
 - Memory usage optimizations.
