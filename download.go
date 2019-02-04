@@ -10,7 +10,6 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
-	"strconv"
 	"time"
 
 	_ "image/gif"
@@ -69,7 +68,7 @@ func initDownloading() {
 	}
 
 	if conf.LocalFileSystemRoot != "" {
-		transport.RegisterProtocol("local", http.NewFileTransport(http.Dir(conf.LocalFileSystemRoot)))
+		transport.RegisterProtocol("local", newFsTransport())
 	}
 
 	if conf.S3Enabled {
@@ -126,9 +125,6 @@ func readAndCheckImage(ctx context.Context, res *http.Response) (context.Context
 
 	if res.ContentLength > 0 {
 		contentLength = int(res.ContentLength)
-	} else {
-		// ContentLength wasn't set properly, trying to parse the header
-		contentLength, _ = strconv.Atoi(res.Header.Get("Content-Length"))
 	}
 
 	buf := downloadBufPool.Get(contentLength)
