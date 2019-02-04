@@ -36,7 +36,7 @@ type cConfig struct {
 
 var cConf cConfig
 
-var cstrings map[string]*C.char
+var cstrings = make(map[string]*C.char)
 
 func initVips() {
 	runtime.LockOSThread()
