@@ -39,7 +39,6 @@ $ git push heroku master
 
   ```bash
   # macOS
-  $ brew tap homebrew/science
   $ brew install vips
 
   # Ubuntu

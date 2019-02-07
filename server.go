@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"crypto/subtle"
 	"fmt"
@@ -11,7 +10,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	nanoid "github.com/matoous/go-nanoid"
@@ -46,13 +44,10 @@ var (
 
 	errInvalidMethod = newError(422, "Invalid request method", "Method doesn't allowed")
 	errInvalidSecret = newError(403, "Invalid secret", "Forbidden")
-)
 
-var responseBufPool = sync.Pool{
-	New: func() interface{} {
-		return new(bytes.Buffer)
-	},
-}
+	responseGzipBufPool *bufPool
+	responseGzipPool    *gzipPool
+)
 
 type httpHandler struct {
 	sem chan struct{}
@@ -71,6 +66,11 @@ func startServer() *http.Server {
 		Handler:        newHTTPHandler(),
 		ReadTimeout:    time.Duration(conf.ReadTimeout) * time.Second,
 		MaxHeaderBytes: 1 << 20,
+	}
+
+	if conf.GZipCompression > 0 {
+		responseGzipBufPool = newBufPool("gzip", conf.Concurrency, conf.GZipBufferSize)
+		responseGzipPool = newGzipPool(conf.Concurrency)
 	}
 
 	go func() {
@@ -121,19 +121,23 @@ func respondWithImage(ctx context.Context, reqID string, r *http.Request, rw htt
 	rw.Header().Set("Content-Type", mimes[po.Format])
 	rw.Header().Set("Content-Disposition", contentDisposition(getImageURL(ctx), po.Format))
 
+	addVaryHeader(rw)
+
 	if conf.GZipCompression > 0 && strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
-		buf := responseBufPool.Get().(*bytes.Buffer)
-		defer responseBufPool.Put(buf)
+		buf := responseGzipBufPool.Get(0)
+		defer responseGzipBufPool.Put(buf)
 
-		buf.Reset()
+		gz := responseGzipPool.Get(buf)
+		defer responseGzipPool.Put(gz)
 
-		gzipData(data, buf)
+		gz.Write(data)
+		gz.Close()
 
 		rw.Header().Set("Content-Encoding", "gzip")
 		rw.Header().Set("Content-Length", strconv.Itoa(buf.Len()))
 
 		rw.WriteHeader(200)
-		buf.WriteTo(rw)
+		rw.Write(buf.Bytes())
 	} else {
 		rw.Header().Set("Content-Length", strconv.Itoa(len(data)))
 		rw.WriteHeader(200)
@@ -141,6 +145,26 @@ func respondWithImage(ctx context.Context, reqID string, r *http.Request, rw htt
 	}
 
 	logResponse(reqID, 200, fmt.Sprintf("Processed in %s: %s; %+v", getTimerSince(ctx), getImageURL(ctx), po))
+}
+
+func addVaryHeader(rw http.ResponseWriter) {
+	vary := make([]string, 0)
+
+	if conf.EnableWebpDetection || conf.EnforceWebp {
+		vary = append(vary, "Accept")
+	}
+
+	if conf.GZipCompression > 0 {
+		vary = append(vary, "Accept-Encoding")
+	}
+
+	if conf.EnableClientHints {
+		vary = append(vary, "DPR", "Viewport-Width", "Width")
+	}
+
+	if len(vary) > 0 {
+		rw.Header().Set("Vary", strings.Join(vary, ", "))
+	}
 }
 
 func respondWithError(reqID string, rw http.ResponseWriter, err *imgproxyError) {
@@ -219,14 +243,14 @@ func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		panic(errInvalidMethod)
 	}
 
-	if !checkSecret(r) {
-		panic(errInvalidSecret)
-	}
-
 	if r.URL.RequestURI() == healthPath {
 		rw.WriteHeader(200)
 		rw.Write(imgproxyIsRunningMsg)
 		return
+	}
+
+	if !checkSecret(r) {
+		panic(errInvalidSecret)
 	}
 
 	ctx := context.Background()
@@ -279,7 +303,8 @@ func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	checkTimeout(ctx)
 
-	imageData, err := processImage(ctx)
+	imageData, processcancel, err := processImage(ctx)
+	defer processcancel()
 	if err != nil {
 		if newRelicEnabled {
 			sendErrorToNewRelic(ctx, err)

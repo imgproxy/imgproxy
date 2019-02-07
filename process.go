@@ -36,6 +36,8 @@ type cConfig struct {
 
 var cConf cConfig
 
+var cstrings = make(map[string]*C.char)
+
 func initVips() {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
@@ -115,6 +117,17 @@ func initVips() {
 func shutdownVips() {
 	C.clear_image(&watermark)
 	C.vips_shutdown()
+}
+
+func cachedCString(str string) *C.char {
+	if cstr, ok := cstrings[str]; ok {
+		return cstr
+	}
+
+	cstr := C.CString(str)
+	cstrings[str] = cstr
+
+	return cstr
 }
 
 func extractMeta(img *C.VipsImage) (int, int, int, bool) {
@@ -413,11 +426,7 @@ func transformImage(ctx context.Context, img **C.struct__VipsImage, data []byte,
 		}
 	}
 
-	if err = vipsFixColourspace(img); err != nil {
-		return err
-	}
-
-	return nil
+	return vipsFixColourspace(img)
 }
 
 func transformGif(ctx context.Context, img **C.struct__VipsImage, po *processingOptions) error {
@@ -491,7 +500,7 @@ func transformGif(ctx context.Context, img **C.struct__VipsImage, po *processing
 	return nil
 }
 
-func processImage(ctx context.Context) ([]byte, error) {
+func processImage(ctx context.Context) ([]byte, context.CancelFunc, error) {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 
@@ -511,7 +520,7 @@ func processImage(ctx context.Context) ([]byte, error) {
 	imgtype := getImageType(ctx)
 
 	if po.Gravity.Type == gravitySmart && !vipsSupportSmartcrop {
-		return nil, errSmartCropNotSupported
+		return nil, func() {}, errSmartCropNotSupported
 	}
 
 	if po.Format == imageTypeUnknown {
@@ -524,17 +533,17 @@ func processImage(ctx context.Context) ([]byte, error) {
 
 	img, err := vipsLoadImage(data, imgtype, 1, 1.0, po.Format == imageTypeGIF)
 	if err != nil {
-		return nil, err
+		return nil, func() {}, err
 	}
 	defer C.clear_image(&img)
 
 	if imgtype == imageTypeGIF && po.Format == imageTypeGIF && vipsIsAnimatedGif(img) {
 		if err := transformGif(ctx, &img, po); err != nil {
-			return nil, err
+			return nil, func() {}, err
 		}
 	} else {
 		if err := transformImage(ctx, &img, data, po, imgtype); err != nil {
-			return nil, err
+			return nil, func() {}, err
 		}
 	}
 
@@ -542,7 +551,7 @@ func processImage(ctx context.Context) ([]byte, error) {
 
 	if po.Format == imageTypeGIF {
 		if err := vipsCastUchar(&img); err != nil {
-			return nil, err
+			return nil, func() {}, err
 		}
 		checkTimeout(ctx)
 	}
@@ -645,9 +654,12 @@ func vipsLoadImage(data []byte, imgtype imageType, shrink int, svgScale float64,
 	return img, nil
 }
 
-func vipsSaveImage(img *C.struct__VipsImage, imgtype imageType, quality int) ([]byte, error) {
+func vipsSaveImage(img *C.struct__VipsImage, imgtype imageType, quality int) ([]byte, context.CancelFunc, error) {
 	var ptr unsafe.Pointer
-	defer C.g_free_go(&ptr)
+
+	cancel := func() {
+		C.g_free_go(&ptr)
+	}
 
 	err := C.int(0)
 
@@ -658,6 +670,7 @@ func vipsSaveImage(img *C.struct__VipsImage, imgtype imageType, quality int) ([]
 		err = C.vips_jpegsave_go(img, &ptr, &imgsize, 1, C.int(quality), cConf.JpegProgressive)
 	case imageTypePNG:
 		if err = C.vips_pngsave_go(img, &ptr, &imgsize, cConf.PngInterlaced, 1); err != 0 {
+			C.g_free_go(&ptr)
 			logWarning("Failed to save PNG; Trying not to embed icc profile")
 			err = C.vips_pngsave_go(img, &ptr, &imgsize, cConf.PngInterlaced, 0)
 		}
@@ -669,10 +682,15 @@ func vipsSaveImage(img *C.struct__VipsImage, imgtype imageType, quality int) ([]
 		err = C.vips_icosave_go(img, &ptr, &imgsize)
 	}
 	if err != 0 {
-		return nil, vipsError()
+		C.g_free_go(&ptr)
+		return nil, cancel, vipsError()
 	}
 
-	return C.GoBytes(ptr, C.int(imgsize)), nil
+	const maxBufSize = ^uint32(0)
+
+	b := (*[maxBufSize]byte)(ptr)[:int(imgsize):int(imgsize)]
+
+	return b, cancel, nil
 }
 
 func vipsArrayjoin(in []*C.struct__VipsImage, out **C.struct__VipsImage) error {
@@ -697,20 +715,14 @@ func vipsImageHasAlpha(img *C.struct__VipsImage) bool {
 func vipsGetInt(img *C.struct__VipsImage, name string) (int, error) {
 	var i C.int
 
-	cname := C.CString(name)
-	defer C.free(unsafe.Pointer(cname))
-
-	if C.vips_image_get_int(img, cname, &i) != 0 {
+	if C.vips_image_get_int(img, cachedCString(name), &i) != 0 {
 		return 0, vipsError()
 	}
 	return int(i), nil
 }
 
 func vipsSetInt(img *C.struct__VipsImage, name string, value int) {
-	cname := C.CString(name)
-	defer C.free(unsafe.Pointer(cname))
-
-	C.vips_image_set_int(img, cname, C.int(value))
+	C.vips_image_set_int(img, cachedCString(name), C.int(value))
 }
 
 func vipsPremultiply(img **C.struct__VipsImage) (C.VipsBandFormat, error) {
@@ -859,10 +871,7 @@ func vipsImportColourProfile(img **C.struct__VipsImage) error {
 			return err
 		}
 
-		cprofile := C.CString(profile)
-		defer C.free(unsafe.Pointer(cprofile))
-
-		if C.vips_icc_import_go(*img, &tmp, cprofile) != 0 {
+		if C.vips_icc_import_go(*img, &tmp, cachedCString(profile)) != 0 {
 			return vipsError()
 		}
 		C.swap_and_clear(img, tmp)

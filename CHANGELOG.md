@@ -1,6 +1,26 @@
 # Changelog
 
-# v2.1.5
+## v2.2.3
+
+- Fixed critical bug with cached C strings;
+- Simple filesystem transport withh less memory usage.
+
+## v2.2.2
+
+- Memory usage optimizations.
+
+## v2.2.1
+
+- Source file size limit;
+- More memory usage optimizations.
+
+## v2.2.0
+
+- Optimized memory usage. [Memory usage tweaks](./docs/memory_usage_tweaks.md);
+- `Vary` header is set when WebP detection, client hints or GZip compression are enabled;
+- Health check doesn't require `Authorization` header anymore.
+
+## v2.1.5
 
 - [Sentry support](./docs/configuration.md#error-reporting) (thanks to [@koenpunt](https://github.com/koenpunt));
 - Fixed detection of some kind of WebP images;

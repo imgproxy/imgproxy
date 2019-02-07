@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
+	"log"
 )
 
 func main() {
@@ -16,11 +17,11 @@ func main() {
 	var err error
 
 	if keyBin, err = hex.DecodeString(key); err != nil {
-		logFatal("Key expected to be hex-encoded string")
+		log.Fatal("Key expected to be hex-encoded string")
 	}
 
 	if saltBin, err = hex.DecodeString(salt); err != nil {
-		logFatal("Salt expected to be hex-encoded string")
+		log.Fatal("Salt expected to be hex-encoded string")
 	}
 
 	resize := "fill"

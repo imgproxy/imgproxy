@@ -16,6 +16,9 @@ var (
 	prometheusRequestDuration    prometheus.Histogram
 	prometheusDownloadDuration   prometheus.Histogram
 	prometheusProcessingDuration prometheus.Histogram
+	prometheusBufferSize         *prometheus.HistogramVec
+	prometheusBufferDefaultSize  *prometheus.GaugeVec
+	prometheusBufferMaxSize      *prometheus.GaugeVec
 )
 
 func initPrometheus() {
@@ -30,7 +33,7 @@ func initPrometheus() {
 
 	prometheusErrorsTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Name: "errors_total",
-		Help: "A counter of the occured errors separated by type.",
+		Help: "A counter of the occurred errors separated by type.",
 	}, []string{"type"})
 
 	prometheusRequestDuration = prometheus.NewHistogram(prometheus.HistogramOpts{
@@ -48,12 +51,30 @@ func initPrometheus() {
 		Help: "A histogram of the image processing latency.",
 	})
 
+	prometheusBufferSize = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Name: "buffer_size_bytes",
+		Help: "A histogram of the buffer size in bytes.",
+	}, []string{"type"})
+
+	prometheusBufferDefaultSize = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "buffer_default_size_bytes",
+		Help: "A gauge of the buffer default size in bytes.",
+	}, []string{"type"})
+
+	prometheusBufferMaxSize = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "buffer_max_size_bytes",
+		Help: "A gauge of the buffer max size in bytes.",
+	}, []string{"type"})
+
 	prometheus.MustRegister(
 		prometheusRequestsTotal,
 		prometheusErrorsTotal,
 		prometheusRequestDuration,
 		prometheusDownloadDuration,
 		prometheusProcessingDuration,
+		prometheusBufferSize,
+		prometheusBufferDefaultSize,
+		prometheusBufferMaxSize,
 	)
 
 	prometheusEnabled = true
@@ -80,4 +101,16 @@ func startPrometheusDuration(m prometheus.Histogram) func() {
 
 func incrementPrometheusErrorsTotal(t string) {
 	prometheusErrorsTotal.With(prometheus.Labels{"type": t}).Inc()
+}
+
+func observePrometheusBufferSize(t string, size int) {
+	prometheusBufferSize.With(prometheus.Labels{"type": t}).Observe(float64(size))
+}
+
+func setPrometheusBufferDefaultSize(t string, size int) {
+	prometheusBufferDefaultSize.With(prometheus.Labels{"type": t}).Set(float64(size))
+}
+
+func setPrometheusBufferMaxSize(t string, size int) {
+	prometheusBufferMaxSize.With(prometheus.Labels{"type": t}).Set(float64(size))
 }

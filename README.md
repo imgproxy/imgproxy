@@ -71,6 +71,7 @@ Massive processing of remote images is a potentially dangerous thing, security-w
    * [Prometheus metrics](./docs/configuration.md#prometheus-metrics)
    * [Error reporting](./docs/configuration.md#error-reporting)
    * [Syslog](./docs/configuration.md#syslog)
+   * [Memory usage tweaks](./docs/configuration.md#memory-usage-tweaks)
    * [Miscellaneous](./docs/configuration.md#miscellaneous)
 4. [Generating the URL](./docs/generating_the_url_basic.md)
    * [Basic](./docs/generating_the_url_basic.md)
@@ -86,6 +87,7 @@ Massive processing of remote images is a potentially dangerous thing, security-w
 12. [Image formats support](./docs/image_formats_support.md)
 13. [About processing pipeline](./docs/about_processing_pipeline.md)
 14. [Health check](./docs/healthcheck.md)
+15. [Memory usage tweaks](./docs/memory_usage_tweaks.md)
 
 ## Author
 
