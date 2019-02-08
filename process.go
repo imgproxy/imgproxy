@@ -23,7 +23,7 @@ var (
 	vipsTypeSupportLoad  = make(map[imageType]bool)
 	vipsTypeSupportSave  = make(map[imageType]bool)
 
-	watermark *C.struct__VipsImage
+	watermark *C.VipsImage
 
 	errSmartCropNotSupported = errors.New("Smart crop is not supported by used version of libvips")
 )
@@ -258,7 +258,7 @@ func calcCrop(width, height, cropWidth, cropHeight int, gravity *gravityOptions)
 	return
 }
 
-func resizeImage(img **C.struct__VipsImage, scale float64, hasAlpha bool) error {
+func resizeImage(img **C.VipsImage, scale float64, hasAlpha bool) error {
 	var err error
 
 	premultiplied := false
@@ -284,7 +284,7 @@ func resizeImage(img **C.struct__VipsImage, scale float64, hasAlpha bool) error 
 	return nil
 }
 
-func transformImage(ctx context.Context, img **C.struct__VipsImage, data []byte, po *processingOptions, imgtype imageType) error {
+func transformImage(ctx context.Context, img **C.VipsImage, data []byte, po *processingOptions, imgtype imageType) error {
 	var err error
 
 	imgWidth, imgHeight, angle, flip := extractMeta(*img)
@@ -429,7 +429,7 @@ func transformImage(ctx context.Context, img **C.struct__VipsImage, data []byte,
 	return vipsFixColourspace(img)
 }
 
-func transformGif(ctx context.Context, img **C.struct__VipsImage, po *processingOptions) error {
+func transformGif(ctx context.Context, img **C.VipsImage, po *processingOptions) error {
 	imgWidth := int((*img).Xsize)
 	imgHeight := int((*img).Ysize)
 
@@ -455,7 +455,7 @@ func transformGif(ctx context.Context, img **C.struct__VipsImage, po *processing
 
 	framesCount := minInt(imgHeight/frameHeight, conf.MaxGifFrames)
 
-	frames := make([]*C.struct__VipsImage, framesCount)
+	frames := make([]*C.VipsImage, framesCount)
 	defer func() {
 		for _, frame := range frames {
 			C.clear_image(&frame)
@@ -467,7 +467,7 @@ func transformGif(ctx context.Context, img **C.struct__VipsImage, po *processing
 	for i := 0; i < framesCount; i++ {
 		ind := i
 		errg.Go(func() error {
-			var frame *C.struct__VipsImage
+			var frame *C.VipsImage
 
 			if err := vipsExtract(*img, &frame, 0, ind*frameHeight, imgWidth, frameHeight); err != nil {
 				return err
@@ -576,11 +576,11 @@ func vipsPrepareWatermark() error {
 		return err
 	}
 
-	var tmp *C.struct__VipsImage
+	var tmp *C.VipsImage
 
 	if cConf.WatermarkOpacity < 1 {
 		if vipsImageHasAlpha(watermark) {
-			var alpha *C.struct__VipsImage
+			var alpha *C.VipsImage
 			defer C.clear_image(&alpha)
 
 			if C.vips_extract_band_go(watermark, &tmp, (*watermark).Bands-1, 1) != 0 {
@@ -618,8 +618,8 @@ func vipsPrepareWatermark() error {
 	return nil
 }
 
-func vipsLoadImage(data []byte, imgtype imageType, shrink int, svgScale float64, allPages bool) (*C.struct__VipsImage, error) {
-	var img *C.struct__VipsImage
+func vipsLoadImage(data []byte, imgtype imageType, shrink int, svgScale float64, allPages bool) (*C.VipsImage, error) {
+	var img *C.VipsImage
 
 	err := C.int(0)
 
@@ -654,7 +654,7 @@ func vipsLoadImage(data []byte, imgtype imageType, shrink int, svgScale float64,
 	return img, nil
 }
 
-func vipsSaveImage(img *C.struct__VipsImage, imgtype imageType, quality int) ([]byte, context.CancelFunc, error) {
+func vipsSaveImage(img *C.VipsImage, imgtype imageType, quality int) ([]byte, context.CancelFunc, error) {
 	var ptr unsafe.Pointer
 
 	cancel := func() {
@@ -693,8 +693,8 @@ func vipsSaveImage(img *C.struct__VipsImage, imgtype imageType, quality int) ([]
 	return b, cancel, nil
 }
 
-func vipsArrayjoin(in []*C.struct__VipsImage, out **C.struct__VipsImage) error {
-	var tmp *C.struct__VipsImage
+func vipsArrayjoin(in []*C.VipsImage, out **C.VipsImage) error {
+	var tmp *C.VipsImage
 
 	if C.vips_arrayjoin_go(&in[0], &tmp, C.int(len(in))) != 0 {
 		return vipsError()
@@ -704,15 +704,15 @@ func vipsArrayjoin(in []*C.struct__VipsImage, out **C.struct__VipsImage) error {
 	return nil
 }
 
-func vipsIsAnimatedGif(img *C.struct__VipsImage) bool {
+func vipsIsAnimatedGif(img *C.VipsImage) bool {
 	return C.vips_is_animated_gif(img) > 0
 }
 
-func vipsImageHasAlpha(img *C.struct__VipsImage) bool {
+func vipsImageHasAlpha(img *C.VipsImage) bool {
 	return C.vips_image_hasalpha_go(img) > 0
 }
 
-func vipsGetInt(img *C.struct__VipsImage, name string) (int, error) {
+func vipsGetInt(img *C.VipsImage, name string) (int, error) {
 	var i C.int
 
 	if C.vips_image_get_int(img, cachedCString(name), &i) != 0 {
@@ -721,12 +721,12 @@ func vipsGetInt(img *C.struct__VipsImage, name string) (int, error) {
 	return int(i), nil
 }
 
-func vipsSetInt(img *C.struct__VipsImage, name string, value int) {
+func vipsSetInt(img *C.VipsImage, name string, value int) {
 	C.vips_image_set_int(img, cachedCString(name), C.int(value))
 }
 
-func vipsPremultiply(img **C.struct__VipsImage) (C.VipsBandFormat, error) {
-	var tmp *C.struct__VipsImage
+func vipsPremultiply(img **C.VipsImage) (C.VipsBandFormat, error) {
+	var tmp *C.VipsImage
 
 	format := C.vips_band_format(*img)
 
@@ -738,8 +738,8 @@ func vipsPremultiply(img **C.struct__VipsImage) (C.VipsBandFormat, error) {
 	return format, nil
 }
 
-func vipsUnpremultiply(img **C.struct__VipsImage, format C.VipsBandFormat) error {
-	var tmp *C.struct__VipsImage
+func vipsUnpremultiply(img **C.VipsImage, format C.VipsBandFormat) error {
+	var tmp *C.VipsImage
 
 	if C.vips_unpremultiply_go(*img, &tmp) != 0 {
 		return vipsError()
@@ -754,8 +754,8 @@ func vipsUnpremultiply(img **C.struct__VipsImage, format C.VipsBandFormat) error
 	return nil
 }
 
-func vipsCastUchar(img **C.struct__VipsImage) error {
-	var tmp *C.struct__VipsImage
+func vipsCastUchar(img **C.VipsImage) error {
+	var tmp *C.VipsImage
 
 	if C.vips_image_get_format(*img) != C.VIPS_FORMAT_UCHAR {
 		if C.vips_cast_go(*img, &tmp, C.VIPS_FORMAT_UCHAR) != 0 {
@@ -767,8 +767,8 @@ func vipsCastUchar(img **C.struct__VipsImage) error {
 	return nil
 }
 
-func vipsResize(img **C.struct__VipsImage, scale float64) error {
-	var tmp *C.struct__VipsImage
+func vipsResize(img **C.VipsImage, scale float64) error {
+	var tmp *C.VipsImage
 
 	if C.vips_resize_go(*img, &tmp, C.double(scale)) != 0 {
 		return vipsError()
@@ -778,8 +778,8 @@ func vipsResize(img **C.struct__VipsImage, scale float64) error {
 	return nil
 }
 
-func vipsRotate(img **C.struct__VipsImage, angle int) error {
-	var tmp *C.struct__VipsImage
+func vipsRotate(img **C.VipsImage, angle int) error {
+	var tmp *C.VipsImage
 
 	if C.vips_rot_go(*img, &tmp, C.VipsAngle(angle)) != 0 {
 		return vipsError()
@@ -789,8 +789,8 @@ func vipsRotate(img **C.struct__VipsImage, angle int) error {
 	return nil
 }
 
-func vipsFlip(img **C.struct__VipsImage) error {
-	var tmp *C.struct__VipsImage
+func vipsFlip(img **C.VipsImage) error {
+	var tmp *C.VipsImage
 
 	if C.vips_flip_horizontal_go(*img, &tmp) != 0 {
 		return vipsError()
@@ -800,8 +800,8 @@ func vipsFlip(img **C.struct__VipsImage) error {
 	return nil
 }
 
-func vipsCrop(img **C.struct__VipsImage, left, top, width, height int) error {
-	var tmp *C.struct__VipsImage
+func vipsCrop(img **C.VipsImage, left, top, width, height int) error {
+	var tmp *C.VipsImage
 
 	if C.vips_extract_area_go(*img, &tmp, C.int(left), C.int(top), C.int(width), C.int(height)) != 0 {
 		return vipsError()
@@ -811,15 +811,15 @@ func vipsCrop(img **C.struct__VipsImage, left, top, width, height int) error {
 	return nil
 }
 
-func vipsExtract(in *C.struct__VipsImage, out **C.struct__VipsImage, left, top, width, height int) error {
+func vipsExtract(in *C.VipsImage, out **C.VipsImage, left, top, width, height int) error {
 	if C.vips_extract_area_go(in, out, C.int(left), C.int(top), C.int(width), C.int(height)) != 0 {
 		return vipsError()
 	}
 	return nil
 }
 
-func vipsSmartCrop(img **C.struct__VipsImage, width, height int) error {
-	var tmp *C.struct__VipsImage
+func vipsSmartCrop(img **C.VipsImage, width, height int) error {
+	var tmp *C.VipsImage
 
 	if C.vips_smartcrop_go(*img, &tmp, C.int(width), C.int(height)) != 0 {
 		return vipsError()
@@ -829,8 +829,8 @@ func vipsSmartCrop(img **C.struct__VipsImage, width, height int) error {
 	return nil
 }
 
-func vipsFlatten(img **C.struct__VipsImage, bg rgbColor) error {
-	var tmp *C.struct__VipsImage
+func vipsFlatten(img **C.VipsImage, bg rgbColor) error {
+	var tmp *C.VipsImage
 
 	if C.vips_flatten_go(*img, &tmp, C.double(bg.R), C.double(bg.G), C.double(bg.B)) != 0 {
 		return vipsError()
@@ -840,8 +840,8 @@ func vipsFlatten(img **C.struct__VipsImage, bg rgbColor) error {
 	return nil
 }
 
-func vipsBlur(img **C.struct__VipsImage, sigma float32) error {
-	var tmp *C.struct__VipsImage
+func vipsBlur(img **C.VipsImage, sigma float32) error {
+	var tmp *C.VipsImage
 
 	if C.vips_gaussblur_go(*img, &tmp, C.double(sigma)) != 0 {
 		return vipsError()
@@ -851,8 +851,8 @@ func vipsBlur(img **C.struct__VipsImage, sigma float32) error {
 	return nil
 }
 
-func vipsSharpen(img **C.struct__VipsImage, sigma float32) error {
-	var tmp *C.struct__VipsImage
+func vipsSharpen(img **C.VipsImage, sigma float32) error {
+	var tmp *C.VipsImage
 
 	if C.vips_sharpen_go(*img, &tmp, C.double(sigma)) != 0 {
 		return vipsError()
@@ -862,8 +862,8 @@ func vipsSharpen(img **C.struct__VipsImage, sigma float32) error {
 	return nil
 }
 
-func vipsImportColourProfile(img **C.struct__VipsImage) error {
-	var tmp *C.struct__VipsImage
+func vipsImportColourProfile(img **C.VipsImage) error {
+	var tmp *C.VipsImage
 
 	if C.vips_need_icc_import(*img) > 0 {
 		profile, err := cmykProfilePath()
@@ -880,8 +880,8 @@ func vipsImportColourProfile(img **C.struct__VipsImage) error {
 	return nil
 }
 
-func vipsFixColourspace(img **C.struct__VipsImage) error {
-	var tmp *C.struct__VipsImage
+func vipsFixColourspace(img **C.VipsImage) error {
+	var tmp *C.VipsImage
 
 	if C.vips_image_guess_interpretation(*img) != C.VIPS_INTERPRETATION_sRGB {
 		if C.vips_colourspace_go(*img, &tmp, C.VIPS_INTERPRETATION_sRGB) != 0 {
@@ -893,8 +893,8 @@ func vipsFixColourspace(img **C.struct__VipsImage) error {
 	return nil
 }
 
-func vipsImageCopyMemory(img **C.struct__VipsImage) error {
-	var tmp *C.struct__VipsImage
+func vipsImageCopyMemory(img **C.VipsImage) error {
+	var tmp *C.VipsImage
 	if tmp = C.vips_image_copy_memory(*img); tmp == nil {
 		return vipsError()
 	}
@@ -902,8 +902,8 @@ func vipsImageCopyMemory(img **C.struct__VipsImage) error {
 	return nil
 }
 
-func vipsReplicate(img **C.struct__VipsImage, width, height C.int) error {
-	var tmp *C.struct__VipsImage
+func vipsReplicate(img **C.VipsImage, width, height C.int) error {
+	var tmp *C.VipsImage
 
 	if C.vips_replicate_go(*img, &tmp, 1+width/(*img).Xsize, 1+height/(*img).Ysize) != 0 {
 		return vipsError()
@@ -918,7 +918,7 @@ func vipsReplicate(img **C.struct__VipsImage, width, height C.int) error {
 	return nil
 }
 
-func vipsEmbed(img **C.struct__VipsImage, gravity gravityType, width, height C.int, offX, offY C.int) error {
+func vipsEmbed(img **C.VipsImage, gravity gravityType, width, height C.int, offX, offY C.int) error {
 	wmWidth := (*img).Xsize
 	wmHeight := (*img).Ysize
 
@@ -953,7 +953,7 @@ func vipsEmbed(img **C.struct__VipsImage, gravity gravityType, width, height C.i
 		top = 0
 	}
 
-	var tmp *C.struct__VipsImage
+	var tmp *C.VipsImage
 	if C.vips_embed_go(*img, &tmp, left, top, width, height) != 0 {
 		return vipsError()
 	}
@@ -962,7 +962,7 @@ func vipsEmbed(img **C.struct__VipsImage, gravity gravityType, width, height C.i
 	return nil
 }
 
-func vipsResizeWatermark(width, height int) (wm *C.struct__VipsImage, err error) {
+func vipsResizeWatermark(width, height int) (wm *C.VipsImage, err error) {
 	wmW := float64(watermark.Xsize)
 	wmH := float64(watermark.Ysize)
 
@@ -986,12 +986,12 @@ func vipsResizeWatermark(width, height int) (wm *C.struct__VipsImage, err error)
 	return
 }
 
-func vipsApplyWatermark(img **C.struct__VipsImage, opts *watermarkOptions) error {
+func vipsApplyWatermark(img **C.VipsImage, opts *watermarkOptions) error {
 	if watermark == nil {
 		return nil
 	}
 
-	var wm, wmAlpha, tmp *C.struct__VipsImage
+	var wm, wmAlpha, tmp *C.VipsImage
 	var err error
 
 	defer C.clear_image(&wm)
@@ -1051,7 +1051,7 @@ func vipsApplyWatermark(img **C.struct__VipsImage, opts *watermarkOptions) error
 
 	imgFormat := C.vips_image_get_format(*img)
 
-	var imgAlpha *C.struct__VipsImage
+	var imgAlpha *C.VipsImage
 	defer C.clear_image(&imgAlpha)
 
 	hasAlpha := vipsImageHasAlpha(*img)
