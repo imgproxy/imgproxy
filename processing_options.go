@@ -2,7 +2,7 @@ package main
 
 /*
 #cgo LDFLAGS: -s -w
-#include "image_types.h"
+#include "vips.h"
 */
 import "C"
 

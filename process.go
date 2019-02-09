@@ -258,32 +258,6 @@ func calcCrop(width, height, cropWidth, cropHeight int, gravity *gravityOptions)
 	return
 }
 
-func resizeImage(img **C.VipsImage, scale float64, hasAlpha bool) error {
-	var err error
-
-	premultiplied := false
-	var bandFormat C.VipsBandFormat
-
-	if hasAlpha {
-		if bandFormat, err = vipsPremultiply(img); err != nil {
-			return err
-		}
-		premultiplied = true
-	}
-
-	if err = vipsResize(img, scale); err != nil {
-		return err
-	}
-
-	if premultiplied {
-		if err = vipsUnpremultiply(img, bandFormat); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
 func transformImage(ctx context.Context, img **C.VipsImage, data []byte, po *processingOptions, imgtype imageType) error {
 	var err error
 
@@ -313,7 +287,7 @@ func transformImage(ctx context.Context, img **C.VipsImage, data []byte, po *pro
 				}
 			}
 
-			if err = resizeImage(img, scale, hasAlpha); err != nil {
+			if err = vipsResize(img, scale, hasAlpha); err != nil {
 				return err
 			}
 		}
@@ -392,7 +366,7 @@ func transformImage(ctx context.Context, img **C.VipsImage, data []byte, po *pro
 
 	if po.Enlarge && po.Resize == resizeCrop && po.Dpr > 1 {
 		// We didn't enlarge the image before, because is wasn't optimal. Now it's time to do it
-		if err = resizeImage(img, po.Dpr, hasAlpha); err != nil {
+		if err = vipsResize(img, po.Dpr, hasAlpha); err != nil {
 			return err
 		}
 		if err = vipsImageCopyMemory(img); err != nil {
@@ -578,37 +552,10 @@ func vipsPrepareWatermark() error {
 
 	var tmp *C.VipsImage
 
-	if cConf.WatermarkOpacity < 1 {
-		if vipsImageHasAlpha(watermark) {
-			var alpha *C.VipsImage
-			defer C.clear_image(&alpha)
-
-			if C.vips_extract_band_go(watermark, &tmp, (*watermark).Bands-1, 1) != 0 {
-				return vipsError()
-			}
-			C.swap_and_clear(&alpha, tmp)
-
-			if C.vips_extract_band_go(watermark, &tmp, 0, (*watermark).Bands-1) != 0 {
-				return vipsError()
-			}
-			C.swap_and_clear(&watermark, tmp)
-
-			if C.vips_linear_go(alpha, &tmp, cConf.WatermarkOpacity, 0) != 0 {
-				return vipsError()
-			}
-			C.swap_and_clear(&alpha, tmp)
-
-			if C.vips_bandjoin_go(watermark, alpha, &tmp) != 0 {
-				return vipsError()
-			}
-			C.swap_and_clear(&watermark, tmp)
-		} else {
-			if C.vips_bandjoin_const_go(watermark, &tmp, cConf.WatermarkOpacity*255) != 0 {
-				return vipsError()
-			}
-			C.swap_and_clear(&watermark, tmp)
-		}
+	if C.vips_apply_opacity(watermark, &tmp, C.double(conf.WatermarkOpacity)) != 0 {
+		return vipsError()
 	}
+	C.swap_and_clear(&watermark, tmp)
 
 	if tmp = C.vips_image_copy_memory(watermark); tmp == nil {
 		return vipsError()
@@ -725,35 +672,6 @@ func vipsSetInt(img *C.VipsImage, name string, value int) {
 	C.vips_image_set_int(img, cachedCString(name), C.int(value))
 }
 
-func vipsPremultiply(img **C.VipsImage) (C.VipsBandFormat, error) {
-	var tmp *C.VipsImage
-
-	format := C.vips_band_format(*img)
-
-	if C.vips_premultiply_go(*img, &tmp) != 0 {
-		return 0, vipsError()
-	}
-
-	C.swap_and_clear(img, tmp)
-	return format, nil
-}
-
-func vipsUnpremultiply(img **C.VipsImage, format C.VipsBandFormat) error {
-	var tmp *C.VipsImage
-
-	if C.vips_unpremultiply_go(*img, &tmp) != 0 {
-		return vipsError()
-	}
-	C.swap_and_clear(img, tmp)
-
-	if C.vips_cast_go(*img, &tmp, format) != 0 {
-		return vipsError()
-	}
-	C.swap_and_clear(img, tmp)
-
-	return nil
-}
-
 func vipsCastUchar(img **C.VipsImage) error {
 	var tmp *C.VipsImage
 
@@ -767,14 +685,21 @@ func vipsCastUchar(img **C.VipsImage) error {
 	return nil
 }
 
-func vipsResize(img **C.VipsImage, scale float64) error {
+func vipsResize(img **C.VipsImage, scale float64, hasAlpa bool) error {
 	var tmp *C.VipsImage
 
-	if C.vips_resize_go(*img, &tmp, C.double(scale)) != 0 {
-		return vipsError()
+	if hasAlpa {
+		if C.vips_resize_with_premultiply(*img, &tmp, C.double(scale)) != 0 {
+			return vipsError()
+		}
+	} else {
+		if C.vips_resize_go(*img, &tmp, C.double(scale)) != 0 {
+			return vipsError()
+		}
 	}
 
 	C.swap_and_clear(img, tmp)
+
 	return nil
 }
 
@@ -905,12 +830,7 @@ func vipsImageCopyMemory(img **C.VipsImage) error {
 func vipsReplicate(img **C.VipsImage, width, height C.int) error {
 	var tmp *C.VipsImage
 
-	if C.vips_replicate_go(*img, &tmp, 1+width/(*img).Xsize, 1+height/(*img).Ysize) != 0 {
-		return vipsError()
-	}
-	C.swap_and_clear(img, tmp)
-
-	if C.vips_extract_area_go(*img, &tmp, 0, 0, width, height) != 0 {
+	if C.vips_replicate_go(*img, &tmp, width, height) != 0 {
 		return vipsError()
 	}
 	C.swap_and_clear(img, tmp)
@@ -979,7 +899,7 @@ func vipsResizeWatermark(width, height int) (wm *C.VipsImage, err error) {
 		scale = 1 / wmH
 	}
 
-	if C.vips_resize_go(watermark, &wm, C.double(scale)) != 0 {
+	if C.vips_resize_with_premultiply(watermark, &wm, C.double(scale)) != 0 {
 		err = vipsError()
 	}
 
@@ -991,17 +911,16 @@ func vipsApplyWatermark(img **C.VipsImage, opts *watermarkOptions) error {
 		return nil
 	}
 
-	var wm, wmAlpha, tmp *C.VipsImage
-	var err error
-
+	var wm, tmp *C.VipsImage
 	defer C.clear_image(&wm)
-	defer C.clear_image(&wmAlpha)
+
+	var err error
 
 	imgW := (*img).Xsize
 	imgH := (*img).Ysize
 
 	if opts.Scale == 0 {
-		if wm = C.vips_image_copy_memory(watermark); wm == nil {
+		if C.vips_copy_go(watermark, &wm) != 0 {
 			return vipsError()
 		}
 	} else {
@@ -1023,68 +942,10 @@ func vipsApplyWatermark(img **C.VipsImage, opts *watermarkOptions) error {
 		}
 	}
 
-	if C.vips_extract_band_go(wm, &tmp, (*wm).Bands-1, 1) != 0 {
-		return vipsError()
-	}
-	C.swap_and_clear(&wmAlpha, tmp)
-
-	if C.vips_extract_band_go(wm, &tmp, 0, (*wm).Bands-1) != 0 {
-		return vipsError()
-	}
-	C.swap_and_clear(&wm, tmp)
-
-	imgInterpolation := C.vips_image_guess_interpretation(*img)
-
-	if imgInterpolation != C.vips_image_guess_interpretation(wm) {
-		if C.vips_colourspace_go(wm, &tmp, imgInterpolation) != 0 {
-			return vipsError()
-		}
-		C.swap_and_clear(&wm, tmp)
-	}
-
-	if opts.Opacity < 1 {
-		if C.vips_linear_go(wmAlpha, &tmp, C.double(opts.Opacity), 0) != 0 {
-			return vipsError()
-		}
-		C.swap_and_clear(&wmAlpha, tmp)
-	}
-
-	imgFormat := C.vips_image_get_format(*img)
-
-	var imgAlpha *C.VipsImage
-	defer C.clear_image(&imgAlpha)
-
-	hasAlpha := vipsImageHasAlpha(*img)
-
-	if hasAlpha {
-		if C.vips_extract_band_go(*img, &imgAlpha, (**img).Bands-1, 1) != 0 {
-			return vipsError()
-		}
-
-		if C.vips_extract_band_go(*img, &tmp, 0, (**img).Bands-1) != 0 {
-			return vipsError()
-		}
-		C.swap_and_clear(img, tmp)
-	}
-
-	if C.vips_ifthenelse_go(wmAlpha, wm, *img, &tmp) != 0 {
+	if C.vips_apply_watermark(*img, wm, &tmp, C.double(opts.Opacity)) != 0 {
 		return vipsError()
 	}
 	C.swap_and_clear(img, tmp)
-
-	if hasAlpha {
-		if C.vips_bandjoin_go(*img, imgAlpha, &tmp) != 0 {
-			return vipsError()
-		}
-		C.swap_and_clear(img, tmp)
-	}
-
-	if imgFormat != C.vips_image_get_format(*img) {
-		if C.vips_cast_go(*img, &tmp, imgFormat) != 0 {
-			return vipsError()
-		}
-		C.swap_and_clear(img, tmp)
-	}
 
 	return nil
 }
