@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.2.4
+
+- Minor improvements.
+
 ## v2.2.3
 
 - Fixed critical bug with cached C strings;
