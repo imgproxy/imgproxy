@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/base64"
 	"io/ioutil"
-	"log"
 	"strings"
 )
 
@@ -20059,7 +20058,7 @@ func cmykProfilePath() (string, error) {
 		f.Close()
 
 		_cmykProfilePath = f.Name()
-		log.Printf("CMYK profile was written to %v", _cmykProfilePath)
+		logNotice("CMYK profile was written to %v", _cmykProfilePath)
 	}
 
 	return _cmykProfilePath, nil

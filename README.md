@@ -3,7 +3,8 @@
 <img align="right" width="200" height="200" title="imgproxy logo"
      src="https://cdn.rawgit.com/DarthSim/imgproxy/master/logo.svg">
 
-[![CircleCI](https://circleci.com/gh/DarthSim/imgproxy.svg?style=svg)](https://circleci.com/gh/DarthSim/imgproxy) [![Docker](https://img.shields.io/badge/docker-darthsim%2Fimgproxy-blue.svg)](https://hub.docker.com/r/darthsim/imgproxy/) [![MicroBadger Size](https://img.shields.io/microbadger/image-size/darthsim/imgproxy.svg)](https://hub.docker.com/r/darthsim/imgproxy/) [![Docker Pulls](https://img.shields.io/docker/pulls/darthsim/imgproxy.svg)](https://hub.docker.com/r/darthsim/imgproxy/)
+
+[![CircleCI branch](https://img.shields.io/circleci/project/github/DarthSim/imgproxy/master.svg?style=for-the-badge)](https://circleci.com/gh/DarthSim/imgproxy) [![Docker](https://img.shields.io/badge/docker-darthsim%2Fimgproxy-blue.svg?style=for-the-badge)](https://hub.docker.com/r/darthsim/imgproxy/) [![MicroBadger Size](https://img.shields.io/microbadger/image-size/darthsim/imgproxy.svg?style=for-the-badge)](https://hub.docker.com/r/darthsim/imgproxy/) [![Docker Pulls](https://img.shields.io/docker/pulls/darthsim/imgproxy.svg?style=for-the-badge)](https://hub.docker.com/r/darthsim/imgproxy/)
 
 
 imgproxy is a fast and secure standalone server for resizing and converting remote images. The main principles of imgproxy are simplicity, speed, and security.
@@ -35,7 +36,7 @@ imgproxy only includes the must-have features for image processing, fine-tuning 
 
 imgproxy uses probably the most efficient image processing library there is, called `libvips`. It is screaming fast and has a very low memory footprint; with it, we can handle the processing for a massive amount of images on the fly.
 
-imgproxy also uses [fasthttp](https://github.com/valyala/fasthttp) for the best HTTP networking speed and less memory usage.
+imgproxy also uses native Go's `net/http` routing for the best HTTP networking support.
 
 #### Security
 
@@ -60,20 +61,33 @@ Massive processing of remote images is a potentially dangerous thing, security-w
    * [Security](./docs/configuration.md#security)
    * [Compression](./docs/configuration.md#compression)
    * [WebP support detection](./docs/configuration.md#webp-support-detection)
+   * [Client Hints support](./docs/configuration.md#client-hints-support)
+   * [Watermark](./docs/configuration.md#watermark)
    * [Presets](./docs/configuration.md#presets)
    * [Serving local files](./docs/configuration.md#serving-local-files)
    * [Serving files from Amazon S3](./docs/configuration.md#serving-files-from-amazon-s3)
+   * [Serving files from Google Cloud Storage](./docs/configuration.md#serving-files-from-google-cloud-storage)
+   * [New Relic metrics](./docs/configuration.md#new-relic-metrics)
+   * [Prometheus metrics](./docs/configuration.md#prometheus-metrics)
+   * [Error reporting](./docs/configuration.md#error-reporting)
+   * [Syslog](./docs/configuration.md#syslog)
+   * [Memory usage tweaks](./docs/configuration.md#memory-usage-tweaks)
    * [Miscellaneous](./docs/configuration.md#miscellaneous)
 4. [Generating the URL](./docs/generating_the_url_basic.md)
    * [Basic](./docs/generating_the_url_basic.md)
    * [Advanced](./docs/generating_the_url_advanced.md)
    * [Signing the URL](./docs/signing_the_url.md)
-5. [Presets](./docs/presets.md)
-6. [Serving local files](./docs/serving_local_files.md)
-7. [Serving files from Amazon S3](./docs/serving_files_from_s3.md)
-7. [Source image formats support](./docs/source_image_formats_support.md)
-8. [About processing pipeline](./docs/about_processing_pipeline.md)
-9. [Health check](./docs/healthcheck.md)
+5. [Watermark](./docs/watermark.md)
+6. [Presets](./docs/presets.md)
+7. [Serving local files](./docs/serving_local_files.md)
+8. [Serving files from Amazon S3](./docs/serving_files_from_s3.md)
+9. [Serving files from Google Cloud Storage](./docs/serving_files_from_google_cloud_storage.md)
+10. [New Relic](./docs/new_relic.md)
+11. [Prometheus](./docs/prometheus.md)
+12. [Image formats support](./docs/image_formats_support.md)
+13. [About processing pipeline](./docs/about_processing_pipeline.md)
+14. [Health check](./docs/healthcheck.md)
+15. [Memory usage tweaks](./docs/memory_usage_tweaks.md)
 
 ## Author
 

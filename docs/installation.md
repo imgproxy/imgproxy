@@ -39,7 +39,6 @@ $ git push heroku master
 
   ```bash
   # macOS
-  $ brew tap homebrew/science
   $ brew install vips
 
   # Ubuntu
@@ -47,6 +46,9 @@ $ git push heroku master
   # It's recommended to use PPA with an up to date version.
   $ sudo add-apt-repository ppa:dhor/myway
   $ sudo apt-get install libvips-dev
+  
+  # FreeBSD
+  pkg install -y pkgconf vips
   ```
 
   **Note:** Most libvips packages come with WebP support. If you want libvips to support WebP on macOS, you need to install it this way:

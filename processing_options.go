@@ -2,7 +2,7 @@ package main
 
 /*
 #cgo LDFLAGS: -s -w
-#include "image_types.h"
+#include "vips.h"
 */
 import "C"
 
@@ -11,11 +11,11 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"net/http"
+	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
-
-	"github.com/valyala/fasthttp"
 )
 
 type urlOptions map[string][]string
@@ -23,12 +23,21 @@ type urlOptions map[string][]string
 type imageType int
 
 const (
-	imageTypeUnknown = C.UNKNOWN
-	imageTypeJPEG    = C.JPEG
-	imageTypePNG     = C.PNG
-	imageTypeWEBP    = C.WEBP
-	imageTypeGIF     = C.GIF
+	imageTypeUnknown = imageType(C.UNKNOWN)
+	imageTypeJPEG    = imageType(C.JPEG)
+	imageTypePNG     = imageType(C.PNG)
+	imageTypeWEBP    = imageType(C.WEBP)
+	imageTypeGIF     = imageType(C.GIF)
+	imageTypeICO     = imageType(C.ICO)
+	imageTypeSVG     = imageType(C.SVG)
 )
+
+type processingHeaders struct {
+	Accept        string
+	Width         string
+	ViewportWidth string
+	DPR           string
+}
 
 var imageTypes = map[string]imageType{
 	"jpeg": imageTypeJPEG,
@@ -36,6 +45,8 @@ var imageTypes = map[string]imageType{
 	"png":  imageTypePNG,
 	"webp": imageTypeWEBP,
 	"gif":  imageTypeGIF,
+	"ico":  imageTypeICO,
+	"svg":  imageTypeSVG,
 }
 
 type gravityType int
@@ -46,21 +57,29 @@ const (
 	gravityEast
 	gravitySouth
 	gravityWest
+	gravityNorthWest
+	gravityNorthEast
+	gravitySouthWest
+	gravitySouthEast
 	gravitySmart
 	gravityFocusPoint
 )
 
 var gravityTypes = map[string]gravityType{
-	"ce": gravityCenter,
-	"no": gravityNorth,
-	"ea": gravityEast,
-	"so": gravitySouth,
-	"we": gravityWest,
-	"sm": gravitySmart,
-	"fp": gravityFocusPoint,
+	"ce":   gravityCenter,
+	"no":   gravityNorth,
+	"ea":   gravityEast,
+	"so":   gravitySouth,
+	"we":   gravityWest,
+	"nowe": gravityNorthWest,
+	"noea": gravityNorthEast,
+	"sowe": gravitySouthWest,
+	"soea": gravitySouthEast,
+	"sm":   gravitySmart,
+	"fp":   gravityFocusPoint,
 }
 
-type gravity struct {
+type gravityOptions struct {
 	Type gravityType
 	X, Y float64
 }
@@ -79,7 +98,7 @@ var resizeTypes = map[string]resizeType{
 	"crop": resizeCrop,
 }
 
-type color struct{ R, G, B uint8 }
+type rgbColor struct{ R, G, B uint8 }
 
 var hexColorRegex = regexp.MustCompile("^([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$")
 
@@ -88,29 +107,54 @@ const (
 	hexColorShortFormat = "%1x%1x%1x"
 )
 
+type watermarkOptions struct {
+	Enabled   bool
+	Opacity   float64
+	Replicate bool
+	Gravity   gravityType
+	OffsetX   int
+	OffsetY   int
+	Scale     float64
+}
+
 type processingOptions struct {
-	Resize      resizeType
-	Width       int
-	Height      int
-	Gravity     gravity
-	Enlarge     bool
-	Format      imageType
-	Flatten     bool
-	Background  color
-	Blur        float32
-	Sharpen     float32
+	Resize     resizeType
+	Width      int
+	Height     int
+	Dpr        float64
+	Gravity    gravityOptions
+	Enlarge    bool
+	Format     imageType
+	Quality    int
+	Flatten    bool
+	Background rgbColor
+	Blur       float32
+	Sharpen    float32
+
+	CacheBuster string
+
+	Watermark watermarkOptions
+
 	UsedPresets []string
 }
+
+type applyOptionFunc func(po *processingOptions, args []string) error
 
 const (
 	imageURLCtxKey          = ctxKey("imageUrl")
 	processingOptionsCtxKey = ctxKey("processingOptions")
+	urlTokenPlain           = "plain"
+	maxClientHintDPR        = 8
+
+	msgForbidden  = "Forbidden"
+	msgInvalidURL = "Invalid URL"
 )
 
 var (
+	errInvalidImageURL                    = errors.New("Invalid image url")
 	errInvalidURLEncoding                 = errors.New("Invalid url encoding")
-	errInvalidPath                        = errors.New("Invalid path")
 	errResultingImageFormatIsNotSupported = errors.New("Resulting image format is not supported")
+	errInvalidPath                        = newError(404, "Invalid path", msgInvalidURL)
 )
 
 func (it imageType) String() string {
@@ -140,8 +184,21 @@ func (rt resizeType) String() string {
 	return ""
 }
 
-func colorFromHex(hexcolor string) (color, error) {
-	c := color{}
+func (po *processingOptions) isPresetUsed(name string) bool {
+	for _, usedName := range po.UsedPresets {
+		if usedName == name {
+			return true
+		}
+	}
+	return false
+}
+
+func (po *processingOptions) presetUsed(name string) {
+	po.UsedPresets = append(po.UsedPresets, name)
+}
+
+func colorFromHex(hexcolor string) (rgbColor, error) {
+	c := rgbColor{}
 
 	if !hexColorRegex.MatchString(hexcolor) {
 		return c, fmt.Errorf("Invalid hex color: %s", hexcolor)
@@ -159,21 +216,8 @@ func colorFromHex(hexcolor string) (color, error) {
 	return c, nil
 }
 
-func (po *processingOptions) isPresetUsed(name string) bool {
-	for _, usedName := range po.UsedPresets {
-		if usedName == name {
-			return true
-		}
-	}
-	return false
-}
-
-func (po *processingOptions) presetUsed(name string) {
-	po.UsedPresets = append(po.UsedPresets, name)
-}
-
-func decodeURL(parts []string) (string, string, error) {
-	var extension string
+func decodeBase64URL(parts []string) (string, string, error) {
+	var format string
 
 	urlParts := strings.Split(strings.Join(parts, ""), ".")
 
@@ -181,16 +225,63 @@ func decodeURL(parts []string) (string, string, error) {
 		return "", "", errInvalidURLEncoding
 	}
 
-	if len(urlParts) == 2 {
-		extension = urlParts[1]
+	if len(urlParts) == 2 && len(urlParts[1]) > 0 {
+		format = urlParts[1]
 	}
 
-	url, err := base64.RawURLEncoding.DecodeString(urlParts[0])
+	imageURL, err := base64.RawURLEncoding.DecodeString(strings.TrimRight(urlParts[0], "="))
 	if err != nil {
 		return "", "", errInvalidURLEncoding
 	}
 
-	return string(url), extension, nil
+	fullURL := fmt.Sprintf("%s%s", conf.BaseURL, string(imageURL))
+
+	if _, err := url.ParseRequestURI(fullURL); err != nil {
+		return "", "", errInvalidImageURL
+	}
+
+	return fullURL, format, nil
+}
+
+func decodePlainURL(parts []string) (string, string, error) {
+	var format string
+
+	urlParts := strings.Split(strings.Join(parts, "/"), "@")
+
+	if len(urlParts) > 2 {
+		return "", "", errInvalidURLEncoding
+	}
+
+	if len(urlParts) == 2 && len(urlParts[1]) > 0 {
+		format = urlParts[1]
+	}
+
+	fullURL := fmt.Sprintf("%s%s", conf.BaseURL, urlParts[0])
+
+	if _, err := url.ParseRequestURI(fullURL); err == nil {
+		return fullURL, format, nil
+	}
+
+	if unescaped, err := url.PathUnescape(urlParts[0]); err == nil {
+		fullURL := fmt.Sprintf("%s%s", conf.BaseURL, unescaped)
+		if _, err := url.ParseRequestURI(fullURL); err == nil {
+			return fullURL, format, nil
+		}
+	}
+
+	return "", "", errInvalidImageURL
+}
+
+func decodeURL(parts []string) (string, string, error) {
+	if len(parts) == 0 {
+		return "", "", errInvalidURLEncoding
+	}
+
+	if parts[0] == urlTokenPlain && len(parts) > 1 {
+		return decodePlainURL(parts[1:])
+	}
+
+	return decodeBase64URL(parts)
 }
 
 func applyWidthOption(po *processingOptions, args []string) error {
@@ -291,6 +382,20 @@ func applyResizeOption(po *processingOptions, args []string) error {
 	return nil
 }
 
+func applyDprOption(po *processingOptions, args []string) error {
+	if len(args) > 1 {
+		return fmt.Errorf("Invalid dpr arguments: %v", args)
+	}
+
+	if d, err := strconv.ParseFloat(args[0], 64); err == nil || (d > 0 && d != 1) {
+		po.Dpr = d
+	} else {
+		return fmt.Errorf("Invalid dpr: %s", args[0])
+	}
+
+	return nil
+}
+
 func applyGravityOption(po *processingOptions, args []string) error {
 	if g, ok := gravityTypes[args[0]]; ok {
 		po.Gravity.Type = g
@@ -316,6 +421,20 @@ func applyGravityOption(po *processingOptions, args []string) error {
 		}
 	} else if len(args) > 1 {
 		return fmt.Errorf("Invalid gravity arguments: %v", args)
+	}
+
+	return nil
+}
+
+func applyQualityOption(po *processingOptions, args []string) error {
+	if len(args) > 1 {
+		return fmt.Errorf("Invalid quality arguments: %v", args)
+	}
+
+	if q, err := strconv.Atoi(args[0]); err == nil && q > 0 && q <= 100 {
+		po.Quality = q
+	} else {
+		return fmt.Errorf("Invalid quality: %s", args[0])
 	}
 
 	return nil
@@ -409,6 +528,55 @@ func applyPresetOption(po *processingOptions, args []string) error {
 	return nil
 }
 
+func applyWatermarkOption(po *processingOptions, args []string) error {
+	if len(args) > 7 {
+		return fmt.Errorf("Invalid watermark arguments: %v", args)
+	}
+
+	if o, err := strconv.ParseFloat(args[0], 64); err == nil && o >= 0 && o <= 1 {
+		po.Watermark.Enabled = o > 0
+		po.Watermark.Opacity = o
+	} else {
+		return fmt.Errorf("Invalid watermark opacity: %s", args[0])
+	}
+
+	if len(args) > 1 && len(args[1]) > 0 {
+		if args[1] == "re" {
+			po.Watermark.Replicate = true
+		} else if g, ok := gravityTypes[args[1]]; ok && g != gravityFocusPoint && g != gravitySmart {
+			po.Watermark.Gravity = g
+		} else {
+			return fmt.Errorf("Invalid watermark position: %s", args[1])
+		}
+	}
+
+	if len(args) > 2 && len(args[2]) > 0 {
+		if x, err := strconv.Atoi(args[2]); err == nil {
+			po.Watermark.OffsetX = x
+		} else {
+			return fmt.Errorf("Invalid watermark X offset: %s", args[2])
+		}
+	}
+
+	if len(args) > 3 && len(args[3]) > 0 {
+		if y, err := strconv.Atoi(args[3]); err == nil {
+			po.Watermark.OffsetY = y
+		} else {
+			return fmt.Errorf("Invalid watermark Y offset: %s", args[3])
+		}
+	}
+
+	if len(args) > 4 && len(args[4]) > 0 {
+		if s, err := strconv.ParseFloat(args[4], 64); err == nil && s >= 0 {
+			po.Watermark.Scale = s
+		} else {
+			return fmt.Errorf("Invalid watermark scale: %s", args[4])
+		}
+	}
+
+	return nil
+}
+
 func applyFormatOption(po *processingOptions, args []string) error {
 	if len(args) > 1 {
 		return fmt.Errorf("Invalid format arguments: %v", args)
@@ -428,6 +596,16 @@ func applyFormatOption(po *processingOptions, args []string) error {
 	if !vipsTypeSupportSave[po.Format] {
 		return errResultingImageFormatIsNotSupported
 	}
+
+	return nil
+}
+
+func applyCacheBusterOption(po *processingOptions, args []string) error {
+	if len(args) > 1 {
+		return fmt.Errorf("Invalid cache buster arguments: %v", args)
+	}
+
+	po.CacheBuster = args[0]
 
 	return nil
 }
@@ -462,8 +640,16 @@ func applyProcessingOption(po *processingOptions, name string, args []string) er
 		if err := applyEnlargeOption(po, args); err != nil {
 			return err
 		}
+	case "dpr":
+		if err := applyDprOption(po, args); err != nil {
+			return err
+		}
 	case "gravity", "g":
 		if err := applyGravityOption(po, args); err != nil {
+			return err
+		}
+	case "quality", "q":
+		if err := applyQualityOption(po, args); err != nil {
 			return err
 		}
 	case "background", "bg":
@@ -478,8 +664,16 @@ func applyProcessingOption(po *processingOptions, name string, args []string) er
 		if err := applySharpenOption(po, args); err != nil {
 			return err
 		}
+	case "watermark", "wm":
+		if err := applyWatermarkOption(po, args); err != nil {
+			return err
+		}
 	case "preset", "pr":
 		if err := applyPresetOption(po, args); err != nil {
+			return err
+		}
+	case "cachebuster", "cb":
+		if err := applyCacheBusterOption(po, args); err != nil {
 			return err
 		}
 	default:
@@ -525,25 +719,43 @@ func parseURLOptions(opts []string) (urlOptions, []string) {
 	return parsed, rest
 }
 
-func defaultProcessingOptions(acceptHeader string) (*processingOptions, error) {
+func defaultProcessingOptions(headers *processingHeaders) (*processingOptions, error) {
 	var err error
 
 	po := processingOptions{
 		Resize:      resizeFit,
 		Width:       0,
 		Height:      0,
-		Gravity:     gravity{Type: gravityCenter},
+		Gravity:     gravityOptions{Type: gravityCenter},
 		Enlarge:     false,
-		Format:      imageTypeJPEG,
+		Quality:     conf.Quality,
+		Format:      imageTypeUnknown,
+		Background:  rgbColor{255, 255, 255},
 		Blur:        0,
 		Sharpen:     0,
+		Dpr:         1,
+		Watermark:   watermarkOptions{Opacity: 1, Replicate: false, Gravity: gravityCenter},
 		UsedPresets: make([]string, 0, len(conf.Presets)),
 	}
 
-	if (conf.EnableWebpDetection || conf.EnforceWebp) && strings.Contains(acceptHeader, "image/webp") {
+	if (conf.EnableWebpDetection || conf.EnforceWebp) && strings.Contains(headers.Accept, "image/webp") {
 		po.Format = imageTypeWEBP
 	}
-
+	if conf.EnableClientHints && len(headers.ViewportWidth) > 0 {
+		if vw, err := strconv.Atoi(headers.ViewportWidth); err == nil {
+			po.Width = vw
+		}
+	}
+	if conf.EnableClientHints && len(headers.Width) > 0 {
+		if w, err := strconv.Atoi(headers.Width); err == nil {
+			po.Width = w
+		}
+	}
+	if conf.EnableClientHints && len(headers.DPR) > 0 {
+		if dpr, err := strconv.ParseFloat(headers.DPR, 64); err == nil || (dpr > 0 && dpr <= maxClientHintDPR) {
+			po.Dpr = dpr
+		}
+	}
 	if _, ok := conf.Presets["default"]; ok {
 		err = applyPresetOption(&po, []string{"default"})
 	}
@@ -551,8 +763,8 @@ func defaultProcessingOptions(acceptHeader string) (*processingOptions, error) {
 	return &po, err
 }
 
-func parsePathAdvanced(parts []string, acceptHeader string) (string, *processingOptions, error) {
-	po, err := defaultProcessingOptions(acceptHeader)
+func parsePathAdvanced(parts []string, headers *processingHeaders) (string, *processingOptions, error) {
+	po, err := defaultProcessingOptions(headers)
 	if err != nil {
 		return "", po, err
 	}
@@ -574,17 +786,17 @@ func parsePathAdvanced(parts []string, acceptHeader string) (string, *processing
 		}
 	}
 
-	return string(url), po, nil
+	return url, po, nil
 }
 
-func parsePathSimple(parts []string, acceptHeader string) (string, *processingOptions, error) {
+func parsePathBasic(parts []string, headers *processingHeaders) (string, *processingOptions, error) {
 	var err error
 
 	if len(parts) < 6 {
 		return "", nil, errInvalidPath
 	}
 
-	po, err := defaultProcessingOptions(acceptHeader)
+	po, err := defaultProcessingOptions(headers)
 	if err != nil {
 		return "", po, err
 	}
@@ -618,17 +830,12 @@ func parsePathSimple(parts []string, acceptHeader string) (string, *processingOp
 		}
 	}
 
-	return string(url), po, nil
+	return url, po, nil
 }
 
-func parsePath(ctx context.Context, rctx *fasthttp.RequestCtx) (context.Context, error) {
-	path := string(rctx.Path())
+func parsePath(ctx context.Context, r *http.Request) (context.Context, error) {
+	path := r.URL.Path
 	parts := strings.Split(strings.TrimPrefix(path, "/"), "/")
-
-	var acceptHeader string
-	if h := rctx.Request.Header.Peek("Accept"); len(h) > 0 {
-		acceptHeader = string(h)
-	}
 
 	if len(parts) < 3 {
 		return ctx, errInvalidPath
@@ -636,8 +843,15 @@ func parsePath(ctx context.Context, rctx *fasthttp.RequestCtx) (context.Context,
 
 	if !conf.AllowInsecure {
 		if err := validatePath(parts[0], strings.TrimPrefix(path, fmt.Sprintf("/%s", parts[0]))); err != nil {
-			return ctx, err
+			return ctx, newError(403, err.Error(), msgForbidden)
 		}
+	}
+
+	headers := &processingHeaders{
+		Accept:        r.Header.Get("Accept"),
+		Width:         r.Header.Get("Width"),
+		ViewportWidth: r.Header.Get("Viewport-Width"),
+		DPR:           r.Header.Get("DPR"),
 	}
 
 	var imageURL string
@@ -645,19 +859,19 @@ func parsePath(ctx context.Context, rctx *fasthttp.RequestCtx) (context.Context,
 	var err error
 
 	if _, ok := resizeTypes[parts[1]]; ok {
-		imageURL, po, err = parsePathSimple(parts[1:], acceptHeader)
+		imageURL, po, err = parsePathBasic(parts[1:], headers)
 	} else {
-		imageURL, po, err = parsePathAdvanced(parts[1:], acceptHeader)
+		imageURL, po, err = parsePathAdvanced(parts[1:], headers)
 	}
 
 	if err != nil {
-		return ctx, err
+		return ctx, newError(404, err.Error(), msgInvalidURL)
 	}
 
 	ctx = context.WithValue(ctx, imageURLCtxKey, imageURL)
 	ctx = context.WithValue(ctx, processingOptionsCtxKey, po)
 
-	return ctx, err
+	return ctx, nil
 }
 
 func getImageURL(ctx context.Context) string {

@@ -9,8 +9,6 @@ import (
 	"sync"
 )
 
-var errNotModified = newError(304, "Not modified", "Not modified")
-
 type eTagCalc struct {
 	hash hash.Hash
 	enc  *json.Encoder
@@ -28,7 +26,7 @@ var eTagCalcPool = sync.Pool{
 	},
 }
 
-func calcETag(ctx context.Context) []byte {
+func calcETag(ctx context.Context) string {
 	c := eTagCalcPool.Get().(*eTagCalc)
 	defer eTagCalcPool.Put(c)
 
@@ -42,8 +40,5 @@ func calcETag(ctx context.Context) []byte {
 	c.enc.Encode(conf)
 	c.enc.Encode(getProcessingOptions(ctx))
 
-	etag := make([]byte, 64)
-	hex.Encode(etag, c.hash.Sum(nil))
-
-	return etag
+	return hex.EncodeToString(c.hash.Sum(nil))
 }

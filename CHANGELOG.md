@@ -1,5 +1,76 @@
 # Changelog
 
+## v2.2.4
+
+- Minor improvements.
+
+## v2.2.3
+
+- Fixed critical bug with cached C strings;
+- Simple filesystem transport withh less memory usage.
+
+## v2.2.2
+
+- Memory usage optimizations.
+
+## v2.2.1
+
+- Source file size limit;
+- More memory usage optimizations.
+
+## v2.2.0
+
+- Optimized memory usage. [Memory usage tweaks](./docs/memory_usage_tweaks.md);
+- `Vary` header is set when WebP detection, client hints or GZip compression are enabled;
+- Health check doesn't require `Authorization` header anymore.
+
+## v2.1.5
+
+- [Sentry support](./docs/configuration.md#error-reporting) (thanks to [@koenpunt](https://github.com/koenpunt));
+- Fixed detection of some kind of WebP images;
+- [Syslog support](./docs/configuration.md#syslog).
+
+## v2.1.4
+
+- SVG sources support;
+- Fixed support for not animated GIFs;
+- Proper filename in the `Content-Disposition` header;
+- Memory usage optimizations.
+
+## v2.1.3
+
+- [Minio support](./docs/serving_files_from_s3.md#minio)
+
+## v2.1.2
+
+- ICO support
+
+## v2.1.1
+
+- Fixed EXIF orientation fetching;
+- When libvips failed to save PNG, imgproxy will try to save is without embedded ICC profile.
+
+## v2.1.0
+
+- [Plain source URLs](./docs/generating_the_url_advanced.md#plain) support;
+- [Serving images from Google Cloud Storage](./docs/serving_files_from_google_cloud_storage.md);
+- [Full support of GIFs](./docs/image_formats_support.md#gif-support) including animated ones;
+- [Watermarks](./docs/watermark.md);
+- [New Relic](./docs/new_relic.md) metrics;
+- [Prometheus](./docs/prometheus.md) metrics;
+- [DPR](./docs/generating_the_url_advanced.md#dpr) option (thanks to [selul](https://github.com/selul));
+- [Cache buster](./docs/generating_the_url_advanced.md#cache-buster) option;
+- [Quality](./docs/generating_the_url_advanced.md#quality) option;
+- Support for custom [Amazon S3](./docs/serving_files_from_s3.md) endpoints;
+- Support for [Amazon S3](./docs/serving_files_from_s3.md) versioning;
+- [Client hints](./docs/configuration.md#client-hints-support) support (thanks to [selul](https://github.com/selul));
+- Using source image format when one is not specified in the URL;
+- Sending `User-Agent` header when downloading a source image;
+- Setting proper filename in `Content-Disposition` header in the response;
+- Truncated signature support (thanks to [printercu](https://github.com/printercu));
+- imgproxy uses source image format by default for the resulting image;
+- `IMGPROXY_MAX_SRC_DIMENSION` is **deprecated**, use `IMGPROXY_MAX_SRC_RESOLUTION` instead.
+
 ## v2.0.3
 
 Fixed URL validation when IMGPROXY_BASE_URL is used

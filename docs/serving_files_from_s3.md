@@ -4,7 +4,15 @@ imgproxy can process images from S3 buckets. To use this feature, do the followi
 
 1. Set `IMGPROXY_USE_S3` environment variable as `true`;
 2. [Setup credentials](#setup-credentials) to grant access to your bucket;
-3. Use `s3://%bucket_name/%file_key` as the source image URL.
+3. _(optional)_ Specify AWS region with `IMGPROXY_S3_REGION` or `AWS_REGION`. Default: `us-west-1`;
+4. _(optional)_ Specify S3 endpoint with `IMGPROXY_S3_ENDPOINT`;
+5. Use `s3://%bucket_name/%file_key` as the source image URL.
+
+If you need to specify version of the source object, you can use query string of the source URL:
+
+```
+s3://%bucket_name/%file_key?%version_id
+```
 
 ### Setup credentials
 
@@ -38,3 +46,12 @@ aws_secret_access_key = %secret_access_key
 If you are running imgproxy on an Amazon EC2 instance, you can use the instance's [IAM role](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html) to get security credentials to make calls to AWS S3.
 
 You can learn about credentials in the [Configuring the AWS SDK for Go](https://docs.aws.amazon.com/sdk-for-go/v1/developer-guide/configuring-sdk.html) guide.
+
+## Minio
+
+[Minio](https://github.com/minio/minio) is an object storage server released under Apache License v2.0. It is compatible with Amazon S3, so it can be used with imgproxy.
+
+To use Minio as source images provider, do the following:
+
+* Setup Amazon S3 support as usual using evironment variables or shared config file;
+* Specify endpoint with `IMGPROXY_S3_ENDPOINT`. Use `http://...` endpoint to disable SSL.

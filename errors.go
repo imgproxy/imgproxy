@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"runtime"
 	"strings"
 )
@@ -13,17 +12,17 @@ type imgproxyError struct {
 	PublicMessage string
 }
 
-func (e imgproxyError) Error() string {
+func (e *imgproxyError) Error() string {
 	return e.Message
 }
 
-func newError(status int, msg string, pub string) imgproxyError {
-	return imgproxyError{status, msg, pub}
+func newError(status int, msg string, pub string) *imgproxyError {
+	return &imgproxyError{status, msg, pub}
 }
 
-func newUnexpectedError(err error, skip int) imgproxyError {
+func newUnexpectedError(err error, skip int) *imgproxyError {
 	msg := fmt.Sprintf("Unexpected error: %s\n%s", err, stacktrace(skip+1))
-	return imgproxyError{500, msg, "Internal error"}
+	return &imgproxyError{500, msg, "Internal error"}
 }
 
 func stacktrace(skip int) string {
@@ -38,8 +37,4 @@ func stacktrace(skip int) string {
 	}
 
 	return strings.Join(lines, "\n")
-}
-
-func warning(f string, args ...interface{}) {
-	log.Printf("\033[1;33m[WARNING]\033[0m %s", fmt.Sprintf(f, args...))
 }

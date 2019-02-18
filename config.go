@@ -2,12 +2,9 @@ package main
 
 import (
 	"bufio"
-	"bytes"
 	"encoding/hex"
 	"flag"
 	"fmt"
-	"io/ioutil"
-	"log"
 	"os"
 	"runtime"
 	"strconv"
@@ -16,6 +13,12 @@ import (
 
 func intEnvConfig(i *int, name string) {
 	if env, err := strconv.Atoi(os.Getenv(name)); err == nil {
+		*i = env
+	}
+}
+
+func floatEnvConfig(i *float64, name string) {
+	if env, err := strconv.ParseFloat(os.Getenv(name), 64); err == nil {
 		*i = env
 	}
 }
@@ -39,40 +42,56 @@ func boolEnvConfig(b *bool, name string) {
 	}
 }
 
-func hexEnvConfig(b *[]byte, name string) {
+func hexEnvConfig(b *[]securityKey, name string) {
 	var err error
 
 	if env := os.Getenv(name); len(env) > 0 {
-		if *b, err = hex.DecodeString(env); err != nil {
-			log.Fatalf("%s expected to be hex-encoded string\n", name)
+		parts := strings.Split(env, ",")
+
+		keys := make([]securityKey, len(parts))
+
+		for i, part := range parts {
+			if keys[i], err = hex.DecodeString(part); err != nil {
+				logFatal("%s expected to be hex-encoded strings. Invalid: %s\n", name, part)
+			}
 		}
+
+		*b = keys
 	}
 }
 
-func hexFileConfig(b *[]byte, filepath string) {
+func hexFileConfig(b *[]securityKey, filepath string) {
 	if len(filepath) == 0 {
 		return
 	}
 
 	f, err := os.Open(filepath)
 	if err != nil {
-		log.Fatalf("Can't open file %s\n", filepath)
+		logFatal("Can't open file %s\n", filepath)
 	}
 
-	src, err := ioutil.ReadAll(f)
-	if err != nil {
-		log.Fatalln(err)
+	keys := []securityKey{}
+
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		part := scanner.Text()
+
+		if len(part) == 0 {
+			continue
+		}
+
+		if key, err := hex.DecodeString(part); err == nil {
+			keys = append(keys, key)
+		} else {
+			logFatal("%s expected to contain hex-encoded strings. Invalid: %s\n", filepath, part)
+		}
 	}
 
-	src = bytes.TrimSpace(src)
-
-	dst := make([]byte, hex.DecodedLen(len(src)))
-	n, err := hex.Decode(dst, src)
-	if err != nil {
-		log.Fatalf("%s expected to contain hex-encoded string\n", filepath)
+	if err := scanner.Err(); err != nil {
+		logFatal("Failed to read file %s: %s", filepath, err)
 	}
 
-	*b = dst[:n]
+	*b = keys
 }
 
 func presetEnvConfig(p presets, name string) {
@@ -80,7 +99,9 @@ func presetEnvConfig(p presets, name string) {
 		presetStrings := strings.Split(env, ",")
 
 		for _, presetStr := range presetStrings {
-			parsePreset(p, presetStr)
+			if err := parsePreset(p, presetStr); err != nil {
+				logFatal(err.Error())
+			}
 		}
 	}
 }
@@ -92,16 +113,18 @@ func presetFileConfig(p presets, filepath string) {
 
 	f, err := os.Open(filepath)
 	if err != nil {
-		log.Fatalf("Can't open file %s\n", filepath)
+		logFatal("Can't open file %s\n", filepath)
 	}
 
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
-		parsePreset(p, scanner.Text())
+		if err := parsePreset(p, scanner.Text()); err != nil {
+			logFatal(err.Error())
+		}
 	}
 
 	if err := scanner.Err(); err != nil {
-		log.Fatalf("Failed to read presets file: %s", err)
+		logFatal("Failed to read presets file: %s", err)
 	}
 }
 
@@ -117,6 +140,8 @@ type config struct {
 
 	MaxSrcDimension  int
 	MaxSrcResolution int
+	MaxSrcFileSize   int
+	MaxGifFrames     int
 
 	JpegProgressive bool
 	PngInterlaced   bool
@@ -125,45 +150,86 @@ type config struct {
 
 	EnableWebpDetection bool
 	EnforceWebp         bool
+	EnableClientHints   bool
 
-	Key           []byte
-	Salt          []byte
+	Keys          []securityKey
+	Salts         []securityKey
 	AllowInsecure bool
+	SignatureSize int
 
 	Secret string
 
 	AllowOrigin string
 
+	UserAgent string
+
 	IgnoreSslVerification bool
 
 	LocalFileSystemRoot string
 	S3Enabled           bool
+	S3Region            string
+	S3Endpoint          string
+	GCSKey              string
 
 	ETagEnabled bool
 
 	BaseURL string
 
 	Presets presets
+
+	WatermarkData    string
+	WatermarkPath    string
+	WatermarkURL     string
+	WatermarkOpacity float64
+
+	NewRelicAppName string
+	NewRelicKey     string
+
+	PrometheusBind string
+
+	BugsnagKey        string
+	BugsnagStage      string
+	HoneybadgerKey    string
+	HoneybadgerEnv    string
+	SentryDSN         string
+	SentryEnvironment string
+	SentryRelease     string
+
+	FreeMemoryInterval             int
+	DownloadBufferSize             int
+	GZipBufferSize                 int
+	BufferPoolCalibrationThreshold int
 }
 
 var conf = config{
-	Bind:                  ":8080",
-	ReadTimeout:           10,
-	WriteTimeout:          10,
-	DownloadTimeout:       5,
-	Concurrency:           runtime.NumCPU() * 2,
-	TTL:                   3600,
-	IgnoreSslVerification: false,
-	MaxSrcDimension:       8192,
-	MaxSrcResolution:      16800000,
-	AllowInsecure:         false,
-	Quality:               80,
-	GZipCompression:       5,
-	ETagEnabled:           false,
-	S3Enabled:             false,
+	Bind:                           ":8080",
+	ReadTimeout:                    10,
+	WriteTimeout:                   10,
+	DownloadTimeout:                5,
+	Concurrency:                    runtime.NumCPU() * 2,
+	TTL:                            3600,
+	IgnoreSslVerification:          false,
+	MaxSrcResolution:               16800000,
+	MaxGifFrames:                   1,
+	AllowInsecure:                  false,
+	SignatureSize:                  32,
+	Quality:                        80,
+	GZipCompression:                5,
+	UserAgent:                      fmt.Sprintf("imgproxy/%s", version),
+	ETagEnabled:                    false,
+	S3Enabled:                      false,
+	WatermarkOpacity:               1,
+	BugsnagStage:                   "production",
+	HoneybadgerEnv:                 "production",
+	SentryEnvironment:              "production",
+	SentryRelease:                  fmt.Sprintf("imgproxy/%s", version),
+	FreeMemoryInterval:             10,
+	BufferPoolCalibrationThreshold: 1024,
 }
 
 func init() {
+	initSyslog()
+
 	keyPath := flag.String("keypath", "", "path of the file with hex-encoded key")
 	saltPath := flag.String("saltpath", "", "path of the file with hex-encoded salt")
 	presetsPath := flag.String("presets", "", "path of the file with presets")
@@ -190,6 +256,8 @@ func init() {
 
 	intEnvConfig(&conf.MaxSrcDimension, "IMGPROXY_MAX_SRC_DIMENSION")
 	megaIntEnvConfig(&conf.MaxSrcResolution, "IMGPROXY_MAX_SRC_RESOLUTION")
+	intEnvConfig(&conf.MaxSrcFileSize, "IMGPROXY_MAX_SRC_FILE_SIZE")
+	intEnvConfig(&conf.MaxGifFrames, "IMGPROXY_MAX_GIF_FRAMES")
 
 	boolEnvConfig(&conf.JpegProgressive, "IMGPROXY_JPEG_PROGRESSIVE")
 	boolEnvConfig(&conf.PngInterlaced, "IMGPROXY_PNG_INTERLACED")
@@ -198,22 +266,30 @@ func init() {
 
 	boolEnvConfig(&conf.EnableWebpDetection, "IMGPROXY_ENABLE_WEBP_DETECTION")
 	boolEnvConfig(&conf.EnforceWebp, "IMGPROXY_ENFORCE_WEBP")
+	boolEnvConfig(&conf.EnableClientHints, "IMGPROXY_ENABLE_CLIENT_HINTS")
 
-	hexEnvConfig(&conf.Key, "IMGPROXY_KEY")
-	hexEnvConfig(&conf.Salt, "IMGPROXY_SALT")
+	hexEnvConfig(&conf.Keys, "IMGPROXY_KEY")
+	hexEnvConfig(&conf.Salts, "IMGPROXY_SALT")
+	intEnvConfig(&conf.SignatureSize, "IMGPROXY_SIGNATURE_SIZE")
 
-	hexFileConfig(&conf.Key, *keyPath)
-	hexFileConfig(&conf.Salt, *saltPath)
+	hexFileConfig(&conf.Keys, *keyPath)
+	hexFileConfig(&conf.Salts, *saltPath)
 
 	strEnvConfig(&conf.Secret, "IMGPROXY_SECRET")
 
 	strEnvConfig(&conf.AllowOrigin, "IMGPROXY_ALLOW_ORIGIN")
+
+	strEnvConfig(&conf.UserAgent, "IMGPROXY_USER_AGENT")
 
 	boolEnvConfig(&conf.IgnoreSslVerification, "IMGPROXY_IGNORE_SSL_VERIFICATION")
 
 	strEnvConfig(&conf.LocalFileSystemRoot, "IMGPROXY_LOCAL_FILESYSTEM_ROOT")
 
 	boolEnvConfig(&conf.S3Enabled, "IMGPROXY_USE_S3")
+	strEnvConfig(&conf.S3Region, "IMGPROXY_S3_REGION")
+	strEnvConfig(&conf.S3Endpoint, "IMGPROXY_S3_ENDPOINT")
+
+	strEnvConfig(&conf.GCSKey, "IMGPROXY_GCS_KEY")
 
 	boolEnvConfig(&conf.ETagEnabled, "IMGPROXY_USE_ETAG")
 
@@ -223,33 +299,63 @@ func init() {
 	presetEnvConfig(conf.Presets, "IMGPROXY_PRESETS")
 	presetFileConfig(conf.Presets, *presetsPath)
 
-	if len(conf.Key) == 0 {
-		warning("Key is not defined, so signature checking is disabled")
+	strEnvConfig(&conf.WatermarkData, "IMGPROXY_WATERMARK_DATA")
+	strEnvConfig(&conf.WatermarkPath, "IMGPROXY_WATERMARK_PATH")
+	strEnvConfig(&conf.WatermarkURL, "IMGPROXY_WATERMARK_URL")
+	floatEnvConfig(&conf.WatermarkOpacity, "IMGPROXY_WATERMARK_OPACITY")
+
+	strEnvConfig(&conf.NewRelicAppName, "IMGPROXY_NEW_RELIC_APP_NAME")
+	strEnvConfig(&conf.NewRelicKey, "IMGPROXY_NEW_RELIC_KEY")
+
+	strEnvConfig(&conf.PrometheusBind, "IMGPROXY_PROMETHEUS_BIND")
+
+	strEnvConfig(&conf.BugsnagKey, "IMGPROXY_BUGSNAG_KEY")
+	strEnvConfig(&conf.BugsnagStage, "IMGPROXY_BUGSNAG_STAGE")
+	strEnvConfig(&conf.HoneybadgerKey, "IMGPROXY_HONEYBADGER_KEY")
+	strEnvConfig(&conf.HoneybadgerEnv, "IMGPROXY_HONEYBADGER_ENV")
+	strEnvConfig(&conf.SentryDSN, "IMGPROXY_SENTRY_DSN")
+	strEnvConfig(&conf.SentryEnvironment, "IMGPROXY_SENTRY_ENVIRONMENT")
+	strEnvConfig(&conf.SentryRelease, "IMGPROXY_SENTRY_RELEASE")
+
+	intEnvConfig(&conf.FreeMemoryInterval, "IMGPROXY_FREE_MEMORY_INTERVAL")
+	intEnvConfig(&conf.DownloadBufferSize, "IMGPROXY_DOWNLOAD_BUFFER_SIZE")
+	intEnvConfig(&conf.GZipBufferSize, "IMGPROXY_GZIP_BUFFER_SIZE")
+	intEnvConfig(&conf.BufferPoolCalibrationThreshold, "IMGPROXY_BUFFER_POOL_CALIBRATION_THRESHOLD")
+
+	if len(conf.Keys) != len(conf.Salts) {
+		logFatal("Number of keys and number of salts should be equal. Keys: %d, salts: %d", len(conf.Keys), len(conf.Salts))
+	}
+	if len(conf.Keys) == 0 {
+		logWarning("No keys defined, so signature checking is disabled")
 		conf.AllowInsecure = true
 	}
-	if len(conf.Salt) == 0 {
-		warning("Salt is not defined, so signature checking is disabled")
+	if len(conf.Salts) == 0 {
+		logWarning("No salts defined, so signature checking is disabled")
 		conf.AllowInsecure = true
+	}
+
+	if conf.SignatureSize < 1 || conf.SignatureSize > 32 {
+		logFatal("Signature size should be within 1 and 32, now - %d\n", conf.SignatureSize)
 	}
 
 	if len(conf.Bind) == 0 {
-		log.Fatalln("Bind address is not defined")
+		logFatal("Bind address is not defined")
 	}
 
 	if conf.ReadTimeout <= 0 {
-		log.Fatalf("Read timeout should be greater than 0, now - %d\n", conf.ReadTimeout)
+		logFatal("Read timeout should be greater than 0, now - %d\n", conf.ReadTimeout)
 	}
 
 	if conf.WriteTimeout <= 0 {
-		log.Fatalf("Write timeout should be greater than 0, now - %d\n", conf.WriteTimeout)
+		logFatal("Write timeout should be greater than 0, now - %d\n", conf.WriteTimeout)
 	}
 
 	if conf.DownloadTimeout <= 0 {
-		log.Fatalf("Download timeout should be greater than 0, now - %d\n", conf.DownloadTimeout)
+		logFatal("Download timeout should be greater than 0, now - %d\n", conf.DownloadTimeout)
 	}
 
 	if conf.Concurrency <= 0 {
-		log.Fatalf("Concurrency should be greater than 0, now - %d\n", conf.Concurrency)
+		logFatal("Concurrency should be greater than 0, now - %d\n", conf.Concurrency)
 	}
 
 	if conf.MaxClients <= 0 {
@@ -257,49 +363,94 @@ func init() {
 	}
 
 	if conf.TTL <= 0 {
-		log.Fatalf("TTL should be greater than 0, now - %d\n", conf.TTL)
+		logFatal("TTL should be greater than 0, now - %d\n", conf.TTL)
 	}
 
-	if conf.MaxSrcDimension <= 0 {
-		log.Fatalf("Max src dimension should be greater than 0, now - %d\n", conf.MaxSrcDimension)
+	if conf.MaxSrcDimension < 0 {
+		logFatal("Max src dimension should be greater than or equal to 0, now - %d\n", conf.MaxSrcDimension)
+	} else if conf.MaxSrcDimension > 0 {
+		logWarning("IMGPROXY_MAX_SRC_DIMENSION is deprecated and can be removed in future versions. Use IMGPROXY_MAX_SRC_RESOLUTION")
 	}
 
 	if conf.MaxSrcResolution <= 0 {
-		log.Fatalf("Max src resolution should be greater than 0, now - %d\n", conf.MaxSrcResolution)
+		logFatal("Max src resolution should be greater than 0, now - %d\n", conf.MaxSrcResolution)
+	}
+
+	if conf.MaxSrcFileSize < 0 {
+		logFatal("Max src file size should be greater than or equal to 0, now - %d\n", conf.MaxSrcFileSize)
+	}
+
+	if conf.MaxGifFrames <= 0 {
+		logFatal("Max GIF frames should be greater than 0, now - %d\n", conf.MaxGifFrames)
 	}
 
 	if conf.Quality <= 0 {
-		log.Fatalf("Quality should be greater than 0, now - %d\n", conf.Quality)
+		logFatal("Quality should be greater than 0, now - %d\n", conf.Quality)
 	} else if conf.Quality > 100 {
-		log.Fatalf("Quality can't be greater than 100, now - %d\n", conf.Quality)
+		logFatal("Quality can't be greater than 100, now - %d\n", conf.Quality)
 	}
 
 	if conf.GZipCompression < 0 {
-		log.Fatalf("GZip compression should be greater than or quual to 0, now - %d\n", conf.GZipCompression)
+		logFatal("GZip compression should be greater than or equal to 0, now - %d\n", conf.GZipCompression)
 	} else if conf.GZipCompression > 9 {
-		log.Fatalf("GZip compression can't be greater than 9, now - %d\n", conf.GZipCompression)
+		logFatal("GZip compression can't be greater than 9, now - %d\n", conf.GZipCompression)
 	}
 
 	if conf.IgnoreSslVerification {
-		warning("Ignoring SSL verification is very unsafe")
+		logWarning("Ignoring SSL verification is very unsafe")
 	}
 
 	if conf.LocalFileSystemRoot != "" {
 		stat, err := os.Stat(conf.LocalFileSystemRoot)
 		if err != nil {
-			log.Fatalf("Cannot use local directory: %s", err)
+			logFatal("Cannot use local directory: %s", err)
 		} else {
 			if !stat.IsDir() {
-				log.Fatalf("Cannot use local directory: not a directory")
+				logFatal("Cannot use local directory: not a directory")
 			}
 		}
 		if conf.LocalFileSystemRoot == "/" {
-			log.Print("Exposing root via IMGPROXY_LOCAL_FILESYSTEM_ROOT is unsafe")
+			logNotice("Exposing root via IMGPROXY_LOCAL_FILESYSTEM_ROOT is unsafe")
 		}
 	}
 
-	checkPresets(conf.Presets)
+	if err := checkPresets(conf.Presets); err != nil {
+		logFatal(err.Error())
+	}
 
-	initVips()
+	if conf.WatermarkOpacity <= 0 {
+		logFatal("Watermark opacity should be greater than 0")
+	} else if conf.WatermarkOpacity > 1 {
+		logFatal("Watermark opacity should be less than or equal to 1")
+	}
+
+	if len(conf.PrometheusBind) > 0 && conf.PrometheusBind == conf.Bind {
+		logFatal("Can't use the same binding for the main server and Prometheus")
+	}
+
+	if conf.FreeMemoryInterval <= 0 {
+		logFatal("Free memory interval should be greater than zero")
+	}
+
+	if conf.DownloadBufferSize < 0 {
+		logFatal("Download buffer size should be greater than or equal to 0")
+	} else if conf.DownloadBufferSize > int(^uint32(0)) {
+		logFatal("Download buffer size can't be greater than %d", ^uint32(0))
+	}
+
+	if conf.GZipBufferSize < 0 {
+		logFatal("GZip buffer size should be greater than or equal to 0")
+	} else if conf.GZipBufferSize > int(^uint32(0)) {
+		logFatal("GZip buffer size can't be greater than %d", ^uint32(0))
+	}
+
+	if conf.BufferPoolCalibrationThreshold < 64 {
+		logFatal("Buffer pool calibration threshold should be greater than or equal to 64")
+	}
+
+	initNewrelic()
+	initPrometheus()
 	initDownloading()
+	initErrorsReporting()
+	initVips()
 }

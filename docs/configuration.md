@@ -8,8 +8,11 @@ imgproxy allows URLs to be signed with a key and salt. This feature is disabled 
 
 * `IMGPROXY_KEY`: hex-encoded key;
 * `IMGPROXY_SALT`: hex-encoded salt;
+* `IMGPROXY_SIGNATURE_SIZE`: number of bytes to use for signature before encoding to Base64. Default: 32;
 
-You can also specify paths to files with a hex-encoded key and salt (useful in a development environment):
+You can specify multiple key/salt pairs by dividing keys and salts with comma (`,`). imgproxy will check URL signatures with each pair. Useful when you need to change key/salt pair in your application with zero downtime.
+
+You can also specify paths to files with a hex-encoded keys and salts, one by line (useful in a development environment):
 
 ```bash
 $ imgproxy -keypath /path/to/file/with/key -saltpath /path/to/file/with/salt
@@ -30,14 +33,21 @@ $ echo $(xxd -g 2 -l 64 -p /dev/random | tr -d '\n')
 * `IMGPROXY_CONCURRENCY`: the maximum number of image requests to be processed simultaneously. Default: number of CPU cores times two;
 * `IMGPROXY_MAX_CLIENTS`: the maximum number of simultaneous active connections. Default: `IMGPROXY_CONCURRENCY * 10`;
 * `IMGPROXY_TTL`: duration (in seconds) sent in `Expires` and `Cache-Control: max-age` HTTP headers. Default: `3600` (1 hour);
+* `IMGPROXY_USER_AGENT`: User-Agent header that will be sent with source image request. Default: `imgproxy/%current_version`;
 * `IMGPROXY_USE_ETAG`: when `true`, enables using [ETag](https://en.wikipedia.org/wiki/HTTP_ETag) HTTP header for HTTP cache control. Default: false;
 
 ### Security
 
-imgproxy protects you from so-called image bombs. Here is how you can specify maximum image dimensions and resolution which you consider reasonable:
+imgproxy protects you from so-called image bombs. Here is how you can specify maximum image resolution which you consider reasonable:
 
-* `IMGPROXY_MAX_SRC_DIMENSION`: the maximum dimensions of the source image, in pixels, for both width and height. Images with larger actual size will be rejected. Default: `8192`;
 * `IMGPROXY_MAX_SRC_RESOLUTION`: the maximum resolution of the source image, in megapixels. Images with larger actual size will be rejected. Default: `16.8`;
+* `IMGPROXY_MAX_SRC_FILE_SIZE`: the maximum size of the source image, in bytes. Images with larger file size will be rejected. When `0`, file size check is disabled. Default: `0`;
+
+imgproxy can process animated GIFs, but since this operation is pretty heavy, only one frame is processed by default. You can increase the maximum of GIF frames to process with the following variable:
+
+* `IMGPROXY_MAX_GIF_FRAMES`: the maximum of animated GIF frames to being processed. Default: `1`.
+
+**Note:** imgproxy summarizes all GIF frames resolutions while checking source image resolution.
 
 You can also specify a secret to enable authorization with the HTTP `Authorization` header for use in production environments:
 
@@ -53,7 +63,7 @@ When you use imgproxy in a development environment, it can be useful to ignore S
 
 ### Compression
 
-* `IMGPROXY_QUALITY`: quality of the resulting image, percentage. Default: `80`;
+* `IMGPROXY_QUALITY`: default quality of the resulting image, percentage. Default: `80`;
 * `IMGPROXY_GZIP_COMPRESSION`: GZip compression level. Default: `5`;
 * `IMGPROXY_JPEG_PROGRESSIVE` : when true, enables progressive JPEG compression. Default: false;
 * `IMGPROXY_PNG_INTERLACED`: when true, enables interlaced PNG compression. Default: false;
@@ -67,7 +77,24 @@ imgproxy can use the `Accept` HTTP header to detect if the browser supports WebP
 
 When WebP support detection is enabled, please take care to configure your CDN or caching proxy to take the `Accept` HTTP header into account while caching.
 
-**Warning**: Headers cannot be signed. This means that an attacker can bypass your CDN cache by changing the `Accept` HTTP header. Have this in mind when configuring your production caching setup.
+**Warning**: Headers cannot be signed. This means that an attacker can bypass your CDN cache by changing the `Accept` HTTP headers. Have this in mind when configuring your production caching setup.
+
+## Client Hints support
+
+imgproxy can use the `Width`, `Viewport-Width` or `DPR` HTTP headers to determine default width and DPR options using Client Hints. This feature is disabled by default and can be enabled by the following option:
+
+* `IMGPROXY_ENABLE_CLIENT_HINTS`: enables Client Hints support to determine default width and DPR options. Read [here](https://developers.google.com/web/updates/2015/09/automating-resource-selection-with-client-hints) details about Client Hints.
+
+**Warning**: Headers cannot be signed. This means that an attacker can bypass your CDN cache by changing the `Width`, `Viewport-Width` or `DPR` HTTP headers. Have this in mind when configuring your production caching setup.
+
+### Watermark
+
+* `IMGPROXY_WATERMARK_DATA`: Base64-encoded image data. You can easily calculate it with `base64 tmp/watermark.png | tr -d '\n'`;
+* `IMGPROXY_WATERMARK_PATH`: path to the locally stored image;
+* `IMGPROXY_WATERMARK_URL`: watermark image URL;
+* `IMGPROXY_WATERMARK_OPACITY`: watermark base opacity.
+
+Read more about watermarks in the [Watermark](./watermark.md) guide.
 
 ### Presets
 
@@ -109,9 +136,65 @@ Check out the [Serving local files](./serving_local_files.md) guide to learn mor
 
 imgproxy can process files from Amazon S3 buckets, but this feature is disabled by default. To enable it, set `IMGPROXY_USE_S3` to `true`:
 
-* `IMGPROXY_USE_S3`: when `true`, enables image fetching from Amazon S3 buckets. Default: false.
+* `IMGPROXY_USE_S3`: when `true`, enables image fetching from Amazon S3 buckets. Default: false;
+* `IMGPROXY_S3_ENDPOINT`: custom S3 endpoint to being used by imgproxy.
 
 Check out the [Serving files from S3](./serving_files_from_s3.md) guide to learn more.
+
+### Serving files from Google Cloud Storage
+
+imgproxy can process files from Google Cloud Storage buckets, but this feature is disabled by default. To enable it, set `IMGPROXY_GCS_KEY` to the content of Google Cloud JSON key:
+
+* `IMGPROXY_GCS_KEY`: Google Cloud JSON key. When set, enables image fetching from Google Cloud Storage buckets. Default: blank.
+
+Check out the [Serving files from Google Cloud Storage](./serving_files_from_google_cloud_storage.md) guide to learn more.
+
+### New Relic metrics
+
+imgproxy can send its metrics to New Relic. Specify your New Relic license key to activate this feature:
+
+* `IMGPROXY_NEW_RELIC_KEY`: New Relic license key;
+* `IMGPROXY_NEW_RELIC_APP_NAME`: New Relic application name. Default: `imgproxy`.
+
+Check out the [New Relic](./new_relic.md) guide to learn more.
+
+### Prometheus metrics
+
+imgproxy can collect its metrics for Prometheus. Specify binding for Prometheus metrics server to activate this feature:
+
+* `IMGPROXY_PROMETHEUS_BIND`: Prometheus metrics server binding. Can't be the same as `IMGPROXY_BIND`. Default: blank.
+
+Check out the [Prometheus](./prometheus.md) guide to learn more.
+
+### Error reporting
+
+imgproxy can report occurred errors to Bugsnag, Honeybadger and Sentry:
+
+* `IMGPROXY_BUGSNAG_KEY`: Bugsnag API key. When provided, enables error reporting to Bugsnag;
+* `IMGPROXY_BUGSNAG_STAGE`: Bugsnag stage to report to. Default: `production`;
+* `IMGPROXY_HONEYBADGER_KEY`: Honeybadger API key. When provided, enables error reporting to Honeybadger;
+* `IMGPROXY_HONEYBADGER_ENV`: Honeybadger env to report to. Default: `production`.
+* `IMGPROXY_SENTRY_DSN`: Sentry project DSN. When provided, enables error reporting to Sentry;
+* `IMGPROXY_SENTRY_ENVIRONMENT`: Sentry environment to report to. Default: `production`.
+* `IMGPROXY_SENTRY_RELEASE`: Sentry release to report to. Default: `imgproxy/{imgproxy version}`.
+
+### Syslog
+
+imgproxy can send logs to syslog, but this feature is disabled by default. To enable it, set `IMGPROXY_SYSLOG_ENABLE` to `true`:
+
+* `IMGPROXY_SYSLOG_ENABLE`: when `true`, enables sending logs to syslog;
+* `IMGPROXY_SYSLOG_LEVEL`: maximum log level to send to syslog. Known levels are: `crit`, `error`, `warning` and `notice`. Default: `notice`;
+* `IMGPROXY_SYSLOG_NETWORK`: network that will be used to connect to syslog. When blank, the local syslog server will be used. Known networks are `tcp`, `tcp4`, `tcp6`, `udp`, `udp4`, `udp6`, `ip`, `ip4`, `ip6`, `unix`, `unixgram` and `unixpacket`. Default: blank;
+* `IMGPROXY_SYSLOG_ADDRESS`: address of the syslog service. Not used if `IMGPROXY_SYSLOG_NETWORK` is blank. Default: blank;
+
+### Memory usage tweaks
+
+**Warning:** It's highly recommended to read [Memory usage tweaks](./memory_usage_tweaks.md) guide before changing this settings.
+
+* `IMGPROXY_DOWNLOAD_BUFFER_SIZE`: the initial size (in bytes) of a single download buffer. When zero, initializes empty download buffers. Default: `0`;
+* `IMGPROXY_GZIP_BUFFER_SIZE`: the initial size (in bytes) of a single GZip buffer. When zero, initializes empty GZip buffers. Makes sense only when GZip compression is enabled. Default: `0`;
+* `IMGPROXY_FREE_MEMORY_INTERVAL`: the interval (in seconds) at which unused memory will be returned to the OS. Default: `10`;
+* `IMGPROXY_BUFFER_POOL_CALIBRATION_THRESHOLD`: the number of buffers that should be returned to a pool before calibration. Default: `1024`.
 
 ### Miscellaneous
 
