@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.2.5
+
+- [extend](./docs/generating_the_url_advanced.md#extend) processing option;
+- Fixed SVG detection;
+- Add `vips_memory_bytes`, `vips_max_memory_bytes` and `vips_allocs` metrics to Prometheus.
+
 ## v2.2.4
 
 - Minor improvements.
