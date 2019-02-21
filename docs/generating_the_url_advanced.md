@@ -34,20 +34,20 @@ imgproxy supports the following processing options:
 ##### Resize
 
 ```
-resize:%resizing_type:%width:%height:%enlarge
-rs:%resizing_type:%width:%height:%enlarge
+resize:%resizing_type:%width:%height:%enlarge:%extend
+rs:%resizing_type:%width:%height:%enlarge:%extend
 ```
 
-Meta-option that defines the [resizing type](#resizing-type), [width](#width), [height](#height), and [enlarge](#enlarge). All arguments are optional and can be omited to use their default values.
+Meta-option that defines the [resizing type](#resizing-type), [width](#width), [height](#height), [enlarge](#enlarge), and [extend](#extend). All arguments are optional and can be omited to use their default values.
 
 ##### Size
 
 ```
-size:%width:%height:%enlarge
-s:%width:%height:%enlarge
+size:%width:%height:%enlarge:%extend
+s:%width:%height:%enlarge:%extend
 ```
 
-Meta-option that defines the [width](#width), [height](#height), and [enlarge](#enlarge). All arguments are optional and can be omited to use their default values.
+Meta-option that defines the [width](#width), [height](#height), [enlarge](#enlarge), and [extend](#extend). All arguments are optional and can be omited to use their default values.
 
 ##### Resizing type
 
@@ -104,6 +104,17 @@ el:%enlarge
 ```
 
 If set to `0`, imgproxy will not enlarge the image if it is smaller than the given size. With any other value, imgproxy will enlarge the image.
+
+Default: `0`
+
+##### Extend
+
+```
+extend:%extend
+ex:%extend
+```
+
+If set to `0`, imgproxy will not extend the image if the resizing result is smaller than the given size. With any other value, imgproxy will extend the image to the given size.
 
 Default: `0`
 

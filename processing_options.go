@@ -124,6 +124,7 @@ type processingOptions struct {
 	Dpr        float64
 	Gravity    gravityOptions
 	Enlarge    bool
+	Expand     bool
 	Format     imageType
 	Quality    int
 	Flatten    bool
@@ -322,8 +323,18 @@ func applyEnlargeOption(po *processingOptions, args []string) error {
 	return nil
 }
 
+func applyExtendOption(po *processingOptions, args []string) error {
+	if len(args) > 1 {
+		return fmt.Errorf("Invalid expand arguments: %v", args)
+	}
+
+	po.Expand = args[0] != "0"
+
+	return nil
+}
+
 func applySizeOption(po *processingOptions, args []string) (err error) {
-	if len(args) > 3 {
+	if len(args) > 4 {
 		return fmt.Errorf("Invalid size arguments: %v", args)
 	}
 
@@ -339,8 +350,14 @@ func applySizeOption(po *processingOptions, args []string) (err error) {
 		}
 	}
 
-	if len(args) == 3 && len(args[2]) > 0 {
+	if len(args) >= 3 && len(args[2]) > 0 {
 		if err = applyEnlargeOption(po, args[2:3]); err != nil {
+			return
+		}
+	}
+
+	if len(args) == 4 && len(args[3]) > 0 {
+		if err = applyExtendOption(po, args[3:4]); err != nil {
 			return
 		}
 	}
@@ -363,7 +380,7 @@ func applyResizingTypeOption(po *processingOptions, args []string) error {
 }
 
 func applyResizeOption(po *processingOptions, args []string) error {
-	if len(args) > 4 {
+	if len(args) > 5 {
 		return fmt.Errorf("Invalid resize arguments: %v", args)
 	}
 
@@ -638,6 +655,10 @@ func applyProcessingOption(po *processingOptions, name string, args []string) er
 		}
 	case "enlarge", "el":
 		if err := applyEnlargeOption(po, args); err != nil {
+			return err
+		}
+	case "extend", "ex":
+		if err := applyExtendOption(po, args); err != nil {
 			return err
 		}
 	case "dpr":

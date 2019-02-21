@@ -389,6 +389,18 @@ func transformImage(ctx context.Context, img **C.VipsImage, data []byte, po *pro
 		}
 	}
 
+	if po.Expand && (po.Width > int((*img).Xsize) || po.Height > int((*img).Ysize)) {
+		if err = vipsEnsureAlpha(img); err != nil {
+			return err
+		}
+
+		hasAlpha = true
+
+		if err = vipsEmbed(img, gravityCenter, C.int(po.Width), C.int(po.Height), 0, 0); err != nil {
+			return err
+		}
+	}
+
 	if hasAlpha && (po.Flatten || po.Format == imageTypeJPEG) {
 		if err = vipsFlatten(img, po.Background); err != nil {
 			return err
@@ -762,6 +774,17 @@ func vipsSmartCrop(img **C.VipsImage, width, height int) error {
 	var tmp *C.VipsImage
 
 	if C.vips_smartcrop_go(*img, &tmp, C.int(width), C.int(height)) != 0 {
+		return vipsError()
+	}
+
+	C.swap_and_clear(img, tmp)
+	return nil
+}
+
+func vipsEnsureAlpha(img **C.VipsImage) error {
+	var tmp *C.VipsImage
+
+	if C.vips_ensure_alpha(*img, &tmp) != 0 {
 		return vipsError()
 	}
 

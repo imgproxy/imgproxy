@@ -288,10 +288,17 @@ vips_embed_go(VipsImage *in, VipsImage **out, int x, int y, int width, int heigh
 }
 
 int
-vips_apply_opacity(VipsImage *in, VipsImage **out, double opacity){
-  gboolean has_alpha = vips_image_hasalpha_go(in);
+vips_ensure_alpha(VipsImage *in, VipsImage **out) {
+  if (vips_image_hasalpha_go(in)) {
+    return vips_copy(in, out, NULL);
+  }
 
-  if (has_alpha) {
+  return vips_bandjoin_const1(in, out, 255, NULL);
+}
+
+int
+vips_apply_opacity(VipsImage *in, VipsImage **out, double opacity){
+  if (vips_image_hasalpha_go(in)) {
     if (opacity < 1) {
       VipsImage *img, *img_alpha, *tmp;
 
