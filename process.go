@@ -13,6 +13,7 @@ import (
 	"math"
 	"os"
 	"runtime"
+	"time"
 	"unsafe"
 
 	"golang.org/x/sync/errgroup"
@@ -112,11 +113,25 @@ func initVips() {
 	if err := vipsPrepareWatermark(); err != nil {
 		logFatal(err.Error())
 	}
+
+	collectVipsMetrics()
 }
 
 func shutdownVips() {
 	C.clear_image(&watermark)
 	C.vips_shutdown()
+}
+
+func collectVipsMetrics() {
+	if prometheusEnabled {
+		go func() {
+			for range time.Tick(5 * time.Second) {
+				prometheusVipsMemory.Set(float64(C.vips_tracked_get_mem()))
+				prometheusVipsMaxMemory.Set(float64(C.vips_tracked_get_mem_highwater()))
+				prometheusVipsAllocs.Set(float64(C.vips_tracked_get_allocs()))
+			}
+		}()
+	}
 }
 
 func cachedCString(str string) *C.char {

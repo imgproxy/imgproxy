@@ -19,6 +19,9 @@ var (
 	prometheusBufferSize         *prometheus.HistogramVec
 	prometheusBufferDefaultSize  *prometheus.GaugeVec
 	prometheusBufferMaxSize      *prometheus.GaugeVec
+	prometheusVipsMemory         prometheus.Gauge
+	prometheusVipsMaxMemory      prometheus.Gauge
+	prometheusVipsAllocs         prometheus.Gauge
 )
 
 func initPrometheus() {
@@ -66,6 +69,21 @@ func initPrometheus() {
 		Help: "A gauge of the buffer max size in bytes.",
 	}, []string{"type"})
 
+	prometheusVipsMemory = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name: "vips_memory_bytes",
+		Help: "A gauge of the vips tracked memory usage in bytes.",
+	})
+
+	prometheusVipsMaxMemory = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name: "vips_max_memory_bytes",
+		Help: "A gauge of the max vips tracked memory usage in bytes.",
+	})
+
+	prometheusVipsAllocs = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name: "vips_allocs",
+		Help: "A gauge of the number of active vips allocations.",
+	})
+
 	prometheus.MustRegister(
 		prometheusRequestsTotal,
 		prometheusErrorsTotal,
@@ -75,6 +93,9 @@ func initPrometheus() {
 		prometheusBufferSize,
 		prometheusBufferDefaultSize,
 		prometheusBufferMaxSize,
+		prometheusVipsMemory,
+		prometheusVipsMaxMemory,
+		prometheusVipsAllocs,
 	)
 
 	prometheusEnabled = true
