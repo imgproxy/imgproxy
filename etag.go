@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -9,26 +10,70 @@ import (
 	"sync"
 )
 
-type eTagCalc struct {
+type etagPool struct {
+	mutex sync.Mutex
+	top   *etagPoolEntry
+}
+
+type etagPoolEntry struct {
 	hash hash.Hash
 	enc  *json.Encoder
+	buf  *bytes.Buffer
+	next *etagPoolEntry
 }
 
-var eTagCalcPool = sync.Pool{
-	New: func() interface{} {
-		h := sha256.New()
+func newEtagPool(n int) *etagPool {
+	pool := new(etagPool)
 
-		enc := json.NewEncoder(h)
-		enc.SetEscapeHTML(false)
-		enc.SetIndent("", "")
+	for i := 0; i < n; i++ {
+		pool.grow()
+	}
 
-		return &eTagCalc{h, enc}
-	},
+	return pool
 }
 
-func calcETag(ctx context.Context) string {
-	c := eTagCalcPool.Get().(*eTagCalc)
-	defer eTagCalcPool.Put(c)
+func (p *etagPool) grow() {
+	h := sha256.New()
+
+	enc := json.NewEncoder(h)
+	enc.SetEscapeHTML(false)
+	enc.SetIndent("", "")
+
+	p.top = &etagPoolEntry{
+		hash: h,
+		enc:  enc,
+		buf:  new(bytes.Buffer),
+		next: p.top,
+	}
+}
+
+func (p *etagPool) Get() *etagPoolEntry {
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
+
+	if p.top == nil {
+		p.grow()
+	}
+
+	entry := p.top
+	p.top = p.top.next
+
+	return entry
+}
+
+func (p *etagPool) Put(e *etagPoolEntry) {
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
+
+	e.next = p.top
+	p.top = e
+}
+
+var eTagCalcPool *etagPool
+
+func calcETag(ctx context.Context) ([]byte, context.CancelFunc) {
+	c := eTagCalcPool.Get()
+	cancel := func() { eTagCalcPool.Put(c) }
 
 	c.hash.Reset()
 	c.hash.Write(getImageData(ctx).Bytes())
@@ -40,5 +85,9 @@ func calcETag(ctx context.Context) string {
 	c.enc.Encode(conf)
 	c.enc.Encode(getProcessingOptions(ctx))
 
-	return hex.EncodeToString(c.hash.Sum(nil))
+	c.buf.Reset()
+	enc := hex.NewEncoder(c.buf)
+	enc.Write(c.hash.Sum(nil))
+
+	return c.buf.Bytes(), cancel
 }

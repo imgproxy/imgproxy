@@ -199,6 +199,26 @@
   revision = "ae77be60afb1dcacde03767a8c37337fad28ac14"
 
 [[projects]]
+  digest = "1:aaa8e0e7e35d92e21daed3f241832cee73d15ca1cd3302ba3843159a959a7eac"
+  name = "github.com/klauspost/compress"
+  packages = [
+    "flate",
+    "gzip",
+    "zlib",
+  ]
+  pruneopts = "NUT"
+  revision = "30be6041bed523c18e269a700ebd9c2ea9328574"
+  version = "v1.4.1"
+
+[[projects]]
+  digest = "1:f44ca3e400a23dc9cf76a09d71891da95193c0c7da2008205f8f20154f49b22d"
+  name = "github.com/klauspost/cpuid"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "e7e905edc00ea8827e58662220139109efea09db"
+  version = "v1.2.0"
+
+[[projects]]
   digest = "1:a4e095309329d4548b915b87bb668c8d98f71e3e0af596060dd5eea054db342c"
   name = "github.com/mat/besticon"
   packages = ["ico"]
@@ -332,6 +352,26 @@
   version = "v1.3.0"
 
 [[projects]]
+  digest = "1:af354641f23332b1a8d5d361d11b5a9171589e412a67d499633706c611acc064"
+  name = "github.com/valyala/bytebufferpool"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "e746df99fe4a3986f4d4f79e13c1e0117ce9c2f7"
+  version = "v1.0.0"
+
+[[projects]]
+  digest = "1:db3a7fd81bc4907ff78c8d6748ba68583a18112f725cbc9bf3633cb495a870af"
+  name = "github.com/valyala/fasthttp"
+  packages = [
+    ".",
+    "fasthttputil",
+    "stackless",
+  ]
+  pruneopts = "NUT"
+  revision = "ed3793a1e1602989ba50bd20823e8521a4da84af"
+  version = "v1.2.0"
+
+[[projects]]
   digest = "1:fe16cada1d1885b0092d869e39bdd96195d2c65c6f79830a291978f027db1fc6"
   name = "go.opencensus.io"
   packages = [
@@ -369,7 +409,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:6d9afbae920f65834081d5bf61e3d63f63a3a45057e6e7c635e316b7b90afaa7"
+  digest = "1:d4e37d487310720926343302a747f3f9e8f020e5fe961190c57ce437159a6e63"
   name = "golang.org/x/net"
   packages = [
     "context",
@@ -379,7 +419,6 @@
     "http2/hpack",
     "idna",
     "internal/timeseries",
-    "netutil",
     "trace",
   ]
   pruneopts = "NUT"
@@ -551,10 +590,10 @@
     "github.com/stretchr/testify/assert",
     "github.com/stretchr/testify/require",
     "github.com/stretchr/testify/suite",
+    "github.com/valyala/fasthttp",
     "golang.org/x/image/riff",
     "golang.org/x/image/vp8",
     "golang.org/x/image/vp8l",
-    "golang.org/x/net/netutil",
     "golang.org/x/sync/errgroup",
     "google.golang.org/api/option",
   ]

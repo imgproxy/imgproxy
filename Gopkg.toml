@@ -41,3 +41,7 @@
 [[constraint]]
   name = "github.com/getsentry/raven-go"
   version = "0.2.0"
+
+[[constraint]]
+  name = "github.com/valyala/fasthttp"
+  version = "1.2.0"

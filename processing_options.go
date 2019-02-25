@@ -11,11 +11,12 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"net/http"
 	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/valyala/fasthttp"
 )
 
 type urlOptions map[string][]string
@@ -235,7 +236,7 @@ func decodeBase64URL(parts []string) (string, string, error) {
 		return "", "", errInvalidURLEncoding
 	}
 
-	fullURL := fmt.Sprintf("%s%s", conf.BaseURL, string(imageURL))
+	fullURL := fmt.Sprintf("%s%s", conf.BaseURL, imageURL)
 
 	if _, err := url.ParseRequestURI(fullURL); err != nil {
 		return "", "", errInvalidImageURL
@@ -260,7 +261,7 @@ func decodePlainURL(parts []string) (string, string, error) {
 	if unescaped, err := url.PathUnescape(urlParts[0]); err == nil {
 		fullURL := fmt.Sprintf("%s%s", conf.BaseURL, unescaped)
 		if _, err := url.ParseRequestURI(fullURL); err == nil {
-			return fullURL, format, nil
+			return fmt.Sprintf("%s%s", conf.BaseURL, unescaped), format, nil
 		}
 	}
 
@@ -848,11 +849,8 @@ func parsePathBasic(parts []string, headers *processingHeaders) (string, *proces
 	return url, po, nil
 }
 
-func parsePath(ctx context.Context, r *http.Request) (context.Context, error) {
-	path := r.URL.RawPath
-	if len(path) == 0 {
-		path = r.URL.Path
-	}
+func parsePath(ctx context.Context, rctx *fasthttp.RequestCtx) (context.Context, error) {
+	path := string(rctx.Request.URI().PathOriginal())
 	parts := strings.Split(strings.TrimPrefix(path, "/"), "/")
 
 	if len(parts) < 3 {
@@ -866,10 +864,10 @@ func parsePath(ctx context.Context, r *http.Request) (context.Context, error) {
 	}
 
 	headers := &processingHeaders{
-		Accept:        r.Header.Get("Accept"),
-		Width:         r.Header.Get("Width"),
-		ViewportWidth: r.Header.Get("Viewport-Width"),
-		DPR:           r.Header.Get("DPR"),
+		Accept:        string(rctx.Request.Header.Peek("Accept")),
+		Width:         string(rctx.Request.Header.Peek("Width")),
+		ViewportWidth: string(rctx.Request.Header.Peek("Viewport-Width")),
+		DPR:           string(rctx.Request.Header.Peek("DPR")),
 	}
 
 	var imageURL string

@@ -1,23 +1,21 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"crypto/subtle"
 	"fmt"
-	"net"
 	"net/http"
 	"net/url"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 
 	nanoid "github.com/matoous/go-nanoid"
-	"golang.org/x/net/netutil"
+	"github.com/valyala/fasthttp"
 )
 
 const (
-	healthPath                         = "/health"
 	contextDispositionFilenameFallback = "image"
 )
 
@@ -40,13 +38,14 @@ var (
 
 	authHeaderMust []byte
 
+	healthPath = []byte("/health")
+
 	imgproxyIsRunningMsg = []byte("imgproxy is running")
 
 	errInvalidMethod = newError(422, "Invalid request method", "Method doesn't allowed")
 	errInvalidSecret = newError(403, "Invalid secret", "Forbidden")
 
-	responseGzipBufPool *bufPool
-	responseGzipPool    *gzipPool
+	responseGzipPool *gzipPool
 )
 
 type httpHandler struct {
@@ -57,45 +56,43 @@ func newHTTPHandler() *httpHandler {
 	return &httpHandler{make(chan struct{}, conf.Concurrency)}
 }
 
-func startServer() *http.Server {
-	l, err := net.Listen("tcp", conf.Bind)
-	if err != nil {
-		logFatal(err.Error())
-	}
-	s := &http.Server{
-		Handler:        newHTTPHandler(),
-		ReadTimeout:    time.Duration(conf.ReadTimeout) * time.Second,
-		MaxHeaderBytes: 1 << 20,
+func startServer() *fasthttp.Server {
+	handler := newHTTPHandler()
+
+	server := &fasthttp.Server{
+		Name:        "imgproxy",
+		Handler:     handler.ServeHTTP,
+		Concurrency: conf.MaxClients,
+		ReadTimeout: time.Duration(conf.ReadTimeout) * time.Second,
 	}
 
 	if conf.GZipCompression > 0 {
-		responseGzipBufPool = newBufPool("gzip", conf.Concurrency, conf.GZipBufferSize)
 		responseGzipPool = newGzipPool(conf.Concurrency)
+	}
+
+	if conf.ETagEnabled {
+		eTagCalcPool = newEtagPool(conf.Concurrency)
 	}
 
 	go func() {
 		logNotice("Starting server at %s", conf.Bind)
-		if err := s.Serve(netutil.LimitListener(l, conf.MaxClients)); err != nil && err != http.ErrServerClosed {
+		if err := server.ListenAndServe(conf.Bind); err != nil {
 			logFatal(err.Error())
 		}
 	}()
 
-	return s
+	return server
 }
 
-func shutdownServer(s *http.Server) {
+func shutdownServer(s *fasthttp.Server) {
 	logNotice("Shutting down the server...")
-
-	ctx, close := context.WithTimeout(context.Background(), 5*time.Second)
-	defer close()
-
-	s.Shutdown(ctx)
+	s.Shutdown()
 }
 
-func writeCORS(rw http.ResponseWriter) {
+func writeCORS(rctx *fasthttp.RequestCtx) {
 	if len(conf.AllowOrigin) > 0 {
-		rw.Header().Set("Access-Control-Allow-Origin", conf.AllowOrigin)
-		rw.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONs")
+		rctx.Response.Header.Set("Access-Control-Allow-Origin", conf.AllowOrigin)
+		rctx.Response.Header.Set("Access-Control-Allow-Methods", "GET, OPTIONs")
 	}
 }
 
@@ -113,42 +110,35 @@ func contentDisposition(imageURL string, imgtype imageType) string {
 	return fmt.Sprintf(contentDispositionsFmt[imgtype], strings.TrimSuffix(filename, filepath.Ext(filename)))
 }
 
-func respondWithImage(ctx context.Context, reqID string, r *http.Request, rw http.ResponseWriter, data []byte) {
+func respondWithImage(ctx context.Context, reqID string, rctx *fasthttp.RequestCtx, data []byte) {
 	po := getProcessingOptions(ctx)
 
-	rw.Header().Set("Expires", time.Now().Add(time.Second*time.Duration(conf.TTL)).Format(http.TimeFormat))
-	rw.Header().Set("Cache-Control", fmt.Sprintf("max-age=%d, public", conf.TTL))
-	rw.Header().Set("Content-Type", mimes[po.Format])
-	rw.Header().Set("Content-Disposition", contentDisposition(getImageURL(ctx), po.Format))
+	rctx.SetStatusCode(200)
 
-	addVaryHeader(rw)
+	rctx.Response.Header.Set("Expires", time.Now().Add(time.Second*time.Duration(conf.TTL)).Format(http.TimeFormat))
+	rctx.Response.Header.Set("Cache-Control", fmt.Sprintf("max-age=%d, public", conf.TTL))
+	rctx.Response.Header.Set("Content-Type", mimes[po.Format])
+	rctx.Response.Header.Set("Content-Disposition", contentDisposition(getImageURL(ctx), po.Format))
 
-	if conf.GZipCompression > 0 && strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
-		buf := responseGzipBufPool.Get(0)
-		defer responseGzipBufPool.Put(buf)
+	addVaryHeader(rctx)
 
-		gz := responseGzipPool.Get(buf)
+	if conf.GZipCompression > 0 && rctx.Request.Header.HasAcceptEncoding("gzip") {
+		gz := responseGzipPool.Get(rctx)
 		defer responseGzipPool.Put(gz)
 
 		gz.Write(data)
 		gz.Close()
 
-		rw.Header().Set("Content-Encoding", "gzip")
-		rw.Header().Set("Content-Length", strconv.Itoa(buf.Len()))
-
-		rw.WriteHeader(200)
-		rw.Write(buf.Bytes())
+		rctx.Response.Header.Set("Content-Encoding", "gzip")
 	} else {
-		rw.Header().Set("Content-Length", strconv.Itoa(len(data)))
-		rw.WriteHeader(200)
-		rw.Write(data)
+		rctx.SetBody(data)
 	}
 
 	logResponse(reqID, 200, fmt.Sprintf("Processed in %s: %s; %+v", getTimerSince(ctx), getImageURL(ctx), po))
 }
 
-func addVaryHeader(rw http.ResponseWriter) {
-	vary := make([]string, 0)
+func addVaryHeader(rctx *fasthttp.RequestCtx) {
+	vary := make([]string, 0, 5)
 
 	if conf.EnableWebpDetection || conf.EnforceWebp {
 		vary = append(vary, "Accept")
@@ -163,25 +153,25 @@ func addVaryHeader(rw http.ResponseWriter) {
 	}
 
 	if len(vary) > 0 {
-		rw.Header().Set("Vary", strings.Join(vary, ", "))
+		rctx.Response.Header.Set("Vary", strings.Join(vary, ", "))
 	}
 }
 
-func respondWithError(reqID string, rw http.ResponseWriter, err *imgproxyError) {
+func respondWithError(reqID string, rctx *fasthttp.RequestCtx, err *imgproxyError) {
 	logResponse(reqID, err.StatusCode, err.Message)
 
-	rw.WriteHeader(err.StatusCode)
-	rw.Write([]byte(err.PublicMessage))
+	rctx.SetStatusCode(err.StatusCode)
+	rctx.SetBodyString(err.PublicMessage)
 }
 
-func respondWithOptions(reqID string, rw http.ResponseWriter) {
+func respondWithOptions(reqID string, rctx *fasthttp.RequestCtx) {
 	logResponse(reqID, 200, "Respond with options")
-	rw.WriteHeader(200)
+	rctx.SetStatusCode(200)
 }
 
-func respondWithNotModified(reqID string, rw http.ResponseWriter) {
-	logResponse(reqID, 200, "Not modified")
-	rw.WriteHeader(304)
+func respondWithNotModified(reqID string, rctx *fasthttp.RequestCtx) {
+	logResponse(reqID, 304, "Not modified")
+	rctx.SetStatusCode(304)
 }
 
 func prepareAuthHeaderMust() []byte {
@@ -192,15 +182,44 @@ func prepareAuthHeaderMust() []byte {
 	return authHeaderMust
 }
 
-func checkSecret(r *http.Request) bool {
+func checkSecret(rctx *fasthttp.RequestCtx) bool {
 	if len(conf.Secret) == 0 {
 		return true
 	}
 
 	return subtle.ConstantTimeCompare(
-		[]byte(r.Header.Get("Authorization")),
+		rctx.Request.Header.Peek("Authorization"),
 		prepareAuthHeaderMust(),
 	) == 1
+}
+
+func requestCtxToRequest(rctx *fasthttp.RequestCtx) *http.Request {
+	if r, ok := rctx.UserValue("httpRequest").(*http.Request); ok {
+		return r
+	}
+
+	reqURL, _ := url.Parse(rctx.Request.URI().String())
+
+	r := &http.Request{
+		Method:     http.MethodGet, // Only GET is supported
+		URL:        reqURL,
+		Proto:      "HTTP/1.0",
+		ProtoMajor: 1,
+		ProtoMinor: 0,
+		Header:     make(http.Header),
+		Body:       http.NoBody,
+		Host:       reqURL.Host,
+		RequestURI: reqURL.RequestURI(),
+		RemoteAddr: rctx.RemoteAddr().String(),
+	}
+
+	rctx.Request.Header.VisitAll(func(key, value []byte) {
+		r.Header.Add(string(key), string(value))
+	})
+
+	rctx.SetUserValue("httpRequest", r)
+
+	return r
 }
 
 func (h *httpHandler) lock() {
@@ -211,18 +230,18 @@ func (h *httpHandler) unlock() {
 	<-h.sem
 }
 
-func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+func (h *httpHandler) ServeHTTP(rctx *fasthttp.RequestCtx) {
 	reqID, _ := nanoid.Nanoid()
 
 	defer func() {
 		if rerr := recover(); rerr != nil {
 			if err, ok := rerr.(error); ok {
-				reportError(err, r)
+				reportError(err, requestCtxToRequest(rctx))
 
 				if ierr, ok := err.(*imgproxyError); ok {
-					respondWithError(reqID, rw, ierr)
+					respondWithError(reqID, rctx, ierr)
 				} else {
-					respondWithError(reqID, rw, newUnexpectedError(err, 4))
+					respondWithError(reqID, rctx, newUnexpectedError(err, 4))
 				}
 			} else {
 				panic(rerr)
@@ -230,26 +249,26 @@ func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	logRequest(reqID, r)
+	logRequest(reqID, rctx)
 
-	writeCORS(rw)
+	writeCORS(rctx)
 
-	if r.Method == http.MethodOptions {
-		respondWithOptions(reqID, rw)
+	if rctx.Request.Header.IsOptions() {
+		respondWithOptions(reqID, rctx)
 		return
 	}
 
-	if r.Method != http.MethodGet {
+	if !rctx.Request.Header.IsGet() {
 		panic(errInvalidMethod)
 	}
 
-	if r.URL.RequestURI() == healthPath {
-		rw.WriteHeader(200)
-		rw.Write(imgproxyIsRunningMsg)
+	if bytes.Compare(rctx.RequestURI(), healthPath) == 0 {
+		rctx.SetStatusCode(200)
+		rctx.SetBody(imgproxyIsRunningMsg)
 		return
 	}
 
-	if !checkSecret(r) {
+	if !checkSecret(rctx) {
 		panic(errInvalidSecret)
 	}
 
@@ -257,7 +276,7 @@ func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	if newRelicEnabled {
 		var newRelicCancel context.CancelFunc
-		ctx, newRelicCancel = startNewRelicTransaction(ctx, rw, r)
+		ctx, newRelicCancel = startNewRelicTransaction(ctx, requestCtxToRequest(rctx))
 		defer newRelicCancel()
 	}
 
@@ -272,7 +291,7 @@ func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	ctx, timeoutCancel := startTimer(ctx, time.Duration(conf.WriteTimeout)*time.Second)
 	defer timeoutCancel()
 
-	ctx, err := parsePath(ctx, r)
+	ctx, err := parsePath(ctx, rctx)
 	if err != nil {
 		panic(err)
 	}
@@ -292,11 +311,13 @@ func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	checkTimeout(ctx)
 
 	if conf.ETagEnabled {
-		eTag := calcETag(ctx)
-		rw.Header().Set("ETag", eTag)
+		eTag, etagcancel := calcETag(ctx)
+		defer etagcancel()
 
-		if eTag == r.Header.Get("If-None-Match") {
-			respondWithNotModified(reqID, rw)
+		rctx.Response.Header.SetBytesV("ETag", eTag)
+
+		if bytes.Compare(eTag, rctx.Request.Header.Peek("If-None-Match")) == 0 {
+			respondWithNotModified(reqID, rctx)
 			return
 		}
 	}
@@ -317,5 +338,5 @@ func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	checkTimeout(ctx)
 
-	respondWithImage(ctx, reqID, r, rw, imageData)
+	respondWithImage(ctx, reqID, rctx, imageData)
 }

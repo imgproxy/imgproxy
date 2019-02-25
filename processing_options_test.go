@@ -4,20 +4,24 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"net/http"
 	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"github.com/valyala/fasthttp"
 )
 
 type ProcessingOptionsTestSuite struct{ MainTestSuite }
 
-func (s *ProcessingOptionsTestSuite) getRequest(url string) *http.Request {
-	req, _ := http.NewRequest("GET", url, nil)
-	return req
+func (s *ProcessingOptionsTestSuite) getRequest(url string) *fasthttp.RequestCtx {
+	req := fasthttp.Request{}
+	req.SetRequestURI(url)
+	return &fasthttp.RequestCtx{
+		Request:  req,
+		Response: fasthttp.Response{},
+	}
 }
 
 func (s *ProcessingOptionsTestSuite) TestParseBase64URL() {
@@ -402,7 +406,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathWebpDetection() {
 	conf.EnableWebpDetection = true
 
 	req := s.getRequest("http://example.com/unsafe/plain/http://images.dev/lorem/ipsum.jpg")
-	req.Header.Set("Accept", "image/webp")
+	req.Request.Header.Set("Accept", "image/webp")
 	ctx, err := parsePath(context.Background(), req)
 
 	require.Nil(s.T(), err)
@@ -415,7 +419,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathWebpDetectionRedefine() {
 	conf.EnableWebpDetection = true
 
 	req := s.getRequest("http://example.com/unsafe/plain/http://images.dev/lorem/ipsum.jpg@png")
-	req.Header.Set("Accept", "image/webp")
+	req.Request.Header.Set("Accept", "image/webp")
 	ctx, err := parsePath(context.Background(), req)
 
 	require.Nil(s.T(), err)
@@ -428,7 +432,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathWebpEnforce() {
 	conf.EnforceWebp = true
 
 	req := s.getRequest("http://example.com/unsafe/plain/http://images.dev/lorem/ipsum.jpg@png")
-	req.Header.Set("Accept", "image/webp")
+	req.Request.Header.Set("Accept", "image/webp")
 	ctx, err := parsePath(context.Background(), req)
 
 	require.Nil(s.T(), err)
@@ -441,7 +445,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathWidthHeader() {
 	conf.EnableClientHints = true
 
 	req := s.getRequest("http://example.com/unsafe/plain/http://images.dev/lorem/ipsum.jpg@png")
-	req.Header.Set("Width", "100")
+	req.Request.Header.Set("Width", "100")
 	ctx, err := parsePath(context.Background(), req)
 
 	require.Nil(s.T(), err)
@@ -452,7 +456,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathWidthHeader() {
 
 func (s *ProcessingOptionsTestSuite) TestParsePathWidthHeaderDisabled() {
 	req := s.getRequest("http://example.com/unsafe/plain/http://images.dev/lorem/ipsum.jpg@png")
-	req.Header.Set("Width", "100")
+	req.Request.Header.Set("Width", "100")
 	ctx, err := parsePath(context.Background(), req)
 
 	require.Nil(s.T(), err)
@@ -465,7 +469,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathWidthHeaderRedefine() {
 	conf.EnableClientHints = true
 
 	req := s.getRequest("http://example.com/unsafe/width:150/plain/http://images.dev/lorem/ipsum.jpg@png")
-	req.Header.Set("Width", "100")
+	req.Request.Header.Set("Width", "100")
 	ctx, err := parsePath(context.Background(), req)
 
 	require.Nil(s.T(), err)
@@ -478,7 +482,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathViewportWidthHeader() {
 	conf.EnableClientHints = true
 
 	req := s.getRequest("http://example.com/unsafe/plain/http://images.dev/lorem/ipsum.jpg@png")
-	req.Header.Set("Viewport-Width", "100")
+	req.Request.Header.Set("Viewport-Width", "100")
 	ctx, err := parsePath(context.Background(), req)
 
 	require.Nil(s.T(), err)
@@ -489,7 +493,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathViewportWidthHeader() {
 
 func (s *ProcessingOptionsTestSuite) TestParsePathViewportWidthHeaderDisabled() {
 	req := s.getRequest("http://example.com/unsafe/plain/http://images.dev/lorem/ipsum.jpg@png")
-	req.Header.Set("Viewport-Width", "100")
+	req.Request.Header.Set("Viewport-Width", "100")
 	ctx, err := parsePath(context.Background(), req)
 
 	require.Nil(s.T(), err)
@@ -502,7 +506,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathViewportWidthHeaderRedefine() 
 	conf.EnableClientHints = true
 
 	req := s.getRequest("http://example.com/unsafe/width:150/plain/http://images.dev/lorem/ipsum.jpg@png")
-	req.Header.Set("Viewport-Width", "100")
+	req.Request.Header.Set("Viewport-Width", "100")
 	ctx, err := parsePath(context.Background(), req)
 
 	require.Nil(s.T(), err)
@@ -515,7 +519,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathDprHeader() {
 	conf.EnableClientHints = true
 
 	req := s.getRequest("http://example.com/unsafe/plain/http://images.dev/lorem/ipsum.jpg@png")
-	req.Header.Set("DPR", "2")
+	req.Request.Header.Set("DPR", "2")
 	ctx, err := parsePath(context.Background(), req)
 
 	require.Nil(s.T(), err)
@@ -526,7 +530,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathDprHeader() {
 
 func (s *ProcessingOptionsTestSuite) TestParsePathDprHeaderDisabled() {
 	req := s.getRequest("http://example.com/unsafe/plain/http://images.dev/lorem/ipsum.jpg@png")
-	req.Header.Set("DPR", "2")
+	req.Request.Header.Set("DPR", "2")
 	ctx, err := parsePath(context.Background(), req)
 
 	require.Nil(s.T(), err)
