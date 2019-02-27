@@ -257,12 +257,6 @@ func decodePlainURL(parts []string) (string, string, error) {
 		format = urlParts[1]
 	}
 
-	fullURL := fmt.Sprintf("%s%s", conf.BaseURL, urlParts[0])
-
-	if _, err := url.ParseRequestURI(fullURL); err == nil {
-		return fullURL, format, nil
-	}
-
 	if unescaped, err := url.PathUnescape(urlParts[0]); err == nil {
 		fullURL := fmt.Sprintf("%s%s", conf.BaseURL, unescaped)
 		if _, err := url.ParseRequestURI(fullURL); err == nil {
@@ -855,7 +849,10 @@ func parsePathBasic(parts []string, headers *processingHeaders) (string, *proces
 }
 
 func parsePath(ctx context.Context, r *http.Request) (context.Context, error) {
-	path := r.URL.Path
+	path := r.URL.RawPath
+	if len(path) == 0 {
+		path = r.URL.Path
+	}
 	parts := strings.Split(strings.TrimPrefix(path, "/"), "/")
 
 	if len(parts) < 3 {
