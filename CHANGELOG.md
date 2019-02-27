@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.2.6
+
+- Fixed signature check when source URL is escaped.
+
 ## v2.2.5
 
 - [extend](./docs/generating_the_url_advanced.md#extend) processing option;
