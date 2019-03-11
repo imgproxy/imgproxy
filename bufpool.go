@@ -47,14 +47,7 @@ func (p *bufPool) calibrateAndClean() {
 	score := p.calls[pos]
 
 	p.callInd = 0
-	p.maxSize = 64
-
-	for {
-		if p.maxSize > score {
-			break
-		}
-		p.maxSize <<= 1
-	}
+	p.maxSize = p.normalizeSize(score)
 
 	p.defaultSize = maxInt(p.defaultSize, p.calls[0])
 	p.maxSize = maxInt(p.defaultSize, p.maxSize)
@@ -81,6 +74,8 @@ func (p *bufPool) calibrateAndClean() {
 func (p *bufPool) Get(size int) *bytes.Buffer {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
+
+	size = p.normalizeSize(size)
 
 	minSize, maxSize, minInd, maxInd := -1, -1, -1, -1
 
@@ -154,4 +149,8 @@ func (p *bufPool) Put(buf *bytes.Buffer) {
 			return
 		}
 	}
+}
+
+func (p *bufPool) normalizeSize(n int) int {
+	return (n/bytes.MinRead + 2) * bytes.MinRead
 }
