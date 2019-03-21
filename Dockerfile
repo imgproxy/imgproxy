@@ -82,6 +82,8 @@ RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/reposit
 COPY --from=0 /usr/local/bin/imgproxy /usr/local/bin/
 COPY --from=0 /root/libs/* /usr/local/lib/
 
+ENV VIPS_WARNING=0
+
 CMD ["imgproxy"]
 
 EXPOSE 8080
