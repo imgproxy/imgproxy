@@ -83,6 +83,7 @@ COPY --from=0 /usr/local/bin/imgproxy /usr/local/bin/
 COPY --from=0 /root/libs/* /usr/local/lib/
 
 ENV VIPS_WARNING=0
+ENV MALLOC_ARENA_MAX=4
 
 CMD ["imgproxy"]
 
