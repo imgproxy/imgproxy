@@ -598,11 +598,6 @@ func vipsLoadImage(data []byte, imgtype imageType, shrink int, svgScale float64,
 
 	err := C.int(0)
 
-	pages := C.int(1)
-	if allPages {
-		pages = -1
-	}
-
 	switch imgtype {
 	case imageTypeJPEG:
 		err = C.vips_jpegload_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), C.int(shrink), &img)
@@ -611,6 +606,11 @@ func vipsLoadImage(data []byte, imgtype imageType, shrink int, svgScale float64,
 	case imageTypeWEBP:
 		err = C.vips_webpload_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), C.int(shrink), &img)
 	case imageTypeGIF:
+		pages := C.int(1)
+		if allPages {
+			pages = -1
+		}
+
 		err = C.vips_gifload_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), pages, &img)
 	case imageTypeSVG:
 		err = C.vips_svgload_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), C.double(svgScale), &img)
