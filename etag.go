@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -18,8 +17,8 @@ type etagPool struct {
 type etagPoolEntry struct {
 	hash hash.Hash
 	enc  *json.Encoder
-	buf  *bytes.Buffer
 	next *etagPoolEntry
+	b    []byte
 }
 
 func newEtagPool(n int) *etagPool {
@@ -42,7 +41,7 @@ func (p *etagPool) grow() {
 	p.top = &etagPoolEntry{
 		hash: h,
 		enc:  enc,
-		buf:  new(bytes.Buffer),
+		b:    make([]byte, 64),
 		next: p.top,
 	}
 }
@@ -85,9 +84,7 @@ func calcETag(ctx context.Context) ([]byte, context.CancelFunc) {
 	c.enc.Encode(conf)
 	c.enc.Encode(getProcessingOptions(ctx))
 
-	c.buf.Reset()
-	enc := hex.NewEncoder(c.buf)
-	enc.Write(c.hash.Sum(nil))
+	hex.Encode(c.b, c.hash.Sum(nil))
 
-	return c.buf.Bytes(), cancel
+	return c.b, cancel
 }
