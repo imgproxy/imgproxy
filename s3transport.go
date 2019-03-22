@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	http "net/http"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -47,10 +46,9 @@ func (t s3Transport) RoundTrip(req *http.Request) (resp *http.Response, err erro
 
 	s3req, _ := t.svc.GetObjectRequest(input)
 
-	s3err := s3req.Send()
-	if s3err == nil { // resp is now filled
-		return s3req.HTTPResponse, nil
+	if err := s3req.Send(); err != nil {
+		return nil, err
 	}
-	fmt.Println("s3 error", s3err)
-	return nil, s3err
+
+	return s3req.HTTPResponse, nil
 }
