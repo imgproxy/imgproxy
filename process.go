@@ -154,6 +154,7 @@ func extractMeta(img *C.VipsImage) (int, int, int, bool) {
 	flip := false
 
 	orientation := C.vips_get_exif_orientation(img)
+
 	if orientation >= 5 && orientation <= 8 {
 		width, height = height, width
 	}
@@ -281,7 +282,9 @@ func transformImage(ctx context.Context, img **C.VipsImage, data []byte, po *pro
 
 	hasAlpha := vipsImageHasAlpha(*img)
 
-	if scale := calcScale(imgWidth, imgHeight, po, imgtype); scale != 1 {
+	scale := calcScale(imgWidth, imgHeight, po, imgtype)
+
+	if scale != 1 {
 		if imgtype == imageTypeSVG && data != nil {
 			// Load SVG with desired scale
 			if tmp, err := vipsLoadImage(data, imgtype, 1, scale, false); err == nil {
@@ -289,32 +292,44 @@ func transformImage(ctx context.Context, img **C.VipsImage, data []byte, po *pro
 			} else {
 				return err
 			}
+
+			scale = 1
 		} else {
 			// Do some shrink-on-load
 			if scale < 1.0 && data != nil {
 				if shrink := calcShink(scale, imgtype); shrink != 1 {
-					scale = scale * float64(shrink)
-
 					if tmp, err := vipsLoadImage(data, imgtype, shrink, 1.0, false); err == nil {
 						C.swap_and_clear(img, tmp)
 					} else {
 						return err
 					}
+
+					scale = scale * float64(shrink)
 				}
 			}
-
-			if err = vipsResize(img, scale, hasAlpha); err != nil {
-				return err
-			}
 		}
+	}
 
-		// Update actual image size after resize
-		imgWidth, imgHeight, _, _ = extractMeta(*img)
+	if err = vipsRad2Float(img); err != nil {
+		return err
 	}
 
 	if err = vipsImportColourProfile(img); err != nil {
 		return err
 	}
+
+	if err = vipsFixColourspace(img); err != nil {
+		return err
+	}
+
+	if scale != 1 {
+		if err = vipsResize(img, scale, hasAlpha); err != nil {
+			return err
+		}
+	}
+
+	// Update actual image size after resize
+	imgWidth, imgHeight, _, _ = extractMeta(*img)
 
 	checkTimeout(ctx)
 
@@ -558,6 +573,8 @@ func processImage(ctx context.Context) ([]byte, context.CancelFunc, error) {
 		checkTimeout(ctx)
 	}
 
+	C.vips_strip_meta(img)
+
 	return vipsSaveImage(img, po.Format, po.Quality)
 }
 
@@ -642,7 +659,7 @@ func vipsSaveImage(img *C.VipsImage, imgtype imageType, quality int) ([]byte, co
 
 	switch imgtype {
 	case imageTypeJPEG:
-		err = C.vips_jpegsave_go(img, &ptr, &imgsize, 1, C.int(quality), cConf.JpegProgressive)
+		err = C.vips_jpegsave_go(img, &ptr, &imgsize, C.int(quality), cConf.JpegProgressive)
 	case imageTypePNG:
 		if err = C.vips_pngsave_go(img, &ptr, &imgsize, cConf.PngInterlaced, 1); err != 0 {
 			C.g_free_go(&ptr)
@@ -650,7 +667,7 @@ func vipsSaveImage(img *C.VipsImage, imgtype imageType, quality int) ([]byte, co
 			err = C.vips_pngsave_go(img, &ptr, &imgsize, cConf.PngInterlaced, 0)
 		}
 	case imageTypeWEBP:
-		err = C.vips_webpsave_go(img, &ptr, &imgsize, 1, C.int(quality))
+		err = C.vips_webpsave_go(img, &ptr, &imgsize, C.int(quality))
 	case imageTypeGIF:
 		err = C.vips_gifsave_go(img, &ptr, &imgsize)
 	case imageTypeICO:
@@ -705,6 +722,19 @@ func vipsCastUchar(img **C.VipsImage) error {
 
 	if C.vips_image_get_format(*img) != C.VIPS_FORMAT_UCHAR {
 		if C.vips_cast_go(*img, &tmp, C.VIPS_FORMAT_UCHAR) != 0 {
+			return vipsError()
+		}
+		C.swap_and_clear(img, tmp)
+	}
+
+	return nil
+}
+
+func vipsRad2Float(img **C.VipsImage) error {
+	var tmp *C.VipsImage
+
+	if C.vips_image_get_coding(*img) == C.VIPS_CODING_RAD {
+		if C.vips_rad2float_go(*img, &tmp) != 0 {
 			return vipsError()
 		}
 		C.swap_and_clear(img, tmp)

@@ -30,6 +30,7 @@ int vips_gifload_go(void *buf, size_t len, int pages, VipsImage **out);
 int vips_svgload_go(void *buf, size_t len, double scale, VipsImage **out);
 
 int vips_get_exif_orientation(VipsImage *image);
+void vips_strip_meta(VipsImage *image);
 
 int vips_support_smartcrop();
 
@@ -41,6 +42,7 @@ gboolean vips_image_hasalpha_go(VipsImage * in);
 int vips_copy_go(VipsImage *in, VipsImage **out);
 
 int vips_cast_go(VipsImage *in, VipsImage **out, VipsBandFormat format);
+int vips_rad2float_go(VipsImage *in, VipsImage **out);
 
 int vips_resize_go(VipsImage *in, VipsImage **out, double scale);
 int vips_resize_with_premultiply(VipsImage *in, VipsImage **out, double scale);
@@ -70,9 +72,9 @@ int vips_apply_watermark(VipsImage *in, VipsImage *watermark, VipsImage **out, d
 
 int vips_arrayjoin_go(VipsImage **in, VipsImage **out, int n);
 
-int vips_jpegsave_go(VipsImage *in, void **buf, size_t *len, int strip, int quality, int interlace);
+int vips_jpegsave_go(VipsImage *in, void **buf, size_t *len, int quality, int interlace);
 int vips_pngsave_go(VipsImage *in, void **buf, size_t *len, int interlace, int embed_profile);
-int vips_webpsave_go(VipsImage *in, void **buf, size_t *len, int strip, int quality);
+int vips_webpsave_go(VipsImage *in, void **buf, size_t *len, int quality);
 int vips_gifsave_go(VipsImage *in, void **buf, size_t *len);
 int vips_icosave_go(VipsImage *in, void **buf, size_t *len);
 
