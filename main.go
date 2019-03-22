@@ -11,7 +11,7 @@ import (
 	_ "net/http/pprof"
 )
 
-const version = "2.2.6"
+const version = "2.2.7"
 
 type ctxKey string
 

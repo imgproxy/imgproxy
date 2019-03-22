@@ -1,5 +1,10 @@
 # Changelog
 
+# v2.2.7
+
+- Fixed color management;
+- Memory usage optimizations.
+
 ## v2.2.6
 
 - Fixed signature check when source URL is escaped.
