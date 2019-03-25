@@ -51,13 +51,6 @@ $ git push heroku master
   pkg install -y pkgconf vips
   ```
 
-  **Note:** Most libvips packages come with WebP support. If you want libvips to support WebP on macOS, you need to install it this way:
-
-  ```bash
-  $ brew tap homebrew/science
-  $ brew install vips --with-webp
-  ```
-
 2. Next, install imgproxy itself:
 
   ```bash
