@@ -197,7 +197,6 @@ type config struct {
 
 	FreeMemoryInterval             int
 	DownloadBufferSize             int
-	GZipBufferSize                 int
 	BufferPoolCalibrationThreshold int
 }
 
@@ -319,7 +318,6 @@ func init() {
 
 	intEnvConfig(&conf.FreeMemoryInterval, "IMGPROXY_FREE_MEMORY_INTERVAL")
 	intEnvConfig(&conf.DownloadBufferSize, "IMGPROXY_DOWNLOAD_BUFFER_SIZE")
-	intEnvConfig(&conf.GZipBufferSize, "IMGPROXY_GZIP_BUFFER_SIZE")
 	intEnvConfig(&conf.BufferPoolCalibrationThreshold, "IMGPROXY_BUFFER_POOL_CALIBRATION_THRESHOLD")
 
 	if len(conf.Keys) != len(conf.Salts) {
@@ -436,12 +434,6 @@ func init() {
 		logFatal("Download buffer size should be greater than or equal to 0")
 	} else if conf.DownloadBufferSize > int(^uint32(0)) {
 		logFatal("Download buffer size can't be greater than %d", ^uint32(0))
-	}
-
-	if conf.GZipBufferSize < 0 {
-		logFatal("GZip buffer size should be greater than or equal to 0")
-	} else if conf.GZipBufferSize > int(^uint32(0)) {
-		logFatal("GZip buffer size can't be greater than %d", ^uint32(0))
 	}
 
 	if conf.BufferPoolCalibrationThreshold < 64 {
