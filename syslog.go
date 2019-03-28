@@ -34,7 +34,10 @@ func initSyslog() {
 	strEnvConfig(&network, "IMGPROXY_SYSLOG_NETWORK")
 	strEnvConfig(&addr, "IMGPROXY_SYSLOG_ADDRESS")
 
-	syslogWriter, err = syslog.Dial(network, addr, syslog.LOG_NOTICE, "imgproxy")
+	tag := "imgproxy"
+	strEnvConfig(&tag, "IMGPROXY_SYSLOG_TAG")
+
+	syslogWriter, err = syslog.Dial(network, addr, syslog.LOG_NOTICE, tag)
 
 	if err != nil {
 		log.Fatalf("Can't connect to syslog: %s", err)
