@@ -116,19 +116,6 @@ vips_svgload_go(void *buf, size_t len, double scale, VipsImage **out) {
   #endif
 }
 
-#ifdef VIPS_META_ORIENTATION
-int
-vips_get_exif_orientation(VipsImage *image) {
-  int orientation;
-
-	if (
-		vips_image_get_typeof(image, VIPS_META_ORIENTATION) == G_TYPE_INT &&
-		vips_image_get_int(image, VIPS_META_ORIENTATION, &orientation) == 0
-	) return orientation;
-
-	return 1;
-}
-#else
 int
 vips_get_exif_orientation(VipsImage *image) {
   const char *orientation;
@@ -139,19 +126,6 @@ vips_get_exif_orientation(VipsImage *image) {
 	) return atoi(orientation);
 
 	return 1;
-}
-#endif // VIPS_META_ORIENTATION
-
-void
-vips_strip_meta(VipsImage *image) {
-  #ifdef VIPS_META_ORIENTATION
-	vips_image_remove(image, VIPS_META_ORIENTATION);
-  #endif
-
-	vips_image_remove(image, VIPS_META_EXIF_NAME);
-	vips_image_remove(image, VIPS_META_PHOTOSHOP_NAME);
-
-  vips_image_remove(image, EXIF_ORIENTATION);
 }
 
 int
@@ -478,20 +452,17 @@ vips_arrayjoin_go(VipsImage **in, VipsImage **out, int n) {
 
 int
 vips_jpegsave_go(VipsImage *in, void **buf, size_t *len, int quality, int interlace) {
-  return vips_jpegsave_buffer(in, buf, len, "Q", quality, "optimize_coding", TRUE, "interlace", interlace, NULL);
+  return vips_jpegsave_buffer(in, buf, len, "profile", "none", "Q", quality, "strip", TRUE, "optimize_coding", TRUE, "interlace", interlace, NULL);
 }
 
 int
-vips_pngsave_go(VipsImage *in, void **buf, size_t *len, int interlace, int embed_profile) {
-  if (embed_profile)
-    return vips_pngsave_buffer(in, buf, len, "filter", VIPS_FOREIGN_PNG_FILTER_NONE, "interlace", interlace, NULL);
-
+vips_pngsave_go(VipsImage *in, void **buf, size_t *len, int interlace) {
   return vips_pngsave_buffer(in, buf, len, "profile", "none", "filter", VIPS_FOREIGN_PNG_FILTER_NONE, "interlace", interlace, NULL);
 }
 
 int
 vips_webpsave_go(VipsImage *in, void **buf, size_t *len, int quality) {
-  return vips_webpsave_buffer(in, buf, len, "Q", quality, NULL);
+  return vips_webpsave_buffer(in, buf, len, "Q", quality, "strip", TRUE, NULL);
 }
 
 int

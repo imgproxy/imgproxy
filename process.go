@@ -581,8 +581,6 @@ func processImage(ctx context.Context) ([]byte, context.CancelFunc, error) {
 		checkTimeout(ctx)
 	}
 
-	C.vips_strip_meta(img)
-
 	return vipsSaveImage(img, po.Format, po.Quality)
 }
 
@@ -669,11 +667,7 @@ func vipsSaveImage(img *C.VipsImage, imgtype imageType, quality int) ([]byte, co
 	case imageTypeJPEG:
 		err = C.vips_jpegsave_go(img, &ptr, &imgsize, C.int(quality), cConf.JpegProgressive)
 	case imageTypePNG:
-		if err = C.vips_pngsave_go(img, &ptr, &imgsize, cConf.PngInterlaced, 1); err != 0 {
-			C.g_free_go(&ptr)
-			logWarning("Failed to save PNG; Trying not to embed icc profile")
-			err = C.vips_pngsave_go(img, &ptr, &imgsize, cConf.PngInterlaced, 0)
-		}
+		err = C.vips_pngsave_go(img, &ptr, &imgsize, cConf.PngInterlaced)
 	case imageTypeWEBP:
 		err = C.vips_webpsave_go(img, &ptr, &imgsize, C.int(quality))
 	case imageTypeGIF:
