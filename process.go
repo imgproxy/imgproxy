@@ -318,8 +318,12 @@ func transformImage(ctx context.Context, img **C.VipsImage, data []byte, po *pro
 		return err
 	}
 
-	if err = vipsFixColourspace(img); err != nil {
-		return err
+	convertToLinear := scale != 1 || po.Dpr != 1
+
+	if convertToLinear {
+		if err = vipsLinearColourspace(img); err != nil {
+			return err
+		}
 	}
 
 	if scale != 1 {
@@ -401,6 +405,12 @@ func transformImage(ctx context.Context, img **C.VipsImage, data []byte, po *pro
 			return err
 		}
 		if err = vipsImageCopyMemory(img); err != nil {
+			return err
+		}
+	}
+
+	if convertToLinear {
+		if err = vipsFixColourspace(img); err != nil {
 			return err
 		}
 	}
@@ -866,6 +876,19 @@ func vipsImportColourProfile(img **C.VipsImage) error {
 		}
 
 		if C.vips_icc_import_go(*img, &tmp, cachedCString(profile)) != 0 {
+			return vipsError()
+		}
+		C.swap_and_clear(img, tmp)
+	}
+
+	return nil
+}
+
+func vipsLinearColourspace(img **C.VipsImage) error {
+	var tmp *C.VipsImage
+
+	if C.vips_image_guess_interpretation(*img) != C.VIPS_INTERPRETATION_scRGB {
+		if C.vips_colourspace_go(*img, &tmp, C.VIPS_INTERPRETATION_scRGB) != 0 {
 			return vipsError()
 		}
 		C.swap_and_clear(img, tmp)

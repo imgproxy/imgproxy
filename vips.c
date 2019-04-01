@@ -240,7 +240,8 @@ vips_resize_with_premultiply(VipsImage *in, VipsImage **out, double scale) {
 
 int
 vips_need_icc_import(VipsImage *in) {
-  return in->Type == VIPS_INTERPRETATION_CMYK &&
+  return (vips_image_get_typeof(in, VIPS_META_ICC_NAME) ||
+    in->Type == VIPS_INTERPRETATION_CMYK) &&
 		in->Coding == VIPS_CODING_NONE &&
 		(in->BandFmt == VIPS_FORMAT_UCHAR ||
 		 in->BandFmt == VIPS_FORMAT_USHORT);
