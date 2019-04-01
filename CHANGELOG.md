@@ -1,5 +1,11 @@
 # Changelog
 
+# v2.2.8
+
+- Resize images in linear colorspace;
+- Add `IMGPROXY_DISABLE_SHRINK_ON_LOAD` config to disable shring-on-load of JPEG and WebP;
+- Remove orc from Docker image (causes segfaults in some cases).
+
 # v2.2.7
 
 - Fixed color management;
