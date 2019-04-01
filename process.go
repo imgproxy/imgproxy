@@ -284,8 +284,8 @@ func transformImage(ctx context.Context, img **C.VipsImage, data []byte, po *pro
 
 	scale := calcScale(imgWidth, imgHeight, po, imgtype)
 
-	if scale != 1 {
-		if imgtype == imageTypeSVG && data != nil {
+	if scale != 1 && data != nil {
+		if imgtype == imageTypeSVG {
 			// Load SVG with desired scale
 			if tmp, err := vipsLoadImage(data, imgtype, 1, scale, false); err == nil {
 				C.swap_and_clear(img, tmp)
@@ -294,18 +294,16 @@ func transformImage(ctx context.Context, img **C.VipsImage, data []byte, po *pro
 			}
 
 			scale = 1
-		} else {
+		} else if !conf.DisableShrinkOnLoad && scale < 1.0 {
 			// Do some shrink-on-load
-			if scale < 1.0 && data != nil {
-				if shrink := calcShink(scale, imgtype); shrink != 1 {
-					if tmp, err := vipsLoadImage(data, imgtype, shrink, 1.0, false); err == nil {
-						C.swap_and_clear(img, tmp)
-					} else {
-						return err
-					}
-
-					scale = scale * float64(shrink)
+			if shrink := calcShink(scale, imgtype); shrink != 1 {
+				if tmp, err := vipsLoadImage(data, imgtype, shrink, 1.0, false); err == nil {
+					C.swap_and_clear(img, tmp)
+				} else {
+					return err
 				}
+
+				scale = scale * float64(shrink)
 			}
 		}
 	}
