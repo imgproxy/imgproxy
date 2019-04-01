@@ -1,5 +1,9 @@
 # Changelog
 
+# v2.2.9
+
+Fixed processing of images with embedded profiles that was broken in v2.2.8.
+
 # v2.2.8
 
 - Resize images in linear colorspace;
