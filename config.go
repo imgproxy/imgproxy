@@ -152,6 +152,7 @@ type config struct {
 	EnforceWebp         bool
 	EnableClientHints   bool
 
+	UseLinearColorspace bool
 	DisableShrinkOnLoad bool
 
 	Keys          []securityKey
@@ -269,6 +270,7 @@ func init() {
 	boolEnvConfig(&conf.EnforceWebp, "IMGPROXY_ENFORCE_WEBP")
 	boolEnvConfig(&conf.EnableClientHints, "IMGPROXY_ENABLE_CLIENT_HINTS")
 
+	boolEnvConfig(&conf.UseLinearColorspace, "IMGPROXY_USE_LINEAR_COLORSPACE")
 	boolEnvConfig(&conf.DisableShrinkOnLoad, "IMGPROXY_DISABLE_SHRINK_ON_LOAD")
 
 	hexEnvConfig(&conf.Keys, "IMGPROXY_KEY")

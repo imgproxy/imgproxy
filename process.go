@@ -316,7 +316,7 @@ func transformImage(ctx context.Context, img **C.VipsImage, data []byte, po *pro
 		return err
 	}
 
-	convertToLinear := scale != 1 || po.Dpr != 1
+	convertToLinear := conf.UseLinearColorspace && (scale != 1 || po.Dpr != 1)
 
 	if convertToLinear {
 		if err = vipsLinearColourspace(img); err != nil {
