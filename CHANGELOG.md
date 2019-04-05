@@ -1,5 +1,10 @@
 # Changelog
 
+# v2.2.10
+
+- Resizing images in linear colorspace is disabled by default. Can be enabled with `IMGPROXY_USE_LINEAR_COLORSPACE`;
+- Add PNG quantization. Can be enabled with `IMGPROXY_PNG_QUANTIZE`. Palette size can be specified with `IMGPROXY_PNG_QUANTIZATION_COLORS`.
+
 # v2.2.9
 
 Fixed processing of images with embedded profiles that was broken in v2.2.8.
