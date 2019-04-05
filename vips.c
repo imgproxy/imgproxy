@@ -15,6 +15,9 @@
 #define VIPS_SUPPORT_MAGICK \
   (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 7))
 
+#define VIPS_SUPPORT_PNG_QUANTIZATION \
+  (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 7))
+
 #define EXIF_ORIENTATION "exif-ifd0-Orientation"
 
 int
@@ -456,8 +459,17 @@ vips_jpegsave_go(VipsImage *in, void **buf, size_t *len, int quality, int interl
 }
 
 int
-vips_pngsave_go(VipsImage *in, void **buf, size_t *len, int interlace) {
-  return vips_pngsave_buffer(in, buf, len, "profile", "none", "filter", VIPS_FOREIGN_PNG_FILTER_NONE, "interlace", interlace, NULL);
+vips_pngsave_go(VipsImage *in, void **buf, size_t *len, int interlace, int quantize, int colors) {
+  return vips_pngsave_buffer(
+    in, buf, len,
+    "profile", "none",
+    "filter", VIPS_FOREIGN_PNG_FILTER_NONE,
+    "interlace", interlace,
+#if VIPS_SUPPORT_PNG_QUANTIZATION
+    "palette", quantize,
+    "colours", colors,
+#endif // VIPS_SUPPORT_PNG_QUANTIZATION
+    NULL);
 }
 
 int

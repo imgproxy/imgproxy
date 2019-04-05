@@ -67,6 +67,8 @@ When you use imgproxy in a development environment, it can be useful to ignore S
 * `IMGPROXY_GZIP_COMPRESSION`: GZip compression level. Default: `5`;
 * `IMGPROXY_JPEG_PROGRESSIVE` : when true, enables progressive JPEG compression. Default: false;
 * `IMGPROXY_PNG_INTERLACED`: when true, enables interlaced PNG compression. Default: false;
+* `IMGPROXY_PNG_QUANTIZE`: when true, enables PNG quantization. libvips should be built with libimagequant support. Default: false;
+* `IMGPROXY_PNG_QUANTIZATION_COLORS`: maximum number of quantization palette entries. Should be between 2 and 256. Default: 256;
 
 ## WebP support detection
 

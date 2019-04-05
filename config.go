@@ -143,10 +143,12 @@ type config struct {
 	MaxSrcFileSize   int
 	MaxGifFrames     int
 
-	JpegProgressive bool
-	PngInterlaced   bool
-	Quality         int
-	GZipCompression int
+	JpegProgressive       bool
+	PngInterlaced         bool
+	PngQuantize           bool
+	PngQuantizationColors int
+	Quality               int
+	GZipCompression       int
 
 	EnableWebpDetection bool
 	EnforceWebp         bool
@@ -215,6 +217,7 @@ var conf = config{
 	MaxGifFrames:                   1,
 	AllowInsecure:                  false,
 	SignatureSize:                  32,
+	PngQuantizationColors:          256,
 	Quality:                        80,
 	GZipCompression:                5,
 	UserAgent:                      fmt.Sprintf("imgproxy/%s", version),
@@ -263,6 +266,8 @@ func init() {
 
 	boolEnvConfig(&conf.JpegProgressive, "IMGPROXY_JPEG_PROGRESSIVE")
 	boolEnvConfig(&conf.PngInterlaced, "IMGPROXY_PNG_INTERLACED")
+	boolEnvConfig(&conf.PngQuantize, "IMGPROXY_PNG_QUANTIZE")
+	intEnvConfig(&conf.PngQuantizationColors, "IMGPROXY_PNG_QUANTIZATION_COLORS")
 	intEnvConfig(&conf.Quality, "IMGPROXY_QUALITY")
 	intEnvConfig(&conf.GZipCompression, "IMGPROXY_GZIP_COMPRESSION")
 
@@ -386,6 +391,12 @@ func init() {
 
 	if conf.MaxGifFrames <= 0 {
 		logFatal("Max GIF frames should be greater than 0, now - %d\n", conf.MaxGifFrames)
+	}
+
+	if conf.PngQuantizationColors < 2 {
+		logFatal("Png quantization colors should be greater than 1, now - %d\n", conf.PngQuantizationColors)
+	} else if conf.PngQuantizationColors > 256 {
+		logFatal("Png quantization colors can't be greater than 256, now - %d\n", conf.PngQuantizationColors)
 	}
 
 	if conf.Quality <= 0 {

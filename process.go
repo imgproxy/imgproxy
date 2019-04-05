@@ -31,9 +31,11 @@ var (
 )
 
 type cConfig struct {
-	JpegProgressive  C.int
-	PngInterlaced    C.int
-	WatermarkOpacity C.double
+	JpegProgressive       C.int
+	PngInterlaced         C.int
+	PngQuantize           C.int
+	PngQuantizationColors C.int
+	WatermarkOpacity      C.double
 }
 
 var cConf cConfig
@@ -108,6 +110,12 @@ func initVips() {
 	if conf.PngInterlaced {
 		cConf.PngInterlaced = C.int(1)
 	}
+
+	if conf.PngQuantize {
+		cConf.PngQuantize = C.int(1)
+	}
+
+	cConf.PngQuantizationColors = C.int(conf.PngQuantizationColors)
 
 	cConf.WatermarkOpacity = C.double(conf.WatermarkOpacity)
 
@@ -667,7 +675,7 @@ func vipsSaveImage(img *C.VipsImage, imgtype imageType, quality int) ([]byte, co
 	case imageTypeJPEG:
 		err = C.vips_jpegsave_go(img, &ptr, &imgsize, C.int(quality), cConf.JpegProgressive)
 	case imageTypePNG:
-		err = C.vips_pngsave_go(img, &ptr, &imgsize, cConf.PngInterlaced)
+		err = C.vips_pngsave_go(img, &ptr, &imgsize, cConf.PngInterlaced, cConf.PngQuantize, cConf.PngQuantizationColors)
 	case imageTypeWEBP:
 		err = C.vips_webpsave_go(img, &ptr, &imgsize, C.int(quality))
 	case imageTypeGIF:
