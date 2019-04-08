@@ -1,5 +1,9 @@
 # Changelog
 
+# v2.2.11
+
+- Optimized ICC import when linear colorspace usage is disabled.
+
 # v2.2.10
 
 - Resizing images in linear colorspace is disabled by default. Can be enabled with `IMGPROXY_USE_LINEAR_COLORSPACE`;
