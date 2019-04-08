@@ -320,13 +320,13 @@ func transformImage(ctx context.Context, img **C.VipsImage, data []byte, po *pro
 		return err
 	}
 
-	if err = vipsImportColourProfile(img); err != nil {
-		return err
-	}
-
 	convertToLinear := conf.UseLinearColorspace && (scale != 1 || po.Dpr != 1)
 
 	if convertToLinear {
+		if err = vipsImportColourProfile(img); err != nil {
+			return err
+		}
+
 		if err = vipsLinearColourspace(img); err != nil {
 			return err
 		}
@@ -417,6 +417,10 @@ func transformImage(ctx context.Context, img **C.VipsImage, data []byte, po *pro
 
 	if convertToLinear {
 		if err = vipsFixColourspace(img); err != nil {
+			return err
+		}
+	} else {
+		if err = vipsImportColourProfile(img); err != nil {
 			return err
 		}
 	}
