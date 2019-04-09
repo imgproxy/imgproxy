@@ -113,7 +113,6 @@ type Backoff struct {
 	cur time.Duration
 }
 
-// Pause returns the next time.Duration that the caller should use to backoff.
 func (bo *Backoff) Pause() time.Duration {
 	if bo.Initial == 0 {
 		bo.Initial = time.Second
@@ -145,12 +144,10 @@ func (o grpcOpt) Resolve(s *CallSettings) {
 	s.GRPC = o
 }
 
-// WithGRPCOptions allows passing gRPC call options during client creation.
 func WithGRPCOptions(opt ...grpc.CallOption) CallOption {
 	return grpcOpt(append([]grpc.CallOption(nil), opt...))
 }
 
-// CallSettings allow fine-grained control over how calls are made.
 type CallSettings struct {
 	// Retry returns a Retryer to be used to control retry logic of a method call.
 	// If Retry is nil or the returned Retryer is nil, the call will not be retried.
