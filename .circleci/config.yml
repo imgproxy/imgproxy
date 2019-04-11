@@ -11,31 +11,31 @@ workflows:
           go_version: "1.12"
           vips_version: "8.7"
       - build:
-          name: go1.11_vips8.7
+          name: go1.12_vips8.7
           requires:
             - checkout_code
           go_version: "1.12"
           vips_version: "8.7"
       - build:
-          name: go1.11_vips8.6
+          name: go1.12_vips8.6
           requires:
             - checkout_code
           go_version: "1.12"
           vips_version: "8.6"
       - build:
-          name: go1.11_vips8.5
+          name: go1.12_vips8.5
           requires:
             - checkout_code
           go_version: "1.12"
           vips_version: "8.5"
       - build:
-          name: go1.11_vips8.4
+          name: go1.12_vips8.4
           requires:
             - checkout_code
           go_version: "1.12"
           vips_version: "8.4"
       - build:
-          name: go1.11_vips8.3
+          name: go1.12_vips8.3
           requires:
             - checkout_code
           go_version: "1.12"
@@ -163,6 +163,7 @@ jobs:
             gvm install go<< parameters.go_version >> -B
             gvm use go<< parameters.go_version >>
             export GOPATH=/go
+            export PATH="PATH:$(go env GOPATH)/bin"
             export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/root/vips/<< parameters.vips_version >>/lib
             export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/root/vips/<< parameters.vips_version >>/lib/pkgconfig
             export CGO_LDFLAGS_ALLOW="-s|-w"
