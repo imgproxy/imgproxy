@@ -29,18 +29,6 @@ workflows:
           go_version: "1.12"
           vips_version: "8.5"
       - build:
-          name: go1.12_vips8.4
-          requires:
-            - checkout_code
-          go_version: "1.12"
-          vips_version: "8.4"
-      - build:
-          name: go1.12_vips8.3
-          requires:
-            - checkout_code
-          go_version: "1.12"
-          vips_version: "8.3"
-      - build:
           name: go1.11_vips8.7
           requires:
             - checkout_code
@@ -59,18 +47,6 @@ workflows:
           go_version: "1.11"
           vips_version: "8.5"
       - build:
-          name: go1.11_vips8.4
-          requires:
-            - checkout_code
-          go_version: "1.11"
-          vips_version: "8.4"
-      - build:
-          name: go1.11_vips8.3
-          requires:
-            - checkout_code
-          go_version: "1.11"
-          vips_version: "8.3"
-      - build:
           name: go1.10_vips8.7
           requires:
             - checkout_code
@@ -88,48 +64,6 @@ workflows:
             - checkout_code
           go_version: "1.10"
           vips_version: "8.5"
-      - build:
-          name: go1.10_vips8.4
-          requires:
-            - checkout_code
-          go_version: "1.10"
-          vips_version: "8.4"
-      - build:
-          name: go1.10_vips8.3
-          requires:
-            - checkout_code
-          go_version: "1.10"
-          vips_version: "8.3"
-      - build:
-          name: go1.10_vips8.7
-          requires:
-            - checkout_code
-          go_version: "1.9"
-          vips_version: "8.7"
-      - build:
-          name: go1.9_vips8.6
-          requires:
-            - checkout_code
-          go_version: "1.9"
-          vips_version: "8.6"
-      - build:
-          name: go1.9_vips8.5
-          requires:
-            - checkout_code
-          go_version: "1.9"
-          vips_version: "8.5"
-      - build:
-          name: go1.9_vips8.4
-          requires:
-            - checkout_code
-          go_version: "1.9"
-          vips_version: "8.4"
-      - build:
-          name: go1.9_vips8.3
-          requires:
-            - checkout_code
-          go_version: "1.9"
-          vips_version: "8.3"
 
 jobs:
   checkout_code:

@@ -46,7 +46,7 @@ $ git push heroku master
   # It's recommended to use PPA with an up to date version.
   $ sudo add-apt-repository ppa:dhor/myway
   $ sudo apt-get install libvips-dev
-  
+
   # FreeBSD
   pkg install -y pkgconf vips
   ```
@@ -56,3 +56,5 @@ $ git push heroku master
   ```bash
   $ go get -f -u github.com/DarthSim/imgproxy
   ```
+
+**Note:** imgproxy build is automatically tested with the latest three minor versions of Go and libvips. Successfully build with the older versions is not guaranteed but yet may be possible.
