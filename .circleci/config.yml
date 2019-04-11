@@ -5,6 +5,41 @@ workflows:
   build:
     jobs:
       - checkout_code
+      - lint:
+          requires:
+            - checkout_code
+          go_version: "1.12"
+          vips_version: "8.7"
+      - build:
+          name: go1.11_vips8.7
+          requires:
+            - checkout_code
+          go_version: "1.12"
+          vips_version: "8.7"
+      - build:
+          name: go1.11_vips8.6
+          requires:
+            - checkout_code
+          go_version: "1.12"
+          vips_version: "8.6"
+      - build:
+          name: go1.11_vips8.5
+          requires:
+            - checkout_code
+          go_version: "1.12"
+          vips_version: "8.5"
+      - build:
+          name: go1.11_vips8.4
+          requires:
+            - checkout_code
+          go_version: "1.12"
+          vips_version: "8.4"
+      - build:
+          name: go1.11_vips8.3
+          requires:
+            - checkout_code
+          go_version: "1.12"
+          vips_version: "8.3"
       - build:
           name: go1.11_vips8.7
           requires:
@@ -107,6 +142,32 @@ jobs:
       - persist_to_workspace:
           root: .
           paths: [.]
+
+  lint:
+    docker:
+      - image: "darthsim/imgproxy-circleci:latest"
+    working_directory: /go/src/imgproxy
+    environment:
+      BASH_ENV: "/root/.bashrc"
+    parameters:
+      go_version:
+        type: string
+      vips_version:
+        type: string
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: Build imgproxy
+          command: |
+            gvm install go<< parameters.go_version >> -B
+            gvm use go<< parameters.go_version >>
+            export GOPATH=/go
+            export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/root/vips/<< parameters.vips_version >>/lib
+            export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/root/vips/<< parameters.vips_version >>/lib/pkgconfig
+            export CGO_LDFLAGS_ALLOW="-s|-w"
+            curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(go env GOPATH)/bin v1.16.0
+            golangci-lint run .
 
   build:
     docker:

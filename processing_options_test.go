@@ -16,12 +16,14 @@ import (
 type ProcessingOptionsTestSuite struct{ MainTestSuite }
 
 func (s *ProcessingOptionsTestSuite) getRequest(url string) *fasthttp.RequestCtx {
-	req := fasthttp.Request{}
-	req.SetRequestURI(url)
-	return &fasthttp.RequestCtx{
-		Request:  req,
+	ctx := fasthttp.RequestCtx{
+		Request:  fasthttp.Request{},
 		Response: fasthttp.Response{},
 	}
+
+	ctx.Request.SetRequestURI(url)
+
+	return &ctx
 }
 
 func (s *ProcessingOptionsTestSuite) TestParseBase64URL() {

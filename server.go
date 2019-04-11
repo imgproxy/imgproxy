@@ -262,7 +262,7 @@ func (h *httpHandler) ServeHTTP(rctx *fasthttp.RequestCtx) {
 		panic(errInvalidMethod)
 	}
 
-	if bytes.Compare(rctx.RequestURI(), healthPath) == 0 {
+	if bytes.Equal(rctx.RequestURI(), healthPath) {
 		rctx.SetStatusCode(200)
 		rctx.SetBody(imgproxyIsRunningMsg)
 		return
@@ -316,7 +316,7 @@ func (h *httpHandler) ServeHTTP(rctx *fasthttp.RequestCtx) {
 
 		rctx.Response.Header.SetBytesV("ETag", eTag)
 
-		if bytes.Compare(eTag, rctx.Request.Header.Peek("If-None-Match")) == 0 {
+		if bytes.Equal(eTag, rctx.Request.Header.Peek("If-None-Match")) {
 			respondWithNotModified(reqID, rctx)
 			return
 		}

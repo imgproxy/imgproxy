@@ -45,7 +45,7 @@ func (t gcsTransport) RoundTrip(req *http.Request) (resp *http.Response, err err
 		ProtoMajor:    1,
 		ProtoMinor:    0,
 		Header:        make(http.Header),
-		ContentLength: reader.Size(),
+		ContentLength: reader.Attrs.Size,
 		Body:          reader,
 		Close:         true,
 		Request:       req,

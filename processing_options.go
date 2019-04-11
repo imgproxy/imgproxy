@@ -140,8 +140,6 @@ type processingOptions struct {
 	UsedPresets []string
 }
 
-type applyOptionFunc func(po *processingOptions, args []string) error
-
 const (
 	imageURLCtxKey          = ctxKey("imageUrl")
 	processingOptionsCtxKey = ctxKey("processingOptions")
@@ -467,19 +465,19 @@ func applyBackgroundOption(po *processingOptions, args []string) error {
 	case 3:
 		po.Flatten = true
 
-		if r, err := strconv.ParseUint(args[0], 10, 8); err == nil && r >= 0 && r <= 255 {
+		if r, err := strconv.ParseUint(args[0], 10, 8); err == nil && r <= 255 {
 			po.Background.R = uint8(r)
 		} else {
 			return fmt.Errorf("Invalid background red channel: %s", args[0])
 		}
 
-		if g, err := strconv.ParseUint(args[1], 10, 8); err == nil && g >= 0 && g <= 255 {
+		if g, err := strconv.ParseUint(args[1], 10, 8); err == nil && g <= 255 {
 			po.Background.G = uint8(g)
 		} else {
 			return fmt.Errorf("Invalid background green channel: %s", args[1])
 		}
 
-		if b, err := strconv.ParseUint(args[2], 10, 8); err == nil && b >= 0 && b <= 255 {
+		if b, err := strconv.ParseUint(args[2], 10, 8); err == nil && b <= 255 {
 			po.Background.B = uint8(b)
 		} else {
 			return fmt.Errorf("Invalid background blue channel: %s", args[2])

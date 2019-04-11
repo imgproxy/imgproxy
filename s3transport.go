@@ -25,7 +25,10 @@ func newS3Transport() http.RoundTripper {
 		s3Conf.S3ForcePathStyle = aws.Bool(true)
 	}
 
-	sess := session.New()
+	sess, err := session.NewSession()
+	if err != nil {
+		logFatal("Can't create S3 session: %s", err)
+	}
 
 	if sess.Config.Region == nil || len(*sess.Config.Region) == 0 {
 		sess.Config.Region = aws.String("us-west-1")
