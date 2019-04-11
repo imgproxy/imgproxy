@@ -1,25 +1,29 @@
 # Changelog
 
-# v2.2.11
+# v2.2.12
+
+- Don't fail processing when embedded ICC profile is not compatible with the image
+
+## v2.2.11
 
 - Optimized ICC import when linear colorspace usage is disabled.
 
-# v2.2.10
+## v2.2.10
 
 - Resizing images in linear colorspace is disabled by default. Can be enabled with `IMGPROXY_USE_LINEAR_COLORSPACE`;
 - Add PNG quantization. Can be enabled with `IMGPROXY_PNG_QUANTIZE`. Palette size can be specified with `IMGPROXY_PNG_QUANTIZATION_COLORS`.
 
-# v2.2.9
+## v2.2.9
 
 Fixed processing of images with embedded profiles that was broken in v2.2.8.
 
-# v2.2.8
+## v2.2.8
 
 - Resize images in linear colorspace;
 - Add `IMGPROXY_DISABLE_SHRINK_ON_LOAD` config to disable shring-on-load of JPEG and WebP;
 - Remove orc from Docker image (causes segfaults in some cases).
 
-# v2.2.7
+## v2.2.7
 
 - Fixed color management;
 - Memory usage optimizations.
