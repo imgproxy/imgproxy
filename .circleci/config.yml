@@ -163,7 +163,7 @@ jobs:
             gvm install go<< parameters.go_version >> -B
             gvm use go<< parameters.go_version >>
             export GOPATH=/go
-            export PATH="PATH:$(go env GOPATH)/bin"
+            export PATH="$PATH:$(go env GOPATH)/bin"
             export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/root/vips/<< parameters.vips_version >>/lib
             export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/root/vips/<< parameters.vips_version >>/lib/pkgconfig
             export CGO_LDFLAGS_ALLOW="-s|-w"
