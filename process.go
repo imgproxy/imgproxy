@@ -879,10 +879,11 @@ func vipsImportColourProfile(img **C.VipsImage) error {
 			return err
 		}
 
-		if C.vips_icc_import_go(*img, &tmp, cachedCString(profile)) != 0 {
-			return vipsError()
+		if C.vips_icc_import_go(*img, &tmp, cachedCString(profile)) == 0 {
+			C.swap_and_clear(img, tmp)
+		} else {
+			logWarning("Can't import ICC profile: %s", vipsError())
 		}
-		C.swap_and_clear(img, tmp)
 	}
 
 	return nil
