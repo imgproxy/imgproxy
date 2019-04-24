@@ -238,11 +238,11 @@ func calcShink(scale float64, imgtype imageType) int {
 		shrink := int(1.0 / scale)
 
 		switch {
-		case shrink >= 16:
-			return 8
 		case shrink >= 8:
-			return 4
+			return 8
 		case shrink >= 4:
+			return 4
+		case shrink >= 2:
 			return 2
 		}
 	}
