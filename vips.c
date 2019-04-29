@@ -1,4 +1,5 @@
 #include "vips.h"
+#include "srgb_iec61966.h"
 
 #define VIPS_SUPPORT_SMARTCROP \
   (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 5))
@@ -216,8 +217,22 @@ vips_resize_with_premultiply(VipsImage *in, VipsImage **out, double scale) {
 }
 
 int
+vips_icc_is_srgb_iec61966(VipsImage *in) {
+  void *data;
+  size_t data_len;
+
+  if (vips_image_get_blob(in, VIPS_META_ICC_NAME, &data, &data_len))
+    return FALSE;
+
+  if (data_len != sRGB_IEC61966_content_size)
+    return FALSE;
+
+  return memcmp(data, (void *)sRGB_IEC61966_content, sRGB_IEC61966_content_size) == 0;
+}
+
+int
 vips_need_icc_import(VipsImage *in) {
-  return (vips_image_get_typeof(in, VIPS_META_ICC_NAME) ||
+  return ((vips_image_get_typeof(in, VIPS_META_ICC_NAME) && !vips_icc_is_srgb_iec61966(in)) ||
     in->Type == VIPS_INTERPRETATION_CMYK) &&
 		in->Coding == VIPS_CODING_NONE &&
 		(in->BandFmt == VIPS_FORMAT_UCHAR ||
