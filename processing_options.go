@@ -714,6 +714,16 @@ func parseURLOptions(opts []string) (urlOptions, []string) {
 	for i, opt := range opts {
 		args := strings.Split(opt, ":")
 
+		if conf.OnlyPresets {
+			if i > 0 {
+				break
+			}
+
+			parsed["preset"] = args
+			urlStart = i + 1
+			break
+		}
+
 		if len(args) == 1 {
 			urlStart = i
 			break

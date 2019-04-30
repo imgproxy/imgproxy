@@ -21,3 +21,11 @@ Read how to specify your presets with imgproxy in the [Configuration](./configur
 ### Default preset
 
 A preset named `default` will be applied to each image. Useful in case you want your default processing options to be different from the imgproxy default ones.
+
+### Only presets
+
+If you set `IMGPROXY_ONLY_PRESETS` as `true`, a preset is obligatory, and all other URL formats are disabled.
+
+In this case, you always need to inform a preset in your URLs without the `preset` or `pr` statement. Example: `http://imgproxy.example.com/AfrOrF3gWeDA6VOlDG4TzxMv39O7MXnF4CXpKUwGqRM/thumbnail/aHR0cDovL2V4YW1w/bGUuY29tL2ltYWdl/cy9jdXJpb3NpdHku/anBn.png`
+
+It's possible to use more than one preset separing them with `:` like `thumbnail:gray`.

@@ -180,7 +180,8 @@ type config struct {
 
 	BaseURL string
 
-	Presets presets
+	Presets     presets
+	OnlyPresets bool
 
 	WatermarkData    string
 	WatermarkPath    string
@@ -230,6 +231,7 @@ var conf = config{
 	SentryRelease:                  fmt.Sprintf("imgproxy/%s", version),
 	FreeMemoryInterval:             10,
 	BufferPoolCalibrationThreshold: 1024,
+	OnlyPresets:                    false,
 }
 
 func init() {
@@ -308,6 +310,7 @@ func init() {
 	conf.Presets = make(presets)
 	presetEnvConfig(conf.Presets, "IMGPROXY_PRESETS")
 	presetFileConfig(conf.Presets, *presetsPath)
+	boolEnvConfig(&conf.OnlyPresets, "IMGPROXY_ONLY_PRESETS")
 
 	strEnvConfig(&conf.WatermarkData, "IMGPROXY_WATERMARK_DATA")
 	strEnvConfig(&conf.WatermarkPath, "IMGPROXY_WATERMARK_PATH")
