@@ -77,6 +77,45 @@ RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/reposit
   && apk --no-cache upgrade \
   && apk add --no-cache bash ca-certificates fftw glib expat libjpeg-turbo libpng \
     libwebp giflib librsvg libgsf libexif lcms2 libimagequant\
+  && apk add --no-cache \
+      fontconfig \
+      font-bh-100dpi \
+      font-sun-misc \
+      font-bh-lucidatypewriter-100dpi \
+      font-adobe-utopia-type1 \
+      font-cronyx-cyrillic \
+      font-misc-cyrillic \
+      font-schumacher-misc \
+      font-daewoo-misc \
+      font-screen-cyrillic \
+      font-adobe-utopia-75dpi \
+      font-bitstream-100dpi \
+      font-xfree86-type1 \
+      font-bitstream-75dpi \
+      font-bh-ttf \
+      font-arabic-misc \
+      font-dec-misc \
+      font-misc-ethiopic \
+      font-micro-misc \
+      font-alias \
+      font-isas-misc \
+      font-bh-lucidatypewriter-75dpi \
+      font-winitzki-cyrillic \
+      font-jis-misc \
+      ttf-ubuntu-font-family \
+      font-bitstream-type1 \
+      font-mutt-misc \
+      font-misc-misc \
+      font-adobe-100dpi \
+      font-bh-type1 \
+      font-bh-75dpi \
+      font-sony-misc \
+      font-ibm-type1 \
+      font-bitstream-speedo \
+      font-adobe-utopia-100dpi \
+      font-adobe-75dpi \
+      font-misc-meltho \
+      font-cursor-misc \
   && rm -rf /var/cache/apk*
 
 COPY --from=0 /usr/local/bin/imgproxy /usr/local/bin/
