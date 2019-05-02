@@ -24,10 +24,10 @@ var (
 	imageTypeCtxKey = ctxKey("imageType")
 	imageDataCtxKey = ctxKey("imageData")
 
-	errSourceDimensionsTooBig      = newError(422, "Source image dimensions are too big", "Invalid source image")
-	errSourceResolutionTooBig      = newError(422, "Source image resolution is too big", "Invalid source image")
-	errSourceFileTooBig            = newError(422, "Source image file is too big", "Invalid source image")
-	errSourceImageTypeNotSupported = newError(422, "Source image type not supported", "Invalid source image")
+	errSourceDimensionsTooBig      = newError(422, "Source image dimensions are too big", "Invalid source image dimensions")
+	errSourceResolutionTooBig      = newError(422, "Source image resolution is too big", "Invalid source image resolution")
+	errSourceFileTooBig            = newError(422, "Source image file is too big", "Invalid source image file")
+	errSourceImageTypeNotSupported = newError(422, "Source image type not supported", "Invalid source image type")
 )
 
 const msgSourceImageIsUnreachable = "Source image is unreachable"
