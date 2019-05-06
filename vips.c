@@ -1,5 +1,4 @@
 #include "vips.h"
-#include "srgb_iec61966.h"
 
 #define VIPS_SUPPORT_SMARTCROP \
   (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 5))
@@ -221,18 +220,29 @@ vips_icc_is_srgb_iec61966(VipsImage *in) {
   void *data;
   size_t data_len;
 
+  // 1998-12-01
+  static char date[] = { 7, 206, 0, 2, 0, 9 };
+  // 2.1
+  static char version[] = { 2, 16, 0, 0 };
+
   if (vips_image_get_blob(in, VIPS_META_ICC_NAME, &data, &data_len))
     return FALSE;
 
-  if (data_len != sRGB_IEC61966_content_size)
+  // Less than header size
+  if (data_len < 128)
     return FALSE;
 
-  return memcmp(data, (void *)sRGB_IEC61966_content, sRGB_IEC61966_content_size) == 0;
+  // Predict it is sRGB IEC61966 2.1 by checking some header fields
+  return ((memcmp(data + 48, "IEC ",  4) == 0) && // Device manufacturer
+          (memcmp(data + 52, "sRGB",  4) == 0) && // Device model
+          (memcmp(data + 80, "HP  ",  4) == 0) && // Profile creator
+          (memcmp(data + 24, date,    6) == 0) && // Date of creation
+          (memcmp(data + 8,  version, 4) == 0));  // Version
 }
 
 int
 vips_need_icc_import(VipsImage *in) {
-  return ((vips_image_get_typeof(in, VIPS_META_ICC_NAME) && !vips_icc_is_srgb_iec61966(in)) ||
+  return (vips_image_get_typeof(in, VIPS_META_ICC_NAME) ||
     in->Type == VIPS_INTERPRETATION_CMYK) &&
 		in->Coding == VIPS_CODING_NONE &&
 		(in->BandFmt == VIPS_FORMAT_UCHAR ||

@@ -323,7 +323,7 @@ func transformImage(ctx context.Context, img **C.VipsImage, data []byte, po *pro
 	convertToLinear := conf.UseLinearColorspace && (scale != 1 || po.Dpr != 1)
 
 	if convertToLinear {
-		if err = vipsImportColourProfile(img); err != nil {
+		if err = vipsImportColourProfile(img, true); err != nil {
 			return err
 		}
 
@@ -420,7 +420,7 @@ func transformImage(ctx context.Context, img **C.VipsImage, data []byte, po *pro
 			return err
 		}
 	} else {
-		if err = vipsImportColourProfile(img); err != nil {
+		if err = vipsImportColourProfile(img, false); err != nil {
 			return err
 		}
 	}
@@ -870,10 +870,10 @@ func vipsSharpen(img **C.VipsImage, sigma float32) error {
 	return nil
 }
 
-func vipsImportColourProfile(img **C.VipsImage) error {
+func vipsImportColourProfile(img **C.VipsImage, evenSRGB bool) error {
 	var tmp *C.VipsImage
 
-	if C.vips_need_icc_import(*img) > 0 {
+	if C.vips_need_icc_import(*img) > 0 && (evenSRGB || C.vips_icc_is_srgb_iec61966(*img) == 0) {
 		profile, err := cmykProfilePath()
 		if err != nil {
 			return err
