@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -17,6 +18,7 @@ import (
 
 const (
 	contextDispositionFilenameFallback = "image"
+	xRequestIDHeader                   = "X-Request-ID"
 )
 
 var (
@@ -46,6 +48,8 @@ var (
 	errInvalidSecret = newError(403, "Invalid secret", "Forbidden")
 
 	responseGzipPool *gzipPool
+
+	requestIDRe = regexp.MustCompile(`^[A-Za-z0-9_\-]+$`)
 )
 
 type httpHandler struct {
@@ -174,6 +178,20 @@ func respondWithNotModified(reqID string, rctx *fasthttp.RequestCtx) {
 	rctx.SetStatusCode(304)
 }
 
+func generateRequestID(rctx *fasthttp.RequestCtx) (reqID string) {
+	reqIDb := rctx.Request.Header.Peek(xRequestIDHeader)
+
+	if len(reqIDb) > 0 && requestIDRe.Match(reqIDb) {
+		reqID = string(reqIDb)
+	} else {
+		reqID, _ = nanoid.Nanoid()
+	}
+
+	rctx.Response.Header.Set(xRequestIDHeader, reqID)
+
+	return
+}
+
 func prepareAuthHeaderMust() []byte {
 	if len(authHeaderMust) == 0 {
 		authHeaderMust = []byte(fmt.Sprintf("Bearer %s", conf.Secret))
@@ -231,7 +249,7 @@ func (h *httpHandler) unlock() {
 }
 
 func (h *httpHandler) ServeHTTP(rctx *fasthttp.RequestCtx) {
-	reqID, _ := nanoid.Nanoid()
+	reqID := generateRequestID(rctx)
 
 	defer func() {
 		if rerr := recover(); rerr != nil {
