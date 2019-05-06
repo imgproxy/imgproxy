@@ -96,7 +96,7 @@ func shutdownServer(s *fasthttp.Server) {
 func writeCORS(rctx *fasthttp.RequestCtx) {
 	if len(conf.AllowOrigin) > 0 {
 		rctx.Response.Header.Set("Access-Control-Allow-Origin", conf.AllowOrigin)
-		rctx.Response.Header.Set("Access-Control-Allow-Methods", "GET, OPTIONs")
+		rctx.Response.Header.Set("Access-Control-Allow-Methods", "GET, OPTIONS")
 	}
 }
 
