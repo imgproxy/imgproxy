@@ -389,9 +389,12 @@ func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedPresetLoopDetection() 
 	}
 
 	req := s.getRequest("http://example.com/unsafe/preset:test1:test2:test1/plain/http://images.dev/lorem/ipsum.jpg")
-	_, err := parsePath(context.Background(), req)
+	ctx, err := parsePath(context.Background(), req)
 
-	require.Error(s.T(), err)
+	require.Nil(s.T(), err)
+
+	po := getProcessingOptions(ctx)
+	require.ElementsMatch(s.T(), po.UsedPresets, []string{"test1", "test2"})
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedCachebuster() {
