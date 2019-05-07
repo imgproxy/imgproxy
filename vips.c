@@ -1,4 +1,5 @@
 #include "vips.h"
+#include <string.h>
 
 #define VIPS_SUPPORT_SMARTCROP \
   (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 5))
