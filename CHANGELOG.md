@@ -1,8 +1,15 @@
 # Changelog
 
-# v2.2.12
+## v2.2.13
 
-- Don't fail processing when embedded ICC profile is not compatible with the image
+- Better shrink-on-load;
+- Don't import common sRGB IEC61966-2.1 ICC profile unless linear colorspace is used;
+- Send `X-Reqiest-ID` header;
+- Don't fail on recursive preset usage, just ignore already used preset and log warning.
+
+## v2.2.12
+
+- Don't fail processing when embedded ICC profile is not compatible with the image.
 
 ## v2.2.11
 
