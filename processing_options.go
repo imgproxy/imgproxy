@@ -522,7 +522,8 @@ func applyPresetOption(po *processingOptions, args []string) error {
 	for _, preset := range args {
 		if p, ok := conf.Presets[preset]; ok {
 			if po.isPresetUsed(preset) {
-				return fmt.Errorf("Recursive preset usage is detected: %s", preset)
+				logWarning("Recursive preset usage is detected: %s", preset)
+				continue
 			}
 
 			po.presetUsed(preset)
