@@ -169,6 +169,7 @@ type config struct {
 	UserAgent string
 
 	IgnoreSslVerification bool
+	DevelopmentErrorsMode bool
 
 	LocalFileSystemRoot string
 	S3Enabled           bool
@@ -293,6 +294,7 @@ func init() {
 	strEnvConfig(&conf.UserAgent, "IMGPROXY_USER_AGENT")
 
 	boolEnvConfig(&conf.IgnoreSslVerification, "IMGPROXY_IGNORE_SSL_VERIFICATION")
+	boolEnvConfig(&conf.DevelopmentErrorsMode, "IMGPROXY_DEVELOPMENT_ERRORS_MODE")
 
 	strEnvConfig(&conf.LocalFileSystemRoot, "IMGPROXY_LOCAL_FILESYSTEM_ROOT")
 

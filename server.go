@@ -175,7 +175,12 @@ func respondWithError(reqID string, rw http.ResponseWriter, err *imgproxyError) 
 	logResponse(reqID, err.StatusCode, err.Message)
 
 	rw.WriteHeader(err.StatusCode)
-	rw.Write([]byte(err.PublicMessage))
+
+	if conf.DevelopmentErrorsMode {
+		rw.Write([]byte(err.Message))
+	} else {
+		rw.Write([]byte(err.PublicMessage))
+	}
 }
 
 func respondWithOptions(reqID string, rw http.ResponseWriter) {
