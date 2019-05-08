@@ -1048,5 +1048,5 @@ func vipsApplyWatermark(img **C.VipsImage, opts *watermarkOptions) error {
 }
 
 func vipsError() error {
-	return errors.New(C.GoString(C.vips_error_buffer()))
+	return newUnexpectedError(C.GoString(C.vips_error_buffer()), 1)
 }

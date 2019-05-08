@@ -240,7 +240,7 @@ func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 				if ierr, ok := err.(*imgproxyError); ok {
 					respondWithError(reqID, rw, ierr)
 				} else {
-					respondWithError(reqID, rw, newUnexpectedError(err, 4))
+					respondWithError(reqID, rw, newUnexpectedError(err.Error(), 3))
 				}
 			} else {
 				panic(rerr)
