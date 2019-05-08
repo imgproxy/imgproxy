@@ -125,6 +125,10 @@ func readAndCheckImage(ctx context.Context, res *http.Response) (context.Context
 
 	if res.ContentLength > 0 {
 		contentLength = int(res.ContentLength)
+
+		if conf.MaxSrcFileSize > 0 && contentLength > conf.MaxSrcFileSize {
+			return ctx, func() {}, errSourceFileTooBig
+		}
 	}
 
 	buf := downloadBufPool.Get(contentLength)
