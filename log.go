@@ -4,8 +4,7 @@ import (
 	"fmt"
 	"log"
 	"log/syslog"
-
-	"github.com/valyala/fasthttp"
+	"net/http"
 )
 
 const (
@@ -18,13 +17,13 @@ const (
 	logFatalSyslogFmt    = "FATAL %s"
 )
 
-func logRequest(reqID string, rctx *fasthttp.RequestCtx) {
-	path := rctx.RequestURI()
+func logRequest(reqID string, r *http.Request) {
+	path := r.URL.RequestURI()
 
-	log.Printf(logRequestFmt, reqID, rctx.Method(), path)
+	log.Printf(logRequestFmt, reqID, r.Method, path)
 
 	if syslogWriter != nil {
-		syslogWriter.Notice(fmt.Sprintf(logRequestSyslogFmt, reqID, rctx.Method(), path))
+		syslogWriter.Notice(fmt.Sprintf(logRequestSyslogFmt, reqID, r.Method, path))
 	}
 }
 

@@ -83,12 +83,6 @@ github.com/honeybadger-io/honeybadger-go
 github.com/jmespath/go-jmespath
 # github.com/kardianos/osext v0.0.0-20170510131534-ae77be60afb1
 github.com/kardianos/osext
-# github.com/klauspost/compress v1.4.1
-github.com/klauspost/compress/flate
-github.com/klauspost/compress/gzip
-github.com/klauspost/compress/zlib
-# github.com/klauspost/cpuid v1.2.0
-github.com/klauspost/cpuid
 # github.com/mat/besticon v3.9.0+incompatible
 github.com/mat/besticon/ico
 # github.com/matoous/go-nanoid v0.0.0-20181114085210-eab626deece6
@@ -132,12 +126,6 @@ github.com/shirou/gopsutil/internal/common
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
 github.com/stretchr/testify/suite
-# github.com/valyala/bytebufferpool v1.0.0
-github.com/valyala/bytebufferpool
-# github.com/valyala/fasthttp v1.2.0
-github.com/valyala/fasthttp
-github.com/valyala/fasthttp/fasthttputil
-github.com/valyala/fasthttp/stackless
 # go.opencensus.io v0.18.0
 go.opencensus.io/trace
 go.opencensus.io/plugin/ochttp
@@ -159,6 +147,7 @@ golang.org/x/image/vp8
 golang.org/x/image/vp8l
 golang.org/x/image/bmp
 # golang.org/x/net v0.0.0-20190110200230-915654e7eabc
+golang.org/x/net/netutil
 golang.org/x/net/context
 golang.org/x/net/trace
 golang.org/x/net/context/ctxhttp

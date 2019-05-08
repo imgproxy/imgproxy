@@ -38,8 +38,8 @@ func initNewrelic() {
 	newRelicEnabled = true
 }
 
-func startNewRelicTransaction(ctx context.Context, r *http.Request) (context.Context, context.CancelFunc) {
-	txn := newRelicApp.StartTransaction("request", nil, r)
+func startNewRelicTransaction(ctx context.Context, rw http.ResponseWriter, r *http.Request) (context.Context, context.CancelFunc) {
+	txn := newRelicApp.StartTransaction("request", rw, r)
 	cancel := func() { txn.End() }
 	return context.WithValue(ctx, newRelicTransactionCtxKey, txn), cancel
 }
