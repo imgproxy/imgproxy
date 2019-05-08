@@ -296,7 +296,7 @@ func applyHeightOption(po *processingOptions, args []string) error {
 		return fmt.Errorf("Invalid height arguments: %v", args)
 	}
 
-	if h, err := strconv.Atoi(args[0]); err == nil && po.Height >= 0 {
+	if h, err := strconv.Atoi(args[0]); err == nil && h >= 0 {
 		po.Height = h
 	} else {
 		return fmt.Errorf("Invalid height: %s", args[0])
