@@ -714,16 +714,6 @@ func parseURLOptions(opts []string) (urlOptions, []string) {
 	for i, opt := range opts {
 		args := strings.Split(opt, ":")
 
-		if conf.OnlyPresets {
-			if i > 0 {
-				break
-			}
-
-			parsed["preset"] = args
-			urlStart = i + 1
-			break
-		}
-
 		if len(args) == 1 {
 			urlStart = i
 			break
@@ -813,6 +803,33 @@ func parsePathAdvanced(parts []string, headers *processingHeaders) (string, *pro
 	return url, po, nil
 }
 
+func parsePathPresets(parts []string, headers *processingHeaders) (string, *processingOptions, error) {
+	po, err := defaultProcessingOptions(headers)
+	if err != nil {
+		return "", po, err
+	}
+
+	presets := strings.Split(parts[0], ":")
+	urlParts := parts[1:]
+
+	if err := applyPresetOption(po, presets); err != nil {
+		return "", nil, err
+	}
+
+	url, extension, err := decodeURL(urlParts)
+	if err != nil {
+		return "", po, err
+	}
+
+	if len(extension) > 0 {
+		if err := applyFormatOption(po, []string{extension}); err != nil {
+			return "", po, err
+		}
+	}
+
+	return url, po, nil
+}
+
 func parsePathBasic(parts []string, headers *processingHeaders) (string, *processingOptions, error) {
 	var err error
 
@@ -882,7 +899,9 @@ func parsePath(ctx context.Context, rctx *fasthttp.RequestCtx) (context.Context,
 	var po *processingOptions
 	var err error
 
-	if _, ok := resizeTypes[parts[1]]; ok {
+	if conf.OnlyPresets {
+		imageURL, po, err = parsePathPresets(parts[1:], headers)
+	} else if _, ok := resizeTypes[parts[1]]; ok {
 		imageURL, po, err = parsePathBasic(parts[1:], headers)
 	} else {
 		imageURL, po, err = parsePathAdvanced(parts[1:], headers)
