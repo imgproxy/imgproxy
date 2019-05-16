@@ -24,8 +24,10 @@ A preset named `default` will be applied to each image. Useful in case you want 
 
 ### Only presets
 
-If you set `IMGPROXY_ONLY_PRESETS` as `true`, a preset is obligatory, and all other URL formats are disabled.
+Setting `IMGPROXY_ONLY_PRESETS` as `true` switches imgproxy into "presets-only mode". In this mode imgproxy accepts presets list as processing options just like you'd specify them for the `preset` option:
 
-In this case, you always need to inform a preset in your URLs without the `preset` or `pr` statement. Example: `http://imgproxy.example.com/AfrOrF3gWeDA6VOlDG4TzxMv39O7MXnF4CXpKUwGqRM/thumbnail/aHR0cDovL2V4YW1w/bGUuY29tL2ltYWdl/cy9jdXJpb3NpdHku/anBn.png`
+```
+http://imgproxy.example.com/unsafe/thumbnail:blurry:watermarked/plain/http://example.com/images/curiosity.jpg@png
+```
 
-It's possible to use more than one preset separing them with `:` like `thumbnail:gray`.
+All othe URL formats are disabled in this mode.
