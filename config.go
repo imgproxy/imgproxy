@@ -215,17 +215,14 @@ var conf = config{
 	DownloadTimeout:                5,
 	Concurrency:                    runtime.NumCPU() * 2,
 	TTL:                            3600,
-	IgnoreSslVerification:          false,
 	MaxSrcResolution:               16800000,
 	MaxGifFrames:                   1,
-	AllowInsecure:                  false,
 	SignatureSize:                  32,
 	PngQuantizationColors:          256,
 	Quality:                        80,
 	GZipCompression:                5,
 	UserAgent:                      fmt.Sprintf("imgproxy/%s", version),
-	ETagEnabled:                    false,
-	S3Enabled:                      false,
+	Presets:                        make(presets),
 	WatermarkOpacity:               1,
 	BugsnagStage:                   "production",
 	HoneybadgerEnv:                 "production",
@@ -233,7 +230,6 @@ var conf = config{
 	SentryRelease:                  fmt.Sprintf("imgproxy/%s", version),
 	FreeMemoryInterval:             10,
 	BufferPoolCalibrationThreshold: 1024,
-	OnlyPresets:                    false,
 }
 
 func init() {
@@ -310,7 +306,6 @@ func init() {
 
 	strEnvConfig(&conf.BaseURL, "IMGPROXY_BASE_URL")
 
-	conf.Presets = make(presets)
 	presetEnvConfig(conf.Presets, "IMGPROXY_PRESETS")
 	presetFileConfig(conf.Presets, *presetsPath)
 	boolEnvConfig(&conf.OnlyPresets, "IMGPROXY_ONLY_PRESETS")
