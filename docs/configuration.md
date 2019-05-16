@@ -111,6 +111,7 @@ There are two ways to define presets:
 ##### Using an environment variable
 
 * `IMGPROXY_PRESETS`: set of preset definitions, comma-divided. Example: `default=resizing_type:fill/enlarge:1,sharp=sharpen:0.7,blurry=blur:2`. Default: blank.
+* `IMGPROXY_ONLY_PRESETS`: disable all URL formats but presets. In this case, you always need to inform a valid preset. Example: `http://imgproxy.example.com/unsafe/thumbnail/plain/http://example.com/images/curiosity.jpg@png`
 
 ##### Using a command line argument
 
