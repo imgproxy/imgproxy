@@ -396,7 +396,7 @@ func applyDprOption(po *processingOptions, args []string) error {
 		return fmt.Errorf("Invalid dpr arguments: %v", args)
 	}
 
-	if d, err := strconv.ParseFloat(args[0], 64); err == nil || (d > 0 && d != 1) {
+	if d, err := strconv.ParseFloat(args[0], 64); err == nil && (d > 0 && d != 1) {
 		po.Dpr = d
 	} else {
 		return fmt.Errorf("Invalid dpr: %s", args[0])
@@ -494,7 +494,7 @@ func applyBlurOption(po *processingOptions, args []string) error {
 		return fmt.Errorf("Invalid blur arguments: %v", args)
 	}
 
-	if b, err := strconv.ParseFloat(args[0], 32); err == nil || b >= 0 {
+	if b, err := strconv.ParseFloat(args[0], 32); err == nil && b >= 0 {
 		po.Blur = float32(b)
 	} else {
 		return fmt.Errorf("Invalid blur: %s", args[0])
@@ -508,7 +508,7 @@ func applySharpenOption(po *processingOptions, args []string) error {
 		return fmt.Errorf("Invalid sharpen arguments: %v", args)
 	}
 
-	if s, err := strconv.ParseFloat(args[0], 32); err == nil || s >= 0 {
+	if s, err := strconv.ParseFloat(args[0], 32); err == nil && s >= 0 {
 		po.Sharpen = float32(s)
 	} else {
 		return fmt.Errorf("Invalid sharpen: %s", args[0])
@@ -766,7 +766,7 @@ func defaultProcessingOptions(headers *processingHeaders) (*processingOptions, e
 		}
 	}
 	if conf.EnableClientHints && len(headers.DPR) > 0 {
-		if dpr, err := strconv.ParseFloat(headers.DPR, 64); err == nil || (dpr > 0 && dpr <= maxClientHintDPR) {
+		if dpr, err := strconv.ParseFloat(headers.DPR, 64); err == nil && (dpr > 0 && dpr <= maxClientHintDPR) {
 			po.Dpr = dpr
 		}
 	}
