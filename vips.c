@@ -19,7 +19,16 @@
 #define VIPS_SUPPORT_PNG_QUANTIZATION \
   (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 7))
 
+#define VIPS_SUPPORT_BUILTIN_ICC \
+  (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 8))
+
 #define EXIF_ORIENTATION "exif-ifd0-Orientation"
+
+#if (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 8))
+  #define VIPS_BLOB_DATA_TYPE const void *
+#else
+  #define VIPS_BLOB_DATA_TYPE void *
+#endif
 
 int
 vips_initialize() {
@@ -218,7 +227,7 @@ vips_resize_with_premultiply(VipsImage *in, VipsImage **out, double scale) {
 
 int
 vips_icc_is_srgb_iec61966(VipsImage *in) {
-  void *data;
+  VIPS_BLOB_DATA_TYPE data;
   size_t data_len;
 
   // 1998-12-01
@@ -242,12 +251,13 @@ vips_icc_is_srgb_iec61966(VipsImage *in) {
 }
 
 int
-vips_need_icc_import(VipsImage *in) {
-  return (vips_image_get_typeof(in, VIPS_META_ICC_NAME) ||
-    in->Type == VIPS_INTERPRETATION_CMYK) &&
-		in->Coding == VIPS_CODING_NONE &&
-		(in->BandFmt == VIPS_FORMAT_UCHAR ||
-		 in->BandFmt == VIPS_FORMAT_USHORT);
+vips_has_embedded_icc(VipsImage *in) {
+  return vips_image_get_typeof(in, VIPS_META_ICC_NAME) != 0;
+}
+
+int
+vips_support_builtin_icc() {
+  return VIPS_SUPPORT_BUILTIN_ICC;
 }
 
 int

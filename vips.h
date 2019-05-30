@@ -48,7 +48,8 @@ int vips_resize_go(VipsImage *in, VipsImage **out, double scale);
 int vips_resize_with_premultiply(VipsImage *in, VipsImage **out, double scale);
 
 int vips_icc_is_srgb_iec61966(VipsImage *in);
-int vips_need_icc_import(VipsImage *in);
+int vips_has_embedded_icc(VipsImage *in);
+int vips_support_builtin_icc();
 int vips_icc_import_go(VipsImage *in, VipsImage **out, char *profile);
 int vips_colourspace_go(VipsImage *in, VipsImage **out, VipsInterpretation cs);
 

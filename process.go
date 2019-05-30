@@ -873,17 +873,42 @@ func vipsSharpen(img **C.VipsImage, sigma float32) error {
 func vipsImportColourProfile(img **C.VipsImage, evenSRGB bool) error {
 	var tmp *C.VipsImage
 
-	if C.vips_need_icc_import(*img) > 0 && (evenSRGB || C.vips_icc_is_srgb_iec61966(*img) == 0) {
-		profile, err := cmykProfilePath()
-		if err != nil {
-			return err
+	if (*img).Coding != C.VIPS_CODING_NONE {
+		return nil
+	}
+
+	if (*img).BandFmt != C.VIPS_FORMAT_UCHAR && (*img).BandFmt != C.VIPS_FORMAT_USHORT {
+		return nil
+	}
+
+	profile := (*C.char)(nil)
+
+	if (*img).Type == C.VIPS_INTERPRETATION_sRGB {
+		// No embedded profile for sRGB, ignore
+		if C.vips_has_embedded_icc(*img) == 0 {
+			return nil
 		}
 
-		if C.vips_icc_import_go(*img, &tmp, cachedCString(profile)) == 0 {
-			C.swap_and_clear(img, tmp)
-		} else {
-			logWarning("Can't import ICC profile: %s", vipsError())
+		// Don't import sRGB IEC61966 2.1 unless evenSRGB
+		if !evenSRGB && C.vips_icc_is_srgb_iec61966(*img) != 0 {
+			return nil
 		}
+	} else if (*img).Type == C.VIPS_INTERPRETATION_CMYK && C.vips_has_embedded_icc(*img) == 0 {
+		if C.vips_support_builtin_icc() != 0 {
+			profile = cachedCString("cmyk")
+		} else {
+			p, err := cmykProfilePath()
+			if err != nil {
+				return err
+			}
+			profile = cachedCString(p)
+		}
+	}
+
+	if C.vips_icc_import_go(*img, &tmp, profile) == 0 {
+		C.swap_and_clear(img, tmp)
+	} else {
+		logWarning("Can't import ICC profile: %s", vipsError())
 	}
 
 	return nil
