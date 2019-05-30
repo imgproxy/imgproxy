@@ -25,7 +25,7 @@ int vips_type_find_save_go(int imgtype);
 
 int vips_jpegload_go(void *buf, size_t len, int shrink, VipsImage **out);
 int vips_pngload_go(void *buf, size_t len, VipsImage **out);
-int vips_webpload_go(void *buf, size_t len, int shrink, VipsImage **out);
+int vips_webpload_go(void *buf, size_t len, double scale, VipsImage **out);
 int vips_gifload_go(void *buf, size_t len, int pages, VipsImage **out);
 int vips_svgload_go(void *buf, size_t len, double scale, VipsImage **out);
 

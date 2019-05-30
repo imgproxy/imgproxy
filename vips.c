@@ -19,6 +19,9 @@
 #define VIPS_SUPPORT_PNG_QUANTIZATION \
   (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 7))
 
+#define VIPS_SUPPORT_WEBP_SCALE_ON_LOAD \
+  (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 8))
+
 #define VIPS_SUPPORT_BUILTIN_ICC \
   (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 8))
 
@@ -102,9 +105,18 @@ vips_pngload_go(void *buf, size_t len, VipsImage **out) {
 }
 
 int
-vips_webpload_go(void *buf, size_t len, int shrink, VipsImage **out) {
-  if (shrink > 1)
-    return vips_webpload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, "shrink", shrink, NULL);
+vips_webpload_go(void *buf, size_t len, double scale, VipsImage **out) {
+  if (scale < 1)
+    return vips_webpload_buffer(
+      buf, len, out,
+      "access", VIPS_ACCESS_SEQUENTIAL,
+#if VIPS_SUPPORT_WEBP_SCALE_ON_LOAD
+      "scale", scale,
+#else
+      "shrink", (int)(1.0 / scale),
+#endif
+      NULL
+    );
 
   return vips_webpload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, NULL);
 }

@@ -230,21 +230,28 @@ func calcScale(width, height int, po *processingOptions, imgtype imageType) floa
 	return scale
 }
 
-func calcShink(scale float64, imgtype imageType) int {
-	switch imgtype {
-	case imageTypeWEBP:
-		return int(1.0 / scale)
-	case imageTypeJPEG:
-		shrink := int(1.0 / scale)
+func canScaleOnLoad(imgtype imageType, scale float64) bool {
+	if imgtype == imageTypeSVG {
+		return true
+	}
 
-		switch {
-		case shrink >= 8:
-			return 8
-		case shrink >= 4:
-			return 4
-		case shrink >= 2:
-			return 2
-		}
+	if conf.DisableShrinkOnLoad || scale >= 1 {
+		return false
+	}
+
+	return imgtype == imageTypeJPEG || imgtype == imageTypeWEBP
+}
+
+func calcJpegShink(scale float64, imgtype imageType) int {
+	shrink := int(1.0 / scale)
+
+	switch {
+	case shrink >= 8:
+		return 8
+	case shrink >= 4:
+		return 4
+	case shrink >= 2:
+		return 2
 	}
 
 	return 1
@@ -292,28 +299,28 @@ func transformImage(ctx context.Context, img **C.VipsImage, data []byte, po *pro
 
 	scale := calcScale(imgWidth, imgHeight, po, imgtype)
 
-	if scale != 1 && data != nil {
-		if imgtype == imageTypeSVG {
-			// Load SVG with desired scale
+	if scale != 1 && data != nil && canScaleOnLoad(imgtype, scale) {
+		if imgtype == imageTypeWEBP || imgtype == imageTypeSVG {
+			// Do some scale-on-load
 			if tmp, err := vipsLoadImage(data, imgtype, 1, scale, false); err == nil {
 				C.swap_and_clear(img, tmp)
 			} else {
 				return err
 			}
-
-			scale = 1
-		} else if !conf.DisableShrinkOnLoad && scale < 1.0 {
+		} else if imgtype == imageTypeJPEG {
 			// Do some shrink-on-load
-			if shrink := calcShink(scale, imgtype); shrink != 1 {
+			if shrink := calcJpegShink(scale, imgtype); shrink != 1 {
 				if tmp, err := vipsLoadImage(data, imgtype, shrink, 1.0, false); err == nil {
 					C.swap_and_clear(img, tmp)
 				} else {
 					return err
 				}
-
-				scale = scale * float64(shrink)
 			}
 		}
+
+		// Update actual image size ans scale after scale-on-load
+		imgWidth, imgHeight, _, _ = extractMeta(*img)
+		scale = calcScale(imgWidth, imgHeight, po, imgtype)
 	}
 
 	if err = vipsRad2Float(img); err != nil {
@@ -628,7 +635,7 @@ func vipsPrepareWatermark() error {
 	return nil
 }
 
-func vipsLoadImage(data []byte, imgtype imageType, shrink int, svgScale float64, allPages bool) (*C.VipsImage, error) {
+func vipsLoadImage(data []byte, imgtype imageType, shrink int, scale float64, allPages bool) (*C.VipsImage, error) {
 	var img *C.VipsImage
 
 	err := C.int(0)
@@ -639,7 +646,7 @@ func vipsLoadImage(data []byte, imgtype imageType, shrink int, svgScale float64,
 	case imageTypePNG:
 		err = C.vips_pngload_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), &img)
 	case imageTypeWEBP:
-		err = C.vips_webpload_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), C.int(shrink), &img)
+		err = C.vips_webpload_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), C.double(scale), &img)
 	case imageTypeGIF:
 		pages := C.int(1)
 		if allPages {
@@ -648,7 +655,7 @@ func vipsLoadImage(data []byte, imgtype imageType, shrink int, svgScale float64,
 
 		err = C.vips_gifload_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), pages, &img)
 	case imageTypeSVG:
-		err = C.vips_svgload_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), C.double(svgScale), &img)
+		err = C.vips_svgload_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), C.double(scale), &img)
 	case imageTypeICO:
 		rawData, width, height, icoErr := icoData(data)
 		if icoErr != nil {
