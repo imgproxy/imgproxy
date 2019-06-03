@@ -188,6 +188,12 @@ func respondWithOptions(reqID string, rw http.ResponseWriter) {
 	rw.WriteHeader(200)
 }
 
+func respondWithHealth(reqID string, rw http.ResponseWriter) {
+	logResponse(reqID, 200, string(imgproxyIsRunningMsg))
+	rw.WriteHeader(200)
+	rw.Write(imgproxyIsRunningMsg)
+}
+
 func respondWithNotModified(reqID string, rw http.ResponseWriter) {
 	logResponse(reqID, 200, "Not modified")
 	rw.WriteHeader(304)
@@ -266,9 +272,8 @@ func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		panic(errInvalidMethod)
 	}
 
-	if r.URL.RequestURI() == healthPath {
-		rw.WriteHeader(200)
-		rw.Write(imgproxyIsRunningMsg)
+	if r.URL.Path == healthPath {
+		respondWithHealth(reqID, rw)
 		return
 	}
 
