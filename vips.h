@@ -29,8 +29,6 @@ int vips_webpload_go(void *buf, size_t len, double scale, int pages, VipsImage *
 int vips_gifload_go(void *buf, size_t len, int pages, VipsImage **out);
 int vips_svgload_go(void *buf, size_t len, double scale, VipsImage **out);
 
-int vips_support_n_pages();
-
 int vips_get_exif_orientation(VipsImage *image);
 void vips_strip_meta(VipsImage *image);
 

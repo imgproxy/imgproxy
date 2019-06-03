@@ -25,9 +25,6 @@
 #define VIPS_SUPPORT_WEBP_ANIMATION \
   (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 8))
 
-#define VIPS_SUPPORT_N_PAGES \
-  (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 8))
-
 #define VIPS_SUPPORT_BUILTIN_ICC \
   (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 8))
 
@@ -122,7 +119,6 @@ vips_webpload_go(void *buf, size_t len, double scale, int pages, VipsImage **out
 #endif
 #if VIPS_SUPPORT_WEBP_ANIMATION
     "n", pages,
-    "page", 0,
 #endif
     NULL
   );
@@ -146,11 +142,6 @@ vips_svgload_go(void *buf, size_t len, double scale, VipsImage **out) {
     vips_error("vips_svgload_go", "Loading SVG is not supported");
     return 1;
   #endif
-}
-
-int
-vips_support_n_pages() {
-  return VIPS_SUPPORT_N_PAGES;
 }
 
 int
