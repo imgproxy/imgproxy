@@ -26,6 +26,7 @@ var (
 		imageTypeWEBP: "image/webp",
 		imageTypeGIF:  "image/gif",
 		imageTypeICO:  "image/x-icon",
+		imageTypeHEIC: "image/heif",
 	}
 
 	contentDispositionsFmt = map[imageType]string{
@@ -34,6 +35,7 @@ var (
 		imageTypeWEBP: "inline; filename=\"%s.webp\"",
 		imageTypeGIF:  "inline; filename=\"%s.gif\"",
 		imageTypeICO:  "inline; filename=\"%s.ico\"",
+		imageTypeHEIC: "inline; filename=\"%s.heic\"",
 	}
 
 	imgproxyIsRunningMsg = []byte("imgproxy is running")

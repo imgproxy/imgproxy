@@ -30,6 +30,7 @@ const (
 	imageTypeGIF     = imageType(C.GIF)
 	imageTypeICO     = imageType(C.ICO)
 	imageTypeSVG     = imageType(C.SVG)
+	imageTypeHEIC    = imageType(C.HEIC)
 )
 
 type processingHeaders struct {
@@ -47,6 +48,7 @@ var imageTypes = map[string]imageType{
 	"gif":  imageTypeGIF,
 	"ico":  imageTypeICO,
 	"svg":  imageTypeSVG,
+	"heic": imageTypeHEIC,
 }
 
 type gravityType int
