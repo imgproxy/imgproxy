@@ -22,6 +22,12 @@
 #define VIPS_SUPPORT_WEBP_SCALE_ON_LOAD \
   (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 8))
 
+#define VIPS_SUPPORT_WEBP_ANIMATION \
+  (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 8))
+
+#define VIPS_SUPPORT_N_PAGES \
+  (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 8))
+
 #define VIPS_SUPPORT_BUILTIN_ICC \
   (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 8))
 
@@ -105,20 +111,21 @@ vips_pngload_go(void *buf, size_t len, VipsImage **out) {
 }
 
 int
-vips_webpload_go(void *buf, size_t len, double scale, VipsImage **out) {
-  if (scale < 1)
-    return vips_webpload_buffer(
-      buf, len, out,
-      "access", VIPS_ACCESS_SEQUENTIAL,
+vips_webpload_go(void *buf, size_t len, double scale, int pages, VipsImage **out) {
+  return vips_webpload_buffer(
+    buf, len, out,
+    "access", VIPS_ACCESS_SEQUENTIAL,
 #if VIPS_SUPPORT_WEBP_SCALE_ON_LOAD
-      "scale", scale,
+    "scale", scale,
 #else
-      "shrink", (int)(1.0 / scale),
+    "shrink", (int)(1.0 / scale),
 #endif
-      NULL
-    );
-
-  return vips_webpload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, NULL);
+#if VIPS_SUPPORT_WEBP_ANIMATION
+    "n", pages,
+    "page", 0,
+#endif
+    NULL
+  );
 }
 
 int
@@ -142,6 +149,11 @@ vips_svgload_go(void *buf, size_t len, double scale, VipsImage **out) {
 }
 
 int
+vips_support_n_pages() {
+  return VIPS_SUPPORT_N_PAGES;
+}
+
+int
 vips_get_exif_orientation(VipsImage *image) {
   const char *orientation;
 
@@ -155,11 +167,7 @@ vips_get_exif_orientation(VipsImage *image) {
 
 int
 vips_support_smartcrop() {
-#if VIPS_SUPPORT_SMARTCROP
-  return 1;
-#else
-  return 0;
-#endif
+  return VIPS_SUPPORT_SMARTCROP;
 }
 
 VipsBandFormat
@@ -168,7 +176,12 @@ vips_band_format(VipsImage *in) {
 }
 
 gboolean
-vips_is_animated_gif(VipsImage * in) {
+vips_support_webp_animation() {
+  return VIPS_SUPPORT_WEBP_ANIMATION;
+}
+
+gboolean
+vips_is_animated(VipsImage * in) {
   return( vips_image_get_typeof(in, "page-height") != G_TYPE_INVALID &&
           vips_image_get_typeof(in, "gif-delay") != G_TYPE_INVALID &&
           vips_image_get_typeof(in, "gif-loop") != G_TYPE_INVALID );

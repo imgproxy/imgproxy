@@ -25,9 +25,11 @@ int vips_type_find_save_go(int imgtype);
 
 int vips_jpegload_go(void *buf, size_t len, int shrink, VipsImage **out);
 int vips_pngload_go(void *buf, size_t len, VipsImage **out);
-int vips_webpload_go(void *buf, size_t len, double scale, VipsImage **out);
+int vips_webpload_go(void *buf, size_t len, double scale, int pages, VipsImage **out);
 int vips_gifload_go(void *buf, size_t len, int pages, VipsImage **out);
 int vips_svgload_go(void *buf, size_t len, double scale, VipsImage **out);
+
+int vips_support_n_pages();
 
 int vips_get_exif_orientation(VipsImage *image);
 void vips_strip_meta(VipsImage *image);
@@ -36,7 +38,8 @@ int vips_support_smartcrop();
 
 VipsBandFormat vips_band_format(VipsImage *in);
 
-gboolean vips_is_animated_gif(VipsImage * in);
+gboolean vips_support_webp_animation();
+gboolean vips_is_animated(VipsImage * in);
 gboolean vips_image_hasalpha_go(VipsImage * in);
 
 int vips_copy_go(VipsImage *in, VipsImage **out);

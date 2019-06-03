@@ -302,7 +302,7 @@ func transformImage(ctx context.Context, img **C.VipsImage, data []byte, po *pro
 	if scale != 1 && data != nil && canScaleOnLoad(imgtype, scale) {
 		if imgtype == imageTypeWEBP || imgtype == imageTypeSVG {
 			// Do some scale-on-load
-			if tmp, err := vipsLoadImage(data, imgtype, 1, scale, false); err == nil {
+			if tmp, err := vipsLoadImage(data, imgtype, 1, scale, 1); err == nil {
 				C.swap_and_clear(img, tmp)
 			} else {
 				return err
@@ -310,7 +310,7 @@ func transformImage(ctx context.Context, img **C.VipsImage, data []byte, po *pro
 		} else if imgtype == imageTypeJPEG {
 			// Do some shrink-on-load
 			if shrink := calcJpegShink(scale, imgtype); shrink != 1 {
-				if tmp, err := vipsLoadImage(data, imgtype, shrink, 1.0, false); err == nil {
+				if tmp, err := vipsLoadImage(data, imgtype, shrink, 1.0, 1); err == nil {
 					C.swap_and_clear(img, tmp)
 				} else {
 					return err
@@ -473,18 +473,42 @@ func transformImage(ctx context.Context, img **C.VipsImage, data []byte, po *pro
 	return vipsFixColourspace(img)
 }
 
-func transformGif(ctx context.Context, img **C.VipsImage, po *processingOptions) error {
+func transformAnimated(ctx context.Context, img **C.VipsImage, data []byte, po *processingOptions, imgtype imageType) error {
 	imgWidth := int((*img).Xsize)
 	imgHeight := int((*img).Ysize)
-
-	// Double check dimensions because gif may have many frames
-	if err := checkDimensions(imgWidth, imgHeight); err != nil {
-		return err
-	}
 
 	frameHeight, err := vipsGetInt(*img, "page-height")
 	if err != nil {
 		return err
+	}
+
+	framesCount := minInt(imgHeight/frameHeight, conf.MaxGifFrames)
+
+	// Double check dimensions because animated image has many frames
+	if err := checkDimensions(imgWidth, frameHeight*framesCount); err != nil {
+		return err
+	}
+
+	// Vips 8.8+ supports n-pages and doesn't load the whole animated image on header access
+	if nPages, _ := vipsGetInt(*img, "n-pages"); nPages > 0 {
+		scale := calcScale(imgWidth, frameHeight, po, imgtype)
+
+		if nPages > framesCount || canScaleOnLoad(imgtype, scale) {
+			// Do some scale-on-load
+			if tmp, err := vipsLoadImage(data, imgtype, 1, scale, framesCount); err == nil {
+				C.swap_and_clear(img, tmp)
+			} else {
+				return err
+			}
+		}
+
+		imgWidth = int((*img).Xsize)
+		imgHeight = int((*img).Ysize)
+
+		frameHeight, err = vipsGetInt(*img, "page-height")
+		if err != nil {
+			return err
+		}
 	}
 
 	delay, err := vipsGetInt(*img, "gif-delay")
@@ -496,8 +520,6 @@ func transformGif(ctx context.Context, img **C.VipsImage, po *processingOptions)
 	if err != nil {
 		return err
 	}
-
-	framesCount := minInt(imgHeight/frameHeight, conf.MaxGifFrames)
 
 	frames := make([]*C.VipsImage, framesCount)
 	defer func() {
@@ -517,7 +539,7 @@ func transformGif(ctx context.Context, img **C.VipsImage, po *processingOptions)
 				return err
 			}
 
-			if err := transformImage(ctx, &frame, nil, po, imageTypeGIF); err != nil {
+			if err := transformImage(ctx, &frame, nil, po, imgtype); err != nil {
 				return err
 			}
 
@@ -540,6 +562,7 @@ func transformGif(ctx context.Context, img **C.VipsImage, po *processingOptions)
 	vipsSetInt(*img, "page-height", int(frames[0].Ysize))
 	vipsSetInt(*img, "gif-delay", delay)
 	vipsSetInt(*img, "gif-loop", loop)
+	vipsSetInt(*img, "n-pages", framesCount)
 
 	return nil
 }
@@ -575,14 +598,21 @@ func processImage(ctx context.Context) ([]byte, context.CancelFunc, error) {
 		}
 	}
 
-	img, err := vipsLoadImage(data, imgtype, 1, 1.0, po.Format == imageTypeGIF)
+	animationSupport := conf.MaxGifFrames > 1 && vipsSupportAnimation(imgtype) && vipsSupportAnimation(po.Format)
+
+	pages := 1
+	if animationSupport {
+		pages = -1
+	}
+
+	img, err := vipsLoadImage(data, imgtype, 1, 1.0, pages)
 	if err != nil {
 		return nil, func() {}, err
 	}
 	defer C.clear_image(&img)
 
-	if imgtype == imageTypeGIF && po.Format == imageTypeGIF && vipsIsAnimatedGif(img) {
-		if err := transformGif(ctx, &img, po); err != nil {
+	if animationSupport && vipsIsAnimated(img) {
+		if err := transformAnimated(ctx, &img, data, po, imgtype); err != nil {
 			return nil, func() {}, err
 		}
 	} else {
@@ -615,7 +645,7 @@ func vipsPrepareWatermark() error {
 		return nil
 	}
 
-	watermark, err = vipsLoadImage(data, imgtype, 1, 1.0, false)
+	watermark, err = vipsLoadImage(data, imgtype, 1, 1.0, 1)
 	if err != nil {
 		return err
 	}
@@ -635,7 +665,7 @@ func vipsPrepareWatermark() error {
 	return nil
 }
 
-func vipsLoadImage(data []byte, imgtype imageType, shrink int, scale float64, allPages bool) (*C.VipsImage, error) {
+func vipsLoadImage(data []byte, imgtype imageType, shrink int, scale float64, pages int) (*C.VipsImage, error) {
 	var img *C.VipsImage
 
 	err := C.int(0)
@@ -646,14 +676,9 @@ func vipsLoadImage(data []byte, imgtype imageType, shrink int, scale float64, al
 	case imageTypePNG:
 		err = C.vips_pngload_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), &img)
 	case imageTypeWEBP:
-		err = C.vips_webpload_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), C.double(scale), &img)
+		err = C.vips_webpload_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), C.double(scale), C.int(pages), &img)
 	case imageTypeGIF:
-		pages := C.int(1)
-		if allPages {
-			pages = -1
-		}
-
-		err = C.vips_gifload_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), pages, &img)
+		err = C.vips_gifload_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), C.int(pages), &img)
 	case imageTypeSVG:
 		err = C.vips_svgload_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), C.double(scale), &img)
 	case imageTypeICO:
@@ -717,8 +742,13 @@ func vipsArrayjoin(in []*C.VipsImage, out **C.VipsImage) error {
 	return nil
 }
 
-func vipsIsAnimatedGif(img *C.VipsImage) bool {
-	return C.vips_is_animated_gif(img) > 0
+func vipsSupportAnimation(imgtype imageType) bool {
+	return imgtype == imageTypeGIF ||
+		(imgtype == imageTypeWEBP && C.vips_support_webp_animation() != 0)
+}
+
+func vipsIsAnimated(img *C.VipsImage) bool {
+	return C.vips_is_animated(img) > 0
 }
 
 func vipsImageHasAlpha(img *C.VipsImage) bool {
