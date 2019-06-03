@@ -1,11 +1,5 @@
 package main
 
-/*
-#cgo LDFLAGS: -s -w
-#include "vips.h"
-*/
-import "C"
-
 import (
 	"context"
 	"encoding/base64"
@@ -20,35 +14,11 @@ import (
 
 type urlOptions map[string][]string
 
-type imageType int
-
-const (
-	imageTypeUnknown = imageType(C.UNKNOWN)
-	imageTypeJPEG    = imageType(C.JPEG)
-	imageTypePNG     = imageType(C.PNG)
-	imageTypeWEBP    = imageType(C.WEBP)
-	imageTypeGIF     = imageType(C.GIF)
-	imageTypeICO     = imageType(C.ICO)
-	imageTypeSVG     = imageType(C.SVG)
-	imageTypeHEIC    = imageType(C.HEIC)
-)
-
 type processingHeaders struct {
 	Accept        string
 	Width         string
 	ViewportWidth string
 	DPR           string
-}
-
-var imageTypes = map[string]imageType{
-	"jpeg": imageTypeJPEG,
-	"jpg":  imageTypeJPEG,
-	"png":  imageTypePNG,
-	"webp": imageTypeWEBP,
-	"gif":  imageTypeGIF,
-	"ico":  imageTypeICO,
-	"svg":  imageTypeSVG,
-	"heic": imageTypeHEIC,
 }
 
 type gravityType int
@@ -157,15 +127,6 @@ var (
 	errResultingImageFormatIsNotSupported = errors.New("Resulting image format is not supported")
 	errInvalidPath                        = newError(404, "Invalid path", msgInvalidURL)
 )
-
-func (it imageType) String() string {
-	for k, v := range imageTypes {
-		if v == it {
-			return k
-		}
-	}
-	return ""
-}
 
 func (gt gravityType) String() string {
 	for k, v := range gravityTypes {
