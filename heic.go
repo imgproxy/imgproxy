@@ -52,13 +52,13 @@ func heifReadFtyp(r io.Reader, boxDataSize int64) error {
 		return err
 	}
 
-	if bytes.Compare(data[0:4], heicBrand) == 0 {
+	if bytes.Equal(data[0:4], heicBrand) {
 		return nil
 	}
 
 	if boxDataSize >= 12 {
 		for i := int64(8); i < boxDataSize; i += 4 {
-			if bytes.Compare(data[i:i+4], heicBrand) == 0 {
+			if bytes.Equal(data[i:i+4], heicBrand) {
 				return nil
 			}
 		}
@@ -95,7 +95,7 @@ func heifReadHldr(r io.Reader, boxDataSize int64) error {
 		return err
 	}
 
-	if bytes.Compare(data[8:12], heicPict) != 0 {
+	if !bytes.Equal(data[8:12], heicPict) {
 		return fmt.Errorf("Invalid handler. Expected: pict, actual: %s", data[8:12])
 	}
 

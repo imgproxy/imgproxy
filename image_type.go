@@ -7,9 +7,9 @@ package main
 import "C"
 
 import (
-	"path/filepath"
 	"fmt"
 	"net/url"
+	"path/filepath"
 	"strings"
 )
 
@@ -71,9 +71,9 @@ func (it imageType) String() string {
 func (it imageType) Mime() string {
 	if mime, ok := mimes[it]; ok {
 		return mime
-	} else {
-		return "application/octet-stream"
 	}
+
+	return "application/octet-stream"
 }
 
 func (it imageType) ContentDisposition(imageURL string) string {

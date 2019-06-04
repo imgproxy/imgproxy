@@ -481,14 +481,13 @@ func transformImage(ctx context.Context, img **C.VipsImage, data []byte, po *pro
 
 func transformAnimated(ctx context.Context, img **C.VipsImage, data []byte, po *processingOptions, imgtype imageType) error {
 	imgWidth := int((*img).Xsize)
-	imgHeight := int((*img).Ysize)
 
 	frameHeight, err := vipsGetInt(*img, "page-height")
 	if err != nil {
 		return err
 	}
 
-	framesCount := minInt(imgHeight/frameHeight, conf.MaxGifFrames)
+	framesCount := minInt(int((*img).Ysize)/frameHeight, conf.MaxGifFrames)
 
 	// Double check dimensions because animated image has many frames
 	if err := checkDimensions(imgWidth, frameHeight*framesCount); err != nil {
@@ -509,7 +508,6 @@ func transformAnimated(ctx context.Context, img **C.VipsImage, data []byte, po *
 		}
 
 		imgWidth = int((*img).Xsize)
-		imgHeight = int((*img).Ysize)
 
 		frameHeight, err = vipsGetInt(*img, "page-height")
 		if err != nil {
