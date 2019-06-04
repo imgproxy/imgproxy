@@ -1,4 +1,5 @@
 *.swp
 imgproxy
 tmp/
+.tmp/
 .vscode/
