@@ -231,9 +231,7 @@ var conf = config{
 	BufferPoolCalibrationThreshold: 1024,
 }
 
-func init() {
-	initSyslog()
-
+func configure() {
 	keyPath := flag.String("keypath", "", "path of the file with hex-encoded key")
 	saltPath := flag.String("saltpath", "", "path of the file with hex-encoded salt")
 	presetsPath := flag.String("presets", "", "path of the file with presets")
@@ -463,10 +461,4 @@ func init() {
 	if conf.BufferPoolCalibrationThreshold < 64 {
 		logFatal("Buffer pool calibration threshold should be greater than or equal to 64")
 	}
-
-	initNewrelic()
-	initPrometheus()
-	initDownloading()
-	initErrorsReporting()
-	initVips()
 }

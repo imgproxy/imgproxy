@@ -16,7 +16,19 @@ const version = "2.2.13"
 
 type ctxKey string
 
+func initialize() {
+	initSyslog()
+	configure()
+	initNewrelic()
+	initPrometheus()
+	initDownloading()
+	initErrorsReporting()
+	initVips()
+}
+
 func main() {
+	initialize()
+
 	go func() {
 		var logMemStats = len(os.Getenv("IMGPROXY_LOG_MEM_STATS")) > 0
 
