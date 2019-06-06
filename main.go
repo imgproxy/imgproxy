@@ -7,9 +7,6 @@ import (
 	"runtime/debug"
 	"syscall"
 	"time"
-
-	"net/http"
-	_ "net/http/pprof"
 )
 
 const version = "2.2.13"
@@ -42,12 +39,6 @@ func main() {
 			}
 		}
 	}()
-
-	if len(os.Getenv("IMGPROXY_PPROF_BIND")) > 0 {
-		go func() {
-			http.ListenAndServe(os.Getenv("IMGPROXY_PPROF_BIND"), nil)
-		}()
-	}
 
 	s := startServer()
 
