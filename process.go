@@ -154,24 +154,24 @@ func cropImage(img *vipsImage, cropWidth, cropHeight int, gravity *gravityOption
 		cropHeight = minInt(cropHeight, imgHeight)
 	}
 
-	if cropWidth < imgWidth || cropHeight < imgHeight {
-		if gravity.Type == gravitySmart {
-			if err := img.CopyMemory(); err != nil {
-				return err
-			}
-			if err := img.SmartCrop(cropWidth, cropHeight); err != nil {
-				return err
-			}
-			// Applying additional modifications after smart crop causes SIGSEGV on Alpine
-			// so we have to copy memory after it
-			return img.CopyMemory()
-		} else {
-			left, top := calcCrop(imgWidth, imgHeight, cropWidth, cropHeight, gravity)
-			return img.Crop(left, top, cropWidth, cropHeight)
-		}
+	if cropWidth >= imgWidth && cropHeight >= imgHeight {
+		return nil
 	}
 
-	return nil
+	if gravity.Type == gravitySmart {
+		if err := img.CopyMemory(); err != nil {
+			return err
+		}
+		if err := img.SmartCrop(cropWidth, cropHeight); err != nil {
+			return err
+		}
+		// Applying additional modifications after smart crop causes SIGSEGV on Alpine
+		// so we have to copy memory after it
+		return img.CopyMemory()
+	}
+
+	left, top := calcCrop(imgWidth, imgHeight, cropWidth, cropHeight, gravity)
+	return img.Crop(left, top, cropWidth, cropHeight)
 }
 
 func transformImage(ctx context.Context, img *vipsImage, data []byte, po *processingOptions, imgtype imageType) error {
