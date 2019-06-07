@@ -191,8 +191,8 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 
 	scale := calcScale(widthToScale, heightToScale, po, imgtype)
 
-	cropWidth = int(float64(cropWidth) * scale)
-	cropHeight = int(float64(cropHeight) * scale)
+	cropWidth = roundToInt(float64(cropWidth) * scale)
+	cropHeight = roundToInt(float64(cropHeight) * scale)
 
 	if scale != 1 && data != nil && canScaleOnLoad(imgtype, scale) {
 		if imgtype == imageTypeWEBP || imgtype == imageTypeSVG {
@@ -212,8 +212,8 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 		// Update scale after scale-on-load
 		newWidth, newHeight, _, _ := extractMeta(img)
 
-		widthToScale = int(float64(widthToScale) * float64(newWidth) / float64(srcWidth))
-		heightToScale = int(float64(heightToScale) * float64(newHeight) / float64(srcHeight))
+		widthToScale = roundToInt(float64(widthToScale) * float64(newWidth) / float64(srcWidth))
+		heightToScale = roundToInt(float64(heightToScale) * float64(newHeight) / float64(srcHeight))
 
 		scale = calcScale(widthToScale, heightToScale, po, imgtype)
 	}
@@ -264,8 +264,8 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 
 	checkTimeout(ctx)
 
-	dprWidth := int(float64(po.Width) * po.Dpr)
-	dprHeight := int(float64(po.Height) * po.Dpr)
+	dprWidth := roundToInt(float64(po.Width) * po.Dpr)
+	dprHeight := roundToInt(float64(po.Height) * po.Dpr)
 
 	cropGravity := po.Crop.Gravity
 	if cropGravity.Type == gravityUnknown {
