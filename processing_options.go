@@ -24,7 +24,8 @@ type processingHeaders struct {
 type gravityType int
 
 const (
-	gravityCenter gravityType = iota
+	gravityUnknown gravityType = iota
+	gravityCenter
 	gravityNorth
 	gravityEast
 	gravitySouth
@@ -79,6 +80,12 @@ const (
 	hexColorShortFormat = "%1x%1x%1x"
 )
 
+type cropOptions struct {
+	Width   int
+	Height  int
+	Gravity gravityOptions
+}
+
 type watermarkOptions struct {
 	Enabled   bool
 	Opacity   float64
@@ -97,6 +104,7 @@ type processingOptions struct {
 	Gravity    gravityOptions
 	Enlarge    bool
 	Expand     bool
+	Crop       cropOptions
 	Format     imageType
 	Quality    int
 	Flatten    bool
@@ -240,18 +248,52 @@ func decodeURL(parts []string) (string, string, error) {
 	return decodeBase64URL(parts)
 }
 
+func parseDimension(d *int, name, arg string) error {
+	if v, err := strconv.Atoi(arg); err == nil && v >= 0 {
+		*d = v
+	} else {
+		return fmt.Errorf("Invalid %s: %s", name, arg)
+	}
+
+	return nil
+}
+
+func parseGravity(g *gravityOptions, args []string) error {
+	if t, ok := gravityTypes[args[0]]; ok {
+		g.Type = t
+	} else {
+		return fmt.Errorf("Invalid gravity: %s", args[0])
+	}
+
+	if g.Type == gravityFocusPoint {
+		if len(args) != 3 {
+			return fmt.Errorf("Invalid gravity arguments: %v", args)
+		}
+
+		if x, err := strconv.ParseFloat(args[1], 64); err == nil && x >= 0 && x <= 1 {
+			g.X = x
+		} else {
+			return fmt.Errorf("Invalid gravity X: %s", args[1])
+		}
+
+		if y, err := strconv.ParseFloat(args[2], 64); err == nil && y >= 0 && y <= 1 {
+			g.Y = y
+		} else {
+			return fmt.Errorf("Invalid gravity Y: %s", args[2])
+		}
+	} else if len(args) > 1 {
+		return fmt.Errorf("Invalid gravity arguments: %v", args)
+	}
+
+	return nil
+}
+
 func applyWidthOption(po *processingOptions, args []string) error {
 	if len(args) > 1 {
 		return fmt.Errorf("Invalid width arguments: %v", args)
 	}
 
-	if w, err := strconv.Atoi(args[0]); err == nil && w >= 0 {
-		po.Width = w
-	} else {
-		return fmt.Errorf("Invalid width: %s", args[0])
-	}
-
-	return nil
+	return parseDimension(&po.Width, "width", args[0])
 }
 
 func applyHeightOption(po *processingOptions, args []string) error {
@@ -259,13 +301,7 @@ func applyHeightOption(po *processingOptions, args []string) error {
 		return fmt.Errorf("Invalid height arguments: %v", args)
 	}
 
-	if h, err := strconv.Atoi(args[0]); err == nil && h >= 0 {
-		po.Height = h
-	} else {
-		return fmt.Errorf("Invalid height: %s", args[0])
-	}
-
-	return nil
+	return parseDimension(&po.Height, "height", args[0])
 }
 
 func applyEnlargeOption(po *processingOptions, args []string) error {
@@ -369,30 +405,26 @@ func applyDprOption(po *processingOptions, args []string) error {
 }
 
 func applyGravityOption(po *processingOptions, args []string) error {
-	if g, ok := gravityTypes[args[0]]; ok {
-		po.Gravity.Type = g
-	} else {
-		return fmt.Errorf("Invalid gravity: %s", args[0])
+	return parseGravity(&po.Gravity, args)
+}
+
+func applyCropOption(po *processingOptions, args []string) error {
+	if len(args) > 5 {
+		return fmt.Errorf("Invalid crop arguments: %v", args)
 	}
 
-	if po.Gravity.Type == gravityFocusPoint {
-		if len(args) != 3 {
-			return fmt.Errorf("Invalid gravity arguments: %v", args)
-		}
+	if err := parseDimension(&po.Crop.Width, "crop width", args[0]); err != nil {
+		return err
+	}
 
-		if x, err := strconv.ParseFloat(args[1], 64); err == nil && x >= 0 && x <= 1 {
-			po.Gravity.X = x
-		} else {
-			return fmt.Errorf("Invalid gravity X: %s", args[1])
+	if len(args) > 1 {
+		if err := parseDimension(&po.Crop.Height, "crop height", args[1]); err != nil {
+			return err
 		}
+	}
 
-		if y, err := strconv.ParseFloat(args[2], 64); err == nil && y >= 0 && y <= 1 {
-			po.Gravity.Y = y
-		} else {
-			return fmt.Errorf("Invalid gravity Y: %s", args[2])
-		}
-	} else if len(args) > 1 {
-		return fmt.Errorf("Invalid gravity arguments: %v", args)
+	if len(args) > 2 {
+		return parseGravity(&po.Crop.Gravity, args[2:])
 	}
 
 	return nil
@@ -623,6 +655,10 @@ func applyProcessingOption(po *processingOptions, name string, args []string) er
 		}
 	case "gravity", "g":
 		if err := applyGravityOption(po, args); err != nil {
+			return err
+		}
+	case "crop", "c":
+		if err := applyCropOption(po, args); err != nil {
 			return err
 		}
 	case "quality", "q":

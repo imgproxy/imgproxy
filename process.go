@@ -37,15 +37,6 @@ func extractMeta(img *vipsImage) (int, int, int, bool) {
 }
 
 func calcScale(width, height int, po *processingOptions, imgtype imageType) float64 {
-	// If we're going only to crop, we need only to scale down to DPR.
-	// Scaling up while cropping is not optimal on this stage, we'll do it later if needed.
-	if po.Resize == resizeCrop {
-		if po.Dpr < 1 {
-			return po.Dpr
-		}
-		return 1
-	}
-
 	var scale float64
 
 	srcW, srcH := float64(width), float64(height)
@@ -144,14 +135,64 @@ func calcCrop(width, height, cropWidth, cropHeight int, gravity *gravityOptions)
 	return
 }
 
+func cropImage(img *vipsImage, cropWidth, cropHeight int, gravity *gravityOptions) error {
+	if cropWidth == 0 && cropHeight == 0 {
+		return nil
+	}
+
+	imgWidth, imgHeight := img.Width(), img.Height()
+
+	if cropWidth == 0 {
+		cropWidth = imgWidth
+	} else {
+		cropWidth = minInt(cropWidth, imgWidth)
+	}
+
+	if cropHeight == 0 {
+		cropHeight = imgHeight
+	} else {
+		cropHeight = minInt(cropHeight, imgHeight)
+	}
+
+	if cropWidth < imgWidth || cropHeight < imgHeight {
+		if gravity.Type == gravitySmart {
+			if err := img.CopyMemory(); err != nil {
+				return err
+			}
+			if err := img.SmartCrop(cropWidth, cropHeight); err != nil {
+				return err
+			}
+			// Applying additional modifications after smart crop causes SIGSEGV on Alpine
+			// so we have to copy memory after it
+			return img.CopyMemory()
+		} else {
+			left, top := calcCrop(imgWidth, imgHeight, cropWidth, cropHeight, gravity)
+			return img.Crop(left, top, cropWidth, cropHeight)
+		}
+	}
+
+	return nil
+}
+
 func transformImage(ctx context.Context, img *vipsImage, data []byte, po *processingOptions, imgtype imageType) error {
 	var err error
 
-	imgWidth, imgHeight, angle, flip := extractMeta(img)
+	srcWidth, srcHeight, angle, flip := extractMeta(img)
 
-	hasAlpha := img.HasAlpha()
+	widthToScale, heightToScale := srcWidth, srcHeight
+	cropWidth, cropHeight := po.Crop.Width, po.Crop.Height
 
-	scale := calcScale(imgWidth, imgHeight, po, imgtype)
+	if cropWidth > 0 {
+		widthToScale = minInt(cropWidth, srcWidth)
+	}
+	if cropHeight > 0 {
+		heightToScale = minInt(cropHeight, srcHeight)
+	}
+
+	scale := calcScale(widthToScale, heightToScale, po, imgtype)
+
+	cropWidth = int(float64(cropWidth) * scale)
+	cropHeight = int(float64(cropHeight) * scale)
 
 	if scale != 1 && data != nil && canScaleOnLoad(imgtype, scale) {
 		if imgtype == imageTypeWEBP || imgtype == imageTypeSVG {
@@ -168,9 +209,13 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 			}
 		}
 
-		// Update actual image size ans scale after scale-on-load
-		imgWidth, imgHeight, _, _ = extractMeta(img)
-		scale = calcScale(imgWidth, imgHeight, po, imgtype)
+		// Update scale after scale-on-load
+		newWidth, newHeight, _, _ := extractMeta(img)
+
+		widthToScale = int(float64(widthToScale) * float64(newWidth) / float64(srcWidth))
+		heightToScale = int(float64(heightToScale) * float64(newHeight) / float64(srcHeight))
+
+		scale = calcScale(widthToScale, heightToScale, po, imgtype)
 	}
 
 	if err = img.Rad2Float(); err != nil {
@@ -189,14 +234,13 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 		}
 	}
 
+	hasAlpha := img.HasAlpha()
+
 	if scale != 1 {
 		if err = img.Resize(scale, hasAlpha); err != nil {
 			return err
 		}
 	}
-
-	// Update actual image size after resize
-	imgWidth, imgHeight, _, _ = extractMeta(img)
 
 	checkTimeout(ctx)
 
@@ -220,57 +264,40 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 
 	checkTimeout(ctx)
 
-	cropW, cropH := po.Width, po.Height
+	dprWidth := int(float64(po.Width) * po.Dpr)
+	dprHeight := int(float64(po.Height) * po.Dpr)
 
-	if po.Dpr < 1 || (po.Dpr > 1 && po.Resize != resizeCrop) {
-		cropW = int(float64(cropW) * po.Dpr)
-		cropH = int(float64(cropH) * po.Dpr)
+	cropGravity := po.Crop.Gravity
+	if cropGravity.Type == gravityUnknown {
+		cropGravity = po.Gravity
 	}
 
-	if cropW == 0 {
-		cropW = imgWidth
-	} else {
-		cropW = minInt(cropW, imgWidth)
-	}
-
-	if cropH == 0 {
-		cropH = imgHeight
-	} else {
-		cropH = minInt(cropH, imgHeight)
-	}
-
-	if cropW < imgWidth || cropH < imgHeight {
-		if po.Gravity.Type == gravitySmart {
-			if err = img.CopyMemory(); err != nil {
-				return err
-			}
-			if err = img.SmartCrop(cropW, cropH); err != nil {
-				return err
-			}
-			// Applying additional modifications after smart crop causes SIGSEGV on Alpine
-			// so we have to copy memory after it
-			if err = img.CopyMemory(); err != nil {
-				return err
-			}
-		} else {
-			left, top := calcCrop(imgWidth, imgHeight, cropW, cropH, &po.Gravity)
-			if err = img.Crop(left, top, cropW, cropH); err != nil {
-				return err
-			}
+	if cropGravity.Type == po.Gravity.Type && cropGravity.Type != gravityFocusPoint {
+		if cropWidth == 0 {
+			cropWidth = dprWidth
+		} else if dprWidth > 0 {
+			cropWidth = minInt(cropWidth, dprWidth)
 		}
 
-		checkTimeout(ctx)
-	}
+		if cropHeight == 0 {
+			cropHeight = dprHeight
+		} else if dprHeight > 0 {
+			cropHeight = minInt(cropHeight, dprHeight)
+		}
 
-	if po.Enlarge && po.Resize == resizeCrop && po.Dpr > 1 {
-		// We didn't enlarge the image before, because is wasn't optimal. Now it's time to do it
-		if err = img.Resize(po.Dpr, hasAlpha); err != nil {
+		if err = cropImage(img, cropWidth, cropHeight, &cropGravity); err != nil {
 			return err
 		}
-		if err = img.CopyMemory(); err != nil {
+	} else {
+		if err = cropImage(img, cropWidth, cropHeight, &cropGravity); err != nil {
+			return err
+		}
+		if err = cropImage(img, dprWidth, dprHeight, &po.Gravity); err != nil {
 			return err
 		}
 	}
+
+	checkTimeout(ctx)
 
 	if convertToLinear {
 		if err = img.FixColourspace(); err != nil {
@@ -442,6 +469,15 @@ func processImage(ctx context.Context) ([]byte, context.CancelFunc, error) {
 		} else {
 			po.Format = imageTypeJPEG
 		}
+	}
+
+	if po.Resize == resizeCrop {
+		logWarning("`crop` resizing type is deprecated and will be removed in future versions. Use `crop` processing option instead")
+
+		po.Crop.Width, po.Crop.Height = po.Width, po.Height
+
+		po.Resize = resizeFit
+		po.Width, po.Height = 0, 0
 	}
 
 	animationSupport := conf.MaxGifFrames > 1 && vipsSupportAnimation(imgtype) && vipsSupportAnimation(po.Format)
