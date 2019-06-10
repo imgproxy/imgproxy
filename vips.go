@@ -545,7 +545,7 @@ func (img *vipsImage) RgbColourspace() error {
 	return img.Colorspace(C.VIPS_INTERPRETATION_sRGB)
 }
 
-func (img *vipsImage) Colourspace(colorspace C.VipsInterpretation) error {
+func (img *vipsImage) Colorspace(colorspace C.VipsInterpretation) error {
 	if C.vips_image_guess_interpretation(img.VipsImage) != colorspace {
 		var tmp *C.VipsImage
 
