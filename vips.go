@@ -538,23 +538,18 @@ func (img *vipsImage) ImportColourProfile(evenSRGB bool) error {
 }
 
 func (img *vipsImage) LinearColourspace() error {
-	if C.vips_image_guess_interpretation(img.VipsImage) != C.VIPS_INTERPRETATION_scRGB {
-		var tmp *C.VipsImage
-
-		if C.vips_colourspace_go(img.VipsImage, &tmp, C.VIPS_INTERPRETATION_scRGB) != 0 {
-			return vipsError()
-		}
-		C.swap_and_clear(&img.VipsImage, tmp)
-	}
-
-	return nil
+	return img.Colorspace(C.VIPS_INTERPRETATION_scRGB)
 }
 
-func (img *vipsImage) FixColourspace() error {
-	if C.vips_image_guess_interpretation(img.VipsImage) != C.VIPS_INTERPRETATION_sRGB {
+func (img *vipsImage) RgbColourspace() error {
+	return img.Colorspace(C.VIPS_INTERPRETATION_sRGB)
+}
+
+func (img *vipsImage) Colourspace(colorspace C.VipsInterpretation) error {
+	if C.vips_image_guess_interpretation(img.VipsImage) != colorspace {
 		var tmp *C.VipsImage
 
-		if C.vips_colourspace_go(img.VipsImage, &tmp, C.VIPS_INTERPRETATION_sRGB) != 0 {
+		if C.vips_colourspace_go(img.VipsImage, &tmp, colorspace) != 0 {
 			return vipsError()
 		}
 		C.swap_and_clear(&img.VipsImage, tmp)

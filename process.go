@@ -300,7 +300,7 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 	checkTimeout(ctx)
 
 	if convertToLinear {
-		if err = img.FixColourspace(); err != nil {
+		if err = img.RgbColourspace(); err != nil {
 			return err
 		}
 	} else {
@@ -347,7 +347,7 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 		}
 	}
 
-	return img.FixColourspace()
+	return img.RgbColourspace()
 }
 
 func transformAnimated(ctx context.Context, img *vipsImage, data []byte, po *processingOptions, imgtype imageType) error {
