@@ -360,7 +360,7 @@ func transformAnimated(ctx context.Context, img *vipsImage, data []byte, po *pro
 		return err
 	}
 
-	framesCount := minInt(img.Height()/frameHeight, conf.MaxGifFrames)
+	framesCount := minInt(img.Height()/frameHeight, conf.MaxAnimationFrames)
 
 	// Double check dimensions because animated image has many frames
 	if err := checkDimensions(imgWidth, frameHeight*framesCount); err != nil {
@@ -489,7 +489,7 @@ func processImage(ctx context.Context) ([]byte, context.CancelFunc, error) {
 		po.Width, po.Height = 0, 0
 	}
 
-	animationSupport := conf.MaxGifFrames > 1 && vipsSupportAnimation(imgtype) && vipsSupportAnimation(po.Format)
+	animationSupport := conf.MaxAnimationFrames > 1 && vipsSupportAnimation(imgtype) && vipsSupportAnimation(po.Format)
 
 	pages := 1
 	if animationSupport {

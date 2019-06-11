@@ -43,11 +43,11 @@ imgproxy protects you from so-called image bombs. Here is how you can specify ma
 * `IMGPROXY_MAX_SRC_RESOLUTION`: the maximum resolution of the source image, in megapixels. Images with larger actual size will be rejected. Default: `16.8`;
 * `IMGPROXY_MAX_SRC_FILE_SIZE`: the maximum size of the source image, in bytes. Images with larger file size will be rejected. When `0`, file size check is disabled. Default: `0`;
 
-imgproxy can process animated GIFs, but since this operation is pretty heavy, only one frame is processed by default. You can increase the maximum of GIF frames to process with the following variable:
+imgproxy can process animated images (GIF, WebP), but since this operation is pretty heavy, only one frame is processed by default. You can increase the maximum of animation frames to process with the following variable:
 
-* `IMGPROXY_MAX_GIF_FRAMES`: the maximum of animated GIF frames to being processed. Default: `1`.
+* `IMGPROXY_MAX_ANIMATION_FRAMES`: the maximum of animated image frames to being processed. Default: `1`.
 
-**Note:** imgproxy summarizes all GIF frames resolutions while checking source image resolution.
+**Note:** imgproxy summarizes all frames resolutions while checking source image resolution.
 
 You can also specify a secret to enable authorization with the HTTP `Authorization` header for use in production environments:
 

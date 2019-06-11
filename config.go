@@ -137,10 +137,10 @@ type config struct {
 	MaxClients      int
 	TTL             int
 
-	MaxSrcDimension  int
-	MaxSrcResolution int
-	MaxSrcFileSize   int
-	MaxGifFrames     int
+	MaxSrcDimension    int
+	MaxSrcResolution   int
+	MaxSrcFileSize     int
+	MaxAnimationFrames int
 
 	JpegProgressive       bool
 	PngInterlaced         bool
@@ -215,7 +215,7 @@ var conf = config{
 	Concurrency:                    runtime.NumCPU() * 2,
 	TTL:                            3600,
 	MaxSrcResolution:               16800000,
-	MaxGifFrames:                   1,
+	MaxAnimationFrames:             1,
 	SignatureSize:                  32,
 	PngQuantizationColors:          256,
 	Quality:                        80,
@@ -259,7 +259,12 @@ func configure() {
 	intEnvConfig(&conf.MaxSrcDimension, "IMGPROXY_MAX_SRC_DIMENSION")
 	megaIntEnvConfig(&conf.MaxSrcResolution, "IMGPROXY_MAX_SRC_RESOLUTION")
 	intEnvConfig(&conf.MaxSrcFileSize, "IMGPROXY_MAX_SRC_FILE_SIZE")
-	intEnvConfig(&conf.MaxGifFrames, "IMGPROXY_MAX_GIF_FRAMES")
+
+	if _, ok := os.LookupEnv("IMGPROXY_MAX_GIF_FRAMES"); ok {
+		logWarning("`IMGPROXY_MAX_GIF_FRAMES` is deprecated and will be removed in future versions. Use `IMGPROXY_MAX_ANIMATION_FRAMES` instead")
+		intEnvConfig(&conf.MaxAnimationFrames, "IMGPROXY_MAX_GIF_FRAMES")
+	}
+	intEnvConfig(&conf.MaxAnimationFrames, "IMGPROXY_MAX_ANIMATION_FRAMES")
 
 	boolEnvConfig(&conf.JpegProgressive, "IMGPROXY_JPEG_PROGRESSIVE")
 	boolEnvConfig(&conf.PngInterlaced, "IMGPROXY_PNG_INTERLACED")
@@ -388,8 +393,8 @@ func configure() {
 		logFatal("Max src file size should be greater than or equal to 0, now - %d\n", conf.MaxSrcFileSize)
 	}
 
-	if conf.MaxGifFrames <= 0 {
-		logFatal("Max GIF frames should be greater than 0, now - %d\n", conf.MaxGifFrames)
+	if conf.MaxAnimationFrames <= 0 {
+		logFatal("Max animation frames should be greater than 0, now - %d\n", conf.MaxAnimationFrames)
 	}
 
 	if conf.PngQuantizationColors < 2 {
