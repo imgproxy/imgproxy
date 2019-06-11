@@ -631,7 +631,7 @@ func (img *vipsImage) ApplyWatermark(opts *watermarkOptions) error {
 		wm  *vipsImage
 		tmp *C.VipsImage
 	)
-	defer wm.Clear()
+	defer func() { wm.Clear() }()
 
 	var err error
 
