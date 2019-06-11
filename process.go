@@ -8,6 +8,8 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+const msgSmartCropNotSupported = "Smart crop is not supported by used version of libvips"
+
 func extractMeta(img *vipsImage) (int, int, int, bool) {
 	width := img.Width()
 	height := img.Height()
@@ -459,15 +461,22 @@ func processImage(ctx context.Context) ([]byte, context.CancelFunc, error) {
 	data := getImageData(ctx).Bytes()
 	imgtype := getImageType(ctx)
 
-	if po.Gravity.Type == gravitySmart && !vipsSupportSmartcrop {
-		return nil, func() {}, errSmartCropNotSupported
-	}
-
 	if po.Format == imageTypeUnknown {
 		if vipsTypeSupportSave[imgtype] {
 			po.Format = imgtype
 		} else {
 			po.Format = imageTypeJPEG
+		}
+	}
+
+	if !vipsSupportSmartcrop {
+		if po.Gravity.Type == gravitySmart {
+			logWarning(msgSmartCropNotSupported)
+			po.Gravity.Type = gravityCenter
+		}
+		if po.Crop.Gravity.Type == gravitySmart {
+			logWarning(msgSmartCropNotSupported)
+			po.Crop.Gravity.Type = gravityCenter
 		}
 	}
 

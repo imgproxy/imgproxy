@@ -9,7 +9,6 @@ package main
 import "C"
 import (
 	"context"
-	"errors"
 	"math"
 	"os"
 	"runtime"
@@ -27,8 +26,6 @@ var (
 	vipsTypeSupportSave  = make(map[imageType]bool)
 
 	watermark *vipsImage
-
-	errSmartCropNotSupported = errors.New("Smart crop is not supported by used version of libvips")
 )
 
 var vipsConf struct {
