@@ -59,8 +59,7 @@ rt:%resizing_type
 Defines how imgproxy will resize the source image. Supported resizing types are:
 
 * `fit`: resizes the image while keeping aspect ratio to fit given size;
-* `fill`: resizes the image while keeping aspect ratio to fill given size and cropping projecting parts;
-* `crop`: crops the image to a given size.
+* `fill`: resizes the image while keeping aspect ratio to fill given size and cropping projecting parts.
 
 Default: `fit`
 
@@ -71,7 +70,7 @@ width:%width
 w:%width
 ```
 
-Defines the width of the resulting image. When set to `0`, imgproxy will calculate the resulting width using the defined height and source aspect ratio. When set to `0` and the `crop` resizing type is used, imgproxy will use the full width of the source image.
+Defines the width of the resulting image. When set to `0`, imgproxy will calculate the resulting width using the defined height and source aspect ratio.
 
 Default: `0`
 
@@ -82,7 +81,7 @@ height:%height
 h:%height
 ```
 
-Defines the height of the resulting image. When set to `0`, imgproxy will calculate resulting height using the defined width and source aspect ratio. When set to `0` and `crop` resizing type is used, imgproxy will use the full height of the source image.
+Defines the height of the resulting image. When set to `0`, imgproxy will calculate resulting height using the defined width and source aspect ratio.
 
 Default: `0`
 
@@ -140,6 +139,18 @@ When imgproxy needs to cut some parts of the image, it is guided by the gravity.
 * `fp:%x:%y`: focus point. `x` and `y` are floating point numbers between 0 and 1 that define the coordinates of the center of the resulting image. Treat 0 and 1 as right/left for `x` and top/bottom for `y`.
 
 Default: `ce`
+
+##### Crop
+
+```
+crop:%width:%height:%gravity
+c:%width:%height:%gravity
+```
+
+Defines an area of the image to be processed (crop before resize).
+
+* `width` and `height` define the size of the area. When `width` or `height` is set to `0`, imgproxy will use the full width/height of the source image.
+* `gravity` accepts the same values as [gravity](#gravity) option. When `gravity` is not set, imgproxy will use the value of the [gravity](#gravity) option.
 
 ##### Quality
 
