@@ -369,10 +369,16 @@ func transformAnimated(ctx context.Context, img *vipsImage, data []byte, po *pro
 
 	// Vips 8.8+ supports n-pages and doesn't load the whole animated image on header access
 	if nPages, _ := img.GetInt("n-pages"); nPages > 0 {
-		scale := calcScale(imgWidth, frameHeight, po, imgtype)
+		scale := 1.0
+
+		// Don't do scale on load if we need to crop
+		if po.Crop.Width == 0 && po.Crop.Height == 0 {
+			scale = calcScale(imgWidth, frameHeight, po, imgtype)
+		}
 
 		if nPages > framesCount || canScaleOnLoad(imgtype, scale) {
-			// Do some scale-on-load
+			logNotice("Animated scale on load")
+			// Do some scale-on-load and load only the needed frames
 			if err := img.Load(data, imgtype, 1, scale, framesCount); err != nil {
 				return err
 			}
