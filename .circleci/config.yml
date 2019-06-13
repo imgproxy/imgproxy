@@ -79,21 +79,25 @@ commands:
       vips_version:
         type: string
     steps:
-      - run: |
-          echo 'LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/root/vips/<< parameters.vips_version >>/lib"' >> $BASH_ENV
-          echo 'PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/root/vips/<< parameters.vips_version >>/lib/pkgconfig"' >> $BASH_ENV
+      - run:
+          name: Setup Vips
+          command: |
+            echo 'LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/root/vips/<< parameters.vips_version >>/lib"' >> $BASH_ENV
+            echo 'PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/root/vips/<< parameters.vips_version >>/lib/pkgconfig"' >> $BASH_ENV
 
   install_go:
     parameters:
       go_version:
         type: string
     steps:
-      - run: |
-          gvm install go<< parameters.go_version >> -B
-          gvm use go<< parameters.go_version >> --default
-          echo 'export GOPATH=/go' >> $BASH_ENV
-          echo 'export PATH="$PATH:$(go env GOPATH)/bin"' >> $BASH_ENV
-          echo 'export CGO_LDFLAGS_ALLOW="-s|-w"' >> $BASH_ENV
+      - run:
+          name: Install Go
+          command: |
+            gvm install go<< parameters.go_version >> -B
+            gvm use go<< parameters.go_version >> --default
+            echo 'export GOPATH=/go' >> $BASH_ENV
+            echo 'export PATH="$PATH:$(go env GOPATH)/bin"' >> $BASH_ENV
+            echo 'export CGO_LDFLAGS_ALLOW="-s|-w"' >> $BASH_ENV
 
 jobs:
   checkout_code:
