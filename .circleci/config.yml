@@ -9,7 +9,13 @@ workflows:
           requires:
             - checkout_code
           go_version: "1.12"
-          vips_version: "8.7"
+          vips_version: "8.8"
+      - build:
+          name: go1.12_vips8.8
+          requires:
+            - checkout_code
+          go_version: "1.12"
+          vips_version: "8.8"
       - build:
           name: go1.12_vips8.7
           requires:
@@ -23,11 +29,11 @@ workflows:
           go_version: "1.12"
           vips_version: "8.6"
       - build:
-          name: go1.12_vips8.5
+          name: go1.11_vips8.8
           requires:
             - checkout_code
-          go_version: "1.12"
-          vips_version: "8.5"
+          go_version: "1.11"
+          vips_version: "8.8"
       - build:
           name: go1.11_vips8.7
           requires:
@@ -41,11 +47,11 @@ workflows:
           go_version: "1.11"
           vips_version: "8.6"
       - build:
-          name: go1.11_vips8.5
+          name: go1.10_vips8.8
           requires:
             - checkout_code
-          go_version: "1.11"
-          vips_version: "8.5"
+          go_version: "1.10"
+          vips_version: "8.8"
       - build:
           name: go1.10_vips8.7
           requires:
@@ -58,12 +64,6 @@ workflows:
             - checkout_code
           go_version: "1.10"
           vips_version: "8.6"
-      - build:
-          name: go1.10_vips8.5
-          requires:
-            - checkout_code
-          go_version: "1.10"
-          vips_version: "8.5"
 
 executors:
   imgproxy:
