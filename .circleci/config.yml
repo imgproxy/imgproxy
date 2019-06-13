@@ -70,15 +70,19 @@ executors:
     docker:
       - image: "darthsim/imgproxy-circleci:latest"
     working_directory: /go/src/imgproxy
+    environment:
+      BASH_ENV: "/root/.bashrc"
+
+commands:
+  setup_vips:
     parameters:
       vips_version:
         type: string
-    environment:
-      BASH_ENV: "/root/.bashrc"
-      LD_LIBRARY_PATH: "$LD_LIBRARY_PATH:/root/vips/<< parameters.vips_version >>/lib"
-      PKG_CONFIG_PATH: "$PKG_CONFIG_PATH:/root/vips/<< parameters.vips_version >>/lib/pkgconfig"
+    steps:
+      - run: |
+          echo 'LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/root/vips/<< parameters.vips_version >>/lib"' >> $BASH_ENV
+          echo 'PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/root/vips/<< parameters.vips_version >>/lib/pkgconfig"' >> $BASH_ENV
 
-commands:
   install_go:
     parameters:
       go_version:
@@ -106,11 +110,15 @@ jobs:
   lint:
     executor: imgproxy
     parameters:
+      vips_version:
+        type: string
       go_version:
         type: string
     steps:
       - attach_workspace:
           at: .
+      - setup_vips:
+          vips_version: << parameters.vips_version >>
       - install_go:
           go_version: << parameters.go_version >>
       - run:
@@ -123,13 +131,17 @@ jobs:
   build:
     executor: imgproxy
     parameters:
+      vips_version:
+        type: string
       go_version:
         type: string
     steps:
       - attach_workspace:
           at: .
+      - setup_vips:
+          vips_version: << parameters.vips_version >>
       - install_go:
-        go_version: << parameters.go_version >>
+          go_version: << parameters.go_version >>
       - run:
           name: Build imgproxy
           command: go test -v
