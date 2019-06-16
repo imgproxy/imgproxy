@@ -171,6 +171,7 @@ type config struct {
 	DevelopmentErrorsMode bool
 
 	LocalFileSystemRoot string
+	OnlyLocalFileSystem bool
 	S3Enabled           bool
 	S3Region            string
 	S3Endpoint          string
@@ -297,6 +298,7 @@ func configure() {
 	boolEnvConfig(&conf.DevelopmentErrorsMode, "IMGPROXY_DEVELOPMENT_ERRORS_MODE")
 
 	strEnvConfig(&conf.LocalFileSystemRoot, "IMGPROXY_LOCAL_FILESYSTEM_ROOT")
+	boolEnvConfig(&conf.OnlyLocalFileSystem, "IMGPROXY_ONLY_LOCAL_FILESYSTEM")
 
 	boolEnvConfig(&conf.S3Enabled, "IMGPROXY_USE_S3")
 	strEnvConfig(&conf.S3Region, "IMGPROXY_S3_REGION")
@@ -430,6 +432,12 @@ func configure() {
 		}
 		if conf.LocalFileSystemRoot == "/" {
 			logNotice("Exposing root via IMGPROXY_LOCAL_FILESYSTEM_ROOT is unsafe")
+		}
+	}
+
+	if conf.OnlyLocalFileSystem {
+		if conf.LocalFileSystemRoot == "" {
+			logFatal("Must specify a file system root")
 		}
 	}
 

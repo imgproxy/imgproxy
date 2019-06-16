@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	neturl "net/url"
 	"time"
 
 	_ "image/gif"
@@ -159,6 +160,17 @@ func readAndCheckImage(ctx context.Context, res *http.Response) (context.Context
 
 func downloadImage(ctx context.Context) (context.Context, context.CancelFunc, error) {
 	url := getImageURL(ctx)
+
+	u, err := neturl.Parse(url)
+	if err != nil {
+		return ctx, func() {}, newError(404, err.Error(), msgSourceImageIsUnreachable)
+	}
+	if conf.OnlyLocalFileSystem {
+		if u.Scheme != "local" {
+			msg := "Can't download remote images"
+			return ctx, func() {}, newError(404, msg, msgSourceImageIsUnreachable)
+		}
+	}
 
 	if newRelicEnabled {
 		newRelicCancel := startNewRelicSegment(ctx, "Downloading image")
