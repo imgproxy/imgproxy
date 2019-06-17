@@ -364,8 +364,16 @@ vips_replicate_go(VipsImage *in, VipsImage **out, int width, int height) {
 }
 
 int
-vips_embed_go(VipsImage *in, VipsImage **out, int x, int y, int width, int height) {
-  return vips_embed(in, out, x, y, width, height, NULL);
+vips_embed_go(VipsImage *in, VipsImage **out, int x, int y, int width, int height, double *bg, int bgn) {
+  VipsArrayDouble *bga = vips_array_double_new(bg, bgn);
+  int ret = vips_embed(
+    in, out, x, y, width, height,
+    "extend", VIPS_EXTEND_BACKGROUND,
+    "background", bga,
+    NULL
+  );
+  vips_area_unref((VipsArea *)bga);
+  return ret;
 }
 
 int

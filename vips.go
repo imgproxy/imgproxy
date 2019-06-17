@@ -575,7 +575,7 @@ func (img *vipsImage) Replicate(width, height int) error {
 	return nil
 }
 
-func (img *vipsImage) Embed(gravity gravityType, width, height int, offX, offY int) error {
+func (img *vipsImage) Embed(gravity gravityType, width, height int, offX, offY int, bg rgbColor) error {
 	wmWidth := img.Width()
 	wmHeight := img.Height()
 
@@ -610,8 +610,19 @@ func (img *vipsImage) Embed(gravity gravityType, width, height int, offX, offY i
 		top = 0
 	}
 
+	if err := img.RgbColourspace(); err != nil {
+		return err
+	}
+
+	var bgc []C.double
+	if img.HasAlpha() {
+		bgc = []C.double{C.double(0)}
+	} else {
+		bgc = []C.double{C.double(bg.R), C.double(bg.G), C.double(bg.B)}
+	}
+
 	var tmp *C.VipsImage
-	if C.vips_embed_go(img.VipsImage, &tmp, C.int(left), C.int(top), C.int(width), C.int(height)) != 0 {
+	if C.vips_embed_go(img.VipsImage, &tmp, C.int(left), C.int(top), C.int(width), C.int(height), &bgc[0], C.int(len(bgc))) != 0 {
 		return vipsError()
 	}
 	C.swap_and_clear(&img.VipsImage, tmp)
@@ -655,7 +666,7 @@ func (img *vipsImage) ApplyWatermark(opts *watermarkOptions) error {
 			return err
 		}
 	} else {
-		if err = wm.Embed(opts.Gravity, imgW, imgH, opts.OffsetX, opts.OffsetY); err != nil {
+		if err = wm.Embed(opts.Gravity, imgW, imgH, opts.OffsetX, opts.OffsetY, rgbColor{0, 0, 0}); err != nil {
 			return err
 		}
 	}

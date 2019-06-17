@@ -311,18 +311,6 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 		}
 	}
 
-	if po.Expand && (po.Width > img.Width() || po.Height > img.Height()) {
-		if err = img.EnsureAlpha(); err != nil {
-			return err
-		}
-
-		hasAlpha = true
-
-		if err = img.Embed(gravityCenter, po.Width, po.Height, 0, 0); err != nil {
-			return err
-		}
-	}
-
 	if hasAlpha && (po.Flatten || po.Format == imageTypeJPEG) {
 		if err = img.Flatten(po.Background); err != nil {
 			return err
@@ -337,6 +325,12 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 
 	if po.Sharpen > 0 {
 		if err = img.Sharpen(po.Sharpen); err != nil {
+			return err
+		}
+	}
+
+	if po.Expand && (po.Width > img.Width() || po.Height > img.Height()) {
+		if err = img.Embed(gravityCenter, po.Width, po.Height, 0, 0, po.Background); err != nil {
 			return err
 		}
 	}

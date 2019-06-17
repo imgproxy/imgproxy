@@ -68,7 +68,7 @@ int vips_sharpen_go(VipsImage *in, VipsImage **out, double sigma);
 int vips_flatten_go(VipsImage *in, VipsImage **out, double r, double g, double b);
 
 int vips_replicate_go(VipsImage *in, VipsImage **out, int across, int down);
-int vips_embed_go(VipsImage *in, VipsImage **out, int x, int y, int width, int height);
+int vips_embed_go(VipsImage *in, VipsImage **out, int x, int y, int width, int height, double *bg, int bgn);
 
 int vips_ensure_alpha(VipsImage *in, VipsImage **out);
 int vips_apply_opacity(VipsImage *in, VipsImage **out, double opacity);
