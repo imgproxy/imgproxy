@@ -329,7 +329,7 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 		}
 	}
 
-	if po.Expand && (po.Width > img.Width() || po.Height > img.Height()) {
+	if po.Extend && (po.Width > img.Width() || po.Height > img.Height()) {
 		if err = img.Embed(gravityCenter, po.Width, po.Height, 0, 0, po.Background); err != nil {
 			return err
 		}

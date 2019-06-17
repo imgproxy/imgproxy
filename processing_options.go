@@ -103,7 +103,7 @@ type processingOptions struct {
 	Dpr        float64
 	Gravity    gravityOptions
 	Enlarge    bool
-	Expand     bool
+	Extend     bool
 	Crop       cropOptions
 	Format     imageType
 	Quality    int
@@ -316,10 +316,10 @@ func applyEnlargeOption(po *processingOptions, args []string) error {
 
 func applyExtendOption(po *processingOptions, args []string) error {
 	if len(args) > 1 {
-		return fmt.Errorf("Invalid expand arguments: %v", args)
+		return fmt.Errorf("Invalid extend arguments: %v", args)
 	}
 
-	po.Expand = args[0] != "0"
+	po.Extend = args[0] != "0"
 
 	return nil
 }
