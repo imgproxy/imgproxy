@@ -3,6 +3,8 @@
   "description": "Fast and secure standalone server for resizing and converting remote images.",
   "keywords": ["image", "resize-images", "crop-image", "microservice", "docker", "jpeg", "png", "libvips"],
   "repository": "https://github.com/imgproxy/imgproxy",
+  "logo": "https://raw.githubusercontent.com/imgproxy/imgproxy/master/logo.svg",
+  "success_url": "/health",
   "stack": "container",
   "env": {
     "IMGPROXY_KEY": {
@@ -15,6 +17,5 @@
       "value": "",
       "required": false
     }
-  },
-  "image": "darthsim/imgproxy"
+  }
 }
