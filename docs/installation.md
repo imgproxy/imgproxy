@@ -1,6 +1,6 @@
 # Installation
 
-There are three ways you can install imgproxy:
+There are four ways you can install imgproxy:
 
 ### Docker
 
@@ -32,6 +32,12 @@ $ heroku create your-application
 $ heroku stack:set container
 $ git push heroku master
 ```
+
+### Packages
+
+#### Arch Linux and derivatives
+
+[imgproxy](https://aur.archlinux.org/packages/imgproxy/) package is available from AUR.
 
 ### From the source
 
