@@ -395,7 +395,7 @@ func applyDprOption(po *processingOptions, args []string) error {
 		return fmt.Errorf("Invalid dpr arguments: %v", args)
 	}
 
-	if d, err := strconv.ParseFloat(args[0], 64); err == nil && (d > 0 && d != 1) {
+	if d, err := strconv.ParseFloat(args[0], 64); err == nil && d > 0 {
 		po.Dpr = d
 	} else {
 		return fmt.Errorf("Invalid dpr: %s", args[0])
