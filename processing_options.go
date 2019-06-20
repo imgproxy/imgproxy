@@ -52,11 +52,6 @@ var gravityTypes = map[string]gravityType{
 	"fp":   gravityFocusPoint,
 }
 
-type gravityOptions struct {
-	Type gravityType
-	X, Y float64
-}
-
 type resizeType int
 
 const (
@@ -79,6 +74,11 @@ const (
 	hexColorLongFormat  = "%02x%02x%02x"
 	hexColorShortFormat = "%1x%1x%1x"
 )
+
+type gravityOptions struct {
+	Type gravityType
+	X, Y float64
+}
 
 type cropOptions struct {
 	Width   int
@@ -258,31 +258,47 @@ func parseDimension(d *int, name, arg string) error {
 	return nil
 }
 
+func isGravityOffcetValid(gravity gravityType, offset float64) bool {
+	if gravity == gravityCenter {
+		return true
+	}
+
+	return offset >= 0 && (gravity != gravityFocusPoint || offset <= 1)
+}
+
 func parseGravity(g *gravityOptions, args []string) error {
+	nArgs := len(args)
+
+	if nArgs > 3 {
+		return fmt.Errorf("Invalid gravity arguments: %v", args)
+	}
+
 	if t, ok := gravityTypes[args[0]]; ok {
 		g.Type = t
 	} else {
 		return fmt.Errorf("Invalid gravity: %s", args[0])
 	}
 
-	if g.Type == gravityFocusPoint {
-		if len(args) != 3 {
-			return fmt.Errorf("Invalid gravity arguments: %v", args)
-		}
+	if g.Type == gravitySmart && nArgs > 1 {
+		return fmt.Errorf("Invalid gravity arguments: %v", args)
+	} else if g.Type == gravityFocusPoint && nArgs != 3 {
+		return fmt.Errorf("Invalid gravity arguments: %v", args)
+	}
 
-		if x, err := strconv.ParseFloat(args[1], 64); err == nil && x >= 0 && x <= 1 {
+	if nArgs > 1 {
+		if x, err := strconv.ParseFloat(args[1], 64); err == nil && isGravityOffcetValid(g.Type, x) {
 			g.X = x
 		} else {
 			return fmt.Errorf("Invalid gravity X: %s", args[1])
 		}
+	}
 
-		if y, err := strconv.ParseFloat(args[2], 64); err == nil && y >= 0 && y <= 1 {
+	if nArgs > 2 {
+		if y, err := strconv.ParseFloat(args[2], 64); err == nil && isGravityOffcetValid(g.Type, y) {
 			g.Y = y
 		} else {
 			return fmt.Errorf("Invalid gravity Y: %s", args[2])
 		}
-	} else if len(args) > 1 {
-		return fmt.Errorf("Invalid gravity arguments: %v", args)
 	}
 
 	return nil

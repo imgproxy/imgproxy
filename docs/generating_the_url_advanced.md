@@ -120,25 +120,30 @@ Default: `0`
 ##### Gravity
 
 ```
-gravity:%gravity
-g:%gravity
+gravity:%gravity_type:%x_offset:%y_offset
+g:%gravity_type:%x_offset:%y_offset
 ```
 
-When imgproxy needs to cut some parts of the image, it is guided by the gravity. The following values are supported:
+When imgproxy needs to cut some parts of the image, it is guided by the gravity.
 
-* `no`: north (top edge);
-* `so`: south (bottom edge);
-* `ea`: east (right edge);
-* `we`: west (left edge);
-* `noea`: north-east (top-right corner);
-* `nowe`: north-west (top-left corner);
-* `soea`: south-east (bottom-right corner);
-* `sowe`: south-west (bottom-left corner);
-* `ce`: center;
-* `sm`: smart. `libvips` detects the most "interesting" section of the image and considers it as the center of the resulting image;
-* `fp:%x:%y`: focus point. `x` and `y` are floating point numbers between 0 and 1 that define the coordinates of the center of the resulting image. Treat 0 and 1 as right/left for `x` and top/bottom for `y`.
+* `gravity_type` - specifies the gravity type. Available values:
+  * `no`: north (top edge);
+  * `so`: south (bottom edge);
+  * `ea`: east (right edge);
+  * `we`: west (left edge);
+  * `noea`: north-east (top-right corner);
+  * `nowe`: north-west (top-left corner);
+  * `soea`: south-east (bottom-right corner);
+  * `sowe`: south-west (bottom-left corner);
+  * `ce`: center.
+* `x_offset`, `y_offset` - (optional) specify gravity offset by X and Y axes.
 
-Default: `ce`
+Default: `ce:0:0`
+
+###### Special gravities:
+
+* `gravity:sm` - smart gravity. `libvips` detects the most "interesting" section of the image and considers it as the center of the resulting image. Offsets are not applicable here;
+* `gravity:fp:%x:%y` - focus point gravity. `x` and `y` are floating point numbers between 0 and 1 that define the coordinates of the center of the resulting image. Treat 0 and 1 as right/left for `x` and top/bottom for `y`.
 
 ##### Crop
 
