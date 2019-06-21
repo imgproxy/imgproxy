@@ -128,14 +128,14 @@ func presetFileConfig(p presets, filepath string) {
 }
 
 type config struct {
-	Bind            string
-	ReadTimeout     int
-	WaitTimeout     int
-	WriteTimeout    int
-	DownloadTimeout int
-	Concurrency     int
-	MaxClients      int
-	TTL             int
+	Bind             string
+	ReadTimeout      int
+	WriteTimeout     int
+	KeepAliveTimeout int
+	DownloadTimeout  int
+	Concurrency      int
+	MaxClients       int
+	TTL              int
 
 	MaxSrcDimension    int
 	MaxSrcResolution   int
@@ -211,6 +211,7 @@ var conf = config{
 	Bind:                           ":8080",
 	ReadTimeout:                    10,
 	WriteTimeout:                   10,
+	KeepAliveTimeout:               10,
 	DownloadTimeout:                5,
 	Concurrency:                    runtime.NumCPU() * 2,
 	TTL:                            3600,
@@ -250,6 +251,7 @@ func configure() {
 	strEnvConfig(&conf.Bind, "IMGPROXY_BIND")
 	intEnvConfig(&conf.ReadTimeout, "IMGPROXY_READ_TIMEOUT")
 	intEnvConfig(&conf.WriteTimeout, "IMGPROXY_WRITE_TIMEOUT")
+	intEnvConfig(&conf.KeepAliveTimeout, "IMGPROXY_KEEP_ALIVE_TIMEOUT")
 	intEnvConfig(&conf.DownloadTimeout, "IMGPROXY_DOWNLOAD_TIMEOUT")
 	intEnvConfig(&conf.Concurrency, "IMGPROXY_CONCURRENCY")
 	intEnvConfig(&conf.MaxClients, "IMGPROXY_MAX_CLIENTS")
@@ -361,6 +363,9 @@ func configure() {
 
 	if conf.WriteTimeout <= 0 {
 		logFatal("Write timeout should be greater than 0, now - %d\n", conf.WriteTimeout)
+	}
+	if conf.KeepAliveTimeout < 0 {
+		logFatal("KeepAlive timeout should be greater than or equal to 0, now - %d\n", conf.KeepAliveTimeout)
 	}
 
 	if conf.DownloadTimeout <= 0 {

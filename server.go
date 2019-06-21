@@ -42,6 +42,12 @@ func startServer() *http.Server {
 		MaxHeaderBytes: 1 << 20,
 	}
 
+	if conf.KeepAliveTimeout > 0 {
+		s.IdleTimeout = time.Duration(conf.KeepAliveTimeout) * time.Second
+	} else {
+		s.SetKeepAlivesEnabled(false)
+	}
+
 	initProcessingHandler()
 
 	go func() {
