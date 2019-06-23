@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	http "net/http"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -18,14 +17,24 @@ func newS3Transport() http.RoundTripper {
 	s3Conf := aws.NewConfig()
 
 	if len(conf.S3Region) != 0 {
-		s3Conf.WithRegion(conf.S3Region)
+		s3Conf.Region = aws.String(conf.S3Region)
 	}
 
 	if len(conf.S3Endpoint) != 0 {
-		s3Conf.WithEndpoint(conf.S3Endpoint)
+		s3Conf.Endpoint = aws.String(conf.S3Endpoint)
+		s3Conf.S3ForcePathStyle = aws.Bool(true)
 	}
 
-	return s3Transport{s3.New(session.New(), s3Conf)}
+	sess, err := session.NewSession()
+	if err != nil {
+		logFatal("Can't create S3 session: %s", err)
+	}
+
+	if sess.Config.Region == nil || len(*sess.Config.Region) == 0 {
+		sess.Config.Region = aws.String("us-west-1")
+	}
+
+	return s3Transport{s3.New(sess, s3Conf)}
 }
 
 func (t s3Transport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
@@ -40,10 +49,9 @@ func (t s3Transport) RoundTrip(req *http.Request) (resp *http.Response, err erro
 
 	s3req, _ := t.svc.GetObjectRequest(input)
 
-	s3err := s3req.Send()
-	if s3err == nil { // resp is now filled
-		return s3req.HTTPResponse, nil
+	if err := s3req.Send(); err != nil {
+		return nil, err
 	}
-	fmt.Println("s3 error", s3err)
-	return nil, s3err
+
+	return s3req.HTTPResponse, nil
 }

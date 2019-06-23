@@ -5,6 +5,35 @@ workflows:
   build:
     jobs:
       - checkout_code
+      - lint:
+          requires:
+            - checkout_code
+          go_version: "1.12"
+          vips_version: "8.8"
+      - build:
+          name: go1.12_vips8.8
+          requires:
+            - checkout_code
+          go_version: "1.12"
+          vips_version: "8.8"
+      - build:
+          name: go1.12_vips8.7
+          requires:
+            - checkout_code
+          go_version: "1.12"
+          vips_version: "8.7"
+      - build:
+          name: go1.12_vips8.6
+          requires:
+            - checkout_code
+          go_version: "1.12"
+          vips_version: "8.6"
+      - build:
+          name: go1.11_vips8.8
+          requires:
+            - checkout_code
+          go_version: "1.11"
+          vips_version: "8.8"
       - build:
           name: go1.11_vips8.7
           requires:
@@ -18,23 +47,11 @@ workflows:
           go_version: "1.11"
           vips_version: "8.6"
       - build:
-          name: go1.11_vips8.5
+          name: go1.10_vips8.8
           requires:
             - checkout_code
-          go_version: "1.11"
-          vips_version: "8.5"
-      - build:
-          name: go1.11_vips8.4
-          requires:
-            - checkout_code
-          go_version: "1.11"
-          vips_version: "8.4"
-      - build:
-          name: go1.11_vips8.3
-          requires:
-            - checkout_code
-          go_version: "1.11"
-          vips_version: "8.3"
+          go_version: "1.10"
+          vips_version: "8.8"
       - build:
           name: go1.10_vips8.7
           requires:
@@ -47,54 +64,40 @@ workflows:
             - checkout_code
           go_version: "1.10"
           vips_version: "8.6"
-      - build:
-          name: go1.10_vips8.5
-          requires:
-            - checkout_code
-          go_version: "1.10"
-          vips_version: "8.5"
-      - build:
-          name: go1.10_vips8.4
-          requires:
-            - checkout_code
-          go_version: "1.10"
-          vips_version: "8.4"
-      - build:
-          name: go1.10_vips8.3
-          requires:
-            - checkout_code
-          go_version: "1.10"
-          vips_version: "8.3"
-      - build:
-          name: go1.10_vips8.7
-          requires:
-            - checkout_code
-          go_version: "1.9"
-          vips_version: "8.7"
-      - build:
-          name: go1.9_vips8.6
-          requires:
-            - checkout_code
-          go_version: "1.9"
-          vips_version: "8.6"
-      - build:
-          name: go1.9_vips8.5
-          requires:
-            - checkout_code
-          go_version: "1.9"
-          vips_version: "8.5"
-      - build:
-          name: go1.9_vips8.4
-          requires:
-            - checkout_code
-          go_version: "1.9"
-          vips_version: "8.4"
-      - build:
-          name: go1.9_vips8.3
-          requires:
-            - checkout_code
-          go_version: "1.9"
-          vips_version: "8.3"
+
+executors:
+  imgproxy:
+    docker:
+      - image: "darthsim/imgproxy-circleci:latest"
+    working_directory: /go/src/imgproxy
+    environment:
+      BASH_ENV: "/root/.bashrc"
+
+commands:
+  setup_vips:
+    parameters:
+      vips_version:
+        type: string
+    steps:
+      - run:
+          name: Setup Vips
+          command: |
+            echo 'LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/root/vips/<< parameters.vips_version >>/lib"' >> $BASH_ENV
+            echo 'PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/root/vips/<< parameters.vips_version >>/lib/pkgconfig"' >> $BASH_ENV
+
+  install_go:
+    parameters:
+      go_version:
+        type: string
+    steps:
+      - run:
+          name: Install Go
+          command: |
+            gvm install go<< parameters.go_version >> -B
+            gvm use go<< parameters.go_version >> --default
+            echo 'export GOPATH=/go' >> $BASH_ENV
+            echo 'export PATH="$PATH:$(go env GOPATH)/bin"' >> $BASH_ENV
+            echo 'export CGO_LDFLAGS_ALLOW="-s|-w"' >> $BASH_ENV
 
 jobs:
   checkout_code:
@@ -108,27 +111,41 @@ jobs:
           root: .
           paths: [.]
 
-  build:
-    docker:
-      - image: "darthsim/imgproxy-circleci:latest"
-    working_directory: /go/src/imgproxy
-    environment:
-      BASH_ENV: "/root/.bashrc"
+  lint:
+    executor: imgproxy
     parameters:
-      go_version:
-        type: string
       vips_version:
+        type: string
+      go_version:
         type: string
     steps:
       - attach_workspace:
           at: .
+      - setup_vips:
+          vips_version: << parameters.vips_version >>
+      - install_go:
+          go_version: << parameters.go_version >>
+      - run:
+          name: Install golangci-lint
+          command: curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | BINARY=golangci-lint sh -s -- -b $(go env GOPATH)/bin v1.16.0
+      - run:
+          name: Lint imgproxy
+          command: golangci-lint run .
+
+  build:
+    executor: imgproxy
+    parameters:
+      vips_version:
+        type: string
+      go_version:
+        type: string
+    steps:
+      - attach_workspace:
+          at: .
+      - setup_vips:
+          vips_version: << parameters.vips_version >>
+      - install_go:
+          go_version: << parameters.go_version >>
       - run:
           name: Build imgproxy
-          command: |
-            gvm install go<< parameters.go_version >> -B
-            gvm use go<< parameters.go_version >>
-            export GOPATH=/go
-            export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/root/vips/<< parameters.vips_version >>/lib
-            export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/root/vips/<< parameters.vips_version >>/lib/pkgconfig
-            export CGO_LDFLAGS_ALLOW="-s|-w"
-            go test -v
+          command: go test -v

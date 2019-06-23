@@ -1,78 +1,59 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"crypto/subtle"
 	"fmt"
-	"log"
 	"net"
 	"net/http"
-	"strconv"
-	"strings"
-	"sync"
 	"time"
 
-	nanoid "github.com/matoous/go-nanoid"
 	"golang.org/x/net/netutil"
 )
 
-const healthPath = "/"
-
 var (
-	mimes = map[imageType]string{
-		imageTypeJPEG: "image/jpeg",
-		imageTypePNG:  "image/png",
-		imageTypeWEBP: "image/webp",
-		imageTypeGIF:  "image/gif",
-		imageTypeICO:  "image/x-icon",
-	}
-
-	contentDispositions = map[imageType]string{
-		imageTypeJPEG: "inline; filename=\"image.jpg\"",
-		imageTypePNG:  "inline; filename=\"image.png\"",
-		imageTypeWEBP: "inline; filename=\"image.webp\"",
-		imageTypeGIF:  "inline; filename=\"image.gif\"",
-		imageTypeICO:  "inline; filename=\"favicon.ico\"",
-	}
-
-	authHeaderMust []byte
-
 	imgproxyIsRunningMsg = []byte("imgproxy is running")
 
-	errInvalidMethod = newError(422, "Invalid request method", "Method doesn't allowed")
 	errInvalidSecret = newError(403, "Invalid secret", "Forbidden")
 )
 
-var responseBufPool = sync.Pool{
-	New: func() interface{} {
-		return new(bytes.Buffer)
-	},
-}
+func buildRouter() *router {
+	r := newRouter()
 
-type httpHandler struct {
-	sem chan struct{}
-}
+	r.PanicHandler = handlePanic
 
-func newHTTPHandler() *httpHandler {
-	return &httpHandler{make(chan struct{}, conf.Concurrency)}
+	r.GET("/health", handleHealth)
+	r.GET("/", withCORS(withSecret(handleProcessing)))
+	r.OPTIONS("/", withCORS(handleOptions))
+
+	return r
 }
 
 func startServer() *http.Server {
 	l, err := net.Listen("tcp", conf.Bind)
 	if err != nil {
-		log.Fatal(err)
+		logFatal(err.Error())
 	}
+	l = netutil.LimitListener(l, conf.MaxClients)
+
 	s := &http.Server{
-		Handler:        newHTTPHandler(),
+		Handler:        buildRouter(),
 		ReadTimeout:    time.Duration(conf.ReadTimeout) * time.Second,
 		MaxHeaderBytes: 1 << 20,
 	}
 
+	if conf.KeepAliveTimeout > 0 {
+		s.IdleTimeout = time.Duration(conf.KeepAliveTimeout) * time.Second
+	} else {
+		s.SetKeepAlivesEnabled(false)
+	}
+
+	initProcessingHandler()
+
 	go func() {
-		log.Printf("Starting server at %s\n", conf.Bind)
-		if err := s.Serve(netutil.LimitListener(l, conf.MaxClients)); err != nil && err != http.ErrServerClosed {
-			log.Fatalln(err)
+		logNotice("Starting server at %s", conf.Bind)
+		if err := s.Serve(l); err != nil && err != http.ErrServerClosed {
+			logFatal(err.Error())
 		}
 	}()
 
@@ -80,7 +61,7 @@ func startServer() *http.Server {
 }
 
 func shutdownServer(s *http.Server) {
-	log.Println("Shutting down the server...")
+	logNotice("Shutting down the server...")
 
 	ctx, close := context.WithTimeout(context.Background(), 5*time.Second)
 	defer close()
@@ -88,206 +69,63 @@ func shutdownServer(s *http.Server) {
 	s.Shutdown(ctx)
 }
 
-func logResponse(status int, msg string) {
-	var color int
+func withCORS(h routeHandler) routeHandler {
+	return func(reqID string, rw http.ResponseWriter, r *http.Request) {
+		if len(conf.AllowOrigin) > 0 {
+			rw.Header().Set("Access-Control-Allow-Origin", conf.AllowOrigin)
+			rw.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+		}
 
-	if status >= 500 {
-		color = 31
-	} else if status >= 400 {
-		color = 33
-	} else {
-		color = 32
-	}
-
-	log.Printf("|\033[7;%dm %d \033[0m| %s\n", color, status, msg)
-}
-
-func writeCORS(rw http.ResponseWriter) {
-	if len(conf.AllowOrigin) > 0 {
-		rw.Header().Set("Access-Control-Allow-Origin", conf.AllowOrigin)
-		rw.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONs")
+		h(reqID, rw, r)
 	}
 }
 
-func respondWithImage(ctx context.Context, reqID string, r *http.Request, rw http.ResponseWriter, data []byte, size ImageSize) {
-	po := getProcessingOptions(ctx)
-
-	rw.Header().Set("Expires", time.Now().Add(time.Second*time.Duration(conf.TTL)).Format(http.TimeFormat))
-	rw.Header().Set("Cache-Control", fmt.Sprintf("max-age=%d, public", conf.TTL))
-	rw.Header().Set("Content-Type", mimes[po.Format])
-	rw.Header().Set("Content-Disposition", contentDispositions[po.Format])
-	rw.Header().Set("X-is", fmt.Sprintf("%d:%d", size.Width, size.Height))
-
-	dataToRespond := data
-
-	if conf.GZipCompression > 0 && strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
-		rw.Header().Set("Content-Encoding", "gzip")
-
-		buf := responseBufPool.Get().(*bytes.Buffer)
-		buf.Reset()
-		defer responseBufPool.Put(buf)
-
-		gzipData(data, buf)
-		dataToRespond = buf.Bytes()
-	}
-
-	rw.Header().Set("Content-Length", strconv.Itoa(len(dataToRespond)))
-	rw.WriteHeader(200)
-	rw.Write(dataToRespond)
-
-	logResponse(200, fmt.Sprintf("[%s] Processed in %s: %s; %+v", reqID, getTimerSince(ctx), getImageURL(ctx), po))
-}
-
-func respondWithError(reqID string, rw http.ResponseWriter, err *imgproxyError) {
-	logResponse(err.StatusCode, fmt.Sprintf("[%s] %s", reqID, err.Message))
-
-	rw.WriteHeader(err.StatusCode)
-	rw.Write([]byte(err.PublicMessage))
-}
-
-func respondWithOptions(reqID string, rw http.ResponseWriter) {
-	logResponse(200, fmt.Sprintf("[%s] Respond with options", reqID))
-	rw.WriteHeader(200)
-}
-
-func respondWithNotModified(reqID string, rw http.ResponseWriter) {
-	logResponse(200, fmt.Sprintf("[%s] Not modified", reqID))
-	rw.WriteHeader(304)
-}
-
-func prepareAuthHeaderMust() []byte {
-	if len(authHeaderMust) == 0 {
-		authHeaderMust = []byte(fmt.Sprintf("Bearer %s", conf.Secret))
-	}
-
-	return authHeaderMust
-}
-
-func checkSecret(r *http.Request) bool {
+func withSecret(h routeHandler) routeHandler {
 	if len(conf.Secret) == 0 {
-		return true
+		return h
 	}
 
-	return subtle.ConstantTimeCompare(
-		[]byte(r.Header.Get("Authorization")),
-		prepareAuthHeaderMust(),
-	) == 1
+	authHeader := []byte(fmt.Sprintf("Bearer %s", conf.Secret))
+
+	return func(reqID string, rw http.ResponseWriter, r *http.Request) {
+		if subtle.ConstantTimeCompare([]byte(r.Header.Get("Authorization")), authHeader) == 1 {
+			h(reqID, rw, r)
+		} else {
+			panic(errInvalidSecret)
+		}
+	}
 }
 
-func (h *httpHandler) lock() {
-	h.sem <- struct{}{}
+func handlePanic(reqID string, rw http.ResponseWriter, r *http.Request, err error) {
+	reportError(err, r)
+
+	var (
+		ierr *imgproxyError
+		ok   bool
+	)
+
+	if ierr, ok = err.(*imgproxyError); !ok {
+		ierr = newUnexpectedError(err.Error(), 3)
+	}
+
+	logResponse(reqID, ierr.StatusCode, ierr.Message)
+
+	rw.WriteHeader(ierr.StatusCode)
+
+	if conf.DevelopmentErrorsMode {
+		rw.Write([]byte(ierr.Message))
+	} else {
+		rw.Write([]byte(ierr.PublicMessage))
+	}
 }
 
-func (h *httpHandler) unlock() {
-	<-h.sem
+func handleHealth(reqID string, rw http.ResponseWriter, r *http.Request) {
+	logResponse(reqID, 200, string(imgproxyIsRunningMsg))
+	rw.WriteHeader(200)
+	rw.Write(imgproxyIsRunningMsg)
 }
 
-func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	reqID, _ := nanoid.Nanoid()
-
-	defer func() {
-		if rerr := recover(); rerr != nil {
-			if err, ok := rerr.(error); ok {
-				reportError(err, r)
-
-				if ierr, ok := err.(*imgproxyError); ok {
-					respondWithError(reqID, rw, ierr)
-				} else {
-					respondWithError(reqID, rw, newUnexpectedError(err, 4))
-				}
-			} else {
-				panic(rerr)
-			}
-		}
-	}()
-
-	log.Printf("[%s] %s: %s\n", reqID, r.Method, r.URL.RequestURI())
-
-	writeCORS(rw)
-
-	if r.Method == http.MethodOptions {
-		respondWithOptions(reqID, rw)
-		return
-	}
-
-	// Only allow post/get
-	if r.Method != http.MethodGet && r.Method != http.MethodPost {
-		panic(errInvalidMethod)
-	}
-
-	if !checkSecret(r) {
-		panic(errInvalidSecret)
-	}
-
-	if r.URL.RequestURI() == healthPath {
-		rw.WriteHeader(200)
-		rw.Write(imgproxyIsRunningMsg)
-		return
-	}
-
-	ctx := context.Background()
-
-	if newRelicEnabled {
-		var newRelicCancel context.CancelFunc
-		ctx, newRelicCancel = startNewRelicTransaction(ctx, rw, r)
-		defer newRelicCancel()
-	}
-
-	if prometheusEnabled {
-		prometheusRequestsTotal.Inc()
-		defer startPrometheusDuration(prometheusRequestDuration)()
-	}
-
-	h.lock()
-	defer h.unlock()
-
-	ctx, timeoutCancel := startTimer(ctx, time.Duration(conf.WriteTimeout)*time.Second)
-	defer timeoutCancel()
-
-	ctx, err := parsePath(ctx, r)
-	if err != nil {
-		panic(err)
-	}
-
-	// If get, download URL
-	ctx, cancel, err := processIncomingImageRequest(ctx, r)
-	defer cancel()
-	if err != nil {
-		if newRelicEnabled {
-			sendErrorToNewRelic(ctx, err)
-		}
-		if prometheusEnabled {
-			incrementPrometheusErrorsTotal("download")
-		}
-		panic(err)
-	}
-
-	checkTimeout(ctx)
-
-	if conf.ETagEnabled {
-		eTag := calcETag(ctx)
-		rw.Header().Set("ETag", eTag)
-
-		if eTag == r.Header.Get("If-None-Match") {
-			respondWithNotModified(reqID, rw)
-			return
-		}
-	}
-
-	checkTimeout(ctx)
-
-	imageData, imgSize, err := processImage(ctx)
-	if err != nil {
-		if newRelicEnabled {
-			sendErrorToNewRelic(ctx, err)
-		}
-		if prometheusEnabled {
-			incrementPrometheusErrorsTotal("processing")
-		}
-		panic(err)
-	}
-
-	checkTimeout(ctx)
-
-	respondWithImage(ctx, reqID, r, rw, imageData, imgSize)
+func handleOptions(reqID string, rw http.ResponseWriter, r *http.Request) {
+	logResponse(reqID, 200, "Respond with options")
+	rw.WriteHeader(200)
 }

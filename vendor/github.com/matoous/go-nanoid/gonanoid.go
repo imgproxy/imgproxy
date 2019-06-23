@@ -6,10 +6,16 @@ import (
 )
 
 const (
-	defaultAlphabet = "_~0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" // len=64
+	defaultAlphabet = "_-0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" // len=64
 	defaultSize     = 22
 	defaultMaskSize = 5
 )
+
+// Generator function
+type Generator func([]byte) (int, error)
+
+// BytesGenerator is the default bytes generator
+var BytesGenerator Generator = rand.Read
 
 func initMasks(params ...int) []uint {
 	var size int
@@ -46,7 +52,7 @@ func Generate(alphabet string, size int) (string, error) {
 	id := make([]byte, size)
 	bytes := make([]byte, step)
 	for j := 0; ; {
-		_, err := rand.Read(bytes)
+		_, err := BytesGenerator(bytes)
 		if err != nil {
 			return "", err
 		}
@@ -72,7 +78,7 @@ func Nanoid(param ...int) (string, error) {
 		size = param[0]
 	}
 	bytes := make([]byte, size)
-	_, err := rand.Read(bytes)
+	_, err := BytesGenerator(bytes)
 	if err != nil {
 		return "", err
 	}

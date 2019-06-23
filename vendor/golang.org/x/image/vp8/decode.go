@@ -82,7 +82,7 @@ type mb struct {
 	pred [4]uint8
 	// nzMask is a mask of 8 bits: 4 for the bottom or right 4x4 luma regions,
 	// and 2 + 2 for the bottom or right 4x4 chroma regions. A 1 bit indicates
-	// that that region has non-zero coefficients.
+	// that region has non-zero coefficients.
 	nzMask uint8
 	// nzY16 is a 0/1 value that is 1 if the macroblock used Y16 prediction and
 	// had non-zero coefficients.
@@ -274,7 +274,7 @@ func (d *Decoder) parseOtherPartitions() error {
 	var partLens [maxNOP]int
 	d.nOP = 1 << d.fp.readUint(uniformProb, 2)
 
-	// The final partition length is implied by the the remaining chunk data
+	// The final partition length is implied by the remaining chunk data
 	// (d.r.n) and the other d.nOP-1 partition lengths. Those d.nOP-1 partition
 	// lengths are stored as 24-bit uints, i.e. up to 16 MiB per partition.
 	n := 3 * (d.nOP - 1)

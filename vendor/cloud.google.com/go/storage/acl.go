@@ -15,11 +15,11 @@
 package storage
 
 import (
+	"context"
 	"net/http"
 	"reflect"
 
 	"cloud.google.com/go/internal/trace"
-	"golang.org/x/net/context"
 	"google.golang.org/api/googleapi"
 	raw "google.golang.org/api/storage/v1"
 )

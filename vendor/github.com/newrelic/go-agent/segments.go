@@ -114,15 +114,33 @@ func StartSegment(txn Transaction, name string) *Segment {
 //    segment.Response = resp
 //    segment.End()
 //
+// In addition to starting an external segment, StartExternalSegment also adds
+// distributed tracing headers to the request.  Therefore, it is recommended
+// over populating ExternalSegment structs manually.
+//
+// If the Transaction parameter is nil, StartExternalSegment will look for a
+// Transaction in the request's context using FromContext.  Example:
+//
+//    request = newrelic.RequestWithTransactionContext(request, txn)
+//    segment := newrelic.StartExternalSegment(nil, request)
+//    resp, err := client.Do(request)
+//    segment.Response = resp
+//    segment.End()
+//
 func StartExternalSegment(txn Transaction, request *http.Request) *ExternalSegment {
+	if nil == txn {
+		txn = transactionFromRequestContext(request)
+	}
 	s := &ExternalSegment{
 		StartTime: StartSegmentNow(txn),
 		Request:   request,
 	}
 
-	for key, values := range s.OutboundHeaders() {
-		for _, value := range values {
-			request.Header.Add(key, value)
+	if request != nil && request.Header != nil {
+		for key, values := range s.OutboundHeaders() {
+			for _, value := range values {
+				request.Header.Add(key, value)
+			}
 		}
 	}
 

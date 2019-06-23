@@ -4,7 +4,7 @@
      src="https://cdn.rawgit.com/DarthSim/imgproxy/master/logo.svg">
 
 
-[![CircleCI branch](https://img.shields.io/circleci/project/github/DarthSim/imgproxy/master.svg?style=for-the-badge)](https://circleci.com/gh/DarthSim/imgproxy) [![Docker](https://img.shields.io/badge/docker-darthsim%2Fimgproxy-blue.svg?style=for-the-badge)](https://hub.docker.com/r/darthsim/imgproxy/) [![MicroBadger Size](https://img.shields.io/microbadger/image-size/darthsim/imgproxy.svg?style=for-the-badge)](https://hub.docker.com/r/darthsim/imgproxy/) [![Docker Pulls](https://img.shields.io/docker/pulls/darthsim/imgproxy.svg?style=for-the-badge)](https://hub.docker.com/r/darthsim/imgproxy/)
+[![CircleCI branch](https://img.shields.io/circleci/project/github/imgproxy/imgproxy/master.svg?style=for-the-badge)](https://circleci.com/gh/DarthSim/imgproxy) [![Docker](https://img.shields.io/badge/docker-darthsim%2Fimgproxy-blue.svg?style=for-the-badge)](https://hub.docker.com/r/darthsim/imgproxy/) [![MicroBadger Size](https://img.shields.io/microbadger/image-size/darthsim/imgproxy.svg?style=for-the-badge)](https://hub.docker.com/r/darthsim/imgproxy/) [![Docker Pulls](https://img.shields.io/docker/pulls/darthsim/imgproxy.svg?style=for-the-badge)](https://hub.docker.com/r/darthsim/imgproxy/)
 
 
 imgproxy is a fast and secure standalone server for resizing and converting remote images. The main principles of imgproxy are simplicity, speed, and security.
@@ -38,6 +38,8 @@ imgproxy uses probably the most efficient image processing library there is, cal
 
 imgproxy also uses native Go's `net/http` routing for the best HTTP networking support.
 
+You can see benchmarking results and comparison with some well-known alternatives in our [benchmark report](./BENCHMARK.md).
+
 #### Security
 
 Massive processing of remote images is a potentially dangerous thing, security-wise. There are many attack vectors, so it is a good idea to consider attack prevention measures first. Here is how imgproxy can help:
@@ -69,7 +71,9 @@ Massive processing of remote images is a potentially dangerous thing, security-w
    * [Serving files from Google Cloud Storage](./docs/configuration.md#serving-files-from-google-cloud-storage)
    * [New Relic metrics](./docs/configuration.md#new-relic-metrics)
    * [Prometheus metrics](./docs/configuration.md#prometheus-metrics)
-   * [Errors reporting](./docs/configuration.md#errors-reporting)
+   * [Error reporting](./docs/configuration.md#error-reporting)
+   * [Syslog](./docs/configuration.md#syslog)
+   * [Memory usage tweaks](./docs/configuration.md#memory-usage-tweaks)
    * [Miscellaneous](./docs/configuration.md#miscellaneous)
 4. [Generating the URL](./docs/generating_the_url_basic.md)
    * [Basic](./docs/generating_the_url_basic.md)
@@ -85,6 +89,7 @@ Massive processing of remote images is a potentially dangerous thing, security-w
 12. [Image formats support](./docs/image_formats_support.md)
 13. [About processing pipeline](./docs/about_processing_pipeline.md)
 14. [Health check](./docs/healthcheck.md)
+15. [Memory usage tweaks](./docs/memory_usage_tweaks.md)
 
 ## Author
 

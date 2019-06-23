@@ -1,5 +1,95 @@
 # Changelog
 
+## v2.2.13
+
+- Better shrink-on-load;
+- Don't import common sRGB IEC61966-2.1 ICC profile unless linear colorspace is used;
+- Send `X-Reqiest-ID` header;
+- Don't fail on recursive preset usage, just ignore already used preset and log warning.
+
+## v2.2.12
+
+- Don't fail processing when embedded ICC profile is not compatible with the image.
+
+## v2.2.11
+
+- Optimized ICC import when linear colorspace usage is disabled.
+
+## v2.2.10
+
+- Resizing images in linear colorspace is disabled by default. Can be enabled with `IMGPROXY_USE_LINEAR_COLORSPACE`;
+- Add PNG quantization. Can be enabled with `IMGPROXY_PNG_QUANTIZE`. Palette size can be specified with `IMGPROXY_PNG_QUANTIZATION_COLORS`.
+
+## v2.2.9
+
+Fixed processing of images with embedded profiles that was broken in v2.2.8.
+
+## v2.2.8
+
+- Resize images in linear colorspace;
+- Add `IMGPROXY_DISABLE_SHRINK_ON_LOAD` config to disable shring-on-load of JPEG and WebP;
+- Remove orc from Docker image (causes segfaults in some cases).
+
+## v2.2.7
+
+- Fixed color management;
+- Memory usage optimizations.
+
+## v2.2.6
+
+- Fixed signature check when source URL is escaped.
+
+## v2.2.5
+
+- [extend](./docs/generating_the_url_advanced.md#extend) processing option;
+- Fixed SVG detection;
+- Add `vips_memory_bytes`, `vips_max_memory_bytes` and `vips_allocs` metrics to Prometheus.
+
+## v2.2.4
+
+- Minor improvements.
+
+## v2.2.3
+
+- Fixed critical bug with cached C strings;
+- Simple filesystem transport withh less memory usage.
+
+## v2.2.2
+
+- Memory usage optimizations.
+
+## v2.2.1
+
+- Source file size limit;
+- More memory usage optimizations.
+
+## v2.2.0
+
+- Optimized memory usage. [Memory usage tweaks](./docs/memory_usage_tweaks.md);
+- `Vary` header is set when WebP detection, client hints or GZip compression are enabled;
+- Health check doesn't require `Authorization` header anymore.
+
+## v2.1.5
+
+- [Sentry support](./docs/configuration.md#error-reporting) (thanks to [@koenpunt](https://github.com/koenpunt));
+- Fixed detection of some kind of WebP images;
+- [Syslog support](./docs/configuration.md#syslog).
+
+## v2.1.4
+
+- SVG sources support;
+- Fixed support for not animated GIFs;
+- Proper filename in the `Content-Disposition` header;
+- Memory usage optimizations.
+
+## v2.1.3
+
+- [Minio support](./docs/serving_files_from_s3.md#minio)
+
+## v2.1.2
+
+- ICO support
+
 ## v2.1.1
 
 - Fixed EXIF orientation fetching;

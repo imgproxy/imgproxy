@@ -8,5 +8,6 @@
 
     "go.delveConfig": {
         "apiVersion": 2,
-    }
+    },
+    "go.formatTool": "goimports"
 }

@@ -22,7 +22,8 @@ type PreconnectReply struct {
 // ConnectReply contains all of the settings and state send down from the
 // collector.  It should not be modified after creation.
 type ConnectReply struct {
-	RunID AgentRunID `json:"agent_run_id"`
+	RunID             AgentRunID        `json:"agent_run_id"`
+	RequestHeadersMap map[string]string `json:"request_headers_map"`
 
 	// Transaction Name Modifiers
 	SegmentTerms segmentRules `json:"transaction_segment_terms"`
@@ -43,6 +44,7 @@ type ConnectReply struct {
 	CollectTraces          bool               `json:"collect_traces"`
 	CollectErrors          bool               `json:"collect_errors"`
 	CollectErrorEvents     bool               `json:"collect_error_events"`
+	CollectSpanEvents      bool               `json:"collect_span_events"`
 
 	// RUM
 	AgentLoader string `json:"js_agent_loader"`
@@ -103,6 +105,7 @@ func ConnectReplyDefaults() *ConnectReply {
 		CollectTraces:          true,
 		CollectErrors:          true,
 		CollectErrorEvents:     true,
+		CollectSpanEvents:      true,
 		// No transactions should be sampled before the application is
 		// connected.
 		AdaptiveSampler: SampleNothing{},

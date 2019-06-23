@@ -24,8 +24,7 @@ Once you set up your [URL signature](./configuration.md#url-signature), check ou
 imgproxy supports the following resizing types:
 
 * `fit`: resizes the image while keeping aspect ratio to fit given size;
-* `fill`: resizes the image while keeping aspect ratio to fill given size and cropping projecting parts;
-* `crop`: crops the image to a given size.
+* `fill`: resizes the image while keeping aspect ratio to fill given size and cropping projecting parts.
 
 #### Width and height
 
