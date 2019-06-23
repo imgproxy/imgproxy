@@ -29,6 +29,7 @@ $ echo $(xxd -g 2 -l 64 -p /dev/random | tr -d '\n')
 * `IMGPROXY_BIND`: TCP address and port to listen on. Default: `:8080`;
 * `IMGPROXY_READ_TIMEOUT`: the maximum duration (in seconds) for reading the entire image request, including the body. Default: `10`;
 * `IMGPROXY_WRITE_TIMEOUT`: the maximum duration (in seconds) for writing the response. Default: `10`;
+* `IMGPROXY_KEEP_ALIVE_TIMEOUT`: the maximum duration (in seconds) to wait for the next request before closing the connection. When set to `0`, keep-alive is disabled. Default: `10`;
 * `IMGPROXY_DOWNLOAD_TIMEOUT`: the maximum duration (in seconds) for downloading the source image. Default: `5`;
 * `IMGPROXY_CONCURRENCY`: the maximum number of image requests to be processed simultaneously. Default: number of CPU cores times two;
 * `IMGPROXY_MAX_CLIENTS`: the maximum number of simultaneous active connections. Default: `IMGPROXY_CONCURRENCY * 10`;
@@ -41,12 +42,13 @@ $ echo $(xxd -g 2 -l 64 -p /dev/random | tr -d '\n')
 imgproxy protects you from so-called image bombs. Here is how you can specify maximum image resolution which you consider reasonable:
 
 * `IMGPROXY_MAX_SRC_RESOLUTION`: the maximum resolution of the source image, in megapixels. Images with larger actual size will be rejected. Default: `16.8`;
+* `IMGPROXY_MAX_SRC_FILE_SIZE`: the maximum size of the source image, in bytes. Images with larger file size will be rejected. When `0`, file size check is disabled. Default: `0`;
 
-imgproxy can process animated GIFs, but since this operation is pretty heavy, only one frame is processed by default. You can increase the maximum of GIF frames to process with the following variable:
+imgproxy can process animated images (GIF, WebP), but since this operation is pretty heavy, only one frame is processed by default. You can increase the maximum of animation frames to process with the following variable:
 
-* `IMGPROXY_MAX_GIF_FRAMES`: the maximum of animated GIF frames to being processed. Default: `1`.
+* `IMGPROXY_MAX_ANIMATION_FRAMES`: the maximum of animated image frames to being processed. Default: `1`.
 
-**Note:** imgproxy summarizes all GIF frames resolutions while checking source image resolution.
+**Note:** imgproxy summarizes all frames resolutions while checking source image resolution.
 
 You can also specify a secret to enable authorization with the HTTP `Authorization` header for use in production environments:
 
@@ -60,12 +62,18 @@ When you use imgproxy in a development environment, it can be useful to ignore S
 
 * `IMGPROXY_IGNORE_SSL_VERIFICATION`: when true, disables SSL verification, so imgproxy can be used in a development environment with self-signed SSL certificates.
 
+Also you may want imgproxy to respond with the same error message that it writes to the log:
+
+* `IMGPROXY_DEVELOPMENT_ERRORS_MODE`: when true, imgproxy will respond with detailed error messages. Not recommended for production because some errors may contain stack trace.
+
 ### Compression
 
 * `IMGPROXY_QUALITY`: default quality of the resulting image, percentage. Default: `80`;
 * `IMGPROXY_GZIP_COMPRESSION`: GZip compression level. Default: `5`;
 * `IMGPROXY_JPEG_PROGRESSIVE` : when true, enables progressive JPEG compression. Default: false;
 * `IMGPROXY_PNG_INTERLACED`: when true, enables interlaced PNG compression. Default: false;
+* `IMGPROXY_PNG_QUANTIZE`: when true, enables PNG quantization. libvips should be built with libimagequant support. Default: false;
+* `IMGPROXY_PNG_QUANTIZATION_COLORS`: maximum number of quantization palette entries. Should be between 2 and 256. Default: 256;
 
 ## WebP support detection
 
@@ -123,6 +131,12 @@ sharp=sharpen:0.7
 blurry=blur:2
 ```
 
+#### Using only presets
+
+imgproxy can be switched into "presets-only mode". In this mode, imgproxy accepts only `preset` option arguments as processing options. Example: `http://imgproxy.example.com/unsafe/thumbnail:blurry:watermarked/plain/http://example.com/images/curiosity.jpg@png`
+
+* `IMGPROXY_ONLY_PRESETS`: disable all URL formats and enable presets-only mode.
+
 ### Serving local files
 
 imgproxy can serve your local images, but this feature is disabled by default. To enable it, specify your local filesystem root:
@@ -165,15 +179,39 @@ imgproxy can collect its metrics for Prometheus. Specify binding for Prometheus 
 
 Check out the [Prometheus](./prometheus.md) guide to learn more.
 
-### Errors reporting
+### Error reporting
 
-imgproxy can report occurred errors to Bugsnag or Honeybadger:
+imgproxy can report occurred errors to Bugsnag, Honeybadger and Sentry:
 
-* `IMGPROXY_BUGSNAG_KEY`: Bugsnag API key. When provided, enables errors reporting to Bugsnag;
+* `IMGPROXY_BUGSNAG_KEY`: Bugsnag API key. When provided, enables error reporting to Bugsnag;
 * `IMGPROXY_BUGSNAG_STAGE`: Bugsnag stage to report to. Default: `production`;
-* `IMGPROXY_HONEYBADGER_KEY`: Honeybadger API key. When provided, enables errors reporting to Honeybadger;
+* `IMGPROXY_HONEYBADGER_KEY`: Honeybadger API key. When provided, enables error reporting to Honeybadger;
 * `IMGPROXY_HONEYBADGER_ENV`: Honeybadger env to report to. Default: `production`.
+* `IMGPROXY_SENTRY_DSN`: Sentry project DSN. When provided, enables error reporting to Sentry;
+* `IMGPROXY_SENTRY_ENVIRONMENT`: Sentry environment to report to. Default: `production`.
+* `IMGPROXY_SENTRY_RELEASE`: Sentry release to report to. Default: `imgproxy/{imgproxy version}`.
+
+### Syslog
+
+imgproxy can send logs to syslog, but this feature is disabled by default. To enable it, set `IMGPROXY_SYSLOG_ENABLE` to `true`:
+
+* `IMGPROXY_SYSLOG_ENABLE`: when `true`, enables sending logs to syslog;
+* `IMGPROXY_SYSLOG_LEVEL`: maximum log level to send to syslog. Known levels are: `crit`, `error`, `warning` and `notice`. Default: `notice`;
+* `IMGPROXY_SYSLOG_NETWORK`: network that will be used to connect to syslog. When blank, the local syslog server will be used. Known networks are `tcp`, `tcp4`, `tcp6`, `udp`, `udp4`, `udp6`, `ip`, `ip4`, `ip6`, `unix`, `unixgram` and `unixpacket`. Default: blank;
+* `IMGPROXY_SYSLOG_ADDRESS`: address of the syslog service. Not used if `IMGPROXY_SYSLOG_NETWORK` is blank. Default: blank;
+* `IMGPROXY_SYSLOG_TAG`: specific syslogtag. Default: `imgproxy`;
+
+### Memory usage tweaks
+
+**Warning:** It's highly recommended to read [Memory usage tweaks](./memory_usage_tweaks.md) guide before changing this settings.
+
+* `IMGPROXY_DOWNLOAD_BUFFER_SIZE`: the initial size (in bytes) of a single download buffer. When zero, initializes empty download buffers. Default: `0`;
+* `IMGPROXY_GZIP_BUFFER_SIZE`: the initial size (in bytes) of a single GZip buffer. When zero, initializes empty GZip buffers. Makes sense only when GZip compression is enabled. Default: `0`;
+* `IMGPROXY_FREE_MEMORY_INTERVAL`: the interval (in seconds) at which unused memory will be returned to the OS. Default: `10`;
+* `IMGPROXY_BUFFER_POOL_CALIBRATION_THRESHOLD`: the number of buffers that should be returned to a pool before calibration. Default: `1024`.
 
 ### Miscellaneous
 
 * `IMGPROXY_BASE_URL`: base URL prefix that will be added to every requested image URL. For example, if the base URL is `http://example.com/images` and `/path/to/image.png` is requested, imgproxy will download the source image from `http://example.com/images/path/to/image.png`. Default: blank.
+* `IMGPROXY_USE_LINEAR_COLORSPACE`: when `true`, imgproxy will process images in linear colorspace. This will slow down processing. Note that images won't be fully processed in linear colorspace while shrink-on-load is enabled (see below).
+* `IMGPROXY_DISABLE_SHRINK_ON_LOAD`: when `true`, disables shrink-on-load for JPEG and WebP. Allows to process the whole image in linear colorspace but dramatically slows down resizing and increases memory usage when working with large images.

@@ -2,6 +2,7 @@ package newrelic
 
 import (
 	"net/http"
+	"net/url"
 )
 
 // Transaction represents a request or a background task.
@@ -37,6 +38,13 @@ type Transaction interface {
 	// For more information, see:
 	// https://docs.newrelic.com/docs/agents/manage-apm-agents/agent-metrics/collect-custom-attributes
 	AddAttribute(key string, value interface{}) error
+
+	// SetWebRequest marks the transaction as a web transaction.  If
+	// WebRequest is non-nil, SetWebRequest will additionally collect
+	// details on request attributes, url, and method.  If headers are
+	// present, the agent will look for a distributed tracing header.  Use
+	// NewWebRequest to transform a *http.Request into a WebRequest.
+	SetWebRequest(WebRequest) error
 
 	// StartSegmentNow allows the timing of functions, external calls, and
 	// datastore calls.  The segments of each transaction MUST be used in a
@@ -105,3 +113,28 @@ var (
 	TransportQueue   = TransportType{name: "Queue"}
 	TransportOther   = TransportType{name: "Other"}
 )
+
+// WebRequest may be implemented to provide request information to
+// Transaction.SetWebRequest.
+type WebRequest interface {
+	// Header may return nil if you don't have any headers or don't want to
+	// transform them to http.Header format.
+	Header() http.Header
+	// URL may return nil if you don't have a URL or don't want to transform
+	// it to *url.URL.
+	URL() *url.URL
+	Method() string
+	// If a distributed tracing header is found in the headers returned by
+	// Header(), this TransportType will be used in the distributed tracing
+	// metrics.
+	Transport() TransportType
+}
+
+// NewWebRequest turns a *http.Request into a WebRequest for input into
+// Transaction.SetWebRequest.
+func NewWebRequest(request *http.Request) WebRequest {
+	if nil == request {
+		return nil
+	}
+	return requestWrap{request: request}
+}

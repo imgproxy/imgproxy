@@ -8,3 +8,7 @@ import "net/http"
 func RequestWithTransactionContext(req *http.Request, txn Transaction) *http.Request {
 	return req
 }
+
+func transactionFromRequestContext(req *http.Request) Transaction {
+	return nil
+}

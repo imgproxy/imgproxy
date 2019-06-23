@@ -21,3 +21,13 @@ Read how to specify your presets with imgproxy in the [Configuration](./configur
 ### Default preset
 
 A preset named `default` will be applied to each image. Useful in case you want your default processing options to be different from the imgproxy default ones.
+
+### Only presets
+
+Setting `IMGPROXY_ONLY_PRESETS` as `true` switches imgproxy into "presets-only mode". In this mode imgproxy accepts presets list as processing options just like you'd specify them for the `preset` option:
+
+```
+http://imgproxy.example.com/unsafe/thumbnail:blurry:watermarked/plain/http://example.com/images/curiosity.jpg@png
+```
+
+All othe URL formats are disabled in this mode.

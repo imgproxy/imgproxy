@@ -1,6 +1,8 @@
 package bugsnag
 
 import (
+	"context"
+	"net/http"
 	"strings"
 
 	"github.com/bugsnag/bugsnag-go/errors"
@@ -98,35 +100,43 @@ type Event struct {
 	User *User
 	// Other MetaData to send to Bugsnag. Appears as a set of tabbed tables in the dashboard.
 	MetaData MetaData
+	// Ctx is the context of the session the event occurred in. This allows Bugsnag to associate the event with the session.
+	Ctx context.Context
+	// Request is the request information that populates the Request tab in the dashboard.
+	Request *RequestJSON
 	// The reason for the severity and original value
 	handledState HandledState
 }
 
-func newEvent(err *errors.Error, rawData []interface{}, notifier *Notifier) (*Event, *Configuration) {
-
+func newEvent(rawData []interface{}, notifier *Notifier) (*Event, *Configuration) {
 	config := notifier.Config
 	event := &Event{
-		Error:   err,
-		RawData: append(notifier.RawData, rawData...),
-
-		ErrorClass: err.TypeName(),
-		Message:    err.Error(),
-		Stacktrace: make([]stackFrame, len(err.StackFrames())),
-
+		RawData:  append(notifier.RawData, rawData...),
 		Severity: SeverityWarning,
-
 		MetaData: make(MetaData),
-
 		handledState: HandledState{
-			SeverityReasonHandledError,
-			SeverityWarning,
-			false,
-			"",
+			SeverityReason:   SeverityReasonHandledError,
+			OriginalSeverity: SeverityWarning,
+			Unhandled:        false,
+			Framework:        "",
 		},
 	}
 
+	var err *errors.Error
+
 	for _, datum := range event.RawData {
 		switch datum := datum.(type) {
+
+		case error, errors.Error:
+			err = errors.New(datum.(error), 1)
+			event.Error = err
+			event.ErrorClass = err.TypeName()
+			event.Message = err.Error()
+			event.Stacktrace = make([]stackFrame, len(err.StackFrames()))
+
+		case bool:
+			config = config.merge(&Configuration{Synchronous: bool(datum)})
+
 		case severity:
 			event.Severity = datum
 			event.handledState.OriginalSeverity = datum
@@ -134,6 +144,12 @@ func newEvent(err *errors.Error, rawData []interface{}, notifier *Notifier) (*Ev
 
 		case Context:
 			event.Context = datum.String
+
+		case context.Context:
+			populateEventWithContext(datum, event)
+
+		case *http.Request:
+			populateEventWithRequest(datum, event)
 
 		case Configuration:
 			config = config.merge(&datum)
@@ -174,4 +190,35 @@ func newEvent(err *errors.Error, rawData []interface{}, notifier *Notifier) (*Ev
 	}
 
 	return event, config
+}
+
+func populateEventWithContext(ctx context.Context, event *Event) {
+	event.Ctx = ctx
+	reqJSON, req := extractRequestInfo(ctx)
+	if event.Request == nil {
+		event.Request = reqJSON
+	}
+	populateEventWithRequest(req, event)
+
+}
+
+func populateEventWithRequest(req *http.Request, event *Event) {
+	if req == nil {
+		return
+	}
+
+	event.Request = extractRequestInfoFromReq(req)
+
+	if event.Context == "" {
+		event.Context = req.URL.Path
+	}
+
+	// Default user.id to IP so that the count of users affected works.
+	if event.User == nil {
+		ip := req.RemoteAddr
+		if idx := strings.LastIndex(ip, ":"); idx != -1 {
+			ip = ip[:idx]
+		}
+		event.User = &User{Id: ip}
+	}
 }

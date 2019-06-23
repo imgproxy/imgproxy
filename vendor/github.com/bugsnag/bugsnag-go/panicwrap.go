@@ -4,6 +4,7 @@ package bugsnag
 
 import (
 	"github.com/bugsnag/bugsnag-go/errors"
+	"github.com/bugsnag/bugsnag-go/sessions"
 	"github.com/bugsnag/panicwrap"
 )
 
@@ -14,6 +15,7 @@ import (
 // Related: https://godoc.org/github.com/bugsnag/panicwrap#BasicMonitor
 func defaultPanicHandler() {
 	defer defaultNotifier.dontPanic()
+	ctx := sessions.SendStartupSession(&sessionTrackingConfig)
 
 	err := panicwrap.BasicMonitor(func(output string) {
 		toNotify, err := errors.ParsePanic(output)
@@ -22,7 +24,8 @@ func defaultPanicHandler() {
 			defaultNotifier.Config.logf("bugsnag.handleUncaughtPanic: %v", err)
 		}
 		state := HandledState{SeverityReasonUnhandledPanic, SeverityError, true, ""}
-		defaultNotifier.NotifySync(toNotify, true, state)
+		defaultNotifier.NotifySync(toNotify, true, state, ctx)
+
 	})
 
 	if err != nil {

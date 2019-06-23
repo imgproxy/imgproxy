@@ -1,22 +1,24 @@
 FROM debian:stretch
 
 RUN apt-get -qq update \
-  && apt-get install -y --no-install-recommends bash unzip ca-certificates build-essential \
-  curl git mercurial make binutils bison gcc autoconf libtool automake swig \
-  gobject-introspection libglib2.0-dev libexpat1-dev libxml2-dev libfftw3-dev \
-  libjpeg-dev libpng-dev libwebp-dev libgif-dev libexif-dev liblcms2-dev gtk-doc-tools
+  && apt-get install -y --no-install-recommends bash ca-certificates build-essential \
+  curl git mercurial make binutils bison gcc gobject-introspection libglib2.0-dev \
+  libexpat1-dev libxml2-dev libfftw3-dev libjpeg-dev libpng-dev libwebp-dev libgif-dev \
+  libexif-dev liblcms2-dev libavcodec-dev libavformat-dev libavutil-dev libswscale-dev
 
 RUN curl -s -S -L https://raw.githubusercontent.com/moovweb/gvm/master/binscripts/gvm-installer | bash -
 
 RUN \
-  for VIPS_VERSION in "8.3" "8.4" "8.5" "8.6" "8.7"; do \
-    mkdir -p /root/vips \
-    && cd /root/vips \
-    && mkdir /root/vips/$VIPS_VERSION \
-    && curl -s -S -L -o $VIPS_VERSION.zip https://github.com/libvips/libvips/archive/$VIPS_VERSION.zip \
-    && unzip $VIPS_VERSION.zip \
-    && cd libvips-$VIPS_VERSION \
-    && test -f autogen.sh && ./autogen.sh || ./bootstrap.sh \
+  mkdir /root/vips \
+  && cd /root/vips \
+  && curl -s -S -L -o vips_releases.json "https://api.github.com/repos/libvips/libvips/releases" \
+  && for VIPS_VERSION in "8.6" "8.7" "8.8"; do \
+    mkdir $VIPS_VERSION \
+    && export VIPS_RELEASE=$(grep -m 1 "\"tag_name\": \"v$VIPS_VERSION." vips_releases.json | sed -E 's/.*"v([^"]+)".*/\1/') \
+    && echo "Building Vips $VIPS_RELEASE as $VIPS_VERSION" \
+    && curl -s -S -L -o $VIPS_RELEASE.tar.gz https://github.com/libvips/libvips/releases/download/v$VIPS_RELEASE/vips-$VIPS_RELEASE.tar.gz \
+    && tar -xzf $VIPS_RELEASE.tar.gz \
+    && cd vips-$VIPS_RELEASE \
     && ./configure \
       --prefix=/root/vips/$VIPS_VERSION \
       --without-python \
@@ -29,10 +31,9 @@ RUN \
       --enable-gtk-doc-html=no \
       --enable-gtk-doc=no \
       --enable-pyvips8=no \
-    && make \
     && make install \
     && cd .. \
-    && rm -rf $VIPS_VERSION.zip libvips-$VIPS_VERSION; \
+    && rm -rf $VIPS_RELEASE.tar.gz vips-$VIPS_RELEASE; \
   done
 
 WORKDIR /go/src

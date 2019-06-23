@@ -638,7 +638,7 @@ const (
 	IFA_F_STABLE_PRIVACY                 = 0x800
 	IFA_F_TEMPORARY                      = 0x1
 	IFA_F_TENTATIVE                      = 0x40
-	IFA_MAX                              = 0x9
+	IFA_MAX                              = 0xa
 	IFF_ALLMULTI                         = 0x200
 	IFF_ATTACH_QUEUE                     = 0x200
 	IFF_AUTOMEDIA                        = 0x4000
@@ -912,6 +912,11 @@ const (
 	KEYCTL_JOIN_SESSION_KEYRING          = 0x1
 	KEYCTL_LINK                          = 0x8
 	KEYCTL_NEGATE                        = 0xd
+	KEYCTL_PKEY_DECRYPT                  = 0x1a
+	KEYCTL_PKEY_ENCRYPT                  = 0x19
+	KEYCTL_PKEY_QUERY                    = 0x18
+	KEYCTL_PKEY_SIGN                     = 0x1b
+	KEYCTL_PKEY_VERIFY                   = 0x1c
 	KEYCTL_READ                          = 0xb
 	KEYCTL_REJECT                        = 0x13
 	KEYCTL_RESTRICT_KEYRING              = 0x1d
@@ -921,6 +926,10 @@ const (
 	KEYCTL_SETPERM                       = 0x5
 	KEYCTL_SET_REQKEY_KEYRING            = 0xe
 	KEYCTL_SET_TIMEOUT                   = 0xf
+	KEYCTL_SUPPORTS_DECRYPT              = 0x2
+	KEYCTL_SUPPORTS_ENCRYPT              = 0x1
+	KEYCTL_SUPPORTS_SIGN                 = 0x4
+	KEYCTL_SUPPORTS_VERIFY               = 0x8
 	KEYCTL_UNLINK                        = 0x9
 	KEYCTL_UPDATE                        = 0x2
 	KEY_REQKEY_DEFL_DEFAULT              = 0x0
@@ -1098,6 +1107,7 @@ const (
 	NETLINK_FIB_LOOKUP                   = 0xa
 	NETLINK_FIREWALL                     = 0x3
 	NETLINK_GENERIC                      = 0x10
+	NETLINK_GET_STRICT_CHK               = 0xc
 	NETLINK_INET_DIAG                    = 0x4
 	NETLINK_IP6_FW                       = 0xd
 	NETLINK_ISCSI                        = 0x8
@@ -1243,6 +1253,7 @@ const (
 	PACKET_FASTROUTE                     = 0x6
 	PACKET_HDRLEN                        = 0xb
 	PACKET_HOST                          = 0x0
+	PACKET_IGNORE_OUTGOING               = 0x17
 	PACKET_KERNEL                        = 0x7
 	PACKET_LOOPBACK                      = 0x5
 	PACKET_LOSS                          = 0xe
@@ -1292,6 +1303,36 @@ const (
 	PERF_EVENT_IOC_SET_FILTER            = 0x80082406
 	PERF_EVENT_IOC_SET_OUTPUT            = 0x20002405
 	PIPEFS_MAGIC                         = 0x50495045
+	PPPIOCATTACH                         = 0x8004743d
+	PPPIOCATTCHAN                        = 0x80047438
+	PPPIOCCONNECT                        = 0x8004743a
+	PPPIOCDETACH                         = 0x8004743c
+	PPPIOCDISCONN                        = 0x20007439
+	PPPIOCGASYNCMAP                      = 0x40047458
+	PPPIOCGCHAN                          = 0x40047437
+	PPPIOCGDEBUG                         = 0x40047441
+	PPPIOCGFLAGS                         = 0x4004745a
+	PPPIOCGIDLE                          = 0x4010743f
+	PPPIOCGL2TPSTATS                     = 0x40487436
+	PPPIOCGMRU                           = 0x40047453
+	PPPIOCGNPMODE                        = 0xc008744c
+	PPPIOCGRASYNCMAP                     = 0x40047455
+	PPPIOCGUNIT                          = 0x40047456
+	PPPIOCGXASYNCMAP                     = 0x40207450
+	PPPIOCNEWUNIT                        = 0xc004743e
+	PPPIOCSACTIVE                        = 0x80107446
+	PPPIOCSASYNCMAP                      = 0x80047457
+	PPPIOCSCOMPRESS                      = 0x8010744d
+	PPPIOCSDEBUG                         = 0x80047440
+	PPPIOCSFLAGS                         = 0x80047459
+	PPPIOCSMAXCID                        = 0x80047451
+	PPPIOCSMRRU                          = 0x8004743b
+	PPPIOCSMRU                           = 0x80047452
+	PPPIOCSNPMODE                        = 0x8008744b
+	PPPIOCSPASS                          = 0x80107447
+	PPPIOCSRASYNCMAP                     = 0x80047454
+	PPPIOCSXASYNCMAP                     = 0x8020744f
+	PPPIOCXFERUNIT                       = 0x2000744e
 	PRIO_PGRP                            = 0x1
 	PRIO_PROCESS                         = 0x0
 	PRIO_USER                            = 0x2
@@ -1394,6 +1435,7 @@ const (
 	PR_SPEC_DISABLE                      = 0x4
 	PR_SPEC_ENABLE                       = 0x2
 	PR_SPEC_FORCE_DISABLE                = 0x8
+	PR_SPEC_INDIRECT_BRANCH              = 0x1
 	PR_SPEC_NOT_AFFECTED                 = 0x0
 	PR_SPEC_PRCTL                        = 0x1
 	PR_SPEC_STORE_BYPASS                 = 0x0
@@ -1472,6 +1514,8 @@ const (
 	PTRACE_SINGLEBLOCK                   = 0x100
 	PTRACE_SINGLESTEP                    = 0x9
 	PTRACE_SYSCALL                       = 0x18
+	PTRACE_SYSEMU                        = 0x1d
+	PTRACE_SYSEMU_SINGLESTEP             = 0x1e
 	PTRACE_TRACEME                       = 0x0
 	PT_CCR                               = 0x26
 	PT_CTR                               = 0x23
@@ -1752,6 +1796,7 @@ const (
 	SCM_TIMESTAMPNS                      = 0x23
 	SCM_TXTIME                           = 0x3d
 	SCM_WIFI_STATUS                      = 0x29
+	SC_LOG_FLUSH                         = 0x100000
 	SECCOMP_MODE_DISABLED                = 0x0
 	SECCOMP_MODE_FILTER                  = 0x2
 	SECCOMP_MODE_STRICT                  = 0x1
@@ -1807,6 +1852,9 @@ const (
 	SIOCGMIIPHY                          = 0x8947
 	SIOCGMIIREG                          = 0x8948
 	SIOCGPGRP                            = 0x8904
+	SIOCGPPPCSTATS                       = 0x89f2
+	SIOCGPPPSTATS                        = 0x89f0
+	SIOCGPPPVER                          = 0x89f1
 	SIOCGRARP                            = 0x8961
 	SIOCGSKNS                            = 0x894c
 	SIOCGSTAMP                           = 0x8906
@@ -2034,7 +2082,7 @@ const (
 	TASKSTATS_GENL_NAME                  = "TASKSTATS"
 	TASKSTATS_GENL_VERSION               = 0x1
 	TASKSTATS_TYPE_MAX                   = 0x6
-	TASKSTATS_VERSION                    = 0x8
+	TASKSTATS_VERSION                    = 0x9
 	TCFLSH                               = 0x2000741f
 	TCGETA                               = 0x40147417
 	TCGETS                               = 0x402c7413
@@ -2112,6 +2160,7 @@ const (
 	TIOCGETP                             = 0x40067408
 	TIOCGEXCL                            = 0x40045440
 	TIOCGICOUNT                          = 0x545d
+	TIOCGISO7816                         = 0x40285442
 	TIOCGLCKTRMIOS                       = 0x5456
 	TIOCGLTC                             = 0x40067474
 	TIOCGPGRP                            = 0x40047477
@@ -2172,6 +2221,7 @@ const (
 	TIOCSETN                             = 0x8006740a
 	TIOCSETP                             = 0x80067409
 	TIOCSIG                              = 0x80045436
+	TIOCSISO7816                         = 0xc0285443
 	TIOCSLCKTRMIOS                       = 0x5457
 	TIOCSLTC                             = 0x80067475
 	TIOCSPGRP                            = 0x80047476
@@ -2404,6 +2454,7 @@ const (
 	XDP_UMEM_REG                         = 0x4
 	XDP_ZEROCOPY                         = 0x4
 	XENFS_SUPER_MAGIC                    = 0xabba1974
+	XFS_SUPER_MAGIC                      = 0x58465342
 	XTABS                                = 0xc00
 	ZSMALLOC_MAGIC                       = 0x58295829
 )

@@ -1,11 +1,5 @@
 package main
 
-/*
-#cgo LDFLAGS: -s -w
-#include "image_types.h"
-*/
-import "C"
-
 import (
 	"context"
 	"encoding/base64"
@@ -20,17 +14,6 @@ import (
 
 type urlOptions map[string][]string
 
-type imageType int
-
-const (
-	imageTypeUnknown = imageType(C.UNKNOWN)
-	imageTypeJPEG    = imageType(C.JPEG)
-	imageTypePNG     = imageType(C.PNG)
-	imageTypeWEBP    = imageType(C.WEBP)
-	imageTypeGIF     = imageType(C.GIF)
-	imageTypeICO     = imageType(C.ICO)
-)
-
 type processingHeaders struct {
 	Accept        string
 	Width         string
@@ -38,19 +21,11 @@ type processingHeaders struct {
 	DPR           string
 }
 
-var imageTypes = map[string]imageType{
-	"jpeg": imageTypeJPEG,
-	"jpg":  imageTypeJPEG,
-	"png":  imageTypePNG,
-	"webp": imageTypeWEBP,
-	"gif":  imageTypeGIF,
-	"ico":  imageTypeICO,
-}
-
 type gravityType int
 
 const (
-	gravityCenter gravityType = iota
+	gravityUnknown gravityType = iota
+	gravityCenter
 	gravityNorth
 	gravityEast
 	gravitySouth
@@ -77,11 +52,6 @@ var gravityTypes = map[string]gravityType{
 	"fp":   gravityFocusPoint,
 }
 
-type gravityOptions struct {
-	Type gravityType
-	X, Y float64
-}
-
 type resizeType int
 
 const (
@@ -96,7 +66,7 @@ var resizeTypes = map[string]resizeType{
 	"crop": resizeCrop,
 }
 
-type color struct{ R, G, B uint8 }
+type rgbColor struct{ R, G, B uint8 }
 
 var hexColorRegex = regexp.MustCompile("^([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$")
 
@@ -104,6 +74,17 @@ const (
 	hexColorLongFormat  = "%02x%02x%02x"
 	hexColorShortFormat = "%1x%1x%1x"
 )
+
+type gravityOptions struct {
+	Type gravityType
+	X, Y float64
+}
+
+type cropOptions struct {
+	Width   int
+	Height  int
+	Gravity gravityOptions
+}
 
 type watermarkOptions struct {
 	Enabled   bool
@@ -122,10 +103,12 @@ type processingOptions struct {
 	Dpr        float64
 	Gravity    gravityOptions
 	Enlarge    bool
+	Extend     bool
+	Crop       cropOptions
 	Format     imageType
 	Quality    int
 	Flatten    bool
-	Background color
+	Background rgbColor
 	Blur       float32
 	Sharpen    float32
 
@@ -135,8 +118,6 @@ type processingOptions struct {
 
 	UsedPresets []string
 }
-
-type applyOptionFunc func(po *processingOptions, args []string) error
 
 const (
 	imageURLCtxKey          = ctxKey("imageUrl")
@@ -154,15 +135,6 @@ var (
 	errResultingImageFormatIsNotSupported = errors.New("Resulting image format is not supported")
 	errInvalidPath                        = newError(404, "Invalid path", msgInvalidURL)
 )
-
-func (it imageType) String() string {
-	for k, v := range imageTypes {
-		if v == it {
-			return k
-		}
-	}
-	return ""
-}
 
 func (gt gravityType) String() string {
 	for k, v := range gravityTypes {
@@ -195,8 +167,8 @@ func (po *processingOptions) presetUsed(name string) {
 	po.UsedPresets = append(po.UsedPresets, name)
 }
 
-func colorFromHex(hexcolor string) (color, error) {
-	c := color{}
+func colorFromHex(hexcolor string) (rgbColor, error) {
+	c := rgbColor{}
 
 	if !hexColorRegex.MatchString(hexcolor) {
 		return c, fmt.Errorf("Invalid hex color: %s", hexcolor)
@@ -227,7 +199,7 @@ func decodeBase64URL(parts []string) (string, string, error) {
 		format = urlParts[1]
 	}
 
-	imageURL, err := base64.RawURLEncoding.DecodeString(urlParts[0])
+	imageURL, err := base64.RawURLEncoding.DecodeString(strings.TrimRight(urlParts[0], "="))
 	if err != nil {
 		return "", "", errInvalidURLEncoding
 	}
@@ -254,12 +226,6 @@ func decodePlainURL(parts []string) (string, string, error) {
 		format = urlParts[1]
 	}
 
-	fullURL := fmt.Sprintf("%s%s", conf.BaseURL, urlParts[0])
-
-	if _, err := url.ParseRequestURI(fullURL); err == nil {
-		return fullURL, format, nil
-	}
-
 	if unescaped, err := url.PathUnescape(urlParts[0]); err == nil {
 		fullURL := fmt.Sprintf("%s%s", conf.BaseURL, unescaped)
 		if _, err := url.ParseRequestURI(fullURL); err == nil {
@@ -282,18 +248,68 @@ func decodeURL(parts []string) (string, string, error) {
 	return decodeBase64URL(parts)
 }
 
+func parseDimension(d *int, name, arg string) error {
+	if v, err := strconv.Atoi(arg); err == nil && v >= 0 {
+		*d = v
+	} else {
+		return fmt.Errorf("Invalid %s: %s", name, arg)
+	}
+
+	return nil
+}
+
+func isGravityOffcetValid(gravity gravityType, offset float64) bool {
+	if gravity == gravityCenter {
+		return true
+	}
+
+	return offset >= 0 && (gravity != gravityFocusPoint || offset <= 1)
+}
+
+func parseGravity(g *gravityOptions, args []string) error {
+	nArgs := len(args)
+
+	if nArgs > 3 {
+		return fmt.Errorf("Invalid gravity arguments: %v", args)
+	}
+
+	if t, ok := gravityTypes[args[0]]; ok {
+		g.Type = t
+	} else {
+		return fmt.Errorf("Invalid gravity: %s", args[0])
+	}
+
+	if g.Type == gravitySmart && nArgs > 1 {
+		return fmt.Errorf("Invalid gravity arguments: %v", args)
+	} else if g.Type == gravityFocusPoint && nArgs != 3 {
+		return fmt.Errorf("Invalid gravity arguments: %v", args)
+	}
+
+	if nArgs > 1 {
+		if x, err := strconv.ParseFloat(args[1], 64); err == nil && isGravityOffcetValid(g.Type, x) {
+			g.X = x
+		} else {
+			return fmt.Errorf("Invalid gravity X: %s", args[1])
+		}
+	}
+
+	if nArgs > 2 {
+		if y, err := strconv.ParseFloat(args[2], 64); err == nil && isGravityOffcetValid(g.Type, y) {
+			g.Y = y
+		} else {
+			return fmt.Errorf("Invalid gravity Y: %s", args[2])
+		}
+	}
+
+	return nil
+}
+
 func applyWidthOption(po *processingOptions, args []string) error {
 	if len(args) > 1 {
 		return fmt.Errorf("Invalid width arguments: %v", args)
 	}
 
-	if w, err := strconv.Atoi(args[0]); err == nil && w >= 0 {
-		po.Width = w
-	} else {
-		return fmt.Errorf("Invalid width: %s", args[0])
-	}
-
-	return nil
+	return parseDimension(&po.Width, "width", args[0])
 }
 
 func applyHeightOption(po *processingOptions, args []string) error {
@@ -301,13 +317,7 @@ func applyHeightOption(po *processingOptions, args []string) error {
 		return fmt.Errorf("Invalid height arguments: %v", args)
 	}
 
-	if h, err := strconv.Atoi(args[0]); err == nil && po.Height >= 0 {
-		po.Height = h
-	} else {
-		return fmt.Errorf("Invalid height: %s", args[0])
-	}
-
-	return nil
+	return parseDimension(&po.Height, "height", args[0])
 }
 
 func applyEnlargeOption(po *processingOptions, args []string) error {
@@ -320,8 +330,18 @@ func applyEnlargeOption(po *processingOptions, args []string) error {
 	return nil
 }
 
+func applyExtendOption(po *processingOptions, args []string) error {
+	if len(args) > 1 {
+		return fmt.Errorf("Invalid extend arguments: %v", args)
+	}
+
+	po.Extend = args[0] != "0"
+
+	return nil
+}
+
 func applySizeOption(po *processingOptions, args []string) (err error) {
-	if len(args) > 3 {
+	if len(args) > 4 {
 		return fmt.Errorf("Invalid size arguments: %v", args)
 	}
 
@@ -337,8 +357,14 @@ func applySizeOption(po *processingOptions, args []string) (err error) {
 		}
 	}
 
-	if len(args) == 3 && len(args[2]) > 0 {
+	if len(args) >= 3 && len(args[2]) > 0 {
 		if err = applyEnlargeOption(po, args[2:3]); err != nil {
+			return
+		}
+	}
+
+	if len(args) == 4 && len(args[3]) > 0 {
+		if err = applyExtendOption(po, args[3:4]); err != nil {
 			return
 		}
 	}
@@ -361,7 +387,7 @@ func applyResizingTypeOption(po *processingOptions, args []string) error {
 }
 
 func applyResizeOption(po *processingOptions, args []string) error {
-	if len(args) > 4 {
+	if len(args) > 5 {
 		return fmt.Errorf("Invalid resize arguments: %v", args)
 	}
 
@@ -385,7 +411,7 @@ func applyDprOption(po *processingOptions, args []string) error {
 		return fmt.Errorf("Invalid dpr arguments: %v", args)
 	}
 
-	if d, err := strconv.ParseFloat(args[0], 64); err == nil || (d > 0 && d != 1) {
+	if d, err := strconv.ParseFloat(args[0], 64); err == nil && d > 0 {
 		po.Dpr = d
 	} else {
 		return fmt.Errorf("Invalid dpr: %s", args[0])
@@ -395,30 +421,26 @@ func applyDprOption(po *processingOptions, args []string) error {
 }
 
 func applyGravityOption(po *processingOptions, args []string) error {
-	if g, ok := gravityTypes[args[0]]; ok {
-		po.Gravity.Type = g
-	} else {
-		return fmt.Errorf("Invalid gravity: %s", args[0])
+	return parseGravity(&po.Gravity, args)
+}
+
+func applyCropOption(po *processingOptions, args []string) error {
+	if len(args) > 5 {
+		return fmt.Errorf("Invalid crop arguments: %v", args)
 	}
 
-	if po.Gravity.Type == gravityFocusPoint {
-		if len(args) != 3 {
-			return fmt.Errorf("Invalid gravity arguments: %v", args)
-		}
+	if err := parseDimension(&po.Crop.Width, "crop width", args[0]); err != nil {
+		return err
+	}
 
-		if x, err := strconv.ParseFloat(args[1], 64); err == nil && x >= 0 && x <= 1 {
-			po.Gravity.X = x
-		} else {
-			return fmt.Errorf("Invalid gravity X: %s", args[1])
+	if len(args) > 1 {
+		if err := parseDimension(&po.Crop.Height, "crop height", args[1]); err != nil {
+			return err
 		}
+	}
 
-		if y, err := strconv.ParseFloat(args[2], 64); err == nil && y >= 0 && y <= 1 {
-			po.Gravity.Y = y
-		} else {
-			return fmt.Errorf("Invalid gravity Y: %s", args[2])
-		}
-	} else if len(args) > 1 {
-		return fmt.Errorf("Invalid gravity arguments: %v", args)
+	if len(args) > 2 {
+		return parseGravity(&po.Crop.Gravity, args[2:])
 	}
 
 	return nil
@@ -453,19 +475,19 @@ func applyBackgroundOption(po *processingOptions, args []string) error {
 	case 3:
 		po.Flatten = true
 
-		if r, err := strconv.ParseUint(args[0], 10, 8); err == nil && r >= 0 && r <= 255 {
+		if r, err := strconv.ParseUint(args[0], 10, 8); err == nil && r <= 255 {
 			po.Background.R = uint8(r)
 		} else {
 			return fmt.Errorf("Invalid background red channel: %s", args[0])
 		}
 
-		if g, err := strconv.ParseUint(args[1], 10, 8); err == nil && g >= 0 && g <= 255 {
+		if g, err := strconv.ParseUint(args[1], 10, 8); err == nil && g <= 255 {
 			po.Background.G = uint8(g)
 		} else {
 			return fmt.Errorf("Invalid background green channel: %s", args[1])
 		}
 
-		if b, err := strconv.ParseUint(args[2], 10, 8); err == nil && b >= 0 && b <= 255 {
+		if b, err := strconv.ParseUint(args[2], 10, 8); err == nil && b <= 255 {
 			po.Background.B = uint8(b)
 		} else {
 			return fmt.Errorf("Invalid background blue channel: %s", args[2])
@@ -483,7 +505,7 @@ func applyBlurOption(po *processingOptions, args []string) error {
 		return fmt.Errorf("Invalid blur arguments: %v", args)
 	}
 
-	if b, err := strconv.ParseFloat(args[0], 32); err == nil || b >= 0 {
+	if b, err := strconv.ParseFloat(args[0], 32); err == nil && b >= 0 {
 		po.Blur = float32(b)
 	} else {
 		return fmt.Errorf("Invalid blur: %s", args[0])
@@ -497,7 +519,7 @@ func applySharpenOption(po *processingOptions, args []string) error {
 		return fmt.Errorf("Invalid sharpen arguments: %v", args)
 	}
 
-	if s, err := strconv.ParseFloat(args[0], 32); err == nil || s >= 0 {
+	if s, err := strconv.ParseFloat(args[0], 32); err == nil && s >= 0 {
 		po.Sharpen = float32(s)
 	} else {
 		return fmt.Errorf("Invalid sharpen: %s", args[0])
@@ -510,7 +532,8 @@ func applyPresetOption(po *processingOptions, args []string) error {
 	for _, preset := range args {
 		if p, ok := conf.Presets[preset]; ok {
 			if po.isPresetUsed(preset) {
-				return fmt.Errorf("Recursive preset usage is detected: %s", preset)
+				logWarning("Recursive preset usage is detected: %s", preset)
+				continue
 			}
 
 			po.presetUsed(preset)
@@ -638,12 +661,20 @@ func applyProcessingOption(po *processingOptions, name string, args []string) er
 		if err := applyEnlargeOption(po, args); err != nil {
 			return err
 		}
+	case "extend", "ex":
+		if err := applyExtendOption(po, args); err != nil {
+			return err
+		}
 	case "dpr":
 		if err := applyDprOption(po, args); err != nil {
 			return err
 		}
 	case "gravity", "g":
 		if err := applyGravityOption(po, args); err != nil {
+			return err
+		}
+	case "crop", "c":
+		if err := applyCropOption(po, args); err != nil {
 			return err
 		}
 	case "quality", "q":
@@ -728,7 +759,7 @@ func defaultProcessingOptions(headers *processingHeaders) (*processingOptions, e
 		Enlarge:     false,
 		Quality:     conf.Quality,
 		Format:      imageTypeUnknown,
-		Background:  color{255, 255, 255},
+		Background:  rgbColor{255, 255, 255},
 		Blur:        0,
 		Sharpen:     0,
 		Dpr:         1,
@@ -750,7 +781,7 @@ func defaultProcessingOptions(headers *processingHeaders) (*processingOptions, e
 		}
 	}
 	if conf.EnableClientHints && len(headers.DPR) > 0 {
-		if dpr, err := strconv.ParseFloat(headers.DPR, 64); err == nil || (dpr > 0 && dpr <= maxClientHintDPR) {
+		if dpr, err := strconv.ParseFloat(headers.DPR, 64); err == nil && (dpr > 0 && dpr <= maxClientHintDPR) {
 			po.Dpr = dpr
 		}
 	}
@@ -771,6 +802,33 @@ func parsePathAdvanced(parts []string, headers *processingHeaders) (string, *pro
 
 	if err := applyProcessingOptions(po, options); err != nil {
 		return "", po, err
+	}
+
+	url, extension, err := decodeURL(urlParts)
+	if err != nil {
+		return "", po, err
+	}
+
+	if len(extension) > 0 {
+		if err := applyFormatOption(po, []string{extension}); err != nil {
+			return "", po, err
+		}
+	}
+
+	return url, po, nil
+}
+
+func parsePathPresets(parts []string, headers *processingHeaders) (string, *processingOptions, error) {
+	po, err := defaultProcessingOptions(headers)
+	if err != nil {
+		return "", po, err
+	}
+
+	presets := strings.Split(parts[0], ":")
+	urlParts := parts[1:]
+
+	if err := applyPresetOption(po, presets); err != nil {
+		return "", nil, err
 	}
 
 	url, extension, err := decodeURL(urlParts)
@@ -832,7 +890,10 @@ func parsePathBasic(parts []string, headers *processingHeaders) (string, *proces
 }
 
 func parsePath(ctx context.Context, r *http.Request) (context.Context, error) {
-	path := r.URL.Path
+	path := r.URL.RawPath
+	if len(path) == 0 {
+		path = r.URL.Path
+	}
 	parts := strings.Split(strings.TrimPrefix(path, "/"), "/")
 
 	if len(parts) < 3 {
@@ -856,7 +917,9 @@ func parsePath(ctx context.Context, r *http.Request) (context.Context, error) {
 	var po *processingOptions
 	var err error
 
-	if _, ok := resizeTypes[parts[1]]; ok {
+	if conf.OnlyPresets {
+		imageURL, po, err = parsePathPresets(parts[1:], headers)
+	} else if _, ok := resizeTypes[parts[1]]; ok {
 		imageURL, po, err = parsePathBasic(parts[1:], headers)
 	} else {
 		imageURL, po, err = parsePathAdvanced(parts[1:], headers)

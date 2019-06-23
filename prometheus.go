@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"net/http"
 	"time"
 
@@ -17,6 +16,12 @@ var (
 	prometheusRequestDuration    prometheus.Histogram
 	prometheusDownloadDuration   prometheus.Histogram
 	prometheusProcessingDuration prometheus.Histogram
+	prometheusBufferSize         *prometheus.HistogramVec
+	prometheusBufferDefaultSize  *prometheus.GaugeVec
+	prometheusBufferMaxSize      *prometheus.GaugeVec
+	prometheusVipsMemory         prometheus.Gauge
+	prometheusVipsMaxMemory      prometheus.Gauge
+	prometheusVipsAllocs         prometheus.Gauge
 )
 
 func initPrometheus() {
@@ -31,7 +36,7 @@ func initPrometheus() {
 
 	prometheusErrorsTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Name: "errors_total",
-		Help: "A counter of the occured errors separated by type.",
+		Help: "A counter of the occurred errors separated by type.",
 	}, []string{"type"})
 
 	prometheusRequestDuration = prometheus.NewHistogram(prometheus.HistogramOpts{
@@ -49,12 +54,48 @@ func initPrometheus() {
 		Help: "A histogram of the image processing latency.",
 	})
 
+	prometheusBufferSize = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Name: "buffer_size_bytes",
+		Help: "A histogram of the buffer size in bytes.",
+	}, []string{"type"})
+
+	prometheusBufferDefaultSize = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "buffer_default_size_bytes",
+		Help: "A gauge of the buffer default size in bytes.",
+	}, []string{"type"})
+
+	prometheusBufferMaxSize = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "buffer_max_size_bytes",
+		Help: "A gauge of the buffer max size in bytes.",
+	}, []string{"type"})
+
+	prometheusVipsMemory = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name: "vips_memory_bytes",
+		Help: "A gauge of the vips tracked memory usage in bytes.",
+	})
+
+	prometheusVipsMaxMemory = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name: "vips_max_memory_bytes",
+		Help: "A gauge of the max vips tracked memory usage in bytes.",
+	})
+
+	prometheusVipsAllocs = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name: "vips_allocs",
+		Help: "A gauge of the number of active vips allocations.",
+	})
+
 	prometheus.MustRegister(
 		prometheusRequestsTotal,
 		prometheusErrorsTotal,
 		prometheusRequestDuration,
 		prometheusDownloadDuration,
 		prometheusProcessingDuration,
+		prometheusBufferSize,
+		prometheusBufferDefaultSize,
+		prometheusBufferMaxSize,
+		prometheusVipsMemory,
+		prometheusVipsMaxMemory,
+		prometheusVipsAllocs,
 	)
 
 	prometheusEnabled = true
@@ -65,9 +106,9 @@ func initPrometheus() {
 	}
 
 	go func() {
-		log.Printf("Starting Prometheus server at %s\n", s.Addr)
+		logNotice("Starting Prometheus server at %s\n", s.Addr)
 		if err := s.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalln(err)
+			logFatal(err.Error())
 		}
 	}()
 }
@@ -81,4 +122,16 @@ func startPrometheusDuration(m prometheus.Histogram) func() {
 
 func incrementPrometheusErrorsTotal(t string) {
 	prometheusErrorsTotal.With(prometheus.Labels{"type": t}).Inc()
+}
+
+func observePrometheusBufferSize(t string, size int) {
+	prometheusBufferSize.With(prometheus.Labels{"type": t}).Observe(float64(size))
+}
+
+func setPrometheusBufferDefaultSize(t string, size int) {
+	prometheusBufferDefaultSize.With(prometheus.Labels{"type": t}).Set(float64(size))
+}
+
+func setPrometheusBufferMaxSize(t string, size int) {
+	prometheusBufferMaxSize.With(prometheus.Labels{"type": t}).Set(float64(size))
 }

@@ -1,0 +1,349 @@
+sudo: required
+language: go
+
+sevices:
+  - docker
+
+addons:
+  apt:
+    packages:
+    - docker-ce
+
+jobs:
+  include:
+    - stage: gotest
+      script: make ci
+      go: "1.7"
+    - script: make ci
+      go: "1.8"
+    - script: make ci
+      go: "1.9"
+    - script: make ci
+      go: "1.10"
+    - script: make ci
+      go: "1.11"
+    - script: make ci
+      go: "master"
+
+    - stage: plain go app tests
+      script: make testplain
+      env: GO_VERSION=1.11
+    - if: branch = master
+      script: make testplain
+      env: GO_VERSION=1.10
+    - if: branch = master
+      script: make testplain
+      env: GO_VERSION=1.9
+    - if: branch = master
+      script: make testplain
+      env: GO_VERSION=1.8
+    - if: branch = master
+      script: make testplain
+      env: GO_VERSION=1.7
+
+
+    - stage: net/http tests
+      script: make testnethttp
+      env: GO_VERSION=1.11
+    - if: branch = master
+      script: make testnethttp
+      env: GO_VERSION=1.10
+    - if: branch = master
+      script: make testnethttp
+      env: GO_VERSION=1.9
+    - if: branch = master
+      script: make testnethttp
+      env: GO_VERSION=1.8
+    - if: branch = master
+      script: make testnethttp
+      env: GO_VERSION=1.7
+
+
+    - stage: gin tests
+      script: make testgin
+      env:
+        - GO_VERSION=1.11
+        - GIN_VERSION=v1.3.0
+    - if: branch = master
+      script: make testgin
+      env:
+        - GO_VERSION=1.10
+        - GIN_VERSION=v1.3.0
+    - if: branch = master
+      script: make testgin
+      env:
+        - GO_VERSION=1.9
+        - GIN_VERSION=v1.3.0
+    - if: branch = master
+      script: make testgin
+      env:
+        - GO_VERSION=1.8
+        - GIN_VERSION=v1.3.0
+    - if: branch = master
+      script: make testgin
+      env:
+        - GO_VERSION=1.7
+        - GIN_VERSION=v1.3.0
+
+    - if: branch = master
+      script: make testgin
+      env:
+        - GO_VERSION=1.11
+        - GIN_VERSION=v1.2
+    - if: branch = master
+      script: make testgin
+      env:
+        - GO_VERSION=1.10
+        - GIN_VERSION=v1.2
+    - if: branch = master
+      script: make testgin
+      env:
+        - GO_VERSION=1.9
+        - GIN_VERSION=v1.2
+    - if: branch = master
+      script: make testgin
+      env:
+        - GO_VERSION=1.8
+        - GIN_VERSION=v1.2
+    - if: branch = master
+      script: make testgin
+      env:
+        - GO_VERSION=1.7
+        - GIN_VERSION=v1.2
+
+    - if: branch = master
+      script: make testgin
+      env:
+        - GO_VERSION=1.11
+        - GIN_VERSION=v1.1
+    - if: branch = master
+      script: make testgin
+      env:
+        - GO_VERSION=1.10
+        - GIN_VERSION=v1.1
+    - if: branch = master
+      script: make testgin
+      env:
+        - GO_VERSION=1.9
+        - GIN_VERSION=v1.1
+    - if: branch = master
+      script: make testgin
+      env:
+        - GO_VERSION=1.8
+        - GIN_VERSION=v1.1
+    - if: branch = master
+      script: make testgin
+      env:
+        - GO_VERSION=1.7
+        - GIN_VERSION=v1.1
+
+    - if: branch = master
+      script: make testgin
+      env:
+        - GO_VERSION=1.11
+        - GIN_VERSION=v1.0
+    - if: branch = master
+      script: make testgin
+      env:
+        - GO_VERSION=1.10
+        - GIN_VERSION=v1.0
+    - if: branch = master
+      script: make testgin
+      env:
+        - GO_VERSION=1.9
+        - GIN_VERSION=v1.0
+    - if: branch = master
+      script: make testgin
+      env:
+        - GO_VERSION=1.8
+        - GIN_VERSION=v1.0
+    - if: branch = master
+      script: make testgin
+      env:
+        - GO_VERSION=1.7
+        - GIN_VERSION=v1.0
+
+    - stage: martini tests
+      script: make testmartini
+      env: GO_VERSION=1.11
+    - if: branch = master
+      script: make testmartini
+      env: GO_VERSION=1.10
+    - if: branch = master
+      script: make testmartini
+      env: GO_VERSION=1.9
+    - if: branch = master
+      script: make testmartini
+      env: GO_VERSION=1.8
+    - if: branch = master
+      script: make testmartini
+      env: GO_VERSION=1.7
+
+    - stage: negroni tests
+      script: make testnegroni
+      env:
+        - GO_VERSION=1.11
+        - NEGRONI_VERSION=v1.0.0
+    - if: branch = master
+      script: make testnegroni
+      env:
+        - GO_VERSION=1.10
+        - NEGRONI_VERSION=v1.0.0
+    - if: branch = master
+      script: make testnegroni
+      env:
+        - GO_VERSION=1.9
+        - NEGRONI_VERSION=v1.0.0
+    - if: branch = master
+      script: make testnegroni
+      env:
+        - GO_VERSION=1.8
+        - NEGRONI_VERSION=v1.0.0
+    - if: branch = master
+      script: make testnegroni
+      env:
+        - GO_VERSION=1.7
+        - NEGRONI_VERSION=v1.0.0
+
+    - if: branch = master
+      script: make testnegroni
+      env:
+        - GO_VERSION=1.11
+        - NEGRONI_VERSION=v0.3.0
+    - if: branch = master
+      script: make testnegroni
+      env:
+        - GO_VERSION=1.10
+        - NEGRONI_VERSION=v0.3.0
+    - if: branch = master
+      script: make testnegroni
+      env:
+        - GO_VERSION=1.9
+        - NEGRONI_VERSION=v0.3.0
+    - if: branch = master
+      script: make testnegroni
+      env:
+        - GO_VERSION=1.8
+        - NEGRONI_VERSION=v0.3.0
+    - if: branch = master
+      script: make testnegroni
+      env:
+        - GO_VERSION=1.7
+        - NEGRONI_VERSION=v0.3.0
+
+    - if: branch = master
+      script: make testnegroni
+      env:
+        - GO_VERSION=1.11
+        - NEGRONI_VERSION=v0.2.0
+    - if: branch = master
+      script: make testnegroni
+      env:
+        - GO_VERSION=1.10
+        - NEGRONI_VERSION=v0.2.0
+    - if: branch = master
+      script: make testnegroni
+      env:
+        - GO_VERSION=1.9
+        - NEGRONI_VERSION=v0.2.0
+    - if: branch = master
+      script: make testnegroni
+      env:
+        - GO_VERSION=1.8
+        - NEGRONI_VERSION=v0.2.0
+    - if: branch = master
+      script: make testnegroni
+      env:
+        - GO_VERSION=1.7
+        - NEGRONI_VERSION=v0.2.0
+
+
+
+    - stage: revel tests
+      script: make testrevel
+      env:
+        - GO_VERSION=1.11
+        - REVEL_VERSION=v0.21.0
+        - REVEL_CMD_VERSION=v0.21.1
+    - if: branch = master
+      script: make testrevel
+      env:
+        - GO_VERSION=1.10
+        - REVEL_VERSION=v0.21.0
+        - REVEL_CMD_VERSION=v0.21.1
+    - if: branch = master
+      script: make testrevel
+      env:
+        - GO_VERSION=1.9
+        - REVEL_VERSION=v0.21.0
+        - REVEL_CMD_VERSION=v0.21.1
+    - if: branch = master
+      script: make testrevel
+      env:
+        - GO_VERSION=1.8
+        - REVEL_VERSION=v0.21.0
+        - REVEL_CMD_VERSION=v0.21.1
+
+    - if: branch = master
+      script: make testrevel
+      env:
+        - GO_VERSION=1.11
+        - REVEL_VERSION=v0.20.0
+        - REVEL_CMD_VERSION=v0.20.2
+    - if: branch = master
+      script: make testrevel
+      env:
+        - GO_VERSION=1.10
+        - REVEL_VERSION=v0.20.0
+        - REVEL_CMD_VERSION=v0.20.2
+    - if: branch = master
+      script: make testrevel
+      env:
+        - GO_VERSION=1.9
+        - REVEL_VERSION=v0.20.0
+        - REVEL_CMD_VERSION=v0.20.2
+    - if: branch = master
+      script: make testrevel
+      env:
+        - GO_VERSION=1.8
+        - REVEL_VERSION=v0.20.0
+        - REVEL_CMD_VERSION=v0.20.2
+
+
+    - if: branch = master
+      script: make testrevel
+      env:
+        - GO_VERSION=1.11
+        - REVEL_VERSION=v0.19.1
+        - REVEL_CMD_VERSION=v0.19.0
+    - if: branch = master
+      script: make testrevel
+      env:
+        - GO_VERSION=1.10
+        - REVEL_VERSION=v0.19.1
+        - REVEL_CMD_VERSION=v0.19.0
+    - if: branch = master
+      script: make testrevel
+      env:
+        - GO_VERSION=1.9
+        - REVEL_VERSION=v0.19.1
+        - REVEL_CMD_VERSION=v0.19.0
+
+    - if: branch = master
+      script: make testrevel
+      env:
+        - GO_VERSION=1.11
+        - REVEL_VERSION=v0.18.0
+        - REVEL_CMD_VERSION=v0.18.0
+    - if: branch = master
+      script: make testrevel
+      env:
+        - GO_VERSION=1.10
+        - REVEL_VERSION=v0.18.0
+        - REVEL_CMD_VERSION=v0.18.0
+    - if: branch = master
+      script: make testrevel
+      env:
+        - GO_VERSION=1.9
+        - REVEL_VERSION=v0.18.0
+        - REVEL_CMD_VERSION=v0.18.0

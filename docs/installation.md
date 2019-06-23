@@ -22,12 +22,12 @@ $ docker run -p 8080:8080 -it imgproxy
 
 imgproxy can be deployed to Heroku with a click of a button:
 
-[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/DarthSim/imgproxy)
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/imgproxy/imgproxy)
 
 However, you can do it manually with a few steps:
 
 ```bash
-$ git clone https://github.com/DarthSim/imgproxy.git && cd imgproxy
+$ git clone https://github.com/imgproxy/imgproxy.git && cd imgproxy
 $ heroku create your-application
 $ heroku stack:set container
 $ git push heroku master
@@ -35,32 +35,40 @@ $ git push heroku master
 
 ### From the source
 
-1. First, install [libvips](https://github.com/libvips/libvips).
+#### Ubuntu
 
-  ```bash
-  # macOS
-  $ brew tap homebrew/science
-  $ brew install vips
+First, install [libvips](https://github.com/libvips/libvips).
 
-  # Ubuntu
-  # Ubuntu apt repository contains a pretty old version of libvips.
-  # It's recommended to use PPA with an up to date version.
-  $ sudo add-apt-repository ppa:dhor/myway
-  $ sudo apt-get install libvips-dev
-  
-  # FreeBSD
-  pkg install -y pkgconf vips
-  ```
+Ubuntu apt repository contains a pretty old version of libvips. You can use PPA with more recent version of libvips:
 
-  **Note:** Most libvips packages come with WebP support. If you want libvips to support WebP on macOS, you need to install it this way:
+```bash
+$ sudo add-apt-repository ppa:dhor/myway
+$ sudo apt-get update
+$ sudo apt-get install libvips-dev
+```
 
-  ```bash
-  $ brew tap homebrew/science
-  $ brew install vips --with-webp
-  ```
+But if you want to use all the features of imgproxy, it's recommended to build libvips from the source: [https://github.com/libvips/ libvips/wiki/Build-for-Ubuntu](https://github.com/libvips/libvips/wiki/Build-for-Ubuntu)
 
-2. Next, install imgproxy itself:
+Next, install the latest Go:
 
-  ```bash
-  $ go get -f -u github.com/DarthSim/imgproxy
-  ```
+```bash
+$ sudo add-apt-repository ppa:longsleep/golang-backports
+$ sudo apt-get update
+$ sudo apt-get install golang-go
+```
+
+And finally, install imgproxy itself:
+
+```bash
+$ CGO_LDFLAGS_ALLOW="-s|-w" go get -f -u github.com/imgproxy/imgproxy
+```
+
+#### macOS + Homebrew
+
+```bash
+$ brew install vips go
+$ PKG_CONFIG_PATH="$(brew --prefix libffi)/lib/pkgconfig" \
+  CGO_LDFLAGS_ALLOW="-s|-w" \
+  CGO_CFLAGS_ALLOW="-Xpreprocessor" \
+  go get -f -u github.com/imgproxy/imgproxy
+```

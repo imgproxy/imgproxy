@@ -99,3 +99,13 @@ type errUnsetPolicy struct{ name string }
 func (err errUnsetPolicy) Error() string {
 	return fmt.Sprintf("policy '%s' not received, please contact support", err.name)
 }
+
+func isDisconnectSecurityPolicyError(e error) bool {
+	if _, ok := e.(errUnknownRequiredPolicy); ok {
+		return true
+	}
+	if _, ok := e.(errUnsetPolicy); ok {
+		return true
+	}
+	return false
+}

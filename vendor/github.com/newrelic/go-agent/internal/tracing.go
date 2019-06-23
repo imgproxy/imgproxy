@@ -333,7 +333,7 @@ func EndExternalSegment(t *TxnData, start SegmentStartTime, now time.Time, u *ur
 	}
 
 	key := externalMetricKey{
-		Host: host,
+		Host:                    host,
 		ExternalCrossProcessID:  crossProcessID,
 		ExternalTransactionName: transactionName,
 	}

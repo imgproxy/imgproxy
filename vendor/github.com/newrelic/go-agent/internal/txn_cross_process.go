@@ -65,15 +65,13 @@ type CrossProcessMetadata struct {
 }
 
 // Init initialises a TxnCrossProcess based on the given application connect
-// reply and metadata fields, if any.
-func (txp *TxnCrossProcess) Init(enabled bool, dt bool, reply *ConnectReply, metadata CrossProcessMetadata) error {
+// reply.
+func (txp *TxnCrossProcess) Init(enabled bool, dt bool, reply *ConnectReply) {
 	txp.CrossProcessID = []byte(reply.CrossProcessID)
 	txp.EncodingKey = []byte(reply.EncodingKey)
 	txp.DistributedTracingEnabled = dt
 	txp.Enabled = enabled
 	txp.TrustedAccounts = reply.TrustedAccounts
-
-	return txp.handleInboundRequestHeaders(metadata)
 }
 
 // CreateCrossProcessMetadata generates request metadata that enable CAT and
