@@ -3,9 +3,6 @@ FROM alpine:edge
 ENV GOPATH /go
 ENV PATH /usr/local/go/bin:$PATH
 
-ADD . /go/src/github.com/DarthSim/imgproxy
-WORKDIR /go/src/github.com/DarthSim/imgproxy
-
 # Install dependencies
 RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories \
   && apk --no-cache upgrade \
@@ -56,6 +53,10 @@ RUN cd /root \
     --disable-static \
     --enable-silent-rules \
   && make install-strip
+
+
+ADD . /go/src/github.com/DarthSim/imgproxy
+WORKDIR /go/src/github.com/DarthSim/imgproxy
 
 # Build imgproxy
 RUN cd /go/src/github.com/DarthSim/imgproxy \

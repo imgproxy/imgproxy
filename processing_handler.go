@@ -43,13 +43,14 @@ func initProcessingHandler() {
 	headerVaryValue = strings.Join(vary, ", ")
 }
 
-func respondWithImage(ctx context.Context, reqID string, r *http.Request, rw http.ResponseWriter, data []byte) {
+func respondWithImage(ctx context.Context, reqID string, r *http.Request, rw http.ResponseWriter, data []byte, size ImageSize) {
 	po := getProcessingOptions(ctx)
 
 	rw.Header().Set("Expires", time.Now().Add(time.Second*time.Duration(conf.TTL)).Format(http.TimeFormat))
 	rw.Header().Set("Cache-Control", fmt.Sprintf("max-age=%d, public", conf.TTL))
 	rw.Header().Set("Content-Type", po.Format.Mime())
 	rw.Header().Set("Content-Disposition", po.Format.ContentDisposition(getImageURL(ctx)))
+	rw.Header().Set("X-is", fmt.Sprintf("%d:%d", size.Width, size.Height))
 
 	if len(headerVaryValue) > 0 {
 		rw.Header().Set("Vary", headerVaryValue)
@@ -81,6 +82,12 @@ func respondWithImage(ctx context.Context, reqID string, r *http.Request, rw htt
 
 func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
+
+	// Health check
+	if r.URL.RequestURI() == "/" && r.Method == http.MethodGet {
+		rw.WriteHeader(200)
+		return
+	}
 
 	if newRelicEnabled {
 		var newRelicCancel context.CancelFunc
@@ -131,7 +138,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 
 	checkTimeout(ctx)
 
-	imageData, processcancel, err := processImage(ctx)
+	imageData, processcancel, err, imgSize := processImage(ctx)
 	defer processcancel()
 	if err != nil {
 		if newRelicEnabled {
@@ -145,5 +152,5 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 
 	checkTimeout(ctx)
 
-	respondWithImage(ctx, reqID, r, rw, imageData)
+	respondWithImage(ctx, reqID, r, rw, imageData, imgSize)
 }

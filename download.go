@@ -120,34 +120,21 @@ func checkTypeAndDimensions(r io.Reader) (imageType, error) {
 	return imgtype, nil
 }
 
-func readAndCheckImage(ctx context.Context, res *http.Response) (context.Context, context.CancelFunc, error) {
+func readAndCheckImage(ctx context.Context, r io.ReadCloser) (context.Context, context.CancelFunc, error) {
+
 	var contentLength int
-
-	if res.ContentLength > 0 {
-		contentLength = int(res.ContentLength)
-
-		if conf.MaxSrcFileSize > 0 && contentLength > conf.MaxSrcFileSize {
-			return ctx, func() {}, errSourceFileTooBig
-		}
-	}
 
 	buf := downloadBufPool.Get(contentLength)
 	cancel := func() {
 		downloadBufPool.Put(buf)
 	}
 
-	body := res.Body
-
-	if conf.MaxSrcFileSize > 0 {
-		body = &limitReader{r: body, left: conf.MaxSrcFileSize}
-	}
-
-	imgtype, err := checkTypeAndDimensions(io.TeeReader(body, buf))
+	imgtype, err := checkTypeAndDimensions(io.TeeReader(r, buf))
 	if err != nil {
 		return ctx, cancel, err
 	}
 
-	if _, err = buf.ReadFrom(body); err != nil {
+	if _, err = buf.ReadFrom(r); err != nil {
 		return ctx, cancel, newError(404, err.Error(), msgSourceImageIsUnreachable)
 	}
 

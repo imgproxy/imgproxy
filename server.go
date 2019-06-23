@@ -22,8 +22,8 @@ func buildRouter() *router {
 
 	r.PanicHandler = handlePanic
 
-	r.GET("/health", handleHealth)
-	r.GET("/", withCORS(withSecret(handleProcessing)))
+	r.Add(http.MethodGet, "/", withCORS(withSecret(handleProcessing)))
+	r.Add(http.MethodPost, "/", withCORS(withSecret(handleProcessing)))
 	r.OPTIONS("/", withCORS(handleOptions))
 
 	return r

@@ -10,6 +10,11 @@ import (
 
 const msgSmartCropNotSupported = "Smart crop is not supported by used version of libvips"
 
+type ImageSize struct {
+	Width  int
+	Height int
+}
+
 func extractMeta(img *vipsImage) (int, int, int, bool) {
 	width := img.Width()
 	height := img.Height()
@@ -189,7 +194,7 @@ func scaleSize(size int, scale float64) int {
 	return roundToInt(float64(size) * scale)
 }
 
-func transformImage(ctx context.Context, img *vipsImage, data []byte, po *processingOptions, imgtype imageType) error {
+func transformImage(ctx context.Context, img *vipsImage, data []byte, po *processingOptions, imgtype imageType, s *ImageSize) error {
 	var err error
 
 	srcWidth, srcHeight, angle, flip := extractMeta(img)
@@ -234,6 +239,10 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 
 		// Update scale after scale-on-load
 		newWidth, newHeight, _, _ := extractMeta(img)
+
+		// Update image size struct
+		s.Width = srcWidth
+		s.Height = srcHeight
 
 		widthToScale = scaleSize(widthToScale, float64(newWidth)/float64(srcWidth))
 		heightToScale = scaleSize(heightToScale, float64(newHeight)/float64(srcHeight))
@@ -368,7 +377,7 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 	return img.RgbColourspace()
 }
 
-func transformAnimated(ctx context.Context, img *vipsImage, data []byte, po *processingOptions, imgtype imageType) error {
+func transformAnimated(ctx context.Context, img *vipsImage, data []byte, po *processingOptions, imgtype imageType, size *ImageSize) error {
 	imgWidth := img.Width()
 
 	frameHeight, err := img.GetInt("page-height")
@@ -436,7 +445,7 @@ func transformAnimated(ctx context.Context, img *vipsImage, data []byte, po *pro
 				return err
 			}
 
-			if err := transformImage(ctx, frame, nil, po, imgtype); err != nil {
+			if err := transformImage(ctx, frame, nil, po, imgtype, size); err != nil {
 				return err
 			}
 
@@ -464,7 +473,9 @@ func transformAnimated(ctx context.Context, img *vipsImage, data []byte, po *pro
 	return nil
 }
 
-func processImage(ctx context.Context) ([]byte, context.CancelFunc, error) {
+func processImage(ctx context.Context) ([]byte, context.CancelFunc, error, ImageSize) {
+	size := ImageSize{Width: 0, Height: 0}
+
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 
@@ -522,16 +533,16 @@ func processImage(ctx context.Context) ([]byte, context.CancelFunc, error) {
 	defer img.Clear()
 
 	if err := img.Load(data, imgtype, 1, 1.0, pages); err != nil {
-		return nil, func() {}, err
+		return nil, func() {}, err, size
 	}
 
 	if animationSupport && img.IsAnimated() {
-		if err := transformAnimated(ctx, img, data, po, imgtype); err != nil {
-			return nil, func() {}, err
+		if err := transformAnimated(ctx, img, data, po, imgtype, &size); err != nil {
+			return nil, func() {}, err, size
 		}
 	} else {
-		if err := transformImage(ctx, img, data, po, imgtype); err != nil {
-			return nil, func() {}, err
+		if err := transformImage(ctx, img, data, po, imgtype, &size); err != nil {
+			return nil, func() {}, err, size
 		}
 	}
 
@@ -539,10 +550,12 @@ func processImage(ctx context.Context) ([]byte, context.CancelFunc, error) {
 
 	if po.Format == imageTypeGIF {
 		if err := img.CastUchar(); err != nil {
-			return nil, func() {}, err
+			return nil, func() {}, err, size
 		}
 		checkTimeout(ctx)
 	}
 
-	return img.Save(po.Format, po.Quality)
+	imgData, cancel, err := img.Save(po.Format, po.Quality)
+
+	return imgData, cancel, err, size
 }
