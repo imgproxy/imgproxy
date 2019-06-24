@@ -49,11 +49,24 @@ func calcScale(width, height int, po *processingOptions, imgtype imageType) floa
 		wr := float64(po.Width) / srcW
 		hr := float64(po.Height) / srcH
 
+		rt := po.Resize
+
+		if rt == resizeAuto {
+			srcD := width - height
+			dstD := po.Width - po.Height
+
+			if (srcD >= 0 && dstD >= 0) || (srcD < 0 && dstD < 0) {
+				rt = resizeFill
+			} else {
+				rt = resizeFit
+			}
+		}
+
 		if po.Width == 0 {
 			scale = hr
 		} else if po.Height == 0 {
 			scale = wr
-		} else if po.Resize == resizeFit {
+		} else if rt == resizeFit {
 			scale = math.Min(wr, hr)
 		} else {
 			scale = math.Max(wr, hr)
