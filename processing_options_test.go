@@ -411,20 +411,8 @@ func (s *ProcessingOptionsTestSuite) TestParsePathWebpDetection() {
 	require.Nil(s.T(), err)
 
 	po := getProcessingOptions(ctx)
-	assert.Equal(s.T(), imageTypeWEBP, po.Format)
-}
-
-func (s *ProcessingOptionsTestSuite) TestParsePathWebpDetectionRedefine() {
-	conf.EnableWebpDetection = true
-
-	req := s.getRequest("http://example.com/unsafe/plain/http://images.dev/lorem/ipsum.jpg@png")
-	req.Header.Set("Accept", "image/webp")
-	ctx, err := parsePath(context.Background(), req)
-
-	require.Nil(s.T(), err)
-
-	po := getProcessingOptions(ctx)
-	assert.Equal(s.T(), imageTypePNG, po.Format)
+	assert.Equal(s.T(), true, po.PreferWebP)
+	assert.Equal(s.T(), false, po.EnforceWebP)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathWebpEnforce() {
@@ -437,7 +425,8 @@ func (s *ProcessingOptionsTestSuite) TestParsePathWebpEnforce() {
 	require.Nil(s.T(), err)
 
 	po := getProcessingOptions(ctx)
-	assert.Equal(s.T(), imageTypeWEBP, po.Format)
+	assert.Equal(s.T(), true, po.PreferWebP)
+	assert.Equal(s.T(), true, po.EnforceWebP)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathWidthHeader() {
