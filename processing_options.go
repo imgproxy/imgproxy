@@ -118,6 +118,9 @@ type processingOptions struct {
 
 	Watermark watermarkOptions
 
+	PreferWebP  bool
+	EnforceWebP bool
+
 	UsedPresets []string
 }
 
@@ -605,11 +608,6 @@ func applyFormatOption(po *processingOptions, args []string) error {
 		return fmt.Errorf("Invalid format arguments: %v", args)
 	}
 
-	if conf.EnforceWebp && po.Format == imageTypeWEBP {
-		// Webp is enforced and already set as format
-		return nil
-	}
-
 	if f, ok := imageTypes[args[0]]; ok {
 		po.Format = f
 	} else {
@@ -769,9 +767,11 @@ func defaultProcessingOptions(headers *processingHeaders) (*processingOptions, e
 		UsedPresets: make([]string, 0, len(conf.Presets)),
 	}
 
-	if (conf.EnableWebpDetection || conf.EnforceWebp) && strings.Contains(headers.Accept, "image/webp") {
-		po.Format = imageTypeWEBP
+	if strings.Contains(headers.Accept, "image/webp") {
+		po.PreferWebP = conf.EnableWebpDetection || conf.EnforceWebp
+		po.EnforceWebP = conf.EnforceWebp
 	}
+
 	if conf.EnableClientHints && len(headers.ViewportWidth) > 0 {
 		if vw, err := strconv.Atoi(headers.ViewportWidth); err == nil {
 			po.Width = vw

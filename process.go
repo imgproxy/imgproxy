@@ -497,11 +497,15 @@ func processImage(ctx context.Context) ([]byte, context.CancelFunc, error) {
 	imgtype := getImageType(ctx)
 
 	if po.Format == imageTypeUnknown {
-		if vipsTypeSupportSave[imgtype] {
+		if po.PreferWebP && vipsTypeSupportSave[imageTypeWEBP] {
+			po.Format = imageTypeWEBP
+		} else if vipsTypeSupportSave[imgtype] {
 			po.Format = imgtype
 		} else {
 			po.Format = imageTypeJPEG
 		}
+	} else if po.EnforceWebP && vipsTypeSupportSave[imageTypeWEBP] {
+		po.Format = imageTypeWEBP
 	}
 
 	if !vipsSupportSmartcrop {
