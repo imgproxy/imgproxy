@@ -18,6 +18,12 @@ imgproxy supports GIF output only when using libvips 8.7.0+ compiled with ImageM
 
 imgproxy supports ICO output only when using libvips 8.7.0+ compiled with ImageMagick support. Official imgproxy Docker image supports ICO out of the box.
 
+## HEIC support
+
+imgproxy supports HEIC only when using libvips 8.8.0+. Official imgproxy Docker image supports HEIC out of the box.
+
+By default, imgproxy saves HEIC images as JPEG. You need to explicitly specify the `format` option to get HEIC output.
+
 ## Animated images support
 
 Since processing of animated images is pretty heavy, only one frame is processed by default. You can increase the maximum of animation frames to process with the following variable:

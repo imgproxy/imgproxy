@@ -499,7 +499,7 @@ func processImage(ctx context.Context) ([]byte, context.CancelFunc, error) {
 	if po.Format == imageTypeUnknown {
 		if po.PreferWebP && vipsTypeSupportSave[imageTypeWEBP] {
 			po.Format = imageTypeWEBP
-		} else if vipsTypeSupportSave[imgtype] {
+		} else if vipsTypeSupportSave[imgtype] && imgtype != imageTypeHEIC {
 			po.Format = imgtype
 		} else {
 			po.Format = imageTypeJPEG
