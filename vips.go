@@ -493,6 +493,10 @@ func (img *vipsImage) Sharpen(sigma float32) error {
 func (img *vipsImage) ImportColourProfile(evenSRGB bool) error {
 	var tmp *C.VipsImage
 
+	if conf.IgnoreICCP {
+		return nil
+	}
+
 	if img.VipsImage.Coding != C.VIPS_CODING_NONE {
 		return nil
 	}

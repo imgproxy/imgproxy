@@ -205,6 +205,8 @@ type config struct {
 	DownloadBufferSize             int
 	GZipBufferSize                 int
 	BufferPoolCalibrationThreshold int
+
+	IgnoreICCP bool
 }
 
 var conf = config{
@@ -336,6 +338,8 @@ func configure() {
 	intEnvConfig(&conf.DownloadBufferSize, "IMGPROXY_DOWNLOAD_BUFFER_SIZE")
 	intEnvConfig(&conf.GZipBufferSize, "IMGPROXY_GZIP_BUFFER_SIZE")
 	intEnvConfig(&conf.BufferPoolCalibrationThreshold, "IMGPROXY_BUFFER_POOL_CALIBRATION_THRESHOLD")
+
+	boolEnvConfig(&conf.IgnoreICCP, "IMGPROXY_IGNORE_ICCP")
 
 	if len(conf.Keys) != len(conf.Salts) {
 		logFatal("Number of keys and number of salts should be equal. Keys: %d, salts: %d", len(conf.Keys), len(conf.Salts))
