@@ -73,11 +73,11 @@ func calcScale(width, height int, po *processingOptions, imgtype imageType) floa
 		}
 	}
 
-	scale = scale * po.Dpr
-
 	if !po.Enlarge && scale > 1 && imgtype != imageTypeSVG {
-		return 1
+		scale = 1
 	}
+
+	scale = scale * po.Dpr
 
 	if srcW*scale < 1 {
 		scale = 1 / srcW
