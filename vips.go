@@ -503,26 +503,26 @@ func (img *vipsImage) ImportColourProfile(evenSRGB bool) error {
 
 	profile := (*C.char)(nil)
 
-	if img.VipsImage.Type == C.VIPS_INTERPRETATION_sRGB {
-		// No embedded profile for sRGB, ignore
-		if C.vips_has_embedded_icc(img.VipsImage) == 0 {
-			return nil
-		}
-
-		// Don't import sRGB IEC61966 2.1 unless evenSRGB
-		if !evenSRGB && C.vips_icc_is_srgb_iec61966(img.VipsImage) != 0 {
-			return nil
-		}
-	} else if img.VipsImage.Type == C.VIPS_INTERPRETATION_CMYK && C.vips_has_embedded_icc(img.VipsImage) == 0 {
-		if C.vips_support_builtin_icc() != 0 {
-			profile = cachedCString("cmyk")
-		} else {
+	if C.vips_has_embedded_icc(img.VipsImage) == 0 {
+		// No embedded profile
+		// If vips doesn't have built-in profile, use profile built-in to imgproxy for CMYK
+		// TODO: Remove this. Supporting built-in profiles is pain, vips does it better
+		if img.VipsImage.Type == C.VIPS_INTERPRETATION_CMYK && C.vips_support_builtin_icc() == 0 {
 			p, err := cmykProfilePath()
 			if err != nil {
 				return err
 			}
 			profile = cachedCString(p)
+		} else {
+			// imgproxy doesn't have built-in profile for other interpretations,
+			// so we can't do anything here
+			return nil
 		}
+	}
+
+	// Don't import sRGB IEC61966 2.1 unless evenSRGB
+	if img.VipsImage.Type == C.VIPS_INTERPRETATION_sRGB && !evenSRGB && C.vips_icc_is_srgb_iec61966(img.VipsImage) != 0 {
+		return nil
 	}
 
 	if C.vips_icc_import_go(img.VipsImage, &tmp, profile) == 0 {
@@ -534,6 +534,10 @@ func (img *vipsImage) ImportColourProfile(evenSRGB bool) error {
 	return nil
 }
 
+func (img *vipsImage) IsSRGB() bool {
+	return img.VipsImage.Type == C.VIPS_INTERPRETATION_sRGB
+}
+
 func (img *vipsImage) LinearColourspace() error {
 	return img.Colorspace(C.VIPS_INTERPRETATION_scRGB)
 }
@@ -543,7 +547,7 @@ func (img *vipsImage) RgbColourspace() error {
 }
 
 func (img *vipsImage) Colorspace(colorspace C.VipsInterpretation) error {
-	if C.vips_image_guess_interpretation(img.VipsImage) != colorspace {
+	if img.VipsImage.Type != colorspace {
 		var tmp *C.VipsImage
 
 		if C.vips_colourspace_go(img.VipsImage, &tmp, colorspace) != 0 {

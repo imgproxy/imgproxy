@@ -258,14 +258,22 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 		return err
 	}
 
+	iccImported := false
 	convertToLinear := conf.UseLinearColorspace && (scale != 1 || po.Dpr != 1)
 
-	if convertToLinear {
+	if convertToLinear || !img.IsSRGB() {
 		if err = img.ImportColourProfile(true); err != nil {
 			return err
 		}
+		iccImported = true
+	}
 
+	if convertToLinear {
 		if err = img.LinearColourspace(); err != nil {
+			return err
+		}
+	} else {
+		if err = img.RgbColourspace(); err != nil {
 			return err
 		}
 	}
@@ -336,14 +344,14 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 
 	checkTimeout(ctx)
 
-	if convertToLinear {
-		if err = img.RgbColourspace(); err != nil {
-			return err
-		}
-	} else {
+	if !iccImported {
 		if err = img.ImportColourProfile(false); err != nil {
 			return err
 		}
+	}
+
+	if err = img.RgbColourspace(); err != nil {
+		return err
 	}
 
 	if hasAlpha && (po.Flatten || po.Format == imageTypeJPEG) {
