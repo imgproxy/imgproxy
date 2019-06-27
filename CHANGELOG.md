@@ -3,7 +3,7 @@
 ## master
 
 - Better handling if non-sRGB images;
-- `SO_REUSEPORT` socker option support. Can be enabled with `IMGPROXY_SU_REUSEPORT`;
+- `SO_REUSEPORT` socker option support. Can be enabled with `IMGPROXY_SO_REUSEPORT`;
 - `dpr` option always changes the resulting size even if it leads to enlarge and `enlarge` is falsey;
 
 ## v2.3.0
