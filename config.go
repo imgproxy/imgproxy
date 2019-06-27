@@ -136,6 +136,7 @@ type config struct {
 	Concurrency      int
 	MaxClients       int
 	TTL              int
+	SoReuseport      bool
 
 	MaxSrcDimension    int
 	MaxSrcResolution   int
@@ -257,6 +258,8 @@ func configure() {
 	intEnvConfig(&conf.MaxClients, "IMGPROXY_MAX_CLIENTS")
 
 	intEnvConfig(&conf.TTL, "IMGPROXY_TTL")
+
+	boolEnvConfig(&conf.SoReuseport, "IMGPROXY_SO_REUSEPORT")
 
 	intEnvConfig(&conf.MaxSrcDimension, "IMGPROXY_MAX_SRC_DIMENSION")
 	megaIntEnvConfig(&conf.MaxSrcResolution, "IMGPROXY_MAX_SRC_RESOLUTION")

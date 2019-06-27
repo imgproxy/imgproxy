@@ -100,14 +100,16 @@ func initPrometheus() {
 
 	prometheusEnabled = true
 
-	s := http.Server{
-		Addr:    conf.PrometheusBind,
-		Handler: promhttp.Handler(),
-	}
+	s := http.Server{Handler: promhttp.Handler()}
 
 	go func() {
-		logNotice("Starting Prometheus server at %s\n", s.Addr)
-		if err := s.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		l, err := listenReuseport("tcp", conf.PrometheusBind)
+		if err != nil {
+			logFatal(err.Error())
+		}
+
+		logNotice("Starting Prometheus server at %s\n", conf.PrometheusBind)
+		if err := s.Serve(l); err != nil && err != http.ErrServerClosed {
 			logFatal(err.Error())
 		}
 	}()

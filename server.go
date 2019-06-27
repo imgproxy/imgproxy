@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/subtle"
 	"fmt"
-	"net"
 	"net/http"
 	"time"
 
@@ -30,7 +29,7 @@ func buildRouter() *router {
 }
 
 func startServer() *http.Server {
-	l, err := net.Listen("tcp", conf.Bind)
+	l, err := listenReuseport("tcp", conf.Bind)
 	if err != nil {
 		logFatal(err.Error())
 	}
