@@ -47,6 +47,7 @@ var (
 		imageTypeGIF:  "image/gif",
 		imageTypeICO:  "image/x-icon",
 		imageTypeHEIC: "image/heif",
+		imageTypeSVG:  "image/svg+xml",
 	}
 
 	contentDispositionsFmt = map[imageType]string{
@@ -56,6 +57,7 @@ var (
 		imageTypeGIF:  "inline; filename=\"%s.gif\"",
 		imageTypeICO:  "inline; filename=\"%s.ico\"",
 		imageTypeHEIC: "inline; filename=\"%s.heic\"",
+		imageTypeSVG:  "inline; filename=\"%s.svg\"",
 	}
 )
 
