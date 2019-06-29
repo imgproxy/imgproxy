@@ -106,6 +106,7 @@ func initVips() {
 	if int(C.vips_type_find_save_go(C.int(imageTypeICO))) != 0 {
 		vipsTypeSupportSave[imageTypeICO] = true
 	}
+
 	if int(C.vips_type_find_save_go(C.int(imageTypeHEIC))) != 0 {
 		vipsTypeSupportSave[imageTypeHEIC] = true
 	}

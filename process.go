@@ -502,6 +502,11 @@ func processImage(ctx context.Context) ([]byte, context.CancelFunc, error, Image
 		}
 	}
 
+	// Handle returning svg images as received
+	if po.Format == imgtype && po.Format == imageTypeSVG {
+		return data, func() {}, nil, size
+	}
+
 	if !vipsSupportSmartcrop {
 		if po.Gravity.Type == gravitySmart {
 			logWarning(msgSmartCropNotSupported)
