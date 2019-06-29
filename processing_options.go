@@ -614,7 +614,7 @@ func applyFormatOption(po *processingOptions, args []string) error {
 		return fmt.Errorf("Invalid image format: %s", args[0])
 	}
 
-	if !vipsTypeSupportSave[po.Format] {
+	if !vipsTypeSupportSave[po.Format] && po.Format != imageTypeSVG {
 		return errResultingImageFormatIsNotSupported
 	}
 
