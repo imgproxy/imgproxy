@@ -112,7 +112,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	}
 
 	// Handle post uploads
-	ctx, downloadcancel, err := processIncomingImageRequest(ctx)
+	ctx, downloadcancel, err := processIncomingImageRequest(ctx, r)
 	defer downloadcancel()
 	if err != nil {
 		if newRelicEnabled {
