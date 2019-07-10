@@ -51,7 +51,6 @@ RUN cd /root \
   && ./configure \
     --disable-magickload \
     --without-python \
-    --without-tiff \
     --without-OpenEXR \
     --enable-debug=no \
     --disable-static \
