@@ -87,6 +87,9 @@ func initVips() {
 	if int(C.vips_type_find_load_go(C.int(imageTypeHEIC))) != 0 {
 		vipsTypeSupportLoad[imageTypeHEIC] = true
 	}
+	if int(C.vips_type_find_load_go(C.int(imageTypeTIFF))) != 0 {
+		vipsTypeSupportLoad[imageTypeTIFF] = true
+	}
 
 	// we load ICO with github.com/mat/besticon/ico and send decoded data to vips
 	vipsTypeSupportLoad[imageTypeICO] = true
@@ -108,6 +111,9 @@ func initVips() {
 	}
 	if int(C.vips_type_find_save_go(C.int(imageTypeHEIC))) != 0 {
 		vipsTypeSupportSave[imageTypeHEIC] = true
+	}
+	if int(C.vips_type_find_save_go(C.int(imageTypeTIFF))) != 0 {
+		vipsTypeSupportSave[imageTypeTIFF] = true
 	}
 
 	if conf.JpegProgressive {
@@ -252,6 +258,8 @@ func (img *vipsImage) Load(data []byte, imgtype imageType, shrink int, scale flo
 		tmp = C.vips_image_new_from_memory_copy(unsafe.Pointer(&rawData[0]), C.size_t(width*height*4), C.int(width), C.int(height), 4, C.VIPS_FORMAT_UCHAR)
 	case imageTypeHEIC:
 		err = C.vips_heifload_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), &tmp)
+	case imageTypeTIFF:
+		err = C.vips_tiffload_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), &tmp)
 	}
 	if err != 0 {
 		return vipsError()
@@ -286,6 +294,8 @@ func (img *vipsImage) Save(imgtype imageType, quality int) ([]byte, context.Canc
 		err = C.vips_icosave_go(img.VipsImage, &ptr, &imgsize)
 	case imageTypeHEIC:
 		err = C.vips_heifsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality))
+	case imageTypeTIFF:
+		err = C.vips_tiffsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality))
 	}
 	if err != 0 {
 		C.g_free_go(&ptr)
