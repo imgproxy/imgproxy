@@ -8,7 +8,8 @@ At the moment, imgproxy supports only the most popular Web image formats:
 * GIF;
 * ICO;
 * SVG _(source only)_;
-* HEIC.
+* HEIC;
+* TIFF.
 
 ## GIF support
 
