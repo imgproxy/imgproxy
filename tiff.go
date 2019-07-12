@@ -250,8 +250,7 @@ func DecodeConfig(r io.Reader) (image.Config, error) {
 }
 
 func init() {
-	// Register fake tiff decoder. Since we need this only for type detecting, we can
-	// return fake image sizes
+	// Register fake tiff decoder
 	decode := func(io.Reader) (image.Image, error) {
 		return image.NewRGBA(image.Rect(0, 0, 1, 1)), nil
 	}

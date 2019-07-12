@@ -11,7 +11,7 @@ WORKDIR /go/src/github.com/DarthSim/imgproxy
 RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories \
   && apk --no-cache upgrade \
   && apk add --no-cache curl ca-certificates go gcc g++ make musl-dev fftw-dev glib-dev expat-dev \
-    libjpeg-turbo-dev libpng-dev libwebp-dev libtiff-dev giflib-dev librsvg-dev libexif-dev lcms2-dev libimagequant-dev
+    libjpeg-turbo-dev libpng-dev libwebp-dev tiff-dev giflib-dev librsvg-dev libexif-dev lcms2-dev libimagequant-dev
 
 # Build ImageMagick
 RUN cd /root \
