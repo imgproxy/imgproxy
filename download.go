@@ -15,7 +15,6 @@ import (
 	_ "image/gif"
 	_ "image/jpeg"
 	_ "image/png"
-	_ "golang.org/x/image/tiff"
 
 	_ "github.com/mat/besticon/ico"
 )
