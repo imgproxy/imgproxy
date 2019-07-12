@@ -255,9 +255,6 @@ func init() {
 	decode := func(io.Reader) (image.Image, error) {
 		return image.NewRGBA(image.Rect(0, 0, 1, 1)), nil
 	}
-	// decodeConfig := func(io.Reader) (image.Config, error) {
-	// 	return image.Config{ColorModel: color.RGBAModel, Width: 1, Height: 1}, nil
-	// }
 
 	image.RegisterFormat("tiff", leHeader, decode, DecodeConfig)
 	image.RegisterFormat("tiff", beHeader, decode, DecodeConfig)
