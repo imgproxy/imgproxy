@@ -28,6 +28,9 @@
 #define VIPS_SUPPORT_HEIF \
   (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 8))
 
+#define VIPS_SUPPORT_TIFF \
+  (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 8))
+
 #define VIPS_SUPPORT_BUILTIN_ICC \
   (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 8))
 
@@ -167,8 +170,8 @@ vips_heifload_go(void *buf, size_t len, VipsImage **out) {
 
 int
 vips_tiffload_go(void *buf, size_t len, VipsImage **out) {
-#if VIPS_SUPPORT_MAGICK
-  return vips_magickload_buffer(buf, len, out, NULL);
+#if VIPS_SUPPORT_TIFF
+  return vips_tiffload_buffer(buf, len, out, NULL);
 #else
   vips_error("vips_tiffload_go", "Loading TIFF is not supported");
   return 1;
@@ -600,8 +603,8 @@ vips_heifsave_go(VipsImage *in, void **buf, size_t *len, int quality) {
 
 int
 vips_tiffsave_go(VipsImage *in, void **buf, size_t *len, int quality) {
-#if VIPS_SUPPORT_MAGICK
-  return vips_magicksave_buffer(in, buf, len, "format", "tif", "quality", quality, NULL);
+#if VIPS_SUPPORT_TIFF
+  return vips_tiffsave_buffer(in, buf, len, "Q", quality, NULL);
 #else
   vips_error("vips_tiffsave_go", "Saving TIFF is not supported");
   return 1;
