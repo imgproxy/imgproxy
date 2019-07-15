@@ -20,10 +20,8 @@ const (
 	
 	// Data types (p. 14-16 of the spec).
 	dtByte     = 1
-	dtASCII    = 2
 	dtShort    = 3
 	dtLong     = 4
-  dtRational = 5
 )
 
 // The length of one instance of each data type in bytes.
@@ -92,15 +90,8 @@ type decoder struct {
 	r         io.ReaderAt
 	byteOrder binary.ByteOrder
 	config    image.Config
-	mode      imageMode
-	bpp       uint
 	features  map[int][]uint
 	palette   []color.Color
-
-	buf   []byte
-	off   int    // Current offset in buf.
-	v     uint32 // Buffer value for reading with arbitrary bit depths.
-	nbits uint   // Remaining number of bits in v.
 }
 
 // firstVal returns the first uint of the features entry with the given tag,
