@@ -15,13 +15,13 @@ const (
 	ifdLen = 12 // Length of an IFD entry in bytes.
 
 	// Tags (see p. 28-41 of the spec).
-	tImageWidth = 256
+	tImageWidth  = 256
 	tImageLength = 257
-	
+
 	// Data types (p. 14-16 of the spec).
-	dtByte     = 1
-	dtShort    = 3
-	dtLong     = 4
+	dtByte  = 1
+	dtShort = 3
+	dtLong  = 4
 )
 
 // The length of one instance of each data type in bytes.
