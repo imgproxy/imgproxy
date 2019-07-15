@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/binary"
 	"image"
-	"image/color"
 	"io"
 	"math"
 )
@@ -26,9 +25,6 @@ const (
 
 // The length of one instance of each data type in bytes.
 var lengths = [...]uint32{0, 1, 1, 2, 4, 8}
-
-// imageMode represents the mode of the image.
-type imageMode int
 
 // A FormatError reports that the input is not a valid TIFF image.
 type FormatError string
@@ -91,7 +87,6 @@ type decoder struct {
 	byteOrder binary.ByteOrder
 	config    image.Config
 	features  map[int][]uint
-	palette   []color.Color
 }
 
 // firstVal returns the first uint of the features entry with the given tag,
