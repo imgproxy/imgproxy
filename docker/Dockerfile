@@ -4,9 +4,6 @@ LABEL maintainer="Sergey Alexandrovich <darthsim@gmail.com>"
 ENV GOPATH /go
 ENV PATH /usr/local/go/bin:$PATH
 
-ADD . /go/src/github.com/DarthSim/imgproxy
-WORKDIR /go/src/github.com/DarthSim/imgproxy
-
 # Install dependencies
 RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories \
   && apk --no-cache upgrade \
@@ -59,8 +56,11 @@ RUN cd /root \
     --enable-silent-rules \
   && make install-strip
 
+ADD . /go/src/github.com/imgproxy/imgproxy
+WORKDIR /go/src/github.com/imgproxy/imgproxy
+
 # Build imgproxy
-RUN cd /go/src/github.com/DarthSim/imgproxy \
+RUN cd /go/src/github.com/imgproxy/imgproxy \
   && CGO_LDFLAGS_ALLOW="-s|-w" go build -v -o /usr/local/bin/imgproxy
 
 # Copy compiled libs here to copy them to the final image
