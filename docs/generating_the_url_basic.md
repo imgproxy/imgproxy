@@ -57,7 +57,7 @@ There are two ways to specify source url:
 
 ##### Plain
 
-The source URL can be provided as is, prendended by `/plain/` part:
+The source URL can be provided as is, prepended by `/plain/` part:
 
 ```
 /plain/http://example.com/images/curiosity.jpg
