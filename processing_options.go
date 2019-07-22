@@ -12,7 +12,11 @@ import (
 	"strings"
 )
 
-type urlOptions map[string][]string
+type urlOption struct {
+	Name string
+	Args []string
+}
+type urlOptions []urlOption
 
 type processingHeaders struct {
 	Accept        string
@@ -713,8 +717,8 @@ func applyProcessingOption(po *processingOptions, name string, args []string) er
 }
 
 func applyProcessingOptions(po *processingOptions, options urlOptions) error {
-	for name, args := range options {
-		if err := applyProcessingOption(po, name, args); err != nil {
+	for _, opt := range options {
+		if err := applyProcessingOption(po, opt.Name, opt.Args); err != nil {
 			return err
 		}
 	}
@@ -723,7 +727,7 @@ func applyProcessingOptions(po *processingOptions, options urlOptions) error {
 }
 
 func parseURLOptions(opts []string) (urlOptions, []string) {
-	parsed := make(urlOptions)
+	parsed := make(urlOptions, 0, len(opts))
 	urlStart := len(opts) + 1
 
 	for i, opt := range opts {
@@ -734,7 +738,7 @@ func parseURLOptions(opts []string) (urlOptions, []string) {
 			break
 		}
 
-		parsed[args[0]] = args[1:]
+		parsed = append(parsed, urlOption{Name: args[0], Args: args[1:]})
 	}
 
 	var rest []string
