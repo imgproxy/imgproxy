@@ -163,12 +163,11 @@ vips_heifload_go(void *buf, size_t len, VipsImage **out) {
 
 int
 vips_get_exif_orientation(VipsImage *image) {
-  const char *orientation;
+  int orientation;
 
 	if (
-		vips_image_get_typeof(image, EXIF_ORIENTATION) == VIPS_TYPE_REF_STRING &&
-		vips_image_get_string(image, EXIF_ORIENTATION, &orientation) == 0
-	) return atoi(orientation);
+		vips_image_get_int(image, VIPS_META_ORIENTATION, &orientation) == 0
+	) return orientation;
 
 	return 1;
 }
