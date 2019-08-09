@@ -461,13 +461,13 @@ func configure() {
 
 	if conf.DownloadBufferSize < 0 {
 		logFatal("Download buffer size should be greater than or equal to 0")
-	} else if conf.DownloadBufferSize > int(^uint32(0)) {
+	} else if uint32(conf.DownloadBufferSize) > ^uint32(0) {
 		logFatal("Download buffer size can't be greater than %d", ^uint32(0))
 	}
 
 	if conf.GZipBufferSize < 0 {
 		logFatal("GZip buffer size should be greater than or equal to 0")
-	} else if conf.GZipBufferSize > int(^uint32(0)) {
+	} else if uint32(conf.GZipBufferSize) > ^uint32(0) {
 		logFatal("GZip buffer size can't be greater than %d", ^uint32(0))
 	}
 
