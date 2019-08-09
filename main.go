@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"os"
 	"os/signal"
 	"runtime"
@@ -14,6 +15,8 @@ const version = "2.3.0"
 type ctxKey string
 
 func initialize() {
+	log.SetOutput(os.Stdout)
+
 	initSyslog()
 	configure()
 	initNewrelic()
