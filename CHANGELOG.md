@@ -24,7 +24,7 @@
 
 - Better shrink-on-load;
 - Don't import common sRGB IEC61966-2.1 ICC profile unless linear colorspace is used;
-- Send `X-Reqiest-ID` header;
+- Send `X-Request-ID` header;
 - Don't fail on recursive preset usage, just ignore already used preset and log warning.
 
 ## v2.2.12
