@@ -125,6 +125,8 @@ type processingOptions struct {
 	PreferWebP  bool
 	EnforceWebP bool
 
+	Filename string
+
 	UsedPresets []string
 }
 
@@ -635,6 +637,16 @@ func applyCacheBusterOption(po *processingOptions, args []string) error {
 	return nil
 }
 
+func applyFilenameOption(po *processingOptions, args []string) error {
+	if len(args) > 1 {
+		return fmt.Errorf("Invalid filename arguments: %v", args)
+	}
+
+	po.Filename = args[0]
+
+	return nil
+}
+
 func applyProcessingOption(po *processingOptions, name string, args []string) error {
 	switch name {
 	case "format", "f", "ext":
@@ -707,6 +719,10 @@ func applyProcessingOption(po *processingOptions, name string, args []string) er
 		}
 	case "cachebuster", "cb":
 		if err := applyCacheBusterOption(po, args); err != nil {
+			return err
+		}
+	case "filename", "fn":
+		if err := applyFilenameOption(po, args); err != nil {
 			return err
 		}
 	default:

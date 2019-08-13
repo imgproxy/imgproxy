@@ -76,21 +76,25 @@ func (it imageType) Mime() string {
 	return "application/octet-stream"
 }
 
-func (it imageType) ContentDisposition(imageURL string) string {
+func (it imageType) ContentDisposition(filename string) string {
 	format, ok := contentDispositionsFmt[it]
 	if !ok {
 		return "inline"
 	}
 
+	return fmt.Sprintf(format, filename)
+}
+
+func (it imageType) ContentDispositionFromURL(imageURL string) string {
 	url, err := url.Parse(imageURL)
 	if err != nil {
-		return fmt.Sprintf(format, contentDispositionFilenameFallback)
+		return it.ContentDisposition(contentDispositionFilenameFallback)
 	}
 
 	_, filename := filepath.Split(url.Path)
 	if len(filename) == 0 {
-		return fmt.Sprintf(format, contentDispositionFilenameFallback)
+		return it.ContentDisposition(contentDispositionFilenameFallback)
 	}
 
-	return fmt.Sprintf(format, strings.TrimSuffix(filename, filepath.Ext(filename)))
+	return it.ContentDisposition(strings.TrimSuffix(filename, filepath.Ext(filename)))
 }

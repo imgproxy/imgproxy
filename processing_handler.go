@@ -46,10 +46,17 @@ func initProcessingHandler() {
 func respondWithImage(ctx context.Context, reqID string, r *http.Request, rw http.ResponseWriter, data []byte) {
 	po := getProcessingOptions(ctx)
 
+	var contentDisposition string
+	if len(po.Filename) > 0 {
+		contentDisposition = po.Format.ContentDisposition(po.Filename)
+	} else {
+		contentDisposition = po.Format.ContentDispositionFromURL(getImageURL(ctx))
+	}
+
 	rw.Header().Set("Expires", time.Now().Add(time.Second*time.Duration(conf.TTL)).Format(http.TimeFormat))
 	rw.Header().Set("Cache-Control", fmt.Sprintf("max-age=%d, public", conf.TTL))
 	rw.Header().Set("Content-Type", po.Format.Mime())
-	rw.Header().Set("Content-Disposition", po.Format.ContentDisposition(getImageURL(ctx)))
+	rw.Header().Set("Content-Disposition", contentDisposition)
 
 	if len(headerVaryValue) > 0 {
 		rw.Header().Set("Vary", headerVaryValue)
