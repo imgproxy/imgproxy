@@ -650,86 +650,46 @@ func applyFilenameOption(po *processingOptions, args []string) error {
 func applyProcessingOption(po *processingOptions, name string, args []string) error {
 	switch name {
 	case "format", "f", "ext":
-		if err := applyFormatOption(po, args); err != nil {
-			return err
-		}
+		return applyFormatOption(po, args)
 	case "resize", "rs":
-		if err := applyResizeOption(po, args); err != nil {
-			return err
-		}
+		return applyResizeOption(po, args)
 	case "resizing_type", "rt":
-		if err := applyResizingTypeOption(po, args); err != nil {
-			return err
-		}
+		return applyResizingTypeOption(po, args)
 	case "size", "s":
-		if err := applySizeOption(po, args); err != nil {
-			return err
-		}
+		return applySizeOption(po, args)
 	case "width", "w":
-		if err := applyWidthOption(po, args); err != nil {
-			return err
-		}
+		return applyWidthOption(po, args)
 	case "height", "h":
-		if err := applyHeightOption(po, args); err != nil {
-			return err
-		}
+		return applyHeightOption(po, args)
 	case "enlarge", "el":
-		if err := applyEnlargeOption(po, args); err != nil {
-			return err
-		}
+		return applyEnlargeOption(po, args)
 	case "extend", "ex":
-		if err := applyExtendOption(po, args); err != nil {
-			return err
-		}
+		return applyExtendOption(po, args)
 	case "dpr":
-		if err := applyDprOption(po, args); err != nil {
-			return err
-		}
+		return applyDprOption(po, args)
 	case "gravity", "g":
-		if err := applyGravityOption(po, args); err != nil {
-			return err
-		}
+		return applyGravityOption(po, args)
 	case "crop", "c":
-		if err := applyCropOption(po, args); err != nil {
-			return err
-		}
+		return applyCropOption(po, args)
 	case "quality", "q":
-		if err := applyQualityOption(po, args); err != nil {
-			return err
-		}
+		return applyQualityOption(po, args)
 	case "background", "bg":
-		if err := applyBackgroundOption(po, args); err != nil {
-			return err
-		}
+		return applyBackgroundOption(po, args)
 	case "blur", "bl":
-		if err := applyBlurOption(po, args); err != nil {
-			return err
-		}
+		return applyBlurOption(po, args)
 	case "sharpen", "sh":
-		if err := applySharpenOption(po, args); err != nil {
-			return err
-		}
+		return applySharpenOption(po, args)
 	case "watermark", "wm":
-		if err := applyWatermarkOption(po, args); err != nil {
-			return err
-		}
+		return applyWatermarkOption(po, args)
 	case "preset", "pr":
-		if err := applyPresetOption(po, args); err != nil {
-			return err
-		}
+		return applyPresetOption(po, args)
 	case "cachebuster", "cb":
-		if err := applyCacheBusterOption(po, args); err != nil {
-			return err
-		}
+		return applyCacheBusterOption(po, args)
 	case "filename", "fn":
-		if err := applyFilenameOption(po, args); err != nil {
-			return err
-		}
-	default:
-		return fmt.Errorf("Unknown processing option: %s", name)
+		return applyFilenameOption(po, args)
 	}
 
-	return nil
+	return fmt.Errorf("Unknown processing option: %s", name)
 }
 
 func applyProcessingOptions(po *processingOptions, options urlOptions) error {
