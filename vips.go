@@ -292,7 +292,7 @@ func (img *vipsImage) Save(imgtype imageType, quality int) ([]byte, context.Canc
 		return nil, cancel, vipsError()
 	}
 
-	b := (*[math.MaxUint32]byte)(ptr)[:int(imgsize):int(imgsize)]
+	b := (*[math.MaxInt32]byte)(ptr)[:int(imgsize):int(imgsize)]
 
 	return b, cancel, nil
 }
