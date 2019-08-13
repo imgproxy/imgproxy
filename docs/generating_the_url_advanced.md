@@ -261,6 +261,17 @@ It's highly recommended to prefer `cachebuster` option over URL query string bec
 
 Default: empty
 
+##### Filename
+
+```
+filenale:%string
+fn:%string
+```
+
+Defines a filename for `Content-Disposition` header. When not specified, imgproxy will get filename from the source url.
+
+Default: empty
+
 ##### Format
 
 ```

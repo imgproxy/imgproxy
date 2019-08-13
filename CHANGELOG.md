@@ -5,7 +5,8 @@
 - Better handling if non-sRGB images;
 - `SO_REUSEPORT` socker option support. Can be enabled with `IMGPROXY_SO_REUSEPORT`;
 - `dpr` option always changes the resulting size even if it leads to enlarge and `enlarge` is falsey;
-- Log to STDOUT
+- Log to STDOUT;
+- [filename](./docs/generating_the_url_advanced.md#filename) option.
 
 ## v2.3.0
 
