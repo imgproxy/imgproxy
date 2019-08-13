@@ -292,9 +292,7 @@ func (img *vipsImage) Save(imgtype imageType, quality int) ([]byte, context.Canc
 		return nil, cancel, vipsError()
 	}
 
-	const maxBufSize = ^uint32(0)
-
-	b := (*[maxBufSize]byte)(ptr)[:int(imgsize):int(imgsize)]
+	b := (*[math.MaxUint32]byte)(ptr)[:int(imgsize):int(imgsize)]
 
 	return b, cancel, nil
 }
