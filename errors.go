@@ -10,6 +10,7 @@ type imgproxyError struct {
 	StatusCode    int
 	Message       string
 	PublicMessage string
+	Unexpected    bool
 }
 
 func (e *imgproxyError) Error() string {
@@ -17,14 +18,19 @@ func (e *imgproxyError) Error() string {
 }
 
 func newError(status int, msg string, pub string) *imgproxyError {
-	return &imgproxyError{status, msg, pub}
+	return &imgproxyError{
+		StatusCode:    status,
+		Message:       msg,
+		PublicMessage: pub,
+	}
 }
 
 func newUnexpectedError(msg string, skip int) *imgproxyError {
 	return &imgproxyError{
-		500,
-		fmt.Sprintf("Unexpected error: %s\n%s", msg, stacktrace(skip+3)),
-		"Internal error",
+		StatusCode:    500,
+		Message:       fmt.Sprintf("Unexpected error: %s\n%s", msg, stacktrace(skip+3)),
+		PublicMessage: "Internal error",
+		Unexpected:    true,
 	}
 }
 
