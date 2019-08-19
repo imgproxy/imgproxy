@@ -109,7 +109,7 @@ func handlePanic(reqID string, rw http.ResponseWriter, r *http.Request, err erro
 		reportError(err, r)
 	}
 
-	logResponse(reqID, ierr.StatusCode, ierr.Message)
+	logResponse(reqID, ierr.StatusCode, ierr.ErrorWithStack())
 
 	rw.WriteHeader(ierr.StatusCode)
 

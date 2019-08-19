@@ -11,10 +11,24 @@ type imgproxyError struct {
 	Message       string
 	PublicMessage string
 	Unexpected    bool
+
+	stack []uintptr
 }
 
 func (e *imgproxyError) Error() string {
 	return e.Message
+}
+
+func (e *imgproxyError) ErrorWithStack() string {
+	if e.stack == nil {
+		return e.Message
+	}
+
+	return fmt.Sprintf("%s\n%s", e.Message, formatStack(e.stack))
+}
+
+func (e *imgproxyError) StackTrace() []uintptr {
+	return e.stack
 }
 
 func newError(status int, msg string, pub string) *imgproxyError {
@@ -28,18 +42,23 @@ func newError(status int, msg string, pub string) *imgproxyError {
 func newUnexpectedError(msg string, skip int) *imgproxyError {
 	return &imgproxyError{
 		StatusCode:    500,
-		Message:       fmt.Sprintf("Unexpected error: %s\n%s", msg, stacktrace(skip+3)),
+		Message:       msg,
 		PublicMessage: "Internal error",
 		Unexpected:    true,
+
+		stack: callers(skip + 3),
 	}
 }
 
-func stacktrace(skip int) string {
-	callers := make([]uintptr, 10)
-	n := runtime.Callers(skip, callers)
+func callers(skip int) []uintptr {
+	stack := make([]uintptr, 10)
+	n := runtime.Callers(skip, stack)
+	return stack[:n]
+}
 
-	lines := make([]string, n)
-	for i, pc := range callers[:n] {
+func formatStack(stack []uintptr) string {
+	lines := make([]string, len(stack))
+	for i, pc := range stack {
 		f := runtime.FuncForPC(pc)
 		file, line := f.FileLine(pc)
 		lines[i] = fmt.Sprintf("%s:%d %s", file, line, f.Name())
