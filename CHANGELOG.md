@@ -8,7 +8,8 @@
 - Log to STDOUT;
 - [filename](./docs/generating_the_url_advanced.md#filename) option;
 - Only unexpected errors are reported to Bugsnag/Honeybadger/Sentry;
-- GZip compression support is deprecated.
+- GZip compression support is deprecated;
+- Better Sentry support.
 
 ## v2.3.0
 

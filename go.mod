@@ -12,6 +12,7 @@ require (
 	github.com/bugsnag/panicwrap v1.2.0 // indirect
 	github.com/certifi/gocertifi v0.0.0-20180118203423-deb3ae2ef261 // indirect
 	github.com/getsentry/raven-go v0.2.0
+	github.com/getsentry/sentry-go v0.2.1
 	github.com/go-ole/go-ole v1.2.2 // indirect
 	github.com/gofrs/uuid v3.2.0+incompatible // indirect
 	github.com/google/martian v2.1.0+incompatible // indirect
@@ -24,7 +25,6 @@ require (
 	github.com/matoous/go-nanoid v0.0.0-20181114085210-eab626deece6
 	github.com/newrelic/go-agent v2.2.0+incompatible
 	github.com/pborman/uuid v0.0.0-20180906182336-adf5a7427709 // indirect
-	github.com/pkg/errors v0.8.1 // indirect
 	github.com/prometheus/client_golang v0.9.2
 	github.com/prometheus/client_model v0.0.0-20190109181635-f287a105a20e // indirect
 	github.com/prometheus/common v0.1.0 // indirect
