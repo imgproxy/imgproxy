@@ -222,7 +222,6 @@ var conf = config{
 	SignatureSize:                  32,
 	PngQuantizationColors:          256,
 	Quality:                        80,
-	GZipCompression:                5,
 	UserAgent:                      fmt.Sprintf("imgproxy/%s", version),
 	Presets:                        make(presets),
 	WatermarkOpacity:               1,
@@ -422,6 +421,10 @@ func configure() {
 		logFatal("GZip compression should be greater than or equal to 0, now - %d\n", conf.GZipCompression)
 	} else if conf.GZipCompression > 9 {
 		logFatal("GZip compression can't be greater than 9, now - %d\n", conf.GZipCompression)
+	}
+
+	if conf.GZipCompression > 0 {
+		logWarning("GZip compression is deprecated and can be removed in future versions")
 	}
 
 	if conf.IgnoreSslVerification {

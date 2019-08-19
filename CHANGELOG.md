@@ -7,7 +7,8 @@
 - `dpr` option always changes the resulting size even if it leads to enlarge and `enlarge` is falsey;
 - Log to STDOUT;
 - [filename](./docs/generating_the_url_advanced.md#filename) option;
-- Only unexpected errors are reported to Bugsnag/Honeybadger/Sentry.
+- Only unexpected errors are reported to Bugsnag/Honeybadger/Sentry;
+- GZip compression support is deprecated.
 
 ## v2.3.0
 
