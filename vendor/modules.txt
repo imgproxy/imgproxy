@@ -53,12 +53,10 @@ github.com/bugsnag/bugsnag-go/headers
 github.com/bugsnag/bugsnag-go/sessions
 # github.com/bugsnag/panicwrap v1.2.0
 github.com/bugsnag/panicwrap
-# github.com/certifi/gocertifi v0.0.0-20180118203423-deb3ae2ef261
-github.com/certifi/gocertifi
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
-# github.com/getsentry/raven-go v0.2.0
-github.com/getsentry/raven-go
+# github.com/getsentry/sentry-go v0.2.1
+github.com/getsentry/sentry-go
 # github.com/go-ole/go-ole v1.2.2
 github.com/go-ole/go-ole
 github.com/go-ole/go-ole/oleutil
@@ -99,8 +97,6 @@ github.com/newrelic/go-agent/internal/jsonx
 github.com/newrelic/go-agent/internal/sysinfo
 # github.com/pborman/uuid v0.0.0-20180906182336-adf5a7427709
 github.com/pborman/uuid
-# github.com/pkg/errors v0.8.1
-github.com/pkg/errors
 # github.com/pmezard/go-difflib v1.0.0
 github.com/pmezard/go-difflib/difflib
 # github.com/prometheus/client_golang v0.9.2
