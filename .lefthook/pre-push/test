@@ -1,0 +1,10 @@
+#!/bin/sh
+
+if ! [ -x "$(which brew)" ]; then
+  export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:$(brew --prefix libffi)/lib/pkgconfig"
+fi
+
+export CGO_LDFLAGS_ALLOW="-s|-w"
+export CGO_CFLAGS_ALLOW="-Xpreprocessor"
+
+go test

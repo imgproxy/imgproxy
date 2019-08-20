@@ -1,0 +1,9 @@
+pre-commit:
+  scripts:
+    lint:
+      tags: lint
+
+pre-push:
+  scripts:
+    test:
+      tags: test
