@@ -1,6 +1,6 @@
 #!/bin/sh
 
-if ! [ -x "$(which brew)" ]; then
+if [ -x "$(which brew)" ]; then
   export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:$(brew --prefix libffi)/lib/pkgconfig"
 fi
 
