@@ -31,6 +31,11 @@ func (e *imgproxyError) StackTrace() []uintptr {
 	return e.stack
 }
 
+func (e *imgproxyError) MarkAsUnexpected() *imgproxyError {
+	e.Unexpected = true
+	return e
+}
+
 func newError(status int, msg string, pub string) *imgproxyError {
 	return &imgproxyError{
 		StatusCode:    status,

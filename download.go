@@ -171,7 +171,7 @@ func downloadImage(ctx context.Context) (context.Context, context.CancelFunc, er
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return ctx, func() {}, newError(404, err.Error(), msgSourceImageIsUnreachable)
+		return ctx, func() {}, newError(404, err.Error(), msgSourceImageIsUnreachable).MarkAsUnexpected()
 	}
 
 	req.Header.Set("User-Agent", conf.UserAgent)
@@ -181,13 +181,13 @@ func downloadImage(ctx context.Context) (context.Context, context.CancelFunc, er
 		defer res.Body.Close()
 	}
 	if err != nil {
-		return ctx, func() {}, newError(404, err.Error(), msgSourceImageIsUnreachable)
+		return ctx, func() {}, newError(404, err.Error(), msgSourceImageIsUnreachable).MarkAsUnexpected()
 	}
 
 	if res.StatusCode != 200 {
 		body, _ := ioutil.ReadAll(res.Body)
 		msg := fmt.Sprintf("Can't download image; Status: %d; %s", res.StatusCode, string(body))
-		return ctx, func() {}, newError(404, msg, msgSourceImageIsUnreachable)
+		return ctx, func() {}, newError(404, msg, msgSourceImageIsUnreachable).MarkAsUnexpected()
 	}
 
 	return readAndCheckImage(ctx, res)
