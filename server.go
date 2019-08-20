@@ -21,9 +21,11 @@ func buildRouter() *router {
 
 	r.PanicHandler = handlePanic
 
-	r.GET("/health", handleHealth)
-	r.GET("/", withCORS(withSecret(handleProcessing)))
-	r.OPTIONS("/", withCORS(handleOptions))
+	r.GET("/", handleLanding, true)
+	r.GET("/health", handleHealth, true)
+	r.GET("/favicon.ico", handleFavicon, true)
+	r.GET("/", withCORS(withSecret(handleProcessing)), false)
+	r.OPTIONS("/", withCORS(handleOptions), false)
 
 	return r
 }
@@ -128,5 +130,10 @@ func handleHealth(reqID string, rw http.ResponseWriter, r *http.Request) {
 
 func handleOptions(reqID string, rw http.ResponseWriter, r *http.Request) {
 	logResponse(reqID, 200, "Respond with options")
+	rw.WriteHeader(200)
+}
+
+func handleFavicon(reqID string, rw http.ResponseWriter, r *http.Request) {
+	// TODO: Add a real favicon maybe?
 	rw.WriteHeader(200)
 }
