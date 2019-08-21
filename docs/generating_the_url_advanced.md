@@ -264,7 +264,7 @@ Default: empty
 ##### Filename
 
 ```
-filenale:%string
+filename:%string
 fn:%string
 ```
 
