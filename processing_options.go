@@ -140,13 +140,6 @@ const (
 	msgInvalidURL = "Invalid URL"
 )
 
-var (
-	errInvalidImageURL                    = errors.New("Invalid image url")
-	errInvalidURLEncoding                 = errors.New("Invalid url encoding")
-	errResultingImageFormatIsNotSupported = errors.New("Resulting image format is not supported")
-	errInvalidPath                        = newError(404, "Invalid path", msgInvalidURL)
-)
-
 func (gt gravityType) String() string {
 	for k, v := range gravityTypes {
 		if v == gt {
@@ -200,10 +193,15 @@ func colorFromHex(hexcolor string) (rgbColor, error) {
 func decodeBase64URL(parts []string) (string, string, error) {
 	var format string
 
-	urlParts := strings.Split(strings.Join(parts, ""), ".")
+	encoded := strings.Join(parts, "")
+	urlParts := strings.Split(encoded, ".")
+
+	if len(urlParts[0]) == 0 {
+		return "", "", errors.New("Image URL is empty")
+	}
 
 	if len(urlParts) > 2 {
-		return "", "", errInvalidURLEncoding
+		return "", "", fmt.Errorf("Multiple formats are specified: %s", encoded)
 	}
 
 	if len(urlParts) == 2 && len(urlParts[1]) > 0 {
@@ -212,13 +210,13 @@ func decodeBase64URL(parts []string) (string, string, error) {
 
 	imageURL, err := base64.RawURLEncoding.DecodeString(strings.TrimRight(urlParts[0], "="))
 	if err != nil {
-		return "", "", errInvalidURLEncoding
+		return "", "", fmt.Errorf("Invalid url encoding: %s", encoded)
 	}
 
 	fullURL := fmt.Sprintf("%s%s", conf.BaseURL, string(imageURL))
 
 	if _, err := url.ParseRequestURI(fullURL); err != nil {
-		return "", "", errInvalidImageURL
+		return "", "", fmt.Errorf("Invalid image url: %s", fullURL)
 	}
 
 	return fullURL, format, nil
@@ -227,29 +225,38 @@ func decodeBase64URL(parts []string) (string, string, error) {
 func decodePlainURL(parts []string) (string, string, error) {
 	var format string
 
-	urlParts := strings.Split(strings.Join(parts, "/"), "@")
+	encoded := strings.Join(parts, "/")
+	urlParts := strings.Split(encoded, "@")
+
+	if len(urlParts[0]) == 0 {
+		return "", "", errors.New("Image URL is empty")
+	}
 
 	if len(urlParts) > 2 {
-		return "", "", errInvalidURLEncoding
+		return "", "", fmt.Errorf("Multiple formats are specified: %s", encoded)
 	}
 
 	if len(urlParts) == 2 && len(urlParts[1]) > 0 {
 		format = urlParts[1]
 	}
 
-	if unescaped, err := url.PathUnescape(urlParts[0]); err == nil {
-		fullURL := fmt.Sprintf("%s%s", conf.BaseURL, unescaped)
-		if _, err := url.ParseRequestURI(fullURL); err == nil {
-			return fullURL, format, nil
-		}
+	unescaped, err := url.PathUnescape(urlParts[0])
+	if err != nil {
+		return "", "", fmt.Errorf("Invalid url encoding: %s", encoded)
 	}
 
-	return "", "", errInvalidImageURL
+	fullURL := fmt.Sprintf("%s%s", conf.BaseURL, unescaped)
+
+	if _, err := url.ParseRequestURI(fullURL); err != nil {
+		return "", "", fmt.Errorf("Invalid image url: %s", fullURL)
+	}
+
+	return fullURL, format, nil
 }
 
 func decodeURL(parts []string) (string, string, error) {
 	if len(parts) == 0 {
-		return "", "", errInvalidURLEncoding
+		return "", "", errors.New("Image URL is empty")
 	}
 
 	if parts[0] == urlTokenPlain && len(parts) > 1 {
@@ -621,7 +628,7 @@ func applyFormatOption(po *processingOptions, args []string) error {
 	}
 
 	if !vipsTypeSupportSave[po.Format] {
-		return errResultingImageFormatIsNotSupported
+		return fmt.Errorf("Resulting image format is not supported: %s", po.Format)
 	}
 
 	return nil
@@ -831,7 +838,7 @@ func parsePathBasic(parts []string, headers *processingHeaders) (string, *proces
 	var err error
 
 	if len(parts) < 6 {
-		return "", nil, errInvalidPath
+		return "", nil, fmt.Errorf("Invalid basic URL format arguments: %s", strings.Join(parts, "/"))
 	}
 
 	po, err := defaultProcessingOptions(headers)
@@ -879,7 +886,7 @@ func parsePath(ctx context.Context, r *http.Request) (context.Context, error) {
 	parts := strings.Split(strings.TrimPrefix(path, "/"), "/")
 
 	if len(parts) < 3 {
-		return ctx, errInvalidPath
+		return ctx, newError(404, fmt.Sprintf("Invalid path: %s", path), msgInvalidURL)
 	}
 
 	if !conf.AllowInsecure {

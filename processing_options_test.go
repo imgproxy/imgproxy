@@ -58,7 +58,7 @@ func (s *ProcessingOptionsTestSuite) TestParseBase64URLInvalid() {
 	_, err := parsePath(context.Background(), req)
 
 	require.Error(s.T(), err)
-	assert.Equal(s.T(), errInvalidImageURL.Error(), err.Error())
+	assert.Contains(s.T(), err.Error(), "Invalid image url")
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePlainURL() {
@@ -121,7 +121,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePlainURLInvalid() {
 	_, err := parsePath(context.Background(), req)
 
 	require.Error(s.T(), err)
-	assert.Equal(s.T(), errInvalidImageURL.Error(), err.Error())
+	assert.Contains(s.T(), err.Error(), "Invalid image url")
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePlainURLEscapedInvalid() {
@@ -130,7 +130,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePlainURLEscapedInvalid() {
 	_, err := parsePath(context.Background(), req)
 
 	require.Error(s.T(), err)
-	assert.Equal(s.T(), errInvalidImageURL.Error(), err.Error())
+	assert.Contains(s.T(), err.Error(), "Invalid image url")
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathBasic() {

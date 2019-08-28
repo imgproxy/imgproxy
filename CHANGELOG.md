@@ -2,6 +2,8 @@
 
 ## master
 
+- More verbose URL parsing errors;
+
 ## v2.4.0
 
 - Better handling if non-sRGB images;
