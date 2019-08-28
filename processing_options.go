@@ -553,7 +553,7 @@ func applyPresetOption(po *processingOptions, args []string) error {
 				return err
 			}
 		} else {
-			return fmt.Errorf("Unknown asset: %s", preset)
+			return fmt.Errorf("Unknown preset: %s", preset)
 		}
 	}
 
