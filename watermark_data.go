@@ -9,22 +9,47 @@ import (
 	"os"
 )
 
-func watermarkData() ([]byte, imageType, context.CancelFunc, error) {
+type watermarkData struct {
+	data    []byte
+	imgtype imageType
+}
+
+func getWatermarkData() (*watermarkData, error) {
 	if len(conf.WatermarkData) > 0 {
 		data, imgtype, err := base64WatermarkData()
-		return data, imgtype, func() {}, err
+
+		if err != nil {
+			return nil, err
+		}
+
+		return &watermarkData{data, imgtype}, err
 	}
 
 	if len(conf.WatermarkPath) > 0 {
 		data, imgtype, err := fileWatermarkData()
-		return data, imgtype, func() {}, err
+
+		if err != nil {
+			return nil, err
+		}
+
+		return &watermarkData{data, imgtype}, err
 	}
 
 	if len(conf.WatermarkURL) > 0 {
-		return remoteWatermarkData()
+		b, imgtype, cancel, err := remoteWatermarkData()
+		defer cancel()
+
+		if err != nil {
+			return nil, err
+		}
+
+		data := make([]byte, len(b))
+		copy(data, b)
+
+		return &watermarkData{data, imgtype}, err
 	}
 
-	return nil, imageTypeUnknown, func() {}, nil
+	return nil, nil
 }
 
 func base64WatermarkData() ([]byte, imageType, error) {
