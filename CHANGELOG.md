@@ -2,6 +2,8 @@
 
 ## master
 
+## v2.4.1
+
 - More verbose URL parsing errors;
 
 ## v2.4.0
