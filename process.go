@@ -202,6 +202,66 @@ func scaleSize(size int, scale float64) int {
 	return roundToInt(float64(size) * scale)
 }
 
+func prepareWatermark(wm *vipsImage, wmData *watermarkData, opts *watermarkOptions, imgWidth, imgHeight int) error {
+	if err := wm.Load(wmData.data, wmData.imgtype, 1, 1.0, 1); err != nil {
+		return err
+	}
+
+	po := processingOptions{
+		Resize:  resizeFit,
+		Dpr:     1,
+		Enlarge: true,
+		Format:  wmData.imgtype,
+	}
+
+	if opts.Scale > 0 {
+		po.Width = maxInt(int(float64(imgWidth)*opts.Scale), 1)
+		po.Height = maxInt(int(float64(imgHeight)*opts.Scale), 1)
+	}
+
+	if err := transformImage(context.Background(), wm, wmData.data, &po, wmData.imgtype); err != nil {
+		return err
+	}
+
+	if err := wm.EnsureAlpha(); err != nil {
+		return nil
+	}
+
+	if opts.Replicate {
+		if err := wm.Replicate(imgWidth, imgHeight); err != nil {
+			return err
+		}
+	} else {
+		if err := wm.Embed(opts.Gravity, imgWidth, imgHeight, opts.OffsetX, opts.OffsetY, rgbColor{0, 0, 0}); err != nil {
+			return err
+		}
+	}
+
+	return wm.CopyMemory()
+}
+
+func applyWatermark(img *vipsImage, wmData *watermarkData, opts *watermarkOptions, framesCount int) error {
+	wm := new(vipsImage)
+	defer wm.Clear()
+
+	width := img.Width()
+	height := img.Height()
+
+	if err := prepareWatermark(wm, wmData, opts, width, height/framesCount); err != nil {
+		return err
+	}
+
+	if framesCount > 1 {
+		if err := wm.Replicate(width, height); err != nil {
+			return err
+		}
+	}
+
+	opacity := opts.Opacity * conf.WatermarkOpacity
+
+	return img.ApplyWatermark(wm, opacity)
+}
+
 func transformImage(ctx context.Context, img *vipsImage, data []byte, po *processingOptions, imgtype imageType) error {
 	var err error
 
@@ -380,8 +440,8 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 
 	checkTimeout(ctx)
 
-	if po.Watermark.Enabled {
-		if err = img.ApplyWatermark(&po.Watermark); err != nil {
+	if po.Watermark.Enabled && watermark != nil {
+		if err = applyWatermark(img, watermark, &po.Watermark, 1); err != nil {
 			return err
 		}
 	}
@@ -446,6 +506,10 @@ func transformAnimated(ctx context.Context, img *vipsImage, data []byte, po *pro
 		}
 	}()
 
+	watermarkEnabled := po.Watermark.Enabled
+	po.Watermark.Enabled = false
+	defer func() { po.Watermark.Enabled = watermarkEnabled }()
+
 	var errg errgroup.Group
 
 	for i := 0; i < framesCount; i++ {
@@ -475,6 +539,12 @@ func transformAnimated(ctx context.Context, img *vipsImage, data []byte, po *pro
 
 	if err := img.Arrayjoin(frames); err != nil {
 		return err
+	}
+
+	if watermarkEnabled && watermark != nil {
+		if err = applyWatermark(img, watermark, &po.Watermark, framesCount); err != nil {
+			return err
+		}
 	}
 
 	img.SetInt("page-height", frames[0].Height())

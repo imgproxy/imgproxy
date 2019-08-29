@@ -71,7 +71,6 @@ int vips_replicate_go(VipsImage *in, VipsImage **out, int across, int down);
 int vips_embed_go(VipsImage *in, VipsImage **out, int x, int y, int width, int height, double *bg, int bgn);
 
 int vips_ensure_alpha(VipsImage *in, VipsImage **out);
-int vips_apply_opacity(VipsImage *in, VipsImage **out, double opacity);
 
 int vips_apply_watermark(VipsImage *in, VipsImage *watermark, VipsImage **out, double opacity);
 

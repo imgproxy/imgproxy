@@ -386,49 +386,6 @@ vips_ensure_alpha(VipsImage *in, VipsImage **out) {
 }
 
 int
-vips_apply_opacity(VipsImage *in, VipsImage **out, double opacity){
-  if (vips_image_hasalpha_go(in)) {
-    if (opacity < 1) {
-      VipsImage *img, *img_alpha, *tmp;
-
-			if (vips_extract_band(in, &img, 0, "n", in->Bands - 1, NULL))
-				return 1;
-
-      if (vips_extract_band(in, &img_alpha, in->Bands - 1, "n", 1, NULL)) {
-        clear_image(&img);
-				return 1;
-			}
-
-			if (vips_linear1(img_alpha, &tmp, opacity, 0, NULL)) {
-        clear_image(&img);
-        clear_image(&img_alpha);
-				return 1;
-			}
-			swap_and_clear(&img_alpha, tmp);
-
-			if (vips_bandjoin2(img, img_alpha, out, NULL)) {
-        clear_image(&img);
-        clear_image(&img_alpha);
-				return 1;
-			}
-
-      clear_image(&img);
-      clear_image(&img_alpha);
-    } else {
-      if (vips_copy(in, out, NULL)) {
-        return 1;
-      }
-    }
-  } else {
-    if (vips_bandjoin_const1(in, out, opacity * 255, NULL)) {
-      return 1;
-    }
-  }
-
-  return 0;
-}
-
-int
 vips_apply_watermark(VipsImage *in, VipsImage *watermark, VipsImage **out, double opacity) {
   VipsImage *wm, *wm_alpha, *tmp;
 
