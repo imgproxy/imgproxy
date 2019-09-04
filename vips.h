@@ -82,6 +82,7 @@ int vips_pngsave_go(VipsImage *in, void **buf, size_t *len, int interlace, int q
 int vips_webpsave_go(VipsImage *in, void **buf, size_t *len, int quality);
 int vips_gifsave_go(VipsImage *in, void **buf, size_t *len);
 int vips_icosave_go(VipsImage *in, void **buf, size_t *len);
+int vips_svgsave_go(VipsImage *in, void **buf, size_t *len);
 int vips_heifsave_go(VipsImage *in, void **buf, size_t *len, int quality);
 
 void vips_cleanup();

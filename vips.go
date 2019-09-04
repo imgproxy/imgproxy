@@ -106,6 +106,9 @@ func initVips() {
 	if int(C.vips_type_find_save_go(C.int(imageTypeICO))) != 0 {
 		vipsTypeSupportSave[imageTypeICO] = true
 	}
+	if int(C.vips_type_find_save_go(C.int(imageTypeSVG))) != 0 {
+		vipsTypeSupportSave[imageTypeSVG] = true
+	}
 	if int(C.vips_type_find_save_go(C.int(imageTypeHEIC))) != 0 {
 		vipsTypeSupportSave[imageTypeHEIC] = true
 	}
@@ -284,6 +287,8 @@ func (img *vipsImage) Save(imgtype imageType, quality int) ([]byte, context.Canc
 		err = C.vips_gifsave_go(img.VipsImage, &ptr, &imgsize)
 	case imageTypeICO:
 		err = C.vips_icosave_go(img.VipsImage, &ptr, &imgsize)
+	case imageTypeSVG:
+		err = C.vips_svgsave_go(img.VipsImage, &ptr, &imgsize)
 	case imageTypeHEIC:
 		err = C.vips_heifsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality))
 	}

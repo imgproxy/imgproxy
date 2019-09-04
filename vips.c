@@ -94,6 +94,8 @@ vips_type_find_save_go(int imgtype) {
     return vips_type_find("VipsOperation", "magicksave_buffer");
   case (ICO):
     return vips_type_find("VipsOperation", "magicksave_buffer");
+  case (SVG):
+    return vips_type_find("VipsOperation", "magicksave_buffer");
   case (HEIC):
     return vips_type_find("VipsOperation", "heifsave_buffer");
   }
@@ -570,6 +572,16 @@ vips_icosave_go(VipsImage *in, void **buf, size_t *len) {
   return vips_magicksave_buffer(in, buf, len, "format", "ico", NULL);
 #else
   vips_error("vips_icosave_go", "Saving ICO is not supported");
+  return 1;
+#endif
+}
+
+int
+vips_svgsave_go(VipsImage *in, void **buf, size_t *len) {
+#if VIPS_SUPPORT_MAGICK
+  return vips_magicksave_buffer(in, buf, len, "format", "svg", NULL);
+#else
+  vips_error("vips_svgsave_go", "Saving SVG is not supported");
   return 1;
 #endif
 }
