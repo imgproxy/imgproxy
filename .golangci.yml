@@ -1,3 +1,7 @@
+run:
+  skip-dirs:
+    - .tmp
+
 linters:
   fast: true
   enable:
@@ -20,3 +24,12 @@ issues:
     - linters:
         - staticcheck
       text: "SA4000:"
+
+    - path: listen(_no)?_reuseport\.go
+      linters:
+        - typecheck
+      text: "declar"
+
+    - linters:
+        - typecheck
+      text: "could not import C"

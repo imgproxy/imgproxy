@@ -18,7 +18,7 @@ func icoData(data []byte) (out []byte, width int, height int, err error) {
 
 	// Ensure that image is in RGBA format
 	rgba := image.NewRGBA(ico.Bounds())
-	draw.Draw(rgba, ico.Bounds(), ico, image.ZP, draw.Src)
+	draw.Draw(rgba, ico.Bounds(), ico, image.Point{}, draw.Src)
 
 	width = rgba.Bounds().Dx()
 	height = rgba.Bounds().Dy()
