@@ -2,6 +2,7 @@
 
 #include <vips/vips.h>
 #include <vips/vips7compat.h>
+#include <vips/vector.h>
 
 enum ImgproxyImageTypes {
   UNKNOWN = 0,
