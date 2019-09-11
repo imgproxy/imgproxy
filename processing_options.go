@@ -158,6 +158,24 @@ func (rt resizeType) String() string {
 	return ""
 }
 
+func newProcessingOptions() *processingOptions {
+	return &processingOptions{
+		Resize:      resizeFit,
+		Width:       0,
+		Height:      0,
+		Gravity:     gravityOptions{Type: gravityCenter},
+		Enlarge:     false,
+		Quality:     conf.Quality,
+		Format:      imageTypeUnknown,
+		Background:  rgbColor{255, 255, 255},
+		Blur:        0,
+		Sharpen:     0,
+		Dpr:         1,
+		Watermark:   watermarkOptions{Opacity: 1, Replicate: false, Gravity: gravityCenter},
+		UsedPresets: make([]string, 0, len(conf.Presets)),
+	}
+}
+
 func (po *processingOptions) isPresetUsed(name string) bool {
 	for _, usedName := range po.UsedPresets {
 		if usedName == name {
@@ -736,21 +754,7 @@ func parseURLOptions(opts []string) (urlOptions, []string) {
 }
 
 func defaultProcessingOptions(headers *processingHeaders) (*processingOptions, error) {
-	po := processingOptions{
-		Resize:      resizeFit,
-		Width:       0,
-		Height:      0,
-		Gravity:     gravityOptions{Type: gravityCenter},
-		Enlarge:     false,
-		Quality:     conf.Quality,
-		Format:      imageTypeUnknown,
-		Background:  rgbColor{255, 255, 255},
-		Blur:        0,
-		Sharpen:     0,
-		Dpr:         1,
-		Watermark:   watermarkOptions{Opacity: 1, Replicate: false, Gravity: gravityCenter},
-		UsedPresets: make([]string, 0, len(conf.Presets)),
-	}
+	po := newProcessingOptions()
 
 	if strings.Contains(headers.Accept, "image/webp") {
 		po.PreferWebP = conf.EnableWebpDetection || conf.EnforceWebp
@@ -773,12 +777,12 @@ func defaultProcessingOptions(headers *processingHeaders) (*processingOptions, e
 		}
 	}
 	if _, ok := conf.Presets["default"]; ok {
-		if err := applyPresetOption(&po, []string{"default"}); err != nil {
-			return &po, err
+		if err := applyPresetOption(po, []string{"default"}); err != nil {
+			return po, err
 		}
 	}
 
-	return &po, nil
+	return po, nil
 }
 
 func parsePathAdvanced(parts []string, headers *processingHeaders) (string, *processingOptions, error) {

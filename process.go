@@ -120,8 +120,8 @@ func calcJpegShink(scale float64, imgtype imageType) int {
 
 func calcCrop(width, height, cropWidth, cropHeight int, gravity *gravityOptions) (left, top int) {
 	if gravity.Type == gravityFocusPoint {
-		pointX := int(float64(width) * gravity.X)
-		pointY := int(float64(height) * gravity.Y)
+		pointX := scaleInt(width, gravity.X)
+		pointY := scaleInt(height, gravity.Y)
 
 		left = maxInt(0, minInt(pointX-cropWidth/2, width-cropWidth))
 		top = maxInt(0, minInt(pointY-cropHeight/2, height-cropHeight))
@@ -163,17 +163,8 @@ func cropImage(img *vipsImage, cropWidth, cropHeight int, gravity *gravityOption
 
 	imgWidth, imgHeight := img.Width(), img.Height()
 
-	if cropWidth == 0 {
-		cropWidth = imgWidth
-	} else {
-		cropWidth = minInt(cropWidth, imgWidth)
-	}
-
-	if cropHeight == 0 {
-		cropHeight = imgHeight
-	} else {
-		cropHeight = minInt(cropHeight, imgHeight)
-	}
+	cropWidth = minNonZeroInt(cropWidth, imgWidth)
+	cropHeight = minNonZeroInt(cropHeight, imgHeight)
 
 	if cropWidth >= imgWidth && cropHeight >= imgHeight {
 		return nil
@@ -195,32 +186,23 @@ func cropImage(img *vipsImage, cropWidth, cropHeight int, gravity *gravityOption
 	return img.Crop(left, top, cropWidth, cropHeight)
 }
 
-func scaleSize(size int, scale float64) int {
-	if size == 0 {
-		return 0
-	}
-
-	return roundToInt(float64(size) * scale)
-}
-
 func prepareWatermark(wm *vipsImage, wmData *watermarkData, opts *watermarkOptions, imgWidth, imgHeight int) error {
 	if err := wm.Load(wmData.data, wmData.imgtype, 1, 1.0, 1); err != nil {
 		return err
 	}
 
-	po := processingOptions{
-		Resize:  resizeFit,
-		Dpr:     1,
-		Enlarge: true,
-		Format:  wmData.imgtype,
-	}
+	po := newProcessingOptions()
+	po.Resize = resizeFit
+	po.Dpr = 1
+	po.Enlarge = true
+	po.Format = wmData.imgtype
 
 	if opts.Scale > 0 {
-		po.Width = maxInt(int(float64(imgWidth)*opts.Scale), 1)
-		po.Height = maxInt(int(float64(imgHeight)*opts.Scale), 1)
+		po.Width = maxInt(scaleInt(imgWidth, opts.Scale), 1)
+		po.Height = maxInt(scaleInt(imgHeight, opts.Scale), 1)
 	}
 
-	if err := transformImage(context.Background(), wm, wmData.data, &po, wmData.imgtype); err != nil {
+	if err := transformImage(context.Background(), wm, wmData.data, po, wmData.imgtype); err != nil {
 		return err
 	}
 
@@ -261,7 +243,6 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 	var err error
 
 	srcWidth, srcHeight, angle, flip := extractMeta(img)
-
 	cropWidth, cropHeight := po.Crop.Width, po.Crop.Height
 
 	cropGravity := po.Crop.Gravity
@@ -269,19 +250,13 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 		cropGravity = po.Gravity
 	}
 
-	widthToScale, heightToScale := srcWidth, srcHeight
-
-	if cropWidth > 0 {
-		widthToScale = minInt(cropWidth, srcWidth)
-	}
-	if cropHeight > 0 {
-		heightToScale = minInt(cropHeight, srcHeight)
-	}
+	widthToScale := minNonZeroInt(cropWidth, srcWidth)
+	heightToScale := minNonZeroInt(cropHeight, srcHeight)
 
 	scale := calcScale(widthToScale, heightToScale, po, imgtype)
 
-	cropWidth = scaleSize(cropWidth, scale)
-	cropHeight = scaleSize(cropHeight, scale)
+	cropWidth = scaleInt(cropWidth, scale)
+	cropHeight = scaleInt(cropHeight, scale)
 	cropGravity.X *= scale
 	cropGravity.Y *= scale
 
@@ -303,8 +278,8 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 		// Update scale after scale-on-load
 		newWidth, newHeight, _, _ := extractMeta(img)
 
-		widthToScale = scaleSize(widthToScale, float64(newWidth)/float64(srcWidth))
-		heightToScale = scaleSize(heightToScale, float64(newHeight)/float64(srcHeight))
+		widthToScale = scaleInt(widthToScale, float64(newWidth)/float64(srcWidth))
+		heightToScale = scaleInt(heightToScale, float64(newHeight)/float64(srcHeight))
 
 		scale = calcScale(widthToScale, heightToScale, po, imgtype)
 	}
@@ -363,21 +338,12 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 
 	checkTimeout(ctx)
 
-	dprWidth := roundToInt(float64(po.Width) * po.Dpr)
-	dprHeight := roundToInt(float64(po.Height) * po.Dpr)
+	dprWidth := scaleInt(po.Width, po.Dpr)
+	dprHeight := scaleInt(po.Height, po.Dpr)
 
 	if cropGravity.Type == po.Gravity.Type && cropGravity.Type != gravityFocusPoint {
-		if cropWidth == 0 {
-			cropWidth = dprWidth
-		} else if dprWidth > 0 {
-			cropWidth = minInt(cropWidth, dprWidth)
-		}
-
-		if cropHeight == 0 {
-			cropHeight = dprHeight
-		} else if dprHeight > 0 {
-			cropHeight = minInt(cropHeight, dprHeight)
-		}
+		cropWidth = minNonZeroInt(cropWidth, dprWidth)
+		cropHeight = minNonZeroInt(cropHeight, dprHeight)
 
 		sumGravity := gravityOptions{
 			Type: cropGravity.Type,
