@@ -30,30 +30,32 @@ func logRequest(reqID string, r *http.Request) {
 func logResponse(reqID string, status int, msg string) {
 	var color int
 
-	if status >= 500 {
+	switch {
+	case status >= 500:
 		color = 31
-	} else if status >= 400 {
+	case status >= 400:
 		color = 33
-	} else {
+	default:
 		color = 32
 	}
 
 	log.Printf(logResponseFmt, reqID, color, status, msg)
 
 	if syslogWriter != nil {
-		msg := fmt.Sprintf(logResponseSyslogFmt, reqID, status, msg)
+		syslogMsg := fmt.Sprintf(logResponseSyslogFmt, reqID, status, msg)
 
-		if status >= 500 {
+		switch {
+		case status >= 500:
 			if syslogLevel >= syslog.LOG_ERR {
-				syslogWriter.Err(msg)
+				syslogWriter.Err(syslogMsg)
 			}
-		} else if status >= 400 {
+		case status >= 400:
 			if syslogLevel >= syslog.LOG_WARNING {
-				syslogWriter.Warning(msg)
+				syslogWriter.Warning(syslogMsg)
 			}
-		} else {
+		default:
 			if syslogLevel >= syslog.LOG_NOTICE {
-				syslogWriter.Notice(msg)
+				syslogWriter.Notice(syslogMsg)
 			}
 		}
 	}

@@ -736,8 +736,6 @@ func parseURLOptions(opts []string) (urlOptions, []string) {
 }
 
 func defaultProcessingOptions(headers *processingHeaders) (*processingOptions, error) {
-	var err error
-
 	po := processingOptions{
 		Resize:      resizeFit,
 		Width:       0,
@@ -775,10 +773,12 @@ func defaultProcessingOptions(headers *processingHeaders) (*processingOptions, e
 		}
 	}
 	if _, ok := conf.Presets["default"]; ok {
-		err = applyPresetOption(&po, []string{"default"})
+		if err := applyPresetOption(&po, []string{"default"}); err != nil {
+			return &po, err
+		}
 	}
 
-	return &po, err
+	return &po, nil
 }
 
 func parsePathAdvanced(parts []string, headers *processingHeaders) (string, *processingOptions, error) {
@@ -789,7 +789,7 @@ func parsePathAdvanced(parts []string, headers *processingHeaders) (string, *pro
 
 	options, urlParts := parseURLOptions(parts)
 
-	if err := applyProcessingOptions(po, options); err != nil {
+	if err = applyProcessingOptions(po, options); err != nil {
 		return "", po, err
 	}
 
@@ -799,7 +799,7 @@ func parsePathAdvanced(parts []string, headers *processingHeaders) (string, *pro
 	}
 
 	if len(extension) > 0 {
-		if err := applyFormatOption(po, []string{extension}); err != nil {
+		if err = applyFormatOption(po, []string{extension}); err != nil {
 			return "", po, err
 		}
 	}
@@ -816,7 +816,7 @@ func parsePathPresets(parts []string, headers *processingHeaders) (string, *proc
 	presets := strings.Split(parts[0], ":")
 	urlParts := parts[1:]
 
-	if err := applyPresetOption(po, presets); err != nil {
+	if err = applyPresetOption(po, presets); err != nil {
 		return "", nil, err
 	}
 
@@ -826,7 +826,7 @@ func parsePathPresets(parts []string, headers *processingHeaders) (string, *proc
 	}
 
 	if len(extension) > 0 {
-		if err := applyFormatOption(po, []string{extension}); err != nil {
+		if err = applyFormatOption(po, []string{extension}); err != nil {
 			return "", po, err
 		}
 	}
@@ -835,8 +835,6 @@ func parsePathPresets(parts []string, headers *processingHeaders) (string, *proc
 }
 
 func parsePathBasic(parts []string, headers *processingHeaders) (string, *processingOptions, error) {
-	var err error
-
 	if len(parts) < 6 {
 		return "", nil, fmt.Errorf("Invalid basic URL format arguments: %s", strings.Join(parts, "/"))
 	}

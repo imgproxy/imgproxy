@@ -41,7 +41,7 @@ type limitReader struct {
 
 func (lr *limitReader) Read(p []byte) (n int, err error) {
 	n, err = lr.r.Read(p)
-	lr.left = lr.left - n
+	lr.left -= n
 
 	if err == nil && lr.left < 0 {
 		err = errSourceFileTooBig

@@ -62,13 +62,14 @@ func calcScale(width, height int, po *processingOptions, imgtype imageType) floa
 			}
 		}
 
-		if po.Width == 0 {
+		switch {
+		case po.Width == 0:
 			scale = hr
-		} else if po.Height == 0 {
+		case po.Height == 0:
 			scale = wr
-		} else if rt == resizeFit {
+		case rt == resizeFit:
 			scale = math.Min(wr, hr)
-		} else {
+		default:
 			scale = math.Max(wr, hr)
 		}
 	}
@@ -77,7 +78,7 @@ func calcScale(width, height int, po *processingOptions, imgtype imageType) floa
 		scale = 1
 	}
 
-	scale = scale * po.Dpr
+	scale *= po.Dpr
 
 	if srcW*scale < 1 {
 		scale = 1 / srcW
@@ -287,19 +288,19 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 
 	cropWidth = scaleSize(cropWidth, scale)
 	cropHeight = scaleSize(cropHeight, scale)
-	cropGravity.X = cropGravity.X * scale
-	cropGravity.Y = cropGravity.Y * scale
+	cropGravity.X *= scale
+	cropGravity.Y *= scale
 
 	if scale != 1 && data != nil && canScaleOnLoad(imgtype, scale) {
 		if imgtype == imageTypeWEBP || imgtype == imageTypeSVG {
 			// Do some scale-on-load
-			if err := img.Load(data, imgtype, 1, scale, 1); err != nil {
+			if err = img.Load(data, imgtype, 1, scale, 1); err != nil {
 				return err
 			}
 		} else if imgtype == imageTypeJPEG {
 			// Do some shrink-on-load
 			if shrink := calcJpegShink(scale, imgtype); shrink != 1 {
-				if err := img.Load(data, imgtype, shrink, 1.0, 1); err != nil {
+				if err = img.Load(data, imgtype, shrink, 1.0, 1); err != nil {
 					return err
 				}
 			}
@@ -460,7 +461,7 @@ func transformAnimated(ctx context.Context, img *vipsImage, data []byte, po *pro
 	framesCount := minInt(img.Height()/frameHeight, conf.MaxAnimationFrames)
 
 	// Double check dimensions because animated image has many frames
-	if err := checkDimensions(imgWidth, frameHeight*framesCount); err != nil {
+	if err = checkDimensions(imgWidth, frameHeight*framesCount); err != nil {
 		return err
 	}
 
@@ -476,7 +477,7 @@ func transformAnimated(ctx context.Context, img *vipsImage, data []byte, po *pro
 		if nPages > framesCount || canScaleOnLoad(imgtype, scale) {
 			logNotice("Animated scale on load")
 			// Do some scale-on-load and load only the needed frames
-			if err := img.Load(data, imgtype, 1, scale, framesCount); err != nil {
+			if err = img.Load(data, imgtype, 1, scale, framesCount); err != nil {
 				return err
 			}
 		}
@@ -517,11 +518,11 @@ func transformAnimated(ctx context.Context, img *vipsImage, data []byte, po *pro
 		errg.Go(func() error {
 			frame := new(vipsImage)
 
-			if err := img.Extract(frame, 0, ind*frameHeight, imgWidth, frameHeight); err != nil {
+			if err = img.Extract(frame, 0, ind*frameHeight, imgWidth, frameHeight); err != nil {
 				return err
 			}
 
-			if err := transformImage(ctx, frame, nil, po, imgtype); err != nil {
+			if err = transformImage(ctx, frame, nil, po, imgtype); err != nil {
 				return err
 			}
 
@@ -531,13 +532,13 @@ func transformAnimated(ctx context.Context, img *vipsImage, data []byte, po *pro
 		})
 	}
 
-	if err := errg.Wait(); err != nil {
+	if err = errg.Wait(); err != nil {
 		return err
 	}
 
 	checkTimeout(ctx)
 
-	if err := img.Arrayjoin(frames); err != nil {
+	if err = img.Arrayjoin(frames); err != nil {
 		return err
 	}
 
@@ -575,11 +576,12 @@ func processImage(ctx context.Context) ([]byte, context.CancelFunc, error) {
 	imgtype := getImageType(ctx)
 
 	if po.Format == imageTypeUnknown {
-		if po.PreferWebP && vipsTypeSupportSave[imageTypeWEBP] {
+		switch {
+		case po.PreferWebP && vipsTypeSupportSave[imageTypeWEBP]:
 			po.Format = imageTypeWEBP
-		} else if vipsTypeSupportSave[imgtype] && imgtype != imageTypeHEIC {
+		case vipsTypeSupportSave[imgtype] && imgtype != imageTypeHEIC:
 			po.Format = imgtype
-		} else {
+		default:
 			po.Format = imageTypeJPEG
 		}
 	} else if po.EnforceWebP && vipsTypeSupportSave[imageTypeWEBP] {

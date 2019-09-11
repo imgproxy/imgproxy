@@ -433,15 +433,17 @@ func configure() {
 
 	if conf.LocalFileSystemRoot != "" {
 		stat, err := os.Stat(conf.LocalFileSystemRoot)
+
 		if err != nil {
 			logFatal("Cannot use local directory: %s", err)
-		} else {
-			if !stat.IsDir() {
-				logFatal("Cannot use local directory: not a directory")
-			}
 		}
+
+		if !stat.IsDir() {
+			logFatal("Cannot use local directory: not a directory")
+		}
+
 		if conf.LocalFileSystemRoot == "/" {
-			logNotice("Exposing root via IMGPROXY_LOCAL_FILESYSTEM_ROOT is unsafe")
+			logWarning("Exposing root via IMGPROXY_LOCAL_FILESYSTEM_ROOT is unsafe")
 		}
 	}
 

@@ -24,7 +24,7 @@ func newGCSTransport() http.RoundTripper {
 	return gcsTransport{client}
 }
 
-func (t gcsTransport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
+func (t gcsTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	bkt := t.client.Bucket(req.URL.Host)
 	obj := bkt.Object(strings.TrimPrefix(req.URL.Path, "/"))
 

@@ -89,8 +89,6 @@ func decodeWebpConfig(r io.Reader) (image.Config, error) {
 				return image.Config{}, err
 			}
 
-			const alphaBit = 1 << 4
-
 			widthMinusOne := uint32(buf[4]) | uint32(buf[5])<<8 | uint32(buf[6])<<16
 			heightMinusOne := uint32(buf[7]) | uint32(buf[8])<<8 | uint32(buf[9])<<16
 
