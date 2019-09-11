@@ -127,7 +127,7 @@ jobs:
           go_version: << parameters.go_version >>
       - run:
           name: Install golangci-lint
-          command: curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | BINARY=golangci-lint sh -s -- -b $(go env GOPATH)/bin v1.16.0
+          command: curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | BINARY=golangci-lint sh -s -- -b $(go env GOPATH)/bin v1.18.0
       - run:
           name: Lint imgproxy
           command: golangci-lint run .
