@@ -31,6 +31,9 @@
 #define VIPS_SUPPORT_BUILTIN_ICC \
   (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 8))
 
+#define VIPS_SUPPORT_COMPOSITE \
+  (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 6))
+
 #define EXIF_ORIENTATION "exif-ifd0-Orientation"
 
 #if (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 8))
@@ -387,99 +390,38 @@ vips_ensure_alpha(VipsImage *in, VipsImage **out) {
 
 int
 vips_apply_watermark(VipsImage *in, VipsImage *watermark, VipsImage **out, double opacity) {
-  VipsImage *wm, *wm_alpha, *tmp;
-
-	if (vips_extract_band(watermark, &wm, 0, "n", watermark->Bands - 1, NULL))
-		return 1;
-
-  if (vips_extract_band(watermark, &wm_alpha, watermark->Bands - 1, "n", 1, NULL)) {
-    clear_image(&wm);
-		return 1;
-	}
-
-	VipsInterpretation img_interpolation = vips_image_guess_interpretation(in);
-
-	if (img_interpolation != vips_image_guess_interpretation(wm)) {
-		if (vips_colourspace(wm, &tmp, img_interpolation, NULL)) {
-      clear_image(&wm);
-      clear_image(&wm_alpha);
-			return 1;
-		}
-		swap_and_clear(&wm, tmp);
-	}
+#ifdef VIPS_SUPPORT_COMPOSITE
+  VipsImage *base = vips_image_new();
+	VipsImage **t = (VipsImage **) vips_object_local_array(VIPS_OBJECT(base), 5);
 
 	if (opacity < 1) {
-		if (vips_linear1(wm_alpha, &tmp, opacity, 0, NULL)) {
-      clear_image(&wm);
-      clear_image(&wm_alpha);
-			return 1;
-		}
-
-		swap_and_clear(&wm_alpha, tmp);
-	}
-
-	VipsBandFormat img_format;
-	VipsImage *img, *img_alpha;
-
-	img_format = vips_image_get_format(in);
-
-  gboolean has_alpha = vips_image_hasalpha_go(in);
-
-	if (has_alpha) {
-		if (vips_extract_band(in, &img, 0, "n", in->Bands - 1, NULL)) {
-      clear_image(&wm);
-      clear_image(&wm_alpha);
-			return 1;
-		}
-
-		if (vips_extract_band(in, &img_alpha, in->Bands - 1, "n", 1, NULL)) {
-      clear_image(&wm);
-      clear_image(&wm_alpha);
-      clear_image(&img);
+    if (
+      vips_extract_band(watermark, &t[0], 0, "n", watermark->Bands - 1, NULL) ||
+      vips_extract_band(watermark, &t[1], watermark->Bands - 1, "n", 1, NULL) ||
+		  vips_linear1(t[1], &t[2], opacity, 0, NULL) ||
+      vips_bandjoin2(t[0], t[2], &t[3], NULL)
+    ) {
+      clear_image(&base);
 			return 1;
 		}
 	} else {
-    if (vips_copy(in, &img, NULL)) {
-      clear_image(&wm);
-      clear_image(&wm_alpha);
-			return 1;
+    if (vips_copy(watermark, &t[3], NULL)) {
+      clear_image(&base);
+      return 1;
     }
   }
 
-	if (vips_ifthenelse(wm_alpha, wm, img, &tmp, "blend", TRUE, NULL)) {
-    clear_image(&wm);
-    clear_image(&wm_alpha);
-    clear_image(&img);
-    clear_image(&img_alpha);
-		return 1;
-	}
+  int res =
+    vips_composite2(in, t[3], &t[4], VIPS_BLEND_MODE_OVER, "compositing_space", in->Type, NULL) ||
+    vips_cast(t[4], out, vips_image_get_format(in), NULL);
 
-	swap_and_clear(&img, tmp);
-  clear_image(&wm);
-  clear_image(&wm_alpha);
+  clear_image(&base);
 
-	if (has_alpha) {
-		if (vips_bandjoin2(img, img_alpha, &tmp, NULL)) {
-      clear_image(&img);
-      clear_image(&img_alpha);
-			return 1;
-		}
-
-		swap_and_clear(&img, tmp);
-    clear_image(&img_alpha);
-	}
-
-	if (img_format != vips_image_get_format(img)) {
-		if (vips_cast(img, &tmp, img_format, NULL)) {
-      clear_image(&img);
-			return 1;
-		}
-		swap_and_clear(&img, tmp);
-	}
-
-  *out = img;
-
-  return 0;
+  return res;
+#else
+  vips_error("vips_apply_watermark", "Watermarking is not supported");
+  return 1;
+#endif
 }
 
 int

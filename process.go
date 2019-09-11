@@ -229,16 +229,10 @@ func prepareWatermark(wm *vipsImage, wmData *watermarkData, opts *watermarkOptio
 	}
 
 	if opts.Replicate {
-		if err := wm.Replicate(imgWidth, imgHeight); err != nil {
-			return err
-		}
-	} else {
-		if err := wm.Embed(opts.Gravity, imgWidth, imgHeight, opts.OffsetX, opts.OffsetY, rgbColor{0, 0, 0}); err != nil {
-			return err
-		}
+		return wm.Replicate(imgWidth, imgHeight)
 	}
 
-	return wm.CopyMemory()
+	return wm.Embed(opts.Gravity, imgWidth, imgHeight, opts.OffsetX, opts.OffsetY, rgbColor{0, 0, 0})
 }
 
 func applyWatermark(img *vipsImage, wmData *watermarkData, opts *watermarkOptions, framesCount int) error {
