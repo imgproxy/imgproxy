@@ -1,6 +1,6 @@
 module github.com/imgproxy/imgproxy
 
-go 1.12
+go 1.11
 
 require (
 	cloud.google.com/go v0.34.0
