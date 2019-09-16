@@ -1,5 +1,0 @@
-language: go
-install: make deps
-go:
-  - 1.7
-  - tip
