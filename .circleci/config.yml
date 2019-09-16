@@ -50,19 +50,19 @@ workflows:
           name: go1.11_vips8.8
           requires:
             - checkout_code
-          go_version: "1.11"
+          go_version: "1.11.13"
           vips_version: "8.8"
       - build:
           name: go1.11_vips8.7
           requires:
             - checkout_code
-          go_version: "1.11"
+          go_version: "1.11.13"
           vips_version: "8.7"
       - build:
           name: go1.11_vips8.6
           requires:
             - checkout_code
-          go_version: "1.11"
+          go_version: "1.11.13"
           vips_version: "8.6"
 
 executors:
