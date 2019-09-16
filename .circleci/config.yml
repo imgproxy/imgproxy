@@ -147,6 +147,13 @@ jobs:
           vips_version: << parameters.vips_version >>
       - install_go:
           go_version: << parameters.go_version >>
+      - restore_cache:
+          keys:
+            - go-modules-{{ checksum "go.sum" }}
       - run:
           name: Build imgproxy
           command: go test -v
+      - save_cache:
+          key: go-modules-{{ checksum "go.sum" }}
+          paths:
+            - "/go/pkg/mod"
