@@ -39,15 +39,24 @@ func extractMeta(img *vipsImage) (int, int, int, bool) {
 }
 
 func calcScale(width, height int, po *processingOptions, imgtype imageType) float64 {
-	var scale float64
+	var shrink float64
 
 	srcW, srcH := float64(width), float64(height)
+	dstW, dstH := float64(po.Width), float64(po.Height)
 
-	if (po.Width == 0 || po.Width == width) && (po.Height == 0 || po.Height == height) {
-		scale = 1
+	if po.Width == 0 {
+		dstW = srcW
+	}
+
+	if po.Height == 0 {
+		dstH = srcH
+	}
+
+	if dstW == srcW && dstH == srcH {
+		shrink = 1
 	} else {
-		wr := float64(po.Width) / srcW
-		hr := float64(po.Height) / srcH
+		wshrink := srcW / dstW
+		hshrink := srcH / dstH
 
 		rt := po.Resize
 
@@ -64,31 +73,31 @@ func calcScale(width, height int, po *processingOptions, imgtype imageType) floa
 
 		switch {
 		case po.Width == 0:
-			scale = hr
+			shrink = hshrink
 		case po.Height == 0:
-			scale = wr
+			shrink = wshrink
 		case rt == resizeFit:
-			scale = math.Min(wr, hr)
+			shrink = math.Max(wshrink, hshrink)
 		default:
-			scale = math.Max(wr, hr)
+			shrink = math.Min(wshrink, hshrink)
 		}
 	}
 
-	if !po.Enlarge && scale > 1 && imgtype != imageTypeSVG {
-		scale = 1
+	if !po.Enlarge && shrink < 1 && imgtype != imageTypeSVG {
+		shrink = 1
 	}
 
-	scale *= po.Dpr
+	shrink /= po.Dpr
 
-	if srcW*scale < 1 {
-		scale = 1 / srcW
+	if shrink > srcW {
+		shrink = srcW
 	}
 
-	if srcH*scale < 1 {
-		scale = 1 / srcH
+	if shrink > srcH {
+		shrink = srcH
 	}
 
-	return scale
+	return 1.0 / shrink
 }
 
 func canScaleOnLoad(imgtype imageType, scale float64) bool {
