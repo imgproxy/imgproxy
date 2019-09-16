@@ -30,12 +30,13 @@ require (
 	github.com/prometheus/common v0.1.0 // indirect
 	github.com/prometheus/procfs v0.0.0-20190104112138-b1a0a9a36d74 // indirect
 	github.com/shirou/gopsutil v2.18.12+incompatible // indirect
+	github.com/sirupsen/logrus v1.4.2
 	github.com/stretchr/testify v1.3.0
 	golang.org/x/image v0.0.0-20181116024801-cd38e8056d9b
 	golang.org/x/net v0.0.0-20190110200230-915654e7eabc
 	golang.org/x/oauth2 v0.0.0-20190110195249-fd3eaa146cbb // indirect
 	golang.org/x/sync v0.0.0-20181221193216-37e7f081c4d4
-	golang.org/x/sys v0.0.0-20190109145017-48ac38b7c8cb
+	golang.org/x/sys v0.0.0-20190422165155-953cdadca894
 	google.golang.org/api v0.1.0
 	google.golang.org/genproto v0.0.0-20190110221437-6909d8a4a91b // indirect
 )

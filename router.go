@@ -65,6 +65,8 @@ func (r *router) OPTIONS(prefix string, handler routeHandler, exact bool) {
 }
 
 func (r *router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	req = req.WithContext(setTimerSince(req.Context()))
+
 	reqID := req.Header.Get(xRequestIDHeader)
 
 	if len(reqID) == 0 || !requestIDRe.MatchString(reqID) {

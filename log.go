@@ -1,92 +1,97 @@
 package main
 
 import (
-	"fmt"
-	"log"
-	"log/syslog"
 	"net/http"
+
+	logrus "github.com/sirupsen/logrus"
 )
 
-const (
-	logRequestFmt        = "[%s] %s: %s"
-	logRequestSyslogFmt  = "REQUEST [%s] %s: %s"
-	logResponseFmt       = "[%s] |\033[7;%dm %d \033[0m| %s"
-	logResponseSyslogFmt = "RESPONSE [%s] | %d | %s"
-	logWarningFmt        = "\033[1;33m[WARNING]\033[0m %s"
-	logWarningSyslogFmt  = "WARNING %s"
-	logFatalSyslogFmt    = "FATAL %s"
-)
+func initLog() {
+	logFormat := "pretty"
+	strEnvConfig(&logFormat, "IMGPROXY_LOG_FORMAT")
+
+	switch logFormat {
+	case "structured":
+		logrus.SetFormatter(&logStructuredFormatter{})
+	case "json":
+		logrus.SetFormatter(&logrus.JSONFormatter{})
+	default:
+		logrus.SetFormatter(newLogPrettyFormatter())
+	}
+
+	logrus.SetLevel(logrus.DebugLevel)
+
+	if isSyslogEnabled() {
+		slHook, err := newSyslogHook()
+		if err != nil {
+			logFatal("Unable to connect to local syslog daemon")
+		}
+
+		logrus.AddHook(slHook)
+	}
+}
 
 func logRequest(reqID string, r *http.Request) {
 	path := r.URL.RequestURI()
 
-	log.Printf(logRequestFmt, reqID, r.Method, path)
-
-	if syslogWriter != nil {
-		syslogWriter.Notice(fmt.Sprintf(logRequestSyslogFmt, reqID, r.Method, path))
-	}
+	logrus.WithFields(logrus.Fields{
+		"request_id": reqID,
+		"method":     r.Method,
+	}).Infof("Started %s", path)
 }
 
-func logResponse(reqID string, status int, msg string) {
-	var color int
+func logResponse(reqID string, r *http.Request, status int, err *imgproxyError, imageURL *string, po *processingOptions) {
+	var level logrus.Level
 
 	switch {
 	case status >= 500:
-		color = 31
+		level = logrus.ErrorLevel
 	case status >= 400:
-		color = 33
+		level = logrus.WarnLevel
 	default:
-		color = 32
+		level = logrus.InfoLevel
 	}
 
-	log.Printf(logResponseFmt, reqID, color, status, msg)
+	fields := logrus.Fields{
+		"request_id": reqID,
+		"method":     r.Method,
+		"status":     status,
+	}
 
-	if syslogWriter != nil {
-		syslogMsg := fmt.Sprintf(logResponseSyslogFmt, reqID, status, msg)
+	if err != nil {
+		fields["error"] = err
 
-		switch {
-		case status >= 500:
-			if syslogLevel >= syslog.LOG_ERR {
-				syslogWriter.Err(syslogMsg)
-			}
-		case status >= 400:
-			if syslogLevel >= syslog.LOG_WARNING {
-				syslogWriter.Warning(syslogMsg)
-			}
-		default:
-			if syslogLevel >= syslog.LOG_NOTICE {
-				syslogWriter.Notice(syslogMsg)
-			}
+		if stack := err.FormatStack(); len(stack) > 0 {
+			fields["stack"] = stack
 		}
 	}
+
+	if imageURL != nil {
+		fields["image_url"] = *imageURL
+	}
+
+	if po != nil {
+		fields["processing_options"] = po
+	}
+
+	logrus.WithFields(fields).Logf(
+		level,
+		"Completed in %s %s", getTimerSince(r.Context()), r.URL.RequestURI(),
+	)
 }
 
 func logNotice(f string, args ...interface{}) {
-	msg := fmt.Sprintf(f, args...)
-
-	log.Print(msg)
-
-	if syslogWriter != nil && syslogLevel >= syslog.LOG_NOTICE {
-		syslogWriter.Notice(msg)
-	}
+	logrus.Infof(f, args...)
 }
 
 func logWarning(f string, args ...interface{}) {
-	msg := fmt.Sprintf(f, args...)
-
-	log.Printf(logWarningFmt, msg)
-
-	if syslogWriter != nil && syslogLevel >= syslog.LOG_WARNING {
-		syslogWriter.Warning(fmt.Sprintf(logWarningSyslogFmt, msg))
-	}
+	logrus.Warnf(f, args...)
 }
 
 func logFatal(f string, args ...interface{}) {
-	msg := fmt.Sprintf(f, args...)
+	logrus.Fatalf(f, args...)
+}
 
-	if syslogWriter != nil {
-		syslogWriter.Crit(fmt.Sprintf(logFatalSyslogFmt, msg))
-	}
-
-	log.Fatal(msg)
+func logDebug(f string, args ...interface{}) {
+	logrus.Debugf(f, args...)
 }

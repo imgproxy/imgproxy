@@ -8,11 +8,8 @@ import (
 
 var timerSinceCtxKey = ctxKey("timerSince")
 
-func startTimer(ctx context.Context, d time.Duration) (context.Context, context.CancelFunc) {
-	return context.WithTimeout(
-		context.WithValue(ctx, timerSinceCtxKey, time.Now()),
-		d,
-	)
+func setTimerSince(ctx context.Context) context.Context {
+	return context.WithValue(ctx, timerSinceCtxKey, time.Now())
 }
 
 func getTimerSince(ctx context.Context) time.Duration {

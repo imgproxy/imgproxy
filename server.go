@@ -111,7 +111,7 @@ func handlePanic(reqID string, rw http.ResponseWriter, r *http.Request, err erro
 		reportError(err, r)
 	}
 
-	logResponse(reqID, ierr.StatusCode, ierr.ErrorWithStack())
+	logResponse(reqID, r, ierr.StatusCode, ierr, nil, nil)
 
 	rw.WriteHeader(ierr.StatusCode)
 
@@ -123,17 +123,18 @@ func handlePanic(reqID string, rw http.ResponseWriter, r *http.Request, err erro
 }
 
 func handleHealth(reqID string, rw http.ResponseWriter, r *http.Request) {
-	logResponse(reqID, 200, string(imgproxyIsRunningMsg))
+	logResponse(reqID, r, 200, nil, nil, nil)
 	rw.WriteHeader(200)
 	rw.Write(imgproxyIsRunningMsg)
 }
 
 func handleOptions(reqID string, rw http.ResponseWriter, r *http.Request) {
-	logResponse(reqID, 200, "Respond with options")
+	logResponse(reqID, r, 200, nil, nil, nil)
 	rw.WriteHeader(200)
 }
 
 func handleFavicon(reqID string, rw http.ResponseWriter, r *http.Request) {
+	logResponse(reqID, r, 200, nil, nil, nil)
 	// TODO: Add a real favicon maybe?
 	rw.WriteHeader(200)
 }

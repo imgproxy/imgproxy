@@ -83,11 +83,22 @@ func respondWithImage(ctx context.Context, reqID string, r *http.Request, rw htt
 		rw.Write(data)
 	}
 
-	logResponse(reqID, 200, fmt.Sprintf("Processed in %s: %s; %+v", getTimerSince(ctx), getImageURL(ctx), po))
+	imageURL := getImageURL(ctx)
+
+	logResponse(reqID, r, 200, nil, &imageURL, po)
+	// logResponse(reqID, r, 200, getTimerSince(ctx), getImageURL(ctx), po))
+}
+
+func respondWithNotModified(ctx context.Context, reqID string, r *http.Request, rw http.ResponseWriter) {
+	rw.WriteHeader(304)
+
+	imageURL := getImageURL(ctx)
+
+	logResponse(reqID, r, 304, nil, &imageURL, getProcessingOptions(ctx))
 }
 
 func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
+	ctx := r.Context()
 
 	if newRelicEnabled {
 		var newRelicCancel context.CancelFunc
@@ -103,7 +114,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	processingSem <- struct{}{}
 	defer func() { <-processingSem }()
 
-	ctx, timeoutCancel := startTimer(ctx, time.Duration(conf.WriteTimeout)*time.Second)
+	ctx, timeoutCancel := context.WithTimeout(ctx, time.Duration(conf.WriteTimeout)*time.Second)
 	defer timeoutCancel()
 
 	ctx, err := parsePath(ctx, r)
@@ -130,8 +141,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		rw.Header().Set("ETag", eTag)
 
 		if eTag == r.Header.Get("If-None-Match") {
-			logResponse(reqID, 304, "Not modified")
-			rw.WriteHeader(304)
+			respondWithNotModified(ctx, reqID, r, rw)
 			return
 		}
 	}

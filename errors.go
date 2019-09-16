@@ -19,12 +19,12 @@ func (e *imgproxyError) Error() string {
 	return e.Message
 }
 
-func (e *imgproxyError) ErrorWithStack() string {
+func (e *imgproxyError) FormatStack() string {
 	if e.stack == nil {
-		return e.Message
+		return ""
 	}
 
-	return fmt.Sprintf("%s\n%s", e.Message, formatStack(e.stack))
+	return formatStack(e.stack)
 }
 
 func (e *imgproxyError) StackTrace() []uintptr {

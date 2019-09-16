@@ -189,6 +189,10 @@ func (po *processingOptions) presetUsed(name string) {
 	po.UsedPresets = append(po.UsedPresets, name)
 }
 
+func (po *processingOptions) String() string {
+	return fmt.Sprintf("%+v", *po)
+}
+
 func colorFromHex(hexcolor string) (rgbColor, error) {
 	c := rgbColor{}
 
