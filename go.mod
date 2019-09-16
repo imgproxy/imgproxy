@@ -40,3 +40,5 @@ require (
 	google.golang.org/api v0.1.0
 	google.golang.org/genproto v0.0.0-20190110221437-6909d8a4a91b // indirect
 )
+
+replace git.apache.org/thrift.git => github.com/apache/thrift v0.0.0-20180902110319-2566ecd5d999
