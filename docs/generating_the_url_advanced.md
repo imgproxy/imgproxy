@@ -218,7 +218,7 @@ wm:%opacity:%position:%x_offset:%y_offset:%scale
 
 Puts watermark on the processed image.
 
-* `opacity` - watermark opacity modifier. Final opacity is calculated like `base_opacity * opacity`. It's highly recommended to set this argument as `1` and adjust opacity with `IMGPROXY_WATERMARK_OPACITY` since this would optimize performance and memory usage.
+* `opacity` - watermark opacity modifier. Final opacity is calculated like `base_opacity * opacity`.
 * `position` - (optional) specifies the position of the watermark. Available values:
   * `ce`: (default) center;
   * `no`: north (top edge);

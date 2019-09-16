@@ -192,15 +192,22 @@ imgproxy can report occurred errors to Bugsnag, Honeybadger and Sentry:
 * `IMGPROXY_SENTRY_ENVIRONMENT`: Sentry environment to report to. Default: `production`.
 * `IMGPROXY_SENTRY_RELEASE`: Sentry release to report to. Default: `imgproxy/{imgproxy version}`.
 
-### Syslog
+### Log
+
+* `IMGPROXY_LOG_FORMAT`: the log format. The following formats are supported:
+  * `pretty`: _(default)_ colored human-readable format;
+  * `structured`: machine-readable format;
+  * `json`: JSON format;
 
 imgproxy can send logs to syslog, but this feature is disabled by default. To enable it, set `IMGPROXY_SYSLOG_ENABLE` to `true`:
 
 * `IMGPROXY_SYSLOG_ENABLE`: when `true`, enables sending logs to syslog;
-* `IMGPROXY_SYSLOG_LEVEL`: maximum log level to send to syslog. Known levels are: `crit`, `error`, `warning` and `notice`. Default: `notice`;
+* `IMGPROXY_SYSLOG_LEVEL`: maximum log level to send to syslog. Known levels are: `crit`, `error`, `warning` and `info`. Default: `info`;
 * `IMGPROXY_SYSLOG_NETWORK`: network that will be used to connect to syslog. When blank, the local syslog server will be used. Known networks are `tcp`, `tcp4`, `tcp6`, `udp`, `udp4`, `udp6`, `ip`, `ip4`, `ip6`, `unix`, `unixgram` and `unixpacket`. Default: blank;
 * `IMGPROXY_SYSLOG_ADDRESS`: address of the syslog service. Not used if `IMGPROXY_SYSLOG_NETWORK` is blank. Default: blank;
-* `IMGPROXY_SYSLOG_TAG`: specific syslogtag. Default: `imgproxy`;
+* `IMGPROXY_SYSLOG_TAG`: specific syslog tag. Default: `imgproxy`;
+
+**Note:** imgproxy always uses structured log format for syslog.
 
 ### Memory usage tweaks
 
