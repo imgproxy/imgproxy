@@ -56,11 +56,11 @@ RUN cd /root \
     --enable-silent-rules \
   && make install-strip
 
-ADD . /go/src/github.com/imgproxy/imgproxy
-WORKDIR /go/src/github.com/imgproxy/imgproxy
+ADD . /app
+WORKDIR /app
 
 # Build imgproxy
-RUN cd /go/src/github.com/imgproxy/imgproxy \
+RUN cd /app \
   && CGO_LDFLAGS_ALLOW="-s|-w" go build -v -o /usr/local/bin/imgproxy
 
 # Copy compiled libs here to copy them to the final image
