@@ -141,7 +141,7 @@ When imgproxy needs to cut some parts of the image, it is guided by the gravity.
 
 Default: `ce:0:0`
 
-##### Special gravities:
+**Special gravities**:
 
 * `gravity:sm` - smart gravity. `libvips` detects the most "interesting" section of the image and considers it as the center of the resulting image. Offsets are not applicable here;
 * `gravity:fp:%x:%y` - focus point gravity. `x` and `y` are floating point numbers between 0 and 1 that define the coordinates of the center of the resulting image. Treat 0 and 1 as right/left for `x` and top/bottom for `y`.
