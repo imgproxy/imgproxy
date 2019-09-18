@@ -15,9 +15,9 @@ If you don't have docker, you can use Heroku for a quick start.
 
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/DarthSim/imgproxy)
 
-Check out our [installation guide](./installation.md) for more details and instructions.
+Check out our [installation guide](installation.md) for more details and instructions.
 
-That's it! No further configuration is needed, but if you want to unleash the full power of imgproxy, read our [configuration guide](./configuration.md).
+That's it! No further configuration is needed, but if you want to unleash the full power of imgproxy, read our [configuration guide](configuration.md).
 
 ## Resize an image
 
@@ -26,8 +26,8 @@ After you've successfully installed imgproxy, you might want to see if it is wor
 
 Here's [the original image](https://m.media-amazon.com/images/M/MV5BMmQ3ZmY4NzYtY2VmYi00ZDRmLTgyODAtZWYzZjhlNzk1NzU2XkEyXkFqcGdeQXVyNTc3MjUzNTI@.jpg), just for reference. Using the URL above, imgproxy is told to resize it to fill the area of `300x400` size with "smart" gravity. "Smart" means that the `libvips` library chooses the most "interesting" part of the image.
 
-Learn more on how to generate imgproxy URLs in the [Generating the URL](./generating_the_url_basic.md) guide.
+Learn more on how to generate imgproxy URLs in the [Generating the URL](generating_the_url_basic.md) guide.
 
 ## Security
 
-Note that the URL in the above example is not signed. It is highly recommended to sign URLs in production. Read our [Signing the URL](./signing_the_url.md) guide to know how to secure your imgproxy installation from attackers.
+Note that the URL in the above example is not signed. It is highly recommended to sign URLs in production. Read our [Signing the URL](signing_the_url.md) guide to know how to secure your imgproxy installation from attackers.

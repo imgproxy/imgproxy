@@ -2,7 +2,7 @@
 
 There are four ways you can install imgproxy:
 
-### Docker
+## Docker
 
 imgproxy can (and should) be used as a standalone application inside a Docker container. Just pull the official image from Docker Hub:
 
@@ -18,7 +18,7 @@ $ docker build -t imgproxy .
 $ docker run -p 8080:8080 -it imgproxy
 ```
 
-### Heroku
+## Heroku
 
 imgproxy can be deployed to Heroku with a click of a button:
 
@@ -33,15 +33,15 @@ $ heroku stack:set container
 $ git push heroku master
 ```
 
-### Packages
+## Packages
 
-#### Arch Linux and derivatives
+### Arch Linux and derivatives
 
 [imgproxy](https://aur.archlinux.org/packages/imgproxy/) package is available from AUR.
 
-### From the source
+## From the source
 
-#### Ubuntu
+### Ubuntu
 
 First, install [libvips](https://github.com/libvips/libvips).
 
@@ -69,7 +69,7 @@ And finally, install imgproxy itself:
 $ CGO_LDFLAGS_ALLOW="-s|-w" go get -f -u github.com/imgproxy/imgproxy
 ```
 
-#### macOS + Homebrew
+### macOS + Homebrew
 
 ```bash
 $ brew install vips go
