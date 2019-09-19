@@ -1,10 +1,5 @@
 #!/bin/sh
 
-if ! git diff --staged --name-only | grep -qe ".*\.(go|h|c)$"; then
-  echo "Nothing to test"
-  exit 0;
-fi
-
 if [ -x "$(which brew)" ]; then
   export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:$(brew --prefix libffi)/lib/pkgconfig"
 fi
