@@ -28,6 +28,7 @@
     var(--base-background-color-trans),
     var(--base-background-color) 500px
   ), url('/assets/pattern.svg');
+  background-attachment: fixed;
 }
 
 .loading {
