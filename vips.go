@@ -337,7 +337,7 @@ func (img *vipsImage) Resize(scale float64, hasAlpa bool) error {
 }
 
 func (img *vipsImage) Orientation() C.int {
-	return C.vips_get_exif_orientation(img.VipsImage)
+	return C.vips_get_orientation(img.VipsImage)
 }
 
 func (img *vipsImage) Rotate(angle int) error {

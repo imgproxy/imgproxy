@@ -157,7 +157,7 @@ vips_svgload_go(void *buf, size_t len, double scale, VipsImage **out) {
 int
 vips_heifload_go(void *buf, size_t len, VipsImage **out) {
 #if VIPS_SUPPORT_HEIF
-  return vips_heifload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, "autorotate", 1, NULL);
+  return vips_heifload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, NULL);
 #else
   vips_error("vips_heifload_go", "Loading HEIF is not supported");
   return 1;
@@ -165,13 +165,20 @@ vips_heifload_go(void *buf, size_t len, VipsImage **out) {
 }
 
 int
-vips_get_exif_orientation(VipsImage *image) {
+vips_get_orientation(VipsImage *image) {
+#ifdef VIPS_META_ORIENTATION
+  int orientation;
+
+	if (vips_image_get_int(image, VIPS_META_ORIENTATION, &orientation) == 0)
+    return orientation;
+#else
   const char *orientation;
 
 	if (
 		vips_image_get_typeof(image, EXIF_ORIENTATION) == VIPS_TYPE_REF_STRING &&
 		vips_image_get_string(image, EXIF_ORIENTATION, &orientation) == 0
 	) return atoi(orientation);
+#endif
 
 	return 1;
 }
