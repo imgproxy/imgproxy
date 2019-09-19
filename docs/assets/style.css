@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css?family=Roboto&display=swap');
-
 :root {
   --mono-hue: var(--theme-hue);
   --mono-saturation: 10%;
@@ -14,6 +12,7 @@
   --base-background-color-trans: rgba(13, 15, 21, 0);
   --base-font-family: "Roboto",sans-serif;
 
+  --code-font-family: "Fira Mono",monospace;
   --code-inline-background: var(--mono-tint1);
 
   --link-color: var(--theme-color);
@@ -29,6 +28,21 @@
     var(--base-background-color) 500px
   ), url('/assets/pattern.svg');
   background-attachment: fixed;
+}
+
+@media (min-width: 1200px) {
+  :root {
+      --base-font-size: 18px;
+  }
+}
+
+@media (min-width: 1400px) {
+  :root {
+      --base-font-size: 20px;
+  }
+  .sidebar-nav {
+    font-size: 18px;
+  }
 }
 
 .loading {
