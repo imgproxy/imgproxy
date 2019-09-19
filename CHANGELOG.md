@@ -2,6 +2,8 @@
 
 ## master
 
+# v2.5.0
+
 - New default log format;
 - `structured` and `json` log formats. Can be set with `IMGPROXY_LOG_FORMAT`;
 - Better watermarking: image transparency doesn't affect watermarks, faster watermark scaling.
