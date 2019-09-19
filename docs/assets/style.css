@@ -31,17 +31,14 @@
 }
 
 @media (min-width: 1200px) {
-  :root {
-      --base-font-size: 18px;
+  .content {
+    font-size: 111%;
   }
 }
 
 @media (min-width: 1400px) {
   :root {
-      --base-font-size: 20px;
-  }
-  .sidebar-nav {
-    font-size: 18px;
+    --base-font-size: 18px;
   }
 }
 
