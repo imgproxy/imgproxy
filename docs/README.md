@@ -11,8 +11,8 @@ imgproxy is a Go application, ready to be installed and used in any Unix environ
 See this article for a good intro and all the juicy details! [imgproxy:
 Resize your images instantly and securely](https://evilmartians.com/chronicles/introducing-imgproxy)
 
-<a href="https://evilmartians.com/?utm_source=imgproxy">
-<img src="https://evilmartians.com/badges/sponsored-by-evil-martians.svg" alt="Sponsored by Evil Martians" width="236" height="54">
+<a href="https://evilmartians.com/?utm_source=imgproxy" target="_blank">
+<img src="https://evilmartians.com/badges/sponsored-by-evil-martians_v2.0_for-dark-bg.svg" alt="Sponsored by Evil Martians" width="236" height="54">
 </a>
 
 #### Simplicity
