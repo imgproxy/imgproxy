@@ -139,7 +139,7 @@ vips_gifload_go(void *buf, size_t len, int pages, VipsImage **out) {
   #if VIPS_SUPPORT_GIF
     return vips_gifload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, "n", pages, NULL);
   #else
-    vips_error("vips_gifload_go", "Loading GIF is not supported");
+    vips_error("vips_gifload_go", "Loading GIF is not supported (libvips 8.3+ reuired)");
     return 1;
   #endif
 }
@@ -149,7 +149,7 @@ vips_svgload_go(void *buf, size_t len, double scale, VipsImage **out) {
   #if VIPS_SUPPORT_SVG
     return vips_svgload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, "scale", scale, NULL);
   #else
-    vips_error("vips_svgload_go", "Loading SVG is not supported");
+    vips_error("vips_svgload_go", "Loading SVG is not supported (libvips 8.5+ reuired)");
     return 1;
   #endif
 }
@@ -159,7 +159,7 @@ vips_heifload_go(void *buf, size_t len, VipsImage **out) {
 #if VIPS_SUPPORT_HEIF
   return vips_heifload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, NULL);
 #else
-  vips_error("vips_heifload_go", "Loading HEIF is not supported");
+  vips_error("vips_heifload_go", "Loading HEIF is not supported (libvips 8.8+ reuired)");
   return 1;
 #endif
 }
@@ -328,7 +328,7 @@ vips_smartcrop_go(VipsImage *in, VipsImage **out, int width, int height) {
 #if VIPS_SUPPORT_SMARTCROP
   return vips_smartcrop(in, out, width, height, NULL);
 #else
-  vips_error("vips_smartcrop_go", "Smart crop is not supported");
+  vips_error("vips_smartcrop_go", "Smart crop is not supported (libvips 8.5+ reuired)");
   return 1;
 #endif
 }
@@ -397,7 +397,7 @@ vips_ensure_alpha(VipsImage *in, VipsImage **out) {
 
 int
 vips_apply_watermark(VipsImage *in, VipsImage *watermark, VipsImage **out, double opacity) {
-#ifdef VIPS_SUPPORT_COMPOSITE
+#if VIPS_SUPPORT_COMPOSITE
   VipsImage *base = vips_image_new();
 	VipsImage **t = (VipsImage **) vips_object_local_array(VIPS_OBJECT(base), 5);
 
@@ -426,7 +426,7 @@ vips_apply_watermark(VipsImage *in, VipsImage *watermark, VipsImage **out, doubl
 
   return res;
 #else
-  vips_error("vips_apply_watermark", "Watermarking is not supported");
+  vips_error("vips_apply_watermark", "Watermarking is not supported (libvips 8.6+ reuired)");
   return 1;
 #endif
 }
@@ -465,7 +465,7 @@ vips_gifsave_go(VipsImage *in, void **buf, size_t *len) {
 #if VIPS_SUPPORT_MAGICK
   return vips_magicksave_buffer(in, buf, len, "format", "gif", NULL);
 #else
-  vips_error("vips_gifsave_go", "Saving GIF is not supported");
+  vips_error("vips_gifsave_go", "Saving GIF is not supported (libvips 8.7+ reuired)");
   return 1;
 #endif
 }
@@ -475,7 +475,7 @@ vips_icosave_go(VipsImage *in, void **buf, size_t *len) {
 #if VIPS_SUPPORT_MAGICK
   return vips_magicksave_buffer(in, buf, len, "format", "ico", NULL);
 #else
-  vips_error("vips_icosave_go", "Saving ICO is not supported");
+  vips_error("vips_icosave_go", "Saving ICO is not supported (libvips 8.7+ reuired)");
   return 1;
 #endif
 }
