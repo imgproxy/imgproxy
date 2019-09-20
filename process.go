@@ -195,8 +195,8 @@ func cropImage(img *vipsImage, cropWidth, cropHeight int, gravity *gravityOption
 	return img.Crop(left, top, cropWidth, cropHeight)
 }
 
-func prepareWatermark(wm *vipsImage, wmData *watermarkData, opts *watermarkOptions, imgWidth, imgHeight int) error {
-	if err := wm.Load(wmData.data, wmData.imgtype, 1, 1.0, 1); err != nil {
+func prepareWatermark(wm *vipsImage, wmData *imageData, opts *watermarkOptions, imgWidth, imgHeight int) error {
+	if err := wm.Load(wmData.Data, wmData.Type, 1, 1.0, 1); err != nil {
 		return err
 	}
 
@@ -204,14 +204,14 @@ func prepareWatermark(wm *vipsImage, wmData *watermarkData, opts *watermarkOptio
 	po.Resize = resizeFit
 	po.Dpr = 1
 	po.Enlarge = true
-	po.Format = wmData.imgtype
+	po.Format = wmData.Type
 
 	if opts.Scale > 0 {
 		po.Width = maxInt(scaleInt(imgWidth, opts.Scale), 1)
 		po.Height = maxInt(scaleInt(imgHeight, opts.Scale), 1)
 	}
 
-	if err := transformImage(context.Background(), wm, wmData.data, po, wmData.imgtype); err != nil {
+	if err := transformImage(context.Background(), wm, wmData.Data, po, wmData.Type); err != nil {
 		return err
 	}
 
@@ -226,7 +226,7 @@ func prepareWatermark(wm *vipsImage, wmData *watermarkData, opts *watermarkOptio
 	return wm.Embed(opts.Gravity, imgWidth, imgHeight, opts.OffsetX, opts.OffsetY, rgbColor{0, 0, 0})
 }
 
-func applyWatermark(img *vipsImage, wmData *watermarkData, opts *watermarkOptions, framesCount int) error {
+func applyWatermark(img *vipsImage, wmData *imageData, opts *watermarkOptions, framesCount int) error {
 	wm := new(vipsImage)
 	defer wm.Clear()
 
@@ -541,15 +541,14 @@ func processImage(ctx context.Context) ([]byte, context.CancelFunc, error) {
 	defer vipsCleanup()
 
 	po := getProcessingOptions(ctx)
-	data := getImageData(ctx).Bytes()
-	imgtype := getImageType(ctx)
+	imgdata := getImageData(ctx)
 
 	if po.Format == imageTypeUnknown {
 		switch {
 		case po.PreferWebP && vipsTypeSupportSave[imageTypeWEBP]:
 			po.Format = imageTypeWEBP
-		case vipsTypeSupportSave[imgtype] && imgtype != imageTypeHEIC:
-			po.Format = imgtype
+		case vipsTypeSupportSave[imgdata.Type] && imgdata.Type != imageTypeHEIC:
+			po.Format = imgdata.Type
 		default:
 			po.Format = imageTypeJPEG
 		}
@@ -577,7 +576,7 @@ func processImage(ctx context.Context) ([]byte, context.CancelFunc, error) {
 		po.Width, po.Height = 0, 0
 	}
 
-	animationSupport := conf.MaxAnimationFrames > 1 && vipsSupportAnimation(imgtype) && vipsSupportAnimation(po.Format)
+	animationSupport := conf.MaxAnimationFrames > 1 && vipsSupportAnimation(imgdata.Type) && vipsSupportAnimation(po.Format)
 
 	pages := 1
 	if animationSupport {
@@ -587,16 +586,16 @@ func processImage(ctx context.Context) ([]byte, context.CancelFunc, error) {
 	img := new(vipsImage)
 	defer img.Clear()
 
-	if err := img.Load(data, imgtype, 1, 1.0, pages); err != nil {
+	if err := img.Load(imgdata.Data, imgdata.Type, 1, 1.0, pages); err != nil {
 		return nil, func() {}, err
 	}
 
 	if animationSupport && img.IsAnimated() {
-		if err := transformAnimated(ctx, img, data, po, imgtype); err != nil {
+		if err := transformAnimated(ctx, img, imgdata.Data, po, imgdata.Type); err != nil {
 			return nil, func() {}, err
 		}
 	} else {
-		if err := transformImage(ctx, img, data, po, imgtype); err != nil {
+		if err := transformImage(ctx, img, imgdata.Data, po, imgdata.Type); err != nil {
 			return nil, func() {}, err
 		}
 	}

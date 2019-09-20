@@ -31,7 +31,7 @@ func calcETag(ctx context.Context) string {
 	defer eTagCalcPool.Put(c)
 
 	c.hash.Reset()
-	c.hash.Write(getImageData(ctx).Bytes())
+	c.hash.Write(getImageData(ctx).Data)
 	footprint := c.hash.Sum(nil)
 
 	c.hash.Reset()

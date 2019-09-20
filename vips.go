@@ -25,7 +25,7 @@ var (
 	vipsTypeSupportLoad  = make(map[imageType]bool)
 	vipsTypeSupportSave  = make(map[imageType]bool)
 
-	watermark *watermarkData
+	watermark *imageData
 )
 
 var vipsConf struct {
