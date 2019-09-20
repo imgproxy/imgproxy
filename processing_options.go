@@ -237,10 +237,6 @@ func decodeBase64URL(parts []string) (string, string, error) {
 
 	fullURL := fmt.Sprintf("%s%s", conf.BaseURL, string(imageURL))
 
-	// if _, err := url.ParseRequestURI(fullURL); err != nil {
-	// 	return "", "", fmt.Errorf("Invalid image url: %s", fullURL)
-	// }
-
 	return fullURL, format, nil
 }
 
@@ -268,10 +264,6 @@ func decodePlainURL(parts []string) (string, string, error) {
 	}
 
 	fullURL := fmt.Sprintf("%s%s", conf.BaseURL, unescaped)
-
-	// if _, err := url.ParseRequestURI(fullURL); err != nil {
-	// 	return "", "", fmt.Errorf("Invalid image url: %s", fullURL)
-	// }
 
 	return fullURL, format, nil
 }
