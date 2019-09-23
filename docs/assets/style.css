@@ -15,6 +15,9 @@
   --code-font-family: "Fira Mono",monospace;
   --code-inline-background: var(--mono-tint1);
 
+  --heading-h1-font-weight: 600;
+  --heading-h2-font-weight: 600;
+
   --link-color: var(--theme-color);
 
   --sidebar-background: var(--mono-shade4);
