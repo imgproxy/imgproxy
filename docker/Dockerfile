@@ -7,7 +7,7 @@ ENV PATH /usr/local/go/bin:$PATH
 # Install dependencies
 RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories \
   && apk --no-cache upgrade \
-  && apk add --no-cache curl git ca-certificates go gcc g++ make musl-dev fftw-dev glib-dev expat-dev \
+  && apk add --no-cache curl git ca-certificates go gcc g++ make musl-dev fftw-dev glib-dev libtool expat-dev \
     libjpeg-turbo-dev libpng-dev libwebp-dev giflib-dev librsvg-dev libexif-dev lcms2-dev libimagequant-dev \
     libheif-dev
 
@@ -76,7 +76,7 @@ LABEL maintainer="Sergey Alexandrovich <darthsim@gmail.com>"
 
 RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories \
   && apk --no-cache upgrade \
-  && apk add --no-cache bash ca-certificates fftw glib expat libjpeg-turbo libpng \
+  && apk add --no-cache bash ca-certificates fftw glib libltdl expat libjpeg-turbo libpng \
     libwebp giflib librsvg libgsf libexif lcms2 libimagequant libheif \
   && rm -rf /var/cache/apk*
 
