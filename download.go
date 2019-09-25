@@ -4,18 +4,13 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"image"
 	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"time"
 
-	_ "image/gif"
-	_ "image/jpeg"
-	_ "image/png"
-
-	_ "github.com/mat/besticon/ico"
+	imageSize "github.com/imgproxy/imgproxy/image_size"
 )
 
 var (
@@ -107,20 +102,20 @@ func checkDimensions(width, height int) error {
 }
 
 func checkTypeAndDimensions(r io.Reader) (imageType, error) {
-	imgconf, imgtypeStr, err := image.DecodeConfig(r)
-	if err == image.ErrFormat {
+	meta, err := imageSize.DecodeMeta(r)
+	if err == imageSize.ErrFormat {
 		return imageTypeUnknown, errSourceImageTypeNotSupported
 	}
 	if err != nil {
 		return imageTypeUnknown, newUnexpectedError(err.Error(), 0)
 	}
 
-	imgtype, imgtypeOk := imageTypes[imgtypeStr]
+	imgtype, imgtypeOk := imageTypes[meta.Format]
 	if !imgtypeOk || !vipsTypeSupportLoad[imgtype] {
 		return imageTypeUnknown, errSourceImageTypeNotSupported
 	}
 
-	if err = checkDimensions(imgconf.Width, imgconf.Height); err != nil {
+	if err = checkDimensions(meta.Width, meta.Height); err != nil {
 		return imageTypeUnknown, err
 	}
 
