@@ -547,7 +547,7 @@ func processImage(ctx context.Context) ([]byte, context.CancelFunc, error) {
 		switch {
 		case po.PreferWebP && vipsTypeSupportSave[imageTypeWEBP]:
 			po.Format = imageTypeWEBP
-		case vipsTypeSupportSave[imgdata.Type] && imgdata.Type != imageTypeHEIC:
+		case vipsTypeSupportSave[imgdata.Type] && imgdata.Type != imageTypeHEIC && imgdata.Type != imageTypeTIFF:
 			po.Format = imgdata.Type
 		default:
 			po.Format = imageTypeJPEG
