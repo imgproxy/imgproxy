@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"flag"
 	"fmt"
+	"math"
 	"os"
 	"runtime"
 	"strconv"
@@ -221,7 +222,6 @@ var conf = config{
 	SignatureSize:                  32,
 	PngQuantizationColors:          256,
 	Quality:                        80,
-	GZipCompression:                5,
 	UserAgent:                      fmt.Sprintf("imgproxy/%s", version),
 	Presets:                        make(presets),
 	WatermarkOpacity:               1,
@@ -423,21 +423,27 @@ func configure() {
 		logFatal("GZip compression can't be greater than 9, now - %d\n", conf.GZipCompression)
 	}
 
+	if conf.GZipCompression > 0 {
+		logWarning("GZip compression is deprecated and can be removed in future versions")
+	}
+
 	if conf.IgnoreSslVerification {
 		logWarning("Ignoring SSL verification is very unsafe")
 	}
 
 	if conf.LocalFileSystemRoot != "" {
 		stat, err := os.Stat(conf.LocalFileSystemRoot)
+
 		if err != nil {
 			logFatal("Cannot use local directory: %s", err)
-		} else {
-			if !stat.IsDir() {
-				logFatal("Cannot use local directory: not a directory")
-			}
 		}
+
+		if !stat.IsDir() {
+			logFatal("Cannot use local directory: not a directory")
+		}
+
 		if conf.LocalFileSystemRoot == "/" {
-			logNotice("Exposing root via IMGPROXY_LOCAL_FILESYSTEM_ROOT is unsafe")
+			logWarning("Exposing root via IMGPROXY_LOCAL_FILESYSTEM_ROOT is unsafe")
 		}
 	}
 
@@ -461,14 +467,14 @@ func configure() {
 
 	if conf.DownloadBufferSize < 0 {
 		logFatal("Download buffer size should be greater than or equal to 0")
-	} else if conf.DownloadBufferSize > int(^uint32(0)) {
-		logFatal("Download buffer size can't be greater than %d", ^uint32(0))
+	} else if conf.DownloadBufferSize > math.MaxInt32 {
+		logFatal("Download buffer size can't be greater than %d", math.MaxInt32)
 	}
 
 	if conf.GZipBufferSize < 0 {
 		logFatal("GZip buffer size should be greater than or equal to 0")
-	} else if conf.GZipBufferSize > int(^uint32(0)) {
-		logFatal("GZip buffer size can't be greater than %d", ^uint32(0))
+	} else if conf.GZipBufferSize > math.MaxInt32 {
+		logFatal("GZip buffer size can't be greater than %d", math.MaxInt32)
 	}
 
 	if conf.BufferPoolCalibrationThreshold < 64 {

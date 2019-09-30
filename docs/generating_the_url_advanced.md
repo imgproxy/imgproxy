@@ -1,8 +1,8 @@
 # Generating the URL (Advanced)
 
-This guide describes the advanced URL format that allows the use of all the imgproxy features. Read our [Generating the URL (Basic)](./generating_the_url_basic.md) guide to learn about the _basic_ URL format that is compatible with imgproxy 1.x.
+This guide describes the advanced URL format that allows the use of all the imgproxy features. Read our [Generating the URL (Basic)](generating_the_url_basic.md) guide to learn about the _basic_ URL format that is compatible with imgproxy 1.x.
 
-### Format definition
+## Format definition
 
 The advanced URL should contain the signature, processing options, and source URL, like this:
 
@@ -13,13 +13,13 @@ The advanced URL should contain the signature, processing options, and source UR
 
 Check out the [example](#example) at the end of this guide.
 
-#### Signature
+### Signature
 
 Signature protects your URL from being altered by an attacker. It is highly recommended to sign imgproxy URLs in production.
 
-Once you set up your [URL signature](./configuration.md#url-signature), check out the [Signing the URL](./signing_the_url.md) guide to know how to sign your URLs. Otherwise, use any string here.
+Once you set up your [URL signature](configuration.md#url-signature), check out the [Signing the URL](signing_the_url.md) guide to know how to sign your URLs. Otherwise, use any string here.
 
-#### Processing options
+### Processing options
 
 Processing options should be specified as URL parts divided by slashes (`/`). Processing option has the following format:
 
@@ -27,11 +27,11 @@ Processing options should be specified as URL parts divided by slashes (`/`). Pr
 %option_name:%argument1:%argument2:...:argumentN
 ```
 
-The list of processing options does not define imgproxy's processing pipeline. Instead, imgproxy already comes with a specific, built-in image processing pipeline for the maximum performance. Read more about it in the [About processing pipeline](./about_processing_pipeline.md) guide.
+The list of processing options does not define imgproxy's processing pipeline. Instead, imgproxy already comes with a specific, built-in image processing pipeline for the maximum performance. Read more about it in the [About processing pipeline](about_processing_pipeline.md) guide.
 
 imgproxy supports the following processing options:
 
-##### Resize
+#### Resize
 
 ```
 resize:%resizing_type:%width:%height:%enlarge:%extend
@@ -40,7 +40,7 @@ rs:%resizing_type:%width:%height:%enlarge:%extend
 
 Meta-option that defines the [resizing type](#resizing-type), [width](#width), [height](#height), [enlarge](#enlarge), and [extend](#extend). All arguments are optional and can be omited to use their default values.
 
-##### Size
+#### Size
 
 ```
 size:%width:%height:%enlarge:%extend
@@ -49,7 +49,7 @@ s:%width:%height:%enlarge:%extend
 
 Meta-option that defines the [width](#width), [height](#height), [enlarge](#enlarge), and [extend](#extend). All arguments are optional and can be omited to use their default values.
 
-##### Resizing type
+#### Resizing type
 
 ```
 resizing_type:%resizing_type
@@ -64,7 +64,7 @@ Defines how imgproxy will resize the source image. Supported resizing types are:
 
 Default: `fit`
 
-##### Width
+#### Width
 
 ```
 width:%width
@@ -75,7 +75,7 @@ Defines the width of the resulting image. When set to `0`, imgproxy will calcula
 
 Default: `0`
 
-##### Height
+#### Height
 
 ```
 height:%height
@@ -86,7 +86,7 @@ Defines the height of the resulting image. When set to `0`, imgproxy will calcul
 
 Default: `0`
 
-##### Dpr
+#### Dpr
 
 ```
 dpr:%dpr
@@ -96,7 +96,7 @@ When set, imgproxy will multiply the image dimensions according to this factor f
 
 Default: `1`
 
-##### Enlarge
+#### Enlarge
 
 ```
 enlarge:%enlarge
@@ -107,7 +107,7 @@ If set to `0`, imgproxy will not enlarge the image if it is smaller than the giv
 
 Default: `0`
 
-##### Extend
+#### Extend
 
 ```
 extend:%extend
@@ -118,7 +118,7 @@ If set to `0`, imgproxy will not extend the image if the resizing result is smal
 
 Default: `0`
 
-##### Gravity
+#### Gravity
 
 ```
 gravity:%gravity_type:%x_offset:%y_offset
@@ -141,12 +141,12 @@ When imgproxy needs to cut some parts of the image, it is guided by the gravity.
 
 Default: `ce:0:0`
 
-###### Special gravities:
+**Special gravities**:
 
 * `gravity:sm` - smart gravity. `libvips` detects the most "interesting" section of the image and considers it as the center of the resulting image. Offsets are not applicable here;
 * `gravity:fp:%x:%y` - focus point gravity. `x` and `y` are floating point numbers between 0 and 1 that define the coordinates of the center of the resulting image. Treat 0 and 1 as right/left for `x` and top/bottom for `y`.
 
-##### Crop
+#### Crop
 
 ```
 crop:%width:%height:%gravity
@@ -158,7 +158,7 @@ Defines an area of the image to be processed (crop before resize).
 * `width` and `height` define the size of the area. When `width` or `height` is set to `0`, imgproxy will use the full width/height of the source image.
 * `gravity` accepts the same values as [gravity](#gravity) option. When `gravity` is not set, imgproxy will use the value of the [gravity](#gravity) option.
 
-##### Quality
+#### Quality
 
 ```
 quality:%quality
@@ -169,7 +169,7 @@ Redefines quality of the resulting image, percentage.
 
 Default: value from the environment variable.
 
-##### Background
+#### Background
 
 ```
 background:%R:%G:%B
@@ -185,7 +185,7 @@ With no arguments provided, disables any background manipulations.
 
 Default: disabled
 
-##### Blur
+#### Blur
 
 ```
 blur:%sigma
@@ -196,7 +196,7 @@ When set, imgproxy will apply the gaussian blur filter to the resulting image. `
 
 Default: disabled
 
-##### Sharpen
+#### Sharpen
 
 ```
 sharpen:%sigma
@@ -209,7 +209,7 @@ As an approximate guideline, use 0.5 sigma for 4 pixels/mm (display resolution),
 
 Default: disabled
 
-##### Watermark
+#### Watermark
 
 ```
 watermark:%opacity:%position:%x_offset:%y_offset:%scale
@@ -218,7 +218,7 @@ wm:%opacity:%position:%x_offset:%y_offset:%scale
 
 Puts watermark on the processed image.
 
-* `opacity` - watermark opacity modifier. Final opacity is calculated like `base_opacity * opacity`. It's highly recommended to set this argument as `1` and adjust opacity with `IMGPROXY_WATERMARK_OPACITY` since this would optimize performance and memory usage.
+* `opacity` - watermark opacity modifier. Final opacity is calculated like `base_opacity * opacity`.
 * `position` - (optional) specifies the position of the watermark. Available values:
   * `ce`: (default) center;
   * `no`: north (top edge);
@@ -235,7 +235,7 @@ Puts watermark on the processed image.
 
 Default: disabled
 
-##### Preset
+#### Preset
 
 ```
 preset:%preset_name1:%preset_name2:...:%preset_nameN
@@ -244,11 +244,11 @@ pr:%preset_name1:%preset_name2:...:%preset_nameN
 
 Defines a list of presets to be used by imgproxy. Feel free to use as many presets in a single URL as you need.
 
-Read more about presets in the [Presets](./presets.md) guide.
+Read more about presets in the [Presets](presets.md) guide.
 
 Default: empty
 
-##### Cache buster
+#### Cache buster
 
 ```
 cachebuster:%string
@@ -261,7 +261,18 @@ It's highly recommended to prefer `cachebuster` option over URL query string bec
 
 Default: empty
 
-##### Format
+#### Filename
+
+```
+filename:%string
+fn:%string
+```
+
+Defines a filename for `Content-Disposition` header. When not specified, imgproxy will get filename from the source url.
+
+Default: empty
+
+#### Format
 
 ```
 format:%extension
@@ -273,11 +284,11 @@ Specifies the resulting image format. Alias for [extension](#extension) URL part
 
 Default: `jpg`
 
-#### Source URL
+### Source URL
 
 There are two ways to specify source url:
 
-##### Plain
+#### Plain
 
 The source URL can be provided as is, prendended by `/plain/` part:
 
@@ -293,7 +304,7 @@ When using plain source URL, you can specify the [extension](#extension) after `
 /plain/http://example.com/images/curiosity.jpg@png
 ```
 
-##### Base64 encoded
+#### Base64 encoded
 
 The source URL can be encoded with URL-safe Base64. The encoded URL can be split with `/` for your needs:
 
@@ -307,15 +318,15 @@ When using encoded source URL, you can specify the [extension](#extension) after
 /aHR0cDovL2V4YW1w/bGUuY29tL2ltYWdl/cy9jdXJpb3NpdHku/anBn.png
 ```
 
-#### Extension
+### Extension
 
 Extension specifies the format of the resulting image. At the moment, imgproxy supports only `jpg`, `png`, `webp`, `gif`, and `ico`, them being the most popular and useful image formats on the Web.
 
-**Note:** Read about GIF support [here](./image_formats_support.md#gif-support).
+**Note:** Read about GIF support [here](image_formats_support.md#gif-support).
 
-The extension part can be omitted. In this case, imgproxy will use source image format as resulting one. If source image format is not supported as resulting, imgproxy will use `jpg`. You also can [enable WebP support detection](./configuration.md#webp-support-detection) to use it as default resulting format when possible.
+The extension part can be omitted. In this case, imgproxy will use source image format as resulting one. If source image format is not supported as resulting, imgproxy will use `jpg`. You also can [enable WebP support detection](configuration.md#webp-support-detection) to use it as default resulting format when possible.
 
-### Example
+## Example
 
 Signed imgproxy URL that uses `sharp` preset, resizes `http://example.com/images/curiosity.jpg` to fill `300x400` area with smart gravity without enlarging, and then converts the image to `png`:
 

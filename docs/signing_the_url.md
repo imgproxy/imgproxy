@@ -9,7 +9,7 @@ URL signature checking is disabled by default, but it is highly recommended to e
 * `IMGPROXY_KEY`: hex-encoded key;
 * `IMGPROXY_SALT`: hex-encoded salt;
 
-Read our [Configuration](./configuration.md#url-signature) guide to find more ways to set key and salt.
+Read our [Configuration](configuration.md#url-signature) guide to find more ways to set key and salt.
 
 If you need a random key/salt pair real fast, you can quickly generate it using, for example, the following snippet:
 
@@ -22,15 +22,15 @@ $ echo $(xxd -g 2 -l 64 -p /dev/random | tr -d '\n')
 Signature is an URL-safe Base64-encoded HMAC digest of the rest of the path, including the leading `/`. Here is how it is calculated:
 
 * Take the path part after the signature:
-  * For [basic URL format](./generating_the_url_basic.md): `/%resizing_type/%width/%height/%gravity/%enlarge/%encoded_url.%extension`;
-  * For [advanced URL format](./generating_the_url_advanced.md): `/%processing_options/%encoded_url.%extension`;
+  * For [basic URL format](generating_the_url_basic.md): `/%resizing_type/%width/%height/%gravity/%enlarge/%encoded_url.%extension`;
+  * For [advanced URL format](generating_the_url_advanced.md): `/%processing_options/%encoded_url.%extension`;
 * Add salt to the beginning;
 * Calculate the HMAC digest using SHA256;
 * Encode the result with URL-safe Base64.
 
 ### Example
 
-**You can find helpful code snippets in various programming languages the [examples](../examples) folder. There is a good chance you will find a snippet in your favorite programming language that you can use right away.**
+**You can find helpful code snippets in various programming languages the [examples](https://github.com/imgproxy/imgproxy/tree/master/examples) folder. There is a good chance you will find a snippet in your favorite programming language that you can use right away.**
 
 And here is a step-by-step example of calculating the URL signature:
 

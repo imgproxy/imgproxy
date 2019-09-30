@@ -108,7 +108,7 @@ func initPrometheus() {
 			logFatal(err.Error())
 		}
 
-		logNotice("Starting Prometheus server at %s\n", conf.PrometheusBind)
+		logNotice("Starting Prometheus server at %s", conf.PrometheusBind)
 		if err := s.Serve(l); err != nil && err != http.ErrServerClosed {
 			logFatal(err.Error())
 		}

@@ -2,7 +2,7 @@
 
 imgproxy is [Twelve-Factor-App](https://12factor.net/)-ready and can be configured using `ENV` variables.
 
-### URL signature
+## URL signature
 
 imgproxy allows URLs to be signed with a key and salt. This feature is disabled by default, but it is _highly_ recommended to enable it in production. To enable URL signature checking, define the key/salt pair:
 
@@ -24,7 +24,7 @@ If you need a random key/salt pair real fast, you can quickly generate it using,
 $ echo $(xxd -g 2 -l 64 -p /dev/random | tr -d '\n')
 ```
 
-### Server
+## Server
 
 * `IMGPROXY_BIND`: TCP address and port to listen on. Default: `:8080`;
 * `IMGPROXY_READ_TIMEOUT`: the maximum duration (in seconds) for reading the entire image request, including the body. Default: `10`;
@@ -38,7 +38,7 @@ $ echo $(xxd -g 2 -l 64 -p /dev/random | tr -d '\n')
 * `IMGPROXY_USER_AGENT`: User-Agent header that will be sent with source image request. Default: `imgproxy/%current_version`;
 * `IMGPROXY_USE_ETAG`: when `true`, enables using [ETag](https://en.wikipedia.org/wiki/HTTP_ETag) HTTP header for HTTP cache control. Default: false;
 
-### Security
+## Security
 
 imgproxy protects you from so-called image bombs. Here is how you can specify maximum image resolution which you consider reasonable:
 
@@ -67,7 +67,7 @@ Also you may want imgproxy to respond with the same error message that it writes
 
 * `IMGPROXY_DEVELOPMENT_ERRORS_MODE`: when true, imgproxy will respond with detailed error messages. Not recommended for production because some errors may contain stack trace.
 
-### Compression
+## Compression
 
 * `IMGPROXY_QUALITY`: default quality of the resulting image, percentage. Default: `80`;
 * `IMGPROXY_GZIP_COMPRESSION`: GZip compression level. Default: `5`;
@@ -95,26 +95,26 @@ imgproxy can use the `Width`, `Viewport-Width` or `DPR` HTTP headers to determin
 
 **Warning**: Headers cannot be signed. This means that an attacker can bypass your CDN cache by changing the `Width`, `Viewport-Width` or `DPR` HTTP headers. Have this in mind when configuring your production caching setup.
 
-### Watermark
+## Watermark
 
 * `IMGPROXY_WATERMARK_DATA`: Base64-encoded image data. You can easily calculate it with `base64 tmp/watermark.png | tr -d '\n'`;
 * `IMGPROXY_WATERMARK_PATH`: path to the locally stored image;
 * `IMGPROXY_WATERMARK_URL`: watermark image URL;
 * `IMGPROXY_WATERMARK_OPACITY`: watermark base opacity.
 
-Read more about watermarks in the [Watermark](./watermark.md) guide.
+Read more about watermarks in the [Watermark](watermark.md) guide.
 
-### Presets
+## Presets
 
-Read about imgproxy presets in the [Presets](./presets.md) guide.
+Read about imgproxy presets in the [Presets](presets.md) guide.
 
 There are two ways to define presets:
 
-##### Using an environment variable
+#### Using an environment variable
 
 * `IMGPROXY_PRESETS`: set of preset definitions, comma-divided. Example: `default=resizing_type:fill/enlarge:1,sharp=sharpen:0.7,blurry=blur:2`. Default: blank.
 
-##### Using a command line argument
+#### Using a command line argument
 
 ```bash
 $ imgproxy -presets /path/to/file/with/presets
@@ -132,55 +132,55 @@ sharp=sharpen:0.7
 blurry=blur:2
 ```
 
-#### Using only presets
+### Using only presets
 
 imgproxy can be switched into "presets-only mode". In this mode, imgproxy accepts only `preset` option arguments as processing options. Example: `http://imgproxy.example.com/unsafe/thumbnail:blurry:watermarked/plain/http://example.com/images/curiosity.jpg@png`
 
 * `IMGPROXY_ONLY_PRESETS`: disable all URL formats and enable presets-only mode.
 
-### Serving local files
+## Serving local files
 
 imgproxy can serve your local images, but this feature is disabled by default. To enable it, specify your local filesystem root:
 
 * `IMGPROXY_LOCAL_FILESYSTEM_ROOT`: the root of the local filesystem. Keep empty to disable serving of local files.
 
-Check out the [Serving local files](./serving_local_files.md) guide to learn more.
+Check out the [Serving local files](serving_local_files.md) guide to learn more.
 
-### Serving files from Amazon S3
+## Serving files from Amazon S3
 
 imgproxy can process files from Amazon S3 buckets, but this feature is disabled by default. To enable it, set `IMGPROXY_USE_S3` to `true`:
 
 * `IMGPROXY_USE_S3`: when `true`, enables image fetching from Amazon S3 buckets. Default: false;
 * `IMGPROXY_S3_ENDPOINT`: custom S3 endpoint to being used by imgproxy.
 
-Check out the [Serving files from S3](./serving_files_from_s3.md) guide to learn more.
+Check out the [Serving files from S3](serving_files_from_s3.md) guide to learn more.
 
-### Serving files from Google Cloud Storage
+## Serving files from Google Cloud Storage
 
 imgproxy can process files from Google Cloud Storage buckets, but this feature is disabled by default. To enable it, set `IMGPROXY_GCS_KEY` to the content of Google Cloud JSON key:
 
 * `IMGPROXY_GCS_KEY`: Google Cloud JSON key. When set, enables image fetching from Google Cloud Storage buckets. Default: blank.
 
-Check out the [Serving files from Google Cloud Storage](./serving_files_from_google_cloud_storage.md) guide to learn more.
+Check out the [Serving files from Google Cloud Storage](serving_files_from_google_cloud_storage.md) guide to learn more.
 
-### New Relic metrics
+## New Relic metrics
 
 imgproxy can send its metrics to New Relic. Specify your New Relic license key to activate this feature:
 
 * `IMGPROXY_NEW_RELIC_KEY`: New Relic license key;
 * `IMGPROXY_NEW_RELIC_APP_NAME`: New Relic application name. Default: `imgproxy`.
 
-Check out the [New Relic](./new_relic.md) guide to learn more.
+Check out the [New Relic](new_relic.md) guide to learn more.
 
-### Prometheus metrics
+## Prometheus metrics
 
 imgproxy can collect its metrics for Prometheus. Specify binding for Prometheus metrics server to activate this feature:
 
 * `IMGPROXY_PROMETHEUS_BIND`: Prometheus metrics server binding. Can't be the same as `IMGPROXY_BIND`. Default: blank.
 
-Check out the [Prometheus](./prometheus.md) guide to learn more.
+Check out the [Prometheus](prometheus.md) guide to learn more.
 
-### Error reporting
+## Error reporting
 
 imgproxy can report occurred errors to Bugsnag, Honeybadger and Sentry:
 
@@ -192,26 +192,33 @@ imgproxy can report occurred errors to Bugsnag, Honeybadger and Sentry:
 * `IMGPROXY_SENTRY_ENVIRONMENT`: Sentry environment to report to. Default: `production`.
 * `IMGPROXY_SENTRY_RELEASE`: Sentry release to report to. Default: `imgproxy/{imgproxy version}`.
 
-### Syslog
+## Log
+
+* `IMGPROXY_LOG_FORMAT`: the log format. The following formats are supported:
+  * `pretty`: _(default)_ colored human-readable format;
+  * `structured`: machine-readable format;
+  * `json`: JSON format;
 
 imgproxy can send logs to syslog, but this feature is disabled by default. To enable it, set `IMGPROXY_SYSLOG_ENABLE` to `true`:
 
 * `IMGPROXY_SYSLOG_ENABLE`: when `true`, enables sending logs to syslog;
-* `IMGPROXY_SYSLOG_LEVEL`: maximum log level to send to syslog. Known levels are: `crit`, `error`, `warning` and `notice`. Default: `notice`;
+* `IMGPROXY_SYSLOG_LEVEL`: maximum log level to send to syslog. Known levels are: `crit`, `error`, `warning` and `info`. Default: `info`;
 * `IMGPROXY_SYSLOG_NETWORK`: network that will be used to connect to syslog. When blank, the local syslog server will be used. Known networks are `tcp`, `tcp4`, `tcp6`, `udp`, `udp4`, `udp6`, `ip`, `ip4`, `ip6`, `unix`, `unixgram` and `unixpacket`. Default: blank;
 * `IMGPROXY_SYSLOG_ADDRESS`: address of the syslog service. Not used if `IMGPROXY_SYSLOG_NETWORK` is blank. Default: blank;
-* `IMGPROXY_SYSLOG_TAG`: specific syslogtag. Default: `imgproxy`;
+* `IMGPROXY_SYSLOG_TAG`: specific syslog tag. Default: `imgproxy`;
 
-### Memory usage tweaks
+**Note:** imgproxy always uses structured log format for syslog.
 
-**Warning:** It's highly recommended to read [Memory usage tweaks](./memory_usage_tweaks.md) guide before changing this settings.
+## Memory usage tweaks
+
+**Warning:** It's highly recommended to read [Memory usage tweaks](memory_usage_tweaks.md) guide before changing this settings.
 
 * `IMGPROXY_DOWNLOAD_BUFFER_SIZE`: the initial size (in bytes) of a single download buffer. When zero, initializes empty download buffers. Default: `0`;
 * `IMGPROXY_GZIP_BUFFER_SIZE`: the initial size (in bytes) of a single GZip buffer. When zero, initializes empty GZip buffers. Makes sense only when GZip compression is enabled. Default: `0`;
 * `IMGPROXY_FREE_MEMORY_INTERVAL`: the interval (in seconds) at which unused memory will be returned to the OS. Default: `10`;
 * `IMGPROXY_BUFFER_POOL_CALIBRATION_THRESHOLD`: the number of buffers that should be returned to a pool before calibration. Default: `1024`.
 
-### Miscellaneous
+## Miscellaneous
 
 * `IMGPROXY_BASE_URL`: base URL prefix that will be added to every requested image URL. For example, if the base URL is `http://example.com/images` and `/path/to/image.png` is requested, imgproxy will download the source image from `http://example.com/images/path/to/image.png`. Default: blank.
 * `IMGPROXY_USE_LINEAR_COLORSPACE`: when `true`, imgproxy will process images in linear colorspace. This will slow down processing. Note that images won't be fully processed in linear colorspace while shrink-on-load is enabled (see below).

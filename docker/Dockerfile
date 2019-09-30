@@ -4,14 +4,12 @@ LABEL maintainer="Sergey Alexandrovich <darthsim@gmail.com>"
 ENV GOPATH /go
 ENV PATH /usr/local/go/bin:$PATH
 
-ADD . /go/src/github.com/DarthSim/imgproxy
-WORKDIR /go/src/github.com/DarthSim/imgproxy
-
 # Install dependencies
 RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories \
   && apk --no-cache upgrade \
-  && apk add --no-cache curl ca-certificates go gcc g++ make musl-dev fftw-dev glib-dev expat-dev \
-    libjpeg-turbo-dev libpng-dev libwebp-dev giflib-dev librsvg-dev libexif-dev lcms2-dev libimagequant-dev
+  && apk add --no-cache curl git ca-certificates go gcc g++ make musl-dev fftw-dev glib-dev libtool expat-dev \
+    libjpeg-turbo-dev libpng-dev libwebp-dev giflib-dev librsvg-dev libexif-dev lcms2-dev libimagequant-dev \
+    libheif-dev
 
 # Build ImageMagick
 RUN cd /root \
@@ -58,8 +56,11 @@ RUN cd /root \
     --enable-silent-rules \
   && make install-strip
 
+ADD . /app
+WORKDIR /app
+
 # Build imgproxy
-RUN cd /go/src/github.com/DarthSim/imgproxy \
+RUN cd /app \
   && CGO_LDFLAGS_ALLOW="-s|-w" go build -v -o /usr/local/bin/imgproxy
 
 # Copy compiled libs here to copy them to the final image
@@ -75,8 +76,8 @@ LABEL maintainer="Sergey Alexandrovich <darthsim@gmail.com>"
 
 RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories \
   && apk --no-cache upgrade \
-  && apk add --no-cache bash ca-certificates fftw glib expat libjpeg-turbo libpng \
-    libwebp giflib librsvg libgsf libexif lcms2 libimagequant\
+  && apk add --no-cache bash ca-certificates fftw glib libltdl expat libjpeg-turbo libpng \
+    libwebp giflib librsvg libgsf libexif lcms2 libimagequant libheif \
   && rm -rf /var/cache/apk*
 
 COPY --from=0 /usr/local/bin/imgproxy /usr/local/bin/

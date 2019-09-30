@@ -31,6 +31,9 @@
 #define VIPS_SUPPORT_BUILTIN_ICC \
   (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 8))
 
+#define VIPS_SUPPORT_COMPOSITE \
+  (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 6))
+
 #define EXIF_ORIENTATION "exif-ifd0-Orientation"
 
 #if (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 8))
@@ -140,7 +143,7 @@ vips_gifload_go(void *buf, size_t len, int pages, VipsImage **out) {
   #if VIPS_SUPPORT_GIF
     return vips_gifload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, "n", pages, NULL);
   #else
-    vips_error("vips_gifload_go", "Loading GIF is not supported");
+    vips_error("vips_gifload_go", "Loading GIF is not supported (libvips 8.3+ reuired)");
     return 1;
   #endif
 }
@@ -150,7 +153,7 @@ vips_svgload_go(void *buf, size_t len, double scale, VipsImage **out) {
   #if VIPS_SUPPORT_SVG
     return vips_svgload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, "scale", scale, NULL);
   #else
-    vips_error("vips_svgload_go", "Loading SVG is not supported");
+    vips_error("vips_svgload_go", "Loading SVG is not supported (libvips 8.5+ reuired)");
     return 1;
   #endif
 }
@@ -158,9 +161,9 @@ vips_svgload_go(void *buf, size_t len, double scale, VipsImage **out) {
 int
 vips_heifload_go(void *buf, size_t len, VipsImage **out) {
 #if VIPS_SUPPORT_HEIF
-  return vips_heifload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, "autorotate", 1, NULL);
+  return vips_heifload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, NULL);
 #else
-  vips_error("vips_heifload_go", "Loading HEIF is not supported");
+  vips_error("vips_heifload_go", "Loading HEIF is not supported (libvips 8.8+ reuired)");
   return 1;
 #endif
 }
@@ -176,13 +179,20 @@ vips_bmpload_go(void *buf, size_t len, VipsImage **out) {
 }
 
 int
-vips_get_exif_orientation(VipsImage *image) {
+vips_get_orientation(VipsImage *image) {
+#ifdef VIPS_META_ORIENTATION
+  int orientation;
+
+	if (vips_image_get_int(image, VIPS_META_ORIENTATION, &orientation) == 0)
+    return orientation;
+#else
   const char *orientation;
 
 	if (
 		vips_image_get_typeof(image, EXIF_ORIENTATION) == VIPS_TYPE_REF_STRING &&
 		vips_image_get_string(image, EXIF_ORIENTATION, &orientation) == 0
 	) return atoi(orientation);
+#endif
 
 	return 1;
 }
@@ -332,7 +342,7 @@ vips_smartcrop_go(VipsImage *in, VipsImage **out, int width, int height) {
 #if VIPS_SUPPORT_SMARTCROP
   return vips_smartcrop(in, out, width, height, NULL);
 #else
-  vips_error("vips_smartcrop_go", "Smart crop is not supported");
+  vips_error("vips_smartcrop_go", "Smart crop is not supported (libvips 8.5+ reuired)");
   return 1;
 #endif
 }
@@ -400,143 +410,39 @@ vips_ensure_alpha(VipsImage *in, VipsImage **out) {
 }
 
 int
-vips_apply_opacity(VipsImage *in, VipsImage **out, double opacity){
-  if (vips_image_hasalpha_go(in)) {
-    if (opacity < 1) {
-      VipsImage *img, *img_alpha, *tmp;
+vips_apply_watermark(VipsImage *in, VipsImage *watermark, VipsImage **out, double opacity) {
+#if VIPS_SUPPORT_COMPOSITE
+  VipsImage *base = vips_image_new();
+	VipsImage **t = (VipsImage **) vips_object_local_array(VIPS_OBJECT(base), 5);
 
-			if (vips_extract_band(in, &img, 0, "n", in->Bands - 1, NULL))
-				return 1;
-
-      if (vips_extract_band(in, &img_alpha, in->Bands - 1, "n", 1, NULL)) {
-        clear_image(&img);
-				return 1;
-			}
-
-			if (vips_linear1(img_alpha, &tmp, opacity, 0, NULL)) {
-        clear_image(&img);
-        clear_image(&img_alpha);
-				return 1;
-			}
-			swap_and_clear(&img_alpha, tmp);
-
-			if (vips_bandjoin2(img, img_alpha, out, NULL)) {
-        clear_image(&img);
-        clear_image(&img_alpha);
-				return 1;
-			}
-
-      clear_image(&img);
-      clear_image(&img_alpha);
-    } else {
-      if (vips_copy(in, out, NULL)) {
-        return 1;
-      }
-    }
-  } else {
-    if (vips_bandjoin_const1(in, out, opacity * 255, NULL)) {
+	if (opacity < 1) {
+    if (
+      vips_extract_band(watermark, &t[0], 0, "n", watermark->Bands - 1, NULL) ||
+      vips_extract_band(watermark, &t[1], watermark->Bands - 1, "n", 1, NULL) ||
+		  vips_linear1(t[1], &t[2], opacity, 0, NULL) ||
+      vips_bandjoin2(t[0], t[2], &t[3], NULL)
+    ) {
+      clear_image(&base);
+			return 1;
+		}
+	} else {
+    if (vips_copy(watermark, &t[3], NULL)) {
+      clear_image(&base);
       return 1;
     }
   }
 
-  return 0;
-}
+  int res =
+    vips_composite2(in, t[3], &t[4], VIPS_BLEND_MODE_OVER, "compositing_space", in->Type, NULL) ||
+    vips_cast(t[4], out, vips_image_get_format(in), NULL);
 
-int
-vips_apply_watermark(VipsImage *in, VipsImage *watermark, VipsImage **out, double opacity) {
-  VipsImage *wm, *wm_alpha, *tmp;
+  clear_image(&base);
 
-	if (vips_extract_band(watermark, &wm, 0, "n", watermark->Bands - 1, NULL))
-		return 1;
-
-  if (vips_extract_band(watermark, &wm_alpha, watermark->Bands - 1, "n", 1, NULL)) {
-    clear_image(&wm);
-		return 1;
-	}
-
-	VipsInterpretation img_interpolation = vips_image_guess_interpretation(in);
-
-	if (img_interpolation != vips_image_guess_interpretation(wm)) {
-		if (vips_colourspace(wm, &tmp, img_interpolation, NULL)) {
-      clear_image(&wm);
-      clear_image(&wm_alpha);
-			return 1;
-		}
-		swap_and_clear(&wm, tmp);
-	}
-
-	if (opacity < 1) {
-		if (vips_linear1(wm_alpha, &tmp, opacity, 0, NULL)) {
-      clear_image(&wm);
-      clear_image(&wm_alpha);
-			return 1;
-		}
-
-		swap_and_clear(&wm_alpha, tmp);
-	}
-
-	VipsBandFormat img_format;
-	VipsImage *img, *img_alpha;
-
-	img_format = vips_image_get_format(in);
-
-  gboolean has_alpha = vips_image_hasalpha_go(in);
-
-	if (has_alpha) {
-		if (vips_extract_band(in, &img, 0, "n", in->Bands - 1, NULL)) {
-      clear_image(&wm);
-      clear_image(&wm_alpha);
-			return 1;
-		}
-
-		if (vips_extract_band(in, &img_alpha, in->Bands - 1, "n", 1, NULL)) {
-      clear_image(&wm);
-      clear_image(&wm_alpha);
-      clear_image(&img);
-			return 1;
-		}
-	} else {
-    if (vips_copy(in, &img, NULL)) {
-      clear_image(&wm);
-      clear_image(&wm_alpha);
-			return 1;
-    }
-  }
-
-	if (vips_ifthenelse(wm_alpha, wm, img, &tmp, "blend", TRUE, NULL)) {
-    clear_image(&wm);
-    clear_image(&wm_alpha);
-    clear_image(&img);
-    clear_image(&img_alpha);
-		return 1;
-	}
-
-	swap_and_clear(&img, tmp);
-  clear_image(&wm);
-  clear_image(&wm_alpha);
-
-	if (has_alpha) {
-		if (vips_bandjoin2(img, img_alpha, &tmp, NULL)) {
-      clear_image(&img);
-      clear_image(&img_alpha);
-			return 1;
-		}
-
-		swap_and_clear(&img, tmp);
-    clear_image(&img_alpha);
-	}
-
-	if (img_format != vips_image_get_format(img)) {
-		if (vips_cast(img, &tmp, img_format, NULL)) {
-      clear_image(&img);
-			return 1;
-		}
-		swap_and_clear(&img, tmp);
-	}
-
-  *out = img;
-
-  return 0;
+  return res;
+#else
+  vips_error("vips_apply_watermark", "Watermarking is not supported (libvips 8.6+ reuired)");
+  return 1;
+#endif
 }
 
 int
@@ -573,7 +479,7 @@ vips_gifsave_go(VipsImage *in, void **buf, size_t *len) {
 #if VIPS_SUPPORT_MAGICK
   return vips_magicksave_buffer(in, buf, len, "format", "gif", NULL);
 #else
-  vips_error("vips_gifsave_go", "Saving GIF is not supported");
+  vips_error("vips_gifsave_go", "Saving GIF is not supported (libvips 8.7+ reuired)");
   return 1;
 #endif
 }
@@ -583,7 +489,7 @@ vips_icosave_go(VipsImage *in, void **buf, size_t *len) {
 #if VIPS_SUPPORT_MAGICK
   return vips_magicksave_buffer(in, buf, len, "format", "ico", NULL);
 #else
-  vips_error("vips_icosave_go", "Saving ICO is not supported");
+  vips_error("vips_icosave_go", "Saving ICO is not supported (libvips 8.7+ reuired)");
   return 1;
 #endif
 }

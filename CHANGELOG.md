@@ -2,9 +2,26 @@
 
 ## master
 
+# v2.5.0
+
+- New default log format;
+- `structured` and `json` log formats. Can be set with `IMGPROXY_LOG_FORMAT`;
+- Better watermarking: image transparency doesn't affect watermarks, faster watermark scaling.
+
+## v2.4.1
+
+- More verbose URL parsing errors;
+
+## v2.4.0
+
 - Better handling if non-sRGB images;
 - `SO_REUSEPORT` socker option support. Can be enabled with `IMGPROXY_SO_REUSEPORT`;
 - `dpr` option always changes the resulting size even if it leads to enlarge and `enlarge` is falsey;
+- Log to STDOUT;
+- [filename](./docs/generating_the_url_advanced.md#filename) option;
+- Only unexpected errors are reported to Bugsnag/Honeybadger/Sentry;
+- GZip compression support is deprecated;
+- Better Sentry support.
 
 ## v2.3.0
 
@@ -23,7 +40,7 @@
 
 - Better shrink-on-load;
 - Don't import common sRGB IEC61966-2.1 ICC profile unless linear colorspace is used;
-- Send `X-Reqiest-ID` header;
+- Send `X-Request-ID` header;
 - Don't fail on recursive preset usage, just ignore already used preset and log warning.
 
 ## v2.2.12

@@ -2,6 +2,7 @@
 
 #include <vips/vips.h>
 #include <vips/vips7compat.h>
+#include <vips/vector.h>
 
 enum ImgproxyImageTypes {
   UNKNOWN = 0,
@@ -33,7 +34,7 @@ int vips_svgload_go(void *buf, size_t len, double scale, VipsImage **out);
 int vips_heifload_go(void *buf, size_t len, VipsImage **out);
 int vips_bmpload_go(void *buf, size_t len, VipsImage **out);
 
-int vips_get_exif_orientation(VipsImage *image);
+int vips_get_orientation(VipsImage *image);
 void vips_strip_meta(VipsImage *image);
 
 int vips_support_smartcrop();
@@ -73,7 +74,6 @@ int vips_replicate_go(VipsImage *in, VipsImage **out, int across, int down);
 int vips_embed_go(VipsImage *in, VipsImage **out, int x, int y, int width, int height, double *bg, int bgn);
 
 int vips_ensure_alpha(VipsImage *in, VipsImage **out);
-int vips_apply_opacity(VipsImage *in, VipsImage **out, double opacity);
 
 int vips_apply_watermark(VipsImage *in, VipsImage *watermark, VipsImage **out, double opacity);
 

@@ -23,11 +23,24 @@ type route struct {
 	Method  string
 	Prefix  string
 	Handler routeHandler
+	Exact   bool
 }
 
 type router struct {
 	Routes       []*route
 	PanicHandler panicHandler
+}
+
+func (r *route) IsMatch(req *http.Request) bool {
+	if r.Method != req.Method {
+		return false
+	}
+
+	if r.Exact {
+		return req.URL.Path == r.Prefix
+	}
+
+	return strings.HasPrefix(req.URL.Path, r.Prefix)
 }
 
 func newRouter() *router {
@@ -36,22 +49,24 @@ func newRouter() *router {
 	}
 }
 
-func (r *router) Add(method, prefix string, handler routeHandler) {
+func (r *router) Add(method, prefix string, handler routeHandler, exact bool) {
 	r.Routes = append(
 		r.Routes,
-		&route{Method: method, Prefix: prefix, Handler: handler},
+		&route{Method: method, Prefix: prefix, Handler: handler, Exact: exact},
 	)
 }
 
-func (r *router) GET(prefix string, handler routeHandler) {
-	r.Add(http.MethodGet, prefix, handler)
+func (r *router) GET(prefix string, handler routeHandler, exact bool) {
+	r.Add(http.MethodGet, prefix, handler, exact)
 }
 
-func (r *router) OPTIONS(prefix string, handler routeHandler) {
-	r.Add(http.MethodOptions, prefix, handler)
+func (r *router) OPTIONS(prefix string, handler routeHandler, exact bool) {
+	r.Add(http.MethodOptions, prefix, handler, exact)
 }
 
 func (r *router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	req = req.WithContext(setTimerSince(req.Context()))
+
 	reqID := req.Header.Get(xRequestIDHeader)
 
 	if len(reqID) == 0 || !requestIDRe.MatchString(reqID) {
@@ -74,7 +89,7 @@ func (r *router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	logRequest(reqID, req)
 
 	for _, rr := range r.Routes {
-		if rr.Method == req.Method && strings.HasPrefix(req.URL.Path, rr.Prefix) {
+		if rr.IsMatch(req) {
 			rr.Handler(reqID, rw, req)
 			return
 		}

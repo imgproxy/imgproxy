@@ -21,9 +21,11 @@ func buildRouter() *router {
 
 	r.PanicHandler = handlePanic
 
-	r.GET("/health", handleHealth)
-	r.GET("/", withCORS(withSecret(handleProcessing)))
-	r.OPTIONS("/", withCORS(handleOptions))
+	r.GET("/", handleLanding, true)
+	r.GET("/health", handleHealth, true)
+	r.GET("/favicon.ico", handleFavicon, true)
+	r.GET("/", withCORS(withSecret(handleProcessing)), false)
+	r.OPTIONS("/", withCORS(handleOptions), false)
 
 	return r
 }
@@ -96,8 +98,6 @@ func withSecret(h routeHandler) routeHandler {
 }
 
 func handlePanic(reqID string, rw http.ResponseWriter, r *http.Request, err error) {
-	reportError(err, r)
-
 	var (
 		ierr *imgproxyError
 		ok   bool
@@ -107,7 +107,11 @@ func handlePanic(reqID string, rw http.ResponseWriter, r *http.Request, err erro
 		ierr = newUnexpectedError(err.Error(), 3)
 	}
 
-	logResponse(reqID, ierr.StatusCode, ierr.Message)
+	if ierr.Unexpected {
+		reportError(err, r)
+	}
+
+	logResponse(reqID, r, ierr.StatusCode, ierr, nil, nil)
 
 	rw.WriteHeader(ierr.StatusCode)
 
@@ -119,12 +123,18 @@ func handlePanic(reqID string, rw http.ResponseWriter, r *http.Request, err erro
 }
 
 func handleHealth(reqID string, rw http.ResponseWriter, r *http.Request) {
-	logResponse(reqID, 200, string(imgproxyIsRunningMsg))
+	logResponse(reqID, r, 200, nil, nil, nil)
 	rw.WriteHeader(200)
 	rw.Write(imgproxyIsRunningMsg)
 }
 
 func handleOptions(reqID string, rw http.ResponseWriter, r *http.Request) {
-	logResponse(reqID, 200, "Respond with options")
+	logResponse(reqID, r, 200, nil, nil, nil)
+	rw.WriteHeader(200)
+}
+
+func handleFavicon(reqID string, rw http.ResponseWriter, r *http.Request) {
+	logResponse(reqID, r, 200, nil, nil, nil)
+	// TODO: Add a real favicon maybe?
 	rw.WriteHeader(200)
 }

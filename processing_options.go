@@ -12,7 +12,11 @@ import (
 	"strings"
 )
 
-type urlOptions map[string][]string
+type urlOption struct {
+	Name string
+	Args []string
+}
+type urlOptions []urlOption
 
 type processingHeaders struct {
 	Accept        string
@@ -121,6 +125,8 @@ type processingOptions struct {
 	PreferWebP  bool
 	EnforceWebP bool
 
+	Filename string
+
 	UsedPresets []string
 }
 
@@ -132,13 +138,6 @@ const (
 
 	msgForbidden  = "Forbidden"
 	msgInvalidURL = "Invalid URL"
-)
-
-var (
-	errInvalidImageURL                    = errors.New("Invalid image url")
-	errInvalidURLEncoding                 = errors.New("Invalid url encoding")
-	errResultingImageFormatIsNotSupported = errors.New("Resulting image format is not supported")
-	errInvalidPath                        = newError(404, "Invalid path", msgInvalidURL)
 )
 
 func (gt gravityType) String() string {
@@ -159,6 +158,24 @@ func (rt resizeType) String() string {
 	return ""
 }
 
+func newProcessingOptions() *processingOptions {
+	return &processingOptions{
+		Resize:      resizeFit,
+		Width:       0,
+		Height:      0,
+		Gravity:     gravityOptions{Type: gravityCenter},
+		Enlarge:     false,
+		Quality:     conf.Quality,
+		Format:      imageTypeUnknown,
+		Background:  rgbColor{255, 255, 255},
+		Blur:        0,
+		Sharpen:     0,
+		Dpr:         1,
+		Watermark:   watermarkOptions{Opacity: 1, Replicate: false, Gravity: gravityCenter},
+		UsedPresets: make([]string, 0, len(conf.Presets)),
+	}
+}
+
 func (po *processingOptions) isPresetUsed(name string) bool {
 	for _, usedName := range po.UsedPresets {
 		if usedName == name {
@@ -170,6 +187,10 @@ func (po *processingOptions) isPresetUsed(name string) bool {
 
 func (po *processingOptions) presetUsed(name string) {
 	po.UsedPresets = append(po.UsedPresets, name)
+}
+
+func (po *processingOptions) String() string {
+	return fmt.Sprintf("%+v", *po)
 }
 
 func colorFromHex(hexcolor string) (rgbColor, error) {
@@ -194,10 +215,15 @@ func colorFromHex(hexcolor string) (rgbColor, error) {
 func decodeBase64URL(parts []string) (string, string, error) {
 	var format string
 
-	urlParts := strings.Split(strings.Join(parts, ""), ".")
+	encoded := strings.Join(parts, "")
+	urlParts := strings.Split(encoded, ".")
+
+	if len(urlParts[0]) == 0 {
+		return "", "", errors.New("Image URL is empty")
+	}
 
 	if len(urlParts) > 2 {
-		return "", "", errInvalidURLEncoding
+		return "", "", fmt.Errorf("Multiple formats are specified: %s", encoded)
 	}
 
 	if len(urlParts) == 2 && len(urlParts[1]) > 0 {
@@ -206,14 +232,10 @@ func decodeBase64URL(parts []string) (string, string, error) {
 
 	imageURL, err := base64.RawURLEncoding.DecodeString(strings.TrimRight(urlParts[0], "="))
 	if err != nil {
-		return "", "", errInvalidURLEncoding
+		return "", "", fmt.Errorf("Invalid url encoding: %s", encoded)
 	}
 
 	fullURL := fmt.Sprintf("%s%s", conf.BaseURL, string(imageURL))
-
-	if _, err := url.ParseRequestURI(fullURL); err != nil {
-		return "", "", errInvalidImageURL
-	}
 
 	return fullURL, format, nil
 }
@@ -221,29 +243,34 @@ func decodeBase64URL(parts []string) (string, string, error) {
 func decodePlainURL(parts []string) (string, string, error) {
 	var format string
 
-	urlParts := strings.Split(strings.Join(parts, "/"), "@")
+	encoded := strings.Join(parts, "/")
+	urlParts := strings.Split(encoded, "@")
+
+	if len(urlParts[0]) == 0 {
+		return "", "", errors.New("Image URL is empty")
+	}
 
 	if len(urlParts) > 2 {
-		return "", "", errInvalidURLEncoding
+		return "", "", fmt.Errorf("Multiple formats are specified: %s", encoded)
 	}
 
 	if len(urlParts) == 2 && len(urlParts[1]) > 0 {
 		format = urlParts[1]
 	}
 
-	if unescaped, err := url.PathUnescape(urlParts[0]); err == nil {
-		fullURL := fmt.Sprintf("%s%s", conf.BaseURL, unescaped)
-		if _, err := url.ParseRequestURI(fullURL); err == nil {
-			return fullURL, format, nil
-		}
+	unescaped, err := url.PathUnescape(urlParts[0])
+	if err != nil {
+		return "", "", fmt.Errorf("Invalid url encoding: %s", encoded)
 	}
 
-	return "", "", errInvalidImageURL
+	fullURL := fmt.Sprintf("%s%s", conf.BaseURL, unescaped)
+
+	return fullURL, format, nil
 }
 
 func decodeURL(parts []string) (string, string, error) {
 	if len(parts) == 0 {
-		return "", "", errInvalidURLEncoding
+		return "", "", errors.New("Image URL is empty")
 	}
 
 	if parts[0] == urlTokenPlain && len(parts) > 1 {
@@ -547,7 +574,7 @@ func applyPresetOption(po *processingOptions, args []string) error {
 				return err
 			}
 		} else {
-			return fmt.Errorf("Unknown asset: %s", preset)
+			return fmt.Errorf("Unknown preset: %s", preset)
 		}
 	}
 
@@ -615,7 +642,7 @@ func applyFormatOption(po *processingOptions, args []string) error {
 	}
 
 	if !vipsTypeSupportSave[po.Format] {
-		return errResultingImageFormatIsNotSupported
+		return fmt.Errorf("Resulting image format is not supported: %s", po.Format)
 	}
 
 	return nil
@@ -631,90 +658,64 @@ func applyCacheBusterOption(po *processingOptions, args []string) error {
 	return nil
 }
 
-func applyProcessingOption(po *processingOptions, name string, args []string) error {
-	switch name {
-	case "format", "f", "ext":
-		if err := applyFormatOption(po, args); err != nil {
-			return err
-		}
-	case "resize", "rs":
-		if err := applyResizeOption(po, args); err != nil {
-			return err
-		}
-	case "resizing_type", "rt":
-		if err := applyResizingTypeOption(po, args); err != nil {
-			return err
-		}
-	case "size", "s":
-		if err := applySizeOption(po, args); err != nil {
-			return err
-		}
-	case "width", "w":
-		if err := applyWidthOption(po, args); err != nil {
-			return err
-		}
-	case "height", "h":
-		if err := applyHeightOption(po, args); err != nil {
-			return err
-		}
-	case "enlarge", "el":
-		if err := applyEnlargeOption(po, args); err != nil {
-			return err
-		}
-	case "extend", "ex":
-		if err := applyExtendOption(po, args); err != nil {
-			return err
-		}
-	case "dpr":
-		if err := applyDprOption(po, args); err != nil {
-			return err
-		}
-	case "gravity", "g":
-		if err := applyGravityOption(po, args); err != nil {
-			return err
-		}
-	case "crop", "c":
-		if err := applyCropOption(po, args); err != nil {
-			return err
-		}
-	case "quality", "q":
-		if err := applyQualityOption(po, args); err != nil {
-			return err
-		}
-	case "background", "bg":
-		if err := applyBackgroundOption(po, args); err != nil {
-			return err
-		}
-	case "blur", "bl":
-		if err := applyBlurOption(po, args); err != nil {
-			return err
-		}
-	case "sharpen", "sh":
-		if err := applySharpenOption(po, args); err != nil {
-			return err
-		}
-	case "watermark", "wm":
-		if err := applyWatermarkOption(po, args); err != nil {
-			return err
-		}
-	case "preset", "pr":
-		if err := applyPresetOption(po, args); err != nil {
-			return err
-		}
-	case "cachebuster", "cb":
-		if err := applyCacheBusterOption(po, args); err != nil {
-			return err
-		}
-	default:
-		return fmt.Errorf("Unknown processing option: %s", name)
+func applyFilenameOption(po *processingOptions, args []string) error {
+	if len(args) > 1 {
+		return fmt.Errorf("Invalid filename arguments: %v", args)
 	}
+
+	po.Filename = args[0]
 
 	return nil
 }
 
+func applyProcessingOption(po *processingOptions, name string, args []string) error {
+	switch name {
+	case "format", "f", "ext":
+		return applyFormatOption(po, args)
+	case "resize", "rs":
+		return applyResizeOption(po, args)
+	case "resizing_type", "rt":
+		return applyResizingTypeOption(po, args)
+	case "size", "s":
+		return applySizeOption(po, args)
+	case "width", "w":
+		return applyWidthOption(po, args)
+	case "height", "h":
+		return applyHeightOption(po, args)
+	case "enlarge", "el":
+		return applyEnlargeOption(po, args)
+	case "extend", "ex":
+		return applyExtendOption(po, args)
+	case "dpr":
+		return applyDprOption(po, args)
+	case "gravity", "g":
+		return applyGravityOption(po, args)
+	case "crop", "c":
+		return applyCropOption(po, args)
+	case "quality", "q":
+		return applyQualityOption(po, args)
+	case "background", "bg":
+		return applyBackgroundOption(po, args)
+	case "blur", "bl":
+		return applyBlurOption(po, args)
+	case "sharpen", "sh":
+		return applySharpenOption(po, args)
+	case "watermark", "wm":
+		return applyWatermarkOption(po, args)
+	case "preset", "pr":
+		return applyPresetOption(po, args)
+	case "cachebuster", "cb":
+		return applyCacheBusterOption(po, args)
+	case "filename", "fn":
+		return applyFilenameOption(po, args)
+	}
+
+	return fmt.Errorf("Unknown processing option: %s", name)
+}
+
 func applyProcessingOptions(po *processingOptions, options urlOptions) error {
-	for name, args := range options {
-		if err := applyProcessingOption(po, name, args); err != nil {
+	for _, opt := range options {
+		if err := applyProcessingOption(po, opt.Name, opt.Args); err != nil {
 			return err
 		}
 	}
@@ -723,7 +724,7 @@ func applyProcessingOptions(po *processingOptions, options urlOptions) error {
 }
 
 func parseURLOptions(opts []string) (urlOptions, []string) {
-	parsed := make(urlOptions)
+	parsed := make(urlOptions, 0, len(opts))
 	urlStart := len(opts) + 1
 
 	for i, opt := range opts {
@@ -734,7 +735,7 @@ func parseURLOptions(opts []string) (urlOptions, []string) {
 			break
 		}
 
-		parsed[args[0]] = args[1:]
+		parsed = append(parsed, urlOption{Name: args[0], Args: args[1:]})
 	}
 
 	var rest []string
@@ -749,23 +750,7 @@ func parseURLOptions(opts []string) (urlOptions, []string) {
 }
 
 func defaultProcessingOptions(headers *processingHeaders) (*processingOptions, error) {
-	var err error
-
-	po := processingOptions{
-		Resize:      resizeFit,
-		Width:       0,
-		Height:      0,
-		Gravity:     gravityOptions{Type: gravityCenter},
-		Enlarge:     false,
-		Quality:     conf.Quality,
-		Format:      imageTypeUnknown,
-		Background:  rgbColor{255, 255, 255},
-		Blur:        0,
-		Sharpen:     0,
-		Dpr:         1,
-		Watermark:   watermarkOptions{Opacity: 1, Replicate: false, Gravity: gravityCenter},
-		UsedPresets: make([]string, 0, len(conf.Presets)),
-	}
+	po := newProcessingOptions()
 
 	if strings.Contains(headers.Accept, "image/webp") {
 		po.PreferWebP = conf.EnableWebpDetection || conf.EnforceWebp
@@ -788,10 +773,12 @@ func defaultProcessingOptions(headers *processingHeaders) (*processingOptions, e
 		}
 	}
 	if _, ok := conf.Presets["default"]; ok {
-		err = applyPresetOption(&po, []string{"default"})
+		if err := applyPresetOption(po, []string{"default"}); err != nil {
+			return po, err
+		}
 	}
 
-	return &po, err
+	return po, nil
 }
 
 func parsePathAdvanced(parts []string, headers *processingHeaders) (string, *processingOptions, error) {
@@ -802,7 +789,7 @@ func parsePathAdvanced(parts []string, headers *processingHeaders) (string, *pro
 
 	options, urlParts := parseURLOptions(parts)
 
-	if err := applyProcessingOptions(po, options); err != nil {
+	if err = applyProcessingOptions(po, options); err != nil {
 		return "", po, err
 	}
 
@@ -812,7 +799,7 @@ func parsePathAdvanced(parts []string, headers *processingHeaders) (string, *pro
 	}
 
 	if len(extension) > 0 {
-		if err := applyFormatOption(po, []string{extension}); err != nil {
+		if err = applyFormatOption(po, []string{extension}); err != nil {
 			return "", po, err
 		}
 	}
@@ -829,7 +816,7 @@ func parsePathPresets(parts []string, headers *processingHeaders) (string, *proc
 	presets := strings.Split(parts[0], ":")
 	urlParts := parts[1:]
 
-	if err := applyPresetOption(po, presets); err != nil {
+	if err = applyPresetOption(po, presets); err != nil {
 		return "", nil, err
 	}
 
@@ -839,7 +826,7 @@ func parsePathPresets(parts []string, headers *processingHeaders) (string, *proc
 	}
 
 	if len(extension) > 0 {
-		if err := applyFormatOption(po, []string{extension}); err != nil {
+		if err = applyFormatOption(po, []string{extension}); err != nil {
 			return "", po, err
 		}
 	}
@@ -848,10 +835,8 @@ func parsePathPresets(parts []string, headers *processingHeaders) (string, *proc
 }
 
 func parsePathBasic(parts []string, headers *processingHeaders) (string, *processingOptions, error) {
-	var err error
-
 	if len(parts) < 6 {
-		return "", nil, errInvalidPath
+		return "", nil, fmt.Errorf("Invalid basic URL format arguments: %s", strings.Join(parts, "/"))
 	}
 
 	po, err := defaultProcessingOptions(headers)
@@ -899,7 +884,7 @@ func parsePath(ctx context.Context, r *http.Request) (context.Context, error) {
 	parts := strings.Split(strings.TrimPrefix(path, "/"), "/")
 
 	if len(parts) < 3 {
-		return ctx, errInvalidPath
+		return ctx, newError(404, fmt.Sprintf("Invalid path: %s", path), msgInvalidURL)
 	}
 
 	if !conf.AllowInsecure {

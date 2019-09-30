@@ -19,8 +19,8 @@ func (s *PresetsTestSuite) TestParsePreset() {
 	require.Nil(s.T(), err)
 
 	assert.Equal(s.T(), urlOptions{
-		"resize":  []string{"fit", "100", "200"},
-		"sharpen": []string{"2"},
+		urlOption{Name: "resize", Args: []string{"fit", "100", "200"}},
+		urlOption{Name: "sharpen", Args: []string{"2"}},
 	}, p["test"])
 }
 
@@ -85,8 +85,8 @@ func (s *PresetsTestSuite) TestParsePresetComment() {
 func (s *PresetsTestSuite) TestCheckPresets() {
 	p := presets{
 		"test": urlOptions{
-			"resize":  []string{"fit", "100", "200"},
-			"sharpen": []string{"2"},
+			urlOption{Name: "resize", Args: []string{"fit", "100", "200"}},
+			urlOption{Name: "sharpen", Args: []string{"2"}},
 		},
 	}
 
@@ -98,8 +98,8 @@ func (s *PresetsTestSuite) TestCheckPresets() {
 func (s *PresetsTestSuite) TestCheckPresetsInvalid() {
 	p := presets{
 		"test": urlOptions{
-			"resize":  []string{"fit", "-1", "-2"},
-			"sharpen": []string{"2"},
+			urlOption{Name: "resize", Args: []string{"fit", "-1", "-2"}},
+			urlOption{Name: "sharpen", Args: []string{"2"}},
 		},
 	}
 
