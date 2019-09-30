@@ -17,7 +17,7 @@ imgproxy supports GIF output only when using libvips 8.7.0+ compiled with ImageM
 
 ## ICO support
 
-imgproxy supports ICO output only when using libvips 8.7.0+ compiled with ImageMagick support. Official imgproxy Docker image supports ICO out of the box.
+imgproxy supports ICO only when using libvips 8.7.0+ compiled with ImageMagick support. Official imgproxy Docker image supports ICO out of the box.
 
 ## HEIC support
 

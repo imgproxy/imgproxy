@@ -47,7 +47,6 @@ RUN cd /root \
   && curl -Ls https://github.com/libvips/libvips/releases/download/v$VIPS_VERSION/vips-$VIPS_VERSION.tar.gz | tar -xz \
   && cd vips-$VIPS_VERSION \
   && ./configure \
-    --disable-magickload \
     --without-python \
     --without-tiff \
     --without-OpenEXR \

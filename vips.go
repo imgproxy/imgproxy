@@ -8,12 +8,15 @@ package main
 */
 import "C"
 import (
+	"bytes"
 	"context"
 	"math"
 	"os"
 	"runtime"
 	"time"
 	"unsafe"
+
+	imageSize "github.com/imgproxy/imgproxy/image_size"
 )
 
 type vipsImage struct {
@@ -88,15 +91,15 @@ func initVips() {
 	if int(C.vips_type_find_load_go(C.int(imageTypeSVG))) != 0 {
 		vipsTypeSupportLoad[imageTypeSVG] = true
 	}
+	if int(C.vips_type_find_load_go(C.int(imageTypeICO))) != 0 {
+		vipsTypeSupportLoad[imageTypeICO] = true
+	}
 	if int(C.vips_type_find_load_go(C.int(imageTypeHEIC))) != 0 {
 		vipsTypeSupportLoad[imageTypeHEIC] = true
 	}
 	if int(C.vips_type_find_load_go(C.int(imageTypeTIFF))) != 0 {
 		vipsTypeSupportLoad[imageTypeTIFF] = true
 	}
-
-	// we load ICO with github.com/mat/besticon/ico and send decoded data to vips
-	vipsTypeSupportLoad[imageTypeICO] = true
 
 	if int(C.vips_type_find_save_go(C.int(imageTypeJPEG))) != 0 {
 		vipsTypeSupportSave[imageTypeJPEG] = true
@@ -197,12 +200,12 @@ func (img *vipsImage) Load(data []byte, imgtype imageType, shrink int, scale flo
 	case imageTypeSVG:
 		err = C.vips_svgload_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), C.double(scale), &tmp)
 	case imageTypeICO:
-		rawData, width, height, icoErr := icoData(data)
-		if icoErr != nil {
-			return icoErr
+		bestPage, ierr := imageSize.BestIcoPage(bytes.NewBuffer(data))
+		if ierr != nil {
+			logWarning(ierr.Error())
 		}
 
-		tmp = C.vips_image_new_from_memory_copy(unsafe.Pointer(&rawData[0]), C.size_t(width*height*4), C.int(width), C.int(height), 4, C.VIPS_FORMAT_UCHAR)
+		err = C.vips_icoload_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), C.int(bestPage), &tmp)
 	case imageTypeHEIC:
 		err = C.vips_heifload_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), &tmp)
 	case imageTypeTIFF:

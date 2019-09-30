@@ -68,8 +68,6 @@ github.com/kr/pretty v0.1.0/go.mod h1:dAy3ld7l9f0ibDNOQOHHMYYIIbhfbHSm3C4ZsoJORN
 github.com/kr/pty v1.1.1/go.mod h1:pFQYn66WHrOpPYNljwOMqo10TkYh1fy3cYio2l3bCsQ=
 github.com/kr/text v0.1.0 h1:45sCR5RtlFHMR4UwH9sdQ5TC8v0qDQCHnXt+kaKSTVE=
 github.com/kr/text v0.1.0/go.mod h1:4Jbv+DJW3UT/LiOwJeYQe1efqtUx/iVham/4vfdArNI=
-github.com/mat/besticon v3.9.0+incompatible h1:SLaWKCE7ptsjWbQee8Sbx8F/WK4bw8b55tUV4mY0m/c=
-github.com/mat/besticon v3.9.0+incompatible/go.mod h1:mA1auQYHt6CW5e7L9HJLmqVQC8SzNk2gVwouO0AbiEU=
 github.com/matoous/go-nanoid v0.0.0-20181114085210-eab626deece6 h1:elv0VC5n2owefO3RvtKvS3i3/rw9LCrs0+tVFLbBlmQ=
 github.com/matoous/go-nanoid v0.0.0-20181114085210-eab626deece6/go.mod h1:soqXi4beH2aAljcVvgIDqekDtnM2UZkGl47fniwq3J4=
 github.com/matttproud/golang_protobuf_extensions v1.0.1 h1:4hp9jkHxhMHkqkrB3Ix0jegS5sx/RkqARlsWZ6pIwiU=

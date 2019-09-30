@@ -80,6 +80,8 @@ vips_type_find_load_go(int imgtype) {
     return vips_type_find("VipsOperation", "gifload_buffer");
   case (SVG):
     return vips_type_find("VipsOperation", "svgload_buffer");
+  case (ICO):
+    return vips_type_find("VipsOperation", "magickload_buffer");
   case (HEIC):
     return vips_type_find("VipsOperation", "heifload_buffer");
   case (TIFF):
@@ -157,6 +159,16 @@ vips_svgload_go(void *buf, size_t len, double scale, VipsImage **out) {
     return vips_svgload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, "scale", scale, NULL);
   #else
     vips_error("vips_svgload_go", "Loading SVG is not supported (libvips 8.5+ reuired)");
+    return 1;
+  #endif
+}
+
+int
+vips_icoload_go(void *buf, size_t len, int page, VipsImage **out) {
+  #if VIPS_SUPPORT_MAGICK
+    return vips_magickload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, "page", page, NULL);
+  #else
+    vips_error("vips_icoload_go", "Loading ICO is not supported (libvips 8.7+ reuired)");
     return 1;
   #endif
 }
