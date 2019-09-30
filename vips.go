@@ -76,57 +76,9 @@ func initVips() {
 
 	vipsSupportSmartcrop = C.vips_support_smartcrop() == 1
 
-	if int(C.vips_type_find_load_go(C.int(imageTypeJPEG))) != 0 {
-		vipsTypeSupportLoad[imageTypeJPEG] = true
-	}
-	if int(C.vips_type_find_load_go(C.int(imageTypePNG))) != 0 {
-		vipsTypeSupportLoad[imageTypePNG] = true
-	}
-	if int(C.vips_type_find_load_go(C.int(imageTypeWEBP))) != 0 {
-		vipsTypeSupportLoad[imageTypeWEBP] = true
-	}
-	if int(C.vips_type_find_load_go(C.int(imageTypeGIF))) != 0 {
-		vipsTypeSupportLoad[imageTypeGIF] = true
-	}
-	if int(C.vips_type_find_load_go(C.int(imageTypeSVG))) != 0 {
-		vipsTypeSupportLoad[imageTypeSVG] = true
-	}
-	if int(C.vips_type_find_load_go(C.int(imageTypeICO))) != 0 {
-		vipsTypeSupportLoad[imageTypeICO] = true
-	}
-	if int(C.vips_type_find_load_go(C.int(imageTypeHEIC))) != 0 {
-		vipsTypeSupportLoad[imageTypeHEIC] = true
-	}
-	if int(C.vips_type_find_load_go(C.int(imageTypeBMP))) != 0 {
-		vipsTypeSupportLoad[imageTypeBMP] = true
-	}
-	if int(C.vips_type_find_load_go(C.int(imageTypeTIFF))) != 0 {
-		vipsTypeSupportLoad[imageTypeTIFF] = true
-	}
-
-	if int(C.vips_type_find_save_go(C.int(imageTypeJPEG))) != 0 {
-		vipsTypeSupportSave[imageTypeJPEG] = true
-	}
-	if int(C.vips_type_find_save_go(C.int(imageTypePNG))) != 0 {
-		vipsTypeSupportSave[imageTypePNG] = true
-	}
-	if int(C.vips_type_find_save_go(C.int(imageTypeWEBP))) != 0 {
-		vipsTypeSupportSave[imageTypeWEBP] = true
-	}
-	if int(C.vips_type_find_save_go(C.int(imageTypeGIF))) != 0 {
-		vipsTypeSupportSave[imageTypeGIF] = true
-	}
-	if int(C.vips_type_find_save_go(C.int(imageTypeICO))) != 0 {
-		vipsTypeSupportSave[imageTypeICO] = true
-	}
-	if int(C.vips_type_find_save_go(C.int(imageTypeHEIC))) != 0 {
-		vipsTypeSupportSave[imageTypeHEIC] = true
-	}
-	if int(C.vips_type_find_save_go(C.int(imageTypeBMP))) != 0 {
-		vipsTypeSupportSave[imageTypeBMP] = true
-	}
-	if int(C.vips_type_find_save_go(C.int(imageTypeTIFF))) != 0 {
-		vipsTypeSupportSave[imageTypeTIFF] = true
+	for _, imgtype := range imageTypes {
+		vipsTypeSupportLoad[imgtype] = int(C.vips_type_find_load_go(C.int(imgtype))) != 0
+		vipsTypeSupportSave[imgtype] = int(C.vips_type_find_save_go(C.int(imgtype))) != 0
 	}
 
 	if conf.JpegProgressive {
