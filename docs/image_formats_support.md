@@ -28,6 +28,8 @@ By default, imgproxy saves HEIC images as JPEG. You need to explicitly specify t
 
 ## BMP support
 
+imgproxy supports BMP only when using libvips 8.7.0+ compiled with ImageMagick support. Official imgproxy Docker image supports ICO out of the box.
+
 By default, imgproxy saves BMP images as JPEG. You need to explicitly specify the `format` option to get BMP output.
 
 ## Animated images support

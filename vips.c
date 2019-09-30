@@ -109,7 +109,7 @@ vips_type_find_save_go(int imgtype) {
   case (HEIC):
     return vips_type_find("VipsOperation", "heifsave_buffer");
   case (BMP):
-    return vips_type_find("VipsOperation", "bmpsave_buffer");
+    return vips_type_find("VipsOperation", "magicksave_buffer");
   case (TIFF):
     return vips_type_find("VipsOperation", "tiffsave_buffer");
   }
@@ -196,7 +196,7 @@ vips_bmpload_go(void *buf, size_t len, VipsImage **out) {
   return 1;
 #endif
 }
-  
+
 int
 vips_tiffload_go(void *buf, size_t len, VipsImage **out) {
 #if VIPS_SUPPORT_TIFF
@@ -544,9 +544,9 @@ vips_tiffsave_go(VipsImage *in, void **buf, size_t *len, int quality) {
 }
 
 int
-vips_bmpsave_go(VipsImage *in, void **buf, size_t *len, int quality) {
+vips_bmpsave_go(VipsImage *in, void **buf, size_t *len) {
 #if VIPS_SUPPORT_MAGICK
-  return vips_magicksave_buffer(in, buf, len, "format", "bmp", "quality", quality, NULL);
+  return vips_magicksave_buffer(in, buf, len, "format", "bmp", "quality", NULL);
 #else
   vips_error("vips_bmpsave_go", "Saving BMP is not supported");
   return 1;

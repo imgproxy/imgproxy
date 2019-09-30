@@ -124,7 +124,7 @@ func initVips() {
 	}
 	if int(C.vips_type_find_save_go(C.int(imageTypeBMP))) != 0 {
 		vipsTypeSupportSave[imageTypeBMP] = true
-  }
+	}
 	if int(C.vips_type_find_save_go(C.int(imageTypeTIFF))) != 0 {
 		vipsTypeSupportSave[imageTypeTIFF] = true
 	}
@@ -253,7 +253,7 @@ func (img *vipsImage) Save(imgtype imageType, quality int) ([]byte, context.Canc
 	case imageTypeHEIC:
 		err = C.vips_heifsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality))
 	case imageTypeBMP:
-		err = C.vips_bmpsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality))
+		err = C.vips_bmpsave_go(img.VipsImage, &ptr, &imgsize)
 	case imageTypeTIFF:
 		err = C.vips_tiffsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality))
 	}
