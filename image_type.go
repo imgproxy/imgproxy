@@ -24,6 +24,7 @@ const (
 	imageTypeICO     = imageType(C.ICO)
 	imageTypeSVG     = imageType(C.SVG)
 	imageTypeHEIC    = imageType(C.HEIC)
+	imageTypeBMP     = imageType(C.BMP)
 	imageTypeTIFF    = imageType(C.TIFF)
 
 	contentDispositionFilenameFallback = "image"
@@ -39,6 +40,7 @@ var (
 		"ico":  imageTypeICO,
 		"svg":  imageTypeSVG,
 		"heic": imageTypeHEIC,
+		"bmp":  imageTypeBMP,
 		"tiff": imageTypeTIFF,
 	}
 
@@ -49,6 +51,7 @@ var (
 		imageTypeGIF:  "image/gif",
 		imageTypeICO:  "image/x-icon",
 		imageTypeHEIC: "image/heif",
+		imageTypeBMP:  "image/bmp",
 		imageTypeTIFF: "image/tiff",
 	}
 
@@ -59,6 +62,7 @@ var (
 		imageTypeGIF:  "inline; filename=\"%s.gif\"",
 		imageTypeICO:  "inline; filename=\"%s.ico\"",
 		imageTypeHEIC: "inline; filename=\"%s.heic\"",
+		imageTypeBMP:  "inline; filename=\"%s.bmp\"",
 		imageTypeTIFF: "inline; filename=\"%s.tiff\"",
 	}
 )

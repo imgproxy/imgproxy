@@ -97,6 +97,9 @@ func initVips() {
 	if int(C.vips_type_find_load_go(C.int(imageTypeHEIC))) != 0 {
 		vipsTypeSupportLoad[imageTypeHEIC] = true
 	}
+	if int(C.vips_type_find_load_go(C.int(imageTypeBMP))) != 0 {
+		vipsTypeSupportLoad[imageTypeBMP] = true
+	}
 	if int(C.vips_type_find_load_go(C.int(imageTypeTIFF))) != 0 {
 		vipsTypeSupportLoad[imageTypeTIFF] = true
 	}
@@ -119,6 +122,9 @@ func initVips() {
 	if int(C.vips_type_find_save_go(C.int(imageTypeHEIC))) != 0 {
 		vipsTypeSupportSave[imageTypeHEIC] = true
 	}
+	if int(C.vips_type_find_save_go(C.int(imageTypeBMP))) != 0 {
+		vipsTypeSupportSave[imageTypeBMP] = true
+  }
 	if int(C.vips_type_find_save_go(C.int(imageTypeTIFF))) != 0 {
 		vipsTypeSupportSave[imageTypeTIFF] = true
 	}
@@ -208,6 +214,8 @@ func (img *vipsImage) Load(data []byte, imgtype imageType, shrink int, scale flo
 		err = C.vips_icoload_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), C.int(bestPage), &tmp)
 	case imageTypeHEIC:
 		err = C.vips_heifload_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), &tmp)
+	case imageTypeBMP:
+		err = C.vips_bmpload_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), &tmp)
 	case imageTypeTIFF:
 		err = C.vips_tiffload_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), &tmp)
 	}
@@ -244,6 +252,8 @@ func (img *vipsImage) Save(imgtype imageType, quality int) ([]byte, context.Canc
 		err = C.vips_icosave_go(img.VipsImage, &ptr, &imgsize)
 	case imageTypeHEIC:
 		err = C.vips_heifsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality))
+	case imageTypeBMP:
+		err = C.vips_bmpsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality))
 	case imageTypeTIFF:
 		err = C.vips_tiffsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality))
 	}
