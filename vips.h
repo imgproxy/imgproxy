@@ -14,6 +14,7 @@ enum ImgproxyImageTypes {
   SVG,
   HEIC,
   BMP,
+  TIFF
 };
 
 int vips_initialize();
@@ -31,8 +32,10 @@ int vips_pngload_go(void *buf, size_t len, VipsImage **out);
 int vips_webpload_go(void *buf, size_t len, double scale, int pages, VipsImage **out);
 int vips_gifload_go(void *buf, size_t len, int pages, VipsImage **out);
 int vips_svgload_go(void *buf, size_t len, double scale, VipsImage **out);
+int vips_icoload_go(void *buf, size_t len, int page, VipsImage **out);
 int vips_heifload_go(void *buf, size_t len, VipsImage **out);
 int vips_bmpload_go(void *buf, size_t len, VipsImage **out);
+int vips_tiffload_go(void *buf, size_t len, VipsImage **out);
 
 int vips_get_orientation(VipsImage *image);
 void vips_strip_meta(VipsImage *image);
@@ -86,5 +89,6 @@ int vips_gifsave_go(VipsImage *in, void **buf, size_t *len);
 int vips_icosave_go(VipsImage *in, void **buf, size_t *len);
 int vips_heifsave_go(VipsImage *in, void **buf, size_t *len, int quality);
 int vips_bmpsave_go(VipsImage *in, void **buf, size_t *len, int quality);
+int vips_tiffsave_go(VipsImage *in, void **buf, size_t *len, int quality);
 
 void vips_cleanup();

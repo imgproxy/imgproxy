@@ -25,6 +25,7 @@ const (
 	imageTypeSVG     = imageType(C.SVG)
 	imageTypeHEIC    = imageType(C.HEIC)
 	imageTypeBMP     = imageType(C.BMP)
+	imageTypeTIFF    = imageType(C.TIFF)
 
 	contentDispositionFilenameFallback = "image"
 )
@@ -40,6 +41,7 @@ var (
 		"svg":  imageTypeSVG,
 		"heic": imageTypeHEIC,
 		"bmp":  imageTypeBMP,
+		"tiff": imageTypeTIFF,
 	}
 
 	mimes = map[imageType]string{
@@ -50,6 +52,7 @@ var (
 		imageTypeICO:  "image/x-icon",
 		imageTypeHEIC: "image/heif",
 		imageTypeBMP:  "image/bmp",
+		imageTypeTIFF: "image/tiff",
 	}
 
 	contentDispositionsFmt = map[imageType]string{
@@ -60,6 +63,7 @@ var (
 		imageTypeICO:  "inline; filename=\"%s.ico\"",
 		imageTypeHEIC: "inline; filename=\"%s.heic\"",
 		imageTypeBMP:  "inline; filename=\"%s.bmp\"",
+		imageTypeTIFF: "inline; filename=\"%s.tiff\"",
 	}
 )
 

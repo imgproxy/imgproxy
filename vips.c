@@ -13,6 +13,9 @@
 #define VIPS_SUPPORT_SVG \
   (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 3))
 
+#define VIPS_SUPPORT_TIFF \
+  (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 6))
+
 #define VIPS_SUPPORT_MAGICK \
   (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 7))
 
@@ -77,10 +80,14 @@ vips_type_find_load_go(int imgtype) {
     return vips_type_find("VipsOperation", "gifload_buffer");
   case (SVG):
     return vips_type_find("VipsOperation", "svgload_buffer");
+  case (ICO):
+    return vips_type_find("VipsOperation", "magickload_buffer");
   case (HEIC):
     return vips_type_find("VipsOperation", "heifload_buffer");
   case (BMP):
     return vips_type_find("VipsOperation", "magickload_buffer");
+  case (TIFF):
+    return vips_type_find("VipsOperation", "tiffload_buffer");
   }
   return 0;
 }
@@ -103,6 +110,8 @@ vips_type_find_save_go(int imgtype) {
     return vips_type_find("VipsOperation", "heifsave_buffer");
   case (BMP):
     return vips_type_find("VipsOperation", "bmpsave_buffer");
+  case (TIFF):
+    return vips_type_find("VipsOperation", "tiffsave_buffer");
   }
 
   return 0;
@@ -159,6 +168,16 @@ vips_svgload_go(void *buf, size_t len, double scale, VipsImage **out) {
 }
 
 int
+vips_icoload_go(void *buf, size_t len, int page, VipsImage **out) {
+  #if VIPS_SUPPORT_MAGICK
+    return vips_magickload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, "page", page, NULL);
+  #else
+    vips_error("vips_icoload_go", "Loading ICO is not supported (libvips 8.7+ reuired)");
+    return 1;
+  #endif
+}
+
+int
 vips_heifload_go(void *buf, size_t len, VipsImage **out) {
 #if VIPS_SUPPORT_HEIF
   return vips_heifload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, NULL);
@@ -174,6 +193,16 @@ vips_bmpload_go(void *buf, size_t len, VipsImage **out) {
   return vips_magickload_buffer(buf, len, out, NULL);
 #else
   vips_error("vips_bmpload_go", "Loading BMP is not supported");
+  return 1;
+#endif
+}
+  
+int
+vips_tiffload_go(void *buf, size_t len, VipsImage **out) {
+#if VIPS_SUPPORT_TIFF
+  return vips_tiffload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, NULL);
+#else
+  vips_error("vips_tiffload_go", "Loading TIFF is not supported (libvips 8.6+ reuired)");
   return 1;
 #endif
 }
@@ -499,7 +528,17 @@ vips_heifsave_go(VipsImage *in, void **buf, size_t *len, int quality) {
 #if VIPS_SUPPORT_HEIF
   return vips_heifsave_buffer(in, buf, len, "Q", quality, NULL);
 #else
-  vips_error("vips_heifsave_go", "Saving HEIF is not supported");
+  vips_error("vips_heifsave_go", "Saving HEIF is not supported (libvips 8.8+ reuired)");
+  return 1;
+#endif
+}
+
+int
+vips_tiffsave_go(VipsImage *in, void **buf, size_t *len, int quality) {
+#if VIPS_SUPPORT_TIFF
+  return vips_tiffsave_buffer(in, buf, len, "Q", quality, NULL);
+#else
+  vips_error("vips_tiffsave_go", "Saving TIFF is not supported (libvips 8.6+ reuired)");
   return 1;
 #endif
 }

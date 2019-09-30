@@ -1,6 +1,6 @@
 # Image formats support
 
-At the moment, imgproxy supports only the most popular Web image formats:
+At the moment, imgproxy supports only the most popular image formats:
 
 * PNG;
 * JPEG;
@@ -9,7 +9,8 @@ At the moment, imgproxy supports only the most popular Web image formats:
 * ICO;
 * SVG _(source only)_;
 * HEIC;
-* BMP.
+* BMP;
+* TIFF.
 
 ## GIF support
 
@@ -17,7 +18,7 @@ imgproxy supports GIF output only when using libvips 8.7.0+ compiled with ImageM
 
 ## ICO support
 
-imgproxy supports ICO output only when using libvips 8.7.0+ compiled with ImageMagick support. Official imgproxy Docker image supports ICO out of the box.
+imgproxy supports ICO only when using libvips 8.7.0+ compiled with ImageMagick support. Official imgproxy Docker image supports ICO out of the box.
 
 ## HEIC support
 
