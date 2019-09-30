@@ -77,7 +77,7 @@ func initDownloading() {
 		transport.RegisterProtocol("s3", newS3Transport())
 	}
 
-	if len(conf.GCSKey) > 0 {
+	if conf.GCSEnabled {
 		transport.RegisterProtocol("gs", newGCSTransport())
 	}
 

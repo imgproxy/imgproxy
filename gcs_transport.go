@@ -15,7 +15,16 @@ type gcsTransport struct {
 }
 
 func newGCSTransport() http.RoundTripper {
-	client, err := storage.NewClient(context.Background(), option.WithCredentialsJSON([]byte(conf.GCSKey)))
+	var (
+		client *storage.Client
+		err    error
+	)
+
+	if len(conf.GCSKey) > 0 {
+		client, err = storage.NewClient(context.Background(), option.WithCredentialsJSON([]byte(conf.GCSKey)))
+	} else {
+		client, err = storage.NewClient(context.Background())
+	}
 
 	if err != nil {
 		logFatal("Can't create GCS client: %s", err)

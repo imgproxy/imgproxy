@@ -176,6 +176,7 @@ type config struct {
 	S3Enabled           bool
 	S3Region            string
 	S3Endpoint          string
+	GCSEnabled          bool
 	GCSKey              string
 
 	ETagEnabled bool
@@ -307,6 +308,7 @@ func configure() {
 	strEnvConfig(&conf.S3Region, "IMGPROXY_S3_REGION")
 	strEnvConfig(&conf.S3Endpoint, "IMGPROXY_S3_ENDPOINT")
 
+	boolEnvConfig(&conf.GCSEnabled, "IMGPROXY_USE_GCS")
 	strEnvConfig(&conf.GCSKey, "IMGPROXY_GCS_KEY")
 
 	boolEnvConfig(&conf.ETagEnabled, "IMGPROXY_USE_ETAG")
@@ -445,6 +447,11 @@ func configure() {
 		if conf.LocalFileSystemRoot == "/" {
 			logWarning("Exposing root via IMGPROXY_LOCAL_FILESYSTEM_ROOT is unsafe")
 		}
+	}
+
+	if _, ok := os.LookupEnv("IMGPROXY_USE_GCS"); !ok && len(conf.GCSKey) > 0 {
+		logWarning("Set IMGPROXY_USE_GCS to true since it may be required by future versions to enable GCS support")
+		conf.GCSEnabled = true
 	}
 
 	if err := checkPresets(conf.Presets); err != nil {
