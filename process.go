@@ -20,6 +20,12 @@ func imageTypeSaveSupport(imgtype imageType) bool {
 	return imgtype == imageTypeSVG || vipsTypeSupportSave[imgtype]
 }
 
+func imageTypeGoodForWeb(imgtype imageType) bool {
+	return imgtype != imageTypeHEIC &&
+		imgtype != imageTypeTIFF &&
+		imgtype != imageTypeBMP
+}
+
 func extractMeta(img *vipsImage) (int, int, int, bool) {
 	width := img.Width()
 	height := img.Height()
@@ -557,7 +563,7 @@ func processImage(ctx context.Context) ([]byte, context.CancelFunc, error) {
 		switch {
 		case po.PreferWebP && imageTypeSaveSupport(imageTypeWEBP):
 			po.Format = imageTypeWEBP
-		case imageTypeSaveSupport(imgdata.Type) && imgdata.Type != imageTypeHEIC && imgdata.Type != imageTypeTIFF:
+		case imageTypeSaveSupport(imgdata.Type) && imageTypeGoodForWeb(imgdata.Type):
 			po.Format = imgdata.Type
 		default:
 			po.Format = imageTypeJPEG
