@@ -204,6 +204,8 @@ type config struct {
 	SentryEnvironment string
 	SentryRelease     string
 
+	ReportDownloadingErrors bool
+
 	FreeMemoryInterval             int
 	DownloadBufferSize             int
 	GZipBufferSize                 int
@@ -230,6 +232,7 @@ var conf = config{
 	HoneybadgerEnv:                 "production",
 	SentryEnvironment:              "production",
 	SentryRelease:                  fmt.Sprintf("imgproxy/%s", version),
+	ReportDownloadingErrors:        true,
 	FreeMemoryInterval:             10,
 	BufferPoolCalibrationThreshold: 1024,
 }
@@ -336,6 +339,7 @@ func configure() {
 	strEnvConfig(&conf.SentryDSN, "IMGPROXY_SENTRY_DSN")
 	strEnvConfig(&conf.SentryEnvironment, "IMGPROXY_SENTRY_ENVIRONMENT")
 	strEnvConfig(&conf.SentryRelease, "IMGPROXY_SENTRY_RELEASE")
+	boolEnvConfig(&conf.ReportDownloadingErrors, "IMGPROXY_REPORT_DOWNLOADING_ERRORS")
 
 	intEnvConfig(&conf.FreeMemoryInterval, "IMGPROXY_FREE_MEMORY_INTERVAL")
 	intEnvConfig(&conf.DownloadBufferSize, "IMGPROXY_DOWNLOAD_BUFFER_SIZE")

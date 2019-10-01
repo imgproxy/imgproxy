@@ -31,8 +31,8 @@ func (e *imgproxyError) StackTrace() []uintptr {
 	return e.stack
 }
 
-func (e *imgproxyError) MarkAsUnexpected() *imgproxyError {
-	e.Unexpected = true
+func (e *imgproxyError) SetUnexpected(u bool) *imgproxyError {
+	e.Unexpected = u
 	return e
 }
 

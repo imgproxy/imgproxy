@@ -151,20 +151,20 @@ func readAndCheckImage(r io.Reader, contentLength int) (*imageData, error) {
 func requestImage(imageURL string) (*http.Response, error) {
 	req, err := http.NewRequest("GET", imageURL, nil)
 	if err != nil {
-		return nil, newError(404, err.Error(), msgSourceImageIsUnreachable).MarkAsUnexpected()
+		return nil, newError(404, err.Error(), msgSourceImageIsUnreachable).SetUnexpected(conf.ReportDownloadingErrors)
 	}
 
 	req.Header.Set("User-Agent", conf.UserAgent)
 
 	res, err := downloadClient.Do(req)
 	if err != nil {
-		return res, newError(404, err.Error(), msgSourceImageIsUnreachable).MarkAsUnexpected()
+		return res, newError(404, err.Error(), msgSourceImageIsUnreachable).SetUnexpected(conf.ReportDownloadingErrors)
 	}
 
 	if res.StatusCode != 200 {
 		body, _ := ioutil.ReadAll(res.Body)
 		msg := fmt.Sprintf("Can't download image; Status: %d; %s", res.StatusCode, string(body))
-		return res, newError(404, msg, msgSourceImageIsUnreachable).MarkAsUnexpected()
+		return res, newError(404, msg, msgSourceImageIsUnreachable).SetUnexpected(conf.ReportDownloadingErrors)
 	}
 
 	return res, nil
