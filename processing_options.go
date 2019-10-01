@@ -641,7 +641,7 @@ func applyFormatOption(po *processingOptions, args []string) error {
 		return fmt.Errorf("Invalid image format: %s", args[0])
 	}
 
-	if !vipsTypeSupportSave[po.Format] {
+	if !imageTypeSaveSupport(po.Format) {
 		return fmt.Errorf("Resulting image format is not supported: %s", po.Format)
 	}
 

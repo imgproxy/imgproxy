@@ -6,7 +6,8 @@
 - TIFF and BMP support;
 - Using Application Default Credentials when `IMGPROXY_USE_GCS` is set to `true` but `IMGPROXY_GCS_KEY` is not set.
   **Note:** If you use `IMGPROXY_GCS_KEY`, it's recommended to set `IMGPROXY_USE_GCS` to `true` since it may be required by future versions to enable GCS support;
-- Setting `IMGPROXY_REPORT_DOWNLOADING_ERRORS` to `false` disables reporting of downloading errors.
+- Setting `IMGPROXY_REPORT_DOWNLOADING_ERRORS` to `false` disables reporting of downloading errors;
+- SVG passthrough. When source image and requested format are SVG, image will be returned without changes.
 
 ## v2.5.0
 

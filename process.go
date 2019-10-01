@@ -10,6 +10,16 @@ import (
 
 const msgSmartCropNotSupported = "Smart crop is not supported by used version of libvips"
 
+var errConvertingNonSvgToSvg = newError(422, "Converting non-SVG images to SVG is not supported", "Converting non-SVG images to SVG is not supported")
+
+func imageTypeLoadSupport(imgtype imageType) bool {
+	return imgtype == imageTypeSVG || vipsTypeSupportLoad[imgtype]
+}
+
+func imageTypeSaveSupport(imgtype imageType) bool {
+	return imgtype == imageTypeSVG || vipsTypeSupportSave[imgtype]
+}
+
 func extractMeta(img *vipsImage) (int, int, int, bool) {
 	width := img.Width()
 	height := img.Height()
@@ -545,15 +555,23 @@ func processImage(ctx context.Context) ([]byte, context.CancelFunc, error) {
 
 	if po.Format == imageTypeUnknown {
 		switch {
-		case po.PreferWebP && vipsTypeSupportSave[imageTypeWEBP]:
+		case po.PreferWebP && imageTypeSaveSupport(imageTypeWEBP):
 			po.Format = imageTypeWEBP
-		case vipsTypeSupportSave[imgdata.Type] && imgdata.Type != imageTypeHEIC && imgdata.Type != imageTypeTIFF:
+		case imageTypeSaveSupport(imgdata.Type) && imgdata.Type != imageTypeHEIC && imgdata.Type != imageTypeTIFF:
 			po.Format = imgdata.Type
 		default:
 			po.Format = imageTypeJPEG
 		}
-	} else if po.EnforceWebP && vipsTypeSupportSave[imageTypeWEBP] {
+	} else if po.EnforceWebP && imageTypeSaveSupport(imageTypeWEBP) {
 		po.Format = imageTypeWEBP
+	}
+
+	if po.Format == imageTypeSVG {
+		if imgdata.Type != imageTypeSVG {
+			return []byte{}, func() {}, errConvertingNonSvgToSvg
+		}
+
+		return imgdata.Data, func() {}, nil
 	}
 
 	if !vipsSupportSmartcrop {

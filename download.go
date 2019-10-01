@@ -111,7 +111,7 @@ func checkTypeAndDimensions(r io.Reader) (imageType, error) {
 	}
 
 	imgtype, imgtypeOk := imageTypes[meta.Format]
-	if !imgtypeOk || !vipsTypeSupportLoad[imgtype] {
+	if !imgtypeOk || !imageTypeLoadSupport(imgtype) {
 		return imageTypeUnknown, errSourceImageTypeNotSupported
 	}
 
