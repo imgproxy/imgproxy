@@ -580,6 +580,10 @@ func processImage(ctx context.Context) ([]byte, context.CancelFunc, error) {
 		return imgdata.Data, func() {}, nil
 	}
 
+	if imgdata.Type == imageTypeSVG && !vipsTypeSupportLoad[imageTypeSVG] {
+		return []byte{}, func() {}, errSourceImageTypeNotSupported
+	}
+
 	if !vipsSupportSmartcrop {
 		if po.Gravity.Type == gravitySmart {
 			logWarning(msgSmartCropNotSupported)
