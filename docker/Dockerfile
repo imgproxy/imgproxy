@@ -68,7 +68,6 @@ RUN cd /root \
   && cd vips-$VIPS_VERSION \
   && ./configure \
     --without-python \
-    --without-tiff \
     --without-OpenEXR \
     --enable-debug=no \
     --disable-static \
