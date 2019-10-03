@@ -5,7 +5,7 @@ import (
 	"io"
 )
 
-func icoBestSize(r io.Reader) (width, height byte, page uint16, err error) {
+func icoBestSize(r io.Reader) (width, height byte, offset uint32, size uint32, err error) {
 	var tmp [16]byte
 
 	if _, err = io.ReadFull(r, tmp[:6]); err != nil {
@@ -22,20 +22,21 @@ func icoBestSize(r io.Reader) (width, height byte, page uint16, err error) {
 		if tmp[0] > width || tmp[1] > height || tmp[0] == 0 || tmp[1] == 0 {
 			width = tmp[0]
 			height = tmp[1]
-			page = i
+			size = binary.LittleEndian.Uint32(tmp[8:12])
+			offset = binary.LittleEndian.Uint32(tmp[12:16])
 		}
 	}
 
 	return
 }
 
-func BestIcoPage(r io.Reader) (int, error) {
-	_, _, page, err := icoBestSize(r)
-	return int(page), err
+func BestIcoPage(r io.Reader) (int, int, error) {
+	_, _, offset, size, err := icoBestSize(r)
+	return int(offset), int(size), err
 }
 
 func DecodeIcoMeta(r io.Reader) (*Meta, error) {
-	bwidth, bheight, _, err := icoBestSize(r)
+	bwidth, bheight, _, _, err := icoBestSize(r)
 	if err != nil {
 		return nil, err
 	}

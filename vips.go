@@ -8,15 +8,12 @@ package main
 */
 import "C"
 import (
-	"bytes"
 	"context"
 	"math"
 	"os"
 	"runtime"
 	"time"
 	"unsafe"
-
-	imageSize "github.com/imgproxy/imgproxy/image_size"
 )
 
 type vipsImage struct {
@@ -157,13 +154,6 @@ func (img *vipsImage) Load(data []byte, imgtype imageType, shrink int, scale flo
 		err = C.vips_gifload_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), C.int(pages), &tmp)
 	case imageTypeSVG:
 		err = C.vips_svgload_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), C.double(scale), &tmp)
-	case imageTypeICO:
-		bestPage, ierr := imageSize.BestIcoPage(bytes.NewBuffer(data))
-		if ierr != nil {
-			logWarning(ierr.Error())
-		}
-
-		err = C.vips_icoload_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), C.int(bestPage), &tmp)
 	case imageTypeHEIC:
 		err = C.vips_heifload_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), &tmp)
 	case imageTypeBMP:

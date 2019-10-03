@@ -1,10 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"fmt"
 	"math"
 	"runtime"
 
+	imageSize "github.com/imgproxy/imgproxy/image_size"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -13,7 +16,9 @@ const msgSmartCropNotSupported = "Smart crop is not supported by used version of
 var errConvertingNonSvgToSvg = newError(422, "Converting non-SVG images to SVG is not supported", "Converting non-SVG images to SVG is not supported")
 
 func imageTypeLoadSupport(imgtype imageType) bool {
-	return imgtype == imageTypeSVG || vipsTypeSupportLoad[imgtype]
+	return imgtype == imageTypeSVG ||
+		imgtype == imageTypeICO ||
+		vipsTypeSupportLoad[imgtype]
 }
 
 func imageTypeSaveSupport(imgtype imageType) bool {
@@ -541,6 +546,29 @@ func transformAnimated(ctx context.Context, img *vipsImage, data []byte, po *pro
 	return nil
 }
 
+func getIcoData(imgdata *imageData) (*imageData, error) {
+	offset, size, err := imageSize.BestIcoPage(bytes.NewBuffer(imgdata.Data))
+	if err != nil {
+		return nil, err
+	}
+
+	data := imgdata.Data[offset : offset+size]
+
+	meta, err := imageSize.DecodeMeta(bytes.NewBuffer(data))
+	if err != nil {
+		return nil, err
+	}
+
+	if imgtype, ok := imageTypes[meta.Format]; ok && vipsTypeSupportLoad[imgtype] {
+		return &imageData{
+			Data: data,
+			Type: imgtype,
+		}, nil
+	}
+
+	return nil, fmt.Errorf("Can't load %s from ICO", meta.Format)
+}
+
 func processImage(ctx context.Context) ([]byte, context.CancelFunc, error) {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
@@ -582,6 +610,15 @@ func processImage(ctx context.Context) ([]byte, context.CancelFunc, error) {
 
 	if imgdata.Type == imageTypeSVG && !vipsTypeSupportLoad[imageTypeSVG] {
 		return []byte{}, func() {}, errSourceImageTypeNotSupported
+	}
+
+	if imgdata.Type == imageTypeICO {
+		icodata, err := getIcoData(imgdata)
+		if err != nil {
+			return nil, func() {}, err
+		}
+
+		imgdata = icodata
 	}
 
 	if !vipsSupportSmartcrop {
