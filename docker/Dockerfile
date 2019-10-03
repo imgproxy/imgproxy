@@ -1,17 +1,15 @@
-FROM alpine:edge
+FROM golang:1-alpine3.10
 LABEL maintainer="Sergey Alexandrovich <darthsim@gmail.com>"
 
 ENV GOPATH /go
 ENV PATH /usr/local/go/bin:$PATH
 
 # Install dependencies
-RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories \
-  && apk --no-cache upgrade \
+RUN apk --no-cache upgrade \
   && apk add --no-cache \
     curl \
     git \
     ca-certificates \
-    go \
     gcc \
     g++ \
     make \
@@ -27,9 +25,10 @@ RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/reposit
     librsvg-dev \
     libexif-dev \
     lcms2-dev \
-    libimagequant-dev \
     libheif-dev \
-    tiff-dev
+    tiff-dev \
+  && apk add --no-cache --repository http://dl-cdn.alpinelinux.org/alpine/edge/testing \
+    libimagequant-dev
 
 # Build ImageMagick
 RUN cd /root \
@@ -49,6 +48,7 @@ RUN cd /root \
     --without-bzlib \
     --without-dps \
     --without-freetype \
+    --without-fontconfig \
     --without-jbig \
     --without-jpeg \
     --without-lcms \
@@ -58,6 +58,8 @@ RUN cd /root \
     --without-wmf \
     --without-xml \
     --without-webp \
+    --without-heic \
+    --without-pango \
   && make install-strip
 
 # Build libvips
@@ -89,11 +91,10 @@ RUN cd /root \
 # ==================================================================================================
 # Final image
 
-FROM alpine:edge
+FROM alpine:3.10
 LABEL maintainer="Sergey Alexandrovich <darthsim@gmail.com>"
 
-RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories \
-  && apk --no-cache upgrade \
+RUN apk --no-cache upgrade \
   && apk add --no-cache \
     bash \
     ca-certificates \
@@ -109,9 +110,10 @@ RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/reposit
     libgsf \
     libexif \
     lcms2 \
-    libimagequant \
     libheif \
     tiff \
+  && apk add --no-cache --repository http://dl-cdn.alpinelinux.org/alpine/edge/testing \
+    libimagequant \
   && rm -rf /var/cache/apk*
 
 COPY --from=0 /usr/local/bin/imgproxy /usr/local/bin/
