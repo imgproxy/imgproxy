@@ -78,6 +78,15 @@ func (it imageType) String() string {
 	return ""
 }
 
+func (it imageType) MarshalJSON() ([]byte, error) {
+	for k, v := range imageTypes {
+		if v == it {
+			return []byte(fmt.Sprintf("%q", k)), nil
+		}
+	}
+	return []byte("null"), nil
+}
+
 func (it imageType) Mime() string {
 	if mime, ok := mimes[it]; ok {
 		return mime

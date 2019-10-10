@@ -152,6 +152,15 @@ func (gt gravityType) String() string {
 	return ""
 }
 
+func (gt gravityType) MarshalJSON() ([]byte, error) {
+	for k, v := range gravityTypes {
+		if v == gt {
+			return []byte(fmt.Sprintf("%q", k)), nil
+		}
+	}
+	return []byte("null"), nil
+}
+
 func (rt resizeType) String() string {
 	for k, v := range resizeTypes {
 		if v == rt {
@@ -159,6 +168,15 @@ func (rt resizeType) String() string {
 		}
 	}
 	return ""
+}
+
+func (rt resizeType) MarshalJSON() ([]byte, error) {
+	for k, v := range resizeTypes {
+		if v == rt {
+			return []byte(fmt.Sprintf("%q", k)), nil
+		}
+	}
+	return []byte("null"), nil
 }
 
 var (
