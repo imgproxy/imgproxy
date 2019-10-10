@@ -248,6 +248,10 @@ func prepareWatermark(wm *vipsImage, wmData *imageData, opts *watermarkOptions, 
 }
 
 func applyWatermark(img *vipsImage, wmData *imageData, opts *watermarkOptions, framesCount int) error {
+	if err := img.RgbColourspace(); err != nil {
+		return err
+	}
+
 	wm := new(vipsImage)
 	defer wm.Clear()
 
