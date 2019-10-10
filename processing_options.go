@@ -10,6 +10,9 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
+
+	structdiff "github.com/imgproxy/imgproxy/struct-diff"
 )
 
 type urlOption struct {
@@ -158,22 +161,33 @@ func (rt resizeType) String() string {
 	return ""
 }
 
+var (
+	_newProcessingOptions    processingOptions
+	newProcessingOptionsOnce sync.Once
+)
+
 func newProcessingOptions() *processingOptions {
-	return &processingOptions{
-		Resize:      resizeFit,
-		Width:       0,
-		Height:      0,
-		Gravity:     gravityOptions{Type: gravityCenter},
-		Enlarge:     false,
-		Quality:     conf.Quality,
-		Format:      imageTypeUnknown,
-		Background:  rgbColor{255, 255, 255},
-		Blur:        0,
-		Sharpen:     0,
-		Dpr:         1,
-		Watermark:   watermarkOptions{Opacity: 1, Replicate: false, Gravity: gravityCenter},
-		UsedPresets: make([]string, 0, len(conf.Presets)),
-	}
+	newProcessingOptionsOnce.Do(func() {
+		_newProcessingOptions = processingOptions{
+			Resize:     resizeFit,
+			Width:      0,
+			Height:     0,
+			Gravity:    gravityOptions{Type: gravityCenter},
+			Enlarge:    false,
+			Quality:    conf.Quality,
+			Format:     imageTypeUnknown,
+			Background: rgbColor{255, 255, 255},
+			Blur:       0,
+			Sharpen:    0,
+			Dpr:        1,
+			Watermark:  watermarkOptions{Opacity: 1, Replicate: false, Gravity: gravityCenter},
+		}
+	})
+
+	po := _newProcessingOptions
+	po.UsedPresets = make([]string, 0, len(conf.Presets))
+
+	return &po
 }
 
 func (po *processingOptions) isPresetUsed(name string) bool {
@@ -189,8 +203,16 @@ func (po *processingOptions) presetUsed(name string) {
 	po.UsedPresets = append(po.UsedPresets, name)
 }
 
+func (po *processingOptions) Diff() structdiff.Entries {
+	return structdiff.Diff(newProcessingOptions(), po)
+}
+
 func (po *processingOptions) String() string {
-	return fmt.Sprintf("%+v", *po)
+	return po.Diff().String()
+}
+
+func (po *processingOptions) MarshalJSON() ([]byte, error) {
+	return po.Diff().MarshalJSON()
 }
 
 func colorFromHex(hexcolor string) (rgbColor, error) {
