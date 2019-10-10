@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"time"
 
-	imageSize "github.com/imgproxy/imgproxy/image_size"
+	imagesize "github.com/imgproxy/imgproxy/image_size"
 )
 
 var (
@@ -102,8 +102,8 @@ func checkDimensions(width, height int) error {
 }
 
 func checkTypeAndDimensions(r io.Reader) (imageType, error) {
-	meta, err := imageSize.DecodeMeta(r)
-	if err == imageSize.ErrFormat {
+	meta, err := imagesize.DecodeMeta(r)
+	if err == imagesize.ErrFormat {
 		return imageTypeUnknown, errSourceImageTypeNotSupported
 	}
 	if err != nil {

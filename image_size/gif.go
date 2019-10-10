@@ -1,4 +1,4 @@
-package imageSize
+package imagesize
 
 import (
 	"io"

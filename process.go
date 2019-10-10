@@ -7,7 +7,7 @@ import (
 	"math"
 	"runtime"
 
-	imageSize "github.com/imgproxy/imgproxy/image_size"
+	imagesize "github.com/imgproxy/imgproxy/image_size"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -551,14 +551,14 @@ func transformAnimated(ctx context.Context, img *vipsImage, data []byte, po *pro
 }
 
 func getIcoData(imgdata *imageData) (*imageData, error) {
-	offset, size, err := imageSize.BestIcoPage(bytes.NewBuffer(imgdata.Data))
+	offset, size, err := imagesize.BestIcoPage(bytes.NewBuffer(imgdata.Data))
 	if err != nil {
 		return nil, err
 	}
 
 	data := imgdata.Data[offset : offset+size]
 
-	meta, err := imageSize.DecodeMeta(bytes.NewBuffer(data))
+	meta, err := imagesize.DecodeMeta(bytes.NewBuffer(data))
 	if err != nil {
 		return nil, err
 	}

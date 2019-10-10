@@ -4,7 +4,7 @@
 
 // Original code was cropped and fixed by @DarthSim for imgproxy needs
 
-package imageSize
+package imagesize
 
 import (
 	"errors"
