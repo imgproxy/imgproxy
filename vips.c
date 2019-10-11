@@ -200,8 +200,10 @@ vips_get_orientation(VipsImage *image) {
 #ifdef VIPS_META_ORIENTATION
   int orientation;
 
-	if (vips_image_get_int(image, VIPS_META_ORIENTATION, &orientation) == 0)
-    return orientation;
+	if (
+    vips_image_get_typeof(image, VIPS_META_ORIENTATION) == G_TYPE_INT &&
+    vips_image_get_int(image, VIPS_META_ORIENTATION, &orientation) == 0
+  ) return orientation;
 #else
   const char *orientation;
 
