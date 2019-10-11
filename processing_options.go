@@ -106,20 +106,20 @@ type watermarkOptions struct {
 }
 
 type processingOptions struct {
-	Resize     resizeType
-	Width      int
-	Height     int
-	Dpr        float64
-	Gravity    gravityOptions
-	Enlarge    bool
-	Extend     bool
-	Crop       cropOptions
-	Format     imageType
-	Quality    int
-	Flatten    bool
-	Background rgbColor
-	Blur       float32
-	Sharpen    float32
+	ResizingType resizeType
+	Width        int
+	Height       int
+	Dpr          float64
+	Gravity      gravityOptions
+	Enlarge      bool
+	Extend       bool
+	Crop         cropOptions
+	Format       imageType
+	Quality      int
+	Flatten      bool
+	Background   rgbColor
+	Blur         float32
+	Sharpen      float32
 
 	CacheBuster string
 
@@ -187,18 +187,18 @@ var (
 func newProcessingOptions() *processingOptions {
 	newProcessingOptionsOnce.Do(func() {
 		_newProcessingOptions = processingOptions{
-			Resize:     resizeFit,
-			Width:      0,
-			Height:     0,
-			Gravity:    gravityOptions{Type: gravityCenter},
-			Enlarge:    false,
-			Quality:    conf.Quality,
-			Format:     imageTypeUnknown,
-			Background: rgbColor{255, 255, 255},
-			Blur:       0,
-			Sharpen:    0,
-			Dpr:        1,
-			Watermark:  watermarkOptions{Opacity: 1, Replicate: false, Gravity: gravityCenter},
+			ResizingType: resizeFit,
+			Width:        0,
+			Height:       0,
+			Gravity:      gravityOptions{Type: gravityCenter},
+			Enlarge:      false,
+			Quality:      conf.Quality,
+			Format:       imageTypeUnknown,
+			Background:   rgbColor{255, 255, 255},
+			Blur:         0,
+			Sharpen:      0,
+			Dpr:          1,
+			Watermark:    watermarkOptions{Opacity: 1, Replicate: false, Gravity: gravityCenter},
 		}
 	})
 
@@ -450,7 +450,7 @@ func applyResizingTypeOption(po *processingOptions, args []string) error {
 	}
 
 	if r, ok := resizeTypes[args[0]]; ok {
-		po.Resize = r
+		po.ResizingType = r
 	} else {
 		return fmt.Errorf("Invalid resize type: %s", args[0])
 	}
@@ -884,7 +884,7 @@ func parsePathBasic(parts []string, headers *processingHeaders) (string, *proces
 		return "", po, err
 	}
 
-	po.Resize = resizeTypes[parts[0]]
+	po.ResizingType = resizeTypes[parts[0]]
 
 	if err = applyWidthOption(po, parts[1:2]); err != nil {
 		return "", po, err

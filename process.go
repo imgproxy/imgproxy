@@ -79,7 +79,7 @@ func calcScale(width, height int, po *processingOptions, imgtype imageType) floa
 		wshrink := srcW / dstW
 		hshrink := srcH / dstH
 
-		rt := po.Resize
+		rt := po.ResizingType
 
 		if rt == resizeAuto {
 			srcD := width - height
@@ -222,7 +222,7 @@ func prepareWatermark(wm *vipsImage, wmData *imageData, opts *watermarkOptions, 
 	}
 
 	po := newProcessingOptions()
-	po.Resize = resizeFit
+	po.ResizingType = resizeFit
 	po.Dpr = 1
 	po.Enlarge = true
 	po.Format = wmData.Type
@@ -636,12 +636,12 @@ func processImage(ctx context.Context) ([]byte, context.CancelFunc, error) {
 		}
 	}
 
-	if po.Resize == resizeCrop {
+	if po.ResizingType == resizeCrop {
 		logWarning("`crop` resizing type is deprecated and will be removed in future versions. Use `crop` processing option instead")
 
 		po.Crop.Width, po.Crop.Height = po.Width, po.Height
 
-		po.Resize = resizeFit
+		po.ResizingType = resizeFit
 		po.Width, po.Height = 0, 0
 	}
 
