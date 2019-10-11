@@ -7,7 +7,7 @@ At the moment, imgproxy supports only the most popular image formats:
 * WebP;
 * GIF;
 * ICO;
-* SVG _(source only)_;
+* SVG;
 * MP4 _(result only)_ <img class="pro-badge" src="assets/pro.svg" alt="pro" />;
 * HEIC;
 * BMP;
@@ -20,6 +20,12 @@ imgproxy supports GIF output only when using libvips 8.7.0+ compiled with ImageM
 ## ICO support
 
 imgproxy supports ICO only when using libvips 8.7.0+ compiled with ImageMagick support. Official imgproxy Docker image supports ICO out of the box.
+
+## SVG support
+
+imgproxy supports SVG sources without limitations, but SVG results are not supported when the source image is not SVG.
+
+When the source image is SVG and the SVG result is requested, imgproxy returns source image without modifications.
 
 ## HEIC support
 
