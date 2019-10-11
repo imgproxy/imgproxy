@@ -70,8 +70,30 @@ Also you may want imgproxy to respond with the same error message that it writes
 ## Compression
 
 * `IMGPROXY_QUALITY`: default quality of the resulting image, percentage. Default: `80`;
-* `IMGPROXY_GZIP_COMPRESSION`: GZip compression level. Default: `5`;
-* `IMGPROXY_JPEG_PROGRESSIVE` : when true, enables progressive JPEG compression. Default: false;
+* `IMGPROXY_GZIP_COMPRESSION`: GZip compression level. Default: `5`.
+
+### Advanced JPEG compression
+
+* `IMGPROXY_JPEG_PROGRESSIVE`: when true, enables progressive JPEG compression. Default: false;
+* `IMGPROXY_JPEG_NO_SUBSAMPLE`: <img class="pro-badge" src="assets/pro.svg" alt="pro" /> when true, chrominance subsampling is disabled. This will improve quality at the cost of larger file size. Default: false;
+* `IMGPROXY_JPEG_TRELLIS_QUANT`: <img class="pro-badge" src="assets/pro.svg" alt="pro" /> when true, enables trellis quantisation for each 8x8 block. Reduces file size but increases compression time. Default: false;
+* `IMGPROXY_JPEG_OVERSHOOT_DERINGING`: <img class="pro-badge" src="assets/pro.svg" alt="pro" /> when true, enables overshooting of samples with extreme values. Overshooting may reduce ringing artifacts from compression, in particular in areas where black text appears on a white background. Default: false;
+* `IMGPROXY_JPEG_OPTIMIZE_SCANS`: <img class="pro-badge" src="assets/pro.svg" alt="pro" /> when true, split the spectrum of DCT coefficients into separate scans. Reduces file size but increases compression time. Requires `IMGPROXY_JPEG_PROGRESSIVE` to be true. Default: false;
+* `IMGPROXY_JPEG_QUANT_TABLE`: <img class="pro-badge" src="assets/pro.svg" alt="pro" /> quantization table to use. Supported values are:
+  * `0`: Table from JPEG Annex K (default);
+  * `1`: Flat table;
+  * `2`: Table tuned for MSSIM on Kodak image set;
+  * `3`: Table from ImageMagick by N. Robidoux;
+  * `4`: Table tuned for PSNR-HVS-M on Kodak image set;
+  * `5`: Table from Relevance of Human Vision to JPEG-DCT Compression (1992);
+  * `6`: Table from DCTune Perceptual Optimization of Compressed Dental X-Rays (1997);
+  * `7`: Table from A Visual Detection Model for DCT Coefficient Quantization (1993);
+  * `8`: Table from An Improved Detection Model for DCT Coefficient Quantization (1993).
+
+**Note:** `IMGPROXY_JPEG_TRELLIS_QUANT`, `IMGPROXY_JPEG_OVERSHOOT_DERINGING`, `IMGPROXY_JPEG_OPTIMIZE_SCANS`, and `IMGPROXY_JPEG_QUANT_TABLE` require libvips to be built with [MozJPEG](https://github.com/mozilla/mozjpeg) since standard libjpeg ddoesn't support those optimizations.
+
+### Advanced PNG compression
+
 * `IMGPROXY_PNG_INTERLACED`: when true, enables interlaced PNG compression. Default: false;
 * `IMGPROXY_PNG_QUANTIZE`: when true, enables PNG quantization. libvips should be built with libimagequant support. Default: false;
 * `IMGPROXY_PNG_QUANTIZATION_COLORS`: maximum number of quantization palette entries. Should be between 2 and 256. Default: 256;
@@ -100,7 +122,8 @@ imgproxy can use the `Width`, `Viewport-Width` or `DPR` HTTP headers to determin
 * `IMGPROXY_WATERMARK_DATA`: Base64-encoded image data. You can easily calculate it with `base64 tmp/watermark.png | tr -d '\n'`;
 * `IMGPROXY_WATERMARK_PATH`: path to the locally stored image;
 * `IMGPROXY_WATERMARK_URL`: watermark image URL;
-* `IMGPROXY_WATERMARK_OPACITY`: watermark base opacity.
+* `IMGPROXY_WATERMARK_OPACITY`: watermark base opacity;
+* `IMGPROXY_WATERMARKS_CACHE_SIZE`: <img class="pro-badge" src="assets/pro.svg" alt="pro" /> size of custom watermarks cache. When set to `0`, watermarks cache is disabled. By default 256 watermarks are cached.
 
 Read more about watermarks in the [Watermark](watermark.md) guide.
 
@@ -224,3 +247,4 @@ imgproxy can send logs to syslog, but this feature is disabled by default. To en
 * `IMGPROXY_BASE_URL`: base URL prefix that will be added to every requested image URL. For example, if the base URL is `http://example.com/images` and `/path/to/image.png` is requested, imgproxy will download the source image from `http://example.com/images/path/to/image.png`. Default: blank.
 * `IMGPROXY_USE_LINEAR_COLORSPACE`: when `true`, imgproxy will process images in linear colorspace. This will slow down processing. Note that images won't be fully processed in linear colorspace while shrink-on-load is enabled (see below).
 * `IMGPROXY_DISABLE_SHRINK_ON_LOAD`: when `true`, disables shrink-on-load for JPEG and WebP. Allows to process the whole image in linear colorspace but dramatically slows down resizing and increases memory usage when working with large images.
+* `IMGPROXY_APPLY_UNSHARPEN_MASKING`: <img class="pro-badge" src="assets/pro.svg" alt="pro" /> when `true`, imgproxy will apply unsharpen masking to the resulting image if one is smaller than the source. Default: `true`.

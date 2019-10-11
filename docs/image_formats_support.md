@@ -8,6 +8,7 @@ At the moment, imgproxy supports only the most popular image formats:
 * GIF;
 * ICO;
 * SVG _(source only)_;
+* MP4 _(result only)_ <img class="pro-badge" src="assets/pro.svg" alt="pro" />;
 * HEIC;
 * BMP;
 * TIFF.
@@ -39,3 +40,9 @@ Since processing of animated images is pretty heavy, only one frame is processed
 * `IMGPROXY_MAX_ANIMATION_FRAMES`: the maximum of animated image frames to being processed. Default: `1`.
 
 **Note:** imgproxy summarizes all frames resolutions while checking source image resolution.
+
+## Converting animated images to MP4 <img class="pro-badge" src="assets/pro.svg" alt="pro" />
+
+Animated images results can be converted to MP4 by specifying `mp4` extension.
+
+Since MP4 requires usage of a `<video>` tag instead of `<img>`, automatic conversion to MP4 is not provided.

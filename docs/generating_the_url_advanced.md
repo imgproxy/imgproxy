@@ -209,6 +209,17 @@ As an approximate guideline, use 0.5 sigma for 4 pixels/mm (display resolution),
 
 Default: disabled
 
+#### Pixelate <img class="pro-badge" src="assets/pro.svg" alt="pro" />
+
+```
+pixelate:%size
+pix:%size
+```
+
+When set, imgproxy will apply the pixelate filter to the resulting image. `size` is the size of a pixel.
+
+Default: disabled
+
 #### Watermark
 
 ```
@@ -234,6 +245,28 @@ Puts watermark on the processed image.
 * `scale` - (optional) floating point number that defines watermark size relative to the resulting image size. When set to `0` or omitted, watermark size won't be changed.
 
 Default: disabled
+
+#### Watermark URL <img class="pro-badge" src="assets/pro.svg" alt="pro" />
+
+```
+watermark_url:%url
+wmu:%url
+```
+
+When set, imgproxy will use the image from the specified URL as a watermark. `url` is Base64-encoded URL of the custom watermark.
+
+Default: blank
+
+#### Style <img class="pro-badge" src="assets/pro.svg" alt="pro" />
+
+```
+style:%style
+st:%style
+```
+
+When set, imgproxy will prepend `<style>` node with provided content to the `<svg>` node of source SVG image. `%style` is url-safe Base64-encoded CSS-style.
+
+Default: blank
 
 #### Preset
 
@@ -322,7 +355,9 @@ When using encoded source URL, you can specify the [extension](#extension) after
 
 Extension specifies the format of the resulting image. At the moment, imgproxy supports only `jpg`, `png`, `webp`, `gif`, `ico`, `heic`, and `tiff`, them being the most popular and useful image formats.
 
-**Note:** Read about GIF support [here](image_formats_support.md#gif-support).
+<img class="pro-badge" src="assets/pro.svg" alt="pro" /> Also you can yse `mp4` extension to convert animated images to MP4.
+
+**Note:** Read more about image formats support [here](image_formats_support.md).
 
 The extension part can be omitted. In this case, imgproxy will use source image format as resulting one. If source image format is not supported as resulting, imgproxy will use `jpg`. You also can [enable WebP support detection](configuration.md#webp-support-detection) to use it as default resulting format when possible.
 

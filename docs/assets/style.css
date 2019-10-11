@@ -73,3 +73,8 @@
     transform: rotate(360deg);
   }
 }
+
+.pro-badge {
+  height: 1em;
+  vertical-align: middle;
+}
