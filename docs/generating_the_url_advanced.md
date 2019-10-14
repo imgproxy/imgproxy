@@ -185,6 +185,48 @@ With no arguments provided, disables any background manipulations.
 
 Default: disabled
 
+#### Adjust <img class="pro-badge" src="assets/pro.svg" alt="pro" />
+
+```
+adjust:%brightness:%contrast:%saturation
+a:%brightness:%contrast:%saturation
+```
+
+Meta-option that defines the [brightness](#brightness), [contrast](#contrast), and [saturation](#saturation). All arguments are optional and can be omited to use their default values.
+
+#### Brightness <img class="pro-badge" src="assets/pro.svg" alt="pro" />
+
+```
+brightness:%brightness
+br:%brightness
+```
+
+When set, imgproxy will adjust brightness of the resulting image. `brightness` is an integer number in range from `-255` to `255`.
+
+Default: 0
+
+#### Contrast <img class="pro-badge" src="assets/pro.svg" alt="pro" />
+
+```
+contrast:%contrast
+co:%contrast
+```
+
+When set, imgproxy will adjust contrast of the resulting image. `contrast` is a positive floating point number, where `1` keeps the contrast unchanged.
+
+Default: 1
+
+#### Saturation <img class="pro-badge" src="assets/pro.svg" alt="pro" />
+
+```
+saturation:%saturation
+co:%saturation
+```
+
+When set, imgproxy will adjust saturation of the resulting image. `saturation` is a positive floating point number, where `1` keeps the saturation unchanged.
+
+Default: 1
+
 #### Blur
 
 ```
