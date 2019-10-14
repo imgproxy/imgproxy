@@ -220,7 +220,7 @@ Default: 1
 
 ```
 saturation:%saturation
-co:%saturation
+sa:%saturation
 ```
 
 When set, imgproxy will adjust saturation of the resulting image. `saturation` is a positive floating point number, where `1` keeps the saturation unchanged.
