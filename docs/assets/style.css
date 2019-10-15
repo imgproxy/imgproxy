@@ -103,3 +103,7 @@
       display: none;
   }
 }
+
+.github-corner {
+  position: fixed;
+}
