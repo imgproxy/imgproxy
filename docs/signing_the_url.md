@@ -14,7 +14,7 @@ Read our [Configuration](configuration.md#url-signature) guide to find more ways
 If you need a random key/salt pair real fast, you can quickly generate it using, for example, the following snippet:
 
 ```bash
-$ echo $(xxd -g 2 -l 64 -p /dev/random | tr -d '\n')
+echo $(xxd -g 2 -l 64 -p /dev/random | tr -d '\n')
 ```
 
 ### Calculating URL signature
@@ -43,7 +43,7 @@ http://imgproxy.example.com/insecure/fill/300/400/sm/0/aHR0cDovL2V4YW1w/bGUuY29t
 To sign it, you need to configure imgproxy to use your key/salt pair. Let's say, your key and salt are `secret` and `hello` — that translates to `736563726574` and `68656C6C6F` in hex encoding. This key/salt pair is quite weak for production use but will do for this example. Run your imgproxy using this key/salt pair:
 
 ```bash
-$ IMGPROXY_KEY=736563726574 IMGPROXY_SALT=68656C6C6F imgproxy
+IMGPROXY_KEY=736563726574 IMGPROXY_SALT=68656C6C6F imgproxy
 ```
 
 Note that all your unsigned URL will stop working since imgproxy now checks signatures of all URLs.

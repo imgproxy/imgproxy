@@ -15,13 +15,13 @@ You can specify multiple key/salt pairs by dividing keys and salts with comma (`
 You can also specify paths to files with a hex-encoded keys and salts, one by line (useful in a development environment):
 
 ```bash
-$ imgproxy -keypath /path/to/file/with/key -saltpath /path/to/file/with/salt
+imgproxy -keypath /path/to/file/with/key -saltpath /path/to/file/with/salt
 ```
 
 If you need a random key/salt pair real fast, you can quickly generate it using, for example, the following snippet:
 
 ```bash
-$ echo $(xxd -g 2 -l 64 -p /dev/random | tr -d '\n')
+echo $(xxd -g 2 -l 64 -p /dev/random | tr -d '\n')
 ```
 
 ## Server
@@ -140,7 +140,7 @@ There are two ways to define presets:
 #### Using a command line argument
 
 ```bash
-$ imgproxy -presets /path/to/file/with/presets
+imgproxy -presets /path/to/file/with/presets
 ```
 
 The file should contain preset definitions, one per line. Lines starting with `#` are treated as comments. Example:

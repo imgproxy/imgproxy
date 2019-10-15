@@ -22,6 +22,8 @@
 
   --sidebar-background: var(--mono-shade4);
   --sidebar-border-color: hsla(0,0%,100%,.4);
+
+  --copycode-background: var(--link-color);
 }
 
 .content {

@@ -10,7 +10,7 @@ imgproxy can be configured to process files from your local filesystem. To use t
 Assume you want to process an image that stored locally at `/path/to/project/images/logos/evil_martians.png`. Run imgproxy with `IMGPROXY_LOCAL_FILESYSTEM_ROOT` set to your images directory:
 
 ```bash
-$ IMGPROXY_LOCAL_FILESYSTEM_ROOT=/path/to/project/images imgproxy
+IMGPROXY_LOCAL_FILESYSTEM_ROOT=/path/to/project/images imgproxy
 ```
 
 Then use path inside this directory as the source URL:

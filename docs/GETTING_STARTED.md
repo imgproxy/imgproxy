@@ -7,8 +7,8 @@ This guide will show you how to get your first image resized with imgproxy quick
 Let's assume you have Docker installed on your machine. Then you can pull an official imgproxy image, and you're done!
 
 ```bash
-$ docker pull darthsim/imgproxy:latest
-$ docker run -p 8080:8080 -it darthsim/imgproxy
+docker pull darthsim/imgproxy:latest
+docker run -p 8080:8080 -it darthsim/imgproxy
 ```
 
 If you don't have docker, you can use Heroku for a quick start.
