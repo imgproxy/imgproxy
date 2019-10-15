@@ -3,7 +3,8 @@ module github.com/imgproxy/imgproxy
 go 1.11
 
 require (
-	cloud.google.com/go v0.47.0
+	cloud.google.com/go v0.47.0 // indirect
+	cloud.google.com/go/storage v1.0.0
 	github.com/StackExchange/wmi v0.0.0-20180116203802-5d049714c4a6 // indirect
 	github.com/aws/aws-sdk-go v1.25.12
 	github.com/bitly/go-simplejson v0.5.0 // indirect
@@ -13,12 +14,9 @@ require (
 	github.com/getsentry/sentry-go v0.2.1
 	github.com/go-ole/go-ole v1.2.2 // indirect
 	github.com/gofrs/uuid v3.2.0+incompatible // indirect
-	github.com/google/martian v2.1.0+incompatible // indirect
 	github.com/google/uuid v1.1.0 // indirect
-	github.com/googleapis/gax-go v0.0.0-20181219185031-c8a15bac9b9f // indirect
 	github.com/honeybadger-io/honeybadger-go v0.4.0
 	github.com/kardianos/osext v0.0.0-20170510131534-ae77be60afb1 // indirect
-	github.com/kr/pretty v0.1.0 // indirect
 	github.com/matoous/go-nanoid v0.0.0-20181114085210-eab626deece6
 	github.com/newrelic/go-agent v2.14.0+incompatible
 	github.com/pborman/uuid v0.0.0-20180906182336-adf5a7427709 // indirect
@@ -26,13 +24,11 @@ require (
 	github.com/shirou/gopsutil v2.18.12+incompatible // indirect
 	github.com/sirupsen/logrus v1.4.2
 	github.com/stretchr/testify v1.3.0
-	golang.org/x/image v0.0.0-20181116024801-cd38e8056d9b
-	golang.org/x/net v0.0.0-20190110200230-915654e7eabc
-	golang.org/x/oauth2 v0.0.0-20190110195249-fd3eaa146cbb // indirect
-	golang.org/x/sync v0.0.0-20181221193216-37e7f081c4d4
-	golang.org/x/sys v0.0.0-20190422165155-953cdadca894
-	google.golang.org/api v0.1.0
-	google.golang.org/genproto v0.0.0-20190110221437-6909d8a4a91b // indirect
+	golang.org/x/image v0.0.0-20190802002840-cff245a6509b
+	golang.org/x/net v0.0.0-20190620200207-3b0461eec859
+	golang.org/x/sync v0.0.0-20190423024810-112230192c58
+	golang.org/x/sys v0.0.0-20190624142023-c5567b49c5d0
+	google.golang.org/api v0.9.0
 )
 
 replace git.apache.org/thrift.git => github.com/apache/thrift v0.0.0-20180902110319-2566ecd5d999
