@@ -78,3 +78,28 @@
   height: 1em;
   vertical-align: middle;
 }
+
+.github-edit-btn {
+  display: block;
+  position: fixed;
+  bottom: 0;
+  right: 10px;
+  border-radius: 10px 10px 0 0;
+  background-color: var(--link-color);
+  color: var(--base-color) !important;
+  text-decoration: none !important;
+  font-size: .8em;
+  padding: 0.2em 1em;
+  opacity: 0.75;
+  z-index: 999;
+}
+
+.github-edit-btn:hover {
+  opacity: 1;
+}
+
+@media (max-width: 768px) {
+  .github-edit-btn {
+      display: none;
+  }
+}

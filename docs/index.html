@@ -36,6 +36,7 @@
       <div class="loading__spinner"></div>
     </div>
   </div>
+  <script src="assets/docsify-edit-link.js"></script>
   <script>
     window.$docsify = {
       name: '<img style="width:90%" title="imgproxy logo" src="/assets/logo.svg" >',
@@ -46,7 +47,10 @@
       search: {
         namespace: 'docs-imgproxy',
         depth: 6
-      }
+      },
+      plugins: [
+        EditOnGithubPlugin.create('https://github.com/imgproxy/imgproxy/blob/master/docs/')
+      ]
     }
   </script>
   <script src="//unpkg.com/docsify/lib/docsify.min.js"></script>
