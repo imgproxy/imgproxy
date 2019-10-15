@@ -22,10 +22,7 @@ require (
 	github.com/matoous/go-nanoid v0.0.0-20181114085210-eab626deece6
 	github.com/newrelic/go-agent v2.2.0+incompatible
 	github.com/pborman/uuid v0.0.0-20180906182336-adf5a7427709 // indirect
-	github.com/prometheus/client_golang v0.9.2
-	github.com/prometheus/client_model v0.0.0-20190109181635-f287a105a20e // indirect
-	github.com/prometheus/common v0.1.0 // indirect
-	github.com/prometheus/procfs v0.0.0-20190104112138-b1a0a9a36d74 // indirect
+	github.com/prometheus/client_golang v0.9.4
 	github.com/shirou/gopsutil v2.18.12+incompatible // indirect
 	github.com/sirupsen/logrus v1.4.2
 	github.com/stretchr/testify v1.3.0
