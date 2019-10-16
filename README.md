@@ -104,3 +104,7 @@ Great bunch of kudos goes to [John Cupitt](https://github.com/jcupitt) who devel
 imgproxy is licensed under the MIT license.
 
 See LICENSE for the full license text.
+
+## Security Contact
+
+To report a security vulnerability, please use the [Tidelift security contact](https://tidelift.com/security). Tidelift will coordinate the fix and disclosure.
