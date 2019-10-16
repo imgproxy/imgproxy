@@ -18,7 +18,7 @@ require (
 	github.com/honeybadger-io/honeybadger-go v0.4.0
 	github.com/kardianos/osext v0.0.0-20170510131534-ae77be60afb1 // indirect
 	github.com/matoous/go-nanoid v0.0.0-20181114085210-eab626deece6
-	github.com/newrelic/go-agent v2.14.0+incompatible
+	github.com/newrelic/go-agent v2.14.1+incompatible
 	github.com/pborman/uuid v0.0.0-20180906182336-adf5a7427709 // indirect
 	github.com/prometheus/client_golang v0.9.4
 	github.com/shirou/gopsutil v2.18.12+incompatible // indirect
