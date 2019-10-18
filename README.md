@@ -38,7 +38,7 @@ imgproxy uses probably the most efficient image processing library there is, cal
 
 imgproxy also uses native Go's `net/http` routing for the best HTTP networking support.
 
-You can see benchmarking results and comparison with some well-known alternatives in our [benchmark report](./BENCHMARK.md).
+You can see benchmarking results and comparison with some well-known alternatives in our [benchmark report](https://github.com/imgproxy/imgproxy/blob/master/BENCHMARK.md).
 
 #### Security
 
