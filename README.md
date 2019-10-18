@@ -38,7 +38,7 @@ imgproxy uses probably the most efficient image processing library there is, cal
 
 imgproxy also uses native Go's `net/http` routing for the best HTTP networking support.
 
-You can see benchmarking results and comparison with some well-known alternatives in our [benchmark report](./BENCHMARK.md).
+You can see benchmarking results and comparison with some well-known alternatives in our [benchmark report](https://github.com/imgproxy/imgproxy/blob/master/BENCHMARK.md).
 
 #### Security
 
@@ -52,44 +52,44 @@ Massive processing of remote images is a potentially dangerous thing, security-w
 
 ## Documentation
 
-1. [Getting started](./docs/GETTING_STARTED.md)
-2. [Installation](./docs/installation.md)
-   * [Docker](./docs/installation.md#docker)
-   * [Heroku](./docs/installation.md#heroku)
-   * [From the source](./docs/installation.md#from-the-source)
-3. [Configuration](./docs/configuration.md)
-   * [URL signature](./docs/configuration.md#url-signature)
-   * [Server](./docs/configuration.md#server)
-   * [Security](./docs/configuration.md#security)
-   * [Compression](./docs/configuration.md#compression)
-   * [WebP support detection](./docs/configuration.md#webp-support-detection)
-   * [Client Hints support](./docs/configuration.md#client-hints-support)
-   * [Watermark](./docs/configuration.md#watermark)
-   * [Presets](./docs/configuration.md#presets)
-   * [Serving local files](./docs/configuration.md#serving-local-files)
-   * [Serving files from Amazon S3](./docs/configuration.md#serving-files-from-amazon-s3)
-   * [Serving files from Google Cloud Storage](./docs/configuration.md#serving-files-from-google-cloud-storage)
-   * [New Relic metrics](./docs/configuration.md#new-relic-metrics)
-   * [Prometheus metrics](./docs/configuration.md#prometheus-metrics)
-   * [Error reporting](./docs/configuration.md#error-reporting)
-   * [Syslog](./docs/configuration.md#syslog)
-   * [Memory usage tweaks](./docs/configuration.md#memory-usage-tweaks)
-   * [Miscellaneous](./docs/configuration.md#miscellaneous)
-4. [Generating the URL](./docs/generating_the_url_basic.md)
-   * [Basic](./docs/generating_the_url_basic.md)
-   * [Advanced](./docs/generating_the_url_advanced.md)
-   * [Signing the URL](./docs/signing_the_url.md)
-5. [Watermark](./docs/watermark.md)
-6. [Presets](./docs/presets.md)
-7. [Serving local files](./docs/serving_local_files.md)
-8. [Serving files from Amazon S3](./docs/serving_files_from_s3.md)
-9. [Serving files from Google Cloud Storage](./docs/serving_files_from_google_cloud_storage.md)
-10. [New Relic](./docs/new_relic.md)
-11. [Prometheus](./docs/prometheus.md)
-12. [Image formats support](./docs/image_formats_support.md)
-13. [About processing pipeline](./docs/about_processing_pipeline.md)
-14. [Health check](./docs/healthcheck.md)
-15. [Memory usage tweaks](./docs/memory_usage_tweaks.md)
+1. [Getting started](https://docs.imgproxy.net/#/GETTING_STARTED)
+2. [Installation](https://docs.imgproxy.net/#/installation)
+   * [Docker](https://docs.imgproxy.net/#/installation?id=docker)
+   * [Heroku](https://docs.imgproxy.net/#/installation?id=heroku)
+   * [From the source](https://docs.imgproxy.net/#/installation?id=from-the-source)
+3. [Configuration](https://docs.imgproxy.net/#/configuration)
+   * [URL signature](https://docs.imgproxy.net/#/configuration?id=url-signature)
+   * [Server](https://docs.imgproxy.net/#/configuration?id=server)
+   * [Security](https://docs.imgproxy.net/#/configuration?id=security)
+   * [Compression](https://docs.imgproxy.net/#/configuration?id=compression)
+   * [WebP support detection](https://docs.imgproxy.net/#/configuration?id=webp-support-detection)
+   * [Client Hints support](https://docs.imgproxy.net/#/configuration?id=client-hints-support)
+   * [Watermark](https://docs.imgproxy.net/#/configuration?id=watermark)
+   * [Presets](https://docs.imgproxy.net/#/configuration?id=presets)
+   * [Serving local files](https://docs.imgproxy.net/#/configuration?id=serving-local-files)
+   * [Serving files from Amazon S3](https://docs.imgproxy.net/#/configuration?id=serving-files-from-amazon-s3)
+   * [Serving files from Google Cloud Storage](https://docs.imgproxy.net/#/configuration?id=serving-files-from-google-cloud-storage)
+   * [New Relic metrics](https://docs.imgproxy.net/#/configuration?id=new-relic-metrics)
+   * [Prometheus metrics](https://docs.imgproxy.net/#/configuration?id=prometheus-metrics)
+   * [Error reporting](https://docs.imgproxy.net/#/configuration?id=error-reporting)
+   * [Log](https://docs.imgproxy.net/#/configuration?id=log)
+   * [Memory usage tweaks](https://docs.imgproxy.net/#/configuration?id=memory-usage-tweaks)
+   * [Miscellaneous](https://docs.imgproxy.net/#/configuration?id=miscellaneous)
+4. Generating the URL
+   * [Basic](https://docs.imgproxy.net/#/generating_the_url_basic)
+   * [Advanced](https://docs.imgproxy.net/#/generating_the_url_advanced)
+   * [Signing the URL](https://docs.imgproxy.net/#/signing_the_url)
+5. [Watermark](https://docs.imgproxy.net/#/watermark)
+6. [Presets](https://docs.imgproxy.net/#/presets)
+7. [Serving local files](https://docs.imgproxy.net/#/serving_local_files)
+8. [Serving files from Amazon S3](https://docs.imgproxy.net/#/serving_files_from_s3)
+9. [Serving files from Google Cloud Storage](https://docs.imgproxy.net/#/serving_files_from_google_cloud_storage)
+10. [New Relic](https://docs.imgproxy.net/#/new_relic)
+11. [Prometheus](https://docs.imgproxy.net/#/prometheus)
+12. [Image formats support](https://docs.imgproxy.net/#/image_formats_support)
+13. [About processing pipeline](https://docs.imgproxy.net/#/about_processing_pipeline)
+14. [Health check](https://docs.imgproxy.net/#/healthcheck)
+15. [Memory usage tweaks](https://docs.imgproxy.net/#/memory_usage_tweaks)
 
 ## Author
 
@@ -104,3 +104,7 @@ Great bunch of kudos goes to [John Cupitt](https://github.com/jcupitt) who devel
 imgproxy is licensed under the MIT license.
 
 See LICENSE for the full license text.
+
+## Security Contact
+
+To report a security vulnerability, please use the [Tidelift security contact](https://tidelift.com/security). Tidelift will coordinate the fix and disclosure.

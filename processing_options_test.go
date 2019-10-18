@@ -52,15 +52,6 @@ func (s *ProcessingOptionsTestSuite) TestParseBase64URLWithBase() {
 	assert.Equal(s.T(), imageTypePNG, getProcessingOptions(ctx).Format)
 }
 
-func (s *ProcessingOptionsTestSuite) TestParseBase64URLInvalid() {
-	imageURL := "lorem/ipsum.jpg?param=value"
-	req := s.getRequest(fmt.Sprintf("http://example.com/unsafe/size:100:100/%s.png", base64.RawURLEncoding.EncodeToString([]byte(imageURL))))
-	_, err := parsePath(context.Background(), req)
-
-	require.Error(s.T(), err)
-	assert.Equal(s.T(), errInvalidImageURL.Error(), err.Error())
-}
-
 func (s *ProcessingOptionsTestSuite) TestParsePlainURL() {
 	imageURL := "http://images.dev/lorem/ipsum.jpg"
 	req := s.getRequest(fmt.Sprintf("http://example.com/unsafe/size:100:100/plain/%s@png", imageURL))
@@ -115,24 +106,6 @@ func (s *ProcessingOptionsTestSuite) TestParsePlainURLEscapedWithBase() {
 	assert.Equal(s.T(), imageTypePNG, getProcessingOptions(ctx).Format)
 }
 
-func (s *ProcessingOptionsTestSuite) TestParsePlainURLInvalid() {
-	imageURL := "lorem/ipsum.jpg?param=value"
-	req := s.getRequest(fmt.Sprintf("http://example.com/unsafe/size:100:100/plain/%s@png", imageURL))
-	_, err := parsePath(context.Background(), req)
-
-	require.Error(s.T(), err)
-	assert.Equal(s.T(), errInvalidImageURL.Error(), err.Error())
-}
-
-func (s *ProcessingOptionsTestSuite) TestParsePlainURLEscapedInvalid() {
-	imageURL := "lorem/ipsum.jpg?param=value"
-	req := s.getRequest(fmt.Sprintf("http://example.com/unsafe/size:100:100/plain/%s@png", url.PathEscape(imageURL)))
-	_, err := parsePath(context.Background(), req)
-
-	require.Error(s.T(), err)
-	assert.Equal(s.T(), errInvalidImageURL.Error(), err.Error())
-}
-
 func (s *ProcessingOptionsTestSuite) TestParsePathBasic() {
 	req := s.getRequest("http://example.com/unsafe/fill/100/200/noea/1/plain/http://images.dev/lorem/ipsum.jpg@png")
 	ctx, err := parsePath(context.Background(), req)
@@ -140,7 +113,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathBasic() {
 	require.Nil(s.T(), err)
 
 	po := getProcessingOptions(ctx)
-	assert.Equal(s.T(), resizeFill, po.Resize)
+	assert.Equal(s.T(), resizeFill, po.ResizingType)
 	assert.Equal(s.T(), 100, po.Width)
 	assert.Equal(s.T(), 200, po.Height)
 	assert.Equal(s.T(), gravityNorthEast, po.Gravity.Type)
@@ -165,7 +138,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedResize() {
 	require.Nil(s.T(), err)
 
 	po := getProcessingOptions(ctx)
-	assert.Equal(s.T(), resizeFill, po.Resize)
+	assert.Equal(s.T(), resizeFill, po.ResizingType)
 	assert.Equal(s.T(), 100, po.Width)
 	assert.Equal(s.T(), 200, po.Height)
 	assert.True(s.T(), po.Enlarge)
@@ -178,7 +151,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedResizingType() {
 	require.Nil(s.T(), err)
 
 	po := getProcessingOptions(ctx)
-	assert.Equal(s.T(), resizeFill, po.Resize)
+	assert.Equal(s.T(), resizeFill, po.ResizingType)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedSize() {
@@ -335,12 +308,12 @@ func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedWatermark() {
 
 func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedPreset() {
 	conf.Presets["test1"] = urlOptions{
-		"resizing_type": []string{"fill"},
+		urlOption{Name: "resizing_type", Args: []string{"fill"}},
 	}
 
 	conf.Presets["test2"] = urlOptions{
-		"blur":    []string{"0.2"},
-		"quality": []string{"50"},
+		urlOption{Name: "blur", Args: []string{"0.2"}},
+		urlOption{Name: "quality", Args: []string{"50"}},
 	}
 
 	req := s.getRequest("http://example.com/unsafe/preset:test1:test2/plain/http://images.dev/lorem/ipsum.jpg")
@@ -349,16 +322,16 @@ func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedPreset() {
 	require.Nil(s.T(), err)
 
 	po := getProcessingOptions(ctx)
-	assert.Equal(s.T(), resizeFill, po.Resize)
+	assert.Equal(s.T(), resizeFill, po.ResizingType)
 	assert.Equal(s.T(), float32(0.2), po.Blur)
 	assert.Equal(s.T(), 50, po.Quality)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathPresetDefault() {
 	conf.Presets["default"] = urlOptions{
-		"resizing_type": []string{"fill"},
-		"blur":          []string{"0.2"},
-		"quality":       []string{"50"},
+		urlOption{Name: "resizing_type", Args: []string{"fill"}},
+		urlOption{Name: "blur", Args: []string{"0.2"}},
+		urlOption{Name: "quality", Args: []string{"50"}},
 	}
 
 	req := s.getRequest("http://example.com/unsafe/quality:70/plain/http://images.dev/lorem/ipsum.jpg")
@@ -367,19 +340,19 @@ func (s *ProcessingOptionsTestSuite) TestParsePathPresetDefault() {
 	require.Nil(s.T(), err)
 
 	po := getProcessingOptions(ctx)
-	assert.Equal(s.T(), resizeFill, po.Resize)
+	assert.Equal(s.T(), resizeFill, po.ResizingType)
 	assert.Equal(s.T(), float32(0.2), po.Blur)
 	assert.Equal(s.T(), 70, po.Quality)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedPresetLoopDetection() {
 	conf.Presets["test1"] = urlOptions{
-		"resizing_type": []string{"fill"},
+		urlOption{Name: "resizing_type", Args: []string{"fill"}},
 	}
 
 	conf.Presets["test2"] = urlOptions{
-		"blur":    []string{"0.2"},
-		"quality": []string{"50"},
+		urlOption{Name: "blur", Args: []string{"0.2"}},
+		urlOption{Name: "quality", Args: []string{"50"}},
 	}
 
 	req := s.getRequest("http://example.com/unsafe/preset:test1:test2:test1/plain/http://images.dev/lorem/ipsum.jpg")
@@ -411,20 +384,8 @@ func (s *ProcessingOptionsTestSuite) TestParsePathWebpDetection() {
 	require.Nil(s.T(), err)
 
 	po := getProcessingOptions(ctx)
-	assert.Equal(s.T(), imageTypeWEBP, po.Format)
-}
-
-func (s *ProcessingOptionsTestSuite) TestParsePathWebpDetectionRedefine() {
-	conf.EnableWebpDetection = true
-
-	req := s.getRequest("http://example.com/unsafe/plain/http://images.dev/lorem/ipsum.jpg@png")
-	req.Header.Set("Accept", "image/webp")
-	ctx, err := parsePath(context.Background(), req)
-
-	require.Nil(s.T(), err)
-
-	po := getProcessingOptions(ctx)
-	assert.Equal(s.T(), imageTypePNG, po.Format)
+	assert.Equal(s.T(), true, po.PreferWebP)
+	assert.Equal(s.T(), false, po.EnforceWebP)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathWebpEnforce() {
@@ -437,7 +398,8 @@ func (s *ProcessingOptionsTestSuite) TestParsePathWebpEnforce() {
 	require.Nil(s.T(), err)
 
 	po := getProcessingOptions(ctx)
-	assert.Equal(s.T(), imageTypeWEBP, po.Format)
+	assert.Equal(s.T(), true, po.PreferWebP)
+	assert.Equal(s.T(), true, po.EnforceWebP)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathWidthHeader() {
@@ -564,10 +526,10 @@ func (s *ProcessingOptionsTestSuite) TestParsePathSignedInvalid() {
 func (s *ProcessingOptionsTestSuite) TestParsePathOnlyPresets() {
 	conf.OnlyPresets = true
 	conf.Presets["test1"] = urlOptions{
-		"blur": []string{"0.2"},
+		urlOption{Name: "blur", Args: []string{"0.2"}},
 	}
 	conf.Presets["test2"] = urlOptions{
-		"quality": []string{"50"},
+		urlOption{Name: "quality", Args: []string{"50"}},
 	}
 
 	req := s.getRequest("http://example.com/unsafe/test1:test2/plain/http://images.dev/lorem/ipsum.jpg")
@@ -584,10 +546,10 @@ func (s *ProcessingOptionsTestSuite) TestParsePathOnlyPresets() {
 func (s *ProcessingOptionsTestSuite) TestParseBase64URLOnlyPresets() {
 	conf.OnlyPresets = true
 	conf.Presets["test1"] = urlOptions{
-		"blur": []string{"0.2"},
+		urlOption{Name: "blur", Args: []string{"0.2"}},
 	}
 	conf.Presets["test2"] = urlOptions{
-		"quality": []string{"50"},
+		urlOption{Name: "quality", Args: []string{"50"}},
 	}
 
 	imageURL := "http://images.dev/lorem/ipsum.jpg?param=value"

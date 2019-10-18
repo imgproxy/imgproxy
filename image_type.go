@@ -24,6 +24,8 @@ const (
 	imageTypeICO     = imageType(C.ICO)
 	imageTypeSVG     = imageType(C.SVG)
 	imageTypeHEIC    = imageType(C.HEIC)
+	imageTypeBMP     = imageType(C.BMP)
+	imageTypeTIFF    = imageType(C.TIFF)
 
 	contentDispositionFilenameFallback = "image"
 )
@@ -38,6 +40,8 @@ var (
 		"ico":  imageTypeICO,
 		"svg":  imageTypeSVG,
 		"heic": imageTypeHEIC,
+		"bmp":  imageTypeBMP,
+		"tiff": imageTypeTIFF,
 	}
 
 	mimes = map[imageType]string{
@@ -46,7 +50,10 @@ var (
 		imageTypeWEBP: "image/webp",
 		imageTypeGIF:  "image/gif",
 		imageTypeICO:  "image/x-icon",
+		imageTypeSVG:  "image/svg+xml",
 		imageTypeHEIC: "image/heif",
+		imageTypeBMP:  "image/bmp",
+		imageTypeTIFF: "image/tiff",
 	}
 
 	contentDispositionsFmt = map[imageType]string{
@@ -55,7 +62,10 @@ var (
 		imageTypeWEBP: "inline; filename=\"%s.webp\"",
 		imageTypeGIF:  "inline; filename=\"%s.gif\"",
 		imageTypeICO:  "inline; filename=\"%s.ico\"",
+		imageTypeSVG:  "inline; filename=\"%s.svg\"",
 		imageTypeHEIC: "inline; filename=\"%s.heic\"",
+		imageTypeBMP:  "inline; filename=\"%s.bmp\"",
+		imageTypeTIFF: "inline; filename=\"%s.tiff\"",
 	}
 )
 
@@ -68,6 +78,15 @@ func (it imageType) String() string {
 	return ""
 }
 
+func (it imageType) MarshalJSON() ([]byte, error) {
+	for k, v := range imageTypes {
+		if v == it {
+			return []byte(fmt.Sprintf("%q", k)), nil
+		}
+	}
+	return []byte("null"), nil
+}
+
 func (it imageType) Mime() string {
 	if mime, ok := mimes[it]; ok {
 		return mime
@@ -76,21 +95,25 @@ func (it imageType) Mime() string {
 	return "application/octet-stream"
 }
 
-func (it imageType) ContentDisposition(imageURL string) string {
+func (it imageType) ContentDisposition(filename string) string {
 	format, ok := contentDispositionsFmt[it]
 	if !ok {
 		return "inline"
 	}
 
+	return fmt.Sprintf(format, filename)
+}
+
+func (it imageType) ContentDispositionFromURL(imageURL string) string {
 	url, err := url.Parse(imageURL)
 	if err != nil {
-		return fmt.Sprintf(format, contentDispositionFilenameFallback)
+		return it.ContentDisposition(contentDispositionFilenameFallback)
 	}
 
 	_, filename := filepath.Split(url.Path)
 	if len(filename) == 0 {
-		return fmt.Sprintf(format, contentDispositionFilenameFallback)
+		return it.ContentDisposition(contentDispositionFilenameFallback)
 	}
 
-	return fmt.Sprintf(format, strings.TrimSuffix(filename, filepath.Ext(filename)))
+	return it.ContentDisposition(strings.TrimSuffix(filename, filepath.Ext(filename)))
 }

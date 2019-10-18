@@ -2,74 +2,73 @@ package main
 
 import (
 	"bytes"
-	"context"
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
 	"os"
 )
 
-func watermarkData() ([]byte, imageType, context.CancelFunc, error) {
+func getWatermarkData() (*imageData, error) {
 	if len(conf.WatermarkData) > 0 {
-		data, imgtype, err := base64WatermarkData()
-		return data, imgtype, func() {}, err
+		return base64WatermarkData(conf.WatermarkData)
 	}
 
 	if len(conf.WatermarkPath) > 0 {
-		data, imgtype, err := fileWatermarkData()
-		return data, imgtype, func() {}, err
+		return fileWatermarkData(conf.WatermarkPath)
 	}
 
 	if len(conf.WatermarkURL) > 0 {
-		return remoteWatermarkData()
+		return remoteWatermarkData(conf.WatermarkURL)
 	}
 
-	return nil, imageTypeUnknown, func() {}, nil
+	return nil, nil
 }
 
-func base64WatermarkData() ([]byte, imageType, error) {
-	data, err := base64.StdEncoding.DecodeString(conf.WatermarkData)
+func base64WatermarkData(encoded string) (*imageData, error) {
+	data, err := base64.StdEncoding.DecodeString(encoded)
 	if err != nil {
-		return nil, imageTypeUnknown, fmt.Errorf("Can't decode watermark data: %s", err)
+		return nil, fmt.Errorf("Can't decode watermark data: %s", err)
 	}
 
 	imgtype, err := checkTypeAndDimensions(bytes.NewReader(data))
 	if err != nil {
-		return nil, imageTypeUnknown, fmt.Errorf("Can't decode watermark: %s", err)
+		return nil, fmt.Errorf("Can't decode watermark: %s", err)
 	}
 
-	return data, imgtype, nil
+	return &imageData{Data: data, Type: imgtype}, nil
 }
 
-func fileWatermarkData() ([]byte, imageType, error) {
-	f, err := os.Open(conf.WatermarkPath)
+func fileWatermarkData(path string) (*imageData, error) {
+	f, err := os.Open(path)
 	if err != nil {
-		return nil, imageTypeUnknown, fmt.Errorf("Can't read watermark: %s", err)
+		return nil, fmt.Errorf("Can't read watermark: %s", err)
 	}
 
-	imgtype, err := checkTypeAndDimensions(f)
+	fi, err := f.Stat()
 	if err != nil {
-		return nil, imageTypeUnknown, fmt.Errorf("Can't decode watermark: %s", err)
+		return nil, fmt.Errorf("Can't read watermark: %s", err)
 	}
 
-	// Return to the beginning of the file
-	f.Seek(0, 0)
-
-	data, err := ioutil.ReadAll(f)
+	imgdata, err := readAndCheckImage(f, int(fi.Size()))
 	if err != nil {
-		return nil, imageTypeUnknown, fmt.Errorf("Can't read watermark: %s", err)
+		return nil, fmt.Errorf("Can't read watermark: %s", err)
 	}
 
-	return data, imgtype, nil
+	return imgdata, err
 }
 
-func remoteWatermarkData() ([]byte, imageType, context.CancelFunc, error) {
-	ctx := context.WithValue(context.Background(), imageURLCtxKey, conf.WatermarkURL)
-	ctx, cancel, err := downloadImage(ctx)
-
+func remoteWatermarkData(imageURL string) (*imageData, error) {
+	res, err := requestImage(imageURL)
+	if res != nil {
+		defer res.Body.Close()
+	}
 	if err != nil {
-		return nil, imageTypeUnknown, cancel, fmt.Errorf("Can't download watermark: %s", err)
+		return nil, fmt.Errorf("Can't download watermark: %s", err)
 	}
 
-	return getImageData(ctx).Bytes(), getImageType(ctx), cancel, err
+	imgdata, err := readAndCheckImage(res.Body, int(res.ContentLength))
+	if err != nil {
+		return nil, fmt.Errorf("Can't download watermark: %s", err)
+	}
+
+	return imgdata, err
 }

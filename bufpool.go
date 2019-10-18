@@ -97,15 +97,16 @@ func (p *bufPool) Get(size int) *bytes.Buffer {
 
 	var buf *bytes.Buffer
 
-	if minInd >= 0 {
+	switch {
+	case minInd >= 0:
 		// We found buffer with the desired size
 		buf = p.buffers[minInd]
 		p.buffers[minInd] = nil
-	} else if maxInd >= 0 {
+	case maxInd >= 0:
 		// We didn't find buffer with the desired size
 		buf = p.buffers[maxInd]
 		p.buffers[maxInd] = nil
-	} else {
+	default:
 		// We didn't find buffers at all
 		buf = new(bytes.Buffer)
 	}

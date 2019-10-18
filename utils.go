@@ -16,6 +16,25 @@ func minInt(a, b int) int {
 	return b
 }
 
+func minNonZeroInt(a, b int) int {
+	switch {
+	case a == 0:
+		return b
+	case b == 0:
+		return a
+	}
+
+	return minInt(a, b)
+}
+
 func roundToInt(a float64) int {
 	return int(math.Round(a))
+}
+
+func scaleInt(a int, scale float64) int {
+	if a == 0 {
+		return 0
+	}
+
+	return roundToInt(float64(a) * scale)
 }

@@ -8,8 +8,26 @@ workflows:
       - lint:
           requires:
             - checkout_code
-          go_version: "1.12"
+          go_version: "1.13"
           vips_version: "8.8"
+      - build:
+          name: go1.13_vips8.8
+          requires:
+            - checkout_code
+          go_version: "1.13"
+          vips_version: "8.8"
+      - build:
+          name: go1.13_vips8.7
+          requires:
+            - checkout_code
+          go_version: "1.13"
+          vips_version: "8.7"
+      - build:
+          name: go1.13_vips8.6
+          requires:
+            - checkout_code
+          go_version: "1.13"
+          vips_version: "8.6"
       - build:
           name: go1.12_vips8.8
           requires:
@@ -32,37 +50,19 @@ workflows:
           name: go1.11_vips8.8
           requires:
             - checkout_code
-          go_version: "1.11"
+          go_version: "1.11.13"
           vips_version: "8.8"
       - build:
           name: go1.11_vips8.7
           requires:
             - checkout_code
-          go_version: "1.11"
+          go_version: "1.11.13"
           vips_version: "8.7"
       - build:
           name: go1.11_vips8.6
           requires:
             - checkout_code
-          go_version: "1.11"
-          vips_version: "8.6"
-      - build:
-          name: go1.10_vips8.8
-          requires:
-            - checkout_code
-          go_version: "1.10"
-          vips_version: "8.8"
-      - build:
-          name: go1.10_vips8.7
-          requires:
-            - checkout_code
-          go_version: "1.10"
-          vips_version: "8.7"
-      - build:
-          name: go1.10_vips8.6
-          requires:
-            - checkout_code
-          go_version: "1.10"
+          go_version: "1.11.13"
           vips_version: "8.6"
 
 executors:
@@ -95,6 +95,7 @@ commands:
           command: |
             gvm install go<< parameters.go_version >> -B
             gvm use go<< parameters.go_version >> --default
+            echo 'export GO111MODULE=on' >> $BASH_ENV
             echo 'export GOPATH=/go' >> $BASH_ENV
             echo 'export PATH="$PATH:$(go env GOPATH)/bin"' >> $BASH_ENV
             echo 'export CGO_LDFLAGS_ALLOW="-s|-w"' >> $BASH_ENV
@@ -127,7 +128,7 @@ jobs:
           go_version: << parameters.go_version >>
       - run:
           name: Install golangci-lint
-          command: curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | BINARY=golangci-lint sh -s -- -b $(go env GOPATH)/bin v1.16.0
+          command: curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | BINARY=golangci-lint sh -s -- -b $(go env GOPATH)/bin v1.18.0
       - run:
           name: Lint imgproxy
           command: golangci-lint run .
@@ -146,6 +147,13 @@ jobs:
           vips_version: << parameters.vips_version >>
       - install_go:
           go_version: << parameters.go_version >>
+      - restore_cache:
+          keys:
+            - go-modules-{{ checksum "go.sum" }}
       - run:
           name: Build imgproxy
           command: go test -v
+      - save_cache:
+          key: go-modules-{{ checksum "go.sum" }}
+          paths:
+            - "/go/pkg/mod"

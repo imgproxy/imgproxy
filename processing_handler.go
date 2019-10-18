@@ -46,10 +46,17 @@ func initProcessingHandler() {
 func respondWithImage(ctx context.Context, reqID string, r *http.Request, rw http.ResponseWriter, data []byte) {
 	po := getProcessingOptions(ctx)
 
+	var contentDisposition string
+	if len(po.Filename) > 0 {
+		contentDisposition = po.Format.ContentDisposition(po.Filename)
+	} else {
+		contentDisposition = po.Format.ContentDispositionFromURL(getImageURL(ctx))
+	}
+
 	rw.Header().Set("Expires", time.Now().Add(time.Second*time.Duration(conf.TTL)).Format(http.TimeFormat))
 	rw.Header().Set("Cache-Control", fmt.Sprintf("max-age=%d, public", conf.TTL))
 	rw.Header().Set("Content-Type", po.Format.Mime())
-	rw.Header().Set("Content-Disposition", po.Format.ContentDisposition(getImageURL(ctx)))
+	rw.Header().Set("Content-Disposition", contentDisposition)
 
 	if len(headerVaryValue) > 0 {
 		rw.Header().Set("Vary", headerVaryValue)
@@ -76,11 +83,22 @@ func respondWithImage(ctx context.Context, reqID string, r *http.Request, rw htt
 		rw.Write(data)
 	}
 
-	logResponse(reqID, 200, fmt.Sprintf("Processed in %s: %s; %+v", getTimerSince(ctx), getImageURL(ctx), po))
+	imageURL := getImageURL(ctx)
+
+	logResponse(reqID, r, 200, nil, &imageURL, po)
+	// logResponse(reqID, r, 200, getTimerSince(ctx), getImageURL(ctx), po))
+}
+
+func respondWithNotModified(ctx context.Context, reqID string, r *http.Request, rw http.ResponseWriter) {
+	rw.WriteHeader(304)
+
+	imageURL := getImageURL(ctx)
+
+	logResponse(reqID, r, 304, nil, &imageURL, getProcessingOptions(ctx))
 }
 
 func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
+	ctx := r.Context()
 
 	if newRelicEnabled {
 		var newRelicCancel context.CancelFunc
@@ -96,7 +114,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	processingSem <- struct{}{}
 	defer func() { <-processingSem }()
 
-	ctx, timeoutCancel := startTimer(ctx, time.Duration(conf.WriteTimeout)*time.Second)
+	ctx, timeoutCancel := context.WithTimeout(ctx, time.Duration(conf.WriteTimeout)*time.Second)
 	defer timeoutCancel()
 
 	ctx, err := parsePath(ctx, r)
@@ -123,8 +141,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		rw.Header().Set("ETag", eTag)
 
 		if eTag == r.Header.Get("If-None-Match") {
-			logResponse(reqID, 304, "Not modified")
-			rw.WriteHeader(304)
+			respondWithNotModified(ctx, reqID, r, rw)
 			return
 		}
 	}

@@ -1,10 +1,55 @@
 # Changelog
 
+## master
+
+- Reimplemented and more errors-tolerant image size parsing;
+- TIFF and BMP support;
+- Using Application Default Credentials when `IMGPROXY_USE_GCS` is set to `true` but `IMGPROXY_GCS_KEY` is not set.
+  **Note:** If you use `IMGPROXY_GCS_KEY`, it's recommended to set `IMGPROXY_USE_GCS` to `true` since it may be required by future versions to enable GCS support;
+- Setting `IMGPROXY_REPORT_DOWNLOADING_ERRORS` to `false` disables reporting of downloading errors;
+- SVG passthrough. When source image and requested format are SVG, image will be returned without changes;
+- Log only modified processing options;
+- Fixed sharpening+watermarking
+
+## v2.5.0
+
+- New default log format;
+- `structured` and `json` log formats. Can be set with `IMGPROXY_LOG_FORMAT`;
+- Better watermarking: image transparency doesn't affect watermarks, faster watermark scaling.
+
+## v2.4.1
+
+- More verbose URL parsing errors;
+
+## v2.4.0
+
+- Better handling if non-sRGB images;
+- `SO_REUSEPORT` socker option support. Can be enabled with `IMGPROXY_SO_REUSEPORT`;
+- `dpr` option always changes the resulting size even if it leads to enlarge and `enlarge` is falsey;
+- Log to STDOUT;
+- [filename](./docs/generating_the_url_advanced.md#filename) option;
+- Only unexpected errors are reported to Bugsnag/Honeybadger/Sentry;
+- GZip compression support is deprecated;
+- Better Sentry support.
+
+## v2.3.0
+
+- `libvips` v8.8 support: better processing of animated GIFs, built-in CMYK profile, better WebP scale-on-load, etc;
+- Animated WebP support. `IMGPROXY_MAX_GIF_FRAMES` is deprecated, use `IMGPROXY_MAX_ANIMATION_FRAMES`;
+- [HEIC support](./docs/image_formats_support.md#heic-support);
+- [crop](./docs/generating_the_url_advanced.md#crop) processing option. `resizing_type:crop` is deprecated;
+- Offsets for [gravity](./docs/generating_the_url_advanced.md#gravity);
+- Resizing type `auto`. If both source and resulting dimensions have the same orientation (portrait or landscape), imgproxy will use `fill`. Otherwise, it will use `fit`;
+- Development errors mode. When `IMGPROXY_DEVELOPMENT_ERRORS_MODE` is true, imgproxy will respond with detailed error messages. Not recommended for production because some errors may contain stack trace;
+- Better stack trace for image processing errors;
+- Allowed URL query for `/health`;
+- `IMGPROXY_KEEP_ALIVE_TIMEOUT` config.
+
 ## v2.2.13
 
 - Better shrink-on-load;
 - Don't import common sRGB IEC61966-2.1 ICC profile unless linear colorspace is used;
-- Send `X-Reqiest-ID` header;
+- Send `X-Request-ID` header;
 - Don't fail on recursive preset usage, just ignore already used preset and log warning.
 
 ## v2.2.12
