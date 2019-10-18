@@ -174,15 +174,9 @@ func requestImage(imageURL string) (*http.Response, error) {
 func downloadImage(ctx context.Context) (context.Context, context.CancelFunc, error) {
 	imageURL := getImageURL(ctx)
 
-	u, err := neturl.Parse(url)
+	_, err := neturl.Parse(imageURL)
 	if err != nil {
 		return ctx, func() {}, newError(404, err.Error(), msgSourceImageIsUnreachable)
-	}
-	if conf.OnlyLocalFileSystem {
-		if u.Scheme != "local" {
-			msg := "Can't download remote images"
-			return ctx, func() {}, newError(404, msg, msgSourceImageIsUnreachable)
-		}
 	}
 
 	if newRelicEnabled {

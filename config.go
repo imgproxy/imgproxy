@@ -172,8 +172,8 @@ type config struct {
 	IgnoreSslVerification bool
 	DevelopmentErrorsMode bool
 
+	AllowedSources      string
 	LocalFileSystemRoot string
-	OnlyLocalFileSystem bool
 	S3Enabled           bool
 	S3Region            string
 	S3Endpoint          string
@@ -307,7 +307,7 @@ func configure() {
 	boolEnvConfig(&conf.DevelopmentErrorsMode, "IMGPROXY_DEVELOPMENT_ERRORS_MODE")
 
 	strEnvConfig(&conf.LocalFileSystemRoot, "IMGPROXY_LOCAL_FILESYSTEM_ROOT")
-	boolEnvConfig(&conf.OnlyLocalFileSystem, "IMGPROXY_ONLY_LOCAL_FILESYSTEM")
+	strEnvConfig(&conf.AllowedSources, "IMGPROXY_ALLOWED_SOURCES")
 
 	boolEnvConfig(&conf.S3Enabled, "IMGPROXY_USE_S3")
 	strEnvConfig(&conf.S3Region, "IMGPROXY_S3_REGION")
@@ -455,13 +455,7 @@ func configure() {
 		}
 	}
 
-	if conf.OnlyLocalFileSystem {
-		if conf.LocalFileSystemRoot == "" {
-			logFatal("Must specify a file system root")
-		}
-  }
-
-  if _, ok := os.LookupEnv("IMGPROXY_USE_GCS"); !ok && len(conf.GCSKey) > 0 {
+	if _, ok := os.LookupEnv("IMGPROXY_USE_GCS"); !ok && len(conf.GCSKey) > 0 {
 		logWarning("Set IMGPROXY_USE_GCS to true since it may be required by future versions to enable GCS support")
 		conf.GCSEnabled = true
 	}

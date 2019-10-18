@@ -139,8 +139,9 @@ const (
 	urlTokenPlain           = "plain"
 	maxClientHintDPR        = 8
 
-	msgForbidden  = "Forbidden"
-	msgInvalidURL = "Invalid URL"
+	msgForbidden     = "Forbidden"
+	msgInvalidURL    = "Invalid URL"
+	msgInvalidSource = "Invalid Source"
 )
 
 func (gt gravityType) String() string {
@@ -763,6 +764,19 @@ func applyProcessingOptions(po *processingOptions, options urlOptions) error {
 	return nil
 }
 
+func isAllowedSource(imageURL string) bool {
+	source := strings.Split(imageURL, ":")[0]
+	if conf.AllowedSources == "" {
+		return true
+	}
+	for _, val := range strings.Split(conf.AllowedSources, ",") {
+		if string(val) == source {
+			return true
+		}
+	}
+	return false
+}
+
 func parseURLOptions(opts []string) (urlOptions, []string) {
 	parsed := make(urlOptions, 0, len(opts))
 	urlStart := len(opts) + 1
@@ -950,6 +964,10 @@ func parsePath(ctx context.Context, r *http.Request) (context.Context, error) {
 		imageURL, po, err = parsePathBasic(parts[1:], headers)
 	} else {
 		imageURL, po, err = parsePathAdvanced(parts[1:], headers)
+	}
+
+	if !isAllowedSource(imageURL) {
+		return ctx, newError(404, fmt.Sprintf("Invalid source"), msgInvalidSource)
 	}
 
 	if err != nil {
