@@ -923,7 +923,7 @@ func parsePath(ctx context.Context, r *http.Request) (context.Context, error) {
 	}
 	parts := strings.Split(strings.TrimPrefix(path, "/"), "/")
 
-	if len(parts) < 3 {
+	if len(parts) < 2 {
 		return ctx, newError(404, fmt.Sprintf("Invalid path: %s", path), msgInvalidURL)
 	}
 
