@@ -9,7 +9,8 @@
 - Setting `IMGPROXY_REPORT_DOWNLOADING_ERRORS` to `false` disables reporting of downloading errors;
 - SVG passthrough. When source image and requested format are SVG, image will be returned without changes;
 - Log only modified processing options;
-- Fixed sharpening+watermarking
+- Fixed sharpening+watermarking;
+- Fixed path parsing when no options is provided and image URL is Base64 encoded.
 
 ## v2.5.0
 
