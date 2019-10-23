@@ -5,12 +5,19 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"strings"
 	"sync"
 )
 
 var bufPool = sync.Pool{
 	New: func() interface{} {
 		return new(bytes.Buffer)
+	},
+}
+
+var builderPool = sync.Pool{
+	New: func() interface{} {
+		return new(strings.Builder)
 	},
 }
 
@@ -22,7 +29,7 @@ type Entry struct {
 type Entries []Entry
 
 func (d Entries) String() string {
-	buf := bufPool.Get().(*bytes.Buffer)
+	buf := builderPool.Get().(*strings.Builder)
 	last := len(d) - 1
 
 	buf.Reset()
