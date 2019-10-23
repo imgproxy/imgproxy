@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+
+## [2.6.0] - 2019-10-23
 ### Added
 - TIFF and BMP support.
 - `IMGPROXY_REPORT_DOWNLOADING_ERRORS` config. Setting it to `false` disables reporting of downloading errors.
@@ -8,11 +10,11 @@
 - `IMGPROXY_USE_GCS` config. When it set to true and `IMGPROXY_GCS_KEY` is not set, imgproxy tries to use Application Default Credentials to get access to GCS bucket.
 
 ### Changed
-- Reimplemented and more errors-tolerant image size parsing;
-- Log only modified processing options;
+- Reimplemented and more errors-tolerant image size parsing.
+- Log only modified processing options.
 
 ### Fixed
-- Fixed sharpening+watermarking;
+- Fixed sharpening+watermarking.
 - Fixed path parsing when no options is provided and image URL is Base64 encoded.
 
 ### Deprecated
