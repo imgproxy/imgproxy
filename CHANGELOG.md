@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [2.6.1] - 2019-10-28
+### Fixed
+- Fix loadding of some GIFs by using edge version of giflib.
+
 ## [2.6.0] - 2019-10-23
 ### Added
 - TIFF and BMP support.
