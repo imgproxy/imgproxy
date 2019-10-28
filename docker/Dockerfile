@@ -21,12 +21,13 @@ RUN apk --no-cache upgrade \
     libjpeg-turbo-dev \
     libpng-dev \
     libwebp-dev \
-    giflib-dev \
     librsvg-dev \
     libexif-dev \
     lcms2-dev \
     libheif-dev \
     tiff-dev \
+  && apk add --no-cache --repository http://dl-cdn.alpinelinux.org/alpine/edge/main \
+    giflib-dev \
   && apk add --no-cache --repository http://dl-cdn.alpinelinux.org/alpine/edge/testing \
     libimagequant-dev
 
@@ -105,13 +106,14 @@ RUN apk --no-cache upgrade \
     libjpeg-turbo \
     libpng \
     libwebp \
-    giflib \
     librsvg \
     libgsf \
     libexif \
     lcms2 \
     libheif \
     tiff \
+  && apk add --no-cache --repository http://dl-cdn.alpinelinux.org/alpine/edge/main \
+    giflib \
   && apk add --no-cache --repository http://dl-cdn.alpinelinux.org/alpine/edge/testing \
     libimagequant \
   && rm -rf /var/cache/apk*
