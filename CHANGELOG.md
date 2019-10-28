@@ -4,7 +4,7 @@
 
 ## [2.6.1] - 2019-10-28
 ### Fixed
-- Fix loadding of some GIFs by using edge version of giflib.
+- Fix loading of some GIFs by using the edge version of giflib.
 
 ## [2.6.0] - 2019-10-23
 ### Added
