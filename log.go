@@ -19,7 +19,15 @@ func initLog() {
 		logrus.SetFormatter(newLogPrettyFormatter())
 	}
 
-	logrus.SetLevel(logrus.DebugLevel)
+	logLevel := "info"
+	strEnvConfig(&logLevel, "IMGPROXY_LOG_LEVEL")
+
+	levelLogLevel, err := logrus.ParseLevel(logLevel)
+	if err != nil {
+		levelLogLevel = logrus.DebugLevel
+	}
+
+	logrus.SetLevel(levelLogLevel)
 
 	if isSyslogEnabled() {
 		slHook, err := newSyslogHook()
