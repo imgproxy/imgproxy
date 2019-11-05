@@ -81,6 +81,10 @@ func initDownloading() {
 		transport.RegisterProtocol("gs", newGCSTransport())
 	}
 
+	if conf.SwiftEnabled {
+		transport.RegisterProtocol("swift", newSwiftTransport())
+	}
+
 	downloadClient = &http.Client{
 		Timeout:   time.Duration(conf.DownloadTimeout) * time.Second,
 		Transport: transport,

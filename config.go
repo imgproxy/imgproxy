@@ -179,6 +179,12 @@ type config struct {
 	GCSEnabled          bool
 	GCSKey              string
 
+	SwiftEnabled  bool
+	SwiftUserName string
+	SwiftPassword string
+	SwiftAuthUrl  string
+	SwiftTenant   string
+
 	ETagEnabled bool
 
 	BaseURL string
@@ -313,6 +319,12 @@ func configure() {
 
 	boolEnvConfig(&conf.GCSEnabled, "IMGPROXY_USE_GCS")
 	strEnvConfig(&conf.GCSKey, "IMGPROXY_GCS_KEY")
+
+	boolEnvConfig(&conf.SwiftEnabled, "IMGPROXY_USE_SWIFT")
+	strEnvConfig(&conf.SwiftUserName, "IMGPROXY_SWIFT_USERNAME")
+	strEnvConfig(&conf.SwiftPassword, "IMGPROXY_SWIFT_PASSWORD")
+	strEnvConfig(&conf.SwiftAuthUrl, "IMGPROXY_SWIFT_AUTH_URL")
+	strEnvConfig(&conf.SwiftTenant, "IMGPROXY_SWIFT_TENANT")
 
 	boolEnvConfig(&conf.ETagEnabled, "IMGPROXY_USE_ETAG")
 
