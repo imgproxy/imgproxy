@@ -49,7 +49,7 @@ When imgproxy needs to cut some parts of the image, it is guided by the gravity.
 
 ### Enlarge
 
-When set to `0`, imgproxy will not enlarge the image if it is smaller than the given size. With any other value, imgproxy will enlarge the image.
+When set to `1`, `t` or `true`, imgproxy will enlarge the image if it is smaller than the given size.
 
 ### Source URL
 

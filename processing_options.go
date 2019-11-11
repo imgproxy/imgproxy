@@ -330,6 +330,16 @@ func parseDimension(d *int, name, arg string) error {
 	return nil
 }
 
+func parseBoolOption(str string) bool {
+	b, err := strconv.ParseBool(str)
+
+	if err != nil {
+		logWarning("`%s` is not a valid boolean value. Treated as false", str)
+	}
+
+	return b
+}
+
 func isGravityOffcetValid(gravity gravityType, offset float64) bool {
 	if gravity == gravityCenter {
 		return true
@@ -397,7 +407,7 @@ func applyEnlargeOption(po *processingOptions, args []string) error {
 		return fmt.Errorf("Invalid enlarge arguments: %v", args)
 	}
 
-	po.Enlarge = args[0] != "0"
+	po.Enlarge = parseBoolOption(args[0])
 
 	return nil
 }
@@ -407,7 +417,7 @@ func applyExtendOption(po *processingOptions, args []string) error {
 		return fmt.Errorf("Invalid extend arguments: %v", args)
 	}
 
-	po.Extend = args[0] != "0"
+	po.Extend = parseBoolOption(args[0])
 
 	return nil
 }

@@ -103,9 +103,9 @@ enlarge:%enlarge
 el:%enlarge
 ```
 
-If set to `0`, imgproxy will not enlarge the image if it is smaller than the given size. With any other value, imgproxy will enlarge the image.
+When set to `1`, `t` or `true`, imgproxy will enlarge the image if it is smaller than the given size.
 
-Default: `0`
+Default: false
 
 #### Extend
 
@@ -114,9 +114,9 @@ extend:%extend
 ex:%extend
 ```
 
-If set to `0`, imgproxy will not extend the image if the resizing result is smaller than the given size. With any other value, imgproxy will extend the image to the given size.
+When set to `1`, `t` or `true`, imgproxy will extend the image if it is smaller than the given size.
 
-Default: `0`
+Default: false
 
 #### Gravity
 
