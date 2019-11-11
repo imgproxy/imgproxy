@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+### Fixed
+- Fix `format` option in presets.
 
 ## [2.6.1] - 2019-10-28
 ### Fixed
