@@ -24,6 +24,11 @@ func initialize() {
 	initDownloading()
 	initErrorsReporting()
 	initVips()
+
+	if err := checkPresets(conf.Presets); err != nil {
+		shutdownVips()
+		logFatal(err.Error())
+	}
 }
 
 func main() {

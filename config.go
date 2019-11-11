@@ -458,10 +458,6 @@ func configure() {
 		conf.GCSEnabled = true
 	}
 
-	if err := checkPresets(conf.Presets); err != nil {
-		logFatal(err.Error())
-	}
-
 	if conf.WatermarkOpacity <= 0 {
 		logFatal("Watermark opacity should be greater than 0")
 	} else if conf.WatermarkOpacity > 1 {
