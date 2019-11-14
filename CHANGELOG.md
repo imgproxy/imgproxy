@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+
+## [2.7.0] - 2019-11-13
 ### Changed
 - Boolean processing options such as `enlarge` and `extend` are properly parsed. `1`, `t`, `TRUE`, `true`, `True` are truthy, `0`, `f`, `F`, `FALSE`, `false`, `False` are falsy. All other values are treated as falsy and generate a warning message.
 
