@@ -252,6 +252,10 @@ func applyWatermark(img *vipsImage, wmData *imageData, opts *watermarkOptions, f
 		return err
 	}
 
+	if err := img.CopyMemory(); err != nil {
+		return err
+	}
+
 	wm := new(vipsImage)
 	defer wm.Clear()
 
