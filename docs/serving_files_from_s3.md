@@ -53,5 +53,5 @@ You can learn about credentials in the [Configuring the AWS SDK for Go](https://
 
 To use Minio as source images provider, do the following:
 
-* Setup Amazon S3 support as usual using evironment variables or shared config file;
+* Setup Amazon S3 support as usual using environment variables or shared config file;
 * Specify endpoint with `IMGPROXY_S3_ENDPOINT`. Use `http://...` endpoint to disable SSL.
