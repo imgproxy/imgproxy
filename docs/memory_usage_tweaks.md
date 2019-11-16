@@ -22,13 +22,13 @@ Buffer pools in imgproxy do self-calibration time by time. imgproxy collects sta
 
 ### MALLOC_ARENA_MAX
 
-`libvips` uses GLib for memory management, and it brings GLib memory fragmentation issues to heavily multi-threaded programs. imgproxy is defenitely one of them. First thing you can try if you noticed constantly growing RSS usage without Go's sys memory growth is set `MALLOC_ARENA_MAX`:
+`libvips` uses GLib for memory management, and it brings GLib memory fragmentation issues to heavily multi-threaded programs. imgproxy is definitely one of them. First thing you can try if you noticed constantly growing RSS usage without Go's sys memory growth is set `MALLOC_ARENA_MAX`:
 
 ```
 MALLOC_ARENA_MAX=2 imgproxy
 ```
 
-This will reduce GLib memory appetites by reducing the number of malloc arenas that it can create. By default GLib creates one are per thread, and this would folow to a memory fragmentation.
+This will reduce GLib memory appetites by reducing the number of malloc arenas that it can create. By default GLib creates one are per thread, and this would follow to a memory fragmentation.
 
 
 ### Using jemalloc
