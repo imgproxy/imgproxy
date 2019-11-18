@@ -38,7 +38,7 @@ resize:%resizing_type:%width:%height:%enlarge:%extend
 rs:%resizing_type:%width:%height:%enlarge:%extend
 ```
 
-Meta-option that defines the [resizing type](#resizing-type), [width](#width), [height](#height), [enlarge](#enlarge), and [extend](#extend). All arguments are optional and can be omited to use their default values.
+Meta-option that defines the [resizing type](#resizing-type), [width](#width), [height](#height), [enlarge](#enlarge), and [extend](#extend). All arguments are optional and can be omitted to use their default values.
 
 #### Size
 
@@ -47,7 +47,7 @@ size:%width:%height:%enlarge:%extend
 s:%width:%height:%enlarge:%extend
 ```
 
-Meta-option that defines the [width](#width), [height](#height), [enlarge](#enlarge), and [extend](#extend). All arguments are optional and can be omited to use their default values.
+Meta-option that defines the [width](#width), [height](#height), [enlarge](#enlarge), and [extend](#extend). All arguments are optional and can be omitted to use their default values.
 
 #### Resizing type
 
@@ -192,7 +192,7 @@ adjust:%brightness:%contrast:%saturation
 a:%brightness:%contrast:%saturation
 ```
 
-Meta-option that defines the [brightness](#brightness), [contrast](#contrast), and [saturation](#saturation). All arguments are optional and can be omited to use their default values.
+Meta-option that defines the [brightness](#brightness), [contrast](#contrast), and [saturation](#saturation). All arguments are optional and can be omitted to use their default values.
 
 #### Brightness <img class="pro-badge" src="assets/pro.svg" alt="pro" />
 
@@ -371,7 +371,7 @@ The source URL can be provided as is, prendended by `/plain/` part:
 /plain/http://example.com/images/curiosity.jpg
 ```
 
-**Note:** If the sorce URL contains query string or `@`, you need to escape it.
+**Note:** If the source URL contains query string or `@`, you need to escape it.
 
 When using plain source URL, you can specify the [extension](#extension) after `@`:
 
