@@ -24,7 +24,7 @@ func initLog() {
 
 	levelLogLevel, err := logrus.ParseLevel(logLevel)
 	if err != nil {
-		levelLogLevel = logrus.DebugLevel
+		levelLogLevel = logrus.InfoLevel
 	}
 
 	logrus.SetLevel(levelLogLevel)

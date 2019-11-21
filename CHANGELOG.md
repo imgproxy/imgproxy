@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+### Added
+- `IMGPROXY_LOG_LEVEL` config.
 
 ## [2.7.0] - 2019-11-13
 ### Changed
