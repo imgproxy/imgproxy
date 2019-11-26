@@ -1,34 +1,30 @@
-FROM golang:1-alpine3.10
+FROM golang:1-buster
 LABEL maintainer="Sergey Alexandrovich <darthsim@gmail.com>"
 
-ENV GOPATH /go
-ENV PATH /usr/local/go/bin:$PATH
+ENV PKG_CONFIG_PATH /usr/local/lib/pkgconfig
+ENV LD_LIBRARY_PATH /lib64:/usr/lib64:/usr/local/lib
+ENV CGO_LDFLAGS_ALLOW "-s|-w"
 
 # Install dependencies
-RUN apk --no-cache upgrade \
-  && apk add --no-cache \
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends \
     curl \
     git \
     ca-certificates \
-    gcc \
-    g++ \
-    make \
-    musl-dev \
-    fftw-dev \
-    glib-dev \
+    build-essential \
     libtool \
-    expat-dev \
-    libjpeg-turbo-dev \
+    libfftw3-dev \
+    libglib2.0-dev \
+    libexpat1-dev \
+    libjpeg62-turbo-dev \
     libpng-dev \
     libwebp-dev \
-    librsvg-dev \
+    libgif-dev \
+    librsvg2-dev \
     libexif-dev \
-    lcms2-dev \
+    liblcms2-dev \
     libheif-dev \
-    tiff-dev \
-  && apk add --no-cache --repository http://dl-cdn.alpinelinux.org/alpine/edge/main \
-    giflib-dev \
-  && apk add --no-cache --repository http://dl-cdn.alpinelinux.org/alpine/edge/testing \
+    libtiff-dev \
     libimagequant-dev
 
 # Build ImageMagick
@@ -61,7 +57,8 @@ RUN cd /root \
     --without-webp \
     --without-heic \
     --without-pango \
-  && make install-strip
+  && make install-strip \
+  && rm -rf /usr/local/lib/libMagickWand-7.*
 
 # Build libvips
 RUN cd /root \
@@ -74,55 +71,51 @@ RUN cd /root \
     --without-OpenEXR \
     --enable-debug=no \
     --disable-static \
+    --disable-introspection \
     --enable-silent-rules \
-  && make install-strip
+  && make install-strip \
+  && rm -rf /usr/local/lib/libvips-cpp.*
 
-ADD . /app
 WORKDIR /app
+COPY . .
 
 # Build imgproxy
-RUN cd /app \
-  && CGO_LDFLAGS_ALLOW="-s|-w" go build -v -o /usr/local/bin/imgproxy
-
-# Copy compiled libs here to copy them to the final image
-RUN cd /root \
-  && mkdir libs \
-  && ldd /usr/local/bin/imgproxy | grep /usr/local/lib/ | awk '{print $3}' | xargs -I '{}' cp '{}' libs/
+RUN go build -v -o /usr/local/bin/imgproxy
 
 # ==================================================================================================
 # Final image
 
-FROM alpine:3.10
+FROM debian:buster-slim
 LABEL maintainer="Sergey Alexandrovich <darthsim@gmail.com>"
 
-RUN apk --no-cache upgrade \
-  && apk add --no-cache \
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends \
     bash \
     ca-certificates \
-    fftw \
-    glib \
-    libltdl \
-    expat \
-    libjpeg-turbo \
-    libpng \
-    libwebp \
-    librsvg \
-    libgsf \
-    libexif \
-    lcms2 \
-    libheif \
-    tiff \
-  && apk add --no-cache --repository http://dl-cdn.alpinelinux.org/alpine/edge/main \
-    giflib \
-  && apk add --no-cache --repository http://dl-cdn.alpinelinux.org/alpine/edge/testing \
-    libimagequant \
-  && rm -rf /var/cache/apk*
+    libsm6 \
+    libfftw3-3 \
+    libglib2.0-0 \
+    libexpat1 \
+    libjpeg62-turbo \
+    libpng16-16 \
+    libwebp6 \
+    libwebpmux3 \
+    libwebpdemux2 \
+    libgif7 \
+    librsvg2-2 \
+    libexif12 \
+    liblcms2-2 \
+    libheif1 \
+    libtiff5 \
+    libimagequant0 \
+  && rm -rf /var/lib/apt/lists/*
 
 COPY --from=0 /usr/local/bin/imgproxy /usr/local/bin/
-COPY --from=0 /root/libs/* /usr/local/lib/
+COPY --from=0 /usr/local/lib /usr/local/lib
 
 ENV VIPS_WARNING=0
 ENV MALLOC_ARENA_MAX=4
+ENV LD_LIBRARY_PATH /lib64:/usr/lib64:/usr/local/lib
 
 CMD ["imgproxy"]
 
