@@ -133,6 +133,15 @@ func canScaleOnLoad(imgtype imageType, scale float64) bool {
 	return imgtype == imageTypeJPEG || imgtype == imageTypeWEBP
 }
 
+func canFitToBytes(imgtype imageType) bool {
+	switch imgtype {
+	case imageTypeJPEG, imageTypeWEBP, imageTypeHEIC, imageTypeTIFF:
+		return true
+	default:
+		return false
+	}
+}
+
 func calcJpegShink(scale float64, imgtype imageType) int {
 	shrink := int(1.0 / scale)
 
@@ -683,4 +692,59 @@ func processImage(ctx context.Context) ([]byte, context.CancelFunc, error) {
 	}
 
 	return img.Save(po.Format, po.Quality)
+}
+
+func processImageMaxBytes(ctx context.Context) ([]byte, context.CancelFunc, error) {
+	initialResult, initialCancel, err := processImage(ctx)
+	if err != nil {
+		return initialResult, initialCancel, err
+	}
+
+	po := getProcessingOptions(ctx)
+	if canFitToBytes(po.Format) || len(initialResult) < po.MaxBytes {
+		return initialResult, initialCancel, nil
+	}
+
+	checkTimeout(ctx)
+
+	initialQuality := po.Quality
+
+	quality := initialQuality
+	result := initialResult
+	var cancel context.CancelFunc
+	var cancels []context.CancelFunc
+	cancelFunc := func() {
+		for _, cancel := range cancels {
+			cancel()
+		}
+	}
+
+	for len(result) > po.MaxBytes {
+		var diff float64
+		delta := float64(len(result)) / float64(po.MaxBytes)
+		switch {
+		case delta > 3:
+			diff = 0.25
+		case delta > 1.5:
+			diff = 0.5
+		default:
+			diff = 0.75
+		}
+		quality = int(float64(quality) * diff)
+
+		if quality < 10 {
+			return initialResult, initialCancel, nil
+		}
+
+		checkTimeout(ctx)
+
+		po.Quality = quality
+		result, cancel, err = processImage(ctx)
+		cancels = append(cancels, cancel)
+		if err != nil {
+			return result, cancelFunc, err
+		}
+	}
+
+	return result, cancelFunc, nil
 }

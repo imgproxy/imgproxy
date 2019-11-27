@@ -148,7 +148,14 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 
 	checkTimeout(ctx)
 
-	imageData, processcancel, err := processImage(ctx)
+	po := getProcessingOptions(ctx)
+	var imageData []byte
+	var processcancel context.CancelFunc
+	if po.MaxBytes > 0 {
+		imageData, processcancel, err = processImageMaxBytes(ctx)
+	} else {
+		imageData, processcancel, err = processImage(ctx)
+	}
 	defer processcancel()
 	if err != nil {
 		if newRelicEnabled {
