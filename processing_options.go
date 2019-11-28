@@ -549,7 +549,7 @@ func applyMaxBytesOption(po *processingOptions, args []string) error {
 		return fmt.Errorf("Invalid max_bytes arguments: %v", args)
 	}
 
-	if max, err := strconv.Atoi(args[0]); err == nil && max > 0 {
+	if max, err := strconv.Atoi(args[0]); err == nil && max >= 0 {
 		po.MaxBytes = max
 	} else {
 		return fmt.Errorf("Invalid max_bytes: %s", args[0])
