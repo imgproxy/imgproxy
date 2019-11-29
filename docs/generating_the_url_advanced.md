@@ -169,6 +169,19 @@ Redefines quality of the resulting image, percentage.
 
 Default: value from the environment variable.
 
+#### Max Bytes
+
+```
+max_bytes:%max_bytes
+mb:%max_bytes
+```
+
+This filter automatically degrades the quality of the image until the image is under the specified amount of bytes.
+
+*Warning: this filter processes image multiple times to achieve specified image size*
+
+Default: 0
+
 #### Background
 
 ```
