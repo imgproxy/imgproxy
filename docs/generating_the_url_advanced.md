@@ -172,13 +172,14 @@ Default: value from the environment variable.
 #### Max Bytes
 
 ```
-max_bytes:%max_bytes
-mb:%max_bytes
+max_bytes:%bytes
+mb:%bytes
 ```
 
-This filter automatically degrades the quality of the image until the image is under the specified amount of bytes.
+When set, imgproxy automatically degrades the quality of the image until the image is under the specified amount of bytes.
 
-*Warning: this filter processes image multiple times to achieve specified image size*
+**Note:** Applicable only to `jpg`, `webp`, `heic`, and `tiff`.
+**Warning**: When `max_bytes` is set, imgproxy saves image multiple times to achieve specified image size.
 
 Default: 0
 

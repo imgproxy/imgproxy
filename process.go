@@ -586,6 +586,32 @@ func getIcoData(imgdata *imageData) (*imageData, error) {
 	return nil, fmt.Errorf("Can't load %s from ICO", meta.Format)
 }
 
+func saveImageToFitBytes(po *processingOptions, img *vipsImage) ([]byte, context.CancelFunc, error) {
+	var diff float64
+	quality := po.Quality
+
+	img.CopyMemory()
+
+	for {
+		result, cancel, err := img.Save(po.Format, quality)
+		if len(result) <= po.MaxBytes || quality <= 10 || err != nil {
+			return result, cancel, err
+		}
+		cancel()
+
+		delta := float64(len(result)) / float64(po.MaxBytes)
+		switch {
+		case delta > 3:
+			diff = 0.25
+		case delta > 1.5:
+			diff = 0.5
+		default:
+			diff = 0.75
+		}
+		quality = int(float64(quality) * diff)
+	}
+}
+
 func processImage(ctx context.Context) ([]byte, context.CancelFunc, error) {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
@@ -692,34 +718,8 @@ func processImage(ctx context.Context) ([]byte, context.CancelFunc, error) {
 	}
 
 	if po.MaxBytes > 0 && canFitToBytes(po.Format) {
-		return processToFitBytes(po, img)
+		return saveImageToFitBytes(po, img)
 	}
 
 	return img.Save(po.Format, po.Quality)
-}
-
-func processToFitBytes(po *processingOptions, img *vipsImage) ([]byte, context.CancelFunc, error) {
-	var diff float64
-	quality := po.Quality
-
-	img.CopyMemory()
-
-	for {
-		result, cancel, err := img.Save(po.Format, quality)
-		if len(result) <= po.MaxBytes || quality <= 10 || err != nil {
-			return result, cancel, err
-		}
-		cancel()
-
-		delta := float64(len(result)) / float64(po.MaxBytes)
-		switch {
-		case delta > 3:
-			diff = 0.25
-		case delta > 1.5:
-			diff = 0.5
-		default:
-			diff = 0.75
-		}
-		quality = int(float64(quality) * diff)
-	}
 }
