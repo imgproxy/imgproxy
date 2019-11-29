@@ -692,29 +692,25 @@ func processImage(ctx context.Context) ([]byte, context.CancelFunc, error) {
 	}
 
 	if po.MaxBytes > 0 && canFitToBytes(po.Format) {
-		return processToFitBytes(ctx, img)
+		return processToFitBytes(po, img)
 	}
 
 	return img.Save(po.Format, po.Quality)
 }
 
-func processToFitBytes(ctx context.Context, img *vipsImage) ([]byte, context.CancelFunc, error) {
-	po := getProcessingOptions(ctx)
-
-	img.CopyMemory()
-	result, cancel, err := img.Save(po.Format, po.Quality)
-	if err != nil || len(result) < po.MaxBytes {
-		return result, cancel, err
-	}
-
-	initialResult := make([]byte, len(result))
-	copy(initialResult, result)
+func processToFitBytes(po *processingOptions, img *vipsImage) ([]byte, context.CancelFunc, error) {
+	var diff float64
 	quality := po.Quality
 
-	for len(result) > po.MaxBytes {
+	img.CopyMemory()
+
+	for {
+		result, cancel, err := img.Save(po.Format, quality)
+		if len(result) <= po.MaxBytes || quality <= 10 || err != nil {
+			return result, cancel, err
+		}
 		cancel()
 
-		var diff float64
 		delta := float64(len(result)) / float64(po.MaxBytes)
 		switch {
 		case delta > 3:
@@ -725,18 +721,5 @@ func processToFitBytes(ctx context.Context, img *vipsImage) ([]byte, context.Can
 			diff = 0.75
 		}
 		quality = int(float64(quality) * diff)
-		if quality < 10 {
-			return initialResult, func() {}, nil
-		}
-
-		checkTimeout(ctx)
-
-		img.CopyMemory()
-		result, cancel, err = img.Save(po.Format, quality)
-		if err != nil {
-			return result, cancel, err
-		}
 	}
-
-	return result, cancel, err
 }
