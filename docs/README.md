@@ -45,11 +45,15 @@ Massive processing of remote images is a potentially dangerous thing, security-w
 
 ## Author
 
-Sergey "DarthSim" Alexandrovich
+Sergey "[DarthSim](https://github.com/DarthSim)" Alexandrovich
 
-Many thanks to [Roman Shamin](https://github.com/romashamin) for the awesome logo.
+## Special thanks
 
-Great bunch of kudos goes to [John Cupitt](https://github.com/jcupitt) who develops [libvips](https://github.com/libvips/libvips) and helps me to optimize its usage under the hood of imgproxy.
+Many thanks to:
+
+* [Roman Shamin](https://github.com/romashamin) for the awesome logo.
+* [Alena Kirdina](https://github.com/egodyston) and [Alexander Madyankin](https://github.com/outpunk) for the great website.
+* [John Cupitt](https://github.com/jcupitt) who develops [libvips](https://github.com/libvips/libvips) and helps me to optimize its usage under the hood of imgproxy.
 
 ## License
 
