@@ -39,6 +39,13 @@ git push heroku master
 
 [imgproxy](https://aur.archlinux.org/packages/imgproxy/) package is available from AUR.
 
+### macOS + Homebrew
+
+[imgproxy](https://formulae.brew.sh/formula/imgproxy) is available from Homebrew:
+```bash
+brew install imgproxy
+```
+
 ## From the source
 
 ### Ubuntu
