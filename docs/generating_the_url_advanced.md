@@ -64,6 +64,17 @@ Defines how imgproxy will resize the source image. Supported resizing types are:
 
 Default: `fit`
 
+#### Resizing algorithm <img class="pro-badge" src="assets/pro.svg" alt="pro" />
+
+```
+resizing_algorithm:%algorithm
+ra:%algorithm
+```
+
+Defines the algorithm that imgproxy will use for resizing. Supported algorithms are `nearest`, `linear`, `cubic`, `lanczos2`, and `lanczos3`.
+
+Default: `lanczos3`
+
 #### Width
 
 ```
