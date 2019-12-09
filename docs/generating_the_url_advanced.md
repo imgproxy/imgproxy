@@ -324,6 +324,24 @@ When set, imgproxy will prepend `<style>` node with provided content to the `<sv
 
 Default: blank
 
+#### JPEG options <img class="pro-badge" src="assets/pro.svg" alt="pro" />
+
+```
+jpeg_options:%progressive:%no_subsample:%trellis_quant:%overshoot_deringing:%optimize_scans:%quant_table
+jpgo:%progressive:%no_subsample:%trellis_quant:%overshoot_deringing:%optimize_scans:%quant_table
+```
+
+Allows redefining JPEG saving options. All arguments have the same meaning as [Advanced JPEG compression](configuration.md#advanced-jpeg-compression) configs. All arguments are optional and can be omitted.
+
+#### PNG options <img class="pro-badge" src="assets/pro.svg" alt="pro" />
+
+```
+png_options:%png_interlaced:%png_quantize:%png_quantization_colors
+pngo:%png_interlaced:%png_quantize:%png_quantization_colors
+```
+
+Allows redefining PNG saving options. All arguments have the same meaning as [Advanced PNG compression](configuration.md#advanced-png-compression) configs. All arguments are optional and can be omitted.
+
 #### Preset
 
 ```
