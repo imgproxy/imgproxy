@@ -23,6 +23,11 @@
   <meta property="og:site_name" content="imgproxy documentation" />
   <meta name="keywords" content="image, resize-images, crop-image, microservice, docker, jpeg, png, libvips" />
   <meta name="theme-color" content="#000000" />
+  <link rel="icon" type="image/png" href="/assets/favicon-196x196.png" sizes="196x196">
+  <link rel="icon" type="image/png" href="/assets/favicon-128x128.png" sizes="128x128">
+  <link rel="icon" type="image/png" href="/assets/favicon-96x96.png" sizes="96x96">
+  <link rel="icon" type="image/png" href="/assets/favicon-32x32.png" sizes="32x32">
+  <link rel="icon" type="image/png" href="/assets/favicon-16x16.png" sizes="16x16">
   <link rel="stylesheet" href="assets/theme.css">
   <link rel="stylesheet" href="assets/style.css">
 </head>
@@ -37,6 +42,7 @@
     </div>
   </div>
   <script src="assets/docsify-edit-link.js"></script>
+  <script src="assets/docsify-gitter.js"></script>
   <script>
     window.$docsify = {
       name: '<img style="width:90%" title="imgproxy logo" src="/assets/logo.svg" >',
@@ -49,7 +55,8 @@
         depth: 6
       },
       plugins: [
-        EditOnGithubPlugin.create('https://github.com/imgproxy/imgproxy/blob/master/docs/')
+        EditOnGithubPlugin.create('https://github.com/imgproxy/imgproxy/blob/master/docs/'),
+        GitterPlugin.create("imgproxy/imgproxy", "1775d3")
       ]
     }
   </script>

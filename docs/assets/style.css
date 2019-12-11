@@ -109,3 +109,8 @@
 .github-corner {
   position: fixed;
 }
+
+.gitter img {
+  display: block;
+  margin: 5px auto 0;
+}
