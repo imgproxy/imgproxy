@@ -26,6 +26,10 @@
   --copycode-background: var(--link-color);
 }
 
+.app-name-link img {
+  width: 90%
+}
+
 .content {
   background: linear-gradient(
     180deg,
