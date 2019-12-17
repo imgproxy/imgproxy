@@ -30,13 +30,16 @@
   width: 90%
 }
 
-.content {
+body::before {
+  content: "";
+  position: fixed;
+  width: 100%;
+  height: 500px;
   background: linear-gradient(
     180deg,
     var(--base-background-color-trans),
     var(--base-background-color) 500px
   ), url('/assets/pattern.svg');
-  background-attachment: fixed;
 }
 
 @media (min-width: 1200px) {
