@@ -26,7 +26,7 @@ require (
 	golang.org/x/net v0.0.0-20190827160401-ba9fcec4b297
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58
 	golang.org/x/sys v0.0.0-20190813064441-fde4db37ae7a
-	google.golang.org/api v0.14.0
+	google.golang.org/api v0.15.0
 )
 
 replace git.apache.org/thrift.git => github.com/apache/thrift v0.0.0-20180902110319-2566ecd5d999
