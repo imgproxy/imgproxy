@@ -66,6 +66,8 @@ const (
 	resizeFill
 	resizeCrop
 	resizeAuto
+	resizeAutoCrop
+	resizeAutoFit
 )
 
 var resizeTypes = map[string]resizeType{
@@ -73,6 +75,8 @@ var resizeTypes = map[string]resizeType{
 	"fill": resizeFill,
 	"crop": resizeCrop,
 	"auto": resizeAuto,
+	"autocrop": resizeAutoCrop,
+	"autofit": resizeAutoFit,
 }
 
 type rgbColor struct{ R, G, B uint8 }

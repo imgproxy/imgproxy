@@ -291,6 +291,7 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 
 	srcWidth, srcHeight, angle, flip := extractMeta(img)
 	cropWidth, cropHeight := po.Crop.Width, po.Crop.Height
+	logDebug("TRANSFORM: start src(%d, %d, %d, %d) croptarget(%d, %d)", srcWidth, srcHeight, angle, flip, cropWidth, cropHeight)
 
 	cropGravity := po.Crop.Gravity
 	if cropGravity.Type == gravityUnknown {
@@ -300,12 +301,58 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 	widthToScale := minNonZeroInt(cropWidth, srcWidth)
 	heightToScale := minNonZeroInt(cropHeight, srcHeight)
 
-	scale := calcScale(widthToScale, heightToScale, po, imgtype)
+	if ((cropHeight == 0 || cropWidth == 0) && po.ResizingType == resizeAutoCrop) {
+		/* only one target-size => fit it and if enlarge with background-filling if necessary */
+		po.ResizingType = resizeAutoFit
+	}
 
-	cropWidth = scaleInt(cropWidth, scale)
-	cropHeight = scaleInt(cropHeight, scale)
-	cropGravity.X *= scale
-	cropGravity.Y *= scale
+	srcRatio := float64(srcWidth) / float64(srcHeight)
+	cropRatio := float64(1)
+	if (cropHeight > 0 && cropWidth > 0) {
+		cropRatio = float64(cropWidth) / float64(cropHeight)
+	}
+
+	scale := float64(1)
+	logDebug("TRANSFORM: (type=%s) before ratio srcRatio %f / cropRatio %f howscale(1/%d/%d)", po.ResizingType, srcRatio, cropRatio, widthToScale, heightToScale)
+	if (po.ResizingType == resizeAutoCrop) {
+		if (srcRatio > cropRatio) {
+			/* target cropHeight shall fit, target srcWidth will be greater than srcWidth */
+			scale = float64(cropHeight) / float64(srcHeight)
+			heightToScale = cropHeight
+		} else {
+			/* target cropWidth shall fit */
+			scale = float64(cropWidth) / float64(srcWidth)
+			widthToScale = cropWidth
+		}
+
+		logDebug("TRANSFORM: (type=%s) step-1 ratio srcRatio %f / cropRatio %f / scale %f", po.ResizingType, srcRatio, cropRatio, scale)
+	} else if (po.ResizingType == resizeAutoFit) {
+		if (cropWidth == 0 && cropHeight > 0) {
+			scale = float64(cropHeight) / float64(srcHeight)
+		} else if (cropHeight == 0 && cropWidth > 0) {
+			scale = float64(cropWidth) / float64(srcWidth)
+		} else {
+			scale = 1
+			if (srcRatio > cropRatio && cropWidth > 0) {
+				/* target cropWidth shall fit, target cropHeigth will be lesser than srcHeight */
+				scale = float64(cropWidth) / float64(srcWidth)
+				widthToScale = cropWidth
+			} else if (cropHeight > 0) {
+				/* target cropHeight shall fit */
+				scale = float64(cropHeight) / float64(srcHeight)
+				heightToScale = cropHeight
+			}
+		}
+
+		logDebug("TRANSFORM: (type=%s) step-1 ratio srcRatio %f / cropRatio %f / scale %f", po.ResizingType, srcRatio, cropRatio, scale)
+	} else {
+		scale = calcScale(widthToScale, heightToScale, po, imgtype)
+
+		cropWidth = scaleInt(cropWidth, scale)
+		cropHeight = scaleInt(cropHeight, scale)
+		cropGravity.X *= scale
+		cropGravity.Y *= scale
+	}
 
 	if scale != 1 && data != nil && canScaleOnLoad(imgtype, scale) {
 		if imgtype == imageTypeWEBP || imgtype == imageTypeSVG {
@@ -325,11 +372,19 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 		// Update scale after scale-on-load
 		newWidth, newHeight, _, _ := extractMeta(img)
 
-		widthToScale = scaleInt(widthToScale, float64(newWidth)/float64(srcWidth))
-		heightToScale = scaleInt(heightToScale, float64(newHeight)/float64(srcHeight))
+		if (po.ResizingType == resizeAutoCrop || po.ResizingType == resizeAutoFit) {
+			if newWidth != srcWidth {
+				scale = scale * (float64(srcWidth) / float64(newWidth))
+			}
+		} else {
+			widthToScale = scaleInt(widthToScale, float64(newWidth)/float64(srcWidth))
+			heightToScale = scaleInt(heightToScale, float64(newHeight)/float64(srcHeight))
 
-		scale = calcScale(widthToScale, heightToScale, po, imgtype)
+			scale = calcScale(widthToScale, heightToScale, po, imgtype)
+		}
+		logDebug("TRANSFORM: pre-load new(%d, %d, __, __) croptarget(%d, %d) scale %f", newWidth, newHeight, cropWidth, cropHeight, scale)
 	}
+	logDebug("TRANSFORM: step-3 (type=%s) ratio srcRatio %f / cropRatio %f / scale %f", po.ResizingType, srcRatio, cropRatio, scale)
 
 	if err = img.Rad2Float(); err != nil {
 		return err
@@ -440,6 +495,9 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 		}
 	}
 
+	if (po.ResizingType == resizeAutoCrop || po.ResizingType == resizeAutoFit) {
+		po.Width, po.Height = po.Crop.Width, po.Crop.Height
+	}
 	if po.Extend && (po.Width > img.Width() || po.Height > img.Height()) {
 		if err = img.Embed(gravityCenter, po.Width, po.Height, 0, 0, po.Background); err != nil {
 			return err
@@ -677,10 +735,10 @@ func processImage(ctx context.Context) ([]byte, context.CancelFunc, error) {
 
 	if po.ResizingType == resizeCrop {
 		logWarning("`crop` resizing type is deprecated and will be removed in future versions. Use `crop` processing option instead")
-
-		po.Crop.Width, po.Crop.Height = po.Width, po.Height
-
 		po.ResizingType = resizeFit
+	}
+	if po.ResizingType == resizeCrop || po.ResizingType == resizeAutoCrop || po.ResizingType == resizeAutoFit {
+		po.Crop.Width, po.Crop.Height = po.Width, po.Height
 		po.Width, po.Height = 0, 0
 	}
 
