@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
-	neturl "net/url"
 	"time"
 
 	imagesize "github.com/imgproxy/imgproxy/image_size"
@@ -173,11 +172,6 @@ func requestImage(imageURL string) (*http.Response, error) {
 
 func downloadImage(ctx context.Context) (context.Context, context.CancelFunc, error) {
 	imageURL := getImageURL(ctx)
-
-	_, err := neturl.Parse(imageURL)
-	if err != nil {
-		return ctx, func() {}, newError(404, err.Error(), msgSourceImageIsUnreachable)
-	}
 
 	if newRelicEnabled {
 		newRelicCancel := startNewRelicSegment(ctx, "Downloading image")
