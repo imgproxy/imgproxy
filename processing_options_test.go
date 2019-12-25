@@ -106,6 +106,24 @@ func (s *ProcessingOptionsTestSuite) TestParsePlainURLEscapedWithBase() {
 	assert.Equal(s.T(), imageTypePNG, getProcessingOptions(ctx).Format)
 }
 
+func (s *ProcessingOptionsTestSuite) TestParseURLAllowedSource() {
+	conf.AllowedSources = []string{"local://", "http://images.dev/"}
+
+	req := s.getRequest("http://example.com/unsafe/plain/http://images.dev/lorem/ipsum.jpg")
+	_, err := parsePath(context.Background(), req)
+
+	require.Nil(s.T(), err)
+}
+
+func (s *ProcessingOptionsTestSuite) TestParseURLNotAllowedSource() {
+	conf.AllowedSources = []string{"local://", "http://images.dev/"}
+
+	req := s.getRequest("http://example.com/unsafe/plain/s3://images/lorem/ipsum.jpg")
+	_, err := parsePath(context.Background(), req)
+
+	require.Error(s.T(), err)
+}
+
 func (s *ProcessingOptionsTestSuite) TestParsePathBasic() {
 	req := s.getRequest("http://example.com/unsafe/fill/100/200/noea/1/plain/http://images.dev/lorem/ipsum.jpg@png")
 	ctx, err := parsePath(context.Background(), req)

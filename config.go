@@ -36,6 +36,20 @@ func strEnvConfig(s *string, name string) {
 	}
 }
 
+func strSliceEnvConfig(s *[]string, name string) {
+	if env := os.Getenv(name); len(env) > 0 {
+		parts := strings.Split(env, ",")
+
+		for i, p := range parts {
+			parts[i] = strings.TrimSpace(p)
+		}
+
+		*s = parts
+	}
+
+	*s = []string{}
+}
+
 func boolEnvConfig(b *bool, name string) {
 	if env, err := strconv.ParseBool(os.Getenv(name)); err == nil {
 		*b = env
@@ -126,16 +140,6 @@ func presetFileConfig(p presets, filepath string) {
 	if err := scanner.Err(); err != nil {
 		logFatal("Failed to read presets file: %s", err)
 	}
-}
-
-func sourceEnvConfig(allowedsources *[]string, name string) {
-	sources := []string{}
-	if env := os.Getenv(name); len(env) > 0 {
-		for _, source := range strings.Split(env, ",") {
-			sources = append(sources, fmt.Sprintf("%s://", strings.TrimSpace(source)))
-		}
-	}
-	*allowedsources = sources
 }
 
 type config struct {
@@ -286,7 +290,7 @@ func configure() {
 	}
 	intEnvConfig(&conf.MaxAnimationFrames, "IMGPROXY_MAX_ANIMATION_FRAMES")
 
-	sourceEnvConfig(&conf.AllowedSources, "IMGPROXY_ALLOWED_SOURCES")
+	strSliceEnvConfig(&conf.AllowedSources, "IMGPROXY_ALLOWED_SOURCES")
 
 	boolEnvConfig(&conf.JpegProgressive, "IMGPROXY_JPEG_PROGRESSIVE")
 	boolEnvConfig(&conf.PngInterlaced, "IMGPROXY_PNG_INTERLACED")
