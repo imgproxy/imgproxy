@@ -1,4 +1,4 @@
-package imagesize
+package imagemeta
 
 import (
 	"bufio"
@@ -32,7 +32,7 @@ type JpegFormatError string
 
 func (e JpegFormatError) Error() string { return "invalid JPEG format: " + string(e) }
 
-func DecodeJpegMeta(rr io.Reader) (*Meta, error) {
+func DecodeJpegMeta(rr io.Reader) (Meta, error) {
 	var tmp [512]byte
 
 	r := asJpegReader(rr)
@@ -100,10 +100,10 @@ func DecodeJpegMeta(rr io.Reader) (*Meta, error) {
 				return nil, JpegFormatError("unsupported precision")
 			}
 
-			return &Meta{
-				Format: "jpeg",
-				Width:  int(tmp[3])<<8 + int(tmp[4]),
-				Height: int(tmp[1])<<8 + int(tmp[2]),
+			return &meta{
+				format: "jpeg",
+				width:  int(tmp[3])<<8 + int(tmp[4]),
+				height: int(tmp[1])<<8 + int(tmp[2]),
 			}, nil
 		}
 

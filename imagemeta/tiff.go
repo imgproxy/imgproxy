@@ -1,4 +1,4 @@
-package imagesize
+package imagemeta
 
 import (
 	"bufio"
@@ -37,7 +37,7 @@ type TiffFormatError string
 
 func (e TiffFormatError) Error() string { return "invalid TIFF format: " + string(e) }
 
-func DecodeTiffMeta(rr io.Reader) (*Meta, error) {
+func DecodeTiffMeta(rr io.Reader) (Meta, error) {
 	var (
 		tmp       [12]byte
 		byteOrder binary.ByteOrder
@@ -104,10 +104,10 @@ func DecodeTiffMeta(rr io.Reader) (*Meta, error) {
 		}
 
 		if width > 0 && height > 0 {
-			return &Meta{
-				Format: "tiff",
-				Width:  width,
-				Height: height,
+			return &meta{
+				format: "tiff",
+				width:  width,
+				height: height,
 			}, nil
 		}
 	}

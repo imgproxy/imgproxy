@@ -1,4 +1,4 @@
-package imagesize
+package imagemeta
 
 import (
 	"bytes"
@@ -12,7 +12,7 @@ type PngFormatError string
 
 func (e PngFormatError) Error() string { return "invalid PNG format: " + string(e) }
 
-func DecodePngMeta(r io.Reader) (*Meta, error) {
+func DecodePngMeta(r io.Reader) (Meta, error) {
 	var tmp [16]byte
 
 	if _, err := io.ReadFull(r, tmp[:8]); err != nil {
@@ -27,10 +27,10 @@ func DecodePngMeta(r io.Reader) (*Meta, error) {
 		return nil, err
 	}
 
-	return &Meta{
-		Format: "png",
-		Width:  int(binary.BigEndian.Uint32(tmp[8:12])),
-		Height: int(binary.BigEndian.Uint32(tmp[12:16])),
+	return &meta{
+		format: "png",
+		width:  int(binary.BigEndian.Uint32(tmp[8:12])),
+		height: int(binary.BigEndian.Uint32(tmp[12:16])),
 	}, nil
 }
 

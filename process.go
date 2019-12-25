@@ -7,7 +7,7 @@ import (
 	"math"
 	"runtime"
 
-	imagesize "github.com/imgproxy/imgproxy/image_size"
+	"github.com/imgproxy/imgproxy/imagemeta"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -564,26 +564,29 @@ func transformAnimated(ctx context.Context, img *vipsImage, data []byte, po *pro
 }
 
 func getIcoData(imgdata *imageData) (*imageData, error) {
-	offset, size, err := imagesize.BestIcoPage(bytes.NewBuffer(imgdata.Data))
+	icoMeta, err := imagemeta.DecodeIcoMeta(bytes.NewReader(imgdata.Data))
 	if err != nil {
 		return nil, err
 	}
+
+	offset := icoMeta.BestImageOffset()
+	size := icoMeta.BestImageSize()
 
 	data := imgdata.Data[offset : offset+size]
 
-	meta, err := imagesize.DecodeMeta(bytes.NewBuffer(data))
+	meta, err := imagemeta.DecodeMeta(bytes.NewReader(data))
 	if err != nil {
 		return nil, err
 	}
 
-	if imgtype, ok := imageTypes[meta.Format]; ok && vipsTypeSupportLoad[imgtype] {
+	if imgtype, ok := imageTypes[meta.Format()]; ok && vipsTypeSupportLoad[imgtype] {
 		return &imageData{
 			Data: data,
 			Type: imgtype,
 		}, nil
 	}
 
-	return nil, fmt.Errorf("Can't load %s from ICO", meta.Format)
+	return nil, fmt.Errorf("Can't load %s from ICO", meta.Format())
 }
 
 func saveImageToFitBytes(po *processingOptions, img *vipsImage) ([]byte, context.CancelFunc, error) {

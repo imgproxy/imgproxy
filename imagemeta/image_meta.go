@@ -1,4 +1,4 @@
-package imagesize
+package imagemeta
 
 import (
 	"bufio"
@@ -8,14 +8,34 @@ import (
 	"sync/atomic"
 )
 
-type Meta struct {
-	Format        string
-	Width, Height int
+type Meta interface {
+	Format() string
+	Width() int
+	Height() int
+}
+
+type DecodeMetaFunc func(io.Reader) (Meta, error)
+
+type meta struct {
+	format        string
+	width, height int
+}
+
+func (m *meta) Format() string {
+	return m.format
+}
+
+func (m *meta) Width() int {
+	return m.width
+}
+
+func (m *meta) Height() int {
+	return m.height
 }
 
 type format struct {
 	magic      string
-	decodeMeta func(io.Reader) (*Meta, error)
+	decodeMeta DecodeMetaFunc
 }
 
 type reader interface {
@@ -49,7 +69,7 @@ func matchMagic(magic string, b []byte) bool {
 	return true
 }
 
-func RegisterFormat(magic string, decodeMeta func(io.Reader) (*Meta, error)) {
+func RegisterFormat(magic string, decodeMeta DecodeMetaFunc) {
 	formatsMu.Lock()
 	defer formatsMu.Unlock()
 
@@ -57,7 +77,7 @@ func RegisterFormat(magic string, decodeMeta func(io.Reader) (*Meta, error)) {
 	atomicFormats.Store(append(formats, format{magic, decodeMeta}))
 }
 
-func DecodeMeta(r io.Reader) (*Meta, error) {
+func DecodeMeta(r io.Reader) (Meta, error) {
 	rr := asReader(r)
 	formats, _ := atomicFormats.Load().([]format)
 
