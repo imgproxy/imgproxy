@@ -489,41 +489,7 @@ func (img *vipsImage) Replicate(width, height int) error {
 	return nil
 }
 
-func (img *vipsImage) Embed(gravity gravityType, width, height int, offX, offY int, bg rgbColor) error {
-	wmWidth := img.Width()
-	wmHeight := img.Height()
-
-	left := (width-wmWidth+1)/2 + offX
-	top := (height-wmHeight+1)/2 + offY
-
-	if gravity == gravityNorth || gravity == gravityNorthEast || gravity == gravityNorthWest {
-		top = offY
-	}
-
-	if gravity == gravityEast || gravity == gravityNorthEast || gravity == gravitySouthEast {
-		left = width - wmWidth - offX
-	}
-
-	if gravity == gravitySouth || gravity == gravitySouthEast || gravity == gravitySouthWest {
-		top = height - wmHeight - offY
-	}
-
-	if gravity == gravityWest || gravity == gravityNorthWest || gravity == gravitySouthWest {
-		left = offX
-	}
-
-	if left > width {
-		left = width - wmWidth
-	} else if left < -wmWidth {
-		left = 0
-	}
-
-	if top > height {
-		top = height - wmHeight
-	} else if top < -wmHeight {
-		top = 0
-	}
-
+func (img *vipsImage) Embed(width, height int, offX, offY int, bg rgbColor) error {
 	if err := img.RgbColourspace(); err != nil {
 		return err
 	}
@@ -536,7 +502,7 @@ func (img *vipsImage) Embed(gravity gravityType, width, height int, offX, offY i
 	}
 
 	var tmp *C.VipsImage
-	if C.vips_embed_go(img.VipsImage, &tmp, C.int(left), C.int(top), C.int(width), C.int(height), &bgc[0], C.int(len(bgc))) != 0 {
+	if C.vips_embed_go(img.VipsImage, &tmp, C.int(offX), C.int(offY), C.int(width), C.int(height), &bgc[0], C.int(len(bgc))) != 0 {
 		return vipsError()
 	}
 	C.swap_and_clear(&img.VipsImage, tmp)

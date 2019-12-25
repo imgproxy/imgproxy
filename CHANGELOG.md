@@ -8,6 +8,7 @@
 
 ### Changed
 - Docker image base is changed to Debian 10 for better stability and performance.
+- `extend` option now supports gravity.
 
 ## [2.7.0] - 2019-11-13
 ### Changed

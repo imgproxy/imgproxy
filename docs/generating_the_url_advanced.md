@@ -121,13 +121,14 @@ Default: false
 #### Extend
 
 ```
-extend:%extend
-ex:%extend
+extend:%extend:%gravity
+ex:%extend:%gravity
 ```
 
-When set to `1`, `t` or `true`, imgproxy will extend the image if it is smaller than the given size.
+* When `extend` is set to `1`, `t` or `true`, imgproxy will extend the image if it is smaller than the given size.
+* `gravity` _(optional)_ accepts the same values as [gravity](#gravity) option, except `sm`. When `gravity` is not set, imgproxy will use `ce` gravity without offsets.
 
-Default: false
+Default: `false:ce:0:0`
 
 #### Gravity
 
@@ -167,7 +168,7 @@ c:%width:%height:%gravity
 Defines an area of the image to be processed (crop before resize).
 
 * `width` and `height` define the size of the area. When `width` or `height` is set to `0`, imgproxy will use the full width/height of the source image.
-* `gravity` accepts the same values as [gravity](#gravity) option. When `gravity` is not set, imgproxy will use the value of the [gravity](#gravity) option.
+* `gravity` _(optional)_ accepts the same values as [gravity](#gravity) option. When `gravity` is not set, imgproxy will use the value of the [gravity](#gravity) option.
 
 #### Quality
 

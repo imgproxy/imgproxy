@@ -89,6 +89,11 @@ type gravityOptions struct {
 	X, Y float64
 }
 
+type extendOptions struct {
+	Enabled bool
+	Gravity gravityOptions
+}
+
 type cropOptions struct {
 	Width   int
 	Height  int
@@ -99,9 +104,7 @@ type watermarkOptions struct {
 	Enabled   bool
 	Opacity   float64
 	Replicate bool
-	Gravity   gravityType
-	OffsetX   int
-	OffsetY   int
+	Gravity   gravityOptions
 	Scale     float64
 }
 
@@ -112,7 +115,7 @@ type processingOptions struct {
 	Dpr          float64
 	Gravity      gravityOptions
 	Enlarge      bool
-	Extend       bool
+	Extend       extendOptions
 	Crop         cropOptions
 	Format       imageType
 	Quality      int
@@ -194,6 +197,7 @@ func newProcessingOptions() *processingOptions {
 			Height:       0,
 			Gravity:      gravityOptions{Type: gravityCenter},
 			Enlarge:      false,
+			Extend:       extendOptions{Enabled: false, Gravity: gravityOptions{Type: gravityCenter}},
 			Quality:      conf.Quality,
 			MaxBytes:     0,
 			Format:       imageTypeUnknown,
@@ -201,7 +205,7 @@ func newProcessingOptions() *processingOptions {
 			Blur:         0,
 			Sharpen:      0,
 			Dpr:          1,
-			Watermark:    watermarkOptions{Opacity: 1, Replicate: false, Gravity: gravityCenter},
+			Watermark:    watermarkOptions{Opacity: 1, Replicate: false, Gravity: gravityOptions{Type: gravityCenter}},
 		}
 	})
 
@@ -416,17 +420,27 @@ func applyEnlargeOption(po *processingOptions, args []string) error {
 }
 
 func applyExtendOption(po *processingOptions, args []string) error {
-	if len(args) > 1 {
+	if len(args) > 4 {
 		return fmt.Errorf("Invalid extend arguments: %v", args)
 	}
 
-	po.Extend = parseBoolOption(args[0])
+	po.Extend.Enabled = parseBoolOption(args[0])
+
+	if len(args) > 1 {
+		if err := parseGravity(&po.Extend.Gravity, args[1:]); err != nil {
+			return err
+		}
+
+		if po.Extend.Gravity.Type == gravitySmart {
+			return errors.New("extend doesn't support smart gravity")
+		}
+	}
 
 	return nil
 }
 
 func applySizeOption(po *processingOptions, args []string) (err error) {
-	if len(args) > 4 {
+	if len(args) > 7 {
 		return fmt.Errorf("Invalid size arguments: %v", args)
 	}
 
@@ -448,8 +462,8 @@ func applySizeOption(po *processingOptions, args []string) (err error) {
 		}
 	}
 
-	if len(args) == 4 && len(args[3]) > 0 {
-		if err = applyExtendOption(po, args[3:4]); err != nil {
+	if len(args) >= 4 && len(args[3]) > 0 {
+		if err = applyExtendOption(po, args[3:]); err != nil {
 			return
 		}
 	}
@@ -472,7 +486,7 @@ func applyResizingTypeOption(po *processingOptions, args []string) error {
 }
 
 func applyResizeOption(po *processingOptions, args []string) error {
-	if len(args) > 5 {
+	if len(args) > 8 {
 		return fmt.Errorf("Invalid resize arguments: %v", args)
 	}
 
@@ -664,7 +678,7 @@ func applyWatermarkOption(po *processingOptions, args []string) error {
 		if args[1] == "re" {
 			po.Watermark.Replicate = true
 		} else if g, ok := gravityTypes[args[1]]; ok && g != gravityFocusPoint && g != gravitySmart {
-			po.Watermark.Gravity = g
+			po.Watermark.Gravity.Type = g
 		} else {
 			return fmt.Errorf("Invalid watermark position: %s", args[1])
 		}
@@ -672,7 +686,7 @@ func applyWatermarkOption(po *processingOptions, args []string) error {
 
 	if len(args) > 2 && len(args[2]) > 0 {
 		if x, err := strconv.Atoi(args[2]); err == nil {
-			po.Watermark.OffsetX = x
+			po.Watermark.Gravity.X = float64(x)
 		} else {
 			return fmt.Errorf("Invalid watermark X offset: %s", args[2])
 		}
@@ -680,7 +694,7 @@ func applyWatermarkOption(po *processingOptions, args []string) error {
 
 	if len(args) > 3 && len(args[3]) > 0 {
 		if y, err := strconv.Atoi(args[3]); err == nil {
-			po.Watermark.OffsetY = y
+			po.Watermark.Gravity.Y = float64(y)
 		} else {
 			return fmt.Errorf("Invalid watermark Y offset: %s", args[3])
 		}

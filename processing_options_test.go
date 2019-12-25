@@ -196,6 +196,19 @@ func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedEnlarge() {
 	assert.True(s.T(), po.Enlarge)
 }
 
+func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedExtend() {
+	req := s.getRequest("http://example.com/unsafe/extend:1:so:10:20/plain/http://images.dev/lorem/ipsum.jpg")
+	ctx, err := parsePath(context.Background(), req)
+
+	require.Nil(s.T(), err)
+
+	po := getProcessingOptions(ctx)
+	assert.Equal(s.T(), true, po.Extend.Enabled)
+	assert.Equal(s.T(), gravitySouth, po.Extend.Gravity.Type)
+	assert.Equal(s.T(), 10.0, po.Extend.Gravity.X)
+	assert.Equal(s.T(), 20.0, po.Extend.Gravity.Y)
+}
+
 func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedGravity() {
 	req := s.getRequest("http://example.com/unsafe/gravity:soea/plain/http://images.dev/lorem/ipsum.jpg")
 	ctx, err := parsePath(context.Background(), req)
@@ -300,9 +313,9 @@ func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedWatermark() {
 
 	po := getProcessingOptions(ctx)
 	assert.True(s.T(), po.Watermark.Enabled)
-	assert.Equal(s.T(), gravitySouthEast, po.Watermark.Gravity)
-	assert.Equal(s.T(), 10, po.Watermark.OffsetX)
-	assert.Equal(s.T(), 20, po.Watermark.OffsetY)
+	assert.Equal(s.T(), gravitySouthEast, po.Watermark.Gravity.Type)
+	assert.Equal(s.T(), 10.0, po.Watermark.Gravity.X)
+	assert.Equal(s.T(), 20.0, po.Watermark.Gravity.Y)
 	assert.Equal(s.T(), 0.6, po.Watermark.Scale)
 }
 

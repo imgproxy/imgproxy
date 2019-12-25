@@ -157,40 +157,48 @@ func calcJpegShink(scale float64, imgtype imageType) int {
 	return 1
 }
 
-func calcCrop(width, height, cropWidth, cropHeight int, gravity *gravityOptions) (left, top int) {
+func calcPosition(width, height, innerWidth, innerHeight int, gravity *gravityOptions, allowOverflow bool) (left, top int) {
 	if gravity.Type == gravityFocusPoint {
 		pointX := scaleInt(width, gravity.X)
 		pointY := scaleInt(height, gravity.Y)
 
-		left = maxInt(0, minInt(pointX-cropWidth/2, width-cropWidth))
-		top = maxInt(0, minInt(pointY-cropHeight/2, height-cropHeight))
+		left = pointX - innerWidth/2
+		top = pointY - innerHeight/2
+	} else {
+		offX, offY := int(gravity.X), int(gravity.Y)
 
-		return
+		left = (width-innerWidth+1)/2 + offX
+		top = (height-innerHeight+1)/2 + offY
+
+		if gravity.Type == gravityNorth || gravity.Type == gravityNorthEast || gravity.Type == gravityNorthWest {
+			top = 0 + offY
+		}
+
+		if gravity.Type == gravityEast || gravity.Type == gravityNorthEast || gravity.Type == gravitySouthEast {
+			left = width - innerWidth - offX
+		}
+
+		if gravity.Type == gravitySouth || gravity.Type == gravitySouthEast || gravity.Type == gravitySouthWest {
+			top = height - innerHeight - offY
+		}
+
+		if gravity.Type == gravityWest || gravity.Type == gravityNorthWest || gravity.Type == gravitySouthWest {
+			left = 0 + offX
+		}
 	}
 
-	offX, offY := int(gravity.X), int(gravity.Y)
+	var minX, maxX, minY, maxY int
 
-	left = (width-cropWidth+1)/2 + offX
-	top = (height-cropHeight+1)/2 + offY
-
-	if gravity.Type == gravityNorth || gravity.Type == gravityNorthEast || gravity.Type == gravityNorthWest {
-		top = 0 + offY
+	if allowOverflow {
+		minX, maxX = -innerWidth+1, width-1
+		minY, maxY = -innerHeight+1, height-1
+	} else {
+		minX, maxX = 0, width-innerWidth
+		minY, maxY = 0, height-innerHeight
 	}
 
-	if gravity.Type == gravityEast || gravity.Type == gravityNorthEast || gravity.Type == gravitySouthEast {
-		left = width - cropWidth - offX
-	}
-
-	if gravity.Type == gravitySouth || gravity.Type == gravitySouthEast || gravity.Type == gravitySouthWest {
-		top = height - cropHeight - offY
-	}
-
-	if gravity.Type == gravityWest || gravity.Type == gravityNorthWest || gravity.Type == gravitySouthWest {
-		left = 0 + offX
-	}
-
-	left = maxInt(0, minInt(left, width-cropWidth))
-	top = maxInt(0, minInt(top, height-cropHeight))
+	left = maxInt(minX, minInt(left, maxX))
+	top = maxInt(minY, minInt(top, maxY))
 
 	return
 }
@@ -221,7 +229,7 @@ func cropImage(img *vipsImage, cropWidth, cropHeight int, gravity *gravityOption
 		return img.CopyMemory()
 	}
 
-	left, top := calcCrop(imgWidth, imgHeight, cropWidth, cropHeight, gravity)
+	left, top := calcPosition(imgWidth, imgHeight, cropWidth, cropHeight, gravity, false)
 	return img.Crop(left, top, cropWidth, cropHeight)
 }
 
@@ -253,7 +261,9 @@ func prepareWatermark(wm *vipsImage, wmData *imageData, opts *watermarkOptions, 
 		return wm.Replicate(imgWidth, imgHeight)
 	}
 
-	return wm.Embed(opts.Gravity, imgWidth, imgHeight, opts.OffsetX, opts.OffsetY, rgbColor{0, 0, 0})
+	left, top := calcPosition(imgWidth, imgWidth, wm.Width(), wm.Height(), &opts.Gravity, true)
+
+	return wm.Embed(imgWidth, imgHeight, left, top, rgbColor{0, 0, 0})
 }
 
 func applyWatermark(img *vipsImage, wmData *imageData, opts *watermarkOptions, framesCount int) error {
@@ -440,8 +450,9 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 		}
 	}
 
-	if po.Extend && (po.Width > img.Width() || po.Height > img.Height()) {
-		if err = img.Embed(gravityCenter, po.Width, po.Height, 0, 0, po.Background); err != nil {
+	if po.Extend.Enabled && (po.Width > img.Width() || po.Height > img.Height()) {
+		offX, offY := calcPosition(po.Width, po.Height, img.Width(), img.Height(), &po.Extend.Gravity, false)
+		if err = img.Embed(po.Width, po.Height, offX, offY, po.Background); err != nil {
 			return err
 		}
 	}
