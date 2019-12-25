@@ -128,6 +128,17 @@ func presetFileConfig(p presets, filepath string) {
 	}
 }
 
+func sourceEnvConfig(allowedsources *[]string, name string) {
+	sources := []string{}
+	if env := os.Getenv(name); len(env) > 0 {
+		for _, source := range strings.Split(env, ",") {
+			logWarning("source: %s", source)
+			sources = append(sources, fmt.Sprintf("%s://", source))
+		}
+	}
+	*allowedsources = sources
+}
+
 type config struct {
 	Bind             string
 	ReadTimeout      int
@@ -172,6 +183,7 @@ type config struct {
 	IgnoreSslVerification bool
 	DevelopmentErrorsMode bool
 
+	AllowedSources      []string
 	LocalFileSystemRoot string
 	S3Enabled           bool
 	S3Region            string
@@ -306,6 +318,7 @@ func configure() {
 	boolEnvConfig(&conf.DevelopmentErrorsMode, "IMGPROXY_DEVELOPMENT_ERRORS_MODE")
 
 	strEnvConfig(&conf.LocalFileSystemRoot, "IMGPROXY_LOCAL_FILESYSTEM_ROOT")
+	sourceEnvConfig(&conf.AllowedSources, "IMGPROXY_ALLOWED_SOURCES")
 
 	boolEnvConfig(&conf.S3Enabled, "IMGPROXY_USE_S3")
 	strEnvConfig(&conf.S3Region, "IMGPROXY_S3_REGION")

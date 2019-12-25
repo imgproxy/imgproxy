@@ -166,6 +166,7 @@ imgproxy can be switched into "presets-only mode". In this mode, imgproxy accept
 imgproxy can serve your local images, but this feature is disabled by default. To enable it, specify your local filesystem root:
 
 * `IMGPROXY_LOCAL_FILESYSTEM_ROOT`: the root of the local filesystem. Keep empty to disable serving of local files.
+* `IMGPROXY_ONLY_LOCAL_FILESYSTEM`: when true only allows images to be served from the local filesytem. Default: false;
 
 Check out the [Serving local files](serving_local_files.md) guide to learn more.
 
