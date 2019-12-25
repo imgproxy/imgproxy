@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+
+## [2.8.0] - 2019-12-25
 ### Added
 - `IMGPROXY_LOG_LEVEL` config.
 - `max_bytes` processing option.
