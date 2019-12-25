@@ -795,11 +795,9 @@ func applyProcessingOptions(po *processingOptions, options urlOptions) error {
 func isAllowedSource(imageURL string) bool {
 	logWarning("URL: %s", imageURL)
 	if len(conf.AllowedSources) == 0 {
-		logWarning("No sources set")
 		return true
 	}
 	for _, val := range conf.AllowedSources {
-		logWarning("Allowed Source: %s", string(val))
 		if strings.HasPrefix(imageURL, string(val)) {
 			return true
 		}

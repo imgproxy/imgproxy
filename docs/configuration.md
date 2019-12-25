@@ -63,6 +63,10 @@ When you use imgproxy in a development environment, it can be useful to ignore S
 
 * `IMGPROXY_IGNORE_SSL_VERIFICATION`: when true, disables SSL verification, so imgproxy can be used in a development environment with self-signed SSL certificates.
 
+You can limit allowed protocols of the source URLs:
+
+* `IMGPROXY_ALLOWED_SOURCES`: when set, limits allowed source URL protocols. Example: `https,s3,local`. Default: blank.
+
 Also you may want imgproxy to respond with the same error message that it writes to the log:
 
 * `IMGPROXY_DEVELOPMENT_ERRORS_MODE`: when true, imgproxy will respond with detailed error messages. Not recommended for production because some errors may contain stack trace.
@@ -166,7 +170,6 @@ imgproxy can be switched into "presets-only mode". In this mode, imgproxy accept
 imgproxy can serve your local images, but this feature is disabled by default. To enable it, specify your local filesystem root:
 
 * `IMGPROXY_LOCAL_FILESYSTEM_ROOT`: the root of the local filesystem. Keep empty to disable serving of local files.
-* `IMGPROXY_ONLY_LOCAL_FILESYSTEM`: when true only allows images to be served from the local filesytem. Default: false;
 
 Check out the [Serving local files](serving_local_files.md) guide to learn more.
 

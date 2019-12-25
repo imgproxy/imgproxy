@@ -132,8 +132,7 @@ func sourceEnvConfig(allowedsources *[]string, name string) {
 	sources := []string{}
 	if env := os.Getenv(name); len(env) > 0 {
 		for _, source := range strings.Split(env, ",") {
-			logWarning("source: %s", source)
-			sources = append(sources, fmt.Sprintf("%s://", source))
+			sources = append(sources, fmt.Sprintf("%s://", strings.TrimSpace(source)))
 		}
 	}
 	*allowedsources = sources
@@ -287,6 +286,8 @@ func configure() {
 	}
 	intEnvConfig(&conf.MaxAnimationFrames, "IMGPROXY_MAX_ANIMATION_FRAMES")
 
+	sourceEnvConfig(&conf.AllowedSources, "IMGPROXY_ALLOWED_SOURCES")
+
 	boolEnvConfig(&conf.JpegProgressive, "IMGPROXY_JPEG_PROGRESSIVE")
 	boolEnvConfig(&conf.PngInterlaced, "IMGPROXY_PNG_INTERLACED")
 	boolEnvConfig(&conf.PngQuantize, "IMGPROXY_PNG_QUANTIZE")
@@ -318,7 +319,6 @@ func configure() {
 	boolEnvConfig(&conf.DevelopmentErrorsMode, "IMGPROXY_DEVELOPMENT_ERRORS_MODE")
 
 	strEnvConfig(&conf.LocalFileSystemRoot, "IMGPROXY_LOCAL_FILESYSTEM_ROOT")
-	sourceEnvConfig(&conf.AllowedSources, "IMGPROXY_ALLOWED_SOURCES")
 
 	boolEnvConfig(&conf.S3Enabled, "IMGPROXY_USE_S3")
 	strEnvConfig(&conf.S3Region, "IMGPROXY_S3_REGION")

@@ -4,6 +4,7 @@
 ### Added
 - `IMGPROXY_LOG_LEVEL` config.
 - `max_bytes` processing option.
+- `IMGPROXY_ALLOWED_SOURCES` config.
 
 ### Changed
 - Docker image base is changed to Debian 10 for better stability and performance.
