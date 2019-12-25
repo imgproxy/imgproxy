@@ -59,7 +59,7 @@ imgproxy does not send CORS headers by default. Specify allowed origin to enable
 
 * `IMGPROXY_ALLOW_ORIGIN`: when set, enables CORS headers with provided origin. CORS headers are disabled by default.
 
-You can limit allowed protocols of the source URLs:
+You can limit allowed source URLs:
 
 * `IMGPROXY_ALLOWED_SOURCES`: whitelist of source image URLs prefixes divided by comma. When blank, imgproxy allows all source image URLs. Example: `s3://,https://example.com/,local://`. Default: blank.
 
