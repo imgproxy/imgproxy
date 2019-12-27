@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [2.8.1] - 2019-12-27
+### Fixed
+- Fix watermark top offset calculation.
+
 ## [2.8.0] - 2019-12-25
 ### Added
 - `IMGPROXY_LOG_LEVEL` config.
