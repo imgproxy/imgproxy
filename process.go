@@ -261,7 +261,7 @@ func prepareWatermark(wm *vipsImage, wmData *imageData, opts *watermarkOptions, 
 		return wm.Replicate(imgWidth, imgHeight)
 	}
 
-	left, top := calcPosition(imgWidth, imgWidth, wm.Width(), wm.Height(), &opts.Gravity, true)
+	left, top := calcPosition(imgWidth, imgHeight, wm.Width(), wm.Height(), &opts.Gravity, true)
 
 	return wm.Embed(imgWidth, imgHeight, left, top, rgbColor{0, 0, 0})
 }
