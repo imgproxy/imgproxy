@@ -7,7 +7,7 @@ import (
 	"math"
 	"runtime"
 
-	"github.com/imgproxy/imgproxy/imagemeta"
+	imagesize "github.com/imgproxy/imgproxy/image_size"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -38,11 +38,13 @@ func extractMeta(img *vipsImage) (int, int, int, bool) {
 	angle := vipsAngleD0
 	flip := false
 
+	/*
 	orientation := img.Orientation()
 
 	if orientation >= 5 && orientation <= 8 {
 		width, height = height, width
 	}
+
 	if orientation == 3 || orientation == 4 {
 		angle = vipsAngleD180
 	}
@@ -55,8 +57,71 @@ func extractMeta(img *vipsImage) (int, int, int, bool) {
 	if orientation == 2 || orientation == 4 || orientation == 5 || orientation == 7 {
 		flip = true
 	}
+	*/
 
 	return width, height, angle, flip
+}
+
+func calcScale2(oriWidth, oriHeight, width, height int, po *processingOptions, imgtype imageType) float64 {
+	var shrink float64
+
+	srcW, srcH := float64(width), float64(height)
+	dstW, dstH := float64(po.Width), float64(po.Height)
+
+	if po.Width == 0 {
+		dstW = srcW
+	}
+
+	if po.Height == 0 {
+		dstH = srcH
+	}
+
+	if dstW == srcW && dstH == srcH {
+		shrink = 1
+	} else {
+		wshrink := srcW / dstW
+		hshrink := srcH / dstH
+
+		rt := po.ResizingType
+
+		if rt == resizeAuto {
+			srcD := oriWidth - oriHeight
+
+			// 가로가 큰 사진은 fit, 세로가 큰 사진은 fill 하도록 변경. (원래 소스와 반대)
+			if (srcD > 0) {
+				rt = resizeFit
+			} else {
+				rt = resizeFill
+			}
+		}
+
+		switch {
+		case po.Width == 0:
+			shrink = hshrink
+		case po.Height == 0:
+			shrink = wshrink
+		case rt == resizeFit:
+			shrink = math.Max(wshrink, hshrink)
+		default:
+			shrink = math.Min(wshrink, hshrink)
+		}
+	}
+
+	if !po.Enlarge && shrink < 1 && imgtype != imageTypeSVG {
+		shrink = 1
+	}
+
+	shrink /= po.Dpr
+
+	if shrink > srcW {
+		shrink = srcW
+	}
+
+	if shrink > srcH {
+		shrink = srcH
+	}
+
+	return 1.0 / shrink
 }
 
 func calcScale(width, height int, po *processingOptions, imgtype imageType) float64 {
@@ -157,48 +222,40 @@ func calcJpegShink(scale float64, imgtype imageType) int {
 	return 1
 }
 
-func calcPosition(width, height, innerWidth, innerHeight int, gravity *gravityOptions, allowOverflow bool) (left, top int) {
+func calcCrop(width, height, cropWidth, cropHeight int, gravity *gravityOptions) (left, top int) {
 	if gravity.Type == gravityFocusPoint {
 		pointX := scaleInt(width, gravity.X)
 		pointY := scaleInt(height, gravity.Y)
 
-		left = pointX - innerWidth/2
-		top = pointY - innerHeight/2
-	} else {
-		offX, offY := int(gravity.X), int(gravity.Y)
+		left = maxInt(0, minInt(pointX-cropWidth/2, width-cropWidth))
+		top = maxInt(0, minInt(pointY-cropHeight/2, height-cropHeight))
 
-		left = (width-innerWidth+1)/2 + offX
-		top = (height-innerHeight+1)/2 + offY
-
-		if gravity.Type == gravityNorth || gravity.Type == gravityNorthEast || gravity.Type == gravityNorthWest {
-			top = 0 + offY
-		}
-
-		if gravity.Type == gravityEast || gravity.Type == gravityNorthEast || gravity.Type == gravitySouthEast {
-			left = width - innerWidth - offX
-		}
-
-		if gravity.Type == gravitySouth || gravity.Type == gravitySouthEast || gravity.Type == gravitySouthWest {
-			top = height - innerHeight - offY
-		}
-
-		if gravity.Type == gravityWest || gravity.Type == gravityNorthWest || gravity.Type == gravitySouthWest {
-			left = 0 + offX
-		}
+		return
 	}
 
-	var minX, maxX, minY, maxY int
+	offX, offY := int(gravity.X), int(gravity.Y)
 
-	if allowOverflow {
-		minX, maxX = -innerWidth+1, width-1
-		minY, maxY = -innerHeight+1, height-1
-	} else {
-		minX, maxX = 0, width-innerWidth
-		minY, maxY = 0, height-innerHeight
+	left = (width-cropWidth+1)/2 + offX
+	top = (height-cropHeight+1)/2 + offY
+
+	if gravity.Type == gravityNorth || gravity.Type == gravityNorthEast || gravity.Type == gravityNorthWest {
+		top = 0 + offY
 	}
 
-	left = maxInt(minX, minInt(left, maxX))
-	top = maxInt(minY, minInt(top, maxY))
+	if gravity.Type == gravityEast || gravity.Type == gravityNorthEast || gravity.Type == gravitySouthEast {
+		left = width - cropWidth - offX
+	}
+
+	if gravity.Type == gravitySouth || gravity.Type == gravitySouthEast || gravity.Type == gravitySouthWest {
+		top = height - cropHeight - offY
+	}
+
+	if gravity.Type == gravityWest || gravity.Type == gravityNorthWest || gravity.Type == gravitySouthWest {
+		left = 0 + offX
+	}
+
+	left = maxInt(0, minInt(left, width-cropWidth))
+	top = maxInt(0, minInt(top, height-cropHeight))
 
 	return
 }
@@ -229,7 +286,7 @@ func cropImage(img *vipsImage, cropWidth, cropHeight int, gravity *gravityOption
 		return img.CopyMemory()
 	}
 
-	left, top := calcPosition(imgWidth, imgHeight, cropWidth, cropHeight, gravity, false)
+	left, top := calcCrop(imgWidth, imgHeight, cropWidth, cropHeight, gravity)
 	return img.Crop(left, top, cropWidth, cropHeight)
 }
 
@@ -261,9 +318,7 @@ func prepareWatermark(wm *vipsImage, wmData *imageData, opts *watermarkOptions, 
 		return wm.Replicate(imgWidth, imgHeight)
 	}
 
-	left, top := calcPosition(imgWidth, imgHeight, wm.Width(), wm.Height(), &opts.Gravity, true)
-
-	return wm.Embed(imgWidth, imgHeight, left, top, rgbColor{0, 0, 0})
+	return wm.Embed(opts.Gravity, imgWidth, imgHeight, opts.OffsetX, opts.OffsetY, rgbColor{0, 0, 0})
 }
 
 func applyWatermark(img *vipsImage, wmData *imageData, opts *watermarkOptions, framesCount int) error {
@@ -309,8 +364,10 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 
 	widthToScale := minNonZeroInt(cropWidth, srcWidth)
 	heightToScale := minNonZeroInt(cropHeight, srcHeight)
+	// logWarning("hsshim] 1. srcWidth=`%d`, srcHeight=`%d`, widthToScale=`%d`, heightToScale=`%d`", srcWidth, srcHeight, widthToScale, heightToScale)
 
-	scale := calcScale(widthToScale, heightToScale, po, imgtype)
+	scale := calcScale2(srcWidth, srcHeight, widthToScale, heightToScale, po, imgtype)
+	// logWarning("hsshim] scale = `%d`", scale)
 
 	cropWidth = scaleInt(cropWidth, scale)
 	cropHeight = scaleInt(cropHeight, scale)
@@ -338,7 +395,8 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 		widthToScale = scaleInt(widthToScale, float64(newWidth)/float64(srcWidth))
 		heightToScale = scaleInt(heightToScale, float64(newHeight)/float64(srcHeight))
 
-		scale = calcScale(widthToScale, heightToScale, po, imgtype)
+		// logWarning("hsshim] 2. srcWidth=`%d`, srcHeight=`%d`, widthToScale=`%d`, heightToScale=`%d`", srcWidth, srcHeight, widthToScale, heightToScale)
+		scale = calcScale2(srcWidth, srcHeight, widthToScale, heightToScale, po, imgtype)
 	}
 
 	if err = img.Rad2Float(); err != nil {
@@ -450,9 +508,8 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 		}
 	}
 
-	if po.Extend.Enabled && (po.Width > img.Width() || po.Height > img.Height()) {
-		offX, offY := calcPosition(po.Width, po.Height, img.Width(), img.Height(), &po.Extend.Gravity, false)
-		if err = img.Embed(po.Width, po.Height, offX, offY, po.Background); err != nil {
+	if po.Extend && (po.Width > img.Width() || po.Height > img.Height()) {
+		if err = img.Embed(gravityCenter, po.Width, po.Height, 0, 0, po.Background); err != nil {
 			return err
 		}
 	}
@@ -575,29 +632,26 @@ func transformAnimated(ctx context.Context, img *vipsImage, data []byte, po *pro
 }
 
 func getIcoData(imgdata *imageData) (*imageData, error) {
-	icoMeta, err := imagemeta.DecodeIcoMeta(bytes.NewReader(imgdata.Data))
+	offset, size, err := imagesize.BestIcoPage(bytes.NewBuffer(imgdata.Data))
 	if err != nil {
 		return nil, err
 	}
-
-	offset := icoMeta.BestImageOffset()
-	size := icoMeta.BestImageSize()
 
 	data := imgdata.Data[offset : offset+size]
 
-	meta, err := imagemeta.DecodeMeta(bytes.NewReader(data))
+	meta, err := imagesize.DecodeMeta(bytes.NewBuffer(data))
 	if err != nil {
 		return nil, err
 	}
 
-	if imgtype, ok := imageTypes[meta.Format()]; ok && vipsTypeSupportLoad[imgtype] {
+	if imgtype, ok := imageTypes[meta.Format]; ok && vipsTypeSupportLoad[imgtype] {
 		return &imageData{
 			Data: data,
 			Type: imgtype,
 		}, nil
 	}
 
-	return nil, fmt.Errorf("Can't load %s from ICO", meta.Format())
+	return nil, fmt.Errorf("Can't load %s from ICO", meta.Format)
 }
 
 func saveImageToFitBytes(po *processingOptions, img *vipsImage) ([]byte, context.CancelFunc, error) {
