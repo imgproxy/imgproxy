@@ -364,10 +364,8 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 
 	widthToScale := minNonZeroInt(cropWidth, srcWidth)
 	heightToScale := minNonZeroInt(cropHeight, srcHeight)
-	// logWarning("hsshim] 1. srcWidth=`%d`, srcHeight=`%d`, widthToScale=`%d`, heightToScale=`%d`", srcWidth, srcHeight, widthToScale, heightToScale)
 
 	scale := calcScale2(srcWidth, srcHeight, widthToScale, heightToScale, po, imgtype)
-	// logWarning("hsshim] scale = `%d`", scale)
 
 	cropWidth = scaleInt(cropWidth, scale)
 	cropHeight = scaleInt(cropHeight, scale)
@@ -395,7 +393,6 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 		widthToScale = scaleInt(widthToScale, float64(newWidth)/float64(srcWidth))
 		heightToScale = scaleInt(heightToScale, float64(newHeight)/float64(srcHeight))
 
-		// logWarning("hsshim] 2. srcWidth=`%d`, srcHeight=`%d`, widthToScale=`%d`, heightToScale=`%d`", srcWidth, srcHeight, widthToScale, heightToScale)
 		scale = calcScale2(srcWidth, srcHeight, widthToScale, heightToScale, po, imgtype)
 	}
 
