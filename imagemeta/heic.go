@@ -1,4 +1,4 @@
-package imagesize
+package imagemeta
 
 import (
 	"bytes"
@@ -169,17 +169,17 @@ func heicReadBoxes(d *heicDimensionsData, r io.Reader) error {
 	}
 }
 
-func DecodeHeicMeta(r io.Reader) (*Meta, error) {
+func DecodeHeicMeta(r io.Reader) (Meta, error) {
 	d := new(heicDimensionsData)
 
 	if err := heicReadBoxes(d, r); err != nil && !d.IsFilled() {
 		return nil, err
 	}
 
-	return &Meta{
-		Format: "heic",
-		Width:  int(d.Width),
-		Height: int(d.Height),
+	return &meta{
+		format: "heic",
+		width:  int(d.Width),
+		height: int(d.Height),
 	}, nil
 }
 

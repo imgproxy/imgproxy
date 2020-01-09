@@ -1,12 +1,20 @@
 # Changelog
 
 ## [Unreleased]
+
+## [2.8.1] - 2019-12-27
+### Fixed
+- Fix watermark top offset calculation.
+
+## [2.8.0] - 2019-12-25
 ### Added
 - `IMGPROXY_LOG_LEVEL` config.
 - `max_bytes` processing option.
+- `IMGPROXY_ALLOWED_SOURCES` config.
 
 ### Changed
 - Docker image base is changed to Debian 10 for better stability and performance.
+- `extend` option now supports gravity.
 
 ## [2.7.0] - 2019-11-13
 ### Changed

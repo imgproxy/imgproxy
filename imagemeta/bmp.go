@@ -1,4 +1,4 @@
-package imagesize
+package imagemeta
 
 import (
 	"bytes"
@@ -12,7 +12,7 @@ type BmpFormatError string
 
 func (e BmpFormatError) Error() string { return "invalid BMP format: " + string(e) }
 
-func DecodeBmpMeta(r io.Reader) (*Meta, error) {
+func DecodeBmpMeta(r io.Reader) (Meta, error) {
 	var tmp [26]byte
 
 	if _, err := io.ReadFull(r, tmp[:]); err != nil {
@@ -36,10 +36,10 @@ func DecodeBmpMeta(r io.Reader) (*Meta, error) {
 		height = int(binary.LittleEndian.Uint16(tmp[20:22]))
 	}
 
-	return &Meta{
-		Format: "bmp",
-		Width:  width,
-		Height: height,
+	return &meta{
+		format: "bmp",
+		width:  width,
+		height: height,
 	}, nil
 }
 

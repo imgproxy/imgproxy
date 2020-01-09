@@ -59,4 +59,4 @@ Many thanks to:
 
 imgproxy is licensed under the MIT license.
 
-See [LICENSE](https://github.com/imgproxy/imgproxy/blob/master/LICENSE.md) for the full license text.
+See [LICENSE](https://github.com/imgproxy/imgproxy/blob/master/LICENSE) for the full license text.

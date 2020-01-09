@@ -1,9 +1,23 @@
-package imagesize
+package imagemeta
 
 import (
 	"encoding/binary"
 	"io"
 )
+
+type IcoMeta struct {
+	Meta
+	offset int
+	size   int
+}
+
+func (m *IcoMeta) BestImageOffset() int {
+	return m.offset
+}
+
+func (m *IcoMeta) BestImageSize() int {
+	return m.size
+}
 
 func icoBestSize(r io.Reader) (width, height byte, offset uint32, size uint32, err error) {
 	var tmp [16]byte
@@ -35,8 +49,8 @@ func BestIcoPage(r io.Reader) (int, int, error) {
 	return int(offset), int(size), err
 }
 
-func DecodeIcoMeta(r io.Reader) (*Meta, error) {
-	bwidth, bheight, _, _, err := icoBestSize(r)
+func DecodeIcoMeta(r io.Reader) (*IcoMeta, error) {
+	bwidth, bheight, offset, size, err := icoBestSize(r)
 	if err != nil {
 		return nil, err
 	}
@@ -52,13 +66,20 @@ func DecodeIcoMeta(r io.Reader) (*Meta, error) {
 		height = 256
 	}
 
-	return &Meta{
-		Format: "ico",
-		Width:  width,
-		Height: height,
+	return &IcoMeta{
+		Meta: &meta{
+			format: "ico",
+			width:  width,
+			height: height,
+		},
+		offset: int(offset),
+		size:   int(size),
 	}, nil
 }
 
 func init() {
-	RegisterFormat("\x00\x00\x01\x00", DecodeIcoMeta)
+	RegisterFormat(
+		"\x00\x00\x01\x00",
+		func(r io.Reader) (Meta, error) { return DecodeIcoMeta(r) },
+	)
 }

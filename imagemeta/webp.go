@@ -4,7 +4,7 @@
 
 // Original code was cropped and fixed by @DarthSim for imgproxy needs
 
-package imagesize
+package imagemeta
 
 import (
 	"errors"
@@ -25,7 +25,7 @@ var (
 	webpFccWEBP = riff.FourCC{'W', 'E', 'B', 'P'}
 )
 
-func DecodeWebpMeta(r io.Reader) (*Meta, error) {
+func DecodeWebpMeta(r io.Reader) (Meta, error) {
 	formType, riffReader, err := riff.NewReader(r)
 	if err != nil {
 		return nil, err
@@ -58,10 +58,10 @@ func DecodeWebpMeta(r io.Reader) (*Meta, error) {
 
 			fh, err := d.DecodeFrameHeader()
 
-			return &Meta{
-				Format: "webp",
-				Width:  fh.Width,
-				Height: fh.Height,
+			return &meta{
+				format: "webp",
+				width:  fh.Width,
+				height: fh.Height,
 			}, err
 
 		case webpFccVP8L:
@@ -70,10 +70,10 @@ func DecodeWebpMeta(r io.Reader) (*Meta, error) {
 				return nil, err
 			}
 
-			return &Meta{
-				Format: "webp",
-				Width:  conf.Width,
-				Height: conf.Height,
+			return &meta{
+				format: "webp",
+				width:  conf.Width,
+				height: conf.Height,
 			}, nil
 
 		case webpFccVP8X:
@@ -88,10 +88,10 @@ func DecodeWebpMeta(r io.Reader) (*Meta, error) {
 			widthMinusOne := uint32(buf[4]) | uint32(buf[5])<<8 | uint32(buf[6])<<16
 			heightMinusOne := uint32(buf[7]) | uint32(buf[8])<<8 | uint32(buf[9])<<16
 
-			return &Meta{
-				Format: "webp",
-				Width:  int(widthMinusOne) + 1,
-				Height: int(heightMinusOne) + 1,
+			return &meta{
+				format: "webp",
+				width:  int(widthMinusOne) + 1,
+				height: int(heightMinusOne) + 1,
 			}, nil
 
 		default:
