@@ -5,7 +5,6 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
-	"runtime/debug"
 	"syscall"
 	"time"
 )
@@ -38,7 +37,7 @@ func main() {
 		var logMemStats = len(os.Getenv("IMGPROXY_LOG_MEM_STATS")) > 0
 
 		for range time.Tick(time.Duration(conf.FreeMemoryInterval) * time.Second) {
-			debug.FreeOSMemory()
+			freeMemory()
 
 			if logMemStats {
 				var m runtime.MemStats
