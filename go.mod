@@ -3,7 +3,6 @@ module github.com/imgproxy/imgproxy
 go 1.11
 
 require (
-	cloud.google.com/go v0.47.0 // indirect
 	cloud.google.com/go/storage v1.5.0
 	github.com/StackExchange/wmi v0.0.0-20180116203802-5d049714c4a6 // indirect
 	github.com/aws/aws-sdk-go v1.28.0
@@ -23,9 +22,9 @@ require (
 	github.com/sirupsen/logrus v1.4.2
 	github.com/stretchr/testify v1.4.0
 	golang.org/x/image v0.0.0-20190802002840-cff245a6509b
-	golang.org/x/net v0.0.0-20190827160401-ba9fcec4b297
-	golang.org/x/sync v0.0.0-20190423024810-112230192c58
-	golang.org/x/sys v0.0.0-20190813064441-fde4db37ae7a
+	golang.org/x/net v0.0.0-20191209160850-c0dbc17a3553
+	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
+	golang.org/x/sys v0.0.0-20191228213918-04cbcbbfeed8
 	google.golang.org/api v0.15.0
 )
 
