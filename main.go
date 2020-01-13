@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-const version = "2.8.1"
+const version = "2.8.2"
 
 type ctxKey string
 

@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## [2.8.2] - 2020-01-13
+### Changed
+- Optimized memory usage.
+
+### Fixed
+- Fixed `IMGPROXY_ALLOWED_SOURCES` config.
+
 ## [2.8.1] - 2019-12-27
 ### Fixed
 - Fix watermark top offset calculation.
