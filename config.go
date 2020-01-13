@@ -45,6 +45,8 @@ func strSliceEnvConfig(s *[]string, name string) {
 		}
 
 		*s = parts
+
+		return
 	}
 
 	*s = []string{}
