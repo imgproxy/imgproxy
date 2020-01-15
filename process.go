@@ -398,26 +398,11 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 	dprWidth := scaleInt(po.Width, po.Dpr)
 	dprHeight := scaleInt(po.Height, po.Dpr)
 
-	if cropGravity.Type == po.Gravity.Type && cropGravity.Type != gravityFocusPoint {
-		cropWidth = minNonZeroInt(cropWidth, dprWidth)
-		cropHeight = minNonZeroInt(cropHeight, dprHeight)
-
-		sumGravity := gravityOptions{
-			Type: cropGravity.Type,
-			X:    cropGravity.X + po.Gravity.X,
-			Y:    cropGravity.Y + po.Gravity.Y,
-		}
-
-		if err = cropImage(img, cropWidth, cropHeight, &sumGravity); err != nil {
-			return err
-		}
-	} else {
-		if err = cropImage(img, cropWidth, cropHeight, &cropGravity); err != nil {
-			return err
-		}
-		if err = cropImage(img, dprWidth, dprHeight, &po.Gravity); err != nil {
-			return err
-		}
+	if err = cropImage(img, cropWidth, cropHeight, &cropGravity); err != nil {
+		return err
+	}
+	if err = cropImage(img, dprWidth, dprHeight, &po.Gravity); err != nil {
+		return err
 	}
 
 	checkTimeout(ctx)
