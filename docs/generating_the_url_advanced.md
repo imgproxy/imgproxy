@@ -170,6 +170,20 @@ Defines an area of the image to be processed (crop before resize).
 * `width` and `height` define the size of the area. When `width` or `height` is set to `0`, imgproxy will use the full width/height of the source image.
 * `gravity` _(optional)_ accepts the same values as [gravity](#gravity) option. When `gravity` is not set, imgproxy will use the value of the [gravity](#gravity) option.
 
+#### Trim
+
+```
+trim:%threshold
+t:%threshold
+```
+
+Removes surrounding background.
+
+* `threshold` - color similarity tolerance.
+
+**Warning:** Trimming requires an image to be fully loaded into memory. This disables scale-on-load and significantly increases memory usage and processing time. Use it carefully with large images.
+**Note:** Trimming of animated images is not supported.
+
 #### Quality
 
 ```

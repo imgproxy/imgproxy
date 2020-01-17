@@ -297,7 +297,17 @@ func applyWatermark(img *vipsImage, wmData *imageData, opts *watermarkOptions, f
 }
 
 func transformImage(ctx context.Context, img *vipsImage, data []byte, po *processingOptions, imgtype imageType) error {
-	var err error
+	var (
+		err     error
+		trimmed bool
+	)
+
+	if po.Trim.Enabled {
+		if err = img.Trim(po.Trim.Threshold); err != nil {
+			return err
+		}
+		trimmed = true
+	}
 
 	srcWidth, srcHeight, angle, flip := extractMeta(img)
 	cropWidth, cropHeight := po.Crop.Width, po.Crop.Height
@@ -317,7 +327,7 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 	cropGravity.X *= scale
 	cropGravity.Y *= scale
 
-	if scale != 1 && data != nil && canScaleOnLoad(imgtype, scale) {
+	if !trimmed && scale != 1 && data != nil && canScaleOnLoad(imgtype, scale) {
 		if imgtype == imageTypeWEBP || imgtype == imageTypeSVG {
 			// Do some scale-on-load
 			if err = img.Load(data, imgtype, 1, scale, 1); err != nil {
@@ -454,6 +464,11 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 }
 
 func transformAnimated(ctx context.Context, img *vipsImage, data []byte, po *processingOptions, imgtype imageType) error {
+	if po.Trim.Enabled {
+		logWarning("Trim is not supported for animated images")
+		po.Trim.Enabled = false
+	}
+
 	imgWidth := img.Width()
 
 	frameHeight, err := img.GetInt("page-height")

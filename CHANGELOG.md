@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+### Added
+- `trim` processing option.
 
 ## [2.8.2] - 2020-01-13
 ### Changed

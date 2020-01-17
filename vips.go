@@ -356,6 +356,21 @@ func (img *vipsImage) SmartCrop(width, height int) error {
 	return nil
 }
 
+func (img *vipsImage) Trim(threshold float64) error {
+	var tmp *C.VipsImage
+
+	if err := img.CopyMemory(); err != nil {
+		return err
+	}
+
+	if C.vips_trim(img.VipsImage, &tmp, C.double(threshold)) != 0 {
+		return vipsError()
+	}
+
+	C.swap_and_clear(&img.VipsImage, tmp)
+	return nil
+}
+
 func (img *vipsImage) EnsureAlpha() error {
 	var tmp *C.VipsImage
 

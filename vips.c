@@ -390,6 +390,48 @@ vips_extract_area_go(VipsImage *in, VipsImage **out, int left, int top, int widt
 }
 
 int
+vips_trim(VipsImage *in, VipsImage **out, double threshold) {
+  VipsImage *tmp;
+
+  if (vips_image_hasalpha(in)) {
+    if (vips_flatten(in, &tmp, NULL))
+      return 1;
+  } else {
+    if (vips_copy(in, &tmp, NULL))
+      return 1;
+  }
+
+  double *bg;
+  int bgn;
+
+  if (vips_getpoint(tmp, &bg, &bgn, 0, 0, NULL)) {
+    clear_image(&tmp);
+    return 1;
+  }
+
+  VipsArrayDouble *bga = vips_array_double_new(bg, bgn);
+
+  int left, top, width, height;
+
+  if (vips_find_trim(tmp, &left, &top, &width, &height, "background", bga, "threshold", threshold, NULL)) {
+    clear_image(&tmp);
+    vips_area_unref((VipsArea *)bga);
+    g_free(bg);
+    return 1;
+  }
+
+  clear_image(&tmp);
+  vips_area_unref((VipsArea *)bga);
+  g_free(bg);
+
+  if (width == 0 || height == 0) {
+    return vips_copy(in, out, NULL);
+  }
+
+  return vips_extract_area(in, out, left, top, width, height, NULL);
+}
+
+int
 vips_replicate_go(VipsImage *in, VipsImage **out, int width, int height) {
   VipsImage *tmp;
 

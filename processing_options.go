@@ -100,6 +100,11 @@ type cropOptions struct {
 	Gravity gravityOptions
 }
 
+type trimOptions struct {
+	Enabled   bool
+	Threshold float64
+}
+
 type watermarkOptions struct {
 	Enabled   bool
 	Opacity   float64
@@ -117,6 +122,7 @@ type processingOptions struct {
 	Enlarge      bool
 	Extend       extendOptions
 	Crop         cropOptions
+	Trim         trimOptions
 	Format       imageType
 	Quality      int
 	MaxBytes     int
@@ -198,6 +204,7 @@ func newProcessingOptions() *processingOptions {
 			Gravity:      gravityOptions{Type: gravityCenter},
 			Enlarge:      false,
 			Extend:       extendOptions{Enabled: false, Gravity: gravityOptions{Type: gravityCenter}},
+			Trim:         trimOptions{Enabled: false, Threshold: 10},
 			Quality:      conf.Quality,
 			MaxBytes:     0,
 			Format:       imageTypeUnknown,
@@ -545,6 +552,21 @@ func applyCropOption(po *processingOptions, args []string) error {
 	return nil
 }
 
+func applyTrimOption(po *processingOptions, args []string) error {
+	if len(args) > 1 {
+		return fmt.Errorf("Invalid crop arguments: %v", args)
+	}
+
+	if t, err := strconv.ParseFloat(args[0], 64); err == nil && t >= 0 {
+		po.Trim.Enabled = true
+		po.Trim.Threshold = t
+	} else {
+		return fmt.Errorf("Invalid trim treshold: %s", args[0])
+	}
+
+	return nil
+}
+
 func applyQualityOption(po *processingOptions, args []string) error {
 	if len(args) > 1 {
 		return fmt.Errorf("Invalid quality arguments: %v", args)
@@ -773,6 +795,8 @@ func applyProcessingOption(po *processingOptions, name string, args []string) er
 		return applyGravityOption(po, args)
 	case "crop", "c":
 		return applyCropOption(po, args)
+	case "trim", "t":
+		return applyTrimOption(po, args)
 	case "quality", "q":
 		return applyQualityOption(po, args)
 	case "max_bytes", "mb":
