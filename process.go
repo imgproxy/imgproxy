@@ -607,7 +607,7 @@ func saveImageToFitBytes(po *processingOptions, img *vipsImage) ([]byte, context
 	img.CopyMemory()
 
 	for {
-		result, cancel, err := img.Save(po.Format, quality)
+		result, cancel, err := img.Save(po.Format, quality, po.StripMetadata)
 		if len(result) <= po.MaxBytes || quality <= 10 || err != nil {
 			return result, cancel, err
 		}
@@ -735,5 +735,5 @@ func processImage(ctx context.Context) ([]byte, context.CancelFunc, error) {
 		return saveImageToFitBytes(po, img)
 	}
 
-	return img.Save(po.Format, po.Quality)
+	return img.Save(po.Format, po.Quality, po.StripMetadata)
 }

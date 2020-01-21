@@ -166,6 +166,7 @@ type config struct {
 	PngQuantizationColors int
 	Quality               int
 	GZipCompression       int
+	StripMetadata         bool
 
 	EnableWebpDetection bool
 	EnforceWebp         bool
@@ -242,6 +243,7 @@ var conf = config{
 	SignatureSize:                  32,
 	PngQuantizationColors:          256,
 	Quality:                        80,
+	StripMetadata:                  true,
 	UserAgent:                      fmt.Sprintf("imgproxy/%s", version),
 	Presets:                        make(presets),
 	WatermarkOpacity:               1,
@@ -300,6 +302,7 @@ func configure() {
 	intEnvConfig(&conf.PngQuantizationColors, "IMGPROXY_PNG_QUANTIZATION_COLORS")
 	intEnvConfig(&conf.Quality, "IMGPROXY_QUALITY")
 	intEnvConfig(&conf.GZipCompression, "IMGPROXY_GZIP_COMPRESSION")
+	boolEnvConfig(&conf.StripMetadata, "IMGPROXY_STRIP_METADATA")
 
 	boolEnvConfig(&conf.EnableWebpDetection, "IMGPROXY_ENABLE_WEBP_DETECTION")
 	boolEnvConfig(&conf.EnforceWebp, "IMGPROXY_ENFORCE_WEBP")

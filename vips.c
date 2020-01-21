@@ -512,8 +512,8 @@ vips_arrayjoin_go(VipsImage **in, VipsImage **out, int n) {
 }
 
 int
-vips_jpegsave_go(VipsImage *in, void **buf, size_t *len, int quality, int interlace) {
-  return vips_jpegsave_buffer(in, buf, len, "profile", "none", "Q", quality, "strip", TRUE, "optimize_coding", TRUE, "interlace", interlace, NULL);
+vips_jpegsave_go(VipsImage *in, void **buf, size_t *len, int quality, int interlace, gboolean strip) {
+  return vips_jpegsave_buffer(in, buf, len, "profile", "none", "Q", quality, "strip", strip, "optimize_coding", TRUE, "interlace", interlace, NULL);
 }
 
 int
@@ -531,8 +531,8 @@ vips_pngsave_go(VipsImage *in, void **buf, size_t *len, int interlace, int quant
 }
 
 int
-vips_webpsave_go(VipsImage *in, void **buf, size_t *len, int quality) {
-  return vips_webpsave_buffer(in, buf, len, "Q", quality, "strip", TRUE, NULL);
+vips_webpsave_go(VipsImage *in, void **buf, size_t *len, int quality, gboolean strip) {
+  return vips_webpsave_buffer(in, buf, len, "Q", quality, "strip", strip, NULL);
 }
 
 int

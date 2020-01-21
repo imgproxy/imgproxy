@@ -130,6 +130,13 @@ func vipsLoadWatermark() (err error) {
 	return
 }
 
+func gbool(b bool) C.gboolean {
+	if b {
+		return C.gboolean(1)
+	}
+	return C.gboolean(0)
+}
+
 func (img *vipsImage) Width() int {
 	return int(img.VipsImage.Xsize)
 }
@@ -170,7 +177,7 @@ func (img *vipsImage) Load(data []byte, imgtype imageType, shrink int, scale flo
 	return nil
 }
 
-func (img *vipsImage) Save(imgtype imageType, quality int) ([]byte, context.CancelFunc, error) {
+func (img *vipsImage) Save(imgtype imageType, quality int, stripMeta bool) ([]byte, context.CancelFunc, error) {
 	var ptr unsafe.Pointer
 
 	cancel := func() {
@@ -183,11 +190,11 @@ func (img *vipsImage) Save(imgtype imageType, quality int) ([]byte, context.Canc
 
 	switch imgtype {
 	case imageTypeJPEG:
-		err = C.vips_jpegsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality), vipsConf.JpegProgressive)
+		err = C.vips_jpegsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality), vipsConf.JpegProgressive, gbool(stripMeta))
 	case imageTypePNG:
 		err = C.vips_pngsave_go(img.VipsImage, &ptr, &imgsize, vipsConf.PngInterlaced, vipsConf.PngQuantize, vipsConf.PngQuantizationColors)
 	case imageTypeWEBP:
-		err = C.vips_webpsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality))
+		err = C.vips_webpsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality), gbool(stripMeta))
 	case imageTypeGIF:
 		err = C.vips_gifsave_go(img.VipsImage, &ptr, &imgsize)
 	case imageTypeICO:
