@@ -319,6 +319,8 @@ func (img *vipsImage) Rotate(angle int) error {
 		return vipsError()
 	}
 
+	C.vips_autorot_remove_angle(tmp)
+
 	C.swap_and_clear(&img.VipsImage, tmp)
 	return nil
 }
