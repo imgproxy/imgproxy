@@ -510,6 +510,7 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 	}
 	if po.Extend.Enabled && (po.Width > img.Width() || po.Height > img.Height()) {
 		offX, offY := calcPosition(po.Width, po.Height, img.Width(), img.Height(), &po.Extend.Gravity, false)
+		logDebug("TRANSFORM: step-4 (embed with background %s) target w/h %f/%f, img w/h %f/%f off X/Y %f/%f", po.Background, po.Width, po.Height, img.Width(), img.Height(), offX, offY)
 		if err = img.Embed(po.Width, po.Height, offX, offY, po.Background); err != nil {
 			return err
 		}
