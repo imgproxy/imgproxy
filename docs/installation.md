@@ -14,7 +14,7 @@ docker run -p 8080:8080 -it darthsim/imgproxy
 You can also build your own image. imgproxy is ready to be dockerized, plug and play:
 
 ```bash
-docker build -t imgproxy .
+docker build -f docker/Dockerfile -t imgproxy .
 docker run -p 8080:8080 -it imgproxy
 ```
 
