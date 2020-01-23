@@ -108,16 +108,14 @@ RUN apt-get update \
     libheif1 \
     libtiff5 \
     libimagequant0 \
-    libjemalloc2 \
   && rm -rf /var/lib/apt/lists/*
 
 COPY --from=0 /usr/local/bin/imgproxy /usr/local/bin/
 COPY --from=0 /usr/local/lib /usr/local/lib
 
 ENV VIPS_WARNING=0
-ENV MALLOC_ARENA_MAX=4
+ENV MALLOC_ARENA_MAX=2
 ENV LD_LIBRARY_PATH /lib64:/usr/lib64:/usr/local/lib
-ENV LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libjemalloc.so.2
 
 CMD ["imgproxy"]
 
