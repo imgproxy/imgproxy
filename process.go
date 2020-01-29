@@ -324,8 +324,10 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 
 	cropWidth = scaleInt(cropWidth, scale)
 	cropHeight = scaleInt(cropHeight, scale)
-	cropGravity.X *= scale
-	cropGravity.Y *= scale
+	if cropGravity.Type != gravityFocusPoint {
+		cropGravity.X *= scale
+		cropGravity.Y *= scale
+	}
 
 	if !trimmed && scale != 1 && data != nil && canScaleOnLoad(imgtype, scale) {
 		if imgtype == imageTypeWEBP || imgtype == imageTypeSVG {

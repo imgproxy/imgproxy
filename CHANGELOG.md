@@ -4,6 +4,9 @@
 ### Added
 - `trim` processing option.
 
+### Fixed
+- Fixed focus point crop calculation.
+
 ## [2.8.2] - 2020-01-13
 ### Changed
 - Optimized memory usage.
