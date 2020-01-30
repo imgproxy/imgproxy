@@ -338,7 +338,12 @@ vips_support_builtin_icc() {
 
 int
 vips_icc_import_go(VipsImage *in, VipsImage **out, char *profile) {
-  return vips_icc_import(in, out, "input_profile", profile, "embedded", TRUE, "pcs", VIPS_PCS_XYZ, NULL);
+  if (vips_icc_import(in, out, "input_profile", profile, "embedded", TRUE, "pcs", VIPS_PCS_XYZ, NULL))
+    return 1;
+
+  vips_image_remove(*out, VIPS_META_ICC_NAME);
+
+  return 0;
 }
 
 int
