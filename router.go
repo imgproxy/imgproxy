@@ -64,6 +64,10 @@ func (r *router) OPTIONS(prefix string, handler routeHandler, exact bool) {
 	r.Add(http.MethodOptions, prefix, handler, exact)
 }
 
+func (r *router) HEAD(prefix string, handler routeHandler, exact bool) {
+	r.Add(http.MethodHead, prefix, handler, exact)
+}
+
 func (r *router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	req = req.WithContext(setTimerSince(req.Context()))
 
