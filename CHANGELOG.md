@@ -3,6 +3,7 @@
 ## [Unreleased]
 ### Added
 - `trim` processing option.
+- `IMGPROXY_STRIP_METADATA` config.
 
 ### Fixed
 - Fixed focus point crop calculation.
