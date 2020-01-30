@@ -114,23 +114,22 @@ type watermarkOptions struct {
 }
 
 type processingOptions struct {
-	ResizingType  resizeType
-	Width         int
-	Height        int
-	Dpr           float64
-	Gravity       gravityOptions
-	Enlarge       bool
-	Extend        extendOptions
-	Crop          cropOptions
-	Trim          trimOptions
-	Format        imageType
-	Quality       int
-	StripMetadata bool
-	MaxBytes      int
-	Flatten       bool
-	Background    rgbColor
-	Blur          float32
-	Sharpen       float32
+	ResizingType resizeType
+	Width        int
+	Height       int
+	Dpr          float64
+	Gravity      gravityOptions
+	Enlarge      bool
+	Extend       extendOptions
+	Crop         cropOptions
+	Trim         trimOptions
+	Format       imageType
+	Quality      int
+	MaxBytes     int
+	Flatten      bool
+	Background   rgbColor
+	Blur         float32
+	Sharpen      float32
 
 	CacheBuster string
 
@@ -199,22 +198,21 @@ var (
 func newProcessingOptions() *processingOptions {
 	newProcessingOptionsOnce.Do(func() {
 		_newProcessingOptions = processingOptions{
-			ResizingType:  resizeFit,
-			Width:         0,
-			Height:        0,
-			Gravity:       gravityOptions{Type: gravityCenter},
-			Enlarge:       false,
-			Extend:        extendOptions{Enabled: false, Gravity: gravityOptions{Type: gravityCenter}},
-			Trim:          trimOptions{Enabled: false, Threshold: 10},
-			Quality:       conf.Quality,
-			StripMetadata: conf.StripMetadata,
-			MaxBytes:      0,
-			Format:        imageTypeUnknown,
-			Background:    rgbColor{255, 255, 255},
-			Blur:          0,
-			Sharpen:       0,
-			Dpr:           1,
-			Watermark:     watermarkOptions{Opacity: 1, Replicate: false, Gravity: gravityOptions{Type: gravityCenter}},
+			ResizingType: resizeFit,
+			Width:        0,
+			Height:       0,
+			Gravity:      gravityOptions{Type: gravityCenter},
+			Enlarge:      false,
+			Extend:       extendOptions{Enabled: false, Gravity: gravityOptions{Type: gravityCenter}},
+			Trim:         trimOptions{Enabled: false, Threshold: 10},
+			Quality:      conf.Quality,
+			MaxBytes:     0,
+			Format:       imageTypeUnknown,
+			Background:   rgbColor{255, 255, 255},
+			Blur:         0,
+			Sharpen:      0,
+			Dpr:          1,
+			Watermark:    watermarkOptions{Opacity: 1, Replicate: false, Gravity: gravityOptions{Type: gravityCenter}},
 		}
 	})
 
