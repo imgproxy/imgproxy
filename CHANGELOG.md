@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+
+## [2.9.0] - 2020-01-30
 ### Added
 - `trim` processing option.
 - `IMGPROXY_STRIP_METADATA` config.
