@@ -21,6 +21,10 @@ func checkTimeout(ctx context.Context) {
 	case <-ctx.Done():
 		d := getTimerSince(ctx)
 
+		if ctx.Err() != context.DeadlineExceeded {
+			panic(newError(499, fmt.Sprintf("Request was cancelled after %v", d), "Cancelled"))
+		}
+
 		if newRelicEnabled {
 			sendTimeoutToNewRelic(ctx, d)
 		}
