@@ -26,7 +26,8 @@ echo $(xxd -g 2 -l 64 -p /dev/random | tr -d '\n')
 
 ## Server
 
-* `IMGPROXY_BIND`: TCP address and port to listen on. Default: `:8080`;
+* `IMGPROXY_BIND`: address and port or Unix socket to listen on. Default: `:8080`;
+* `IMGPROXY_NETWORK`: network to use. Known networks are `tcp`, `tcp4`, `tcp6`, `unix`, and `unixpacket`. Default: `tcp`;
 * `IMGPROXY_READ_TIMEOUT`: the maximum duration (in seconds) for reading the entire image request, including the body. Default: `10`;
 * `IMGPROXY_WRITE_TIMEOUT`: the maximum duration (in seconds) for writing the response. Default: `10`;
 * `IMGPROXY_KEEP_ALIVE_TIMEOUT`: the maximum duration (in seconds) to wait for the next request before closing the connection. When set to `0`, keep-alive is disabled. Default: `10`;

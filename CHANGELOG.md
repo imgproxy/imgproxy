@@ -1,6 +1,9 @@
 # Changelog
 
 ## [Unreleased]
+### Added
+- `IMGPROXY_NETWORK` config. Allows to bind on Unix socket.
+
 ### Fixed
 - Fix detection of SVG starting with a comment.
 

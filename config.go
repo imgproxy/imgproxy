@@ -145,6 +145,7 @@ func presetFileConfig(p presets, filepath string) {
 }
 
 type config struct {
+	Network          string
 	Bind             string
 	ReadTimeout      int
 	WriteTimeout     int
@@ -231,6 +232,7 @@ type config struct {
 }
 
 var conf = config{
+	Network:                        "tcp",
 	Bind:                           ":8080",
 	ReadTimeout:                    10,
 	WriteTimeout:                   10,
@@ -272,6 +274,7 @@ func configure() {
 		conf.Bind = fmt.Sprintf(":%s", port)
 	}
 
+	strEnvConfig(&conf.Network, "IMGPROXY_NETWORK")
 	strEnvConfig(&conf.Bind, "IMGPROXY_BIND")
 	intEnvConfig(&conf.ReadTimeout, "IMGPROXY_READ_TIMEOUT")
 	intEnvConfig(&conf.WriteTimeout, "IMGPROXY_WRITE_TIMEOUT")

@@ -32,7 +32,7 @@ func buildRouter() *router {
 }
 
 func startServer() *http.Server {
-	l, err := listenReuseport("tcp", conf.Bind)
+	l, err := listenReuseport(conf.Network, conf.Bind)
 	if err != nil {
 		logFatal(err.Error())
 	}
