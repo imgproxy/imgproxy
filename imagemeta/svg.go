@@ -12,4 +12,6 @@ func init() {
 	}
 	RegisterFormat("<?xml ", decodeMeta)
 	RegisterFormat("<svg", decodeMeta)
+	// We believe that file starting with HTML comment is SVG
+	RegisterFormat("<!--", decodeMeta)
 }

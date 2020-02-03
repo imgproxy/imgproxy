@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+### Fixed
+- Fix detection of SVG starting with a comment.
 
 ## [2.9.0] - 2020-01-30
 ### Added
