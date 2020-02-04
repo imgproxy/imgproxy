@@ -4,6 +4,7 @@
 ### Added
 - `IMGPROXY_NETWORK` config. Allows to bind on Unix socket.
 - `IMGPROXY_CACHE_CONTROL_PASSTHROUGH` config.
+- `imgproxy health` command.
 
 ### Fixed
 - Fix detection of SVG starting with a comment.
