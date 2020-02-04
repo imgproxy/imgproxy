@@ -14,8 +14,11 @@ import (
 )
 
 var (
-	downloadClient  *http.Client
-	imageDataCtxKey = ctxKey("imageData")
+	downloadClient *http.Client
+
+	imageDataCtxKey          = ctxKey("imageData")
+	cacheControlHeaderCtxKey = ctxKey("cacheControlHeader")
+	expiresHeaderCtxKey      = ctxKey("expiresHeader")
 
 	errSourceDimensionsTooBig      = newError(422, "Source image dimensions are too big", "Invalid source image")
 	errSourceResolutionTooBig      = newError(422, "Source image resolution is too big", "Invalid source image")
@@ -196,10 +199,20 @@ func downloadImage(ctx context.Context) (context.Context, context.CancelFunc, er
 	}
 
 	ctx = context.WithValue(ctx, imageDataCtxKey, imgdata)
+	ctx = context.WithValue(ctx, cacheControlHeaderCtxKey, res.Header.Get("Cache-Control"))
+	ctx = context.WithValue(ctx, expiresHeaderCtxKey, res.Header.Get("Expires"))
 
 	return ctx, imgdata.Close, err
 }
 
 func getImageData(ctx context.Context) *imageData {
 	return ctx.Value(imageDataCtxKey).(*imageData)
+}
+
+func getCacheControlHeader(ctx context.Context) string {
+	return ctx.Value(cacheControlHeaderCtxKey).(string)
+}
+
+func getExpiresHeader(ctx context.Context) string {
+	return ctx.Value(expiresHeaderCtxKey).(string)
 }

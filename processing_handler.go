@@ -53,10 +53,27 @@ func respondWithImage(ctx context.Context, reqID string, r *http.Request, rw htt
 		contentDisposition = po.Format.ContentDispositionFromURL(getImageURL(ctx))
 	}
 
-	rw.Header().Set("Expires", time.Now().Add(time.Second*time.Duration(conf.TTL)).Format(http.TimeFormat))
-	rw.Header().Set("Cache-Control", fmt.Sprintf("max-age=%d, public", conf.TTL))
 	rw.Header().Set("Content-Type", po.Format.Mime())
 	rw.Header().Set("Content-Disposition", contentDisposition)
+
+	var cacheControl, expires string
+
+	if conf.CacheControlPassthrough {
+		cacheControl = getCacheControlHeader(ctx)
+		expires = getExpiresHeader(ctx)
+	}
+
+	if len(cacheControl) == 0 && len(expires) == 0 {
+		cacheControl = fmt.Sprintf("max-age=%d, public", conf.TTL)
+		expires = time.Now().Add(time.Second * time.Duration(conf.TTL)).Format(http.TimeFormat)
+	}
+
+	if len(cacheControl) > 0 {
+		rw.Header().Set("Cache-Control", cacheControl)
+	}
+	if len(expires) > 0 {
+		rw.Header().Set("Expires", expires)
+	}
 
 	if len(headerVaryValue) > 0 {
 		rw.Header().Set("Vary", headerVaryValue)

@@ -153,8 +153,11 @@ type config struct {
 	DownloadTimeout  int
 	Concurrency      int
 	MaxClients       int
-	TTL              int
-	SoReuseport      bool
+
+	TTL                     int
+	CacheControlPassthrough bool
+
+	SoReuseport bool
 
 	MaxSrcDimension    int
 	MaxSrcResolution   int
@@ -284,6 +287,7 @@ func configure() {
 	intEnvConfig(&conf.MaxClients, "IMGPROXY_MAX_CLIENTS")
 
 	intEnvConfig(&conf.TTL, "IMGPROXY_TTL")
+	boolEnvConfig(&conf.CacheControlPassthrough, "IMGPROXY_CACHE_CONTROL_PASSTHROUGH")
 
 	boolEnvConfig(&conf.SoReuseport, "IMGPROXY_SO_REUSEPORT")
 

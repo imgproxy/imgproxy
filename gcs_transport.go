@@ -47,13 +47,16 @@ func (t gcsTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 		return nil, err
 	}
 
+	header := make(http.Header)
+	header.Set("Cache-Control", reader.Attrs.CacheControl)
+
 	return &http.Response{
 		Status:        "200 OK",
 		StatusCode:    200,
 		Proto:         "HTTP/1.0",
 		ProtoMajor:    1,
 		ProtoMinor:    0,
-		Header:        make(http.Header),
+		Header:        header,
 		ContentLength: reader.Attrs.Size,
 		Body:          reader,
 		Close:         true,
