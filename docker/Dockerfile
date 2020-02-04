@@ -1,6 +1,9 @@
 FROM golang:1-buster
 LABEL maintainer="Sergey Alexandrovich <darthsim@gmail.com>"
 
+ARG VIPS_VERSION=8.9.1
+ARG IMAGEMAGICK_VERSION=7.0.9-20
+
 ENV PKG_CONFIG_PATH /usr/local/lib/pkgconfig
 ENV LD_LIBRARY_PATH /lib64:/usr/lib64:/usr/local/lib
 ENV CGO_LDFLAGS_ALLOW "-s|-w"
@@ -29,9 +32,8 @@ RUN apt-get update \
 
 # Build ImageMagick
 RUN cd /root \
-  && mkdir ImageMagick \
-  && curl -Ls https://imagemagick.org/download/ImageMagick.tar.gz | tar -xz -C ImageMagick --strip-components 1 \
-  && cd ImageMagick \
+  && curl -Ls https://github.com/ImageMagick/ImageMagick/archive/$IMAGEMAGICK_VERSION.tar.gz | tar -xz \
+  && cd ImageMagick-$IMAGEMAGICK_VERSION \
   && ./configure \
     --enable-silent-rules \
     --disable-static \
@@ -62,8 +64,6 @@ RUN cd /root \
 
 # Build libvips
 RUN cd /root \
-  && export VIPS_VERSION=$(curl -s "https://api.github.com/repos/libvips/libvips/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/') \
-  && echo "Vips version: $VIPS_VERSION" \
   && curl -Ls https://github.com/libvips/libvips/releases/download/v$VIPS_VERSION/vips-$VIPS_VERSION.tar.gz | tar -xz \
   && cd vips-$VIPS_VERSION \
   && ./configure \
