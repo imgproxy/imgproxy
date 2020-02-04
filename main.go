@@ -32,6 +32,7 @@ func initialize() {
 
 func main() {
 	initialize()
+	defer shutdownVips()
 
 	go func() {
 		var logMemStats = len(os.Getenv("IMGPROXY_LOG_MEM_STATS")) > 0
@@ -48,12 +49,10 @@ func main() {
 	}()
 
 	s := startServer()
+	defer shutdownServer(s)
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 
 	<-stop
-
-	shutdownServer(s)
-	shutdownVips()
 }
