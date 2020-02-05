@@ -18,6 +18,22 @@ docker build -f docker/Dockerfile -t imgproxy .
 docker run -p 8080:8080 -it imgproxy
 ```
 
+## Helm
+
+imgproxy can be easily deployed to your Kubernetes cluster using Helm and our official Helm chart:
+
+```bash
+helm repo add imgproxy https://helm.imgproxy.net/
+
+# With Helm 3
+helm upgrade -i imgproxy imgproxy/imgproxy
+
+# With Helm 2
+helm upgrade -i --name imgproxy imgproxy/imgproxy
+```
+
+Read the [chart's README](https://github.com/imgproxy/imgproxy-helm) for more info.
+
 ## Heroku
 
 imgproxy can be deployed to Heroku with a click of a button:
