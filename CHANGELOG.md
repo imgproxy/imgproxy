@@ -5,6 +5,7 @@
 - `IMGPROXY_NETWORK` config. Allows to bind on Unix socket.
 - `IMGPROXY_CACHE_CONTROL_PASSTHROUGH` config.
 - `imgproxy health` command.
+- (pro) `IMGPROXY_GIF_OPTIMIZE_FRAMES` & `IMGPROXY_GIF_OPTIMIZE_TRANSPARENCY` configs and `gif_options` processing option.
 
 ### Fixed
 - Fix detection of SVG starting with a comment.

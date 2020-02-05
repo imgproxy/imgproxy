@@ -368,6 +368,15 @@ pngo:%png_interlaced:%png_quantize:%png_quantization_colors
 
 Allows redefining PNG saving options. All arguments have the same meaning as [Advanced PNG compression](configuration.md#advanced-png-compression) configs. All arguments are optional and can be omitted.
 
+#### GIF options <img class="pro-badge" src="assets/pro.svg" alt="pro" />
+
+```
+gif_options:%gif_optimize_frames:%gif_optimize_transparency
+gifo:%gif_optimize_frames:%gif_optimize_transparency
+```
+
+Allows redefining GIF saving options. All arguments have the same meaning as [Advanced GIF compression](configuration.md#advanced-gif-compression) configs. All arguments are optional and can be omitted.
+
 #### Preset
 
 ```

@@ -104,6 +104,11 @@ Also you may want imgproxy to respond with the same error message that it writes
 * `IMGPROXY_PNG_QUANTIZE`: when true, enables PNG quantization. libvips should be built with libimagequant support. Default: false;
 * `IMGPROXY_PNG_QUANTIZATION_COLORS`: maximum number of quantization palette entries. Should be between 2 and 256. Default: 256;
 
+### Advanced GIF compression
+
+* `IMGPROXY_GIF_OPTIMIZE_FRAMES`: <img class="pro-badge" src="assets/pro.svg" alt="pro" /> when true, enables GIF frames optimization. This may produce a smaller result, but may increase compression time.
+* `IMGPROXY_GIF_OPTIMIZE_TRANSPARENCY`: <img class="pro-badge" src="assets/pro.svg" alt="pro" /> when true, enables GIF transparency optimization. This may produce a smaller result, but may increase compression time.
+
 ## WebP support detection
 
 imgproxy can use the `Accept` HTTP header to detect if the browser supports WebP and use it as the default format. This feature is disabled by default and can be enabled by the following options:
