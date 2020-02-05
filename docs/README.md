@@ -54,6 +54,7 @@ Many thanks to:
 * [Roman Shamin](https://github.com/romashamin) for the awesome logo.
 * [Alena Kirdina](https://github.com/egodyston) and [Alexander Madyankin](https://github.com/outpunk) for the great website.
 * [John Cupitt](https://github.com/jcupitt) who develops [libvips](https://github.com/libvips/libvips) and helps me to optimize its usage under the hood of imgproxy.
+* [Kirill Kuznetsov](https://github.com/dragonsmith) for the [Helm chart](https://github.com/imgproxy/imgproxy-helm).
 
 ## License
 
