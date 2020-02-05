@@ -210,9 +210,11 @@ func getImageData(ctx context.Context) *imageData {
 }
 
 func getCacheControlHeader(ctx context.Context) string {
-	return ctx.Value(cacheControlHeaderCtxKey).(string)
+	str, _ := ctx.Value(cacheControlHeaderCtxKey).(string)
+	return str
 }
 
 func getExpiresHeader(ctx context.Context) string {
-	return ctx.Value(expiresHeaderCtxKey).(string)
+	str, _ := ctx.Value(expiresHeaderCtxKey).(string)
+	return str
 }

@@ -1046,7 +1046,8 @@ func parsePath(ctx context.Context, r *http.Request) (context.Context, error) {
 }
 
 func getImageURL(ctx context.Context) string {
-	return ctx.Value(imageURLCtxKey).(string)
+	str, _ := ctx.Value(imageURLCtxKey).(string)
+	return str
 }
 
 func getProcessingOptions(ctx context.Context) *processingOptions {
