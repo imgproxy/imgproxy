@@ -7,6 +7,10 @@
 - `imgproxy health` command.
 - (pro) `IMGPROXY_GIF_OPTIMIZE_FRAMES` & `IMGPROXY_GIF_OPTIMIZE_TRANSPARENCY` configs and `gif_options` processing option.
 
+### Changed
+
+- Better SVG detection.
+
 ### Fixed
 - Fix detection of SVG starting with a comment.
 

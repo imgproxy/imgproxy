@@ -90,6 +90,8 @@ func initDownloading() {
 	}
 
 	downloadBufPool = newBufPool("download", conf.Concurrency, conf.DownloadBufferSize)
+
+	imagemeta.SetMaxSvgCheckRead(conf.MaxSvgCheckBytes)
 }
 
 func checkDimensions(width, height int) error {

@@ -27,6 +27,10 @@ imgproxy supports SVG sources without limitations, but SVG results are not suppo
 
 When the source image is SVG and the SVG result is requested, imgproxy returns source image without modifications.
 
+imgproxy reads some amount of bytes to check if the source image is SVG. By default it reads maximum of 32KB, but you can change this:
+
+* `IMGPROXY_MAX_SVG_CHECK_BYTES`: the maximum number of bytes imgproxy will read to recognize SVG. If imgproxy can't recognize your SVG, try to increase this number. Default: `32768` (32KB)
+
 ## HEIC support
 
 imgproxy supports HEIC only when using libvips 8.8.0+. Official imgproxy Docker image supports HEIC out of the box.

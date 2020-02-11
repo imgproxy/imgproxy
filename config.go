@@ -163,6 +163,7 @@ type config struct {
 	MaxSrcResolution   int
 	MaxSrcFileSize     int
 	MaxAnimationFrames int
+	MaxSvgCheckBytes   int
 
 	JpegProgressive       bool
 	PngInterlaced         bool
@@ -245,6 +246,7 @@ var conf = config{
 	TTL:                            3600,
 	MaxSrcResolution:               16800000,
 	MaxAnimationFrames:             1,
+	MaxSvgCheckBytes:               32 * 1024,
 	SignatureSize:                  32,
 	PngQuantizationColors:          256,
 	Quality:                        80,
@@ -294,6 +296,7 @@ func configure() {
 	intEnvConfig(&conf.MaxSrcDimension, "IMGPROXY_MAX_SRC_DIMENSION")
 	megaIntEnvConfig(&conf.MaxSrcResolution, "IMGPROXY_MAX_SRC_RESOLUTION")
 	intEnvConfig(&conf.MaxSrcFileSize, "IMGPROXY_MAX_SRC_FILE_SIZE")
+	intEnvConfig(&conf.MaxSvgCheckBytes, "IMGPROXY_MAX_SVG_CHECK_BYTES")
 
 	if _, ok := os.LookupEnv("IMGPROXY_MAX_GIF_FRAMES"); ok {
 		logWarning("`IMGPROXY_MAX_GIF_FRAMES` is deprecated and will be removed in future versions. Use `IMGPROXY_MAX_ANIMATION_FRAMES` instead")

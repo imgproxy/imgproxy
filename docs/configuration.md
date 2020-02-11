@@ -53,6 +53,10 @@ imgproxy can process animated images (GIF, WebP), but since this operation is pr
 
 **Note:** imgproxy summarizes all frames resolutions while checking source image resolution.
 
+imgproxy reads some amount of bytes to check if the source image is SVG. By default it reads maximum of 32KB, but you can change this:
+
+* `IMGPROXY_MAX_SVG_CHECK_BYTES`: the maximum number of bytes imgproxy will read to recognize SVG. If imgproxy can't recognize your SVG, try to increase this number. Default: `32768` (32KB)
+
 You can also specify a secret to enable authorization with the HTTP `Authorization` header for use in production environments:
 
 * `IMGPROXY_SECRET`: the authorization token. If specified, the HTTP request should contain the `Authorization: Bearer %secret%` header;
