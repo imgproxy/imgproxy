@@ -69,6 +69,8 @@ You can limit allowed source URLs:
 
 * `IMGPROXY_ALLOWED_SOURCES`: whitelist of source image URLs prefixes divided by comma. When blank, imgproxy allows all source image URLs. Example: `s3://,https://example.com/,local://`. Default: blank.
 
+**Warning:** Be careful when using this config to limit source URL hosts, and always add a trailing slash after the host. Bad: `http://example.com`, good: `http://example.com/`. If you don't add a trailing slash, `http://example.com@baddomain.com` will be an allowed URL but the request will be made to `baddomain.com`.
+
 When you use imgproxy in a development environment, it can be useful to ignore SSL verification:
 
 * `IMGPROXY_IGNORE_SSL_VERIFICATION`: when true, disables SSL verification, so imgproxy can be used in a development environment with self-signed SSL certificates.
