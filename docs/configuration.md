@@ -51,7 +51,7 @@ imgproxy can process animated images (GIF, WebP), but since this operation is pr
 
 * `IMGPROXY_MAX_ANIMATION_FRAMES`: the maximum of animated image frames to being processed. Default: `1`.
 
-**Note:** imgproxy summarizes all frames resolutions while checking source image resolution.
+**📝Note:** imgproxy summarizes all frames resolutions while checking source image resolution.
 
 imgproxy reads some amount of bytes to check if the source image is SVG. By default it reads maximum of 32KB, but you can change this:
 
@@ -69,7 +69,7 @@ You can limit allowed source URLs:
 
 * `IMGPROXY_ALLOWED_SOURCES`: whitelist of source image URLs prefixes divided by comma. When blank, imgproxy allows all source image URLs. Example: `s3://,https://example.com/,local://`. Default: blank.
 
-**Warning:** Be careful when using this config to limit source URL hosts, and always add a trailing slash after the host. Bad: `http://example.com`, good: `http://example.com/`. If you don't add a trailing slash, `http://example.com@baddomain.com` will be an allowed URL but the request will be made to `baddomain.com`.
+**⚠️Warning:** Be careful when using this config to limit source URL hosts, and always add a trailing slash after the host. Bad: `http://example.com`, good: `http://example.com/`. If you don't add a trailing slash, `http://example.com@baddomain.com` will be an allowed URL but the request will be made to `baddomain.com`.
 
 When you use imgproxy in a development environment, it can be useful to ignore SSL verification:
 
@@ -102,7 +102,7 @@ Also you may want imgproxy to respond with the same error message that it writes
   * `7`: Table from A Visual Detection Model for DCT Coefficient Quantization (1993);
   * `8`: Table from An Improved Detection Model for DCT Coefficient Quantization (1993).
 
-**Note:** `IMGPROXY_JPEG_TRELLIS_QUANT`, `IMGPROXY_JPEG_OVERSHOOT_DERINGING`, `IMGPROXY_JPEG_OPTIMIZE_SCANS`, and `IMGPROXY_JPEG_QUANT_TABLE` require libvips to be built with [MozJPEG](https://github.com/mozilla/mozjpeg) since standard libjpeg doesn't support those optimizations.
+**📝Note:** `IMGPROXY_JPEG_TRELLIS_QUANT`, `IMGPROXY_JPEG_OVERSHOOT_DERINGING`, `IMGPROXY_JPEG_OPTIMIZE_SCANS`, and `IMGPROXY_JPEG_QUANT_TABLE` require libvips to be built with [MozJPEG](https://github.com/mozilla/mozjpeg) since standard libjpeg doesn't support those optimizations.
 
 ### Advanced PNG compression
 
@@ -124,7 +124,7 @@ imgproxy can use the `Accept` HTTP header to detect if the browser supports WebP
 
 When WebP support detection is enabled, please take care to configure your CDN or caching proxy to take the `Accept` HTTP header into account while caching.
 
-**Warning**: Headers cannot be signed. This means that an attacker can bypass your CDN cache by changing the `Accept` HTTP headers. Have this in mind when configuring your production caching setup.
+**⚠️Warning:** Headers cannot be signed. This means that an attacker can bypass your CDN cache by changing the `Accept` HTTP headers. Have this in mind when configuring your production caching setup.
 
 ## Client Hints support
 
@@ -132,7 +132,7 @@ imgproxy can use the `Width`, `Viewport-Width` or `DPR` HTTP headers to determin
 
 * `IMGPROXY_ENABLE_CLIENT_HINTS`: enables Client Hints support to determine default width and DPR options. Read [here](https://developers.google.com/web/updates/2015/09/automating-resource-selection-with-client-hints) details about Client Hints.
 
-**Warning**: Headers cannot be signed. This means that an attacker can bypass your CDN cache by changing the `Width`, `Viewport-Width` or `DPR` HTTP headers. Have this in mind when configuring your production caching setup.
+**⚠️Warning:** Headers cannot be signed. This means that an attacker can bypass your CDN cache by changing the `Width`, `Viewport-Width` or `DPR` HTTP headers. Have this in mind when configuring your production caching setup.
 
 ## Watermark
 
@@ -249,11 +249,11 @@ imgproxy can send logs to syslog, but this feature is disabled by default. To en
 * `IMGPROXY_SYSLOG_ADDRESS`: address of the syslog service. Not used if `IMGPROXY_SYSLOG_NETWORK` is blank. Default: blank;
 * `IMGPROXY_SYSLOG_TAG`: specific syslog tag. Default: `imgproxy`;
 
-**Note:** imgproxy always uses structured log format for syslog.
+**📝Note:** imgproxy always uses structured log format for syslog.
 
 ## Memory usage tweaks
 
-**Warning:** It's highly recommended to read [Memory usage tweaks](memory_usage_tweaks.md) guide before changing this settings.
+**⚠️Warning:** It's highly recommended to read [Memory usage tweaks](memory_usage_tweaks.md) guide before changing this settings.
 
 * `IMGPROXY_DOWNLOAD_BUFFER_SIZE`: the initial size (in bytes) of a single download buffer. When zero, initializes empty download buffers. Default: `0`;
 * `IMGPROXY_GZIP_BUFFER_SIZE`: the initial size (in bytes) of a single GZip buffer. When zero, initializes empty GZip buffers. Makes sense only when GZip compression is enabled. Default: `0`;

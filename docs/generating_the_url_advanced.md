@@ -181,8 +181,9 @@ Removes surrounding background.
 
 * `threshold` - color similarity tolerance.
 
-**Warning:** Trimming requires an image to be fully loaded into memory. This disables scale-on-load and significantly increases memory usage and processing time. Use it carefully with large images.
-**Note:** Trimming of animated images is not supported.
+**⚠️Warning:** Trimming requires an image to be fully loaded into memory. This disables scale-on-load and significantly increases memory usage and processing time. Use it carefully with large images.
+
+**📝Note:** Trimming of animated images is not supported.
 
 #### Quality
 
@@ -204,8 +205,9 @@ mb:%bytes
 
 When set, imgproxy automatically degrades the quality of the image until the image is under the specified amount of bytes.
 
-**Note:** Applicable only to `jpg`, `webp`, `heic`, and `tiff`.
-**Warning**: When `max_bytes` is set, imgproxy saves image multiple times to achieve specified image size.
+**📝Note:** Applicable only to `jpg`, `webp`, `heic`, and `tiff`.
+
+**⚠️Warning:** When `max_bytes` is set, imgproxy saves image multiple times to achieve specified image size.
 
 Default: 0
 
@@ -438,7 +440,7 @@ The source URL can be provided as is, prendended by `/plain/` part:
 /plain/http://example.com/images/curiosity.jpg
 ```
 
-**Note:** If the source URL contains query string or `@`, you need to escape it.
+**📝Note:** If the source URL contains query string or `@`, you need to escape it.
 
 When using plain source URL, you can specify the [extension](#extension) after `@`:
 
@@ -466,7 +468,7 @@ Extension specifies the format of the resulting image. At the moment, imgproxy s
 
 <img class="pro-badge" src="assets/pro.svg" alt="pro" /> Also you can yse `mp4` extension to convert animated images to MP4.
 
-**Note:** Read more about image formats support [here](image_formats_support.md).
+**📝Note:** Read more about image formats support [here](image_formats_support.md).
 
 The extension part can be omitted. In this case, imgproxy will use source image format as resulting one. If source image format is not supported as resulting, imgproxy will use `jpg`. You also can [enable WebP support detection](configuration.md#webp-support-detection) to use it as default resulting format when possible.
 

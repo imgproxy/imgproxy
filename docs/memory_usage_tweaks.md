@@ -2,7 +2,7 @@
 
 There are some imgproxy options that can help you to optimize memory usage and decrease memory fragmentation.
 
-**Warning:** This is an advanced part. Please make sure that you know what you're doing before changing anything.
+**⚠️Warning:** This is an advanced part. Please make sure that you know what you're doing before changing anything.
 
 ### IMGPROXY_DOWNLOAD_BUFFER_SIZE
 

@@ -49,7 +49,7 @@ Since processing of animated images is pretty heavy, only one frame is processed
 
 * `IMGPROXY_MAX_ANIMATION_FRAMES`: the maximum of animated image frames to being processed. Default: `1`.
 
-**Note:** imgproxy summarizes all frames resolutions while checking source image resolution.
+**📝Note:** imgproxy summarizes all frames resolutions while checking source image resolution.
 
 ## Converting animated images to MP4 <img class="pro-badge" src="assets/pro.svg" alt="pro" />
 
