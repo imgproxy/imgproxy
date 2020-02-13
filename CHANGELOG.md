@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+
+## [2.10.0] - 2020-02-13
 ### Added
 - `IMGPROXY_NETWORK` config. Allows to bind on Unix socket.
 - `IMGPROXY_CACHE_CONTROL_PASSTHROUGH` config.
