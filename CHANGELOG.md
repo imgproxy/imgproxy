@@ -6,6 +6,7 @@
 - `IMGPROXY_CACHE_CONTROL_PASSTHROUGH` config.
 - `imgproxy health` command.
 - (pro) `IMGPROXY_GIF_OPTIMIZE_FRAMES` & `IMGPROXY_GIF_OPTIMIZE_TRANSPARENCY` configs and `gif_options` processing option.
+- (pro) `IMGPROXY_CUSTOM_REQUEST_HEADERS`, `IMGPROXY_CUSTOM_RESPONSE_HEADERS`, and `IMGPROXY_CUSTOM_HEADERS_SEPARATOR` configs.
 
 ### Changed
 

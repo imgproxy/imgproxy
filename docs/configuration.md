@@ -39,6 +39,9 @@ echo $(xxd -g 2 -l 64 -p /dev/random | tr -d '\n')
 * `IMGPROXY_SO_REUSEPORT`: when `true`, enables `SO_REUSEPORT` socket option (currently on linux and darwin only);
 * `IMGPROXY_USER_AGENT`: User-Agent header that will be sent with source image request. Default: `imgproxy/%current_version`;
 * `IMGPROXY_USE_ETAG`: when `true`, enables using [ETag](https://en.wikipedia.org/wiki/HTTP_ETag) HTTP header for HTTP cache control. Default: false;
+* `IMGPROXY_CUSTOM_REQUEST_HEADERS`: <img class="pro-badge" src="assets/pro.svg" alt="pro" /> list of custom headers that imgproxy will send while requesting the source image, divided by `\;` (can be redefined by `IMGPROXY_CUSTOM_HEADERS_SEPARATOR`). Example: `X-MyHeader1=Lorem\;X-MyHeader2=Ipsum`;
+* `IMGPROXY_CUSTOM_RESPONSE_HEADERS`: <img class="pro-badge" src="assets/pro.svg" alt="pro" /> list of custom response headers, divided by `\;` (can be redefined by `IMGPROXY_CUSTOM_HEADERS_SEPARATOR`). Example: `X-MyHeader1=Lorem\;X-MyHeader2=Ipsum`;
+* `IMGPROXY_CUSTOM_HEADERS_SEPARATOR`: <img class="pro-badge" src="assets/pro.svg" alt="pro" /> string that will be used as a custom headers separator. Default: `\;`;
 
 ## Security
 
