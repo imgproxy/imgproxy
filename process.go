@@ -587,12 +587,22 @@ func getIcoData(imgdata *imageData) (*imageData, error) {
 
 	data := imgdata.Data[offset : offset+size]
 
+	var format string
+
 	meta, err := imagemeta.DecodeMeta(bytes.NewReader(data))
 	if err != nil {
-		return nil, err
+		// Looks like it's BMP with an incomplete header
+		if d, err := imagemeta.FixBmpHeader(data); err == nil {
+			format = "bmp"
+			data = d
+		} else {
+			return nil, err
+		}
+	} else {
+		format = meta.Format()
 	}
 
-	if imgtype, ok := imageTypes[meta.Format()]; ok && vipsTypeSupportLoad[imgtype] {
+	if imgtype, ok := imageTypes[format]; ok && vipsTypeSupportLoad[imgtype] {
 		return &imageData{
 			Data: data,
 			Type: imgtype,

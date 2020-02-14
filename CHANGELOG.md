@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+### Fixed
+- Fix loadind BMP stored in ICO.
 
 ## [2.10.0] - 2020-02-13
 ### Added
