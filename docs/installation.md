@@ -89,14 +89,17 @@ sudo apt-get install golang-go
 And finally, install imgproxy itself:
 
 ```bash
-CGO_LDFLAGS_ALLOW="-s|-w" go get -f -u github.com/imgproxy/imgproxy
+GO111MODULE=on \
+  CGO_LDFLAGS_ALLOW="-s|-w" \
+  go get -f -u github.com/imgproxy/imgproxy
 ```
 
 ### macOS + Homebrew
 
 ```bash
 brew install vips go
-PKG_CONFIG_PATH="$(brew --prefix libffi)/lib/pkgconfig" \
+GO111MODULE=on \
+  PKG_CONFIG_PATH="$(brew --prefix libffi)/lib/pkgconfig" \
   CGO_LDFLAGS_ALLOW="-s|-w" \
   CGO_CFLAGS_ALLOW="-Xpreprocessor" \
   go get -f -u github.com/imgproxy/imgproxy
