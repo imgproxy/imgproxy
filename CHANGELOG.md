@@ -8,6 +8,8 @@
 - Fix loadind BMP stored in ICO.
 - Fix ambiguous HEIC magic bytes (MP4 videos has been detected as HEIC).
 - Fix build with libvips < 8.6.
+- Fix build with Go 1.14.
+- Fix go module naming. Use `github.com/imgproxy/imgproxy/v2` to build imgproxy from source.
 
 ## [2.10.0] - 2020-02-13
 ### Added

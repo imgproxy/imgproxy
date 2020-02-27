@@ -1,4 +1,4 @@
-module github.com/imgproxy/imgproxy
+module github.com/imgproxy/imgproxy/v2
 
 go 1.11
 

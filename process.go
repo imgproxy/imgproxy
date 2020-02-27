@@ -7,7 +7,7 @@ import (
 	"math"
 	"runtime"
 
-	"github.com/imgproxy/imgproxy/imagemeta"
+	"github.com/imgproxy/imgproxy/v2/imagemeta"
 	"golang.org/x/sync/errgroup"
 )
 

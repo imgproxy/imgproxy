@@ -91,7 +91,7 @@ And finally, install imgproxy itself:
 ```bash
 GO111MODULE=on \
   CGO_LDFLAGS_ALLOW="-s|-w" \
-  go get -f -u github.com/imgproxy/imgproxy
+  go get -f -u github.com/imgproxy/imgproxy/v2
 ```
 
 ### macOS + Homebrew
@@ -102,5 +102,5 @@ GO111MODULE=on \
   PKG_CONFIG_PATH="$(brew --prefix libffi)/lib/pkgconfig" \
   CGO_LDFLAGS_ALLOW="-s|-w" \
   CGO_CFLAGS_ALLOW="-Xpreprocessor" \
-  go get -f -u github.com/imgproxy/imgproxy
+  go get -f -u github.com/imgproxy/imgproxy/v2
 ```
