@@ -4,6 +4,7 @@
 ### Fixed
 - Fix loadind BMP stored in ICO.
 - Fix ambiguous HEIC magic bytes (MP4 videos has been detected as HEIC).
+- Fix build with libvips < 8.6.
 
 ## [2.10.0] - 2020-02-13
 ### Added

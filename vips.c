@@ -37,6 +37,9 @@
 #define VIPS_SUPPORT_COMPOSITE \
   (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 6))
 
+#define VIPS_SUPPORT_FIND_TRIM \
+  (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 6))
+
 #define EXIF_ORIENTATION "exif-ifd0-Orientation"
 
 #if (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 8))
@@ -396,6 +399,7 @@ vips_extract_area_go(VipsImage *in, VipsImage **out, int left, int top, int widt
 
 int
 vips_trim(VipsImage *in, VipsImage **out, double threshold) {
+#if VIPS_SUPPORT_FIND_TRIM
   VipsImage *tmp;
 
   if (vips_image_hasalpha(in)) {
@@ -434,6 +438,10 @@ vips_trim(VipsImage *in, VipsImage **out, double threshold) {
   }
 
   return vips_extract_area(in, out, left, top, width, height, NULL);
+#else
+  vips_error("vips_trim", "Trim is not supported (libvips 8.6+ reuired)");
+  return 1;
+#endif
 }
 
 int
