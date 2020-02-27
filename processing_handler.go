@@ -18,12 +18,15 @@ var (
 	headerVaryValue string
 )
 
-func initProcessingHandler() {
+func initProcessingHandler() error {
 	processingSem = make(chan struct{}, conf.Concurrency)
 
 	if conf.GZipCompression > 0 {
+		var err error
 		responseGzipBufPool = newBufPool("gzip", conf.Concurrency, conf.GZipBufferSize)
-		responseGzipPool = newGzipPool(conf.Concurrency)
+		if responseGzipPool, err = newGzipPool(conf.Concurrency); err != nil {
+			return err
+		}
 	}
 
 	vary := make([]string, 0)
@@ -41,6 +44,8 @@ func initProcessingHandler() {
 	}
 
 	headerVaryValue = strings.Join(vary, ", ")
+
+	return nil
 }
 
 func respondWithImage(ctx context.Context, reqID string, r *http.Request, rw http.ResponseWriter, data []byte) {

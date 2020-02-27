@@ -9,7 +9,7 @@ import (
 	"os"
 )
 
-func healthcheck() {
+func healthcheck() int {
 	network := conf.Network
 	bind := conf.Bind
 
@@ -27,7 +27,7 @@ func healthcheck() {
 	res, err := httpc.Get("http://imgproxy/health")
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
-		os.Exit(1)
+		return 1
 	}
 	defer res.Body.Close()
 
@@ -35,8 +35,8 @@ func healthcheck() {
 	fmt.Fprintln(os.Stderr, string(msg))
 
 	if res.StatusCode != 200 {
-		os.Exit(1)
+		return 1
 	}
 
-	os.Exit(0)
+	return 0
 }

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -13,29 +15,46 @@ const version = "2.10.0"
 
 type ctxKey string
 
-func initialize() {
+func initialize() error {
 	log.SetOutput(os.Stdout)
 
-	initLog()
-	configure()
-	initNewrelic()
+	if err := initLog(); err != nil {
+		return err
+	}
+
+	if err := configure(); err != nil {
+		return err
+	}
+
+	if err := initNewrelic(); err != nil {
+		return err
+	}
+
 	initPrometheus()
-	initDownloading()
+
+	if err := initDownloading(); err != nil {
+		return err
+	}
+
 	initErrorsReporting()
-	initVips()
+
+	if err := initVips(); err != nil {
+		return err
+	}
 
 	if err := checkPresets(conf.Presets); err != nil {
 		shutdownVips()
-		logFatal(err.Error())
+		return err
 	}
+
+	return nil
 }
 
-func main() {
-	if len(os.Args) > 1 && os.Args[1] == "health" {
-		healthcheck()
+func run() error {
+	if err := initialize(); err != nil {
+		return err
 	}
 
-	initialize()
 	defer shutdownVips()
 
 	go func() {
@@ -52,11 +71,43 @@ func main() {
 		}
 	}()
 
-	s := startServer()
+	ctx, cancel := context.WithCancel(context.Background())
+
+	if prometheusEnabled {
+		if err := startPrometheusServer(cancel); err != nil {
+			return err
+		}
+	}
+
+	s, err := startServer(cancel)
+	if err != nil {
+		return err
+	}
 	defer shutdownServer(s)
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 
-	<-stop
+	select {
+	case <-ctx.Done():
+	case <-stop:
+	}
+
+	return nil
+}
+
+func main() {
+	if len(os.Args) > 1 {
+		switch os.Args[1] {
+		case "health":
+			os.Exit(healthcheck())
+		case "version":
+			fmt.Println(version)
+			os.Exit(0)
+		}
+	}
+
+	if err := run(); err != nil {
+		logFatal(err.Error())
+	}
 }

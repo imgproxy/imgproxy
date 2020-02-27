@@ -31,10 +31,10 @@ func buildRouter() *router {
 	return r
 }
 
-func startServer() *http.Server {
+func startServer(cancel context.CancelFunc) (*http.Server, error) {
 	l, err := listenReuseport(conf.Network, conf.Bind)
 	if err != nil {
-		logFatal(err.Error())
+		return nil, fmt.Errorf("Can't start server: %s", err)
 	}
 	l = netutil.LimitListener(l, conf.MaxClients)
 
@@ -50,16 +50,19 @@ func startServer() *http.Server {
 		s.SetKeepAlivesEnabled(false)
 	}
 
-	initProcessingHandler()
+	if err := initProcessingHandler(); err != nil {
+		return nil, err
+	}
 
 	go func() {
 		logNotice("Starting server at %s", conf.Bind)
 		if err := s.Serve(l); err != nil && err != http.ErrServerClosed {
-			logFatal(err.Error())
+			logError(err.Error())
 		}
+		cancel()
 	}()
 
-	return s
+	return s, nil
 }
 
 func shutdownServer(s *http.Server) {

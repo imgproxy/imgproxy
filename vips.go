@@ -9,6 +9,7 @@ package main
 import "C"
 import (
 	"context"
+	"fmt"
 	"math"
 	"os"
 	"runtime"
@@ -43,13 +44,13 @@ const (
 	vipsAngleD270 = C.VIPS_ANGLE_D270
 )
 
-func initVips() {
+func initVips() error {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 
 	if err := C.vips_initialize(); err != 0 {
 		C.vips_shutdown()
-		logFatal("unable to start vips!")
+		return fmt.Errorf("unable to start vips!")
 	}
 
 	// Disable libvips cache. Since processing pipeline is fine tuned, we won't get much profit from it.
@@ -95,10 +96,13 @@ func initVips() {
 	vipsConf.WatermarkOpacity = C.double(conf.WatermarkOpacity)
 
 	if err := vipsLoadWatermark(); err != nil {
-		logFatal(err.Error())
+		C.vips_shutdown()
+		return fmt.Errorf("Can't load watermark: %s", err)
 	}
 
 	vipsCollectMetrics()
+
+	return nil
 }
 
 func shutdownVips() {

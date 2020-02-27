@@ -59,7 +59,7 @@ func (lr *limitReader) Read(p []byte) (n int, err error) {
 	return
 }
 
-func initDownloading() {
+func initDownloading() error {
 	transport := &http.Transport{
 		Proxy:               http.ProxyFromEnvironment,
 		MaxIdleConns:        conf.Concurrency,
@@ -77,11 +77,19 @@ func initDownloading() {
 	}
 
 	if conf.S3Enabled {
-		transport.RegisterProtocol("s3", newS3Transport())
+		if t, err := newS3Transport(); err != nil {
+			return err
+		} else {
+			transport.RegisterProtocol("s3", t)
+		}
 	}
 
 	if conf.GCSEnabled {
-		transport.RegisterProtocol("gs", newGCSTransport())
+		if t, err := newGCSTransport(); err != nil {
+			return err
+		} else {
+			transport.RegisterProtocol("gs", t)
+		}
 	}
 
 	downloadClient = &http.Client{
@@ -92,6 +100,8 @@ func initDownloading() {
 	downloadBufPool = newBufPool("download", conf.Concurrency, conf.DownloadBufferSize)
 
 	imagemeta.SetMaxSvgCheckRead(conf.MaxSvgCheckBytes)
+
+	return nil
 }
 
 func checkDimensions(width, height int) error {

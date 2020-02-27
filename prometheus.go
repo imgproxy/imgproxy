@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -99,20 +101,25 @@ func initPrometheus() {
 	)
 
 	prometheusEnabled = true
+}
 
+func startPrometheusServer(cancel context.CancelFunc) error {
 	s := http.Server{Handler: promhttp.Handler()}
 
-	go func() {
-		l, err := listenReuseport("tcp", conf.PrometheusBind)
-		if err != nil {
-			logFatal(err.Error())
-		}
+	l, err := listenReuseport("tcp", conf.PrometheusBind)
+	if err != nil {
+		return fmt.Errorf("Can't start Prometheus metrics server: %s", err)
+	}
 
+	go func() {
 		logNotice("Starting Prometheus server at %s", conf.PrometheusBind)
 		if err := s.Serve(l); err != nil && err != http.ErrServerClosed {
-			logFatal(err.Error())
+			logError(err.Error())
 		}
+		cancel()
 	}()
+
+	return nil
 }
 
 func startPrometheusDuration(m prometheus.Histogram) func() {

@@ -1,6 +1,9 @@
 # Changelog
 
 ## [Unreleased]
+### Changed
+- `imgproxy -v` is replaced with `imgproxy version`.
+
 ### Fixed
 - Fix loadind BMP stored in ICO.
 - Fix ambiguous HEIC magic bytes (MP4 videos has been detected as HEIC).
