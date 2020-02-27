@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+
+## [2.10.1] - 2020-02-27
 ### Changed
 - `imgproxy -v` is replaced with `imgproxy version`.
 
