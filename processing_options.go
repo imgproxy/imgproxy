@@ -105,6 +105,15 @@ type trimOptions struct {
 	Threshold float64
 }
 
+type paddingOptions struct {
+	Enabled bool
+	Color   rgbColor
+	Top     int
+	Right   int
+	Bottom  int
+	Left    int
+}
+
 type watermarkOptions struct {
 	Enabled   bool
 	Opacity   float64
@@ -123,6 +132,7 @@ type processingOptions struct {
 	Extend       extendOptions
 	Crop         cropOptions
 	Trim         trimOptions
+	Padding      paddingOptions
 	Format       imageType
 	Quality      int
 	MaxBytes     int
@@ -205,6 +215,7 @@ func newProcessingOptions() *processingOptions {
 			Enlarge:      false,
 			Extend:       extendOptions{Enabled: false, Gravity: gravityOptions{Type: gravityCenter}},
 			Trim:         trimOptions{Enabled: false, Threshold: 10},
+			Padding:      paddingOptions{Enabled: false},
 			Quality:      conf.Quality,
 			MaxBytes:     0,
 			Format:       imageTypeUnknown,
@@ -567,6 +578,51 @@ func applyTrimOption(po *processingOptions, args []string) error {
 	return nil
 }
 
+func applyPaddingOption(po *processingOptions, args []string) error {
+	nArgs := len(args)
+
+	if nArgs < 1 || nArgs > 5 {
+		return fmt.Errorf("Invalid padding arguments: %v", args)
+	}
+
+	if c, err := colorFromHex(args[0]); err == nil {
+		po.Padding.Enabled = true
+		po.Padding.Color = c
+	} else {
+		return fmt.Errorf("Invalid padding color: %s", args[0])
+	}
+
+	if nArgs > 1 {
+		if err := parseDimension(&po.Padding.Top, "padding top", args[1]); err != nil {
+			return err
+		}
+	}
+
+	if nArgs > 2 {
+		if err := parseDimension(&po.Padding.Right, "padding right", args[2]); err != nil {
+			return err
+		}
+	}
+
+	if nArgs > 3 {
+		if err := parseDimension(&po.Padding.Bottom, "padding bottom", args[3]); err != nil {
+			return err
+		}
+	}
+
+	if nArgs > 4 {
+		if err := parseDimension(&po.Padding.Left, "padding left", args[4]); err != nil {
+			return err
+		}
+	}
+
+	if po.Padding.Top == 0 && po.Padding.Right == 0 && po.Padding.Bottom == 0 && po.Padding.Left == 0 {
+		po.Padding.Enabled = false
+	}
+
+	return nil
+}
+
 func applyQualityOption(po *processingOptions, args []string) error {
 	if len(args) > 1 {
 		return fmt.Errorf("Invalid quality arguments: %v", args)
@@ -797,6 +853,8 @@ func applyProcessingOption(po *processingOptions, name string, args []string) er
 		return applyCropOption(po, args)
 	case "trim", "t":
 		return applyTrimOption(po, args)
+	case "padding", "pd":
+		return applyPaddingOption(po, args)
 	case "quality", "q":
 		return applyQualityOption(po, args)
 	case "max_bytes", "mb":

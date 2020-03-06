@@ -73,6 +73,11 @@ func calcScale(width, height int, po *processingOptions, imgtype imageType) floa
 		dstH = srcH
 	}
 
+	if po.Padding.Enabled {
+		dstW -= float64(po.Padding.Left + po.Padding.Right)
+		dstH -= float64(po.Padding.Top + po.Padding.Bottom)
+	}
+
 	if dstW == srcW && dstH == srcH {
 		shrink = 1
 	} else {
@@ -383,6 +388,16 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 		if err = img.Resize(scale, hasAlpha); err != nil {
 			return err
 		}
+	}
+
+	if po.Padding.Enabled {
+		img.Embed(
+			img.Width()+po.Padding.Left+po.Padding.Right,
+			img.Height()+po.Padding.Top+po.Padding.Bottom,
+			po.Padding.Left,
+			po.Padding.Top,
+			po.Padding.Color,
+		)
 	}
 
 	checkTimeout(ctx)
