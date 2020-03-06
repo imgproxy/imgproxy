@@ -103,6 +103,10 @@ type cropOptions struct {
 type trimOptions struct {
 	Enabled   bool
 	Threshold float64
+	Smart     bool
+	Color     rgbColor
+	EqualHor  bool
+	EqualVer  bool
 }
 
 type watermarkOptions struct {
@@ -553,15 +557,33 @@ func applyCropOption(po *processingOptions, args []string) error {
 }
 
 func applyTrimOption(po *processingOptions, args []string) error {
-	if len(args) > 1 {
-		return fmt.Errorf("Invalid crop arguments: %v", args)
+	nArgs := len(args)
+
+	if nArgs > 4 {
+		return fmt.Errorf("Invalid trim arguments: %v", args)
 	}
 
 	if t, err := strconv.ParseFloat(args[0], 64); err == nil && t >= 0 {
 		po.Trim.Enabled = true
 		po.Trim.Threshold = t
 	} else {
-		return fmt.Errorf("Invalid trim treshold: %s", args[0])
+		return fmt.Errorf("Invalid trim threshold: %s", args[0])
+	}
+
+	if nArgs > 1 {
+		if c, err := colorFromHex(args[1]); err == nil {
+			po.Trim.Color = c
+		} else {
+			return fmt.Errorf("Invalid trim color: %s", args[1])
+		}
+	}
+
+	if nArgs > 2 {
+		po.Trim.EqualHor = parseBoolOption(args[2])
+	}
+
+	if nArgs > 3 {
+		po.Trim.EqualVer = parseBoolOption(args[3])
 	}
 
 	return nil
