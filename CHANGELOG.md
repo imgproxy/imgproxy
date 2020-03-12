@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+
+## [2.11.0] - 2020-03-12
 ## Changed
 - Replaced imagequant with [Quantizr](https://github.com/DarthSim/quantizr) in docker image.
 - Removed HEIC saving support.
