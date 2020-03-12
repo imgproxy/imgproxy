@@ -110,7 +110,7 @@ Also you may want imgproxy to respond with the same error message that it writes
 ### Advanced PNG compression
 
 * `IMGPROXY_PNG_INTERLACED`: when true, enables interlaced PNG compression. Default: false;
-* `IMGPROXY_PNG_QUANTIZE`: when true, enables PNG quantization. libvips should be built with libimagequant support. Default: false;
+* `IMGPROXY_PNG_QUANTIZE`: when true, enables PNG quantization. libvips should be built with [Quantizr](https://github.com/DarthSim/quantizr) or libimagequant support. Default: false;
 * `IMGPROXY_PNG_QUANTIZATION_COLORS`: maximum number of quantization palette entries. Should be between 2 and 256. Default: 256;
 
 ### Advanced GIF compression

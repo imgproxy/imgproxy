@@ -87,7 +87,7 @@ When using encoded source URL, you can specify the [extension](#extension) after
 
 ### Extension
 
-Extension specifies the format of the resulting image. At the moment, imgproxy supports only `jpg`, `png`, `webp`, `gif`, `ico`, `heic`, and `tiff`, them being the most popular and useful image formats.
+Extension specifies the format of the resulting image. At the moment, imgproxy supports only `jpg`, `png`, `webp`, `gif`, `ico`, and `tiff`, them being the most popular and useful image formats.
 
 <img class="pro-badge" src="assets/pro.svg" alt="pro" /> Also you can yse `mp4` extension to convert animated images to MP4.
 

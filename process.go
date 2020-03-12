@@ -26,8 +26,7 @@ func imageTypeSaveSupport(imgtype imageType) bool {
 }
 
 func imageTypeGoodForWeb(imgtype imageType) bool {
-	return imgtype != imageTypeHEIC &&
-		imgtype != imageTypeTIFF &&
+	return imgtype != imageTypeTIFF &&
 		imgtype != imageTypeBMP
 }
 

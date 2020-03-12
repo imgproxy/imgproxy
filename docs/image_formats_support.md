@@ -9,7 +9,7 @@ At the moment, imgproxy supports only the most popular image formats:
 * ICO;
 * SVG;
 * MP4 _(result only)_ <img class="pro-badge" src="assets/pro.svg" alt="pro" />;
-* HEIC;
+* HEIC _(source only)_;
 * BMP;
 * TIFF.
 
@@ -34,8 +34,6 @@ imgproxy reads some amount of bytes to check if the source image is SVG. By defa
 ## HEIC support
 
 imgproxy supports HEIC only when using libvips 8.8.0+. Official imgproxy Docker image supports HEIC out of the box.
-
-By default, imgproxy saves HEIC images as JPEG. You need to explicitly specify the `format` option to get HEIC output.
 
 ## BMP support
 

@@ -1,6 +1,10 @@
 # Changelog
 
 ## [Unreleased]
+## Changed
+- Replaced imagequant with [Quantizr](https://github.com/DarthSim/quantizr) in docker image.
+- Removed HEIC saving support.
+- Removed JBIG compressin support in TIFF.
 
 ## [2.10.1] - 2020-02-27
 ### Changed
