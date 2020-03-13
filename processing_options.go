@@ -208,7 +208,7 @@ func newProcessingOptions() *processingOptions {
 			Gravity:      gravityOptions{Type: gravityCenter},
 			Enlarge:      false,
 			Extend:       extendOptions{Enabled: false, Gravity: gravityOptions{Type: gravityCenter}},
-			Trim:         trimOptions{Enabled: false, Threshold: 10},
+			Trim:         trimOptions{Enabled: false, Threshold: 10, Smart: true},
 			Quality:      conf.Quality,
 			MaxBytes:     0,
 			Format:       imageTypeUnknown,
@@ -570,19 +570,20 @@ func applyTrimOption(po *processingOptions, args []string) error {
 		return fmt.Errorf("Invalid trim threshold: %s", args[0])
 	}
 
-	if nArgs > 1 {
+	if nArgs > 1 && len(args[1]) > 0 {
 		if c, err := colorFromHex(args[1]); err == nil {
 			po.Trim.Color = c
+			po.Trim.Smart = false
 		} else {
 			return fmt.Errorf("Invalid trim color: %s", args[1])
 		}
 	}
 
-	if nArgs > 2 {
+	if nArgs > 2 && len(args[2]) > 0 {
 		po.Trim.EqualHor = parseBoolOption(args[2])
 	}
 
-	if nArgs > 3 {
+	if nArgs > 3 && len(args[3]) > 0 {
 		po.Trim.EqualVer = parseBoolOption(args[3])
 	}
 
