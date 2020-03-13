@@ -30,7 +30,8 @@ RUN apt-get update \
     libexif-dev \
     liblcms2-dev \
     libde265-dev \
-    liblzma-dev
+    liblzma-dev \
+    libzstd-dev
 
 # Install quantizr
 RUN cd /root \
@@ -132,6 +133,7 @@ RUN apt-get update \
     liblcms2-2 \
     libde265-0 \
     liblzma5 \
+    libzstd1 \
   && rm -rf /var/lib/apt/lists/*
 
 COPY --from=0 /usr/local/bin/imgproxy /usr/local/bin/
