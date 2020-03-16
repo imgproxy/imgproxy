@@ -571,26 +571,30 @@ func applyPaddingOption(po *processingOptions, args []string) error {
 
 	po.Padding.Enabled = true
 
-	if nArgs > 1 {
-		if err := parseDimension(&po.Padding.Top, "padding top", args[1]); err != nil {
+	if nArgs > 0 && len(args[0]) > 0 {
+		if err := parseDimension(&po.Padding.Top, "padding top (+all)", args[0]); err != nil {
+			return err
+		}
+		po.Padding.Right = po.Padding.Top
+		po.Padding.Bottom = po.Padding.Top
+		po.Padding.Left = po.Padding.Top
+	}
+
+	if nArgs > 1 && len(args[1]) > 0 {
+		if err := parseDimension(&po.Padding.Right, "padding right (+left)", args[1]); err != nil {
+			return err
+		}
+		po.Padding.Left = po.Padding.Right
+	}
+
+	if nArgs > 2 && len(args[2]) > 0 {
+		if err := parseDimension(&po.Padding.Bottom, "padding bottom", args[2]); err != nil {
 			return err
 		}
 	}
 
-	if nArgs > 2 {
-		if err := parseDimension(&po.Padding.Right, "padding right", args[2]); err != nil {
-			return err
-		}
-	}
-
-	if nArgs > 3 {
-		if err := parseDimension(&po.Padding.Bottom, "padding bottom", args[3]); err != nil {
-			return err
-		}
-	}
-
-	if nArgs > 4 {
-		if err := parseDimension(&po.Padding.Left, "padding left", args[4]); err != nil {
+	if nArgs > 3 && len(args[3]) > 0 {
+		if err := parseDimension(&po.Padding.Left, "padding left", args[3]); err != nil {
 			return err
 		}
 	}
