@@ -102,7 +102,6 @@ type cropOptions struct {
 
 type paddingOptions struct {
 	Enabled bool
-	Color   rgbColor
 	Top     int
 	Right   int
 	Bottom  int
@@ -566,16 +565,11 @@ func applyCropOption(po *processingOptions, args []string) error {
 func applyPaddingOption(po *processingOptions, args []string) error {
 	nArgs := len(args)
 
-	if nArgs < 1 || nArgs > 5 {
+	if nArgs < 1 || nArgs > 4 {
 		return fmt.Errorf("Invalid padding arguments: %v", args)
 	}
 
-	if c, err := colorFromHex(args[0]); err == nil {
-		po.Padding.Enabled = true
-		po.Padding.Color = c
-	} else {
-		return fmt.Errorf("Invalid padding color: %s", args[0])
-	}
+	po.Padding.Enabled = true
 
 	if nArgs > 1 {
 		if err := parseDimension(&po.Padding.Top, "padding top", args[1]); err != nil {

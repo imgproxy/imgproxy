@@ -458,7 +458,7 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 			img.Height()+po.Padding.Top+po.Padding.Bottom,
 			po.Padding.Left,
 			po.Padding.Top,
-			po.Padding.Color,
+			po.Background,
 		)
 	}
 
