@@ -100,11 +100,6 @@ type cropOptions struct {
 	Gravity gravityOptions
 }
 
-type trimOptions struct {
-	Enabled   bool
-	Threshold float64
-}
-
 type paddingOptions struct {
 	Enabled bool
 	Color   rgbColor
@@ -112,6 +107,11 @@ type paddingOptions struct {
 	Right   int
 	Bottom  int
 	Left    int
+}
+
+type trimOptions struct {
+	Enabled   bool
+	Threshold float64
 }
 
 type watermarkOptions struct {
@@ -131,8 +131,8 @@ type processingOptions struct {
 	Enlarge      bool
 	Extend       extendOptions
 	Crop         cropOptions
-	Trim         trimOptions
 	Padding      paddingOptions
+	Trim         trimOptions
 	Format       imageType
 	Quality      int
 	MaxBytes     int
@@ -214,8 +214,8 @@ func newProcessingOptions() *processingOptions {
 			Gravity:      gravityOptions{Type: gravityCenter},
 			Enlarge:      false,
 			Extend:       extendOptions{Enabled: false, Gravity: gravityOptions{Type: gravityCenter}},
-			Trim:         trimOptions{Enabled: false, Threshold: 10},
 			Padding:      paddingOptions{Enabled: false},
+			Trim:         trimOptions{Enabled: false, Threshold: 10},
 			Quality:      conf.Quality,
 			MaxBytes:     0,
 			Format:       imageTypeUnknown,
@@ -563,21 +563,6 @@ func applyCropOption(po *processingOptions, args []string) error {
 	return nil
 }
 
-func applyTrimOption(po *processingOptions, args []string) error {
-	if len(args) > 1 {
-		return fmt.Errorf("Invalid crop arguments: %v", args)
-	}
-
-	if t, err := strconv.ParseFloat(args[0], 64); err == nil && t >= 0 {
-		po.Trim.Enabled = true
-		po.Trim.Threshold = t
-	} else {
-		return fmt.Errorf("Invalid trim treshold: %s", args[0])
-	}
-
-	return nil
-}
-
 func applyPaddingOption(po *processingOptions, args []string) error {
 	nArgs := len(args)
 
@@ -618,6 +603,21 @@ func applyPaddingOption(po *processingOptions, args []string) error {
 
 	if po.Padding.Top == 0 && po.Padding.Right == 0 && po.Padding.Bottom == 0 && po.Padding.Left == 0 {
 		po.Padding.Enabled = false
+	}
+
+	return nil
+}
+
+func applyTrimOption(po *processingOptions, args []string) error {
+	if len(args) > 1 {
+		return fmt.Errorf("Invalid crop arguments: %v", args)
+	}
+
+	if t, err := strconv.ParseFloat(args[0], 64); err == nil && t >= 0 {
+		po.Trim.Enabled = true
+		po.Trim.Threshold = t
+	} else {
+		return fmt.Errorf("Invalid trim treshold: %s", args[0])
 	}
 
 	return nil
