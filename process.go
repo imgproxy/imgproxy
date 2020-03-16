@@ -390,16 +390,6 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 		}
 	}
 
-	if po.Padding.Enabled {
-		img.Embed(
-			img.Width()+po.Padding.Left+po.Padding.Right,
-			img.Height()+po.Padding.Top+po.Padding.Bottom,
-			po.Padding.Left,
-			po.Padding.Top,
-			po.Padding.Color,
-		)
-	}
-
 	checkTimeout(ctx)
 
 	if angle != vipsAngleD0 || flip {
@@ -460,6 +450,16 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 		if err = img.Sharpen(po.Sharpen); err != nil {
 			return err
 		}
+	}
+
+	if po.Padding.Enabled {
+		img.Embed(
+			img.Width()+po.Padding.Left+po.Padding.Right,
+			img.Height()+po.Padding.Top+po.Padding.Bottom,
+			po.Padding.Left,
+			po.Padding.Top,
+			po.Padding.Color,
+		)
 	}
 
 	if po.Extend.Enabled && (po.Width > img.Width() || po.Height > img.Height()) {
