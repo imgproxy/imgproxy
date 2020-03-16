@@ -453,13 +453,15 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 	}
 
 	if po.Padding.Enabled {
-		img.Embed(
+		if err = img.Embed(
 			img.Width()+po.Padding.Left+po.Padding.Right,
 			img.Height()+po.Padding.Top+po.Padding.Bottom,
 			po.Padding.Left,
 			po.Padding.Top,
 			po.Background,
-		)
+		); err != nil {
+			return err
+		}
 	}
 
 	if po.Extend.Enabled && (po.Width > img.Width() || po.Height > img.Height()) {
