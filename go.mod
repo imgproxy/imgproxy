@@ -20,12 +20,12 @@ require (
 	github.com/newrelic/go-agent v2.16.3+incompatible
 	github.com/prometheus/client_golang v0.9.4
 	github.com/sirupsen/logrus v1.4.2
-	github.com/stretchr/testify v1.4.0
+	github.com/stretchr/testify v1.5.1
 	golang.org/x/image v0.0.0-20190802002840-cff245a6509b
 	golang.org/x/net v0.0.0-20191209160850-c0dbc17a3553
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 	golang.org/x/sys v0.0.0-20191228213918-04cbcbbfeed8
-	google.golang.org/api v0.17.0
+	google.golang.org/api v0.20.0
 )
 
 replace git.apache.org/thrift.git => github.com/apache/thrift v0.0.0-20180902110319-2566ecd5d999
