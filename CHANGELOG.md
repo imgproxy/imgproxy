@@ -1,6 +1,12 @@
 # Changelog
 
 ## [Unreleased]
+## Addded
+- Video thumbnails.
+
+## Changed
+- Quantizr updated to 0.2.0 in Docker image.
+
 
 ## [2.11.0] - 2020-03-12
 ## Changed

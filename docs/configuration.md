@@ -137,6 +137,13 @@ imgproxy can use the `Width`, `Viewport-Width` or `DPR` HTTP headers to determin
 
 **⚠️Warning:** Headers cannot be signed. This means that an attacker can bypass your CDN cache by changing the `Width`, `Viewport-Width` or `DPR` HTTP headers. Have this in mind when configuring your production caching setup.
 
+## Video thumbnails
+
+imgproxy Pro can extract specific frames of videos to create thumbnails. The feature is disabled by default^ but can be enabled with `IMGPROXY_ENABLE_VIDEO_THUMBNAILS`.
+
+* `IMGPROXY_ENABLE_VIDEO_THUMBNAILS`: <img class="pro-badge" src="assets/pro.svg" alt="pro" /> then true, enables video thumbnails generation. Default: false;
+* `IMGPROXY_VIDEO_THUMBNAIL_SECOND`: <img class="pro-badge" src="assets/pro.svg" alt="pro" /> the timestamp of the frame in seconds that will be used for a thumbnail. Default: 1.
+
 ## Watermark
 
 * `IMGPROXY_WATERMARK_DATA`: Base64-encoded image data. You can easily calculate it with `base64 tmp/watermark.png | tr -d '\n'`;
