@@ -139,7 +139,7 @@ imgproxy can use the `Width`, `Viewport-Width` or `DPR` HTTP headers to determin
 
 ## Video thumbnails
 
-imgproxy Pro can extract specific frames of videos to create thumbnails. The feature is disabled by default^ but can be enabled with `IMGPROXY_ENABLE_VIDEO_THUMBNAILS`.
+imgproxy Pro can extract specific frames of videos to create thumbnails. The feature is disabled by default, but can be enabled with `IMGPROXY_ENABLE_VIDEO_THUMBNAILS`.
 
 * `IMGPROXY_ENABLE_VIDEO_THUMBNAILS`: <img class="pro-badge" src="assets/pro.svg" alt="pro" /> then true, enables video thumbnails generation. Default: false;
 * `IMGPROXY_VIDEO_THUMBNAIL_SECOND`: <img class="pro-badge" src="assets/pro.svg" alt="pro" /> the timestamp of the frame in seconds that will be used for a thumbnail. Default: 1.
