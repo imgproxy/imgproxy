@@ -8,8 +8,32 @@ workflows:
       - lint:
           requires:
             - checkout_code
-          go_version: "1.13"
+          go_version: "1.14"
+          vips_version: "8.9"
+      - build:
+          name: go1.14_vips8.9
+          requires:
+            - checkout_code
+          go_version: "1.14"
+          vips_version: "8.9"
+      - build:
+          name: go1.14_vips8.8
+          requires:
+            - checkout_code
+          go_version: "1.14"
           vips_version: "8.8"
+      - build:
+          name: go1.14_vips8.7
+          requires:
+            - checkout_code
+          go_version: "1.14"
+          vips_version: "8.7"
+      - build:
+          name: go1.13_vips8.9
+          requires:
+            - checkout_code
+          go_version: "1.13"
+          vips_version: "8.9"
       - build:
           name: go1.13_vips8.8
           requires:
@@ -23,11 +47,11 @@ workflows:
           go_version: "1.13"
           vips_version: "8.7"
       - build:
-          name: go1.13_vips8.6
+          name: go1.12_vips8.9
           requires:
             - checkout_code
-          go_version: "1.13"
-          vips_version: "8.6"
+          go_version: "1.12"
+          vips_version: "8.9"
       - build:
           name: go1.12_vips8.8
           requires:
@@ -40,30 +64,6 @@ workflows:
             - checkout_code
           go_version: "1.12"
           vips_version: "8.7"
-      - build:
-          name: go1.12_vips8.6
-          requires:
-            - checkout_code
-          go_version: "1.12"
-          vips_version: "8.6"
-      - build:
-          name: go1.11_vips8.8
-          requires:
-            - checkout_code
-          go_version: "1.11.13"
-          vips_version: "8.8"
-      - build:
-          name: go1.11_vips8.7
-          requires:
-            - checkout_code
-          go_version: "1.11.13"
-          vips_version: "8.7"
-      - build:
-          name: go1.11_vips8.6
-          requires:
-            - checkout_code
-          go_version: "1.11.13"
-          vips_version: "8.6"
 
 executors:
   imgproxy:
