@@ -367,14 +367,16 @@ func (img *vipsImage) SmartCrop(width, height int) error {
 	return nil
 }
 
-func (img *vipsImage) Trim(threshold float64) error {
+func (img *vipsImage) Trim(threshold float64, smart bool, color rgbColor, equalHor bool, equalVer bool) error {
 	var tmp *C.VipsImage
 
 	if err := img.CopyMemory(); err != nil {
 		return err
 	}
 
-	if C.vips_trim(img.VipsImage, &tmp, C.double(threshold)) != 0 {
+	if C.vips_trim(img.VipsImage, &tmp, C.double(threshold),
+		gbool(smart), C.double(color.R), C.double(color.G), C.double(color.B),
+		gbool(equalHor), gbool(equalVer)) != 0 {
 		return vipsError()
 	}
 
