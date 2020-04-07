@@ -16,6 +16,7 @@ var (
 	processingSem chan struct{}
 
 	headerVaryValue string
+	fallback        *imageData
 )
 
 func initProcessingHandler() error {
@@ -44,6 +45,8 @@ func initProcessingHandler() error {
 	}
 
 	headerVaryValue = strings.Join(vary, ", ")
+
+	loadFallback()
 
 	return nil
 }
@@ -153,7 +156,12 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		if prometheusEnabled {
 			incrementPrometheusErrorsTotal("download")
 		}
-		panic(err)
+		if fallback != nil {
+			logError("Could not load image. Using fallback image.", err.Error())
+			ctx = context.WithValue(ctx, imageDataCtxKey, fallback)
+		} else {
+			panic(err)
+		}
 	}
 
 	checkTimeout(ctx)
@@ -185,4 +193,12 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	checkTimeout(ctx)
 
 	respondWithImage(ctx, reqID, r, rw, imageData)
+}
+
+func loadFallback() (err error) {
+	fallback, err = getFallbackData()
+	if err != nil {
+		logError("Could not load fallback data. Fallback images will not be available.", err.Error())
+	}
+	return
 }

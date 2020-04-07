@@ -222,6 +222,10 @@ type config struct {
 	WatermarkURL     string
 	WatermarkOpacity float64
 
+	FallbackData string
+	FallbackPath string
+	FallbackURL  string
+
 	NewRelicAppName string
 	NewRelicKey     string
 
@@ -372,6 +376,10 @@ func configure() error {
 	strEnvConfig(&conf.WatermarkPath, "IMGPROXY_WATERMARK_PATH")
 	strEnvConfig(&conf.WatermarkURL, "IMGPROXY_WATERMARK_URL")
 	floatEnvConfig(&conf.WatermarkOpacity, "IMGPROXY_WATERMARK_OPACITY")
+
+	strEnvConfig(&conf.FallbackData, "IMGPROXY_FALLBACK_DATA")
+	strEnvConfig(&conf.FallbackPath, "IMGPROXY_FALLBACK_PATH")
+	strEnvConfig(&conf.FallbackURL, "IMGPROXY_FALLBACK_URL")
 
 	strEnvConfig(&conf.NewRelicAppName, "IMGPROXY_NEW_RELIC_APP_NAME")
 	strEnvConfig(&conf.NewRelicKey, "IMGPROXY_NEW_RELIC_KEY")
