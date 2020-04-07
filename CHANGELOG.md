@@ -7,6 +7,7 @@
 - (pro) [Getting the image info](https://docs.imgproxy.net/#/getting_the_image_info).
 
 ## Changed
+- Improved `trim` processing option.
 - Quantizr updated to 0.2.0 in Docker image.
 
 
