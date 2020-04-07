@@ -157,7 +157,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 			incrementPrometheusErrorsTotal("download")
 		}
 		if fallback != nil {
-			logError("Could not load image. Using fallback image.", err.Error())
+			logError("Could not load image. Using fallback image: %s", err.Error())
 			ctx = context.WithValue(ctx, imageDataCtxKey, fallback)
 		} else {
 			panic(err)
@@ -198,7 +198,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 func loadFallback() (err error) {
 	fallback, err = getFallbackData()
 	if err != nil {
-		logError("Could not load fallback data. Fallback images will not be available.", err.Error())
+		logError("Could not load fallback data. Fallback images will not be available: %s", err.Error())
 	}
 	return
 }
