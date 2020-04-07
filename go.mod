@@ -19,7 +19,7 @@ require (
 	github.com/matoous/go-nanoid v1.1.1-0.20200226125206-b0a1054fe39d
 	github.com/newrelic/go-agent v2.16.3+incompatible
 	github.com/prometheus/client_golang v0.9.4
-	github.com/sirupsen/logrus v1.4.2
+	github.com/sirupsen/logrus v1.5.0
 	github.com/stretchr/testify v1.5.1
 	golang.org/x/image v0.0.0-20190802002840-cff245a6509b
 	golang.org/x/net v0.0.0-20200222125558-5a598a2470a0
