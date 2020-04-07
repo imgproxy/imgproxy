@@ -3,6 +3,7 @@
 ## [Unreleased]
 ## Addded
 - Video thumbnails.
+- `IMGPROXY_PATH_PREFIX` config.
 
 ## Changed
 - Quantizr updated to 0.2.0 in Docker image.

@@ -27,6 +27,7 @@ type route struct {
 }
 
 type router struct {
+	prefix       string
 	Routes       []*route
 	PanicHandler panicHandler
 }
@@ -43,8 +44,9 @@ func (r *route) IsMatch(req *http.Request) bool {
 	return strings.HasPrefix(req.URL.Path, r.Prefix)
 }
 
-func newRouter() *router {
+func newRouter(prefix string) *router {
 	return &router{
+		prefix: prefix,
 		Routes: make([]*route, 0),
 	}
 }
@@ -52,7 +54,7 @@ func newRouter() *router {
 func (r *router) Add(method, prefix string, handler routeHandler, exact bool) {
 	r.Routes = append(
 		r.Routes,
-		&route{Method: method, Prefix: prefix, Handler: handler, Exact: exact},
+		&route{Method: method, Prefix: r.prefix + prefix, Handler: handler, Exact: exact},
 	)
 }
 

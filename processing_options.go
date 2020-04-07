@@ -996,10 +996,17 @@ func parsePathBasic(parts []string, headers *processingHeaders) (string, *proces
 }
 
 func parsePath(ctx context.Context, r *http.Request) (context.Context, error) {
+	var err error
+
 	path := r.URL.RawPath
 	if len(path) == 0 {
 		path = r.URL.Path
 	}
+
+	if len(conf.PathPrefix) > 0 {
+		path = strings.TrimPrefix(path, conf.PathPrefix)
+	}
+
 	parts := strings.Split(strings.TrimPrefix(path, "/"), "/")
 
 	if len(parts) < 2 {
@@ -1007,7 +1014,7 @@ func parsePath(ctx context.Context, r *http.Request) (context.Context, error) {
 	}
 
 	if !conf.AllowInsecure {
-		if err := validatePath(parts[0], strings.TrimPrefix(path, fmt.Sprintf("/%s", parts[0]))); err != nil {
+		if err = validatePath(parts[0], strings.TrimPrefix(path, fmt.Sprintf("/%s", parts[0]))); err != nil {
 			return ctx, newError(403, err.Error(), msgForbidden)
 		}
 	}
@@ -1021,7 +1028,6 @@ func parsePath(ctx context.Context, r *http.Request) (context.Context, error) {
 
 	var imageURL string
 	var po *processingOptions
-	var err error
 
 	if conf.OnlyPresets {
 		imageURL, po, err = parsePathPresets(parts[1:], headers)

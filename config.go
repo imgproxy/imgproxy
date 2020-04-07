@@ -167,6 +167,8 @@ type config struct {
 
 	SoReuseport bool
 
+	PathPrefix string
+
 	MaxSrcDimension    int
 	MaxSrcResolution   int
 	MaxSrcFileSize     int
@@ -294,6 +296,8 @@ func configure() error {
 	boolEnvConfig(&conf.CacheControlPassthrough, "IMGPROXY_CACHE_CONTROL_PASSTHROUGH")
 
 	boolEnvConfig(&conf.SoReuseport, "IMGPROXY_SO_REUSEPORT")
+
+	strEnvConfig(&conf.PathPrefix, "IMGPROXY_PATH_PREFIX")
 
 	intEnvConfig(&conf.MaxSrcDimension, "IMGPROXY_MAX_SRC_DIMENSION")
 	megaIntEnvConfig(&conf.MaxSrcResolution, "IMGPROXY_MAX_SRC_RESOLUTION")

@@ -17,7 +17,7 @@ var (
 )
 
 func buildRouter() *router {
-	r := newRouter()
+	r := newRouter(conf.PathPrefix)
 
 	r.PanicHandler = handlePanic
 
