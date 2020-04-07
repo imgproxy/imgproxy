@@ -2,8 +2,9 @@
 
 ## [Unreleased]
 ## Addded
-- Video thumbnails.
 - `IMGPROXY_PATH_PREFIX` config.
+- (pro) Video thumbnails.
+- (pro) [Getting the image info](https://docs.imgproxy.net/#/getting_the_image_info).
 
 ## Changed
 - Quantizr updated to 0.2.0 in Docker image.
