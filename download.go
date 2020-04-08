@@ -30,19 +30,6 @@ const msgSourceImageIsUnreachable = "Source image is unreachable"
 
 var downloadBufPool *bufPool
 
-type imageData struct {
-	Data []byte
-	Type imageType
-
-	cancel context.CancelFunc
-}
-
-func (d *imageData) Close() {
-	if d.cancel != nil {
-		d.cancel()
-	}
-}
-
 type limitReader struct {
 	r    io.Reader
 	left int

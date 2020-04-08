@@ -155,6 +155,14 @@ imgproxy Pro can extract specific frames of videos to create thumbnails. The fea
 
 Read more about watermarks in the [Watermark](watermark.md) guide.
 
+## Fallback image
+
+You can set up a fallback image that will be used in case imgproxy can't fetch the requested one. Use one of the following variables:
+
+* `IMGPROXY_FALLBACK_IMAGE_DATA`: Base64-encoded image data. You can easily calculate it with `base64 tmp/fallback.png | tr -d '\n'`;
+* `IMGPROXY_FALLBACK_IMAGE_PATH`: path to the locally stored image;
+* `IMGPROXY_FALLBACK_IMAGE_URL`: fallback image URL.
+
 ## Presets
 
 Read about imgproxy presets in the [Presets](presets.md) guide.

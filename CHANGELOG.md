@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+### Added
+- Fallback images.
 
 ## [2.12.0] - 2020-04-07
 ### Addded

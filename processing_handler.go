@@ -16,14 +16,15 @@ var (
 	processingSem chan struct{}
 
 	headerVaryValue string
-	fallback        *imageData
+	fallbackImage   *imageData
 )
 
 func initProcessingHandler() error {
+	var err error
+
 	processingSem = make(chan struct{}, conf.Concurrency)
 
 	if conf.GZipCompression > 0 {
-		var err error
 		responseGzipBufPool = newBufPool("gzip", conf.Concurrency, conf.GZipBufferSize)
 		if responseGzipPool, err = newGzipPool(conf.Concurrency); err != nil {
 			return err
@@ -46,7 +47,7 @@ func initProcessingHandler() error {
 
 	headerVaryValue = strings.Join(vary, ", ")
 
-	if err := loadFallback(); err != nil {
+	if fallbackImage, err = getFallbackImageData(); err != nil {
 		return err
 	}
 
@@ -158,12 +159,17 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		if prometheusEnabled {
 			incrementPrometheusErrorsTotal("download")
 		}
-		if fallback != nil {
-			logError("Could not load image. Using fallback image: %s", err.Error())
-			ctx = context.WithValue(ctx, imageDataCtxKey, fallback)
-		} else {
+
+		if fallbackImage == nil {
 			panic(err)
 		}
+
+		if ierr, ok := err.(*imgproxyError); !ok || ierr.Unexpected {
+			reportError(err, r)
+		}
+
+		logWarning("Could not load image. Using fallback image: %s", err.Error())
+		ctx = context.WithValue(ctx, imageDataCtxKey, fallbackImage)
 	}
 
 	checkTimeout(ctx)
@@ -195,12 +201,4 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	checkTimeout(ctx)
 
 	respondWithImage(ctx, reqID, r, rw, imageData)
-}
-
-func loadFallback() (err error) {
-	fallback, err = getFallbackImageData()
-	if err != nil {
-		logError("Could not load fallback data. Fallback images will not be available: %s", err.Error())
-	}
-	return err
 }
