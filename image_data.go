@@ -9,35 +9,51 @@ import (
 
 func getWatermarkData() (*imageData, error) {
 	if len(conf.WatermarkData) > 0 {
-		return base64WatermarkData(conf.WatermarkData)
+		return base64ImageData(conf.WatermarkData)
 	}
 
 	if len(conf.WatermarkPath) > 0 {
-		return fileWatermarkData(conf.WatermarkPath)
+		return fileImageData(conf.WatermarkPath)
 	}
 
 	if len(conf.WatermarkURL) > 0 {
-		return remoteWatermarkData(conf.WatermarkURL)
+		return remoteImageData(conf.WatermarkURL)
 	}
 
 	return nil, nil
 }
 
-func base64WatermarkData(encoded string) (*imageData, error) {
+func getFallbackImageData() (*imageData, error) {
+	if len(conf.FallbackImageData) > 0 {
+		return base64ImageData(conf.FallbackImageData)
+	}
+
+	if len(conf.FallbackImagePath) > 0 {
+		return fileImageData(conf.FallbackImagePath)
+	}
+
+	if len(conf.FallbackImageURL) > 0 {
+		return remoteImageData(conf.FallbackImageURL)
+	}
+
+	return nil, nil
+}
+
+func base64ImageData(encoded string) (*imageData, error) {
 	data, err := base64.StdEncoding.DecodeString(encoded)
 	if err != nil {
-		return nil, fmt.Errorf("Can't decode watermark data: %s", err)
+		return nil, fmt.Errorf("Can't decode image data: %s", err)
 	}
 
 	imgtype, err := checkTypeAndDimensions(bytes.NewReader(data))
 	if err != nil {
-		return nil, fmt.Errorf("Can't decode watermark: %s", err)
+		return nil, fmt.Errorf("Can't decode image: %s", err)
 	}
 
 	return &imageData{Data: data, Type: imgtype}, nil
 }
 
-func fileWatermarkData(path string) (*imageData, error) {
+func fileImageData(path string) (*imageData, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("Can't read watermark: %s", err)
@@ -56,18 +72,18 @@ func fileWatermarkData(path string) (*imageData, error) {
 	return imgdata, err
 }
 
-func remoteWatermarkData(imageURL string) (*imageData, error) {
+func remoteImageData(imageURL string) (*imageData, error) {
 	res, err := requestImage(imageURL)
 	if res != nil {
 		defer res.Body.Close()
 	}
 	if err != nil {
-		return nil, fmt.Errorf("Can't download watermark: %s", err)
+		return nil, fmt.Errorf("Can't download image: %s", err)
 	}
 
 	imgdata, err := readAndCheckImage(res.Body, int(res.ContentLength))
 	if err != nil {
-		return nil, fmt.Errorf("Can't download watermark: %s", err)
+		return nil, fmt.Errorf("Can't download image: %s", err)
 	}
 
 	return imgdata, err
