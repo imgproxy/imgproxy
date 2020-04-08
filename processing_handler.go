@@ -46,7 +46,9 @@ func initProcessingHandler() error {
 
 	headerVaryValue = strings.Join(vary, ", ")
 
-	loadFallback()
+	if err := loadFallback(); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -196,9 +198,9 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 }
 
 func loadFallback() (err error) {
-	fallback, err = getFallbackData()
+	fallback, err = getFallbackImageData()
 	if err != nil {
 		logError("Could not load fallback data. Fallback images will not be available: %s", err.Error())
 	}
-	return
+	return err
 }
