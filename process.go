@@ -72,11 +72,6 @@ func calcScale(width, height int, po *processingOptions, imgtype imageType) floa
 		dstH = srcH
 	}
 
-	if po.Padding.Enabled {
-		dstW -= float64(po.Padding.Left + po.Padding.Right)
-		dstH -= float64(po.Padding.Top + po.Padding.Bottom)
-	}
-
 	if dstW == srcW && dstH == srcH {
 		shrink = 1
 	} else {
@@ -451,21 +446,25 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 		}
 	}
 
-	if po.Padding.Enabled {
-		if err = img.Embed(
-			img.Width()+po.Padding.Left+po.Padding.Right,
-			img.Height()+po.Padding.Top+po.Padding.Bottom,
-			po.Padding.Left,
-			po.Padding.Top,
-			po.Background,
-		); err != nil {
+	if po.Extend.Enabled && (po.Width > img.Width() || po.Height > img.Height()) {
+		offX, offY := calcPosition(po.Width, po.Height, img.Width(), img.Height(), &po.Extend.Gravity, false)
+		if err = img.Embed(po.Width, po.Height, offX, offY, po.Background); err != nil {
 			return err
 		}
 	}
 
-	if po.Extend.Enabled && (po.Width > img.Width() || po.Height > img.Height()) {
-		offX, offY := calcPosition(po.Width, po.Height, img.Width(), img.Height(), &po.Extend.Gravity, false)
-		if err = img.Embed(po.Width, po.Height, offX, offY, po.Background); err != nil {
+	if po.Padding.Enabled {
+		paddingTop := scaleInt(po.Padding.Top, po.Dpr)
+		paddingRight := scaleInt(po.Padding.Right, po.Dpr)
+		paddingBottom := scaleInt(po.Padding.Bottom, po.Dpr)
+		paddingLeft := scaleInt(po.Padding.Left, po.Dpr)
+		if err = img.Embed(
+			img.Width()+paddingLeft+paddingRight,
+			img.Height()+paddingTop+paddingBottom,
+			paddingLeft,
+			paddingTop,
+			po.Background,
+		); err != nil {
 			return err
 		}
 	}

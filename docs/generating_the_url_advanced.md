@@ -184,7 +184,9 @@ Defines padding size in css manner. All arguments are optional but at least one 
 * `bottom` - bottom padding;
 * `left` - left padding.
 
-**📝Note:** Padding is considered as inset which means that if your resize dimensions were 100x200px and you applied `padding:10` option then you will get 100x200 image with 10px "border" inside it (original image would be resized to 80x180px).
+**📝Notes:** 
+* Padding is applied after all image transformations (except watermark) and enlarges generated image which means that if your resize dimensions were 100x200px and you applied `padding:10` option then you will get 120x220px image.
+* Padding follows [dpr](#dpr) option so it will be scaled too if you set it.
 
 #### Trim
 
