@@ -8,8 +8,8 @@ At the moment, imgproxy supports only the most popular image formats:
 * GIF;
 * ICO;
 * SVG;
-* MP4 _(result only)_ <img class="pro-badge" src="assets/pro.svg" alt="pro" />;
-* HEIC;
+* MP4 <img class="pro-badge" src="assets/pro.svg" alt="pro" />;
+* HEIC _(source only)_;
 * BMP;
 * TIFF.
 
@@ -35,8 +35,6 @@ imgproxy reads some amount of bytes to check if the source image is SVG. By defa
 
 imgproxy supports HEIC only when using libvips 8.8.0+. Official imgproxy Docker image supports HEIC out of the box.
 
-By default, imgproxy saves HEIC images as JPEG. You need to explicitly specify the `format` option to get HEIC output.
-
 ## BMP support
 
 imgproxy supports BMP only when using libvips 8.7.0+ compiled with ImageMagick support. Official imgproxy Docker image supports ICO out of the box.
@@ -56,3 +54,12 @@ Since processing of animated images is pretty heavy, only one frame is processed
 Animated images results can be converted to MP4 by specifying `mp4` extension.
 
 Since MP4 requires usage of a `<video>` tag instead of `<img>`, automatic conversion to MP4 is not provided.
+
+## Video thumbnails <img class="pro-badge" src="assets/pro.svg" alt="pro" />
+
+If you provide a video as a source, imgproxy takes its specific frame to create a thumbnail. Doing this imgproxy downloads only the amount of data required to reach the needed frame.
+
+Since this still requires more data to be downloaded, video thumbnails generation is disabled by default and should be enabled with `IMGPROXY_ENABLE_VIDEO_THUMBNAILS` config option.
+
+* `IMGPROXY_ENABLE_VIDEO_THUMBNAILS`: then true, enables video thumbnails generation. Default: false;
+* `IMGPROXY_VIDEO_THUMBNAIL_SECOND`: the timestamp of the frame in seconds that will be used for a thumbnail. Default: 1.

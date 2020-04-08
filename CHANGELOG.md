@@ -1,6 +1,25 @@
 # Changelog
 
 ## [Unreleased]
+### Added
+- Fallback images.
+
+## [2.12.0] - 2020-04-07
+### Addded
+- `IMGPROXY_PATH_PREFIX` config.
+- (pro) Video thumbnails.
+- (pro) [Getting the image info](https://docs.imgproxy.net/#/getting_the_image_info).
+
+### Changed
+- Improved `trim` processing option.
+- Quantizr updated to 0.2.0 in Docker image.
+
+
+## [2.11.0] - 2020-03-12
+### Changed
+- Replaced imagequant with [Quantizr](https://github.com/DarthSim/quantizr) in docker image.
+- Removed HEIC saving support.
+- Removed JBIG compressin support in TIFF.
 
 ## [2.10.1] - 2020-02-27
 ### Changed

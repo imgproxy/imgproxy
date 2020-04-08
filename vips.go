@@ -203,8 +203,6 @@ func (img *vipsImage) Save(imgtype imageType, quality int, stripMeta bool) ([]by
 		err = C.vips_gifsave_go(img.VipsImage, &ptr, &imgsize)
 	case imageTypeICO:
 		err = C.vips_icosave_go(img.VipsImage, &ptr, &imgsize)
-	case imageTypeHEIC:
-		err = C.vips_heifsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality))
 	case imageTypeBMP:
 		err = C.vips_bmpsave_go(img.VipsImage, &ptr, &imgsize)
 	case imageTypeTIFF:
@@ -369,14 +367,16 @@ func (img *vipsImage) SmartCrop(width, height int) error {
 	return nil
 }
 
-func (img *vipsImage) Trim(threshold float64) error {
+func (img *vipsImage) Trim(threshold float64, smart bool, color rgbColor, equalHor bool, equalVer bool) error {
 	var tmp *C.VipsImage
 
 	if err := img.CopyMemory(); err != nil {
 		return err
 	}
 
-	if C.vips_trim(img.VipsImage, &tmp, C.double(threshold)) != 0 {
+	if C.vips_trim(img.VipsImage, &tmp, C.double(threshold),
+		gbool(smart), C.double(color.R), C.double(color.G), C.double(color.B),
+		gbool(equalHor), gbool(equalVer)) != 0 {
 		return vipsError()
 	}
 

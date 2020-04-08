@@ -189,15 +189,20 @@ Defines padding size in css manner. All arguments are optional but at least one 
 #### Trim
 
 ```
-trim:%threshold
-t:%threshold
+trim:%threshold:%color:%equal_hor:%equal_ver
+t:%threshold:%color:%equal_hor:%equal_ver
 ```
 
 Removes surrounding background.
 
 * `threshold` - color similarity tolerance.
+* `color` - _(optional)_ hex-coded value of the color that needs to be cut off.
+* `equal_hor` - _(optional)_ set to `1`, `t` or `true`, imgproxy will cut only equal parts from left and right sides. That means that if 10px of background can be cut off from left and 5px from right then 5px will be cut off from both sides. For example, it can be useful if objects on your images are centered but have non-symmetrical shadow.
+* `equal_ver` - _(optional)_ acts like `equal_hor` but for top/bottom sides.
 
 **⚠️Warning:** Trimming requires an image to be fully loaded into memory. This disables scale-on-load and significantly increases memory usage and processing time. Use it carefully with large images.
+
+**📝Note:** If you know background color of your images then setting it explicitly via `color` will also save some resources because libvips won't detect it automatically.
 
 **📝Note:** Trimming of animated images is not supported.
 
@@ -480,7 +485,7 @@ When using encoded source URL, you can specify the [extension](#extension) after
 
 ### Extension
 
-Extension specifies the format of the resulting image. At the moment, imgproxy supports only `jpg`, `png`, `webp`, `gif`, `ico`, `heic`, and `tiff`, them being the most popular and useful image formats.
+Extension specifies the format of the resulting image. At the moment, imgproxy supports only `jpg`, `png`, `webp`, `gif`, `ico`, and `tiff`, them being the most popular and useful image formats.
 
 <img class="pro-badge" src="assets/pro.svg" alt="pro" /> Also you can yse `mp4` extension to convert animated images to MP4.
 

@@ -107,8 +107,6 @@ vips_type_find_save_go(int imgtype) {
     return vips_type_find("VipsOperation", "magicksave_buffer");
   case (ICO):
     return vips_type_find("VipsOperation", "magicksave_buffer");
-  case (HEIC):
-    return vips_type_find("VipsOperation", "heifsave_buffer");
   case (BMP):
     return vips_type_find("VipsOperation", "magicksave_buffer");
   case (TIFF):
@@ -398,7 +396,9 @@ vips_extract_area_go(VipsImage *in, VipsImage **out, int left, int top, int widt
 }
 
 int
-vips_trim(VipsImage *in, VipsImage **out, double threshold) {
+vips_trim(VipsImage *in, VipsImage **out, double threshold,
+          gboolean smart, double r, double g, double b,
+          gboolean equal_hor, gboolean equal_ver) {
 #if VIPS_SUPPORT_FIND_TRIM
   VipsImage *tmp;
 
@@ -412,21 +412,48 @@ vips_trim(VipsImage *in, VipsImage **out, double threshold) {
 
   double *bg;
   int bgn;
+  VipsArrayDouble *bga;
 
-  if (vips_getpoint(tmp, &bg, &bgn, 0, 0, NULL)) {
-    clear_image(&tmp);
-    return 1;
+  if (smart) {
+    if (vips_getpoint(tmp, &bg, &bgn, 0, 0, NULL)) {
+      clear_image(&tmp);
+      return 1;
+    }
+    bga = vips_array_double_new(bg, bgn);
+  } else {
+    bga = vips_array_double_newv(3, r, g, b);
+    bg = 0;
   }
 
-  VipsArrayDouble *bga = vips_array_double_new(bg, bgn);
-
-  int left, top, width, height;
+  int left, right, top, bot, width, height, diff;
 
   if (vips_find_trim(tmp, &left, &top, &width, &height, "background", bga, "threshold", threshold, NULL)) {
     clear_image(&tmp);
     vips_area_unref((VipsArea *)bga);
     g_free(bg);
     return 1;
+  }
+
+  if (equal_hor) {
+    right = in->Xsize - left - width;
+    diff = right - left;
+    if (diff > 0) {
+      width += diff;
+    } else if (diff < 0) {
+      left = right;
+      width -= diff;
+    }
+  }
+
+  if (equal_ver) {
+    bot = in->Ysize - top - height;
+    diff = bot - top;
+    if (diff > 0) {
+      height += diff;
+    } else if (diff < 0) {
+      top = bot;
+      height -= diff;
+    }
   }
 
   clear_image(&tmp);
@@ -564,16 +591,6 @@ vips_icosave_go(VipsImage *in, void **buf, size_t *len) {
   return vips_magicksave_buffer(in, buf, len, "format", "ico", NULL);
 #else
   vips_error("vips_icosave_go", "Saving ICO is not supported (libvips 8.7+ reuired)");
-  return 1;
-#endif
-}
-
-int
-vips_heifsave_go(VipsImage *in, void **buf, size_t *len, int quality) {
-#if VIPS_SUPPORT_HEIF
-  return vips_heifsave_buffer(in, buf, len, "Q", quality, NULL);
-#else
-  vips_error("vips_heifsave_go", "Saving HEIF is not supported (libvips 8.8+ reuired)");
   return 1;
 #endif
 }

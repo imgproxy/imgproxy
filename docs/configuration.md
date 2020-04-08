@@ -37,6 +37,7 @@ echo $(xxd -g 2 -l 64 -p /dev/random | tr -d '\n')
 * `IMGPROXY_TTL`: duration (in seconds) sent in `Expires` and `Cache-Control: max-age` HTTP headers. Default: `3600` (1 hour);
 * `IMGPROXY_CACHE_CONTROL_PASSTHROUGH`: when `true` and source image response contains `Expires` or `Cache-Control` headers, reuse those headers. Default: false;
 * `IMGPROXY_SO_REUSEPORT`: when `true`, enables `SO_REUSEPORT` socket option (currently on linux and darwin only);
+* `IMGPROXY_PATH_PREFIX`: URL path prefix. Example: when set to `/abc/def`, imgproxy URL will be `/abc/def/%signature/%processing_options/%source_url`. Default: blank.
 * `IMGPROXY_USER_AGENT`: User-Agent header that will be sent with source image request. Default: `imgproxy/%current_version`;
 * `IMGPROXY_USE_ETAG`: when `true`, enables using [ETag](https://en.wikipedia.org/wiki/HTTP_ETag) HTTP header for HTTP cache control. Default: false;
 * `IMGPROXY_CUSTOM_REQUEST_HEADERS`: <img class="pro-badge" src="assets/pro.svg" alt="pro" /> list of custom headers that imgproxy will send while requesting the source image, divided by `\;` (can be redefined by `IMGPROXY_CUSTOM_HEADERS_SEPARATOR`). Example: `X-MyHeader1=Lorem\;X-MyHeader2=Ipsum`;
@@ -110,7 +111,7 @@ Also you may want imgproxy to respond with the same error message that it writes
 ### Advanced PNG compression
 
 * `IMGPROXY_PNG_INTERLACED`: when true, enables interlaced PNG compression. Default: false;
-* `IMGPROXY_PNG_QUANTIZE`: when true, enables PNG quantization. libvips should be built with libimagequant support. Default: false;
+* `IMGPROXY_PNG_QUANTIZE`: when true, enables PNG quantization. libvips should be built with [Quantizr](https://github.com/DarthSim/quantizr) or libimagequant support. Default: false;
 * `IMGPROXY_PNG_QUANTIZATION_COLORS`: maximum number of quantization palette entries. Should be between 2 and 256. Default: 256;
 
 ### Advanced GIF compression
@@ -137,6 +138,13 @@ imgproxy can use the `Width`, `Viewport-Width` or `DPR` HTTP headers to determin
 
 **⚠️Warning:** Headers cannot be signed. This means that an attacker can bypass your CDN cache by changing the `Width`, `Viewport-Width` or `DPR` HTTP headers. Have this in mind when configuring your production caching setup.
 
+## Video thumbnails
+
+imgproxy Pro can extract specific frames of videos to create thumbnails. The feature is disabled by default, but can be enabled with `IMGPROXY_ENABLE_VIDEO_THUMBNAILS`.
+
+* `IMGPROXY_ENABLE_VIDEO_THUMBNAILS`: <img class="pro-badge" src="assets/pro.svg" alt="pro" /> then true, enables video thumbnails generation. Default: false;
+* `IMGPROXY_VIDEO_THUMBNAIL_SECOND`: <img class="pro-badge" src="assets/pro.svg" alt="pro" /> the timestamp of the frame in seconds that will be used for a thumbnail. Default: 1.
+
 ## Watermark
 
 * `IMGPROXY_WATERMARK_DATA`: Base64-encoded image data. You can easily calculate it with `base64 tmp/watermark.png | tr -d '\n'`;
@@ -146,6 +154,14 @@ imgproxy can use the `Width`, `Viewport-Width` or `DPR` HTTP headers to determin
 * `IMGPROXY_WATERMARKS_CACHE_SIZE`: <img class="pro-badge" src="assets/pro.svg" alt="pro" /> size of custom watermarks cache. When set to `0`, watermarks cache is disabled. By default 256 watermarks are cached.
 
 Read more about watermarks in the [Watermark](watermark.md) guide.
+
+## Fallback image
+
+You can set up a fallback image that will be used in case imgproxy can't fetch the requested one. Use one of the following variables:
+
+* `IMGPROXY_FALLBACK_IMAGE_DATA`: Base64-encoded image data. You can easily calculate it with `base64 tmp/fallback.png | tr -d '\n'`;
+* `IMGPROXY_FALLBACK_IMAGE_PATH`: path to the locally stored image;
+* `IMGPROXY_FALLBACK_IMAGE_URL`: fallback image URL.
 
 ## Presets
 

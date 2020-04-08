@@ -3,6 +3,7 @@
 * [Configuration](configuration)
 * [Generating the URL (Basic)](generating_the_url_basic)
 * [Generating the URL (Advanced)](generating_the_url_advanced)
+* [Getting the image info <img class="pro-badge" src="assets/pro.svg" alt="pro" />](getting_the_image_info)
 * [Signing the URL](signing_the_url)
 * [Watermark](watermark)
 * [Presets](presets)

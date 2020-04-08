@@ -26,8 +26,7 @@ func imageTypeSaveSupport(imgtype imageType) bool {
 }
 
 func imageTypeGoodForWeb(imgtype imageType) bool {
-	return imgtype != imageTypeHEIC &&
-		imgtype != imageTypeTIFF &&
+	return imgtype != imageTypeTIFF &&
 		imgtype != imageTypeBMP
 }
 
@@ -308,7 +307,7 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 	)
 
 	if po.Trim.Enabled {
-		if err = img.Trim(po.Trim.Threshold); err != nil {
+		if err = img.Trim(po.Trim.Threshold, po.Trim.Smart, po.Trim.Color, po.Trim.EqualHor, po.Trim.EqualVer); err != nil {
 			return err
 		}
 		trimmed = true

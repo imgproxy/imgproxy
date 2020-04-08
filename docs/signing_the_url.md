@@ -22,8 +22,9 @@ echo $(xxd -g 2 -l 64 -p /dev/random | tr -d '\n')
 Signature is an URL-safe Base64-encoded HMAC digest of the rest of the path, including the leading `/`. Here is how it is calculated:
 
 * Take the path part after the signature:
-  * For [basic URL format](generating_the_url_basic.md): `/%resizing_type/%width/%height/%gravity/%enlarge/%encoded_url.%extension`;
-  * For [advanced URL format](generating_the_url_advanced.md): `/%processing_options/%encoded_url.%extension`;
+  * For [basic URL format](generating_the_url_basic.md): `/%resizing_type/%width/%height/%gravity/%enlarge/%encoded_url.%extension` or `/%resizing_type/%width/%height/%gravity/%enlarge/plain/%plain_url@%extension`;
+  * For [advanced URL format](generating_the_url_advanced.md): `/%processing_options/%encoded_url.%extension` or `/%processing_options/plain/%plain_url@%extension`;
+  * For [info URL](getting_the_image_info.md): `/%encoded_url` or `/plain/%plain_url`;
 * Add salt to the beginning;
 * Calculate the HMAC digest using SHA256;
 * Encode the result with URL-safe Base64.
