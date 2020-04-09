@@ -453,6 +453,22 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 		}
 	}
 
+	if po.Padding.Enabled {
+		paddingTop := scaleInt(po.Padding.Top, po.Dpr)
+		paddingRight := scaleInt(po.Padding.Right, po.Dpr)
+		paddingBottom := scaleInt(po.Padding.Bottom, po.Dpr)
+		paddingLeft := scaleInt(po.Padding.Left, po.Dpr)
+		if err = img.Embed(
+			img.Width()+paddingLeft+paddingRight,
+			img.Height()+paddingTop+paddingBottom,
+			paddingLeft,
+			paddingTop,
+			po.Background,
+		); err != nil {
+			return err
+		}
+	}
+
 	checkTimeout(ctx)
 
 	if po.Watermark.Enabled && watermark != nil {

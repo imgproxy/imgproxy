@@ -170,6 +170,24 @@ Defines an area of the image to be processed (crop before resize).
 * `width` and `height` define the size of the area. When `width` or `height` is set to `0`, imgproxy will use the full width/height of the source image.
 * `gravity` _(optional)_ accepts the same values as [gravity](#gravity) option. When `gravity` is not set, imgproxy will use the value of the [gravity](#gravity) option.
 
+#### Padding
+
+```
+padding:%top:%right:%bottom:%left
+pd:%top:%right:%bottom:%left
+```
+
+Defines padding size in css manner. All arguments are optional but at least one dimension must be set. Padded space is filled according to [background](#background) option.
+
+* `top` - top padding (and all other sides if they won't be set explicitly);
+* `right` - right padding (and left if it won't be set explicitly);
+* `bottom` - bottom padding;
+* `left` - left padding.
+
+**📝Notes:** 
+* Padding is applied after all image transformations (except watermark) and enlarges generated image which means that if your resize dimensions were 100x200px and you applied `padding:10` option then you will get 120x220px image.
+* Padding follows [dpr](#dpr) option so it will be scaled too if you set it.
+
 #### Trim
 
 ```

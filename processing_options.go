@@ -100,6 +100,14 @@ type cropOptions struct {
 	Gravity gravityOptions
 }
 
+type paddingOptions struct {
+	Enabled bool
+	Top     int
+	Right   int
+	Bottom  int
+	Left    int
+}
+
 type trimOptions struct {
 	Enabled   bool
 	Threshold float64
@@ -126,6 +134,7 @@ type processingOptions struct {
 	Enlarge      bool
 	Extend       extendOptions
 	Crop         cropOptions
+	Padding      paddingOptions
 	Trim         trimOptions
 	Format       imageType
 	Quality      int
@@ -208,6 +217,7 @@ func newProcessingOptions() *processingOptions {
 			Gravity:      gravityOptions{Type: gravityCenter},
 			Enlarge:      false,
 			Extend:       extendOptions{Enabled: false, Gravity: gravityOptions{Type: gravityCenter}},
+			Padding:      paddingOptions{Enabled: false},
 			Trim:         trimOptions{Enabled: false, Threshold: 10, Smart: true},
 			Quality:      conf.Quality,
 			MaxBytes:     0,
@@ -556,6 +566,50 @@ func applyCropOption(po *processingOptions, args []string) error {
 	return nil
 }
 
+func applyPaddingOption(po *processingOptions, args []string) error {
+	nArgs := len(args)
+
+	if nArgs < 1 || nArgs > 4 {
+		return fmt.Errorf("Invalid padding arguments: %v", args)
+	}
+
+	po.Padding.Enabled = true
+
+	if nArgs > 0 && len(args[0]) > 0 {
+		if err := parseDimension(&po.Padding.Top, "padding top (+all)", args[0]); err != nil {
+			return err
+		}
+		po.Padding.Right = po.Padding.Top
+		po.Padding.Bottom = po.Padding.Top
+		po.Padding.Left = po.Padding.Top
+	}
+
+	if nArgs > 1 && len(args[1]) > 0 {
+		if err := parseDimension(&po.Padding.Right, "padding right (+left)", args[1]); err != nil {
+			return err
+		}
+		po.Padding.Left = po.Padding.Right
+	}
+
+	if nArgs > 2 && len(args[2]) > 0 {
+		if err := parseDimension(&po.Padding.Bottom, "padding bottom", args[2]); err != nil {
+			return err
+		}
+	}
+
+	if nArgs > 3 && len(args[3]) > 0 {
+		if err := parseDimension(&po.Padding.Left, "padding left", args[3]); err != nil {
+			return err
+		}
+	}
+
+	if po.Padding.Top == 0 && po.Padding.Right == 0 && po.Padding.Bottom == 0 && po.Padding.Left == 0 {
+		po.Padding.Enabled = false
+	}
+
+	return nil
+}
+
 func applyTrimOption(po *processingOptions, args []string) error {
 	nArgs := len(args)
 
@@ -820,6 +874,8 @@ func applyProcessingOption(po *processingOptions, name string, args []string) er
 		return applyCropOption(po, args)
 	case "trim", "t":
 		return applyTrimOption(po, args)
+	case "padding", "pd":
+		return applyPaddingOption(po, args)
 	case "quality", "q":
 		return applyQualityOption(po, args)
 	case "max_bytes", "mb":
