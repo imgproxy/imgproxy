@@ -3,7 +3,7 @@
 ## [Unreleased]
 ### Added
 - Fallback images.
-- [padding](./docs/generating_the_url_advanced.md#padding) processing option.
+- [padding](https://docs.imgproxy.net/#/generating_the_url_advanced?id=padding) processing option.
 
 ## [2.12.0] - 2020-04-07
 ### Addded
