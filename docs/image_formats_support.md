@@ -61,5 +61,5 @@ If you provide a video as a source, imgproxy takes its specific frame to create 
 
 Since this still requires more data to be downloaded, video thumbnails generation is disabled by default and should be enabled with `IMGPROXY_ENABLE_VIDEO_THUMBNAILS` config option.
 
-* `IMGPROXY_ENABLE_VIDEO_THUMBNAILS`: then true, enables video thumbnails generation. Default: false;
+* `IMGPROXY_ENABLE_VIDEO_THUMBNAILS`: when true, enables video thumbnails generation. Default: false;
 * `IMGPROXY_VIDEO_THUMBNAIL_SECOND`: the timestamp of the frame in seconds that will be used for a thumbnail. Default: 1.
