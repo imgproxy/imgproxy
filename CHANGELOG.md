@@ -1,9 +1,17 @@
 # Changelog
 
 ## [Unreleased]
+
+## [2.13.0] - 2020-04-22
 ### Added
 - Fallback images.
 - [padding](https://docs.imgproxy.net/#/generating_the_url_advanced?id=padding) processing option.
+
+### Changed
+- Optimized memory usage. Especially when dealing with animated images.
+
+### Fixed
+- Fix crashes during animated images processing.
 
 ## [2.12.0] - 2020-04-07
 ### Addded
