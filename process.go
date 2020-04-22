@@ -383,23 +383,21 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 		}
 	}
 
+	if err = img.CopyMemory(); err != nil {
+		return err
+	}
+
 	checkTimeout(ctx)
 
-	if angle != vipsAngleD0 || flip {
-		if err = img.CopyMemory(); err != nil {
+	if angle != vipsAngleD0 {
+		if err = img.Rotate(angle); err != nil {
 			return err
 		}
+	}
 
-		if angle != vipsAngleD0 {
-			if err = img.Rotate(angle); err != nil {
-				return err
-			}
-		}
-
-		if flip {
-			if err = img.Flip(); err != nil {
-				return err
-			}
+	if flip {
+		if err = img.Flip(); err != nil {
+			return err
 		}
 	}
 
@@ -432,6 +430,12 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 			return err
 		}
 	}
+
+	if err = img.CopyMemory(); err != nil {
+		return err
+	}
+
+	checkTimeout(ctx)
 
 	if po.Blur > 0 {
 		if err = img.Blur(po.Blur); err != nil {
