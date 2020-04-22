@@ -8,7 +8,6 @@ import (
 	"runtime"
 
 	"github.com/imgproxy/imgproxy/v2/imagemeta"
-	"golang.org/x/sync/errgroup"
 )
 
 const msgSmartCropNotSupported = "Smart crop is not supported by used version of libvips"
@@ -546,22 +545,20 @@ func transformAnimated(ctx context.Context, img *vipsImage, data []byte, po *pro
 	po.Watermark.Enabled = false
 	defer func() { po.Watermark.Enabled = watermarkEnabled }()
 
-	var errg errgroup.Group
+	var errg panicGroup
 
 	for i := 0; i < framesCount; i++ {
 		ind := i
 		errg.Go(func() error {
-			frame := new(vipsImage)
+			frames[ind] = new(vipsImage)
 
-			if err = img.Extract(frame, 0, ind*frameHeight, imgWidth, frameHeight); err != nil {
-				return err
+			if ferr := img.Extract(frames[ind], 0, ind*frameHeight, imgWidth, frameHeight); ferr != nil {
+				return ferr
 			}
 
-			if err = transformImage(ctx, frame, nil, po, imgtype); err != nil {
-				return err
+			if ferr := transformImage(ctx, frames[ind], nil, po, imgtype); ferr != nil {
+				return ferr
 			}
-
-			frames[ind] = frame
 
 			return nil
 		})
