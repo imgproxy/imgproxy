@@ -26,6 +26,7 @@ const (
 	imageTypeHEIC    = imageType(C.HEIC)
 	imageTypeBMP     = imageType(C.BMP)
 	imageTypeTIFF    = imageType(C.TIFF)
+	imageTypePDF     = imageType(C.PDF)
 
 	contentDispositionFilenameFallback = "image"
 )
@@ -42,6 +43,7 @@ var (
 		"heic": imageTypeHEIC,
 		"bmp":  imageTypeBMP,
 		"tiff": imageTypeTIFF,
+		"pdf":  imageTypePDF,
 	}
 
 	mimes = map[imageType]string{
@@ -54,6 +56,7 @@ var (
 		imageTypeHEIC: "image/heif",
 		imageTypeBMP:  "image/bmp",
 		imageTypeTIFF: "image/tiff",
+		imageTypePDF:  "application/pdf",
 	}
 
 	contentDispositionsFmt = map[imageType]string{
@@ -66,6 +69,7 @@ var (
 		imageTypeHEIC: "inline; filename=\"%s.heic\"",
 		imageTypeBMP:  "inline; filename=\"%s.bmp\"",
 		imageTypeTIFF: "inline; filename=\"%s.tiff\"",
+		imageTypePDF:  "inline; filename=\"%s.pdf\"",
 	}
 )
 

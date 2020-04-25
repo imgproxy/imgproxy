@@ -16,6 +16,9 @@
 #define VIPS_SUPPORT_TIFF \
   (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 6))
 
+#define VIPS_SUPPORT_PDF \
+  (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 6))
+
 #define VIPS_SUPPORT_MAGICK \
   (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 7))
 
@@ -89,6 +92,8 @@ vips_type_find_load_go(int imgtype) {
     return vips_type_find("VipsOperation", "magickload_buffer");
   case (TIFF):
     return vips_type_find("VipsOperation", "tiffload_buffer");
+  case (PDF):
+    return vips_type_find("VipsOperation", "pdfload_buffer");
   }
   return 0;
 }
@@ -192,6 +197,16 @@ vips_tiffload_go(void *buf, size_t len, VipsImage **out) {
   return vips_tiffload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, NULL);
 #else
   vips_error("vips_tiffload_go", "Loading TIFF is not supported (libvips 8.6+ reuired)");
+  return 1;
+#endif
+}
+
+int
+vips_pdfload_go(void *buf, size_t len, VipsImage **out) {
+#if VIPS_SUPPORT_PDF
+  return vips_pdfload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, NULL);
+#else
+  vips_error("vips_pdfload_go", "Loading PDF is not supported.");
   return 1;
 #endif
 }
@@ -603,6 +618,12 @@ vips_tiffsave_go(VipsImage *in, void **buf, size_t *len, int quality) {
   vips_error("vips_tiffsave_go", "Saving TIFF is not supported (libvips 8.6+ reuired)");
   return 1;
 #endif
+}
+
+int
+vips_pdfsave_go(VipsImage *in, void **buf, size_t *len, int quality) {
+  vips_error("vips_pdfsave_go", "Saving pdf is not supported");
+  return 1;
 }
 
 int
