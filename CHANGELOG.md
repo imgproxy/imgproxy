@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+
+## [2.13.1] - 2020-05-06
 ### Fixed
 - Fix and optimize processing of animated images.
 
