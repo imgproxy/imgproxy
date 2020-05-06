@@ -538,33 +538,37 @@ func transformAnimated(ctx context.Context, img *vipsImage, data []byte, po *pro
 		return err
 	}
 
-	frames := make([]*vipsImage, framesCount)
-	defer func() {
-		for _, frame := range frames {
-			frame.Clear()
-		}
-	}()
-
 	watermarkEnabled := po.Watermark.Enabled
 	po.Watermark.Enabled = false
 	defer func() { po.Watermark.Enabled = watermarkEnabled }()
 
 	var errg panicGroup
 
+	frames := make([]*vipsImage, framesCount)
+	defer func() {
+		// Ensure all frames are processed before freeing
+		errg.Wait()
+
+		for _, frame := range frames {
+			if frame != nil {
+				frame.Clear()
+			}
+		}
+	}()
+
 	for i := 0; i < framesCount; i++ {
-		ind := i
+		frame := new(vipsImage)
+
+		if err = img.Extract(frame, 0, i*frameHeight, imgWidth, frameHeight); err != nil {
+			return err
+		}
+
+		frame.CopyMemory()
+
+		frames[i] = frame
+
 		errg.Go(func() error {
-			frames[ind] = new(vipsImage)
-
-			if ferr := img.Extract(frames[ind], 0, ind*frameHeight, imgWidth, frameHeight); ferr != nil {
-				return ferr
-			}
-
-			if ferr := transformImage(ctx, frames[ind], nil, po, imgtype); ferr != nil {
-				return ferr
-			}
-
-			return nil
+			return transformImage(ctx, frame, nil, po, imgtype)
 		})
 	}
 
