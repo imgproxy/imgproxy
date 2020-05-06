@@ -1,7 +1,7 @@
 FROM golang:1-buster
 LABEL maintainer="Sergey Alexandrovich <darthsim@gmail.com>"
 
-ARG VIPS_VERSION=8.9.1
+ARG VIPS_VERSION=8.9.2
 ARG IMAGEMAGICK_VERSION=7.0.9-20
 ARG QUANTIZR_VERSION=0.2.0
 ARG LIBHEIF_VERSION=1.6.2
