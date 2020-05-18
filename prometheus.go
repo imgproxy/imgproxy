@@ -32,58 +32,69 @@ func initPrometheus() {
 	}
 
 	prometheusRequestsTotal = prometheus.NewCounter(prometheus.CounterOpts{
-		Name: "requests_total",
-		Help: "A counter of the total number of HTTP requests imgproxy processed.",
+		Namespace: conf.PrometheusNamespace,
+		Name:      "requests_total",
+		Help:      "A counter of the total number of HTTP requests imgproxy processed.",
 	})
 
 	prometheusErrorsTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Name: "errors_total",
-		Help: "A counter of the occurred errors separated by type.",
+		Namespace: conf.PrometheusNamespace,
+		Name:      "errors_total",
+		Help:      "A counter of the occurred errors separated by type.",
 	}, []string{"type"})
 
 	prometheusRequestDuration = prometheus.NewHistogram(prometheus.HistogramOpts{
-		Name: "request_duration_seconds",
-		Help: "A histogram of the response latency.",
+		Namespace: conf.PrometheusNamespace,
+		Name:      "request_duration_seconds",
+		Help:      "A histogram of the response latency.",
 	})
 
 	prometheusDownloadDuration = prometheus.NewHistogram(prometheus.HistogramOpts{
-		Name: "download_duration_seconds",
-		Help: "A histogram of the source image downloading latency.",
+		Namespace: conf.PrometheusNamespace,
+		Name:      "download_duration_seconds",
+		Help:      "A histogram of the source image downloading latency.",
 	})
 
 	prometheusProcessingDuration = prometheus.NewHistogram(prometheus.HistogramOpts{
-		Name: "processing_duration_seconds",
-		Help: "A histogram of the image processing latency.",
+		Namespace: conf.PrometheusNamespace,
+		Name:      "processing_duration_seconds",
+		Help:      "A histogram of the image processing latency.",
 	})
 
 	prometheusBufferSize = prometheus.NewHistogramVec(prometheus.HistogramOpts{
-		Name: "buffer_size_bytes",
-		Help: "A histogram of the buffer size in bytes.",
+		Namespace: conf.PrometheusNamespace,
+		Name:      "buffer_size_bytes",
+		Help:      "A histogram of the buffer size in bytes.",
 	}, []string{"type"})
 
 	prometheusBufferDefaultSize = prometheus.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "buffer_default_size_bytes",
-		Help: "A gauge of the buffer default size in bytes.",
+		Namespace: conf.PrometheusNamespace,
+		Name:      "buffer_default_size_bytes",
+		Help:      "A gauge of the buffer default size in bytes.",
 	}, []string{"type"})
 
 	prometheusBufferMaxSize = prometheus.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "buffer_max_size_bytes",
-		Help: "A gauge of the buffer max size in bytes.",
+		Namespace: conf.PrometheusNamespace,
+		Name:      "buffer_max_size_bytes",
+		Help:      "A gauge of the buffer max size in bytes.",
 	}, []string{"type"})
 
 	prometheusVipsMemory = prometheus.NewGauge(prometheus.GaugeOpts{
-		Name: "vips_memory_bytes",
-		Help: "A gauge of the vips tracked memory usage in bytes.",
+		Namespace: conf.PrometheusNamespace,
+		Name:      "vips_memory_bytes",
+		Help:      "A gauge of the vips tracked memory usage in bytes.",
 	})
 
 	prometheusVipsMaxMemory = prometheus.NewGauge(prometheus.GaugeOpts{
-		Name: "vips_max_memory_bytes",
-		Help: "A gauge of the max vips tracked memory usage in bytes.",
+		Namespace: conf.PrometheusNamespace,
+		Name:      "vips_max_memory_bytes",
+		Help:      "A gauge of the max vips tracked memory usage in bytes.",
 	})
 
 	prometheusVipsAllocs = prometheus.NewGauge(prometheus.GaugeOpts{
-		Name: "vips_allocs",
-		Help: "A gauge of the number of active vips allocations.",
+		Namespace: conf.PrometheusNamespace,
+		Name:      "vips_allocs",
+		Help:      "A gauge of the number of active vips allocations.",
 	})
 
 	prometheus.MustRegister(

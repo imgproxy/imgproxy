@@ -231,7 +231,8 @@ type config struct {
 	NewRelicAppName string
 	NewRelicKey     string
 
-	PrometheusBind string
+	PrometheusBind      string
+	PrometheusNamespace string
 
 	BugsnagKey        string
 	BugsnagStage      string
@@ -389,6 +390,7 @@ func configure() error {
 	strEnvConfig(&conf.NewRelicKey, "IMGPROXY_NEW_RELIC_KEY")
 
 	strEnvConfig(&conf.PrometheusBind, "IMGPROXY_PROMETHEUS_BIND")
+	strEnvConfig(&conf.PrometheusNamespace, "IMGPROXY_PROMETHEUS_NAMESPACE")
 
 	strEnvConfig(&conf.BugsnagKey, "IMGPROXY_BUGSNAG_KEY")
 	strEnvConfig(&conf.BugsnagStage, "IMGPROXY_BUGSNAG_STAGE")
