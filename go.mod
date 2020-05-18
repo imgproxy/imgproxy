@@ -3,7 +3,7 @@ module github.com/imgproxy/imgproxy/v2
 go 1.11
 
 require (
-	cloud.google.com/go/storage v1.6.0
+	cloud.google.com/go/storage v1.8.0
 	github.com/StackExchange/wmi v0.0.0-20180116203802-5d049714c4a6 // indirect
 	github.com/aws/aws-sdk-go v1.30.4
 	github.com/bitly/go-simplejson v0.5.0 // indirect
@@ -22,10 +22,10 @@ require (
 	github.com/sirupsen/logrus v1.5.0
 	github.com/stretchr/testify v1.5.1
 	golang.org/x/image v0.0.0-20190802002840-cff245a6509b
-	golang.org/x/net v0.0.0-20200222125558-5a598a2470a0
-	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
-	golang.org/x/sys v0.0.0-20200223170610-d5e6a3e2c0ae
-	google.golang.org/api v0.21.0
+	golang.org/x/net v0.0.0-20200506145744-7e3656a0809f
+	golang.org/x/sync v0.0.0-20200317015054-43a5402ce75a
+	golang.org/x/sys v0.0.0-20200511232937-7e40ca221e25
+	google.golang.org/api v0.24.0
 )
 
 replace git.apache.org/thrift.git => github.com/apache/thrift v0.0.0-20180902110319-2566ecd5d999
