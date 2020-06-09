@@ -20,7 +20,7 @@ require (
 	github.com/newrelic/go-agent v2.16.3+incompatible
 	github.com/prometheus/client_golang v0.9.4
 	github.com/sirupsen/logrus v1.6.0
-	github.com/stretchr/testify v1.5.1
+	github.com/stretchr/testify v1.6.1
 	golang.org/x/image v0.0.0-20190802002840-cff245a6509b
 	golang.org/x/net v0.0.0-20200222125558-5a598a2470a0
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
