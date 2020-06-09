@@ -65,7 +65,7 @@ func reportError(err error, req *http.Request) {
 
 	if sentryEnabled {
 		hub := sentry.CurrentHub().Clone()
-		hub.Scope().SetRequest(sentry.Request{}.FromHTTPRequest(req))
+		hub.Scope().SetRequest(req)
 		hub.Scope().SetLevel(sentry.LevelError)
 		eventID := hub.CaptureException(err)
 		if eventID != nil {
