@@ -23,7 +23,6 @@ require (
 	github.com/stretchr/testify v1.6.1
 	golang.org/x/image v0.0.0-20190802002840-cff245a6509b
 	golang.org/x/net v0.0.0-20200520182314-0ba52f642ac2
-	golang.org/x/sync v0.0.0-20200317015054-43a5402ce75a
 	golang.org/x/sys v0.0.0-20200523222454-059865788121
 	google.golang.org/api v0.26.0
 )
