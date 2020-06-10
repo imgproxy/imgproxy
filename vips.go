@@ -13,7 +13,6 @@ import (
 	"math"
 	"os"
 	"runtime"
-	"time"
 	"unsafe"
 )
 
@@ -100,8 +99,6 @@ func initVips() error {
 		return fmt.Errorf("Can't load watermark: %s", err)
 	}
 
-	vipsCollectMetrics()
-
 	return nil
 }
 
@@ -109,16 +106,16 @@ func shutdownVips() {
 	C.vips_shutdown()
 }
 
-func vipsCollectMetrics() {
-	if prometheusEnabled {
-		go func() {
-			for range time.Tick(5 * time.Second) {
-				prometheusVipsMemory.Set(float64(C.vips_tracked_get_mem()))
-				prometheusVipsMaxMemory.Set(float64(C.vips_tracked_get_mem_highwater()))
-				prometheusVipsAllocs.Set(float64(C.vips_tracked_get_allocs()))
-			}
-		}()
-	}
+func vipsGetMem() float64 {
+	return float64(C.vips_tracked_get_mem())
+}
+
+func vipsGetMemHighwater() float64 {
+	return float64(C.vips_tracked_get_mem_highwater())
+}
+
+func vipsGetAllocs() float64 {
+	return float64(C.vips_tracked_get_allocs())
 }
 
 func vipsCleanup() {
