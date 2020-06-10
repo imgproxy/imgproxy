@@ -236,6 +236,7 @@ Check out the [New Relic](new_relic.md) guide to learn more.
 imgproxy can collect its metrics for Prometheus. Specify binding for Prometheus metrics server to activate this feature:
 
 * `IMGPROXY_PROMETHEUS_BIND`: Prometheus metrics server binding. Can't be the same as `IMGPROXY_BIND`. Default: blank.
+* `IMGPROXY_PROMETHEUS_NAMESPACE`: Namespace (prefix) for improxy metrics. Defaulr: blank.
 
 Check out the [Prometheus](prometheus.md) guide to learn more.
 
