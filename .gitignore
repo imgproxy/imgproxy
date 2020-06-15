@@ -1,5 +1,8 @@
 *.swp
 imgproxy
 tmp/
-.tmp/
+.tmp
 .vscode/
+
+.gitmodules
+docker-base
