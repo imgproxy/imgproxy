@@ -5,7 +5,8 @@
 - Add `IMGPROXY_PROMETHEUS_NAMESPACE` config.
 
 ### Changed
-- Better for libvips memory metrics for Prometheus
+- Better for libvips memory metrics for Prometheus.
+- Docker image includes the latest versions of dependencies.
 
 ## [2.13.1] - 2020-05-06
 ### Fixed
