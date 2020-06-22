@@ -5,7 +5,7 @@ go 1.11
 require (
 	cloud.google.com/go/storage v1.9.0
 	github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d // indirect
-	github.com/aws/aws-sdk-go v1.31.13
+	github.com/aws/aws-sdk-go v1.32.6
 	github.com/bitly/go-simplejson v0.5.0 // indirect
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
 	github.com/bugsnag/bugsnag-go v1.5.3
