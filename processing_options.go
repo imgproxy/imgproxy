@@ -143,7 +143,7 @@ type processingOptions struct {
 	Background   rgbColor
 	Blur         float32
 	Sharpen      float32
-	StripMeta     bool
+	StripMeta    bool
 
 	CacheBuster string
 
