@@ -405,14 +405,14 @@ func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedCachebuster() {
 	assert.Equal(s.T(), "123", po.CacheBuster)
 }
 
-func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedKeepMeta() {
-	req := s.getRequest("http://example.com/unsafe/keepmeta:true/plain/http://images.dev/lorem/ipsum.jpg")
+func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedStripMeta() {
+	req := s.getRequest("http://example.com/unsafe/stripmeta:true/plain/http://images.dev/lorem/ipsum.jpg")
 	ctx, err := parsePath(context.Background(), req)
 
 	require.Nil(s.T(), err)
 
 	po := getProcessingOptions(ctx)
-	assert.True(s.T(), po.KeepMeta)
+	assert.True(s.T(), po.StripMeta)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathWebpDetection() {

@@ -431,11 +431,11 @@ Default: empty
 #### Keep Meta
 
 ```
-keepmeta:%keepmeta
-km:%keepmeta
+stripmeta:%stripmeta
+sm:%stripmeta
 ```
 
-When set to `1`, `t` or `true`, imgproxy will keep the metadata (EXIF, IPTC, etc.) on JPEG and WebP output images. Normally this is controlled by the [IMGPROXY_STRIP_METADATA](configuration.md#miscellaneous) configuration setting but this procesing option allows the configuration to be overridden for a specific request.
+When set to `1`, `t` or `true`, imgproxy will strip the metadata (EXIF, IPTC, etc.) on JPEG and WebP output images. Normally this is controlled by the [IMGPROXY_STRIP_METADATA](configuration.md#miscellaneous) configuration but this procesing option allows the configuration to be set for each request.
 
 Default: `false`
 

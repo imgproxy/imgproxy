@@ -143,7 +143,7 @@ type processingOptions struct {
 	Background   rgbColor
 	Blur         float32
 	Sharpen      float32
-	KeepMeta     bool
+	StripMeta     bool
 
 	CacheBuster string
 
@@ -228,7 +228,7 @@ func newProcessingOptions() *processingOptions {
 			Sharpen:      0,
 			Dpr:          1,
 			Watermark:    watermarkOptions{Opacity: 1, Replicate: false, Gravity: gravityOptions{Type: gravityCenter}},
-			KeepMeta:     false,
+			StripMeta:     conf.StripMetadata,
 		}
 	})
 
@@ -851,14 +851,8 @@ func applyFilenameOption(po *processingOptions, args []string) error {
 }
 
 func applyMetaStripOption(po *processingOptions, args []string) error {
-	nArgs := len(args)
-
-	if nArgs > 1 {
-		return fmt.Errorf("Invalid meta strip arguments: %v", args)
-	}
-
 	if len(args[0]) > 0 {
-		po.KeepMeta = parseBoolOption(args[0])
+		po.StripMeta = parseBoolOption(args[0])
 	}
 
 	return nil
@@ -910,7 +904,7 @@ func applyProcessingOption(po *processingOptions, name string, args []string) er
 		return applyCacheBusterOption(po, args)
 	case "filename", "fn":
 		return applyFilenameOption(po, args)
-	case "keepmeta", "km":
+	case "stripmeta", "sm":
 		return applyMetaStripOption(po, args)
 	}
 
