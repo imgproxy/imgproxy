@@ -228,7 +228,7 @@ func newProcessingOptions() *processingOptions {
 			Sharpen:      0,
 			Dpr:          1,
 			Watermark:    watermarkOptions{Opacity: 1, Replicate: false, Gravity: gravityOptions{Type: gravityCenter}},
-			StripMeta:     conf.StripMetadata,
+			StripMeta:    conf.StripMetadata,
 		}
 	})
 
