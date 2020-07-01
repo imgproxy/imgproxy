@@ -850,7 +850,7 @@ func applyFilenameOption(po *processingOptions, args []string) error {
 	return nil
 }
 
-func applyMetaStripmetaOption(po *processingOptions, args []string) error {
+func applyStripMetadataOption(po *processingOptions, args []string) error {
 	if len(args[0]) > 0 {
 		po.StripMetadata = parseBoolOption(args[0])
 	}
@@ -902,10 +902,10 @@ func applyProcessingOption(po *processingOptions, name string, args []string) er
 		return applyPresetOption(po, args)
 	case "cachebuster", "cb":
 		return applyCacheBusterOption(po, args)
+	case "strip_metadata", "sm":
+		return applyStripMetadataOption(po, args)
 	case "filename", "fn":
 		return applyFilenameOption(po, args)
-	case "strip_metadata", "sm":
-		return applyMetaStripmetaOption(po, args)
 	}
 
 	return fmt.Errorf("Unknown processing option: %s", name)
