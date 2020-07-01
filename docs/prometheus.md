@@ -3,7 +3,9 @@
 imgproxy can collect its metrics for Prometheus. To use this feature, do the following:
 
 1. Set `IMGPROXY_PROMETHEUS_BIND` environment variable. Note that you can't bind the main server and Prometheus to the same port;
-2. Collect the metrics from any path on the specified binding.
+2. _(optional)_ Set `IMGPROXY_PROMETHEUS_NAMESPACE` to prepend prefix to the names of metrics.
+   I.e. with `IMGPROXY_PROMETHEUS_NAMESPACE=imgproxy` names will look like `imgproxy_requests_total`.
+3. Collect the metrics from any path on the specified binding.
 
 imgproxy will collect the following metrics:
 

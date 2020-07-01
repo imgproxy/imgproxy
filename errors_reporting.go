@@ -3,9 +3,10 @@ package main
 import (
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/bugsnag/bugsnag-go"
-	"github.com/getsentry/raven-go"
+	"github.com/getsentry/sentry-go"
 	"github.com/honeybadger-io/honeybadger-go"
 )
 
@@ -15,6 +16,7 @@ var (
 	sentryEnabled      bool
 
 	headersReplacer = strings.NewReplacer("-", "_")
+	sentryTimeout   = 5 * time.Second
 )
 
 func initErrorsReporting() {
@@ -35,9 +37,11 @@ func initErrorsReporting() {
 	}
 
 	if len(conf.SentryDSN) > 0 {
-		raven.SetDSN(conf.SentryDSN)
-		raven.SetEnvironment(conf.SentryEnvironment)
-		raven.SetRelease(conf.SentryRelease)
+		sentry.Init(sentry.ClientOptions{
+			Dsn:         conf.SentryDSN,
+			Release:     conf.SentryRelease,
+			Environment: conf.SentryEnvironment,
+		})
 
 		sentryEnabled = true
 	}
@@ -60,7 +64,12 @@ func reportError(err error, req *http.Request) {
 	}
 
 	if sentryEnabled {
-		raven.SetHttpContext(raven.NewHttp(req))
-		raven.CaptureError(err, nil)
+		hub := sentry.CurrentHub().Clone()
+		hub.Scope().SetRequest(req)
+		hub.Scope().SetLevel(sentry.LevelError)
+		eventID := hub.CaptureException(err)
+		if eventID != nil {
+			hub.Flush(sentryTimeout)
+		}
 	}
 }

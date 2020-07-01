@@ -1,29 +1,18 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Generator: Adobe Illustrator 21.1.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
-<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-	 viewBox="0 0 200 200" enable-background="new 0 0 200 200" xml:space="preserve">
-<g>
-	<linearGradient id="SVGID_1_" gradientUnits="userSpaceOnUse" x1="100" y1="149" x2="100" y2="51">
-		<stop  offset="0" style="stop-color:#1D40B2"/>
-		<stop  offset="1" style="stop-color:#1680D6"/>
-	</linearGradient>
-	<path fill="url(#SVGID_1_)" d="M169,69V51h-18v5h-42v-5H91v5H49v-5H31v18h5v22h-5v18h5v22h-5v18h18v-5h42v5h18v-5h42v5h18v-18h-5
-		v-22h5V91h-5V69H169z M95,55h10v10H95V55z M35,65V55h10v10H35z M35,105V95h10v10H35z M45,145H35v-10h10V145z M105,145H95v-10h10
-		V145z M151,136h-42v-5H91v5H49v-5h-5v-22h5V91h-5V69h5v-5h42v5h18v-5h42v5h5v22h-5v18h5v22h-5V136z M165,135v10h-10v-10H165z
-		 M165,95v10h-10V95H165z M155,65V55h10v10H155z"/>
-	<polygon fill="#1960C4" points="102,93 98,93 98,98 93,98 93,102 98,102 98,107 102,107 102,102 107,102 107,98 102,98 	"/>
-	<g>
-		<linearGradient id="SVGID_2_" gradientUnits="userSpaceOnUse" x1="165.6285" y1="159.6245" x2="188.2889" y2="153.5527">
-			<stop  offset="0" style="stop-color:#1C1C1C"/>
-			<stop  offset="1" style="stop-color:#3D3E3F"/>
-		</linearGradient>
-		<polygon fill-rule="evenodd" clip-rule="evenodd" fill="url(#SVGID_2_)" points="174.2,173.2 193.5,173.2 160.4,140 		"/>
-		<linearGradient id="SVGID_3_" gradientUnits="userSpaceOnUse" x1="154.4951" y1="165.0742" x2="170.8477" y2="160.6925">
-			<stop  offset="0" style="stop-color:#1C1C1C"/>
-			<stop  offset="1" style="stop-color:#3D3E3F"/>
-		</linearGradient>
-		<polyline fill-rule="evenodd" clip-rule="evenodd" fill="url(#SVGID_3_)" points="160.4,140 160.4,187 174.2,173.2 		"/>
-	</g>
-</g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <linearGradient id="a" gradientUnits="userSpaceOnUse" x1="100" y1="149" x2="100" y2="51">
+    <stop offset="0" stop-color="#1d40b2"/>
+    <stop offset="1" stop-color="#1680d6"/>
+  </linearGradient>
+  <path fill="url(#a)" d="M169 69V51h-18v5h-42v-5H91v5H49v-5H31v18h5v22h-5v18h5v22h-5v18h18v-5h42v5h18v-5h42v5h18v-18h-5v-22h5V91h-5V69h5zM95 55h10v10H95V55zM35 65V55h10v10H35zm0 40V95h10v10H35zm10 40H35v-10h10v10zm60 0H95v-10h10v10zm46-9h-42v-5H91v5H49v-5h-5v-22h5V91h-5V69h5v-5h42v5h18v-5h42v5h5v22h-5v18h5v22h-5v5zm14-1v10h-10v-10h10zm0-40v10h-10V95h10zm-10-30V55h10v10h-10z"/>
+  <path fill="#1960C4" d="M102 93h-4v5h-5v4h5v5h4v-5h5v-4h-5z"/>
+  <linearGradient id="b" gradientUnits="userSpaceOnUse" x1="165.629" y1="159.625" x2="188.289" y2="153.553">
+    <stop offset="0" stop-color="#1c1c1c"/>
+    <stop offset="1" stop-color="#3d3e3f"/>
+  </linearGradient>
+  <path fill-rule="evenodd" clip-rule="evenodd" fill="url(#b)" d="M174.2 173.2h19.3L160.4 140z"/>
+  <linearGradient id="c" gradientUnits="userSpaceOnUse" x1="154.495" y1="165.074" x2="170.848" y2="160.692">
+    <stop offset="0" stop-color="#1c1c1c"/>
+    <stop offset="1" stop-color="#3d3e3f"/>
+  </linearGradient>
+  <path fill-rule="evenodd" clip-rule="evenodd" fill="url(#c)" d="M160.4 140v47l13.8-13.8"/>
 </svg>

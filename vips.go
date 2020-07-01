@@ -9,10 +9,10 @@ package main
 import "C"
 import (
 	"context"
+	"fmt"
 	"math"
 	"os"
 	"runtime"
-	"time"
 	"unsafe"
 )
 
@@ -25,7 +25,7 @@ var (
 	vipsTypeSupportLoad  = make(map[imageType]bool)
 	vipsTypeSupportSave  = make(map[imageType]bool)
 
-	watermark *vipsImage
+	watermark *imageData
 )
 
 var vipsConf struct {
@@ -43,13 +43,13 @@ const (
 	vipsAngleD270 = C.VIPS_ANGLE_D270
 )
 
-func initVips() {
+func initVips() error {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 
 	if err := C.vips_initialize(); err != 0 {
 		C.vips_shutdown()
-		logFatal("unable to start vips!")
+		return fmt.Errorf("unable to start vips!")
 	}
 
 	// Disable libvips cache. Since processing pipeline is fine tuned, we won't get much profit from it.
@@ -58,6 +58,10 @@ func initVips() {
 	C.vips_cache_set_max(0)
 
 	C.vips_concurrency_set(1)
+
+	// Vector calculations cause SIGSEGV sometimes when working with JPEG.
+	// It's better to disable it since profit it quite small
+	C.vips_vector_set_enabled(0)
 
 	if len(os.Getenv("IMGPROXY_VIPS_LEAK_CHECK")) > 0 {
 		C.vips_leak_set(C.gboolean(1))
@@ -69,46 +73,9 @@ func initVips() {
 
 	vipsSupportSmartcrop = C.vips_support_smartcrop() == 1
 
-	if int(C.vips_type_find_load_go(C.int(imageTypeJPEG))) != 0 {
-		vipsTypeSupportLoad[imageTypeJPEG] = true
-	}
-	if int(C.vips_type_find_load_go(C.int(imageTypePNG))) != 0 {
-		vipsTypeSupportLoad[imageTypePNG] = true
-	}
-	if int(C.vips_type_find_load_go(C.int(imageTypeWEBP))) != 0 {
-		vipsTypeSupportLoad[imageTypeWEBP] = true
-	}
-	if int(C.vips_type_find_load_go(C.int(imageTypeGIF))) != 0 {
-		vipsTypeSupportLoad[imageTypeGIF] = true
-	}
-	if int(C.vips_type_find_load_go(C.int(imageTypeSVG))) != 0 {
-		vipsTypeSupportLoad[imageTypeSVG] = true
-	}
-	if int(C.vips_type_find_load_go(C.int(imageTypeHEIC))) != 0 {
-		vipsTypeSupportLoad[imageTypeHEIC] = true
-	}
-
-	// we load ICO with github.com/mat/besticon/ico and send decoded data to vips
-	vipsTypeSupportLoad[imageTypeICO] = true
-
-	if int(C.vips_type_find_save_go(C.int(imageTypeJPEG))) != 0 {
-		vipsTypeSupportSave[imageTypeJPEG] = true
-	}
-	if int(C.vips_type_find_save_go(C.int(imageTypePNG))) != 0 {
-		vipsTypeSupportSave[imageTypePNG] = true
-	}
-	if int(C.vips_type_find_save_go(C.int(imageTypeWEBP))) != 0 {
-		vipsTypeSupportSave[imageTypeWEBP] = true
-	}
-	if int(C.vips_type_find_save_go(C.int(imageTypeGIF))) != 0 {
-		vipsTypeSupportSave[imageTypeGIF] = true
-	}
-	if int(C.vips_type_find_save_go(C.int(imageTypeICO))) != 0 {
-		vipsTypeSupportSave[imageTypeICO] = true
-	}
-
-	if int(C.vips_type_find_save_go(C.int(imageTypeHEIC))) != 0 {
-		vipsTypeSupportSave[imageTypeHEIC] = true
+	for _, imgtype := range imageTypes {
+		vipsTypeSupportLoad[imgtype] = int(C.vips_type_find_load_go(C.int(imgtype))) != 0
+		vipsTypeSupportSave[imgtype] = int(C.vips_type_find_save_go(C.int(imgtype))) != 0
 	}
 
 	if conf.JpegProgressive {
@@ -127,31 +94,28 @@ func initVips() {
 
 	vipsConf.WatermarkOpacity = C.double(conf.WatermarkOpacity)
 
-	if err := vipsPrepareWatermark(); err != nil {
-		logFatal(err.Error())
+	if err := vipsLoadWatermark(); err != nil {
+		C.vips_shutdown()
+		return fmt.Errorf("Can't load watermark: %s", err)
 	}
 
-	vipsCollectMetrics()
+	return nil
 }
 
 func shutdownVips() {
-	if watermark != nil {
-		watermark.Clear()
-	}
-
 	C.vips_shutdown()
 }
 
-func vipsCollectMetrics() {
-	if prometheusEnabled {
-		go func() {
-			for range time.Tick(5 * time.Second) {
-				prometheusVipsMemory.Set(float64(C.vips_tracked_get_mem()))
-				prometheusVipsMaxMemory.Set(float64(C.vips_tracked_get_mem_highwater()))
-				prometheusVipsAllocs.Set(float64(C.vips_tracked_get_allocs()))
-			}
-		}()
-	}
+func vipsGetMem() float64 {
+	return float64(C.vips_tracked_get_mem())
+}
+
+func vipsGetMemHighwater() float64 {
+	return float64(C.vips_tracked_get_mem_highwater())
+}
+
+func vipsGetAllocs() float64 {
+	return float64(C.vips_tracked_get_allocs())
 }
 
 func vipsCleanup() {
@@ -162,62 +126,16 @@ func vipsError() error {
 	return newUnexpectedError(C.GoString(C.vips_error_buffer()), 1)
 }
 
-func vipsPrepareWatermark() error {
-	data, imgtype, cancel, err := watermarkData()
-	defer cancel()
-
-	if err != nil {
-		return err
-	}
-
-	if data == nil {
-		return nil
-	}
-
-	watermark = new(vipsImage)
-
-	if err = watermark.Load(data, imgtype, 1, 1.0, 1); err != nil {
-		return err
-	}
-
-	var tmp *C.VipsImage
-
-	if C.vips_apply_opacity(watermark.VipsImage, &tmp, C.double(conf.WatermarkOpacity)) != 0 {
-		return vipsError()
-	}
-	C.swap_and_clear(&watermark.VipsImage, tmp)
-
-	if err = watermark.CopyMemory(); err != nil {
-		return err
-	}
-
-	return nil
+func vipsLoadWatermark() (err error) {
+	watermark, err = getWatermarkData()
+	return
 }
 
-func vipsResizeWatermark(width, height int) (wm *vipsImage, err error) {
-	wmW := float64(watermark.VipsImage.Xsize)
-	wmH := float64(watermark.VipsImage.Ysize)
-
-	wr := float64(width) / wmW
-	hr := float64(height) / wmH
-
-	scale := math.Min(wr, hr)
-
-	if wmW*scale < 1 {
-		scale = 1 / wmW
+func gbool(b bool) C.gboolean {
+	if b {
+		return C.gboolean(1)
 	}
-
-	if wmH*scale < 1 {
-		scale = 1 / wmH
-	}
-
-	wm = new(vipsImage)
-
-	if C.vips_resize_with_premultiply(watermark.VipsImage, &wm.VipsImage, C.double(scale)) != 0 {
-		err = vipsError()
-	}
-
-	return
+	return C.gboolean(0)
 }
 
 func (img *vipsImage) Width() int {
@@ -244,15 +162,12 @@ func (img *vipsImage) Load(data []byte, imgtype imageType, shrink int, scale flo
 		err = C.vips_gifload_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), C.int(pages), &tmp)
 	case imageTypeSVG:
 		err = C.vips_svgload_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), C.double(scale), &tmp)
-	case imageTypeICO:
-		rawData, width, height, icoErr := icoData(data)
-		if icoErr != nil {
-			return icoErr
-		}
-
-		tmp = C.vips_image_new_from_memory_copy(unsafe.Pointer(&rawData[0]), C.size_t(width*height*4), C.int(width), C.int(height), 4, C.VIPS_FORMAT_UCHAR)
 	case imageTypeHEIC:
 		err = C.vips_heifload_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), &tmp)
+	case imageTypeBMP:
+		err = C.vips_bmpload_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), &tmp)
+	case imageTypeTIFF:
+		err = C.vips_tiffload_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), &tmp)
 	}
 	if err != 0 {
 		return vipsError()
@@ -263,7 +178,7 @@ func (img *vipsImage) Load(data []byte, imgtype imageType, shrink int, scale flo
 	return nil
 }
 
-func (img *vipsImage) Save(imgtype imageType, quality int) ([]byte, context.CancelFunc, error) {
+func (img *vipsImage) Save(imgtype imageType, quality int, stripMeta bool) ([]byte, context.CancelFunc, error) {
 	var ptr unsafe.Pointer
 
 	cancel := func() {
@@ -276,26 +191,26 @@ func (img *vipsImage) Save(imgtype imageType, quality int) ([]byte, context.Canc
 
 	switch imgtype {
 	case imageTypeJPEG:
-		err = C.vips_jpegsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality), vipsConf.JpegProgressive)
+		err = C.vips_jpegsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality), vipsConf.JpegProgressive, gbool(stripMeta))
 	case imageTypePNG:
 		err = C.vips_pngsave_go(img.VipsImage, &ptr, &imgsize, vipsConf.PngInterlaced, vipsConf.PngQuantize, vipsConf.PngQuantizationColors)
 	case imageTypeWEBP:
-		err = C.vips_webpsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality))
+		err = C.vips_webpsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality), gbool(stripMeta))
 	case imageTypeGIF:
 		err = C.vips_gifsave_go(img.VipsImage, &ptr, &imgsize)
 	case imageTypeICO:
 		err = C.vips_icosave_go(img.VipsImage, &ptr, &imgsize)
-	case imageTypeHEIC:
-		err = C.vips_heifsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality))
+	case imageTypeBMP:
+		err = C.vips_bmpsave_go(img.VipsImage, &ptr, &imgsize)
+	case imageTypeTIFF:
+		err = C.vips_tiffsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality))
 	}
 	if err != 0 {
 		C.g_free_go(&ptr)
 		return nil, cancel, vipsError()
 	}
 
-	const maxBufSize = ^uint32(0)
-
-	b := (*[maxBufSize]byte)(ptr)[:int(imgsize):int(imgsize)]
+	b := (*[math.MaxInt32]byte)(ptr)[:int(imgsize):int(imgsize)]
 
 	return b, cancel, nil
 }
@@ -393,7 +308,7 @@ func (img *vipsImage) Resize(scale float64, hasAlpa bool) error {
 }
 
 func (img *vipsImage) Orientation() C.int {
-	return C.vips_get_exif_orientation(img.VipsImage)
+	return C.vips_get_orientation(img.VipsImage)
 }
 
 func (img *vipsImage) Rotate(angle int) error {
@@ -402,6 +317,8 @@ func (img *vipsImage) Rotate(angle int) error {
 	if C.vips_rot_go(img.VipsImage, &tmp, C.VipsAngle(angle)) != 0 {
 		return vipsError()
 	}
+
+	C.vips_autorot_remove_angle(tmp)
 
 	C.swap_and_clear(&img.VipsImage, tmp)
 	return nil
@@ -440,6 +357,23 @@ func (img *vipsImage) SmartCrop(width, height int) error {
 	var tmp *C.VipsImage
 
 	if C.vips_smartcrop_go(img.VipsImage, &tmp, C.int(width), C.int(height)) != 0 {
+		return vipsError()
+	}
+
+	C.swap_and_clear(&img.VipsImage, tmp)
+	return nil
+}
+
+func (img *vipsImage) Trim(threshold float64, smart bool, color rgbColor, equalHor bool, equalVer bool) error {
+	var tmp *C.VipsImage
+
+	if err := img.CopyMemory(); err != nil {
+		return err
+	}
+
+	if C.vips_trim(img.VipsImage, &tmp, C.double(threshold),
+		gbool(smart), C.double(color.R), C.double(color.G), C.double(color.B),
+		gbool(equalHor), gbool(equalVer)) != 0 {
 		return vipsError()
 	}
 
@@ -504,26 +438,26 @@ func (img *vipsImage) ImportColourProfile(evenSRGB bool) error {
 
 	profile := (*C.char)(nil)
 
-	if img.VipsImage.Type == C.VIPS_INTERPRETATION_sRGB {
-		// No embedded profile for sRGB, ignore
-		if C.vips_has_embedded_icc(img.VipsImage) == 0 {
-			return nil
-		}
-
-		// Don't import sRGB IEC61966 2.1 unless evenSRGB
-		if !evenSRGB && C.vips_icc_is_srgb_iec61966(img.VipsImage) != 0 {
-			return nil
-		}
-	} else if img.VipsImage.Type == C.VIPS_INTERPRETATION_CMYK && C.vips_has_embedded_icc(img.VipsImage) == 0 {
-		if C.vips_support_builtin_icc() != 0 {
-			profile = cachedCString("cmyk")
-		} else {
+	if C.vips_has_embedded_icc(img.VipsImage) == 0 {
+		// No embedded profile
+		// If vips doesn't have built-in profile, use profile built-in to imgproxy for CMYK
+		// TODO: Remove this. Supporting built-in profiles is pain, vips does it better
+		if img.VipsImage.Type == C.VIPS_INTERPRETATION_CMYK && C.vips_support_builtin_icc() == 0 {
 			p, err := cmykProfilePath()
 			if err != nil {
 				return err
 			}
 			profile = cachedCString(p)
+		} else {
+			// imgproxy doesn't have built-in profile for other interpretations,
+			// so we can't do anything here
+			return nil
 		}
+	}
+
+	// Don't import sRGB IEC61966 2.1 unless evenSRGB
+	if img.VipsImage.Type == C.VIPS_INTERPRETATION_sRGB && !evenSRGB && C.vips_icc_is_srgb_iec61966(img.VipsImage) != 0 {
+		return nil
 	}
 
 	if C.vips_icc_import_go(img.VipsImage, &tmp, profile) == 0 {
@@ -535,6 +469,10 @@ func (img *vipsImage) ImportColourProfile(evenSRGB bool) error {
 	return nil
 }
 
+func (img *vipsImage) IsSRGB() bool {
+	return img.VipsImage.Type == C.VIPS_INTERPRETATION_sRGB
+}
+
 func (img *vipsImage) LinearColourspace() error {
 	return img.Colorspace(C.VIPS_INTERPRETATION_scRGB)
 }
@@ -544,7 +482,7 @@ func (img *vipsImage) RgbColourspace() error {
 }
 
 func (img *vipsImage) Colorspace(colorspace C.VipsInterpretation) error {
-	if C.vips_image_guess_interpretation(img.VipsImage) != colorspace {
+	if img.VipsImage.Type != colorspace {
 		var tmp *C.VipsImage
 
 		if C.vips_colourspace_go(img.VipsImage, &tmp, colorspace) != 0 {
@@ -576,41 +514,7 @@ func (img *vipsImage) Replicate(width, height int) error {
 	return nil
 }
 
-func (img *vipsImage) Embed(gravity gravityType, width, height int, offX, offY int, bg rgbColor) error {
-	wmWidth := img.Width()
-	wmHeight := img.Height()
-
-	left := (width-wmWidth+1)/2 + offX
-	top := (height-wmHeight+1)/2 + offY
-
-	if gravity == gravityNorth || gravity == gravityNorthEast || gravity == gravityNorthWest {
-		top = offY
-	}
-
-	if gravity == gravityEast || gravity == gravityNorthEast || gravity == gravitySouthEast {
-		left = width - wmWidth - offX
-	}
-
-	if gravity == gravitySouth || gravity == gravitySouthEast || gravity == gravitySouthWest {
-		top = height - wmHeight - offY
-	}
-
-	if gravity == gravityWest || gravity == gravityNorthWest || gravity == gravitySouthWest {
-		left = offX
-	}
-
-	if left > width {
-		left = width - wmWidth
-	} else if left < -wmWidth {
-		left = 0
-	}
-
-	if top > height {
-		top = height - wmHeight
-	} else if top < -wmHeight {
-		top = 0
-	}
-
+func (img *vipsImage) Embed(width, height int, offX, offY int, bg rgbColor) error {
 	if err := img.RgbColourspace(); err != nil {
 		return err
 	}
@@ -623,7 +527,7 @@ func (img *vipsImage) Embed(gravity gravityType, width, height int, offX, offY i
 	}
 
 	var tmp *C.VipsImage
-	if C.vips_embed_go(img.VipsImage, &tmp, C.int(left), C.int(top), C.int(width), C.int(height), &bgc[0], C.int(len(bgc))) != 0 {
+	if C.vips_embed_go(img.VipsImage, &tmp, C.int(offX), C.int(offY), C.int(width), C.int(height), &bgc[0], C.int(len(bgc))) != 0 {
 		return vipsError()
 	}
 	C.swap_and_clear(&img.VipsImage, tmp)
@@ -631,48 +535,10 @@ func (img *vipsImage) Embed(gravity gravityType, width, height int, offX, offY i
 	return nil
 }
 
-func (img *vipsImage) ApplyWatermark(opts *watermarkOptions) error {
-	if watermark == nil {
-		return nil
-	}
+func (img *vipsImage) ApplyWatermark(wm *vipsImage, opacity float64) error {
+	var tmp *C.VipsImage
 
-	var (
-		wm  *vipsImage
-		tmp *C.VipsImage
-	)
-	defer func() { wm.Clear() }()
-
-	var err error
-
-	imgW := img.Width()
-	imgH := img.Height()
-
-	if opts.Scale == 0 {
-		wm = new(vipsImage)
-
-		if C.vips_copy_go(watermark.VipsImage, &wm.VipsImage) != 0 {
-			return vipsError()
-		}
-	} else {
-		wmW := maxInt(int(float64(imgW)*opts.Scale), 1)
-		wmH := maxInt(int(float64(imgH)*opts.Scale), 1)
-
-		if wm, err = vipsResizeWatermark(wmW, wmH); err != nil {
-			return err
-		}
-	}
-
-	if opts.Replicate {
-		if err = wm.Replicate(imgW, imgH); err != nil {
-			return err
-		}
-	} else {
-		if err = wm.Embed(opts.Gravity, imgW, imgH, opts.OffsetX, opts.OffsetY, rgbColor{0, 0, 0}); err != nil {
-			return err
-		}
-	}
-
-	if C.vips_apply_watermark(img.VipsImage, wm.VipsImage, &tmp, C.double(opts.Opacity)) != 0 {
+	if C.vips_apply_watermark(img.VipsImage, wm.VipsImage, &tmp, C.double(opacity)) != 0 {
 		return vipsError()
 	}
 	C.swap_and_clear(&img.VipsImage, tmp)

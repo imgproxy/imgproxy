@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -14,17 +15,26 @@ type gcsTransport struct {
 	client *storage.Client
 }
 
-func newGCSTransport() http.RoundTripper {
-	client, err := storage.NewClient(context.Background(), option.WithCredentialsJSON([]byte(conf.GCSKey)))
+func newGCSTransport() (http.RoundTripper, error) {
+	var (
+		client *storage.Client
+		err    error
+	)
 
-	if err != nil {
-		logFatal("Can't create GCS client: %s", err)
+	if len(conf.GCSKey) > 0 {
+		client, err = storage.NewClient(context.Background(), option.WithCredentialsJSON([]byte(conf.GCSKey)))
+	} else {
+		client, err = storage.NewClient(context.Background())
 	}
 
-	return gcsTransport{client}
+	if err != nil {
+		return nil, fmt.Errorf("Can't create GCS client: %s", err)
+	}
+
+	return gcsTransport{client}, nil
 }
 
-func (t gcsTransport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
+func (t gcsTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	bkt := t.client.Bucket(req.URL.Host)
 	obj := bkt.Object(strings.TrimPrefix(req.URL.Path, "/"))
 
@@ -38,13 +48,16 @@ func (t gcsTransport) RoundTrip(req *http.Request) (resp *http.Response, err err
 		return nil, err
 	}
 
+	header := make(http.Header)
+	header.Set("Cache-Control", reader.Attrs.CacheControl)
+
 	return &http.Response{
 		Status:        "200 OK",
 		StatusCode:    200,
 		Proto:         "HTTP/1.0",
 		ProtoMajor:    1,
 		ProtoMinor:    0,
-		Header:        make(http.Header),
+		Header:        header,
 		ContentLength: reader.Attrs.Size,
 		Body:          reader,
 		Close:         true,

@@ -16,14 +16,19 @@ var (
 	processingSem chan struct{}
 
 	headerVaryValue string
+	fallbackImage   *imageData
 )
 
-func initProcessingHandler() {
+func initProcessingHandler() error {
+	var err error
+
 	processingSem = make(chan struct{}, conf.Concurrency)
 
 	if conf.GZipCompression > 0 {
 		responseGzipBufPool = newBufPool("gzip", conf.Concurrency, conf.GZipBufferSize)
-		responseGzipPool = newGzipPool(conf.Concurrency)
+		if responseGzipPool, err = newGzipPool(conf.Concurrency); err != nil {
+			return err
+		}
 	}
 
 	vary := make([]string, 0)
@@ -41,16 +46,46 @@ func initProcessingHandler() {
 	}
 
 	headerVaryValue = strings.Join(vary, ", ")
+
+	if fallbackImage, err = getFallbackImageData(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func respondWithImage(ctx context.Context, reqID string, r *http.Request, rw http.ResponseWriter, data []byte, size ImageSize) {
 	po := getProcessingOptions(ctx)
 
-	rw.Header().Set("Expires", time.Now().Add(time.Second*time.Duration(conf.TTL)).Format(http.TimeFormat))
-	rw.Header().Set("Cache-Control", fmt.Sprintf("max-age=%d, public", conf.TTL))
+	var contentDisposition string
+	if len(po.Filename) > 0 {
+		contentDisposition = po.Format.ContentDisposition(po.Filename)
+	} else {
+		contentDisposition = po.Format.ContentDispositionFromURL(getImageURL(ctx))
+	}
+
 	rw.Header().Set("Content-Type", po.Format.Mime())
-	rw.Header().Set("Content-Disposition", po.Format.ContentDisposition(getImageURL(ctx)))
 	rw.Header().Set("X-is", fmt.Sprintf("%d:%d", size.Width, size.Height))
+	rw.Header().Set("Content-Disposition", contentDisposition)
+
+	var cacheControl, expires string
+
+	if conf.CacheControlPassthrough {
+		cacheControl = getCacheControlHeader(ctx)
+		expires = getExpiresHeader(ctx)
+	}
+
+	if len(cacheControl) == 0 && len(expires) == 0 {
+		cacheControl = fmt.Sprintf("max-age=%d, public", conf.TTL)
+		expires = time.Now().Add(time.Second * time.Duration(conf.TTL)).Format(http.TimeFormat)
+	}
+
+	if len(cacheControl) > 0 {
+		rw.Header().Set("Cache-Control", cacheControl)
+	}
+	if len(expires) > 0 {
+		rw.Header().Set("Expires", expires)
+	}
 
 	if len(headerVaryValue) > 0 {
 		rw.Header().Set("Vary", headerVaryValue)
@@ -77,11 +112,22 @@ func respondWithImage(ctx context.Context, reqID string, r *http.Request, rw htt
 		rw.Write(data)
 	}
 
-	logResponse(reqID, 200, fmt.Sprintf("Processed in %s: %s; %+v", getTimerSince(ctx), getImageURL(ctx), po))
+	imageURL := getImageURL(ctx)
+
+	logResponse(reqID, r, 200, nil, &imageURL, po)
+	// logResponse(reqID, r, 200, getTimerSince(ctx), getImageURL(ctx), po))
+}
+
+func respondWithNotModified(ctx context.Context, reqID string, r *http.Request, rw http.ResponseWriter) {
+	rw.WriteHeader(304)
+
+	imageURL := getImageURL(ctx)
+
+	logResponse(reqID, r, 304, nil, &imageURL, getProcessingOptions(ctx))
 }
 
 func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
+	ctx := r.Context()
 
 	// Health check
 	if r.URL.RequestURI() == "/" && r.Method == http.MethodGet {
@@ -103,7 +149,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	processingSem <- struct{}{}
 	defer func() { <-processingSem }()
 
-	ctx, timeoutCancel := startTimer(ctx, time.Duration(conf.WriteTimeout)*time.Second)
+	ctx, timeoutCancel := context.WithTimeout(ctx, time.Duration(conf.WriteTimeout)*time.Second)
 	defer timeoutCancel()
 
 	ctx, err := parsePath(ctx, r)
@@ -121,7 +167,17 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		if prometheusEnabled {
 			incrementPrometheusErrorsTotal("download")
 		}
-		panic(err)
+
+		if fallbackImage == nil {
+			panic(err)
+		}
+
+		if ierr, ok := err.(*imgproxyError); !ok || ierr.Unexpected {
+			reportError(err, r)
+		}
+
+		logWarning("Could not load image. Using fallback image: %s", err.Error())
+		ctx = context.WithValue(ctx, imageDataCtxKey, fallbackImage)
 	}
 
 	checkTimeout(ctx)
@@ -131,8 +187,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		rw.Header().Set("ETag", eTag)
 
 		if eTag == r.Header.Get("If-None-Match") {
-			logResponse(reqID, 304, "Not modified")
-			rw.WriteHeader(304)
+			respondWithNotModified(ctx, reqID, r, rw)
 			return
 		}
 	}

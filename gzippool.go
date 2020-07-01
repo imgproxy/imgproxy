@@ -2,6 +2,7 @@ package main
 
 import (
 	"compress/gzip"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"sync"
@@ -17,26 +18,30 @@ type gzipPoolEntry struct {
 	next *gzipPoolEntry
 }
 
-func newGzipPool(n int) *gzipPool {
+func newGzipPool(n int) (*gzipPool, error) {
 	pool := new(gzipPool)
 
 	for i := 0; i < n; i++ {
-		pool.grow()
+		if err := pool.grow(); err != nil {
+			return nil, err
+		}
 	}
 
-	return pool
+	return pool, nil
 }
 
-func (p *gzipPool) grow() {
+func (p *gzipPool) grow() error {
 	gz, err := gzip.NewWriterLevel(ioutil.Discard, conf.GZipCompression)
 	if err != nil {
-		logFatal("Can't init GZip compression: %s", err)
+		return fmt.Errorf("Can't init GZip compression: %s", err)
 	}
 
 	p.top = &gzipPoolEntry{
 		gz:   gz,
 		next: p.top,
 	}
+
+	return nil
 }
 
 func (p *gzipPool) Get(w io.Writer) *gzip.Writer {

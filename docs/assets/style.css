@@ -1,0 +1,123 @@
+:root {
+  --mono-hue: var(--theme-hue);
+  --mono-saturation: 10%;
+
+  --mono-shade4: hsl(var(--mono-hue), var(--mono-saturation), 10%);
+
+  --theme-hue       : 208;
+  --theme-saturation: 80.3%;
+  --theme-lightness : 45.9%;
+
+  --base-background-color: rgb(13, 15, 21);
+  --base-background-color-trans: rgba(13, 15, 21, 0);
+  --base-font-family: "Roboto",sans-serif;
+
+  --code-font-family: "Fira Mono",monospace;
+  --code-inline-background: var(--mono-tint1);
+
+  --heading-h1-font-weight: 600;
+  --heading-h2-font-weight: 600;
+
+  --link-color: var(--theme-color);
+
+  --sidebar-background: var(--mono-shade4);
+  --sidebar-border-color: hsla(0,0%,100%,.4);
+
+  --copycode-background: var(--link-color);
+}
+
+.app-name-link img {
+  width: 90%
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  width: 100%;
+  height: 500px;
+  background: linear-gradient(
+    180deg,
+    var(--base-background-color-trans),
+    var(--base-background-color) 500px
+  ), url('/assets/pattern.svg');
+}
+
+@media (min-width: 1200px) {
+  .content {
+    font-size: 111%;
+  }
+}
+
+@media (min-width: 1400px) {
+  :root {
+    --base-font-size: 18px;
+  }
+}
+
+.loading {
+  margin: 150px auto 0;
+  position: relative;
+  text-align: center;
+}
+
+.loading__spinner {
+  --spinner-size: 50px;
+
+  box-sizing: border-box;
+  width: var(--spinner-size);
+  height: var(--spinner-size);
+  margin: 0 auto;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spinner 1s linear infinite;
+}
+
+@keyframes spinner {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.pro-badge {
+  height: 1em;
+  vertical-align: middle;
+}
+
+.github-edit-btn {
+  display: block;
+  position: fixed;
+  bottom: 0;
+  right: 10px;
+  border-radius: 10px 10px 0 0;
+  background-color: var(--link-color);
+  color: var(--base-color) !important;
+  text-decoration: none !important;
+  font-size: .8em;
+  padding: 0.2em 1em;
+  opacity: 0.75;
+  z-index: 999;
+}
+
+.github-edit-btn:hover {
+  opacity: 1;
+}
+
+@media (max-width: 768px) {
+  .github-edit-btn {
+      display: none;
+  }
+}
+
+.github-corner {
+  position: fixed;
+}
+
+.gitter img {
+  display: block;
+  margin: 5px auto 0;
+}

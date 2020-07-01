@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/subtle"
 	"fmt"
-	"net"
 	"net/http"
 	"time"
 
@@ -18,21 +17,24 @@ var (
 )
 
 func buildRouter() *router {
-	r := newRouter()
+	r := newRouter(conf.PathPrefix)
 
 	r.PanicHandler = handlePanic
 
 	r.Add(http.MethodGet, "/", withCORS(withSecret(handleProcessing)))
 	r.Add(http.MethodPost, "/", withCORS(withSecret(handleProcessing)))
 	r.OPTIONS("/", withCORS(handleOptions))
+	r.GET("/favicon.ico", handleFavicon, true)
+	r.HEAD("/", withCORS(handleHead), false)
+	r.OPTIONS("/", withCORS(handleHead), false)
 
 	return r
 }
 
-func startServer() *http.Server {
-	l, err := net.Listen("tcp", conf.Bind)
+func startServer(cancel context.CancelFunc) (*http.Server, error) {
+	l, err := listenReuseport(conf.Network, conf.Bind)
 	if err != nil {
-		logFatal(err.Error())
+		return nil, fmt.Errorf("Can't start server: %s", err)
 	}
 	l = netutil.LimitListener(l, conf.MaxClients)
 
@@ -48,16 +50,19 @@ func startServer() *http.Server {
 		s.SetKeepAlivesEnabled(false)
 	}
 
-	initProcessingHandler()
+	if err := initProcessingHandler(); err != nil {
+		return nil, err
+	}
 
 	go func() {
 		logNotice("Starting server at %s", conf.Bind)
 		if err := s.Serve(l); err != nil && err != http.ErrServerClosed {
-			logFatal(err.Error())
+			logError(err.Error())
 		}
+		cancel()
 	}()
 
-	return s
+	return s, nil
 }
 
 func shutdownServer(s *http.Server) {
@@ -97,8 +102,6 @@ func withSecret(h routeHandler) routeHandler {
 }
 
 func handlePanic(reqID string, rw http.ResponseWriter, r *http.Request, err error) {
-	reportError(err, r)
-
 	var (
 		ierr *imgproxyError
 		ok   bool
@@ -108,7 +111,11 @@ func handlePanic(reqID string, rw http.ResponseWriter, r *http.Request, err erro
 		ierr = newUnexpectedError(err.Error(), 3)
 	}
 
-	logResponse(reqID, ierr.StatusCode, ierr.Message)
+	if ierr.Unexpected {
+		reportError(err, r)
+	}
+
+	logResponse(reqID, r, ierr.StatusCode, ierr, nil, nil)
 
 	rw.WriteHeader(ierr.StatusCode)
 
@@ -120,12 +127,18 @@ func handlePanic(reqID string, rw http.ResponseWriter, r *http.Request, err erro
 }
 
 func handleHealth(reqID string, rw http.ResponseWriter, r *http.Request) {
-	logResponse(reqID, 200, string(imgproxyIsRunningMsg))
+	logResponse(reqID, r, 200, nil, nil, nil)
 	rw.WriteHeader(200)
 	rw.Write(imgproxyIsRunningMsg)
 }
 
-func handleOptions(reqID string, rw http.ResponseWriter, r *http.Request) {
-	logResponse(reqID, 200, "Respond with options")
+func handleHead(reqID string, rw http.ResponseWriter, r *http.Request) {
+	logResponse(reqID, r, 200, nil, nil, nil)
+	rw.WriteHeader(200)
+}
+
+func handleFavicon(reqID string, rw http.ResponseWriter, r *http.Request) {
+	logResponse(reqID, r, 200, nil, nil, nil)
+	// TODO: Add a real favicon maybe?
 	rw.WriteHeader(200)
 }
