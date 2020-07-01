@@ -428,6 +428,17 @@ It's highly recommended to prefer `cachebuster` option over URL query string bec
 
 Default: empty
 
+#### Strip Metadata
+
+```
+strip_metadata:%strip_metadata
+sm:%strip_metadata
+```
+
+When set to `1`, `t` or `true`, imgproxy will strip the metadata (EXIF, IPTC, etc.) on JPEG and WebP output images. Normally this is controlled by the [IMGPROXY_STRIP_METADATA](configuration.md#miscellaneous) configuration but this procesing option allows the configuration to be set for each request.
+
+Default: `false`
+
 #### Filename
 
 ```
