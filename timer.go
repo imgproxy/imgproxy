@@ -8,11 +8,8 @@ import (
 
 var timerSinceCtxKey = ctxKey("timerSince")
 
-func startTimer(ctx context.Context, d time.Duration) (context.Context, context.CancelFunc) {
-	return context.WithTimeout(
-		context.WithValue(ctx, timerSinceCtxKey, time.Now()),
-		d,
-	)
+func setTimerSince(ctx context.Context) context.Context {
+	return context.WithValue(ctx, timerSinceCtxKey, time.Now())
 }
 
 func getTimerSince(ctx context.Context) time.Duration {
@@ -23,6 +20,10 @@ func checkTimeout(ctx context.Context) {
 	select {
 	case <-ctx.Done():
 		d := getTimerSince(ctx)
+
+		if ctx.Err() != context.DeadlineExceeded {
+			panic(newError(499, fmt.Sprintf("Request was cancelled after %v", d), "Cancelled"))
+		}
 
 		if newRelicEnabled {
 			sendTimeoutToNewRelic(ctx, d)

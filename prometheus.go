@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -19,9 +21,9 @@ var (
 	prometheusBufferSize         *prometheus.HistogramVec
 	prometheusBufferDefaultSize  *prometheus.GaugeVec
 	prometheusBufferMaxSize      *prometheus.GaugeVec
-	prometheusVipsMemory         prometheus.Gauge
-	prometheusVipsMaxMemory      prometheus.Gauge
-	prometheusVipsAllocs         prometheus.Gauge
+	prometheusVipsMemory         prometheus.GaugeFunc
+	prometheusVipsMaxMemory      prometheus.GaugeFunc
+	prometheusVipsAllocs         prometheus.GaugeFunc
 )
 
 func initPrometheus() {
@@ -30,59 +32,70 @@ func initPrometheus() {
 	}
 
 	prometheusRequestsTotal = prometheus.NewCounter(prometheus.CounterOpts{
-		Name: "requests_total",
-		Help: "A counter of the total number of HTTP requests imgproxy processed.",
+		Namespace: conf.PrometheusNamespace,
+		Name:      "requests_total",
+		Help:      "A counter of the total number of HTTP requests imgproxy processed.",
 	})
 
 	prometheusErrorsTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Name: "errors_total",
-		Help: "A counter of the occurred errors separated by type.",
+		Namespace: conf.PrometheusNamespace,
+		Name:      "errors_total",
+		Help:      "A counter of the occurred errors separated by type.",
 	}, []string{"type"})
 
 	prometheusRequestDuration = prometheus.NewHistogram(prometheus.HistogramOpts{
-		Name: "request_duration_seconds",
-		Help: "A histogram of the response latency.",
+		Namespace: conf.PrometheusNamespace,
+		Name:      "request_duration_seconds",
+		Help:      "A histogram of the response latency.",
 	})
 
 	prometheusDownloadDuration = prometheus.NewHistogram(prometheus.HistogramOpts{
-		Name: "download_duration_seconds",
-		Help: "A histogram of the source image downloading latency.",
+		Namespace: conf.PrometheusNamespace,
+		Name:      "download_duration_seconds",
+		Help:      "A histogram of the source image downloading latency.",
 	})
 
 	prometheusProcessingDuration = prometheus.NewHistogram(prometheus.HistogramOpts{
-		Name: "processing_duration_seconds",
-		Help: "A histogram of the image processing latency.",
+		Namespace: conf.PrometheusNamespace,
+		Name:      "processing_duration_seconds",
+		Help:      "A histogram of the image processing latency.",
 	})
 
 	prometheusBufferSize = prometheus.NewHistogramVec(prometheus.HistogramOpts{
-		Name: "buffer_size_bytes",
-		Help: "A histogram of the buffer size in bytes.",
+		Namespace: conf.PrometheusNamespace,
+		Name:      "buffer_size_bytes",
+		Help:      "A histogram of the buffer size in bytes.",
 	}, []string{"type"})
 
 	prometheusBufferDefaultSize = prometheus.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "buffer_default_size_bytes",
-		Help: "A gauge of the buffer default size in bytes.",
+		Namespace: conf.PrometheusNamespace,
+		Name:      "buffer_default_size_bytes",
+		Help:      "A gauge of the buffer default size in bytes.",
 	}, []string{"type"})
 
 	prometheusBufferMaxSize = prometheus.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "buffer_max_size_bytes",
-		Help: "A gauge of the buffer max size in bytes.",
+		Namespace: conf.PrometheusNamespace,
+		Name:      "buffer_max_size_bytes",
+		Help:      "A gauge of the buffer max size in bytes.",
 	}, []string{"type"})
 
-	prometheusVipsMemory = prometheus.NewGauge(prometheus.GaugeOpts{
-		Name: "vips_memory_bytes",
-		Help: "A gauge of the vips tracked memory usage in bytes.",
-	})
+	prometheusVipsMemory = prometheus.NewGaugeFunc(prometheus.GaugeOpts{
+		Namespace: conf.PrometheusNamespace,
+		Name:      "vips_memory_bytes",
+		Help:      "A gauge of the vips tracked memory usage in bytes.",
+	}, vipsGetMem)
 
-	prometheusVipsMaxMemory = prometheus.NewGauge(prometheus.GaugeOpts{
-		Name: "vips_max_memory_bytes",
-		Help: "A gauge of the max vips tracked memory usage in bytes.",
-	})
+	prometheusVipsMaxMemory = prometheus.NewGaugeFunc(prometheus.GaugeOpts{
+		Namespace: conf.PrometheusNamespace,
+		Name:      "vips_max_memory_bytes",
+		Help:      "A gauge of the max vips tracked memory usage in bytes.",
+	}, vipsGetMemHighwater)
 
-	prometheusVipsAllocs = prometheus.NewGauge(prometheus.GaugeOpts{
-		Name: "vips_allocs",
-		Help: "A gauge of the number of active vips allocations.",
-	})
+	prometheusVipsAllocs = prometheus.NewGaugeFunc(prometheus.GaugeOpts{
+		Namespace: conf.PrometheusNamespace,
+		Name:      "vips_allocs",
+		Help:      "A gauge of the number of active vips allocations.",
+	}, vipsGetAllocs)
 
 	prometheus.MustRegister(
 		prometheusRequestsTotal,
@@ -99,18 +112,25 @@ func initPrometheus() {
 	)
 
 	prometheusEnabled = true
+}
 
-	s := http.Server{
-		Addr:    conf.PrometheusBind,
-		Handler: promhttp.Handler(),
+func startPrometheusServer(cancel context.CancelFunc) error {
+	s := http.Server{Handler: promhttp.Handler()}
+
+	l, err := listenReuseport("tcp", conf.PrometheusBind)
+	if err != nil {
+		return fmt.Errorf("Can't start Prometheus metrics server: %s", err)
 	}
 
 	go func() {
-		logNotice("Starting Prometheus server at %s\n", s.Addr)
-		if err := s.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logFatal(err.Error())
+		logNotice("Starting Prometheus server at %s", conf.PrometheusBind)
+		if err := s.Serve(l); err != nil && err != http.ErrServerClosed {
+			logError(err.Error())
 		}
+		cancel()
 	}()
+
+	return nil
 }
 
 func startPrometheusDuration(m prometheus.Histogram) func() {

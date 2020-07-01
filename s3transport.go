@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	http "net/http"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -13,7 +14,7 @@ type s3Transport struct {
 	svc *s3.S3
 }
 
-func newS3Transport() http.RoundTripper {
+func newS3Transport() (http.RoundTripper, error) {
 	s3Conf := aws.NewConfig()
 
 	if len(conf.S3Region) != 0 {
@@ -27,14 +28,14 @@ func newS3Transport() http.RoundTripper {
 
 	sess, err := session.NewSession()
 	if err != nil {
-		logFatal("Can't create S3 session: %s", err)
+		return nil, fmt.Errorf("Can't create S3 session: %s", err)
 	}
 
 	if sess.Config.Region == nil || len(*sess.Config.Region) == 0 {
 		sess.Config.Region = aws.String("us-west-1")
 	}
 
-	return s3Transport{s3.New(sess, s3Conf)}
+	return s3Transport{s3.New(sess, s3Conf)}, nil
 }
 
 func (t s3Transport) RoundTrip(req *http.Request) (resp *http.Response, err error) {

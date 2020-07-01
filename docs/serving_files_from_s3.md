@@ -23,7 +23,7 @@ There are three ways to specify your AWS credentials. The credentials need to ha
 You can specify AWS Acces Key ID and Secret Access Key by setting the standard `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` environment variables.
 
 ``` bash
-$ AWS_ACCESS_KEY_ID=my_access_key AWS_SECRET_ACCESS_KEY=my_secret_key imgproxy
+AWS_ACCESS_KEY_ID=my_access_key AWS_SECRET_ACCESS_KEY=my_secret_key imgproxy
 
 # same for Docker
 docker run -e AWS_ACCESS_KEY_ID=my_access_key -e AWS_SECRET_ACCESS_KEY=my_secret_key -it darthsim/imgproxy
@@ -53,5 +53,5 @@ You can learn about credentials in the [Configuring the AWS SDK for Go](https://
 
 To use Minio as source images provider, do the following:
 
-* Setup Amazon S3 support as usual using evironment variables or shared config file;
+* Setup Amazon S3 support as usual using environment variables or shared config file;
 * Specify endpoint with `IMGPROXY_S3_ENDPOINT`. Use `http://...` endpoint to disable SSL.

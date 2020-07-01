@@ -4,7 +4,7 @@
      src="https://cdn.rawgit.com/DarthSim/imgproxy/master/logo.svg">
 
 
-[![CircleCI branch](https://img.shields.io/circleci/project/github/imgproxy/imgproxy/master.svg?style=for-the-badge)](https://circleci.com/gh/DarthSim/imgproxy) [![Docker](https://img.shields.io/badge/docker-darthsim%2Fimgproxy-blue.svg?style=for-the-badge)](https://hub.docker.com/r/darthsim/imgproxy/) [![MicroBadger Size](https://img.shields.io/microbadger/image-size/darthsim/imgproxy.svg?style=for-the-badge)](https://hub.docker.com/r/darthsim/imgproxy/) [![Docker Pulls](https://img.shields.io/docker/pulls/darthsim/imgproxy.svg?style=for-the-badge)](https://hub.docker.com/r/darthsim/imgproxy/)
+[![CircleCI branch](https://img.shields.io/circleci/project/github/imgproxy/imgproxy/master.svg?logo=circleci&style=for-the-badge)](https://circleci.com/gh/imgproxy/imgproxy) [![Docker](https://img.shields.io/badge/docker-darthsim%2Fimgproxy-blue.svg?logo=docker&logoColor=white&style=for-the-badge)](https://hub.docker.com/r/darthsim/imgproxy/) [![Docker Pulls](https://img.shields.io/docker/pulls/darthsim/imgproxy.svg?logo=docker&logoColor=white&style=for-the-badge)](https://hub.docker.com/r/darthsim/imgproxy/) [![Gitter](https://img.shields.io/gitter/room/imgproxy/imgproxy?logo=gitter&style=for-the-badge)](https://gitter.im/imgproxy/imgproxy)
 
 
 imgproxy is a fast and secure standalone server for resizing and converting remote images. The main principles of imgproxy are simplicity, speed, and security.
@@ -15,11 +15,10 @@ imgproxy does one thing — resizing remote images — and does it well. It work
 
 imgproxy is a Go application, ready to be installed and used in any Unix environment — also ready to be containerized using Docker.
 
-See this article for a good intro and all the juicy details! [imgproxy:
-Resize your images instantly and securely](https://evilmartians.com/chronicles/introducing-imgproxy)
+See this article for a good intro and all the juicy details! [imgproxy: Resize your images instantly and securely](https://evilmartians.com/chronicles/introducing-imgproxy)
 
 <a href="https://evilmartians.com/?utm_source=imgproxy">
-<img src="https://evilmartians.com/badges/sponsored-by-evil-martians.svg" alt="Sponsored by Evil Martians" width="236" height="54">
+<img src="https://evilmartians.com/badges/sponsored-by-evil-martians_v2.0.svg" alt="Sponsored by Evil Martians" width="236" height="54">
 </a>
 
 #### Simplicity
@@ -38,7 +37,7 @@ imgproxy uses probably the most efficient image processing library there is, cal
 
 imgproxy also uses native Go's `net/http` routing for the best HTTP networking support.
 
-You can see benchmarking results and comparison with some well-known alternatives in our [benchmark report](./BENCHMARK.md).
+You can see benchmarking results and comparison with some well-known alternatives in our [benchmark report](https://github.com/imgproxy/imgproxy/blob/master/BENCHMARK.md).
 
 #### Security
 
@@ -52,55 +51,66 @@ Massive processing of remote images is a potentially dangerous thing, security-w
 
 ## Documentation
 
-1. [Getting started](./docs/GETTING_STARTED.md)
-2. [Installation](./docs/installation.md)
-   * [Docker](./docs/installation.md#docker)
-   * [Heroku](./docs/installation.md#heroku)
-   * [From the source](./docs/installation.md#from-the-source)
-3. [Configuration](./docs/configuration.md)
-   * [URL signature](./docs/configuration.md#url-signature)
-   * [Server](./docs/configuration.md#server)
-   * [Security](./docs/configuration.md#security)
-   * [Compression](./docs/configuration.md#compression)
-   * [WebP support detection](./docs/configuration.md#webp-support-detection)
-   * [Client Hints support](./docs/configuration.md#client-hints-support)
-   * [Watermark](./docs/configuration.md#watermark)
-   * [Presets](./docs/configuration.md#presets)
-   * [Serving local files](./docs/configuration.md#serving-local-files)
-   * [Serving files from Amazon S3](./docs/configuration.md#serving-files-from-amazon-s3)
-   * [Serving files from Google Cloud Storage](./docs/configuration.md#serving-files-from-google-cloud-storage)
-   * [New Relic metrics](./docs/configuration.md#new-relic-metrics)
-   * [Prometheus metrics](./docs/configuration.md#prometheus-metrics)
-   * [Error reporting](./docs/configuration.md#error-reporting)
-   * [Syslog](./docs/configuration.md#syslog)
-   * [Memory usage tweaks](./docs/configuration.md#memory-usage-tweaks)
-   * [Miscellaneous](./docs/configuration.md#miscellaneous)
-4. [Generating the URL](./docs/generating_the_url_basic.md)
-   * [Basic](./docs/generating_the_url_basic.md)
-   * [Advanced](./docs/generating_the_url_advanced.md)
-   * [Signing the URL](./docs/signing_the_url.md)
-5. [Watermark](./docs/watermark.md)
-6. [Presets](./docs/presets.md)
-7. [Serving local files](./docs/serving_local_files.md)
-8. [Serving files from Amazon S3](./docs/serving_files_from_s3.md)
-9. [Serving files from Google Cloud Storage](./docs/serving_files_from_google_cloud_storage.md)
-10. [New Relic](./docs/new_relic.md)
-11. [Prometheus](./docs/prometheus.md)
-12. [Image formats support](./docs/image_formats_support.md)
-13. [About processing pipeline](./docs/about_processing_pipeline.md)
-14. [Health check](./docs/healthcheck.md)
-15. [Memory usage tweaks](./docs/memory_usage_tweaks.md)
+1. [Getting started](https://docs.imgproxy.net/#/GETTING_STARTED)
+2. [Installation](https://docs.imgproxy.net/#/installation)
+   * [Docker](https://docs.imgproxy.net/#/installation?id=docker)
+   * [Helm](https://docs.imgproxy.net/#/installation?id=helm)
+   * [Heroku](https://docs.imgproxy.net/#/installation?id=heroku)
+   * [Packages](https://docs.imgproxy.net/#/installation?id=packages)
+   * [From the source](https://docs.imgproxy.net/#/installation?id=from-the-source)
+3. [Configuration](https://docs.imgproxy.net/#/configuration)
+   * [URL signature](https://docs.imgproxy.net/#/configuration?id=url-signature)
+   * [Server](https://docs.imgproxy.net/#/configuration?id=server)
+   * [Security](https://docs.imgproxy.net/#/configuration?id=security)
+   * [Compression](https://docs.imgproxy.net/#/configuration?id=compression)
+   * [WebP support detection](https://docs.imgproxy.net/#/configuration?id=webp-support-detection)
+   * [Client Hints support](https://docs.imgproxy.net/#/configuration?id=client-hints-support)
+   * [Watermark](https://docs.imgproxy.net/#/configuration?id=watermark)
+   * [Presets](https://docs.imgproxy.net/#/configuration?id=presets)
+   * [Serving local files](https://docs.imgproxy.net/#/configuration?id=serving-local-files)
+   * [Serving files from Amazon S3](https://docs.imgproxy.net/#/configuration?id=serving-files-from-amazon-s3)
+   * [Serving files from Google Cloud Storage](https://docs.imgproxy.net/#/configuration?id=serving-files-from-google-cloud-storage)
+   * [New Relic metrics](https://docs.imgproxy.net/#/configuration?id=new-relic-metrics)
+   * [Prometheus metrics](https://docs.imgproxy.net/#/configuration?id=prometheus-metrics)
+   * [Error reporting](https://docs.imgproxy.net/#/configuration?id=error-reporting)
+   * [Log](https://docs.imgproxy.net/#/configuration?id=log)
+   * [Memory usage tweaks](https://docs.imgproxy.net/#/configuration?id=memory-usage-tweaks)
+   * [Miscellaneous](https://docs.imgproxy.net/#/configuration?id=miscellaneous)
+4. Generating the URL
+   * [Basic](https://docs.imgproxy.net/#/generating_the_url_basic)
+   * [Advanced](https://docs.imgproxy.net/#/generating_the_url_advanced)
+   * [Signing the URL](https://docs.imgproxy.net/#/signing_the_url)
+5. [Watermark](https://docs.imgproxy.net/#/watermark)
+6. [Presets](https://docs.imgproxy.net/#/presets)
+7. [Serving local files](https://docs.imgproxy.net/#/serving_local_files)
+8. [Serving files from Amazon S3](https://docs.imgproxy.net/#/serving_files_from_s3)
+9. [Serving files from Google Cloud Storage](https://docs.imgproxy.net/#/serving_files_from_google_cloud_storage)
+10. [New Relic](https://docs.imgproxy.net/#/new_relic)
+11. [Prometheus](https://docs.imgproxy.net/#/prometheus)
+12. [Image formats support](https://docs.imgproxy.net/#/image_formats_support)
+13. [About processing pipeline](https://docs.imgproxy.net/#/about_processing_pipeline)
+14. [Health check](https://docs.imgproxy.net/#/healthcheck)
+15. [Memory usage tweaks](https://docs.imgproxy.net/#/memory_usage_tweaks)
 
 ## Author
 
-Sergey "DarthSim" Alexandrovich
+Sergey "[DarthSim](https://github.com/DarthSim)" Alexandrovich
 
-Many thanks to [Roman Shamin](https://github.com/romashamin) for the awesome logo.
+## Special thanks
 
-Great bunch of kudos goes to [John Cupitt](https://github.com/jcupitt) who develops [libvips](https://github.com/libvips/libvips) and helps me to optimize its usage under the hood of imgproxy.
+Many thanks to:
+
+* [Roman Shamin](https://github.com/romashamin) for the awesome logo.
+* [Alena Kirdina](https://github.com/egodyston) and [Alexander Madyankin](https://github.com/outpunk) for the great website.
+* [John Cupitt](https://github.com/jcupitt) who develops [libvips](https://github.com/libvips/libvips) and helps me to optimize its usage under the hood of imgproxy.
+* [Kirill Kuznetsov](https://github.com/dragonsmith) for the [Helm chart](https://github.com/imgproxy/imgproxy-helm).
 
 ## License
 
 imgproxy is licensed under the MIT license.
 
 See LICENSE for the full license text.
+
+## Security Contact
+
+To report a security vulnerability, please use the [Tidelift security contact](https://tidelift.com/security). Tidelift will coordinate the fix and disclosure.

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -16,9 +17,9 @@ var (
 	newRelicTransactionCtxKey = ctxKey("newRelicTransaction")
 )
 
-func initNewrelic() {
+func initNewrelic() error {
 	if len(conf.NewRelicKey) == 0 {
-		return
+		return nil
 	}
 
 	name := conf.NewRelicAppName
@@ -32,10 +33,12 @@ func initNewrelic() {
 	newRelicApp, err = newrelic.NewApplication(config)
 
 	if err != nil {
-		logFatal("Can't init New Relic agent: %s", err)
+		return fmt.Errorf("Can't init New Relic agent: %s", err)
 	}
 
 	newRelicEnabled = true
+
+	return nil
 }
 
 func startNewRelicTransaction(ctx context.Context, rw http.ResponseWriter, r *http.Request) (context.Context, context.CancelFunc) {

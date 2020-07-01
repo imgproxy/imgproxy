@@ -1,5 +1,0 @@
-# Ignore maze runner generated files
-maze_output
-vendor
-
-features/fixtures/testbuild

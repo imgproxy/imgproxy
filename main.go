@@ -1,52 +1,113 @@
 package main
 
 import (
+	"context"
+	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"runtime"
-	"runtime/debug"
 	"syscall"
 	"time"
 )
 
-const version = "2.2.13"
+const version = "2.13.1"
 
 type ctxKey string
 
-func initialize() {
-	initSyslog()
-	configure()
-	initNewrelic()
+func initialize() error {
+	log.SetOutput(os.Stdout)
+
+	if err := initLog(); err != nil {
+		return err
+	}
+
+	if err := configure(); err != nil {
+		return err
+	}
+
+	if err := initNewrelic(); err != nil {
+		return err
+	}
+
 	initPrometheus()
-	initDownloading()
+
+	if err := initDownloading(); err != nil {
+		return err
+	}
+
 	initErrorsReporting()
-	initVips()
+
+	if err := initVips(); err != nil {
+		return err
+	}
+
+	if err := checkPresets(conf.Presets); err != nil {
+		shutdownVips()
+		return err
+	}
+
+	return nil
 }
 
-func main() {
-	initialize()
+func run() error {
+	if err := initialize(); err != nil {
+		return err
+	}
+
+	defer shutdownVips()
 
 	go func() {
 		var logMemStats = len(os.Getenv("IMGPROXY_LOG_MEM_STATS")) > 0
 
 		for range time.Tick(time.Duration(conf.FreeMemoryInterval) * time.Second) {
-			debug.FreeOSMemory()
+			freeMemory()
 
 			if logMemStats {
 				var m runtime.MemStats
 				runtime.ReadMemStats(&m)
-				logNotice("[MEMORY USAGE] Sys: %d; HeapIdle: %d; HeapInuse: %d", m.Sys/1024/1024, m.HeapIdle/1024/1024, m.HeapInuse/1024/1024)
+				logDebug("MEMORY USAGE: Sys=%d HeapIdle=%d HeapInuse=%d", m.Sys/1024/1024, m.HeapIdle/1024/1024, m.HeapInuse/1024/1024)
 			}
 		}
 	}()
 
-	s := startServer()
+	ctx, cancel := context.WithCancel(context.Background())
+
+	if prometheusEnabled {
+		if err := startPrometheusServer(cancel); err != nil {
+			return err
+		}
+	}
+
+	s, err := startServer(cancel)
+	if err != nil {
+		return err
+	}
+	defer shutdownServer(s)
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 
-	<-stop
+	select {
+	case <-ctx.Done():
+	case <-stop:
+	}
 
-	shutdownServer(s)
-	shutdownVips()
+	return nil
+}
+
+func main() {
+	if len(os.Args) > 1 {
+		switch os.Args[1] {
+		case "health":
+			os.Exit(healthcheck())
+		case "version":
+			fmt.Println(version)
+			os.Exit(0)
+		}
+	}
+
+	if err := run(); err != nil {
+		logFatal(err.Error())
+	}
 }
