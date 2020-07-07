@@ -10,7 +10,12 @@ import (
 	"github.com/imgproxy/imgproxy/v2/imagemeta"
 )
 
-const msgSmartCropNotSupported = "Smart crop is not supported by used version of libvips"
+const (
+	msgSmartCropNotSupported = "Smart crop is not supported by used version of libvips"
+
+	// https://chromium.googlesource.com/webm/libwebp/+/refs/heads/master/src/webp/encode.h#529
+	webpMaxDimension = 16383.0
+)
 
 var errConvertingNonSvgToSvg = newError(422, "Converting non-SVG images to SVG is not supported", "Converting non-SVG images to SVG is not supported")
 
@@ -719,6 +724,16 @@ func processImage(ctx context.Context) ([]byte, context.CancelFunc, error) {
 
 		po.ResizingType = resizeFit
 		po.Width, po.Height = 0, 0
+	}
+
+	if po.Format == imageTypeWEBP {
+		webpLimitShrink := float64(maxInt(po.Width, po.Height)) * po.Dpr / webpMaxDimension
+
+		if webpLimitShrink > 1.0 {
+			po.Width = int(float64(po.Width) / webpLimitShrink)
+			po.Height = int(float64(po.Height) / webpLimitShrink)
+			logWarning("WebP dimension size is limited to %d. Requested dimensions are rescaled to %dx%d", int(webpMaxDimension), po.Width, po.Height)
+		}
 	}
 
 	animationSupport := conf.MaxAnimationFrames > 1 && vipsSupportAnimation(imgdata.Type) && vipsSupportAnimation(po.Format)
