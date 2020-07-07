@@ -2,11 +2,13 @@
 
 ## [Unreleased]
 ### Added
-- Add `IMGPROXY_PROMETHEUS_NAMESPACE` config.
+- `IMGPROXY_PROMETHEUS_NAMESPACE` config.
+- [strip_metadata](https://docs.imgproxy.net/#/generating_the_url_advanced?id=strip-metadata) processing option.
 
 ### Changed
 - Better for libvips memory metrics for Prometheus.
 - Docker image includes the latest versions of dependencies.
+- Optimize processing of animated images.
 
 ## [2.13.1] - 2020-05-06
 ### Fixed
