@@ -12,6 +12,7 @@
 
 ### Fix
 - Fix error when requested WebP dimension exceeds the WebP dimension limit.
+- Fix path parsing in some rare cases.
 
 ## [2.13.1] - 2020-05-06
 ### Fixed

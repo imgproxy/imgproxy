@@ -1089,23 +1089,22 @@ func parsePathBasic(parts []string, headers *processingHeaders) (string, *proces
 func parsePath(ctx context.Context, r *http.Request) (context.Context, error) {
 	var err error
 
-	path := r.URL.RawPath
-	if len(path) == 0 {
-		path = r.URL.Path
-	}
+	path := trimAfter(r.RequestURI, '?')
 
 	if len(conf.PathPrefix) > 0 {
 		path = strings.TrimPrefix(path, conf.PathPrefix)
 	}
 
-	parts := strings.Split(strings.TrimPrefix(path, "/"), "/")
+	path = strings.TrimPrefix(path, "/")
+
+	parts := strings.Split(path, "/")
 
 	if len(parts) < 2 {
 		return ctx, newError(404, fmt.Sprintf("Invalid path: %s", path), msgInvalidURL)
 	}
 
 	if !conf.AllowInsecure {
-		if err = validatePath(parts[0], strings.TrimPrefix(path, fmt.Sprintf("/%s", parts[0]))); err != nil {
+		if err = validatePath(parts[0], strings.TrimPrefix(path, parts[0])); err != nil {
 			return ctx, newError(403, err.Error(), msgForbidden)
 		}
 	}

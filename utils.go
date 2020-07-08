@@ -1,6 +1,9 @@
 package main
 
-import "math"
+import (
+	"math"
+	"strings"
+)
 
 func maxInt(a, b int) int {
 	if a > b {
@@ -37,4 +40,12 @@ func scaleInt(a int, scale float64) int {
 	}
 
 	return roundToInt(float64(a) * scale)
+}
+
+func trimAfter(s string, sep byte) string {
+	i := strings.IndexByte(s, sep)
+	if i < 0 {
+		return s
+	}
+	return s[:i]
 }

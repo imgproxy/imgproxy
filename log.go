@@ -43,7 +43,7 @@ func initLog() error {
 }
 
 func logRequest(reqID string, r *http.Request) {
-	path := r.URL.RequestURI()
+	path := r.RequestURI
 
 	logrus.WithFields(logrus.Fields{
 		"request_id": reqID,
@@ -87,7 +87,7 @@ func logResponse(reqID string, r *http.Request, status int, err *imgproxyError, 
 
 	logrus.WithFields(fields).Logf(
 		level,
-		"Completed in %s %s", getTimerSince(r.Context()), r.URL.RequestURI(),
+		"Completed in %s %s", getTimerSince(r.Context()), r.RequestURI,
 	)
 }
 
