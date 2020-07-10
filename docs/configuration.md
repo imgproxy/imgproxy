@@ -163,8 +163,8 @@ imgproxy Pro can apply unshapening mask to your images.
   * `auto`: _(default)_ apply unsharpening mask only when image is downscaled and `sharpen` option is not set.
   * `none`: don't apply the unsharpening mask.
   * `always`: always apply the unsharpening mask.
-* `IMGPROXY_UNSHARPENING_WEIGHT`: a floating-point number that defines how neighbor pixels will affect the current pixel. Greater the value - sharper the image. Should be greater than zero. Default: `1`.
-* `IMGPROXY_UNSHARPENING_DIVIDOR`: a floating-point number that defines the unsharpening strength. Lesser the value - sharper the image. Should be greater than zero. Default: `24`.
+* `IMGPROXY_UNSHARPENING_WEIGHT`: <img class="pro-badge" src="assets/pro.svg" alt="pro" /> a floating-point number that defines how neighbor pixels will affect the current pixel. Greater the value - sharper the image. Should be greater than zero. Default: `1`.
+* `IMGPROXY_UNSHARPENING_DIVIDOR`: <img class="pro-badge" src="assets/pro.svg" alt="pro" /> a floating-point number that defines the unsharpening strength. Lesser the value - sharper the image. Should be greater than zero. Default: `24`.
 
 ## Fallback image
 
