@@ -18,12 +18,12 @@ require (
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
 	github.com/matoous/go-nanoid v1.4.1
 	github.com/newrelic/go-agent v3.5.0+incompatible
-	github.com/prometheus/client_golang v1.6.0
+	github.com/prometheus/client_golang v1.7.1
 	github.com/sirupsen/logrus v1.6.0
 	github.com/stretchr/testify v1.6.1
 	golang.org/x/image v0.0.0-20200609002522-3f4726a040e8
 	golang.org/x/net v0.0.0-20200602114024-627f9648deb9
-	golang.org/x/sys v0.0.0-20200602225109-6fdc65e7d980
+	golang.org/x/sys v0.0.0-20200615200032-f1bc736245b1
 	google.golang.org/api v0.28.0
 )
 
