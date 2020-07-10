@@ -4,6 +4,7 @@
 ### Added
 - `IMGPROXY_PROMETHEUS_NAMESPACE` config.
 - [strip_metadata](https://docs.imgproxy.net/#/generating_the_url_advanced?id=strip-metadata) processing option.
+- (pro) Configurable unsharpening. See [Unsharpening](https://docs.imgproxy.net/#/configuration?id=unsharpening) configs and [unsharpening](https://docs.imgproxy.net/#/generating_the_url_advanced?id=unsharpening-) processing option.
 
 ### Changed
 - Better for libvips memory metrics for Prometheus.
@@ -14,6 +15,9 @@
 - Fix error when requested WebP dimension exceeds the WebP dimension limit.
 - Fix path parsing in some rare cases.
 - Fix HEIC/HEIF header parsing bug.
+
+### Deprecated
+- (pro) `IMGPROXY_APPLY_UNSHARPEN_MASKING` config is deprecated, use `IMGPROXY_UNSHARPENING_MODE` instead.
 
 ## [2.13.1] - 2020-05-06
 ### Fixed
@@ -132,7 +136,6 @@
 - Fixed path parsing when no options is provided and image URL is Base64 encoded.
 
 ### Deprecated
-
 - Using `IMGPROXY_GCS_KEY` without `IMGPROXY_USE_GCS` set to `true` is deprecated.
 
 ## [2.5.0] - 2019-09-19

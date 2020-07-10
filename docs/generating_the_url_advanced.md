@@ -327,6 +327,15 @@ When set, imgproxy will apply the pixelate filter to the resulting image. `size`
 
 Default: disabled
 
+#### Unsharpening <img class="pro-badge" src="assets/pro.svg" alt="pro" />
+
+```
+unsharpening:%mode:%weight:%dividor
+ush:%mode:%weight:%dividor
+```
+
+Allows redefining unsharpening options. All arguments have the same meaning as [Unsharpening](configuration.md#unsharpening) configs. All arguments are optional and can be omitted.
+
 #### Watermark
 
 ```

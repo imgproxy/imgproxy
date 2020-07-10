@@ -155,6 +155,17 @@ imgproxy Pro can extract specific frames of videos to create thumbnails. The fea
 
 Read more about watermarks in the [Watermark](watermark.md) guide.
 
+## Unsharpening
+
+imgproxy Pro can apply unshapening mask to your images.
+
+* `IMGPROXY_UNSHARPENING_MODE`: <img class="pro-badge" src="assets/pro.svg" alt="pro" /> controls when unsharpenning mask should be applied. The following modes are supported:
+  * `auto`: _(default)_ apply unsharpening mask only when image is downscaled and `sharpen` option is not set.
+  * `none`: don't apply the unsharpening mask.
+  * `always`: always apply the unsharpening mask.
+* `IMGPROXY_UNSHARPENING_WEIGHT`: a floating-point number that defines how neighbor pixels will affect the current pixel. Greater the value - sharper the image. Should be greater than zero. Default: `1`.
+* `IMGPROXY_UNSHARPENING_DIVIDOR`: a floating-point number that defines the unsharpening strength. Lesser the value - sharper the image. Should be greater than zero. Default: `24`.
+
 ## Fallback image
 
 You can set up a fallback image that will be used in case imgproxy can't fetch the requested one. Use one of the following variables:
@@ -285,5 +296,4 @@ imgproxy can send logs to syslog, but this feature is disabled by default. To en
 * `IMGPROXY_BASE_URL`: base URL prefix that will be added to every requested image URL. For example, if the base URL is `http://example.com/images` and `/path/to/image.png` is requested, imgproxy will download the source image from `http://example.com/images/path/to/image.png`. Default: blank.
 * `IMGPROXY_USE_LINEAR_COLORSPACE`: when `true`, imgproxy will process images in linear colorspace. This will slow down processing. Note that images won't be fully processed in linear colorspace while shrink-on-load is enabled (see below).
 * `IMGPROXY_DISABLE_SHRINK_ON_LOAD`: when `true`, disables shrink-on-load for JPEG and WebP. Allows to process the whole image in linear colorspace but dramatically slows down resizing and increases memory usage when working with large images.
-* `IMGPROXY_APPLY_UNSHARPEN_MASKING`: <img class="pro-badge" src="assets/pro.svg" alt="pro" /> when `true`, imgproxy will apply unsharpen masking to the resulting image if one is smaller than the source. Default: `true`.
 * `IMGPROXY_STRIP_METADATA`: whether to strip all metadata (EXIF, IPTC, etc.) from JPEG and WebP output images. Default: `true`.
