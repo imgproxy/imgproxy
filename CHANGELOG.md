@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+
+## [2.14.0] - 2020-07-17
 ### Added
 - `IMGPROXY_PROMETHEUS_NAMESPACE` config.
 - [strip_metadata](https://docs.imgproxy.net/#/generating_the_url_advanced?id=strip-metadata) processing option.
