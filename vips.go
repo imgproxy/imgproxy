@@ -8,9 +8,11 @@ package main
 */
 import "C"
 import (
+	"bytes"
 	"context"
+	"encoding/binary"
+	"errors"
 	"fmt"
-	"math"
 	"os"
 	"runtime"
 	"unsafe"
@@ -179,6 +181,11 @@ func (img *vipsImage) Load(data []byte, imgtype imageType, shrink int, scale flo
 }
 
 func (img *vipsImage) Save(imgtype imageType, quality int, stripMeta bool) ([]byte, context.CancelFunc, error) {
+	if imgtype == imageTypeICO {
+		b, err := img.SaveAsIco()
+		return b, func() {}, err
+	}
+
 	var ptr unsafe.Pointer
 
 	cancel := func() {
@@ -198,8 +205,6 @@ func (img *vipsImage) Save(imgtype imageType, quality int, stripMeta bool) ([]by
 		err = C.vips_webpsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality), gbool(stripMeta))
 	case imageTypeGIF:
 		err = C.vips_gifsave_go(img.VipsImage, &ptr, &imgsize)
-	case imageTypeICO:
-		err = C.vips_icosave_go(img.VipsImage, &ptr, &imgsize)
 	case imageTypeBMP:
 		err = C.vips_bmpsave_go(img.VipsImage, &ptr, &imgsize)
 	case imageTypeTIFF:
@@ -210,9 +215,80 @@ func (img *vipsImage) Save(imgtype imageType, quality int, stripMeta bool) ([]by
 		return nil, cancel, vipsError()
 	}
 
-	b := (*[math.MaxInt32]byte)(ptr)[:int(imgsize):int(imgsize)]
+	b := ptrToBytes(ptr, int(imgsize))
 
 	return b, cancel, nil
+}
+
+func (img *vipsImage) SaveAsIco() ([]byte, error) {
+	if img.Width() > 256 || img.Height() > 256 {
+		return nil, errors.New("Image dimensions is too big. Max dimension size for ICO is 256")
+	}
+
+	var ptr unsafe.Pointer
+	imgsize := C.size_t(0)
+
+	defer func() {
+		C.g_free_go(&ptr)
+	}()
+
+	if C.vips_pngsave_go(img.VipsImage, &ptr, &imgsize, 0, 0, 256) != 0 {
+		return nil, vipsError()
+	}
+
+	b := ptrToBytes(ptr, int(imgsize))
+
+	buf := new(bytes.Buffer)
+	buf.Grow(22 + int(imgsize))
+
+	// ICONDIR header
+	if _, err := buf.Write([]byte{0, 0, 1, 0, 1, 0}); err != nil {
+		return nil, err
+	}
+
+	// ICONDIRENTRY
+	if _, err := buf.Write([]byte{
+		byte(img.Width() % 256),
+		byte(img.Height() % 256),
+	}); err != nil {
+		return nil, err
+	}
+	// Number of colors. Not supported in our case
+	if err := buf.WriteByte(0); err != nil {
+		return nil, err
+	}
+	// Reserved
+	if err := buf.WriteByte(0); err != nil {
+		return nil, err
+	}
+	// Color planes. Always 1 in our case
+	if _, err := buf.Write([]byte{1, 0}); err != nil {
+		return nil, err
+	}
+	// Bits per pixel
+	if img.HasAlpha() {
+		if _, err := buf.Write([]byte{32, 0}); err != nil {
+			return nil, err
+		}
+	} else {
+		if _, err := buf.Write([]byte{24, 0}); err != nil {
+			return nil, err
+		}
+	}
+	// Image data size
+	if err := binary.Write(buf, binary.LittleEndian, uint32(imgsize)); err != nil {
+		return nil, err
+	}
+	// Image data offset. Always 22 in our case
+	if _, err := buf.Write([]byte{22, 0, 0, 0}); err != nil {
+		return nil, err
+	}
+
+	if _, err := buf.Write(b); err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
 }
 
 func (img *vipsImage) Clear() {

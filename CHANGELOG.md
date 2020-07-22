@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+### Fix
+- Fix ICO saving.
 
 ## [2.14.0] - 2020-07-17
 ### Added

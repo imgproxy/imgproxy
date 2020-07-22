@@ -106,7 +106,7 @@ vips_type_find_save_go(int imgtype) {
   case (GIF):
     return vips_type_find("VipsOperation", "magicksave_buffer");
   case (ICO):
-    return vips_type_find("VipsOperation", "magicksave_buffer");
+    return vips_type_find("VipsOperation", "pngsave_buffer");
   case (BMP):
     return vips_type_find("VipsOperation", "magicksave_buffer");
   case (TIFF):
@@ -586,16 +586,6 @@ vips_gifsave_go(VipsImage *in, void **buf, size_t *len) {
 }
 
 int
-vips_icosave_go(VipsImage *in, void **buf, size_t *len) {
-#if VIPS_SUPPORT_MAGICK
-  return vips_magicksave_buffer(in, buf, len, "format", "ico", NULL);
-#else
-  vips_error("vips_icosave_go", "Saving ICO is not supported (libvips 8.7+ reuired)");
-  return 1;
-#endif
-}
-
-int
 vips_tiffsave_go(VipsImage *in, void **buf, size_t *len, int quality) {
 #if VIPS_SUPPORT_TIFF
   return vips_tiffsave_buffer(in, buf, len, "Q", quality, NULL);
@@ -608,7 +598,7 @@ vips_tiffsave_go(VipsImage *in, void **buf, size_t *len, int quality) {
 int
 vips_bmpsave_go(VipsImage *in, void **buf, size_t *len) {
 #if VIPS_SUPPORT_MAGICK
-  return vips_magicksave_buffer(in, buf, len, "format", "bmp", "quality", NULL);
+  return vips_magicksave_buffer(in, buf, len, "format", "bmp", NULL);
 #else
   vips_error("vips_bmpsave_go", "Saving BMP is not supported");
   return 1;

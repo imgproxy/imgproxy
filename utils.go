@@ -3,6 +3,7 @@ package main
 import (
 	"math"
 	"strings"
+	"unsafe"
 )
 
 func maxInt(a, b int) int {
@@ -48,4 +49,8 @@ func trimAfter(s string, sep byte) string {
 		return s
 	}
 	return s[:i]
+}
+
+func ptrToBytes(ptr unsafe.Pointer, size int) []byte {
+	return (*[math.MaxInt32]byte)(ptr)[:int(size):int(size)]
 }
