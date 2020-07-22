@@ -52,7 +52,7 @@ Note that all your unsigned URL will stop working since imgproxy now checks sign
 First, you need to take the path after the signature and add the salt to the beginning:
 
 ```
-hello/fill/300/400/sm/0/aHR0cDovL2V4YW1w/bGUuY29tL2ltYWdl/cy9jdXJpb3NpdHku/anBn.png
+68656C6C6F/fill/300/400/sm/0/aHR0cDovL2V4YW1w/bGUuY29tL2ltYWdl/cy9jdXJpb3NpdHku/anBn.png
 ```
 
 Then calculate the HMAC digest of this string using SHA256 and encode it with URL-safe Base64:
