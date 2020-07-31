@@ -1132,7 +1132,7 @@ func parsePath(ctx context.Context, r *http.Request) (context.Context, error) {
 	}
 
 	if !isAllowedSource(imageURL) {
-		return ctx, newError(404, fmt.Sprintf("Invalid source"), msgInvalidSource)
+		return ctx, newError(404, "Invalid source", msgInvalidSource)
 	}
 
 	ctx = context.WithValue(ctx, imageURLCtxKey, imageURL)
