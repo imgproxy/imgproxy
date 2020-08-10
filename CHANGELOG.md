@@ -1,6 +1,9 @@
 # Changelog
 
 ## [Unreleased]
+### Added
+- (pro) [video_thumbnail_second](https://docs.imgproxy.net/#/generating_the_url_advanced?id=video-thumbnail-second) processing option.
+- (pro) [background_alpha](https://docs.imgproxy.net/#/generating_the_url_advanced?id=background-alpha) processing option.
 
 ## [2.14.1] - 2020-07-22
 ### Fix

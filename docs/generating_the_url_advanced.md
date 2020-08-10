@@ -422,7 +422,7 @@ gifo:%gif_optimize_frames:%gif_optimize_transparency
 
 Allows redefining GIF saving options. All arguments have the same meaning as [Advanced GIF compression](configuration.md#advanced-gif-compression) configs. All arguments are optional and can be omitted.
 
-#### Video thumnail second <img class="pro-badge" src="assets/pro.svg" alt="pro" />
+#### Video thumbnail second <img class="pro-badge" src="assets/pro.svg" alt="pro" />
 
 ```
 video_thumbnail_second:%second
