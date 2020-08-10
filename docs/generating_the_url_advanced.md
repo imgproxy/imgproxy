@@ -250,6 +250,17 @@ With no arguments provided, disables any background manipulations.
 
 Default: disabled
 
+#### Background alpha <img class="pro-badge" src="assets/pro.svg" alt="pro" />
+
+```
+background_alpha:%alpha
+bga:%alpha
+```
+
+Adds alpha channel to `background`. `alpha` is a positive floating point number between `0` and `1`.
+
+Default: 1
+
 #### Adjust <img class="pro-badge" src="assets/pro.svg" alt="pro" />
 
 ```
