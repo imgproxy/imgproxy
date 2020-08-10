@@ -22,9 +22,9 @@ require (
 	github.com/sirupsen/logrus v1.6.0
 	github.com/stretchr/testify v1.6.1
 	golang.org/x/image v0.0.0-20200609002522-3f4726a040e8
-	golang.org/x/net v0.0.0-20200602114024-627f9648deb9
-	golang.org/x/sys v0.0.0-20200615200032-f1bc736245b1
-	google.golang.org/api v0.29.0
+	golang.org/x/net v0.0.0-20200707034311-ab3426394381
+	golang.org/x/sys v0.0.0-20200803210538-64077c9b5642
+	google.golang.org/api v0.30.0
 )
 
 replace git.apache.org/thrift.git => github.com/apache/thrift v0.0.0-20180902110319-2566ecd5d999
