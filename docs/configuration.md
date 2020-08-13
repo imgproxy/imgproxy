@@ -174,6 +174,16 @@ You can set up a fallback image that will be used in case imgproxy can't fetch t
 * `IMGPROXY_FALLBACK_IMAGE_PATH`: path to the locally stored image;
 * `IMGPROXY_FALLBACK_IMAGE_URL`: fallback image URL.
 
+## Skip processing
+
+You can configure imgproxy to skip processing of some formats:
+
+* `IMGPROXY_SKIP_PROCESSING_FORMATS`: list of formats that imgproxy shouldn't process, comma-divided.
+
+**📝Note:** Processing can be skipped only when the requested format is the same as the source format.
+
+**📝Note:** Video thumbnails processing can't be skipped.
+
 ## Presets
 
 Read about imgproxy presets in the [Presets](presets.md) guide.

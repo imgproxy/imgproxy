@@ -58,6 +58,23 @@ func boolEnvConfig(b *bool, name string) {
 	}
 }
 
+func imageTypesEnvConfig(it *[]imageType, name string) {
+	*it = []imageType{}
+
+	if env := os.Getenv(name); len(env) > 0 {
+		parts := strings.Split(env, ",")
+
+		for _, p := range parts {
+			pt := strings.TrimSpace(p)
+			if t, ok := imageTypes[pt]; ok {
+				*it = append(*it, t)
+			} else {
+				logWarning("Unknown image format to skip: %s", pt)
+			}
+		}
+	}
+}
+
 func hexEnvConfig(b *[]securityKey, name string) error {
 	var err error
 
@@ -186,6 +203,8 @@ type config struct {
 	EnableWebpDetection bool
 	EnforceWebp         bool
 	EnableClientHints   bool
+
+	SkipProcessingFormats []imageType
 
 	UseLinearColorspace bool
 	DisableShrinkOnLoad bool
@@ -328,6 +347,8 @@ func configure() error {
 	boolEnvConfig(&conf.EnableWebpDetection, "IMGPROXY_ENABLE_WEBP_DETECTION")
 	boolEnvConfig(&conf.EnforceWebp, "IMGPROXY_ENFORCE_WEBP")
 	boolEnvConfig(&conf.EnableClientHints, "IMGPROXY_ENABLE_CLIENT_HINTS")
+
+	imageTypesEnvConfig(&conf.SkipProcessingFormats, "IMGPROXY_SKIP_PROCESSING_FORMATS")
 
 	boolEnvConfig(&conf.UseLinearColorspace, "IMGPROXY_USE_LINEAR_COLORSPACE")
 	boolEnvConfig(&conf.DisableShrinkOnLoad, "IMGPROXY_DISABLE_SHRINK_ON_LOAD")

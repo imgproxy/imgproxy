@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 ### Added
+- Ability to skip processing of some formats. See [Skip processing](https://docs.imgproxy.net/#/configuration?id=skip-processing).
 - (pro) [video_thumbnail_second](https://docs.imgproxy.net/#/generating_the_url_advanced?id=video-thumbnail-second) processing option.
 - (pro) [background_alpha](https://docs.imgproxy.net/#/generating_the_url_advanced?id=background-alpha) processing option.
 

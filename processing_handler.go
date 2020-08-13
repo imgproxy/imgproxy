@@ -186,6 +186,21 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 
 	checkTimeout(ctx)
 
+	if len(conf.SkipProcessingFormats) > 0 {
+		imgdata := getImageData(ctx)
+		po := getProcessingOptions(ctx)
+
+		if imgdata.Type == po.Format || po.Format == imageTypeUnknown {
+			for _, f := range conf.SkipProcessingFormats {
+				if f == imgdata.Type {
+					po.Format = imgdata.Type
+					respondWithImage(ctx, reqID, r, rw, imgdata.Data)
+					return
+				}
+			}
+		}
+	}
+
 	imageData, processcancel, err := processImage(ctx)
 	defer processcancel()
 	if err != nil {
