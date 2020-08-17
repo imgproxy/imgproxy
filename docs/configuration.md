@@ -144,6 +144,10 @@ imgproxy Pro can extract specific frames of videos to create thumbnails. The fea
 
 * `IMGPROXY_ENABLE_VIDEO_THUMBNAILS`: <img class="pro-badge" src="assets/pro.svg" alt="pro" /> then true, enables video thumbnails generation. Default: false;
 * `IMGPROXY_VIDEO_THUMBNAIL_SECOND`: <img class="pro-badge" src="assets/pro.svg" alt="pro" /> the timestamp of the frame in seconds that will be used for a thumbnail. Default: 1.
+* `IMGPROXY_VIDEO_THUMBNAIL_PROBE_SIZE`: <img class="pro-badge" src="assets/pro.svg" alt="pro" /> the maximum amount of bytes used to determine the format. Lower values can decrease memory usage but can produce inaccurate data or even lead to errors. Default: 5000000.
+* `IMGPROXY_VIDEO_THUMBNAIL_MAX_ANALYZE_DURATION`: <img class="pro-badge" src="assets/pro.svg" alt="pro" /> the maximum of milliseconds used to get the stream info. Low values can decrease memory usage but can produce inaccurate data or even lead to errors. When set to 0, the heuristic is used. Default: 0.
+
+**⚠️Warning:** Though using `IMGPROXY_VIDEO_THUMBNAIL_PROBE_SIZE` and `IMGPROXY_VIDEO_THUMBNAIL_MAX_ANALYZE_DURATION` can lower the memory footprint of video thumbnails generation, you should use them in production only when you know what are you doing.
 
 ## Watermark
 

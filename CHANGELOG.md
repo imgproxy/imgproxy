@@ -5,6 +5,13 @@
 - Ability to skip processing of some formats. See [Skip processing](https://docs.imgproxy.net/#/configuration?id=skip-processing).
 - (pro) [video_thumbnail_second](https://docs.imgproxy.net/#/generating_the_url_advanced?id=video-thumbnail-second) processing option.
 - (pro) [background_alpha](https://docs.imgproxy.net/#/generating_the_url_advanced?id=background-alpha) processing option.
+- (pro) `IMGPROXY_VIDEO_THUMBNAIL_PROBE_SIZE` and `IMGPROXY_VIDEO_THUMBNAIL_MAX_ANALYZE_DURATION` configs.
+
+### Changed
+- Speed up generation of video thumbnails with large timestamps.
+
+### Fix
+- Fix thumbnails generation of some videos.
 
 ## [2.14.1] - 2020-07-22
 ### Fix
