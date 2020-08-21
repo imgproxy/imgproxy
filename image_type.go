@@ -117,3 +117,7 @@ func (it imageType) ContentDispositionFromURL(imageURL string) string {
 
 	return it.ContentDisposition(strings.TrimSuffix(filename, filepath.Ext(filename)))
 }
+
+func (it imageType) SupportsAlpha() bool {
+	return it != imageTypeJPEG && it != imageTypeBMP
+}

@@ -45,7 +45,9 @@ VipsBandFormat vips_band_format(VipsImage *in);
 
 gboolean vips_support_webp_animation();
 gboolean vips_is_animated(VipsImage * in);
+
 gboolean vips_image_hasalpha_go(VipsImage * in);
+int vips_addalpha_go(VipsImage *in, VipsImage **out);
 
 int vips_copy_go(VipsImage *in, VipsImage **out);
 

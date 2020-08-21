@@ -266,7 +266,7 @@ func prepareWatermark(wm *vipsImage, wmData *imageData, opts *watermarkOptions, 
 
 	left, top := calcPosition(imgWidth, imgHeight, wm.Width(), wm.Height(), &opts.Gravity, true)
 
-	return wm.Embed(imgWidth, imgHeight, left, top, rgbColor{0, 0, 0})
+	return wm.Embed(imgWidth, imgHeight, left, top, rgbColor{0, 0, 0}, true)
 }
 
 func applyWatermark(img *vipsImage, wmData *imageData, opts *watermarkOptions, framesCount int) error {
@@ -430,6 +430,8 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 		return err
 	}
 
+	transparrentBg := po.Format.SupportsAlpha() && !po.Flatten
+
 	if hasAlpha && (po.Flatten || po.Format == imageTypeJPEG) {
 		if err = img.Flatten(po.Background); err != nil {
 			return err
@@ -456,7 +458,7 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 
 	if po.Extend.Enabled && (po.Width > img.Width() || po.Height > img.Height()) {
 		offX, offY := calcPosition(po.Width, po.Height, img.Width(), img.Height(), &po.Extend.Gravity, false)
-		if err = img.Embed(po.Width, po.Height, offX, offY, po.Background); err != nil {
+		if err = img.Embed(po.Width, po.Height, offX, offY, po.Background, transparrentBg); err != nil {
 			return err
 		}
 	}
@@ -472,6 +474,7 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 			paddingLeft,
 			paddingTop,
 			po.Background,
+			transparrentBg,
 		); err != nil {
 			return err
 		}

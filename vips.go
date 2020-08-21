@@ -590,20 +590,30 @@ func (img *vipsImage) Replicate(width, height int) error {
 	return nil
 }
 
-func (img *vipsImage) Embed(width, height int, offX, offY int, bg rgbColor) error {
+func (img *vipsImage) Embed(width, height int, offX, offY int, bg rgbColor, transpBg bool) error {
+	var tmp *C.VipsImage
+
 	if err := img.RgbColourspace(); err != nil {
 		return err
 	}
 
 	var bgc []C.double
-	if img.HasAlpha() {
+	if transpBg {
+		if !img.HasAlpha() {
+			if C.vips_addalpha_go(img.VipsImage, &tmp) != 0 {
+				return vipsError()
+			}
+			C.swap_and_clear(&img.VipsImage, tmp)
+		}
+
 		bgc = []C.double{C.double(0)}
 	} else {
-		bgc = []C.double{C.double(bg.R), C.double(bg.G), C.double(bg.B)}
+		bgc = []C.double{C.double(bg.R), C.double(bg.G), C.double(bg.B), 1.0}
 	}
 
-	var tmp *C.VipsImage
-	if C.vips_embed_go(img.VipsImage, &tmp, C.int(offX), C.int(offY), C.int(width), C.int(height), &bgc[0], C.int(len(bgc))) != 0 {
+	bgn := minInt(int(img.VipsImage.Bands), len(bgc))
+
+	if C.vips_embed_go(img.VipsImage, &tmp, C.int(offX), C.int(offY), C.int(width), C.int(height), &bgc[0], C.int(bgn)) != 0 {
 		return vipsError()
 	}
 	C.swap_and_clear(&img.VipsImage, tmp)

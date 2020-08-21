@@ -251,6 +251,11 @@ vips_image_hasalpha_go(VipsImage * in) {
 }
 
 int
+vips_addalpha_go(VipsImage *in, VipsImage **out) {
+  return vips_addalpha(in, out, NULL);
+}
+
+int
 vips_copy_go(VipsImage *in, VipsImage **out) {
   return vips_copy(in, out, NULL);
 }
