@@ -432,7 +432,7 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 
 	transparrentBg := po.Format.SupportsAlpha() && !po.Flatten
 
-	if hasAlpha && (po.Flatten || po.Format == imageTypeJPEG) {
+	if hasAlpha && !transparrentBg {
 		if err = img.Flatten(po.Background); err != nil {
 			return err
 		}
