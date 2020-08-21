@@ -430,9 +430,9 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 		return err
 	}
 
-	transparrentBg := po.Format.SupportsAlpha() && !po.Flatten
+	transparentBg := po.Format.SupportsAlpha() && !po.Flatten
 
-	if hasAlpha && !transparrentBg {
+	if hasAlpha && !transparentBg {
 		if err = img.Flatten(po.Background); err != nil {
 			return err
 		}
@@ -458,7 +458,7 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 
 	if po.Extend.Enabled && (po.Width > img.Width() || po.Height > img.Height()) {
 		offX, offY := calcPosition(po.Width, po.Height, img.Width(), img.Height(), &po.Extend.Gravity, false)
-		if err = img.Embed(po.Width, po.Height, offX, offY, po.Background, transparrentBg); err != nil {
+		if err = img.Embed(po.Width, po.Height, offX, offY, po.Background, transparentBg); err != nil {
 			return err
 		}
 	}
@@ -474,7 +474,7 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 			paddingLeft,
 			paddingTop,
 			po.Background,
-			transparrentBg,
+			transparentBg,
 		); err != nil {
 			return err
 		}
