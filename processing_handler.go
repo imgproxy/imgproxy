@@ -107,6 +107,13 @@ func respondWithImage(ctx context.Context, reqID string, r *http.Request, rw htt
 		rw.Write(buf.Bytes())
 	} else {
 		rw.Header().Set("Content-Length", strconv.Itoa(len(data)))
+
+		if conf.EnableDebugHeaders {
+			imgdata := getImageData(ctx)
+			rw.Header().Set("X-Imgproxy-Bytes-Before", strconv.Itoa(len(imgdata.Data)))
+			rw.Header().Set("X-Imgproxy-Bytes-After", strconv.Itoa(len(data)))
+		}
+
 		rw.WriteHeader(200)
 		rw.Write(data)
 	}

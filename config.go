@@ -295,7 +295,7 @@ var conf = config{
 	SentryEnvironment:              "production",
 	SentryRelease:                  fmt.Sprintf("imgproxy/%s", version),
 	ReportDownloadingErrors:        true,
-	EnableDebugHeaders:				false,
+	EnableDebugHeaders:             false,
 	FreeMemoryInterval:             10,
 	BufferPoolCalibrationThreshold: 1024,
 }
