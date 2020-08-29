@@ -451,8 +451,8 @@ Default: `false`
 #### Auto Rotate
 
 ```
-auto_rotate:%strip_metadata
-ar:%strip_metadata
+auto_rotate:%auto_rotate
+ar:%auto_rotate
 ```
 
 When set to `1`, `t` or `true`, imgproxy will automatically rotate images based onon the EXIF Orientation parameter (if available in the image meta data). Normally this is controlled by the [IMGPROXY_AUTO_ROTATE](configuration.md#miscellaneous) configuration but this procesing option allows the configuration to be set for each request.
