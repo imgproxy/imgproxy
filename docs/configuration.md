@@ -297,3 +297,4 @@ imgproxy can send logs to syslog, but this feature is disabled by default. To en
 * `IMGPROXY_USE_LINEAR_COLORSPACE`: when `true`, imgproxy will process images in linear colorspace. This will slow down processing. Note that images won't be fully processed in linear colorspace while shrink-on-load is enabled (see below).
 * `IMGPROXY_DISABLE_SHRINK_ON_LOAD`: when `true`, disables shrink-on-load for JPEG and WebP. Allows to process the whole image in linear colorspace but dramatically slows down resizing and increases memory usage when working with large images.
 * `IMGPROXY_STRIP_METADATA`: whether to strip all metadata (EXIF, IPTC, etc.) from JPEG and WebP output images. Default: `true`.
+* `IMGPROXY_AUTO_ROTATE`: whether to auto rotate images based on the EXIF Orientation parameter (if available in the image meta data). Default: `true`.
