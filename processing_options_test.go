@@ -414,6 +414,38 @@ func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedStripMetadata() {
 	assert.True(s.T(), po.StripMetadata)
 }
 
+func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedAutoRotateDeault() {
+	req := s.getRequest("/unsafe/strip_metadata:true/plain/http://images.dev/lorem/ipsum.jpg")
+	ctx, err := parsePath(context.Background(), req)
+
+	require.Nil(s.T(), err)
+
+	po := getProcessingOptions(ctx)
+	assert.True(s.T(), po.AutoRotate)
+}
+
+func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedAutoRotateFalse() {
+	req := s.getRequest("/unsafe/auto_rotate:false/plain/http://images.dev/lorem/ipsum.jpg")
+	ctx, err := parsePath(context.Background(), req)
+
+	require.Nil(s.T(), err)
+
+	po := getProcessingOptions(ctx)
+	assert.False(s.T(), po.AutoRotate)
+}
+
+func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedAutoRotateTrue() {
+	req := s.getRequest("/unsafe/auto_rotate:true/plain/http://images.dev/lorem/ipsum.jpg")
+	ctx, err := parsePath(context.Background(), req)
+
+	require.Nil(s.T(), err)
+
+	po := getProcessingOptions(ctx)
+	assert.True(s.T(), po.AutoRotate)
+}
+
+
+
 func (s *ProcessingOptionsTestSuite) TestParsePathWebpDetection() {
 	conf.EnableWebpDetection = true
 

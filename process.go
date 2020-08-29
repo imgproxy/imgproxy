@@ -394,7 +394,7 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 
 	checkTimeout(ctx)
 
-	if angle != vipsAngleD0 {
+	if angle != vipsAngleD0 && po.AutoRotate {
 		if err = img.Rotate(angle); err != nil {
 			return err
 		}
