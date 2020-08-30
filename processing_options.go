@@ -915,7 +915,7 @@ func applyProcessingOption(po *processingOptions, name string, args []string) er
 	case "strip_metadata", "sm":
 		return applyStripMetadataOption(po, args)
 	case "auto_rotate", "ar":
-		return applyAutoRotateOption(po, args)		
+		return applyAutoRotateOption(po, args)
 	case "filename", "fn":
 		return applyFilenameOption(po, args)
 	}

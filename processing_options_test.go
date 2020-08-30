@@ -444,8 +444,6 @@ func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedAutoRotateTrue() {
 	assert.True(s.T(), po.AutoRotate)
 }
 
-
-
 func (s *ProcessingOptionsTestSuite) TestParsePathWebpDetection() {
 	conf.EnableWebpDetection = true
 
