@@ -183,6 +183,7 @@ type config struct {
 	GZipCompression       int
 	StripMetadata         bool
 	AutoRotate            bool
+	
 	EnableWebpDetection bool
 	EnforceWebp         bool
 	EnableClientHints   bool
