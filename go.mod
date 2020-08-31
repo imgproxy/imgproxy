@@ -3,7 +3,7 @@ module github.com/imgproxy/imgproxy/v2
 go 1.11
 
 require (
-	cloud.google.com/go/storage v1.10.0
+	cloud.google.com/go/storage v1.11.0
 	github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d // indirect
 	github.com/aws/aws-sdk-go v1.34.0
 	github.com/bitly/go-simplejson v0.5.0 // indirect
@@ -22,7 +22,7 @@ require (
 	github.com/sirupsen/logrus v1.6.0
 	github.com/stretchr/testify v1.6.1
 	golang.org/x/image v0.0.0-20200609002522-3f4726a040e8
-	golang.org/x/net v0.0.0-20200707034311-ab3426394381
+	golang.org/x/net v0.0.0-20200813134508-3edf25e44fcc
 	golang.org/x/sys v0.0.0-20200803210538-64077c9b5642
 	google.golang.org/api v0.30.0
 )
