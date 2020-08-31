@@ -418,6 +418,21 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 		return err
 	}
 
+	if po.Format == imageTypeWEBP {
+		webpLimitShrink := float64(maxInt(img.Width(), img.Height())) / webpMaxDimension
+
+		if webpLimitShrink > 1.0 {
+			if err = img.Resize(1.0/webpLimitShrink, hasAlpha); err != nil {
+				return err
+			}
+			logWarning("WebP dimension size is limited to %d. The image is rescaled to %dx%d", int(webpMaxDimension), img.Width(), img.Height())
+		}
+
+		if err = img.CopyMemory(); err != nil {
+			return err
+		}
+	}
+
 	checkTimeout(ctx)
 
 	if !iccImported {
@@ -727,16 +742,6 @@ func processImage(ctx context.Context) ([]byte, context.CancelFunc, error) {
 
 		po.ResizingType = resizeFit
 		po.Width, po.Height = 0, 0
-	}
-
-	if po.Format == imageTypeWEBP {
-		webpLimitShrink := float64(maxInt(po.Width, po.Height)) * po.Dpr / webpMaxDimension
-
-		if webpLimitShrink > 1.0 {
-			po.Width = int(float64(po.Width) / webpLimitShrink)
-			po.Height = int(float64(po.Height) / webpLimitShrink)
-			logWarning("WebP dimension size is limited to %d. Requested dimensions are rescaled to %dx%d", int(webpMaxDimension), po.Width, po.Height)
-		}
 	}
 
 	animationSupport := conf.MaxAnimationFrames > 1 && vipsSupportAnimation(imgdata.Type) && vipsSupportAnimation(po.Format)

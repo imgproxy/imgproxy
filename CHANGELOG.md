@@ -11,7 +11,8 @@
 - Speed up generation of video thumbnails with large timestamps.
 
 ### Fix
-- Fix `padding` and `extend` behaior when converting from a fromat without alpha support to one with alpha support
+- Fix `padding` and `extend` behaior when converting from a fromat without alpha support to one with alpha support.
+- Fix WebP dimension limit handling.
 - (pro) Fix thumbnails generation of some videos.
 
 ## [2.14.1] - 2020-07-22
