@@ -422,6 +422,17 @@ gifo:%gif_optimize_frames:%gif_optimize_transparency
 
 Allows redefining GIF saving options. All arguments have the same meaning as [Advanced GIF compression](configuration.md#advanced-gif-compression) configs. All arguments are optional and can be omitted.
 
+#### Page <img class="pro-badge" src="assets/pro.svg" alt="pro" />
+
+```
+page:%page
+pg:%page
+```
+
+When source image supports pagination (PDF, TIFF) or animation (GIF, WebP), this option allows specifying the page to use. Pages numeration starts from zero.
+
+Default: 0
+
 #### Video thumbnail second <img class="pro-badge" src="assets/pro.svg" alt="pro" />
 
 ```

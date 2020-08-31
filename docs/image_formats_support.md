@@ -11,7 +11,8 @@ At the moment, imgproxy supports only the most popular image formats:
 * MP4 <img class="pro-badge" src="assets/pro.svg" alt="pro" />;
 * HEIC _(source only)_;
 * BMP;
-* TIFF.
+* TIFF;
+* PDF _(source only)_ <img class="pro-badge" src="assets/pro.svg" alt="pro" />.
 
 ## GIF support
 
