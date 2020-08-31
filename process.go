@@ -770,7 +770,7 @@ func processImage(ctx context.Context) ([]byte, context.CancelFunc, error) {
 
 	checkTimeout(ctx)
 
-	if po.Format == imageTypeGIF {
+	if po.Format == imageTypeGIF || po.Format == imageTypeBMP {
 		if err := img.CastUchar(); err != nil {
 			return nil, func() {}, err
 		}
