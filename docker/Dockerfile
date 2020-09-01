@@ -1,4 +1,4 @@
-ARG BASE_IMAGE_VERSION="v1.0.3"
+ARG BASE_IMAGE_VERSION="v1.0.4"
 
 FROM darthsim/imgproxy-base:${BASE_IMAGE_VERSION}
 LABEL maintainer="Sergey Alexandrovich <darthsim@gmail.com>"
