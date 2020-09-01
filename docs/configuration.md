@@ -40,9 +40,9 @@ echo $(xxd -g 2 -l 64 -p /dev/random | tr -d '\n')
 * `IMGPROXY_PATH_PREFIX`: URL path prefix. Example: when set to `/abc/def`, imgproxy URL will be `/abc/def/%signature/%processing_options/%source_url`. Default: blank.
 * `IMGPROXY_USER_AGENT`: User-Agent header that will be sent with source image request. Default: `imgproxy/%current_version`;
 * `IMGPROXY_USE_ETAG`: when `true`, enables using [ETag](https://en.wikipedia.org/wiki/HTTP_ETag) HTTP header for HTTP cache control. Default: false;
-* `IMGPROXY_CUSTOM_REQUEST_HEADERS`: <img class="pro-badge" src="assets/pro.svg" alt="pro" /> list of custom headers that imgproxy will send while requesting the source image, divided by `\;` (can be redefined by `IMGPROXY_CUSTOM_HEADERS_SEPARATOR`). Example: `X-MyHeader1=Lorem\;X-MyHeader2=Ipsum`;
-* `IMGPROXY_CUSTOM_RESPONSE_HEADERS`: <img class="pro-badge" src="assets/pro.svg" alt="pro" /> list of custom response headers, divided by `\;` (can be redefined by `IMGPROXY_CUSTOM_HEADERS_SEPARATOR`). Example: `X-MyHeader1=Lorem\;X-MyHeader2=Ipsum`;
-* `IMGPROXY_CUSTOM_HEADERS_SEPARATOR`: <img class="pro-badge" src="assets/pro.svg" alt="pro" /> string that will be used as a custom headers separator. Default: `\;`;
+* `IMGPROXY_CUSTOM_REQUEST_HEADERS`: <img class='pro-badge' src='assets/pro.svg' alt='pro' /> list of custom headers that imgproxy will send while requesting the source image, divided by `\;` (can be redefined by `IMGPROXY_CUSTOM_HEADERS_SEPARATOR`). Example: `X-MyHeader1=Lorem\;X-MyHeader2=Ipsum`;
+* `IMGPROXY_CUSTOM_RESPONSE_HEADERS`: <img class='pro-badge' src='assets/pro.svg' alt='pro' /> list of custom response headers, divided by `\;` (can be redefined by `IMGPROXY_CUSTOM_HEADERS_SEPARATOR`). Example: `X-MyHeader1=Lorem\;X-MyHeader2=Ipsum`;
+* `IMGPROXY_CUSTOM_HEADERS_SEPARATOR`: <img class='pro-badge' src='assets/pro.svg' alt='pro' /> string that will be used as a custom headers separator. Default: `\;`;
 
 ## Security
 
@@ -91,11 +91,11 @@ Also you may want imgproxy to respond with the same error message that it writes
 ### Advanced JPEG compression
 
 * `IMGPROXY_JPEG_PROGRESSIVE`: when true, enables progressive JPEG compression. Default: false;
-* `IMGPROXY_JPEG_NO_SUBSAMPLE`: <img class="pro-badge" src="assets/pro.svg" alt="pro" /> when true, chrominance subsampling is disabled. This will improve quality at the cost of larger file size. Default: false;
-* `IMGPROXY_JPEG_TRELLIS_QUANT`: <img class="pro-badge" src="assets/pro.svg" alt="pro" /> when true, enables trellis quantisation for each 8x8 block. Reduces file size but increases compression time. Default: false;
-* `IMGPROXY_JPEG_OVERSHOOT_DERINGING`: <img class="pro-badge" src="assets/pro.svg" alt="pro" /> when true, enables overshooting of samples with extreme values. Overshooting may reduce ringing artifacts from compression, in particular in areas where black text appears on a white background. Default: false;
-* `IMGPROXY_JPEG_OPTIMIZE_SCANS`: <img class="pro-badge" src="assets/pro.svg" alt="pro" /> when true, split the spectrum of DCT coefficients into separate scans. Reduces file size but increases compression time. Requires `IMGPROXY_JPEG_PROGRESSIVE` to be true. Default: false;
-* `IMGPROXY_JPEG_QUANT_TABLE`: <img class="pro-badge" src="assets/pro.svg" alt="pro" /> quantization table to use. Supported values are:
+* `IMGPROXY_JPEG_NO_SUBSAMPLE`: <img class='pro-badge' src='assets/pro.svg' alt='pro' /> when true, chrominance subsampling is disabled. This will improve quality at the cost of larger file size. Default: false;
+* `IMGPROXY_JPEG_TRELLIS_QUANT`: <img class='pro-badge' src='assets/pro.svg' alt='pro' /> when true, enables trellis quantisation for each 8x8 block. Reduces file size but increases compression time. Default: false;
+* `IMGPROXY_JPEG_OVERSHOOT_DERINGING`: <img class='pro-badge' src='assets/pro.svg' alt='pro' /> when true, enables overshooting of samples with extreme values. Overshooting may reduce ringing artifacts from compression, in particular in areas where black text appears on a white background. Default: false;
+* `IMGPROXY_JPEG_OPTIMIZE_SCANS`: <img class='pro-badge' src='assets/pro.svg' alt='pro' /> when true, split the spectrum of DCT coefficients into separate scans. Reduces file size but increases compression time. Requires `IMGPROXY_JPEG_PROGRESSIVE` to be true. Default: false;
+* `IMGPROXY_JPEG_QUANT_TABLE`: <img class='pro-badge' src='assets/pro.svg' alt='pro' /> quantization table to use. Supported values are:
   * `0`: Table from JPEG Annex K (default);
   * `1`: Flat table;
   * `2`: Table tuned for MSSIM on Kodak image set;
@@ -116,8 +116,8 @@ Also you may want imgproxy to respond with the same error message that it writes
 
 ### Advanced GIF compression
 
-* `IMGPROXY_GIF_OPTIMIZE_FRAMES`: <img class="pro-badge" src="assets/pro.svg" alt="pro" /> when true, enables GIF frames optimization. This may produce a smaller result, but may increase compression time.
-* `IMGPROXY_GIF_OPTIMIZE_TRANSPARENCY`: <img class="pro-badge" src="assets/pro.svg" alt="pro" /> when true, enables GIF transparency optimization. This may produce a smaller result, but may increase compression time.
+* `IMGPROXY_GIF_OPTIMIZE_FRAMES`: <img class='pro-badge' src='assets/pro.svg' alt='pro' /> when true, enables GIF frames optimization. This may produce a smaller result, but may increase compression time.
+* `IMGPROXY_GIF_OPTIMIZE_TRANSPARENCY`: <img class='pro-badge' src='assets/pro.svg' alt='pro' /> when true, enables GIF transparency optimization. This may produce a smaller result, but may increase compression time.
 
 ## WebP support detection
 
@@ -142,10 +142,10 @@ imgproxy can use the `Width`, `Viewport-Width` or `DPR` HTTP headers to determin
 
 imgproxy Pro can extract specific frames of videos to create thumbnails. The feature is disabled by default, but can be enabled with `IMGPROXY_ENABLE_VIDEO_THUMBNAILS`.
 
-* `IMGPROXY_ENABLE_VIDEO_THUMBNAILS`: <img class="pro-badge" src="assets/pro.svg" alt="pro" /> then true, enables video thumbnails generation. Default: false;
-* `IMGPROXY_VIDEO_THUMBNAIL_SECOND`: <img class="pro-badge" src="assets/pro.svg" alt="pro" /> the timestamp of the frame in seconds that will be used for a thumbnail. Default: 1.
-* `IMGPROXY_VIDEO_THUMBNAIL_PROBE_SIZE`: <img class="pro-badge" src="assets/pro.svg" alt="pro" /> the maximum amount of bytes used to determine the format. Lower values can decrease memory usage but can produce inaccurate data or even lead to errors. Default: 5000000.
-* `IMGPROXY_VIDEO_THUMBNAIL_MAX_ANALYZE_DURATION`: <img class="pro-badge" src="assets/pro.svg" alt="pro" /> the maximum of milliseconds used to get the stream info. Low values can decrease memory usage but can produce inaccurate data or even lead to errors. When set to 0, the heuristic is used. Default: 0.
+* `IMGPROXY_ENABLE_VIDEO_THUMBNAILS`: <img class='pro-badge' src='assets/pro.svg' alt='pro' /> then true, enables video thumbnails generation. Default: false;
+* `IMGPROXY_VIDEO_THUMBNAIL_SECOND`: <img class='pro-badge' src='assets/pro.svg' alt='pro' /> the timestamp of the frame in seconds that will be used for a thumbnail. Default: 1.
+* `IMGPROXY_VIDEO_THUMBNAIL_PROBE_SIZE`: <img class='pro-badge' src='assets/pro.svg' alt='pro' /> the maximum amount of bytes used to determine the format. Lower values can decrease memory usage but can produce inaccurate data or even lead to errors. Default: 5000000.
+* `IMGPROXY_VIDEO_THUMBNAIL_MAX_ANALYZE_DURATION`: <img class='pro-badge' src='assets/pro.svg' alt='pro' /> the maximum of milliseconds used to get the stream info. Low values can decrease memory usage but can produce inaccurate data or even lead to errors. When set to 0, the heuristic is used. Default: 0.
 
 **⚠️Warning:** Though using `IMGPROXY_VIDEO_THUMBNAIL_PROBE_SIZE` and `IMGPROXY_VIDEO_THUMBNAIL_MAX_ANALYZE_DURATION` can lower the memory footprint of video thumbnails generation, you should use them in production only when you know what are you doing.
 
@@ -155,7 +155,7 @@ imgproxy Pro can extract specific frames of videos to create thumbnails. The fea
 * `IMGPROXY_WATERMARK_PATH`: path to the locally stored image;
 * `IMGPROXY_WATERMARK_URL`: watermark image URL;
 * `IMGPROXY_WATERMARK_OPACITY`: watermark base opacity;
-* `IMGPROXY_WATERMARKS_CACHE_SIZE`: <img class="pro-badge" src="assets/pro.svg" alt="pro" /> size of custom watermarks cache. When set to `0`, watermarks cache is disabled. By default 256 watermarks are cached.
+* `IMGPROXY_WATERMARKS_CACHE_SIZE`: <img class='pro-badge' src='assets/pro.svg' alt='pro' /> size of custom watermarks cache. When set to `0`, watermarks cache is disabled. By default 256 watermarks are cached.
 
 Read more about watermarks in the [Watermark](watermark.md) guide.
 
@@ -163,12 +163,12 @@ Read more about watermarks in the [Watermark](watermark.md) guide.
 
 imgproxy Pro can apply unshapening mask to your images.
 
-* `IMGPROXY_UNSHARPENING_MODE`: <img class="pro-badge" src="assets/pro.svg" alt="pro" /> controls when unsharpenning mask should be applied. The following modes are supported:
+* `IMGPROXY_UNSHARPENING_MODE`: <img class='pro-badge' src='assets/pro.svg' alt='pro' /> controls when unsharpenning mask should be applied. The following modes are supported:
   * `auto`: _(default)_ apply unsharpening mask only when image is downscaled and `sharpen` option is not set.
   * `none`: don't apply the unsharpening mask.
   * `always`: always apply the unsharpening mask.
-* `IMGPROXY_UNSHARPENING_WEIGHT`: <img class="pro-badge" src="assets/pro.svg" alt="pro" /> a floating-point number that defines how neighbor pixels will affect the current pixel. Greater the value - sharper the image. Should be greater than zero. Default: `1`.
-* `IMGPROXY_UNSHARPENING_DIVIDOR`: <img class="pro-badge" src="assets/pro.svg" alt="pro" /> a floating-point number that defines the unsharpening strength. Lesser the value - sharper the image. Should be greater than zero. Default: `24`.
+* `IMGPROXY_UNSHARPENING_WEIGHT`: <img class='pro-badge' src='assets/pro.svg' alt='pro' /> a floating-point number that defines how neighbor pixels will affect the current pixel. Greater the value - sharper the image. Should be greater than zero. Default: `1`.
+* `IMGPROXY_UNSHARPENING_DIVIDOR`: <img class='pro-badge' src='assets/pro.svg' alt='pro' /> a floating-point number that defines the unsharpening strength. Lesser the value - sharper the image. Should be greater than zero. Default: `24`.
 
 ## Fallback image
 

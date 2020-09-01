@@ -64,7 +64,7 @@ Defines how imgproxy will resize the source image. Supported resizing types are:
 
 Default: `fit`
 
-#### Resizing algorithm <img class="pro-badge" src="assets/pro.svg" alt="pro" />
+#### Resizing algorithm<img class='pro-badge' src='assets/pro.svg' alt='pro' />
 
 ```
 resizing_algorithm:%algorithm
@@ -250,7 +250,7 @@ With no arguments provided, disables any background manipulations.
 
 Default: disabled
 
-#### Background alpha <img class="pro-badge" src="assets/pro.svg" alt="pro" />
+#### Background alpha<img class='pro-badge' src='assets/pro.svg' alt='pro' />
 
 ```
 background_alpha:%alpha
@@ -261,7 +261,7 @@ Adds alpha channel to `background`. `alpha` is a positive floating point number 
 
 Default: 1
 
-#### Adjust <img class="pro-badge" src="assets/pro.svg" alt="pro" />
+#### Adjust<img class='pro-badge' src='assets/pro.svg' alt='pro' />
 
 ```
 adjust:%brightness:%contrast:%saturation
@@ -270,7 +270,7 @@ a:%brightness:%contrast:%saturation
 
 Meta-option that defines the [brightness](#brightness), [contrast](#contrast), and [saturation](#saturation). All arguments are optional and can be omitted to use their default values.
 
-#### Brightness <img class="pro-badge" src="assets/pro.svg" alt="pro" />
+#### Brightness<img class='pro-badge' src='assets/pro.svg' alt='pro' />
 
 ```
 brightness:%brightness
@@ -281,7 +281,7 @@ When set, imgproxy will adjust brightness of the resulting image. `brightness` i
 
 Default: 0
 
-#### Contrast <img class="pro-badge" src="assets/pro.svg" alt="pro" />
+#### Contrast<img class='pro-badge' src='assets/pro.svg' alt='pro' />
 
 ```
 contrast:%contrast
@@ -292,7 +292,7 @@ When set, imgproxy will adjust contrast of the resulting image. `contrast` is a 
 
 Default: 1
 
-#### Saturation <img class="pro-badge" src="assets/pro.svg" alt="pro" />
+#### Saturation<img class='pro-badge' src='assets/pro.svg' alt='pro' />
 
 ```
 saturation:%saturation
@@ -327,7 +327,7 @@ As an approximate guideline, use 0.5 sigma for 4 pixels/mm (display resolution),
 
 Default: disabled
 
-#### Pixelate <img class="pro-badge" src="assets/pro.svg" alt="pro" />
+#### Pixelate<img class='pro-badge' src='assets/pro.svg' alt='pro' />
 
 ```
 pixelate:%size
@@ -338,7 +338,7 @@ When set, imgproxy will apply the pixelate filter to the resulting image. `size`
 
 Default: disabled
 
-#### Unsharpening <img class="pro-badge" src="assets/pro.svg" alt="pro" />
+#### Unsharpening<img class='pro-badge' src='assets/pro.svg' alt='pro' />
 
 ```
 unsharpening:%mode:%weight:%dividor
@@ -373,7 +373,7 @@ Puts watermark on the processed image.
 
 Default: disabled
 
-#### Watermark URL <img class="pro-badge" src="assets/pro.svg" alt="pro" />
+#### Watermark URL<img class='pro-badge' src='assets/pro.svg' alt='pro' />
 
 ```
 watermark_url:%url
@@ -384,7 +384,7 @@ When set, imgproxy will use the image from the specified URL as a watermark. `ur
 
 Default: blank
 
-#### Style <img class="pro-badge" src="assets/pro.svg" alt="pro" />
+#### Style<img class='pro-badge' src='assets/pro.svg' alt='pro' />
 
 ```
 style:%style
@@ -395,7 +395,7 @@ When set, imgproxy will prepend `<style>` node with provided content to the `<sv
 
 Default: blank
 
-#### JPEG options <img class="pro-badge" src="assets/pro.svg" alt="pro" />
+#### JPEG options<img class='pro-badge' src='assets/pro.svg' alt='pro' />
 
 ```
 jpeg_options:%progressive:%no_subsample:%trellis_quant:%overshoot_deringing:%optimize_scans:%quant_table
@@ -404,7 +404,7 @@ jpgo:%progressive:%no_subsample:%trellis_quant:%overshoot_deringing:%optimize_sc
 
 Allows redefining JPEG saving options. All arguments have the same meaning as [Advanced JPEG compression](configuration.md#advanced-jpeg-compression) configs. All arguments are optional and can be omitted.
 
-#### PNG options <img class="pro-badge" src="assets/pro.svg" alt="pro" />
+#### PNG options<img class='pro-badge' src='assets/pro.svg' alt='pro' />
 
 ```
 png_options:%png_interlaced:%png_quantize:%png_quantization_colors
@@ -413,7 +413,7 @@ pngo:%png_interlaced:%png_quantize:%png_quantization_colors
 
 Allows redefining PNG saving options. All arguments have the same meaning as [Advanced PNG compression](configuration.md#advanced-png-compression) configs. All arguments are optional and can be omitted.
 
-#### GIF options <img class="pro-badge" src="assets/pro.svg" alt="pro" />
+#### GIF options<img class='pro-badge' src='assets/pro.svg' alt='pro' />
 
 ```
 gif_options:%gif_optimize_frames:%gif_optimize_transparency
@@ -422,7 +422,7 @@ gifo:%gif_optimize_frames:%gif_optimize_transparency
 
 Allows redefining GIF saving options. All arguments have the same meaning as [Advanced GIF compression](configuration.md#advanced-gif-compression) configs. All arguments are optional and can be omitted.
 
-#### Page <img class="pro-badge" src="assets/pro.svg" alt="pro" />
+#### Page<img class='pro-badge' src='assets/pro.svg' alt='pro' />
 
 ```
 page:%page
@@ -433,7 +433,7 @@ When source image supports pagination (PDF, TIFF) or animation (GIF, WebP), this
 
 Default: 0
 
-#### Video thumbnail second <img class="pro-badge" src="assets/pro.svg" alt="pro" />
+#### Video thumbnail second<img class='pro-badge' src='assets/pro.svg' alt='pro' />
 
 ```
 video_thumbnail_second:%second

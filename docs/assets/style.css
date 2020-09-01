@@ -90,6 +90,10 @@ body::before {
   vertical-align: middle;
 }
 
+h1 .pro-badge, h2 .pro-badge, h3 .pro-badge, h4 .pro-badge {
+  margin-left: .25ch;
+}
+
 .github-edit-btn {
   display: block;
   position: fixed;

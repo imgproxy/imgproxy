@@ -13,9 +13,9 @@ At the moment, imgproxy supports only the most popular image formats:
 | HEIC   | `heic`    | Yes    | No     |
 | BMP    | `bmp`     | Yes    | Yes    |
 | TIFF   | `tiff`    | Yes    | Yes    |
-| PDF <img class="pro-badge" src="assets/pro.svg" alt="pro" /> | `pdf` | Yes | No |
-| MP4 (h264) <img class="pro-badge" src="assets/pro.svg" alt="pro" /> | `mp4` | [See notes](#video-thumbnails-) | Yes |
-| Other video formats <img class="pro-badge" src="assets/pro.svg" alt="pro" /> | | [See notes](#video-thumbnails-) | No |
+| PDF <img class='pro-badge' src='assets/pro.svg' alt='pro' /> | `pdf` | Yes | No |
+| MP4 (h264) <img class='pro-badge' src='assets/pro.svg' alt='pro' /> | `mp4` | [See notes](#video-thumbnails) | Yes |
+| Other video formats <img class='pro-badge' src='assets/pro.svg' alt='pro' /> | | [See notes](#video-thumbnails) | No |
 
 ## GIF support
 
@@ -53,13 +53,13 @@ Since processing of animated images is pretty heavy, only one frame is processed
 
 **📝Note:** imgproxy summarizes all frames resolutions while checking source image resolution.
 
-## Converting animated images to MP4 <img class="pro-badge" src="assets/pro.svg" alt="pro" />
+## Converting animated images to MP4<img class='pro-badge' src='assets/pro.svg' alt='pro' />
 
 Animated images results can be converted to MP4 by specifying `mp4` extension.
 
 Since MP4 requires usage of a `<video>` tag instead of `<img>`, automatic conversion to MP4 is not provided.
 
-## Video thumbnails <img class="pro-badge" src="assets/pro.svg" alt="pro" />
+## Video thumbnails<img class='pro-badge' src='assets/pro.svg' alt='pro' />
 
 If you provide a video as a source, imgproxy takes its specific frame to create a thumbnail. Doing this imgproxy downloads only the amount of data required to reach the needed frame.
 

@@ -25,7 +25,7 @@
 ### Added
 - `IMGPROXY_PROMETHEUS_NAMESPACE` config.
 - [strip_metadata](https://docs.imgproxy.net/#/generating_the_url_advanced?id=strip-metadata) processing option.
-- (pro) Configurable unsharpening. See [Unsharpening](https://docs.imgproxy.net/#/configuration?id=unsharpening) configs and [unsharpening](https://docs.imgproxy.net/#/generating_the_url_advanced?id=unsharpening-) processing option.
+- (pro) Configurable unsharpening. See [Unsharpening](https://docs.imgproxy.net/#/configuration?id=unsharpening) configs and [unsharpening](https://docs.imgproxy.net/#/generating_the_url_advanced?id=unsharpening) processing option.
 
 ### Changed
 - Better for libvips memory metrics for Prometheus.
