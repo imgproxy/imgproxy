@@ -851,9 +851,11 @@ func applyFilenameOption(po *processingOptions, args []string) error {
 }
 
 func applyStripMetadataOption(po *processingOptions, args []string) error {
-	if len(args[0]) > 0 {
-		po.StripMetadata = parseBoolOption(args[0])
+	if len(args) > 1 {
+		return fmt.Errorf("Invalid strip metadata arguments: %v", args)
 	}
+
+	po.StripMetadata = parseBoolOption(args[0])
 
 	return nil
 }
