@@ -24,6 +24,8 @@
   --sidebar-border-color: hsla(0,0%,100%,.4);
 
   --copycode-background: var(--link-color);
+
+  --table-row-even-background: var(--base-background-color);
 }
 
 .app-name-link img {

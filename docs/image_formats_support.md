@@ -2,17 +2,20 @@
 
 At the moment, imgproxy supports only the most popular image formats:
 
-* PNG;
-* JPEG;
-* WebP;
-* GIF;
-* ICO;
-* SVG;
-* MP4 <img class="pro-badge" src="assets/pro.svg" alt="pro" />;
-* HEIC _(source only)_;
-* BMP;
-* TIFF;
-* PDF _(source only)_ <img class="pro-badge" src="assets/pro.svg" alt="pro" />.
+| Format | Extension | Source | Result |
+| -------|-----------|--------|--------|
+| PNG    | `png`     | Yes    | Yes    |
+| JPEG   | `jpg`     | Yes    | Yes    |
+| WebP   | `webp`    | Yes    | Yes    |
+| GIF    | `gif`     | Yes    | Yes    |
+| ICO    | `ico`     | Yes    | Yes    |
+| SVG    | `svg`     | Yes    | [See notes](#svg-support) |
+| HEIC   | `heic`    | Yes    | No     |
+| BMP    | `bmp`     | Yes    | Yes    |
+| TIFF   | `tiff`    | Yes    | Yes    |
+| PDF <img class="pro-badge" src="assets/pro.svg" alt="pro" /> | `pdf` | Yes | No |
+| MP4 (h264) <img class="pro-badge" src="assets/pro.svg" alt="pro" /> | `mp4` | [See notes](#video-thumbnails-) | Yes |
+| Other video formats <img class="pro-badge" src="assets/pro.svg" alt="pro" /> | | [See notes](#video-thumbnails-) | No |
 
 ## GIF support
 
