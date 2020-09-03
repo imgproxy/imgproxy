@@ -536,7 +536,6 @@ func transformAnimated(ctx context.Context, img *vipsImage, data []byte, po *pro
 		}
 
 		if nPages > framesCount || canScaleOnLoad(imgtype, scale) {
-			logNotice("Animated scale on load")
 			// Do some scale-on-load and load only the needed frames
 			if err = img.Load(data, imgtype, 1, scale, framesCount); err != nil {
 				return err
