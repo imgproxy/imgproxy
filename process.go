@@ -333,17 +333,12 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 	}
 
 	if !trimmed && scale != 1 && data != nil && canScaleOnLoad(imgtype, scale) {
-		if imgtype == imageTypeWEBP || imgtype == imageTypeSVG {
+		jpegShrink := calcJpegShink(scale, imgtype)
+
+		if imgtype != imageTypeJPEG || jpegShrink != 1 {
 			// Do some scale-on-load
-			if err = img.Load(data, imgtype, 1, scale, 1); err != nil {
+			if err = img.Load(data, imgtype, jpegShrink, scale, 1); err != nil {
 				return err
-			}
-		} else if imgtype == imageTypeJPEG {
-			// Do some shrink-on-load
-			if shrink := calcJpegShink(scale, imgtype); shrink != 1 {
-				if err = img.Load(data, imgtype, shrink, 1.0, 1); err != nil {
-					return err
-				}
 			}
 		}
 
