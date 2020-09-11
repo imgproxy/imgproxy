@@ -501,7 +501,15 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 		}
 	}
 
-	return img.RgbColourspace()
+	if err = img.RgbColourspace(); err != nil {
+		return err
+	}
+
+	if err := img.CastUchar(); err != nil {
+		return err
+	}
+
+	return copyMemoryAndCheckTimeout(ctx, img)
 }
 
 func transformAnimated(ctx context.Context, img *vipsImage, data []byte, po *processingOptions, imgtype imageType) error {
@@ -597,6 +605,14 @@ func transformAnimated(ctx context.Context, img *vipsImage, data []byte, po *pro
 		if err = applyWatermark(img, watermark, &po.Watermark, framesCount); err != nil {
 			return err
 		}
+	}
+
+	if err = img.CastUchar(); err != nil {
+		return err
+	}
+
+	if err = copyMemoryAndCheckTimeout(ctx, img); err != nil {
+		return err
 	}
 
 	img.SetInt("page-height", frames[0].Height())
@@ -767,12 +783,6 @@ func processImage(ctx context.Context) ([]byte, context.CancelFunc, error) {
 
 	if err := copyMemoryAndCheckTimeout(ctx, img); err != nil {
 		return nil, func() {}, err
-	}
-
-	if po.Format == imageTypeGIF || po.Format == imageTypeBMP {
-		if err := img.CastUchar(); err != nil {
-			return nil, func() {}, err
-		}
 	}
 
 	if po.MaxBytes > 0 && canFitToBytes(po.Format) {
