@@ -299,6 +299,12 @@ func applyWatermark(img *vipsImage, wmData *imageData, opts *watermarkOptions, f
 	return img.ApplyWatermark(wm, opacity)
 }
 
+func copyMemoryAndCheckTimeout(ctx context.Context, img *vipsImage) error {
+	err := img.CopyMemory()
+	checkTimeout(ctx)
+	return err
+}
+
 func transformImage(ctx context.Context, img *vipsImage, data []byte, po *processingOptions, imgtype imageType) error {
 	var (
 		err     error
@@ -307,6 +313,9 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 
 	if po.Trim.Enabled {
 		if err = img.Trim(po.Trim.Threshold, po.Trim.Smart, po.Trim.Color, po.Trim.EqualHor, po.Trim.EqualVer); err != nil {
+			return err
+		}
+		if err = copyMemoryAndCheckTimeout(ctx, img); err != nil {
 			return err
 		}
 		trimmed = true
@@ -383,11 +392,9 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 		}
 	}
 
-	if err = img.CopyMemory(); err != nil {
+	if err = copyMemoryAndCheckTimeout(ctx, img); err != nil {
 		return err
 	}
-
-	checkTimeout(ctx)
 
 	if angle != vipsAngleD0 {
 		if err = img.Rotate(angle); err != nil {
@@ -400,8 +407,6 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 			return err
 		}
 	}
-
-	checkTimeout(ctx)
 
 	dprWidth := scaleInt(po.Width, po.Dpr)
 	dprHeight := scaleInt(po.Height, po.Dpr)
@@ -423,12 +428,10 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 			logWarning("WebP dimension size is limited to %d. The image is rescaled to %dx%d", int(webpMaxDimension), img.Width(), img.Height())
 		}
 
-		if err = img.CopyMemory(); err != nil {
+		if err = copyMemoryAndCheckTimeout(ctx, img); err != nil {
 			return err
 		}
 	}
-
-	checkTimeout(ctx)
 
 	if !iccImported {
 		if err = img.ImportColourProfile(false); err != nil {
@@ -448,11 +451,9 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 		}
 	}
 
-	if err = img.CopyMemory(); err != nil {
+	if err = copyMemoryAndCheckTimeout(ctx, img); err != nil {
 		return err
 	}
-
-	checkTimeout(ctx)
 
 	if po.Blur > 0 {
 		if err = img.Blur(po.Blur); err != nil {
@@ -464,6 +465,10 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 		if err = img.Sharpen(po.Sharpen); err != nil {
 			return err
 		}
+	}
+
+	if err = copyMemoryAndCheckTimeout(ctx, img); err != nil {
+		return err
 	}
 
 	if po.Extend.Enabled && (po.Width > img.Width() || po.Height > img.Height()) {
@@ -489,8 +494,6 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 			return err
 		}
 	}
-
-	checkTimeout(ctx)
 
 	if po.Watermark.Enabled && watermark != nil {
 		if err = applyWatermark(img, watermark, &po.Watermark, 1); err != nil {
@@ -581,10 +584,10 @@ func transformAnimated(ctx context.Context, img *vipsImage, data []byte, po *pro
 			return err
 		}
 
-		frame.CopyMemory()
+		if err = copyMemoryAndCheckTimeout(ctx, frame); err != nil {
+			return err
+		}
 	}
-
-	checkTimeout(ctx)
 
 	if err = img.Arrayjoin(frames); err != nil {
 		return err
@@ -762,13 +765,14 @@ func processImage(ctx context.Context) ([]byte, context.CancelFunc, error) {
 		}
 	}
 
-	checkTimeout(ctx)
+	if err := copyMemoryAndCheckTimeout(ctx, img); err != nil {
+		return nil, func() {}, err
+	}
 
 	if po.Format == imageTypeGIF || po.Format == imageTypeBMP {
 		if err := img.CastUchar(); err != nil {
 			return nil, func() {}, err
 		}
-		checkTimeout(ctx)
 	}
 
 	if po.MaxBytes > 0 && canFitToBytes(po.Format) {
