@@ -138,7 +138,7 @@ func canScaleOnLoad(imgtype imageType, scale float64) bool {
 
 func canFitToBytes(imgtype imageType) bool {
 	switch imgtype {
-	case imageTypeJPEG, imageTypeWEBP, imageTypeHEIC, imageTypeTIFF:
+	case imageTypeJPEG, imageTypeWEBP, imageTypeAVIF, imageTypeTIFF:
 		return true
 	default:
 		return false

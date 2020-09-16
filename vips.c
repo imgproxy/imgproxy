@@ -85,6 +85,8 @@ vips_type_find_load_go(int imgtype) {
     return vips_type_find("VipsOperation", "svgload_buffer");
   case (HEIC):
     return vips_type_find("VipsOperation", "heifload_buffer");
+  case (AVIF):
+    return vips_type_find("VipsOperation", "heifload_buffer");
   case (BMP):
     return vips_type_find("VipsOperation", "magickload_buffer");
   case (TIFF):
@@ -105,6 +107,8 @@ vips_type_find_save_go(int imgtype) {
     return vips_type_find("VipsOperation", "webpsave_buffer");
   case (GIF):
     return vips_type_find("VipsOperation", "magicksave_buffer");
+  case (AVIF):
+    return vips_type_find("VipsOperation", "heifsave_buffer");
   case (ICO):
     return vips_type_find("VipsOperation", "pngsave_buffer");
   case (BMP):
@@ -596,6 +600,16 @@ vips_tiffsave_go(VipsImage *in, void **buf, size_t *len, int quality) {
   return vips_tiffsave_buffer(in, buf, len, "Q", quality, NULL);
 #else
   vips_error("vips_tiffsave_go", "Saving TIFF is not supported (libvips 8.6+ reuired)");
+  return 1;
+#endif
+}
+
+int
+vips_avifsave_go(VipsImage *in, void **buf, size_t *len, int quality) {
+#if VIPS_SUPPORT_HEIF
+  return vips_heifsave_buffer(in, buf, len, "Q", quality, "compression", VIPS_FOREIGN_HEIF_COMPRESSION_AV1, NULL);
+#else
+  vips_error("vips_avifsave_go", "Saving AVIF is not supported (libvips 8.6+ reuired)");
   return 1;
 #endif
 }

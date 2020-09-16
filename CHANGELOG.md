@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+### Added
+- AVIF support.
 
 ## [2.15.0] - 2020-09-03
 ### Added

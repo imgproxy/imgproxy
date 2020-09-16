@@ -164,7 +164,7 @@ func (img *vipsImage) Load(data []byte, imgtype imageType, shrink int, scale flo
 		err = C.vips_gifload_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), C.int(pages), &tmp)
 	case imageTypeSVG:
 		err = C.vips_svgload_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), C.double(scale), &tmp)
-	case imageTypeHEIC:
+	case imageTypeHEIC, imageTypeAVIF:
 		err = C.vips_heifload_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), &tmp)
 	case imageTypeBMP:
 		err = C.vips_bmpload_go(unsafe.Pointer(&data[0]), C.size_t(len(data)), &tmp)
@@ -205,6 +205,8 @@ func (img *vipsImage) Save(imgtype imageType, quality int, stripMeta bool) ([]by
 		err = C.vips_webpsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality), gbool(stripMeta))
 	case imageTypeGIF:
 		err = C.vips_gifsave_go(img.VipsImage, &ptr, &imgsize)
+	case imageTypeAVIF:
+		err = C.vips_avifsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality))
 	case imageTypeBMP:
 		err = C.vips_bmpsave_go(img.VipsImage, &ptr, &imgsize)
 	case imageTypeTIFF:
