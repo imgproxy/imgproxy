@@ -1,6 +1,7 @@
 package imagemeta
 
 import (
+	"bytes"
 	"encoding/xml"
 	"io"
 	"sync/atomic"
@@ -24,6 +25,8 @@ func IsSVG(r io.Reader) (bool, error) {
 	buf := make([]byte, 0, maxBytes)
 	b := make([]byte, 1024)
 
+	rr := bytes.NewReader(buf)
+
 	for {
 		n, err := r.Read(b)
 		if err != nil && err != io.EOF {
@@ -34,8 +37,11 @@ func IsSVG(r io.Reader) (bool, error) {
 		}
 
 		buf = append(buf, b[:n]...)
+		rr.Reset(buf)
 
-		if xml.Unmarshal(buf, &h); h.XMLName.Local == "svg" {
+		dec := xml.NewDecoder(rr)
+		dec.Strict = false
+		if dec.Decode(&h); h.XMLName.Local == "svg" {
 			return true, nil
 		}
 
