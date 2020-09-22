@@ -31,6 +31,9 @@
 #define VIPS_SUPPORT_HEIF \
   (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 8))
 
+#define VIPS_SUPPORT_AVIF \
+  (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 9))
+
 #define VIPS_SUPPORT_BUILTIN_ICC \
   (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 8))
 
@@ -107,8 +110,10 @@ vips_type_find_save_go(int imgtype) {
     return vips_type_find("VipsOperation", "webpsave_buffer");
   case (GIF):
     return vips_type_find("VipsOperation", "magicksave_buffer");
+#if VIPS_SUPPORT_AVIF
   case (AVIF):
     return vips_type_find("VipsOperation", "heifsave_buffer");
+#endif
   case (ICO):
     return vips_type_find("VipsOperation", "pngsave_buffer");
   case (BMP):
@@ -606,10 +611,10 @@ vips_tiffsave_go(VipsImage *in, void **buf, size_t *len, int quality) {
 
 int
 vips_avifsave_go(VipsImage *in, void **buf, size_t *len, int quality) {
-#if VIPS_SUPPORT_HEIF
+#if VIPS_SUPPORT_AVIF
   return vips_heifsave_buffer(in, buf, len, "Q", quality, "compression", VIPS_FOREIGN_HEIF_COMPRESSION_AV1, NULL);
 #else
-  vips_error("vips_avifsave_go", "Saving AVIF is not supported (libvips 8.6+ reuired)");
+  vips_error("vips_avifsave_go", "Saving AVIF is not supported (libvips 8.9+ reuired)");
   return 1;
 #endif
 }
