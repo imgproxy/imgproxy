@@ -4,6 +4,9 @@
 ### Added
 - AVIF support.
 
+### Fix
+- Fix `dpr` option.
+
 ## [2.15.0] - 2020-09-03
 ### Added
 - Ability to skip processing of some formats. See [Skip processing](https://docs.imgproxy.net/#/configuration?id=skip-processing).

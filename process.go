@@ -353,11 +353,14 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 
 		// Update scale after scale-on-load
 		newWidth, newHeight, _, _ := extractMeta(img)
-
-		widthToScale = scaleInt(widthToScale, float64(newWidth)/float64(srcWidth))
-		heightToScale = scaleInt(heightToScale, float64(newHeight)/float64(srcHeight))
-
-		scale = calcScale(widthToScale, heightToScale, po, imgtype)
+		if srcWidth > srcHeight {
+			scale = float64(srcWidth) * scale / float64(newWidth)
+		} else {
+			scale = float64(srcHeight) * scale / float64(newHeight)
+		}
+		if srcWidth == scaleInt(srcWidth, scale) && srcHeight == scaleInt(srcHeight, scale) {
+			scale = 1.0
+		}
 	}
 
 	if err = img.Rad2Float(); err != nil {
@@ -365,7 +368,7 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 	}
 
 	iccImported := false
-	convertToLinear := conf.UseLinearColorspace && (scale != 1 || po.Dpr != 1)
+	convertToLinear := conf.UseLinearColorspace && scale != 1
 
 	if convertToLinear || !img.IsSRGB() {
 		if err = img.ImportColourProfile(true); err != nil {
@@ -536,8 +539,10 @@ func transformAnimated(ctx context.Context, img *vipsImage, data []byte, po *pro
 	if nPages, _ := img.GetInt("n-pages"); nPages > 0 {
 		scale := 1.0
 
-		// Don't do scale on load if we need to crop
-		if po.Crop.Width == 0 && po.Crop.Height == 0 {
+		// Don't do scale on load if DPR != 1 or we need to crop
+		// because it causes problems in these cases.
+		// TODO: Rewrite scaling
+		if po.Dpr == 1.0 && po.Crop.Width == 0 && po.Crop.Height == 0 {
 			scale = calcScale(imgWidth, frameHeight, po, imgtype)
 		}
 
