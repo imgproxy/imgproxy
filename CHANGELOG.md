@@ -5,6 +5,9 @@
 - AVIF support.
 - (pro) Remove Adobe Illustrator garbage from SVGs.
 
+### Changed
+- Disable scale-on-load for animated images since it causes many problems. Currently, only animated WebP is affected.
+
 ### Fix
 - Fix `dpr` option.
 - Fix non-strict SVG detection.
