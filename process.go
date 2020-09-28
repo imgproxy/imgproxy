@@ -474,9 +474,9 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 		return err
 	}
 
-	if po.Extend.Enabled && (po.Width > img.Width() || po.Height > img.Height()) {
-		offX, offY := calcPosition(po.Width, po.Height, img.Width(), img.Height(), &po.Extend.Gravity, false)
-		if err = img.Embed(po.Width, po.Height, offX, offY, po.Background, transparentBg); err != nil {
+	if po.Extend.Enabled && (dprWidth > img.Width() || dprHeight > img.Height()) {
+		offX, offY := calcPosition(dprWidth, dprHeight, img.Width(), img.Height(), &po.Extend.Gravity, false)
+		if err = img.Embed(dprWidth, dprHeight, offX, offY, po.Background, transparentBg); err != nil {
 			return err
 		}
 	}
