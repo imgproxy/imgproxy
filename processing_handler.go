@@ -139,7 +139,11 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		defer startPrometheusDuration(prometheusRequestDuration)()
 	}
 
-	processingSem <- struct{}{}
+	select {
+	case processingSem <- struct{}{}:
+	case <-ctx.Done():
+		panic(newError(499, "Request was cancelled before processing", "Cancelled"))
+	}
 	defer func() { <-processingSem }()
 
 	ctx, timeoutCancel := context.WithTimeout(ctx, time.Duration(conf.WriteTimeout)*time.Second)

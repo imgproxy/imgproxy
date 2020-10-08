@@ -11,6 +11,7 @@
 ### Fix
 - Fix `dpr` option.
 - Fix non-strict SVG detection.
+- Fix checking of connections in queue.
 
 ## [2.15.0] - 2020-09-03
 ### Added
