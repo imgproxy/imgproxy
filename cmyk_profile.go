@@ -20047,7 +20047,7 @@ DQoNCg0KDQoNCgAA
 
 func cmykProfilePath() (string, error) {
 	if _cmykProfilePath == "" {
-		cmykProfile, _ := base64.StdEncoding.DecodeString(strings.Replace(cmykProfile64, "\n", "", -1))
+		cmykProfile, _ := base64.StdEncoding.DecodeString(strings.ReplaceAll(cmykProfile64, "\n", ""))
 
 		f, err := ioutil.TempFile("", "")
 		if err != nil {
