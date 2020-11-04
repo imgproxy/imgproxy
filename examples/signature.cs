@@ -38,8 +38,8 @@ namespace ImgProxy.Examples
             using (var hmac = new HMACSHA256(keybin))
             {
                 var hash = hmac.ComputeHash(saltBin.Concat(Encoding.UTF8.GetBytes(path)).ToArray());
-
-                return $"/{Convert.ToBase64String(hash).TrimEnd('=')}{path}";
+                var urlSafeBase64 = Convert.ToBase64String(hash).TrimEnd('=').Replace('+', '-').Replace('/', '_');
+                return $"/{urlSafeBase64}{path}";
             }
         }
 
