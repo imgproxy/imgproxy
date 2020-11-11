@@ -3,14 +3,26 @@ package imagemeta
 import (
 	"bytes"
 	"encoding/xml"
+	"fmt"
 	"io"
+	"log"
+	"strings"
 	"sync/atomic"
+
+	"golang.org/x/text/encoding/charmap"
 )
 
 var maxSvgBytes int64 = 32 * 1024
 
 type svgHeader struct {
 	XMLName xml.Name
+}
+
+func xmlCharsetReader(charset string, input io.Reader) (io.Reader, error) {
+	if strings.EqualFold(charset, "iso-8859-1") {
+		return charmap.ISO8859_1.NewDecoder().Reader(input), nil
+	}
+	return nil, fmt.Errorf("Unknown SVG charset: %s", charset)
 }
 
 func SetMaxSvgCheckRead(n int) {
@@ -41,8 +53,11 @@ func IsSVG(r io.Reader) (bool, error) {
 
 		dec := xml.NewDecoder(rr)
 		dec.Strict = false
-		if dec.Decode(&h); h.XMLName.Local == "svg" {
+		dec.CharsetReader = xmlCharsetReader
+		if err := dec.Decode(&h); h.XMLName.Local == "svg" {
 			return true, nil
+		} else {
+			log.Printf("SVG err: %s", err)
 		}
 
 		if len(buf) >= maxBytes {
