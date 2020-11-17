@@ -111,6 +111,11 @@ func respondWithImage(ctx context.Context, reqID string, r *http.Request, rw htt
 		rw.Write(data)
 	}
 
+	if conf.EnableDebugHeaders {
+		imgdata := getImageData(ctx)
+		rw.Header().Set("X-Origin-Content-Length", strconv.Itoa(len(imgdata.Data)))
+	}
+
 	imageURL := getImageURL(ctx)
 
 	logResponse(reqID, r, 200, nil, &imageURL, po)

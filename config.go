@@ -263,6 +263,8 @@ type config struct {
 
 	ReportDownloadingErrors bool
 
+	EnableDebugHeaders bool
+
 	FreeMemoryInterval             int
 	DownloadBufferSize             int
 	GZipBufferSize                 int
@@ -421,6 +423,7 @@ func configure() error {
 	strEnvConfig(&conf.SentryEnvironment, "IMGPROXY_SENTRY_ENVIRONMENT")
 	strEnvConfig(&conf.SentryRelease, "IMGPROXY_SENTRY_RELEASE")
 	boolEnvConfig(&conf.ReportDownloadingErrors, "IMGPROXY_REPORT_DOWNLOADING_ERRORS")
+	boolEnvConfig(&conf.EnableDebugHeaders, "IMGPROXY_ENABLE_DEBUG_HEADERS")
 
 	intEnvConfig(&conf.FreeMemoryInterval, "IMGPROXY_FREE_MEMORY_INTERVAL")
 	intEnvConfig(&conf.DownloadBufferSize, "IMGPROXY_DOWNLOAD_BUFFER_SIZE")
