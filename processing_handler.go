@@ -130,7 +130,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 
 	if newRelicEnabled {
 		var newRelicCancel context.CancelFunc
-		ctx, newRelicCancel = startNewRelicTransaction(ctx, rw, r)
+		ctx, newRelicCancel, rw = startNewRelicTransaction(ctx, rw, r)
 		defer newRelicCancel()
 	}
 
