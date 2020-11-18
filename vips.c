@@ -34,9 +34,6 @@
 #define VIPS_SUPPORT_AVIF \
   (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 9))
 
-#define VIPS_SUPPORT_BUILTIN_ICC \
-  (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 8))
-
 #define VIPS_SUPPORT_COMPOSITE \
   (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 6))
 
@@ -347,13 +344,18 @@ vips_has_embedded_icc(VipsImage *in) {
 }
 
 int
-vips_support_builtin_icc() {
-  return VIPS_SUPPORT_BUILTIN_ICC;
+vips_icc_import_go(VipsImage *in, VipsImage **out) {
+  if (vips_icc_import(in, out, "embedded", TRUE, "pcs", VIPS_PCS_XYZ, NULL))
+    return 1;
+
+  vips_image_remove(*out, VIPS_META_ICC_NAME);
+
+  return 0;
 }
 
 int
-vips_icc_import_go(VipsImage *in, VipsImage **out, char *profile) {
-  if (vips_icc_import(in, out, "input_profile", profile, "embedded", TRUE, "pcs", VIPS_PCS_XYZ, NULL))
+vips_icc_transform_go(VipsImage *in, VipsImage **out) {
+  if (vips_icc_transform(in, out, "sRGB", "embedded", TRUE, "pcs", VIPS_PCS_XYZ, NULL))
     return 1;
 
   vips_image_remove(*out, VIPS_META_ICC_NAME);

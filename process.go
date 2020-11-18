@@ -371,7 +371,7 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 	convertToLinear := conf.UseLinearColorspace && scale != 1
 
 	if convertToLinear || !img.IsSRGB() {
-		if err = img.ImportColourProfile(true); err != nil {
+		if err = img.ImportColourProfile(); err != nil {
 			return err
 		}
 		iccImported = true
@@ -436,14 +436,14 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 		}
 	}
 
-	if !iccImported {
-		if err = img.ImportColourProfile(false); err != nil {
+	if iccImported {
+		if err = img.RgbColourspace(); err != nil {
 			return err
 		}
-	}
-
-	if err = img.RgbColourspace(); err != nil {
-		return err
+	} else {
+		if err = img.TransformColourProfile(); err != nil {
+			return err
+		}
 	}
 
 	transparentBg := po.Format.SupportsAlpha() && !po.Flatten

@@ -503,7 +503,7 @@ func (img *vipsImage) Sharpen(sigma float32) error {
 	return nil
 }
 
-func (img *vipsImage) ImportColourProfile(evenSRGB bool) error {
+func (img *vipsImage) ImportColourProfile() error {
 	var tmp *C.VipsImage
 
 	if img.VipsImage.Coding != C.VIPS_CODING_NONE {
@@ -514,34 +514,36 @@ func (img *vipsImage) ImportColourProfile(evenSRGB bool) error {
 		return nil
 	}
 
-	profile := (*C.char)(nil)
-
 	if C.vips_has_embedded_icc(img.VipsImage) == 0 {
 		// No embedded profile
-		// If vips doesn't have built-in profile, use profile built-in to imgproxy for CMYK
-		// TODO: Remove this. Supporting built-in profiles is pain, vips does it better
-		if img.VipsImage.Type == C.VIPS_INTERPRETATION_CMYK && C.vips_support_builtin_icc() == 0 {
-			p, err := cmykProfilePath()
-			if err != nil {
-				return err
-			}
-			profile = cachedCString(p)
-		} else {
-			// imgproxy doesn't have built-in profile for other interpretations,
+		if img.VipsImage.Type != C.VIPS_INTERPRETATION_CMYK {
+			// vips doesn't have built-in profile for other interpretations,
 			// so we can't do anything here
 			return nil
 		}
 	}
 
-	// Don't import sRGB IEC61966 2.1 unless evenSRGB
-	if img.VipsImage.Type == C.VIPS_INTERPRETATION_sRGB && !evenSRGB && C.vips_icc_is_srgb_iec61966(img.VipsImage) != 0 {
-		return nil
-	}
-
-	if C.vips_icc_import_go(img.VipsImage, &tmp, profile) == 0 {
+	if C.vips_icc_import_go(img.VipsImage, &tmp) == 0 {
 		C.swap_and_clear(&img.VipsImage, tmp)
 	} else {
 		logWarning("Can't import ICC profile: %s", vipsError())
+	}
+
+	return nil
+}
+
+func (img *vipsImage) TransformColourProfile() error {
+	var tmp *C.VipsImage
+
+	// Don't transform is there's no embedded profile or embedded profile is sRGB
+	if C.vips_has_embedded_icc(img.VipsImage) == 0 || C.vips_icc_is_srgb_iec61966(img.VipsImage) == 1 {
+		return nil
+	}
+
+	if C.vips_icc_transform_go(img.VipsImage, &tmp) == 0 {
+		C.swap_and_clear(&img.VipsImage, tmp)
+	} else {
+		logWarning("Can't transform ICC profile: %s", vipsError())
 	}
 
 	return nil

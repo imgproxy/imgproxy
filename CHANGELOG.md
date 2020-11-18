@@ -7,6 +7,7 @@
 
 ### Changed
 - Disable scale-on-load for animated images since it causes many problems. Currently, only animated WebP is affected.
+- Improved ICC profiles handling.
 
 ### Fix
 - Fix `dpr` option.
