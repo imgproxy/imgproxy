@@ -15,7 +15,6 @@ require (
 	github.com/getsentry/sentry-go v0.7.0
 	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/gofrs/uuid v3.3.0+incompatible // indirect
-	github.com/google/uuid v1.1.1 // indirect
 	github.com/honeybadger-io/honeybadger-go v0.5.0
 	github.com/ianlancetaylor/cgosymbolizer v0.0.0-20200424224625-be1b05b0b279 // indirect
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
@@ -32,3 +31,5 @@ require (
 )
 
 replace git.apache.org/thrift.git => github.com/apache/thrift v0.0.0-20180902110319-2566ecd5d999
+
+replace github.com/shirou/gopsutil => github.com/shirou/gopsutil v2.20.9+incompatible
