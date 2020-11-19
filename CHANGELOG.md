@@ -3,6 +3,7 @@
 ## [Unreleased]
 ### Added
 - AVIF support.
+- Azure Blob Storage support.
 - (pro) Remove Adobe Illustrator garbage from SVGs.
 
 ### Changed

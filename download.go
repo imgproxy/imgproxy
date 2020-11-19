@@ -79,6 +79,14 @@ func initDownloading() error {
 		}
 	}
 
+	if conf.ABSEnabled {
+		if t, err := newAzureTransport(); err != nil {
+			return err
+		} else {
+			transport.RegisterProtocol("abs", t)
+		}
+	}
+
 	downloadClient = &http.Client{
 		Timeout:   time.Duration(conf.DownloadTimeout) * time.Second,
 		Transport: transport,

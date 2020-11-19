@@ -230,6 +230,10 @@ type config struct {
 	S3Endpoint          string
 	GCSEnabled          bool
 	GCSKey              string
+	ABSEnabled          bool
+	ABSName             string
+	ABSKey              string
+	ABSEndpoint         string
 
 	ETagEnabled bool
 
@@ -385,6 +389,11 @@ func configure() error {
 
 	boolEnvConfig(&conf.GCSEnabled, "IMGPROXY_USE_GCS")
 	strEnvConfig(&conf.GCSKey, "IMGPROXY_GCS_KEY")
+
+	boolEnvConfig(&conf.ABSEnabled, "IMGPROXY_USE_ABS")
+	strEnvConfig(&conf.ABSName, "IMGPROXY_ABS_NAME")
+	strEnvConfig(&conf.ABSKey, "IMGPROXY_ABS_KEY")
+	strEnvConfig(&conf.ABSEndpoint, "IMGPROXY_ABS_ENDPOINT")
 
 	boolEnvConfig(&conf.ETagEnabled, "IMGPROXY_USE_ETAG")
 

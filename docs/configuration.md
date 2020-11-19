@@ -247,6 +247,17 @@ imgproxy can process files from Google Cloud Storage buckets, but this feature i
 
 Check out the [Serving files from Google Cloud Storage](serving_files_from_google_cloud_storage.md) guide to learn more.
 
+## Serving files from Azure Blob Storage
+
+imgproxy can process files from Azure Blob Storage containers, but this feature is disabled by default. To enable it, set `IMGPROXY_USE_ABS` to `true`:
+
+* `IMGPROXY_USE_ABS`: when `true`, enables image fetching from Azure Blob Storage containers. Default: false;
+* `IMGPROXY_ABS_NAME`: Azure account name. Default: blank;
+* `IMGPROXY_ABS_KEY`: Azure account key. Default: blank;
+* `IMGPROXY_ABS_ENDPOINT`: custom Azure Blob Storage endpoint to being used by imgproxy. Default: blank.
+
+Check out the [Serving files from Azure Blob Storage](serving_files_from_azure_blob_storage.md) guide to learn more.
+
 ## New Relic metrics
 
 imgproxy can send its metrics to New Relic. Specify your New Relic license key to activate this feature:
