@@ -12,7 +12,7 @@ RUN \
   mkdir /root/vips \
   && cd /root/vips \
   && curl -s -S -L -o vips_releases.json "https://api.github.com/repos/libvips/libvips/releases" \
-  && for VIPS_VERSION in "8.7" "8.8" "8.9"; do \
+  && for VIPS_VERSION in "8.8" "8.9" "8.10"; do \
     mkdir $VIPS_VERSION \
     && export VIPS_RELEASE=$(grep -m 1 "\"tag_name\": \"v$VIPS_VERSION." vips_releases.json | sed -E 's/.*"v([^"]+)".*/\1/') \
     && echo "Building Vips $VIPS_RELEASE as $VIPS_VERSION" \

@@ -8,62 +8,16 @@ workflows:
       - lint:
           requires:
             - checkout_code
-          go_version: "1.14"
-          vips_version: "8.9"
+          go_version: "1.15"
+          vips_version: "8.10"
       - build:
-          name: go1.14_vips8.9
+          name: go<< matrix.go_version >>_vips<< matrix.vips_version >>
           requires:
             - checkout_code
-          go_version: "1.14"
-          vips_version: "8.9"
-      - build:
-          name: go1.14_vips8.8
-          requires:
-            - checkout_code
-          go_version: "1.14"
-          vips_version: "8.8"
-      - build:
-          name: go1.14_vips8.7
-          requires:
-            - checkout_code
-          go_version: "1.14"
-          vips_version: "8.7"
-      - build:
-          name: go1.13_vips8.9
-          requires:
-            - checkout_code
-          go_version: "1.13"
-          vips_version: "8.9"
-      - build:
-          name: go1.13_vips8.8
-          requires:
-            - checkout_code
-          go_version: "1.13"
-          vips_version: "8.8"
-      - build:
-          name: go1.13_vips8.7
-          requires:
-            - checkout_code
-          go_version: "1.13"
-          vips_version: "8.7"
-      - build:
-          name: go1.12_vips8.9
-          requires:
-            - checkout_code
-          go_version: "1.12"
-          vips_version: "8.9"
-      - build:
-          name: go1.12_vips8.8
-          requires:
-            - checkout_code
-          go_version: "1.12"
-          vips_version: "8.8"
-      - build:
-          name: go1.12_vips8.7
-          requires:
-            - checkout_code
-          go_version: "1.12"
-          vips_version: "8.7"
+          matrix:
+            parameters:
+              go_version: ["1.15", "1.14", "1.13"]
+              vips_version: ["8.10", "8.9", "8.8"]
 
 executors:
   imgproxy:
