@@ -161,7 +161,7 @@ Read more about watermarks in the [Watermark](watermark.md) guide.
 
 ## Unsharpening
 
-imgproxy Pro can apply unshapening mask to your images.
+imgproxy Pro can apply unsharpening mask to your images.
 
 * `IMGPROXY_UNSHARPENING_MODE`: <img class='pro-badge' src='assets/pro.svg' alt='pro' /> controls when unsharpenning mask should be applied. The following modes are supported:
   * `auto`: _(default)_ apply unsharpening mask only when image is downscaled and `sharpen` option is not set.
@@ -272,7 +272,7 @@ Check out the [New Relic](new_relic.md) guide to learn more.
 imgproxy can collect its metrics for Prometheus. Specify binding for Prometheus metrics server to activate this feature:
 
 * `IMGPROXY_PROMETHEUS_BIND`: Prometheus metrics server binding. Can't be the same as `IMGPROXY_BIND`. Default: blank.
-* `IMGPROXY_PROMETHEUS_NAMESPACE`: Namespace (prefix) for improxy metrics. Defaulr: blank.
+* `IMGPROXY_PROMETHEUS_NAMESPACE`: Namespace (prefix) for imgproxy metrics. Default: blank.
 
 Check out the [Prometheus](prometheus.md) guide to learn more.
 
