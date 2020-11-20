@@ -53,7 +53,7 @@ The tools were requested to resize it to fit 500x500.
 
 ## Results
 
-| Tool          | Time taken for tests<br>(sec) | Requests per second | Time per request<br>(sec, mean) | Memory peak usage<br>(MB) | Result file size<br>(KB) |
+| Tool          | Time taken for tests<br>(sec) | Requests per second | Time per request<br>(ms, mean) | Memory peak usage<br>(MB) | Result file size<br>(KB) |
 | :------------ | -------------------------: | ------------------: | ---------------------------: | ---------------------: | --------------------: |
 | imgproxy      | 103.405                    | 9.67                | 413.618                      | 194                    | 43.51                 |
 | thumbor       | 160.505                    | 6.23                | 642.021                      | 461                    | 45.10                 |
