@@ -5,7 +5,6 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
-	"log"
 	"strings"
 	"sync/atomic"
 
@@ -54,10 +53,8 @@ func IsSVG(r io.Reader) (bool, error) {
 		dec := xml.NewDecoder(rr)
 		dec.Strict = false
 		dec.CharsetReader = xmlCharsetReader
-		if err := dec.Decode(&h); h.XMLName.Local == "svg" {
+		if dec.Decode(&h); h.XMLName.Local == "svg" {
 			return true, nil
-		} else {
-			log.Printf("SVG err: %s", err)
 		}
 
 		if len(buf) >= maxBytes {
