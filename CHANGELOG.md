@@ -15,6 +15,7 @@
 - Fix non-strict SVG detection.
 - Fix non-UTF8 SVG detection.
 - Fix checking of connections in queue.
+- (pro) Fix video thumbnail orientation.
 
 ## [2.15.0] - 2020-09-03
 ### Added
