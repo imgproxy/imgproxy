@@ -79,6 +79,7 @@ func withCORS(h routeHandler) routeHandler {
 		if len(conf.AllowOrigin) > 0 {
 			rw.Header().Set("Access-Control-Allow-Origin", conf.AllowOrigin)
 			rw.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+			rw.Header().Set("Access-Control-Allow-Credentials", "true")
 		}
 
 		h(reqID, rw, r)
