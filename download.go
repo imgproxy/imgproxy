@@ -158,13 +158,14 @@ func readAndCheckImage(r io.Reader, contentLength int) (*imageData, error) {
 	return &imageData{buf.Bytes(), imgtype, cancel}, nil
 }
 
-func requestImage(imageURL string) (*http.Response, error) {
+func requestImage(imageURL string, cookie string) (*http.Response, error) {
 	req, err := http.NewRequest("GET", imageURL, nil)
 	if err != nil {
 		return nil, newError(404, err.Error(), msgSourceImageIsUnreachable).SetUnexpected(conf.ReportDownloadingErrors)
 	}
 
 	req.Header.Set("User-Agent", conf.UserAgent)
+	req.Header.Set("cookie", cookie)
 
 	res, err := downloadClient.Do(req)
 	if err != nil {
@@ -180,7 +181,7 @@ func requestImage(imageURL string) (*http.Response, error) {
 	return res, nil
 }
 
-func downloadImage(ctx context.Context) (context.Context, context.CancelFunc, error) {
+func downloadImage(ctx context.Context, cookie string) (context.Context, context.CancelFunc, error) {
 	imageURL := getImageURL(ctx)
 
 	if newRelicEnabled {
@@ -192,7 +193,7 @@ func downloadImage(ctx context.Context) (context.Context, context.CancelFunc, er
 		defer startPrometheusDuration(prometheusDownloadDuration)()
 	}
 
-	res, err := requestImage(imageURL)
+	res, err := requestImage(imageURL, cookie)
 	if res != nil {
 		defer res.Body.Close()
 	}
