@@ -144,6 +144,7 @@ type processingOptions struct {
 	Blur          float32
 	Sharpen       float32
 	StripMetadata bool
+	Lossless 			bool
 
 	CacheBuster string
 
@@ -227,6 +228,7 @@ func newProcessingOptions() *processingOptions {
 			Blur:          0,
 			Sharpen:       0,
 			Dpr:           1,
+			Lossless:			 false,
 			Watermark:     watermarkOptions{Opacity: 1, Replicate: false, Gravity: gravityOptions{Type: gravityCenter}},
 			StripMetadata: conf.StripMetadata,
 		}
@@ -860,6 +862,16 @@ func applyStripMetadataOption(po *processingOptions, args []string) error {
 	return nil
 }
 
+func applyLosslessOption(po *processingOptions, args []string) error {
+	if len(args) > 1 {
+		return fmt.Errorf("Invalid strip metadata arguments: %v", args)
+	}
+
+	po.Lossless = parseBoolOption(args[0])
+
+	return nil
+}
+
 func applyProcessingOption(po *processingOptions, name string, args []string) error {
 	switch name {
 	case "format", "f", "ext":
@@ -906,6 +918,8 @@ func applyProcessingOption(po *processingOptions, name string, args []string) er
 		return applyCacheBusterOption(po, args)
 	case "strip_metadata", "sm":
 		return applyStripMetadataOption(po, args)
+	case "lossless", "ll":
+		return applyLosslessOption(po, args)
 	case "filename", "fn":
 		return applyFilenameOption(po, args)
 	}

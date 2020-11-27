@@ -89,7 +89,7 @@ int vips_arrayjoin_go(VipsImage **in, VipsImage **out, int n);
 
 int vips_jpegsave_go(VipsImage *in, void **buf, size_t *len, int quality, int interlace, gboolean strip);
 int vips_pngsave_go(VipsImage *in, void **buf, size_t *len, int interlace, int quantize, int colors);
-int vips_webpsave_go(VipsImage *in, void **buf, size_t *len, int quality, gboolean strip);
+int vips_webpsave_go(VipsImage *in, void **buf, size_t *len, int quality, gboolean strip, gboolean lossless);
 int vips_gifsave_go(VipsImage *in, void **buf, size_t *len);
 int vips_avifsave_go(VipsImage *in, void **buf, size_t *len, int quality);
 int vips_bmpsave_go(VipsImage *in, void **buf, size_t *len);

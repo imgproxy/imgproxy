@@ -180,7 +180,7 @@ func (img *vipsImage) Load(data []byte, imgtype imageType, shrink int, scale flo
 	return nil
 }
 
-func (img *vipsImage) Save(imgtype imageType, quality int, stripMeta bool) ([]byte, context.CancelFunc, error) {
+func (img *vipsImage) Save(imgtype imageType, quality int, stripMeta bool, lossless bool) ([]byte, context.CancelFunc, error) {
 	if imgtype == imageTypeICO {
 		b, err := img.SaveAsIco()
 		return b, func() {}, err
@@ -202,7 +202,7 @@ func (img *vipsImage) Save(imgtype imageType, quality int, stripMeta bool) ([]by
 	case imageTypePNG:
 		err = C.vips_pngsave_go(img.VipsImage, &ptr, &imgsize, vipsConf.PngInterlaced, vipsConf.PngQuantize, vipsConf.PngQuantizationColors)
 	case imageTypeWEBP:
-		err = C.vips_webpsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality), gbool(stripMeta))
+		err = C.vips_webpsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality), gbool(stripMeta), gbool(lossless))
 	case imageTypeGIF:
 		err = C.vips_gifsave_go(img.VipsImage, &ptr, &imgsize)
 	case imageTypeAVIF:

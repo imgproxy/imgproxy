@@ -587,7 +587,11 @@ vips_pngsave_go(VipsImage *in, void **buf, size_t *len, int interlace, int quant
 }
 
 int
-vips_webpsave_go(VipsImage *in, void **buf, size_t *len, int quality, gboolean strip) {
+vips_webpsave_go(VipsImage *in, void **buf, size_t *len, int quality, gboolean strip, gboolean lossless) {
+  if(lossless == TRUE) {
+    return vips_webpsave_buffer(in, buf, len, "reduction_effort", 0, "strip", strip, "lossless", lossless, NULL);
+  }
+
   return vips_webpsave_buffer(in, buf, len, "Q", quality, "strip", strip, NULL);
 }
 
