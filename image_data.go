@@ -87,7 +87,7 @@ func fileImageData(path, desc string) (*imageData, error) {
 }
 
 func remoteImageData(imageURL, desc string) (*imageData, error) {
-	res, err := requestImage(imageURL)
+	res, err := requestImage(imageURL, "")
 	if res != nil {
 		defer res.Body.Close()
 	}

@@ -132,6 +132,7 @@ func respondWithNotModified(ctx context.Context, reqID string, r *http.Request, 
 
 func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	cookie := r.Header.Get("cookie")
 
 	if newRelicEnabled {
 		var newRelicCancel context.CancelFunc
@@ -159,7 +160,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	ctx, downloadcancel, err := downloadImage(ctx)
+	ctx, downloadcancel, err := downloadImage(ctx, cookie)
 	defer downloadcancel()
 	if err != nil {
 		if newRelicEnabled {
