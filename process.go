@@ -322,9 +322,28 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 	}
 
 	srcWidth, srcHeight, angle, flip := extractMeta(img)
-	cropWidth, cropHeight := po.Crop.Width, po.Crop.Height
 
-	cropGravity := po.Crop.Gravity
+	var cropWidth, cropHeight int
+	var cropGravity gravityOptions
+
+	if po.AspectRatio.Width > 0 && po.AspectRatio.Height > 0 {
+		ar := float64(po.AspectRatio.Width) / float64(po.AspectRatio.Height)
+		var w, h float64
+		if ar < 1 {
+			w = math.Min(float64(srcHeight)*ar, float64(srcWidth))
+			h = w / ar
+		} else {
+			h = math.Min(float64(srcWidth)/ar, float64(srcHeight))
+			w = h * ar
+		}
+		cropWidth = int(math.Round(w))
+		cropHeight = int(math.Round(h))
+		cropGravity = po.AspectRatio.Gravity
+	} else {
+		cropWidth, cropHeight = po.Crop.Width, po.Crop.Height
+		cropGravity = po.Crop.Gravity
+	}
+
 	if cropGravity.Type == gravityUnknown {
 		cropGravity = po.Gravity
 	}

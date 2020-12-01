@@ -100,6 +100,12 @@ type cropOptions struct {
 	Gravity gravityOptions
 }
 
+type aspectRatioOptions struct {
+	Width   int
+	Height  int
+	Gravity gravityOptions
+}
+
 type paddingOptions struct {
 	Enabled bool
 	Top     int
@@ -133,6 +139,7 @@ type processingOptions struct {
 	Gravity       gravityOptions
 	Enlarge       bool
 	Extend        extendOptions
+	AspectRatio   aspectRatioOptions
 	Crop          cropOptions
 	Padding       paddingOptions
 	Trim          trimOptions
@@ -546,6 +553,28 @@ func applyGravityOption(po *processingOptions, args []string) error {
 	return parseGravity(&po.Gravity, args)
 }
 
+func applyAspectRatioOption(po *processingOptions, args []string) error {
+	if len(args) > 5 {
+		return fmt.Errorf("Invalid aspect ratio arguments: %v", args)
+	}
+
+	if err := parseDimension(&po.AspectRatio.Width, "aspect ratio width", args[0]); err != nil {
+		return err
+	}
+
+	if len(args) > 1 {
+		if err := parseDimension(&po.AspectRatio.Height, "aspect ratio height", args[1]); err != nil {
+			return err
+		}
+	}
+
+	if len(args) > 2 {
+		return parseGravity(&po.AspectRatio.Gravity, args[2:])
+	}
+
+	return nil
+}
+
 func applyCropOption(po *processingOptions, args []string) error {
 	if len(args) > 5 {
 		return fmt.Errorf("Invalid crop arguments: %v", args)
@@ -882,6 +911,8 @@ func applyProcessingOption(po *processingOptions, name string, args []string) er
 		return applyDprOption(po, args)
 	case "gravity", "g":
 		return applyGravityOption(po, args)
+	case "aspect_ratio", "ar":
+		return applyAspectRatioOption(po, args)
 	case "crop", "c":
 		return applyCropOption(po, args)
 	case "trim", "t":
