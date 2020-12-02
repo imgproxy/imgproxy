@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -21,40 +21,48 @@ namespace ImgProxy.Examples
             const int Enlarge = 1;
             const string Extension = "png";
 
-            var url = GenerateUrl(Key, Salt, Url, Resize, Width, Height, Gravity, Enlarge, Extension);
+            var url = SignerHelper.GenerateUrl(Key, Salt, Url, Resize, Width, Height, Gravity, Enlarge, Extension);
 
             Console.WriteLine(url);
         }
+    }
 
-        static string GenerateUrl(string key, string salt, string url, string resize, int width, int height, string gravity, int enlarge, string extension)
+    public static class SignerHelper
+    {
+        public static string GenerateUrl(string key, string salt, string url, string resize, int width, int height, string gravity, int enlarge, string extension)
         {
-            var keybin = StringToByteArray(key);
-            var saltBin = StringToByteArray(salt);
+            var keybin = HexadecimalStringToByteArray(key);
+            var saltBin = HexadecimalStringToByteArray(salt);
 
-            var encodedUrl = string.Join("/", WholeChunks(Convert.ToBase64String(Encoding.UTF8.GetBytes(url)).TrimEnd('='), 16));
-
+            var encodedUrl = EncodeBase64URLSafeString(url);
             var path = $"/{resize}/{width}/{height}/{gravity}/{enlarge}/{encodedUrl}.{extension}";
 
-            using (var hmac = new HMACSHA256(keybin))
+            var passwordWithSaltBytes = new List<byte>();
+            passwordWithSaltBytes.AddRange(saltBin);
+            passwordWithSaltBytes.AddRange(Encoding.UTF8.GetBytes(path));
+
+            using var hmac = new HMACSHA256(keybin);
+            byte[] digestBytes = hmac.ComputeHash(passwordWithSaltBytes.ToArray());
+            var urlSafeBase64 = EncodeBase64URLSafeString(digestBytes);
+            return $"/{urlSafeBase64}{path}";
+        }
+
+        static byte[] HexadecimalStringToByteArray(string input)
+        {
+            var outputLength = input.Length / 2;
+            var output = new byte[outputLength];
+            using (var sr = new StringReader(input))
             {
-                var hash = hmac.ComputeHash(saltBin.Concat(Encoding.UTF8.GetBytes(path)).ToArray());
-                var urlSafeBase64 = Convert.ToBase64String(hash).TrimEnd('=').Replace('+', '-').Replace('/', '_');
-                return $"/{urlSafeBase64}{path}";
+                for (var i = 0; i < outputLength; i++)
+                    output[i] = Convert.ToByte(new string(new char[2] { (char)sr.Read(), (char)sr.Read() }), 16);
             }
+            return output;
         }
 
-        static byte[] StringToByteArray(string hex)
-        {
-            return Enumerable.Range(0, hex.Length)
-                             .Where(x => x % 2 == 0)
-                             .Select(x => Convert.ToByte(hex.Substring(x, 2), 16))
-                             .ToArray();
-        }
+        static string EncodeBase64URLSafeString(this byte[] stream)
+            => Convert.ToBase64String(stream).TrimEnd('=').Replace('+', '-').Replace('/', '_');
 
-        static IEnumerable<string> WholeChunks(string str, int maxChunkSize)
-        {
-            for (int i = 0; i < str.Length; i += maxChunkSize)
-                yield return str.Substring(i, Math.Min(maxChunkSize, str.Length - i));
-        }
+        static string EncodeBase64URLSafeString(this string str)
+            => EncodeBase64URLSafeString(Encoding.ASCII.GetBytes(str));
     }
 }
