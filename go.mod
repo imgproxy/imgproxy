@@ -12,7 +12,7 @@ require (
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
 	github.com/bugsnag/bugsnag-go v1.5.3
 	github.com/bugsnag/panicwrap v1.2.0 // indirect
-	github.com/getsentry/sentry-go v0.7.0
+	github.com/getsentry/sentry-go v0.9.0
 	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/gofrs/uuid v3.3.0+incompatible // indirect
 	github.com/honeybadger-io/honeybadger-go v0.5.0
