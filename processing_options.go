@@ -1106,7 +1106,7 @@ func parsePath(ctx context.Context, r *http.Request) (context.Context, error) {
 	}
 
 	if !conf.AllowInsecure {
-		if err = validatePath(parts[0], strings.TrimPrefix(path, parts[0])); err != nil {
+		if err = validatePath(parts[0], extractPathSegmentToValidate(path, parts)); err != nil {
 			return ctx, newError(403, err.Error(), msgForbidden)
 		}
 	}
@@ -1141,6 +1141,15 @@ func parsePath(ctx context.Context, r *http.Request) (context.Context, error) {
 	ctx = context.WithValue(ctx, processingOptionsCtxKey, po)
 
 	return ctx, nil
+}
+
+func extractPathSegmentToValidate(path string, pathSegments []string) string {
+	pathToValidate := strings.TrimPrefix(path, pathSegments[0])
+	if conf.OnlyPresets && conf.ExcludePresetsFromSignature {
+		pathToValidate = strings.TrimPrefix(pathToValidate, "/")
+		pathToValidate = strings.TrimPrefix(pathToValidate, pathSegments[1])
+	}
+	return pathToValidate
 }
 
 func getImageURL(ctx context.Context) string {

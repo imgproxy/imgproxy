@@ -239,8 +239,10 @@ type config struct {
 
 	BaseURL string
 
-	Presets     presets
-	OnlyPresets bool
+	Presets                     presets
+	OnlyPresets                 bool
+	// ExcludePresetsFromSignature is only taken into account when OnlyPresets is true
+	ExcludePresetsFromSignature bool
 
 	WatermarkData    string
 	WatermarkPath    string
@@ -408,6 +410,7 @@ func configure() error {
 		return err
 	}
 	boolEnvConfig(&conf.OnlyPresets, "IMGPROXY_ONLY_PRESETS")
+	boolEnvConfig(&conf.ExcludePresetsFromSignature, "IMGPROXY_EXCLUDE_PRESETS_FROM_SIGNATURE")
 
 	strEnvConfig(&conf.WatermarkData, "IMGPROXY_WATERMARK_DATA")
 	strEnvConfig(&conf.WatermarkPath, "IMGPROXY_WATERMARK_PATH")

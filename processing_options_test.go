@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -603,6 +604,17 @@ func (s *ProcessingOptionsTestSuite) TestParseBase64URLOnlyPresets() {
 	assert.Equal(s.T(), float32(0.2), po.Blur)
 	assert.Equal(s.T(), 50, po.Quality)
 }
+
+func (s *ProcessingOptionsTestSuite) TestExtractPathSegmentToValidateWithPresetsOnly() {
+	conf.AllowInsecure = false
+	conf.OnlyPresets = true
+	path := "signature/test1:test2/plain/http://images.dev/lorem/ipsum.jpg"
+	parts := strings.Split(path, "/")
+	assert.Equal(s.T(), "/test1:test2/plain/http://images.dev/lorem/ipsum.jpg", extractPathSegmentToValidate(path, parts))
+	conf.ExcludePresetsFromSignature = true
+	assert.Equal(s.T(), "/plain/http://images.dev/lorem/ipsum.jpg", extractPathSegmentToValidate(path, parts))
+}
+
 func TestProcessingOptions(t *testing.T) {
 	suite.Run(t, new(ProcessingOptionsTestSuite))
 }

@@ -30,4 +30,9 @@ Setting `IMGPROXY_ONLY_PRESETS` as `true` switches imgproxy into "presets-only m
 http://imgproxy.example.com/unsafe/thumbnail:blurry:watermarked/plain/http://example.com/images/curiosity.jpg@png
 ```
 
-All othe URL formats are disabled in this mode.
+All other URL formats are disabled in this mode.
+
+## Exclude presets from URL signature validation
+
+Setting `IMGPROXY_EXCLUDE_PRESETS_FROM_SIGNATURE` as `true` excludes the presets segment of the URL path from signature validation. Note that this only works when `IMGPROXY_ONLY_PRESETS` is set to `true`. Thus, you can use a single digitally signed URL for fetching multiple pre-defined formats of the same image URL.
+
