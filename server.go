@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"time"
-
+	"strings"
 	"golang.org/x/net/netutil"
 )
 
@@ -77,9 +77,16 @@ func shutdownServer(s *http.Server) {
 func withCORS(h routeHandler) routeHandler {
 	return func(reqID string, rw http.ResponseWriter, r *http.Request) {
 		if len(conf.AllowOrigin) > 0 {
-			rw.Header().Set("Access-Control-Allow-Origin", conf.AllowOrigin)
-			rw.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
-			rw.Header().Set("Access-Control-Allow-Credentials", "true")
+			origins := strings.Split(conf.AllowOrigin, " ")
+			requestOrigin := r.Header.Get("Origin")
+
+			for _,origin := range origins {
+				if(strings.TrimSpace(origin) == requestOrigin) {
+					rw.Header().Set("Access-Control-Allow-Origin", requestOrigin)
+					rw.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+					rw.Header().Set("Access-Control-Allow-Credentials", "true")
+				}
+			}
 		}
 
 		h(reqID, rw, r)

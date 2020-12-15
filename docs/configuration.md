@@ -68,6 +68,9 @@ You can also specify a secret to enable authorization with the HTTP `Authorizati
 
 imgproxy does not send CORS headers by default. Specify allowed origin to enable CORS headers:
 
+Allows one or many origins, seperated with space. Example
+IMGPROXY_ALLOW_ORIGIN=http://localhost:8080 http://localhost:1234
+
 * `IMGPROXY_ALLOW_ORIGIN`: when set, enables CORS headers with provided origin. CORS headers are disabled by default.
 
 You can limit allowed source URLs:
