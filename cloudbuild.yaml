@@ -6,9 +6,9 @@ steps:
   - -f
   - docker/Dockerfile
   - -t
-  - us.gcr.io/$PROJECT_ID/dashboard:$BRANCH_NAME$TAG_NAME
+  - us.gcr.io/$PROJECT_ID/imgproxy:$BRANCH_NAME$TAG_NAME
   - .
 
 # Push docker images to container registry
 images:
-- us.gcr.io/$PROJECT_ID/dashboard:$BRANCH_NAME$TAG_NAME
+- us.gcr.io/$PROJECT_ID/imgproxy:$BRANCH_NAME$TAG_NAME
