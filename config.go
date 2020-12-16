@@ -239,8 +239,8 @@ type config struct {
 
 	BaseURL string
 
-	Presets                     presets
-	OnlyPresets                 bool
+	Presets     presets
+	OnlyPresets bool
 	// ExcludePresetsFromSignature is only taken into account when OnlyPresets is true
 	ExcludePresetsFromSignature bool
 
