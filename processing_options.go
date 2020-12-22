@@ -127,7 +127,7 @@ type watermarkOptions struct {
 
 type urlWatermarkOptions struct {
 	watermarkOptions
-	ImageURL  string
+	ImageURL string
 }
 
 type processingOptions struct {
