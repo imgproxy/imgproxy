@@ -43,6 +43,35 @@ Where arguments are:
 * `x_offset`, `y_offset` - (optional) specify watermark offset by X and Y axes. Not applicable to `re` position;
 * `scale` - (optional) floating point number that defines watermark size relative to the resulting image size. When set to `0` or omitted, watermark size won't be changed.
 
+## Watermarking multiple images via URL
+
+Watermarks are only available with [advanced URL format](generating_the_url_advanced.md). Use `url_watermark` processing option to put multiple watermark images on the processed image:
+
+```
+url_watermark:%image_url:%opacity:%position:%x_offset:%y_offset:%scale
+uwm:%opacity:%image_url:%position:%x_offset:%y_offset:%scale
+```
+
+You may use as many `url_watermark` is single requests, as you need.
+
+Where arguments are:
+
+* `image_url` - image url, url encode is MUST
+* `opacity` - watermark opacity modifier. Final opacity is calculated like `base_opacity * opacity`.
+* `position` - (optional) specifies the position of the watermark. Available values:
+  * `ce`: (default) center;
+  * `no`: north (top edge);
+  * `so`: south (bottom edge);
+  * `ea`: east (right edge);
+  * `we`: west (left edge);
+  * `noea`: north-east (top-right corner);
+  * `nowe`: north-west (top-left corner);
+  * `soea`: south-east (bottom-right corner);
+  * `sowe`: south-west (bottom-left corner);
+  * `re`: replicate watermark to fill the whole image;
+* `x_offset`, `y_offset` - (optional) specify watermark offset by X and Y axes. Not applicable to `re` position;
+* `scale` - (optional) floating point number that defines watermark size relative to the resulting image size. When set to `0` or omitted, watermark size won't be changed.
+
 ## Custom watermarks<img class='pro-badge' src='assets/pro.svg' alt='pro' />
 
 You can use a custom watermark specifying its URL with `watermark_url` processing option:

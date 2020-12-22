@@ -125,6 +125,11 @@ type watermarkOptions struct {
 	Scale     float64
 }
 
+type urlWatermarkOptions struct {
+	watermarkOptions
+	ImageURL  string
+}
+
 type processingOptions struct {
 	ResizingType  resizeType
 	Width         int
@@ -148,6 +153,8 @@ type processingOptions struct {
 	CacheBuster string
 
 	Watermark watermarkOptions
+
+	URLWatermarks []urlWatermarkOptions
 
 	PreferWebP  bool
 	EnforceWebP bool
@@ -209,6 +216,8 @@ var (
 	newProcessingOptionsOnce sync.Once
 )
 
+var defaultURLWatermarkOptions = urlWatermarkOptions{watermarkOptions: watermarkOptions{Opacity: 1, Replicate: false, Gravity: gravityOptions{Type: gravityCenter}}}
+
 func newProcessingOptions() *processingOptions {
 	newProcessingOptionsOnce.Do(func() {
 		_newProcessingOptions = processingOptions{
@@ -228,6 +237,7 @@ func newProcessingOptions() *processingOptions {
 			Sharpen:       0,
 			Dpr:           1,
 			Watermark:     watermarkOptions{Opacity: 1, Replicate: false, Gravity: gravityOptions{Type: gravityCenter}},
+			URLWatermarks: make([]urlWatermarkOptions, 0),
 			StripMetadata: conf.StripMetadata,
 		}
 	})
@@ -812,6 +822,66 @@ func applyWatermarkOption(po *processingOptions, args []string) error {
 	return nil
 }
 
+func applyURLWatermarkOption(po *processingOptions, args []string) error {
+	if len(args) > 8 {
+		return fmt.Errorf("Invalid url watermark arguments: %v", args)
+	}
+
+	wm := defaultURLWatermarkOptions
+
+	if decoded, err := url.QueryUnescape(args[0]); err == nil {
+		wm.Enabled = true
+		wm.ImageURL = decoded
+	} else {
+		return fmt.Errorf("Invalid url watermark url: %s", args[0])
+	}
+
+	if o, err := strconv.ParseFloat(args[1], 64); err == nil && o >= 0 && o <= 1 {
+		wm.Enabled = o > 0
+		wm.Opacity = o
+	} else {
+		return fmt.Errorf("Invalid url watermark opacity: %s", args[1])
+	}
+
+	if len(args) > 2 && len(args[2]) > 0 {
+		if args[1] == "re" {
+			wm.Replicate = true
+		} else if g, ok := gravityTypes[args[2]]; ok && g != gravityFocusPoint && g != gravitySmart {
+			wm.Gravity.Type = g
+		} else {
+			return fmt.Errorf("Invalid url watermark position: %s", args[1])
+		}
+	}
+
+	if len(args) > 3 && len(args[3]) > 0 {
+		if x, err := strconv.Atoi(args[3]); err == nil {
+			wm.Gravity.X = float64(x)
+		} else {
+			return fmt.Errorf("Invalid url watermark X offset: %s", args[2])
+		}
+	}
+
+	if len(args) > 4 && len(args[4]) > 0 {
+		if y, err := strconv.Atoi(args[4]); err == nil {
+			wm.Gravity.Y = float64(y)
+		} else {
+			return fmt.Errorf("Invalid url watermark Y offset: %s", args[3])
+		}
+	}
+
+	if len(args) > 5 && len(args[5]) > 0 {
+		if s, err := strconv.ParseFloat(args[5], 64); err == nil && s >= 0 {
+			wm.Scale = s
+		} else {
+			return fmt.Errorf("Invalid url watermark scale: %s", args[4])
+		}
+	}
+
+	po.URLWatermarks = append(po.URLWatermarks, wm)
+
+	return nil
+}
+
 func applyFormatOption(po *processingOptions, args []string) error {
 	if len(args) > 1 {
 		return fmt.Errorf("Invalid format arguments: %v", args)
@@ -900,6 +970,8 @@ func applyProcessingOption(po *processingOptions, name string, args []string) er
 		return applySharpenOption(po, args)
 	case "watermark", "wm":
 		return applyWatermarkOption(po, args)
+	case "url_watermark", "uwm":
+		return applyURLWatermarkOption(po, args)
 	case "preset", "pr":
 		return applyPresetOption(po, args)
 	case "cachebuster", "cb":

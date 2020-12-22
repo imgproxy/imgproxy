@@ -335,6 +335,20 @@ func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedWatermark() {
 	assert.Equal(s.T(), 20.0, po.Watermark.Gravity.Y)
 	assert.Equal(s.T(), 0.6, po.Watermark.Scale)
 }
+func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedURLWatermark() {
+	req := s.getRequest("/unsafe/url_watermark:https%3A%2F%2Fi.stack.imgur.com%2F59ND2.png:0.5:soea:10:20:0.6/plain/http://images.dev/lorem/ipsum.jpg")
+	ctx, err := parsePath(context.Background(), req)
+
+	require.Nil(s.T(), err)
+
+	po := getProcessingOptions(ctx)
+	assert.True(s.T(), po.URLWatermarks[0].Enabled)
+	assert.Equal(s.T(), gravitySouthEast, po.URLWatermarks[0].Gravity.Type)
+	assert.Equal(s.T(), "https://i.stack.imgur.com/59ND2.png", po.URLWatermarks[0].ImageURL)
+	assert.Equal(s.T(), 10.0, po.URLWatermarks[0].Gravity.X)
+	assert.Equal(s.T(), 20.0, po.URLWatermarks[0].Gravity.Y)
+	assert.Equal(s.T(), 0.6, po.URLWatermarks[0].Scale)
+}
 
 func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedPreset() {
 	conf.Presets["test1"] = urlOptions{

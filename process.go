@@ -504,6 +504,20 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 		}
 	}
 
+	if len(po.URLWatermarks) > 0 {
+		for _, v := range po.URLWatermarks {
+			if v.Enabled {
+				imgData, err := remoteImageData(v.ImageURL, "url_watermark")
+				if err != nil {
+					return err
+				}
+				if err = applyWatermark(img, imgData, &v.watermarkOptions, 1); err != nil {
+					return err
+				}
+			}
+		}
+	}
+
 	if err = img.RgbColourspace(); err != nil {
 		return err
 	}
@@ -557,6 +571,23 @@ func transformAnimated(ctx context.Context, img *vipsImage, data []byte, po *pro
 	po.Watermark.Enabled = false
 	defer func() { po.Watermark.Enabled = watermarkEnabled }()
 
+	anyUrlWatermarkEnabled := false
+	if len(po.URLWatermarks) > 0 {
+		urlWatermarksEnabled := make(map[int]bool, 0)
+		for k, v := range po.URLWatermarks {
+			if v.Enabled {
+				anyUrlWatermarkEnabled = true
+			}
+			urlWatermarksEnabled[k] = v.Enabled
+			v.Enabled = false
+		}
+		defer func() {
+			for k, v := range urlWatermarksEnabled {
+				po.URLWatermarks[k].Enabled = v
+			}
+		}()
+	}
+
 	frames := make([]*vipsImage, framesCount)
 	defer func() {
 		for _, frame := range frames {
@@ -591,6 +622,22 @@ func transformAnimated(ctx context.Context, img *vipsImage, data []byte, po *pro
 	if watermarkEnabled && watermark != nil {
 		if err = applyWatermark(img, watermark, &po.Watermark, framesCount); err != nil {
 			return err
+		}
+		framesCount++
+	}
+
+	if len(po.URLWatermarks) > 0 && anyUrlWatermarkEnabled {
+		for _, v := range po.URLWatermarks {
+			if v.Enabled {
+				imgData, err := remoteImageData(v.ImageURL, "url_watermark")
+				if err != nil {
+					return err
+				}
+				if err = applyWatermark(img, imgData, &v.watermarkOptions, framesCount); err != nil {
+					return err
+				}
+				framesCount++
+			}
 		}
 	}
 
