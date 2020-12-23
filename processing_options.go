@@ -836,11 +836,13 @@ func applyURLWatermarkOption(po *processingOptions, args []string) error {
 		return fmt.Errorf("Invalid url watermark url: %s", args[0])
 	}
 
-	if o, err := strconv.ParseFloat(args[1], 64); err == nil && o >= 0 && o <= 1 {
-		wm.Enabled = o > 0
-		wm.Opacity = o
-	} else {
-		return fmt.Errorf("Invalid url watermark opacity: %s", args[1])
+	if len(args) > 1 && len(args[1]) > 0 {
+		if o, err := strconv.ParseFloat(args[1], 64); err == nil && o >= 0 && o <= 1 {
+			wm.Enabled = o > 0
+			wm.Opacity = o
+		} else {
+			return fmt.Errorf("Invalid url watermark opacity: %s", args[1])
+		}
 	}
 
 	if len(args) > 2 && len(args[2]) > 0 {
