@@ -49,7 +49,7 @@ Watermarks are only available with [advanced URL format](generating_the_url_adva
 
 ```
 url_watermark:%image_url:%opacity:%position:%x_offset:%y_offset:%scale
-uwm:%opacity:%image_url:%position:%x_offset:%y_offset:%scale
+uwm:%image_url:%opacity:%position:%x_offset:%y_offset:%scale
 ```
 
 You may use as many `url_watermark` is single requests, as you need.
