@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	nanoid "github.com/matoous/go-nanoid"
+	nanoid "github.com/matoous/go-nanoid/v2"
 )
 
 const (
@@ -76,7 +76,7 @@ func (r *router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	reqID := req.Header.Get(xRequestIDHeader)
 
 	if len(reqID) == 0 || !requestIDRe.MatchString(reqID) {
-		reqID, _ = nanoid.Nanoid()
+		reqID, _ = nanoid.New()
 	}
 
 	rw.Header().Set("Server", "imgproxy")
