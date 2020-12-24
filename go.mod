@@ -4,28 +4,28 @@ go 1.11
 
 require (
 	cloud.google.com/go/storage v1.12.0
-	github.com/Azure/azure-storage-blob-go v0.11.0
+	github.com/Azure/azure-storage-blob-go v0.12.0
 	github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d // indirect
 	github.com/aws/aws-sdk-go v1.36.15
 	github.com/benesch/cgosymbolizer v0.0.0-20190515212042-bec6fe6e597b
 	github.com/bitly/go-simplejson v0.5.0 // indirect
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
 	github.com/bugsnag/bugsnag-go v1.8.0
-	github.com/bugsnag/panicwrap v1.2.0 // indirect
+	github.com/bugsnag/panicwrap v1.2.2 // indirect
 	github.com/getsentry/sentry-go v0.9.0
 	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/gofrs/uuid v3.3.0+incompatible // indirect
 	github.com/honeybadger-io/honeybadger-go v0.5.0
-	github.com/ianlancetaylor/cgosymbolizer v0.0.0-20200424224625-be1b05b0b279 // indirect
+	github.com/ianlancetaylor/cgosymbolizer v0.0.0-20201204192058-7acc97e53614 // indirect
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
 	github.com/matoous/go-nanoid/v2 v2.0.0
 	github.com/newrelic/go-agent/v3 v3.9.0
 	github.com/prometheus/client_golang v1.9.0
 	github.com/sirupsen/logrus v1.7.0
 	github.com/stretchr/testify v1.6.1
-	golang.org/x/image v0.0.0-20200609002522-3f4726a040e8
-	golang.org/x/net v0.0.0-20201110031124-69a78807bb2b
-	golang.org/x/sys v0.0.0-20201214210602-f9fddec55a1e
+	golang.org/x/image v0.0.0-20201208152932-35266b937fa6
+	golang.org/x/net v0.0.0-20201224014010-6772e930b67b
+	golang.org/x/sys v0.0.0-20201223074533-0d417f636930
 	golang.org/x/text v0.3.4
 	google.golang.org/api v0.36.0
 )

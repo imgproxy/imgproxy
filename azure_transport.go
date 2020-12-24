@@ -40,7 +40,7 @@ func (t azureTransport) RoundTrip(req *http.Request) (resp *http.Response, err e
 	containerURL := t.serviceURL.NewContainerURL(strings.ToLower(req.URL.Host))
 	blobURL := containerURL.NewBlockBlobURL(strings.TrimPrefix(req.URL.Path, "/"))
 
-	get, err := blobURL.Download(context.Background(), 0, azblob.CountToEnd, azblob.BlobAccessConditions{}, false)
+	get, err := blobURL.Download(context.Background(), 0, azblob.CountToEnd, azblob.BlobAccessConditions{}, false, azblob.ClientProvidedKeyOptions{})
 	if err != nil {
 		return nil, err
 	}
