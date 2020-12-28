@@ -429,10 +429,10 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 				return err
 			}
 			logWarning("WebP dimension size is limited to %d. The image is rescaled to %dx%d", int(webpMaxDimension), img.Width(), img.Height())
-		}
 
-		if err = copyMemoryAndCheckTimeout(ctx, img); err != nil {
-			return err
+			if err = copyMemoryAndCheckTimeout(ctx, img); err != nil {
+				return err
+			}
 		}
 	}
 
