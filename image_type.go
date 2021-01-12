@@ -125,3 +125,9 @@ func (it imageType) ContentDispositionFromURL(imageURL string) string {
 func (it imageType) SupportsAlpha() bool {
 	return it != imageTypeJPEG && it != imageTypeBMP
 }
+
+func (it imageType) SupportsColourProfile() bool {
+	return it == imageTypeJPEG ||
+		it == imageTypeWEBP ||
+		it == imageTypeAVIF
+}

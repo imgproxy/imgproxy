@@ -126,24 +126,25 @@ type watermarkOptions struct {
 }
 
 type processingOptions struct {
-	ResizingType  resizeType
-	Width         int
-	Height        int
-	Dpr           float64
-	Gravity       gravityOptions
-	Enlarge       bool
-	Extend        extendOptions
-	Crop          cropOptions
-	Padding       paddingOptions
-	Trim          trimOptions
-	Format        imageType
-	Quality       int
-	MaxBytes      int
-	Flatten       bool
-	Background    rgbColor
-	Blur          float32
-	Sharpen       float32
-	StripMetadata bool
+	ResizingType      resizeType
+	Width             int
+	Height            int
+	Dpr               float64
+	Gravity           gravityOptions
+	Enlarge           bool
+	Extend            extendOptions
+	Crop              cropOptions
+	Padding           paddingOptions
+	Trim              trimOptions
+	Format            imageType
+	Quality           int
+	MaxBytes          int
+	Flatten           bool
+	Background        rgbColor
+	Blur              float32
+	Sharpen           float32
+	StripMetadata     bool
+	StripColorProfile bool
 
 	CacheBuster string
 
@@ -212,23 +213,24 @@ var (
 func newProcessingOptions() *processingOptions {
 	newProcessingOptionsOnce.Do(func() {
 		_newProcessingOptions = processingOptions{
-			ResizingType:  resizeFit,
-			Width:         0,
-			Height:        0,
-			Gravity:       gravityOptions{Type: gravityCenter},
-			Enlarge:       false,
-			Extend:        extendOptions{Enabled: false, Gravity: gravityOptions{Type: gravityCenter}},
-			Padding:       paddingOptions{Enabled: false},
-			Trim:          trimOptions{Enabled: false, Threshold: 10, Smart: true},
-			Quality:       conf.Quality,
-			MaxBytes:      0,
-			Format:        imageTypeUnknown,
-			Background:    rgbColor{255, 255, 255},
-			Blur:          0,
-			Sharpen:       0,
-			Dpr:           1,
-			Watermark:     watermarkOptions{Opacity: 1, Replicate: false, Gravity: gravityOptions{Type: gravityCenter}},
-			StripMetadata: conf.StripMetadata,
+			ResizingType:      resizeFit,
+			Width:             0,
+			Height:            0,
+			Gravity:           gravityOptions{Type: gravityCenter},
+			Enlarge:           false,
+			Extend:            extendOptions{Enabled: false, Gravity: gravityOptions{Type: gravityCenter}},
+			Padding:           paddingOptions{Enabled: false},
+			Trim:              trimOptions{Enabled: false, Threshold: 10, Smart: true},
+			Quality:           conf.Quality,
+			MaxBytes:          0,
+			Format:            imageTypeUnknown,
+			Background:        rgbColor{255, 255, 255},
+			Blur:              0,
+			Sharpen:           0,
+			Dpr:               1,
+			Watermark:         watermarkOptions{Opacity: 1, Replicate: false, Gravity: gravityOptions{Type: gravityCenter}},
+			StripMetadata:     conf.StripMetadata,
+			StripColorProfile: conf.StripColorProfile,
 		}
 	})
 
@@ -860,6 +862,16 @@ func applyStripMetadataOption(po *processingOptions, args []string) error {
 	return nil
 }
 
+func applyStripColorProfileOption(po *processingOptions, args []string) error {
+	if len(args) > 1 {
+		return fmt.Errorf("Invalid strip color profile arguments: %v", args)
+	}
+
+	po.StripColorProfile = parseBoolOption(args[0])
+
+	return nil
+}
+
 func applyProcessingOption(po *processingOptions, name string, args []string) error {
 	switch name {
 	case "format", "f", "ext":
@@ -906,6 +918,8 @@ func applyProcessingOption(po *processingOptions, name string, args []string) er
 		return applyCacheBusterOption(po, args)
 	case "strip_metadata", "sm":
 		return applyStripMetadataOption(po, args)
+	case "strip_color_profile", "scp":
+		return applyStripColorProfileOption(po, args)
 	case "filename", "fn":
 		return applyFilenameOption(po, args)
 	}

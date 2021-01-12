@@ -345,18 +345,27 @@ vips_has_embedded_icc(VipsImage *in) {
 
 int
 vips_icc_import_go(VipsImage *in, VipsImage **out) {
-  if (vips_icc_import(in, out, "embedded", TRUE, "pcs", VIPS_PCS_XYZ, NULL))
-    return 1;
+  return vips_icc_import(in, out, "embedded", TRUE, "pcs", VIPS_PCS_XYZ, NULL);
+}
 
-  vips_image_remove(*out, VIPS_META_ICC_NAME);
+int
+vips_icc_export_go(VipsImage *in, VipsImage **out) {
+  return vips_icc_export(in, out, NULL);
+}
 
-  return 0;
+int
+vips_icc_export_srgb(VipsImage *in, VipsImage **out) {
+  return vips_icc_export(in, out, "output_profile", "sRGB", NULL);
 }
 
 int
 vips_icc_transform_go(VipsImage *in, VipsImage **out) {
-  if (vips_icc_transform(in, out, "sRGB", "embedded", TRUE, "pcs", VIPS_PCS_XYZ, NULL))
-    return 1;
+  return vips_icc_transform(in, out, "sRGB", "embedded", TRUE, "pcs", VIPS_PCS_XYZ, NULL);
+}
+
+int
+vips_icc_remove(VipsImage *in, VipsImage **out) {
+  if (vips_copy(in, out, NULL)) return 1;
 
   vips_image_remove(*out, VIPS_META_ICC_NAME);
 
@@ -568,15 +577,39 @@ vips_arrayjoin_go(VipsImage **in, VipsImage **out, int n) {
 }
 
 int
-vips_jpegsave_go(VipsImage *in, void **buf, size_t *len, int quality, int interlace, gboolean strip) {
-  return vips_jpegsave_buffer(in, buf, len, "profile", "none", "Q", quality, "strip", strip, "optimize_coding", TRUE, "interlace", interlace, NULL);
+vips_strip(VipsImage *in, VipsImage **out) {
+  if (vips_copy(in, out, NULL)) return 1;
+
+  gchar **fields = vips_image_get_fields(in);
+
+  for (int i = 0; fields[i] != NULL; i++) {
+    gchar *name = fields[i];
+
+    if (strcmp(name, VIPS_META_ICC_NAME) == 0) continue;
+
+    vips_image_remove(*out, name);
+  }
+
+  g_strfreev(fields);
+
+  return 0;
+}
+
+int
+vips_jpegsave_go(VipsImage *in, void **buf, size_t *len, int quality, int interlace) {
+  return vips_jpegsave_buffer(
+    in, buf, len,
+    "Q", quality,
+    "optimize_coding", TRUE,
+    "interlace", interlace,
+    NULL
+  );
 }
 
 int
 vips_pngsave_go(VipsImage *in, void **buf, size_t *len, int interlace, int quantize, int colors) {
   return vips_pngsave_buffer(
     in, buf, len,
-    "profile", "none",
     "filter", VIPS_FOREIGN_PNG_FILTER_NONE,
     "interlace", interlace,
 #if VIPS_SUPPORT_PNG_QUANTIZATION
@@ -587,8 +620,12 @@ vips_pngsave_go(VipsImage *in, void **buf, size_t *len, int interlace, int quant
 }
 
 int
-vips_webpsave_go(VipsImage *in, void **buf, size_t *len, int quality, gboolean strip) {
-  return vips_webpsave_buffer(in, buf, len, "Q", quality, "strip", strip, NULL);
+vips_webpsave_go(VipsImage *in, void **buf, size_t *len, int quality) {
+  return vips_webpsave_buffer(
+    in, buf, len,
+    "Q", quality,
+    NULL
+  );
 }
 
 int

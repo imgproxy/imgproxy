@@ -180,7 +180,7 @@ func (img *vipsImage) Load(data []byte, imgtype imageType, shrink int, scale flo
 	return nil
 }
 
-func (img *vipsImage) Save(imgtype imageType, quality int, stripMeta bool) ([]byte, context.CancelFunc, error) {
+func (img *vipsImage) Save(imgtype imageType, quality int) ([]byte, context.CancelFunc, error) {
 	if imgtype == imageTypeICO {
 		b, err := img.SaveAsIco()
 		return b, func() {}, err
@@ -198,11 +198,11 @@ func (img *vipsImage) Save(imgtype imageType, quality int, stripMeta bool) ([]by
 
 	switch imgtype {
 	case imageTypeJPEG:
-		err = C.vips_jpegsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality), vipsConf.JpegProgressive, gbool(stripMeta))
+		err = C.vips_jpegsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality), vipsConf.JpegProgressive)
 	case imageTypePNG:
 		err = C.vips_pngsave_go(img.VipsImage, &ptr, &imgsize, vipsConf.PngInterlaced, vipsConf.PngQuantize, vipsConf.PngQuantizationColors)
 	case imageTypeWEBP:
-		err = C.vips_webpsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality), gbool(stripMeta))
+		err = C.vips_webpsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality))
 	case imageTypeGIF:
 		err = C.vips_gifsave_go(img.VipsImage, &ptr, &imgsize)
 	case imageTypeAVIF:
@@ -532,6 +532,40 @@ func (img *vipsImage) ImportColourProfile() error {
 	return nil
 }
 
+func (img *vipsImage) ExportColourProfile() error {
+	var tmp *C.VipsImage
+
+	// Don't export is there's no embedded profile or embedded profile is sRGB
+	if C.vips_has_embedded_icc(img.VipsImage) == 0 || C.vips_icc_is_srgb_iec61966(img.VipsImage) == 1 {
+		return nil
+	}
+
+	if C.vips_icc_export_go(img.VipsImage, &tmp) == 0 {
+		C.swap_and_clear(&img.VipsImage, tmp)
+	} else {
+		logWarning("Can't export ICC profile: %s", vipsError())
+	}
+
+	return nil
+}
+
+func (img *vipsImage) ExportColourProfileToSRGB() error {
+	var tmp *C.VipsImage
+
+	// Don't export is there's no embedded profile or embedded profile is sRGB
+	if C.vips_has_embedded_icc(img.VipsImage) == 0 || C.vips_icc_is_srgb_iec61966(img.VipsImage) == 1 {
+		return nil
+	}
+
+	if C.vips_icc_export_srgb(img.VipsImage, &tmp) == 0 {
+		C.swap_and_clear(&img.VipsImage, tmp)
+	} else {
+		logWarning("Can't export ICC profile: %s", vipsError())
+	}
+
+	return nil
+}
+
 func (img *vipsImage) TransformColourProfile() error {
 	var tmp *C.VipsImage
 
@@ -544,6 +578,18 @@ func (img *vipsImage) TransformColourProfile() error {
 		C.swap_and_clear(&img.VipsImage, tmp)
 	} else {
 		logWarning("Can't transform ICC profile: %s", vipsError())
+	}
+
+	return nil
+}
+
+func (img *vipsImage) RemoveColourProfile() error {
+	var tmp *C.VipsImage
+
+	if C.vips_icc_remove(img.VipsImage, &tmp) == 0 {
+		C.swap_and_clear(&img.VipsImage, tmp)
+	} else {
+		logWarning("Can't remove ICC profile: %s", vipsError())
 	}
 
 	return nil
@@ -629,6 +675,17 @@ func (img *vipsImage) ApplyWatermark(wm *vipsImage, opacity float64) error {
 	var tmp *C.VipsImage
 
 	if C.vips_apply_watermark(img.VipsImage, wm.VipsImage, &tmp, C.double(opacity)) != 0 {
+		return vipsError()
+	}
+	C.swap_and_clear(&img.VipsImage, tmp)
+
+	return nil
+}
+
+func (img *vipsImage) Strip() error {
+	var tmp *C.VipsImage
+
+	if C.vips_strip(img.VipsImage, &tmp) != 0 {
 		return vipsError()
 	}
 	C.swap_and_clear(&img.VipsImage, tmp)

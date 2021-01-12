@@ -436,12 +436,36 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 		}
 	}
 
+	keepProfile := !po.StripColorProfile && po.Format.SupportsColourProfile()
+
 	if iccImported {
-		if err = img.RgbColourspace(); err != nil {
+		if keepProfile {
+			// We imported ICC profile and want to keep it,
+			// so we need to export it
+			if err = img.ExportColourProfile(); err != nil {
+				return err
+			}
+		} else {
+			// We imported ICC profile but don't want to keep it,
+			// so we need to export image to sRGB for maximum compatibility
+			if err = img.ExportColourProfileToSRGB(); err != nil {
+				return err
+			}
+		}
+	} else if !keepProfile {
+		// We don't import ICC profile and don't want to keep it,
+		// so we need to transform it to sRGB for maximum compatibility
+		if err = img.TransformColourProfile(); err != nil {
 			return err
 		}
-	} else {
-		if err = img.TransformColourProfile(); err != nil {
+	}
+
+	if err = img.RgbColourspace(); err != nil {
+		return err
+	}
+
+	if !keepProfile {
+		if err = img.RemoveColourProfile(); err != nil {
 			return err
 		}
 	}
@@ -510,6 +534,12 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 
 	if err := img.CastUchar(); err != nil {
 		return err
+	}
+
+	if po.StripMetadata {
+		if err := img.Strip(); err != nil {
+			return err
+		}
 	}
 
 	return copyMemoryAndCheckTimeout(ctx, img)
@@ -653,7 +683,7 @@ func saveImageToFitBytes(po *processingOptions, img *vipsImage) ([]byte, context
 	img.CopyMemory()
 
 	for {
-		result, cancel, err := img.Save(po.Format, quality, po.StripMetadata)
+		result, cancel, err := img.Save(po.Format, quality)
 		if len(result) <= po.MaxBytes || quality <= 10 || err != nil {
 			return result, cancel, err
 		}
@@ -776,5 +806,5 @@ func processImage(ctx context.Context) ([]byte, context.CancelFunc, error) {
 		return saveImageToFitBytes(po, img)
 	}
 
-	return img.Save(po.Format, po.Quality, po.StripMetadata)
+	return img.Save(po.Format, po.Quality)
 }

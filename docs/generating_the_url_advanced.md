@@ -479,6 +479,17 @@ When set to `1`, `t` or `true`, imgproxy will strip the metadata (EXIF, IPTC, et
 
 Default: `false`
 
+#### Strip Color Profile
+
+```
+strip_color_profile:%strip_color_profile
+scp:%strip_color_profile
+```
+
+When set to `1`, `t` or `true`, imgproxy will transform the embedded color profile (ICC) to sRGB and remove it from the image. Otherwise, imgproxy will try to keep it as is. Normally this is controlled by the [IMGPROXY_STRIP_COLOR_PROFILE](configuration.md#miscellaneous) configuration but this procesing option allows the configuration to be set for each request.
+
+Default: `false`
+
 #### Filename
 
 ```

@@ -4,6 +4,7 @@
 ### Added
 - AVIF support.
 - Azure Blob Storage support.
+- `IMGPROXY_STRIP_COLOR_PROFILE` config and [strip_color_profile](https://docs.imgproxy.net/#/generating_the_url_advanced?id=strip-color-profile) processing option.
 - (pro) Remove Adobe Illustrator garbage from SVGs.
 
 ### Changed

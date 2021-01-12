@@ -199,6 +199,7 @@ type config struct {
 	Quality               int
 	GZipCompression       int
 	StripMetadata         bool
+	StripColorProfile     bool
 
 	EnableWebpDetection bool
 	EnforceWebp         bool
@@ -291,6 +292,7 @@ var conf = config{
 	PngQuantizationColors:          256,
 	Quality:                        80,
 	StripMetadata:                  true,
+	StripColorProfile:              true,
 	UserAgent:                      fmt.Sprintf("imgproxy/%s", version),
 	Presets:                        make(presets),
 	WatermarkOpacity:               1,
@@ -349,6 +351,7 @@ func configure() error {
 	intEnvConfig(&conf.Quality, "IMGPROXY_QUALITY")
 	intEnvConfig(&conf.GZipCompression, "IMGPROXY_GZIP_COMPRESSION")
 	boolEnvConfig(&conf.StripMetadata, "IMGPROXY_STRIP_METADATA")
+	boolEnvConfig(&conf.StripColorProfile, "IMGPROXY_STRIP_COLOR_PROFILE")
 
 	boolEnvConfig(&conf.EnableWebpDetection, "IMGPROXY_ENABLE_WEBP_DETECTION")
 	boolEnvConfig(&conf.EnforceWebp, "IMGPROXY_ENFORCE_WEBP")
