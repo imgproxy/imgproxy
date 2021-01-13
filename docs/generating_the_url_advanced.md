@@ -208,6 +208,19 @@ Removes surrounding background.
 
 **📝Note:** Trimming of animated images is not supported.
 
+#### Rotate
+
+```
+rotate:%angle
+rot:%angle
+```
+
+Rotates the image on the specified angle. The orientation from the image metadata is applied before the rotation unless autorotation is disabled.
+
+**📝Note:** Only 0/90/180/270/etc degrees angles are supported.
+
+Default: 0.
+
 #### Quality
 
 ```

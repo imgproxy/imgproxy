@@ -34,33 +34,32 @@ func imageTypeGoodForWeb(imgtype imageType) bool {
 		imgtype != imageTypeBMP
 }
 
-func extractMeta(img *vipsImage, useOrientation bool) (int, int, int, bool) {
+func extractMeta(img *vipsImage, baseAngle int, useOrientation bool) (int, int, int, bool) {
 	width := img.Width()
 	height := img.Height()
 
-	angle := vipsAngleD0
+	angle := 0
 	flip := false
 
-	if !useOrientation {
-		return width, height, angle, flip
+	if useOrientation {
+		orientation := img.Orientation()
+
+		if orientation == 3 || orientation == 4 {
+			angle = 180
+		}
+		if orientation == 5 || orientation == 6 {
+			angle = 90
+		}
+		if orientation == 7 || orientation == 8 {
+			angle = 270
+		}
+		if orientation == 2 || orientation == 4 || orientation == 5 || orientation == 7 {
+			flip = true
+		}
 	}
 
-	orientation := img.Orientation()
-
-	if orientation >= 5 && orientation <= 8 {
+	if (angle+baseAngle)%180 != 0 {
 		width, height = height, width
-	}
-	if orientation == 3 || orientation == 4 {
-		angle = vipsAngleD180
-	}
-	if orientation == 5 || orientation == 6 {
-		angle = vipsAngleD90
-	}
-	if orientation == 7 || orientation == 8 {
-		angle = vipsAngleD270
-	}
-	if orientation == 2 || orientation == 4 || orientation == 5 || orientation == 7 {
-		flip = true
 	}
 
 	return width, height, angle, flip
@@ -325,7 +324,7 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 		trimmed = true
 	}
 
-	srcWidth, srcHeight, angle, flip := extractMeta(img, po.AutoRotate)
+	srcWidth, srcHeight, angle, flip := extractMeta(img, po.Rotate, po.AutoRotate)
 	cropWidth, cropHeight := po.Crop.Width, po.Crop.Height
 
 	cropGravity := po.Crop.Gravity
@@ -356,7 +355,7 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 		}
 
 		// Update scale after scale-on-load
-		newWidth, newHeight, _, _ := extractMeta(img, po.AutoRotate)
+		newWidth, newHeight, _, _ := extractMeta(img, po.Rotate, po.AutoRotate)
 		if srcWidth > srcHeight {
 			scale = float64(srcWidth) * scale / float64(newWidth)
 		} else {
@@ -411,6 +410,10 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 		if err = img.Flip(); err != nil {
 			return err
 		}
+	}
+
+	if err = img.Rotate(po.Rotate); err != nil {
+		return err
 	}
 
 	dprWidth := scaleInt(po.Width, po.Dpr)

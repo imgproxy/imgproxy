@@ -136,6 +136,7 @@ type processingOptions struct {
 	Crop              cropOptions
 	Padding           paddingOptions
 	Trim              trimOptions
+	Rotate            int
 	Format            imageType
 	Quality           int
 	MaxBytes          int
@@ -222,6 +223,7 @@ func newProcessingOptions() *processingOptions {
 			Extend:            extendOptions{Enabled: false, Gravity: gravityOptions{Type: gravityCenter}},
 			Padding:           paddingOptions{Enabled: false},
 			Trim:              trimOptions{Enabled: false, Threshold: 10, Smart: true},
+			Rotate:            0,
 			Quality:           0,
 			MaxBytes:          0,
 			Format:            imageTypeUnknown,
@@ -664,6 +666,20 @@ func applyTrimOption(po *processingOptions, args []string) error {
 	return nil
 }
 
+func applyRotateOption(po *processingOptions, args []string) error {
+	if len(args) > 1 {
+		return fmt.Errorf("Invalid rotate arguments: %v", args)
+	}
+
+	if r, err := strconv.Atoi(args[0]); err == nil && r%90 == 0 {
+		po.Rotate = r
+	} else {
+		return fmt.Errorf("Invalid rotation angle: %s", args[0])
+	}
+
+	return nil
+}
+
 func applyQualityOption(po *processingOptions, args []string) error {
 	if len(args) > 1 {
 		return fmt.Errorf("Invalid quality arguments: %v", args)
@@ -924,6 +940,8 @@ func applyProcessingOption(po *processingOptions, name string, args []string) er
 		return applyCropOption(po, args)
 	case "trim", "t":
 		return applyTrimOption(po, args)
+	case "rotate", "rot":
+		return applyRotateOption(po, args)
 	case "padding", "pd":
 		return applyPaddingOption(po, args)
 	case "quality", "q":

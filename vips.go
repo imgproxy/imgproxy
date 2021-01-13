@@ -38,13 +38,6 @@ var vipsConf struct {
 	WatermarkOpacity      C.double
 }
 
-const (
-	vipsAngleD0   = C.VIPS_ANGLE_D0
-	vipsAngleD90  = C.VIPS_ANGLE_D90
-	vipsAngleD180 = C.VIPS_ANGLE_D180
-	vipsAngleD270 = C.VIPS_ANGLE_D270
-)
-
 func initVips() error {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
@@ -392,7 +385,9 @@ func (img *vipsImage) Orientation() C.int {
 func (img *vipsImage) Rotate(angle int) error {
 	var tmp *C.VipsImage
 
-	if C.vips_rot_go(img.VipsImage, &tmp, C.VipsAngle(angle)) != 0 {
+	vipsAngle := (angle / 90) % 4
+
+	if C.vips_rot_go(img.VipsImage, &tmp, C.VipsAngle(vipsAngle)) != 0 {
 		return vipsError()
 	}
 
