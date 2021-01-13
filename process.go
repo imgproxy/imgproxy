@@ -678,7 +678,7 @@ func getIcoData(imgdata *imageData) (*imageData, error) {
 
 func saveImageToFitBytes(po *processingOptions, img *vipsImage) ([]byte, context.CancelFunc, error) {
 	var diff float64
-	quality := po.Quality
+	quality := po.getQuality()
 
 	img.CopyMemory()
 
@@ -806,5 +806,5 @@ func processImage(ctx context.Context) ([]byte, context.CancelFunc, error) {
 		return saveImageToFitBytes(po, img)
 	}
 
-	return img.Save(po.Format, po.Quality)
+	return img.Save(po.Format, po.getQuality())
 }

@@ -75,6 +75,34 @@ func imageTypesEnvConfig(it *[]imageType, name string) {
 	}
 }
 
+func formatQualityEnvConfig(m map[imageType]int, name string) {
+	if env := os.Getenv(name); len(env) > 0 {
+		parts := strings.Split(env, ",")
+
+		for _, p := range parts {
+			i := strings.Index(p, "=")
+			if i < 0 {
+				logWarning("Invalid format quality string: %s", p)
+				continue
+			}
+
+			imgtypeStr, qStr := strings.TrimSpace(p[:i]), strings.TrimSpace(p[i+1:])
+
+			imgtype, ok := imageTypes[imgtypeStr]
+			if !ok {
+				logWarning("Invalid format: %s", p)
+			}
+
+			q, err := strconv.Atoi(qStr)
+			if err != nil || q <= 0 || q > 100 {
+				logWarning("Invalid quality: %s", p)
+			}
+
+			m[imgtype] = q
+		}
+	}
+}
+
 func hexEnvConfig(b *[]securityKey, name string) error {
 	var err error
 
@@ -197,6 +225,7 @@ type config struct {
 	PngQuantize           bool
 	PngQuantizationColors int
 	Quality               int
+	FormatQuality         map[imageType]int
 	GZipCompression       int
 	StripMetadata         bool
 	StripColorProfile     bool
@@ -291,6 +320,7 @@ var conf = config{
 	SignatureSize:                  32,
 	PngQuantizationColors:          256,
 	Quality:                        80,
+	FormatQuality:                  map[imageType]int{imageTypeAVIF: 50},
 	StripMetadata:                  true,
 	StripColorProfile:              true,
 	UserAgent:                      fmt.Sprintf("imgproxy/%s", version),
@@ -349,6 +379,7 @@ func configure() error {
 	boolEnvConfig(&conf.PngQuantize, "IMGPROXY_PNG_QUANTIZE")
 	intEnvConfig(&conf.PngQuantizationColors, "IMGPROXY_PNG_QUANTIZATION_COLORS")
 	intEnvConfig(&conf.Quality, "IMGPROXY_QUALITY")
+	formatQualityEnvConfig(conf.FormatQuality, "IMGPROXY_FORMAT_QUALITY")
 	intEnvConfig(&conf.GZipCompression, "IMGPROXY_GZIP_COMPRESSION")
 	boolEnvConfig(&conf.StripMetadata, "IMGPROXY_STRIP_METADATA")
 	boolEnvConfig(&conf.StripColorProfile, "IMGPROXY_STRIP_COLOR_PROFILE")

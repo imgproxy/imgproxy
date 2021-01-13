@@ -215,9 +215,9 @@ quality:%quality
 q:%quality
 ```
 
-Redefines quality of the resulting image, percentage.
+Redefines quality of the resulting image, percentage. When `0`, quality is assumed based on `IMGPROXY_QUALITY` and `IMGPROXY_FORMAT_QUALITY`.
 
-Default: value from the environment variable.
+Default: 0.
 
 #### Max Bytes
 

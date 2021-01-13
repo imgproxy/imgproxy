@@ -221,7 +221,7 @@ func newProcessingOptions() *processingOptions {
 			Extend:            extendOptions{Enabled: false, Gravity: gravityOptions{Type: gravityCenter}},
 			Padding:           paddingOptions{Enabled: false},
 			Trim:              trimOptions{Enabled: false, Threshold: 10, Smart: true},
-			Quality:           conf.Quality,
+			Quality:           0,
 			MaxBytes:          0,
 			Format:            imageTypeUnknown,
 			Background:        rgbColor{255, 255, 255},
@@ -238,6 +238,20 @@ func newProcessingOptions() *processingOptions {
 	po.UsedPresets = make([]string, 0, len(conf.Presets))
 
 	return &po
+}
+
+func (po *processingOptions) getQuality() int {
+	q := po.Quality
+
+	if q == 0 {
+		q = conf.FormatQuality[po.Format]
+	}
+
+	if q == 0 {
+		q = conf.Quality
+	}
+
+	return q
 }
 
 func (po *processingOptions) isPresetUsed(name string) bool {
@@ -653,7 +667,7 @@ func applyQualityOption(po *processingOptions, args []string) error {
 		return fmt.Errorf("Invalid quality arguments: %v", args)
 	}
 
-	if q, err := strconv.Atoi(args[0]); err == nil && q > 0 && q <= 100 {
+	if q, err := strconv.Atoi(args[0]); err == nil && q >= 0 && q <= 100 {
 		po.Quality = q
 	} else {
 		return fmt.Errorf("Invalid quality: %s", args[0])
