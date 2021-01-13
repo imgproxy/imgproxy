@@ -19,6 +19,7 @@
 - Fix non-UTF8 SVG detection.
 - Fix checking of connections in queue.
 - (pro) Fix video thumbnail orientation.
+- (pro) Fix EXIF fields titles in the `/info` response.
 
 ## [2.15.0] - 2020-09-03
 ### Added
