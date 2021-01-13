@@ -145,6 +145,7 @@ type processingOptions struct {
 	Sharpen           float32
 	StripMetadata     bool
 	StripColorProfile bool
+	AutoRotate        bool
 
 	CacheBuster string
 
@@ -231,6 +232,7 @@ func newProcessingOptions() *processingOptions {
 			Watermark:         watermarkOptions{Opacity: 1, Replicate: false, Gravity: gravityOptions{Type: gravityCenter}},
 			StripMetadata:     conf.StripMetadata,
 			StripColorProfile: conf.StripColorProfile,
+			AutoRotate:        conf.AutoRotate,
 		}
 	})
 
@@ -886,6 +888,16 @@ func applyStripColorProfileOption(po *processingOptions, args []string) error {
 	return nil
 }
 
+func applyAutoRotateOption(po *processingOptions, args []string) error {
+	if len(args) > 1 {
+		return fmt.Errorf("Invalid auto rotate arguments: %v", args)
+	}
+
+	po.AutoRotate = parseBoolOption(args[0])
+
+	return nil
+}
+
 func applyProcessingOption(po *processingOptions, name string, args []string) error {
 	switch name {
 	case "format", "f", "ext":
@@ -934,6 +946,8 @@ func applyProcessingOption(po *processingOptions, name string, args []string) er
 		return applyStripMetadataOption(po, args)
 	case "strip_color_profile", "scp":
 		return applyStripColorProfileOption(po, args)
+	case "auto_rotate", "ar":
+		return applyAutoRotateOption(po, args)
 	case "filename", "fn":
 		return applyFilenameOption(po, args)
 	}

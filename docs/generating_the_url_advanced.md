@@ -486,6 +486,15 @@ scp:%strip_color_profile
 
 When set to `1`, `t` or `true`, imgproxy will transform the embedded color profile (ICC) to sRGB and remove it from the image. Otherwise, imgproxy will try to keep it as is. Normally this is controlled by the [IMGPROXY_STRIP_COLOR_PROFILE](configuration.md#miscellaneous) configuration but this procesing option allows the configuration to be set for each request.
 
+#### Auto Rotate
+
+```
+auto_rotate:%auto_rotate
+ar:%auto_rotate
+```
+
+When set to `1`, `t` or `true`, imgproxy will automatically rotate images based onon the EXIF Orientation parameter (if available in the image meta data). The orientation tag will be removed from the image anyway. Normally this is controlled by the [IMGPROXY_AUTO_ROTATE](configuration.md#miscellaneous) configuration but this procesing option allows the configuration to be set for each request.
+
 #### Filename
 
 ```

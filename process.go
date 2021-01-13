@@ -34,12 +34,16 @@ func imageTypeGoodForWeb(imgtype imageType) bool {
 		imgtype != imageTypeBMP
 }
 
-func extractMeta(img *vipsImage) (int, int, int, bool) {
+func extractMeta(img *vipsImage, useOrientation bool) (int, int, int, bool) {
 	width := img.Width()
 	height := img.Height()
 
 	angle := vipsAngleD0
 	flip := false
+
+	if !useOrientation {
+		return width, height, angle, flip
+	}
 
 	orientation := img.Orientation()
 
@@ -321,7 +325,7 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 		trimmed = true
 	}
 
-	srcWidth, srcHeight, angle, flip := extractMeta(img)
+	srcWidth, srcHeight, angle, flip := extractMeta(img, po.AutoRotate)
 	cropWidth, cropHeight := po.Crop.Width, po.Crop.Height
 
 	cropGravity := po.Crop.Gravity
@@ -352,7 +356,7 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 		}
 
 		// Update scale after scale-on-load
-		newWidth, newHeight, _, _ := extractMeta(img)
+		newWidth, newHeight, _, _ := extractMeta(img, po.AutoRotate)
 		if srcWidth > srcHeight {
 			scale = float64(srcWidth) * scale / float64(newWidth)
 		} else {
@@ -399,10 +403,8 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 		return err
 	}
 
-	if angle != vipsAngleD0 {
-		if err = img.Rotate(angle); err != nil {
-			return err
-		}
+	if err = img.Rotate(angle); err != nil {
+		return err
 	}
 
 	if flip {

@@ -325,3 +325,4 @@ imgproxy can send logs to syslog, but this feature is disabled by default. To en
 * `IMGPROXY_DISABLE_SHRINK_ON_LOAD`: when `true`, disables shrink-on-load for JPEG and WebP. Allows to process the whole image in linear colorspace but dramatically slows down resizing and increases memory usage when working with large images.
 * `IMGPROXY_STRIP_METADATA`: when `true`, imgproxy will strip all metadata (EXIF, IPTC, etc.) from JPEG and WebP output images. Default: `true`.
 * `IMGPROXY_STRIP_COLOR_PROFILE`: when `true`, imgproxy will transform the embedded color profile (ICC) to sRGB and remove it from the image. Otherwise, imgproxy will try to keep it as is. Default: `true`.
+* `IMGPROXY_AUTO_ROTATE`: when `true`, imgproxy will auto rotate images based on the EXIF Orientation parameter (if available in the image meta data). The orientation tag will be removed from the image anyway. Default: `true`.

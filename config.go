@@ -229,6 +229,7 @@ type config struct {
 	GZipCompression       int
 	StripMetadata         bool
 	StripColorProfile     bool
+	AutoRotate            bool
 
 	EnableWebpDetection bool
 	EnforceWebp         bool
@@ -323,6 +324,7 @@ var conf = config{
 	FormatQuality:                  map[imageType]int{imageTypeAVIF: 50},
 	StripMetadata:                  true,
 	StripColorProfile:              true,
+	AutoRotate:                     true,
 	UserAgent:                      fmt.Sprintf("imgproxy/%s", version),
 	Presets:                        make(presets),
 	WatermarkOpacity:               1,
@@ -383,6 +385,7 @@ func configure() error {
 	intEnvConfig(&conf.GZipCompression, "IMGPROXY_GZIP_COMPRESSION")
 	boolEnvConfig(&conf.StripMetadata, "IMGPROXY_STRIP_METADATA")
 	boolEnvConfig(&conf.StripColorProfile, "IMGPROXY_STRIP_COLOR_PROFILE")
+	boolEnvConfig(&conf.AutoRotate, "IMGPROXY_AUTO_ROTATE")
 
 	boolEnvConfig(&conf.EnableWebpDetection, "IMGPROXY_ENABLE_WEBP_DETECTION")
 	boolEnvConfig(&conf.EnforceWebp, "IMGPROXY_ENFORCE_WEBP")
