@@ -477,8 +477,6 @@ sm:%strip_metadata
 
 When set to `1`, `t` or `true`, imgproxy will strip the metadata (EXIF, IPTC, etc.) on JPEG and WebP output images. Normally this is controlled by the [IMGPROXY_STRIP_METADATA](configuration.md#miscellaneous) configuration but this procesing option allows the configuration to be set for each request.
 
-Default: `false`
-
 #### Strip Color Profile
 
 ```
@@ -487,8 +485,6 @@ scp:%strip_color_profile
 ```
 
 When set to `1`, `t` or `true`, imgproxy will transform the embedded color profile (ICC) to sRGB and remove it from the image. Otherwise, imgproxy will try to keep it as is. Normally this is controlled by the [IMGPROXY_STRIP_COLOR_PROFILE](configuration.md#miscellaneous) configuration but this procesing option allows the configuration to be set for each request.
-
-Default: `false`
 
 #### Filename
 
