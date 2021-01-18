@@ -95,8 +95,8 @@ type extendOptions struct {
 }
 
 type cropOptions struct {
-	Width   int
-	Height  int
+	Width   float64
+	Height  float64
 	Gravity gravityOptions
 }
 
@@ -571,13 +571,17 @@ func applyCropOption(po *processingOptions, args []string) error {
 		return fmt.Errorf("Invalid crop arguments: %v", args)
 	}
 
-	if err := parseDimension(&po.Crop.Width, "crop width", args[0]); err != nil {
-		return err
+	if w, err := strconv.ParseFloat(args[0], 64); err == nil && w >= 0 {
+		po.Crop.Width = w
+	} else {
+		return fmt.Errorf("Invalid crop width: %s", args[0])
 	}
 
 	if len(args) > 1 {
-		if err := parseDimension(&po.Crop.Height, "crop height", args[1]); err != nil {
-			return err
+		if h, err := strconv.ParseFloat(args[1], 64); err == nil && h >= 0 {
+			po.Crop.Height = h
+		} else {
+			return fmt.Errorf("Invalid crop height: %s", args[1])
 		}
 	}
 

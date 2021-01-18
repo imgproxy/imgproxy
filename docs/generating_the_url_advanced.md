@@ -167,7 +167,10 @@ c:%width:%height:%gravity
 
 Defines an area of the image to be processed (crop before resize).
 
-* `width` and `height` define the size of the area. When `width` or `height` is set to `0`, imgproxy will use the full width/height of the source image.
+* `width` and `height` define the size of the area:
+  * When `width` or `height` is greater than or equal to `1`, imgproxy treats it as an absolute value.
+  * When `width` or `height` is less than `1`, imgproxy treats it as a relative value.
+  * When `width` or `height` is set to `0`, imgproxy will use the full width/height of the source image.
 * `gravity` _(optional)_ accepts the same values as [gravity](#gravity) option. When `gravity` is not set, imgproxy will use the value of the [gravity](#gravity) option.
 
 #### Padding

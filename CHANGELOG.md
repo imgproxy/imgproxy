@@ -8,6 +8,7 @@
 - `IMGPROXY_FORMAT_QUALITY` config.
 - `IMGPROXY_AUTO_ROTATE` config and [auto_rotate](https://docs.imgproxy.net/#/generating_the_url_advanced?id=auto-rotate) processing option.
 - [rotate](https://docs.imgproxy.net/#/generating_the_url_advanced?id=rotate) processing option.
+- `width` and `height` arguments of the [crop](https://docs.imgproxy.net/#/generating_the_url_advanced?id=crop) processing option can be less than `1` that is treated by imgproxy as a relative value (a.k.a. crop by percentage).
 - (pro) Remove Adobe Illustrator garbage from SVGs.
 
 ### Changed

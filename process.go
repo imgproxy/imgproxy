@@ -163,6 +163,17 @@ func calcJpegShink(scale float64, imgtype imageType) int {
 	return 1
 }
 
+func calcCropSize(orig int, crop float64) int {
+	switch {
+	case crop == 0.0:
+		return 0
+	case crop >= 1.0:
+		return int(crop)
+	default:
+		return maxInt(1, scaleInt(orig, crop))
+	}
+}
+
 func calcPosition(width, height, innerWidth, innerHeight int, gravity *gravityOptions, allowOverflow bool) (left, top int) {
 	if gravity.Type == gravityFocusPoint {
 		pointX := scaleInt(width, gravity.X)
@@ -325,7 +336,9 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 	}
 
 	srcWidth, srcHeight, angle, flip := extractMeta(img, po.Rotate, po.AutoRotate)
-	cropWidth, cropHeight := po.Crop.Width, po.Crop.Height
+
+	cropWidth := calcCropSize(srcWidth, po.Crop.Width)
+	cropHeight := calcCropSize(srcHeight, po.Crop.Height)
 
 	cropGravity := po.Crop.Gravity
 	if cropGravity.Type == gravityUnknown {
@@ -337,8 +350,12 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 
 	scale := calcScale(widthToScale, heightToScale, po, imgtype)
 
-	cropWidth = scaleInt(cropWidth, scale)
-	cropHeight = scaleInt(cropHeight, scale)
+	if cropWidth > 0 {
+		cropWidth = maxInt(1, scaleInt(cropWidth, scale))
+	}
+	if cropHeight > 0 {
+		cropHeight = maxInt(1, scaleInt(cropHeight, scale))
+	}
 	if cropGravity.Type != gravityFocusPoint {
 		cropGravity.X *= scale
 		cropGravity.Y *= scale
@@ -773,7 +790,7 @@ func processImage(ctx context.Context) ([]byte, context.CancelFunc, error) {
 	if po.ResizingType == resizeCrop {
 		logWarning("`crop` resizing type is deprecated and will be removed in future versions. Use `crop` processing option instead")
 
-		po.Crop.Width, po.Crop.Height = po.Width, po.Height
+		po.Crop.Width, po.Crop.Height = float64(po.Width), float64(po.Height)
 
 		po.ResizingType = resizeFit
 		po.Width, po.Height = 0, 0
