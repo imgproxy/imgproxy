@@ -49,48 +49,9 @@ Massive processing of remote images is a potentially dangerous thing, security-w
 
 * imgproxy supports authorization by an HTTP header. That prevents using imgproxy directly by an attacker but allows to use it through a CDN or a caching server — just by adding a header to a proxy or CDN config.
 
-## Documentation
+## Usage
 
-1. [Getting started](https://docs.imgproxy.net/#/GETTING_STARTED)
-2. [Installation](https://docs.imgproxy.net/#/installation)
-   * [Docker](https://docs.imgproxy.net/#/installation?id=docker)
-   * [Helm](https://docs.imgproxy.net/#/installation?id=helm)
-   * [Heroku](https://docs.imgproxy.net/#/installation?id=heroku)
-   * [Packages](https://docs.imgproxy.net/#/installation?id=packages)
-   * [From the source](https://docs.imgproxy.net/#/installation?id=from-the-source)
-3. [Configuration](https://docs.imgproxy.net/#/configuration)
-   * [URL signature](https://docs.imgproxy.net/#/configuration?id=url-signature)
-   * [Server](https://docs.imgproxy.net/#/configuration?id=server)
-   * [Security](https://docs.imgproxy.net/#/configuration?id=security)
-   * [Compression](https://docs.imgproxy.net/#/configuration?id=compression)
-   * [WebP support detection](https://docs.imgproxy.net/#/configuration?id=webp-support-detection)
-   * [Client Hints support](https://docs.imgproxy.net/#/configuration?id=client-hints-support)
-   * [Watermark](https://docs.imgproxy.net/#/configuration?id=watermark)
-   * [Presets](https://docs.imgproxy.net/#/configuration?id=presets)
-   * [Serving local files](https://docs.imgproxy.net/#/configuration?id=serving-local-files)
-   * [Serving files from Amazon S3](https://docs.imgproxy.net/#/configuration?id=serving-files-from-amazon-s3)
-   * [Serving files from Google Cloud Storage](https://docs.imgproxy.net/#/configuration?id=serving-files-from-google-cloud-storage)
-   * [New Relic metrics](https://docs.imgproxy.net/#/configuration?id=new-relic-metrics)
-   * [Prometheus metrics](https://docs.imgproxy.net/#/configuration?id=prometheus-metrics)
-   * [Error reporting](https://docs.imgproxy.net/#/configuration?id=error-reporting)
-   * [Log](https://docs.imgproxy.net/#/configuration?id=log)
-   * [Memory usage tweaks](https://docs.imgproxy.net/#/configuration?id=memory-usage-tweaks)
-   * [Miscellaneous](https://docs.imgproxy.net/#/configuration?id=miscellaneous)
-4. Generating the URL
-   * [Basic](https://docs.imgproxy.net/#/generating_the_url_basic)
-   * [Advanced](https://docs.imgproxy.net/#/generating_the_url_advanced)
-   * [Signing the URL](https://docs.imgproxy.net/#/signing_the_url)
-5. [Watermark](https://docs.imgproxy.net/#/watermark)
-6. [Presets](https://docs.imgproxy.net/#/presets)
-7. [Serving local files](https://docs.imgproxy.net/#/serving_local_files)
-8. [Serving files from Amazon S3](https://docs.imgproxy.net/#/serving_files_from_s3)
-9. [Serving files from Google Cloud Storage](https://docs.imgproxy.net/#/serving_files_from_google_cloud_storage)
-10. [New Relic](https://docs.imgproxy.net/#/new_relic)
-11. [Prometheus](https://docs.imgproxy.net/#/prometheus)
-12. [Image formats support](https://docs.imgproxy.net/#/image_formats_support)
-13. [About processing pipeline](https://docs.imgproxy.net/#/about_processing_pipeline)
-14. [Health check](https://docs.imgproxy.net/#/healthcheck)
-15. [Memory usage tweaks](https://docs.imgproxy.net/#/memory_usage_tweaks)
+Check out our 📑 [Documentation](https://docs.imgproxy.net).
 
 ## Author
 
