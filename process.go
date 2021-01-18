@@ -34,6 +34,13 @@ func imageTypeGoodForWeb(imgtype imageType) bool {
 		imgtype != imageTypeBMP
 }
 
+func canSwitchFormat(src, dst, want imageType) bool {
+	return imageTypeSaveSupport(want) &&
+		(!vipsSupportAnimation(src) ||
+			(dst != imageTypeUnknown && !vipsSupportAnimation(dst)) ||
+			vipsSupportAnimation(want))
+}
+
 func extractMeta(img *vipsImage, baseAngle int, useOrientation bool) (int, int, int, bool) {
 	width := img.Width()
 	height := img.Height()
@@ -745,18 +752,18 @@ func processImage(ctx context.Context) ([]byte, context.CancelFunc, error) {
 	switch {
 	case po.Format == imageTypeUnknown:
 		switch {
-		case po.PreferAvif && imageTypeSaveSupport(imageTypeAVIF):
+		case po.PreferAvif && canSwitchFormat(imgdata.Type, imageTypeUnknown, imageTypeAVIF):
 			po.Format = imageTypeAVIF
-		case po.PreferWebP && imageTypeSaveSupport(imageTypeWEBP):
+		case po.PreferWebP && canSwitchFormat(imgdata.Type, imageTypeUnknown, imageTypeWEBP):
 			po.Format = imageTypeWEBP
 		case imageTypeSaveSupport(imgdata.Type) && imageTypeGoodForWeb(imgdata.Type):
 			po.Format = imgdata.Type
 		default:
 			po.Format = imageTypeJPEG
 		}
-	case po.EnforceAvif && imageTypeSaveSupport(imageTypeAVIF):
+	case po.EnforceAvif && canSwitchFormat(imgdata.Type, po.Format, imageTypeAVIF):
 		po.Format = imageTypeAVIF
-	case po.EnforceWebP && imageTypeSaveSupport(imageTypeWEBP):
+	case po.EnforceWebP && canSwitchFormat(imgdata.Type, po.Format, imageTypeWEBP):
 		po.Format = imageTypeWEBP
 	}
 

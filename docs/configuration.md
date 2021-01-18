@@ -132,6 +132,8 @@ imgproxy can use the `Accept` HTTP header to detect if the browser supports AVIF
 
 **📝Note:** imgproxy prefers AVIF over WebP. This means that if both AVIF and WebP detection/enforcement are enabled and the browser supports both of them, AVIF will be used.
 
+**📝Note:** If both the source and the requested image formats support animation and AVIF detection/enforcement is enabled, AVIF won't be used as AVIF sequence is not supported yet.
+
 **📝Note:** When AVIF/WebP support detection is enabled, please take care to configure your CDN or caching proxy to take the `Accept` HTTP header into account while caching.
 
 **⚠️Warning:** Headers cannot be signed. This means that an attacker can bypass your CDN cache by changing the `Accept` HTTP headers. Have this in mind when configuring your production caching setup.
