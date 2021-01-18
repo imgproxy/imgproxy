@@ -233,6 +233,8 @@ type config struct {
 
 	EnableWebpDetection bool
 	EnforceWebp         bool
+	EnableAvifDetection bool
+	EnforceAvif         bool
 	EnableClientHints   bool
 
 	SkipProcessingFormats []imageType
@@ -389,6 +391,8 @@ func configure() error {
 
 	boolEnvConfig(&conf.EnableWebpDetection, "IMGPROXY_ENABLE_WEBP_DETECTION")
 	boolEnvConfig(&conf.EnforceWebp, "IMGPROXY_ENFORCE_WEBP")
+	boolEnvConfig(&conf.EnableAvifDetection, "IMGPROXY_ENABLE_AVIF_DETECTION")
+	boolEnvConfig(&conf.EnforceAvif, "IMGPROXY_ENFORCE_AVIF")
 	boolEnvConfig(&conf.EnableClientHints, "IMGPROXY_ENABLE_CLIENT_HINTS")
 
 	imageTypesEnvConfig(&conf.SkipProcessingFormats, "IMGPROXY_SKIP_PROCESSING_FORMATS")

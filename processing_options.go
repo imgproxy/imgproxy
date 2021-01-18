@@ -154,6 +154,8 @@ type processingOptions struct {
 
 	PreferWebP  bool
 	EnforceWebP bool
+	PreferAvif  bool
+	EnforceAvif bool
 
 	Filename string
 
@@ -1031,6 +1033,11 @@ func defaultProcessingOptions(headers *processingHeaders) (*processingOptions, e
 	if strings.Contains(headers.Accept, "image/webp") {
 		po.PreferWebP = conf.EnableWebpDetection || conf.EnforceWebp
 		po.EnforceWebP = conf.EnforceWebp
+	}
+
+	if strings.Contains(headers.Accept, "image/avif") {
+		po.PreferAvif = conf.EnableAvifDetection || conf.EnforceAvif
+		po.EnforceAvif = conf.EnforceAvif
 	}
 
 	if conf.EnableClientHints && len(headers.ViewportWidth) > 0 {

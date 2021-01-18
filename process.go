@@ -742,8 +742,11 @@ func processImage(ctx context.Context) ([]byte, context.CancelFunc, error) {
 	po := getProcessingOptions(ctx)
 	imgdata := getImageData(ctx)
 
-	if po.Format == imageTypeUnknown {
+	switch {
+	case po.Format == imageTypeUnknown:
 		switch {
+		case po.PreferAvif && imageTypeSaveSupport(imageTypeAVIF):
+			po.Format = imageTypeAVIF
 		case po.PreferWebP && imageTypeSaveSupport(imageTypeWEBP):
 			po.Format = imageTypeWEBP
 		case imageTypeSaveSupport(imgdata.Type) && imageTypeGoodForWeb(imgdata.Type):
@@ -751,7 +754,9 @@ func processImage(ctx context.Context) ([]byte, context.CancelFunc, error) {
 		default:
 			po.Format = imageTypeJPEG
 		}
-	} else if po.EnforceWebP && imageTypeSaveSupport(imageTypeWEBP) {
+	case po.EnforceAvif && imageTypeSaveSupport(imageTypeAVIF):
+		po.Format = imageTypeAVIF
+	case po.EnforceWebP && imageTypeSaveSupport(imageTypeWEBP):
 		po.Format = imageTypeWEBP
 	}
 

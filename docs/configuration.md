@@ -121,14 +121,18 @@ Also you may want imgproxy to respond with the same error message that it writes
 * `IMGPROXY_GIF_OPTIMIZE_FRAMES`: <img class='pro-badge' src='assets/pro.svg' alt='pro' /> when true, enables GIF frames optimization. This may produce a smaller result, but may increase compression time.
 * `IMGPROXY_GIF_OPTIMIZE_TRANSPARENCY`: <img class='pro-badge' src='assets/pro.svg' alt='pro' /> when true, enables GIF transparency optimization. This may produce a smaller result, but may increase compression time.
 
-## WebP support detection
+## AVIF/WebP support detection
 
-imgproxy can use the `Accept` HTTP header to detect if the browser supports WebP and use it as the default format. This feature is disabled by default and can be enabled by the following options:
+imgproxy can use the `Accept` HTTP header to detect if the browser supports AVIF or WebP and use it as the default format. This feature is disabled by default and can be enabled by the following options:
 
 * `IMGPROXY_ENABLE_WEBP_DETECTION`: enables WebP support detection. When the file extension is omitted in the imgproxy URL and browser supports WebP, imgproxy will use it as the resulting format;
 * `IMGPROXY_ENFORCE_WEBP`: enables WebP support detection and enforces WebP usage. If the browser supports WebP, it will be used as resulting format even if another extension is specified in the imgproxy URL.
+* `IMGPROXY_ENABLE_AVIF_DETECTION`: enables AVIF support detection. When the file extension is omitted in the imgproxy URL and browser supports AVIF, imgproxy will use it as the resulting format;
+* `IMGPROXY_ENFORCE_AVIF`: enables AVIF support detection and enforces AVIF usage. If the browser supports AVIF, it will be used as resulting format even if another extension is specified in the imgproxy URL.
 
-When WebP support detection is enabled, please take care to configure your CDN or caching proxy to take the `Accept` HTTP header into account while caching.
+**📝Note:** imgproxy prefers AVIF over WebP. This means that if both AVIF and WebP detection/enforcement are enabled and the browser supports both of them, AVIF will be used.
+
+**📝Note:** When AVIF/WebP support detection is enabled, please take care to configure your CDN or caching proxy to take the `Accept` HTTP header into account while caching.
 
 **⚠️Warning:** Headers cannot be signed. This means that an attacker can bypass your CDN cache by changing the `Accept` HTTP headers. Have this in mind when configuring your production caching setup.
 
