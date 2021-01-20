@@ -133,13 +133,13 @@ Default: `false:ce:0:0`
 #### Gravity
 
 ```
-gravity:%gravity_type:%x_offset:%y_offset
-g:%gravity_type:%x_offset:%y_offset
+gravity:%type:%x_offset:%y_offset
+g:%type:%x_offset:%y_offset
 ```
 
 When imgproxy needs to cut some parts of the image, it is guided by the gravity.
 
-* `gravity_type` - specifies the gravity type. Available values:
+* `type` - specifies the gravity type. Available values:
   * `no`: north (top edge);
   * `so`: south (bottom edge);
   * `ea`: east (right edge);
