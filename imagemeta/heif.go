@@ -1,12 +1,12 @@
 package imagemeta
 
 import (
-	"bufio"
 	"bytes"
 	"encoding/binary"
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 )
 
 const heifBoxHeaderSize = int64(8)
@@ -14,6 +14,10 @@ const heifBoxHeaderSize = int64(8)
 var heicBrand = []byte("heic")
 var avifBrand = []byte("avif")
 var heifPict = []byte("pict")
+
+type heifDiscarder interface {
+	Discard(n int) (discarded int, err error)
+}
 
 type heifData struct {
 	Format        string
@@ -28,9 +32,9 @@ func heifReadN(r io.Reader, n int64) (b []byte, err error) {
 	if buf, ok := r.(*bytes.Buffer); ok {
 		b = buf.Next(int(n))
 		if len(b) == 0 {
-			return b, io.EOF
+			err = io.EOF
 		}
-		return b, nil
+		return
 	}
 
 	b = make([]byte, n)
@@ -44,7 +48,12 @@ func heifDiscardN(r io.Reader, n int64) error {
 		return nil
 	}
 
-	_, err := bufio.NewReader(r).Discard(int(n))
+	if rd, ok := r.(heifDiscarder); ok {
+		_, err := rd.Discard(int(n))
+		return err
+	}
+
+	_, err := io.CopyN(ioutil.Discard, r, n)
 	return err
 }
 
