@@ -423,8 +423,8 @@ Allows redefining JPEG saving options. All arguments have the same meaning as [A
 #### PNG options<img class='pro-badge' src='assets/pro.svg' alt='pro' />
 
 ```
-png_options:%png_interlaced:%png_quantize:%png_quantization_colors
-pngo:%png_interlaced:%png_quantize:%png_quantization_colors
+png_options:%interlaced:%quantize:%quantization_colors
+pngo:%interlaced:%quantize:%quantization_colors
 ```
 
 Allows redefining PNG saving options. All arguments have the same meaning as [Advanced PNG compression](configuration.md#advanced-png-compression) configs. All arguments are optional and can be omitted.
@@ -432,8 +432,8 @@ Allows redefining PNG saving options. All arguments have the same meaning as [Ad
 #### GIF options<img class='pro-badge' src='assets/pro.svg' alt='pro' />
 
 ```
-gif_options:%gif_optimize_frames:%gif_optimize_transparency
-gifo:%gif_optimize_frames:%gif_optimize_transparency
+gif_options:%optimize_frames:%optimize_transparency
+gifo:%optimize_frames:%optimize_transparency
 ```
 
 Allows redefining GIF saving options. All arguments have the same meaning as [Advanced GIF compression](configuration.md#advanced-gif-compression) configs. All arguments are optional and can be omitted.
