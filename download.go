@@ -52,7 +52,7 @@ func initDownloading() error {
 		MaxIdleConns:        conf.Concurrency,
 		MaxIdleConnsPerHost: conf.Concurrency,
 		DisableCompression:  true,
-		Dial:                (&net.Dialer{KeepAlive: 600 * time.Second}).Dial,
+		DialContext:         (&net.Dialer{KeepAlive: 600 * time.Second}).DialContext,
 	}
 
 	if conf.IgnoreSslVerification {
