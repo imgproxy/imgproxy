@@ -65,6 +65,7 @@ func initPrometheus() {
 		Namespace: conf.PrometheusNamespace,
 		Name:      "buffer_size_bytes",
 		Help:      "A histogram of the buffer size in bytes.",
+		Buckets:   prometheus.ExponentialBuckets(1024, 2, 14),
 	}, []string{"type"})
 
 	prometheusBufferDefaultSize = prometheus.NewGaugeVec(prometheus.GaugeOpts{
