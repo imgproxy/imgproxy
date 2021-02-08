@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+
+## [2.16.0] - 2021-02-08
 ### Added
 - AVIF support.
 - Azure Blob Storage support.
