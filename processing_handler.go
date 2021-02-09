@@ -68,8 +68,11 @@ func respondWithImage(ctx context.Context, reqID string, r *http.Request, rw htt
 	rw.Header().Set("Content-Disposition", contentDisposition)
 
 	if conf.SetCanonicalHeader {
-		linkHeader := fmt.Sprintf(`<%s>; rel="canonical"`, getImageURL(ctx))
-		rw.Header().Set("Link", linkHeader)
+		origin := getImageURL(ctx)
+		if strings.HasPrefix(origin, "https://") || strings.HasPrefix(origin, "http://") {
+			linkHeader := fmt.Sprintf(`<%s>; rel="canonical"`, origin)
+			rw.Header().Set("Link", linkHeader)
+		}
 	}
 
 	var cacheControl, expires string
