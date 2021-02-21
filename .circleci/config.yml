@@ -8,7 +8,7 @@ workflows:
       - lint:
           requires:
             - checkout_code
-          go_version: "1.15"
+          go_version: "1.16"
           vips_version: "8.10"
       - build:
           name: go<< matrix.go_version >>_vips<< matrix.vips_version >>
@@ -16,7 +16,7 @@ workflows:
             - checkout_code
           matrix:
             parameters:
-              go_version: ["1.15", "1.14", "1.13"]
+              go_version: ["1.16", "1.15", "1.14", "1.13"]
               vips_version: ["8.10", "8.9", "8.8"]
 
   release:
