@@ -28,6 +28,9 @@
 #define VIPS_SUPPORT_WEBP_ANIMATION \
   (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 8))
 
+#define VIPS_SUPPORT_ARRAY_HEADERS \
+  (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 9))
+
 #define VIPS_SUPPORT_HEIF \
   (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 8))
 
@@ -243,6 +246,23 @@ vips_is_animated(VipsImage * in) {
   return( vips_image_get_typeof(in, "page-height") != G_TYPE_INVALID &&
           vips_image_get_typeof(in, "gif-delay") != G_TYPE_INVALID &&
           vips_image_get_typeof(in, "gif-loop") != G_TYPE_INVALID );
+}
+
+int
+vips_image_get_array_int_go(VipsImage *image, const char *name, int **out, int *n) {
+#if VIPS_SUPPORT_ARRAY_HEADERS
+  return vips_image_get_array_int(image, name, out, n);
+#else
+  vips_error("vips_image_get_array_int_go", "Array headers are not supported (libvips 8.9+ reuired)");
+  return 1;
+#endif
+}
+
+void
+vips_image_set_array_int_go(VipsImage *image, const char *name, const int *array, int n) {
+#if VIPS_SUPPORT_ARRAY_HEADERS
+  vips_image_set_array_int(image, name, array, n);
+#endif
 }
 
 gboolean

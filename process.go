@@ -595,19 +595,30 @@ func transformAnimated(ctx context.Context, img *vipsImage, data []byte, po *pro
 	}
 
 	// Vips 8.8+ supports n-pages and doesn't load the whole animated image on header access
-	if nPages, _ := img.GetInt("n-pages"); nPages > framesCount {
+	if nPages, _ := img.GetIntDefault("n-pages", 0); nPages > framesCount {
 		// Load only the needed frames
 		if err = img.Load(data, imgtype, 1, 1.0, framesCount); err != nil {
 			return err
 		}
 	}
 
-	delay, err := img.GetInt("gif-delay")
+	delay, err := img.GetIntSliceDefault("delay", nil)
 	if err != nil {
 		return err
 	}
 
-	loop, err := img.GetInt("gif-loop")
+	loop, err := img.GetIntDefault("loop", 0)
+	if err != nil {
+		return err
+	}
+
+	// Legacy fields
+	// TODO: remove this in major update
+	gifLoop, err := img.GetIntDefault("gif-loop", -1)
+	if err != nil {
+		return err
+	}
+	gifDelay, err := img.GetIntDefault("gif-delay", -1)
 	if err != nil {
 		return err
 	}
@@ -661,10 +672,28 @@ func transformAnimated(ctx context.Context, img *vipsImage, data []byte, po *pro
 		return err
 	}
 
+	if len(delay) == 0 {
+		delay = make([]int, framesCount)
+		for i := range delay {
+			delay[i] = 40
+		}
+	} else if len(delay) > framesCount {
+		delay = delay[:framesCount]
+	}
+
 	img.SetInt("page-height", frames[0].Height())
-	img.SetInt("gif-delay", delay)
-	img.SetInt("gif-loop", loop)
+	img.SetIntSlice("delay", delay)
+	img.SetInt("loop", loop)
 	img.SetInt("n-pages", framesCount)
+
+	// Legacy fields
+	// TODO: remove this in major update
+	if gifLoop >= 0 {
+		img.SetInt("gif-loop", gifLoop)
+	}
+	if gifDelay >= 0 {
+		img.SetInt("gif-delay", gifDelay)
+	}
 
 	return nil
 }

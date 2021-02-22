@@ -13,6 +13,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"math"
 	"os"
 	"runtime"
 	"unsafe"
@@ -330,8 +331,54 @@ func (img *vipsImage) GetInt(name string) (int, error) {
 	return int(i), nil
 }
 
+func (img *vipsImage) GetIntDefault(name string, def int) (int, error) {
+	if C.vips_image_get_typeof(img.VipsImage, cachedCString(name)) == 0 {
+		return def, nil
+	}
+
+	return img.GetInt(name)
+}
+
+func (img *vipsImage) GetIntSlice(name string) ([]int, error) {
+	var ptr unsafe.Pointer
+	size := C.int(0)
+
+	if C.vips_image_get_array_int_go(img.VipsImage, cachedCString(name), (**C.int)(unsafe.Pointer(&ptr)), &size) != 0 {
+		return nil, vipsError()
+	}
+
+	if size == 0 {
+		return []int{}, nil
+	}
+
+	cOut := (*[math.MaxInt32]C.int)(ptr)[:int(size):int(size)]
+	out := make([]int, int(size))
+
+	for i, el := range cOut {
+		out[i] = int(el)
+	}
+
+	return out, nil
+}
+
+func (img *vipsImage) GetIntSliceDefault(name string, def []int) ([]int, error) {
+	if C.vips_image_get_typeof(img.VipsImage, cachedCString(name)) == 0 {
+		return def, nil
+	}
+
+	return img.GetIntSlice(name)
+}
+
 func (img *vipsImage) SetInt(name string, value int) {
 	C.vips_image_set_int(img.VipsImage, cachedCString(name), C.int(value))
+}
+
+func (img *vipsImage) SetIntSlice(name string, value []int) {
+	in := make([]C.int, len(value))
+	for i, el := range value {
+		in[i] = C.int(el)
+	}
+	C.vips_image_set_array_int_go(img.VipsImage, cachedCString(name), &in[0], C.int(len(value)))
 }
 
 func (img *vipsImage) CastUchar() error {
