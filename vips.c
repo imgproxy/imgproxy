@@ -168,7 +168,21 @@ vips_gifload_go(void *buf, size_t len, int pages, VipsImage **out) {
 int
 vips_svgload_go(void *buf, size_t len, double scale, VipsImage **out) {
   #if VIPS_SUPPORT_SVG
-    return vips_svgload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, "scale", scale, NULL);
+    // libvips limits the minimal scale to 0.001, so we have to scale down dpi
+    // for lower scale values
+    double dpi = 72.0;
+    if (scale < 0.001) {
+      dpi *= VIPS_MAX(scale / 0.001, 0.001);
+      scale = 0.001;
+    }
+
+    return vips_svgload_buffer(
+      buf, len, out,
+      "access", VIPS_ACCESS_SEQUENTIAL,
+      "scale", scale,
+      "dpi", dpi,
+      NULL
+    );
   #else
     vips_error("vips_svgload_go", "Loading SVG is not supported (libvips 8.5+ reuired)");
     return 1;
