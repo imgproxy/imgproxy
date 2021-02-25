@@ -4,6 +4,7 @@
 ### Fix
 - Fix delays and loop numbers of animated images.
 - Fix scale-on-load of huge SVGs.
+- (pro) Fix loading of PDFs with transparent background.
 
 ## [2.16.0] - 2021-02-08
 ### Added
