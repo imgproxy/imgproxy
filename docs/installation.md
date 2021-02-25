@@ -64,7 +64,7 @@ brew install imgproxy
 
 ## From the source
 
-You can get imgproxy source by clonning the GitHub repo:
+You can get imgproxy source by cloning the GitHub repo:
 
 ```bash
 git clone https://github.com/imgproxy/imgproxy.git
