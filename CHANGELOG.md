@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+
+## [2.16.1] - 2021-03-02
 ### Fix
 - Fix delays and loop numbers of animated images.
 - Fix scale-on-load of huge SVGs.
