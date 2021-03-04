@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [2.16.2] - 2021-03-04
+### Change
+- Updated dependencies in Docker.
+
 ## [2.16.1] - 2021-03-02
 ### Fix
 - Fix delays and loop numbers of animated images.
