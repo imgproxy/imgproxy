@@ -209,6 +209,7 @@ type config struct {
 
 	TTL                     int
 	CacheControlPassthrough bool
+	SetCanonicalHeader      bool
 
 	SoReuseport bool
 
@@ -360,6 +361,7 @@ func configure() error {
 
 	intEnvConfig(&conf.TTL, "IMGPROXY_TTL")
 	boolEnvConfig(&conf.CacheControlPassthrough, "IMGPROXY_CACHE_CONTROL_PASSTHROUGH")
+	boolEnvConfig(&conf.SetCanonicalHeader, "IMGPROXY_SET_CANONICAL_HEADER")
 
 	boolEnvConfig(&conf.SoReuseport, "IMGPROXY_SO_REUSEPORT")
 
