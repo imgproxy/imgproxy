@@ -206,6 +206,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	defer stats.DecRequestsInProgress()
 
 	ctx := r.Context()
+        r = beforeProcessing(r)
 
 	if queueSem != nil {
 		token, aquired := queueSem.TryAquire()
@@ -430,6 +431,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	checkErr(ctx, "processing", err)
 
 	defer resultData.Close()
+        beforeResponse(imageData)
 
 	checkErr(ctx, "timeout", router.CheckTimeout(ctx))
 

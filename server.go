@@ -71,7 +71,7 @@ func startServer(cancel context.CancelFunc) (*http.Server, error) {
 	}
 
 	go func() {
-		log.Infof("Starting server at %s", config.Bind)
+		log.Infof("Starting pushd-imgproxy server at %s", config.Bind)
 		if err := s.Serve(l); err != nil && err != http.ErrServerClosed {
 			log.Error(err)
 		}

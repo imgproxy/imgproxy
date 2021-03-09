@@ -31,8 +31,8 @@ RUN apt-get update \
   && ln -s /usr/lib/$(uname -m)-linux-gnu/libtcmalloc_minimal.so.4 /usr/local/lib/libtcmalloc_minimal.so \
   && rm -rf /var/lib/apt/lists/*
 
-COPY --from=0 /usr/local/bin/imgproxy /usr/local/bin/
-COPY --from=0 /usr/local/lib /usr/local/lib
+COPY --from=build /usr/local/bin/imgproxy /usr/local/bin/
+COPY --from=build /usr/local/lib /usr/local/lib
 
 COPY docker/entrypoint.sh /usr/local/bin/
 

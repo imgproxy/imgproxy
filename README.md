@@ -101,4 +101,7 @@ See [LICENSE](https://github.com/imgproxy/imgproxy/blob/master/LICENSE) for the 
 
 ## Security Contact
 
-To report a security vulnerability, please contact us at security@imgproxy.net. We will coordinate the fix and disclosure.
+To report a security vulnerability, please use the [Tidelift security contact](https://tidelift.com/security). Tidelift will coordinate the fix and disclosure.
+
+## Building
+`build -t <tag you want> -f docker/Dockerfile .`
