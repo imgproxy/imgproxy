@@ -1,10 +1,11 @@
 ARG BASE_IMAGE_VERSION="v1.3.2"
 
-FROM darthsim/imgproxy-base:${BASE_IMAGE_VERSION}
+FROM darthsim/imgproxy-base:${BASE_IMAGE_VERSION} as build
 LABEL maintainer="Sergey Alexandrovich <darthsim@gmail.com>"
 
-COPY . .
-RUN go build -v -o /usr/local/bin/imgproxy
+RUN mkdir /imgproxy_build
+COPY . /imgproxy_build
+RUN cd /imgproxy_build; go build -v -o /usr/local/bin/imgproxy
 
 # ==================================================================================================
 # Final image
@@ -21,8 +22,8 @@ RUN apt-get update \
     libzstd1 \
   && rm -rf /var/lib/apt/lists/*
 
-COPY --from=0 /usr/local/bin/imgproxy /usr/local/bin/
-COPY --from=0 /usr/local/lib /usr/local/lib
+COPY --from=build /usr/local/bin/imgproxy /usr/local/bin/
+COPY --from=build /usr/local/lib /usr/local/lib
 
 COPY NOTICE /usr/local/share/doc/imgproxy/
 
