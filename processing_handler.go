@@ -225,9 +225,12 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	beforeResponse(imageData, cachePath)
+	uploaded := beforeResponse(imageData, cachePath)
 
 	checkTimeout(ctx)
 
 	respondWithImage(ctx, reqID, r, rw, imageData)
+
+	// Waiting for S3 Upload to finish.
+	<- uploaded
 }
