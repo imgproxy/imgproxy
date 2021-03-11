@@ -206,7 +206,11 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	defer stats.DecRequestsInProgress()
 
 	ctx := r.Context()
-        r = beforeProcessing(r)
+
+	r = beforeProcessing(r)
+
+	var cachePath string
+	r, cachePath = beforeProcessing(r)
 
 	if queueSem != nil {
 		token, aquired := queueSem.TryAquire()
