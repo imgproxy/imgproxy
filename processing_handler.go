@@ -435,9 +435,11 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	checkErr(ctx, "processing", err)
 
 	defer resultData.Close()
-        beforeResponse(imageData)
+        uploaded := beforeResponse(imageData)
 
-	checkErr(ctx, "timeout", router.CheckTimeout(ctx))
+	respondWithImage(ctx, reqID, r, rw, imageData)
 
-	respondWithImage(reqID, r, rw, statusCode, resultData, po, imageURL, originData)
+
+	// Waiting for S3 Upload to finish.
+	<- uploaded
 }

@@ -52,10 +52,10 @@ func getCachePath(requestUri string) string {
 	pathBase := path.Base(requestUri)
 	pathDirs := strings.Split(path.Dir(requestUri), "/")
 	// only add last pathDir if length > 2, we expect at least /pushd in the path
-	if len(pathDirs) > 2 {
+	if len(pathDirs) <= 2 {
 		return pathBase
 	} else {
-		return fmt.Sprintf("%s/%s", pathDirs[len(pathDirs)], pathBase)
+		return fmt.Sprintf("%s/%s", pathDirs[len(pathDirs)-1], pathBase)
 	}
 }
 
@@ -64,18 +64,18 @@ func beforeProcessing(r *http.Request) (*http.Request, string){
 	var cachePath string
 	if strings.HasPrefix(r.RequestURI, pushdPath) {
 		cachePath = getCachePath(r.RequestURI)
-		logNotice("Will upload with S3 key: %s")
 		r.RequestURI = fileNameToParams(r.RequestURI)
 	}
 	return r, cachePath
 }
 
-func uploadToS3(data []byte, s3Key string) {
+func uploadToS3(data []byte, s3Key string, uploaded chan bool) {
 	svc := s3.New(session.New())
 	input := &s3.PutObjectInput{
 		Body:    aws.ReadSeekCloser(bytes.NewReader(data)),
 		Bucket:  aws.String(s3RenderBucket),
 		Key:     aws.String(s3Key),
+		ContentType: aws.String("image/jpeg"),
 	}
 
 	_, err := svc.PutObject(input)
@@ -90,9 +90,13 @@ func uploadToS3(data []byte, s3Key string) {
 		}
 		return
 	}
+	logNotice("Upload complete for: %s", s3Key)
+	uploaded <- true
 }
 
-func beforeResponse(imageData []byte, cachePath string) {
-	logNotice("I would be uploading to S3 here, if I was implemented yet")
-	uploadToS3(imageData, cachePath)
+func beforeResponse(imageData []byte, cachePath string) chan bool {
+	logNotice("Uploading rendered image to: %s", cachePath)
+	uploaded := make(chan bool)
+	go uploadToS3(imageData, cachePath, uploaded)
+	return uploaded
 }
