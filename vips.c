@@ -1,55 +1,11 @@
 #include "vips.h"
 #include <string.h>
 
-#define VIPS_SUPPORT_SMARTCROP \
-  (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 5))
-
-#define VIPS_SUPPORT_HASALPHA \
-  (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 5))
-
-#define VIPS_SUPPORT_GIF \
-  (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 3))
-
-#define VIPS_SUPPORT_SVG \
-  (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 3))
-
-#define VIPS_SUPPORT_TIFF \
-  (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 6))
-
-#define VIPS_SUPPORT_MAGICK \
-  (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 7))
-
-#define VIPS_SUPPORT_PNG_QUANTIZATION \
-  (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 7))
-
-#define VIPS_SUPPORT_WEBP_SCALE_ON_LOAD \
-  (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 8))
-
-#define VIPS_SUPPORT_WEBP_ANIMATION \
-  (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 8))
-
 #define VIPS_SUPPORT_ARRAY_HEADERS \
   (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 9))
 
-#define VIPS_SUPPORT_HEIF \
-  (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 8))
-
 #define VIPS_SUPPORT_AVIF \
   (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 9))
-
-#define VIPS_SUPPORT_COMPOSITE \
-  (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 6))
-
-#define VIPS_SUPPORT_FIND_TRIM \
-  (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 6))
-
-#define EXIF_ORIENTATION "exif-ifd0-Orientation"
-
-#if (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 8))
-  #define VIPS_BLOB_DATA_TYPE const void *
-#else
-  #define VIPS_BLOB_DATA_TYPE void *
-#endif
 
 int
 vips_initialize() {
@@ -143,116 +99,66 @@ vips_webpload_go(void *buf, size_t len, double scale, int pages, VipsImage **out
   return vips_webpload_buffer(
     buf, len, out,
     "access", VIPS_ACCESS_SEQUENTIAL,
-#if VIPS_SUPPORT_WEBP_SCALE_ON_LOAD
     "scale", scale,
-#else
-    "shrink", (int)(1.0 / scale),
-#endif
-#if VIPS_SUPPORT_WEBP_ANIMATION
     "n", pages,
-#endif
     NULL
   );
 }
 
 int
 vips_gifload_go(void *buf, size_t len, int pages, VipsImage **out) {
-  #if VIPS_SUPPORT_GIF
-    return vips_gifload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, "n", pages, NULL);
-  #else
-    vips_error("vips_gifload_go", "Loading GIF is not supported (libvips 8.3+ reuired)");
-    return 1;
-  #endif
+  return vips_gifload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, "n", pages, NULL);
 }
 
 int
 vips_svgload_go(void *buf, size_t len, double scale, VipsImage **out) {
-  #if VIPS_SUPPORT_SVG
-    // libvips limits the minimal scale to 0.001, so we have to scale down dpi
-    // for lower scale values
-    double dpi = 72.0;
-    if (scale < 0.001) {
-      dpi *= VIPS_MAX(scale / 0.001, 0.001);
-      scale = 0.001;
-    }
+  // libvips limits the minimal scale to 0.001, so we have to scale down dpi
+  // for lower scale values
+  double dpi = 72.0;
+  if (scale < 0.001) {
+    dpi *= VIPS_MAX(scale / 0.001, 0.001);
+    scale = 0.001;
+  }
 
-    return vips_svgload_buffer(
-      buf, len, out,
-      "access", VIPS_ACCESS_SEQUENTIAL,
-      "scale", scale,
-      "dpi", dpi,
-      NULL
-    );
-  #else
-    vips_error("vips_svgload_go", "Loading SVG is not supported (libvips 8.5+ reuired)");
-    return 1;
-  #endif
+  return vips_svgload_buffer(
+    buf, len, out,
+    "access", VIPS_ACCESS_SEQUENTIAL,
+    "scale", scale,
+    "dpi", dpi,
+    NULL
+  );
 }
 
 int
 vips_heifload_go(void *buf, size_t len, VipsImage **out) {
-#if VIPS_SUPPORT_HEIF
   return vips_heifload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, NULL);
-#else
-  vips_error("vips_heifload_go", "Loading HEIF is not supported (libvips 8.8+ reuired)");
-  return 1;
-#endif
 }
 
 int
 vips_bmpload_go(void *buf, size_t len, VipsImage **out) {
-#if VIPS_SUPPORT_MAGICK
   return vips_magickload_buffer(buf, len, out, NULL);
-#else
-  vips_error("vips_bmpload_go", "Loading BMP is not supported");
-  return 1;
-#endif
 }
 
 int
 vips_tiffload_go(void *buf, size_t len, VipsImage **out) {
-#if VIPS_SUPPORT_TIFF
   return vips_tiffload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, NULL);
-#else
-  vips_error("vips_tiffload_go", "Loading TIFF is not supported (libvips 8.6+ reuired)");
-  return 1;
-#endif
 }
 
 int
 vips_get_orientation(VipsImage *image) {
-#ifdef VIPS_META_ORIENTATION
   int orientation;
 
 	if (
     vips_image_get_typeof(image, VIPS_META_ORIENTATION) == G_TYPE_INT &&
     vips_image_get_int(image, VIPS_META_ORIENTATION, &orientation) == 0
   ) return orientation;
-#else
-  const char *orientation;
-
-	if (
-		vips_image_get_typeof(image, EXIF_ORIENTATION) == VIPS_TYPE_REF_STRING &&
-		vips_image_get_string(image, EXIF_ORIENTATION, &orientation) == 0
-	) return atoi(orientation);
-#endif
 
 	return 1;
-}
-
-int
-vips_support_smartcrop() {
-  return VIPS_SUPPORT_SMARTCROP;
 }
 
 VipsBandFormat
 vips_band_format(VipsImage *in) {
   return in->BandFmt;
-}
-
-gboolean
-vips_support_webp_animation() {
-  return VIPS_SUPPORT_WEBP_ANIMATION;
 }
 
 gboolean
@@ -281,13 +187,7 @@ vips_image_set_array_int_go(VipsImage *image, const char *name, const int *array
 
 gboolean
 vips_image_hasalpha_go(VipsImage * in) {
-#if VIPS_SUPPORT_HASALPHA
   return vips_image_hasalpha(in);
-#else
-  return( in->Bands == 2 ||
-		      (in->Bands == 4 && in->Type != VIPS_INTERPRETATION_CMYK) ||
-		      in->Bands > 4 );
-#endif
 }
 
 int
@@ -349,7 +249,7 @@ vips_resize_with_premultiply(VipsImage *in, VipsImage **out, double scale) {
 
 int
 vips_icc_is_srgb_iec61966(VipsImage *in) {
-  VIPS_BLOB_DATA_TYPE data;
+  const void *data;
   size_t data_len;
 
   // 1998-12-01
@@ -423,12 +323,7 @@ vips_flip_horizontal_go(VipsImage *in, VipsImage **out) {
 
 int
 vips_smartcrop_go(VipsImage *in, VipsImage **out, int width, int height) {
-#if VIPS_SUPPORT_SMARTCROP
   return vips_smartcrop(in, out, width, height, NULL);
-#else
-  vips_error("vips_smartcrop_go", "Smart crop is not supported (libvips 8.5+ reuired)");
-  return 1;
-#endif
 }
 
 int
@@ -458,7 +353,6 @@ int
 vips_trim(VipsImage *in, VipsImage **out, double threshold,
           gboolean smart, double r, double g, double b,
           gboolean equal_hor, gboolean equal_ver) {
-#if VIPS_SUPPORT_FIND_TRIM
   VipsImage *tmp;
 
   if (vips_image_hasalpha(in)) {
@@ -524,10 +418,6 @@ vips_trim(VipsImage *in, VipsImage **out, double threshold,
   }
 
   return vips_extract_area(in, out, left, top, width, height, NULL);
-#else
-  vips_error("vips_trim", "Trim is not supported (libvips 8.6+ reuired)");
-  return 1;
-#endif
 }
 
 int
@@ -571,7 +461,6 @@ vips_ensure_alpha(VipsImage *in, VipsImage **out) {
 
 int
 vips_apply_watermark(VipsImage *in, VipsImage *watermark, VipsImage **out, double opacity) {
-#if VIPS_SUPPORT_COMPOSITE
   VipsImage *base = vips_image_new();
 	VipsImage **t = (VipsImage **) vips_object_local_array(VIPS_OBJECT(base), 5);
 
@@ -599,10 +488,6 @@ vips_apply_watermark(VipsImage *in, VipsImage *watermark, VipsImage **out, doubl
   clear_image(&base);
 
   return res;
-#else
-  vips_error("vips_apply_watermark", "Watermarking is not supported (libvips 8.6+ reuired)");
-  return 1;
-#endif
 }
 
 int
@@ -646,10 +531,8 @@ vips_pngsave_go(VipsImage *in, void **buf, size_t *len, int interlace, int quant
     in, buf, len,
     "filter", VIPS_FOREIGN_PNG_FILTER_NONE,
     "interlace", interlace,
-#if VIPS_SUPPORT_PNG_QUANTIZATION
     "palette", quantize,
     "colours", colors,
-#endif // VIPS_SUPPORT_PNG_QUANTIZATION
     NULL);
 }
 
@@ -664,22 +547,12 @@ vips_webpsave_go(VipsImage *in, void **buf, size_t *len, int quality) {
 
 int
 vips_gifsave_go(VipsImage *in, void **buf, size_t *len) {
-#if VIPS_SUPPORT_MAGICK
   return vips_magicksave_buffer(in, buf, len, "format", "gif", NULL);
-#else
-  vips_error("vips_gifsave_go", "Saving GIF is not supported (libvips 8.7+ reuired)");
-  return 1;
-#endif
 }
 
 int
 vips_tiffsave_go(VipsImage *in, void **buf, size_t *len, int quality) {
-#if VIPS_SUPPORT_TIFF
   return vips_tiffsave_buffer(in, buf, len, "Q", quality, NULL);
-#else
-  vips_error("vips_tiffsave_go", "Saving TIFF is not supported (libvips 8.6+ reuired)");
-  return 1;
-#endif
 }
 
 int
@@ -694,12 +567,7 @@ vips_avifsave_go(VipsImage *in, void **buf, size_t *len, int quality) {
 
 int
 vips_bmpsave_go(VipsImage *in, void **buf, size_t *len) {
-#if VIPS_SUPPORT_MAGICK
   return vips_magicksave_buffer(in, buf, len, "format", "bmp", NULL);
-#else
-  vips_error("vips_bmpsave_go", "Saving BMP is not supported");
-  return 1;
-#endif
 }
 
 void

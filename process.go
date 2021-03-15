@@ -11,8 +11,6 @@ import (
 )
 
 const (
-	msgSmartCropNotSupported = "Smart crop is not supported by used version of libvips"
-
 	// https://chromium.googlesource.com/webm/libwebp/+/refs/heads/master/src/webp/encode.h#529
 	webpMaxDimension = 16383.0
 )
@@ -815,17 +813,6 @@ func processImage(ctx context.Context) ([]byte, context.CancelFunc, error) {
 		}
 
 		imgdata = icodata
-	}
-
-	if !vipsSupportSmartcrop {
-		if po.Gravity.Type == gravitySmart {
-			logWarning(msgSmartCropNotSupported)
-			po.Gravity.Type = gravityCenter
-		}
-		if po.Crop.Gravity.Type == gravitySmart {
-			logWarning(msgSmartCropNotSupported)
-			po.Crop.Gravity.Type = gravityCenter
-		}
 	}
 
 	animationSupport := conf.MaxAnimationFrames > 1 && vipsSupportAnimation(imgdata.Type) && vipsSupportAnimation(po.Format)

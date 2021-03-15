@@ -40,11 +40,8 @@ int vips_tiffload_go(void *buf, size_t len, VipsImage **out);
 int vips_get_orientation(VipsImage *image);
 void vips_strip_meta(VipsImage *image);
 
-int vips_support_smartcrop();
-
 VipsBandFormat vips_band_format(VipsImage *in);
 
-gboolean vips_support_webp_animation();
 gboolean vips_is_animated(VipsImage * in);
 
 int vips_image_get_array_int_go(VipsImage *image, const char *name, int **out, int *n);

@@ -24,9 +24,8 @@ type vipsImage struct {
 }
 
 var (
-	vipsSupportSmartcrop bool
-	vipsTypeSupportLoad  = make(map[imageType]bool)
-	vipsTypeSupportSave  = make(map[imageType]bool)
+	vipsTypeSupportLoad = make(map[imageType]bool)
+	vipsTypeSupportSave = make(map[imageType]bool)
 
 	watermark *imageData
 )
@@ -66,8 +65,6 @@ func initVips() error {
 	if len(os.Getenv("IMGPROXY_VIPS_CACHE_TRACE")) > 0 {
 		C.vips_cache_set_trace(C.gboolean(1))
 	}
-
-	vipsSupportSmartcrop = C.vips_support_smartcrop() == 1
 
 	for _, imgtype := range imageTypes {
 		vipsTypeSupportLoad[imgtype] = int(C.vips_type_find_load_go(C.int(imgtype))) != 0
@@ -310,8 +307,7 @@ func (img *vipsImage) Arrayjoin(in []*vipsImage) error {
 }
 
 func vipsSupportAnimation(imgtype imageType) bool {
-	return imgtype == imageTypeGIF ||
-		(imgtype == imageTypeWEBP && C.vips_support_webp_animation() != 0)
+	return imgtype == imageTypeGIF || imgtype == imageTypeWEBP
 }
 
 func (img *vipsImage) IsAnimated() bool {
