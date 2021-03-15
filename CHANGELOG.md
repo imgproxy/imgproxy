@@ -1,6 +1,13 @@
 # Changelog
 
 ## [Unreleased]
+### Removed
+- Removed basic URL format, use [advanced one](./docs/generating_the_url.md) instead.
+- Removed `IMGPROXY_MAX_SRC_DIMENSION` config, use `IMGPROXY_MAX_SRC_RESOLUTION` instead.
+- Removed `IMGPROXY_GZIP_COMPRESSION` config.
+- Removed `IMGPROXY_MAX_GIF_FRAMES` config, use `IMGPROXY_MAX_ANIMATION_FRAMES` instead.
+- Removed `crop` resizing type, use [crop](./docs/generating_the_url.md#crop) processing option instead.
+- Dropped old libvips (<8.8) support.
 
 ## [2.16.2] - 2021-03-04
 ### Change
