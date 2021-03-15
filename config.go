@@ -215,7 +215,6 @@ type config struct {
 
 	PathPrefix string
 
-	MaxSrcDimension    int
 	MaxSrcResolution   int
 	MaxSrcFileSize     int
 	MaxAnimationFrames int
@@ -227,7 +226,6 @@ type config struct {
 	PngQuantizationColors int
 	Quality               int
 	FormatQuality         map[imageType]int
-	GZipCompression       int
 	StripMetadata         bool
 	StripColorProfile     bool
 	AutoRotate            bool
@@ -305,7 +303,6 @@ type config struct {
 
 	FreeMemoryInterval             int
 	DownloadBufferSize             int
-	GZipBufferSize                 int
 	BufferPoolCalibrationThreshold int
 }
 
@@ -367,15 +364,10 @@ func configure() error {
 
 	strEnvConfig(&conf.PathPrefix, "IMGPROXY_PATH_PREFIX")
 
-	intEnvConfig(&conf.MaxSrcDimension, "IMGPROXY_MAX_SRC_DIMENSION")
 	megaIntEnvConfig(&conf.MaxSrcResolution, "IMGPROXY_MAX_SRC_RESOLUTION")
 	intEnvConfig(&conf.MaxSrcFileSize, "IMGPROXY_MAX_SRC_FILE_SIZE")
 	intEnvConfig(&conf.MaxSvgCheckBytes, "IMGPROXY_MAX_SVG_CHECK_BYTES")
 
-	if _, ok := os.LookupEnv("IMGPROXY_MAX_GIF_FRAMES"); ok {
-		logWarning("`IMGPROXY_MAX_GIF_FRAMES` is deprecated and will be removed in future versions. Use `IMGPROXY_MAX_ANIMATION_FRAMES` instead")
-		intEnvConfig(&conf.MaxAnimationFrames, "IMGPROXY_MAX_GIF_FRAMES")
-	}
 	intEnvConfig(&conf.MaxAnimationFrames, "IMGPROXY_MAX_ANIMATION_FRAMES")
 
 	strSliceEnvConfig(&conf.AllowedSources, "IMGPROXY_ALLOWED_SOURCES")
@@ -386,7 +378,6 @@ func configure() error {
 	intEnvConfig(&conf.PngQuantizationColors, "IMGPROXY_PNG_QUANTIZATION_COLORS")
 	intEnvConfig(&conf.Quality, "IMGPROXY_QUALITY")
 	formatQualityEnvConfig(conf.FormatQuality, "IMGPROXY_FORMAT_QUALITY")
-	intEnvConfig(&conf.GZipCompression, "IMGPROXY_GZIP_COMPRESSION")
 	boolEnvConfig(&conf.StripMetadata, "IMGPROXY_STRIP_METADATA")
 	boolEnvConfig(&conf.StripColorProfile, "IMGPROXY_STRIP_COLOR_PROFILE")
 	boolEnvConfig(&conf.AutoRotate, "IMGPROXY_AUTO_ROTATE")
@@ -479,7 +470,6 @@ func configure() error {
 
 	intEnvConfig(&conf.FreeMemoryInterval, "IMGPROXY_FREE_MEMORY_INTERVAL")
 	intEnvConfig(&conf.DownloadBufferSize, "IMGPROXY_DOWNLOAD_BUFFER_SIZE")
-	intEnvConfig(&conf.GZipBufferSize, "IMGPROXY_GZIP_BUFFER_SIZE")
 	intEnvConfig(&conf.BufferPoolCalibrationThreshold, "IMGPROXY_BUFFER_POOL_CALIBRATION_THRESHOLD")
 
 	if len(conf.Keys) != len(conf.Salts) {
@@ -529,12 +519,6 @@ func configure() error {
 		return fmt.Errorf("TTL should be greater than 0, now - %d\n", conf.TTL)
 	}
 
-	if conf.MaxSrcDimension < 0 {
-		return fmt.Errorf("Max src dimension should be greater than or equal to 0, now - %d\n", conf.MaxSrcDimension)
-	} else if conf.MaxSrcDimension > 0 {
-		logWarning("IMGPROXY_MAX_SRC_DIMENSION is deprecated and can be removed in future versions. Use IMGPROXY_MAX_SRC_RESOLUTION")
-	}
-
 	if conf.MaxSrcResolution <= 0 {
 		return fmt.Errorf("Max src resolution should be greater than 0, now - %d\n", conf.MaxSrcResolution)
 	}
@@ -557,16 +541,6 @@ func configure() error {
 		return fmt.Errorf("Quality should be greater than 0, now - %d\n", conf.Quality)
 	} else if conf.Quality > 100 {
 		return fmt.Errorf("Quality can't be greater than 100, now - %d\n", conf.Quality)
-	}
-
-	if conf.GZipCompression < 0 {
-		return fmt.Errorf("GZip compression should be greater than or equal to 0, now - %d\n", conf.GZipCompression)
-	} else if conf.GZipCompression > 9 {
-		return fmt.Errorf("GZip compression can't be greater than 9, now - %d\n", conf.GZipCompression)
-	}
-
-	if conf.GZipCompression > 0 {
-		logWarning("GZip compression is deprecated and can be removed in future versions")
 	}
 
 	if conf.IgnoreSslVerification {
@@ -612,12 +586,6 @@ func configure() error {
 		return fmt.Errorf("Download buffer size should be greater than or equal to 0")
 	} else if conf.DownloadBufferSize > math.MaxInt32 {
 		return fmt.Errorf("Download buffer size can't be greater than %d", math.MaxInt32)
-	}
-
-	if conf.GZipBufferSize < 0 {
-		return fmt.Errorf("GZip buffer size should be greater than or equal to 0")
-	} else if conf.GZipBufferSize > math.MaxInt32 {
-		return fmt.Errorf("GZip buffer size can't be greater than %d", math.MaxInt32)
 	}
 
 	if conf.BufferPoolCalibrationThreshold < 64 {

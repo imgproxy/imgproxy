@@ -64,14 +64,12 @@ type resizeType int
 const (
 	resizeFit resizeType = iota
 	resizeFill
-	resizeCrop
 	resizeAuto
 )
 
 var resizeTypes = map[string]resizeType{
 	"fit":  resizeFit,
 	"fill": resizeFill,
-	"crop": resizeCrop,
 	"auto": resizeAuto,
 }
 

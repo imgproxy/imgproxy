@@ -89,7 +89,6 @@ Also you may want imgproxy to respond with the same error message that it writes
 
 * `IMGPROXY_QUALITY`: default quality of the resulting image, percentage. Default: `80`;
 * `IMGPROXY_FORMAT_QUALITY`: default quality of the resulting image per format, comma divided. Example: `jpeg=70,avif=40,webp=60`. When value for the resulting format is not set, `IMGPROXY_QUALITY` value is used. Default: `avif=50`.
-* `IMGPROXY_GZIP_COMPRESSION`: GZip compression level. Default: `5`.
 
 ### Advanced JPEG compression
 

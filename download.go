@@ -20,7 +20,6 @@ var (
 	cacheControlHeaderCtxKey = ctxKey("cacheControlHeader")
 	expiresHeaderCtxKey      = ctxKey("expiresHeader")
 
-	errSourceDimensionsTooBig      = newError(422, "Source image dimensions are too big", "Invalid source image")
 	errSourceResolutionTooBig      = newError(422, "Source image resolution is too big", "Invalid source image")
 	errSourceFileTooBig            = newError(422, "Source image file is too big", "Invalid source image")
 	errSourceImageTypeNotSupported = newError(422, "Source image type not supported", "Invalid source image")
@@ -100,10 +99,6 @@ func initDownloading() error {
 }
 
 func checkDimensions(width, height int) error {
-	if conf.MaxSrcDimension > 0 && (width > conf.MaxSrcDimension || height > conf.MaxSrcDimension) {
-		return errSourceDimensionsTooBig
-	}
-
 	if width*height > conf.MaxSrcResolution {
 		return errSourceResolutionTooBig
 	}

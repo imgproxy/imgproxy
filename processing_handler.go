@@ -10,9 +10,6 @@ import (
 )
 
 var (
-	responseGzipBufPool *bufPool
-	responseGzipPool    *gzipPool
-
 	processingSem chan struct{}
 
 	headerVaryValue string
@@ -24,21 +21,10 @@ func initProcessingHandler() error {
 
 	processingSem = make(chan struct{}, conf.Concurrency)
 
-	if conf.GZipCompression > 0 {
-		responseGzipBufPool = newBufPool("gzip", conf.Concurrency, conf.GZipBufferSize)
-		if responseGzipPool, err = newGzipPool(conf.Concurrency); err != nil {
-			return err
-		}
-	}
-
 	vary := make([]string, 0)
 
 	if conf.EnableWebpDetection || conf.EnforceWebp {
 		vary = append(vary, "Accept")
-	}
-
-	if conf.GZipCompression > 0 {
-		vary = append(vary, "Accept-Encoding")
 	}
 
 	if conf.EnableClientHints {
@@ -98,36 +84,18 @@ func respondWithImage(ctx context.Context, reqID string, r *http.Request, rw htt
 		rw.Header().Set("Vary", headerVaryValue)
 	}
 
-	if conf.GZipCompression > 0 && strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
-		buf := responseGzipBufPool.Get(0)
-		defer responseGzipBufPool.Put(buf)
-
-		gz := responseGzipPool.Get(buf)
-		defer responseGzipPool.Put(gz)
-
-		gz.Write(data)
-		gz.Close()
-
-		rw.Header().Set("Content-Encoding", "gzip")
-		rw.Header().Set("Content-Length", strconv.Itoa(buf.Len()))
-
-		rw.WriteHeader(200)
-		rw.Write(buf.Bytes())
-	} else {
-		rw.Header().Set("Content-Length", strconv.Itoa(len(data)))
-		rw.WriteHeader(200)
-		rw.Write(data)
-	}
-
 	if conf.EnableDebugHeaders {
 		imgdata := getImageData(ctx)
 		rw.Header().Set("X-Origin-Content-Length", strconv.Itoa(len(imgdata.Data)))
 	}
 
+	rw.Header().Set("Content-Length", strconv.Itoa(len(data)))
+	rw.WriteHeader(200)
+	rw.Write(data)
+
 	imageURL := getImageURL(ctx)
 
 	logResponse(reqID, r, 200, nil, &imageURL, po)
-	// logResponse(reqID, r, 200, getTimerSince(ctx), getImageURL(ctx), po))
 }
 
 func respondWithNotModified(ctx context.Context, reqID string, r *http.Request, rw http.ResponseWriter) {

@@ -828,15 +828,6 @@ func processImage(ctx context.Context) ([]byte, context.CancelFunc, error) {
 		}
 	}
 
-	if po.ResizingType == resizeCrop {
-		logWarning("`crop` resizing type is deprecated and will be removed in future versions. Use `crop` processing option instead")
-
-		po.Crop.Width, po.Crop.Height = float64(po.Width), float64(po.Height)
-
-		po.ResizingType = resizeFit
-		po.Width, po.Height = 0, 0
-	}
-
 	animationSupport := conf.MaxAnimationFrames > 1 && vipsSupportAnimation(imgdata.Type) && vipsSupportAnimation(po.Format)
 
 	pages := 1
