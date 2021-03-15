@@ -34,7 +34,7 @@ func main() {
 	url := "http://img.example.com/pretty/image.jpg"
 	encodedURL := base64.RawURLEncoding.EncodeToString([]byte(url))
 
-	path := fmt.Sprintf("/%s/%d/%d/%s/%d/%s.%s", resize, width, height, gravity, enlarge, encodedURL, extension)
+	path := fmt.Sprintf("/rs:%s:%d:%d:%d/g:%s/%s.%s", resize, width, height, enlarge, gravity, encodedURL, extension)
 
 	mac := hmac.New(sha256.New, keyBin)
 	mac.Write(saltBin)

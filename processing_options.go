@@ -1062,7 +1062,7 @@ func defaultProcessingOptions(headers *processingHeaders) (*processingOptions, e
 	return po, nil
 }
 
-func parsePathAdvanced(parts []string, headers *processingHeaders) (string, *processingOptions, error) {
+func parsePathOptions(parts []string, headers *processingHeaders) (string, *processingOptions, error) {
 	po, err := defaultProcessingOptions(headers)
 	if err != nil {
 		return "", po, err
@@ -1115,48 +1115,6 @@ func parsePathPresets(parts []string, headers *processingHeaders) (string, *proc
 	return url, po, nil
 }
 
-func parsePathBasic(parts []string, headers *processingHeaders) (string, *processingOptions, error) {
-	if len(parts) < 6 {
-		return "", nil, fmt.Errorf("Invalid basic URL format arguments: %s", strings.Join(parts, "/"))
-	}
-
-	po, err := defaultProcessingOptions(headers)
-	if err != nil {
-		return "", po, err
-	}
-
-	po.ResizingType = resizeTypes[parts[0]]
-
-	if err = applyWidthOption(po, parts[1:2]); err != nil {
-		return "", po, err
-	}
-
-	if err = applyHeightOption(po, parts[2:3]); err != nil {
-		return "", po, err
-	}
-
-	if err = applyGravityOption(po, strings.Split(parts[3], ":")); err != nil {
-		return "", po, err
-	}
-
-	if err = applyEnlargeOption(po, parts[4:5]); err != nil {
-		return "", po, err
-	}
-
-	url, extension, err := decodeURL(parts[5:])
-	if err != nil {
-		return "", po, err
-	}
-
-	if len(extension) > 0 {
-		if err := applyFormatOption(po, []string{extension}); err != nil {
-			return "", po, err
-		}
-	}
-
-	return url, po, nil
-}
-
 func parsePath(ctx context.Context, r *http.Request) (context.Context, error) {
 	var err error
 
@@ -1192,10 +1150,8 @@ func parsePath(ctx context.Context, r *http.Request) (context.Context, error) {
 
 	if conf.OnlyPresets {
 		imageURL, po, err = parsePathPresets(parts[1:], headers)
-	} else if _, ok := resizeTypes[parts[1]]; ok {
-		imageURL, po, err = parsePathBasic(parts[1:], headers)
 	} else {
-		imageURL, po, err = parsePathAdvanced(parts[1:], headers)
+		imageURL, po, err = parsePathOptions(parts[1:], headers)
 	}
 
 	if err != nil {

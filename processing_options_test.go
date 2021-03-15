@@ -123,22 +123,7 @@ func (s *ProcessingOptionsTestSuite) TestParseURLNotAllowedSource() {
 	require.Error(s.T(), err)
 }
 
-func (s *ProcessingOptionsTestSuite) TestParsePathBasic() {
-	req := s.getRequest("/unsafe/fill/100/200/noea/1/plain/http://images.dev/lorem/ipsum.jpg@png")
-	ctx, err := parsePath(context.Background(), req)
-
-	require.Nil(s.T(), err)
-
-	po := getProcessingOptions(ctx)
-	assert.Equal(s.T(), resizeFill, po.ResizingType)
-	assert.Equal(s.T(), 100, po.Width)
-	assert.Equal(s.T(), 200, po.Height)
-	assert.Equal(s.T(), gravityNorthEast, po.Gravity.Type)
-	assert.True(s.T(), po.Enlarge)
-	assert.Equal(s.T(), imageTypePNG, po.Format)
-}
-
-func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedFormat() {
+func (s *ProcessingOptionsTestSuite) TestParsePathFormat() {
 	req := s.getRequest("/unsafe/format:webp/plain/http://images.dev/lorem/ipsum.jpg")
 	ctx, err := parsePath(context.Background(), req)
 
@@ -148,7 +133,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedFormat() {
 	assert.Equal(s.T(), imageTypeWEBP, po.Format)
 }
 
-func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedResize() {
+func (s *ProcessingOptionsTestSuite) TestParsePathResize() {
 	req := s.getRequest("/unsafe/resize:fill:100:200:1/plain/http://images.dev/lorem/ipsum.jpg")
 	ctx, err := parsePath(context.Background(), req)
 
@@ -161,7 +146,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedResize() {
 	assert.True(s.T(), po.Enlarge)
 }
 
-func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedResizingType() {
+func (s *ProcessingOptionsTestSuite) TestParsePathResizingType() {
 	req := s.getRequest("/unsafe/resizing_type:fill/plain/http://images.dev/lorem/ipsum.jpg")
 	ctx, err := parsePath(context.Background(), req)
 
@@ -171,7 +156,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedResizingType() {
 	assert.Equal(s.T(), resizeFill, po.ResizingType)
 }
 
-func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedSize() {
+func (s *ProcessingOptionsTestSuite) TestParsePathSize() {
 	req := s.getRequest("/unsafe/size:100:200:1/plain/http://images.dev/lorem/ipsum.jpg")
 	ctx, err := parsePath(context.Background(), req)
 
@@ -183,7 +168,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedSize() {
 	assert.True(s.T(), po.Enlarge)
 }
 
-func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedWidth() {
+func (s *ProcessingOptionsTestSuite) TestParsePathWidth() {
 	req := s.getRequest("/unsafe/width:100/plain/http://images.dev/lorem/ipsum.jpg")
 	ctx, err := parsePath(context.Background(), req)
 
@@ -193,7 +178,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedWidth() {
 	assert.Equal(s.T(), 100, po.Width)
 }
 
-func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedHeight() {
+func (s *ProcessingOptionsTestSuite) TestParsePathHeight() {
 	req := s.getRequest("/unsafe/height:100/plain/http://images.dev/lorem/ipsum.jpg")
 	ctx, err := parsePath(context.Background(), req)
 
@@ -203,7 +188,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedHeight() {
 	assert.Equal(s.T(), 100, po.Height)
 }
 
-func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedEnlarge() {
+func (s *ProcessingOptionsTestSuite) TestParsePathEnlarge() {
 	req := s.getRequest("/unsafe/enlarge:1/plain/http://images.dev/lorem/ipsum.jpg")
 	ctx, err := parsePath(context.Background(), req)
 
@@ -213,7 +198,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedEnlarge() {
 	assert.True(s.T(), po.Enlarge)
 }
 
-func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedExtend() {
+func (s *ProcessingOptionsTestSuite) TestParsePathExtend() {
 	req := s.getRequest("/unsafe/extend:1:so:10:20/plain/http://images.dev/lorem/ipsum.jpg")
 	ctx, err := parsePath(context.Background(), req)
 
@@ -226,7 +211,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedExtend() {
 	assert.Equal(s.T(), 20.0, po.Extend.Gravity.Y)
 }
 
-func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedGravity() {
+func (s *ProcessingOptionsTestSuite) TestParsePathGravity() {
 	req := s.getRequest("/unsafe/gravity:soea/plain/http://images.dev/lorem/ipsum.jpg")
 	ctx, err := parsePath(context.Background(), req)
 
@@ -236,7 +221,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedGravity() {
 	assert.Equal(s.T(), gravitySouthEast, po.Gravity.Type)
 }
 
-func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedGravityFocuspoint() {
+func (s *ProcessingOptionsTestSuite) TestParsePathGravityFocuspoint() {
 	req := s.getRequest("/unsafe/gravity:fp:0.5:0.75/plain/http://images.dev/lorem/ipsum.jpg")
 	ctx, err := parsePath(context.Background(), req)
 
@@ -248,7 +233,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedGravityFocuspoint() {
 	assert.Equal(s.T(), 0.75, po.Gravity.Y)
 }
 
-func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedQuality() {
+func (s *ProcessingOptionsTestSuite) TestParsePathQuality() {
 	req := s.getRequest("/unsafe/quality:55/plain/http://images.dev/lorem/ipsum.jpg")
 	ctx, err := parsePath(context.Background(), req)
 
@@ -258,7 +243,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedQuality() {
 	assert.Equal(s.T(), 55, po.Quality)
 }
 
-func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedBackground() {
+func (s *ProcessingOptionsTestSuite) TestParsePathBackground() {
 	req := s.getRequest("/unsafe/background:128:129:130/plain/http://images.dev/lorem/ipsum.jpg")
 	ctx, err := parsePath(context.Background(), req)
 
@@ -271,7 +256,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedBackground() {
 	assert.Equal(s.T(), uint8(130), po.Background.B)
 }
 
-func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedBackgroundHex() {
+func (s *ProcessingOptionsTestSuite) TestParsePathBackgroundHex() {
 	req := s.getRequest("/unsafe/background:ffddee/plain/http://images.dev/lorem/ipsum.jpg")
 	ctx, err := parsePath(context.Background(), req)
 
@@ -284,7 +269,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedBackgroundHex() {
 	assert.Equal(s.T(), uint8(0xee), po.Background.B)
 }
 
-func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedBackgroundDisable() {
+func (s *ProcessingOptionsTestSuite) TestParsePathBackgroundDisable() {
 	req := s.getRequest("/unsafe/background:fff/background:/plain/http://images.dev/lorem/ipsum.jpg")
 	ctx, err := parsePath(context.Background(), req)
 
@@ -294,7 +279,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedBackgroundDisable() {
 	assert.False(s.T(), po.Flatten)
 }
 
-func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedBlur() {
+func (s *ProcessingOptionsTestSuite) TestParsePathBlur() {
 	req := s.getRequest("/unsafe/blur:0.2/plain/http://images.dev/lorem/ipsum.jpg")
 	ctx, err := parsePath(context.Background(), req)
 
@@ -304,7 +289,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedBlur() {
 	assert.Equal(s.T(), float32(0.2), po.Blur)
 }
 
-func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedSharpen() {
+func (s *ProcessingOptionsTestSuite) TestParsePathSharpen() {
 	req := s.getRequest("/unsafe/sharpen:0.2/plain/http://images.dev/lorem/ipsum.jpg")
 	ctx, err := parsePath(context.Background(), req)
 
@@ -313,7 +298,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedSharpen() {
 	po := getProcessingOptions(ctx)
 	assert.Equal(s.T(), float32(0.2), po.Sharpen)
 }
-func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedDpr() {
+func (s *ProcessingOptionsTestSuite) TestParsePathDpr() {
 	req := s.getRequest("/unsafe/dpr:2/plain/http://images.dev/lorem/ipsum.jpg")
 	ctx, err := parsePath(context.Background(), req)
 
@@ -322,7 +307,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedDpr() {
 	po := getProcessingOptions(ctx)
 	assert.Equal(s.T(), 2.0, po.Dpr)
 }
-func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedWatermark() {
+func (s *ProcessingOptionsTestSuite) TestParsePathWatermark() {
 	req := s.getRequest("/unsafe/watermark:0.5:soea:10:20:0.6/plain/http://images.dev/lorem/ipsum.jpg")
 	ctx, err := parsePath(context.Background(), req)
 
@@ -336,7 +321,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedWatermark() {
 	assert.Equal(s.T(), 0.6, po.Watermark.Scale)
 }
 
-func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedPreset() {
+func (s *ProcessingOptionsTestSuite) TestParsePathPreset() {
 	conf.Presets["test1"] = urlOptions{
 		urlOption{Name: "resizing_type", Args: []string{"fill"}},
 	}
@@ -375,7 +360,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathPresetDefault() {
 	assert.Equal(s.T(), 70, po.Quality)
 }
 
-func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedPresetLoopDetection() {
+func (s *ProcessingOptionsTestSuite) TestParsePathPresetLoopDetection() {
 	conf.Presets["test1"] = urlOptions{
 		urlOption{Name: "resizing_type", Args: []string{"fill"}},
 	}
@@ -394,7 +379,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedPresetLoopDetection() 
 	require.ElementsMatch(s.T(), po.UsedPresets, []string{"test1", "test2"})
 }
 
-func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedCachebuster() {
+func (s *ProcessingOptionsTestSuite) TestParsePathCachebuster() {
 	req := s.getRequest("/unsafe/cachebuster:123/plain/http://images.dev/lorem/ipsum.jpg")
 	ctx, err := parsePath(context.Background(), req)
 
@@ -404,7 +389,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedCachebuster() {
 	assert.Equal(s.T(), "123", po.CacheBuster)
 }
 
-func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedStripMetadata() {
+func (s *ProcessingOptionsTestSuite) TestParsePathStripMetadata() {
 	req := s.getRequest("/unsafe/strip_metadata:true/plain/http://images.dev/lorem/ipsum.jpg")
 	ctx, err := parsePath(context.Background(), req)
 

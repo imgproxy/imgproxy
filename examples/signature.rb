@@ -16,7 +16,7 @@ gravity = "no"
 enlarge = 1
 extension = "png"
 
-path = "/#{resize}/#{width}/#{height}/#{gravity}/#{enlarge}/#{encoded_url}.#{extension}"
+path = "/rs:#{resize}:#{width}:#{height}:#{enlarge}/g:#{gravity}/#{encoded_url}.#{extension}"
 
 digest = OpenSSL::Digest.new("sha256")
 # You can trim padding spaces to get good-looking url

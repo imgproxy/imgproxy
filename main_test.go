@@ -20,6 +20,8 @@ func TestMain(m *testing.M) {
 
 func (s *MainTestSuite) SetupTest() {
 	s.oldConf = conf
+	// Reset presets
+	conf.Presets = make(presets)
 }
 
 func (s *MainTestSuite) TearDownTest() {
