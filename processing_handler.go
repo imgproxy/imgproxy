@@ -42,6 +42,7 @@ func initProcessingHandler() error {
 
 func respondWithImage(ctx context.Context, reqID string, r *http.Request, rw http.ResponseWriter, data []byte) {
 	po := getProcessingOptions(ctx)
+	imgdata := getImageData(ctx)
 
 	var contentDisposition string
 	if len(po.Filename) > 0 {
@@ -63,9 +64,13 @@ func respondWithImage(ctx context.Context, reqID string, r *http.Request, rw htt
 
 	var cacheControl, expires string
 
-	if conf.CacheControlPassthrough {
-		cacheControl = getCacheControlHeader(ctx)
-		expires = getExpiresHeader(ctx)
+	if conf.CacheControlPassthrough && imgdata.Headers != nil {
+		if val, ok := imgdata.Headers["Cache-Control"]; ok {
+			cacheControl = val
+		}
+		if val, ok := imgdata.Headers["Expires"]; ok {
+			expires = val
+		}
 	}
 
 	if len(cacheControl) == 0 && len(expires) == 0 {
@@ -85,7 +90,6 @@ func respondWithImage(ctx context.Context, reqID string, r *http.Request, rw htt
 	}
 
 	if conf.EnableDebugHeaders {
-		imgdata := getImageData(ctx)
 		rw.Header().Set("X-Origin-Content-Length", strconv.Itoa(len(imgdata.Data)))
 	}
 
@@ -135,7 +139,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	ctx, downloadcancel, err := downloadImage(ctx)
+	ctx, downloadcancel, err := downloadImageCtx(ctx)
 	defer downloadcancel()
 	if err != nil {
 		if newRelicEnabled {

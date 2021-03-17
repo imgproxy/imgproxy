@@ -9,8 +9,9 @@ import (
 )
 
 type imageData struct {
-	Data []byte
-	Type imageType
+	Data    []byte
+	Type    imageType
+	Headers map[string]string
 
 	cancel context.CancelFunc
 }
@@ -87,18 +88,10 @@ func fileImageData(path, desc string) (*imageData, error) {
 }
 
 func remoteImageData(imageURL, desc string) (*imageData, error) {
-	res, err := requestImage(imageURL)
-	if res != nil {
-		defer res.Body.Close()
-	}
+	imgdata, err := downloadImage(imageURL)
 	if err != nil {
 		return nil, fmt.Errorf("Can't download %s: %s", desc, err)
 	}
 
-	imgdata, err := readAndCheckImage(res.Body, int(res.ContentLength))
-	if err != nil {
-		return nil, fmt.Errorf("Can't download %s: %s", desc, err)
-	}
-
-	return imgdata, err
+	return imgdata, nil
 }
