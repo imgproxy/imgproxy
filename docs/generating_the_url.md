@@ -480,6 +480,17 @@ It's highly recommended to prefer `cachebuster` option over URL query string bec
 
 Default: empty
 
+### Expires
+
+```
+expires:%timestamp
+exp:%timestamp
+```
+
+When set, imgproxy will check provided unix timestamp and return 404 when expired.
+
+Default: empty
+
 ### Strip Metadata
 
 ```
@@ -529,17 +540,6 @@ ext:%extension
 Specifies the resulting image format. Alias for [extension](#extension) URL part.
 
 Default: `jpg`
-
-### Expires
-
-```
-expires:%timestamp
-exp:%timestamp
-```
-
-When set, imgproxy will check provided timestamp and return 404 when expired.
-
-Default: empty
 
 ## Source URL
 

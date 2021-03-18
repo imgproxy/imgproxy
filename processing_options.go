@@ -146,7 +146,6 @@ type processingOptions struct {
 	StripMetadata     bool
 	StripColorProfile bool
 	AutoRotate        bool
-	Expires           int64
 
 	CacheBuster string
 
@@ -171,7 +170,7 @@ const (
 	msgForbidden     = "Forbidden"
 	msgInvalidURL    = "Invalid URL"
 	msgInvalidSource = "Invalid Source"
-	msgExpiredLink   = "Expired link"
+	msgExpiredURL    = "Expired URL"
 )
 
 func (gt gravityType) String() string {
@@ -901,7 +900,9 @@ func applyExpiresOption(po *processingOptions, args []string) error {
 		return fmt.Errorf("Invalid expires argument: %v", args[0])
 	}
 
-	po.Expires = timestamp
+	if timestamp > 0 && timestamp < time.Now().Unix() {
+		return errors.New(msgExpiredURL)
+	}
 
 	return nil
 }
@@ -1017,10 +1018,6 @@ func isAllowedSource(imageURL string) bool {
 		}
 	}
 	return false
-}
-
-func isLinkExpired(po *processingOptions) bool {
-	return po.Expires > 0 && po.Expires < time.Now().Unix()
 }
 
 func parseURLOptions(opts []string) (urlOptions, []string) {
@@ -1184,10 +1181,6 @@ func parsePath(ctx context.Context, r *http.Request) (context.Context, error) {
 
 	if !isAllowedSource(imageURL) {
 		return ctx, newError(404, "Invalid source", msgInvalidSource)
-	}
-
-	if isLinkExpired(po) {
-		return ctx, newError(404, "Link expired", msgExpiredLink)
 	}
 
 	ctx = context.WithValue(ctx, imageURLCtxKey, imageURL)
