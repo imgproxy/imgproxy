@@ -67,7 +67,7 @@ imgproxy responses with JSON body and returns the following info:
 }
 ```
 
-#### Exampple (mp4)
+#### Example (mp4)
 
 ```json
 {
