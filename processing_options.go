@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/imgproxy/imgproxy/v2/structdiff"
 )
@@ -145,6 +146,7 @@ type processingOptions struct {
 	StripMetadata     bool
 	StripColorProfile bool
 	AutoRotate        bool
+	Expires           int64
 
 	CacheBuster string
 
@@ -169,6 +171,7 @@ const (
 	msgForbidden     = "Forbidden"
 	msgInvalidURL    = "Invalid URL"
 	msgInvalidSource = "Invalid Source"
+	msgExpiredLink   = "Expired link"
 )
 
 func (gt gravityType) String() string {
@@ -888,6 +891,21 @@ func applyFilenameOption(po *processingOptions, args []string) error {
 	return nil
 }
 
+func applyExpiresOption(po *processingOptions, args []string) error {
+	if len(args) > 1 {
+		return fmt.Errorf("Invalid expires arguments: %v", args)
+	}
+
+	timestamp, err := strconv.ParseInt(args[0], 10, 64)
+	if err != nil {
+		return fmt.Errorf("Invalid expires argument: %v", args[0])
+	}
+
+	po.Expires = timestamp
+
+	return nil
+}
+
 func applyStripMetadataOption(po *processingOptions, args []string) error {
 	if len(args) > 1 {
 		return fmt.Errorf("Invalid strip metadata arguments: %v", args)
@@ -972,6 +990,8 @@ func applyProcessingOption(po *processingOptions, name string, args []string) er
 		return applyAutoRotateOption(po, args)
 	case "filename", "fn":
 		return applyFilenameOption(po, args)
+	case "expires", "exp":
+		return applyExpiresOption(po, args)
 	}
 
 	return fmt.Errorf("Unknown processing option: %s", name)
@@ -997,6 +1017,10 @@ func isAllowedSource(imageURL string) bool {
 		}
 	}
 	return false
+}
+
+func isLinkExpired(po *processingOptions) bool {
+	return po.Expires > 0 && po.Expires < time.Now().Unix()
 }
 
 func parseURLOptions(opts []string) (urlOptions, []string) {
@@ -1160,6 +1184,10 @@ func parsePath(ctx context.Context, r *http.Request) (context.Context, error) {
 
 	if !isAllowedSource(imageURL) {
 		return ctx, newError(404, "Invalid source", msgInvalidSource)
+	}
+
+	if isLinkExpired(po) {
+		return ctx, newError(404, "Link expired", msgExpiredLink)
 	}
 
 	ctx = context.WithValue(ctx, imageURLCtxKey, imageURL)
