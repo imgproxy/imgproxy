@@ -107,6 +107,8 @@ func main() {
 		}
 	}
 
+	defer closeErrorsReporting()
+
 	if err := run(); err != nil {
 		logFatal(err.Error())
 	}
