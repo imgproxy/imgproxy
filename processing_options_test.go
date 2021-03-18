@@ -568,6 +568,21 @@ func (s *ProcessingOptionsTestSuite) TestParsePathOnlyPresets() {
 	assert.Equal(s.T(), 50, po.Quality)
 }
 
+func (s *ProcessingOptionsTestSuite) TestParseExpires() {
+	req := s.getRequest("/unsafe/exp:32503669200/plain/http://images.dev/lorem/ipsum.jpg")
+	_, err := parsePath(context.Background(), req)
+
+	require.Nil(s.T(), err)
+}
+
+func (s *ProcessingOptionsTestSuite) TestParseExpiresExpired() {
+	req := s.getRequest("/unsafe/exp:1609448400/plain/http://images.dev/lorem/ipsum.jpg")
+	_, err := parsePath(context.Background(), req)
+
+	require.Error(s.T(), err)
+	assert.Equal(s.T(), msgExpiredURL, err.Error())
+}
+
 func (s *ProcessingOptionsTestSuite) TestParseBase64URLOnlyPresets() {
 	conf.OnlyPresets = true
 	conf.Presets["test1"] = urlOptions{

@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/imgproxy/imgproxy/v2/structdiff"
 )
@@ -169,6 +170,7 @@ const (
 	msgForbidden     = "Forbidden"
 	msgInvalidURL    = "Invalid URL"
 	msgInvalidSource = "Invalid Source"
+	msgExpiredURL    = "Expired URL"
 )
 
 func (gt gravityType) String() string {
@@ -888,6 +890,23 @@ func applyFilenameOption(po *processingOptions, args []string) error {
 	return nil
 }
 
+func applyExpiresOption(po *processingOptions, args []string) error {
+	if len(args) > 1 {
+		return fmt.Errorf("Invalid expires arguments: %v", args)
+	}
+
+	timestamp, err := strconv.ParseInt(args[0], 10, 64)
+	if err != nil {
+		return fmt.Errorf("Invalid expires argument: %v", args[0])
+	}
+
+	if timestamp > 0 && timestamp < time.Now().Unix() {
+		return errors.New(msgExpiredURL)
+	}
+
+	return nil
+}
+
 func applyStripMetadataOption(po *processingOptions, args []string) error {
 	if len(args) > 1 {
 		return fmt.Errorf("Invalid strip metadata arguments: %v", args)
@@ -972,6 +991,8 @@ func applyProcessingOption(po *processingOptions, name string, args []string) er
 		return applyAutoRotateOption(po, args)
 	case "filename", "fn":
 		return applyFilenameOption(po, args)
+	case "expires", "exp":
+		return applyExpiresOption(po, args)
 	}
 
 	return fmt.Errorf("Unknown processing option: %s", name)
