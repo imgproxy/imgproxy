@@ -16,6 +16,10 @@ var (
 	fallbackImage   *imageData
 )
 
+const (
+	fallbackImageUsedCtxKey = ctxKey("fallbackImageUsed")
+)
+
 func initProcessingHandler() error {
 	var err error
 
@@ -94,12 +98,16 @@ func respondWithImage(ctx context.Context, reqID string, r *http.Request, rw htt
 	}
 
 	rw.Header().Set("Content-Length", strconv.Itoa(len(data)))
-	rw.WriteHeader(200)
+	statusCode := 200
+	if getFallbackImageUsed(ctx) {
+		statusCode = conf.FallbackImageHTTPCode
+	}
+	rw.WriteHeader(statusCode)
 	rw.Write(data)
 
 	imageURL := getImageURL(ctx)
 
-	logResponse(reqID, r, 200, nil, &imageURL, po)
+	logResponse(reqID, r, statusCode, nil, &imageURL, po)
 }
 
 func respondWithNotModified(ctx context.Context, reqID string, r *http.Request, rw http.ResponseWriter) {
@@ -158,12 +166,13 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		}
 
 		logWarning("Could not load image. Using fallback image: %s", err.Error())
+		ctx = setFallbackImageUsedCtx(ctx)
 		ctx = context.WithValue(ctx, imageDataCtxKey, fallbackImage)
 	}
 
 	checkTimeout(ctx)
 
-	if conf.ETagEnabled {
+	if conf.ETagEnabled && !getFallbackImageUsed(ctx) {
 		eTag := calcETag(ctx)
 		rw.Header().Set("ETag", eTag)
 
@@ -205,4 +214,13 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	checkTimeout(ctx)
 
 	respondWithImage(ctx, reqID, r, rw, imageData)
+}
+
+func setFallbackImageUsedCtx(ctx context.Context) context.Context {
+	return context.WithValue(ctx, fallbackImageUsedCtxKey, true)
+}
+
+func getFallbackImageUsed(ctx context.Context) bool {
+	result, _ := ctx.Value(fallbackImageUsedCtxKey).(bool)
+	return result
 }

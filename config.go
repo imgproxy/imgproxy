@@ -279,9 +279,10 @@ type config struct {
 	WatermarkURL     string
 	WatermarkOpacity float64
 
-	FallbackImageData string
-	FallbackImagePath string
-	FallbackImageURL  string
+	FallbackImageData     string
+	FallbackImagePath     string
+	FallbackImageURL      string
+	FallbackImageHTTPCode int
 
 	NewRelicAppName string
 	NewRelicKey     string
@@ -328,6 +329,7 @@ var conf = config{
 	UserAgent:                      fmt.Sprintf("imgproxy/%s", version),
 	Presets:                        make(presets),
 	WatermarkOpacity:               1,
+	FallbackImageHTTPCode:          200,
 	BugsnagStage:                   "production",
 	HoneybadgerEnv:                 "production",
 	SentryEnvironment:              "production",
@@ -451,6 +453,7 @@ func configure() error {
 	strEnvConfig(&conf.FallbackImageData, "IMGPROXY_FALLBACK_IMAGE_DATA")
 	strEnvConfig(&conf.FallbackImagePath, "IMGPROXY_FALLBACK_IMAGE_PATH")
 	strEnvConfig(&conf.FallbackImageURL, "IMGPROXY_FALLBACK_IMAGE_URL")
+	intEnvConfig(&conf.FallbackImageHTTPCode, "IMGPROXY_FALLBACK_IMAGE_HTTP_CODE")
 
 	strEnvConfig(&conf.NewRelicAppName, "IMGPROXY_NEW_RELIC_APP_NAME")
 	strEnvConfig(&conf.NewRelicKey, "IMGPROXY_NEW_RELIC_KEY")
@@ -572,6 +575,10 @@ func configure() error {
 		return fmt.Errorf("Watermark opacity should be greater than 0")
 	} else if conf.WatermarkOpacity > 1 {
 		return fmt.Errorf("Watermark opacity should be less than or equal to 1")
+	}
+
+	if conf.FallbackImageHTTPCode < 100 || conf.FallbackImageHTTPCode > 599 {
+		return fmt.Errorf("Fallback image HTTP code should be between 100 and 599")
 	}
 
 	if len(conf.PrometheusBind) > 0 && conf.PrometheusBind == conf.Bind {

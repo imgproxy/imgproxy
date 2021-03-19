@@ -185,6 +185,7 @@ You can set up a fallback image that will be used in case imgproxy can't fetch t
 * `IMGPROXY_FALLBACK_IMAGE_DATA`: Base64-encoded image data. You can easily calculate it with `base64 tmp/fallback.png | tr -d '\n'`;
 * `IMGPROXY_FALLBACK_IMAGE_PATH`: path to the locally stored image;
 * `IMGPROXY_FALLBACK_IMAGE_URL`: fallback image URL.
+* `IMGPROXY_FALLBACK_IMAGE_HTTP_CODE`: HTTP code for the fallback image response. Default: `200`.
 
 ## Skip processing
 
