@@ -1,6 +1,11 @@
 # Changelog
 
 ## [Unreleased]
+### Added
+- `IMGPROXY_FALLBACK_IMAGE_HTTP_CODE` config.
+- [expires](https://docs.imgproxy.net/#/generating_the_url?id=expires) processing option.
+- [skip processing](https://docs.imgproxy.net/#/generating_the_url?id=skip-processing) processing option.
+
 ### Removed
 - Removed basic URL format, use [advanced one](./docs/generating_the_url.md) instead.
 - Removed `IMGPROXY_MAX_SRC_DIMENSION` config, use `IMGPROXY_MAX_SRC_RESOLUTION` instead.

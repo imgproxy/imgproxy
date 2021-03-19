@@ -568,6 +568,26 @@ func (s *ProcessingOptionsTestSuite) TestParsePathOnlyPresets() {
 	assert.Equal(s.T(), 50, po.Quality)
 }
 
+func (s *ProcessingOptionsTestSuite) TestParseSkipProcessing() {
+	req := s.getRequest("/unsafe/skp:jpg:png/plain/http://images.dev/lorem/ipsum.jpg")
+
+	ctx, err := parsePath(context.Background(), req)
+
+	require.Nil(s.T(), err)
+
+	po := getProcessingOptions(ctx)
+	assert.Equal(s.T(), []imageType{imageTypeJPEG, imageTypePNG}, po.SkipProcessingFormats)
+}
+
+func (s *ProcessingOptionsTestSuite) TestParseSkipProcessingInvalid() {
+	req := s.getRequest("/unsafe/skp:jpg:png:bad_format/plain/http://images.dev/lorem/ipsum.jpg")
+
+	_, err := parsePath(context.Background(), req)
+
+	require.Error(s.T(), err)
+	assert.Equal(s.T(), "Invalid image format in skip processing: bad_format", err.Error())
+}
+
 func (s *ProcessingOptionsTestSuite) TestParseExpires() {
 	req := s.getRequest("/unsafe/exp:32503669200/plain/http://images.dev/lorem/ipsum.jpg")
 	_, err := parsePath(context.Background(), req)

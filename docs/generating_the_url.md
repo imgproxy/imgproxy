@@ -518,6 +518,21 @@ ar:%auto_rotate
 
 When set to `1`, `t` or `true`, imgproxy will automatically rotate images based onon the EXIF Orientation parameter (if available in the image meta data). The orientation tag will be removed from the image anyway. Normally this is controlled by the [IMGPROXY_AUTO_ROTATE](configuration.md#miscellaneous) configuration but this procesing option allows the configuration to be set for each request.
 
+### Skip processing
+
+```
+skip_processing:%extension1:%extension2:...:%extensionN
+skp:%extension1:%extension2:...:%extensionN
+```
+
+When set, imgproxy will skip the processing of listed formats. Also available as [IMGPROXY_SKIP_PROCESSING_FORMATS](configuration.md#skip-processing) configuration.
+
+**📝Note:** Processing can be skipped only when the requested format is the same as the source format.
+
+**📝Note:** Video thumbnail processing can't be skipped.
+
+Default: empty
+
 ### Filename
 
 ```
