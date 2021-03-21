@@ -51,7 +51,7 @@ func initDownloading() error {
 		Proxy:               http.ProxyFromEnvironment,
 		MaxIdleConns:        conf.Concurrency,
 		MaxIdleConnsPerHost: conf.Concurrency,
-		DisableCompression:  true,
+		DisableCompression:  false,
 		DialContext:         (&net.Dialer{KeepAlive: 600 * time.Second}).DialContext,
 	}
 
