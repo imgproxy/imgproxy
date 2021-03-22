@@ -102,14 +102,7 @@ func withSecret(h routeHandler) routeHandler {
 }
 
 func handlePanic(reqID string, rw http.ResponseWriter, r *http.Request, err error) {
-	var (
-		ierr *imgproxyError
-		ok   bool
-	)
-
-	if ierr, ok = err.(*imgproxyError); !ok {
-		ierr = newUnexpectedError(err.Error(), 3)
-	}
+	ierr := wrapError(err, 3)
 
 	if ierr.Unexpected {
 		reportError(err, r)

@@ -116,7 +116,7 @@ func checkTypeAndDimensions(r io.Reader) (imageType, error) {
 		return imageTypeUnknown, errSourceImageTypeNotSupported
 	}
 	if err != nil {
-		return imageTypeUnknown, newUnexpectedError(err.Error(), 0)
+		return imageTypeUnknown, wrapError(err, 0)
 	}
 
 	imgtype, imgtypeOk := imageTypes[meta.Format()]

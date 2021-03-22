@@ -55,6 +55,13 @@ func newUnexpectedError(msg string, skip int) *imgproxyError {
 	}
 }
 
+func wrapError(err error, skip int) *imgproxyError {
+	if ierr, ok := err.(*imgproxyError); ok {
+		return ierr
+	}
+	return newUnexpectedError(err.Error(), skip+1)
+}
+
 func callers(skip int) []uintptr {
 	stack := make([]uintptr, 10)
 	n := runtime.Callers(skip, stack)
