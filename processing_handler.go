@@ -133,6 +133,8 @@ func respondWithNotModified(ctx context.Context, reqID string, r *http.Request, 
 func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
+	r = beforeProcessing(r)
+
 	if newRelicEnabled {
 		var newRelicCancel context.CancelFunc
 		ctx, newRelicCancel, rw = startNewRelicTransaction(ctx, rw, r)
@@ -221,6 +223,8 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		}
 		panic(err)
 	}
+
+	beforeResponse(imageData)
 
 	checkTimeout(ctx)
 
