@@ -133,7 +133,8 @@ func respondWithNotModified(ctx context.Context, reqID string, r *http.Request, 
 func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	r = beforeProcessing(r)
+	var cachePath string
+	r, cachePath = beforeProcessing(r)
 
 	if newRelicEnabled {
 		var newRelicCancel context.CancelFunc
@@ -224,9 +225,12 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	beforeResponse(imageData)
+	uploaded := beforeResponse(imageData, cachePath)
 
 	checkTimeout(ctx)
 
 	respondWithImage(ctx, reqID, r, rw, imageData)
+
+	// Waiting for S3 Upload to finish.
+	<- uploaded
 }
