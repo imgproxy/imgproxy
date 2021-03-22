@@ -243,6 +243,7 @@ func newProcessingOptions() *processingOptions {
 	})
 
 	po := _newProcessingOptions
+	po.SkipProcessingFormats = append([]imageType(nil), conf.SkipProcessingFormats...)
 	po.UsedPresets = make([]string, 0, len(conf.Presets))
 
 	return &po

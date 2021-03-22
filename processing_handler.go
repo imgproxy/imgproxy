@@ -185,11 +185,11 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	checkTimeout(ctx)
 
 	po := getProcessingOptions(ctx)
-	if len(conf.SkipProcessingFormats) > 0 || len(po.SkipProcessingFormats) > 0 {
+	if len(po.SkipProcessingFormats) > 0 {
 		imgdata := getImageData(ctx)
 
 		if imgdata.Type == po.Format || po.Format == imageTypeUnknown {
-			for _, f := range append(conf.SkipProcessingFormats, po.SkipProcessingFormats...) {
+			for _, f := range po.SkipProcessingFormats {
 				if f == imgdata.Type {
 					po.Format = imgdata.Type
 					respondWithImage(ctx, reqID, r, rw, imgdata.Data)
