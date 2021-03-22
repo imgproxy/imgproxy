@@ -147,6 +147,8 @@ type processingOptions struct {
 	StripColorProfile bool
 	AutoRotate        bool
 
+	SkipProcessingFormats []imageType
+
 	CacheBuster string
 
 	Watermark watermarkOptions
@@ -241,6 +243,7 @@ func newProcessingOptions() *processingOptions {
 	})
 
 	po := _newProcessingOptions
+	po.SkipProcessingFormats = append([]imageType(nil), conf.SkipProcessingFormats...)
 	po.UsedPresets = make([]string, 0, len(conf.Presets))
 
 	return &po
@@ -880,6 +883,18 @@ func applyCacheBusterOption(po *processingOptions, args []string) error {
 	return nil
 }
 
+func applySkipProcessingFormatsOption(po *processingOptions, args []string) error {
+	for _, format := range args {
+		if f, ok := imageTypes[format]; ok {
+			po.SkipProcessingFormats = append(po.SkipProcessingFormats, f)
+		} else {
+			return fmt.Errorf("Invalid image format in skip processing: %s", format)
+		}
+	}
+
+	return nil
+}
+
 func applyFilenameOption(po *processingOptions, args []string) error {
 	if len(args) > 1 {
 		return fmt.Errorf("Invalid filename arguments: %v", args)
@@ -989,6 +1004,8 @@ func applyProcessingOption(po *processingOptions, name string, args []string) er
 		return applyStripColorProfileOption(po, args)
 	case "auto_rotate", "ar":
 		return applyAutoRotateOption(po, args)
+	case "skip_processing", "skp":
+		return applySkipProcessingFormatsOption(po, args)
 	case "filename", "fn":
 		return applyFilenameOption(po, args)
 	case "expires", "exp":

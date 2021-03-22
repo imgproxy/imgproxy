@@ -195,7 +195,7 @@ You can configure imgproxy to skip processing of some formats:
 
 **📝Note:** Processing can be skipped only when the requested format is the same as the source format.
 
-**📝Note:** Video thumbnails processing can't be skipped.
+**📝Note:** Video thumbnail processing can't be skipped.
 
 ## Presets
 
