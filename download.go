@@ -32,19 +32,20 @@ const msgSourceImageIsUnreachable = "Source image is unreachable"
 
 var downloadBufPool *bufPool
 
-type limitReader struct {
+type hardLimitReader struct {
 	r    io.Reader
 	left int
 }
 
-func (lr *limitReader) Read(p []byte) (n int, err error) {
+func (lr *hardLimitReader) Read(p []byte) (n int, err error) {
+	if lr.left <= 0 {
+		return 0, errSourceFileTooBig
+	}
+	if len(p) > lr.left {
+		p = p[0:lr.left]
+	}
 	n, err = lr.r.Read(p)
 	lr.left -= n
-
-	if err == nil && lr.left < 0 {
-		err = errSourceFileTooBig
-	}
-
 	return
 }
 
@@ -139,7 +140,7 @@ func readAndCheckImage(r io.Reader, contentLength int) (*imageData, error) {
 	cancel := func() { downloadBufPool.Put(buf) }
 
 	if conf.MaxSrcFileSize > 0 {
-		r = &limitReader{r: r, left: conf.MaxSrcFileSize}
+		r = &hardLimitReader{r: r, left: conf.MaxSrcFileSize}
 	}
 
 	br := newBufReader(r, buf)
