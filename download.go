@@ -142,13 +142,15 @@ func readAndCheckImage(r io.Reader, contentLength int) (*imageData, error) {
 		r = &limitReader{r: r, left: conf.MaxSrcFileSize}
 	}
 
-	imgtype, err := checkTypeAndDimensions(io.TeeReader(r, buf))
+	br := newBufReader(r, buf)
+
+	imgtype, err := checkTypeAndDimensions(br)
 	if err != nil {
 		cancel()
 		return nil, err
 	}
 
-	if _, err = buf.ReadFrom(r); err != nil {
+	if err = br.Flush(); err != nil {
 		cancel()
 		return nil, newError(404, err.Error(), msgSourceImageIsUnreachable).SetUnexpected(conf.ReportDownloadingErrors)
 	}
