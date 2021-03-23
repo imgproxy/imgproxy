@@ -288,7 +288,7 @@ type config struct {
 	NewRelicAppName string
 	NewRelicKey     string
 
-	DatDogAppName string
+	DatadogServiceName string
 
 	PrometheusBind      string
 	PrometheusNamespace string
@@ -465,6 +465,8 @@ func configure() error {
 
 	strEnvConfig(&conf.NewRelicAppName, "IMGPROXY_NEW_RELIC_APP_NAME")
 	strEnvConfig(&conf.NewRelicKey, "IMGPROXY_NEW_RELIC_KEY")
+
+	strEnvConfig(&conf.DatadogServiceName, "IMGPROXY_DATADOG_SERVICE_NAME")
 
 	strEnvConfig(&conf.PrometheusBind, "IMGPROXY_PROMETHEUS_BIND")
 	strEnvConfig(&conf.PrometheusNamespace, "IMGPROXY_PROMETHEUS_NAMESPACE")

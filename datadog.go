@@ -15,18 +15,15 @@ var (
 )
 
 func initDatadog() (bool, context.CancelFunc) {
-	if len(conf.NewRelicKey) == 0 {
-		return false, nil
-	}
-
-	name := conf.DatDogAppName
+	name := conf.DatadogServiceName
 	if len(name) == 0 {
-		name = "imgproxy"
+		return false, nil
 	}
 
 	tracer.Start(tracer.WithServiceName(name))
 
 	datadogEnabled = true
+
 	cancel := func() { tracer.Stop() }
 	return true, cancel
 }
