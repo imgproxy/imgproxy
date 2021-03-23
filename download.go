@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/imgproxy/imgproxy/v2/imagemeta"
+	"github.com/klauspost/compress/gzip"
 )
 
 var (
@@ -51,7 +52,7 @@ func initDownloading() error {
 		Proxy:               http.ProxyFromEnvironment,
 		MaxIdleConns:        conf.Concurrency,
 		MaxIdleConnsPerHost: conf.Concurrency,
-		DisableCompression:  false,
+		DisableCompression:  true,
 		DialContext:         (&net.Dialer{KeepAlive: 600 * time.Second}).DialContext,
 	}
 
@@ -198,6 +199,15 @@ func downloadImage(ctx context.Context) (context.Context, context.CancelFunc, er
 	}
 	if err != nil {
 		return ctx, func() {}, err
+	}
+
+	if res.Header.Get("Content-Encoding") == "gzip" {
+		gzipBody, err := gzip.NewReader(res.Body)
+		if err != nil {
+			return ctx, func() {}, err
+		}
+		defer gzipBody.Close()
+		res.Body = gzipBody
 	}
 
 	imgdata, err := readAndCheckImage(res.Body, int(res.ContentLength))
