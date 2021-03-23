@@ -147,6 +147,12 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		defer newRelicCancel()
 	}
 
+	if datadogEnabled {
+		var datadogCancel context.CancelFunc
+		ctx, datadogCancel = startDatadogTransaction(ctx, r)
+		defer datadogCancel()
+	}
+
 	if prometheusEnabled {
 		prometheusRequestsTotal.Inc()
 		defer startPrometheusDuration(prometheusRequestDuration)()

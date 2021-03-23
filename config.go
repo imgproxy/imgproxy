@@ -288,6 +288,8 @@ type config struct {
 	NewRelicAppName string
 	NewRelicKey     string
 
+	DatDogAppName string
+
 	PrometheusBind      string
 	PrometheusNamespace string
 

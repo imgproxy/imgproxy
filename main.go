@@ -29,7 +29,9 @@ func initialize() error {
 	if err := initNewrelic(); err != nil {
 		return err
 	}
-
+	if success, datadogShutdown := initDatadog(); success {
+		defer datadogShutdown()
+	}
 	initPrometheus()
 
 	if err := initDownloading(); err != nil {

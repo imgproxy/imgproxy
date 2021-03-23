@@ -769,6 +769,12 @@ func processImage(ctx context.Context) ([]byte, context.CancelFunc, error) {
 		defer newRelicCancel()
 	}
 
+	if datadogEnabled {
+		var datadogCancel context.CancelFunc
+		ctx, datadogCancel = startDatadogSpan(ctx, "Downloading image")
+		defer datadogCancel()
+	}
+
 	if prometheusEnabled {
 		defer startPrometheusDuration(prometheusProcessingDuration)()
 	}

@@ -187,7 +187,11 @@ func downloadImage(ctx context.Context) (context.Context, context.CancelFunc, er
 		newRelicCancel := startNewRelicSegment(ctx, "Downloading image")
 		defer newRelicCancel()
 	}
-
+	if datadogEnabled {
+		var datadogCancel context.CancelFunc
+		ctx, datadogCancel = startDatadogSpan(ctx, "Downloading image")
+		defer datadogCancel()
+	}
 	if prometheusEnabled {
 		defer startPrometheusDuration(prometheusDownloadDuration)()
 	}
