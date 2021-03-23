@@ -5,6 +5,7 @@ go 1.13
 require (
 	cloud.google.com/go/storage v1.13.0
 	github.com/Azure/azure-storage-blob-go v0.13.0
+	github.com/Microsoft/go-winio v0.4.16 // indirect
 	github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d // indirect
 	github.com/aws/aws-sdk-go v1.37.20
 	github.com/benesch/cgosymbolizer v0.0.0-20190515212042-bec6fe6e597b
@@ -20,6 +21,7 @@ require (
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
 	github.com/matoous/go-nanoid/v2 v2.0.0
 	github.com/newrelic/go-agent/v3 v3.10.0
+	github.com/philhofer/fwd v1.1.1 // indirect
 	github.com/prometheus/client_golang v1.9.0
 	github.com/sirupsen/logrus v1.8.0
 	github.com/stretchr/testify v1.7.0
@@ -28,6 +30,7 @@ require (
 	golang.org/x/sys v0.0.0-20210124154548-22da62e12c0c
 	golang.org/x/text v0.3.5
 	google.golang.org/api v0.40.0
+	gopkg.in/DataDog/dd-trace-go.v1 v1.29.1 // indirect
 )
 
 replace git.apache.org/thrift.git => github.com/apache/thrift v0.0.0-20180902110319-2566ecd5d999

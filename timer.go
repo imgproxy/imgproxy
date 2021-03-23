@@ -25,6 +25,7 @@ func checkTimeout(ctx context.Context) {
 			panic(newError(499, fmt.Sprintf("Request was cancelled after %v", d), "Cancelled"))
 		}
 
+		sendTimeoutToDataDog(ctx, d)
 		sendTimeoutToNewRelic(ctx, d)
 		incrementPrometheusErrorsTotal("timeout")
 

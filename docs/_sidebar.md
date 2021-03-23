@@ -12,6 +12,7 @@
 * [Serving files from Azure Blob Storage](serving_files_from_azure_blob_storage.md)
 * [New Relic](new_relic)
 * [Prometheus](prometheus)
+* [Datadog](datadog)
 * [Image formats support](image_formats_support)
 * [About processing pipeline](about_processing_pipeline)
 * [Health check](healthcheck)
