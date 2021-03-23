@@ -65,10 +65,8 @@ func (p *bufPool) calibrateAndClean() {
 		runtime.GC()
 	}
 
-	if prometheusEnabled {
-		setPrometheusBufferDefaultSize(p.name, p.defaultSize)
-		setPrometheusBufferMaxSize(p.name, p.maxSize)
-	}
+	setPrometheusBufferDefaultSize(p.name, p.defaultSize)
+	setPrometheusBufferMaxSize(p.name, p.maxSize)
 }
 
 func (p *bufPool) Get(size int) *bytes.Buffer {
@@ -143,7 +141,7 @@ func (p *bufPool) Put(buf *bytes.Buffer) {
 		if b == nil {
 			p.buffers[i] = buf
 
-			if prometheusEnabled && buf.Cap() > 0 {
+			if buf.Cap() > 0 {
 				observePrometheusBufferSize(p.name, buf.Cap())
 			}
 

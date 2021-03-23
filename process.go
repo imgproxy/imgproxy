@@ -762,14 +762,8 @@ func processImage(ctx context.Context) ([]byte, context.CancelFunc, error) {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 
-	if newRelicEnabled {
-		newRelicCancel := startNewRelicSegment(ctx, "Processing image")
-		defer newRelicCancel()
-	}
-
-	if prometheusEnabled {
-		defer startPrometheusDuration(prometheusProcessingDuration)()
-	}
+	defer startNewRelicSegment(ctx, "Processing image")()
+	defer startPrometheusDuration(prometheusProcessingDuration)()
 
 	defer vipsCleanup()
 

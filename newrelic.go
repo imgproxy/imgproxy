@@ -9,12 +9,14 @@ import (
 	"github.com/newrelic/go-agent/v3/newrelic"
 )
 
+const (
+	newRelicTransactionCtxKey = ctxKey("newRelicTransaction")
+)
+
 var (
 	newRelicEnabled = false
 
 	newRelicApp *newrelic.Application
-
-	newRelicTransactionCtxKey = ctxKey("newRelicTransaction")
 )
 
 func initNewrelic() error {
@@ -44,6 +46,10 @@ func initNewrelic() error {
 }
 
 func startNewRelicTransaction(ctx context.Context, rw http.ResponseWriter, r *http.Request) (context.Context, context.CancelFunc, http.ResponseWriter) {
+	if !newRelicEnabled {
+		return ctx, func() {}, rw
+	}
+
 	txn := newRelicApp.StartTransaction("request")
 	txn.SetWebRequestHTTP(r)
 	newRw := txn.SetWebResponse(rw)
@@ -52,23 +58,31 @@ func startNewRelicTransaction(ctx context.Context, rw http.ResponseWriter, r *ht
 }
 
 func startNewRelicSegment(ctx context.Context, name string) context.CancelFunc {
+	if !newRelicEnabled {
+		return func() {}
+	}
+
 	txn := ctx.Value(newRelicTransactionCtxKey).(*newrelic.Transaction)
 	segment := txn.StartSegment(name)
 	return func() { segment.End() }
 }
 
 func sendErrorToNewRelic(ctx context.Context, err error) {
-	txn := ctx.Value(newRelicTransactionCtxKey).(*newrelic.Transaction)
-	txn.NoticeError(err)
+	if newRelicEnabled {
+		txn := ctx.Value(newRelicTransactionCtxKey).(*newrelic.Transaction)
+		txn.NoticeError(err)
+	}
 }
 
 func sendTimeoutToNewRelic(ctx context.Context, d time.Duration) {
-	txn := ctx.Value(newRelicTransactionCtxKey).(*newrelic.Transaction)
-	txn.NoticeError(newrelic.Error{
-		Message: "Timeout",
-		Class:   "Timeout",
-		Attributes: map[string]interface{}{
-			"time": d.Seconds(),
-		},
-	})
+	if newRelicEnabled {
+		txn := ctx.Value(newRelicTransactionCtxKey).(*newrelic.Transaction)
+		txn.NoticeError(newrelic.Error{
+			Message: "Timeout",
+			Class:   "Timeout",
+			Attributes: map[string]interface{}{
+				"time": d.Seconds(),
+			},
+		})
+	}
 }

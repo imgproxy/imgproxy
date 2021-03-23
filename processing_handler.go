@@ -121,16 +121,12 @@ func respondWithNotModified(ctx context.Context, reqID string, r *http.Request, 
 func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	if newRelicEnabled {
-		var newRelicCancel context.CancelFunc
-		ctx, newRelicCancel, rw = startNewRelicTransaction(ctx, rw, r)
-		defer newRelicCancel()
-	}
+	var newRelicCancel context.CancelFunc
+	ctx, newRelicCancel, rw = startNewRelicTransaction(ctx, rw, r)
+	defer newRelicCancel()
 
-	if prometheusEnabled {
-		prometheusRequestsTotal.Inc()
-		defer startPrometheusDuration(prometheusRequestDuration)()
-	}
+	incrementPrometheusRequestsTotal()
+	defer startPrometheusDuration(prometheusRequestDuration)()
 
 	select {
 	case processingSem <- struct{}{}:
@@ -150,12 +146,8 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	ctx, downloadcancel, err := downloadImageCtx(ctx)
 	defer downloadcancel()
 	if err != nil {
-		if newRelicEnabled {
-			sendErrorToNewRelic(ctx, err)
-		}
-		if prometheusEnabled {
-			incrementPrometheusErrorsTotal("download")
-		}
+		sendErrorToNewRelic(ctx, err)
+		incrementPrometheusErrorsTotal("download")
 
 		if fallbackImage == nil {
 			panic(err)
@@ -202,12 +194,8 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	imageData, processcancel, err := processImage(ctx)
 	defer processcancel()
 	if err != nil {
-		if newRelicEnabled {
-			sendErrorToNewRelic(ctx, err)
-		}
-		if prometheusEnabled {
-			incrementPrometheusErrorsTotal("processing")
-		}
+		sendErrorToNewRelic(ctx, err)
+		incrementPrometheusErrorsTotal("processing")
 		panic(err)
 	}
 

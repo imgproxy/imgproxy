@@ -73,10 +73,8 @@ func run() error {
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	if prometheusEnabled {
-		if err := startPrometheusServer(cancel); err != nil {
-			return err
-		}
+	if err := startPrometheusServer(cancel); err != nil {
+		return err
 	}
 
 	s, err := startServer(cancel)
