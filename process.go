@@ -762,6 +762,7 @@ func processImage(ctx context.Context) ([]byte, context.CancelFunc, error) {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 
+	defer startDataDogSpan(ctx, "processing_image")()
 	defer startNewRelicSegment(ctx, "Processing image")()
 	defer startPrometheusDuration(prometheusProcessingDuration)()
 

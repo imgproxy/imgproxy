@@ -30,6 +30,8 @@ func initialize() error {
 		return err
 	}
 
+	initDataDog()
+
 	initPrometheus()
 
 	if err := initDownloading(); err != nil {
@@ -56,6 +58,8 @@ func run() error {
 	}
 
 	defer shutdownVips()
+
+	defer stopDataDog()
 
 	go func() {
 		var logMemStats = len(os.Getenv("IMGPROXY_LOG_MEM_STATS")) > 0

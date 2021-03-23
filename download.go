@@ -214,6 +214,7 @@ func downloadImage(imageURL string) (*imageData, error) {
 func downloadImageCtx(ctx context.Context) (context.Context, context.CancelFunc, error) {
 	imageURL := getImageURL(ctx)
 
+	defer startDataDogSpan(ctx, "downloading_image")()
 	defer startNewRelicSegment(ctx, "Downloading image")()
 	defer startPrometheusDuration(prometheusDownloadDuration)()
 

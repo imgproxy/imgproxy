@@ -121,6 +121,10 @@ func respondWithNotModified(ctx context.Context, reqID string, r *http.Request, 
 func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
+	var dataDogCancel context.CancelFunc
+	ctx, dataDogCancel, rw = startDataDogRootSpan(ctx, rw, r)
+	defer dataDogCancel()
+
 	var newRelicCancel context.CancelFunc
 	ctx, newRelicCancel, rw = startNewRelicTransaction(ctx, rw, r)
 	defer newRelicCancel()
@@ -146,6 +150,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	ctx, downloadcancel, err := downloadImageCtx(ctx)
 	defer downloadcancel()
 	if err != nil {
+		sendErrorToDataDog(ctx, err)
 		sendErrorToNewRelic(ctx, err)
 		incrementPrometheusErrorsTotal("download")
 
@@ -194,6 +199,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	imageData, processcancel, err := processImage(ctx)
 	defer processcancel()
 	if err != nil {
+		sendErrorToDataDog(ctx, err)
 		sendErrorToNewRelic(ctx, err)
 		incrementPrometheusErrorsTotal("processing")
 		panic(err)

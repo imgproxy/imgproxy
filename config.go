@@ -284,6 +284,8 @@ type config struct {
 	FallbackImageURL      string
 	FallbackImageHTTPCode int
 
+	DataDogEnable bool
+
 	NewRelicAppName string
 	NewRelicKey     string
 
@@ -454,6 +456,8 @@ func configure() error {
 	strEnvConfig(&conf.FallbackImagePath, "IMGPROXY_FALLBACK_IMAGE_PATH")
 	strEnvConfig(&conf.FallbackImageURL, "IMGPROXY_FALLBACK_IMAGE_URL")
 	intEnvConfig(&conf.FallbackImageHTTPCode, "IMGPROXY_FALLBACK_IMAGE_HTTP_CODE")
+
+	boolEnvConfig(&conf.DataDogEnable, "IMGPROXY_DATADOG_ENABLE")
 
 	strEnvConfig(&conf.NewRelicAppName, "IMGPROXY_NEW_RELIC_APP_NAME")
 	strEnvConfig(&conf.NewRelicKey, "IMGPROXY_NEW_RELIC_KEY")

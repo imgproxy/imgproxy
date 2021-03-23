@@ -5,6 +5,7 @@
 - `IMGPROXY_FALLBACK_IMAGE_HTTP_CODE` config.
 - [expires](https://docs.imgproxy.net/#/generating_the_url?id=expires) processing option.
 - [skip processing](https://docs.imgproxy.net/#/generating_the_url?id=skip-processing) processing option.
+- [Datadog](./docs/datadog.md) metrics.
 
 ### Removed
 - Removed basic URL format, use [advanced one](./docs/generating_the_url.md) instead.
