@@ -116,6 +116,10 @@ func initPrometheus() {
 }
 
 func startPrometheusServer(cancel context.CancelFunc) error {
+	if !prometheusEnabled {
+		return nil
+	}
+
 	s := http.Server{Handler: promhttp.Handler()}
 
 	l, err := listenReuseport("tcp", conf.PrometheusBind)
@@ -135,6 +139,10 @@ func startPrometheusServer(cancel context.CancelFunc) error {
 }
 
 func startPrometheusDuration(m prometheus.Histogram) func() {
+	if !prometheusEnabled {
+		return func() {}
+	}
+
 	t := time.Now()
 	return func() {
 		m.Observe(time.Since(t).Seconds())
@@ -142,17 +150,31 @@ func startPrometheusDuration(m prometheus.Histogram) func() {
 }
 
 func incrementPrometheusErrorsTotal(t string) {
-	prometheusErrorsTotal.With(prometheus.Labels{"type": t}).Inc()
+	if prometheusEnabled {
+		prometheusErrorsTotal.With(prometheus.Labels{"type": t}).Inc()
+	}
+}
+
+func incrementPrometheusRequestsTotal() {
+	if prometheusEnabled {
+		prometheusRequestsTotal.Inc()
+	}
 }
 
 func observePrometheusBufferSize(t string, size int) {
-	prometheusBufferSize.With(prometheus.Labels{"type": t}).Observe(float64(size))
+	if prometheusEnabled {
+		prometheusBufferSize.With(prometheus.Labels{"type": t}).Observe(float64(size))
+	}
 }
 
 func setPrometheusBufferDefaultSize(t string, size int) {
-	prometheusBufferDefaultSize.With(prometheus.Labels{"type": t}).Set(float64(size))
+	if prometheusEnabled {
+		prometheusBufferDefaultSize.With(prometheus.Labels{"type": t}).Set(float64(size))
+	}
 }
 
 func setPrometheusBufferMaxSize(t string, size int) {
-	prometheusBufferMaxSize.With(prometheus.Labels{"type": t}).Set(float64(size))
+	if prometheusEnabled {
+		prometheusBufferMaxSize.With(prometheus.Labels{"type": t}).Set(float64(size))
+	}
 }

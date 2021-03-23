@@ -214,14 +214,8 @@ func downloadImage(imageURL string) (*imageData, error) {
 func downloadImageCtx(ctx context.Context) (context.Context, context.CancelFunc, error) {
 	imageURL := getImageURL(ctx)
 
-	if newRelicEnabled {
-		newRelicCancel := startNewRelicSegment(ctx, "Downloading image")
-		defer newRelicCancel()
-	}
-
-	if prometheusEnabled {
-		defer startPrometheusDuration(prometheusDownloadDuration)()
-	}
+	defer startNewRelicSegment(ctx, "Downloading image")()
+	defer startPrometheusDuration(prometheusDownloadDuration)()
 
 	imgdata, err := downloadImage(imageURL)
 	if err != nil {

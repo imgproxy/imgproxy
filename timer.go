@@ -25,13 +25,8 @@ func checkTimeout(ctx context.Context) {
 			panic(newError(499, fmt.Sprintf("Request was cancelled after %v", d), "Cancelled"))
 		}
 
-		if newRelicEnabled {
-			sendTimeoutToNewRelic(ctx, d)
-		}
-
-		if prometheusEnabled {
-			incrementPrometheusErrorsTotal("timeout")
-		}
+		sendTimeoutToNewRelic(ctx, d)
+		incrementPrometheusErrorsTotal("timeout")
 
 		panic(newError(503, fmt.Sprintf("Timeout after %v", d), "Timeout"))
 	default:
