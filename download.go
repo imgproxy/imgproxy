@@ -1,6 +1,7 @@
 package main
 
 import (
+	"compress/gzip"
 	"context"
 	"crypto/tls"
 	"fmt"
@@ -11,7 +12,6 @@ import (
 	"time"
 
 	"github.com/imgproxy/imgproxy/v2/imagemeta"
-	"github.com/klauspost/compress/gzip"
 )
 
 var (
