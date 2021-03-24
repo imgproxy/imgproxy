@@ -63,7 +63,7 @@ The source URL can be provided as is, prepended by `/plain/` part:
 /plain/http://example.com/images/curiosity.jpg
 ```
 
-**📝Note:** If the sorce URL contains query string or `@`, you need to escape it.
+**📝Note:** If the source URL contains query string or `@`, you need to escape it.
 
 When using plain source URL, you can specify the [extension](#extension) after `@`:
 
