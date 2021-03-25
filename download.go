@@ -201,16 +201,22 @@ func downloadImage(ctx context.Context) (context.Context, context.CancelFunc, er
 		return ctx, func() {}, err
 	}
 
+	body := res.Body
+	contentLength := int(res.ContentLength)
+
 	if res.Header.Get("Content-Encoding") == "gzip" {
 		gzipBody, errGzip := gzip.NewReader(res.Body)
+		if gzipBody != nil {
+			defer gzipBody.Close()
+		}
 		if errGzip != nil {
 			return ctx, func() {}, err
 		}
-		defer gzipBody.Close()
-		res.Body = gzipBody
+		body = gzipBody
+		contentLength = 0
 	}
 
-	imgdata, err := readAndCheckImage(res.Body, int(res.ContentLength))
+	imgdata, err := readAndCheckImage(body, contentLength)
 	if err != nil {
 		return ctx, func() {}, err
 	}
