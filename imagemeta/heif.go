@@ -210,8 +210,6 @@ func heifReadBoxes(d *heifData, r io.Reader) error {
 			if w > d.Width || h > d.Height {
 				d.Width, d.Height = w, h
 			}
-		case "mdat":
-			return errors.New("mdat box occurred before meta box")
 		default:
 			if err := heifDiscardN(r, boxDataSize); err != nil {
 				return err
