@@ -80,7 +80,7 @@ width:%width
 w:%width
 ```
 
-Defines the width of the resulting image. When set to `0`, imgproxy will calculate the resulting width using the defined height and source aspect ratio.
+Defines the width of the resulting image. When set to `0`, imgproxy will calculate the resulting width using the defined height and source aspect ratio. When set to `0` and rezizing type is `force`, imgproxy will keep the original width.
 
 Default: `0`
 
@@ -91,7 +91,7 @@ height:%height
 h:%height
 ```
 
-Defines the height of the resulting image. When set to `0`, imgproxy will calculate resulting height using the defined width and source aspect ratio.
+Defines the height of the resulting image. When set to `0`, imgproxy will calculate resulting height using the defined width and source aspect ratio. When set to `0` and rezizing type is `force`, imgproxy will keep the original height.
 
 Default: `0`
 

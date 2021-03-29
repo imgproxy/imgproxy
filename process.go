@@ -111,9 +111,9 @@ func calcScale(width, height int, po *processingOptions, imgtype imageType) (flo
 		}
 
 		switch {
-		case po.Width == 0:
+		case po.Width == 0 && rt != resizeForce:
 			wshrink = hshrink
-		case po.Height == 0:
+		case po.Height == 0 && rt != resizeForce:
 			hshrink = wshrink
 		case rt == resizeFit:
 			wshrink = math.Max(wshrink, hshrink)
