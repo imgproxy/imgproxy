@@ -132,6 +132,8 @@ type processingOptions struct {
 	ResizingType      resizeType
 	Width             int
 	Height            int
+	MinWidth          int
+	MinHeight         int
 	Dpr               float64
 	Gravity           gravityOptions
 	Enlarge           bool
@@ -459,6 +461,22 @@ func applyHeightOption(po *processingOptions, args []string) error {
 	}
 
 	return parseDimension(&po.Height, "height", args[0])
+}
+
+func applyMinWidthOption(po *processingOptions, args []string) error {
+	if len(args) > 1 {
+		return fmt.Errorf("Invalid min width arguments: %v", args)
+	}
+
+	return parseDimension(&po.MinWidth, "min width", args[0])
+}
+
+func applyMinHeightOption(po *processingOptions, args []string) error {
+	if len(args) > 1 {
+		return fmt.Errorf("Invalid min height arguments: %v", args)
+	}
+
+	return parseDimension(&po.MinHeight, " min height", args[0])
 }
 
 func applyEnlargeOption(po *processingOptions, args []string) error {
@@ -970,6 +988,10 @@ func applyProcessingOption(po *processingOptions, name string, args []string) er
 		return applyWidthOption(po, args)
 	case "height", "h":
 		return applyHeightOption(po, args)
+	case "min-width", "mw":
+		return applyMinWidthOption(po, args)
+	case "min-height", "mh":
+		return applyMinHeightOption(po, args)
 	case "enlarge", "el":
 		return applyEnlargeOption(po, args)
 	case "extend", "ex":

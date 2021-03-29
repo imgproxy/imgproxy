@@ -95,6 +95,32 @@ Defines the height of the resulting image. When set to `0`, imgproxy will calcul
 
 Default: `0`
 
+### Min width
+
+```
+min-width:%width
+mw:%width
+```
+
+Defines the minimum width of the resulting image.
+
+**⚠️Warning:** When both `width` and `min-width` are set, the final image will be cropped according to `width`, so use this combination with care.
+
+Default: `0`
+
+### Min height
+
+```
+min-height:%height
+mh:%height
+```
+
+Defines the minimum height of the resulting image.
+
+**⚠️Warning:** When both `height` and `min-height` are set, the final image will be cropped according to `height`, so use this combination with care.
+
+Default: `0`
+
 ### Dpr
 
 ```
