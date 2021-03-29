@@ -6,7 +6,7 @@
 - [expires](https://docs.imgproxy.net/#/generating_the_url?id=expires) processing option.
 - [skip processing](https://docs.imgproxy.net/#/generating_the_url?id=skip-processing) processing option.
 - [Datadog](./docs/datadog.md) metrics.
-- `force` resizing type.
+- `force` and `fill-down` resizing types.
 
 ### Removed
 - Removed basic URL format, use [advanced one](./docs/generating_the_url.md) instead.

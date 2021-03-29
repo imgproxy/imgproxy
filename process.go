@@ -118,7 +118,7 @@ func calcScale(width, height int, po *processingOptions, imgtype imageType) (flo
 		case rt == resizeFit:
 			wshrink = math.Max(wshrink, hshrink)
 			hshrink = wshrink
-		case rt == resizeFill:
+		case rt == resizeFill || rt == resizeFillDown:
 			wshrink = math.Min(wshrink, hshrink)
 			hshrink = wshrink
 		}
@@ -459,13 +459,27 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 		return err
 	}
 
-	dprWidth := scaleInt(po.Width, po.Dpr)
-	dprHeight := scaleInt(po.Height, po.Dpr)
-
 	if err = cropImage(img, cropWidth, cropHeight, &cropGravity); err != nil {
 		return err
 	}
-	if err = cropImage(img, dprWidth, dprHeight, &po.Gravity); err != nil {
+
+	// Crop image to the result size
+	resultWidth := scaleInt(po.Width, po.Dpr)
+	resultHeight := scaleInt(po.Height, po.Dpr)
+
+	if po.ResizingType == resizeFillDown {
+		if resultWidth > img.Width() {
+			resultHeight = scaleInt(resultHeight, float64(img.Width())/float64(resultWidth))
+			resultWidth = img.Width()
+		}
+
+		if resultHeight > img.Height() {
+			resultWidth = scaleInt(resultWidth, float64(img.Height())/float64(resultHeight))
+			resultHeight = img.Height()
+		}
+	}
+
+	if err = cropImage(img, resultWidth, resultHeight, &po.Gravity); err != nil {
 		return err
 	}
 
@@ -547,9 +561,9 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 		return err
 	}
 
-	if po.Extend.Enabled && (dprWidth > img.Width() || dprHeight > img.Height()) {
-		offX, offY := calcPosition(dprWidth, dprHeight, img.Width(), img.Height(), &po.Extend.Gravity, false)
-		if err = img.Embed(dprWidth, dprHeight, offX, offY, po.Background, transparentBg); err != nil {
+	if po.Extend.Enabled && (resultWidth > img.Width() || resultHeight > img.Height()) {
+		offX, offY := calcPosition(resultWidth, resultHeight, img.Width(), img.Height(), &po.Extend.Gravity, false)
+		if err = img.Embed(resultWidth, resultHeight, offX, offY, po.Background, transparentBg); err != nil {
 			return err
 		}
 	}

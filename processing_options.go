@@ -65,15 +65,17 @@ type resizeType int
 const (
 	resizeFit resizeType = iota
 	resizeFill
+	resizeFillDown
 	resizeForce
 	resizeAuto
 )
 
 var resizeTypes = map[string]resizeType{
-	"fit":   resizeFit,
-	"fill":  resizeFill,
-	"force": resizeForce,
-	"auto":  resizeAuto,
+	"fit":       resizeFit,
+	"fill":      resizeFill,
+	"fill-down": resizeFillDown,
+	"force":     resizeForce,
+	"auto":      resizeAuto,
 }
 
 type rgbColor struct{ R, G, B uint8 }
