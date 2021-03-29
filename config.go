@@ -307,7 +307,6 @@ type config struct {
 	AirbrakeProjecKey string
 	AirbrakeEnv       string
 
-
 	ReportDownloadingErrors bool
 
 	EnableDebugHeaders bool
