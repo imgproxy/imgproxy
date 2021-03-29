@@ -211,12 +211,12 @@ vips_rad2float_go(VipsImage *in, VipsImage **out) {
 }
 
 int
-vips_resize_go(VipsImage *in, VipsImage **out, double scale) {
-  return vips_resize(in, out, scale, NULL);
+vips_resize_go(VipsImage *in, VipsImage **out, double wscale, double hscale) {
+  return vips_resize(in, out, wscale, "vscale", hscale, NULL);
 }
 
 int
-vips_resize_with_premultiply(VipsImage *in, VipsImage **out, double scale) {
+vips_resize_with_premultiply(VipsImage *in, VipsImage **out, double wscale, double hscale) {
 	VipsBandFormat format;
   VipsImage *tmp1, *tmp2;
 
@@ -225,7 +225,7 @@ vips_resize_with_premultiply(VipsImage *in, VipsImage **out, double scale) {
   if (vips_premultiply(in, &tmp1, NULL))
     return 1;
 
-	if (vips_resize(tmp1, &tmp2, scale, NULL)) {
+	if (vips_resize(tmp1, &tmp2, wscale, "vscale", hscale, NULL)) {
     clear_image(&tmp1);
 		return 1;
   }

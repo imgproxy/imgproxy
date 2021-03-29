@@ -403,15 +403,15 @@ func (img *vipsImage) Rad2Float() error {
 	return nil
 }
 
-func (img *vipsImage) Resize(scale float64, hasAlpa bool) error {
+func (img *vipsImage) Resize(wscale, hscale float64, hasAlpa bool) error {
 	var tmp *C.VipsImage
 
 	if hasAlpa {
-		if C.vips_resize_with_premultiply(img.VipsImage, &tmp, C.double(scale)) != 0 {
+		if C.vips_resize_with_premultiply(img.VipsImage, &tmp, C.double(wscale), C.double(hscale)) != 0 {
 			return vipsError()
 		}
 	} else {
-		if C.vips_resize_go(img.VipsImage, &tmp, C.double(scale)) != 0 {
+		if C.vips_resize_go(img.VipsImage, &tmp, C.double(wscale), C.double(hscale)) != 0 {
 			return vipsError()
 		}
 	}

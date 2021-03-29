@@ -70,8 +70,8 @@ func extractMeta(img *vipsImage, baseAngle int, useOrientation bool) (int, int, 
 	return width, height, angle, flip
 }
 
-func calcScale(width, height int, po *processingOptions, imgtype imageType) float64 {
-	var shrink float64
+func calcScale(width, height int, po *processingOptions, imgtype imageType) (float64, float64) {
+	var wshrink, hshrink float64
 
 	srcW, srcH := float64(width), float64(height)
 	dstW, dstH := float64(po.Width), float64(po.Height)
@@ -80,21 +80,28 @@ func calcScale(width, height int, po *processingOptions, imgtype imageType) floa
 		dstW = srcW
 	}
 
+	if dstW == srcW {
+		wshrink = 1
+	} else {
+		wshrink = srcW / dstW
+	}
+
 	if po.Height == 0 {
 		dstH = srcH
 	}
 
-	if dstW == srcW && dstH == srcH {
-		shrink = 1
+	if dstH == srcH {
+		hshrink = 1
 	} else {
-		wshrink := srcW / dstW
-		hshrink := srcH / dstH
+		hshrink = srcH / dstH
+	}
 
+	if wshrink != 1 || hshrink != 1 {
 		rt := po.ResizingType
 
 		if rt == resizeAuto {
-			srcD := width - height
-			dstD := po.Width - po.Height
+			srcD := srcW - srcH
+			dstD := dstW - dstH
 
 			if (srcD >= 0 && dstD >= 0) || (srcD < 0 && dstD < 0) {
 				rt = resizeFill
@@ -105,31 +112,41 @@ func calcScale(width, height int, po *processingOptions, imgtype imageType) floa
 
 		switch {
 		case po.Width == 0:
-			shrink = hshrink
+			wshrink = hshrink
 		case po.Height == 0:
-			shrink = wshrink
+			hshrink = wshrink
 		case rt == resizeFit:
-			shrink = math.Max(wshrink, hshrink)
-		default:
-			shrink = math.Min(wshrink, hshrink)
+			wshrink = math.Max(wshrink, hshrink)
+			hshrink = wshrink
+		case rt == resizeFill:
+			wshrink = math.Min(wshrink, hshrink)
+			hshrink = wshrink
 		}
 	}
 
-	if !po.Enlarge && shrink < 1 && imgtype != imageTypeSVG {
-		shrink = 1
+	if !po.Enlarge && imgtype != imageTypeSVG {
+		if wshrink < 1 {
+			hshrink /= wshrink
+			wshrink = 1
+		}
+		if hshrink < 1 {
+			wshrink /= hshrink
+			hshrink = 1
+		}
 	}
 
-	shrink /= po.Dpr
+	wshrink /= po.Dpr
+	hshrink /= po.Dpr
 
-	if shrink > srcW {
-		shrink = srcW
+	if wshrink > srcW {
+		wshrink = srcW
 	}
 
-	if shrink > srcH {
-		shrink = srcH
+	if hshrink > srcH {
+		hshrink = srcH
 	}
 
-	return 1.0 / shrink
+	return 1.0 / wshrink, 1.0 / hshrink
 }
 
 func canScaleOnLoad(imgtype imageType, scale float64) bool {
@@ -353,38 +370,42 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 	widthToScale := minNonZeroInt(cropWidth, srcWidth)
 	heightToScale := minNonZeroInt(cropHeight, srcHeight)
 
-	scale := calcScale(widthToScale, heightToScale, po, imgtype)
+	wscale, hscale := calcScale(widthToScale, heightToScale, po, imgtype)
 
 	if cropWidth > 0 {
-		cropWidth = maxInt(1, scaleInt(cropWidth, scale))
+		cropWidth = maxInt(1, scaleInt(cropWidth, wscale))
 	}
 	if cropHeight > 0 {
-		cropHeight = maxInt(1, scaleInt(cropHeight, scale))
+		cropHeight = maxInt(1, scaleInt(cropHeight, hscale))
 	}
 	if cropGravity.Type != gravityFocusPoint {
-		cropGravity.X *= scale
-		cropGravity.Y *= scale
+		cropGravity.X *= wscale
+		cropGravity.Y *= hscale
 	}
 
-	if !trimmed && scale != 1 && data != nil && canScaleOnLoad(imgtype, scale) {
-		jpegShrink := calcJpegShink(scale, imgtype)
+	prescale := math.Max(wscale, hscale)
+
+	if !trimmed && prescale != 1 && data != nil && canScaleOnLoad(imgtype, prescale) {
+		jpegShrink := calcJpegShink(prescale, imgtype)
 
 		if imgtype != imageTypeJPEG || jpegShrink != 1 {
 			// Do some scale-on-load
-			if err = img.Load(data, imgtype, jpegShrink, scale, 1); err != nil {
+			if err = img.Load(data, imgtype, jpegShrink, prescale, 1); err != nil {
 				return err
 			}
 		}
 
-		// Update scale after scale-on-load
+		// Update scales after scale-on-load
 		newWidth, newHeight, _, _ := extractMeta(img, po.Rotate, po.AutoRotate)
-		if srcWidth > srcHeight {
-			scale = float64(srcWidth) * scale / float64(newWidth)
-		} else {
-			scale = float64(srcHeight) * scale / float64(newHeight)
+
+		wscale = float64(srcWidth) * wscale / float64(newWidth)
+		if srcWidth == scaleInt(srcWidth, wscale) {
+			wscale = 1.0
 		}
-		if srcWidth == scaleInt(srcWidth, scale) && srcHeight == scaleInt(srcHeight, scale) {
-			scale = 1.0
+
+		hscale = float64(srcHeight) * hscale / float64(newHeight)
+		if srcHeight == scaleInt(srcHeight, hscale) {
+			hscale = 1.0
 		}
 	}
 
@@ -393,7 +414,7 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 	}
 
 	iccImported := false
-	convertToLinear := conf.UseLinearColorspace && scale != 1
+	convertToLinear := conf.UseLinearColorspace && (wscale != 1 || hscale != 1)
 
 	if convertToLinear || !img.IsSRGB() {
 		if err = img.ImportColourProfile(); err != nil {
@@ -414,8 +435,8 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 
 	hasAlpha := img.HasAlpha()
 
-	if scale != 1 {
-		if err = img.Resize(scale, hasAlpha); err != nil {
+	if wscale != 1 || hscale != 1 {
+		if err = img.Resize(wscale, hscale, hasAlpha); err != nil {
 			return err
 		}
 	}
@@ -452,7 +473,8 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 		webpLimitShrink := float64(maxInt(img.Width(), img.Height())) / webpMaxDimension
 
 		if webpLimitShrink > 1.0 {
-			if err = img.Resize(1.0/webpLimitShrink, hasAlpha); err != nil {
+			scale := 1.0 / webpLimitShrink
+			if err = img.Resize(scale, scale, hasAlpha); err != nil {
 				return err
 			}
 			logWarning("WebP dimension size is limited to %d. The image is rescaled to %dx%d", int(webpMaxDimension), img.Width(), img.Height())

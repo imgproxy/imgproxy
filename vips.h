@@ -55,8 +55,8 @@ int vips_copy_go(VipsImage *in, VipsImage **out);
 int vips_cast_go(VipsImage *in, VipsImage **out, VipsBandFormat format);
 int vips_rad2float_go(VipsImage *in, VipsImage **out);
 
-int vips_resize_go(VipsImage *in, VipsImage **out, double scale);
-int vips_resize_with_premultiply(VipsImage *in, VipsImage **out, double scale);
+int vips_resize_go(VipsImage *in, VipsImage **out, double wscale, double hscale);
+int vips_resize_with_premultiply(VipsImage *in, VipsImage **out, double wscale, double hscale);
 
 int vips_icc_is_srgb_iec61966(VipsImage *in);
 int vips_has_embedded_icc(VipsImage *in);
