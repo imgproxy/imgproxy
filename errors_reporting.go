@@ -60,7 +60,7 @@ func initErrorsReporting() {
 	}
 }
 
-func closeErrorsReporting(){
+func closeErrorsReporting() {
 	airbrake.Close()
 }
 
