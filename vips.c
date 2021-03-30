@@ -1,11 +1,15 @@
 #include "vips.h"
 #include <string.h>
+#include <math.h>
 
 #define VIPS_SUPPORT_ARRAY_HEADERS \
   (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 9))
 
 #define VIPS_SUPPORT_AVIF \
   (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 9))
+
+#define VIPS_SUPPORT_PNG_BITDEPTH \
+  (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 10))
 
 int
 vips_initialize() {
@@ -527,13 +531,29 @@ vips_jpegsave_go(VipsImage *in, void **buf, size_t *len, int quality, int interl
 
 int
 vips_pngsave_go(VipsImage *in, void **buf, size_t *len, int interlace, int quantize, int colors) {
+  if (!quantize)
+    return vips_pngsave_buffer(
+      in, buf, len,
+      "filter", VIPS_FOREIGN_PNG_FILTER_NONE,
+      "interlace", interlace,
+      NULL
+    );
+
+  int bitdepth = ceil(log2(colors));
+
   return vips_pngsave_buffer(
     in, buf, len,
     "filter", VIPS_FOREIGN_PNG_FILTER_NONE,
     "interlace", interlace,
+#if VIPS_SUPPORT_PNG_BITDEPTH
+    "palette", quantize,
+    "bitdepth", bitdepth,
+#else // VIPS_SUPPORT_PNG_BITDEPTH
     "palette", quantize,
     "colours", colors,
-    NULL);
+#endif // VIPS_SUPPORT_PNG_BITDEPTH
+    NULL
+  );
 }
 
 int
