@@ -1,6 +1,5 @@
 #include "vips.h"
 #include <string.h>
-#include <math.h>
 
 #define VIPS_SUPPORT_SMARTCROP \
   (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 5))
@@ -654,7 +653,10 @@ vips_pngsave_go(VipsImage *in, void **buf, size_t *len, int interlace, int quant
       NULL
     );
 
-  int bitdepth = ceil(log2(colors));
+  int bitdepth = 1;
+  if (colors > 16) bitdepth = 8;
+  else if (colors > 4) bitdepth = 4;
+  else if (colors > 2) bitdepth = 2;
 
   return vips_pngsave_buffer(
     in, buf, len,
