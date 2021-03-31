@@ -159,6 +159,18 @@ vips_get_orientation(VipsImage *image) {
 	return 1;
 }
 
+int
+vips_get_palette_bit_depth(VipsImage *image) {
+  int palette_bit_depth;
+
+  if (
+    vips_image_get_typeof(image, "palette-bit-depth") == G_TYPE_INT &&
+    vips_image_get_int(image, "palette-bit-depth", &palette_bit_depth) == 0
+  ) return palette_bit_depth;
+
+	return 0;
+}
+
 VipsBandFormat
 vips_band_format(VipsImage *in) {
   return in->BandFmt;
@@ -508,6 +520,7 @@ vips_strip(VipsImage *in, VipsImage **out) {
     gchar *name = fields[i];
 
     if (strcmp(name, VIPS_META_ICC_NAME) == 0) continue;
+    if (strcmp(name, "palette-bit-depth") == 0) continue;
 
     vips_image_remove(*out, name);
   }
@@ -530,6 +543,21 @@ vips_jpegsave_go(VipsImage *in, void **buf, size_t *len, int quality, int interl
 
 int
 vips_pngsave_go(VipsImage *in, void **buf, size_t *len, int interlace, int quantize, int colors) {
+  int bitdepth;
+
+  if (quantize) {
+    bitdepth = 1;
+    if (colors > 16) bitdepth = 8;
+    else if (colors > 4) bitdepth = 4;
+    else if (colors > 2) bitdepth = 2;
+  } else {
+    bitdepth = vips_get_palette_bit_depth(in);
+    if (bitdepth) {
+      quantize = 1;
+      colors = 1 << bitdepth;
+    }
+  }
+
   if (!quantize)
     return vips_pngsave_buffer(
       in, buf, len,
@@ -537,11 +565,6 @@ vips_pngsave_go(VipsImage *in, void **buf, size_t *len, int interlace, int quant
       "interlace", interlace,
       NULL
     );
-
-  int bitdepth = 1;
-  if (colors > 16) bitdepth = 8;
-  else if (colors > 4) bitdepth = 4;
-  else if (colors > 2) bitdepth = 2;
 
   return vips_pngsave_buffer(
     in, buf, len,
