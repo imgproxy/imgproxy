@@ -7,6 +7,7 @@ At the moment, imgproxy supports only the most popular image formats:
 | PNG    | `png`     | Yes    | Yes    |
 | JPEG   | `jpg`     | Yes    | Yes    |
 | WebP   | `webp`    | Yes    | Yes    |
+| AVIF   | `avif`    | Yes    | Yes    |
 | GIF    | `gif`     | Yes    | Yes    |
 | ICO    | `ico`     | Yes    | Yes    |
 | SVG    | `svg`     | Yes    | [See notes](#svg-support) |
@@ -38,6 +39,10 @@ imgproxy reads some amount of bytes to check if the source image is SVG. By defa
 ## HEIC support
 
 imgproxy supports HEIC only when using libvips 8.8.0+. Official imgproxy Docker image supports HEIC out of the box.
+
+## AVIF support
+
+imgproxy supports AVIF only when using libvips 8.9.0+ with compiled support for libheif + its supported encoder (rav1e, aom). Official imgproxy Docker image supports AVIF out of the box.
 
 ## BMP support
 
