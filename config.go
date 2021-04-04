@@ -225,6 +225,7 @@ type config struct {
 	PngInterlaced         bool
 	PngQuantize           bool
 	PngQuantizationColors int
+	AvifSpeed             int
 	Quality               int
 	FormatQuality         map[imageType]int
 	GZipCompression       int
@@ -324,6 +325,7 @@ var conf = config{
 	SignatureSize:                  32,
 	PngQuantizationColors:          256,
 	Quality:                        80,
+	AvifSpeed:                      5,
 	FormatQuality:                  map[imageType]int{imageTypeAVIF: 50},
 	StripMetadata:                  true,
 	StripColorProfile:              true,
@@ -380,6 +382,7 @@ func configure() error {
 
 	strSliceEnvConfig(&conf.AllowedSources, "IMGPROXY_ALLOWED_SOURCES")
 
+	intEnvConfig(&conf.AvifSpeed, "IMGPROXY_AVIF_SPEED")
 	boolEnvConfig(&conf.JpegProgressive, "IMGPROXY_JPEG_PROGRESSIVE")
 	boolEnvConfig(&conf.PngInterlaced, "IMGPROXY_PNG_INTERLACED")
 	boolEnvConfig(&conf.PngQuantize, "IMGPROXY_PNG_QUANTIZE")
@@ -557,6 +560,12 @@ func configure() error {
 		return fmt.Errorf("Quality should be greater than 0, now - %d\n", conf.Quality)
 	} else if conf.Quality > 100 {
 		return fmt.Errorf("Quality can't be greater than 100, now - %d\n", conf.Quality)
+	}
+
+	if conf.AvifSpeed <= 0 {
+		return fmt.Errorf("Avif speed should be greater than 0, now - %d\n", conf.AvifSpeed)
+	} else if conf.AvifSpeed > 8 {
+		return fmt.Errorf("Avif speed can't be greater than 8, now - %d\n", conf.AvifSpeed)
 	}
 
 	if conf.GZipCompression < 0 {

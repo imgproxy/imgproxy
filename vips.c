@@ -703,9 +703,9 @@ vips_tiffsave_go(VipsImage *in, void **buf, size_t *len, int quality) {
 }
 
 int
-vips_avifsave_go(VipsImage *in, void **buf, size_t *len, int quality) {
+vips_avifsave_go(VipsImage *in, void **buf, size_t *len, int quality, int speed) {
 #if VIPS_SUPPORT_AVIF
-  return vips_heifsave_buffer(in, buf, len, "Q", quality, "compression", VIPS_FOREIGN_HEIF_COMPRESSION_AV1, NULL);
+  return vips_heifsave_buffer(in, buf, len, "Q", quality, "compression", VIPS_FOREIGN_HEIF_COMPRESSION_AV1, "speed", speed, NULL);
 #else
   vips_error("vips_avifsave_go", "Saving AVIF is not supported (libvips 8.9+ reuired)");
   return 1;
