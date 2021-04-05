@@ -26,7 +26,7 @@ require (
 	golang.org/x/image v0.0.0-20201208152932-35266b937fa6
 	golang.org/x/net v0.0.0-20201224014010-6772e930b67b
 	golang.org/x/sys v0.0.0-20210124154548-22da62e12c0c
-	golang.org/x/text v0.3.5
+	golang.org/x/text v0.3.6
 	google.golang.org/api v0.40.0
 )
 
