@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+
+## [2.16.3] - 2021-04-05
 ### Fix
 - Fix PNG quantization palette size.
 - Fix parsing HEIF meta.
