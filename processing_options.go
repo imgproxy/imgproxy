@@ -976,14 +976,12 @@ func applyAutoRotateOption(po *processingOptions, args []string) error {
 
 func applyProcessingOption(po *processingOptions, name string, args []string) error {
 	switch name {
-	case "format", "f", "ext":
-		return applyFormatOption(po, args)
 	case "resize", "rs":
 		return applyResizeOption(po, args)
-	case "resizing_type", "rt":
-		return applyResizingTypeOption(po, args)
 	case "size", "s":
 		return applySizeOption(po, args)
+	case "resizing_type", "rt":
+		return applyResizingTypeOption(po, args)
 	case "width", "w":
 		return applyWidthOption(po, args)
 	case "height", "h":
@@ -992,26 +990,24 @@ func applyProcessingOption(po *processingOptions, name string, args []string) er
 		return applyMinWidthOption(po, args)
 	case "min-height", "mh":
 		return applyMinHeightOption(po, args)
+	case "dpr":
+		return applyDprOption(po, args)
 	case "enlarge", "el":
 		return applyEnlargeOption(po, args)
 	case "extend", "ex":
 		return applyExtendOption(po, args)
-	case "dpr":
-		return applyDprOption(po, args)
 	case "gravity", "g":
 		return applyGravityOption(po, args)
 	case "crop", "c":
 		return applyCropOption(po, args)
 	case "trim", "t":
 		return applyTrimOption(po, args)
-	case "rotate", "rot":
-		return applyRotateOption(po, args)
 	case "padding", "pd":
 		return applyPaddingOption(po, args)
-	case "quality", "q":
-		return applyQualityOption(po, args)
-	case "max_bytes", "mb":
-		return applyMaxBytesOption(po, args)
+	case "auto_rotate", "ar":
+		return applyAutoRotateOption(po, args)
+	case "rotate", "rot":
+		return applyRotateOption(po, args)
 	case "background", "bg":
 		return applyBackgroundOption(po, args)
 	case "blur", "bl":
@@ -1020,22 +1016,29 @@ func applyProcessingOption(po *processingOptions, name string, args []string) er
 		return applySharpenOption(po, args)
 	case "watermark", "wm":
 		return applyWatermarkOption(po, args)
-	case "preset", "pr":
-		return applyPresetOption(po, args)
-	case "cachebuster", "cb":
-		return applyCacheBusterOption(po, args)
 	case "strip_metadata", "sm":
 		return applyStripMetadataOption(po, args)
 	case "strip_color_profile", "scp":
 		return applyStripColorProfileOption(po, args)
-	case "auto_rotate", "ar":
-		return applyAutoRotateOption(po, args)
+	// Saving options
+	case "quality", "q":
+		return applyQualityOption(po, args)
+	case "max_bytes", "mb":
+		return applyMaxBytesOption(po, args)
+	case "format", "f", "ext":
+		return applyFormatOption(po, args)
+	// Handling options
 	case "skip_processing", "skp":
 		return applySkipProcessingFormatsOption(po, args)
-	case "filename", "fn":
-		return applyFilenameOption(po, args)
+	case "cachebuster", "cb":
+		return applyCacheBusterOption(po, args)
 	case "expires", "exp":
 		return applyExpiresOption(po, args)
+	case "filename", "fn":
+		return applyFilenameOption(po, args)
+	// Presets
+	case "preset", "pr":
+		return applyPresetOption(po, args)
 	}
 
 	return fmt.Errorf("Unknown processing option: %s", name)

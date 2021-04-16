@@ -197,24 +197,6 @@ Defines an area of the image to be processed (crop before resize).
   * When `width` or `height` is set to `0`, imgproxy will use the full width/height of the source image.
 * `gravity` _(optional)_ accepts the same values as [gravity](#gravity) option. When `gravity` is not set, imgproxy will use the value of the [gravity](#gravity) option.
 
-### Padding
-
-```
-padding:%top:%right:%bottom:%left
-pd:%top:%right:%bottom:%left
-```
-
-Defines padding size in css manner. All arguments are optional but at least one dimension must be set. Padded space is filled according to [background](#background) option.
-
-* `top` - top padding (and all other sides if they won't be set explicitly);
-* `right` - right padding (and left if it won't be set explicitly);
-* `bottom` - bottom padding;
-* `left` - left padding.
-
-**📝Note:** Padding is applied after all image transformations (except watermark) and enlarges generated image which means that if your resize dimensions were 100x200px and you applied `padding:10` option then you will get 120x220px image.
-
-**📝Note:** Padding follows [dpr](#dpr) option so it will be scaled too if you set it.
-
 ### Trim
 
 ```
@@ -235,6 +217,33 @@ Removes surrounding background.
 
 **📝Note:** Trimming of animated images is not supported.
 
+### Padding
+
+```
+padding:%top:%right:%bottom:%left
+pd:%top:%right:%bottom:%left
+```
+
+Defines padding size in css manner. All arguments are optional but at least one dimension must be set. Padded space is filled according to [background](#background) option.
+
+* `top` - top padding (and all other sides if they won't be set explicitly);
+* `right` - right padding (and left if it won't be set explicitly);
+* `bottom` - bottom padding;
+* `left` - left padding.
+
+**📝Note:** Padding is applied after all image transformations (except watermark) and enlarges generated image which means that if your resize dimensions were 100x200px and you applied `padding:10` option then you will get 120x220px image.
+
+**📝Note:** Padding follows [dpr](#dpr) option so it will be scaled too if you set it.
+
+### Auto Rotate
+
+```
+auto_rotate:%auto_rotate
+ar:%auto_rotate
+```
+
+When set to `1`, `t` or `true`, imgproxy will automatically rotate images based onon the EXIF Orientation parameter (if available in the image meta data). The orientation tag will be removed from the image anyway. Normally this is controlled by the [IMGPROXY_AUTO_ROTATE](configuration.md#miscellaneous) configuration but this procesing option allows the configuration to be set for each request.
+
 ### Rotate
 
 ```
@@ -245,32 +254,6 @@ rot:%angle
 Rotates the image on the specified angle. The orientation from the image metadata is applied before the rotation unless autorotation is disabled.
 
 **📝Note:** Only 0/90/180/270/etc degrees angles are supported.
-
-Default: 0.
-
-### Quality
-
-```
-quality:%quality
-q:%quality
-```
-
-Redefines quality of the resulting image, percentage. When `0`, quality is assumed based on `IMGPROXY_QUALITY` and `IMGPROXY_FORMAT_QUALITY`.
-
-Default: 0.
-
-### Max Bytes
-
-```
-max_bytes:%bytes
-mb:%bytes
-```
-
-When set, imgproxy automatically degrades the quality of the image until the image is under the specified amount of bytes.
-
-**📝Note:** Applicable only to `jpg`, `webp`, `heic`, and `tiff`.
-
-**⚠️Warning:** When `max_bytes` is set, imgproxy saves image multiple times to achieve specified image size.
 
 Default: 0
 
@@ -435,6 +418,50 @@ When set, imgproxy will prepend `<style>` node with provided content to the `<sv
 
 Default: blank
 
+### Strip Metadata
+
+```
+strip_metadata:%strip_metadata
+sm:%strip_metadata
+```
+
+When set to `1`, `t` or `true`, imgproxy will strip the metadata (EXIF, IPTC, etc.) on JPEG and WebP output images. Normally this is controlled by the [IMGPROXY_STRIP_METADATA](configuration.md#miscellaneous) configuration but this procesing option allows the configuration to be set for each request.
+
+### Strip Color Profile
+
+```
+strip_color_profile:%strip_color_profile
+scp:%strip_color_profile
+```
+
+When set to `1`, `t` or `true`, imgproxy will transform the embedded color profile (ICC) to sRGB and remove it from the image. Otherwise, imgproxy will try to keep it as is. Normally this is controlled by the [IMGPROXY_STRIP_COLOR_PROFILE](configuration.md#miscellaneous) configuration but this procesing option allows the configuration to be set for each request.
+
+### Quality
+
+```
+quality:%quality
+q:%quality
+```
+
+Redefines quality of the resulting image, percentage. When `0`, quality is assumed based on `IMGPROXY_QUALITY` and `IMGPROXY_FORMAT_QUALITY`.
+
+Default: 0.
+
+### Max Bytes
+
+```
+max_bytes:%bytes
+mb:%bytes
+```
+
+When set, imgproxy automatically degrades the quality of the image until the image is under the specified amount of bytes.
+
+**📝Note:** Applicable only to `jpg`, `webp`, `heic`, and `tiff`.
+
+**⚠️Warning:** When `max_bytes` is set, imgproxy saves image multiple times to achieve specified image size.
+
+Default: 0
+
 ### JPEG options<img class='pro-badge' src='assets/pro.svg' alt='pro' />
 
 ```
@@ -462,6 +489,18 @@ gifo:%optimize_frames:%optimize_transparency
 
 Allows redefining GIF saving options. All arguments have the same meaning as [Advanced GIF compression](configuration.md#advanced-gif-compression) configs. All arguments are optional and can be omitted.
 
+### Format
+
+```
+format:%extension
+f:%extension
+ext:%extension
+```
+
+Specifies the resulting image format. Alias for [extension](#extension) URL part.
+
+Default: `jpg`
+
 ### Page<img class='pro-badge' src='assets/pro.svg' alt='pro' />
 
 ```
@@ -482,16 +521,18 @@ vts:%second
 
 Allows redefining `IMGPROXY_VIDEO_THUMBNAIL_SECOND` config.
 
-### Preset
+### Skip processing
 
 ```
-preset:%preset_name1:%preset_name2:...:%preset_nameN
-pr:%preset_name1:%preset_name2:...:%preset_nameN
+skip_processing:%extension1:%extension2:...:%extensionN
+skp:%extension1:%extension2:...:%extensionN
 ```
 
-Defines a list of presets to be used by imgproxy. Feel free to use as many presets in a single URL as you need.
+When set, imgproxy will skip the processing of listed formats. Also available as [IMGPROXY_SKIP_PROCESSING_FORMATS](configuration.md#skip-processing) configuration.
 
-Read more about presets in the [Presets](presets.md) guide.
+**📝Note:** Processing can be skipped only when the requested format is the same as the source format.
+
+**📝Note:** Video thumbnail processing can't be skipped.
 
 Default: empty
 
@@ -519,48 +560,6 @@ When set, imgproxy will check provided unix timestamp and return 404 when expire
 
 Default: empty
 
-### Strip Metadata
-
-```
-strip_metadata:%strip_metadata
-sm:%strip_metadata
-```
-
-When set to `1`, `t` or `true`, imgproxy will strip the metadata (EXIF, IPTC, etc.) on JPEG and WebP output images. Normally this is controlled by the [IMGPROXY_STRIP_METADATA](configuration.md#miscellaneous) configuration but this procesing option allows the configuration to be set for each request.
-
-### Strip Color Profile
-
-```
-strip_color_profile:%strip_color_profile
-scp:%strip_color_profile
-```
-
-When set to `1`, `t` or `true`, imgproxy will transform the embedded color profile (ICC) to sRGB and remove it from the image. Otherwise, imgproxy will try to keep it as is. Normally this is controlled by the [IMGPROXY_STRIP_COLOR_PROFILE](configuration.md#miscellaneous) configuration but this procesing option allows the configuration to be set for each request.
-
-### Auto Rotate
-
-```
-auto_rotate:%auto_rotate
-ar:%auto_rotate
-```
-
-When set to `1`, `t` or `true`, imgproxy will automatically rotate images based onon the EXIF Orientation parameter (if available in the image meta data). The orientation tag will be removed from the image anyway. Normally this is controlled by the [IMGPROXY_AUTO_ROTATE](configuration.md#miscellaneous) configuration but this procesing option allows the configuration to be set for each request.
-
-### Skip processing
-
-```
-skip_processing:%extension1:%extension2:...:%extensionN
-skp:%extension1:%extension2:...:%extensionN
-```
-
-When set, imgproxy will skip the processing of listed formats. Also available as [IMGPROXY_SKIP_PROCESSING_FORMATS](configuration.md#skip-processing) configuration.
-
-**📝Note:** Processing can be skipped only when the requested format is the same as the source format.
-
-**📝Note:** Video thumbnail processing can't be skipped.
-
-Default: empty
-
 ### Filename
 
 ```
@@ -572,17 +571,18 @@ Defines a filename for `Content-Disposition` header. When not specified, imgprox
 
 Default: empty
 
-### Format
+### Preset
 
 ```
-format:%extension
-f:%extension
-ext:%extension
+preset:%preset_name1:%preset_name2:...:%preset_nameN
+pr:%preset_name1:%preset_name2:...:%preset_nameN
 ```
 
-Specifies the resulting image format. Alias for [extension](#extension) URL part.
+Defines a list of presets to be used by imgproxy. Feel free to use as many presets in a single URL as you need.
 
-Default: `jpg`
+Read more about presets in the [Presets](presets.md) guide.
+
+Default: empty
 
 ## Source URL
 
