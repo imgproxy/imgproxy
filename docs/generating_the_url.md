@@ -521,6 +521,19 @@ vts:%second
 
 Allows redefining `IMGPROXY_VIDEO_THUMBNAIL_SECOND` config.
 
+### Fallback image URL<img class='pro-badge' src='assets/pro.svg' alt='pro' />
+
+You can use a custom fallback image specifying its URL with `fallback_image_url` processing option:
+
+```
+fallback_image_url:%url
+fiu:%url
+```
+
+Where `url` is Base64-encoded URL of the custom fallback image.
+
+Default: blank
+
 ### Skip processing
 
 ```

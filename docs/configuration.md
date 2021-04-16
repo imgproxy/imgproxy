@@ -186,6 +186,7 @@ You can set up a fallback image that will be used in case imgproxy can't fetch t
 * `IMGPROXY_FALLBACK_IMAGE_PATH`: path to the locally stored image;
 * `IMGPROXY_FALLBACK_IMAGE_URL`: fallback image URL.
 * `IMGPROXY_FALLBACK_IMAGE_HTTP_CODE`: HTTP code for the fallback image response. Default: `200`.
+* `IMGPROXY_FALLBACK_IMAGES_CACHE_SIZE`: <img class='pro-badge' src='assets/pro.svg' alt='pro' /> size of custom fallback images cache. When set to `0`, fallback images cache is disabled. By default 256 fallback images are cached.
 
 ## Skip processing
 
