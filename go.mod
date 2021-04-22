@@ -10,7 +10,7 @@ require (
 	github.com/benesch/cgosymbolizer v0.0.0-20190515212042-bec6fe6e597b
 	github.com/bitly/go-simplejson v0.5.0 // indirect
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
-	github.com/bugsnag/bugsnag-go v1.9.0
+	github.com/bugsnag/bugsnag-go v2.1.1+incompatible
 	github.com/bugsnag/panicwrap v1.2.2 // indirect
 	github.com/getsentry/sentry-go v0.10.0
 	github.com/go-ole/go-ole v1.2.4 // indirect
