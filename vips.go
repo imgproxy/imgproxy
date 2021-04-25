@@ -201,7 +201,11 @@ func (img *vipsImage) Save(imgtype imageType, quality int) ([]byte, context.Canc
 	case imageTypeGIF:
 		err = C.vips_gifsave_go(img.VipsImage, &ptr, &imgsize)
 	case imageTypeAVIF:
-		err = C.vips_avifsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality), vipsConf.AvifSpeed)
+		if C.vips_support_avif_speed() {
+			err = C.vips_avifsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality), vipsConf.AvifSpeed)
+		} else {
+			err = C.vips_avifsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality))
+		}
 	case imageTypeBMP:
 		err = C.vips_bmpsave_go(img.VipsImage, &ptr, &imgsize)
 	case imageTypeTIFF:

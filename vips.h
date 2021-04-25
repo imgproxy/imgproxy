@@ -47,6 +47,8 @@ VipsBandFormat vips_band_format(VipsImage *in);
 gboolean vips_support_webp_animation();
 gboolean vips_is_animated(VipsImage * in);
 
+gboolean vips_support_avif_speed();
+
 int vips_image_get_array_int_go(VipsImage *image, const char *name, int **out, int *n);
 void vips_image_set_array_int_go(VipsImage *image, const char *name, const int *array, int n);
 
@@ -99,7 +101,12 @@ int vips_jpegsave_go(VipsImage *in, void **buf, size_t *len, int quality, int in
 int vips_pngsave_go(VipsImage *in, void **buf, size_t *len, int interlace, int quantize, int colors);
 int vips_webpsave_go(VipsImage *in, void **buf, size_t *len, int quality);
 int vips_gifsave_go(VipsImage *in, void **buf, size_t *len);
+
+#if VIPS_SUPPORT_AVIF_SPEED
 int vips_avifsave_go(VipsImage *in, void **buf, size_t *len, int quality, int speed);
+#else
+int vips_avifsave_go(VipsImage *in, void **buf, size_t *len, int quality);
+#endif
 int vips_bmpsave_go(VipsImage *in, void **buf, size_t *len);
 int vips_tiffsave_go(VipsImage *in, void **buf, size_t *len, int quality);
 
