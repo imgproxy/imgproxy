@@ -101,12 +101,7 @@ int vips_jpegsave_go(VipsImage *in, void **buf, size_t *len, int quality, int in
 int vips_pngsave_go(VipsImage *in, void **buf, size_t *len, int interlace, int quantize, int colors);
 int vips_webpsave_go(VipsImage *in, void **buf, size_t *len, int quality);
 int vips_gifsave_go(VipsImage *in, void **buf, size_t *len);
-
-#if VIPS_SUPPORT_AVIF_SPEED
 int vips_avifsave_go(VipsImage *in, void **buf, size_t *len, int quality, int speed);
-#else
-int vips_avifsave_go(VipsImage *in, void **buf, size_t *len, int quality);
-#endif
 int vips_bmpsave_go(VipsImage *in, void **buf, size_t *len);
 int vips_tiffsave_go(VipsImage *in, void **buf, size_t *len, int quality);
 
