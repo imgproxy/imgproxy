@@ -263,6 +263,55 @@ vips_resize_with_premultiply(VipsImage *in, VipsImage **out, double wscale, doub
 }
 
 int
+vips_pixelate(VipsImage *in, VipsImage **out, int pixels) {
+  VipsImage *base = vips_image_new();
+  VipsImage **t = (VipsImage **) vips_object_local_array(VIPS_OBJECT(base), 3);
+
+  int w, h, tw, th;
+
+  w = in->Xsize;
+  h = in->Ysize;
+
+  tw = (int)((double)(w + pixels - 1) / pixels) * pixels;
+  th = (int)((double)(h + pixels - 1) / pixels) * pixels;
+
+  if (tw > w || th > h) {
+    if (vips_embed(in, &t[0], 0, 0, tw, th, "extend", VIPS_EXTEND_COPY, NULL)) {
+      clear_image(&base);
+      return 1;
+    }
+  } else {
+    if (vips_copy(in, &t[0], NULL)) {
+      clear_image(&base);
+      return 1;
+    }
+  }
+
+  if (
+    vips_shrink(t[0], &t[1], pixels, pixels, NULL) ||
+    vips_zoom(t[1], &t[2], pixels, pixels, NULL)
+  ) {
+      clear_image(&base);
+      return 1;
+  }
+
+  if (tw > w || th > h) {
+    if (vips_extract_area(t[2], out, 0, 0, w, h, NULL)) {
+        clear_image(&base);
+        return 1;
+    }
+  } else {
+    if (vips_copy(t[2], out, NULL)) {
+        clear_image(&base);
+        return 1;
+    }
+  }
+
+  clear_image(&base);
+  return 0;
+}
+
+int
 vips_icc_is_srgb_iec61966(VipsImage *in) {
   const void *data;
   size_t data_len;

@@ -571,6 +571,13 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 		}
 	}
 
+	if po.Pixelate > 1 {
+		pixels := minInt(po.Pixelate, minInt(img.Width(), img.Height()))
+		if err = img.Pixelate(pixels); err != nil {
+			return err
+		}
+	}
+
 	if err = copyMemoryAndCheckTimeout(ctx, img); err != nil {
 		return err
 	}
