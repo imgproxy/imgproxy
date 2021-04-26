@@ -10,11 +10,9 @@ require (
 	github.com/benesch/cgosymbolizer v0.0.0-20190515212042-bec6fe6e597b
 	github.com/bitly/go-simplejson v0.5.0 // indirect
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
-	github.com/bugsnag/bugsnag-go v1.9.0
-	github.com/bugsnag/panicwrap v1.2.2 // indirect
+	github.com/bugsnag/bugsnag-go/v2 v2.1.1 // indirect
 	github.com/getsentry/sentry-go v0.10.0
 	github.com/go-ole/go-ole v1.2.4 // indirect
-	github.com/gofrs/uuid v3.3.0+incompatible // indirect
 	github.com/honeybadger-io/honeybadger-go v0.5.0
 	github.com/ianlancetaylor/cgosymbolizer v0.0.0-20201204192058-7acc97e53614 // indirect
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
