@@ -37,6 +37,11 @@
 #define VIPS_SUPPORT_AVIF \
   (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 9))
 
+#define VIPS_SUPPORT_AVIF_SPEED \
+  (VIPS_MAJOR_VERSION > 8 || \
+    (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION > 10) || \
+    (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 10 && VIPS_MICRO_VERSION >= 2))
+
 #define VIPS_SUPPORT_COMPOSITE \
   (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 6))
 
@@ -256,6 +261,11 @@ vips_band_format(VipsImage *in) {
 gboolean
 vips_support_webp_animation() {
   return VIPS_SUPPORT_WEBP_ANIMATION;
+}
+
+gboolean
+vips_support_avif_speed() {
+  return VIPS_SUPPORT_AVIF_SPEED;
 }
 
 gboolean
@@ -703,9 +713,13 @@ vips_tiffsave_go(VipsImage *in, void **buf, size_t *len, int quality) {
 }
 
 int
-vips_avifsave_go(VipsImage *in, void **buf, size_t *len, int quality) {
+vips_avifsave_go(VipsImage *in, void **buf, size_t *len, int quality, int speed) {
 #if VIPS_SUPPORT_AVIF
-  return vips_heifsave_buffer(in, buf, len, "Q", quality, "compression", VIPS_FOREIGN_HEIF_COMPRESSION_AV1, NULL);
+  #if VIPS_SUPPORT_AVIF_SPEED
+    return vips_heifsave_buffer(in, buf, len, "Q", quality, "compression", VIPS_FOREIGN_HEIF_COMPRESSION_AV1, "speed", speed, NULL);
+  #else
+    return vips_heifsave_buffer(in, buf, len, "Q", quality, "compression", VIPS_FOREIGN_HEIF_COMPRESSION_AV1, NULL);
+  #endif
 #else
   vips_error("vips_avifsave_go", "Saving AVIF is not supported (libvips 8.9+ reuired)");
   return 1;
