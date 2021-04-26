@@ -35,12 +35,12 @@ issues:
     # False positives on CGO generated code
     - linters: [staticcheck]
       text: "SA4000:"
-      path: vips\.go
+      path: vips/*
 
     # False positives on CGO generated code
     - linters: [gocritic]
       text: "dupSubExpr"
-      path: vips\.go
+      path: vips/*
 
     - linters: [stylecheck]
       text: "ST1005:"

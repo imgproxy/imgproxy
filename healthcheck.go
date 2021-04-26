@@ -7,14 +7,17 @@ import (
 	"net"
 	"net/http"
 	"os"
+
+	"github.com/imgproxy/imgproxy/v2/config"
+	"github.com/imgproxy/imgproxy/v2/config/configurators"
 )
 
 func healthcheck() int {
-	network := conf.Network
-	bind := conf.Bind
+	network := config.Network
+	bind := config.Bind
 
-	strEnvConfig(&network, "IMGPROXY_NETWORK")
-	strEnvConfig(&bind, "IMGPROXY_BIND")
+	configurators.String(&network, "IMGPROXY_NETWORK")
+	configurators.String(&bind, "IMGPROXY_BIND")
 
 	httpc := http.Client{
 		Transport: &http.Transport{

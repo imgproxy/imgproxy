@@ -7,6 +7,10 @@ import (
 	"encoding/json"
 	"hash"
 	"sync"
+
+	"github.com/imgproxy/imgproxy/v2/imagedata"
+	"github.com/imgproxy/imgproxy/v2/options"
+	"github.com/imgproxy/imgproxy/v2/version"
 )
 
 type eTagCalc struct {
@@ -26,19 +30,18 @@ var eTagCalcPool = sync.Pool{
 	},
 }
 
-func calcETag(ctx context.Context) string {
+func calcETag(ctx context.Context, imgdata *imagedata.ImageData, po *options.ProcessingOptions) string {
 	c := eTagCalcPool.Get().(*eTagCalc)
 	defer eTagCalcPool.Put(c)
 
 	c.hash.Reset()
-	c.hash.Write(getImageData(ctx).Data)
+	c.hash.Write(imgdata.Data)
 	footprint := c.hash.Sum(nil)
 
 	c.hash.Reset()
 	c.hash.Write(footprint)
-	c.hash.Write([]byte(version))
-	c.enc.Encode(conf)
-	c.enc.Encode(getProcessingOptions(ctx))
+	c.hash.Write([]byte(version.Version()))
+	c.enc.Encode(po)
 
 	return hex.EncodeToString(c.hash.Sum(nil))
 }

@@ -7,79 +7,78 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	log "github.com/sirupsen/logrus"
+
+	"github.com/imgproxy/imgproxy/v2/config"
+	"github.com/imgproxy/imgproxy/v2/errorreport"
+	"github.com/imgproxy/imgproxy/v2/ierrors"
+	"github.com/imgproxy/imgproxy/v2/imagedata"
+	"github.com/imgproxy/imgproxy/v2/imagetype"
+	"github.com/imgproxy/imgproxy/v2/metrics"
+	"github.com/imgproxy/imgproxy/v2/options"
+	"github.com/imgproxy/imgproxy/v2/processing"
+	"github.com/imgproxy/imgproxy/v2/router"
+	"github.com/imgproxy/imgproxy/v2/security"
+	"github.com/imgproxy/imgproxy/v2/vips"
 )
 
 var (
 	processingSem chan struct{}
 
 	headerVaryValue string
-	fallbackImage   *imageData
 )
 
-const (
-	fallbackImageUsedCtxKey = ctxKey("fallbackImageUsed")
-)
+type fallbackImageUsedCtxKey struct{}
 
-func initProcessingHandler() error {
-	var err error
-
-	processingSem = make(chan struct{}, conf.Concurrency)
+func initProcessingHandler() {
+	processingSem = make(chan struct{}, config.Concurrency)
 
 	vary := make([]string, 0)
 
-	if conf.EnableWebpDetection || conf.EnforceWebp {
+	if config.EnableWebpDetection || config.EnforceWebp {
 		vary = append(vary, "Accept")
 	}
 
-	if conf.EnableClientHints {
+	if config.EnableClientHints {
 		vary = append(vary, "DPR", "Viewport-Width", "Width")
 	}
 
 	headerVaryValue = strings.Join(vary, ", ")
-
-	if fallbackImage, err = getFallbackImageData(); err != nil {
-		return err
-	}
-
-	return nil
 }
 
-func respondWithImage(ctx context.Context, reqID string, r *http.Request, rw http.ResponseWriter, data []byte) {
-	po := getProcessingOptions(ctx)
-	imgdata := getImageData(ctx)
-
+func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, resultData *imagedata.ImageData, po *options.ProcessingOptions, originURL string, originData *imagedata.ImageData) {
 	var contentDisposition string
 	if len(po.Filename) > 0 {
-		contentDisposition = po.Format.ContentDisposition(po.Filename)
+		contentDisposition = resultData.Type.ContentDisposition(po.Filename)
 	} else {
-		contentDisposition = po.Format.ContentDispositionFromURL(getImageURL(ctx))
+		contentDisposition = resultData.Type.ContentDispositionFromURL(originURL)
 	}
 
-	rw.Header().Set("Content-Type", po.Format.Mime())
+	rw.Header().Set("Content-Type", resultData.Type.Mime())
 	rw.Header().Set("Content-Disposition", contentDisposition)
 
-	if conf.SetCanonicalHeader {
-		origin := getImageURL(ctx)
-		if strings.HasPrefix(origin, "https://") || strings.HasPrefix(origin, "http://") {
-			linkHeader := fmt.Sprintf(`<%s>; rel="canonical"`, origin)
+	if config.SetCanonicalHeader {
+		if strings.HasPrefix(originURL, "https://") || strings.HasPrefix(originURL, "http://") {
+			linkHeader := fmt.Sprintf(`<%s>; rel="canonical"`, originURL)
 			rw.Header().Set("Link", linkHeader)
 		}
 	}
 
 	var cacheControl, expires string
 
-	if conf.CacheControlPassthrough && imgdata.Headers != nil {
-		if val, ok := imgdata.Headers["Cache-Control"]; ok {
+	if config.CacheControlPassthrough && originData.Headers != nil {
+		if val, ok := originData.Headers["Cache-Control"]; ok {
 			cacheControl = val
 		}
-		if val, ok := imgdata.Headers["Expires"]; ok {
+		if val, ok := originData.Headers["Expires"]; ok {
 			expires = val
 		}
 	}
 
 	if len(cacheControl) == 0 && len(expires) == 0 {
-		cacheControl = fmt.Sprintf("max-age=%d, public", conf.TTL)
-		expires = time.Now().Add(time.Second * time.Duration(conf.TTL)).Format(http.TimeFormat)
+		cacheControl = fmt.Sprintf("max-age=%d, public", config.TTL)
+		expires = time.Now().Add(time.Second * time.Duration(config.TTL)).Format(http.TimeFormat)
 	}
 
 	if len(cacheControl) > 0 {
@@ -93,128 +92,174 @@ func respondWithImage(ctx context.Context, reqID string, r *http.Request, rw htt
 		rw.Header().Set("Vary", headerVaryValue)
 	}
 
-	if conf.EnableDebugHeaders {
-		rw.Header().Set("X-Origin-Content-Length", strconv.Itoa(len(imgdata.Data)))
+	if config.EnableDebugHeaders {
+		rw.Header().Set("X-Origin-Content-Length", strconv.Itoa(len(originData.Data)))
 	}
 
-	rw.Header().Set("Content-Length", strconv.Itoa(len(data)))
+	rw.Header().Set("Content-Length", strconv.Itoa(len(resultData.Data)))
 	statusCode := 200
-	if getFallbackImageUsed(ctx) {
-		statusCode = conf.FallbackImageHTTPCode
+	if getFallbackImageUsed(r.Context()) {
+		statusCode = config.FallbackImageHTTPCode
 	}
 	rw.WriteHeader(statusCode)
-	rw.Write(data)
+	rw.Write(resultData.Data)
 
-	imageURL := getImageURL(ctx)
-
-	logResponse(reqID, r, statusCode, nil, &imageURL, po)
-}
-
-func respondWithNotModified(ctx context.Context, reqID string, r *http.Request, rw http.ResponseWriter) {
-	rw.WriteHeader(304)
-
-	imageURL := getImageURL(ctx)
-
-	logResponse(reqID, r, 304, nil, &imageURL, getProcessingOptions(ctx))
+	router.LogResponse(
+		reqID, r, statusCode, nil,
+		log.Fields{
+			"image_url":          originURL,
+			"processing_options": po,
+		},
+	)
 }
 
 func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	var dataDogCancel context.CancelFunc
-	ctx, dataDogCancel, rw = startDataDogRootSpan(ctx, rw, r)
-	defer dataDogCancel()
-
-	var newRelicCancel context.CancelFunc
-	ctx, newRelicCancel, rw = startNewRelicTransaction(ctx, rw, r)
-	defer newRelicCancel()
-
-	incrementPrometheusRequestsTotal()
-	defer startPrometheusDuration(prometheusRequestDuration)()
-
-	select {
-	case processingSem <- struct{}{}:
-	case <-ctx.Done():
-		panic(newError(499, "Request was cancelled before processing", "Cancelled"))
-	}
-	defer func() { <-processingSem }()
-
-	ctx, timeoutCancel := context.WithTimeout(ctx, time.Duration(conf.WriteTimeout)*time.Second)
+	ctx, timeoutCancel := context.WithTimeout(r.Context(), time.Duration(config.WriteTimeout)*time.Second)
 	defer timeoutCancel()
 
-	ctx, err := parsePath(ctx, r)
+	var metricsCancel context.CancelFunc
+	ctx, metricsCancel, rw = metrics.StartRequest(ctx, rw, r)
+	defer metricsCancel()
+
+	path := r.RequestURI
+	if queryStart := strings.IndexByte(path, '?'); queryStart >= 0 {
+		path = path[:queryStart]
+	}
+
+	if len(config.PathPrefix) > 0 {
+		path = strings.TrimPrefix(path, config.PathPrefix)
+	}
+
+	path = strings.TrimPrefix(path, "/")
+	signature := ""
+
+	if signatureEnd := strings.IndexByte(path, '/'); signatureEnd > 0 {
+		signature = path[:signatureEnd]
+		path = path[signatureEnd:]
+	} else {
+		panic(ierrors.New(404, fmt.Sprintf("Invalid path: %s", path), "Invalid URL"))
+	}
+
+	if err := security.VerifySignature(signature, path); err != nil {
+		panic(ierrors.New(403, err.Error(), "Forbidden"))
+	}
+
+	po, imageURL, err := options.ParsePath(path, r.Header)
 	if err != nil {
 		panic(err)
 	}
 
-	ctx, downloadcancel, err := downloadImageCtx(ctx)
-	defer downloadcancel()
-	if err != nil {
-		sendErrorToDataDog(ctx, err)
-		sendErrorToNewRelic(ctx, err)
-		incrementPrometheusErrorsTotal("download")
+	if !security.VerifySourceURL(imageURL) {
+		panic(ierrors.New(404, fmt.Sprintf("Source URL is not allowed: %s", imageURL), "Invalid source"))
+	}
 
-		if fallbackImage == nil {
+	// SVG is a special case. Though saving to svg is not supported, SVG->SVG is.
+	if !vips.SupportsSave(po.Format) && po.Format != imagetype.Unknown && po.Format != imagetype.SVG {
+		panic(ierrors.New(
+			422,
+			fmt.Sprintf("Resulting image format is not supported: %s", po.Format),
+			"Invalid URL",
+		))
+	}
+
+	// The heavy part start here, so we need to restrict concurrency
+	select {
+	case processingSem <- struct{}{}:
+	case <-ctx.Done():
+		// We don't actually need to check timeout here,
+		// but it's an easy way to check if this is an actual timeout
+		// or the request was cancelled
+		router.CheckTimeout(ctx)
+	}
+	defer func() { <-processingSem }()
+
+	originData, err := func() (*imagedata.ImageData, error) {
+		defer metrics.StartDownloadingSegment(ctx)()
+		return imagedata.Download(imageURL, "source image")
+	}()
+	if err == nil {
+		defer originData.Close()
+	} else {
+		metrics.SendError(ctx, "download", err)
+
+		if imagedata.FallbackImage == nil {
 			panic(err)
 		}
 
-		if ierr, ok := err.(*imgproxyError); !ok || ierr.Unexpected {
-			reportError(err, r)
+		if ierr, ok := err.(*ierrors.Error); !ok || ierr.Unexpected {
+			errorreport.Report(err, r)
 		}
 
-		logWarning("Could not load image. Using fallback image: %s", err.Error())
-		ctx = setFallbackImageUsedCtx(ctx)
-		ctx = context.WithValue(ctx, imageDataCtxKey, fallbackImage)
+		log.Warningf("Could not load image. Using fallback image: %s", err.Error())
+		r = r.WithContext(setFallbackImageUsedCtx(r.Context()))
+		originData = imagedata.FallbackImage
 	}
 
-	checkTimeout(ctx)
+	router.CheckTimeout(ctx)
 
-	if conf.ETagEnabled && !getFallbackImageUsed(ctx) {
-		eTag := calcETag(ctx)
+	if config.ETagEnabled && !getFallbackImageUsed(ctx) {
+		eTag := calcETag(ctx, originData, po)
 		rw.Header().Set("ETag", eTag)
 
 		if eTag == r.Header.Get("If-None-Match") {
-			respondWithNotModified(ctx, reqID, r, rw)
+			rw.WriteHeader(304)
+			router.LogResponse(reqID, r, 304, nil, log.Fields{"image_url": imageURL})
 			return
 		}
 	}
 
-	checkTimeout(ctx)
+	router.CheckTimeout(ctx)
 
-	po := getProcessingOptions(ctx)
-	if len(po.SkipProcessingFormats) > 0 {
-		imgdata := getImageData(ctx)
+	if originData.Type == po.Format || po.Format == imagetype.Unknown {
+		// Don't process SVG
+		if originData.Type == imagetype.SVG {
+			respondWithImage(reqID, r, rw, originData, po, imageURL, originData)
+			return
+		}
 
-		if imgdata.Type == po.Format || po.Format == imageTypeUnknown {
+		if len(po.SkipProcessingFormats) > 0 {
 			for _, f := range po.SkipProcessingFormats {
-				if f == imgdata.Type {
-					po.Format = imgdata.Type
-					respondWithImage(ctx, reqID, r, rw, imgdata.Data)
+				if f == originData.Type {
+					respondWithImage(reqID, r, rw, originData, po, imageURL, originData)
 					return
 				}
 			}
 		}
 	}
 
-	imageData, processcancel, err := processImage(ctx)
-	defer processcancel()
-	if err != nil {
-		sendErrorToDataDog(ctx, err)
-		sendErrorToNewRelic(ctx, err)
-		incrementPrometheusErrorsTotal("processing")
-		panic(err)
+	if !vips.SupportsLoad(originData.Type) {
+		panic(ierrors.New(
+			422,
+			fmt.Sprintf("Source image format is not supported: %s", originData.Type),
+			"Invalid URL",
+		))
 	}
 
-	checkTimeout(ctx)
+	// At this point we can't allow requested format to be SVG as we can't save SVGs
+	if po.Format == imagetype.SVG {
+		panic(ierrors.New(422, "Resulting image format is not supported: svg", "Invalid URL"))
+	}
 
-	respondWithImage(ctx, reqID, r, rw, imageData)
+	resultData, err := func() (*imagedata.ImageData, error) {
+		defer metrics.StartProcessingSegment(ctx)()
+		return processing.ProcessImage(ctx, originData, po)
+	}()
+	if err != nil {
+		metrics.SendError(ctx, "processing", err)
+		panic(err)
+	}
+	defer resultData.Close()
+
+	router.CheckTimeout(ctx)
+
+	respondWithImage(reqID, r, rw, resultData, po, imageURL, originData)
 }
 
 func setFallbackImageUsedCtx(ctx context.Context) context.Context {
-	return context.WithValue(ctx, fallbackImageUsedCtxKey, true)
+	return context.WithValue(ctx, fallbackImageUsedCtxKey{}, true)
 }
 
 func getFallbackImageUsed(ctx context.Context) bool {
-	result, _ := ctx.Value(fallbackImageUsedCtxKey).(bool)
+	result, _ := ctx.Value(fallbackImageUsedCtxKey{}).(bool)
 	return result
 }
