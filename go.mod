@@ -6,7 +6,7 @@ require (
 	cloud.google.com/go/storage v1.15.0
 	github.com/Azure/azure-storage-blob-go v0.13.0
 	github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d // indirect
-	github.com/aws/aws-sdk-go v1.38.25
+	github.com/aws/aws-sdk-go v1.38.30
 	github.com/benesch/cgosymbolizer v0.0.0-20190515212042-bec6fe6e597b
 	github.com/bugsnag/bugsnag-go/v2 v2.1.1
 	github.com/getsentry/sentry-go v0.10.0
