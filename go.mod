@@ -19,10 +19,10 @@ require (
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.0
 	golang.org/x/image v0.0.0-20201208152932-35266b937fa6
-	golang.org/x/net v0.0.0-20210316092652-d523dce5a7f4
-	golang.org/x/sys v0.0.0-20210412220455-f1c623a9e750
+	golang.org/x/net v0.0.0-20210503060351-7fd8e65b6420
+	golang.org/x/sys v0.0.0-20210503080704-8803ae5d1324
 	golang.org/x/text v0.3.6
-	google.golang.org/api v0.45.0
+	google.golang.org/api v0.46.0
 )
 
 replace git.apache.org/thrift.git => github.com/apache/thrift v0.0.0-20180902110319-2566ecd5d999
