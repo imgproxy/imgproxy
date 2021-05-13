@@ -8,7 +8,6 @@ import (
 	"github.com/imgproxy/imgproxy/v2/config"
 	"github.com/imgproxy/imgproxy/v2/ierrors"
 	"github.com/imgproxy/imgproxy/v2/imagemeta"
-	"github.com/imgproxy/imgproxy/v2/imagetype"
 	"github.com/imgproxy/imgproxy/v2/security"
 )
 
@@ -21,8 +20,6 @@ var downloadBufPool *bufpool.Pool
 
 func initRead() {
 	downloadBufPool = bufpool.New("download", config.Concurrency, config.DownloadBufferSize)
-
-	imagemeta.SetMaxSvgCheckRead(config.MaxSvgCheckBytes)
 }
 
 type hardLimitReader struct {
@@ -64,11 +61,6 @@ func readAndCheckImage(r io.Reader, contentLength int) (*ImageData, error) {
 		return nil, ierrors.Wrap(err, 0)
 	}
 
-	imgtype, imgtypeOk := imagetype.Types[meta.Format()]
-	if !imgtypeOk {
-		return nil, ErrSourceImageTypeNotSupported
-	}
-
 	if err = security.CheckDimensions(meta.Width(), meta.Height()); err != nil {
 		return nil, err
 	}
@@ -80,7 +72,7 @@ func readAndCheckImage(r io.Reader, contentLength int) (*ImageData, error) {
 
 	return &ImageData{
 		Data:   buf.Bytes(),
-		Type:   imgtype,
+		Type:   meta.Format(),
 		cancel: cancel,
 	}, nil
 }

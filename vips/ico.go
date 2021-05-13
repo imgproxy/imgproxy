@@ -27,24 +27,23 @@ func (img *Image) loadIco(data []byte, shrink int, scale float64, pages int) err
 
 	internalData := data[offset : offset+size]
 
-	var format string
+	var internalType imagetype.Type
 
 	meta, err := imagemeta.DecodeMeta(bytes.NewReader(internalData))
 	if err != nil {
 		// Looks like it's BMP with an incomplete header
 		if d, err := imagemeta.FixBmpHeader(internalData); err == nil {
-			format = "bmp"
+			internalType = imagetype.BMP
 			internalData = d
 		} else {
 			return err
 		}
 	} else {
-		format = meta.Format()
+		internalType = meta.Format()
 	}
 
-	internalType, ok := imagetype.Types[format]
-	if !ok || internalType == imagetype.ICO || !SupportsLoad(internalType) {
-		return fmt.Errorf("Can't load %s from ICO", meta.Format())
+	if internalType == imagetype.ICO || !SupportsLoad(internalType) {
+		return fmt.Errorf("Can't load %s from ICO", internalType)
 	}
 
 	imgdata := imagedata.ImageData{

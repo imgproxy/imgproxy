@@ -90,7 +90,7 @@ func (s *ProcessingHandlerTestSuite) TestRequest() {
 	meta, err := imagemeta.DecodeMeta(res.Body)
 
 	assert.Nil(s.T(), err)
-	assert.Equal(s.T(), "png", meta.Format())
+	assert.Equal(s.T(), imagetype.PNG, meta.Format())
 	assert.Equal(s.T(), 4, meta.Width())
 	assert.Equal(s.T(), 4, meta.Height())
 }
