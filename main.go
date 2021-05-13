@@ -137,8 +137,6 @@ func main() {
 		os.Exit(0)
 	}
 
-	defer closeErrorsReporting()
-
 	if err := run(); err != nil {
 		log.Fatal(err)
 	}

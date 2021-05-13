@@ -51,7 +51,7 @@ func initErrorsReporting() {
 
 	if len(conf.AirbrakeProjecKey) > 0 {
 		airbrake = gobrake.NewNotifierWithOptions(&gobrake.NotifierOptions{
-			ProjectId:   conf.AirbrakeProjecId,
+			ProjectId:   int64(conf.AirbrakeProjecId),
 			ProjectKey:  conf.AirbrakeProjecKey,
 			Environment: conf.AirbrakeEnv,
 		})
