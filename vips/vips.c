@@ -32,59 +32,6 @@ swap_and_clear(VipsImage **in, VipsImage *out) {
 }
 
 int
-vips_type_find_load_go(int imgtype) {
-  switch (imgtype)
-  {
-  case (JPEG):
-    return vips_type_find("VipsOperation", "jpegload_buffer");
-  case (PNG):
-    return vips_type_find("VipsOperation", "pngload_buffer");
-  case (WEBP):
-    return vips_type_find("VipsOperation", "webpload_buffer");
-  case (GIF):
-    return vips_type_find("VipsOperation", "gifload_buffer");
-  case (SVG):
-    return vips_type_find("VipsOperation", "svgload_buffer");
-  case (HEIC):
-    return vips_type_find("VipsOperation", "heifload_buffer");
-  case (AVIF):
-    return vips_type_find("VipsOperation", "heifload_buffer");
-  case (BMP):
-    return vips_type_find("VipsOperation", "magickload_buffer");
-  case (TIFF):
-    return vips_type_find("VipsOperation", "tiffload_buffer");
-  }
-  return 0;
-}
-
-int
-vips_type_find_save_go(int imgtype) {
-  switch (imgtype)
-  {
-  case (JPEG):
-    return vips_type_find("VipsOperation", "jpegsave_buffer");
-  case (PNG):
-    return vips_type_find("VipsOperation", "pngsave_buffer");
-  case (WEBP):
-    return vips_type_find("VipsOperation", "webpsave_buffer");
-  case (GIF):
-    return vips_type_find("VipsOperation", "magicksave_buffer");
-#if VIPS_SUPPORT_AVIF
-  case (AVIF):
-    return vips_type_find("VipsOperation", "heifsave_buffer");
-#endif
-  case (ICO):
-    return vips_type_find("VipsOperation", "pngsave_buffer");
-  case (BMP):
-    return vips_type_find("VipsOperation", "magicksave_buffer");
-  case (TIFF):
-    return vips_type_find("VipsOperation", "tiffsave_buffer");
-  }
-
-  return 0;
-}
-
-int
 vips_jpegload_go(void *buf, size_t len, int shrink, VipsImage **out) {
   if (shrink > 1)
     return vips_jpegload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, "shrink", shrink, NULL);

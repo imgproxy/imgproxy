@@ -1,11 +1,5 @@
 package imagetype
 
-/*
-#cgo LDFLAGS: -s -w
-#include "imagetype.h"
-*/
-import "C"
-
 import (
 	"fmt"
 	"net/url"
@@ -16,20 +10,20 @@ import (
 type Type int
 
 const (
-	Unknown = Type(C.UNKNOWN)
-	JPEG    = Type(C.JPEG)
-	PNG     = Type(C.PNG)
-	WEBP    = Type(C.WEBP)
-	GIF     = Type(C.GIF)
-	ICO     = Type(C.ICO)
-	SVG     = Type(C.SVG)
-	HEIC    = Type(C.HEIC)
-	AVIF    = Type(C.AVIF)
-	BMP     = Type(C.BMP)
-	TIFF    = Type(C.TIFF)
-
-	contentDispositionFilenameFallback = "image"
+	Unknown Type = iota
+	JPEG
+	PNG
+	WEBP
+	GIF
+	ICO
+	SVG
+	HEIC
+	AVIF
+	BMP
+	TIFF
 )
+
+const contentDispositionFilenameFallback = "image"
 
 var (
 	Types = map[string]Type{

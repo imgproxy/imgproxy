@@ -4,8 +4,6 @@
 #include <vips/vips7compat.h>
 #include <vips/vector.h>
 
-#include "../imagetype/imagetype.h"
-
 int vips_initialize();
 
 void clear_image(VipsImage **in);

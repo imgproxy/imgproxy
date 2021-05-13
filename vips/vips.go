@@ -116,16 +116,36 @@ func Error() error {
 	return ierrors.NewUnexpected(C.GoString(C.vips_error_buffer()), 1)
 }
 
+func hasOperation(name string) bool {
+	return C.vips_type_find(cachedCString("VipsOperation"), cachedCString(name)) != 0
+}
+
 func SupportsLoad(it imagetype.Type) bool {
 	if sup, ok := typeSupportLoad[it]; ok {
 		return sup
 	}
 
 	sup := false
-	if it == imagetype.ICO {
+
+	switch it {
+	case imagetype.JPEG:
+		sup = hasOperation("jpegload_buffer")
+	case imagetype.PNG:
+		sup = hasOperation("pngload_buffer")
+	case imagetype.WEBP:
+		sup = hasOperation("webpload_buffer")
+	case imagetype.GIF:
+		sup = hasOperation("gifload_buffer")
+	case imagetype.ICO:
 		sup = true
-	} else {
-		sup = int(C.vips_type_find_load_go(C.int(it))) != 0
+	case imagetype.SVG:
+		sup = hasOperation("svgload_buffer")
+	case imagetype.HEIC, imagetype.AVIF:
+		sup = hasOperation("heifload_buffer")
+	case imagetype.BMP:
+		sup = hasOperation("magickload_buffer")
+	case imagetype.TIFF:
+		sup = hasOperation("tiffload_buffer")
 	}
 
 	typeSupportLoad[it] = sup
@@ -139,11 +159,20 @@ func SupportsSave(it imagetype.Type) bool {
 	}
 
 	sup := false
-	if it == imagetype.ICO {
-		// We save ICO content as PNG so we need to check it
-		sup = int(C.vips_type_find_save_go(C.int(imagetype.PNG))) != 0
-	} else {
-		sup = int(C.vips_type_find_save_go(C.int(it))) != 0
+
+	switch it {
+	case imagetype.JPEG:
+		return hasOperation("jpegsave_buffer")
+	case imagetype.PNG, imagetype.ICO:
+		return hasOperation("pngsave_buffer")
+	case imagetype.WEBP:
+		return hasOperation("webpsave_buffer")
+	case imagetype.GIF, imagetype.BMP:
+		return hasOperation("magicksave_buffer")
+	case imagetype.AVIF:
+		return hasOperation("heifsave_buffer")
+	case imagetype.TIFF:
+		return hasOperation("tiffsave_buffer")
 	}
 
 	typeSupportSave[it] = sup
