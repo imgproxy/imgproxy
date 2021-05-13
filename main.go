@@ -56,6 +56,7 @@ func run() error {
 	}
 
 	defer shutdownVips()
+	defer closeErrorsReporting()
 
 	go func() {
 		var logMemStats = len(os.Getenv("IMGPROXY_LOG_MEM_STATS")) > 0
@@ -106,8 +107,6 @@ func main() {
 			os.Exit(0)
 		}
 	}
-
-	defer closeErrorsReporting()
 
 	if err := run(); err != nil {
 		logFatal(err.Error())
