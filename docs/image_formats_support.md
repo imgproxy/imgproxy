@@ -7,6 +7,7 @@ At the moment, imgproxy supports only the most popular image formats:
 | PNG    | `png`     | Yes    | Yes    |
 | JPEG   | `jpg`     | Yes    | Yes    |
 | WebP   | `webp`    | Yes    | Yes    |
+| AVIF   | `avif`    | Yes    | Yes    |
 | GIF    | `gif`     | Yes    | Yes    |
 | ICO    | `ico`     | Yes    | Yes    |
 | SVG    | `svg`     | Yes    | [See notes](#svg-support) |
@@ -39,6 +40,10 @@ imgproxy reads some amount of bytes to check if the source image is SVG. By defa
 
 imgproxy supports HEIC only when using libvips 8.8.0+. Official imgproxy Docker image supports HEIC out of the box.
 
+## AVIF support
+
+imgproxy supports AVIF only when using libvips 8.9.0+ with compiled support for libheif + its supported encoder (rav1e, aom). Official imgproxy Docker image supports AVIF out of the box.
+
 ## BMP support
 
 imgproxy supports BMP only when using libvips 8.7.0+ compiled with ImageMagick support. Official imgproxy Docker image supports ICO out of the box.
@@ -53,13 +58,13 @@ Since processing of animated images is pretty heavy, only one frame is processed
 
 **📝Note:** imgproxy summarizes all frames resolutions while checking source image resolution.
 
-## Converting animated images to MP4<img class='pro-badge' src='assets/pro.svg' alt='pro' />
+## Converting animated images to MP4<img class='pro-badge' src='assets/pro.svg' alt='pro' /> :id=converting-animated-images-to-mp4
 
 Animated images results can be converted to MP4 by specifying `mp4` extension.
 
 Since MP4 requires usage of a `<video>` tag instead of `<img>`, automatic conversion to MP4 is not provided.
 
-## Video thumbnails<img class='pro-badge' src='assets/pro.svg' alt='pro' />
+## Video thumbnails<img class='pro-badge' src='assets/pro.svg' alt='pro' /> :id=video-thumbnails
 
 If you provide a video as a source, imgproxy takes its specific frame to create a thumbnail. Doing this imgproxy downloads only the amount of data required to reach the needed frame.
 

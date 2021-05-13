@@ -37,11 +37,19 @@
 #define VIPS_SUPPORT_AVIF \
   (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 9))
 
+#define VIPS_SUPPORT_AVIF_SPEED \
+  (VIPS_MAJOR_VERSION > 8 || \
+    (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION > 10) || \
+    (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 10 && VIPS_MICRO_VERSION >= 2))
+
 #define VIPS_SUPPORT_COMPOSITE \
   (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 6))
 
 #define VIPS_SUPPORT_FIND_TRIM \
   (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 6))
+
+#define VIPS_SUPPORT_PNG_BITDEPTH \
+  (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 10))
 
 #define EXIF_ORIENTATION "exif-ifd0-Orientation"
 
@@ -642,15 +650,32 @@ vips_jpegsave_go(VipsImage *in, void **buf, size_t *len, int quality, int interl
 
 int
 vips_pngsave_go(VipsImage *in, void **buf, size_t *len, int interlace, int quantize, int colors) {
+  if (!quantize)
+    return vips_pngsave_buffer(
+      in, buf, len,
+      "filter", VIPS_FOREIGN_PNG_FILTER_NONE,
+      "interlace", interlace,
+      NULL
+    );
+
+  int bitdepth = 1;
+  if (colors > 16) bitdepth = 8;
+  else if (colors > 4) bitdepth = 4;
+  else if (colors > 2) bitdepth = 2;
+
   return vips_pngsave_buffer(
     in, buf, len,
     "filter", VIPS_FOREIGN_PNG_FILTER_NONE,
     "interlace", interlace,
-#if VIPS_SUPPORT_PNG_QUANTIZATION
+#if VIPS_SUPPORT_PNG_BITDEPTH
+    "palette", quantize,
+    "bitdepth", bitdepth,
+#elif VIPS_SUPPORT_PNG_QUANTIZATION // VIPS_SUPPORT_PNG_BITDEPTH
     "palette", quantize,
     "colours", colors,
 #endif // VIPS_SUPPORT_PNG_QUANTIZATION
-    NULL);
+    NULL
+  );
 }
 
 int
@@ -683,9 +708,16 @@ vips_tiffsave_go(VipsImage *in, void **buf, size_t *len, int quality) {
 }
 
 int
-vips_avifsave_go(VipsImage *in, void **buf, size_t *len, int quality) {
+vips_avifsave_go(VipsImage *in, void **buf, size_t *len, int quality, int speed) {
 #if VIPS_SUPPORT_AVIF
-  return vips_heifsave_buffer(in, buf, len, "Q", quality, "compression", VIPS_FOREIGN_HEIF_COMPRESSION_AV1, NULL);
+  return vips_heifsave_buffer(
+    in, buf, len,
+    "Q", quality,
+    "compression", VIPS_FOREIGN_HEIF_COMPRESSION_AV1,
+  #if VIPS_SUPPORT_AVIF_SPEED
+    "speed", speed,
+  #endif
+    NULL);
 #else
   vips_error("vips_avifsave_go", "Saving AVIF is not supported (libvips 8.9+ reuired)");
   return 1;
