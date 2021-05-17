@@ -17,6 +17,12 @@
 - Removed `crop` resizing type, use [crop](./docs/generating_the_url.md#crop) processing option instead.
 - Dropped old libvips (<8.8) support.
 
+## [2.16.3] - 2021-04-05
+### Fix
+- Fix PNG quantization palette size.
+- Fix parsing HEIF meta.
+- Fix debig header.
+
 ## [2.16.2] - 2021-03-04
 ### Change
 - Updated dependencies in Docker.

@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-const version = "2.16.1"
+const version = "2.16.3"
 
 type ctxKey string
 
@@ -58,6 +58,7 @@ func run() error {
 	}
 
 	defer shutdownVips()
+	defer closeErrorsReporting()
 
 	defer stopDataDog()
 
