@@ -3,7 +3,7 @@ package bugsnag
 import (
 	"net/http"
 
-	"github.com/bugsnag/bugsnag-go"
+	"github.com/bugsnag/bugsnag-go/v2"
 	"github.com/imgproxy/imgproxy/v2/config"
 )
 

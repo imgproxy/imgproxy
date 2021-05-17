@@ -121,6 +121,10 @@ Also you may want imgproxy to respond with the same error message that it writes
 * `IMGPROXY_GIF_OPTIMIZE_FRAMES`: <img class='pro-badge' src='assets/pro.svg' alt='pro' /> when true, enables GIF frames optimization. This may produce a smaller result, but may increase compression time.
 * `IMGPROXY_GIF_OPTIMIZE_TRANSPARENCY`: <img class='pro-badge' src='assets/pro.svg' alt='pro' /> when true, enables GIF transparency optimization. This may produce a smaller result, but may increase compression time.
 
+### Advanced AVIF compression
+
+* `IMGPROXY_AVIF_SPEED`: controls the CPU effort spent improving compression. 0 slowest - 8 fastest. Default: `5`;
+
 ## AVIF/WebP support detection
 
 imgproxy can use the `Accept` HTTP header to detect if the browser supports AVIF or WebP and use it as the default format. This feature is disabled by default and can be enabled by the following options:
@@ -297,6 +301,9 @@ imgproxy can report occurred errors to Bugsnag, Honeybadger and Sentry:
 * `IMGPROXY_SENTRY_DSN`: Sentry project DSN. When provided, enables error reporting to Sentry;
 * `IMGPROXY_SENTRY_ENVIRONMENT`: Sentry environment to report to. Default: `production`;
 * `IMGPROXY_SENTRY_RELEASE`: Sentry release to report to. Default: `imgproxy/{imgproxy version}`;
+* `IMGPROXY_AIRBRAKE_PROJECT_ID`: Airbrake project id;
+* `IMGPROXY_AIRBRAKE_PROJECT_KEY`: Airbrake project key;
+* `IMGPROXY_AIRBRAKE_ENVIRONMENT`: Airbrake environment to report to. Default: `production`;
 * `IMGPROXY_REPORT_DOWNLOADING_ERRORS`: when `true`, imgproxy will report downloading errors. Default: `true`.
 
 ## Log

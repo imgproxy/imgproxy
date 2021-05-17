@@ -7,6 +7,11 @@
 #define VIPS_SUPPORT_AVIF \
   (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 9))
 
+#define VIPS_SUPPORT_AVIF_SPEED \
+  (VIPS_MAJOR_VERSION > 8 || \
+    (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION > 10) || \
+    (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 10 && VIPS_MICRO_VERSION >= 2))
+
 #define VIPS_SUPPORT_PNG_BITDEPTH \
   (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 10))
 
@@ -552,9 +557,16 @@ vips_tiffsave_go(VipsImage *in, void **buf, size_t *len, int quality) {
 }
 
 int
-vips_avifsave_go(VipsImage *in, void **buf, size_t *len, int quality) {
+vips_avifsave_go(VipsImage *in, void **buf, size_t *len, int quality, int speed) {
 #if VIPS_SUPPORT_AVIF
-  return vips_heifsave_buffer(in, buf, len, "Q", quality, "compression", VIPS_FOREIGN_HEIF_COMPRESSION_AV1, NULL);
+  return vips_heifsave_buffer(
+    in, buf, len,
+    "Q", quality,
+    "compression", VIPS_FOREIGN_HEIF_COMPRESSION_AV1,
+  #if VIPS_SUPPORT_AVIF_SPEED
+    "speed", speed,
+  #endif
+    NULL);
 #else
   vips_error("vips_avifsave_go", "Saving AVIF is not supported (libvips 8.9+ reuired)");
   return 1;

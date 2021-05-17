@@ -41,6 +41,7 @@ var (
 	PngInterlaced         bool
 	PngQuantize           bool
 	PngQuantizationColors int
+	AvifSpeed             int
 	Quality               int
 	FormatQuality         map[imagetype.Type]int
 	StripMetadata         bool
@@ -118,6 +119,10 @@ var (
 	SentryEnvironment string
 	SentryRelease     string
 
+	AirbrakeProjecID  int
+	AirbrakeProjecKey string
+	AirbrakeEnv       string
+
 	ReportDownloadingErrors bool
 
 	EnableDebugHeaders bool
@@ -158,6 +163,7 @@ func Reset() {
 	PngInterlaced = false
 	PngQuantize = false
 	PngQuantizationColors = 256
+	AvifSpeed = 5
 	Quality = 80
 	FormatQuality = map[imagetype.Type]int{imagetype.AVIF: 50}
 	StripMetadata = true
@@ -235,6 +241,10 @@ func Reset() {
 	SentryEnvironment = "production"
 	SentryRelease = fmt.Sprintf("imgproxy/%s", version.Version())
 
+	AirbrakeProjecID = 0
+	AirbrakeProjecKey = ""
+	AirbrakeEnv = "production"
+
 	ReportDownloadingErrors = true
 
 	EnableDebugHeaders = false
@@ -283,6 +293,7 @@ func Configure() error {
 	configurators.Bool(&PngInterlaced, "IMGPROXY_PNG_INTERLACED")
 	configurators.Bool(&PngQuantize, "IMGPROXY_PNG_QUANTIZE")
 	configurators.Int(&PngQuantizationColors, "IMGPROXY_PNG_QUANTIZATION_COLORS")
+	configurators.Int(&AvifSpeed, "IMGPROXY_AVIF_SPEED")
 	configurators.Int(&Quality, "IMGPROXY_QUALITY")
 	if err := configurators.ImageTypesQuality(FormatQuality, "IMGPROXY_FORMAT_QUALITY"); err != nil {
 		return err
@@ -377,6 +388,9 @@ func Configure() error {
 	configurators.String(&SentryDSN, "IMGPROXY_SENTRY_DSN")
 	configurators.String(&SentryEnvironment, "IMGPROXY_SENTRY_ENVIRONMENT")
 	configurators.String(&SentryRelease, "IMGPROXY_SENTRY_RELEASE")
+	configurators.Int(&AirbrakeProjecID, "IMGPROXY_AIRBRAKE_PROJECT_ID")
+	configurators.String(&AirbrakeProjecKey, "IMGPROXY_AIRBRAKE_PROJECT_KEY")
+	configurators.String(&AirbrakeEnv, "IMGPROXY_AIRBRAKE_ENVIRONMENT")
 	configurators.Bool(&ReportDownloadingErrors, "IMGPROXY_REPORT_DOWNLOADING_ERRORS")
 	configurators.Bool(&EnableDebugHeaders, "IMGPROXY_ENABLE_DEBUG_HEADERS")
 
@@ -445,6 +459,12 @@ func Configure() error {
 		return fmt.Errorf("Png quantization colors should be greater than 1, now - %d\n", PngQuantizationColors)
 	} else if PngQuantizationColors > 256 {
 		return fmt.Errorf("Png quantization colors can't be greater than 256, now - %d\n", PngQuantizationColors)
+	}
+
+	if AvifSpeed <= 0 {
+		return fmt.Errorf("Avif speed should be greater than 0, now - %d\n", AvifSpeed)
+	} else if AvifSpeed > 8 {
+		return fmt.Errorf("Avif speed can't be greater than 8, now - %d\n", AvifSpeed)
 	}
 
 	if Quality <= 0 {
