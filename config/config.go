@@ -132,6 +132,12 @@ var (
 	BufferPoolCalibrationThreshold int
 )
 
+var (
+	keyPath     = flag.String("keypath", "", "path of the file with hex-encoded key")
+	saltPath    = flag.String("saltpath", "", "path of the file with hex-encoded salt")
+	presetsPath = flag.String("presets", "", "path of the file with presets")
+)
+
 func init() {
 	Reset()
 }
@@ -255,9 +261,6 @@ func Reset() {
 }
 
 func Configure() error {
-	keyPath := flag.String("keypath", "", "path of the file with hex-encoded key")
-	saltPath := flag.String("saltpath", "", "path of the file with hex-encoded salt")
-	presetsPath := flag.String("presets", "", "path of the file with presets")
 	flag.Parse()
 
 	if port := os.Getenv("PORT"); len(port) > 0 {
