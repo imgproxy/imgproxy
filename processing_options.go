@@ -149,6 +149,7 @@ type processingOptions struct {
 	Background        rgbColor
 	Blur              float32
 	Sharpen           float32
+	Pixelate          int
 	StripMetadata     bool
 	StripColorProfile bool
 	AutoRotate        bool
@@ -807,6 +808,20 @@ func applySharpenOption(po *processingOptions, args []string) error {
 	return nil
 }
 
+func applyPixelateOption(po *processingOptions, args []string) error {
+	if len(args) > 1 {
+		return fmt.Errorf("Invalid pixelate arguments: %v", args)
+	}
+
+	if p, err := strconv.Atoi(args[0]); err == nil && p >= 0 {
+		po.Pixelate = p
+	} else {
+		return fmt.Errorf("Invalid pixelate: %s", args[0])
+	}
+
+	return nil
+}
+
 func applyPresetOption(po *processingOptions, args []string) error {
 	for _, preset := range args {
 		if p, ok := conf.Presets[preset]; ok {
@@ -1014,6 +1029,8 @@ func applyProcessingOption(po *processingOptions, name string, args []string) er
 		return applyBlurOption(po, args)
 	case "sharpen", "sh":
 		return applySharpenOption(po, args)
+	case "pixelate", "pix":
+		return applyPixelateOption(po, args)
 	case "watermark", "wm":
 		return applyWatermarkOption(po, args)
 	case "strip_metadata", "sm":

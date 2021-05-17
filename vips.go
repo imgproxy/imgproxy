@@ -422,6 +422,18 @@ func (img *vipsImage) Resize(wscale, hscale float64, hasAlpa bool) error {
 	return nil
 }
 
+func (img *vipsImage) Pixelate(pixels int) error {
+	var tmp *C.VipsImage
+
+	if C.vips_pixelate(img.VipsImage, &tmp, C.int(pixels)) != 0 {
+		return vipsError()
+	}
+
+	C.swap_and_clear(&img.VipsImage, tmp)
+
+	return nil
+}
+
 func (img *vipsImage) Orientation() C.int {
 	return C.vips_get_orientation(img.VipsImage)
 }
