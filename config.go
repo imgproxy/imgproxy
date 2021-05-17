@@ -300,7 +300,7 @@ type config struct {
 	SentryDSN         string
 	SentryEnvironment string
 	SentryRelease     string
-	AirbrakeProjecId  int
+	AirbrakeProjecID  int
 	AirbrakeProjecKey string
 	AirbrakeEnv       string
 
@@ -479,7 +479,7 @@ func configure() error {
 	strEnvConfig(&conf.SentryDSN, "IMGPROXY_SENTRY_DSN")
 	strEnvConfig(&conf.SentryEnvironment, "IMGPROXY_SENTRY_ENVIRONMENT")
 	strEnvConfig(&conf.SentryRelease, "IMGPROXY_SENTRY_RELEASE")
-	intEnvConfig(&conf.AirbrakeProjecId, "IMGPROXY_AIRBRAKE_PROJECT_ID")
+	intEnvConfig(&conf.AirbrakeProjecID, "IMGPROXY_AIRBRAKE_PROJECT_ID")
 	strEnvConfig(&conf.AirbrakeProjecKey, "IMGPROXY_AIRBRAKE_PROJECT_KEY")
 	strEnvConfig(&conf.AirbrakeEnv, "IMGPROXY_AIRBRAKE_ENVIRONMENT")
 	boolEnvConfig(&conf.ReportDownloadingErrors, "IMGPROXY_REPORT_DOWNLOADING_ERRORS")
