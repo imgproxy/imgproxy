@@ -350,7 +350,7 @@ As an approximate guideline, use 0.5 sigma for 4 pixels/mm (display resolution),
 
 Default: disabled
 
-### Pixelate<img class='pro-badge' src='assets/pro.svg' alt='pro' /> :id=pixelate
+### Pixelate
 
 ```
 pixelate:%size

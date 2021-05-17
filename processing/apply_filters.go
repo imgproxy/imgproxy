@@ -2,12 +2,13 @@ package processing
 
 import (
 	"github.com/imgproxy/imgproxy/v2/imagedata"
+	"github.com/imgproxy/imgproxy/v2/imath"
 	"github.com/imgproxy/imgproxy/v2/options"
 	"github.com/imgproxy/imgproxy/v2/vips"
 )
 
 func applyFilters(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata *imagedata.ImageData) error {
-	if po.Blur == 0 && po.Sharpen == 0 {
+	if po.Blur == 0 && po.Sharpen == 0 && po.Pixelate < 1 {
 		return nil
 	}
 
@@ -32,6 +33,13 @@ func applyFilters(pctx *pipelineContext, img *vips.Image, po *options.Processing
 
 	if po.Sharpen > 0 {
 		if err := img.Sharpen(po.Sharpen); err != nil {
+			return err
+		}
+	}
+
+	if po.Pixelate > 1 {
+		pixels := imath.Min(po.Pixelate, imath.Min(img.Width(), img.Height()))
+		if err := img.Pixelate(pixels); err != nil {
 			return err
 		}
 	}
