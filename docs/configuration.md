@@ -300,6 +300,9 @@ imgproxy can report occurred errors to Bugsnag, Honeybadger and Sentry:
 * `IMGPROXY_SENTRY_DSN`: Sentry project DSN. When provided, enables error reporting to Sentry;
 * `IMGPROXY_SENTRY_ENVIRONMENT`: Sentry environment to report to. Default: `production`;
 * `IMGPROXY_SENTRY_RELEASE`: Sentry release to report to. Default: `imgproxy/{imgproxy version}`;
+* `IMGPROXY_AIRBRAKE_PROJECT_ID`: Airbrake project id;
+* `IMGPROXY_AIRBRAKE_PROJECT_KEY`: Airbrake project key;
+* `IMGPROXY_AIRBRAKE_ENVIRONMENT`: Airbrake environment to report to. Default: `production`;
 * `IMGPROXY_REPORT_DOWNLOADING_ERRORS`: when `true`, imgproxy will report downloading errors. Default: `true`.
 
 ## Log

@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/airbrake/gobrake/v5"
 	"github.com/bugsnag/bugsnag-go/v2"
 	"github.com/getsentry/sentry-go"
 	"github.com/honeybadger-io/honeybadger-go"
@@ -14,6 +15,8 @@ var (
 	bugsnagEnabled     bool
 	honeybadgerEnabled bool
 	sentryEnabled      bool
+	airbrakeEnabled    bool
+	airbrake           *gobrake.Notifier
 
 	headersReplacer = strings.NewReplacer("-", "_")
 	sentryTimeout   = 5 * time.Second
@@ -45,6 +48,20 @@ func initErrorsReporting() {
 
 		sentryEnabled = true
 	}
+
+	if len(conf.AirbrakeProjecKey) > 0 {
+		airbrake = gobrake.NewNotifierWithOptions(&gobrake.NotifierOptions{
+			ProjectId:   int64(conf.AirbrakeProjecId),
+			ProjectKey:  conf.AirbrakeProjecKey,
+			Environment: conf.AirbrakeEnv,
+		})
+
+		airbrakeEnabled = true
+	}
+}
+
+func closeErrorsReporting() {
+	airbrake.Close()
 }
 
 func reportError(err error, req *http.Request) {
@@ -71,5 +88,9 @@ func reportError(err error, req *http.Request) {
 		if eventID != nil {
 			hub.Flush(sentryTimeout)
 		}
+	}
+
+	if airbrakeEnabled {
+		airbrake.Notify(err, req)
 	}
 }
