@@ -1,10 +1,33 @@
 FROM debian:buster
 
 RUN apt-get -qq update \
-  && apt-get install -y --no-install-recommends bash ca-certificates build-essential \
-  curl git mercurial make binutils bison gcc gobject-introspection libglib2.0-dev \
-  libexpat1-dev libxml2-dev libfftw3-dev libjpeg-dev libpng-dev libwebp-dev libgif-dev \
-  libexif-dev liblcms2-dev libavcodec-dev libavformat-dev libavutil-dev libswscale-dev
+  && apt-get install -y --no-install-recommends \
+    bash \
+    ca-certificates \
+    build-essential \
+    curl \
+    git \
+    mercurial \
+    make \
+    binutils \
+    bison \
+    gcc \
+    gobject-introspection \
+    libglib2.0-dev \
+    libexpat1-dev \
+    libxml2-dev \
+    libfftw3-dev \
+    libjpeg-dev \
+    libpng-dev \
+    libwebp-dev \
+    libgif-dev \
+    librsvg2-dev \
+    libexif-dev \
+    liblcms2-dev \
+    libavcodec-dev \
+    libavformat-dev \
+    libavutil-dev \
+    libswscale-dev
 
 RUN curl -s -S -L https://raw.githubusercontent.com/moovweb/gvm/master/binscripts/gvm-installer | bash -
 
