@@ -2,7 +2,7 @@ package main
 
 import (
 	"bytes"
-	"io"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -33,7 +33,7 @@ func (s *ProcessingHandlerTestSuite) SetupSuite() {
 
 	config.LocalFileSystemRoot = filepath.Join(wd, "/testdata")
 
-	logrus.SetOutput(io.Discard)
+	logrus.SetOutput(ioutil.Discard)
 
 	initialize()
 
@@ -68,14 +68,14 @@ func (s *ProcessingHandlerTestSuite) readTestFile(name string) []byte {
 	wd, err := os.Getwd()
 	assert.Nil(s.T(), err)
 
-	data, err := os.ReadFile(filepath.Join(wd, "testdata", name))
+	data, err := ioutil.ReadFile(filepath.Join(wd, "testdata", name))
 	assert.Nil(s.T(), err)
 
 	return data
 }
 
 func (s *ProcessingHandlerTestSuite) readBody(res *http.Response) []byte {
-	data, err := io.ReadAll(res.Body)
+	data, err := ioutil.ReadAll(res.Body)
 	assert.Nil(s.T(), err)
 	return data
 }
