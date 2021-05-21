@@ -29,6 +29,7 @@ require (
 	golang.org/x/sys v0.0.0-20210124154548-22da62e12c0c
 	golang.org/x/text v0.3.5
 	google.golang.org/api v0.40.0
+	github.com/google/uuid v1.1.2
 )
 
 replace git.apache.org/thrift.git => github.com/apache/thrift v0.0.0-20180902110319-2566ecd5d999
