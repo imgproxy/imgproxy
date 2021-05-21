@@ -30,7 +30,7 @@ func fileNameToParams(requestUri string) string {
 		imgParams[splitParam[0]] = splitParam[1]
 	}
 
-	s3Path := getS3Path(requestUri)
+	s3Path := getS3SourcePath(requestUri)
 
 	urlParam := fmt.Sprintf("/plain/s3://%s/%s@jpg", s3Path, splitFilename[len(splitFilename)-1])
 
@@ -51,8 +51,9 @@ func fileNameToParams(requestUri string) string {
 
 }
 
+// Gets s3 path of source file
 // removes pushdPath and uuid from path if they exist
-func getS3Path(requestUri string) string {
+func getS3SourcePath(requestUri string) string {
 	pathDirs := strings.Split(path.Dir(requestUri), "/")
 	s3PathDirs := []string{ s3ImagesBucket }
 	for _, pathDir := range pathDirs {
@@ -65,7 +66,8 @@ func getS3Path(requestUri string) string {
 	return strings.Join(s3PathDirs, "/")
 }
 
-func getCachePath(requestUri string) string {
+// creates s3 path for cached generated file
+func getS3CachePath(requestUri string) string {
 	pathBase := path.Base(requestUri)
 	pathDirs := strings.Split(path.Dir(requestUri), "/")
 	// only add last pathDir if length > 2, we expect at least /pushd in the path
@@ -80,7 +82,7 @@ func beforeProcessing(r *http.Request) (*http.Request, string){
 	// process pushd filename if path starts with pushdPath
 	var cachePath string
 	if strings.HasPrefix(r.RequestURI, pushdPath) {
-		cachePath = getCachePath(r.RequestURI)
+		cachePath = getS3CachePath(r.RequestURI)
 		r.RequestURI = fileNameToParams(r.RequestURI)
 	}
 	return r, cachePath
