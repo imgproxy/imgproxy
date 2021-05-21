@@ -7,10 +7,11 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/google/uuid"
 	"net/http"
+	"os"
 	"path"
 	"strings"
-	"os"
 )
 
 var pushdPath = "/pushd"
@@ -29,7 +30,9 @@ func fileNameToParams(requestUri string) string {
 		imgParams[splitParam[0]] = splitParam[1]
 	}
 
-	urlParam := fmt.Sprintf("/plain/s3://%s/%s@jpg", s3ImagesBucket, splitFilename[len(splitFilename)-1])
+	s3Path := getS3SourcePath(requestUri)
+
+	urlParam := fmt.Sprintf("/plain/s3://%s/%s@jpg", s3Path, splitFilename[len(splitFilename)-1])
 
 	var pathStr string
 	for param, value := range imgParams {
@@ -48,14 +51,30 @@ func fileNameToParams(requestUri string) string {
 
 }
 
-func getCachePath(requestUri string) string {
+// Gets s3 path of source file
+// removes pushdPath and uuid from path if they exist
+func getS3SourcePath(requestUri string) string {
+	pathDirs := strings.Split(path.Dir(requestUri), "/")
+	s3PathDirs := []string{ s3ImagesBucket }
+	for _, pathDir := range pathDirs {
+		if len(pathDir) < 1 || isValidUUID(pathDir) || pathDir == pushdPath[1:] {
+			continue
+		} else {
+			s3PathDirs = append(s3PathDirs, pathDir)
+		}
+	}
+	return strings.Join(s3PathDirs, "/")
+}
+
+// creates s3 path for cached generated file
+func getS3CachePath(requestUri string) string {
 	pathBase := path.Base(requestUri)
 	pathDirs := strings.Split(path.Dir(requestUri), "/")
 	// only add last pathDir if length > 2, we expect at least /pushd in the path
 	if len(pathDirs) <= 2 {
 		return pathBase
 	} else {
-		return fmt.Sprintf("%s/%s", pathDirs[len(pathDirs)-1], pathBase)
+		return fmt.Sprintf("%s/%s", strings.Join(pathDirs[2:], "/"), pathBase)
 	}
 }
 
@@ -63,7 +82,7 @@ func beforeProcessing(r *http.Request) (*http.Request, string){
 	// process pushd filename if path starts with pushdPath
 	var cachePath string
 	if strings.HasPrefix(r.RequestURI, pushdPath) {
-		cachePath = getCachePath(r.RequestURI)
+		cachePath = getS3CachePath(r.RequestURI)
 		r.RequestURI = fileNameToParams(r.RequestURI)
 	}
 	return r, cachePath
@@ -99,4 +118,9 @@ func beforeResponse(imageData []byte, cachePath string) chan bool {
 	uploaded := make(chan bool)
 	go uploadToS3(imageData, cachePath, uploaded)
 	return uploaded
+}
+
+func isValidUUID(u string) bool {
+	_, err := uuid.Parse(u)
+	return err == nil
 }
