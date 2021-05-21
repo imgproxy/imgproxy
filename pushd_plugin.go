@@ -7,10 +7,11 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/google/uuid"
 	"net/http"
+	"os"
 	"path"
 	"strings"
-	"os"
 )
 
 var pushdPath = "/pushd"
@@ -29,7 +30,9 @@ func fileNameToParams(requestUri string) string {
 		imgParams[splitParam[0]] = splitParam[1]
 	}
 
-	urlParam := fmt.Sprintf("/plain/s3://%s/%s@jpg", s3ImagesBucket, splitFilename[len(splitFilename)-1])
+	s3Path := getS3Path(requestUri)
+
+	urlParam := fmt.Sprintf("/plain/s3://%s/%s@jpg", s3Path, splitFilename[len(splitFilename)-1])
 
 	var pathStr string
 	for param, value := range imgParams {
@@ -48,6 +51,20 @@ func fileNameToParams(requestUri string) string {
 
 }
 
+// removes pushdPath and uuid from path if they exist
+func getS3Path(requestUri string) string {
+	pathDirs := strings.Split(path.Dir(requestUri), "/")
+	s3PathDirs := []string{ s3ImagesBucket }
+	for _, pathDir := range pathDirs {
+		if len(pathDir) < 1 || isValidUUID(pathDir) || pathDir == pushdPath[1:] {
+			continue
+		} else {
+			s3PathDirs = append(s3PathDirs, pathDir)
+		}
+	}
+	return strings.Join(s3PathDirs, "/")
+}
+
 func getCachePath(requestUri string) string {
 	pathBase := path.Base(requestUri)
 	pathDirs := strings.Split(path.Dir(requestUri), "/")
@@ -55,7 +72,7 @@ func getCachePath(requestUri string) string {
 	if len(pathDirs) <= 2 {
 		return pathBase
 	} else {
-		return fmt.Sprintf("%s/%s", pathDirs[len(pathDirs)-1], pathBase)
+		return fmt.Sprintf("%s/%s", strings.Join(pathDirs[2:], "/"), pathBase)
 	}
 }
 
@@ -99,4 +116,9 @@ func beforeResponse(imageData []byte, cachePath string) chan bool {
 	uploaded := make(chan bool)
 	go uploadToS3(imageData, cachePath, uploaded)
 	return uploaded
+}
+
+func isValidUUID(u string) bool {
+	_, err := uuid.Parse(u)
+	return err == nil
 }

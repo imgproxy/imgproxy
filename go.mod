@@ -20,38 +20,15 @@ require (
 	github.com/honeybadger-io/honeybadger-go v0.5.0
 	github.com/johannesboyne/gofakes3 v0.0.0-20221128113635-c2f5cc6b5294
 	github.com/matoous/go-nanoid/v2 v2.0.0
-	github.com/ncw/swift/v2 v2.0.2
-	github.com/newrelic/go-agent/v3 v3.24.1
-	github.com/newrelic/newrelic-telemetry-sdk-go v0.8.1
-	github.com/pkg/errors v0.9.1
-	github.com/prometheus/client_golang v1.16.0
-	github.com/shirou/gopsutil v3.21.11+incompatible
-	github.com/sirupsen/logrus v1.9.3
-	github.com/stretchr/testify v1.8.4
-	github.com/tdewolff/parse/v2 v2.6.7
-	github.com/trimmer-io/go-xmp v1.0.0
-	go.opentelemetry.io/contrib/detectors/aws/ec2 v1.17.0
-	go.opentelemetry.io/contrib/detectors/aws/ecs v1.17.0
-	go.opentelemetry.io/contrib/detectors/aws/eks v1.17.0
-	go.opentelemetry.io/contrib/propagators/autoprop v0.42.0
-	go.opentelemetry.io/contrib/propagators/aws v1.17.0
-	go.opentelemetry.io/otel v1.16.0
-	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc v0.39.0
-	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp v0.39.0
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.16.0
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.16.0
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.16.0
-	go.opentelemetry.io/otel/metric v1.16.0
-	go.opentelemetry.io/otel/sdk v1.16.0
-	go.opentelemetry.io/otel/sdk/metric v0.39.0
-	go.opentelemetry.io/otel/trace v1.16.0
-	go.uber.org/automaxprocs v1.5.3
-	golang.org/x/image v0.11.0
-	golang.org/x/net v0.14.0
-	golang.org/x/sys v0.11.0
-	google.golang.org/api v0.138.0
-	google.golang.org/grpc v1.57.0
-	gopkg.in/DataDog/dd-trace-go.v1 v1.54.0
+	github.com/newrelic/go-agent/v3 v3.10.0
+	github.com/prometheus/client_golang v1.9.0
+	github.com/sirupsen/logrus v1.8.0
+	github.com/stretchr/testify v1.7.0
+	golang.org/x/image v0.0.0-20201208152932-35266b937fa6
+	golang.org/x/net v0.0.0-20201224014010-6772e930b67b
+	golang.org/x/sys v0.0.0-20210124154548-22da62e12c0c
+	golang.org/x/text v0.3.5
+	google.golang.org/api v0.40.0
 )
 
 require (
