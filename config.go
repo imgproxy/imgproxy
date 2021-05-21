@@ -18,6 +18,12 @@ func intEnvConfig(i *int, name string) {
 	}
 }
 
+func int64EnvConfig(i *int64, name string) {
+	if env, err := strconv.ParseInt(os.Getenv(name), 10, 64); err == nil {
+		*i = env
+	}
+}
+
 func floatEnvConfig(i *float64, name string) {
 	if env, err := strconv.ParseFloat(os.Getenv(name), 64); err == nil {
 		*i = env
