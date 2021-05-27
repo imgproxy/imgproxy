@@ -49,10 +49,10 @@ func initErrorsReporting() {
 		sentryEnabled = true
 	}
 
-	if len(conf.AirbrakeProjecKey) > 0 {
+	if len(conf.AirbrakeProjectKey) > 0 {
 		airbrake = gobrake.NewNotifierWithOptions(&gobrake.NotifierOptions{
-			ProjectId:   int64(conf.AirbrakeProjecId),
-			ProjectKey:  conf.AirbrakeProjecKey,
+			ProjectId:   int64(conf.AirbrakeProjectID),
+			ProjectKey:  conf.AirbrakeProjectKey,
 			Environment: conf.AirbrakeEnv,
 		})
 
@@ -61,7 +61,9 @@ func initErrorsReporting() {
 }
 
 func closeErrorsReporting() {
-	airbrake.Close()
+	if airbrake != nil {
+		airbrake.Close()
+	}
 }
 
 func reportError(err error, req *http.Request) {
