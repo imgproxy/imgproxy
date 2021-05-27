@@ -12,10 +12,9 @@ require (
 	github.com/bitly/go-simplejson v0.5.0 // indirect
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
 	github.com/bugsnag/bugsnag-go/v2 v2.1.1
-	github.com/bugsnag/panicwrap v1.2.2 // indirect
 	github.com/getsentry/sentry-go v0.10.0
 	github.com/go-ole/go-ole v1.2.4 // indirect
-	github.com/gofrs/uuid v3.3.0+incompatible // indirect
+	github.com/google/uuid v1.1.2
 	github.com/honeybadger-io/honeybadger-go v0.5.0
 	github.com/ianlancetaylor/cgosymbolizer v0.0.0-20201204192058-7acc97e53614 // indirect
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
@@ -29,7 +28,7 @@ require (
 	golang.org/x/sys v0.0.0-20210503080704-8803ae5d1324
 	golang.org/x/text v0.3.6
 	google.golang.org/api v0.46.0
-        github.com/google/uuid v1.1.2
+	github.com/pkg/errors v0.9.1
 )
 
 replace git.apache.org/thrift.git => github.com/apache/thrift v0.0.0-20180902110319-2566ecd5d999

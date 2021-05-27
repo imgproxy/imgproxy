@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/pkg/errors"
 	"net/http"
 	"strings"
 	"time"
@@ -93,6 +94,10 @@ func reportError(err error, req *http.Request) {
 	}
 
 	if airbrakeEnabled {
-		airbrake.Notify(err, req)
+		// airbrake won't group like errors together if they have and equal sign
+		// S3 errors especially have this issue with a trailing = on the host id
+		cleanErrStr := strings.Replace(err.Error(), "=", "", -1)
+		cleanErr := errors.New(cleanErrStr)
+		airbrake.Notify(cleanErr, req)
 	}
 }
