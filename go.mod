@@ -13,10 +13,13 @@ require (
 	github.com/airbrake/gobrake/v5 v5.6.1
 	github.com/aws/aws-sdk-go v1.44.327
 	github.com/benesch/cgosymbolizer v0.0.0-20190515212042-bec6fe6e597b
-	github.com/bugsnag/bugsnag-go/v2 v2.2.0
-	github.com/felixge/httpsnoop v1.0.3
-	github.com/fsouza/fake-gcs-server v1.42.2
-	github.com/getsentry/sentry-go v0.23.0
+	github.com/bitly/go-simplejson v0.5.0 // indirect
+	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
+	github.com/bugsnag/bugsnag-go/v2 v2.1.1
+	github.com/bugsnag/panicwrap v1.2.2 // indirect
+	github.com/getsentry/sentry-go v0.10.0
+	github.com/go-ole/go-ole v1.2.4 // indirect
+	github.com/gofrs/uuid v3.3.0+incompatible // indirect
 	github.com/honeybadger-io/honeybadger-go v0.5.0
 	github.com/johannesboyne/gofakes3 v0.0.0-20221128113635-c2f5cc6b5294
 	github.com/matoous/go-nanoid/v2 v2.0.0
@@ -25,10 +28,11 @@ require (
 	github.com/sirupsen/logrus v1.8.0
 	github.com/stretchr/testify v1.7.0
 	golang.org/x/image v0.0.0-20201208152932-35266b937fa6
-	golang.org/x/net v0.0.0-20201224014010-6772e930b67b
-	golang.org/x/sys v0.0.0-20210124154548-22da62e12c0c
-	golang.org/x/text v0.3.5
-	google.golang.org/api v0.40.0
+	golang.org/x/net v0.0.0-20210503060351-7fd8e65b6420
+	golang.org/x/sys v0.0.0-20210503080704-8803ae5d1324
+	golang.org/x/text v0.3.6
+	google.golang.org/api v0.46.0
+        github.com/google/uuid v1.1.2
 )
 
 require (
