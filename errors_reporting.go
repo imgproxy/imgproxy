@@ -49,10 +49,10 @@ func initErrorsReporting() {
 		sentryEnabled = true
 	}
 
-	if len(conf.AirbrakeProjecKey) > 0 {
+	if len(conf.AirbrakeProjectKey) > 0 {
 		airbrake = gobrake.NewNotifierWithOptions(&gobrake.NotifierOptions{
-			ProjectId:   int64(conf.AirbrakeProjecID),
-			ProjectKey:  conf.AirbrakeProjecKey,
+			ProjectId:   int64(conf.AirbrakeProjectID),
+			ProjectKey:  conf.AirbrakeProjectKey,
 			Environment: conf.AirbrakeEnv,
 		})
 
