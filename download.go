@@ -1,6 +1,7 @@
 package main
 
 import (
+	"compress/gzip"
 	"context"
 	"crypto/tls"
 	"fmt"
@@ -200,7 +201,22 @@ func downloadImage(ctx context.Context) (context.Context, context.CancelFunc, er
 		return ctx, func() {}, err
 	}
 
-	imgdata, err := readAndCheckImage(res.Body, int(res.ContentLength))
+	body := res.Body
+	contentLength := int(res.ContentLength)
+
+	if res.Header.Get("Content-Encoding") == "gzip" {
+		gzipBody, errGzip := gzip.NewReader(res.Body)
+		if gzipBody != nil {
+			defer gzipBody.Close()
+		}
+		if errGzip != nil {
+			return ctx, func() {}, err
+		}
+		body = gzipBody
+		contentLength = 0
+	}
+
+	imgdata, err := readAndCheckImage(body, contentLength)
 	if err != nil {
 		return ctx, func() {}, err
 	}

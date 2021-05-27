@@ -36,6 +36,7 @@ var vipsConf struct {
 	PngInterlaced         C.int
 	PngQuantize           C.int
 	PngQuantizationColors C.int
+	AvifSpeed             C.int
 	WatermarkOpacity      C.double
 }
 
@@ -87,7 +88,7 @@ func initVips() error {
 	}
 
 	vipsConf.PngQuantizationColors = C.int(conf.PngQuantizationColors)
-
+	vipsConf.AvifSpeed = C.int(conf.AvifSpeed)
 	vipsConf.WatermarkOpacity = C.double(conf.WatermarkOpacity)
 
 	if err := vipsLoadWatermark(); err != nil {
@@ -200,7 +201,7 @@ func (img *vipsImage) Save(imgtype imageType, quality int) ([]byte, context.Canc
 	case imageTypeGIF:
 		err = C.vips_gifsave_go(img.VipsImage, &ptr, &imgsize)
 	case imageTypeAVIF:
-		err = C.vips_avifsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality))
+		err = C.vips_avifsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality), vipsConf.AvifSpeed)
 	case imageTypeBMP:
 		err = C.vips_bmpsave_go(img.VipsImage, &ptr, &imgsize)
 	case imageTypeTIFF:
