@@ -67,6 +67,14 @@ func respondWithImage(ctx context.Context, reqID string, r *http.Request, rw htt
 	rw.Header().Set("Content-Type", po.Format.Mime())
 	rw.Header().Set("Content-Disposition", contentDisposition)
 
+	if conf.SetCanonicalHeader {
+		origin := getImageURL(ctx)
+		if strings.HasPrefix(origin, "https://") || strings.HasPrefix(origin, "http://") {
+			linkHeader := fmt.Sprintf(`<%s>; rel="canonical"`, origin)
+			rw.Header().Set("Link", linkHeader)
+		}
+	}
+
 	var cacheControl, expires string
 
 	if conf.CacheControlPassthrough {
@@ -90,6 +98,11 @@ func respondWithImage(ctx context.Context, reqID string, r *http.Request, rw htt
 		rw.Header().Set("Vary", headerVaryValue)
 	}
 
+	if conf.EnableDebugHeaders {
+		imgdata := getImageData(ctx)
+		rw.Header().Set("X-Origin-Content-Length", strconv.Itoa(len(imgdata.Data)))
+	}
+
 	if conf.GZipCompression > 0 && strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
 		buf := responseGzipBufPool.Get(0)
 		defer responseGzipBufPool.Put(buf)
@@ -109,11 +122,6 @@ func respondWithImage(ctx context.Context, reqID string, r *http.Request, rw htt
 		rw.Header().Set("Content-Length", strconv.Itoa(len(data)))
 		rw.WriteHeader(200)
 		rw.Write(data)
-	}
-
-	if conf.EnableDebugHeaders {
-		imgdata := getImageData(ctx)
-		rw.Header().Set("X-Origin-Content-Length", strconv.Itoa(len(imgdata.Data)))
 	}
 
 	imageURL := getImageURL(ctx)

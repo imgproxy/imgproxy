@@ -734,11 +734,9 @@ func getIcoData(imgdata *imageData) (*imageData, error) {
 	return nil, fmt.Errorf("Can't load %s from ICO", meta.Format())
 }
 
-func saveImageToFitBytes(po *processingOptions, img *vipsImage) ([]byte, context.CancelFunc, error) {
+func saveImageToFitBytes(ctx context.Context, po *processingOptions, img *vipsImage) ([]byte, context.CancelFunc, error) {
 	var diff float64
 	quality := po.getQuality()
-
-	img.CopyMemory()
 
 	for {
 		result, cancel, err := img.Save(po.Format, quality)
@@ -746,6 +744,8 @@ func saveImageToFitBytes(po *processingOptions, img *vipsImage) ([]byte, context
 			return result, cancel, err
 		}
 		cancel()
+
+		checkTimeout(ctx)
 
 		delta := float64(len(result)) / float64(po.MaxBytes)
 		switch {
@@ -866,7 +866,7 @@ func processImage(ctx context.Context) ([]byte, context.CancelFunc, error) {
 	}
 
 	if po.MaxBytes > 0 && canFitToBytes(po.Format) {
-		return saveImageToFitBytes(po, img)
+		return saveImageToFitBytes(ctx, po, img)
 	}
 
 	return img.Save(po.Format, po.getQuality())
