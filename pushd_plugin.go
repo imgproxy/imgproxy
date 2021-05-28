@@ -2,12 +2,15 @@ package main
 
 import (
 	"bytes"
+	"crypto/md5"
+	"encoding/base64"
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/google/uuid"
+	"io"
 	"net/http"
 	"os"
 	"path"
@@ -88,16 +91,33 @@ func beforeProcessing(r *http.Request) (*http.Request, string){
 	return r, cachePath
 }
 
+func createMD5Hash(data []byte) string{
+	hash := md5.New()
+	reader := bytes.NewReader(data)
+	if _, err := io.Copy(hash, reader); err != nil {
+		logError(err.Error())
+	}
+	return base64.StdEncoding.EncodeToString(hash.Sum(nil))
+}
+
 func uploadToS3(data []byte, s3Key string, uploaded chan bool) {
-	svc := s3.New(session.New())
+	md5Hash := createMD5Hash(data)
+	logNotice("Uploading rendered image to: %s with md5 hash: %s", s3Key, md5Hash)
+	awsSession, err := session.NewSession()
+	if err != nil {
+		logError(err.Error())
+		return
+	}
+	svc := s3.New(awsSession)
 	input := &s3.PutObjectInput{
 		Body:    aws.ReadSeekCloser(bytes.NewReader(data)),
 		Bucket:  aws.String(s3RenderBucket),
 		Key:     aws.String(s3Key),
 		ContentType: aws.String("image/jpeg"),
+		ContentMD5: aws.String(md5Hash),
 	}
 
-	_, err := svc.PutObject(input)
+	_, err = svc.PutObject(input)
 	if err != nil {
 		if aerr, ok := err.(awserr.Error); ok {
 			switch aerr.Code() {
@@ -114,7 +134,6 @@ func uploadToS3(data []byte, s3Key string, uploaded chan bool) {
 }
 
 func beforeResponse(imageData []byte, cachePath string) chan bool {
-	logNotice("Uploading rendered image to: %s", cachePath)
 	uploaded := make(chan bool)
 	go uploadToS3(imageData, cachePath, uploaded)
 	return uploaded
