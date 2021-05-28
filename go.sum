@@ -405,8 +405,6 @@ github.com/modern-go/reflect2 v0.0.0-20180701023420-4b7aa43c6742/go.mod h1:bx2lN
 github.com/modern-go/reflect2 v1.0.1/go.mod h1:bx2lNnkwVCuqBIxFjflWJWanXIb3RllmbCylyMrvgv0=
 github.com/motemen/go-quickfix v0.0.0-20200118031250-2a6e54e79a50 h1:LKXuJ8pSlacZRgcNFoN2OHehByrDxJesflgC/tH7aBM=
 github.com/motemen/go-quickfix v0.0.0-20200118031250-2a6e54e79a50/go.mod h1:8l73QMUlCqIlm+7YUTMwzUS4UH4gQqigx7toFASjmu0=
-github.com/motemen/gore v0.5.2 h1:MXcPj3myuuAToh1EaZbfYworggO7wEva6C49TOGqltA=
-github.com/motemen/gore v0.5.2/go.mod h1:LLl0jKyT5KKWhFV5VwhcR1/D/obZk8NnZxRWZcHqZUg=
 github.com/moul/http2curl v1.0.0/go.mod h1:8UbvGypXm98wA/IqH45anm5Y2Z6ep6O31QGOAZ3H0fQ=
 github.com/mwitkow/go-conntrack v0.0.0-20161129095857-cc309e4a2223/go.mod h1:qRWi+5nqEBWmkhHvq77mSJWrCKwh8bxhgT7d/eI7P4U=
 github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f/go.mod h1:qRWi+5nqEBWmkhHvq77mSJWrCKwh8bxhgT7d/eI7P4U=
