@@ -470,7 +470,7 @@ vips_trim(VipsImage *in, VipsImage **out, double threshold,
   VipsImage *tmp;
 
   if (vips_image_hasalpha(in)) {
-    if (vips_flatten(in, &tmp, NULL))
+    if (vips_flatten_go(in, &tmp, 255.0, 0, 255.0))
       return 1;
   } else {
     if (vips_copy(in, &tmp, NULL))
