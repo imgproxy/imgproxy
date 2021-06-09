@@ -33,7 +33,7 @@ func DecodeBmpMeta(r io.Reader) (Meta, error) {
 	} else {
 		// CORE
 		width = int(binary.LittleEndian.Uint16(tmp[18:20]))
-		height = int(binary.LittleEndian.Uint16(tmp[20:22]))
+		height = int(int16(binary.LittleEndian.Uint16(tmp[20:22])))
 	}
 
 	// height can be negative in Windows bitmaps
