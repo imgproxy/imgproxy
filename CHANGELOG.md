@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+
+## [2.16.4] - 2021-06-16
 ### Change
 - Use magenta (ff00ff) as a transparency key in `trim`.
 
