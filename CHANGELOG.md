@@ -4,6 +4,9 @@
 ### Change
 - Use magenta (ff00ff) as a transparency key in `trim`.
 
+### Fix
+- (pro) Fix parsing HEIF/AVIF meta.
+
 ## [2.16.3] - 2021-04-05
 ### Fix
 - Fix PNG quantization palette size.
