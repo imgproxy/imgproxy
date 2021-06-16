@@ -9,7 +9,7 @@ RUN go build -v -o /usr/local/bin/imgproxy
 # ==================================================================================================
 # Final image
 
-FROM debian:buster-slim
+FROM debian:bullseye-slim
 LABEL maintainer="Sergey Alexandrovich <darthsim@gmail.com>"
 
 RUN apt-get update \
