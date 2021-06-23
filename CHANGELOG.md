@@ -3,11 +3,11 @@
 ## [Unreleased]
 ### Added
 - `IMGPROXY_FALLBACK_IMAGE_HTTP_CODE` config.
-- [expires](https://docs.imgproxy.net/#/generating_the_url?id=expires) processing option.
-- [skip processing](https://docs.imgproxy.net/#/generating_the_url?id=skip-processing) processing option.
+- [expires](https://docs.imgproxy.net/generating_the_url?id=expires) processing option.
+- [skip processing](https://docs.imgproxy.net/generating_the_url?id=skip-processing) processing option.
 - [Datadog](./docs/datadog.md) metrics.
 - `force` and `fill-down` resizing types.
-- [min-width](https://docs.imgproxy.net/#/generating_the_url?id=min-width) and [min-height](https://docs.imgproxy.net/#/generating_the_url?id=min-height) processing options.
+- [min-width](https://docs.imgproxy.net/generating_the_url?id=min-width) and [min-height](https://docs.imgproxy.net/generating_the_url?id=min-height) processing options.
 
 ### Removed
 - Removed basic URL format, use [advanced one](./docs/generating_the_url.md) instead.
@@ -16,6 +16,14 @@
 - Removed `IMGPROXY_MAX_GIF_FRAMES` config, use `IMGPROXY_MAX_ANIMATION_FRAMES` instead.
 - Removed `crop` resizing type, use [crop](./docs/generating_the_url.md#crop) processing option instead.
 - Dropped old libvips (<8.8) support.
+
+## [2.16.4] - 2021-06-16
+### Change
+- Use magenta (ff00ff) as a transparency key in `trim`.
+
+### Fix
+- Fix crashes while processing some SVGs (dockerized version).
+- (pro) Fix parsing HEIF/AVIF meta.
 
 ## [2.16.3] - 2021-04-05
 ### Fix
@@ -37,11 +45,11 @@
 ### Added
 - AVIF support.
 - Azure Blob Storage support.
-- `IMGPROXY_STRIP_COLOR_PROFILE` config and [strip_color_profile](https://docs.imgproxy.net/#/generating_the_url?id=strip-color-profile) processing option.
+- `IMGPROXY_STRIP_COLOR_PROFILE` config and [strip_color_profile](https://docs.imgproxy.net/generating_the_url?id=strip-color-profile) processing option.
 - `IMGPROXY_FORMAT_QUALITY` config.
-- `IMGPROXY_AUTO_ROTATE` config and [auto_rotate](https://docs.imgproxy.net/#/generating_the_url?id=auto-rotate) processing option.
-- [rotate](https://docs.imgproxy.net/#/generating_the_url?id=rotate) processing option.
-- `width` and `height` arguments of the [crop](https://docs.imgproxy.net/#/generating_the_url?id=crop) processing option can be less than `1` that is treated by imgproxy as a relative value (a.k.a. crop by percentage).
+- `IMGPROXY_AUTO_ROTATE` config and [auto_rotate](https://docs.imgproxy.net/generating_the_url?id=auto-rotate) processing option.
+- [rotate](https://docs.imgproxy.net/generating_the_url?id=rotate) processing option.
+- `width` and `height` arguments of the [crop](https://docs.imgproxy.net/generating_the_url?id=crop) processing option can be less than `1` that is treated by imgproxy as a relative value (a.k.a. crop by percentage).
 - (pro) Remove Adobe Illustrator garbage from SVGs.
 - (pro) Add IPTC tags to the `/info` response.
 
@@ -60,11 +68,11 @@
 
 ## [2.15.0] - 2020-09-03
 ### Added
-- Ability to skip processing of some formats. See [Skip processing](https://docs.imgproxy.net/#/configuration?id=skip-processing).
+- Ability to skip processing of some formats. See [Skip processing](https://docs.imgproxy.net/configuration?id=skip-processing).
 - (pro) PDF support.
-- (pro) [video_thumbnail_second](https://docs.imgproxy.net/#/generating_the_url?id=video-thumbnail-second) processing option.
-- (pro) [page](https://docs.imgproxy.net/#/generating_the_url?id=page) processing option.
-- (pro) [background_alpha](https://docs.imgproxy.net/#/generating_the_url?id=background-alpha) processing option.
+- (pro) [video_thumbnail_second](https://docs.imgproxy.net/generating_the_url?id=video-thumbnail-second) processing option.
+- (pro) [page](https://docs.imgproxy.net/generating_the_url?id=page) processing option.
+- (pro) [background_alpha](https://docs.imgproxy.net/generating_the_url?id=background-alpha) processing option.
 - (pro) `IMGPROXY_VIDEO_THUMBNAIL_PROBE_SIZE` and `IMGPROXY_VIDEO_THUMBNAIL_MAX_ANALYZE_DURATION` configs.
 
 ### Changed
@@ -82,8 +90,8 @@
 ## [2.14.0] - 2020-07-17
 ### Added
 - `IMGPROXY_PROMETHEUS_NAMESPACE` config.
-- [strip_metadata](https://docs.imgproxy.net/#/generating_the_url?id=strip-metadata) processing option.
-- (pro) Configurable unsharpening. See [Unsharpening](https://docs.imgproxy.net/#/configuration?id=unsharpening) configs and [unsharpening](https://docs.imgproxy.net/#/generating_the_url?id=unsharpening) processing option.
+- [strip_metadata](https://docs.imgproxy.net/generating_the_url?id=strip-metadata) processing option.
+- (pro) Configurable unsharpening. See [Unsharpening](https://docs.imgproxy.net/configuration?id=unsharpening) configs and [unsharpening](https://docs.imgproxy.net/generating_the_url?id=unsharpening) processing option.
 
 ### Changed
 - Better for libvips memory metrics for Prometheus.
@@ -105,7 +113,7 @@
 ## [2.13.0] - 2020-04-22
 ### Added
 - Fallback images.
-- [padding](https://docs.imgproxy.net/#/generating_the_url?id=padding) processing option.
+- [padding](https://docs.imgproxy.net/generating_the_url?id=padding) processing option.
 
 ### Changed
 - Optimized memory usage. Especially when dealing with animated images.
@@ -117,7 +125,7 @@
 ### Addded
 - `IMGPROXY_PATH_PREFIX` config.
 - (pro) Video thumbnails.
-- (pro) [Getting the image info](https://docs.imgproxy.net/#/getting_the_image_info).
+- (pro) [Getting the image info](https://docs.imgproxy.net/getting_the_image_info).
 
 ### Changed
 - Improved `trim` processing option.
