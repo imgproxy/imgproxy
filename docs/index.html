@@ -44,6 +44,12 @@
   <script src="assets/docsify-edit-link.js"></script>
   <script src="assets/docsify-gitter.js"></script>
   <script>
+    if (window.DOCSIFY_ROUTER_MODE === "history") {
+      var clink = document.createElement("link")
+      clink.rel = "canonical"
+      document.getElementsByTagName("head")[0].appendChild(clink)
+    }
+
     window.$docsify = {
       logo: '/assets/logo.svg',
       name: 'imgproxy',
@@ -58,7 +64,14 @@
       },
       plugins: [
         EditOnGithubPlugin.create('https://github.com/imgproxy/imgproxy/blob/master/docs/'),
-        GitterPlugin.create("imgproxy/imgproxy", "1775d3")
+        GitterPlugin.create("imgproxy/imgproxy", "1775d3"),
+        function (hook, vm) {
+          hook.beforeEach(function () {
+            if (clink) {
+              clink.href = "https://docs.imgproxy.net" + vm.route.path
+            }
+          });
+        }
       ]
     }
   </script>
