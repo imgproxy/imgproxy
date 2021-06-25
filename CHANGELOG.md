@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+### Fix
+- Fix ICC profile handling in some cases.
 
 ## [2.16.4] - 2021-06-16
 ### Change
