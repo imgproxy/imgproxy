@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+
+## [2.16.5] - 2021-06-28
 ### Change
 - More clear downloading errors.
 
