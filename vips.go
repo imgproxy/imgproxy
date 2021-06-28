@@ -586,8 +586,8 @@ func (img *vipsImage) ImportColourProfile() error {
 func (img *vipsImage) ExportColourProfile() error {
 	var tmp *C.VipsImage
 
-	// Don't export is there's no embedded profile or embedded profile is sRGB
-	if C.vips_has_embedded_icc(img.VipsImage) == 0 || C.vips_icc_is_srgb_iec61966(img.VipsImage) == 1 {
+	// Don't export is there's no embedded profile
+	if C.vips_has_embedded_icc(img.VipsImage) == 0 {
 		return nil
 	}
 
@@ -603,8 +603,8 @@ func (img *vipsImage) ExportColourProfile() error {
 func (img *vipsImage) ExportColourProfileToSRGB() error {
 	var tmp *C.VipsImage
 
-	// Don't export is there's no embedded profile or embedded profile is sRGB
-	if C.vips_has_embedded_icc(img.VipsImage) == 0 || C.vips_icc_is_srgb_iec61966(img.VipsImage) == 1 {
+	// Don't export is there's no embedded profile
+	if C.vips_has_embedded_icc(img.VipsImage) == 0 {
 		return nil
 	}
 
@@ -620,8 +620,8 @@ func (img *vipsImage) ExportColourProfileToSRGB() error {
 func (img *vipsImage) TransformColourProfile() error {
 	var tmp *C.VipsImage
 
-	// Don't transform is there's no embedded profile or embedded profile is sRGB
-	if C.vips_has_embedded_icc(img.VipsImage) == 0 || C.vips_icc_is_srgb_iec61966(img.VipsImage) == 1 {
+	// Don't transform is there's no embedded profile
+	if C.vips_has_embedded_icc(img.VipsImage) == 0 {
 		return nil
 	}
 
@@ -644,10 +644,6 @@ func (img *vipsImage) RemoveColourProfile() error {
 	}
 
 	return nil
-}
-
-func (img *vipsImage) IsSRGB() bool {
-	return img.VipsImage.Type == C.VIPS_INTERPRETATION_sRGB
 }
 
 func (img *vipsImage) LinearColourspace() error {

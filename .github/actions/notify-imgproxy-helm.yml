@@ -1,0 +1,19 @@
+---
+name: Notify imgproxy/helm on updated 'configuration' part of the docs
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - docs/configuration.md
+jobs:
+  notify-imgproxy-helm:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Repository Dispatch
+        uses: peter-evans/repository-dispatch@v1.1.3
+        with:
+          token: ${{ secrets.HELM_REPO_ACCESS_TOKEN }}
+          repository: imgproxy/imgproxy-helm
+          event-type: imgproxy-config-updated
+          client-payload: '{"actor":"{{ github.actor }}","link":"https://github.com/imgproxy/imgproxy/commit/{{ github.sha }}#diff-17ed18489a956f326ec0fe4040850c5bc9261d4631fb42da4c52891d74a59180"}'
