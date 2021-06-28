@@ -185,7 +185,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 			reportError(err, r)
 		}
 
-		logWarning("Could not load image. Using fallback image: %s", err.Error())
+		logWarning("Could not load image %s. Using fallback image. %s", getImageURL(ctx), err.Error())
 		ctx = context.WithValue(ctx, imageDataCtxKey, fallbackImage)
 	}
 

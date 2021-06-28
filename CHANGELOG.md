@@ -1,6 +1,9 @@
 # Changelog
 
 ## [Unreleased]
+### Change
+- More clear downloading errors.
+
 ### Fix
 - Fix ICC profile handling in some cases.
 
