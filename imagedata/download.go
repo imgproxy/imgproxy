@@ -88,7 +88,7 @@ func requestImage(imageURL string) (*http.Response, error) {
 
 	res, err := downloadClient.Do(req)
 	if err != nil {
-		return res, ierrors.New(404, err.Error(), msgSourceImageIsUnreachable).SetUnexpected(config.ReportDownloadingErrors)
+		return res, ierrors.New(404, checkTimeoutErr(err).Error(), msgSourceImageIsUnreachable).SetUnexpected(config.ReportDownloadingErrors)
 	}
 
 	if res.StatusCode != 200 {

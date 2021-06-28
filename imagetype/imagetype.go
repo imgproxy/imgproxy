@@ -126,6 +126,7 @@ func (it Type) SupportsAnimation() bool {
 
 func (it Type) SupportsColourProfile() bool {
 	return it == JPEG ||
+		it == PNG ||
 		it == WEBP ||
 		it == AVIF
 }

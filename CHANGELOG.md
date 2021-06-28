@@ -17,6 +17,14 @@
 - Removed `crop` resizing type, use [crop](./docs/generating_the_url.md#crop) processing option instead.
 - Dropped old libvips (<8.8) support.
 
+## [2.16.5] - 2021-06-28
+### Change
+- More clear downloading errors.
+
+### Fix
+- Fix ICC profile handling in some cases.
+- Fix handling of negative height value for BMP.
+
 ## [2.16.4] - 2021-06-16
 ### Change
 - Use magenta (ff00ff) as a transparency key in `trim`.
