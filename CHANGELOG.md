@@ -6,6 +6,7 @@
 
 ### Fix
 - Fix ICC profile handling in some cases.
+- Fix handling of negative height value for BMP.
 
 ## [2.16.4] - 2021-06-16
 ### Change
