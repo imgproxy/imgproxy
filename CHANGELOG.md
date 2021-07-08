@@ -1,6 +1,9 @@
 # Changelog
 
 ## [Unreleased]
+### Fix
+- Fix performance regression in ICC profile handling.
+- Fix crashes while processing CMYK images without ICC profile.
 
 ## [2.16.5] - 2021-06-28
 ### Change

@@ -356,6 +356,37 @@ vips_resize_with_premultiply(VipsImage *in, VipsImage **out, double scale) {
 }
 
 int
+vips_icc_is_srgb_iec61966(VipsImage *in) {
+  VIPS_BLOB_DATA_TYPE data;
+  size_t data_len;
+
+  // 1998-12-01
+  static char date[] = { 7, 206, 0, 2, 0, 9 };
+  // 2.1
+  static char version[] = { 2, 16, 0, 0 };
+
+  // The image had no profile and built-in CMYK was imported.
+  // Vips gives us an invalid data pointer when the built-in profile was imported,
+  // so we check this mark before receiving an actual profile.
+  // if (vips_image_get_typeof(in, "icc-cmyk-no-profile"))
+  //   return FALSE;
+
+  if (vips_image_get_blob(in, VIPS_META_ICC_NAME, &data, &data_len))
+    return FALSE;
+
+  // Less than header size
+  if (data_len < 128)
+    return FALSE;
+
+  // Predict it is sRGB IEC61966 2.1 by checking some header fields
+  return ((memcmp(data + 48, "IEC ",  4) == 0) && // Device manufacturer
+          (memcmp(data + 52, "sRGB",  4) == 0) && // Device model
+          (memcmp(data + 80, "HP  ",  4) == 0) && // Profile creator
+          (memcmp(data + 24, date,    6) == 0) && // Date of creation
+          (memcmp(data + 8,  version, 4) == 0));  // Version
+}
+
+int
 vips_has_embedded_icc(VipsImage *in) {
   return vips_image_get_typeof(in, VIPS_META_ICC_NAME) != 0;
 }
