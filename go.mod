@@ -7,7 +7,7 @@ require (
 	github.com/Azure/azure-storage-blob-go v0.13.0
 	github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d // indirect
 	github.com/airbrake/gobrake/v5 v5.0.3
-	github.com/aws/aws-sdk-go v1.38.65
+	github.com/aws/aws-sdk-go v1.39.4
 	github.com/benesch/cgosymbolizer v0.0.0-20190515212042-bec6fe6e597b
 	github.com/bugsnag/bugsnag-go/v2 v2.1.1
 	github.com/getsentry/sentry-go v0.11.0
@@ -20,7 +20,7 @@ require (
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.0
 	golang.org/x/image v0.0.0-20201208152932-35266b937fa6
-	golang.org/x/net v0.0.0-20210503060351-7fd8e65b6420
+	golang.org/x/net v0.0.0-20210614182718-04defd469f4e
 	golang.org/x/sys v0.0.0-20210603125802-9665404d3644
 	golang.org/x/text v0.3.6
 	google.golang.org/api v0.48.0
