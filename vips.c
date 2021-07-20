@@ -626,7 +626,14 @@ vips_arrayjoin_go(VipsImage **in, VipsImage **out, int n) {
 
 int
 vips_strip(VipsImage *in, VipsImage **out) {
-  if (vips_copy(in, out, NULL)) return 1;
+  static double default_resolution = 72.0 / 25.4;
+
+  if (vips_copy(
+    in, out,
+    "xres", default_resolution,
+    "yres", default_resolution,
+    NULL
+  )) return 1;
 
   gchar **fields = vips_image_get_fields(in);
 
