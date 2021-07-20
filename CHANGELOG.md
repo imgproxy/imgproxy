@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+
+## [2.16.7] - 2021-07-20
 ### Change
 - Reset DPI while stripping meta.
 
