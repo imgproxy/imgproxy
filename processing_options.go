@@ -994,11 +994,27 @@ func isAllowedSource(imageURL string) bool {
 		return true
 	}
 	for _, val := range conf.AllowedSources {
-		if strings.HasPrefix(imageURL, string(val)) {
+		if match, _ := regexp.MatchString(regexpFromPattern(val), imageURL); match {
 			return true
 		}
 	}
 	return false
+}
+
+func regexpFromPattern(pattern string) string {
+	var result strings.Builder
+	// Perform prefix matching
+	result.WriteString("^")
+	for i, part := range strings.Split(pattern, "*") {
+		// Add a regexp match all without slashes for each wildcard character
+		if i > 0 {
+			result.WriteString("[^/]*")
+		}
+
+		// Quote other parts of the pattern
+		result.WriteString(regexp.QuoteMeta(part))
+	}
+	return result.String()
 }
 
 func parseURLOptions(opts []string) (urlOptions, []string) {
