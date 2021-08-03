@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"regexp"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -146,7 +147,12 @@ func (s *ProcessingOptionsTestSuite) TestParseURLAllowedSources() {
 
 	for _, tc := range tt {
 		s.T().Run(tc.name, func(t *testing.T) {
-			conf.AllowedSources = tc.allowedSources
+			exps := make([]*regexp.Regexp, len(tc.allowedSources))
+			for i, pattern := range tc.allowedSources {
+				exps[i] = regexpFromPattern(pattern)
+			}
+			conf.AllowedSources = exps
+
 			req := s.getRequest(tc.requestPath)
 			_, err := parsePath(context.Background(), req)
 			if tc.expectedError {

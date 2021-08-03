@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
@@ -197,6 +198,42 @@ func presetFileConfig(p presets, filepath string) error {
 	return nil
 }
 
+func patternsEnvConfig(s *[]*regexp.Regexp, name string) {
+	if env := os.Getenv(name); len(env) > 0 {
+		parts := strings.Split(env, ",")
+		result := make([]*regexp.Regexp, len(parts))
+
+		for i, p := range parts {
+			result[i] = regexpFromPattern(strings.TrimSpace(p))
+		}
+
+		*s = result
+
+		return
+	}
+
+	*s = []*regexp.Regexp{}
+
+	return
+}
+
+func regexpFromPattern(pattern string) *regexp.Regexp {
+	var result strings.Builder
+	// Perform prefix matching
+	result.WriteString("^")
+	for i, part := range strings.Split(pattern, "*") {
+		// Add a regexp match all without slashes for each wildcard character
+		if i > 0 {
+			result.WriteString("[^/]*")
+		}
+
+		// Quote other parts of the pattern
+		result.WriteString(regexp.QuoteMeta(part))
+	}
+	// It is safe to use regexp.MustCompile since the expression is always valid
+	return regexp.MustCompile(result.String())
+}
+
 type config struct {
 	Network          string
 	Bind             string
@@ -258,7 +295,7 @@ type config struct {
 	IgnoreSslVerification bool
 	DevelopmentErrorsMode bool
 
-	AllowedSources      []string
+	AllowedSources      []*regexp.Regexp
 	LocalFileSystemRoot string
 	S3Enabled           bool
 	S3Region            string
@@ -384,7 +421,7 @@ func configure() error {
 	}
 	intEnvConfig(&conf.MaxAnimationFrames, "IMGPROXY_MAX_ANIMATION_FRAMES")
 
-	strSliceEnvConfig(&conf.AllowedSources, "IMGPROXY_ALLOWED_SOURCES")
+	patternsEnvConfig(&conf.AllowedSources, "IMGPROXY_ALLOWED_SOURCES")
 
 	intEnvConfig(&conf.AvifSpeed, "IMGPROXY_AVIF_SPEED")
 	boolEnvConfig(&conf.JpegProgressive, "IMGPROXY_JPEG_PROGRESSIVE")
