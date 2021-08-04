@@ -37,22 +37,6 @@ func strEnvConfig(s *string, name string) {
 	}
 }
 
-func strSliceEnvConfig(s *[]string, name string) {
-	if env := os.Getenv(name); len(env) > 0 {
-		parts := strings.Split(env, ",")
-
-		for i, p := range parts {
-			parts[i] = strings.TrimSpace(p)
-		}
-
-		*s = parts
-
-		return
-	}
-
-	*s = []string{}
-}
-
 func boolEnvConfig(b *bool, name string) {
 	if env, err := strconv.ParseBool(os.Getenv(name)); err == nil {
 		*b = env
@@ -208,13 +192,9 @@ func patternsEnvConfig(s *[]*regexp.Regexp, name string) {
 		}
 
 		*s = result
-
-		return
+	} else {
+		*s = []*regexp.Regexp{}
 	}
-
-	*s = []*regexp.Regexp{}
-
-	return
 }
 
 func regexpFromPattern(pattern string) *regexp.Regexp {
