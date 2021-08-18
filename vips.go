@@ -558,12 +558,7 @@ func (img *vipsImage) ImportColourProfile() error {
 	}
 
 	if C.vips_has_embedded_icc(img.VipsImage) == 0 {
-		// No embedded profile
-		if img.VipsImage.Type != C.VIPS_INTERPRETATION_CMYK {
-			// vips doesn't have built-in profile for other interpretations,
-			// so we can't do anything here
-			return nil
-		}
+		return nil
 	}
 
 	if C.vips_icc_import_go(img.VipsImage, &tmp) == 0 {
@@ -636,10 +631,6 @@ func (img *vipsImage) RemoveColourProfile() error {
 	}
 
 	return nil
-}
-
-func (img *vipsImage) IsSRGB() bool {
-	return img.VipsImage.Type == C.VIPS_INTERPRETATION_sRGB
 }
 
 func (img *vipsImage) LinearColourspace() error {

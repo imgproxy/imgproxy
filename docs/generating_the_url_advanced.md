@@ -207,7 +207,9 @@ Removes surrounding background.
 
 **⚠️Warning:** Trimming requires an image to be fully loaded into memory. This disables scale-on-load and significantly increases memory usage and processing time. Use it carefully with large images.
 
-**📝Note:** If you know background color of your images then setting it explicitly via `color` will also save some resources because libvips won't detect it automatically.
+**📝Note:** If you know background color of your images then setting it explicitly via `color` will also save some resources because imgproxy won't detect it automatically.
+
+**📝Note:** Use `color` value of `FF00FF` for trimming transparent background as imgproxy uses magenta as a transparency key.
 
 **📝Note:** Trimming of animated images is not supported.
 

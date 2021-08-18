@@ -397,7 +397,7 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 	iccImported := false
 	convertToLinear := conf.UseLinearColorspace && scale != 1
 
-	if convertToLinear || !img.IsSRGB() {
+	if convertToLinear {
 		if err = img.ImportColourProfile(); err != nil {
 			return err
 		}

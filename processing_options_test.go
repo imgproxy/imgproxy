@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"regexp"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -105,22 +106,62 @@ func (s *ProcessingOptionsTestSuite) TestParsePlainURLEscapedWithBase() {
 	assert.Equal(s.T(), imageTypePNG, getProcessingOptions(ctx).Format)
 }
 
-func (s *ProcessingOptionsTestSuite) TestParseURLAllowedSource() {
-	conf.AllowedSources = []string{"local://", "http://images.dev/"}
+func (s *ProcessingOptionsTestSuite) TestParseURLAllowedSources() {
+	tt := []struct {
+		name           string
+		allowedSources []string
+		requestPath    string
+		expectedError  bool
+	}{
+		{
+			name:           "match http URL without wildcard",
+			allowedSources: []string{"local://", "http://images.dev/"},
+			requestPath:    "/unsafe/plain/http://images.dev/lorem/ipsum.jpg",
+			expectedError:  false,
+		},
+		{
+			name:           "match http URL with wildcard in hostname single level",
+			allowedSources: []string{"local://", "http://*.mycdn.dev/"},
+			requestPath:    "/unsafe/plain/http://a-1.mycdn.dev/lorem/ipsum.jpg",
+			expectedError:  false,
+		},
+		{
+			name:           "match http URL with wildcard in hostname multiple levels",
+			allowedSources: []string{"local://", "http://*.mycdn.dev/"},
+			requestPath:    "/unsafe/plain/http://a-1.b-2.mycdn.dev/lorem/ipsum.jpg",
+			expectedError:  false,
+		},
+		{
+			name:           "no match s3 URL with allowed local and http URLs",
+			allowedSources: []string{"local://", "http://images.dev/"},
+			requestPath:    "/unsafe/plain/s3://images/lorem/ipsum.jpg",
+			expectedError:  true,
+		},
+		{
+			name:           "no match http URL with wildcard in hostname including slash",
+			allowedSources: []string{"local://", "http://*.mycdn.dev/"},
+			requestPath:    "/unsafe/plain/http://other.dev/.mycdn.dev/lorem/ipsum.jpg",
+			expectedError:  true,
+		},
+	}
 
-	req := s.getRequest("/unsafe/plain/http://images.dev/lorem/ipsum.jpg")
-	_, err := parsePath(context.Background(), req)
+	for _, tc := range tt {
+		s.T().Run(tc.name, func(t *testing.T) {
+			exps := make([]*regexp.Regexp, len(tc.allowedSources))
+			for i, pattern := range tc.allowedSources {
+				exps[i] = regexpFromPattern(pattern)
+			}
+			conf.AllowedSources = exps
 
-	require.Nil(s.T(), err)
-}
-
-func (s *ProcessingOptionsTestSuite) TestParseURLNotAllowedSource() {
-	conf.AllowedSources = []string{"local://", "http://images.dev/"}
-
-	req := s.getRequest("/unsafe/plain/s3://images/lorem/ipsum.jpg")
-	_, err := parsePath(context.Background(), req)
-
-	require.Error(s.T(), err)
+			req := s.getRequest(tc.requestPath)
+			_, err := parsePath(context.Background(), req)
+			if tc.expectedError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathBasic() {
