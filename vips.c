@@ -365,6 +365,12 @@ vips_icc_is_srgb_iec61966(VipsImage *in) {
   // 2.1
   static char version[] = { 2, 16, 0, 0 };
 
+  // The image had no profile and built-in CMYK was imported.
+  // Vips gives us an invalid data pointer when the built-in profile was imported,
+  // so we check this mark before receiving an actual profile.
+  // if (vips_image_get_typeof(in, "icc-cmyk-no-profile"))
+  //   return FALSE;
+
   if (vips_image_get_blob(in, VIPS_META_ICC_NAME, &data, &data_len))
     return FALSE;
 
@@ -470,7 +476,7 @@ vips_trim(VipsImage *in, VipsImage **out, double threshold,
   VipsImage *tmp;
 
   if (vips_image_hasalpha(in)) {
-    if (vips_flatten(in, &tmp, NULL))
+    if (vips_flatten_go(in, &tmp, 255.0, 0, 255.0))
       return 1;
   } else {
     if (vips_copy(in, &tmp, NULL))
@@ -620,7 +626,14 @@ vips_arrayjoin_go(VipsImage **in, VipsImage **out, int n) {
 
 int
 vips_strip(VipsImage *in, VipsImage **out) {
-  if (vips_copy(in, out, NULL)) return 1;
+  static double default_resolution = 72.0 / 25.4;
+
+  if (vips_copy(
+    in, out,
+    "xres", default_resolution,
+    "yres", default_resolution,
+    NULL
+  )) return 1;
 
   gchar **fields = vips_image_get_fields(in);
 

@@ -993,8 +993,8 @@ func isAllowedSource(imageURL string) bool {
 	if len(conf.AllowedSources) == 0 {
 		return true
 	}
-	for _, val := range conf.AllowedSources {
-		if strings.HasPrefix(imageURL, string(val)) {
+	for _, allowedSource := range conf.AllowedSources {
+		if allowedSource.MatchString(imageURL) {
 			return true
 		}
 	}

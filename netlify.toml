@@ -1,0 +1,9 @@
+[build]
+  base="docs"
+  publish="/"
+  command=""
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

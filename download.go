@@ -4,6 +4,7 @@ import (
 	"compress/gzip"
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -100,6 +101,17 @@ func initDownloading() error {
 	return nil
 }
 
+type httpError interface {
+	Timeout() bool
+}
+
+func checkTimeoutErr(err error) error {
+	if httpErr, ok := err.(httpError); ok && httpErr.Timeout() {
+		return errors.New("The image request timed out")
+	}
+	return err
+}
+
 func checkDimensions(width, height int) error {
 	if conf.MaxSrcDimension > 0 && (width > conf.MaxSrcDimension || height > conf.MaxSrcDimension) {
 		return errSourceDimensionsTooBig
@@ -118,7 +130,7 @@ func checkTypeAndDimensions(r io.Reader) (imageType, error) {
 		return imageTypeUnknown, errSourceImageTypeNotSupported
 	}
 	if err != nil {
-		return imageTypeUnknown, newUnexpectedError(err.Error(), 0)
+		return imageTypeUnknown, newUnexpectedError(checkTimeoutErr(err).Error(), 0)
 	}
 
 	imgtype, imgtypeOk := imageTypes[meta.Format()]
@@ -153,7 +165,7 @@ func readAndCheckImage(r io.Reader, contentLength int) (*imageData, error) {
 
 	if _, err = buf.ReadFrom(r); err != nil {
 		cancel()
-		return nil, newError(404, err.Error(), msgSourceImageIsUnreachable)
+		return nil, newError(404, checkTimeoutErr(err).Error(), msgSourceImageIsUnreachable)
 	}
 
 	return &imageData{buf.Bytes(), imgtype, cancel}, nil
@@ -169,7 +181,7 @@ func requestImage(imageURL string) (*http.Response, error) {
 
 	res, err := downloadClient.Do(req)
 	if err != nil {
-		return res, newError(404, err.Error(), msgSourceImageIsUnreachable).SetUnexpected(conf.ReportDownloadingErrors)
+		return res, newError(404, checkTimeoutErr(err).Error(), msgSourceImageIsUnreachable).SetUnexpected(conf.ReportDownloadingErrors)
 	}
 
 	if res.StatusCode != 200 {
