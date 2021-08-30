@@ -86,10 +86,10 @@ github.com/bitly/go-simplejson v0.5.0 h1:6IH+V8/tVMab511d5bn4M7EwGXZf9Hj6i2xSwkN
 github.com/bitly/go-simplejson v0.5.0/go.mod h1:cXHtHw4XUPsvGaxgjIAn8PhEWG9NfngEKAMDJEczWVA=
 github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 h1:DDGfHa7BWjL4YnC6+E63dPcxHo2sUxDIu8g3QgEJdRY=
 github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869/go.mod h1:Ekp36dRnpXw/yCqJaO+ZrUyxD+3VXMFFr56k5XYrpB4=
-github.com/bugsnag/bugsnag-go/v2 v2.1.1 h1:/X6xB3DvfMCNOSopEvGkOpDSk0iTq4yBSp7SkiV7nM8=
-github.com/bugsnag/bugsnag-go/v2 v2.1.1/go.mod h1:XEgTxTSo37lM/jpzZY9a8FJgJCqZMEagthLA6TSDl+o=
-github.com/bugsnag/panicwrap v1.3.2 h1:pNcbtPtH4Y6VwK+oZVNV/2H6Hh3jOL0ZNVFZEfd/eA4=
-github.com/bugsnag/panicwrap v1.3.2/go.mod h1:D/8v3kj0zr8ZAKg1AQ6crr+5VwKN5eIywRkfhyM/+dE=
+github.com/bugsnag/bugsnag-go/v2 v2.1.2 h1:R5rgYn5w5LhVIere+n+Ah49pa4E1b3OP2bSwHtURmv8=
+github.com/bugsnag/bugsnag-go/v2 v2.1.2/go.mod h1:mJCnw33SPVYPFTsAeSR/kpwuyvjTXrPK5w/XZfTUwMU=
+github.com/bugsnag/panicwrap v1.3.4 h1:A6sXFtDGsgU/4BLf5JT0o5uYg3EeKgGx3Sfs+/uk3pU=
+github.com/bugsnag/panicwrap v1.3.4/go.mod h1:D/8v3kj0zr8ZAKg1AQ6crr+5VwKN5eIywRkfhyM/+dE=
 github.com/caio/go-tdigest v3.1.0+incompatible h1:uoVMJ3Q5lXmVLCCqaMGHLBWnbGoN6Lpu7OAUPR60cds=
 github.com/caio/go-tdigest v3.1.0+incompatible/go.mod h1:sHQM/ubZStBUmF1WbB8FAm8q9GjDajLC5T7ydxE3JHI=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
