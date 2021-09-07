@@ -1,6 +1,14 @@
 # Changelog
 
 ## [Unreleased]
+### Added
+- Wildcard support in `IMGPROXY_ALLOWED_SOURCES`.
+
+### Change
+- If the source URL contains the `IMGPROXY_BASE_URL` prefix, it won't be added.
+
+### Fix
+- (pro) Fix path prefix support in the `/info` handler.
 
 ## [2.16.7] - 2021-07-20
 ### Change
