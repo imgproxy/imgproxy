@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -183,4 +184,36 @@ func HexFile(b *[][]byte, filepath string) error {
 	*b = keys
 
 	return nil
+}
+
+func Patterns(s *[]*regexp.Regexp, name string) {
+	if env := os.Getenv(name); len(env) > 0 {
+		parts := strings.Split(env, ",")
+		result := make([]*regexp.Regexp, len(parts))
+
+		for i, p := range parts {
+			result[i] = RegexpFromPattern(strings.TrimSpace(p))
+		}
+
+		*s = result
+	} else {
+		*s = []*regexp.Regexp{}
+	}
+}
+
+func RegexpFromPattern(pattern string) *regexp.Regexp {
+	var result strings.Builder
+	// Perform prefix matching
+	result.WriteString("^")
+	for i, part := range strings.Split(pattern, "*") {
+		// Add a regexp match all without slashes for each wildcard character
+		if i > 0 {
+			result.WriteString("[^/]*")
+		}
+
+		// Quote other parts of the pattern
+		result.WriteString(regexp.QuoteMeta(part))
+	}
+	// It is safe to use regexp.MustCompile since the expression is always valid
+	return regexp.MustCompile(result.String())
 }

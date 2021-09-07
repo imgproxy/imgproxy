@@ -25,6 +25,9 @@ var (
 		"Cache-Control",
 		"Expires",
 	}
+
+	// For tests
+	redirectAllRequestsTo string
 )
 
 const msgSourceImageIsUnreachable = "Source image is unreachable"
@@ -103,6 +106,11 @@ func requestImage(imageURL string) (*http.Response, error) {
 }
 
 func download(imageURL string) (*ImageData, error) {
+	// We use this for testing
+	if len(redirectAllRequestsTo) > 0 {
+		imageURL = redirectAllRequestsTo
+	}
+
 	res, err := requestImage(imageURL)
 	if res != nil {
 		defer res.Body.Close()
@@ -139,4 +147,12 @@ func download(imageURL string) (*ImageData, error) {
 	}
 
 	return imgdata, nil
+}
+
+func RedirectAllRequestsTo(u string) {
+	redirectAllRequestsTo = u
+}
+
+func StopRedirectingRequests() {
+	redirectAllRequestsTo = ""
 }

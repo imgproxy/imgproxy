@@ -12,6 +12,14 @@ import (
 
 const urlTokenPlain = "plain"
 
+func addBaseURL(u string) string {
+	if len(config.BaseURL) == 0 || strings.HasPrefix(u, config.BaseURL) {
+		return u
+	}
+
+	return fmt.Sprintf("%s%s", config.BaseURL, u)
+}
+
 func decodeBase64URL(parts []string) (string, string, error) {
 	var format string
 
@@ -35,9 +43,7 @@ func decodeBase64URL(parts []string) (string, string, error) {
 		return "", "", fmt.Errorf("Invalid url encoding: %s", encoded)
 	}
 
-	fullURL := fmt.Sprintf("%s%s", config.BaseURL, string(imageURL))
-
-	return fullURL, format, nil
+	return addBaseURL(string(imageURL)), format, nil
 }
 
 func decodePlainURL(parts []string) (string, string, error) {
@@ -63,9 +69,7 @@ func decodePlainURL(parts []string) (string, string, error) {
 		return "", "", fmt.Errorf("Invalid url encoding: %s", encoded)
 	}
 
-	fullURL := fmt.Sprintf("%s%s", config.BaseURL, unescaped)
-
-	return fullURL, format, nil
+	return addBaseURL(unescaped), format, nil
 }
 
 func DecodeURL(parts []string) (string, string, error) {

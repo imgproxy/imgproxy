@@ -14,7 +14,7 @@ var landingTmpl = []byte(`
 `)
 
 func handleLanding(reqID string, rw http.ResponseWriter, r *http.Request) {
-	rw.Header().Set("Content-Tyle", "text/html")
+	rw.Header().Set("Content-Type", "text/html")
 	rw.WriteHeader(200)
 	rw.Write(landingTmpl)
 }

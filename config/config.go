@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"regexp"
 	"runtime"
 
 	log "github.com/sirupsen/logrus"
@@ -72,7 +73,7 @@ var (
 	IgnoreSslVerification bool
 	DevelopmentErrorsMode bool
 
-	AllowedSources      []string
+	AllowedSources      []*regexp.Regexp
 	LocalFileSystemRoot string
 	S3Enabled           bool
 	S3Region            string
@@ -200,7 +201,7 @@ func Reset() {
 	IgnoreSslVerification = false
 	DevelopmentErrorsMode = false
 
-	AllowedSources = make([]string, 0)
+	AllowedSources = make([]*regexp.Regexp, 0)
 	LocalFileSystemRoot = ""
 	S3Enabled = false
 	S3Region = ""
@@ -290,7 +291,7 @@ func Configure() error {
 
 	configurators.Int(&MaxAnimationFrames, "IMGPROXY_MAX_ANIMATION_FRAMES")
 
-	configurators.StringSlice(&AllowedSources, "IMGPROXY_ALLOWED_SOURCES")
+	configurators.Patterns(&AllowedSources, "IMGPROXY_ALLOWED_SOURCES")
 
 	configurators.Bool(&JpegProgressive, "IMGPROXY_JPEG_PROGRESSIVE")
 	configurators.Bool(&PngInterlaced, "IMGPROXY_PNG_INTERLACED")

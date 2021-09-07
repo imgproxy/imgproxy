@@ -7,9 +7,12 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"regexp"
 	"testing"
 
 	"github.com/imgproxy/imgproxy/v2/config"
+	"github.com/imgproxy/imgproxy/v2/config/configurators"
+	"github.com/imgproxy/imgproxy/v2/imagedata"
 	"github.com/imgproxy/imgproxy/v2/imagemeta"
 	"github.com/imgproxy/imgproxy/v2/imagetype"
 	"github.com/imgproxy/imgproxy/v2/router"
@@ -115,22 +118,66 @@ func (s *ProcessingHandlerTestSuite) TestSignatureValidationSuccess() {
 	assert.Equal(s.T(), 200, res.StatusCode)
 }
 
-func (s *ProcessingHandlerTestSuite) TestSourceValidationFailure() {
-	config.AllowedSources = []string{"https://"}
+func (s *ProcessingHandlerTestSuite) TestSourceValidation() {
+	imagedata.RedirectAllRequestsTo("local:///test1.png")
+	defer imagedata.StopRedirectingRequests()
 
-	rw := s.send("/unsafe/rs:fill:4:4/plain/local:///test1.png")
-	res := rw.Result()
+	tt := []struct {
+		name           string
+		allowedSources []string
+		requestPath    string
+		expectedError  bool
+	}{
+		{
+			name:           "match http URL without wildcard",
+			allowedSources: []string{"local://", "http://images.dev/"},
+			requestPath:    "/unsafe/plain/http://images.dev/lorem/ipsum.jpg",
+			expectedError:  false,
+		},
+		{
+			name:           "match http URL with wildcard in hostname single level",
+			allowedSources: []string{"local://", "http://*.mycdn.dev/"},
+			requestPath:    "/unsafe/plain/http://a-1.mycdn.dev/lorem/ipsum.jpg",
+			expectedError:  false,
+		},
+		{
+			name:           "match http URL with wildcard in hostname multiple levels",
+			allowedSources: []string{"local://", "http://*.mycdn.dev/"},
+			requestPath:    "/unsafe/plain/http://a-1.b-2.mycdn.dev/lorem/ipsum.jpg",
+			expectedError:  false,
+		},
+		{
+			name:           "no match s3 URL with allowed local and http URLs",
+			allowedSources: []string{"local://", "http://images.dev/"},
+			requestPath:    "/unsafe/plain/s3://images/lorem/ipsum.jpg",
+			expectedError:  true,
+		},
+		{
+			name:           "no match http URL with wildcard in hostname including slash",
+			allowedSources: []string{"local://", "http://*.mycdn.dev/"},
+			requestPath:    "/unsafe/plain/http://other.dev/.mycdn.dev/lorem/ipsum.jpg",
+			expectedError:  true,
+		},
+	}
 
-	assert.Equal(s.T(), 404, res.StatusCode)
-}
+	for _, tc := range tt {
+		s.T().Run(tc.name, func(t *testing.T) {
+			exps := make([]*regexp.Regexp, len(tc.allowedSources))
+			for i, pattern := range tc.allowedSources {
+				exps[i] = configurators.RegexpFromPattern(pattern)
+			}
+			config.AllowedSources = exps
 
-func (s *ProcessingHandlerTestSuite) TestSourceValidationSuccess() {
-	config.AllowedSources = []string{"local:///"}
+			rw := s.send(tc.requestPath)
+			res := rw.Result()
 
-	rw := s.send("/unsafe/rs:fill:4:4/plain/local:///test1.png")
-	res := rw.Result()
-
-	assert.Equal(s.T(), 200, res.StatusCode)
+			if tc.expectedError {
+				assert.Equal(s.T(), 404, res.StatusCode)
+			} else {
+				assert.Equal(s.T(), 200, res.StatusCode)
+			}
+		})
+	}
 }
 
 func (s *ProcessingHandlerTestSuite) TestSourceFormatNotSupported() {

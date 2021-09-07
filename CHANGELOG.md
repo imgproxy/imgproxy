@@ -17,6 +17,23 @@
 - Removed `crop` resizing type, use [crop](./docs/generating_the_url.md#crop) processing option instead.
 - Dropped old libvips (<8.8) support.
 
+## [2.17.0] - 2021-09-07
+### Added
+- Wildcard support in `IMGPROXY_ALLOWED_SOURCES`.
+
+### Change
+- If the source URL contains the `IMGPROXY_BASE_URL` prefix, it won't be added.
+
+### Fix
+- (pro) Fix path prefix support in the `/info` handler.
+
+### Deprecated
+- The [basic URL format](https://docs.imgproxy.net/generating_the_url_basic) is deprecated and can be removed in future versions. Use [advanced URL format](https://docs.imgproxy.net/generating_the_url_advanced) instead.
+
+## [2.16.7] - 2021-07-20
+### Change
+- Reset DPI while stripping meta.
+
 ## [2.16.6] - 2021-07-08
 ### Fix
 - Fix performance regression in ICC profile handling.
