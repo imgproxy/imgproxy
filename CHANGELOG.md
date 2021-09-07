@@ -10,6 +10,9 @@
 ### Fix
 - (pro) Fix path prefix support in the `/info` handler.
 
+### Deprecated
+- The [basic URL format](https://docs.imgproxy.net/generating_the_url_basic) is deprecated and can be removed in future versions. Use [advanced URL format](https://docs.imgproxy.net/generating_the_url_advanced) instead.
+
 ## [2.16.7] - 2021-07-20
 ### Change
 - Reset DPI while stripping meta.

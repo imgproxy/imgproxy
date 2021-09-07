@@ -1122,6 +1122,8 @@ func parsePathPresets(parts []string, headers *processingHeaders) (string, *proc
 }
 
 func parsePathBasic(parts []string, headers *processingHeaders) (string, *processingOptions, error) {
+	logWarning("The basic URL format is deprecated and can be removed in future versions. Use advanced URL format instead")
+
 	if len(parts) < 6 {
 		return "", nil, fmt.Errorf("Invalid basic URL format arguments: %s", strings.Join(parts, "/"))
 	}
