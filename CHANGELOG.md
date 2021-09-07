@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+
+## [2.17.0] - 2021-09-07
 ### Added
 - Wildcard support in `IMGPROXY_ALLOWED_SOURCES`.
 
