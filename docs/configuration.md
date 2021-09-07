@@ -334,7 +334,7 @@ imgproxy can send logs to syslog, but this feature is disabled by default. To en
 
 ## Miscellaneous
 
-* `IMGPROXY_BASE_URL`: base URL prefix that will be added to every requested image URL. For example, if the base URL is `http://example.com/images` and `/path/to/image.png` is requested, imgproxy will download the source image from `http://example.com/images/path/to/image.png`. Default: blank.
+* `IMGPROXY_BASE_URL`: base URL prefix that will be added to every requested image URL. For example, if the base URL is `http://example.com/images` and `/path/to/image.png` is requested, imgproxy will download the source image from `http://example.com/images/path/to/image.png`. If the image URL already contains the prefix, it won't be added. Default: blank.
 * `IMGPROXY_USE_LINEAR_COLORSPACE`: when `true`, imgproxy will process images in linear colorspace. This will slow down processing. Note that images won't be fully processed in linear colorspace while shrink-on-load is enabled (see below).
 * `IMGPROXY_DISABLE_SHRINK_ON_LOAD`: when `true`, disables shrink-on-load for JPEG and WebP. Allows to process the whole image in linear colorspace but dramatically slows down resizing and increases memory usage when working with large images.
 * `IMGPROXY_STRIP_METADATA`: when `true`, imgproxy will strip all metadata (EXIF, IPTC, etc.) from JPEG and WebP output images. Default: `true`.

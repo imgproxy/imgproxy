@@ -304,6 +304,14 @@ func colorFromHex(hexcolor string) (rgbColor, error) {
 	return c, nil
 }
 
+func addBaseURL(u string) string {
+	if len(conf.BaseURL) == 0 || strings.HasPrefix(u, conf.BaseURL) {
+		return u
+	}
+
+	return fmt.Sprintf("%s%s", conf.BaseURL, u)
+}
+
 func decodeBase64URL(parts []string) (string, string, error) {
 	var format string
 
@@ -327,9 +335,7 @@ func decodeBase64URL(parts []string) (string, string, error) {
 		return "", "", fmt.Errorf("Invalid url encoding: %s", encoded)
 	}
 
-	fullURL := fmt.Sprintf("%s%s", conf.BaseURL, string(imageURL))
-
-	return fullURL, format, nil
+	return addBaseURL(string(imageURL)), format, nil
 }
 
 func decodePlainURL(parts []string) (string, string, error) {
@@ -355,9 +361,7 @@ func decodePlainURL(parts []string) (string, string, error) {
 		return "", "", fmt.Errorf("Invalid url encoding: %s", encoded)
 	}
 
-	fullURL := fmt.Sprintf("%s%s", conf.BaseURL, unescaped)
-
-	return fullURL, format, nil
+	return addBaseURL(unescaped), format, nil
 }
 
 func decodeURL(parts []string) (string, string, error) {
