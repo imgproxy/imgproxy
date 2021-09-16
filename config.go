@@ -13,6 +13,8 @@ import (
 	"strings"
 )
 
+
+
 func intEnvConfig(i *int, name string) {
 	if env, err := strconv.Atoi(os.Getenv(name)); err == nil {
 		*i = env
@@ -426,9 +428,11 @@ func configure() error {
 	boolEnvConfig(&conf.UseLinearColorspace, "IMGPROXY_USE_LINEAR_COLORSPACE")
 	boolEnvConfig(&conf.DisableShrinkOnLoad, "IMGPROXY_DISABLE_SHRINK_ON_LOAD")
 
+	
 	if err := hexEnvConfig(&conf.Keys, "IMGPROXY_KEY"); err != nil {
 		return err
 	}
+
 	if err := hexEnvConfig(&conf.Salts, "IMGPROXY_SALT"); err != nil {
 		return err
 	}

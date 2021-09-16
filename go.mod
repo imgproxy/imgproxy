@@ -14,6 +14,7 @@ require (
 	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/honeybadger-io/honeybadger-go v0.5.0
 	github.com/ianlancetaylor/cgosymbolizer v0.0.0-20201204192058-7acc97e53614 // indirect
+	github.com/joho/godotenv v1.3.0 // indirect
 	github.com/matoous/go-nanoid/v2 v2.0.0
 	github.com/newrelic/go-agent/v3 v3.13.0
 	github.com/prometheus/client_golang v1.11.0

@@ -9,6 +9,7 @@ import (
 	"runtime"
 	"syscall"
 	"time"
+	"github.com/joho/godotenv"
 )
 
 const version = "2.16.7"
@@ -50,7 +51,20 @@ func initialize() error {
 	return nil
 }
 
+func goDotEnvVariable(key string) string {
+
+	// load .env file
+	err := godotenv.Load(".env")
+  
+	if err != nil {
+		log.Fatalf("Error loading .env file")
+	}
+  
+	return os.Getenv(key)
+}
+
 func run() error {
+	goDotEnvVariable("APP_START")
 	if err := initialize(); err != nil {
 		return err
 	}
