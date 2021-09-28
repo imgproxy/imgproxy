@@ -125,6 +125,24 @@ Also you may want imgproxy to respond with the same error message that it writes
 
 * `IMGPROXY_AVIF_SPEED`: controls the CPU effort spent improving compression. 0 slowest - 8 fastest. Default: `5`;
 
+### Autoquality
+
+imgproxy can calculate the quality of the resulting image based on selected metric. Read more in the [Autoquality](autoquality.md) guide.
+
+**⚠️Warning:** Autoquality requires the image to be saved several times. Use it only when you prefer the resulting size and quality over the speed.
+
+* `IMGPROXY_AUTOQUALITY_METHOD`: the method of quality calculation. Default: `none`.
+* `IMGPROXY_AUTOQUALITY_TARGET`: desired value of the autoquality method metric. Default: 0.02.
+* `IMGPROXY_AUTOQUALITY_MIN`: minimal quality imgproxy can use. Default: 70.
+* `IMGPROXY_AUTOQUALITY_FORMAT_MIN`: minimal quality imgproxy can use per format, comma divided. Example: `jpeg=70,avif=40,webp=60`. When value for the resulting format is not set, `IMGPROXY_AUTOQUALITY_MIN` value is used. Default: `avif=40`.
+* `IMGPROXY_AUTOQUALITY_MAX`: maximal quality imgproxy can use. Default: 80.
+* `IMGPROXY_AUTOQUALITY_FORMAT_MAX`: maximal quality imgproxy can use per format, comma divided. Example: `jpeg=70,avif=40,webp=60`. When value for the resulting format is not set, `IMGPROXY_AUTOQUALITY_MAX` value is used. Default: `avif=50`.
+* `IMGPROXY_AUTOQUALITY_ALLOWED_ERROR`: allowed `IMGPROXY_AUTOQUALITY_TARGET` error. Applicable only to `dssim` and `ml` methods. Default: 0.001.
+* `IMGPROXY_AUTOQUALITY_MAX_RESOLUTION`: when value is greater then zero and the result resolution exceeds the value, autoquality won't be used. Default: 0.
+* `IMGPROXY_AUTOQUALITY_JPEG_NET`: path to the neural network for JPEG.
+* `IMGPROXY_AUTOQUALITY_WEBP_NET`: path to the neural network for WebP.
+* `IMGPROXY_AUTOQUALITY_AVIF_NET`: path to the neural network for AVIF.
+
 ## AVIF/WebP support detection
 
 imgproxy can use the `Accept` HTTP header to detect if the browser supports AVIF or WebP and use it as the default format. This feature is disabled by default and can be enabled by the following options:
@@ -181,6 +199,17 @@ imgproxy Pro can apply unsharpening mask to your images.
   * `always`: always apply the unsharpening mask.
 * `IMGPROXY_UNSHARPENING_WEIGHT`: <img class='pro-badge' src='assets/pro.svg' alt='pro' /> a floating-point number that defines how neighbor pixels will affect the current pixel. Greater the value - sharper the image. Should be greater than zero. Default: `1`.
 * `IMGPROXY_UNSHARPENING_DIVIDOR`: <img class='pro-badge' src='assets/pro.svg' alt='pro' /> a floating-point number that defines the unsharpening strength. Lesser the value - sharper the image. Should be greater than zero. Default: `24`.
+
+## Object detection
+
+imgproxy can detect objects on the image and use them for smart crop, bluring the detections, or drawing the detections.
+
+* `IMGPROXY_OBJECT_DETECTION_CONFIG`: path to the neural network config. Default: blank.
+* `IMGPROXY_OBJECT_DETECTION_WEIGHTS`: path to the neural network weights. Default: blank.
+* `IMGPROXY_OBJECT_DETECTION_CLASSES`: path to the text file with the classes names, one by line. Default: blank.
+* `IMGPROXY_OBJECT_DETECTION_NET_SIZE`: the size of the neural network input. The width and the heights of the inputs should be the same, so this config value should be a single number. Default: 416.
+* `IMGPROXY_OBJECT_DETECTION_CONFIDENCE_THRESHOLD`: the detections with confidences below this value will be discarded. Default: 0.2.
+* `IMGPROXY_OBJECT_DETECTION_NMS_THRESHOLD`: non max supression threshold. Don't change this if you don't know what you're doing. Default: 0.4.
 
 ## Fallback image
 

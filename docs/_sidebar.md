@@ -6,6 +6,7 @@
 * [Signing the URL](signing_the_url)
 * [Watermark](watermark)
 * [Presets](presets)
+* [Chained pipelines <img class='pro-badge' src='assets/pro.svg' alt='pro' />](chained_pipelines)
 * [Serving local files](serving_local_files)
 * [Serving files from Amazon S3](serving_files_from_s3)
 * [Serving files from Google Cloud Storage](serving_files_from_google_cloud_storage)

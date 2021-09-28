@@ -180,6 +180,7 @@ Default: `ce:0:0`
 **Special gravities**:
 
 * `gravity:sm` - smart gravity. `libvips` detects the most "interesting" section of the image and considers it as the center of the resulting image. Offsets are not applicable here;
+* `gravity:obj:%class_name1:%class_name2:...:%class_nameN` - <img class='pro-badge' src='assets/pro.svg' alt='pro' /> object-oriented gravity. imgproxy [detects objects](object_detection.md) of provided classes on the image and calculates the resulting image center using their positions. If class names are omited, imgproxy will use all the detected objects.
 * `gravity:fp:%x:%y` - focus point gravity. `x` and `y` are floating point numbers between 0 and 1 that define the coordinates of the center of the resulting image. Treat 0 and 1 as right/left for `x` and top/bottom for `y`.
 
 ### Crop
@@ -372,6 +373,26 @@ ush:%mode:%weight:%dividor
 
 Allows redefining unsharpening options. All arguments have the same meaning as [Unsharpening](configuration.md#unsharpening) configs. All arguments are optional and can be omitted.
 
+### Blur detections<img class='pro-badge' src='assets/pro.svg' alt='pro' /> :id=blur-detections
+
+```
+blur_detections:%sigma:%class_name1:%class_name2:...:%class_nameN
+bd:%sigma:%class_name1:%class_name2:...:%class_nameN
+```
+
+imgproxy [detects objects](object_detection.md) of provided classes and blus them. If class names are omitted, imgproxy blurs all the detected objects.
+
+`sigma` defines the size of a mask imgproxy will use.
+
+### Draw detections<img class='pro-badge' src='assets/pro.svg' alt='pro' /> :id=draw-detections
+
+```
+draw_detections:%draw:%class_name1:%class_name2:...:%class_nameN
+dd:%draw:%class_name1:%class_name2:...:%class_nameN
+```
+
+When `draw` is set to `1`, `t` or `true`, imgproxy [detects objects](object_detection.md) of provided classes and draws their bounding boxed. If class names are omitted, imgproxy draws the bounding boxes of all the detected objects.
+
 ### Watermark
 
 ```
@@ -398,7 +419,7 @@ Puts watermark on the processed image.
 
 Default: disabled
 
-### Watermark URL<img class='pro-badge' src='assets/pro.svg' alt='pro' /> :id=watermark
+### Watermark URL<img class='pro-badge' src='assets/pro.svg' alt='pro' /> :id=watermark-url
 
 ```
 watermark_url:%url
@@ -448,6 +469,17 @@ q:%quality
 Redefines quality of the resulting image, percentage. When `0`, quality is assumed based on `IMGPROXY_QUALITY` and `IMGPROXY_FORMAT_QUALITY`.
 
 Default: 0.
+
+### Autoquality
+
+```
+autoquality:%method:%target:%min_quality:%max_quality:%allowed_error
+aq:%method:%target:%min_quality:%max_quality:%allowed_error
+```
+
+Redefines autoqiality settings. All arguments have the same meaning as [Autoquality](configuration.md#autoqiality) configs. All arguments are optional and can be omitted.
+
+**⚠️Warning:** Autoquality requires the image to be saved several times. Use it only when you prefer the resulting size and quality over the speed.
 
 ### Max Bytes
 
