@@ -16,8 +16,8 @@ workflows:
             - checkout_code
           matrix:
             parameters:
-              go_version: ["1.16", "1.15", "1.14"]
-              vips_version: ["8.10", "8.9", "8.8"]
+              go_version: ["1.17", "1.16"] # Go 1.15 doesn't support io/fs
+              vips_version: ["8.11", "8.10", "8.9"]
 
   release:
     jobs:
