@@ -289,11 +289,10 @@ func (s *ProcessingHandlerTestSuite) TestCacheControlPassthrough() {
 	config.CacheControlPassthrough = true
 
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		data := s.readTestFile("test1.png")
 		rw.Header().Set("Cache-Control", "fake-cache-control")
 		rw.Header().Set("Expires", "fake-expires")
 		rw.WriteHeader(200)
-		rw.Write(data)
+		rw.Write(s.readTestFile("test1.png"))
 	}))
 	defer ts.Close()
 
@@ -308,11 +307,10 @@ func (s *ProcessingHandlerTestSuite) TestCacheControlPassthroughDisabled() {
 	config.CacheControlPassthrough = false
 
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		data := s.readTestFile("test1.png")
 		rw.Header().Set("Cache-Control", "fake-cache-control")
 		rw.Header().Set("Expires", "fake-expires")
 		rw.WriteHeader(200)
-		rw.Write(data)
+		rw.Write(s.readTestFile("test1.png"))
 	}))
 	defer ts.Close()
 
@@ -321,6 +319,183 @@ func (s *ProcessingHandlerTestSuite) TestCacheControlPassthroughDisabled() {
 
 	assert.NotEqual(s.T(), "fake-cache-control", res.Header.Get("Cache-Control"))
 	assert.NotEqual(s.T(), "fake-expires", res.Header.Get("Expires"))
+}
+
+func (s *ProcessingHandlerTestSuite) TestETagDisabled() {
+	config.ETagEnabled = false
+
+	rw := s.send("/unsafe/rs:fill:4:4/plain/local:///test1.png")
+	res := rw.Result()
+
+	assert.Equal(s.T(), 200, res.StatusCode)
+	assert.Empty(s.T(), res.Header.Get("ETag"))
+}
+
+func (s *ProcessingHandlerTestSuite) TestETagReqNoIfNotModified() {
+	config.ETagEnabled = true
+
+	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		assert.Empty(s.T(), r.Header.Get("If-None-Match"))
+
+		rw.Header().Set("ETag", `"loremipsumdolor"`)
+		rw.WriteHeader(200)
+		rw.Write(s.readTestFile("test1.png"))
+	}))
+	defer ts.Close()
+
+	rw := s.send("/unsafe/rs:fill:4:4/plain/" + ts.URL)
+	res := rw.Result()
+
+	assert.Equal(s.T(), 200, res.StatusCode)
+	assert.Equal(
+		s.T(),
+		`"1Uuny6YTSUO08MMVZyantp9oaoOcsaYibQoNbBTJEzk/RImxvcmVtaXBzdW1kb2xvciI"`,
+		res.Header.Get("ETag"),
+	)
+}
+
+func (s *ProcessingHandlerTestSuite) TestETagDataNoIfNotModified() {
+	config.ETagEnabled = true
+
+	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		assert.Empty(s.T(), r.Header.Get("If-None-Match"))
+
+		rw.WriteHeader(200)
+		rw.Write(s.readTestFile("test1.png"))
+	}))
+	defer ts.Close()
+
+	rw := s.send("/unsafe/rs:fill:4:4/plain/" + ts.URL)
+	res := rw.Result()
+
+	assert.Equal(s.T(), 200, res.StatusCode)
+	assert.Equal(
+		s.T(),
+		`"1Uuny6YTSUO08MMVZyantp9oaoOcsaYibQoNbBTJEzk/Dl29MNvkqdLEqPyFvMlh_NlPbRrsC0GDG_AUlmMdX6HA"`,
+		res.Header.Get("ETag"),
+	)
+}
+
+func (s *ProcessingHandlerTestSuite) TestETagReqMatch() {
+	config.ETagEnabled = true
+
+	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		assert.Equal(s.T(), `"loremipsumdolor"`, r.Header.Get("If-None-Match"))
+
+		rw.WriteHeader(304)
+	}))
+	defer ts.Close()
+
+	etag := `"1Uuny6YTSUO08MMVZyantp9oaoOcsaYibQoNbBTJEzk/RImxvcmVtaXBzdW1kb2xvciI"`
+
+	header := make(http.Header)
+	header.Set("If-None-Match", etag)
+
+	rw := s.send("/unsafe/rs:fill:4:4/plain/"+ts.URL, header)
+	res := rw.Result()
+
+	assert.Equal(s.T(), 304, res.StatusCode)
+	assert.Equal(s.T(), etag, res.Header.Get("ETag"))
+}
+
+func (s *ProcessingHandlerTestSuite) TestETagDataMatch() {
+	config.ETagEnabled = true
+
+	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		assert.Empty(s.T(), r.Header.Get("If-None-Match"))
+
+		rw.WriteHeader(200)
+		rw.Write(s.readTestFile("test1.png"))
+	}))
+	defer ts.Close()
+
+	etag := `"1Uuny6YTSUO08MMVZyantp9oaoOcsaYibQoNbBTJEzk/Dl29MNvkqdLEqPyFvMlh_NlPbRrsC0GDG_AUlmMdX6HA"`
+
+	header := make(http.Header)
+	header.Set("If-None-Match", etag)
+
+	rw := s.send("/unsafe/rs:fill:4:4/plain/"+ts.URL, header)
+	res := rw.Result()
+
+	assert.Equal(s.T(), 304, res.StatusCode)
+	assert.Equal(s.T(), etag, res.Header.Get("ETag"))
+}
+
+func (s *ProcessingHandlerTestSuite) TestETagReqNotMatch() {
+	config.ETagEnabled = true
+
+	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		assert.Equal(s.T(), `"loremipsum"`, r.Header.Get("If-None-Match"))
+
+		rw.Header().Set("ETag", `"loremipsumdolor"`)
+		rw.WriteHeader(200)
+		rw.Write(s.readTestFile("test1.png"))
+	}))
+	defer ts.Close()
+
+	header := make(http.Header)
+	header.Set("If-None-Match", `"1Uuny6YTSUO08MMVZyantp9oaoOcsaYibQoNbBTJEzk/RImxvcmVtaXBzdW0i"`)
+
+	rw := s.send("/unsafe/rs:fill:4:4/plain/"+ts.URL, header)
+	res := rw.Result()
+
+	assert.Equal(s.T(), 200, res.StatusCode)
+	assert.Equal(
+		s.T(),
+		`"1Uuny6YTSUO08MMVZyantp9oaoOcsaYibQoNbBTJEzk/RImxvcmVtaXBzdW1kb2xvciI"`,
+		res.Header.Get("ETag"),
+	)
+}
+
+func (s *ProcessingHandlerTestSuite) TestETagDataNotMatch() {
+	config.ETagEnabled = true
+
+	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		assert.Empty(s.T(), r.Header.Get("If-None-Match"))
+
+		rw.WriteHeader(200)
+		rw.Write(s.readTestFile("test1.png"))
+	}))
+	defer ts.Close()
+
+	header := make(http.Header)
+	header.Set("If-None-Match", `"1Uuny6YTSUO08MMVZyantp9oaoOcsaYibQoNbBTJEzk/Dl29MNvkqdLEq"`)
+
+	rw := s.send("/unsafe/rs:fill:4:4/plain/"+ts.URL, header)
+	res := rw.Result()
+
+	assert.Equal(s.T(), 200, res.StatusCode)
+	assert.Equal(
+		s.T(),
+		`"1Uuny6YTSUO08MMVZyantp9oaoOcsaYibQoNbBTJEzk/Dl29MNvkqdLEqPyFvMlh_NlPbRrsC0GDG_AUlmMdX6HA"`,
+		res.Header.Get("ETag"),
+	)
+}
+
+func (s *ProcessingHandlerTestSuite) TestETagProcessingOptionsNotMatch() {
+	config.ETagEnabled = true
+
+	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		assert.Empty(s.T(), r.Header.Get("If-None-Match"))
+
+		rw.Header().Set("ETag", `"loremipsumdolor"`)
+		rw.WriteHeader(200)
+		rw.Write(s.readTestFile("test1.png"))
+	}))
+	defer ts.Close()
+
+	header := make(http.Header)
+	header.Set("If-None-Match", `"1Uuny6YTSUO08MMVZ/Dl29MNvkqdLEq"`)
+
+	rw := s.send("/unsafe/rs:fill:4:4/plain/"+ts.URL, header)
+	res := rw.Result()
+
+	assert.Equal(s.T(), 200, res.StatusCode)
+	assert.Equal(
+		s.T(),
+		`"1Uuny6YTSUO08MMVZyantp9oaoOcsaYibQoNbBTJEzk/RImxvcmVtaXBzdW1kb2xvciI"`,
+		res.Header.Get("ETag"),
+	)
 }
 
 func TestProcessingHandler(t *testing.T) {

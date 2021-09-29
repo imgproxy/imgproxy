@@ -12,6 +12,7 @@ import (
 
 	"github.com/imgproxy/imgproxy/v2/config"
 	"github.com/imgproxy/imgproxy/v2/errorreport"
+	"github.com/imgproxy/imgproxy/v2/etag"
 	"github.com/imgproxy/imgproxy/v2/ierrors"
 	"github.com/imgproxy/imgproxy/v2/imagedata"
 	"github.com/imgproxy/imgproxy/v2/imagetype"
@@ -113,6 +114,17 @@ func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, res
 	)
 }
 
+func respondWithNotModified(reqID string, r *http.Request, rw http.ResponseWriter, po *options.ProcessingOptions, originURL string) {
+	rw.WriteHeader(304)
+	router.LogResponse(
+		reqID, r, 304, nil,
+		log.Fields{
+			"image_url":          originURL,
+			"processing_options": po,
+		},
+	)
+}
+
 func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	ctx, timeoutCancel := context.WithTimeout(r.Context(), time.Duration(config.WriteTimeout)*time.Second)
 	defer timeoutCancel()
@@ -162,6 +174,20 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		))
 	}
 
+	imgRequestHeader := make(http.Header)
+
+	var etagHandler etag.Handler
+
+	if config.ETagEnabled {
+		etagHandler.ParseExpectedETag(r.Header.Get("If-None-Match"))
+
+		if etagHandler.SetActualProcessingOptions(po) {
+			if imgEtag := etagHandler.ImageEtagExpected(); len(imgEtag) != 0 {
+				imgRequestHeader.Set("If-None-Match", imgEtag)
+			}
+		}
+	}
+
 	// The heavy part start here, so we need to restrict concurrency
 	select {
 	case processingSem <- struct{}{}:
@@ -175,19 +201,24 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 
 	originData, err := func() (*imagedata.ImageData, error) {
 		defer metrics.StartDownloadingSegment(ctx)()
-		return imagedata.Download(imageURL, "source image")
+		return imagedata.Download(imageURL, "source image", imgRequestHeader)
 	}()
-	if err == nil {
+	switch {
+	case err == nil:
 		defer originData.Close()
-	} else {
+	case ierrors.StatusCode(err) == http.StatusNotModified:
+		rw.Header().Set("ETag", etagHandler.GenerateExpectedETag())
+		respondWithNotModified(reqID, r, rw, po, imageURL)
+		return
+	default:
+		if ierr, ok := err.(*ierrors.Error); !ok || ierr.Unexpected {
+			errorreport.Report(err, r)
+		}
+
 		metrics.SendError(ctx, "download", err)
 
 		if imagedata.FallbackImage == nil {
 			panic(err)
-		}
-
-		if ierr, ok := err.(*ierrors.Error); !ok || ierr.Unexpected {
-			errorreport.Report(err, r)
 		}
 
 		log.Warningf("Could not load image %s. Using fallback image. %s", imageURL, err.Error())
@@ -198,12 +229,12 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	router.CheckTimeout(ctx)
 
 	if config.ETagEnabled && !getFallbackImageUsed(ctx) {
-		eTag := calcETag(ctx, originData, po)
-		rw.Header().Set("ETag", eTag)
+		imgDataMatch := etagHandler.SetActualImageData(originData)
 
-		if eTag == r.Header.Get("If-None-Match") {
-			rw.WriteHeader(304)
-			router.LogResponse(reqID, r, 304, nil, log.Fields{"image_url": imageURL})
+		rw.Header().Set("ETag", etagHandler.GenerateActualETag())
+
+		if imgDataMatch && etagHandler.ProcessingOptionsMatch() {
+			respondWithNotModified(reqID, r, rw, po, imageURL)
 			return
 		}
 	}

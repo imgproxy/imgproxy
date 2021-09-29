@@ -4,11 +4,13 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"net/http"
 	"os"
 	"strings"
 	"sync"
 
 	"github.com/imgproxy/imgproxy/v2/config"
+	"github.com/imgproxy/imgproxy/v2/ierrors"
 	"github.com/imgproxy/imgproxy/v2/imagetype"
 )
 
@@ -68,7 +70,7 @@ func loadWatermark() (err error) {
 	}
 
 	if len(config.WatermarkURL) > 0 {
-		Watermark, err = Download(config.WatermarkURL, "watermark")
+		Watermark, err = Download(config.WatermarkURL, "watermark", nil)
 		return
 	}
 
@@ -87,7 +89,7 @@ func loadFallbackImage() (err error) {
 	}
 
 	if len(config.FallbackImageURL) > 0 {
-		FallbackImage, err = Download(config.FallbackImageURL, "fallback image")
+		FallbackImage, err = Download(config.FallbackImageURL, "fallback image", nil)
 		return
 	}
 
@@ -125,10 +127,10 @@ func FromFile(path, desc string) (*ImageData, error) {
 	return imgdata, nil
 }
 
-func Download(imageURL, desc string) (*ImageData, error) {
-	imgdata, err := download(imageURL)
+func Download(imageURL, desc string, header http.Header) (*ImageData, error) {
+	imgdata, err := download(imageURL, header)
 	if err != nil {
-		return nil, fmt.Errorf("Can't download %s: %s", desc, err)
+		return nil, ierrors.WrapWithMessage(err, 1, fmt.Sprintf("Can't download %s: %s", desc, err))
 	}
 
 	return imgdata, nil

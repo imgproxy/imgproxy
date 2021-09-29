@@ -24,10 +24,13 @@ var (
 	imageHeadersToStore = []string{
 		"Cache-Control",
 		"Expires",
+		"ETag",
 	}
 
 	// For tests
 	redirectAllRequestsTo string
+
+	ErrNotModified = ierrors.New(http.StatusNotModified, "Not Modified", "Not Modified")
 )
 
 const msgSourceImageIsUnreachable = "Source image is unreachable"
@@ -81,7 +84,7 @@ func initDownloading() error {
 	return nil
 }
 
-func requestImage(imageURL string) (*http.Response, error) {
+func requestImage(imageURL string, header http.Header) (*http.Response, error) {
 	req, err := http.NewRequest("GET", imageURL, nil)
 	if err != nil {
 		return nil, ierrors.New(404, err.Error(), msgSourceImageIsUnreachable).SetUnexpected(config.ReportDownloadingErrors)
@@ -89,29 +92,39 @@ func requestImage(imageURL string) (*http.Response, error) {
 
 	req.Header.Set("User-Agent", config.UserAgent)
 
+	for k, v := range header {
+		if len(v) > 0 {
+			req.Header.Set(k, v[0])
+		}
+	}
+
 	res, err := downloadClient.Do(req)
 	if err != nil {
 		return res, ierrors.New(404, checkTimeoutErr(err).Error(), msgSourceImageIsUnreachable).SetUnexpected(config.ReportDownloadingErrors)
+	}
+
+	if res.StatusCode == http.StatusNotModified {
+		return nil, ErrNotModified
 	}
 
 	if res.StatusCode != 200 {
 		body, _ := ioutil.ReadAll(res.Body)
 		res.Body.Close()
 
-		msg := fmt.Sprintf("Can't download image; Status: %d; %s", res.StatusCode, string(body))
+		msg := fmt.Sprintf("Status: %d; %s", res.StatusCode, string(body))
 		return res, ierrors.New(404, msg, msgSourceImageIsUnreachable).SetUnexpected(config.ReportDownloadingErrors)
 	}
 
 	return res, nil
 }
 
-func download(imageURL string) (*ImageData, error) {
+func download(imageURL string, header http.Header) (*ImageData, error) {
 	// We use this for testing
 	if len(redirectAllRequestsTo) > 0 {
 		imageURL = redirectAllRequestsTo
 	}
 
-	res, err := requestImage(imageURL)
+	res, err := requestImage(imageURL, header)
 	if res != nil {
 		defer res.Body.Close()
 	}

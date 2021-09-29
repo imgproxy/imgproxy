@@ -43,13 +43,35 @@ func (t transport) RoundTrip(req *http.Request) (*http.Response, error) {
 		obj = obj.Generation(g)
 	}
 
-	reader, err := obj.NewReader(context.Background())
+	header := make(http.Header)
 
+	if config.ETagEnabled {
+		attrs, err := obj.Attrs(context.Background())
+		if err != nil {
+			return nil, err
+		}
+		header.Set("ETag", attrs.Etag)
+
+		if attrs.Etag == req.Header.Get("If-None-Match") {
+			return &http.Response{
+				StatusCode:    http.StatusNotModified,
+				Proto:         "HTTP/1.0",
+				ProtoMajor:    1,
+				ProtoMinor:    0,
+				Header:        header,
+				ContentLength: 0,
+				Body:          nil,
+				Close:         false,
+				Request:       req,
+			}, nil
+		}
+	}
+
+	reader, err := obj.NewReader(context.Background())
 	if err != nil {
 		return nil, err
 	}
 
-	header := make(http.Header)
 	header.Set("Cache-Control", reader.Attrs.CacheControl)
 
 	return &http.Response{

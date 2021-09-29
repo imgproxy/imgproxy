@@ -50,6 +50,12 @@ func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error)
 		input.VersionId = aws.String(req.URL.RawQuery)
 	}
 
+	if config.ETagEnabled {
+		if ifNoneMatch := req.Header.Get("If-None-Match"); len(ifNoneMatch) > 0 {
+			input.IfNoneMatch = aws.String(ifNoneMatch)
+		}
+	}
+
 	s3req, _ := t.svc.GetObjectRequest(input)
 
 	if err := s3req.Send(); err != nil {

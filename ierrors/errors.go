@@ -62,6 +62,15 @@ func Wrap(err error, skip int) *Error {
 	return NewUnexpected(err.Error(), skip+1)
 }
 
+func WrapWithMessage(err error, skip int, msg string) *Error {
+	if ierr, ok := err.(*Error); ok {
+		newErr := *ierr
+		ierr.Message = msg
+		return &newErr
+	}
+	return NewUnexpected(err.Error(), skip+1)
+}
+
 func callers(skip int) []uintptr {
 	stack := make([]uintptr, 10)
 	n := runtime.Callers(skip, stack)
@@ -77,4 +86,11 @@ func formatStack(stack []uintptr) string {
 	}
 
 	return strings.Join(lines, "\n")
+}
+
+func StatusCode(err error) int {
+	if ierr, ok := err.(*Error); ok {
+		return ierr.StatusCode
+	}
+	return 0
 }
