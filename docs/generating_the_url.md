@@ -466,9 +466,18 @@ quality:%quality
 q:%quality
 ```
 
-Redefines quality of the resulting image, percentage. When `0`, quality is assumed based on `IMGPROXY_QUALITY` and `IMGPROXY_FORMAT_QUALITY`.
+Redefines quality of the resulting image, percentage. When `0`, quality is assumed based on `IMGPROXY_QUALITY` and [format_quality](#format-quality).
 
 Default: 0.
+
+### Format quality
+
+```
+format_quality:%format1:%quality1:%format2:%quality2:...:%formatN:%qualityN
+fq:%format1:%quality1:%format2:%quality2:...:%formatN:%qualityN
+```
+
+Adds or redefines `IMGPROXY_FORMAT_QUALITY` values.
 
 ### Autoquality
 

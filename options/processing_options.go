@@ -79,6 +79,7 @@ type ProcessingOptions struct {
 	Rotate            int
 	Format            imagetype.Type
 	Quality           int
+	FormatQuality     map[imagetype.Type]int
 	MaxBytes          int
 	Flatten           bool
 	Background        vips.Color
@@ -103,6 +104,8 @@ type ProcessingOptions struct {
 	Filename string
 
 	UsedPresets []string
+
+	defaultQuality int
 }
 
 var (
@@ -133,12 +136,20 @@ func NewProcessingOptions() *ProcessingOptions {
 			StripMetadata:     config.StripMetadata,
 			StripColorProfile: config.StripColorProfile,
 			AutoRotate:        config.AutoRotate,
+
+			// Basically, we need this to update ETag when `IMGPROXY_QUALITY` is changed
+			defaultQuality: config.Quality,
 		}
 	})
 
 	po := _newProcessingOptions
 	po.SkipProcessingFormats = append([]imagetype.Type(nil), config.SkipProcessingFormats...)
 	po.UsedPresets = make([]string, 0, len(config.Presets))
+
+	po.FormatQuality = make(map[imagetype.Type]int)
+	for k, v := range config.FormatQuality {
+		po.FormatQuality[k] = v
+	}
 
 	return &po
 }
@@ -147,11 +158,11 @@ func (po *ProcessingOptions) GetQuality() int {
 	q := po.Quality
 
 	if q == 0 {
-		q = config.FormatQuality[po.Format]
+		q = po.FormatQuality[po.Format]
 	}
 
 	if q == 0 {
-		q = config.Quality
+		q = po.defaultQuality
 	}
 
 	return q
@@ -522,6 +533,28 @@ func applyQualityOption(po *ProcessingOptions, args []string) error {
 	return nil
 }
 
+func applyFormatQualityOption(po *ProcessingOptions, args []string) error {
+	argsLen := len(args)
+	if len(args)%2 != 0 {
+		return fmt.Errorf("Missing quality for: %s", args[argsLen-1])
+	}
+
+	for i := 0; i < argsLen; i += 2 {
+		f, ok := imagetype.Types[args[i]]
+		if !ok {
+			return fmt.Errorf("Invalid image format: %s", args[i])
+		}
+
+		if q, err := strconv.Atoi(args[i+1]); err == nil && q >= 0 && q <= 100 {
+			po.FormatQuality[f] = q
+		} else {
+			return fmt.Errorf("Invalid quality for %s: %s", args[i], args[i+1])
+		}
+	}
+
+	return nil
+}
+
 func applyMaxBytesOption(po *ProcessingOptions, args []string) error {
 	if len(args) > 1 {
 		return fmt.Errorf("Invalid max_bytes arguments: %v", args)
@@ -832,6 +865,8 @@ func applyURLOption(po *ProcessingOptions, name string, args []string) error {
 	// Saving options
 	case "quality", "q":
 		return applyQualityOption(po, args)
+	case "format_quality", "fq":
+		return applyFormatQualityOption(po, args)
 	case "max_bytes", "mb":
 		return applyMaxBytesOption(po, args)
 	case "format", "f", "ext":

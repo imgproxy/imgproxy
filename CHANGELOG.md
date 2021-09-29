@@ -11,6 +11,7 @@
 - [Datadog](./docs/datadog.md) metrics.
 - `force` and `fill-down` resizing types.
 - [min-width](https://docs.imgproxy.net/generating_the_url?id=min-width) and [min-height](https://docs.imgproxy.net/generating_the_url?id=min-height) processing options.
+- [format_quality](https://docs.imgproxy.net/generating_the_url?id=format-quality) processing option.
 
 ### Removed
 - Removed basic URL format, use [advanced one](./docs/generating_the_url.md) instead.
