@@ -1,4 +1,4 @@
-ARG BASE_IMAGE_VERSION="v1.4.0"
+ARG BASE_IMAGE_VERSION="v3.0.0"
 
 FROM darthsim/imgproxy-base:${BASE_IMAGE_VERSION}
 LABEL maintainer="Sergey Alexandrovich <darthsim@gmail.com>"
@@ -13,6 +13,7 @@ FROM debian:bullseye-slim
 LABEL maintainer="Sergey Alexandrovich <darthsim@gmail.com>"
 
 RUN apt-get update \
+  && apt-get upgrade -y \
   && apt-get install -y --no-install-recommends \
     bash \
     ca-certificates \
