@@ -24,8 +24,8 @@ var (
 		Data: []byte("Hello Test"),
 	}
 
-	etagReq  = `"ATeSQpxYMfaZVBSmCh-zpE8682vBUrZ1qxXgQkxtntA/RImxvcmVtaXBzdW1kb2xvciI"`
-	etagData = `"ATeSQpxYMfaZVBSmCh-zpE8682vBUrZ1qxXgQkxtntA/DvyChhMNu_sFX7jrjoyrgQbnFwfoOVv7kzp_Fbs6hQBg"`
+	etagReq  string
+	etagData string
 )
 
 type EtagTestSuite struct {
@@ -36,6 +36,13 @@ type EtagTestSuite struct {
 
 func (s *EtagTestSuite) SetupSuite() {
 	logrus.SetOutput(ioutil.Discard)
+
+	s.h.SetActualProcessingOptions(po)
+	s.h.SetActualImageData(&imgWithETag)
+	etagReq = s.h.GenerateActualETag()
+
+	s.h.SetActualImageData(&imgWithoutETag)
+	etagData = s.h.GenerateActualETag()
 }
 
 func (s *EtagTestSuite) TeardownSuite() {
