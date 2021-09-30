@@ -13,6 +13,9 @@
 - [min-width](https://docs.imgproxy.net/generating_the_url?id=min-width) and [min-height](https://docs.imgproxy.net/generating_the_url?id=min-height) processing options.
 - [format_quality](https://docs.imgproxy.net/generating_the_url?id=format-quality) processing option.
 
+### Change
+- ETag generator & checker uses source image ETag when possible.
+
 ### Removed
 - Removed basic URL format, use [advanced one](./docs/generating_the_url.md) instead.
 - Removed `IMGPROXY_MAX_SRC_DIMENSION` config, use `IMGPROXY_MAX_SRC_RESOLUTION` instead.
