@@ -17,11 +17,11 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/imgproxy/imgproxy/v2/config"
-	"github.com/imgproxy/imgproxy/v2/ierrors"
-	"github.com/imgproxy/imgproxy/v2/imagedata"
-	"github.com/imgproxy/imgproxy/v2/imagetype"
-	"github.com/imgproxy/imgproxy/v2/metrics/prometheus"
+	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/ierrors"
+	"github.com/imgproxy/imgproxy/v3/imagedata"
+	"github.com/imgproxy/imgproxy/v3/imagetype"
+	"github.com/imgproxy/imgproxy/v3/metrics/prometheus"
 )
 
 type Image struct {

@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/imgproxy/imgproxy/v2/imagedata"
-	"github.com/imgproxy/imgproxy/v2/options"
+	"github.com/imgproxy/imgproxy/v3/imagedata"
+	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"

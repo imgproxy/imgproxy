@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/imgproxy/imgproxy/v2/ierrors"
-	"github.com/imgproxy/imgproxy/v2/metrics"
+	"github.com/imgproxy/imgproxy/v3/ierrors"
+	"github.com/imgproxy/imgproxy/v3/metrics"
 )
 
 type timerSinceCtxKey = struct{}

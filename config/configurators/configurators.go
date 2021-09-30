@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/imgproxy/imgproxy/v2/imagetype"
+	"github.com/imgproxy/imgproxy/v3/imagetype"
 )
 
 func Int(i *int, name string) {

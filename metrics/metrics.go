@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/imgproxy/imgproxy/v2/metrics/datadog"
-	"github.com/imgproxy/imgproxy/v2/metrics/newrelic"
-	"github.com/imgproxy/imgproxy/v2/metrics/prometheus"
+	"github.com/imgproxy/imgproxy/v3/metrics/datadog"
+	"github.com/imgproxy/imgproxy/v3/metrics/newrelic"
+	"github.com/imgproxy/imgproxy/v3/metrics/prometheus"
 )
 
 func Init() error {

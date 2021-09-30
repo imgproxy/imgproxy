@@ -6,9 +6,9 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/imgproxy/imgproxy/v2/config"
-	"github.com/imgproxy/imgproxy/v2/imath"
-	"github.com/imgproxy/imgproxy/v2/metrics/prometheus"
+	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/imath"
+	"github.com/imgproxy/imgproxy/v3/metrics/prometheus"
 )
 
 type intSlice []int

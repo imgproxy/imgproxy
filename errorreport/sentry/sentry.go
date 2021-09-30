@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/getsentry/sentry-go"
-	"github.com/imgproxy/imgproxy/v2/config"
+	"github.com/imgproxy/imgproxy/v3/config"
 )
 
 var (

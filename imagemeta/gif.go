@@ -3,7 +3,7 @@ package imagemeta
 import (
 	"io"
 
-	"github.com/imgproxy/imgproxy/v2/imagetype"
+	"github.com/imgproxy/imgproxy/v3/imagetype"
 )
 
 func DecodeGifMeta(r io.Reader) (Meta, error) {

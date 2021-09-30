@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/imgproxy/imgproxy/v2/config"
+	"github.com/imgproxy/imgproxy/v3/config"
 )
 
 const urlTokenPlain = "plain"

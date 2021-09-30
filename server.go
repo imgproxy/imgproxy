@@ -10,11 +10,11 @@ import (
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/netutil"
 
-	"github.com/imgproxy/imgproxy/v2/config"
-	"github.com/imgproxy/imgproxy/v2/errorreport"
-	"github.com/imgproxy/imgproxy/v2/ierrors"
-	"github.com/imgproxy/imgproxy/v2/reuseport"
-	"github.com/imgproxy/imgproxy/v2/router"
+	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/errorreport"
+	"github.com/imgproxy/imgproxy/v3/ierrors"
+	"github.com/imgproxy/imgproxy/v3/reuseport"
+	"github.com/imgproxy/imgproxy/v3/router"
 )
 
 var (

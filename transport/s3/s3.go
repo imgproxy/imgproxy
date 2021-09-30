@@ -8,7 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 
-	"github.com/imgproxy/imgproxy/v2/config"
+	"github.com/imgproxy/imgproxy/v3/config"
 )
 
 // transport implements RoundTripper for the 's3' protocol.

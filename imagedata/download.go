@@ -9,13 +9,13 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/imgproxy/imgproxy/v2/config"
-	"github.com/imgproxy/imgproxy/v2/ierrors"
+	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/ierrors"
 
-	azureTransport "github.com/imgproxy/imgproxy/v2/transport/azure"
-	fsTransport "github.com/imgproxy/imgproxy/v2/transport/fs"
-	gcsTransport "github.com/imgproxy/imgproxy/v2/transport/gcs"
-	s3Transport "github.com/imgproxy/imgproxy/v2/transport/s3"
+	azureTransport "github.com/imgproxy/imgproxy/v3/transport/azure"
+	fsTransport "github.com/imgproxy/imgproxy/v3/transport/fs"
+	gcsTransport "github.com/imgproxy/imgproxy/v3/transport/gcs"
+	s3Transport "github.com/imgproxy/imgproxy/v3/transport/s3"
 )
 
 var (

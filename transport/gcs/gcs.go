@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"cloud.google.com/go/storage"
-	"github.com/imgproxy/imgproxy/v2/config"
+	"github.com/imgproxy/imgproxy/v3/config"
 	"google.golang.org/api/option"
 )
 

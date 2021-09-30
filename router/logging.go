@@ -3,7 +3,7 @@ package router
 import (
 	"net/http"
 
-	"github.com/imgproxy/imgproxy/v2/ierrors"
+	"github.com/imgproxy/imgproxy/v3/ierrors"
 	log "github.com/sirupsen/logrus"
 )
 

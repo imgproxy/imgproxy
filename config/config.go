@@ -10,9 +10,9 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/imgproxy/imgproxy/v2/config/configurators"
-	"github.com/imgproxy/imgproxy/v2/imagetype"
-	"github.com/imgproxy/imgproxy/v2/version"
+	"github.com/imgproxy/imgproxy/v3/config/configurators"
+	"github.com/imgproxy/imgproxy/v3/imagetype"
+	"github.com/imgproxy/imgproxy/v3/version"
 )
 
 var (

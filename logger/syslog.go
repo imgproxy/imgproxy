@@ -5,7 +5,7 @@ import (
 	"log/syslog"
 	"os"
 
-	"github.com/imgproxy/imgproxy/v2/config/configurators"
+	"github.com/imgproxy/imgproxy/v3/config/configurators"
 	"github.com/sirupsen/logrus"
 )
 

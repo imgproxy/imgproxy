@@ -3,10 +3,10 @@ package processing
 import (
 	"context"
 
-	"github.com/imgproxy/imgproxy/v2/imagedata"
-	"github.com/imgproxy/imgproxy/v2/imagetype"
-	"github.com/imgproxy/imgproxy/v2/options"
-	"github.com/imgproxy/imgproxy/v2/vips"
+	"github.com/imgproxy/imgproxy/v3/imagedata"
+	"github.com/imgproxy/imgproxy/v3/imagetype"
+	"github.com/imgproxy/imgproxy/v3/options"
+	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
 type pipelineContext struct {

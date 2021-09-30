@@ -10,9 +10,9 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/imgproxy/imgproxy/v2/imagedata"
-	"github.com/imgproxy/imgproxy/v2/options"
-	"github.com/imgproxy/imgproxy/v2/version"
+	"github.com/imgproxy/imgproxy/v3/imagedata"
+	"github.com/imgproxy/imgproxy/v3/options"
+	"github.com/imgproxy/imgproxy/v3/version"
 )
 
 type eTagCalc struct {

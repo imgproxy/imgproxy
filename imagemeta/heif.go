@@ -8,7 +8,7 @@ import (
 	"io"
 	"io/ioutil"
 
-	"github.com/imgproxy/imgproxy/v2/imagetype"
+	"github.com/imgproxy/imgproxy/v3/imagetype"
 )
 
 const heifBoxHeaderSize = int64(8)

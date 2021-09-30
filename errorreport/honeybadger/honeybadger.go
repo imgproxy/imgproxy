@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/honeybadger-io/honeybadger-go"
-	"github.com/imgproxy/imgproxy/v2/config"
+	"github.com/imgproxy/imgproxy/v3/config"
 )
 
 var (

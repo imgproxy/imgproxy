@@ -3,12 +3,12 @@ package imagedata
 import (
 	"io"
 
-	"github.com/imgproxy/imgproxy/v2/bufpool"
-	"github.com/imgproxy/imgproxy/v2/bufreader"
-	"github.com/imgproxy/imgproxy/v2/config"
-	"github.com/imgproxy/imgproxy/v2/ierrors"
-	"github.com/imgproxy/imgproxy/v2/imagemeta"
-	"github.com/imgproxy/imgproxy/v2/security"
+	"github.com/imgproxy/imgproxy/v3/bufpool"
+	"github.com/imgproxy/imgproxy/v3/bufreader"
+	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/ierrors"
+	"github.com/imgproxy/imgproxy/v3/imagemeta"
+	"github.com/imgproxy/imgproxy/v3/security"
 )
 
 var (

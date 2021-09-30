@@ -11,9 +11,9 @@ import (
 	"fmt"
 	"unsafe"
 
-	"github.com/imgproxy/imgproxy/v2/imagedata"
-	"github.com/imgproxy/imgproxy/v2/imagemeta"
-	"github.com/imgproxy/imgproxy/v2/imagetype"
+	"github.com/imgproxy/imgproxy/v3/imagedata"
+	"github.com/imgproxy/imgproxy/v3/imagemeta"
+	"github.com/imgproxy/imgproxy/v3/imagetype"
 )
 
 func (img *Image) loadIco(data []byte, shrink int, scale float64, pages int) error {

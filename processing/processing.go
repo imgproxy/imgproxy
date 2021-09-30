@@ -7,14 +7,14 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/imgproxy/imgproxy/v2/config"
-	"github.com/imgproxy/imgproxy/v2/imagedata"
-	"github.com/imgproxy/imgproxy/v2/imagetype"
-	"github.com/imgproxy/imgproxy/v2/imath"
-	"github.com/imgproxy/imgproxy/v2/options"
-	"github.com/imgproxy/imgproxy/v2/router"
-	"github.com/imgproxy/imgproxy/v2/security"
-	"github.com/imgproxy/imgproxy/v2/vips"
+	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/imagedata"
+	"github.com/imgproxy/imgproxy/v3/imagetype"
+	"github.com/imgproxy/imgproxy/v3/imath"
+	"github.com/imgproxy/imgproxy/v3/options"
+	"github.com/imgproxy/imgproxy/v3/router"
+	"github.com/imgproxy/imgproxy/v3/security"
+	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
 var mainPipeline = pipeline{

@@ -1,7 +1,7 @@
 package security
 
 import (
-	"github.com/imgproxy/imgproxy/v2/config"
+	"github.com/imgproxy/imgproxy/v3/config"
 )
 
 func VerifySourceURL(imageURL string) bool {

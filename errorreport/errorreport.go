@@ -3,10 +3,10 @@ package errorreport
 import (
 	"net/http"
 
-	"github.com/imgproxy/imgproxy/v2/errorreport/airbrake"
-	"github.com/imgproxy/imgproxy/v2/errorreport/bugsnag"
-	"github.com/imgproxy/imgproxy/v2/errorreport/honeybadger"
-	"github.com/imgproxy/imgproxy/v2/errorreport/sentry"
+	"github.com/imgproxy/imgproxy/v3/errorreport/airbrake"
+	"github.com/imgproxy/imgproxy/v3/errorreport/bugsnag"
+	"github.com/imgproxy/imgproxy/v3/errorreport/honeybadger"
+	"github.com/imgproxy/imgproxy/v3/errorreport/sentry"
 )
 
 func Init() {

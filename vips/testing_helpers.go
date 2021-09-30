@@ -1,6 +1,6 @@
 package vips
 
-import "github.com/imgproxy/imgproxy/v2/imagetype"
+import "github.com/imgproxy/imgproxy/v3/imagetype"
 
 func DisableLoadSupport(it imagetype.Type) {
 	typeSupportLoad[it] = false

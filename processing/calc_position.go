@@ -1,8 +1,8 @@
 package processing
 
 import (
-	"github.com/imgproxy/imgproxy/v2/imath"
-	"github.com/imgproxy/imgproxy/v2/options"
+	"github.com/imgproxy/imgproxy/v3/imath"
+	"github.com/imgproxy/imgproxy/v3/options"
 )
 
 func calcPosition(width, height, innerWidth, innerHeight int, gravity *options.GravityOptions, allowOverflow bool) (left, top int) {

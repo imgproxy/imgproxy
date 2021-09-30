@@ -10,16 +10,16 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/imgproxy/imgproxy/v2/config"
-	"github.com/imgproxy/imgproxy/v2/errorreport"
-	"github.com/imgproxy/imgproxy/v2/imagedata"
-	"github.com/imgproxy/imgproxy/v2/logger"
-	"github.com/imgproxy/imgproxy/v2/memory"
-	"github.com/imgproxy/imgproxy/v2/metrics"
-	"github.com/imgproxy/imgproxy/v2/metrics/prometheus"
-	"github.com/imgproxy/imgproxy/v2/options"
-	"github.com/imgproxy/imgproxy/v2/version"
-	"github.com/imgproxy/imgproxy/v2/vips"
+	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/errorreport"
+	"github.com/imgproxy/imgproxy/v3/imagedata"
+	"github.com/imgproxy/imgproxy/v3/logger"
+	"github.com/imgproxy/imgproxy/v3/memory"
+	"github.com/imgproxy/imgproxy/v3/metrics"
+	"github.com/imgproxy/imgproxy/v3/metrics/prometheus"
+	"github.com/imgproxy/imgproxy/v3/options"
+	"github.com/imgproxy/imgproxy/v3/version"
+	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
 func initialize() error {

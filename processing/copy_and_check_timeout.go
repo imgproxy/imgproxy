@@ -3,8 +3,8 @@ package processing
 import (
 	"context"
 
-	"github.com/imgproxy/imgproxy/v2/router"
-	"github.com/imgproxy/imgproxy/v2/vips"
+	"github.com/imgproxy/imgproxy/v3/router"
+	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
 func copyMemoryAndCheckTimeout(ctx context.Context, img *vips.Image) error {

@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/imgproxy/imgproxy/v2/config"
+	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/newrelic/go-agent/v3/newrelic"
 )
 

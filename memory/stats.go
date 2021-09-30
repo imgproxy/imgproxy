@@ -5,7 +5,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/imgproxy/imgproxy/v2/vips"
+	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
 func LogStats() {

@@ -7,7 +7,7 @@ import (
 
 	logrus "github.com/sirupsen/logrus"
 
-	"github.com/imgproxy/imgproxy/v2/config/configurators"
+	"github.com/imgproxy/imgproxy/v3/config/configurators"
 )
 
 func Init() error {

@@ -5,7 +5,7 @@ import (
 	"bytes"
 	"io"
 
-	"github.com/imgproxy/imgproxy/v2/imath"
+	"github.com/imgproxy/imgproxy/v3/imath"
 )
 
 type Reader struct {

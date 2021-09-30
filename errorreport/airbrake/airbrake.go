@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/airbrake/gobrake/v5"
-	"github.com/imgproxy/imgproxy/v2/config"
+	"github.com/imgproxy/imgproxy/v3/config"
 )
 
 var notifier *gobrake.Notifier

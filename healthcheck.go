@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/imgproxy/imgproxy/v2/config"
-	"github.com/imgproxy/imgproxy/v2/config/configurators"
+	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/config/configurators"
 )
 
 func healthcheck() int {

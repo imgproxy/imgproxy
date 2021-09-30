@@ -7,7 +7,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/imgproxy/imgproxy/v2/config"
+	"github.com/imgproxy/imgproxy/v3/config"
 	"golang.org/x/text/encoding/charmap"
 )
 
