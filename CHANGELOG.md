@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+
+## [3.0.0.beta1] - 2021-10-01
 ### Added
 - (pro) [Autoquality](https://docs.imgproxy.net/autoquality).
 - (pro) [Object detection](https://docs.imgproxy.net/object_detection): `obj` [gravity](https://docs.imgproxy.net/generating_the_url?id=gravity) type, [blur_detections](https://docs.imgproxy.net/generating_the_url?id=blur-detections) processing option, [draw_detections](https://docs.imgproxy.net/generating_the_url?id=draw-detections) processing option.
