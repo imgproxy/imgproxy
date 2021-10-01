@@ -6,7 +6,7 @@
 - (pro) [Object detection](https://docs.imgproxy.net/object_detection): `obj` [gravity](https://docs.imgproxy.net/generating_the_url?id=gravity) type, [blur_detections](https://docs.imgproxy.net/generating_the_url?id=blur-detections) processing option, [draw_detections](https://docs.imgproxy.net/generating_the_url?id=draw-detections) processing option.
 - (pro) [Chained pipelines](https://docs.imgproxy.net/chained_pipelines)
 - `IMGPROXY_FALLBACK_IMAGE_HTTP_CODE` config.
-- [fallback_image_url](https://docs.imgproxy.net/generating_the_url?id=fallback-image-url) processing option.
+- (pro) [fallback_image_url](https://docs.imgproxy.net/generating_the_url?id=fallback-image-url) processing option.
 - [expires](https://docs.imgproxy.net/generating_the_url?id=expires) processing option.
 - [skip processing](https://docs.imgproxy.net/generating_the_url?id=skip-processing) processing option.
 - [Datadog](./docs/datadog.md) metrics.
