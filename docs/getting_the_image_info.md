@@ -1,4 +1,4 @@
-# Getting the image info<img class='pro-badge' src='assets/pro.svg' alt='pro' />
+# Getting the image info<i class='badge badge-pro'></i>
 
 imgproxy can fetch and return the source image info without downloading the whole image.
 

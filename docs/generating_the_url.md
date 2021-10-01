@@ -62,7 +62,7 @@ Defines how imgproxy will resize the source image. Supported resizing types are:
 
 Default: `fit`
 
-### Resizing algorithm<img class='pro-badge' src='assets/pro.svg' alt='pro' /> :id=resizing-algorithm
+### Resizing algorithm<i class='badge badge-pro'></i> :id=resizing-algorithm
 
 ```
 resizing_algorithm:%algorithm
@@ -180,7 +180,7 @@ Default: `ce:0:0`
 **Special gravities**:
 
 * `gravity:sm` - smart gravity. `libvips` detects the most "interesting" section of the image and considers it as the center of the resulting image. Offsets are not applicable here;
-* `gravity:obj:%class_name1:%class_name2:...:%class_nameN` - <img class='pro-badge' src='assets/pro.svg' alt='pro' /> object-oriented gravity. imgproxy [detects objects](object_detection.md) of provided classes on the image and calculates the resulting image center using their positions. If class names are omited, imgproxy will use all the detected objects.
+* `gravity:obj:%class_name1:%class_name2:...:%class_nameN` - <i class='badge badge-pro'></i> <i class='badge badge-v3'></i> object-oriented gravity. imgproxy [detects objects](object_detection.md) of provided classes on the image and calculates the resulting image center using their positions. If class names are omited, imgproxy will use all the detected objects.
 * `gravity:fp:%x:%y` - focus point gravity. `x` and `y` are floating point numbers between 0 and 1 that define the coordinates of the center of the resulting image. Treat 0 and 1 as right/left for `x` and top/bottom for `y`.
 
 ### Crop
@@ -276,7 +276,7 @@ With no arguments provided, disables any background manipulations.
 
 Default: disabled
 
-### Background alpha<img class='pro-badge' src='assets/pro.svg' alt='pro' /> :id=background-alpha
+### Background alpha<i class='badge badge-pro'></i> :id=background-alpha
 
 ```
 background_alpha:%alpha
@@ -287,7 +287,7 @@ Adds alpha channel to `background`. `alpha` is a positive floating point number 
 
 Default: 1
 
-### Adjust<img class='pro-badge' src='assets/pro.svg' alt='pro' /> :id=adjust
+### Adjust<i class='badge badge-pro'></i> :id=adjust
 
 ```
 adjust:%brightness:%contrast:%saturation
@@ -296,7 +296,7 @@ a:%brightness:%contrast:%saturation
 
 Meta-option that defines the [brightness](#brightness), [contrast](#contrast), and [saturation](#saturation). All arguments are optional and can be omitted to use their default values.
 
-### Brightness<img class='pro-badge' src='assets/pro.svg' alt='pro' /> :id=brightness
+### Brightness<i class='badge badge-pro'></i> :id=brightness
 
 ```
 brightness:%brightness
@@ -307,7 +307,7 @@ When set, imgproxy will adjust brightness of the resulting image. `brightness` i
 
 Default: 0
 
-### Contrast<img class='pro-badge' src='assets/pro.svg' alt='pro' /> :id=contrast
+### Contrast<i class='badge badge-pro'></i> :id=contrast
 
 ```
 contrast:%contrast
@@ -318,7 +318,7 @@ When set, imgproxy will adjust contrast of the resulting image. `contrast` is a 
 
 Default: 1
 
-### Saturation<img class='pro-badge' src='assets/pro.svg' alt='pro' /> :id=saturation
+### Saturation<i class='badge badge-pro'></i> :id=saturation
 
 ```
 saturation:%saturation
@@ -364,7 +364,7 @@ When set, imgproxy will apply the pixelate filter to the resulting image. `size`
 
 Default: disabled
 
-### Unsharpening<img class='pro-badge' src='assets/pro.svg' alt='pro' /> :id=unsharpening
+### Unsharpening<i class='badge badge-pro'></i> :id=unsharpening
 
 ```
 unsharpening:%mode:%weight:%dividor
@@ -373,7 +373,7 @@ ush:%mode:%weight:%dividor
 
 Allows redefining unsharpening options. All arguments have the same meaning as [Unsharpening](configuration.md#unsharpening) configs. All arguments are optional and can be omitted.
 
-### Blur detections<img class='pro-badge' src='assets/pro.svg' alt='pro' /> :id=blur-detections
+### Blur detections<i class='badge badge-pro'></i><i class='badge badge-v3'></i> :id=blur-detections
 
 ```
 blur_detections:%sigma:%class_name1:%class_name2:...:%class_nameN
@@ -384,7 +384,7 @@ imgproxy [detects objects](object_detection.md) of provided classes and blus the
 
 `sigma` defines the size of a mask imgproxy will use.
 
-### Draw detections<img class='pro-badge' src='assets/pro.svg' alt='pro' /> :id=draw-detections
+### Draw detections<i class='badge badge-pro'></i><i class='badge badge-v3'></i> :id=draw-detections
 
 ```
 draw_detections:%draw:%class_name1:%class_name2:...:%class_nameN
@@ -419,7 +419,7 @@ Puts watermark on the processed image.
 
 Default: disabled
 
-### Watermark URL<img class='pro-badge' src='assets/pro.svg' alt='pro' /> :id=watermark-url
+### Watermark URL<i class='badge badge-pro'></i> :id=watermark-url
 
 ```
 watermark_url:%url
@@ -430,7 +430,7 @@ When set, imgproxy will use the image from the specified URL as a watermark. `ur
 
 Default: blank
 
-### Style<img class='pro-badge' src='assets/pro.svg' alt='pro' /> :id=style
+### Style<i class='badge badge-pro'></i> :id=style
 
 ```
 style:%style
@@ -505,7 +505,7 @@ When set, imgproxy automatically degrades the quality of the image until the ima
 
 Default: 0
 
-### JPEG options<img class='pro-badge' src='assets/pro.svg' alt='pro' /> :id=jpeg-options
+### JPEG options<i class='badge badge-pro'></i> :id=jpeg-options
 
 ```
 jpeg_options:%progressive:%no_subsample:%trellis_quant:%overshoot_deringing:%optimize_scans:%quant_table
@@ -514,7 +514,7 @@ jpgo:%progressive:%no_subsample:%trellis_quant:%overshoot_deringing:%optimize_sc
 
 Allows redefining JPEG saving options. All arguments have the same meaning as [Advanced JPEG compression](configuration.md#advanced-jpeg-compression) configs. All arguments are optional and can be omitted.
 
-### PNG options<img class='pro-badge' src='assets/pro.svg' alt='pro' /> :id=png-options
+### PNG options<i class='badge badge-pro'></i> :id=png-options
 
 ```
 png_options:%interlaced:%quantize:%quantization_colors
@@ -523,7 +523,7 @@ pngo:%interlaced:%quantize:%quantization_colors
 
 Allows redefining PNG saving options. All arguments have the same meaning as [Advanced PNG compression](configuration.md#advanced-png-compression) configs. All arguments are optional and can be omitted.
 
-### GIF options<img class='pro-badge' src='assets/pro.svg' alt='pro' /> :id=gif-options
+### GIF options<i class='badge badge-pro'></i> :id=gif-options
 
 ```
 gif_options:%optimize_frames:%optimize_transparency
@@ -544,7 +544,7 @@ Specifies the resulting image format. Alias for [extension](#extension) URL part
 
 Default: `jpg`
 
-### Page<img class='pro-badge' src='assets/pro.svg' alt='pro' /> :id=page
+### Page<i class='badge badge-pro'></i> :id=page
 
 ```
 page:%page
@@ -555,7 +555,7 @@ When source image supports pagination (PDF, TIFF) or animation (GIF, WebP), this
 
 Default: 0
 
-### Video thumbnail second<img class='pro-badge' src='assets/pro.svg' alt='pro' /> :id=video-thumbnail-second
+### Video thumbnail second<i class='badge badge-pro'></i> :id=video-thumbnail-second
 
 ```
 video_thumbnail_second:%second
@@ -564,7 +564,7 @@ vts:%second
 
 Allows redefining `IMGPROXY_VIDEO_THUMBNAIL_SECOND` config.
 
-### Fallback image URL<img class='pro-badge' src='assets/pro.svg' alt='pro' />
+### Fallback image URL<i class='badge badge-pro'></i><i class='badge badge-v3'></i> :id=fallback-image-url
 
 You can use a custom fallback image specifying its URL with `fallback_image_url` processing option:
 

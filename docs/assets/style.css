@@ -85,13 +85,34 @@ body::before {
   }
 }
 
-.pro-badge {
-  height: 1em;
+i.badge::before {
+  display: inline-block;
+  height: 1.5em;
+  line-height: 1.5em;
   vertical-align: middle;
+  border: 1px solid;
+  font-size: .6em;
+  font-weight: 700;
+  font-style: normal;
+  border-radius: 0.75em;
+  padding: 0 .5em;
 }
 
-h1 .pro-badge, h2 .pro-badge, h3 .pro-badge, h4 .pro-badge {
-  margin-left: .25ch;
+i.badge-pro::before {
+  content: "pro";
+  color: #177bd3;
+  border-color: #177bd3;
+  text-transform: uppercase;
+}
+
+i.badge-v3::before {
+  content: "v3";
+  color: #ff7401;
+  border-color: #ff7401;
+}
+
+h1 i.badge, h2 i.badge, h3 i.badge, h4 i.badge, .sidebar-nav i.badge {
+  margin-left: .5ch;
 }
 
 .github-edit-btn {
