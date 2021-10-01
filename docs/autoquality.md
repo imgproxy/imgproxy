@@ -29,6 +29,7 @@ IMGPROXY_AUTOQUALITY_METHOD="none"
 With this method, imgproxy will try to degrade the quality so your image fit the desired file size.
 
 **Method name:** `size`
+
 **Target:** desired file size
 
 #### Config example
@@ -54,6 +55,7 @@ IMGPROXY_AUTOQUALITY_FORMAT_MAX="avif=50"
 With this method imgproxy will try to select the quality so the saved image would have the desired [DSSIM](https://en.wikipedia.org/wiki/Structural_similarity#Structural_Dissimilarity) value.
 
 **Method name:** `dssim`
+
 **Target:** desired DSSIM value
 
 #### Config example
@@ -84,6 +86,7 @@ This method is almost the same as [DSSIM](#autoquality-by-dssim) but imgproxy wi
 **📝Note:** When this method is used, imgproxy will save JPEG images with the most optimal [advanced JPEG compression](configuration.md#advanced-jpeg-compression) settings ignoring config and processing options.
 
 **Method name:** `ml`
+
 **Target:** desired DSSIM value
 
 #### Config example
