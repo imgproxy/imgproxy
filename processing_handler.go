@@ -99,6 +99,8 @@ func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, res
 
 	if config.EnableDebugHeaders {
 		rw.Header().Set("X-Origin-Content-Length", strconv.Itoa(len(originData.Data)))
+		rw.Header().Set("X-Origin-Width", resultData.Headers["X-Origin-Width"])
+		rw.Header().Set("X-Origin-Height", resultData.Headers["X-Origin-Height"])
 	}
 
 	rw.Header().Set("Content-Length", strconv.Itoa(len(resultData.Data)))

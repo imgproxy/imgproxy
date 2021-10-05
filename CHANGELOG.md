@@ -1,6 +1,9 @@
 # Changelog
 
 ## [Unreleased]
+### Added
+- Add `X-Origin-Width` and `X-Origin-Height` to debug headers.
+
 ### Change
 - `dpr` processing option doesn't enlarge image unless `enlarge` is true.
 

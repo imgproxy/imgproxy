@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"runtime"
+	"strconv"
 
 	log "github.com/sirupsen/logrus"
 
@@ -61,6 +62,16 @@ func canFitToBytes(imgtype imagetype.Type) bool {
 	default:
 		return false
 	}
+}
+
+func getImageSize(img *vips.Image) (int, int) {
+	width, height, _, _ := extractMeta(img, 0, true)
+
+	if pages, err := img.GetIntDefault("n-pages", 1); err != nil && pages > 0 {
+		height /= pages
+	}
+
+	return width, height
 }
 
 func transformAnimated(ctx context.Context, img *vips.Image, po *options.ProcessingOptions, imgdata *imagedata.ImageData) error {
@@ -251,6 +262,8 @@ func ProcessImage(ctx context.Context, imgdata *imagedata.ImageData, po *options
 		return nil, err
 	}
 
+	originWidth, originHeight := getImageSize(img)
+
 	if animationSupport && img.IsAnimated() {
 		if err := transformAnimated(ctx, img, po, imgdata); err != nil {
 			return nil, err
@@ -265,9 +278,24 @@ func ProcessImage(ctx context.Context, imgdata *imagedata.ImageData, po *options
 		return nil, err
 	}
 
+	var (
+		outData *imagedata.ImageData
+		err     error
+	)
+
 	if po.MaxBytes > 0 && canFitToBytes(po.Format) {
-		return saveImageToFitBytes(ctx, po, img)
+		outData, err = saveImageToFitBytes(ctx, po, img)
+	} else {
+		outData, err = img.Save(po.Format, po.GetQuality())
 	}
 
-	return img.Save(po.Format, po.GetQuality())
+	if err == nil {
+		if outData.Headers == nil {
+			outData.Headers = make(map[string]string)
+		}
+		outData.Headers["X-Origin-Width"] = strconv.Itoa(originWidth)
+		outData.Headers["X-Origin-Height"] = strconv.Itoa(originHeight)
+	}
+
+	return outData, err
 }
