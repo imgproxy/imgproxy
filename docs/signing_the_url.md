@@ -57,13 +57,13 @@ hello/rs:fill:300:400:0/g:sm/aHR0cDovL2V4YW1w/bGUuY29tL2ltYWdl/cy9jdXJpb3NpdHku/
 Then calculate the HMAC digest of this string using SHA256 and encode it with URL-safe Base64:
 
 ```
-LzIKNN09Lv_LAJhmgqbC6_VFlm0qlW2El5riObZq3BQ
+oKfUtW34Dvo2BGQehJFR4Nr0_rIjOtdtzJ3QFsUcXH8
 ```
 
 And finally put the signature to your URL:
 
 ```
-http://imgproxy.example.com/LzIKNN09Lv_LAJhmgqbC6_VFlm0qlW2El5riObZq3BQ/rs:fill:300:400:0/g:sm/aHR0cDovL2V4YW1w/bGUuY29tL2ltYWdl/cy9jdXJpb3NpdHku/anBn.png
+http://imgproxy.example.com/oKfUtW34Dvo2BGQehJFR4Nr0_rIjOtdtzJ3QFsUcXH8/rs:fill:300:400:0/g:sm/aHR0cDovL2V4YW1w/bGUuY29tL2ltYWdl/cy9jdXJpb3NpdHku/anBn.png
 ```
 
 Now you got the URL that you can use to resize the image securely.
