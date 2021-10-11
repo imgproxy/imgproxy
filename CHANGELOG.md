@@ -1,6 +1,9 @@
 # Changelog
 
 ## [Unreleased]
+### Change
+- `dpr` processing option doesn't enlarge image unless `enlarge` is true.
+
 ### Fix
 - Fix Client Hints behavior. `Width` is physical size, so we should divide it by `DPR` value.
 

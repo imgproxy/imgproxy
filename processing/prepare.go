@@ -67,6 +67,9 @@ func calcScale(width, height int, po *options.ProcessingOptions, imgtype imagety
 		hshrink = srcH / dstH
 	}
 
+	wshrink /= po.Dpr
+	hshrink /= po.Dpr
+
 	if wshrink != 1 || hshrink != 1 {
 		rt := po.ResizingType
 
@@ -119,9 +122,6 @@ func calcScale(width, height int, po *options.ProcessingOptions, imgtype imagety
 			hshrink = minShrink
 		}
 	}
-
-	wshrink /= po.Dpr
-	hshrink /= po.Dpr
 
 	if wshrink > srcW {
 		wshrink = srcW
