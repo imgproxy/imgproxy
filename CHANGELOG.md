@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+### Fix
+- Fix Client Hints behavior. `Width` is physical size, so we should divide it by `DPR` value.
 
 ## [3.0.0.beta1] - 2021-10-01
 ### Added

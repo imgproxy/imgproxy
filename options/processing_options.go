@@ -14,6 +14,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
+	"github.com/imgproxy/imgproxy/v3/imath"
 	"github.com/imgproxy/imgproxy/v3/structdiff"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
@@ -914,6 +915,11 @@ func defaultProcessingOptions(headers http.Header) (*ProcessingOptions, error) {
 	}
 
 	if config.EnableClientHints {
+		if headerDPR := headers.Get("DPR"); len(headerDPR) > 0 {
+			if dpr, err := strconv.ParseFloat(headerDPR, 64); err == nil && (dpr > 0 && dpr <= maxClientHintDPR) {
+				po.Dpr = dpr
+			}
+		}
 		if headerViewportWidth := headers.Get("Viewport-Width"); len(headerViewportWidth) > 0 {
 			if vw, err := strconv.Atoi(headerViewportWidth); err == nil {
 				po.Width = vw
@@ -921,12 +927,7 @@ func defaultProcessingOptions(headers http.Header) (*ProcessingOptions, error) {
 		}
 		if headerWidth := headers.Get("Width"); len(headerWidth) > 0 {
 			if w, err := strconv.Atoi(headerWidth); err == nil {
-				po.Width = w
-			}
-		}
-		if headerDPR := headers.Get("DPR"); len(headerDPR) > 0 {
-			if dpr, err := strconv.ParseFloat(headerDPR, 64); err == nil && (dpr > 0 && dpr <= maxClientHintDPR) {
-				po.Dpr = dpr
+				po.Width = imath.Scale(w, 1/po.Dpr)
 			}
 		}
 	}

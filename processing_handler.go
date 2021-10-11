@@ -59,6 +59,10 @@ func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, res
 	rw.Header().Set("Content-Type", resultData.Type.Mime())
 	rw.Header().Set("Content-Disposition", contentDisposition)
 
+	if po.Dpr != 1 {
+		rw.Header().Set("Content-DPR", strconv.FormatFloat(po.Dpr, 'f', 2, 32))
+	}
+
 	if config.SetCanonicalHeader {
 		if strings.HasPrefix(originURL, "https://") || strings.HasPrefix(originURL, "http://") {
 			linkHeader := fmt.Sprintf(`<%s>; rel="canonical"`, originURL)
