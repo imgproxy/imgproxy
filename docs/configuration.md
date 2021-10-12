@@ -44,7 +44,10 @@ echo $(xxd -g 2 -l 64 -p /dev/random | tr -d '\n')
 * `IMGPROXY_CUSTOM_REQUEST_HEADERS`: <i class='badge badge-pro'></i> list of custom headers that imgproxy will send while requesting the source image, divided by `\;` (can be redefined by `IMGPROXY_CUSTOM_HEADERS_SEPARATOR`). Example: `X-MyHeader1=Lorem\;X-MyHeader2=Ipsum`;
 * `IMGPROXY_CUSTOM_RESPONSE_HEADERS`: <i class='badge badge-pro'></i> list of custom response headers, divided by `\;` (can be redefined by `IMGPROXY_CUSTOM_HEADERS_SEPARATOR`). Example: `X-MyHeader1=Lorem\;X-MyHeader2=Ipsum`;
 * `IMGPROXY_CUSTOM_HEADERS_SEPARATOR`: <i class='badge badge-pro'></i> string that will be used as a custom headers separator. Default: `\;`;
-* `IMGPROXY_ENABLE_DEBUG_HEADERS`: when `true`, imgproxy will add `X-Origin-Content-Length` header with the value is size of the source image. Default: `false`.
+* `IMGPROXY_ENABLE_DEBUG_HEADERS`: when `true`, imgproxy will add debug headers to the response. Default: `false`. The following headers will be added:
+  * `X-Origin-Content-Length`: size of the source image.
+  * `X-Origin-Width`: width of the source image.
+  * `X-Origin-Height`: height of the source image.
 
 ## Security
 
