@@ -130,7 +130,11 @@ func FromFile(path, desc string) (*ImageData, error) {
 func Download(imageURL, desc string, header http.Header) (*ImageData, error) {
 	imgdata, err := download(imageURL, header)
 	if err != nil {
-		return nil, ierrors.WrapWithMessage(err, 1, fmt.Sprintf("Can't download %s: %s", desc, err))
+		if nmErr, ok := err.(*ErrorNotModified); ok {
+			nmErr.Message = fmt.Sprintf("Can't download %s: %s", desc, nmErr.Message)
+			return nil, nmErr
+		}
+		return nil, ierrors.WrapWithPrefix(err, 1, fmt.Sprintf("Can't download %s", desc))
 	}
 
 	return imgdata, nil

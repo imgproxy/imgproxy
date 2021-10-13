@@ -29,11 +29,18 @@ var (
 
 	// For tests
 	redirectAllRequestsTo string
-
-	ErrNotModified = ierrors.New(http.StatusNotModified, "Not Modified", "Not Modified")
 )
 
 const msgSourceImageIsUnreachable = "Source image is unreachable"
+
+type ErrorNotModified struct {
+	Message string
+	Headers map[string]string
+}
+
+func (e *ErrorNotModified) Error() string {
+	return e.Message
+}
 
 func initDownloading() error {
 	transport := &http.Transport{
@@ -84,6 +91,18 @@ func initDownloading() error {
 	return nil
 }
 
+func headersToStore(res *http.Response) map[string]string {
+	m := make(map[string]string)
+
+	for _, h := range imageHeadersToStore {
+		if val := res.Header.Get(h); len(val) != 0 {
+			m[h] = val
+		}
+	}
+
+	return m
+}
+
 func requestImage(imageURL string, header http.Header) (*http.Response, error) {
 	req, err := http.NewRequest("GET", imageURL, nil)
 	if err != nil {
@@ -104,7 +123,7 @@ func requestImage(imageURL string, header http.Header) (*http.Response, error) {
 	}
 
 	if res.StatusCode == http.StatusNotModified {
-		return nil, ErrNotModified
+		return nil, &ErrorNotModified{Message: "Not Modified", Headers: headersToStore(res)}
 	}
 
 	if res.StatusCode != 200 {
@@ -152,12 +171,7 @@ func download(imageURL string, header http.Header) (*ImageData, error) {
 		return nil, err
 	}
 
-	imgdata.Headers = make(map[string]string)
-	for _, h := range imageHeadersToStore {
-		if val := res.Header.Get(h); len(val) != 0 {
-			imgdata.Headers[h] = val
-		}
-	}
+	imgdata.Headers = headersToStore(res)
 
 	return imgdata, nil
 }

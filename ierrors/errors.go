@@ -62,13 +62,13 @@ func Wrap(err error, skip int) *Error {
 	return NewUnexpected(err.Error(), skip+1)
 }
 
-func WrapWithMessage(err error, skip int, msg string) *Error {
+func WrapWithPrefix(err error, skip int, prefix string) *Error {
 	if ierr, ok := err.(*Error); ok {
 		newErr := *ierr
-		ierr.Message = msg
+		newErr.Message = fmt.Sprintf("%s: %s", prefix, ierr.Message)
 		return &newErr
 	}
-	return NewUnexpected(err.Error(), skip+1)
+	return NewUnexpected(fmt.Sprintf("%s: %s", prefix, err), skip+1)
 }
 
 func callers(skip int) []uintptr {
@@ -86,11 +86,4 @@ func formatStack(stack []uintptr) string {
 	}
 
 	return strings.Join(lines, "\n")
-}
-
-func StatusCode(err error) int {
-	if ierr, ok := err.(*Error); ok {
-		return ierr.StatusCode
-	}
-	return 0
 }

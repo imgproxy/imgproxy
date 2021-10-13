@@ -6,6 +6,7 @@
 
 ### Change
 - `dpr` processing option doesn't enlarge image unless `enlarge` is true.
+- `304 Not Modified` responses includes `Cache-Control`, `Expires`, and `Vary` headers.
 
 ### Fix
 - Fix Client Hints behavior. `Width` is physical size, so we should divide it by `DPR` value.

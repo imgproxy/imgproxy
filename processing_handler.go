@@ -48,6 +48,37 @@ func initProcessingHandler() {
 	headerVaryValue = strings.Join(vary, ", ")
 }
 
+func setCacheControl(rw http.ResponseWriter, originHeaders map[string]string) {
+	var cacheControl, expires string
+
+	if config.CacheControlPassthrough && originHeaders != nil {
+		if val, ok := originHeaders["Cache-Control"]; ok {
+			cacheControl = val
+		}
+		if val, ok := originHeaders["Expires"]; ok {
+			expires = val
+		}
+	}
+
+	if len(cacheControl) == 0 && len(expires) == 0 {
+		cacheControl = fmt.Sprintf("max-age=%d, public", config.TTL)
+		expires = time.Now().Add(time.Second * time.Duration(config.TTL)).Format(http.TimeFormat)
+	}
+
+	if len(cacheControl) > 0 {
+		rw.Header().Set("Cache-Control", cacheControl)
+	}
+	if len(expires) > 0 {
+		rw.Header().Set("Expires", expires)
+	}
+}
+
+func setVary(rw http.ResponseWriter) {
+	if len(headerVaryValue) > 0 {
+		rw.Header().Set("Vary", headerVaryValue)
+	}
+}
+
 func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, resultData *imagedata.ImageData, po *options.ProcessingOptions, originURL string, originData *imagedata.ImageData) {
 	var contentDisposition string
 	if len(po.Filename) > 0 {
@@ -70,32 +101,8 @@ func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, res
 		}
 	}
 
-	var cacheControl, expires string
-
-	if config.CacheControlPassthrough && originData.Headers != nil {
-		if val, ok := originData.Headers["Cache-Control"]; ok {
-			cacheControl = val
-		}
-		if val, ok := originData.Headers["Expires"]; ok {
-			expires = val
-		}
-	}
-
-	if len(cacheControl) == 0 && len(expires) == 0 {
-		cacheControl = fmt.Sprintf("max-age=%d, public", config.TTL)
-		expires = time.Now().Add(time.Second * time.Duration(config.TTL)).Format(http.TimeFormat)
-	}
-
-	if len(cacheControl) > 0 {
-		rw.Header().Set("Cache-Control", cacheControl)
-	}
-	if len(expires) > 0 {
-		rw.Header().Set("Expires", expires)
-	}
-
-	if len(headerVaryValue) > 0 {
-		rw.Header().Set("Vary", headerVaryValue)
-	}
+	setCacheControl(rw, originData.Headers)
+	setVary(rw)
 
 	if config.EnableDebugHeaders {
 		rw.Header().Set("X-Origin-Content-Length", strconv.Itoa(len(originData.Data)))
@@ -120,7 +127,10 @@ func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, res
 	)
 }
 
-func respondWithNotModified(reqID string, r *http.Request, rw http.ResponseWriter, po *options.ProcessingOptions, originURL string) {
+func respondWithNotModified(reqID string, r *http.Request, rw http.ResponseWriter, po *options.ProcessingOptions, originURL string, originHeaders map[string]string) {
+	setCacheControl(rw, originHeaders)
+	setVary(rw)
+
 	rw.WriteHeader(304)
 	router.LogResponse(
 		reqID, r, 304, nil,
@@ -209,14 +219,14 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		defer metrics.StartDownloadingSegment(ctx)()
 		return imagedata.Download(imageURL, "source image", imgRequestHeader)
 	}()
-	switch {
-	case err == nil:
+
+	if err == nil {
 		defer originData.Close()
-	case ierrors.StatusCode(err) == http.StatusNotModified:
+	} else if nmErr, ok := err.(*imagedata.ErrorNotModified); ok && config.ETagEnabled {
 		rw.Header().Set("ETag", etagHandler.GenerateExpectedETag())
-		respondWithNotModified(reqID, r, rw, po, imageURL)
+		respondWithNotModified(reqID, r, rw, po, imageURL, nmErr.Headers)
 		return
-	default:
+	} else {
 		if ierr, ok := err.(*ierrors.Error); !ok || ierr.Unexpected {
 			errorreport.Report(err, r)
 		}
@@ -240,7 +250,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		rw.Header().Set("ETag", etagHandler.GenerateActualETag())
 
 		if imgDataMatch && etagHandler.ProcessingOptionsMatch() {
-			respondWithNotModified(reqID, r, rw, po, imageURL)
+			respondWithNotModified(reqID, r, rw, po, imageURL, originData.Headers)
 			return
 		}
 	}
