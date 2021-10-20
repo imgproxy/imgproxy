@@ -9,6 +9,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	"go.uber.org/automaxprocs/maxprocs"
 
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/errorreport"
@@ -26,6 +27,8 @@ func initialize() error {
 	if err := logger.Init(); err != nil {
 		return err
 	}
+
+	maxprocs.Set(maxprocs.Logger(log.Debugf))
 
 	if err := config.Configure(); err != nil {
 		return err
