@@ -227,7 +227,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		if ierrok {
 			statusCode = ierr.StatusCode
 		}
-		if !ierrok || ierr.Unexpected || config.ReportDownloadingErrors {
+		if config.ReportDownloadingErrors && (!ierrok || ierr.Unexpected) {
 			errorreport.Report(err, r)
 		}
 
