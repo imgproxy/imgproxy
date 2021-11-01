@@ -7,6 +7,8 @@
 ### Change
 - `dpr` processing option doesn't enlarge image unless `enlarge` is true.
 - `304 Not Modified` responses includes `Cache-Control`, `Expires`, and `Vary` headers.
+- imgproxy responds with `500` HTTP code when the source image downloading error seems temporary (timeout, server error, etc).
+- When `IMGPROXY_FALLBACK_IMAGE_HTTP_CODE` is zero, imgproxy responds with the usual HTTP code.
 
 ### Fix
 - Fix Client Hints behavior. `Width` is physical size, so we should divide it by `DPR` value.

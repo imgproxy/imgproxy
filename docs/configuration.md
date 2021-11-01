@@ -221,7 +221,7 @@ You can set up a fallback image that will be used in case imgproxy can't fetch t
 * `IMGPROXY_FALLBACK_IMAGE_DATA`: Base64-encoded image data. You can easily calculate it with `base64 tmp/fallback.png | tr -d '\n'`;
 * `IMGPROXY_FALLBACK_IMAGE_PATH`: path to the locally stored image;
 * `IMGPROXY_FALLBACK_IMAGE_URL`: fallback image URL.
-* `IMGPROXY_FALLBACK_IMAGE_HTTP_CODE`: <i class='badge badge-v3'></i> HTTP code for the fallback image response. Default: `200`.
+* `IMGPROXY_FALLBACK_IMAGE_HTTP_CODE`: <i class='badge badge-v3'></i> HTTP code for the fallback image response. When set to zero, imgproxy will respond with the usual HTTP code. Default: `200`.
 * `IMGPROXY_FALLBACK_IMAGES_CACHE_SIZE`: <i class='badge badge-pro'></i> <i class='badge badge-v3'></i> size of custom fallback images cache. When set to `0`, fallback images cache is disabled. By default 256 fallback images are cached.
 
 ## Skip processing

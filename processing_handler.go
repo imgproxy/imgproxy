@@ -30,8 +30,6 @@ var (
 	headerVaryValue string
 )
 
-type fallbackImageUsedCtxKey struct{}
-
 func initProcessingHandler() {
 	processingSem = make(chan struct{}, config.Concurrency)
 
@@ -79,7 +77,7 @@ func setVary(rw http.ResponseWriter) {
 	}
 }
 
-func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, resultData *imagedata.ImageData, po *options.ProcessingOptions, originURL string, originData *imagedata.ImageData) {
+func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, statusCode int, resultData *imagedata.ImageData, po *options.ProcessingOptions, originURL string, originData *imagedata.ImageData) {
 	var contentDisposition string
 	if len(po.Filename) > 0 {
 		contentDisposition = resultData.Type.ContentDisposition(po.Filename)
@@ -111,10 +109,6 @@ func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, res
 	}
 
 	rw.Header().Set("Content-Length", strconv.Itoa(len(resultData.Data)))
-	statusCode := 200
-	if getFallbackImageUsed(r.Context()) {
-		statusCode = config.FallbackImageHTTPCode
-	}
 	rw.WriteHeader(statusCode)
 	rw.Write(resultData.Data)
 
@@ -215,6 +209,8 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	}
 	defer func() { <-processingSem }()
 
+	statusCode := http.StatusOK
+
 	originData, err := func() (*imagedata.ImageData, error) {
 		defer metrics.StartDownloadingSegment(ctx)()
 		return imagedata.Download(imageURL, "source image", imgRequestHeader)
@@ -227,7 +223,11 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		respondWithNotModified(reqID, r, rw, po, imageURL, nmErr.Headers)
 		return
 	} else {
-		if ierr, ok := err.(*ierrors.Error); !ok || ierr.Unexpected {
+		ierr, ierrok := err.(*ierrors.Error)
+		if ierrok {
+			statusCode = ierr.StatusCode
+		}
+		if !ierrok || ierr.Unexpected {
 			errorreport.Report(err, r)
 		}
 
@@ -238,13 +238,15 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		}
 
 		log.Warningf("Could not load image %s. Using fallback image. %s", imageURL, err.Error())
-		r = r.WithContext(setFallbackImageUsedCtx(r.Context()))
+		if config.FallbackImageHTTPCode > 0 {
+			statusCode = config.FallbackImageHTTPCode
+		}
 		originData = imagedata.FallbackImage
 	}
 
 	router.CheckTimeout(ctx)
 
-	if config.ETagEnabled && !getFallbackImageUsed(ctx) {
+	if config.ETagEnabled && statusCode == http.StatusOK {
 		imgDataMatch := etagHandler.SetActualImageData(originData)
 
 		rw.Header().Set("ETag", etagHandler.GenerateActualETag())
@@ -260,14 +262,14 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	if originData.Type == po.Format || po.Format == imagetype.Unknown {
 		// Don't process SVG
 		if originData.Type == imagetype.SVG {
-			respondWithImage(reqID, r, rw, originData, po, imageURL, originData)
+			respondWithImage(reqID, r, rw, statusCode, originData, po, imageURL, originData)
 			return
 		}
 
 		if len(po.SkipProcessingFormats) > 0 {
 			for _, f := range po.SkipProcessingFormats {
 				if f == originData.Type {
-					respondWithImage(reqID, r, rw, originData, po, imageURL, originData)
+					respondWithImage(reqID, r, rw, statusCode, originData, po, imageURL, originData)
 					return
 				}
 			}
@@ -299,14 +301,5 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 
 	router.CheckTimeout(ctx)
 
-	respondWithImage(reqID, r, rw, resultData, po, imageURL, originData)
-}
-
-func setFallbackImageUsedCtx(ctx context.Context) context.Context {
-	return context.WithValue(ctx, fallbackImageUsedCtxKey{}, true)
-}
-
-func getFallbackImageUsed(ctx context.Context) bool {
-	result, _ := ctx.Value(fallbackImageUsedCtxKey{}).(bool)
-	return result
+	respondWithImage(reqID, r, rw, statusCode, resultData, po, imageURL, originData)
 }

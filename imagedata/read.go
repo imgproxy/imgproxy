@@ -58,7 +58,7 @@ func readAndCheckImage(r io.Reader, contentLength int) (*ImageData, error) {
 		return nil, ErrSourceImageTypeNotSupported
 	}
 	if err != nil {
-		return nil, ierrors.Wrap(checkTimeoutErr(err), 0)
+		return nil, checkTimeoutErr(err)
 	}
 
 	if err = security.CheckDimensions(meta.Width(), meta.Height()); err != nil {
@@ -67,7 +67,7 @@ func readAndCheckImage(r io.Reader, contentLength int) (*ImageData, error) {
 
 	if err = br.Flush(); err != nil {
 		cancel()
-		return nil, ierrors.New(404, checkTimeoutErr(err).Error(), msgSourceImageIsUnreachable).SetUnexpected(config.ReportDownloadingErrors)
+		return nil, checkTimeoutErr(err)
 	}
 
 	return &ImageData{

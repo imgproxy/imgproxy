@@ -21,6 +21,11 @@ import (
 var (
 	downloadClient *http.Client
 
+	enabledSchemes = map[string]struct{}{
+		"http":  {},
+		"https": {},
+	}
+
 	imageHeadersToStore = []string{
 		"Cache-Control",
 		"Expires",
@@ -55,15 +60,20 @@ func initDownloading() error {
 		transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	}
 
+	registerProtocol := func(scheme string, rt http.RoundTripper) {
+		transport.RegisterProtocol(scheme, rt)
+		enabledSchemes[scheme] = struct{}{}
+	}
+
 	if config.LocalFileSystemRoot != "" {
-		transport.RegisterProtocol("local", fsTransport.New())
+		registerProtocol("local", fsTransport.New())
 	}
 
 	if config.S3Enabled {
 		if t, err := s3Transport.New(); err != nil {
 			return err
 		} else {
-			transport.RegisterProtocol("s3", t)
+			registerProtocol("s3", t)
 		}
 	}
 
@@ -71,7 +81,7 @@ func initDownloading() error {
 		if t, err := gcsTransport.New(); err != nil {
 			return err
 		} else {
-			transport.RegisterProtocol("gs", t)
+			registerProtocol("gs", t)
 		}
 	}
 
@@ -79,7 +89,7 @@ func initDownloading() error {
 		if t, err := azureTransport.New(); err != nil {
 			return err
 		} else {
-			transport.RegisterProtocol("abs", t)
+			registerProtocol("abs", t)
 		}
 	}
 
@@ -109,6 +119,14 @@ func requestImage(imageURL string, header http.Header) (*http.Response, error) {
 		return nil, ierrors.New(404, err.Error(), msgSourceImageIsUnreachable).SetUnexpected(config.ReportDownloadingErrors)
 	}
 
+	if _, ok := enabledSchemes[req.URL.Scheme]; !ok {
+		return nil, ierrors.New(
+			404,
+			fmt.Sprintf("Unknown sheme: %s", req.URL.Scheme),
+			msgSourceImageIsUnreachable,
+		).SetUnexpected(config.ReportDownloadingErrors)
+	}
+
 	req.Header.Set("User-Agent", config.UserAgent)
 
 	for k, v := range header {
@@ -119,7 +137,7 @@ func requestImage(imageURL string, header http.Header) (*http.Response, error) {
 
 	res, err := downloadClient.Do(req)
 	if err != nil {
-		return res, ierrors.New(404, checkTimeoutErr(err).Error(), msgSourceImageIsUnreachable).SetUnexpected(config.ReportDownloadingErrors)
+		return nil, ierrors.New(500, checkTimeoutErr(err).Error(), msgSourceImageIsUnreachable).SetUnexpected(config.ReportDownloadingErrors)
 	}
 
 	if res.StatusCode == http.StatusNotModified {
@@ -130,8 +148,13 @@ func requestImage(imageURL string, header http.Header) (*http.Response, error) {
 		body, _ := ioutil.ReadAll(res.Body)
 		res.Body.Close()
 
+		status := 404
+		if res.StatusCode >= 500 {
+			status = 500
+		}
+
 		msg := fmt.Sprintf("Status: %d; %s", res.StatusCode, string(body))
-		return res, ierrors.New(404, msg, msgSourceImageIsUnreachable).SetUnexpected(config.ReportDownloadingErrors)
+		return nil, ierrors.New(status, msg, msgSourceImageIsUnreachable).SetUnexpected(config.ReportDownloadingErrors)
 	}
 
 	return res, nil
@@ -168,7 +191,7 @@ func download(imageURL string, header http.Header) (*ImageData, error) {
 
 	imgdata, err := readAndCheckImage(body, contentLength)
 	if err != nil {
-		return nil, err
+		return nil, ierrors.Wrap(err, 0).SetUnexpected(config.ReportDownloadingErrors)
 	}
 
 	imgdata.Headers = headersToStore(res)
