@@ -31,11 +31,6 @@ func (e *Error) StackTrace() []uintptr {
 	return e.stack
 }
 
-func (e *Error) SetUnexpected(u bool) *Error {
-	e.Unexpected = u
-	return e
-}
-
 func New(status int, msg string, pub string) *Error {
 	return &Error{
 		StatusCode:    status,

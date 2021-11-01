@@ -116,7 +116,7 @@ func headersToStore(res *http.Response) map[string]string {
 func requestImage(imageURL string, header http.Header) (*http.Response, error) {
 	req, err := http.NewRequest("GET", imageURL, nil)
 	if err != nil {
-		return nil, ierrors.New(404, err.Error(), msgSourceImageIsUnreachable).SetUnexpected(config.ReportDownloadingErrors)
+		return nil, ierrors.New(404, err.Error(), msgSourceImageIsUnreachable)
 	}
 
 	if _, ok := enabledSchemes[req.URL.Scheme]; !ok {
@@ -124,7 +124,7 @@ func requestImage(imageURL string, header http.Header) (*http.Response, error) {
 			404,
 			fmt.Sprintf("Unknown sheme: %s", req.URL.Scheme),
 			msgSourceImageIsUnreachable,
-		).SetUnexpected(config.ReportDownloadingErrors)
+		)
 	}
 
 	req.Header.Set("User-Agent", config.UserAgent)
@@ -137,7 +137,7 @@ func requestImage(imageURL string, header http.Header) (*http.Response, error) {
 
 	res, err := downloadClient.Do(req)
 	if err != nil {
-		return nil, ierrors.New(500, checkTimeoutErr(err).Error(), msgSourceImageIsUnreachable).SetUnexpected(config.ReportDownloadingErrors)
+		return nil, ierrors.New(500, checkTimeoutErr(err).Error(), msgSourceImageIsUnreachable)
 	}
 
 	if res.StatusCode == http.StatusNotModified {
@@ -154,7 +154,7 @@ func requestImage(imageURL string, header http.Header) (*http.Response, error) {
 		}
 
 		msg := fmt.Sprintf("Status: %d; %s", res.StatusCode, string(body))
-		return nil, ierrors.New(status, msg, msgSourceImageIsUnreachable).SetUnexpected(config.ReportDownloadingErrors)
+		return nil, ierrors.New(status, msg, msgSourceImageIsUnreachable)
 	}
 
 	return res, nil
@@ -191,7 +191,7 @@ func download(imageURL string, header http.Header) (*ImageData, error) {
 
 	imgdata, err := readAndCheckImage(body, contentLength)
 	if err != nil {
-		return nil, ierrors.Wrap(err, 0).SetUnexpected(config.ReportDownloadingErrors)
+		return nil, ierrors.Wrap(err, 0)
 	}
 
 	imgdata.Headers = headersToStore(res)
