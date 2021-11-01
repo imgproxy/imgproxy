@@ -59,12 +59,12 @@ func scaleOnLoad(pctx *pipelineContext, img *vips.Image, po *options.ProcessingO
 	newWidth, newHeight, _, _ := extractMeta(img, po.Rotate, po.AutoRotate)
 
 	pctx.wscale = float64(pctx.srcWidth) * pctx.wscale / float64(newWidth)
-	if pctx.srcWidth == imath.Scale(pctx.srcWidth, pctx.wscale) {
+	if newWidth == imath.Scale(newWidth, pctx.wscale) {
 		pctx.wscale = 1.0
 	}
 
 	pctx.hscale = float64(pctx.srcHeight) * pctx.hscale / float64(newHeight)
-	if pctx.srcHeight == imath.Scale(pctx.srcHeight, pctx.hscale) {
+	if newHeight == imath.Scale(newHeight, pctx.hscale) {
 		pctx.hscale = 1.0
 	}
 
