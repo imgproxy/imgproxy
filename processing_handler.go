@@ -167,7 +167,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	ctx, downloadcancel, err := downloadImage(ctx)
+	ctx, downloadcancel, err := downloadImage(ctx, r)
 	defer downloadcancel()
 	if err != nil {
 		if newRelicEnabled {

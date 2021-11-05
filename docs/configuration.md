@@ -85,6 +85,16 @@ Also you may want imgproxy to respond with the same error message that it writes
 
 * `IMGPROXY_DEVELOPMENT_ERRORS_MODE`: when true, imgproxy will respond with detailed error messages. Not recommended for production because some errors may contain stack trace.
 
+## Cookies
+
+imgproxy can pass through cookies in image requests. This can be activated with `IMGPROXY_COOKIE_PASSTHROUGH`. Unfortunately a `Cookie` header doesn't contain information for which URLs these cookies are applicable, so imgproxy can only assume (or must be told).
+
+When cookie forwarding is activated, imgproxy by default assumes the scope of the cookies to be all URLs with the same hostname/port and request scheme as given by the headers `X-Forwarded-Host`, `X-Forwarded-Port`, `X-Forwarded-Scheme` or `Host`. To change that use `IMGPROXY_COOKIE_BASE_URL`.
+
+* `IMGPROXY_COOKIE_PASSTHROUGH`: when `true`, incoming cookies will be passed through to the image request if they are applicable for the image URL. Default: false;
+
+* `IMGPROXY_COOKIE_BASE_URL`: when set, assume that cookies have a scope of this URL for the incoming request (instead of using the request headers). If the cookies are applicable to the image URL too, they will be passed along in the image request.
+
 ## Compression
 
 * `IMGPROXY_QUALITY`: default quality of the resulting image, percentage. Default: `80`;

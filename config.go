@@ -226,6 +226,7 @@ type config struct {
 
 	TTL                     int
 	CacheControlPassthrough bool
+	CookiePassthrough       bool
 	SetCanonicalHeader      bool
 
 	SoReuseport bool
@@ -289,7 +290,8 @@ type config struct {
 
 	ETagEnabled bool
 
-	BaseURL string
+	BaseURL          string
+	CookieBaseURL    string
 
 	Presets     presets
 	OnlyPresets bool
@@ -384,6 +386,7 @@ func configure() error {
 
 	intEnvConfig(&conf.TTL, "IMGPROXY_TTL")
 	boolEnvConfig(&conf.CacheControlPassthrough, "IMGPROXY_CACHE_CONTROL_PASSTHROUGH")
+	boolEnvConfig(&conf.CookiePassthrough, "IMGPROXY_COOKIE_PASSTHROUGH")
 	boolEnvConfig(&conf.SetCanonicalHeader, "IMGPROXY_SET_CANONICAL_HEADER")
 
 	boolEnvConfig(&conf.SoReuseport, "IMGPROXY_SO_REUSEPORT")
@@ -467,6 +470,7 @@ func configure() error {
 	boolEnvConfig(&conf.ETagEnabled, "IMGPROXY_USE_ETAG")
 
 	strEnvConfig(&conf.BaseURL, "IMGPROXY_BASE_URL")
+	strEnvConfig(&conf.CookieBaseURL, "IMGPROXY_COOKIE_BASE_URL")
 
 	if err := presetEnvConfig(conf.Presets, "IMGPROXY_PRESETS"); err != nil {
 		return err

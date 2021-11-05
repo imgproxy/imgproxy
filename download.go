@@ -10,7 +10,10 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"net/http/cookiejar"
+	"net/url"
 	"time"
+	"golang.org/x/net/publicsuffix"
 
 	"github.com/imgproxy/imgproxy/v2/imagemeta"
 )
@@ -171,10 +174,53 @@ func readAndCheckImage(r io.Reader, contentLength int) (*imageData, error) {
 	return &imageData{buf.Bytes(), imgtype, cancel}, nil
 }
 
-func requestImage(imageURL string) (*http.Response, error) {
+func requestImage(imageURL string, r *http.Request) (*http.Response, error) {
 	req, err := http.NewRequest("GET", imageURL, nil)
 	if err != nil {
 		return nil, newError(404, err.Error(), msgSourceImageIsUnreachable).SetUnexpected(conf.ReportDownloadingErrors)
+	}
+
+	if conf.CookiePassthrough && r != nil {
+		jar, err := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
+		if err != nil {
+			return nil, err
+		}
+
+		cookieBase := conf.CookieBaseURL
+
+		if len(cookieBase) == 0 {
+			scheme := r.Header.Get("X-Forwarded-Proto")
+			if len(scheme) == 0 {
+				scheme = "https"
+			}
+			host := r.Header.Get("X-Forwarded-Host")
+			if len(host) == 0 {
+				host = r.Header.Get("Host")
+			}
+			if len(host) == 0 {
+				cookieBase = ""
+			} else {
+				port := r.Header.Get("X-Forwarded-Port")
+				if len(port) > 0 {
+					host = host + ":" + port
+				}
+				cookieBase = scheme + "://" + host + "/"
+			}
+		}
+
+		if len(cookieBase) > 0 {
+			cookieBaseURL, err := url.Parse(cookieBase)
+
+			if err != nil {
+				return nil, err
+			}
+
+			jar.SetCookies(cookieBaseURL, r.Cookies())
+
+			for _, cookie := range jar.Cookies(req.URL) {
+				req.AddCookie(cookie)
+			}
+		}
 	}
 
 	req.Header.Set("User-Agent", conf.UserAgent)
@@ -193,7 +239,7 @@ func requestImage(imageURL string) (*http.Response, error) {
 	return res, nil
 }
 
-func downloadImage(ctx context.Context) (context.Context, context.CancelFunc, error) {
+func downloadImage(ctx context.Context, r *http.Request) (context.Context, context.CancelFunc, error) {
 	imageURL := getImageURL(ctx)
 
 	if newRelicEnabled {
@@ -205,7 +251,7 @@ func downloadImage(ctx context.Context) (context.Context, context.CancelFunc, er
 		defer startPrometheusDuration(prometheusDownloadDuration)()
 	}
 
-	res, err := requestImage(imageURL)
+	res, err := requestImage(imageURL, r)
 	if res != nil {
 		defer res.Body.Close()
 	}
