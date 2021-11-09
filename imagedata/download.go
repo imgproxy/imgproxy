@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"net/http/cookiejar"
 	"time"
 
 	"github.com/imgproxy/imgproxy/v3/config"
@@ -113,7 +114,7 @@ func headersToStore(res *http.Response) map[string]string {
 	return m
 }
 
-func requestImage(imageURL string, header http.Header) (*http.Response, error) {
+func requestImage(imageURL string, header http.Header, jar *cookiejar.Jar) (*http.Response, error) {
 	req, err := http.NewRequest("GET", imageURL, nil)
 	if err != nil {
 		return nil, ierrors.New(404, err.Error(), msgSourceImageIsUnreachable)
@@ -125,6 +126,12 @@ func requestImage(imageURL string, header http.Header) (*http.Response, error) {
 			fmt.Sprintf("Unknown sheme: %s", req.URL.Scheme),
 			msgSourceImageIsUnreachable,
 		)
+	}
+
+	if jar != nil {
+		for _, cookie := range jar.Cookies(req.URL) {
+			req.AddCookie(cookie)
+		}
 	}
 
 	req.Header.Set("User-Agent", config.UserAgent)
@@ -160,13 +167,13 @@ func requestImage(imageURL string, header http.Header) (*http.Response, error) {
 	return res, nil
 }
 
-func download(imageURL string, header http.Header) (*ImageData, error) {
+func download(imageURL string, header http.Header, jar *cookiejar.Jar) (*ImageData, error) {
 	// We use this for testing
 	if len(redirectAllRequestsTo) > 0 {
 		imageURL = redirectAllRequestsTo
 	}
 
-	res, err := requestImage(imageURL, header)
+	res, err := requestImage(imageURL, header, jar)
 	if res != nil {
 		defer res.Body.Close()
 	}

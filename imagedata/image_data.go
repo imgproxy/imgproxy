@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/http"
+	"net/http/cookiejar"
 	"os"
 	"strings"
 	"sync"
@@ -70,7 +71,7 @@ func loadWatermark() (err error) {
 	}
 
 	if len(config.WatermarkURL) > 0 {
-		Watermark, err = Download(config.WatermarkURL, "watermark", nil)
+		Watermark, err = Download(config.WatermarkURL, "watermark", nil, nil)
 		return
 	}
 
@@ -89,7 +90,7 @@ func loadFallbackImage() (err error) {
 	}
 
 	if len(config.FallbackImageURL) > 0 {
-		FallbackImage, err = Download(config.FallbackImageURL, "fallback image", nil)
+		FallbackImage, err = Download(config.FallbackImageURL, "fallback image", nil, nil)
 		return
 	}
 
@@ -127,8 +128,8 @@ func FromFile(path, desc string) (*ImageData, error) {
 	return imgdata, nil
 }
 
-func Download(imageURL, desc string, header http.Header) (*ImageData, error) {
-	imgdata, err := download(imageURL, header)
+func Download(imageURL, desc string, header http.Header, jar *cookiejar.Jar) (*ImageData, error) {
+	imgdata, err := download(imageURL, header, jar)
 	if err != nil {
 		if nmErr, ok := err.(*ErrorNotModified); ok {
 			nmErr.Message = fmt.Sprintf("Can't download %s: %s", desc, nmErr.Message)

@@ -3,7 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"net/http"
+	"net/http/cookiejar"
+	"golang.org/x/net/publicsuffix"
 	"strconv"
 	"strings"
 	"time"
@@ -135,6 +138,48 @@ func respondWithNotModified(reqID string, r *http.Request, rw http.ResponseWrite
 	)
 }
 
+func cookieJarFromRequest(r *http.Request) (*cookiejar.Jar, error) {
+	jar, err := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
+	if err != nil {
+		return nil, err
+	}
+
+	if config.CookiePassthrough && r != nil {
+		cookieBase := config.CookieBaseURL
+
+		if len(cookieBase) == 0 {
+			scheme := r.Header.Get("X-Forwarded-Proto")
+			if len(scheme) == 0 {
+				scheme = "http"
+			}
+			host := r.Header.Get("X-Forwarded-Host")
+			if len(host) == 0 {
+				host = r.Header.Get("Host")
+			}
+			if len(host) == 0 {
+				cookieBase = ""
+			} else {
+				port := r.Header.Get("X-Forwarded-Port")
+				if len(port) > 0 {
+					host = host + ":" + port
+				}
+				cookieBase = scheme + "://" + host + "/"
+			}
+		}
+
+		if len(cookieBase) > 0 {
+			cookieBaseURL, err := url.Parse(cookieBase)
+
+			if err != nil {
+				return nil, err
+			}
+
+			jar.SetCookies(cookieBaseURL, r.Cookies())
+		}
+	}
+	return jar, nil
+}
+
 func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	ctx, timeoutCancel := context.WithTimeout(r.Context(), time.Duration(config.WriteTimeout)*time.Second)
 	defer timeoutCancel()
@@ -175,6 +220,11 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		panic(ierrors.New(404, fmt.Sprintf("Source URL is not allowed: %s", imageURL), "Invalid source"))
 	}
 
+	jar, err := cookieJarFromRequest(r)
+	if err != nil {
+		panic(err)
+	}
+
 	// SVG is a special case. Though saving to svg is not supported, SVG->SVG is.
 	if !vips.SupportsSave(po.Format) && po.Format != imagetype.Unknown && po.Format != imagetype.SVG {
 		panic(ierrors.New(
@@ -213,7 +263,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 
 	originData, err := func() (*imagedata.ImageData, error) {
 		defer metrics.StartDownloadingSegment(ctx)()
-		return imagedata.Download(imageURL, "source image", imgRequestHeader)
+		return imagedata.Download(imageURL, "source image", imgRequestHeader, jar)
 	}()
 
 	if err == nil {
