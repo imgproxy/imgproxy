@@ -56,7 +56,7 @@ Defines how imgproxy will resize the source image. Supported resizing types are:
 
 * `fit`: resizes the image while keeping aspect ratio to fit given size;
 * `fill`: resizes the image while keeping aspect ratio to fill given size and cropping projecting parts;
-* `fill-down`: same as `fill`, but if the resized image is smaller than the requested size, imgproxy will crop the result to keep the requested aspect ratio;
+* `fill-down`: <i class='badge badge-v3'></i> same as `fill`, but if the resized image is smaller than the requested size, imgproxy will crop the result to keep the requested aspect ratio;
 * `force`: resizes the image without keeping aspect ratio;
 * `auto`: if both source and resulting dimensions have the same orientation (portrait or landscape), imgproxy will use `fill`. Otherwise, it will use `fit`.
 
@@ -95,7 +95,7 @@ Defines the height of the resulting image. When set to `0`, imgproxy will calcul
 
 Default: `0`
 
-### Min width
+### Min width<i class='badge badge-v3'></i> :id=min-width
 
 ```
 min-width:%width
@@ -108,7 +108,7 @@ Defines the minimum width of the resulting image.
 
 Default: `0`
 
-### Min height
+### Min height<i class='badge badge-v3'></i> :id=min-height
 
 ```
 min-height:%height
@@ -179,9 +179,9 @@ Default: `ce:0:0`
 
 **Special gravities**:
 
-* `gravity:sm` - smart gravity. `libvips` detects the most "interesting" section of the image and considers it as the center of the resulting image. Offsets are not applicable here;
-* `gravity:obj:%class_name1:%class_name2:...:%class_nameN` - <i class='badge badge-pro'></i> <i class='badge badge-v3'></i> object-oriented gravity. imgproxy [detects objects](object_detection.md) of provided classes on the image and calculates the resulting image center using their positions. If class names are omited, imgproxy will use all the detected objects.
-* `gravity:fp:%x:%y` - focus point gravity. `x` and `y` are floating point numbers between 0 and 1 that define the coordinates of the center of the resulting image. Treat 0 and 1 as right/left for `x` and top/bottom for `y`.
+* `gravity:sm`: smart gravity. `libvips` detects the most "interesting" section of the image and considers it as the center of the resulting image. Offsets are not applicable here;
+* `gravity:obj:%class_name1:%class_name2:...:%class_nameN`: <i class='badge badge-pro'></i> <i class='badge badge-v3'></i> object-oriented gravity. imgproxy [detects objects](object_detection.md) of provided classes on the image and calculates the resulting image center using their positions. If class names are omited, imgproxy will use all the detected objects.
+* `gravity:fp:%x:%y`: focus point gravity. `x` and `y` are floating point numbers between 0 and 1 that define the coordinates of the center of the resulting image. Treat 0 and 1 as right/left for `x` and top/bottom for `y`.
 
 ### Crop
 
@@ -470,7 +470,7 @@ Redefines quality of the resulting image, percentage. When `0`, quality is assum
 
 Default: 0.
 
-### Format quality
+### Format quality<i class='badge badge-v3'></i> :id=format-quality
 
 ```
 format_quality:%format1:%quality1:%format2:%quality2:...:%formatN:%qualityN
@@ -479,7 +479,7 @@ fq:%format1:%quality1:%format2:%quality2:...:%formatN:%qualityN
 
 Adds or redefines `IMGPROXY_FORMAT_QUALITY` values.
 
-### Autoquality
+### Autoquality<i class='badge badge-pro'></i><i class='badge badge-v3'></i> :id=autoquality
 
 ```
 autoquality:%method:%target:%min_quality:%max_quality:%allowed_error
@@ -577,7 +577,7 @@ Where `url` is Base64-encoded URL of the custom fallback image.
 
 Default: blank
 
-### Skip processing
+### Skip processing<i class='badge badge-v3'></i> :id=skip-processing
 
 ```
 skip_processing:%extension1:%extension2:...:%extensionN
@@ -605,7 +605,7 @@ It's highly recommended to prefer `cachebuster` option over URL query string bec
 
 Default: empty
 
-### Expires
+### Expires<i class='badge badge-v3'></i> :id=expires
 
 ```
 expires:%timestamp
