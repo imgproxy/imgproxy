@@ -13,6 +13,7 @@ import (
 	"math"
 	"os"
 	"runtime"
+	"sync"
 	"unsafe"
 
 	log "github.com/sirupsen/logrus"
@@ -29,8 +30,8 @@ type Image struct {
 }
 
 var (
-	typeSupportLoad = make(map[imagetype.Type]bool)
-	typeSupportSave = make(map[imagetype.Type]bool)
+	typeSupportLoad sync.Map
+	typeSupportSave sync.Map
 )
 
 var vipsConf struct {
@@ -123,8 +124,8 @@ func hasOperation(name string) bool {
 }
 
 func SupportsLoad(it imagetype.Type) bool {
-	if sup, ok := typeSupportLoad[it]; ok {
-		return sup
+	if sup, ok := typeSupportLoad.Load(it); ok {
+		return sup.(bool)
 	}
 
 	sup := false
@@ -148,36 +149,36 @@ func SupportsLoad(it imagetype.Type) bool {
 		sup = hasOperation("tiffload_buffer")
 	}
 
-	typeSupportLoad[it] = sup
+	typeSupportLoad.Store(it, sup)
 
 	return sup
 }
 
 func SupportsSave(it imagetype.Type) bool {
-	if sup, ok := typeSupportSave[it]; ok {
-		return sup
+	if sup, ok := typeSupportSave.Load(it); ok {
+		return sup.(bool)
 	}
 
 	sup := false
 
 	switch it {
 	case imagetype.JPEG:
-		return hasOperation("jpegsave_buffer")
+		sup = hasOperation("jpegsave_buffer")
 	case imagetype.PNG, imagetype.ICO:
-		return hasOperation("pngsave_buffer")
+		sup = hasOperation("pngsave_buffer")
 	case imagetype.WEBP:
-		return hasOperation("webpsave_buffer")
+		sup = hasOperation("webpsave_buffer")
 	case imagetype.GIF:
-		return hasOperation("magicksave_buffer")
+		sup = hasOperation("magicksave_buffer")
 	case imagetype.AVIF:
-		return hasOperation("heifsave_buffer")
+		sup = hasOperation("heifsave_buffer")
 	case imagetype.BMP:
-		return true
+		sup = true
 	case imagetype.TIFF:
-		return hasOperation("tiffsave_buffer")
+		sup = hasOperation("tiffsave_buffer")
 	}
 
-	typeSupportSave[it] = sup
+	typeSupportSave.Store(it, sup)
 
 	return sup
 }
