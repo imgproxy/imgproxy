@@ -16,13 +16,13 @@ require (
 	github.com/honeybadger-io/honeybadger-go v0.5.0
 	github.com/ianlancetaylor/cgosymbolizer v0.0.0-20201204192058-7acc97e53614 // indirect
 	github.com/matoous/go-nanoid/v2 v2.0.0
-	github.com/newrelic/go-agent/v3 v3.13.0
+	github.com/newrelic/go-agent/v3 v3.15.1
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/philhofer/fwd v1.1.1 // indirect
 	github.com/prometheus/client_golang v1.11.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.0
-	go.uber.org/automaxprocs v1.4.0 // indirect
+	go.uber.org/automaxprocs v1.4.0
 	golang.org/x/image v0.0.0-20201208152932-35266b937fa6
 	golang.org/x/net v0.0.0-20210503060351-7fd8e65b6420
 	golang.org/x/sys v0.0.0-20210603125802-9665404d3644
