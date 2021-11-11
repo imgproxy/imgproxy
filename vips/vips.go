@@ -138,14 +138,12 @@ func SupportsLoad(it imagetype.Type) bool {
 		sup = hasOperation("webpload_buffer")
 	case imagetype.GIF:
 		sup = hasOperation("gifload_buffer")
-	case imagetype.ICO:
+	case imagetype.ICO, imagetype.BMP:
 		sup = true
 	case imagetype.SVG:
 		sup = hasOperation("svgload_buffer")
 	case imagetype.HEIC, imagetype.AVIF:
 		sup = hasOperation("heifload_buffer")
-	case imagetype.BMP:
-		sup = hasOperation("magickload_buffer")
 	case imagetype.TIFF:
 		sup = hasOperation("tiffload_buffer")
 	}
@@ -169,10 +167,12 @@ func SupportsSave(it imagetype.Type) bool {
 		return hasOperation("pngsave_buffer")
 	case imagetype.WEBP:
 		return hasOperation("webpsave_buffer")
-	case imagetype.GIF, imagetype.BMP:
+	case imagetype.GIF:
 		return hasOperation("magicksave_buffer")
 	case imagetype.AVIF:
 		return hasOperation("heifsave_buffer")
+	case imagetype.BMP:
+		return true
 	case imagetype.TIFF:
 		return hasOperation("tiffsave_buffer")
 	}
@@ -206,6 +206,10 @@ func (img *Image) Load(imgdata *imagedata.ImageData, shrink int, scale float64, 
 		return img.loadIco(imgdata.Data, shrink, scale, pages)
 	}
 
+	if imgdata.Type == imagetype.BMP {
+		return img.loadBmp(imgdata.Data)
+	}
+
 	var tmp *C.VipsImage
 
 	data := unsafe.Pointer(&imgdata.Data[0])
@@ -225,8 +229,6 @@ func (img *Image) Load(imgdata *imagedata.ImageData, shrink int, scale float64, 
 		err = C.vips_svgload_go(data, dataSize, C.double(scale), &tmp)
 	case imagetype.HEIC, imagetype.AVIF:
 		err = C.vips_heifload_go(data, dataSize, &tmp)
-	case imagetype.BMP:
-		err = C.vips_bmpload_go(data, dataSize, &tmp)
 	case imagetype.TIFF:
 		err = C.vips_tiffload_go(data, dataSize, &tmp)
 	default:
@@ -244,6 +246,10 @@ func (img *Image) Load(imgdata *imagedata.ImageData, shrink int, scale float64, 
 func (img *Image) Save(imgtype imagetype.Type, quality int) (*imagedata.ImageData, error) {
 	if imgtype == imagetype.ICO {
 		return img.saveAsIco()
+	}
+
+	if imgtype == imagetype.BMP {
+		return img.saveAsBmp()
 	}
 
 	var ptr unsafe.Pointer
@@ -265,8 +271,6 @@ func (img *Image) Save(imgtype imagetype.Type, quality int) (*imagedata.ImageDat
 		err = C.vips_gifsave_go(img.VipsImage, &ptr, &imgsize)
 	case imagetype.AVIF:
 		err = C.vips_avifsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality), vipsConf.AvifSpeed)
-	case imagetype.BMP:
-		err = C.vips_bmpsave_go(img.VipsImage, &ptr, &imgsize)
 	case imagetype.TIFF:
 		err = C.vips_tiffsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality))
 	default:
