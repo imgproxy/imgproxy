@@ -1,19 +1,23 @@
 package vips
 
-import "github.com/imgproxy/imgproxy/v3/imagetype"
+import (
+	"sync"
+
+	"github.com/imgproxy/imgproxy/v3/imagetype"
+)
 
 func DisableLoadSupport(it imagetype.Type) {
-	typeSupportLoad[it] = false
+	typeSupportLoad.Store(it, false)
 }
 
 func ResetLoadSupport() {
-	typeSupportLoad = make(map[imagetype.Type]bool)
+	typeSupportLoad = sync.Map{}
 }
 
 func DisableSaveSupport(it imagetype.Type) {
-	typeSupportSave[it] = false
+	typeSupportSave.Store(it, false)
 }
 
 func ResetSaveSupport() {
-	typeSupportSave = make(map[imagetype.Type]bool)
+	typeSupportSave = sync.Map{}
 }

@@ -20,8 +20,9 @@ int vips_webpload_go(void *buf, size_t len, double scale, int pages, VipsImage *
 int vips_gifload_go(void *buf, size_t len, int pages, VipsImage **out);
 int vips_svgload_go(void *buf, size_t len, double scale, VipsImage **out);
 int vips_heifload_go(void *buf, size_t len, VipsImage **out);
-int vips_bmpload_go(void *buf, size_t len, VipsImage **out);
 int vips_tiffload_go(void *buf, size_t len, VipsImage **out);
+
+int vips_black_go(VipsImage **out, int width, int height, int bands);
 
 int vips_get_orientation(VipsImage *image);
 void vips_strip_meta(VipsImage *image);
@@ -85,7 +86,6 @@ int vips_pngsave_go(VipsImage *in, void **buf, size_t *len, int interlace, int q
 int vips_webpsave_go(VipsImage *in, void **buf, size_t *len, int quality);
 int vips_gifsave_go(VipsImage *in, void **buf, size_t *len);
 int vips_avifsave_go(VipsImage *in, void **buf, size_t *len, int quality, int speed);
-int vips_bmpsave_go(VipsImage *in, void **buf, size_t *len);
 int vips_tiffsave_go(VipsImage *in, void **buf, size_t *len, int quality);
 
 void vips_cleanup();

@@ -90,13 +90,20 @@ vips_heifload_go(void *buf, size_t len, VipsImage **out) {
 }
 
 int
-vips_bmpload_go(void *buf, size_t len, VipsImage **out) {
-  return vips_magickload_buffer(buf, len, out, NULL);
+vips_tiffload_go(void *buf, size_t len, VipsImage **out) {
+  return vips_tiffload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, NULL);
 }
 
 int
-vips_tiffload_go(void *buf, size_t len, VipsImage **out) {
-  return vips_tiffload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, NULL);
+vips_black_go(VipsImage **out, int width, int height, int bands) {
+  VipsImage *tmp;
+
+  int res = vips_black(&tmp, width, height, "bands", bands, NULL) ||
+    vips_copy(tmp, out, "interpretation", VIPS_INTERPRETATION_sRGB, NULL);
+
+  clear_image(&tmp);
+
+  return res;
 }
 
 int
@@ -633,11 +640,6 @@ vips_avifsave_go(VipsImage *in, void **buf, size_t *len, int quality, int speed)
   vips_error("vips_avifsave_go", "Saving AVIF is not supported (libvips 8.9+ reuired)");
   return 1;
 #endif
-}
-
-int
-vips_bmpsave_go(VipsImage *in, void **buf, size_t *len) {
-  return vips_magicksave_buffer(in, buf, len, "format", "bmp", NULL);
 }
 
 void

@@ -13,6 +13,7 @@ import (
 	"math"
 	"os"
 	"runtime"
+	"sync"
 	"unsafe"
 
 	log "github.com/sirupsen/logrus"
@@ -29,8 +30,8 @@ type Image struct {
 }
 
 var (
-	typeSupportLoad = make(map[imagetype.Type]bool)
-	typeSupportSave = make(map[imagetype.Type]bool)
+	typeSupportLoad sync.Map
+	typeSupportSave sync.Map
 )
 
 var vipsConf struct {
@@ -123,8 +124,8 @@ func hasOperation(name string) bool {
 }
 
 func SupportsLoad(it imagetype.Type) bool {
-	if sup, ok := typeSupportLoad[it]; ok {
-		return sup
+	if sup, ok := typeSupportLoad.Load(it); ok {
+		return sup.(bool)
 	}
 
 	sup := false
@@ -138,46 +139,46 @@ func SupportsLoad(it imagetype.Type) bool {
 		sup = hasOperation("webpload_buffer")
 	case imagetype.GIF:
 		sup = hasOperation("gifload_buffer")
-	case imagetype.ICO:
+	case imagetype.ICO, imagetype.BMP:
 		sup = true
 	case imagetype.SVG:
 		sup = hasOperation("svgload_buffer")
 	case imagetype.HEIC, imagetype.AVIF:
 		sup = hasOperation("heifload_buffer")
-	case imagetype.BMP:
-		sup = hasOperation("magickload_buffer")
 	case imagetype.TIFF:
 		sup = hasOperation("tiffload_buffer")
 	}
 
-	typeSupportLoad[it] = sup
+	typeSupportLoad.Store(it, sup)
 
 	return sup
 }
 
 func SupportsSave(it imagetype.Type) bool {
-	if sup, ok := typeSupportSave[it]; ok {
-		return sup
+	if sup, ok := typeSupportSave.Load(it); ok {
+		return sup.(bool)
 	}
 
 	sup := false
 
 	switch it {
 	case imagetype.JPEG:
-		return hasOperation("jpegsave_buffer")
+		sup = hasOperation("jpegsave_buffer")
 	case imagetype.PNG, imagetype.ICO:
-		return hasOperation("pngsave_buffer")
+		sup = hasOperation("pngsave_buffer")
 	case imagetype.WEBP:
-		return hasOperation("webpsave_buffer")
-	case imagetype.GIF, imagetype.BMP:
-		return hasOperation("magicksave_buffer")
+		sup = hasOperation("webpsave_buffer")
+	case imagetype.GIF:
+		sup = hasOperation("magicksave_buffer")
 	case imagetype.AVIF:
-		return hasOperation("heifsave_buffer")
+		sup = hasOperation("heifsave_buffer")
+	case imagetype.BMP:
+		sup = true
 	case imagetype.TIFF:
-		return hasOperation("tiffsave_buffer")
+		sup = hasOperation("tiffsave_buffer")
 	}
 
-	typeSupportSave[it] = sup
+	typeSupportSave.Store(it, sup)
 
 	return sup
 }
@@ -206,6 +207,10 @@ func (img *Image) Load(imgdata *imagedata.ImageData, shrink int, scale float64, 
 		return img.loadIco(imgdata.Data, shrink, scale, pages)
 	}
 
+	if imgdata.Type == imagetype.BMP {
+		return img.loadBmp(imgdata.Data)
+	}
+
 	var tmp *C.VipsImage
 
 	data := unsafe.Pointer(&imgdata.Data[0])
@@ -225,8 +230,6 @@ func (img *Image) Load(imgdata *imagedata.ImageData, shrink int, scale float64, 
 		err = C.vips_svgload_go(data, dataSize, C.double(scale), &tmp)
 	case imagetype.HEIC, imagetype.AVIF:
 		err = C.vips_heifload_go(data, dataSize, &tmp)
-	case imagetype.BMP:
-		err = C.vips_bmpload_go(data, dataSize, &tmp)
 	case imagetype.TIFF:
 		err = C.vips_tiffload_go(data, dataSize, &tmp)
 	default:
@@ -244,6 +247,10 @@ func (img *Image) Load(imgdata *imagedata.ImageData, shrink int, scale float64, 
 func (img *Image) Save(imgtype imagetype.Type, quality int) (*imagedata.ImageData, error) {
 	if imgtype == imagetype.ICO {
 		return img.saveAsIco()
+	}
+
+	if imgtype == imagetype.BMP {
+		return img.saveAsBmp()
 	}
 
 	var ptr unsafe.Pointer
@@ -265,8 +272,6 @@ func (img *Image) Save(imgtype imagetype.Type, quality int) (*imagedata.ImageDat
 		err = C.vips_gifsave_go(img.VipsImage, &ptr, &imgsize)
 	case imagetype.AVIF:
 		err = C.vips_avifsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality), vipsConf.AvifSpeed)
-	case imagetype.BMP:
-		err = C.vips_bmpsave_go(img.VipsImage, &ptr, &imgsize)
 	case imagetype.TIFF:
 		err = C.vips_tiffsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality))
 	default:
