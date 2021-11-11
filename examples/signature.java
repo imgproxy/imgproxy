@@ -10,7 +10,7 @@ import javax.crypto.spec.SecretKeySpec;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class ImgProxy{
-    
+
     @Test
     public void testWithJavaHmacApacheBase64ImgProxyTest() throws Exception {
         byte[] key = hexStringToByteArray("943b421c9eb07c830af81030552c86009268de4e532ba2ee2eab8247c6da0881");
@@ -33,7 +33,7 @@ public class ImgProxy{
 
         String encodedUrl = Base64.getUrlEncoder().withoutPadding().encodeToString(url.getBytes());
 
-        String path = "/" + resize + "/" + width + "/" + height + "/" + gravity + "/" + enlarge + "/" + encodedUrl + "." + extension;
+        String path = "/rs:" + resize + ":" + width + ":" + height + ":" + enlarge + "/g:" + gravity + "/" + encodedUrl + "." + extension;
 
         Mac sha256HMAC = Mac.getInstance(HMACSHA256);
         SecretKeySpec secretKey = new SecretKeySpec(key, HMACSHA256);

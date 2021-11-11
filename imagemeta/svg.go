@@ -6,12 +6,10 @@ import (
 	"fmt"
 	"io"
 	"strings"
-	"sync/atomic"
 
+	"github.com/imgproxy/imgproxy/v3/config"
 	"golang.org/x/text/encoding/charmap"
 )
-
-var maxSvgBytes int64 = 32 * 1024
 
 type svgHeader struct {
 	XMLName xml.Name
@@ -24,12 +22,8 @@ func xmlCharsetReader(charset string, input io.Reader) (io.Reader, error) {
 	return nil, fmt.Errorf("Unknown SVG charset: %s", charset)
 }
 
-func SetMaxSvgCheckRead(n int) {
-	atomic.StoreInt64(&maxSvgBytes, int64(n))
-}
-
 func IsSVG(r io.Reader) (bool, error) {
-	maxBytes := int(atomic.LoadInt64(&maxSvgBytes))
+	maxBytes := config.MaxSvgCheckBytes
 
 	var h svgHeader
 

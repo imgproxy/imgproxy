@@ -22,9 +22,8 @@ echo $(xxd -g 2 -l 64 -p /dev/random | tr -d '\n')
 Signature is an URL-safe Base64-encoded HMAC digest of the rest of the path, including the leading `/`. Here is how it is calculated:
 
 * Take the path part after the signature:
-  * For [basic URL format](generating_the_url_basic.md): `/%resizing_type/%width/%height/%gravity/%enlarge/%encoded_url.%extension` or `/%resizing_type/%width/%height/%gravity/%enlarge/plain/%plain_url@%extension`;
-  * For [advanced URL format](generating_the_url_advanced.md): `/%processing_options/%encoded_url.%extension` or `/%processing_options/plain/%plain_url@%extension`;
-  * For [info URL](getting_the_image_info.md): `/%encoded_url` or `/plain/%plain_url`;
+  * For [processing URLs](generating_the_url.md): `/%processing_options/%encoded_url.%extension` or `/%processing_options/plain/%plain_url@%extension`;
+  * For [info URLs](getting_the_image_info.md): `/%encoded_url` or `/plain/%plain_url`;
 * Add salt to the beginning;
 * Calculate the HMAC digest using SHA256;
 * Encode the result with URL-safe Base64.
@@ -38,7 +37,7 @@ And here is a step-by-step example of calculating the URL signature:
 Assume that you have the following unsigned URL:
 
 ```
-http://imgproxy.example.com/insecure/fill/300/400/sm/0/aHR0cDovL2V4YW1w/bGUuY29tL2ltYWdl/cy9jdXJpb3NpdHku/anBn.png
+http://imgproxy.example.com/insecure/rs:fill:300:400:0/g:sm/aHR0cDovL2V4YW1w/bGUuY29tL2ltYWdl/cy9jdXJpb3NpdHku/anBn.png
 ```
 
 To sign it, you need to configure imgproxy to use your key/salt pair. Let's say, your key and salt are `secret` and `hello` — that translates to `736563726574` and `68656C6C6F` in hex encoding. This key/salt pair is quite weak for production use but will do for this example. Run your imgproxy using this key/salt pair:
@@ -52,19 +51,19 @@ Note that all your unsigned URL will stop working since imgproxy now checks sign
 First, you need to take the path after the signature and add the salt to the beginning:
 
 ```
-hello/fill/300/400/sm/0/aHR0cDovL2V4YW1w/bGUuY29tL2ltYWdl/cy9jdXJpb3NpdHku/anBn.png
+hello/rs:fill:300:400:0/g:sm/aHR0cDovL2V4YW1w/bGUuY29tL2ltYWdl/cy9jdXJpb3NpdHku/anBn.png
 ```
 
 Then calculate the HMAC digest of this string using SHA256 and encode it with URL-safe Base64:
 
 ```
-AfrOrF3gWeDA6VOlDG4TzxMv39O7MXnF4CXpKUwGqRM
+oKfUtW34Dvo2BGQehJFR4Nr0_rIjOtdtzJ3QFsUcXH8
 ```
 
 And finally put the signature to your URL:
 
 ```
-http://imgproxy.example.com/AfrOrF3gWeDA6VOlDG4TzxMv39O7MXnF4CXpKUwGqRM/fill/300/400/sm/0/aHR0cDovL2V4YW1w/bGUuY29tL2ltYWdl/cy9jdXJpb3NpdHku/anBn.png
+http://imgproxy.example.com/oKfUtW34Dvo2BGQehJFR4Nr0_rIjOtdtzJ3QFsUcXH8/rs:fill:300:400:0/g:sm/aHR0cDovL2V4YW1w/bGUuY29tL2ltYWdl/cy9jdXJpb3NpdHku/anBn.png
 ```
 
 Now you got the URL that you can use to resize the image securely.

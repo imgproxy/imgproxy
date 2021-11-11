@@ -2,6 +2,8 @@ package imagemeta
 
 import (
 	"io"
+
+	"github.com/imgproxy/imgproxy/v3/imagetype"
 )
 
 func DecodeGifMeta(r io.Reader) (Meta, error) {
@@ -13,7 +15,7 @@ func DecodeGifMeta(r io.Reader) (Meta, error) {
 	}
 
 	return &meta{
-		format: "gif",
+		format: imagetype.GIF,
 		width:  int(tmp[6]) + int(tmp[7])<<8,
 		height: int(tmp[8]) + int(tmp[9])<<8,
 	}, nil

@@ -3,6 +3,8 @@ package imagemeta
 import (
 	"bufio"
 	"io"
+
+	"github.com/imgproxy/imgproxy/v3/imagetype"
 )
 
 const (
@@ -101,7 +103,7 @@ func DecodeJpegMeta(rr io.Reader) (Meta, error) {
 			}
 
 			return &meta{
-				format: "jpeg",
+				format: imagetype.JPEG,
 				width:  int(tmp[3])<<8 + int(tmp[4]),
 				height: int(tmp[1])<<8 + int(tmp[2]),
 			}, nil

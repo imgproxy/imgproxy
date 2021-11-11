@@ -24,7 +24,7 @@ const gravity = 'no'
 const enlarge = 1
 const extension = 'png'
 const encoded_url = urlSafeBase64(url)
-const path = `/${resizing_type}/${width}/${height}/${gravity}/${enlarge}/${encoded_url}.${extension}`
+const path = `/rs:${resizing_type}:${width}:${height}:${enlarge}/g:${gravity}/${encoded_url}.${extension}`
 
 const signature = sign(SALT, path, KEY)
 const result = `/${signature}${path}`

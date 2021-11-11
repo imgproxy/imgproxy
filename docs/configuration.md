@@ -41,10 +41,13 @@ echo $(xxd -g 2 -l 64 -p /dev/random | tr -d '\n')
 * `IMGPROXY_PATH_PREFIX`: URL path prefix. Example: when set to `/abc/def`, imgproxy URL will be `/abc/def/%signature/%processing_options/%source_url`. Default: blank.
 * `IMGPROXY_USER_AGENT`: User-Agent header that will be sent with source image request. Default: `imgproxy/%current_version`;
 * `IMGPROXY_USE_ETAG`: when `true`, enables using [ETag](https://en.wikipedia.org/wiki/HTTP_ETag) HTTP header for HTTP cache control. Default: false;
-* `IMGPROXY_CUSTOM_REQUEST_HEADERS`: <img class='pro-badge' src='assets/pro.svg' alt='pro' /> list of custom headers that imgproxy will send while requesting the source image, divided by `\;` (can be redefined by `IMGPROXY_CUSTOM_HEADERS_SEPARATOR`). Example: `X-MyHeader1=Lorem\;X-MyHeader2=Ipsum`;
-* `IMGPROXY_CUSTOM_RESPONSE_HEADERS`: <img class='pro-badge' src='assets/pro.svg' alt='pro' /> list of custom response headers, divided by `\;` (can be redefined by `IMGPROXY_CUSTOM_HEADERS_SEPARATOR`). Example: `X-MyHeader1=Lorem\;X-MyHeader2=Ipsum`;
-* `IMGPROXY_CUSTOM_HEADERS_SEPARATOR`: <img class='pro-badge' src='assets/pro.svg' alt='pro' /> string that will be used as a custom headers separator. Default: `\;`;
-* `IMGPROXY_ENABLE_DEBUG_HEADERS`: when `true`, imgproxy will add `X-Origin-Content-Length` header with the value is size of the source image. Default: `false`.
+* `IMGPROXY_CUSTOM_REQUEST_HEADERS`: <i class='badge badge-pro'></i> list of custom headers that imgproxy will send while requesting the source image, divided by `\;` (can be redefined by `IMGPROXY_CUSTOM_HEADERS_SEPARATOR`). Example: `X-MyHeader1=Lorem\;X-MyHeader2=Ipsum`;
+* `IMGPROXY_CUSTOM_RESPONSE_HEADERS`: <i class='badge badge-pro'></i> list of custom response headers, divided by `\;` (can be redefined by `IMGPROXY_CUSTOM_HEADERS_SEPARATOR`). Example: `X-MyHeader1=Lorem\;X-MyHeader2=Ipsum`;
+* `IMGPROXY_CUSTOM_HEADERS_SEPARATOR`: <i class='badge badge-pro'></i> string that will be used as a custom headers separator. Default: `\;`;
+* `IMGPROXY_ENABLE_DEBUG_HEADERS`: when `true`, imgproxy will add debug headers to the response. Default: `false`. The following headers will be added:
+  * `X-Origin-Content-Length`: size of the source image.
+  * `X-Origin-Width`: width of the source image.
+  * `X-Origin-Height`: height of the source image.
 
 ## Security
 
@@ -85,20 +88,30 @@ Also you may want imgproxy to respond with the same error message that it writes
 
 * `IMGPROXY_DEVELOPMENT_ERRORS_MODE`: when true, imgproxy will respond with detailed error messages. Not recommended for production because some errors may contain stack trace.
 
+## Cookies
+
+imgproxy can pass through cookies in image requests. This can be activated with `IMGPROXY_COOKIE_PASSTHROUGH`. Unfortunately a `Cookie` header doesn't contain information for which URLs these cookies are applicable, so imgproxy can only assume (or must be told).
+
+When cookie forwarding is activated, imgproxy by default assumes the scope of the cookies to be all URLs with the same hostname/port and request scheme as given by the headers `X-Forwarded-Host`, `X-Forwarded-Port`, `X-Forwarded-Scheme` or `Host`. To change that use `IMGPROXY_COOKIE_BASE_URL`.
+
+* `IMGPROXY_COOKIE_PASSTHROUGH`: when `true`, incoming cookies will be passed through to the image request if they are applicable for the image URL. Default: false;
+
+* `IMGPROXY_COOKIE_BASE_URL`: when set, assume that cookies have a scope of this URL for the incoming request (instead of using the request headers). If the cookies are applicable to the image URL too, they will be passed along in the image request.
+
+
 ## Compression
 
 * `IMGPROXY_QUALITY`: default quality of the resulting image, percentage. Default: `80`;
 * `IMGPROXY_FORMAT_QUALITY`: default quality of the resulting image per format, comma divided. Example: `jpeg=70,avif=40,webp=60`. When value for the resulting format is not set, `IMGPROXY_QUALITY` value is used. Default: `avif=50`.
-* `IMGPROXY_GZIP_COMPRESSION`: GZip compression level. Default: `5`.
 
 ### Advanced JPEG compression
 
 * `IMGPROXY_JPEG_PROGRESSIVE`: when true, enables progressive JPEG compression. Default: false;
-* `IMGPROXY_JPEG_NO_SUBSAMPLE`: <img class='pro-badge' src='assets/pro.svg' alt='pro' /> when true, chrominance subsampling is disabled. This will improve quality at the cost of larger file size. Default: false;
-* `IMGPROXY_JPEG_TRELLIS_QUANT`: <img class='pro-badge' src='assets/pro.svg' alt='pro' /> when true, enables trellis quantisation for each 8x8 block. Reduces file size but increases compression time. Default: false;
-* `IMGPROXY_JPEG_OVERSHOOT_DERINGING`: <img class='pro-badge' src='assets/pro.svg' alt='pro' /> when true, enables overshooting of samples with extreme values. Overshooting may reduce ringing artifacts from compression, in particular in areas where black text appears on a white background. Default: false;
-* `IMGPROXY_JPEG_OPTIMIZE_SCANS`: <img class='pro-badge' src='assets/pro.svg' alt='pro' /> when true, split the spectrum of DCT coefficients into separate scans. Reduces file size but increases compression time. Requires `IMGPROXY_JPEG_PROGRESSIVE` to be true. Default: false;
-* `IMGPROXY_JPEG_QUANT_TABLE`: <img class='pro-badge' src='assets/pro.svg' alt='pro' /> quantization table to use. Supported values are:
+* `IMGPROXY_JPEG_NO_SUBSAMPLE`: <i class='badge badge-pro'></i> when true, chrominance subsampling is disabled. This will improve quality at the cost of larger file size. Default: false;
+* `IMGPROXY_JPEG_TRELLIS_QUANT`: <i class='badge badge-pro'></i> when true, enables trellis quantisation for each 8x8 block. Reduces file size but increases compression time. Default: false;
+* `IMGPROXY_JPEG_OVERSHOOT_DERINGING`: <i class='badge badge-pro'></i> when true, enables overshooting of samples with extreme values. Overshooting may reduce ringing artifacts from compression, in particular in areas where black text appears on a white background. Default: false;
+* `IMGPROXY_JPEG_OPTIMIZE_SCANS`: <i class='badge badge-pro'></i> when true, split the spectrum of DCT coefficients into separate scans. Reduces file size but increases compression time. Requires `IMGPROXY_JPEG_PROGRESSIVE` to be true. Default: false;
+* `IMGPROXY_JPEG_QUANT_TABLE`: <i class='badge badge-pro'></i> quantization table to use. Supported values are:
   * `0`: Table from JPEG Annex K (default);
   * `1`: Flat table;
   * `2`: Table tuned for MSSIM on Kodak image set;
@@ -119,12 +132,30 @@ Also you may want imgproxy to respond with the same error message that it writes
 
 ### Advanced GIF compression
 
-* `IMGPROXY_GIF_OPTIMIZE_FRAMES`: <img class='pro-badge' src='assets/pro.svg' alt='pro' /> when true, enables GIF frames optimization. This may produce a smaller result, but may increase compression time.
-* `IMGPROXY_GIF_OPTIMIZE_TRANSPARENCY`: <img class='pro-badge' src='assets/pro.svg' alt='pro' /> when true, enables GIF transparency optimization. This may produce a smaller result, but may increase compression time.
+* `IMGPROXY_GIF_OPTIMIZE_FRAMES`: <i class='badge badge-pro'></i> when true, enables GIF frames optimization. This may produce a smaller result, but may increase compression time.
+* `IMGPROXY_GIF_OPTIMIZE_TRANSPARENCY`: <i class='badge badge-pro'></i> when true, enables GIF transparency optimization. This may produce a smaller result, but may increase compression time.
 
 ### Advanced AVIF compression
 
 * `IMGPROXY_AVIF_SPEED`: controls the CPU effort spent improving compression. 0 slowest - 8 fastest. Default: `5`;
+
+### Autoquality
+
+imgproxy can calculate the quality of the resulting image based on selected metric. Read more in the [Autoquality](autoquality.md) guide.
+
+**⚠️Warning:** Autoquality requires the image to be saved several times. Use it only when you prefer the resulting size and quality over the speed.
+
+* `IMGPROXY_AUTOQUALITY_METHOD`: <i class='badge badge-pro'></i> <i class='badge badge-v3'></i> the method of quality calculation. Default: `none`.
+* `IMGPROXY_AUTOQUALITY_TARGET`: <i class='badge badge-pro'></i> <i class='badge badge-v3'></i> desired value of the autoquality method metric. Default: 0.02.
+* `IMGPROXY_AUTOQUALITY_MIN`: <i class='badge badge-pro'></i> <i class='badge badge-v3'></i> minimal quality imgproxy can use. Default: 70.
+* `IMGPROXY_AUTOQUALITY_FORMAT_MIN`: <i class='badge badge-pro'></i> <i class='badge badge-v3'></i> minimal quality imgproxy can use per format, comma divided. Example: `jpeg=70,avif=40,webp=60`. When value for the resulting format is not set, `IMGPROXY_AUTOQUALITY_MIN` value is used. Default: `avif=40`.
+* `IMGPROXY_AUTOQUALITY_MAX`: <i class='badge badge-pro'></i> <i class='badge badge-v3'></i> maximal quality imgproxy can use. Default: 80.
+* `IMGPROXY_AUTOQUALITY_FORMAT_MAX`: <i class='badge badge-pro'></i> <i class='badge badge-v3'></i> maximal quality imgproxy can use per format, comma divided. Example: `jpeg=70,avif=40,webp=60`. When value for the resulting format is not set, `IMGPROXY_AUTOQUALITY_MAX` value is used. Default: `avif=50`.
+* `IMGPROXY_AUTOQUALITY_ALLOWED_ERROR`: <i class='badge badge-pro'></i> <i class='badge badge-v3'></i> allowed `IMGPROXY_AUTOQUALITY_TARGET` error. Applicable only to `dssim` and `ml` methods. Default: 0.001.
+* `IMGPROXY_AUTOQUALITY_MAX_RESOLUTION`: <i class='badge badge-pro'></i> <i class='badge badge-v3'></i> when value is greater then zero and the result resolution exceeds the value, autoquality won't be used. Default: 0.
+* `IMGPROXY_AUTOQUALITY_JPEG_NET`: <i class='badge badge-pro'></i> <i class='badge badge-v3'></i> path to the neural network for JPEG.
+* `IMGPROXY_AUTOQUALITY_WEBP_NET`: <i class='badge badge-pro'></i> <i class='badge badge-v3'></i> path to the neural network for WebP.
+* `IMGPROXY_AUTOQUALITY_AVIF_NET`: <i class='badge badge-pro'></i> <i class='badge badge-v3'></i> path to the neural network for AVIF.
 
 ## AVIF/WebP support detection
 
@@ -155,10 +186,10 @@ imgproxy can use the `Width`, `Viewport-Width` or `DPR` HTTP headers to determin
 
 imgproxy Pro can extract specific frames of videos to create thumbnails. The feature is disabled by default, but can be enabled with `IMGPROXY_ENABLE_VIDEO_THUMBNAILS`.
 
-* `IMGPROXY_ENABLE_VIDEO_THUMBNAILS`: <img class='pro-badge' src='assets/pro.svg' alt='pro' /> then true, enables video thumbnails generation. Default: false;
-* `IMGPROXY_VIDEO_THUMBNAIL_SECOND`: <img class='pro-badge' src='assets/pro.svg' alt='pro' /> the timestamp of the frame in seconds that will be used for a thumbnail. Default: 1.
-* `IMGPROXY_VIDEO_THUMBNAIL_PROBE_SIZE`: <img class='pro-badge' src='assets/pro.svg' alt='pro' /> the maximum amount of bytes used to determine the format. Lower values can decrease memory usage but can produce inaccurate data or even lead to errors. Default: 5000000.
-* `IMGPROXY_VIDEO_THUMBNAIL_MAX_ANALYZE_DURATION`: <img class='pro-badge' src='assets/pro.svg' alt='pro' /> the maximum of milliseconds used to get the stream info. Low values can decrease memory usage but can produce inaccurate data or even lead to errors. When set to 0, the heuristic is used. Default: 0.
+* `IMGPROXY_ENABLE_VIDEO_THUMBNAILS`: <i class='badge badge-pro'></i> then true, enables video thumbnails generation. Default: false;
+* `IMGPROXY_VIDEO_THUMBNAIL_SECOND`: <i class='badge badge-pro'></i> the timestamp of the frame in seconds that will be used for a thumbnail. Default: 1.
+* `IMGPROXY_VIDEO_THUMBNAIL_PROBE_SIZE`: <i class='badge badge-pro'></i> the maximum amount of bytes used to determine the format. Lower values can decrease memory usage but can produce inaccurate data or even lead to errors. Default: 5000000.
+* `IMGPROXY_VIDEO_THUMBNAIL_MAX_ANALYZE_DURATION`: <i class='badge badge-pro'></i> the maximum of milliseconds used to get the stream info. Low values can decrease memory usage but can produce inaccurate data or even lead to errors. When set to 0, the heuristic is used. Default: 0.
 
 **⚠️Warning:** Though using `IMGPROXY_VIDEO_THUMBNAIL_PROBE_SIZE` and `IMGPROXY_VIDEO_THUMBNAIL_MAX_ANALYZE_DURATION` can lower the memory footprint of video thumbnails generation, you should use them in production only when you know what are you doing.
 
@@ -168,7 +199,7 @@ imgproxy Pro can extract specific frames of videos to create thumbnails. The fea
 * `IMGPROXY_WATERMARK_PATH`: path to the locally stored image;
 * `IMGPROXY_WATERMARK_URL`: watermark image URL;
 * `IMGPROXY_WATERMARK_OPACITY`: watermark base opacity;
-* `IMGPROXY_WATERMARKS_CACHE_SIZE`: <img class='pro-badge' src='assets/pro.svg' alt='pro' /> size of custom watermarks cache. When set to `0`, watermarks cache is disabled. By default 256 watermarks are cached.
+* `IMGPROXY_WATERMARKS_CACHE_SIZE`: <i class='badge badge-pro'></i> size of custom watermarks cache. When set to `0`, watermarks cache is disabled. By default 256 watermarks are cached.
 
 Read more about watermarks in the [Watermark](watermark.md) guide.
 
@@ -176,12 +207,23 @@ Read more about watermarks in the [Watermark](watermark.md) guide.
 
 imgproxy Pro can apply unsharpening mask to your images.
 
-* `IMGPROXY_UNSHARPENING_MODE`: <img class='pro-badge' src='assets/pro.svg' alt='pro' /> controls when unsharpenning mask should be applied. The following modes are supported:
+* `IMGPROXY_UNSHARPENING_MODE`: <i class='badge badge-pro'></i> controls when unsharpenning mask should be applied. The following modes are supported:
   * `auto`: _(default)_ apply unsharpening mask only when image is downscaled and `sharpen` option is not set.
   * `none`: don't apply the unsharpening mask.
   * `always`: always apply the unsharpening mask.
-* `IMGPROXY_UNSHARPENING_WEIGHT`: <img class='pro-badge' src='assets/pro.svg' alt='pro' /> a floating-point number that defines how neighbor pixels will affect the current pixel. Greater the value - sharper the image. Should be greater than zero. Default: `1`.
-* `IMGPROXY_UNSHARPENING_DIVIDOR`: <img class='pro-badge' src='assets/pro.svg' alt='pro' /> a floating-point number that defines the unsharpening strength. Lesser the value - sharper the image. Should be greater than zero. Default: `24`.
+* `IMGPROXY_UNSHARPENING_WEIGHT`: <i class='badge badge-pro'></i> a floating-point number that defines how neighbor pixels will affect the current pixel. Greater the value - sharper the image. Should be greater than zero. Default: `1`.
+* `IMGPROXY_UNSHARPENING_DIVIDOR`: <i class='badge badge-pro'></i> a floating-point number that defines the unsharpening strength. Lesser the value - sharper the image. Should be greater than zero. Default: `24`.
+
+## Object detection
+
+imgproxy can detect objects on the image and use them for smart crop, bluring the detections, or drawing the detections.
+
+* `IMGPROXY_OBJECT_DETECTION_CONFIG`: <i class='badge badge-pro'></i> <i class='badge badge-v3'></i> path to the neural network config. Default: blank.
+* `IMGPROXY_OBJECT_DETECTION_WEIGHTS`: <i class='badge badge-pro'></i> <i class='badge badge-v3'></i> path to the neural network weights. Default: blank.
+* `IMGPROXY_OBJECT_DETECTION_CLASSES`: <i class='badge badge-pro'></i> <i class='badge badge-v3'></i> path to the text file with the classes names, one by line. Default: blank.
+* `IMGPROXY_OBJECT_DETECTION_NET_SIZE`: <i class='badge badge-pro'></i> <i class='badge badge-v3'></i> the size of the neural network input. The width and the heights of the inputs should be the same, so this config value should be a single number. Default: 416.
+* `IMGPROXY_OBJECT_DETECTION_CONFIDENCE_THRESHOLD`: <i class='badge badge-pro'></i> <i class='badge badge-v3'></i> the detections with confidences below this value will be discarded. Default: 0.2.
+* `IMGPROXY_OBJECT_DETECTION_NMS_THRESHOLD`: <i class='badge badge-pro'></i> <i class='badge badge-v3'></i> non max supression threshold. Don't change this if you don't know what you're doing. Default: 0.4.
 
 ## Fallback image
 
@@ -190,6 +232,8 @@ You can set up a fallback image that will be used in case imgproxy can't fetch t
 * `IMGPROXY_FALLBACK_IMAGE_DATA`: Base64-encoded image data. You can easily calculate it with `base64 tmp/fallback.png | tr -d '\n'`;
 * `IMGPROXY_FALLBACK_IMAGE_PATH`: path to the locally stored image;
 * `IMGPROXY_FALLBACK_IMAGE_URL`: fallback image URL.
+* `IMGPROXY_FALLBACK_IMAGE_HTTP_CODE`: <i class='badge badge-v3'></i> HTTP code for the fallback image response. When set to zero, imgproxy will respond with the usual HTTP code. Default: `200`.
+* `IMGPROXY_FALLBACK_IMAGES_CACHE_SIZE`: <i class='badge badge-pro'></i> <i class='badge badge-v3'></i> size of custom fallback images cache. When set to `0`, fallback images cache is disabled. By default 256 fallback images are cached.
 
 ## Skip processing
 
@@ -199,7 +243,7 @@ You can configure imgproxy to skip processing of some formats:
 
 **📝Note:** Processing can be skipped only when the requested format is the same as the source format.
 
-**📝Note:** Video thumbnails processing can't be skipped.
+**📝Note:** Video thumbnail processing can't be skipped.
 
 ## Presets
 
@@ -288,6 +332,14 @@ imgproxy can collect its metrics for Prometheus. Specify binding for Prometheus 
 * `IMGPROXY_PROMETHEUS_NAMESPACE`: Namespace (prefix) for imgproxy metrics. Default: blank.
 
 Check out the [Prometheus](prometheus.md) guide to learn more.
+
+## Datadog metrics
+
+imgproxy can send its metrics to Datadog:
+
+* `IMGPROXY_DATADOG_ENABLE`: <i class='badge badge-v3'></i> when `true`, enables sending metrics to Datadog. Default: false;
+
+Check out the [Datadog](datadog.md) guide to learn more.
 
 ## Error reporting
 

@@ -5,6 +5,8 @@ import (
 	"bytes"
 	"encoding/binary"
 	"io"
+
+	"github.com/imgproxy/imgproxy/v3/imagetype"
 )
 
 var (
@@ -105,7 +107,7 @@ func DecodeTiffMeta(rr io.Reader) (Meta, error) {
 
 		if width > 0 && height > 0 {
 			return &meta{
-				format: "tiff",
+				format: imagetype.TIFF,
 				width:  width,
 				height: height,
 			}, nil

@@ -56,7 +56,7 @@ let originalUrl = "http://img.example.com/pretty/image.jpg";
 let encodedUrl = customBase64(input: Data(originalUrl.utf8))
 let format = "png";
 
-let partialPath = "/\(resizing)/\(width)/\(height)/\(gravity)/\(enlarge)/\(encodedUrl).\(format)"
+let partialPath = "/rs:\(resizing):\(width):\(height):\(enlarge)/g:\(gravity)/\(encodedUrl).\(format)"
 let toSign = salt + partialPath.utf8
 
 let signature = toSign.hmac256(key: key)

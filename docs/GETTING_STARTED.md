@@ -22,11 +22,12 @@ That's it! No further configuration is needed, but if you want to unleash the fu
 ## Resize an image
 
 After you've successfully installed imgproxy, you might want to see if it is working correctly. To check that, you can use the following URL to get the resized image of Matt Damon from "The Martian" movie (replace `localhost:8080` with your domain if you installed imgproxy on a remote server):
-[http://localhost:8080/insecure/fill/300/400/sm/0/aHR0cHM6Ly9tLm1l/ZGlhLWFtYXpvbi5j/b20vaW1hZ2VzL00v/TVY1Qk1tUTNabVk0/TnpZdFkyVm1ZaTAw/WkRSbUxUZ3lPREF0/WldZelpqaGxOemsx/TnpVMlhrRXlYa0Zx/Y0dkZVFYVnlOVGMz/TWpVek5USUAuanBn.jpg](http://localhost:8080/insecure/fill/300/400/sm/0/aHR0cHM6Ly9tLm1l/ZGlhLWFtYXpvbi5j/b20vaW1hZ2VzL00v/TVY1Qk1tUTNabVk0/TnpZdFkyVm1ZaTAw/WkRSbUxUZ3lPREF0/WldZelpqaGxOemsx/TnpVMlhrRXlYa0Zx/Y0dkZVFYVnlOVGMz/TWpVek5USUAuanBn.jpg)
+
+[http://localhost:8080/insecure/rs:fill:300:400/g:sm/aHR0cHM6Ly9tLm1l/ZGlhLWFtYXpvbi5j/b20vaW1hZ2VzL00v/TVY1Qk1tUTNabVk0/TnpZdFkyVm1ZaTAw/WkRSbUxUZ3lPREF0/WldZelpqaGxOemsx/TnpVMlhrRXlYa0Zx/Y0dkZVFYVnlOVGMz/TWpVek5USUAuanBn.jpg](http://localhost:8080/insecure/rs:fill:300:400/g:sm/aHR0cHM6Ly9tLm1l/ZGlhLWFtYXpvbi5j/b20vaW1hZ2VzL00v/TVY1Qk1tUTNabVk0/TnpZdFkyVm1ZaTAw/WkRSbUxUZ3lPREF0/WldZelpqaGxOemsx/TnpVMlhrRXlYa0Zx/Y0dkZVFYVnlOVGMz/TWpVek5USUAuanBn.jpg)
 
 Here's [the original image](https://m.media-amazon.com/images/M/MV5BMmQ3ZmY4NzYtY2VmYi00ZDRmLTgyODAtZWYzZjhlNzk1NzU2XkEyXkFqcGdeQXVyNTc3MjUzNTI@.jpg), just for reference. Using the URL above, imgproxy is told to resize it to fill the area of `300x400` size with "smart" gravity. "Smart" means that the `libvips` library chooses the most "interesting" part of the image.
 
-Learn more on how to generate imgproxy URLs in the [Generating the URL](generating_the_url_basic.md) guide.
+Learn more on how to generate imgproxy URLs in the [Generating the URL](generating_the_url.md) guide.
 
 ## Security
 

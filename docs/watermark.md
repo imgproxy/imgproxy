@@ -19,7 +19,7 @@ You can also specify the base opacity of watermark with `IMGPROXY_WATERMARK_OPAC
 
 ## Watermarking an image
 
-Watermarks are only available with [advanced URL format](generating_the_url_advanced.md). Use `watermark` processing option to put the watermark on the processed image:
+Use `watermark` processing option to put the watermark on the processed image:
 
 ```
 watermark:%opacity:%position:%x_offset:%y_offset:%scale
@@ -43,7 +43,7 @@ Where arguments are:
 * `x_offset`, `y_offset` - (optional) specify watermark offset by X and Y axes. Not applicable to `re` position;
 * `scale` - (optional) floating point number that defines watermark size relative to the resulting image size. When set to `0` or omitted, watermark size won't be changed.
 
-## Custom watermarks<img class='pro-badge' src='assets/pro.svg' alt='pro' /> :id=custom-watermarks
+## Custom watermarks<i class='badge badge-pro'></i> :id=custom-watermarks
 
 You can use a custom watermark specifying its URL with `watermark_url` processing option:
 

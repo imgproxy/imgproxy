@@ -25,7 +25,7 @@ $extension = 'png';
 $url = 'http://img.example.com/pretty/image.jpg';
 $encodedUrl = rtrim(strtr(base64_encode($url), '+/', '-_'), '=');
 
-$path = "/{$resize}/{$width}/{$height}/{$gravity}/{$enlarge}/{$encodedUrl}.{$extension}";
+$path = "/rs:{$resize}:{$width}:{$height}:{$enlarge}/g:{$gravity}/{$encodedUrl}.{$extension}";
 $signature = hash_hmac('sha256', $saltBin.$path, $keyBin, true);
 $signature = pack('A'.IMGPROXY_SIGNATURE_SIZE, $signature);
 $signature = rtrim(strtr(base64_encode($signature), '+/', '-_'), '=');

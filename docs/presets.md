@@ -1,6 +1,6 @@
 # Presets
 
-imgproxy preset is a named set of processing options. Presets can be used in [advanced URL format](generating_the_url_advanced.md#preset) to get shorter and somewhat readable URLs.
+imgproxy preset is a named set of processing options. Presets can be used in [URLs](generating_the_url.md#preset) to make them shorter and somewhat readable.
 
 ## Presets definition
 
@@ -10,7 +10,7 @@ The preset definition looks like this:
 %preset_name=%processing_options
 ```
 
-Processing options should be defined in the same way as you define them in the [advanced URL format](generating_the_url_advanced.md#preset). For example, here is a preset named `awesome` that sets the resizing type to `fill` and resulting format to `jpg`:
+Processing options should be defined in the same way as you define them in the [URLs](generating_the_url.md#processing-options). For example, here is a preset named `awesome` that sets the resizing type to `fill` and resulting format to `jpg`:
 
 ```
 awesome=resizing_type:fill/format:jpg

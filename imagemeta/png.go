@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/binary"
 	"io"
+
+	"github.com/imgproxy/imgproxy/v3/imagetype"
 )
 
 var pngMagick = []byte("\x89PNG\r\n\x1a\n")
@@ -28,7 +30,7 @@ func DecodePngMeta(r io.Reader) (Meta, error) {
 	}
 
 	return &meta{
-		format: "png",
+		format: imagetype.PNG,
 		width:  int(binary.BigEndian.Uint32(tmp[8:12])),
 		height: int(binary.BigEndian.Uint32(tmp[12:16])),
 	}, nil

@@ -1,4 +1,4 @@
-# Getting the image info<img class='pro-badge' src='assets/pro.svg' alt='pro' />
+# Getting the image info<i class='badge badge-pro'></i>
 
 imgproxy can fetch and return the source image info without downloading the whole image.
 
@@ -47,7 +47,10 @@ imgproxy responses with JSON body and returns the following info:
 * `width`: image/video width;
 * `height`: image/video height;
 * `size`: file size. Can be zero if the image source doesn't set `Content-Length` header properly;
-* `exif`: JPEG exif data.
+* `exif`: Exif data;
+* `iptc`: IPTC data.
+
+**📝Note:** There are lots of IPTC tags in the spec, but imgproxy supports only a few of them. If you need some tags to be supported, just contact us.
 
 #### Example (JPEG)
 
@@ -63,6 +66,12 @@ imgproxy responses with JSON body and returns the following info:
     "Date and Time": "2016:09:11 22:15:03",
     "Model": "NIKON D810",
     "Software": "Adobe Photoshop Lightroom 6.1 (Windows)"
+  },
+  "iptc": {
+    "Name": "Spider-Man",
+    "Caption": "Spider-Man swings on the web",
+    "Copyright Notice": "Daily Bugle",
+    "Keywords": ["spider-man", "menance", "offender"]
   }
 }
 ```

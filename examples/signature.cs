@@ -35,7 +35,7 @@ namespace ImgProxy.Examples
             var saltBin = HexadecimalStringToByteArray(salt);
 
             var encodedUrl = EncodeBase64URLSafeString(url);
-            var path = $"/{resize}/{width}/{height}/{gravity}/{enlarge}/{encodedUrl}.{extension}";
+            var path = $"/rs:{resize}:{width}:{height}:{enlarge}/g:{gravity}/{encodedUrl}.{extension}";
 
             var passwordWithSaltBytes = new List<byte>();
             passwordWithSaltBytes.AddRange(saltBin);

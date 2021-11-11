@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/binary"
 	"io"
+
+	"github.com/imgproxy/imgproxy/v3/imagetype"
 )
 
 type IcoMeta struct {
@@ -69,7 +71,7 @@ func DecodeIcoMeta(r io.Reader) (*IcoMeta, error) {
 
 	return &IcoMeta{
 		Meta: &meta{
-			format: "ico",
+			format: imagetype.ICO,
 			width:  width,
 			height: height,
 		},

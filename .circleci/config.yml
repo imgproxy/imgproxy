@@ -16,8 +16,8 @@ workflows:
             - checkout_code
           matrix:
             parameters:
-              go_version: ["1.16", "1.15", "1.14"]
-              vips_version: ["8.10", "8.9", "8.8"]
+              go_version: ["1.17", "1.16"] # Go 1.15 doesn't support io/fs
+              vips_version: ["8.11", "8.10", "8.9"]
 
   release:
     jobs:
@@ -39,6 +39,7 @@ executors:
     working_directory: /go/src/imgproxy
     environment:
       BASH_ENV: "/root/.bashrc"
+      TEST_RESULTS: /tmp/test-results
 
 commands:
   setup_vips:
@@ -66,6 +67,12 @@ commands:
             echo 'export GOPATH=/go' >> $BASH_ENV
             echo 'export PATH="$PATH:$(go env GOPATH)/bin"' >> $BASH_ENV
             echo 'export CGO_LDFLAGS_ALLOW="-s|-w"' >> $BASH_ENV
+      - run:
+          name: Install gotestsum
+          command: |
+            mkdir -p /usr/local/bin && \
+            curl -Ls https://github.com/gotestyourself/gotestsum/releases/download/v1.6.4/gotestsum_1.6.4_linux_amd64.tar.gz | \
+            tar -xzC /usr/local/bin
 
 jobs:
   checkout_code:
@@ -98,7 +105,7 @@ jobs:
           command: curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | BINARY=golangci-lint sh -s -- -b $(go env GOPATH)/bin v1.18.0
       - run:
           name: Lint imgproxy
-          command: golangci-lint run .
+          command: golangci-lint run
 
   build:
     executor: imgproxy
@@ -119,11 +126,18 @@ jobs:
             - go-modules-{{ checksum "go.sum" }}
       - run:
           name: Build imgproxy
-          command: go test -v
+          command: |
+            mkdir -p $TEST_RESULTS && \
+            gotestsum --junitfile ${TEST_RESULTS}/gotestsum-report.xml -- ./...
       - save_cache:
           key: go-modules-{{ checksum "go.sum" }}
           paths:
             - "/go/pkg/mod"
+      - store_artifacts:
+          path: /tmp/test-results
+          destination: raw-test-output
+      - store_test_results:
+          path: /tmp/test-results
 
   publish_github_release:
     executor: imgproxy

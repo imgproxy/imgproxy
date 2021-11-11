@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+
+	"github.com/imgproxy/imgproxy/v3/imagetype"
 )
 
 const heifBoxHeaderSize = int64(8)
@@ -20,12 +22,12 @@ type heifDiscarder interface {
 }
 
 type heifData struct {
-	Format        string
+	Format        imagetype.Type
 	Width, Height int64
 }
 
 func (d *heifData) IsFilled() bool {
-	return len(d.Format) > 0 && d.Width > 0 && d.Height > 0
+	return d.Format != imagetype.Unknown && d.Width > 0 && d.Height > 0
 }
 
 func heifReadN(r io.Reader, n int64) (b []byte, err error) {
@@ -73,12 +75,12 @@ func heifReadBoxHeader(r io.Reader) (boxType string, boxDataSize int64, err erro
 
 func heifAssignFormat(d *heifData, brand []byte) bool {
 	if bytes.Equal(brand, heicBrand) {
-		d.Format = "heic"
+		d.Format = imagetype.HEIC
 		return true
 	}
 
 	if bytes.Equal(brand, avifBrand) {
-		d.Format = "avif"
+		d.Format = imagetype.AVIF
 		return true
 	}
 

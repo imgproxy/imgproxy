@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/binary"
 	"io"
+
+	"github.com/imgproxy/imgproxy/v3/imagetype"
 )
 
 var bmpMagick = []byte("BM")
@@ -42,7 +44,7 @@ func DecodeBmpMeta(r io.Reader) (Meta, error) {
 	}
 
 	return &meta{
-		format: "bmp",
+		format: imagetype.BMP,
 		width:  width,
 		height: height,
 	}, nil

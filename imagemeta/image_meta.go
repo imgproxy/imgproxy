@@ -6,10 +6,12 @@ import (
 	"io"
 	"sync"
 	"sync/atomic"
+
+	"github.com/imgproxy/imgproxy/v3/imagetype"
 )
 
 type Meta interface {
-	Format() string
+	Format() imagetype.Type
 	Width() int
 	Height() int
 }
@@ -17,11 +19,11 @@ type Meta interface {
 type DecodeMetaFunc func(io.Reader) (Meta, error)
 
 type meta struct {
-	format        string
+	format        imagetype.Type
 	width, height int
 }
 
-func (m *meta) Format() string {
+func (m *meta) Format() imagetype.Type {
 	return m.format
 }
 
@@ -91,7 +93,7 @@ func DecodeMeta(r io.Reader) (Meta, error) {
 	if ok, err := IsSVG(rr); err != nil {
 		return nil, err
 	} else if ok {
-		return &meta{format: "svg", width: 1, height: 1}, nil
+		return &meta{format: imagetype.SVG, width: 1, height: 1}, nil
 	}
 
 	return nil, ErrFormat
