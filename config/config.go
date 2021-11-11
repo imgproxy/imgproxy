@@ -27,7 +27,6 @@ var (
 
 	TTL                     int
 	CacheControlPassthrough bool
-	CookiePassthrough       bool
 	SetCanonicalHeader      bool
 
 	SoReuseport bool
@@ -74,7 +73,11 @@ var (
 	IgnoreSslVerification bool
 	DevelopmentErrorsMode bool
 
-	AllowedSources      []*regexp.Regexp
+	AllowedSources []*regexp.Regexp
+
+	CookiePassthrough bool
+	CookieBaseURL     string
+
 	LocalFileSystemRoot string
 	S3Enabled           bool
 	S3Region            string
@@ -88,8 +91,7 @@ var (
 
 	ETagEnabled bool
 
-	BaseURL       string
-	CookieBaseURL string
+	BaseURL string
 
 	Presets     []string
 	OnlyPresets bool
@@ -157,7 +159,6 @@ func Reset() {
 
 	TTL = 3600
 	CacheControlPassthrough = false
-	CookiePassthrough = false
 	SetCanonicalHeader = false
 
 	SoReuseport = false
@@ -205,6 +206,10 @@ func Reset() {
 	DevelopmentErrorsMode = false
 
 	AllowedSources = make([]*regexp.Regexp, 0)
+
+	CookiePassthrough = false
+	CookieBaseURL = ""
+
 	LocalFileSystemRoot = ""
 	S3Enabled = false
 	S3Region = ""
@@ -219,7 +224,6 @@ func Reset() {
 	ETagEnabled = false
 
 	BaseURL = ""
-	CookieBaseURL = ""
 
 	Presets = make([]string, 0)
 	OnlyPresets = false
@@ -283,7 +287,6 @@ func Configure() error {
 
 	configurators.Int(&TTL, "IMGPROXY_TTL")
 	configurators.Bool(&CacheControlPassthrough, "IMGPROXY_CACHE_CONTROL_PASSTHROUGH")
-	configurators.Bool(&CookiePassthrough, "IMGPROXY_COOKIE_PASSTHROUGH")
 	configurators.Bool(&SetCanonicalHeader, "IMGPROXY_SET_CANONICAL_HEADER")
 
 	configurators.Bool(&SoReuseport, "IMGPROXY_SO_REUSEPORT")
@@ -348,6 +351,9 @@ func Configure() error {
 	configurators.Bool(&IgnoreSslVerification, "IMGPROXY_IGNORE_SSL_VERIFICATION")
 	configurators.Bool(&DevelopmentErrorsMode, "IMGPROXY_DEVELOPMENT_ERRORS_MODE")
 
+	configurators.Bool(&CookiePassthrough, "IMGPROXY_COOKIE_PASSTHROUGH")
+	configurators.String(&CookieBaseURL, "IMGPROXY_COOKIE_BASE_URL")
+
 	configurators.String(&LocalFileSystemRoot, "IMGPROXY_LOCAL_FILESYSTEM_ROOT")
 
 	configurators.Bool(&S3Enabled, "IMGPROXY_USE_S3")
@@ -365,7 +371,6 @@ func Configure() error {
 	configurators.Bool(&ETagEnabled, "IMGPROXY_USE_ETAG")
 
 	configurators.String(&BaseURL, "IMGPROXY_BASE_URL")
-	configurators.String(&CookieBaseURL, "IMGPROXY_COOKIE_BASE_URL")
 
 	configurators.StringSlice(&Presets, "IMGPROXY_PRESETS")
 	if err := configurators.StringSliceFile(&Presets, *presetsPath); err != nil {

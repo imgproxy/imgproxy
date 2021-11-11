@@ -3,6 +3,7 @@
 ## [Unreleased]
 ### Added
 - Add `X-Origin-Width` and `X-Origin-Height` to debug headers.
+- Add `IMGPROXY_COOKIE_PASSTHROUGH` and `IMGPROXY_COOKIE_BASE_URL` configs.
 
 ### Change
 - `dpr` processing option doesn't enlarge image unless `enlarge` is true.
