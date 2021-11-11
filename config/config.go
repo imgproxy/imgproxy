@@ -27,6 +27,7 @@ var (
 
 	TTL                     int
 	CacheControlPassthrough bool
+	CookiePassthrough       bool
 	SetCanonicalHeader      bool
 
 	SoReuseport bool
@@ -87,7 +88,8 @@ var (
 
 	ETagEnabled bool
 
-	BaseURL string
+	BaseURL       string
+	CookieBaseURL string
 
 	Presets     []string
 	OnlyPresets bool
@@ -155,6 +157,7 @@ func Reset() {
 
 	TTL = 3600
 	CacheControlPassthrough = false
+	CookiePassthrough = false
 	SetCanonicalHeader = false
 
 	SoReuseport = false
@@ -216,6 +219,7 @@ func Reset() {
 	ETagEnabled = false
 
 	BaseURL = ""
+	CookieBaseURL = ""
 
 	Presets = make([]string, 0)
 	OnlyPresets = false
@@ -279,6 +283,7 @@ func Configure() error {
 
 	configurators.Int(&TTL, "IMGPROXY_TTL")
 	configurators.Bool(&CacheControlPassthrough, "IMGPROXY_CACHE_CONTROL_PASSTHROUGH")
+	configurators.Bool(&CookiePassthrough, "IMGPROXY_COOKIE_PASSTHROUGH")
 	configurators.Bool(&SetCanonicalHeader, "IMGPROXY_SET_CANONICAL_HEADER")
 
 	configurators.Bool(&SoReuseport, "IMGPROXY_SO_REUSEPORT")
@@ -360,6 +365,7 @@ func Configure() error {
 	configurators.Bool(&ETagEnabled, "IMGPROXY_USE_ETAG")
 
 	configurators.String(&BaseURL, "IMGPROXY_BASE_URL")
+	configurators.String(&CookieBaseURL, "IMGPROXY_COOKIE_BASE_URL")
 
 	configurators.StringSlice(&Presets, "IMGPROXY_PRESETS")
 	if err := configurators.StringSliceFile(&Presets, *presetsPath); err != nil {
