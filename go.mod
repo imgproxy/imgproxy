@@ -22,12 +22,12 @@ require (
 	github.com/prometheus/client_golang v1.11.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.0
-	go.uber.org/automaxprocs v1.4.0 // indirect
+	go.uber.org/automaxprocs v1.4.0
 	golang.org/x/image v0.0.0-20201208152932-35266b937fa6
 	golang.org/x/net v0.0.0-20210503060351-7fd8e65b6420
-	golang.org/x/sys v0.0.0-20210603125802-9665404d3644
+	golang.org/x/sys v0.0.0-20211025201205-69cdffdb9359
 	golang.org/x/text v0.3.6
-	google.golang.org/api v0.48.0
+	google.golang.org/api v0.60.0
 	gopkg.in/DataDog/dd-trace-go.v1 v1.29.1
 )
 
