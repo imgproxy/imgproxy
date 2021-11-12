@@ -15,6 +15,7 @@
 ### Fix
 - Fix Client Hints behavior. `Width` is physical size, so we should divide it by `DPR` value.
 - Fix scale-on-load in some rare cases.
+- Fix `requests_total` counter in Prometheus.
 
 ## [3.0.0.beta1] - 2021-10-01
 ### Added

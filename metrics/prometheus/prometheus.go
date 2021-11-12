@@ -119,6 +119,11 @@ func StartServer(cancel context.CancelFunc) error {
 }
 
 func StartRequest() context.CancelFunc {
+	if !enabled {
+		return func() {}
+	}
+
+	requestsTotal.Inc()
 	return startDuration(requestDuration)
 }
 
@@ -144,12 +149,6 @@ func startDuration(m prometheus.Histogram) context.CancelFunc {
 func IncrementErrorsTotal(t string) {
 	if enabled {
 		errorsTotal.With(prometheus.Labels{"type": t}).Inc()
-	}
-}
-
-func IncrementRequestsTotal() {
-	if enabled {
-		requestsTotal.Inc()
 	}
 }
 
