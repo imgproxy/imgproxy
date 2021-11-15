@@ -171,6 +171,10 @@ func SetBufferMaxSize(t string, size int) {
 }
 
 func AddGaugeFunc(name, help string, f func() float64) {
+	if !enabled {
+		return
+	}
+
 	gauge := prometheus.NewGaugeFunc(prometheus.GaugeOpts{
 		Namespace: config.PrometheusNamespace,
 		Name:      name,
