@@ -138,13 +138,17 @@ var (
 )
 
 var (
-	keyPath     = flag.String("keypath", "", "path of the file with hex-encoded key")
-	saltPath    = flag.String("saltpath", "", "path of the file with hex-encoded salt")
-	presetsPath = flag.String("presets", "", "path of the file with presets")
+	keyPath     string
+	saltPath    string
+	presetsPath string
 )
 
 func init() {
 	Reset()
+
+	flag.StringVar(&keyPath, "keypath", "", "path of the file with hex-encoded key")
+	flag.StringVar(&saltPath, "saltpath", "", "path of the file with hex-encoded salt")
+	flag.StringVar(&presetsPath, "presets", "", "path of the file with presets")
 }
 
 func Reset() {
@@ -270,8 +274,6 @@ func Reset() {
 }
 
 func Configure() error {
-	flag.Parse()
-
 	if port := os.Getenv("PORT"); len(port) > 0 {
 		Bind = fmt.Sprintf(":%s", port)
 	}
@@ -335,10 +337,10 @@ func Configure() error {
 	}
 	configurators.Int(&SignatureSize, "IMGPROXY_SIGNATURE_SIZE")
 
-	if err := configurators.HexFile(&Keys, *keyPath); err != nil {
+	if err := configurators.HexFile(&Keys, keyPath); err != nil {
 		return err
 	}
-	if err := configurators.HexFile(&Salts, *saltPath); err != nil {
+	if err := configurators.HexFile(&Salts, saltPath); err != nil {
 		return err
 	}
 
@@ -373,7 +375,7 @@ func Configure() error {
 	configurators.String(&BaseURL, "IMGPROXY_BASE_URL")
 
 	configurators.StringSlice(&Presets, "IMGPROXY_PRESETS")
-	if err := configurators.StringSliceFile(&Presets, *presetsPath); err != nil {
+	if err := configurators.StringSliceFile(&Presets, presetsPath); err != nil {
 		return err
 	}
 	configurators.Bool(&OnlyPresets, "IMGPROXY_ONLY_PRESETS")

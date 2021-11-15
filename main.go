@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"os"
 	"os/signal"
@@ -112,14 +113,14 @@ func run() error {
 }
 
 func main() {
-	if len(os.Args) > 1 {
-		switch os.Args[1] {
-		case "health":
-			os.Exit(healthcheck())
-		case "version":
-			fmt.Println(version.Version())
-			os.Exit(0)
-		}
+	flag.Parse()
+
+	switch flag.Arg(0) {
+	case "health":
+		os.Exit(healthcheck())
+	case "version":
+		fmt.Println(version.Version())
+		os.Exit(0)
 	}
 
 	if err := run(); err != nil {
