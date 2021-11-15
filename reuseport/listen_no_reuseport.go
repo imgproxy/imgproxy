@@ -1,9 +1,11 @@
-// +build !linux,!darwin !go1.11
+//go:build (!linux && !darwin) || !go1.11
 
 package reuseport
 
 import (
 	"net"
+
+	"github.com/imgproxy/imgproxy/v3/config"
 )
 
 func Listen(network, address string) (net.Listener, error) {
