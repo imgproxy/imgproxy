@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+
+## [3.0.0.beta2] - 2021-11-15
 ### Added
 - Add `X-Origin-Width` and `X-Origin-Height` to debug headers.
 - Add `IMGPROXY_COOKIE_PASSTHROUGH` and `IMGPROXY_COOKIE_BASE_URL` configs.
