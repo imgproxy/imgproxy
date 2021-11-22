@@ -12,6 +12,9 @@
     (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION > 10) || \
     (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 10 && VIPS_MICRO_VERSION >= 2))
 
+#define VIPS_SUPPORT_AVIF_EFFORT \
+  (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 12))
+
 #define VIPS_SUPPORT_PNG_BITDEPTH \
   (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 10))
 
@@ -640,7 +643,9 @@ vips_avifsave_go(VipsImage *in, void **buf, size_t *len, int quality, int speed)
     in, buf, len,
     "Q", quality,
     "compression", VIPS_FOREIGN_HEIF_COMPRESSION_AV1,
-  #if VIPS_SUPPORT_AVIF_SPEED
+  #if VIPS_SUPPORT_AVIF_EFFORT
+    "effort", speed,
+  #elif VIPS_SUPPORT_AVIF_SPEED
     "speed", speed,
   #endif
     NULL);
