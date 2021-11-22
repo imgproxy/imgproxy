@@ -169,7 +169,7 @@ func SupportsSave(it imagetype.Type) bool {
 	case imagetype.WEBP:
 		sup = hasOperation("webpsave_buffer")
 	case imagetype.GIF:
-		sup = hasOperation("magicksave_buffer")
+		sup = hasOperation("gifsave_buffer")
 	case imagetype.AVIF:
 		sup = hasOperation("heifsave_buffer")
 	case imagetype.BMP:

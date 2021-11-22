@@ -15,6 +15,9 @@
 #define VIPS_SUPPORT_PNG_BITDEPTH \
   (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 10))
 
+#define VIPS_SUPPORT_GIFSAVE \
+  (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 12))
+
 int
 vips_initialize() {
   return vips_init("imgproxy");
@@ -617,7 +620,12 @@ vips_webpsave_go(VipsImage *in, void **buf, size_t *len, int quality) {
 
 int
 vips_gifsave_go(VipsImage *in, void **buf, size_t *len) {
-  return vips_magicksave_buffer(in, buf, len, "format", "gif", NULL);
+#if VIPS_SUPPORT_GIFSAVE
+  return vips_gifsave_buffer(in, buf, len, NULL);
+#else
+  vips_error("vips_gifsave_go", "Saving GIF is not supported (libvips 8.12+ reuired)");
+  return 1;
+#endif
 }
 
 int

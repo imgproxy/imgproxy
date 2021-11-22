@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+### Change
+- Save GIFs without ImageMagick (vips 8.12+ required).
 
 ## [3.0.0.beta2] - 2021-11-15
 ### Added
