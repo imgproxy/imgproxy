@@ -7,6 +7,11 @@
 ### Change
 - Save GIFs without ImageMagick (vips 8.12+ required).
 
+### Fix
+- Fix the default Sentry release name.
+- Fix the `health` command when the path prefix is set.
+- Escape double quotes in content disposition.
+
 ## [3.0.0.beta2] - 2021-11-15
 ### Added
 - Add `X-Origin-Width` and `X-Origin-Height` to debug headers.
