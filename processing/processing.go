@@ -112,17 +112,6 @@ func transformAnimated(ctx context.Context, img *vips.Image, po *options.Process
 		return err
 	}
 
-	// Legacy fields
-	// TODO: remove this in major update
-	gifLoop, err := img.GetIntDefault("gif-loop", -1)
-	if err != nil {
-		return err
-	}
-	gifDelay, err := img.GetIntDefault("gif-delay", -1)
-	if err != nil {
-		return err
-	}
-
 	watermarkEnabled := po.Watermark.Enabled
 	po.Watermark.Enabled = false
 	defer func() { po.Watermark.Enabled = watermarkEnabled }()
@@ -181,15 +170,6 @@ func transformAnimated(ctx context.Context, img *vips.Image, po *options.Process
 	img.SetIntSlice("delay", delay)
 	img.SetInt("loop", loop)
 	img.SetInt("n-pages", framesCount)
-
-	// Legacy fields
-	// TODO: remove this in major update
-	if gifLoop >= 0 {
-		img.SetInt("gif-loop", gifLoop)
-	}
-	if gifDelay >= 0 {
-		img.SetInt("gif-delay", gifDelay)
-	}
 
 	return nil
 }

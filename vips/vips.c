@@ -1,12 +1,6 @@
 #include "vips.h"
 #include <string.h>
 
-#define VIPS_SUPPORT_ARRAY_HEADERS \
-  (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 9))
-
-#define VIPS_SUPPORT_AVIF \
-  (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 9))
-
 #define VIPS_SUPPORT_AVIF_SPEED \
   (VIPS_MAJOR_VERSION > 8 || \
     (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION > 10) || \
@@ -14,9 +8,6 @@
 
 #define VIPS_SUPPORT_AVIF_EFFORT \
   (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 12))
-
-#define VIPS_SUPPORT_PNG_BITDEPTH \
-  (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 10))
 
 #define VIPS_SUPPORT_GIFSAVE \
   (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 12))
@@ -150,19 +141,12 @@ vips_is_animated(VipsImage * in) {
 
 int
 vips_image_get_array_int_go(VipsImage *image, const char *name, int **out, int *n) {
-#if VIPS_SUPPORT_ARRAY_HEADERS
   return vips_image_get_array_int(image, name, out, n);
-#else
-  vips_error("vips_image_get_array_int_go", "Array headers are not supported (libvips 8.9+ reuired)");
-  return 1;
-#endif
 }
 
 void
 vips_image_set_array_int_go(VipsImage *image, const char *name, const int *array, int n) {
-#if VIPS_SUPPORT_ARRAY_HEADERS
   vips_image_set_array_int(image, name, array, n);
-#endif
 }
 
 int
@@ -601,13 +585,8 @@ vips_pngsave_go(VipsImage *in, void **buf, size_t *len, int interlace, int quant
     in, buf, len,
     "filter", VIPS_FOREIGN_PNG_FILTER_NONE,
     "interlace", interlace,
-#if VIPS_SUPPORT_PNG_BITDEPTH
     "palette", quantize,
     "bitdepth", bitdepth,
-#else // VIPS_SUPPORT_PNG_BITDEPTH
-    "palette", quantize,
-    "colours", colors,
-#endif // VIPS_SUPPORT_PNG_BITDEPTH
     NULL
   );
 }
@@ -638,7 +617,6 @@ vips_tiffsave_go(VipsImage *in, void **buf, size_t *len, int quality) {
 
 int
 vips_avifsave_go(VipsImage *in, void **buf, size_t *len, int quality, int speed) {
-#if VIPS_SUPPORT_AVIF
   return vips_heifsave_buffer(
     in, buf, len,
     "Q", quality,
@@ -649,10 +627,6 @@ vips_avifsave_go(VipsImage *in, void **buf, size_t *len, int quality, int speed)
     "speed", speed,
   #endif
     NULL);
-#else
-  vips_error("vips_avifsave_go", "Saving AVIF is not supported (libvips 8.9+ reuired)");
-  return 1;
-#endif
 }
 
 void
