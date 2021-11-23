@@ -1,6 +1,7 @@
 package router
 
 import (
+	"net"
 	"net/http"
 
 	"github.com/imgproxy/imgproxy/v3/ierrors"
@@ -10,9 +11,12 @@ import (
 func LogRequest(reqID string, r *http.Request) {
 	path := r.RequestURI
 
+	clientIP, _, _ := net.SplitHostPort(r.RemoteAddr)
+
 	log.WithFields(log.Fields{
 		"request_id": reqID,
 		"method":     r.Method,
+		"client_ip":  clientIP,
 	}).Infof("Started %s", path)
 }
 
@@ -28,10 +32,13 @@ func LogResponse(reqID string, r *http.Request, status int, err *ierrors.Error, 
 		level = log.InfoLevel
 	}
 
+	clientIP, _, _ := net.SplitHostPort(r.RemoteAddr)
+
 	fields := log.Fields{
 		"request_id": reqID,
 		"method":     r.Method,
 		"status":     status,
+		"client_ip":  clientIP,
 	}
 
 	if err != nil {

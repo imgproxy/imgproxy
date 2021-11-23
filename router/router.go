@@ -1,6 +1,7 @@
 package router
 
 import (
+	"net"
 	"net/http"
 	"regexp"
 	"strings"
@@ -83,6 +84,17 @@ func (r *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	rw.Header().Set("Server", "imgproxy")
 	rw.Header().Set(xRequestIDHeader, reqID)
 
+	if ip := req.Header.Get("CF-Connecting-IP"); len(ip) != 0 {
+		replaceRemoteAddr(req, ip)
+	} else if ip := req.Header.Get("X-Forwarded-For"); len(ip) != 0 {
+		if index := strings.Index(ip, ","); index > 0 {
+			ip = ip[:index]
+		}
+		replaceRemoteAddr(req, ip)
+	} else if ip := req.Header.Get("X-Real-IP"); len(ip) != 0 {
+		replaceRemoteAddr(req, ip)
+	}
+
 	defer func() {
 		if rerr := recover(); rerr != nil {
 			if err, ok := rerr.(error); ok && r.PanicHandler != nil {
@@ -105,4 +117,13 @@ func (r *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	log.Warningf("Route for %s is not defined", req.URL.Path)
 
 	rw.WriteHeader(404)
+}
+
+func replaceRemoteAddr(req *http.Request, ip string) {
+	_, port, err := net.SplitHostPort(req.RemoteAddr)
+	if err != nil {
+		port = "80"
+	}
+
+	req.RemoteAddr = net.JoinHostPort(strings.TrimSpace(ip), port)
 }

@@ -1,6 +1,9 @@
 # Changelog
 
 ## [Unreleased]
+### Added
+- Add `client_ip` to requests and responses logs.
+
 ### Change
 - Save GIFs without ImageMagick (vips 8.12+ required).
 
