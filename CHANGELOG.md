@@ -1,18 +1,47 @@
 # Changelog
 
 ## [Unreleased]
+
+## [3.0.0] - 2021-11-23
 ### Added
+- (pro) [Autoquality](https://docs.imgproxy.net/autoquality).
+- (pro) [Object detection](https://docs.imgproxy.net/object_detection): `obj` [gravity](https://docs.imgproxy.net/generating_the_url?id=gravity) type, [blur_detections](https://docs.imgproxy.net/generating_the_url?id=blur-detections) processing option, [draw_detections](https://docs.imgproxy.net/generating_the_url?id=draw-detections) processing option.
+- (pro) [Chained pipelines](https://docs.imgproxy.net/chained_pipelines)
+- `IMGPROXY_FALLBACK_IMAGE_HTTP_CODE` config.
+- (pro) [fallback_image_url](https://docs.imgproxy.net/generating_the_url?id=fallback-image-url) processing option.
+- [expires](https://docs.imgproxy.net/generating_the_url?id=expires) processing option.
+- [skip processing](https://docs.imgproxy.net/generating_the_url?id=skip-processing) processing option.
+- [Datadog](./docs/datadog.md) metrics.
+- `force` and `fill-down` resizing types.
+- [min-width](https://docs.imgproxy.net/generating_the_url?id=min-width) and [min-height](https://docs.imgproxy.net/generating_the_url?id=min-height) processing options.
+- [format_quality](https://docs.imgproxy.net/generating_the_url?id=format-quality) processing option.
+- Add `X-Origin-Width` and `X-Origin-Height` to debug headers.
+- Add `IMGPROXY_COOKIE_PASSTHROUGH` and `IMGPROXY_COOKIE_BASE_URL` configs.
 - Add `client_ip` to requests and responses logs.
 
 ### Change
+- ETag generator & checker uses source image ETag when possible.
+- `304 Not Modified` responses includes `Cache-Control`, `Expires`, and `Vary` headers.
+- `dpr` processing option doesn't enlarge image unless `enlarge` is true.
+- imgproxy responds with `500` HTTP code when the source image downloading error seems temporary (timeout, server error, etc).
+- When `IMGPROXY_FALLBACK_IMAGE_HTTP_CODE` is zero, imgproxy responds with the usual HTTP code.
+- BMP support doesn't require ImageMagick.
 - Save GIFs without ImageMagick (vips 8.12+ required).
 
 ### Fix
+- Fix Client Hints behavior. `Width` is physical size, so we should divide it by `DPR` value.
+- Fix scale-on-load in some rare cases.
 - Fix the default Sentry release name.
 - Fix the `health` command when the path prefix is set.
 - Escape double quotes in content disposition.
 
 ### Removed
+- Removed basic URL format, use [advanced one](./docs/generating_the_url.md) instead.
+- Removed `IMGPROXY_MAX_SRC_DIMENSION` config, use `IMGPROXY_MAX_SRC_RESOLUTION` instead.
+- Removed `IMGPROXY_GZIP_COMPRESSION` config.
+- Removed `IMGPROXY_MAX_GIF_FRAMES` config, use `IMGPROXY_MAX_ANIMATION_FRAMES` instead.
+- Removed `crop` resizing type, use [crop](./docs/generating_the_url.md#crop) processing option instead.
+- Dropped old libvips (<8.10) support.
 - (pro) Removed advanced GIF optimizations. All optimizations are applied by default ib both OSS and Pro versions.
 
 ## [3.0.0.beta2] - 2021-11-15
