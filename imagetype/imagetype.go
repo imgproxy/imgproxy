@@ -99,7 +99,7 @@ func (it Type) ContentDisposition(filename string) string {
 		return "inline"
 	}
 
-	return fmt.Sprintf(format, filename)
+	return fmt.Sprintf(format, strings.ReplaceAll(filename, `"`, "%22"))
 }
 
 func (it Type) ContentDispositionFromURL(imageURL string) string {
