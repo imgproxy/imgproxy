@@ -17,7 +17,7 @@ workflows:
           matrix:
             parameters:
               go_version: ["1.17", "1.16"] # Go 1.15 doesn't support io/fs
-              vips_version: ["8.11", "8.10", "8.9"]
+              vips_version: ["8.12", "8.11", "8.10"]
 
   release:
     jobs:
