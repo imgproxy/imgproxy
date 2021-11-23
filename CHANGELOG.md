@@ -12,6 +12,9 @@
 - Fix the `health` command when the path prefix is set.
 - Escape double quotes in content disposition.
 
+### Removed
+- (pro) Removed advanced GIF optimizations. All optimizations are applied by default ib both OSS and Pro versions.
+
 ## [3.0.0.beta2] - 2021-11-15
 ### Added
 - Add `X-Origin-Width` and `X-Origin-Height` to debug headers.
