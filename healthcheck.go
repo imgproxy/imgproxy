@@ -15,9 +15,11 @@ import (
 func healthcheck() int {
 	network := config.Network
 	bind := config.Bind
+	pathprefix := config.PathPrefix
 
 	configurators.String(&network, "IMGPROXY_NETWORK")
 	configurators.String(&bind, "IMGPROXY_BIND")
+	configurators.String(&pathprefix, "IMGPROXY_PATH_PREFIX")
 
 	httpc := http.Client{
 		Transport: &http.Transport{
@@ -27,7 +29,7 @@ func healthcheck() int {
 		},
 	}
 
-	res, err := httpc.Get("http://imgproxy/health")
+	res, err := httpc.Get(fmt.Sprintf("http://imgproxy%s/health", pathprefix))
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
 		return 1
