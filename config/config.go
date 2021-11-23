@@ -258,7 +258,7 @@ func Reset() {
 
 	SentryDSN = ""
 	SentryEnvironment = "production"
-	SentryRelease = fmt.Sprintf("imgproxy/%s", version.Version())
+	SentryRelease = fmt.Sprintf("imgproxy@%s", version.Version())
 
 	AirbrakeProjecID = 0
 	AirbrakeProjecKey = ""
