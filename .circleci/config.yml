@@ -154,7 +154,7 @@ jobs:
           command: |
             # Extract changelog entries between this and previous version headers
             escaped_version=$(echo ${CIRCLE_TAG#v} | sed -e 's/[]\/$*.^[]/\\&/g')
-            description_body=$(awk "BEGIN{inrelease=0} /## \[${escaped_version}\]/{inrelease=1;next} /## \[[0-9]+\.[0-9]+\.[0-9]+\]/{inrelease=0;exit} {if (inrelease) print}" CHANGELOG.md)
+            description_body=$(awk "BEGIN{inrelease=0} /## \[${escaped_version}\]/{inrelease=1;next} /## \[[0-9]+\.[0-9]+\.[0-9]+.+\]/{inrelease=0;exit} {if (inrelease) print}" CHANGELOG.md)
             # Add pre-release option if tag name has any suffix after vMAJOR.MINOR.PATCH
             [[ ${CIRCLE_TAG} =~ ^v[0-9]+\.[0-9]+\.[0-9]+.+ ]] && prerelease="--pre-release"
             # Create release!
