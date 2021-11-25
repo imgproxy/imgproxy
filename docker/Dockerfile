@@ -32,8 +32,8 @@ ENV VIPS_WARNING=0
 ENV MALLOC_ARENA_MAX=2
 ENV LD_LIBRARY_PATH /usr/local/lib
 
-RUN groupadd -r imgproxy && useradd -r -g imgproxy imgproxy
-USER imgproxy
+RUN groupadd -r imgproxy && useradd -r -u 999 -g imgproxy imgproxy
+USER 999
 
 CMD ["imgproxy"]
 
