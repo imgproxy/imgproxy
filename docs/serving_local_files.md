@@ -22,5 +22,5 @@ local:///logos/evil_martians.png
 The URl for resizing this image to fit 300x200 will look like this:
 
 ```
-http://imgproxy.example.com/insecure/fit/300/200/no/0/plain/local:///logos/evil_martians.png@jpg
+http://imgproxy.example.com/insecure/rs:fit:300:200:no:0/plain/local:///logos/evil_martians.png@jpg
 ```
