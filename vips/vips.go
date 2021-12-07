@@ -573,6 +573,10 @@ func (img *Image) Sharpen(sigma float32) error {
 	return nil
 }
 
+func (img *Image) IsCMYK() bool {
+	return C.vips_image_guess_interpretation(img.VipsImage) == C.VIPS_INTERPRETATION_CMYK
+}
+
 func (img *Image) ImportColourProfile() error {
 	var tmp *C.VipsImage
 

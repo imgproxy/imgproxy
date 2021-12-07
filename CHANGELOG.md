@@ -1,6 +1,9 @@
 # Changelog
 
 ## [Unreleased]
+### Change
+- Improved ICC profiles handling.
+
 ### Fix
 - (pro) Fix parsing metadata of extended sequential JPEGs.
 

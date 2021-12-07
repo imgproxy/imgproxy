@@ -27,12 +27,12 @@ var mainPipeline = pipeline{
 	rotateAndFlip,
 	crop,
 	fixWebpSize,
-	exportColorProfile,
 	applyFilters,
 	extend,
 	padding,
 	flatten,
 	watermark,
+	exportColorProfile,
 	finalize,
 }
 

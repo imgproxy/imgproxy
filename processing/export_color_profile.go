@@ -31,10 +31,6 @@ func exportColorProfile(pctx *pipelineContext, img *vips.Image, po *options.Proc
 		}
 	}
 
-	if err := img.RgbColourspace(); err != nil {
-		return err
-	}
-
 	if !keepProfile {
 		return img.RemoveColourProfile()
 	}

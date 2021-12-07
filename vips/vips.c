@@ -293,22 +293,22 @@ vips_has_embedded_icc(VipsImage *in) {
 
 int
 vips_icc_import_go(VipsImage *in, VipsImage **out) {
-  return vips_icc_import(in, out, "embedded", TRUE, "pcs", VIPS_PCS_XYZ, NULL);
+  return vips_icc_import(in, out, "embedded", TRUE, "pcs", VIPS_PCS_LAB, NULL);
 }
 
 int
 vips_icc_export_go(VipsImage *in, VipsImage **out) {
-  return vips_icc_export(in, out, NULL);
+  return vips_icc_export(in, out, "pcs", VIPS_PCS_LAB, NULL);
 }
 
 int
 vips_icc_export_srgb(VipsImage *in, VipsImage **out) {
-  return vips_icc_export(in, out, "output_profile", "sRGB", NULL);
+  return vips_icc_export(in, out, "output_profile", "sRGB", "pcs", VIPS_PCS_LAB, NULL);
 }
 
 int
 vips_icc_transform_go(VipsImage *in, VipsImage **out) {
-  return vips_icc_transform(in, out, "sRGB", "embedded", TRUE, "pcs", VIPS_PCS_XYZ, NULL);
+  return vips_icc_transform(in, out, "sRGB", "embedded", TRUE, "pcs", VIPS_PCS_LAB, NULL);
 }
 
 int
@@ -456,15 +456,13 @@ vips_replicate_go(VipsImage *in, VipsImage **out, int width, int height) {
 
 int
 vips_embed_go(VipsImage *in, VipsImage **out, int x, int y, int width, int height) {
-  VipsImage *base = vips_image_new();
-	VipsImage **t = (VipsImage **) vips_object_local_array(VIPS_OBJECT(base), 2);
+  VipsImage *tmp;
 
   int ret =
-    vips_colourspace(in, &t[0], VIPS_INTERPRETATION_sRGB, NULL) ||
-    vips_ensure_alpha(t[0], &t[1]) ||
-    vips_embed(t[1], out, x, y, width, height, "extend", VIPS_EXTEND_BLACK, NULL);
+    vips_ensure_alpha(in, &tmp) ||
+    vips_embed(tmp, out, x, y, width, height, "extend", VIPS_EXTEND_BLACK, NULL);
 
-  clear_image(&base);
+  clear_image(&tmp);
 
   return ret;
 }

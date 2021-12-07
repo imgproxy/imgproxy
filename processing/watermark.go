@@ -16,7 +16,6 @@ var watermarkPipeline = pipeline{
 	importColorProfile,
 	scale,
 	rotateAndFlip,
-	exportColorProfile,
 	finalize,
 }
 
