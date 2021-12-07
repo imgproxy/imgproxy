@@ -3,6 +3,7 @@
 ## [Unreleased]
 ### Added
 - Add `IMGPROXY_ETAG_BUSTER` config.
+- (pro) [watermark_text](https://docs.imgproxy.net/generating_the_url?id=watermark-text) processing option.
 
 ### Change
 - Improved ICC profiles handling.
