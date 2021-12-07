@@ -1,6 +1,9 @@
 # Changelog
 
 ## [Unreleased]
+### Added
+- Add `IMGPROXY_ETAG_BUSTER` config.
+
 ### Change
 - Improved ICC profiles handling.
 - Proper error message when the deprecated basic URL format is used.

@@ -90,6 +90,7 @@ var (
 	ABSEndpoint         string
 
 	ETagEnabled bool
+	ETagBuster  string
 
 	BaseURL string
 
@@ -226,6 +227,7 @@ func Reset() {
 	ABSEndpoint = ""
 
 	ETagEnabled = false
+	ETagBuster = ""
 
 	BaseURL = ""
 
@@ -371,6 +373,7 @@ func Configure() error {
 	configurators.String(&ABSEndpoint, "IMGPROXY_ABS_ENDPOINT")
 
 	configurators.Bool(&ETagEnabled, "IMGPROXY_USE_ETAG")
+	configurators.String(&ETagBuster, "IMGPROXY_ETAG_BUSTER")
 
 	configurators.String(&BaseURL, "IMGPROXY_BASE_URL")
 

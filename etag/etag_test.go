@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/sirupsen/logrus"
@@ -24,8 +25,8 @@ var (
 		Data: []byte("Hello Test"),
 	}
 
-	etagReq  string
-	etagData string
+	etagReq  = `"yj0WO6sFU4GCciYUBWjzvvfqrBh869doeOC2Pp5EI1Y/RImxvcmVtaXBzdW1kb2xvciI"`
+	etagData = `"yj0WO6sFU4GCciYUBWjzvvfqrBh869doeOC2Pp5EI1Y/DvyChhMNu_sFX7jrjoyrgQbnFwfoOVv7kzp_Fbs6hQBg"`
 )
 
 type EtagTestSuite struct {
@@ -36,13 +37,6 @@ type EtagTestSuite struct {
 
 func (s *EtagTestSuite) SetupSuite() {
 	logrus.SetOutput(ioutil.Discard)
-
-	s.h.SetActualProcessingOptions(po)
-	s.h.SetActualImageData(&imgWithETag)
-	etagReq = s.h.GenerateActualETag()
-
-	s.h.SetActualImageData(&imgWithoutETag)
-	etagData = s.h.GenerateActualETag()
 }
 
 func (s *EtagTestSuite) TeardownSuite() {
@@ -51,6 +45,7 @@ func (s *EtagTestSuite) TeardownSuite() {
 
 func (s *EtagTestSuite) SetupTest() {
 	s.h = Handler{}
+	config.Reset()
 }
 
 func (s *EtagTestSuite) TestGenerateActualReq() {
@@ -133,6 +128,13 @@ func (s *EtagTestSuite) TestImageDataCheckDataToReqFailure() {
 }
 
 func (s *EtagTestSuite) TestImageDataCheckReqToDataFailure() {
+	s.h.ParseExpectedETag(etagReq)
+	assert.False(s.T(), s.h.SetActualImageData(&imgWithoutETag))
+}
+
+func (s *EtagTestSuite) TestETagBusterFailure() {
+	config.ETagBuster = "busted"
+
 	s.h.ParseExpectedETag(etagReq)
 	assert.False(s.T(), s.h.SetActualImageData(&imgWithoutETag))
 }

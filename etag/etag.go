@@ -10,9 +10,9 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/options"
-	"github.com/imgproxy/imgproxy/v3/version"
 )
 
 type eTagCalc struct {
@@ -93,7 +93,7 @@ func (h *Handler) SetActualProcessingOptions(po *options.ProcessingOptions) bool
 	defer eTagCalcPool.Put(c)
 
 	c.hash.Reset()
-	c.hash.Write([]byte(version.Version()))
+	c.hash.Write([]byte(config.ETagBuster))
 	c.enc.Encode(po)
 
 	h.poHashActual = base64.RawURLEncoding.EncodeToString(c.hash.Sum(nil))

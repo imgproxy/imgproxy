@@ -41,6 +41,7 @@ echo $(xxd -g 2 -l 64 -p /dev/random | tr -d '\n')
 * `IMGPROXY_PATH_PREFIX`: URL path prefix. Example: when set to `/abc/def`, imgproxy URL will be `/abc/def/%signature/%processing_options/%source_url`. Default: blank.
 * `IMGPROXY_USER_AGENT`: User-Agent header that will be sent with source image request. Default: `imgproxy/%current_version`;
 * `IMGPROXY_USE_ETAG`: when `true`, enables using [ETag](https://en.wikipedia.org/wiki/HTTP_ETag) HTTP header for HTTP cache control. Default: false;
+* `IMGPROXY_ETAG_BUSTER`: change this to change ETags for all the images. Default: blank.
 * `IMGPROXY_CUSTOM_REQUEST_HEADERS`: <i class='badge badge-pro'></i> list of custom headers that imgproxy will send while requesting the source image, divided by `\;` (can be redefined by `IMGPROXY_CUSTOM_HEADERS_SEPARATOR`). Example: `X-MyHeader1=Lorem\;X-MyHeader2=Ipsum`;
 * `IMGPROXY_CUSTOM_RESPONSE_HEADERS`: <i class='badge badge-pro'></i> list of custom response headers, divided by `\;` (can be redefined by `IMGPROXY_CUSTOM_HEADERS_SEPARATOR`). Example: `X-MyHeader1=Lorem\;X-MyHeader2=Ipsum`;
 * `IMGPROXY_CUSTOM_HEADERS_SEPARATOR`: <i class='badge badge-pro'></i> string that will be used as a custom headers separator. Default: `\;`;
