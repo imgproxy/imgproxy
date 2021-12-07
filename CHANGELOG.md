@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+### Fix
+- (pro) Fix parsing metadata of extended sequential JPEGs.
 
 ## [3.0.0] - 2021-11-23
 ### Added
