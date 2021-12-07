@@ -16,6 +16,7 @@ var watermarkPipeline = pipeline{
 	importColorProfile,
 	scale,
 	rotateAndFlip,
+	padding,
 	finalize,
 }
 
@@ -33,6 +34,14 @@ func prepareWatermark(wm *vips.Image, wmData *imagedata.ImageData, opts *options
 	if opts.Scale > 0 {
 		po.Width = imath.Max(imath.Scale(imgWidth, opts.Scale), 1)
 		po.Height = imath.Max(imath.Scale(imgHeight, opts.Scale), 1)
+	}
+
+	if opts.Replicate {
+		po.Padding.Enabled = true
+		po.Padding.Left = int(opts.Gravity.X / 2)
+		po.Padding.Right = int(opts.Gravity.X) - po.Padding.Left
+		po.Padding.Top = int(opts.Gravity.Y / 2)
+		po.Padding.Bottom = int(opts.Gravity.Y) - po.Padding.Top
 	}
 
 	if err := watermarkPipeline.Run(context.Background(), wm, po, wmData); err != nil {

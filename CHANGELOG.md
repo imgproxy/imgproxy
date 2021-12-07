@@ -8,6 +8,7 @@
 ### Change
 - Improved ICC profiles handling.
 - Proper error message when the deprecated basic URL format is used.
+- Watermark offsets can be applied to replicated watermarks.
 
 ### Fix
 - (pro) Fix parsing metadata of extended sequential JPEGs.
