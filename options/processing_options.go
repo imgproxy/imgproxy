@@ -942,6 +942,14 @@ func defaultProcessingOptions(headers http.Header) (*ProcessingOptions, error) {
 }
 
 func parsePathOptions(parts []string, headers http.Header) (*ProcessingOptions, string, error) {
+	if _, ok := resizeTypes[parts[0]]; ok {
+		return nil, "", ierrors.New(
+			404,
+			"It looks like you're using the deprecated basic URL format",
+			"Invalid URL",
+		)
+	}
+
 	po, err := defaultProcessingOptions(headers)
 	if err != nil {
 		return nil, "", err

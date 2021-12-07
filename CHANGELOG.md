@@ -3,6 +3,7 @@
 ## [Unreleased]
 ### Change
 - Improved ICC profiles handling.
+- Proper error message when the deprecated basic URL format is used.
 
 ### Fix
 - (pro) Fix parsing metadata of extended sequential JPEGs.
