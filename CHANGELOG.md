@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+
+## [3.1.0] - 2021-12-08
 ### Added
 - Add `IMGPROXY_ETAG_BUSTER` config.
 - (pro) [watermark_text](https://docs.imgproxy.net/generating_the_url?id=watermark-text) processing option.
