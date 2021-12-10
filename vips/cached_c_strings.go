@@ -1,16 +1,17 @@
 package vips
 
 import "C"
+import "sync"
 
-var cStringsCache = make(map[string]*C.char)
+var cStringsCache sync.Map
 
 func cachedCString(str string) *C.char {
-	if cstr, ok := cStringsCache[str]; ok {
-		return cstr
+	if cstr, ok := cStringsCache.Load(str); ok {
+		return cstr.(*C.char)
 	}
 
 	cstr := C.CString(str)
-	cStringsCache[str] = cstr
+	cStringsCache.Store(str, cstr)
 
 	return cstr
 }

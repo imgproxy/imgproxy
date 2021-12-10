@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+### Fix
+- Fix crashes in some scenarios.
 
 ## [3.1.0] - 2021-12-08
 ### Added
