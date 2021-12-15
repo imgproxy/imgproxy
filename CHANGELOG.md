@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+
+## [3.1.2] - 2021-12-15
 ### Fix
 - (pro) Fix object detection.
 
