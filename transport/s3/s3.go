@@ -5,6 +5,7 @@ import (
 	http "net/http"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 
@@ -59,7 +60,9 @@ func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error)
 	s3req, _ := t.svc.GetObjectRequest(input)
 
 	if err := s3req.Send(); err != nil {
-		return nil, err
+		if s3err, ok := err.(awserr.RequestFailure); !ok || s3err.StatusCode() != http.StatusNotModified {
+			return nil, err
+		}
 	}
 
 	return s3req.HTTPResponse, nil
