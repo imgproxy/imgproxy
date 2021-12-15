@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+### Fix
+- Fix ETag checking when S3 is used.
 
 ## [3.1.2] - 2021-12-15
 ### Fix
