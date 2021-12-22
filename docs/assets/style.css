@@ -148,3 +148,8 @@ h1 i.badge, h2 i.badge, h3 i.badge, h4 i.badge, .sidebar-nav i.badge {
   display: block;
   margin: 5px auto 0;
 }
+
+h1, h2, h3, h4, p::selection {
+  background-color: var(--link-color);
+}
+  
