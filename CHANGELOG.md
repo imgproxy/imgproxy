@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+### Added
+- (pro) Add `video_meta` to the `/info` response.
 
 ## [3.1.3] - 2021-12-17
 ### Fix
