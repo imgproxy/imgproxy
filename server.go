@@ -26,12 +26,10 @@ var (
 func buildRouter() *router.Router {
 	r := router.New(config.PathPrefix)
 
-	r.PanicHandler = handlePanic
-
 	r.GET("/", handleLanding, true)
 	r.GET("/health", handleHealth, true)
 	r.GET("/favicon.ico", handleFavicon, true)
-	r.GET("/", withCORS(withSecret(handleProcessing)), false)
+	r.GET("/", withCORS(withPanicHandler(withSecret(handleProcessing))), false)
 	r.HEAD("/", withCORS(handleHead), false)
 	r.OPTIONS("/", withCORS(handleHead), false)
 
@@ -104,21 +102,34 @@ func withSecret(h router.RouteHandler) router.RouteHandler {
 	}
 }
 
-func handlePanic(reqID string, rw http.ResponseWriter, r *http.Request, err error) {
-	ierr := ierrors.Wrap(err, 3)
+func withPanicHandler(h router.RouteHandler) router.RouteHandler {
+	return func(reqID string, rw http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if rerr := recover(); rerr != nil {
+				err, ok := rerr.(error)
+				if !ok {
+					panic(rerr)
+				}
 
-	if ierr.Unexpected {
-		errorreport.Report(err, r)
-	}
+				ierr := ierrors.Wrap(err, 3)
 
-	router.LogResponse(reqID, r, ierr.StatusCode, ierr)
+				if ierr.Unexpected {
+					errorreport.Report(err, r)
+				}
 
-	rw.WriteHeader(ierr.StatusCode)
+				router.LogResponse(reqID, r, ierr.StatusCode, ierr)
 
-	if config.DevelopmentErrorsMode {
-		rw.Write([]byte(ierr.Message))
-	} else {
-		rw.Write([]byte(ierr.PublicMessage))
+				rw.WriteHeader(ierr.StatusCode)
+
+				if config.DevelopmentErrorsMode {
+					rw.Write([]byte(ierr.Message))
+				} else {
+					rw.Write([]byte(ierr.PublicMessage))
+				}
+			}
+		}()
+
+		h(reqID, rw, r)
 	}
 }
 
