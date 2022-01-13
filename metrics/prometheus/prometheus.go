@@ -95,6 +95,10 @@ func Init() {
 	enabled = true
 }
 
+func Enabled() bool {
+	return enabled
+}
+
 func StartServer(cancel context.CancelFunc) error {
 	if !enabled {
 		return nil

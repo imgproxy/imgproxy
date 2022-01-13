@@ -4,6 +4,9 @@
 ### Added
 - (pro) Add `video_meta` to the `/info` response.
 
+### Fix
+- Fix Datadog support.
+
 ## [3.1.3] - 2021-12-17
 ### Fix
 - Fix ETag checking when S3 is used.

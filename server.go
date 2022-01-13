@@ -13,6 +13,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/errorreport"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
+	"github.com/imgproxy/imgproxy/v3/metrics"
 	"github.com/imgproxy/imgproxy/v3/reuseport"
 	"github.com/imgproxy/imgproxy/v3/router"
 )
@@ -29,7 +30,7 @@ func buildRouter() *router.Router {
 	r.GET("/", handleLanding, true)
 	r.GET("/health", handleHealth, true)
 	r.GET("/favicon.ico", handleFavicon, true)
-	r.GET("/", withCORS(withPanicHandler(withSecret(handleProcessing))), false)
+	r.GET("/", withMetrics(withPanicHandler(withCORS(withSecret(handleProcessing)))), false)
 	r.HEAD("/", withCORS(handleHead), false)
 	r.OPTIONS("/", withCORS(handleHead), false)
 
@@ -73,6 +74,19 @@ func shutdownServer(s *http.Server) {
 	defer close()
 
 	s.Shutdown(ctx)
+}
+
+func withMetrics(h router.RouteHandler) router.RouteHandler {
+	if !metrics.Enabled() {
+		return h
+	}
+
+	return func(reqID string, rw http.ResponseWriter, r *http.Request) {
+		ctx, metricsCancel, rw := metrics.StartRequest(r.Context(), rw, r)
+		defer metricsCancel()
+
+		h(reqID, rw, r.WithContext(ctx))
+	}
 }
 
 func withCORS(h router.RouteHandler) router.RouteHandler {

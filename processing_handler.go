@@ -137,8 +137,7 @@ func respondWithNotModified(reqID string, r *http.Request, rw http.ResponseWrite
 }
 
 func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
-	ctx, metricsCancel, rw := metrics.StartRequest(r.Context(), rw, r)
-	defer metricsCancel()
+	ctx := r.Context()
 
 	path := r.RequestURI
 	if queryStart := strings.IndexByte(path, '?'); queryStart >= 0 {

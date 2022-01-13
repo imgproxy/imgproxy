@@ -26,6 +26,12 @@ func Stop() {
 	datadog.Stop()
 }
 
+func Enabled() bool {
+	return prometheus.Enabled() ||
+		newrelic.Enabled() ||
+		datadog.Enabled()
+}
+
 func StartRequest(ctx context.Context, rw http.ResponseWriter, r *http.Request) (context.Context, context.CancelFunc, http.ResponseWriter) {
 	promCancel := prometheus.StartRequest()
 	ctx, nrCancel, rw := newrelic.StartTransaction(ctx, rw, r)

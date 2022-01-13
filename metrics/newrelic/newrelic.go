@@ -44,6 +44,10 @@ func Init() error {
 	return nil
 }
 
+func Enabled() bool {
+	return enabled
+}
+
 func StartTransaction(ctx context.Context, rw http.ResponseWriter, r *http.Request) (context.Context, context.CancelFunc, http.ResponseWriter) {
 	if !enabled {
 		return ctx, func() {}, rw

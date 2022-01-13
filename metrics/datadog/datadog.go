@@ -34,12 +34,18 @@ func Init() {
 		tracer.WithServiceVersion(version.Version()),
 		tracer.WithLogger(dataDogLogger{}),
 	)
+
+	enabled = true
 }
 
 func Stop() {
 	if enabled {
 		tracer.Stop()
 	}
+}
+
+func Enabled() bool {
+	return enabled
 }
 
 func StartRootSpan(ctx context.Context, rw http.ResponseWriter, r *http.Request) (context.Context, context.CancelFunc, http.ResponseWriter) {
