@@ -71,7 +71,8 @@ func (r *Router) HEAD(prefix string, handler RouteHandler, exact bool) {
 }
 
 func (r *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	req = setRequestTime(req)
+	req, timeoutCancel := startRequestTimer(req)
+	defer timeoutCancel()
 
 	reqID := req.Header.Get(xRequestIDHeader)
 

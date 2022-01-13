@@ -6,16 +6,18 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/metrics"
 )
 
 type timerSinceCtxKey = struct{}
 
-func setRequestTime(r *http.Request) *http.Request {
-	return r.WithContext(
-		context.WithValue(r.Context(), timerSinceCtxKey{}, time.Now()),
-	)
+func startRequestTimer(r *http.Request) (*http.Request, context.CancelFunc) {
+	ctx := r.Context()
+	ctx = context.WithValue(ctx, timerSinceCtxKey{}, time.Now())
+	ctx, cancel := context.WithTimeout(ctx, time.Duration(config.WriteTimeout)*time.Second)
+	return r.WithContext(ctx), cancel
 }
 
 func ctxTime(ctx context.Context) time.Duration {
