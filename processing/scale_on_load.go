@@ -58,14 +58,28 @@ func scaleOnLoad(pctx *pipelineContext, img *vips.Image, po *options.ProcessingO
 	// Update scales after scale-on-load
 	newWidth, newHeight, _, _ := extractMeta(img, po.Rotate, po.AutoRotate)
 
-	pctx.wscale = float64(pctx.srcWidth) * pctx.wscale / float64(newWidth)
+	wpreshrink := float64(pctx.srcWidth) / float64(newWidth)
+	hpreshrink := float64(pctx.srcHeight) / float64(newHeight)
+
+	pctx.wscale = wpreshrink * pctx.wscale
 	if newWidth == imath.Scale(newWidth, pctx.wscale) {
 		pctx.wscale = 1.0
 	}
 
-	pctx.hscale = float64(pctx.srcHeight) * pctx.hscale / float64(newHeight)
+	pctx.hscale = hpreshrink * pctx.hscale
 	if newHeight == imath.Scale(newHeight, pctx.hscale) {
 		pctx.hscale = 1.0
+	}
+
+	if pctx.cropWidth > 0 {
+		pctx.cropWidth = imath.Max(1, imath.Shrink(pctx.cropWidth, wpreshrink))
+	}
+	if pctx.cropHeight > 0 {
+		pctx.cropHeight = imath.Max(1, imath.Shrink(pctx.cropHeight, hpreshrink))
+	}
+	if pctx.cropGravity.Type != options.GravityFocusPoint {
+		pctx.cropGravity.X /= wpreshrink
+		pctx.cropGravity.Y /= hpreshrink
 	}
 
 	return nil

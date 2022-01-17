@@ -38,3 +38,11 @@ func Scale(a int, scale float64) int {
 
 	return Round(float64(a) * scale)
 }
+
+func Shrink(a int, shrink float64) int {
+	if a == 0 {
+		return 0
+	}
+
+	return Round(float64(a) / shrink)
+}

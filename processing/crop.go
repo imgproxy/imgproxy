@@ -38,10 +38,20 @@ func cropImage(img *vips.Image, cropWidth, cropHeight int, gravity *options.Grav
 }
 
 func crop(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata *imagedata.ImageData) error {
-	if err := cropImage(img, pctx.cropWidth, pctx.cropHeight, &pctx.cropGravity); err != nil {
-		return err
+	width, height := pctx.cropWidth, pctx.cropHeight
+
+	opts := pctx.cropGravity
+	opts.RotateAndFlip(pctx.angle, pctx.flip)
+	opts.RotateAndFlip(po.Rotate, false)
+
+	if (pctx.angle+po.Rotate)%180 == 90 {
+		width, height = height, width
 	}
 
+	return cropImage(img, width, height, &opts)
+}
+
+func cropToResult(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata *imagedata.ImageData) error {
 	// Crop image to the result size
 	resultWidth := imath.Scale(po.Width, po.Dpr)
 	resultHeight := imath.Scale(po.Height, po.Dpr)

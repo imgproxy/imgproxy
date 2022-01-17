@@ -23,11 +23,6 @@ const maxClientHintDPR = 8
 
 var errExpiredURL = errors.New("Expired URL")
 
-type GravityOptions struct {
-	Type GravityType
-	X, Y float64
-}
-
 type ExtendOptions struct {
 	Enabled bool
 	Gravity GravityOptions
@@ -211,11 +206,7 @@ func parseBoolOption(str string) bool {
 }
 
 func isGravityOffcetValid(gravity GravityType, offset float64) bool {
-	if gravity == GravityCenter {
-		return true
-	}
-
-	return offset >= 0 && (gravity != GravityFocusPoint || offset <= 1)
+	return gravity != GravityFocusPoint || (offset >= 0 && offset <= 1)
 }
 
 func parseGravity(g *GravityOptions, args []string) error {

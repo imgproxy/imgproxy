@@ -161,16 +161,5 @@ func prepare(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptio
 
 	pctx.wscale, pctx.hscale = calcScale(widthToScale, heightToScale, po, pctx.imgtype)
 
-	if pctx.cropWidth > 0 {
-		pctx.cropWidth = imath.Max(1, imath.Scale(pctx.cropWidth, pctx.wscale))
-	}
-	if pctx.cropHeight > 0 {
-		pctx.cropHeight = imath.Max(1, imath.Scale(pctx.cropHeight, pctx.hscale))
-	}
-	if pctx.cropGravity.Type != options.GravityFocusPoint {
-		pctx.cropGravity.X *= pctx.wscale
-		pctx.cropGravity.Y *= pctx.hscale
-	}
-
 	return nil
 }

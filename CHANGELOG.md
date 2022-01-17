@@ -5,6 +5,9 @@
 - (pro) Add `video_meta` to the `/info` response.
 - Add 1/2/4-bit BMP support.
 
+### Change
+- Optimized `crop`.
+
 ### Fix
 - Fix Datadog support.
 
