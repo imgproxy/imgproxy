@@ -11,6 +11,7 @@
 ### Fix
 - Fix Datadog support.
 - Fix `force` resizing + rotation.
+- (pro) Fix `obj` gravity.
 
 ## [3.1.3] - 2021-12-17
 ### Fix
