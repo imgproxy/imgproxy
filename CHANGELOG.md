@@ -3,6 +3,7 @@
 ## [Unreleased]
 ### Added
 - (pro) Add `video_meta` to the `/info` response.
+- Add 1/2/4-bit BMP support.
 
 ### Fix
 - Fix Datadog support.
