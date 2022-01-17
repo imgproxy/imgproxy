@@ -10,6 +10,7 @@
 
 ### Fix
 - Fix Datadog support.
+- Fix `force` resizing + rotation.
 
 ## [3.1.3] - 2021-12-17
 ### Fix
