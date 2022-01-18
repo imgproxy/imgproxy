@@ -48,7 +48,8 @@ imgproxy responses with JSON body and returns the following info:
 * `height`: image/video height;
 * `size`: file size. Can be zero if the image source doesn't set `Content-Length` header properly;
 * `exif`: Exif data;
-* `iptc`: IPTC data.
+* `iptc`: IPTC data;
+* `video_meta`: metadata from the video.
 
 **📝Note:** There are lots of IPTC tags in the spec, but imgproxy supports only a few of them. If you need some tags to be supported, just contact us.
 
@@ -84,6 +85,15 @@ imgproxy responses with JSON body and returns the following info:
   "width": 1178,
   "height": 730,
   "size": 984963,
-  "exif": {}
+  "exif": {},
+  "video_meta": {
+    "com.android.version": "9",
+    "compatible_brands": "isommp42",
+    "creation_time": "2022-01-12T15:04:10.000000Z",
+    "location": "+46.4845+030.6848/",
+    "location-eng": "+46.4845+030.6848/",
+    "major_brand": "mp42",
+    "minor_version": "0"
+  }
 }
 ```
