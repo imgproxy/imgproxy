@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+
+## [3.2.0] - 2022-01-18
 ### Added
 - (pro) Add `video_meta` to the `/info` response.
 - Add [zoom](https://docs.imgproxy.net/generating_the_url?id=zoom) processing option.
