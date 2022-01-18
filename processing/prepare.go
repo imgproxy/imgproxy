@@ -98,6 +98,9 @@ func calcScale(width, height int, po *options.ProcessingOptions, imgtype imagety
 		}
 	}
 
+	wshrink /= po.ZoomWidth
+	hshrink /= po.ZoomHeight
+
 	if !po.Enlarge && imgtype != imagetype.SVG {
 		if wshrink < 1 {
 			hshrink /= wshrink

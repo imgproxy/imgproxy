@@ -3,6 +3,7 @@
 ## [Unreleased]
 ### Added
 - (pro) Add `video_meta` to the `/info` response.
+- Add [zoom](https://docs.imgproxy.net/generating_the_url?id=zoom) processing option.
 - Add 1/2/4-bit BMP support.
 
 ### Change

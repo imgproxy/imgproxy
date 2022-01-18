@@ -121,6 +121,24 @@ Defines the minimum height of the resulting image.
 
 Default: `0`
 
+### Zoom
+
+```
+zoom:%zoom_x_y
+z:%zoom_x_y
+
+zoom:%zoom_x %zoom_y
+z:%zoom_x %zoom_y
+```
+
+When set, imgproxy will multiply the image dimensions according to these factors. The values must be greater than 0.
+
+Can be combined with `width` and `height` options. In this case, imgproxy calculates scale factors for the provided size and then multiplies it with the provided zoom factors.
+
+**📝Note:** Unlike [dpr](#dpr), `zoom` doesn't set `Content-DPR` header in the response.
+
+Default: `1`
+
 ### Dpr
 
 ```
@@ -128,6 +146,8 @@ dpr:%dpr
 ```
 
 When set, imgproxy will multiply the image dimensions according to this factor for HiDPI (Retina) devices. The value must be greater than 0.
+
+**📝Note:** `dpr` also sets `Content-DPR` header in the response so the browser can render the image correctly.
 
 Default: `1`
 
