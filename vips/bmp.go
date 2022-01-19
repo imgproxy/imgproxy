@@ -259,10 +259,6 @@ func (img *Image) loadBmp(data []byte) error {
 	case 1, 2, 4, 8:
 		palColors := readUint32(b[46:50])
 
-		if offset != fileHeaderLen+infoLen+palColors*4 {
-			return errBmpUnsupported
-		}
-
 		_, err := io.ReadFull(r, b[:palColors*4])
 		if err != nil {
 			return err
@@ -275,21 +271,25 @@ func (img *Image) loadBmp(data []byte) error {
 			palette[i] = Color{b[4*i+2], b[4*i+1], b[4*i+0]}
 		}
 
+		if _, err := r.Seek(int64(offset), io.SeekStart); err != nil {
+			return err
+		}
+
 		return img.decodeBmpPaletted(r, width, height, int(bpp), palette, topDown)
 	case 24:
-		if offset != fileHeaderLen+infoLen {
-			return errBmpUnsupported
+		if _, err := r.Seek(int64(offset), io.SeekStart); err != nil {
+			return err
 		}
 		return img.decodeBmpRGB(r, width, height, 3, topDown, true)
 	case 32:
-		if offset != fileHeaderLen+infoLen {
-			return errBmpUnsupported
-		}
-
 		noAlpha := true
 		if infoLen >= 70 {
 			// Alpha mask is empty, so no alpha here
 			noAlpha = readUint32(b[66:70]) == 0
+		}
+
+		if _, err := r.Seek(int64(offset), io.SeekStart); err != nil {
+			return err
 		}
 
 		return img.decodeBmpRGB(r, width, height, 4, topDown, noAlpha)

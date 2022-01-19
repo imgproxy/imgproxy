@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+### Fix
+- Fix support of BMP with unusual data offsets.
 
 ## [3.2.0] - 2022-01-18
 ### Added
