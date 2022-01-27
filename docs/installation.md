@@ -4,14 +4,14 @@ There are four ways you can install imgproxy:
 
 ## Docker
 
-imgproxy can (and should) be used as a standalone application inside a Docker container. Just pull the official image from Docker Hub:
+imgproxy can (and this is highly recommended) be used as a standalone application inside a Docker container. Just pull the official image from Docker Hub:
 
 ```bash
 docker pull darthsim/imgproxy:latest
 docker run -p 8080:8080 -it darthsim/imgproxy
 ```
 
-You can also build your own image. imgproxy is ready to be dockerized, plug and play:
+You can also build your own image. imgproxy is ready to be dockerized out of the box:
 
 ```bash
 docker build -f docker/Dockerfile -t imgproxy .
@@ -32,15 +32,15 @@ helm upgrade -i imgproxy imgproxy/imgproxy
 helm upgrade -i --name imgproxy imgproxy/imgproxy
 ```
 
-Read the [chart's README](https://github.com/imgproxy/imgproxy-helm) for more info.
+Check out the [chart's README](https://github.com/imgproxy/imgproxy-helm) for more info.
 
 ## Heroku
 
-imgproxy can be deployed to Heroku with a click of a button:
+imgproxy can be deployed to Heroku with the click of a button:
 
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/imgproxy/imgproxy)
 
-However, you can do it manually with a few steps:
+That being said, you can also do it manually in just a few steps:
 
 ```bash
 git clone https://github.com/imgproxy/imgproxy.git && cd imgproxy
@@ -64,7 +64,7 @@ brew install imgproxy
 
 ## From the source
 
-You can get imgproxy source by cloning the GitHub repo:
+You can get the imgproxy source code by cloning the GitHub repo:
 
 ```bash
 git clone https://github.com/imgproxy/imgproxy.git
@@ -80,7 +80,7 @@ curl -Ls https://github.com/imgproxy/imgproxy/archive/master.tar.gz \
   | tar -xz --strip-components 1 -C .
 ```
 
-You can also download the specific version:
+You can also download a specific version:
 
 ```bash
 mkdir imgproxy
@@ -93,7 +93,7 @@ curl -Ls https://github.com/imgproxy/imgproxy/archive/v2.13.1.tar.gz \
 
 First, install [libvips](https://github.com/libvips/libvips).
 
-Ubuntu apt repository contains a pretty old version of libvips. You can use PPA with more recent version of libvips:
+The Ubuntu apt repository contains a pretty old version of libvips. You can use PPA to access a  more recent version of libvips:
 
 ```bash
 sudo add-apt-repository ppa:dhor/myway
@@ -103,7 +103,7 @@ sudo apt-get install libvips-dev
 
 But if you want to use all the features of imgproxy, it's recommended to build libvips from the source: [https://github.com/libvips/ libvips/wiki/Build-for-Ubuntu](https://github.com/libvips/libvips/wiki/Build-for-Ubuntu)
 
-Next, install the latest Go:
+Next, install the latest version of Go:
 
 ```bash
 sudo add-apt-repository ppa:longsleep/golang-backports
