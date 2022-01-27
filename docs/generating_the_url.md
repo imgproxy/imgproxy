@@ -521,7 +521,7 @@ autoquality:%method:%target:%min_quality:%max_quality:%allowed_error
 aq:%method:%target:%min_quality:%max_quality:%allowed_error
 ```
 
-Redefines autoqiality settings. All arguments have the same meaning as [Autoquality](configuration.md#autoqiality) configs. All arguments are optional and can be omitted.
+Redefines autoquality settings. All arguments have the same meaning as [Autoquality](configuration.md#autoquality) configs. All arguments are optional and can be omitted.
 
 **⚠️Warning:** Autoquality requires the image to be saved several times. Use it only when you prefer the resulting size and quality over the speed.
 
