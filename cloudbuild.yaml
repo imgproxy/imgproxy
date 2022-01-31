@@ -8,7 +8,7 @@ steps:
       docker build \
         -t darthsim/imgproxy:$TAG_NAME-amd64 \
         -f docker/Dockerfile \
-        --build-arg TARGET_ARCH="amd64" \
+        --platform=linux/amd64 \
         .
   env:
     - DOCKER_BUILDKIT=1
@@ -24,8 +24,7 @@ steps:
       && docker build \
         -t darthsim/imgproxy:$TAG_NAME-arm64 \
         -f docker/Dockerfile \
-        --platform=arm64 \
-        --build-arg TARGET_ARCH="arm64" \
+        --platform=linux/arm64/v8 \
         .
   env:
     - DOCKER_BUILDKIT=1
