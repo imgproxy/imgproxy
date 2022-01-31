@@ -1,15 +1,15 @@
-ARG BASE_IMAGE_VERSION="v3.0.1"
+ARG BASE_IMAGE_VERSION="v3.1.0"
+ARG TARGET_ARCH="amd64"
 
-FROM darthsim/imgproxy-base:${BASE_IMAGE_VERSION}
-LABEL maintainer="Sergey Alexandrovich <darthsim@gmail.com>"
+FROM --platform=${TARGET_ARCH} darthsim/imgproxy-base:${BASE_IMAGE_VERSION}
 
 COPY . .
-RUN go build -v -o /usr/local/bin/imgproxy
+RUN ["bash", "-c", "go build -v -o /usr/local/bin/imgproxy"]
 
 # ==================================================================================================
 # Final image
 
-FROM debian:bullseye-slim
+FROM --platform=${TARGET_ARCH} debian:bullseye-slim
 LABEL maintainer="Sergey Alexandrovich <darthsim@gmail.com>"
 
 RUN apt-get update \
