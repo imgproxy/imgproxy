@@ -4,8 +4,7 @@ imgproxy is a fast and secure standalone server for resizing and converting remo
 
 imgproxy is able to quickly and easily resize images on the fly, and it's well-equipped to handle a large amount of image resizing. imgproxy is a fast, secure replacement for all the image resizing code inside your web application (such as resizing libraries, or code that calls ImageMagick or GraphicsMagic). It's also an indispensable tool for processing images from a remote source. With imgproxy, you don’t need to repeatedly prepare images to fit your design every time it changes.
 
-To get an even better introduction, and to dive deeper into the nitty gritty details, check out this article: [imgproxy:
-Resize your images instantly and securely](https://evilmartians.com/chronicles/introducing-imgproxy)
+To get an even better introduction, and to dive deeper into the nitty gritty details, check out this article: [imgproxy: Resize your images instantly and securely](https://evilmartians.com/chronicles/introducing-imgproxy)
 
 <a href="https://evilmartians.com/?utm_source=imgproxy" target="_blank">
 <img src="https://evilmartians.com/badges/sponsored-by-evil-martians_v2.0_for-dark-bg.svg" alt="Sponsored by Evil Martians" width="236" height="54">
