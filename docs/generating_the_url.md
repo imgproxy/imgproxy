@@ -433,8 +433,8 @@ Places a watermark on the processed image.
   * `nowe`: north-west (top-left corner)
   * `soea`: south-east (bottom-right corner)
   * `sowe`: south-west (bottom-left corner)
-  * `re`: replicate watermark to fill the whole image
-* `x_offset`, `y_offset` - (optional) specify watermark offset by X and Y axes. Not applicable to `re` position.
+  * `re`: repeat and tile the watermark to fill the entire image 
+* `x_offset`, `y_offset` - (optional) specify watermark offset by X and Y axes. When using `re` position, these values define the spacing between the tiles.
 * `scale`: (optional) a floating-point number that defines the watermark size relative to the resultant image size. When set to `0` or when omitted, the watermark size won't be changed.
 
 Default: disabled
