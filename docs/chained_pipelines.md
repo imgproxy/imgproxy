@@ -21,7 +21,7 @@ In this example, the first pipeline resizes the image and places the first water
 
 ### Example 2: Fast trim
 
-The `trim` operation is pretty heavy as it involves loading the whole image to the memory at the very start of processing. However, if you're going to scale down your image and the trim accuracy is not very important to you, it's better to move trimming to a separate pipeline.
+Performing the `trim` operation is pretty heavy as it involves loading the entire image into memory from the very start of processing. However, if you're going to scale down your image and trim accuracy is not very important to you, it's better to move trimming to a separate pipeline.
 
 ```
 .../rs:fit:500:500/-/trim:10/...
@@ -33,19 +33,19 @@ In this example, the first pipeline resizes the image, and the second pipeline t
 
 You can use presets in your chained pipelines, and you can use chained pipelines in your presets. However, the behaior may be not obvious. The rules are the following:
 
-* Prest is applied to the pipeline where is was used.
-* Preset may contain chained pipelined, and ones will be chained to the pipeline where the preset was used.
+* A preset is applied to the pipeline where is was used.
+* A preset may contain a chained pipeline, and will be chained to the pipeline where the preset was used.
 * Chained pipelines from the preset and from the URL are merged.
 
 ### Example
 
-If we have the following preset
+If we have the following preset:
 
 ```
 test=width:300/height:300/-/width:200/height:200/-/width:100/height:200
 ```
 
-and the following URL
+And the following URL:
 
 ```
 .../width:400/-/preset:test/width:500/-/width:600/...

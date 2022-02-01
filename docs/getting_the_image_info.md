@@ -1,6 +1,6 @@
 # Getting the image info<i class='badge badge-pro'></i>
 
-imgproxy can fetch and return the source image info without downloading the whole image.
+imgproxy can fetch and return a source image info without downloading the whole image.
 
 ## URL format
 
@@ -13,9 +13,9 @@ To get the image info, use the following URL format:
 
 ### Signature
 
-Signature protects your URL from being modified by an attacker. It is highly recommended to sign imgproxy URLs in a production environment.
+A signature protects your URL from being modified by an attacker. It is highly recommended to sign imgproxy URLs in a production environment.
 
-Once you set up your [URL signature](configuration.md#url-signature), check out the [Signing the URL](signing_the_url.md) guide to learn about how to sign your URLs. Otherwise, use any string here.
+Once you set up your [URL signature](configuration.md#url-signature), check out the [Signing the URL](signing_the_url.md) guide to learn about how to sign your URLs. Otherwise, since the signature is required, feel free to use any string here.
 
 ### Source URL
 
@@ -29,11 +29,11 @@ The source URL can be provided as is, prepended by `/plain/` part:
 /plain/http://example.com/images/curiosity.jpg
 ```
 
-**📝Note:** If the source URL contains query string or `@`, you need to escape it.
+**📝Note:** If the source URL contains a query string or `@`, you'll need to escape it.
 
 #### Base64 encoded
 
-The source URL can be encoded with URL-safe Base64. The encoded URL can be split with `/` for your needs:
+The source URL can be encoded with URL-safe Base64. The encoded URL can be split with `/` as desired:
 
 ```
 /aHR0cDovL2V4YW1w/bGUuY29tL2ltYWdl/cy9jdXJpb3NpdHku/anBn
@@ -41,15 +41,15 @@ The source URL can be encoded with URL-safe Base64. The encoded URL can be split
 
 ## Response format
 
-imgproxy responses with JSON body and returns the following info:
+imgproxy responses with a JSON body and returns the following info:
 
-* `format`: source image/video format. In case of video - list of predicted formats divided by comma;
-* `width`: image/video width;
-* `height`: image/video height;
-* `size`: file size. Can be zero if the image source doesn't set `Content-Length` header properly;
-* `exif`: Exif data;
-* `iptc`: IPTC data;
-* `video_meta`: metadata from the video.
+* `format`: source image/video format. In case of video - list of predicted formats divided by comma
+* `width`: image/video width
+* `height`: image/video height
+* `size`: file size. Can be zero if the image source doesn't set `Content-Length` header properly
+* `exif`: Exif data
+* `iptc`: IPTC data
+* `video_meta`: metadata from the video
 
 **📝Note:** There are lots of IPTC tags in the spec, but imgproxy supports only a few of them. If you need some tags to be supported, just contact us.
 
