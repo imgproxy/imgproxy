@@ -39,8 +39,8 @@ The available arguments are:
   * `nowe`: north-west (top-left corner)
   * `soea`: south-east (bottom-right corner)
   * `sowe`: south-west (bottom-left corner)
-  * `re`: replicate watermark to fill the whole image
-* `x_offset`, `y_offset` - (optional) specify watermark offset by X and Y axes. Not applicable when position is set to `re`.
+  * `re`: repeat and tile the watermark to fill the entire image
+* `x_offset`, `y_offset` - (optional) specify watermark offset by X and Y axes. When using `re` position, these values define the spacing between the tiles.
 * `scale` - (optional) a floating point number that defines the watermark size relative to the resulting image size. When set to `0` or omitted, the watermark size won't be changed.
 
 ## Custom watermarks<i class='badge badge-pro'></i> :id=custom-watermarks
