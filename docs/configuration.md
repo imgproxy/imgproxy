@@ -10,7 +10,7 @@ imgproxy allows URLs to be signed with a key and a salt. This feature is disable
 * `IMGPROXY_SALT`: hex-encoded salt
 * `IMGPROXY_SIGNATURE_SIZE`: number of bytes to use for signature before encoding to Base64. Default: 32
 
-You can specify multiple key/salt pairs by dividing the keys and salts with a comma (,). imgproxy will check URL signatures with each pair. This is useful when you need to change key/salt pairs in your application while incurring zero downtime.
+You can specify multiple key/salt pairs by dividing the keys and salts with a comma (`,`). imgproxy will check URL signatures with each pair. This is useful when you need to change key/salt pairs in your application while incurring zero downtime.
 
 You can also specify file paths using the command line by referencing a separate file containing hex-coded keys and salts line by line:
 
@@ -61,7 +61,9 @@ imgproxy can process animated images (GIF, WebP), but since this operation is pr
 
 * `IMGPROXY_MAX_ANIMATION_FRAMES`: the maximum number of animated image frames that may be processed. Default: `1`
 
-**📝Note:**  imgproxy summarizes all frame resolutions while checking the source image resolution. To check if the source image is SVG, imgproxy reads some amount of bytes; by default it reads a maximum of 32KB. However, you can change this value using the following variable:
+**📝Note:** imgproxy summarizes all frame resolutions while checking the source image resolution.
+
+To check if the source image is SVG, imgproxy reads some amount of bytes; by default it reads a maximum of 32KB. However, you can change this value using the following variable:
 
 * `IMGPROXY_MAX_SVG_CHECK_BYTES`: the maximum number of bytes imgproxy will read to recognize SVG files. If imgproxy is unable to recognize your SVG, try increasing this number. Default: `32768` (32KB)
 
@@ -77,7 +79,7 @@ You can limit allowed source URLs with the following variable:
 
 * `IMGPROXY_ALLOWED_SOURCES`: a whitelist of source image URL prefixes divided by comma. Wildcards can be included with `*` to match all characters except `/`. When blank, imgproxy allows all source image URLs. Example: `s3://,https://*.example.com/,local://`. Default: blank
 
-**⚠️Warning:** Be careful when using this config to limit source URL hosts, and always add a trailing slash after the host. 
+**⚠️Warning:** Be careful when using this config to limit source URL hosts, and always add a trailing slash after the host.
 * Bad: `http://example.com`
 * Good: `http://example.com/`
 If the trailing slash is absent, `http://example.com@baddomain.com` would be a permissable URL, however, the request would be made to `baddomain.com`.
@@ -285,7 +287,7 @@ imgproxy can be switched into "presets-only mode". In this mode, imgproxy accept
 
 imgproxy can serve your local images, but this feature is disabled by default. To enable it, specify your local filesystem root:
 
-* `IMGPROXY_LOCAL_FILESYSTEM_ROOT`: the root of the local filesystem. Keep this empty to local file serving.
+* `IMGPROXY_LOCAL_FILESYSTEM_ROOT`: the root of the local filesystem. Keep this empty to disable local file serving.
 
 Check out the [Serving local files](serving_local_files.md) guide to learn more.
 
