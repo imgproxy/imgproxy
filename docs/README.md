@@ -48,7 +48,7 @@ Sergey "[DarthSim](https://github.com/DarthSim)" Alexandrovich
 Many thanks to:
 
 * [Roman Shamin](https://github.com/romashamin) for the awesome logo.
-* [Alena Kirdina](https://github.com/egodyston) and [Alexander Madyankin](https://github.com/outpunk) for the great website.
+* [Alena Kirdina](https://github.com/egodyston) and [Alexander Madyankin](https://github.com/madyankin) for the great website.
 * [John Cupitt](https://github.com/jcupitt) for developing [libvips](https://github.com/libvips/libvips) and for helping me optimize its usage with imgproxy.
 * [Kirill Kuznetsov](https://github.com/dragonsmith) for the [Helm chart](https://github.com/imgproxy/imgproxy-helm).
 
