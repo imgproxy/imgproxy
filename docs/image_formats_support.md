@@ -18,14 +18,6 @@ At the moment, imgproxy supports only the most popular image formats:
 | MP4 (h264)<i class='badge badge-pro'></i> | `mp4` | [See notes](#video-thumbnails) | Yes |
 | Other video formats<i class='badge badge-pro'></i> | | [See notes](#video-thumbnails) | No |
 
-## GIF support
-
-imgproxy supports GIF output only when using libvips 8.7.0+ compiled with ImageMagick support. The official imgproxy Docker image supports GIF output out of the box.
-
-## ICO support
-
-imgproxy supports ICO only when using libvips 8.7.0+ compiled with ImageMagick support. The official imgproxy Docker image supports ICO out of the box.
-
 ## SVG support
 
 imgproxy supports SVG sources without limitations, but SVG results are not supported when the source image is not SVG.
@@ -35,20 +27,6 @@ When the source image is SVG and an SVG result is requested, imgproxy returns th
 imgproxy reads some amount of bytes to check if the source image is SVG. By default it reads a maximum of 32KB, but you can change this:
 
 * `IMGPROXY_MAX_SVG_CHECK_BYTES`: the maximum number of bytes imgproxy will read to recognize SVG. If imgproxy can't recognize your SVG, try to increase this number. Default: `32768` (32KB)
-
-## HEIC support
-
-imgproxy supports HEIC only when using libvips 8.8.0+. The official imgproxy Docker image supports HEIC out of the box.
-
-## AVIF support
-
-imgproxy supports AVIF only when using libvips 8.9.0+ with compiled support for libheif and its supported encoder (rav1e, aom). The official imgproxy Docker image supports AVIF out of the box.
-
-## BMP support
-
-imgproxy supports BMP only when using libvips 8.7.0+ compiled with ImageMagick support. The official imgproxy Docker image supports ICO out of the box.
-
-By default, imgproxy saves BMP images as JPEG. You need to explicitly specify the `format` option to get BMP output.
 
 ## Animated images support
 
