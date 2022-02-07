@@ -620,7 +620,7 @@ vips_avifsave_go(VipsImage *in, void **buf, size_t *len, int quality, int speed)
     "Q", quality,
     "compression", VIPS_FOREIGN_HEIF_COMPRESSION_AV1,
   #if VIPS_SUPPORT_AVIF_EFFORT
-    "effort", speed,
+    "effort", 9-speed,
   #elif VIPS_SUPPORT_AVIF_SPEED
     "speed", speed,
   #endif
