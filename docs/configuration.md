@@ -134,10 +134,10 @@ When cookie forwarding is activated, by default, imgproxy assumes the scope of t
 * `IMGPROXY_PNG_QUANTIZE`: when true, enables PNG quantization. libvips should be built with [Quantizr](https://github.com/DarthSim/quantizr) or libimagequant support. Default: `false`
 * `IMGPROXY_PNG_QUANTIZATION_COLORS`: maximum number of quantization palette entries. Should be between 2 and 256. Default: 256
 
-### Advanced GIF compression
+<!-- ### Advanced GIF compression
 
 * `IMGPROXY_GIF_OPTIMIZE_FRAMES`: <i class='badge badge-pro'></i> when true, enables GIF frame optimization. This may produce a smaller result, but may increase compression time.
-* `IMGPROXY_GIF_OPTIMIZE_TRANSPARENCY`: <i class='badge badge-pro'></i> when true, enables GIF transparency optimization. This may produce a smaller result, but may also increase compression time.
+* `IMGPROXY_GIF_OPTIMIZE_TRANSPARENCY`: <i class='badge badge-pro'></i> when true, enables GIF transparency optimization. This may produce a smaller result, but may also increase compression time. -->
 
 ### Advanced AVIF compression
 

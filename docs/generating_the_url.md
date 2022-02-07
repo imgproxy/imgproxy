@@ -433,7 +433,7 @@ Places a watermark on the processed image.
   * `nowe`: north-west (top-left corner)
   * `soea`: south-east (bottom-right corner)
   * `sowe`: south-west (bottom-left corner)
-  * `re`: repeat and tile the watermark to fill the entire image 
+  * `re`: repeat and tile the watermark to fill the entire image
 * `x_offset`, `y_offset` - (optional) specify watermark offset by X and Y axes. When using `re` position, these values define the spacing between the tiles.
 * `scale`: (optional) a floating-point number that defines the watermark size relative to the resultant image size. When set to `0` or when omitted, the watermark size won't be changed.
 
@@ -558,14 +558,14 @@ pngo:%interlaced:%quantize:%quantization_colors
 
 Allows redefining PNG saving options. All arguments have the same meaning as with the [Advanced PNG compression](configuration.md#advanced-png-compression) configs. All arguments are optional and can be omitted.
 
-### GIF options<i class='badge badge-pro'></i> :id=gif-options
+<!-- ### GIF options<i class='badge badge-pro'></i> :id=gif-options
 
 ```
 gif_options:%optimize_frames:%optimize_transparency
 gifo:%optimize_frames:%optimize_transparency
 ```
 
-Allows redefining GIF saving options. All arguments have the same meaning as with the [Advanced GIF compression](configuration.md#advanced-gif-compression) configs. All arguments are optional and can be omitted.
+Allows redefining GIF saving options. All arguments have the same meaning as with the [Advanced GIF compression](configuration.md#advanced-gif-compression) configs. All arguments are optional and can be omitted. -->
 
 ### Format
 
