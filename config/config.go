@@ -481,7 +481,7 @@ func Configure() error {
 		return fmt.Errorf("Png quantization colors can't be greater than 256, now - %d\n", PngQuantizationColors)
 	}
 
-	if AvifSpeed <= 0 {
+	if AvifSpeed < 0 {
 		return fmt.Errorf("Avif speed should be greater than 0, now - %d\n", AvifSpeed)
 	} else if AvifSpeed > 8 {
 		return fmt.Errorf("Avif speed can't be greater than 8, now - %d\n", AvifSpeed)
