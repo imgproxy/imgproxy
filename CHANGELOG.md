@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+### Fix
+- Fix the `IMGPROXY_AVIF_SPEED` config.
 
 ## [3.2.1] - 2022-01-19
 ### Fix
