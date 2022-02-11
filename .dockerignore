@@ -5,7 +5,6 @@ tmp/
 imgproxy
 
 docs/
-docker/
 examples/
 LICENSE
 README.md
