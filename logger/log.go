@@ -24,6 +24,8 @@ func Init() error {
 		logrus.SetFormatter(&structuredFormatter{})
 	case "json":
 		logrus.SetFormatter(&logrus.JSONFormatter{})
+	case "text":
+		logrus.SetFormatter(&logrus.TextFormatter{})
 	default:
 		logrus.SetFormatter(newPrettyFormatter())
 	}
