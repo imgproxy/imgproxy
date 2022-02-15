@@ -50,6 +50,7 @@ availableSecrets:
 
 options:
   machineType: 'N1_HIGHCPU_8'
+  logging: CLOUD_LOGGING_ONLY
   dynamic_substitutions: true
 
 timeout: 1200s
