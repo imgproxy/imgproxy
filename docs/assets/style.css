@@ -1,4 +1,6 @@
 :root {
+  --base-color: rgb(255, 255, 255);
+
   --mono-hue: var(--theme-hue);
   --mono-saturation: 10%;
 
@@ -26,6 +28,8 @@
   --copycode-background: var(--link-color);
 
   --table-row-even-background: var(--base-background-color);
+
+  --selection-color: rgba(255, 255, 255, 0.3);
 }
 
 .app-name-link img {
