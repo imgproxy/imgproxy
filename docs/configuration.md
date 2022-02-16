@@ -67,9 +67,9 @@ To check if the source image is SVG, imgproxy reads some amount of bytes; by def
 
 * `IMGPROXY_MAX_SVG_CHECK_BYTES`: the maximum number of bytes imgproxy will read to recognize SVG files. If imgproxy is unable to recognize your SVG, try increasing this number. Default: `32768` (32KB)
 
-Requests to some image sources may go through too many redirects or even go to an infinity loop. You can limit the number of allowed redirects:
+Requests to some image sources may go through too many redirects or enter an infinite loop. You can limit the number of allowed redirects:
 
-* `IMGPROXY_MAX_REDIRECTS`: the max number of redirects imgproxy can follow while requesting the source image.
+* `IMGPROXY_MAX_REDIRECTS`: the max number of redirects imgproxy can follow while requesting the source image
 
 You can also specify a secret key to enable authorization with the HTTP `Authorization` header for use in production environments:
 
