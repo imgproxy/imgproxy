@@ -97,6 +97,13 @@ func initDownloading() error {
 	downloadClient = &http.Client{
 		Timeout:   time.Duration(config.DownloadTimeout) * time.Second,
 		Transport: transport,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			redirects := len(via)
+			if redirects >= config.MaxRedirects {
+				return fmt.Errorf("stopped after %d redirects", redirects)
+			}
+			return nil
+		},
 	}
 
 	return nil

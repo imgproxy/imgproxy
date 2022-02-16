@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+### Added
+- Add the `IMGPROXY_MAX_REDIRECTS` config.
 
 ## [3.2.2] - 2022-02-08
 ### Fix
