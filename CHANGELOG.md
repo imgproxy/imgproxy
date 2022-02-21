@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+
+## [3.3.0] - 2022-02-21
 ### Added
 - Add the `IMGPROXY_MAX_REDIRECTS` config.
 - (pro) Add the `IMGPROXY_SERVER_NAME` config.
