@@ -558,14 +558,14 @@ pngo:%interlaced:%quantize:%quantization_colors
 
 Allows redefining PNG saving options. All arguments have the same meaning as with the [Advanced PNG compression](configuration.md#advanced-png-compression) configs. All arguments are optional and can be omitted.
 
-### GIF options<i class='badge badge-pro'></i> :id=gif-options
+<!-- ### GIF options<i class='badge badge-pro'></i> :id=gif-options
 
 ```
 gif_options:%optimize_frames:%optimize_transparency
 gifo:%optimize_frames:%optimize_transparency
 ```
 
-Allows redefining GIF saving options. All arguments have the same meaning as with the [Advanced GIF compression](configuration.md#advanced-gif-compression) configs. All arguments are optional and can be omitted.
+Allows redefining GIF saving options. All arguments have the same meaning as with the [Advanced GIF compression](configuration.md#advanced-gif-compression) configs. All arguments are optional and can be omitted. -->
 
 ### Format
 
