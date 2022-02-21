@@ -1,4 +1,4 @@
-# Datadog<i class='badge badge-v3'></i>
+# Datadog
 
 imgproxy can send its metrics to Datadog. To use this feature, do the following:
 

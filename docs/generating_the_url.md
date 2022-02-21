@@ -56,7 +56,7 @@ Defines how imgproxy will resize the source image. Supported resizing types are:
 
 * `fit`: resizes the image while keeping aspect ratio to fit a given size.
 * `fill`: resizes the image while keeping aspect ratio to fill a given size and crops projecting parts.
-* `fill-down`: <i class='badge badge-v3'></i> the same as `fill`, but if the resized image is smaller than the requested size, imgproxy will crop the result to keep the requested aspect ratio.
+* `fill-down`: the same as `fill`, but if the resized image is smaller than the requested size, imgproxy will crop the result to keep the requested aspect ratio.
 * `force`: resizes the image without keeping the aspect ratio.
 * `auto`: if both source and resulting dimensions have the same orientation (portrait or landscape), imgproxy will use `fill`. Otherwise, it will use `fit`.
 
@@ -95,7 +95,7 @@ Defines the height of the resulting image. When set to `0`, imgproxy will calcul
 
 Default: `0`
 
-### Min width<i class='badge badge-v3'></i> :id=min-width
+### Min width
 
 ```
 min-width:%width
@@ -108,7 +108,7 @@ Defines the minimum width of the resulting image.
 
 Default: `0`
 
-### Min height<i class='badge badge-v3'></i> :id=min-height
+### Min height
 
 ```
 min-height:%height
@@ -200,7 +200,7 @@ Default: `ce:0:0`
 **Special gravities**:
 
 * `gravity:sm`: smart gravity. `libvips` detects the most "interesting" section of the image and considers it as the center of the resulting image. Offsets are not applicable here.
-* `gravity:obj:%class_name1:%class_name2:...:%class_nameN`: <i class='badge badge-pro'></i> <i class='badge badge-v3'></i> object-oriented gravity. imgproxy [detects objects](object_detection.md) of provided classes on the image and calculates the resulting image center using their positions. If class names are omited, imgproxy will use all the detected objects.
+* `gravity:obj:%class_name1:%class_name2:...:%class_nameN`: <i class='badge badge-pro'></i> object-oriented gravity. imgproxy [detects objects](object_detection.md) of provided classes on the image and calculates the resulting image center using their positions. If class names are omited, imgproxy will use all the detected objects.
 * `gravity:fp:%x:%y`: the gravity focus point . `x` and `y` are floating point numbers between 0 and 1 that define the coordinates of the center of the resulting image. Treat 0 and 1 as right/left for `x` and top/bottom for `y`.
 
 ### Crop
@@ -393,7 +393,7 @@ ush:%mode:%weight:%dividor
 
 Allows redefining unsharpening options. All arguments have the same meaning as [Unsharpening](configuration.md#unsharpening) configs. All arguments are optional and can be omitted.
 
-### Blur detections<i class='badge badge-pro'></i><i class='badge badge-v3'></i> :id=blur-detections
+### Blur detections<i class='badge badge-pro'></i> :id=blur-detections
 
 ```
 blur_detections:%sigma:%class_name1:%class_name2:...:%class_nameN
@@ -404,7 +404,7 @@ imgproxy [detects objects](object_detection.md) of the provided classes and blur
 
 The value of `sigma` defines the size of the mask imgproxy will use.
 
-### Draw detections<i class='badge badge-pro'></i><i class='badge badge-v3'></i> :id=draw-detections
+### Draw detections<i class='badge badge-pro'></i> :id=draw-detections
 
 ```
 draw_detections:%draw:%class_name1:%class_name2:...:%class_nameN
@@ -505,7 +505,7 @@ Redefines quality of the resulting image, as a percentage. When set to `0`, qual
 
 Default: 0.
 
-### Format quality<i class='badge badge-v3'></i> :id=format-quality
+### Format quality
 
 ```
 format_quality:%format1:%quality1:%format2:%quality2:...:%formatN:%qualityN
@@ -514,7 +514,7 @@ fq:%format1:%quality1:%format2:%quality2:...:%formatN:%qualityN
 
 Adds or redefines `IMGPROXY_FORMAT_QUALITY` values.
 
-### Autoquality<i class='badge badge-pro'></i><i class='badge badge-v3'></i> :id=autoquality
+### Autoquality<i class='badge badge-pro'></i> :id=autoquality
 
 ```
 autoquality:%method:%target:%min_quality:%max_quality:%allowed_error
@@ -558,14 +558,14 @@ pngo:%interlaced:%quantize:%quantization_colors
 
 Allows redefining PNG saving options. All arguments have the same meaning as with the [Advanced PNG compression](configuration.md#advanced-png-compression) configs. All arguments are optional and can be omitted.
 
-<!-- ### GIF options<i class='badge badge-pro'></i> :id=gif-options
+### GIF options<i class='badge badge-pro'></i> :id=gif-options
 
 ```
 gif_options:%optimize_frames:%optimize_transparency
 gifo:%optimize_frames:%optimize_transparency
 ```
 
-Allows redefining GIF saving options. All arguments have the same meaning as with the [Advanced GIF compression](configuration.md#advanced-gif-compression) configs. All arguments are optional and can be omitted. -->
+Allows redefining GIF saving options. All arguments have the same meaning as with the [Advanced GIF compression](configuration.md#advanced-gif-compression) configs. All arguments are optional and can be omitted.
 
 ### Format
 
@@ -599,7 +599,7 @@ vts:%second
 
 Allows redefining `IMGPROXY_VIDEO_THUMBNAIL_SECOND` config.
 
-### Fallback image URL<i class='badge badge-pro'></i><i class='badge badge-v3'></i> :id=fallback-image-url
+### Fallback image URL<i class='badge badge-pro'></i> :id=fallback-image-url
 
 You can use a custom fallback image by specifying its URL with the `fallback_image_url` processing option:
 
@@ -612,7 +612,7 @@ The value of `url` is the Base64-encoded URL of the custom fallback image.
 
 Default: blank
 
-### Skip processing<i class='badge badge-v3'></i> :id=skip-processing
+### Skip processing
 
 ```
 skip_processing:%extension1:%extension2:...:%extensionN
@@ -640,7 +640,7 @@ It's highly recommended to prefer the `cachebuster` option over a URL query stri
 
 Default: empty
 
-### Expires<i class='badge badge-v3'></i> :id=expires
+### Expires
 
 ```
 expires:%timestamp

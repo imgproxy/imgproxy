@@ -1,4 +1,4 @@
-# Autoquality<i class='badge badge-pro'></i><i class='badge badge-v3'></i>
+# Autoquality<i class='badge badge-pro'></i>
 
 imgproxy can calculate quality for your resultant images so they best fit the selected metric. The supported methods are [none](#none), [size](#autoquality-by-file-size), [dssim](#autoquality-by-dssim), and [ml](#autoquality-with-ml).
 

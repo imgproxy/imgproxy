@@ -1,4 +1,4 @@
-# Chained pipelines<i class='badge badge-pro'></i><i class='badge badge-v3'></i>
+# Chained pipelines<i class='badge badge-pro'></i>
 
 Though imgproxy's [processing pipeline](about_processing_pipeline.md) is suitable for most cases, sometimes it's handy to run multiple chained pipelines with different options.
 

@@ -109,12 +109,6 @@ i.badge-pro::before {
   text-transform: uppercase;
 }
 
-i.badge-v3::before {
-  content: "v3";
-  color: #ff7401;
-  border-color: #ff7401;
-}
-
 h1 i.badge, h2 i.badge, h3 i.badge, h4 i.badge, .sidebar-nav i.badge {
   margin-left: .5ch;
 }

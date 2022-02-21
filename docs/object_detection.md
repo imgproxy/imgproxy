@@ -1,4 +1,4 @@
-# Object detection<i class='badge badge-pro'></i><i class='badge badge-v3'></i>
+# Object detection<i class='badge badge-pro'></i>
 
 imgproxy can detect objects on the image and use them for smart cropping, bluring the detections, or drawing the detections.
 
