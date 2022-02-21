@@ -137,6 +137,8 @@ var (
 	FreeMemoryInterval             int
 	DownloadBufferSize             int
 	BufferPoolCalibrationThreshold int
+
+	HealthCheckPath string
 )
 
 var (
@@ -275,6 +277,8 @@ func Reset() {
 	FreeMemoryInterval = 10
 	DownloadBufferSize = 0
 	BufferPoolCalibrationThreshold = 1024
+
+	HealthCheckPath = ""
 }
 
 func Configure() error {
@@ -327,6 +331,8 @@ func Configure() error {
 	configurators.Bool(&EnableAvifDetection, "IMGPROXY_ENABLE_AVIF_DETECTION")
 	configurators.Bool(&EnforceAvif, "IMGPROXY_ENFORCE_AVIF")
 	configurators.Bool(&EnableClientHints, "IMGPROXY_ENABLE_CLIENT_HINTS")
+
+	configurators.String(&HealthCheckPath, "IMGPROXY_HEALTH_CHECK_PATH")
 
 	if err := configurators.ImageTypes(&SkipProcessingFormats, "IMGPROXY_SKIP_PROCESSING_FORMATS"); err != nil {
 		return err

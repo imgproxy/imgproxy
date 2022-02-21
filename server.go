@@ -29,6 +29,9 @@ func buildRouter() *router.Router {
 
 	r.GET("/", handleLanding, true)
 	r.GET("/health", handleHealth, true)
+	if len(config.HealthCheckPath) > 0 {
+		r.GET(config.HealthCheckPath, handleHealth, true)
+	}
 	r.GET("/favicon.ico", handleFavicon, true)
 	r.GET("/", withMetrics(withPanicHandler(withCORS(withSecret(handleProcessing)))), false)
 	r.HEAD("/", withCORS(handleHead), false)
