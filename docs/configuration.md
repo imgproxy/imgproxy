@@ -49,6 +49,7 @@ echo $(xxd -g 2 -l 64 -p /dev/random | tr -d '\n')
   * `X-Origin-Content-Length`: the size of the source image
   * `X-Origin-Width`: the width of the source image
   * `X-Origin-Height`: the height of the source image
+* `IMGPROXY_SERVER_NAME`: <i class='badge badge-pro'></i> the `Server` header value. Default: `imgproxy`
 
 ## Security
 
@@ -400,3 +401,4 @@ imgproxy can send logs to syslog, but this feature is disabled by default. To en
 * `IMGPROXY_STRIP_METADATA`: when `true`, imgproxy will strip all metadata (EXIF, IPTC, etc.) from JPEG and WebP output images. Default: `true`
 * `IMGPROXY_STRIP_COLOR_PROFILE`: when `true`, imgproxy will transform the embedded color profile (ICC) to sRGB and remove it from the image. Otherwise, imgproxy will try to keep it as is. Default: `true`
 * `IMGPROXY_AUTO_ROTATE`: when `true`, imgproxy will automatically rotate images based on the EXIF Orientation parameter (if available in the image meta data). The orientation tag will be removed from the image in all cases. Default: `true`
+* `IMGPROXY_HEALTH_CHECK_MESSAGE`: <i class='badge badge-pro'></i> the content of the `/health` response. Default: `imgproxy is running`
