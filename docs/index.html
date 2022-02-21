@@ -77,7 +77,8 @@
         },
         function (hook, vm) {
           hook.doneEach((content) => {
-            document.title += " | " + documentTitleBase;
+            if (document.title != documentTitleBase)
+              document.title += " | " + documentTitleBase;
           });
         }
       ]
