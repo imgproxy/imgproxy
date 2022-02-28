@@ -26,7 +26,7 @@ require (
 	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd
 	golang.org/x/sys v0.0.0-20220209214540-3681064d5158
 	golang.org/x/text v0.3.7
-	google.golang.org/api v0.69.0
+	google.golang.org/api v0.70.0
 	gopkg.in/DataDog/dd-trace-go.v1 v1.36.0
 )
 
