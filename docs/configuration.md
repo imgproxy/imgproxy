@@ -242,6 +242,7 @@ You can set up a fallback image that will be used in case imgproxy is unable to 
 * `IMGPROXY_FALLBACK_IMAGE_PATH`: the path to the locally stored image
 * `IMGPROXY_FALLBACK_IMAGE_URL`: the fallback image URL
 * `IMGPROXY_FALLBACK_IMAGE_HTTP_CODE`: the HTTP code for the fallback image response. When set to zero, imgproxy will respond with the usual HTTP code. Default: `200`
+* `IMGPROXY_FALLBACK_TTL`: a duration (in seconds) sent via the `Expires` and `Cache-Control: max-age` HTTP headers when fallback image response. Default: `60`
 * `IMGPROXY_FALLBACK_IMAGES_CACHE_SIZE`: <i class='badge badge-pro'></i> the size of custom fallback images cache. When set to `0`, the fallback image cache is disabled. 256 fallback images are cached by default.
 
 ## Skip processing
