@@ -3,7 +3,7 @@ imgproxy
 tmp/
 .tmp
 .vscode/
-
+.env
 .gitmodules
 docker-base
 docs/sitemap.txt

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/cookiejar"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -47,7 +48,7 @@ func initProcessingHandler() {
 	headerVaryValue = strings.Join(vary, ", ")
 }
 
-func setCacheControl(rw http.ResponseWriter, originHeaders map[string]string) {
+func setCacheControl(rw http.ResponseWriter, originHeaders map[string]string, statusCode int) {
 	var cacheControl, expires string
 
 	if config.CacheControlPassthrough && originHeaders != nil {
@@ -60,8 +61,13 @@ func setCacheControl(rw http.ResponseWriter, originHeaders map[string]string) {
 	}
 
 	if len(cacheControl) == 0 && len(expires) == 0 {
-		cacheControl = fmt.Sprintf("max-age=%d, public", config.TTL)
-		expires = time.Now().Add(time.Second * time.Duration(config.TTL)).Format(http.TimeFormat)
+		if statusCode >= 400 {
+			cacheControl = fmt.Sprintf("max-age=%d, public", config.FallbackTTL)
+			expires = time.Now().Add(time.Second * time.Duration(config.FallbackTTL)).Format(http.TimeFormat)
+		} else {
+			cacheControl = fmt.Sprintf("max-age=%d, public", config.TTL)
+			expires = time.Now().Add(time.Second * time.Duration(config.TTL)).Format(http.TimeFormat)
+		}
 	}
 
 	if len(cacheControl) > 0 {
@@ -100,7 +106,7 @@ func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, sta
 		}
 	}
 
-	setCacheControl(rw, originData.Headers)
+	setCacheControl(rw, originData.Headers, statusCode)
 	setVary(rw)
 
 	if config.EnableDebugHeaders {
@@ -123,7 +129,7 @@ func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, sta
 }
 
 func respondWithNotModified(reqID string, r *http.Request, rw http.ResponseWriter, po *options.ProcessingOptions, originURL string, originHeaders map[string]string) {
-	setCacheControl(rw, originHeaders)
+	setCacheControl(rw, originHeaders, 304)
 	setVary(rw)
 
 	rw.WriteHeader(304)
@@ -156,6 +162,18 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		path = path[signatureEnd:]
 	} else {
 		panic(ierrors.New(404, fmt.Sprintf("Invalid path: %s", path), "Invalid URL"))
+	}
+
+	if strings.Contains(path, "%") {
+		decodedPath, err := url.QueryUnescape(path)
+		if err != nil {
+			panic(ierrors.New(
+				422,
+				fmt.Sprintf("Error decoding path: %s", err),
+				"Invalid URL",
+			))
+		}
+		path = decodedPath
 	}
 
 	if err := security.VerifySignature(signature, path); err != nil {
