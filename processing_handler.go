@@ -60,8 +60,19 @@ func setCacheControl(rw http.ResponseWriter, originHeaders map[string]string) {
 	}
 
 	if len(cacheControl) == 0 && len(expires) == 0 {
-		cacheControl = fmt.Sprintf("max-age=%d, public", config.TTL)
-		expires = time.Now().Add(time.Second * time.Duration(config.TTL)).Format(http.TimeFormat)
+		if val, ok := originHeaders["FallbackTTL"]; ok {
+			FallbackTTL, err := strconv.Atoi(val)
+			if err != nil {
+				cacheControl = fmt.Sprintf("max-age=%d, public", config.TTL)
+				expires = time.Now().Add(time.Second * time.Duration(config.TTL)).Format(http.TimeFormat)
+			} else {
+				cacheControl = fmt.Sprintf("max-age=%d, public", FallbackTTL)
+				expires = time.Now().Add(time.Second * time.Duration(config.FallbackTTL)).Format(http.TimeFormat)
+			}
+		} else {
+			cacheControl = fmt.Sprintf("max-age=%d, public", config.TTL)
+			expires = time.Now().Add(time.Second * time.Duration(config.TTL)).Format(http.TimeFormat)
+		}
 	}
 
 	if len(cacheControl) > 0 {
@@ -245,6 +256,13 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		log.Warningf("Could not load image %s. Using fallback image. %s", imageURL, err.Error())
 		if config.FallbackImageHTTPCode > 0 {
 			statusCode = config.FallbackImageHTTPCode
+		}
+
+		if config.FallbackTTL > 0 {
+			if imagedata.FallbackImage.Headers == nil {
+				imagedata.FallbackImage.Headers = make(map[string]string)
+			}
+			imagedata.FallbackImage.Headers["FallbackTTL"] = strconv.Itoa(config.FallbackTTL)
 		}
 		originData = imagedata.FallbackImage
 	}
