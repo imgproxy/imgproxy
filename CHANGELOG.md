@@ -1,6 +1,9 @@
 # Changelog
 
 ## [Unreleased]
+### Fix
+- Fix transparrency in loaded ICO.
+- (pro) Fix video thumbnails orientation.
 
 ## [3.3.0] - 2022-02-21
 ### Added
