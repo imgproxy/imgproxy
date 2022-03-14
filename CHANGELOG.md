@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [3.3.1] - 2022-03-14
+### Fix
+- Fix transparrency in loaded ICO.
+- (pro) Fix video thumbnails orientation.
+
 ## [3.3.0] - 2022-02-21
 ### Added
 - Add the `IMGPROXY_MAX_REDIRECTS` config.

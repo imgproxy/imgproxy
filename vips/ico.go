@@ -32,15 +32,15 @@ func (img *Image) loadIco(data []byte, shrink int, scale float64, pages int) err
 	meta, err := imagemeta.DecodeMeta(bytes.NewReader(internalData))
 	if err != nil {
 		// Looks like it's BMP with an incomplete header
-		if d, err := imagemeta.FixBmpHeader(internalData); err == nil {
-			internalType = imagetype.BMP
-			internalData = d
-		} else {
+		d, err := icoFixBmpHeader(internalData)
+		if err != nil {
 			return err
 		}
-	} else {
-		internalType = meta.Format()
+
+		return img.loadBmp(d, false)
 	}
+
+	internalType = meta.Format()
 
 	if internalType == imagetype.ICO || !SupportsLoad(internalType) {
 		return fmt.Errorf("Can't load %s from ICO", internalType)
@@ -128,4 +128,51 @@ func (img *Image) saveAsIco() (*imagedata.ImageData, error) {
 	}
 
 	return &imgdata, nil
+}
+
+func icoFixBmpHeader(b []byte) ([]byte, error) {
+	buf := new(bytes.Buffer)
+
+	fileSize := uint32(14 + len(b))
+
+	buf.Grow(int(fileSize))
+
+	buf.WriteString("BM")
+
+	if err := binary.Write(buf, binary.LittleEndian, &fileSize); err != nil {
+		return nil, err
+	}
+
+	reserved := uint32(0)
+	if err := binary.Write(buf, binary.LittleEndian, &reserved); err != nil {
+		return nil, err
+	}
+
+	colorUsed := binary.LittleEndian.Uint32(b[32:36])
+	bitCount := binary.LittleEndian.Uint16(b[14:16])
+
+	var pixOffset uint32
+	if colorUsed == 0 && bitCount <= 8 {
+		pixOffset = 14 + 40 + 4*(1<<bitCount)
+	} else {
+		pixOffset = 14 + 40 + 4*colorUsed
+	}
+
+	if err := binary.Write(buf, binary.LittleEndian, &pixOffset); err != nil {
+		return nil, err
+	}
+
+	// Write size and width
+	buf.Write(b[:8])
+
+	// For some reason ICO stores double height
+	height := binary.LittleEndian.Uint32(b[8:12]) / 2
+	if err := binary.Write(buf, binary.LittleEndian, &height); err != nil {
+		return nil, err
+	}
+
+	// Write the rest
+	buf.Write(b[12:])
+
+	return buf.Bytes(), nil
 }

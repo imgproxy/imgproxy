@@ -208,7 +208,7 @@ func (img *Image) Load(imgdata *imagedata.ImageData, shrink int, scale float64, 
 	}
 
 	if imgdata.Type == imagetype.BMP {
-		return img.loadBmp(imgdata.Data)
+		return img.loadBmp(imgdata.Data, true)
 	}
 
 	var tmp *C.VipsImage
