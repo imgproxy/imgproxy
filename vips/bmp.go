@@ -191,7 +191,7 @@ func (img *Image) decodeBmpRGB(r io.Reader, width, height, bands int, topDown, n
 	return nil
 }
 
-func (img *Image) loadBmp(data []byte) error {
+func (img *Image) loadBmp(data []byte, noAlpha bool) error {
 	// We only support those BMP images that are a BITMAPFILEHEADER
 	// immediately followed by a BITMAPINFOHEADER.
 	const (
@@ -282,7 +282,6 @@ func (img *Image) loadBmp(data []byte) error {
 		}
 		return img.decodeBmpRGB(r, width, height, 3, topDown, true)
 	case 32:
-		noAlpha := true
 		if infoLen >= 70 {
 			// Alpha mask is empty, so no alpha here
 			noAlpha = readUint32(b[66:70]) == 0
