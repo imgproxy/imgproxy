@@ -2,7 +2,6 @@ package logger
 
 import (
 	"fmt"
-	"log"
 	"os"
 
 	logrus "github.com/sirupsen/logrus"
@@ -11,7 +10,7 @@ import (
 )
 
 func Init() error {
-	log.SetOutput(os.Stdout)
+	logrus.SetOutput(os.Stdout)
 
 	logFormat := "pretty"
 	logLevel := "info"

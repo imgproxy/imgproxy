@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+### Fix
+- Write logs to STDOUT instead of STDERR.
 
 ## [3.3.1] - 2022-03-14
 ### Fix
