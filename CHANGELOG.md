@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+
+## [3.3.2] - 2022-03-17
 ### Fix
 - Write logs to STDOUT instead of STDERR.
 - (pro) Fix crashes when some options are used in presets.
