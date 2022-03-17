@@ -2,7 +2,9 @@ package s3
 
 import (
 	"fmt"
+	"io"
 	http "net/http"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -60,8 +62,21 @@ func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error)
 	s3req, _ := t.svc.GetObjectRequest(input)
 
 	if err := s3req.Send(); err != nil {
-		if s3err, ok := err.(awserr.RequestFailure); !ok || s3err.StatusCode() != http.StatusNotModified {
+		if s3err, ok := err.(awserr.RequestFailure); !ok || s3err.StatusCode() < 100 || s3err.StatusCode() == 301 {
 			return nil, err
+		} else {
+			body := strings.NewReader(s3err.Message())
+			return &http.Response{
+				StatusCode:    s3err.StatusCode(),
+				Proto:         "HTTP/1.0",
+				ProtoMajor:    1,
+				ProtoMinor:    0,
+				Header:        http.Header{},
+				ContentLength: int64(body.Len()),
+				Body:          io.NopCloser(body),
+				Close:         false,
+				Request:       s3req.HTTPRequest,
+			}, nil
 		}
 	}
 

@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 ### Fix
+- Fix `s3` scheme status codes.
 - (pro) Fix saving animations to MP4.
 
 ## [3.3.2] - 2022-03-17
