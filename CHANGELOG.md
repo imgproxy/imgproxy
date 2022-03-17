@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+### Fix
+- (pro) Fix saving animations to MP4.
 
 ## [3.3.2] - 2022-03-17
 ### Fix
