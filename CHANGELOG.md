@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+## [3.3.3] - 2022-03-21
+### Fix
+- Fix `s3` scheme status codes.
+- (pro) Fix saving animations to MP4.
+
+## [3.3.2] - 2022-03-17
+### Fix
+- Write logs to STDOUT instead of STDERR.
+- (pro) Fix crashes when some options are used in presets.
+
 ## [3.3.1] - 2022-03-14
 ### Fix
 - Fix transparrency in loaded ICO.
