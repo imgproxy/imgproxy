@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -81,16 +82,47 @@ func loadWatermark() (err error) {
 func loadFallbackImage() (err error) {
 	if len(config.FallbackImageData) > 0 {
 		FallbackImage, err = FromBase64(config.FallbackImageData, "fallback image")
+	} else if len(config.FallbackImagePath) > 0 {
+		FallbackImage, err = FromFile(config.FallbackImagePath, "fallback image")
+	} else if len(config.FallbackImageURL) > 0 {
+		FallbackImage, err = Download(config.FallbackImageURL, "fallback image", nil, nil)
+	}
+
+	if FallbackImage != nil && err == nil && config.FallbackTTL > 0 {
+		if FallbackImage.Headers == nil {
+			FallbackImage.Headers = make(map[string]string)
+		}
+		FallbackImage.Headers["FallbackTTL"] = strconv.Itoa(config.FallbackTTL)
+	}
+
+	return err
+}
+
+func fallbackTtl() {
+	if FallbackImage != nil && config.FallbackTTL > 0 {
+		if FallbackImage.Headers == nil {
+			FallbackImage.Headers = make(map[string]string)
+		}
+		FallbackImage.Headers["FallbackTTL"] = strconv.Itoa(config.FallbackTTL)
+	}
+}
+
+func loadFallbackImage_() (err error) {
+	if len(config.FallbackImageData) > 0 {
+		FallbackImage, err = FromBase64(config.FallbackImageData, "fallback image")
+		fallbackTtl()
 		return
 	}
 
 	if len(config.FallbackImagePath) > 0 {
 		FallbackImage, err = FromFile(config.FallbackImagePath, "fallback image")
+		fallbackTtl()
 		return
 	}
 
 	if len(config.FallbackImageURL) > 0 {
 		FallbackImage, err = Download(config.FallbackImageURL, "fallback image", nil, nil)
+		fallbackTtl()
 		return
 	}
 
