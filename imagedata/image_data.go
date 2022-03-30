@@ -95,7 +95,7 @@ func loadFallbackImage() (err error) {
 		if FallbackImage.Headers == nil {
 			FallbackImage.Headers = make(map[string]string)
 		}
-		FallbackImage.Headers["FallbackTTL"] = strconv.Itoa(config.FallbackTTL)
+		FallbackImage.Headers["Fallback-Image"] = "1"
 	}
 
 	return err
