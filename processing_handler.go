@@ -63,7 +63,7 @@ func setCacheControl(rw http.ResponseWriter, originHeaders map[string]string) {
 	if len(cacheControl) == 0 && len(expires) == 0 {
 		ttl = config.TTL
 		if _, ok := originHeaders["Fallback-Image"]; ok {
-			ttl = config.FallbackTTL
+			ttl = config.FallbackImageTTL
 		}
 		cacheControl = fmt.Sprintf("max-age=%d, public", ttl)
 		expires = time.Now().Add(time.Second * time.Duration(ttl)).Format(http.TimeFormat)

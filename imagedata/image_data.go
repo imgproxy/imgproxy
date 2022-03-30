@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 	"os"
-	"strconv"
 	"strings"
 	"sync"
 
@@ -91,7 +90,7 @@ func loadFallbackImage() (err error) {
 		FallbackImage, err = nil, nil
 	}
 
-	if FallbackImage != nil && err == nil && config.FallbackTTL > 0 {
+	if FallbackImage != nil && err == nil && config.FallbackImageTTL > 0 {
 		if FallbackImage.Headers == nil {
 			FallbackImage.Headers = make(map[string]string)
 		}
