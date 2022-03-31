@@ -7,3 +7,5 @@ tmp/
 .gitmodules
 docker-base
 docs/sitemap.txt
+.env
+.devcontainer/*

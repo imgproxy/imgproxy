@@ -79,22 +79,25 @@ func loadWatermark() (err error) {
 }
 
 func loadFallbackImage() (err error) {
-	if len(config.FallbackImageData) > 0 {
+	switch {
+	case len(config.FallbackImageData) > 0:
 		FallbackImage, err = FromBase64(config.FallbackImageData, "fallback image")
-		return
-	}
-
-	if len(config.FallbackImagePath) > 0 {
+	case len(config.FallbackImagePath) > 0:
 		FallbackImage, err = FromFile(config.FallbackImagePath, "fallback image")
-		return
-	}
-
-	if len(config.FallbackImageURL) > 0 {
+	case len(config.FallbackImageURL) > 0:
 		FallbackImage, err = Download(config.FallbackImageURL, "fallback image", nil, nil)
-		return
+	default:
+		FallbackImage, err = nil, nil
 	}
 
-	return nil
+	if FallbackImage != nil && err == nil && config.FallbackImageTTL > 0 {
+		if FallbackImage.Headers == nil {
+			FallbackImage.Headers = make(map[string]string)
+		}
+		FallbackImage.Headers["Fallback-Image"] = "1"
+	}
+
+	return err
 }
 
 func FromBase64(encoded, desc string) (*ImageData, error) {

@@ -107,6 +107,7 @@ var (
 	FallbackImagePath     string
 	FallbackImageURL      string
 	FallbackImageHTTPCode int
+	FallbackImageTTL      int
 
 	DataDogEnable bool
 
@@ -247,6 +248,7 @@ func Reset() {
 	FallbackImagePath = ""
 	FallbackImageURL = ""
 	FallbackImageHTTPCode = 200
+	FallbackImageTTL = 0
 
 	DataDogEnable = false
 
@@ -402,6 +404,7 @@ func Configure() error {
 	configurators.String(&FallbackImagePath, "IMGPROXY_FALLBACK_IMAGE_PATH")
 	configurators.String(&FallbackImageURL, "IMGPROXY_FALLBACK_IMAGE_URL")
 	configurators.Int(&FallbackImageHTTPCode, "IMGPROXY_FALLBACK_IMAGE_HTTP_CODE")
+	configurators.Int(&FallbackImageTTL, "IMGPROXY_FALLBACK_IMAGE_TTL")
 
 	configurators.Bool(&DataDogEnable, "IMGPROXY_DATADOG_ENABLE")
 

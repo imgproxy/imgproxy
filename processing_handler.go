@@ -49,6 +49,7 @@ func initProcessingHandler() {
 
 func setCacheControl(rw http.ResponseWriter, originHeaders map[string]string) {
 	var cacheControl, expires string
+	var ttl int
 
 	if config.CacheControlPassthrough && originHeaders != nil {
 		if val, ok := originHeaders["Cache-Control"]; ok {
@@ -60,8 +61,12 @@ func setCacheControl(rw http.ResponseWriter, originHeaders map[string]string) {
 	}
 
 	if len(cacheControl) == 0 && len(expires) == 0 {
-		cacheControl = fmt.Sprintf("max-age=%d, public", config.TTL)
-		expires = time.Now().Add(time.Second * time.Duration(config.TTL)).Format(http.TimeFormat)
+		ttl = config.TTL
+		if _, ok := originHeaders["Fallback-Image"]; ok && config.FallbackImageTTL > 0 {
+			ttl = config.FallbackImageTTL
+		}
+		cacheControl = fmt.Sprintf("max-age=%d, public", ttl)
+		expires = time.Now().Add(time.Second * time.Duration(ttl)).Format(http.TimeFormat)
 	}
 
 	if len(cacheControl) > 0 {
@@ -246,6 +251,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		if config.FallbackImageHTTPCode > 0 {
 			statusCode = config.FallbackImageHTTPCode
 		}
+
 		originData = imagedata.FallbackImage
 	}
 
