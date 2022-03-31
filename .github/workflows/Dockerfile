@@ -7,16 +7,8 @@ RUN apt-get -qq update \
     build-essential \
     curl \
     git \
-    mercurial \
-    make \
-    binutils \
-    bison \
-    gcc \
-    gobject-introspection \
     libglib2.0-dev \
-    libexpat1-dev \
     libxml2-dev \
-    libfftw3-dev \
     libjpeg-dev \
     libpng-dev \
     libwebp-dev \
@@ -27,9 +19,8 @@ RUN apt-get -qq update \
     libavformat-dev \
     libavutil-dev \
     libswscale-dev \
-    libopencv-dev
-
-RUN curl -s -S -L https://raw.githubusercontent.com/moovweb/gvm/master/binscripts/gvm-installer | bash -
+    libopencv-core-dev \
+    libopencv-dnn-dev
 
 RUN \
   mkdir /root/vips \
@@ -59,7 +50,14 @@ RUN \
     && rm -rf $VIPS_RELEASE.tar.gz vips-$VIPS_RELEASE; \
   done
 
+RUN echo "Name: OpenCV\n" \
+  "Description: Open Source Computer Vision Library\n" \
+  "Version: 4.5.1\n" \
+  "Libs: -L/usr/lib/x86_64-linux-gnu -lopencv_dnn -lopencv_imgproc -lopencv_core\n" \
+  "Libs.private: -ldl -lm -lpthread -lrt\n" \
+  "Cflags: -I/usr/include/opencv4\n" \
+  > /usr/lib/x86_64-linux-gnu/pkgconfig/opencv4.pc
+
 WORKDIR /go/src
-ENV GOPATH=/go
 
 ENTRYPOINT [ "/bin/bash" ]
