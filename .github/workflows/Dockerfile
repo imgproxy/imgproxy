@@ -20,6 +20,7 @@ RUN apt-get -qq update \
     libavutil-dev \
     libswscale-dev \
     libopencv-core-dev \
+    libopencv-imgproc-dev \
     libopencv-dnn-dev
 
 RUN \
