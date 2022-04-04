@@ -1,6 +1,9 @@
 # Changelog
 
 ## [Unreleased]
+### Add
+- Add `IMGPROXY_FALLBACK_IMAGE_TTL` config.
+
 ### Fix
 - (pro) Fix custom watermarks on animated images.
 
