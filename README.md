@@ -4,7 +4,7 @@
      src="https://cdn.rawgit.com/DarthSim/imgproxy/master/logo.svg">
 
 
-[![CircleCI branch](https://img.shields.io/circleci/project/github/imgproxy/imgproxy/master.svg?logo=circleci&style=for-the-badge)](https://circleci.com/gh/imgproxy/imgproxy) [![Docker](https://img.shields.io/badge/docker-darthsim%2Fimgproxy-blue.svg?logo=docker&logoColor=white&style=for-the-badge)](https://hub.docker.com/r/darthsim/imgproxy/) [![Docker Pulls](https://img.shields.io/docker/pulls/darthsim/imgproxy.svg?logo=docker&logoColor=white&style=for-the-badge)](https://hub.docker.com/r/darthsim/imgproxy/) [![Gitter](https://img.shields.io/gitter/room/imgproxy/imgproxy?logo=gitter&style=for-the-badge)](https://gitter.im/imgproxy/imgproxy)
+[![GH Test](https://img.shields.io/github/workflow/status/imgproxy/imgproxy/Test?label=Test&logo=github&style=for-the-badge)](https://github.com/imgproxy/imgproxy/actions) [![GH Lint](https://img.shields.io/github/workflow/status/imgproxy/imgproxy/Lint?label=Lint&logo=github&style=for-the-badge)](https://github.com/imgproxy/imgproxy/actions) [![Docker](https://img.shields.io/badge/docker-darthsim%2Fimgproxy-blue.svg?logo=docker&logoColor=white&style=for-the-badge)](https://hub.docker.com/r/darthsim/imgproxy/) [![Docker Pulls](https://img.shields.io/docker/pulls/darthsim/imgproxy.svg?logo=docker&logoColor=white&style=for-the-badge)](https://hub.docker.com/r/darthsim/imgproxy/) [![Gitter](https://img.shields.io/gitter/room/imgproxy/imgproxy?logo=gitter&style=for-the-badge)](https://gitter.im/imgproxy/imgproxy)
 
 
 imgproxy is a fast and secure standalone server for resizing and converting remote images. The guiding principles behind imgproxy are security, speed, and simplicity.
