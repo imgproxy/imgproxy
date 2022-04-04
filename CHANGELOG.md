@@ -4,6 +4,9 @@
 ### Fix
 - (pro) Fix custom watermarks on animated images.
 
+## [3.3.3-pretest] - 2022-04-04
+Just a test of GH Actions. Please, ignore this release
+
 ## [3.3.3] - 2022-03-21
 ### Fix
 - Fix `s3` scheme status codes.
