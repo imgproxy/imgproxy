@@ -1,0 +1,31 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Prepare notes
+        run: |
+          # Extract changelog entries between this and previous version headers
+          escaped_version=$(echo ${GITHUB_REF_NAME#v} | sed -e 's/[]\/$*.^[]/\\&/g')
+          awk "BEGIN{inrelease=0} /## \[${escaped_version}\]/{inrelease=1;next} /## \[[0-9]+\.[0-9]+\.[0-9]+.*\]/{inrelease=0;exit} {if (inrelease) print}" CHANGELOG.md \
+            > RELEASE_NOTES.txt
+
+          # Write PRERELEASE="true" env if tag name has any suffix after vMAJOR.MINOR.PATCH
+          if [[ ${GITHUB_REF_NAME} =~ ^v[0-9]+\.[0-9]+\.[0-9]+.+ ]]; then
+            echo 'PRERELEASE="true"' >> $GITHUB_ENV
+          else
+            echo 'PRERELEASE="false"' >> $GITHUB_ENV
+          fi
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          body_path: RELEASE_NOTES.txt
+          prerelease: ${{ fromJSON(env.PRERELEASE) }}
