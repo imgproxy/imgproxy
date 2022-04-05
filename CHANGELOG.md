@@ -4,6 +4,9 @@
 ### Add
 - Add `IMGPROXY_FALLBACK_IMAGE_TTL` config.
 
+### Change
+- (pro) Don't check `Content-Length` header of videos.
+
 ### Fix
 - (pro) Fix custom watermarks on animated images.
 
