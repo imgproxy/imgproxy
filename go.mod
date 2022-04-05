@@ -16,6 +16,7 @@ require (
 	github.com/honeybadger-io/honeybadger-go v0.5.0
 	github.com/ianlancetaylor/cgosymbolizer v0.0.0-20220217162856-c813f11194b9 // indirect
 	github.com/matoous/go-nanoid/v2 v2.0.0
+	github.com/ncw/swift/v2 v2.0.1
 	github.com/newrelic/go-agent/v3 v3.15.2
 	github.com/prometheus/client_golang v1.12.1
 	github.com/sirupsen/logrus v1.8.1
@@ -32,3 +33,5 @@ require (
 replace git.apache.org/thrift.git => github.com/apache/thrift v0.0.0-20180902110319-2566ecd5d999
 
 replace github.com/shirou/gopsutil => github.com/shirou/gopsutil v2.20.9+incompatible
+
+replace github.com/go-chi/chi/v4 => github.com/go-chi/chi v4.0.0+incompatible
