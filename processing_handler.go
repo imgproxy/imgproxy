@@ -47,9 +47,8 @@ func initProcessingHandler() {
 	headerVaryValue = strings.Join(vary, ", ")
 }
 
-func setCacheControl(rw http.ResponseWriter, originHeaders map[string]string) {
+func setCacheControl(rw http.ResponseWriter, originHeaders map[string]string, ttl int64) {
 	var cacheControl, expires string
-	var ttl int
 
 	if config.CacheControlPassthrough && originHeaders != nil {
 		if val, ok := originHeaders["Cache-Control"]; ok {
@@ -61,9 +60,8 @@ func setCacheControl(rw http.ResponseWriter, originHeaders map[string]string) {
 	}
 
 	if len(cacheControl) == 0 && len(expires) == 0 {
-		ttl = config.TTL
 		if _, ok := originHeaders["Fallback-Image"]; ok && config.FallbackImageTTL > 0 {
-			ttl = config.FallbackImageTTL
+			ttl = int64(config.FallbackImageTTL)
 		}
 		cacheControl = fmt.Sprintf("max-age=%d, public", ttl)
 		expires = time.Now().Add(time.Second * time.Duration(ttl)).Format(http.TimeFormat)
@@ -105,7 +103,7 @@ func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, sta
 		}
 	}
 
-	setCacheControl(rw, originData.Headers)
+	setCacheControl(rw, originData.Headers, po.TTL)
 	setVary(rw)
 
 	if config.EnableDebugHeaders {
@@ -128,7 +126,7 @@ func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, sta
 }
 
 func respondWithNotModified(reqID string, r *http.Request, rw http.ResponseWriter, po *options.ProcessingOptions, originURL string, originHeaders map[string]string) {
-	setCacheControl(rw, originHeaders)
+	setCacheControl(rw, originHeaders, po.TTL)
 	setVary(rw)
 
 	rw.WriteHeader(304)
@@ -154,17 +152,18 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	}
 
 	path = strings.TrimPrefix(path, "/")
-	signature := ""
+	if len(config.Keys) > 0 {
+		signature := ""
+		if signatureEnd := strings.IndexByte(path, '/'); signatureEnd > 0 {
+			signature = path[:signatureEnd]
+			path = path[signatureEnd:]
+		} else {
+			panic(ierrors.New(404, fmt.Sprintf("Invalid path: %s", path), "Invalid URL"))
+		}
 
-	if signatureEnd := strings.IndexByte(path, '/'); signatureEnd > 0 {
-		signature = path[:signatureEnd]
-		path = path[signatureEnd:]
-	} else {
-		panic(ierrors.New(404, fmt.Sprintf("Invalid path: %s", path), "Invalid URL"))
-	}
-
-	if err := security.VerifySignature(signature, path); err != nil {
-		panic(ierrors.New(403, err.Error(), "Forbidden"))
+		if err := security.VerifySignature(signature, path); err != nil {
+			panic(ierrors.New(403, err.Error(), "Forbidden"))
+		}
 	}
 
 	po, imageURL, err := options.ParsePath(path, r.Header)
