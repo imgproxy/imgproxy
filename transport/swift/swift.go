@@ -18,8 +18,8 @@ type transport struct {
 func New() (http.RoundTripper, error) {
 	c := &swift.Connection{
 		UserName:       config.SwiftUsername,
-		ApiKey:         config.SwiftApiKey,
-		AuthUrl:        config.SwiftAuthUrl,
+		ApiKey:         config.SwiftAPIKey,
+		AuthUrl:        config.SwiftAuthURL,
 		AuthVersion:    config.SwiftAuthVersion,
 		Domain:         config.SwiftDomain, // v3 auth only
 		Tenant:         config.SwiftTenant, // v2 auth only
@@ -39,7 +39,7 @@ func New() (http.RoundTripper, error) {
 }
 
 func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
-	container, path, err := parseObjectUrl(req.URL.Path)
+	container, path, err := parseObjectURL(req.URL.Path)
 
 	if err != nil {
 		return &http.Response{
@@ -98,7 +98,7 @@ func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error)
 	}, nil
 }
 
-func parseObjectUrl(url string) (container string, path string, err error) {
+func parseObjectURL(url string) (container string, path string, err error) {
 	paths := strings.SplitN(strings.TrimPrefix(url, "/"), "/", 3)
 
 	if len(paths) != 3 {

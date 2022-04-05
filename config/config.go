@@ -90,8 +90,8 @@ var (
 	ABSEndpoint         string
 	SwiftEnabled        bool
 	SwiftUsername       string
-	SwiftApiKey         string
-	SwiftAuthUrl        string
+	SwiftAPIKey         string
+	SwiftAuthURL        string
 	SwiftDomain         string
 	SwiftTenant         string
 	SwiftAuthVersion    int
@@ -241,8 +241,8 @@ func Reset() {
 	ABSEndpoint = ""
 	SwiftEnabled = false
 	SwiftUsername = ""
-	SwiftApiKey = ""
-	SwiftAuthUrl = ""
+	SwiftAPIKey = ""
+	SwiftAuthURL = ""
 	SwiftAuthVersion = 0
 	SwiftTenant = ""
 	SwiftDomain = ""
@@ -404,8 +404,8 @@ func Configure() error {
 
 	configurators.Bool(&SwiftEnabled, "IMGPROXY_USE_SWIFT")
 	configurators.String(&SwiftUsername, "IMGPROXY_SWIFT_USERNAME")
-	configurators.String(&SwiftApiKey, "IMGPROXY_SWIFT_API_KEY")
-	configurators.String(&SwiftAuthUrl, "IMGPROXY_SWIFT_AUTH_URL")
+	configurators.String(&SwiftAPIKey, "IMGPROXY_SWIFT_API_KEY")
+	configurators.String(&SwiftAuthURL, "IMGPROXY_SWIFT_AUTH_URL")
 	configurators.String(&SwiftDomain, "IMGPROXY_SWIFT_DOMAIN")
 	configurators.String(&SwiftTenant, "IMGPROXY_SWIFT_TENANT")
 	configurators.Int(&SwiftConnectTimeoutSeconds, "IMGPROXY_SWIFT_CONNECT_TIMEOUT_SECONDS")

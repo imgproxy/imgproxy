@@ -21,9 +21,9 @@ const (
 func initTestServer() (*swifttest.SwiftServer, error) {
 	server, err := swifttest.NewSwiftServer("localhost")
 
-	config.SwiftAuthUrl = server.AuthURL
+	config.SwiftAuthURL = server.AuthURL
 	config.SwiftUsername = swifttest.TEST_ACCOUNT
-	config.SwiftApiKey = swifttest.TEST_ACCOUNT
+	config.SwiftAPIKey = swifttest.TEST_ACCOUNT
 	config.SwiftAuthVersion = 1
 
 	return server, err
@@ -32,8 +32,8 @@ func initTestServer() (*swifttest.SwiftServer, error) {
 func setupTestFile(t *testing.T) {
 	c := &swift.Connection{
 		UserName:    config.SwiftUsername,
-		ApiKey:      config.SwiftApiKey,
-		AuthUrl:     config.SwiftAuthUrl,
+		ApiKey:      config.SwiftAPIKey,
+		AuthUrl:     config.SwiftAuthURL,
 		AuthVersion: config.SwiftAuthVersion,
 	}
 
