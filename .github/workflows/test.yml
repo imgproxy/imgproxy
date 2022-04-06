@@ -30,7 +30,7 @@ jobs:
       - name: Download mods
         run: go mod download
       - name: Test
-        run: go test
+        run: go test ./...
         env:
           LD_LIBRARY_PATH: "${{ env.LD_LIBRARY_PATH }}:/root/vips/${{ matrix.vips-version }}/lib"
           PKG_CONFIG_PATH: "${{ env.PKG_CONFIG_PATH }}:/root/vips/${{ matrix.vips-version }}/lib/pkgconfig"
