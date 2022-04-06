@@ -2,15 +2,17 @@ package swift
 
 import (
 	"context"
-	"github.com/imgproxy/imgproxy/v3/config"
-	"github.com/ncw/swift/v2"
-	"github.com/ncw/swift/v2/swifttest"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/ncw/swift/v2"
+	"github.com/ncw/swift/v2/swifttest"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 )
 
 const (
@@ -18,18 +20,26 @@ const (
 	testObject    = "test.png"
 )
 
-func initTestServer() (*swifttest.SwiftServer, error) {
-	server, err := swifttest.NewSwiftServer("localhost")
+type SwiftTestSuite struct {
+	suite.Suite
+	server *swifttest.SwiftServer
+}
 
-	config.SwiftAuthURL = server.AuthURL
+func (s *SwiftTestSuite) SetupSuite() {
+	s.server, _ = swifttest.NewSwiftServer("localhost")
+
+	config.Reset()
+
+	config.SwiftAuthURL = s.server.AuthURL
 	config.SwiftUsername = swifttest.TEST_ACCOUNT
 	config.SwiftAPIKey = swifttest.TEST_ACCOUNT
 	config.SwiftAuthVersion = 1
 
-	return server, err
+	s.setupTestFile()
 }
 
-func setupTestFile(t *testing.T) {
+func (s *SwiftTestSuite) setupTestFile() {
+	t := s.T()
 	c := &swift.Connection{
 		UserName:    config.SwiftUsername,
 		ApiKey:      config.SwiftAPIKey,
@@ -48,6 +58,8 @@ func setupTestFile(t *testing.T) {
 	f, err := c.ObjectCreate(ctx, testContainer, testObject, true, "", "image/png", nil)
 	assert.Nil(t, err, "failed to create object")
 
+	defer f.Close()
+
 	wd, err := os.Getwd()
 	assert.Nil(t, err)
 
@@ -57,86 +69,68 @@ func setupTestFile(t *testing.T) {
 	b, err := f.Write(data)
 	assert.Greater(t, b, 100)
 	assert.Nil(t, err)
-	f.Close()
 }
 
-func TestNew(t *testing.T) {
-	server, err := initTestServer()
-	assert.Nil(t, err, "failed to set up test server")
-	defer server.Close()
+func (s *SwiftTestSuite) TearDownSuite() {
+	s.server.Close()
+}
 
+func (s *SwiftTestSuite) TestNew() {
 	transport, err := New()
 
-	assert.Nil(t, err, "failed to set up transport")
-	assert.IsType(t, transport, transport)
+	assert.Nil(s.T(), err, "failed to set up transport")
+	assert.IsType(s.T(), transport, transport)
 }
 
-func TestTransport_RoundTripWithETagDisabledReturns200(t *testing.T) {
-	server, err := initTestServer()
-	assert.Nil(t, err, "failed to set up test server")
-	defer server.Close()
-
-	setupTestFile(t)
-
-	request, _ := http.NewRequest("GET", "swift:///swifttest/test/test.png", nil)
+func (s *SwiftTestSuite) TestRoundTripWithETagDisabledReturns200() {
+	config.ETagEnabled = false
+	request, _ := http.NewRequest("GET", "swift:///test/test.png", nil)
 
 	transport, _ := New()
 
 	response, err := transport.RoundTrip(request)
-	assert.Nil(t, err)
-	assert.Equal(t, 200, response.StatusCode)
+	assert.Nil(s.T(), err)
+	assert.Equal(s.T(), 200, response.StatusCode)
 }
 
-func TestTransport_RoundTripWithETagEnabled(t *testing.T) {
+func (s *SwiftTestSuite) TestRoundTripWithETagEnabled() {
 	config.ETagEnabled = true
-	server, err := initTestServer()
-	assert.Nil(t, err, "failed to set up test server")
-	defer server.Close()
-
-	setupTestFile(t)
-
-	request, _ := http.NewRequest("GET", "swift:///swifttest/test/test.png", nil)
+	request, _ := http.NewRequest("GET", "swift:///test/test.png", nil)
 
 	transport, _ := New()
 
 	response, err := transport.RoundTrip(request)
-	assert.Nil(t, err)
-	assert.Equal(t, 200, response.StatusCode)
-	assert.Equal(t, "e27ca34142be8e55220e44155c626cd0", response.Header.Get("ETag"))
+	assert.Nil(s.T(), err)
+	assert.Equal(s.T(), 200, response.StatusCode)
+	assert.Equal(s.T(), "e27ca34142be8e55220e44155c626cd0", response.Header.Get("ETag"))
 }
 
-func TestTransport_RoundTripWithIfNoneMatchReturns304(t *testing.T) {
+func (s *SwiftTestSuite) TestRoundTripWithIfNoneMatchReturns304() {
 	config.ETagEnabled = true
-	server, err := initTestServer()
-	assert.Nil(t, err, "failed to set up test server")
-	defer server.Close()
 
-	setupTestFile(t)
-
-	request, _ := http.NewRequest("GET", "swift:///swifttest/test/test.png", nil)
+	request, _ := http.NewRequest("GET", "swift:///test/test.png", nil)
 	request.Header.Set("If-None-Match", "e27ca34142be8e55220e44155c626cd0")
 
 	transport, _ := New()
 
 	response, err := transport.RoundTrip(request)
-	assert.Nil(t, err)
-	assert.Equal(t, http.StatusNotModified, response.StatusCode)
+	assert.Nil(s.T(), err)
+	assert.Equal(s.T(), http.StatusNotModified, response.StatusCode)
 }
 
-func TestTransport_RoundTripWithUpdatedETagReturns200(t *testing.T) {
+func (s *SwiftTestSuite) TestRoundTripWithUpdatedETagReturns200() {
 	config.ETagEnabled = true
-	server, err := initTestServer()
-	assert.Nil(t, err, "failed to set up test server")
-	defer server.Close()
 
-	setupTestFile(t)
-
-	request, _ := http.NewRequest("GET", "swift:///swifttest/test/test.png", nil)
+	request, _ := http.NewRequest("GET", "swift:///test/test.png", nil)
 	request.Header.Set("If-None-Match", "foobar")
 
 	transport, _ := New()
 
 	response, err := transport.RoundTrip(request)
-	assert.Nil(t, err)
-	assert.Equal(t, http.StatusOK, response.StatusCode)
+	assert.Nil(s.T(), err)
+	assert.Equal(s.T(), http.StatusOK, response.StatusCode)
+}
+
+func TestSwiftTransport(t *testing.T) {
+	suite.Run(t, new(SwiftTestSuite))
 }
