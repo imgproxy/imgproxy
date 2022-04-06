@@ -17,12 +17,13 @@ import (
 
 const (
 	testContainer = "test"
-	testObject    = "test.png"
+	testObject    = "foo/test.png"
 )
 
 type SwiftTestSuite struct {
 	suite.Suite
-	server *swifttest.SwiftServer
+	server    *swifttest.SwiftServer
+	transport http.RoundTripper
 }
 
 func (s *SwiftTestSuite) SetupSuite() {
@@ -36,6 +37,11 @@ func (s *SwiftTestSuite) SetupSuite() {
 	config.SwiftAuthVersion = 1
 
 	s.setupTestFile()
+
+	var err error
+	s.transport, err = New()
+	assert.Nil(s.T(), err, "failed to initialize swift transport")
+	assert.IsType(s.T(), transport{}, s.transport)
 }
 
 func (s *SwiftTestSuite) setupTestFile() {
@@ -75,31 +81,20 @@ func (s *SwiftTestSuite) TearDownSuite() {
 	s.server.Close()
 }
 
-func (s *SwiftTestSuite) TestNew() {
-	transport, err := New()
-
-	assert.Nil(s.T(), err, "failed to set up transport")
-	assert.IsType(s.T(), transport, transport)
-}
-
 func (s *SwiftTestSuite) TestRoundTripWithETagDisabledReturns200() {
 	config.ETagEnabled = false
-	request, _ := http.NewRequest("GET", "swift:///test/test.png", nil)
+	request, _ := http.NewRequest("GET", "swift://test/foo/test.png", nil)
 
-	transport, _ := New()
-
-	response, err := transport.RoundTrip(request)
+	response, err := s.transport.RoundTrip(request)
 	assert.Nil(s.T(), err)
 	assert.Equal(s.T(), 200, response.StatusCode)
 }
 
 func (s *SwiftTestSuite) TestRoundTripWithETagEnabled() {
 	config.ETagEnabled = true
-	request, _ := http.NewRequest("GET", "swift:///test/test.png", nil)
+	request, _ := http.NewRequest("GET", "swift://test/foo/test.png", nil)
 
-	transport, _ := New()
-
-	response, err := transport.RoundTrip(request)
+	response, err := s.transport.RoundTrip(request)
 	assert.Nil(s.T(), err)
 	assert.Equal(s.T(), 200, response.StatusCode)
 	assert.Equal(s.T(), "e27ca34142be8e55220e44155c626cd0", response.Header.Get("ETag"))
@@ -108,12 +103,10 @@ func (s *SwiftTestSuite) TestRoundTripWithETagEnabled() {
 func (s *SwiftTestSuite) TestRoundTripWithIfNoneMatchReturns304() {
 	config.ETagEnabled = true
 
-	request, _ := http.NewRequest("GET", "swift:///test/test.png", nil)
+	request, _ := http.NewRequest("GET", "swift://test/foo/test.png", nil)
 	request.Header.Set("If-None-Match", "e27ca34142be8e55220e44155c626cd0")
 
-	transport, _ := New()
-
-	response, err := transport.RoundTrip(request)
+	response, err := s.transport.RoundTrip(request)
 	assert.Nil(s.T(), err)
 	assert.Equal(s.T(), http.StatusNotModified, response.StatusCode)
 }
@@ -121,12 +114,10 @@ func (s *SwiftTestSuite) TestRoundTripWithIfNoneMatchReturns304() {
 func (s *SwiftTestSuite) TestRoundTripWithUpdatedETagReturns200() {
 	config.ETagEnabled = true
 
-	request, _ := http.NewRequest("GET", "swift:///test/test.png", nil)
+	request, _ := http.NewRequest("GET", "swift://test/foo/test.png", nil)
 	request.Header.Set("If-None-Match", "foobar")
 
-	transport, _ := New()
-
-	response, err := transport.RoundTrip(request)
+	response, err := s.transport.RoundTrip(request)
 	assert.Nil(s.T(), err)
 	assert.Equal(s.T(), http.StatusOK, response.StatusCode)
 }

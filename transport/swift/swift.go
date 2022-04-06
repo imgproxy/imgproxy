@@ -39,8 +39,6 @@ func New() (http.RoundTripper, error) {
 }
 
 func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
-	container, path, err := parseObjectURL(req.URL.Path)
-
 	if err != nil {
 		return &http.Response{
 			Status:     "400 Bad Request",
@@ -55,11 +53,17 @@ func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error)
 
 	headers := make(swift.Headers)
 
-	object, headers, err := t.con.ObjectOpen(req.Context(), container, path, false, headers)
+	// Users should have converted the object storage URL in the format of swift://{container}/{object}
+	container := req.URL.Host
+	objectName := strings.TrimPrefix(req.URL.Path, "/")
+
+	object, headers, err := t.con.ObjectOpen(req.Context(), container, objectName, false, headers)
 
 	if err != nil {
 		return nil, fmt.Errorf("error opening object: %v", err)
 	}
+
+	defer object.Close()
 
 	header := make(http.Header)
 
@@ -94,14 +98,4 @@ func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error)
 		Close:      true,
 		Request:    req,
 	}, nil
-}
-
-func parseObjectURL(url string) (container string, path string, err error) {
-	paths := strings.SplitN(strings.TrimPrefix(url, "/"), "/", 2)
-
-	if len(paths) != 2 {
-		return "", "", fmt.Errorf("invalid object url: %s. expecting {container}/{object_path}", url)
-	}
-
-	return paths[0], paths[1], nil
 }
