@@ -3,11 +3,12 @@ package config
 import (
 	"flag"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"math"
 	"os"
 	"regexp"
 	"runtime"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/imgproxy/imgproxy/v3/config/configurators"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
