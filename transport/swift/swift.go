@@ -39,23 +39,11 @@ func New() (http.RoundTripper, error) {
 }
 
 func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
-	if err != nil {
-		return &http.Response{
-			Status:     "400 Bad Request",
-			StatusCode: 400,
-			Proto:      "HTTP/1.1",
-			ProtoMajor: 1,
-			ProtoMinor: 1,
-			Close:      true,
-			Request:    req,
-		}, err
-	}
-
-	headers := make(swift.Headers)
-
 	// Users should have converted the object storage URL in the format of swift://{container}/{object}
 	container := req.URL.Host
 	objectName := strings.TrimPrefix(req.URL.Path, "/")
+
+	headers := make(swift.Headers)
 
 	object, headers, err := t.con.ObjectOpen(req.Context(), container, objectName, false, headers)
 
