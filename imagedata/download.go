@@ -17,6 +17,7 @@ import (
 	fsTransport "github.com/imgproxy/imgproxy/v3/transport/fs"
 	gcsTransport "github.com/imgproxy/imgproxy/v3/transport/gcs"
 	s3Transport "github.com/imgproxy/imgproxy/v3/transport/s3"
+	swiftTransport "github.com/imgproxy/imgproxy/v3/transport/swift"
 )
 
 var (
@@ -91,6 +92,14 @@ func initDownloading() error {
 			return err
 		} else {
 			registerProtocol("abs", t)
+		}
+	}
+
+	if config.SwiftEnabled {
+		if t, err := swiftTransport.New(); err != nil {
+			return err
+		} else {
+			registerProtocol("swift", t)
 		}
 	}
 

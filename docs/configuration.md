@@ -325,6 +325,19 @@ imgproxy can process files from Azure Blob Storage containers, but this feature 
 
 Check out the [Serving files from Azure Blob Storage](serving_files_from_azure_blob_storage.md) guide to learn more.
 
+## Serving files from OpenStack Object Storage ("Swift")
+imgproxy can process files from OpenStack Object Storage, but this feature is disabled by default. To enable it, set `IMGPROXY_USE_SWIFT` to `true`.
+* `IMGPROXY_USE_SWIFT`: when `true`, enables image fetching from OpenStack Swift Object Storage. Default: `false`
+* `IMGPROXY_SWIFT_USERNAME`: the username for Swift API access. Default: blank
+* `IMGPROXY_SWIFT_API_KEY`: the API key for Swift API access. Default: blank
+* `IMGPROXY_SWIFT_AUTH_URL`: the Swift Auth URL. Default: blank
+* `IMGPROXY_SWIFT_AUTH_VERSION`: the Swift auth version, set to 1, 2 or 3 or leave at 0 for autodetect.
+* `IMGPROXY_SWIFT_TENANT`: the tenant name (optional, v2 auth only). Default: blank
+* `IMGPROXY_SWIFT_DOMAIN`: the Swift domain name (optional, v3 auth only): Default: blank
+* `IMGRPOXY_SWIFT_TIMEOUT_SECONDS`: the data channel timeout in seconds. Default: 60
+* `IMGRPOXY_SWIFT_CONNECT_TIMEOUT_SECONDS`: the connect channel timeout in seconds. Default: 10
+
+
 ## New Relic metrics
 
 imgproxy can send its metrics to New Relic. Specify your New Relic license key to activate this feature:

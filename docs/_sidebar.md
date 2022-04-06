@@ -13,6 +13,7 @@
 * [Serving files from Amazon S3](serving_files_from_s3)
 * [Serving files from Google Cloud Storage](serving_files_from_google_cloud_storage)
 * [Serving files from Azure Blob Storage](serving_files_from_azure_blob_storage)
+* [Serving files from OpenStack Object Storage ("Swift")](serving_files_from_openstack_swift)
 * [New Relic](new_relic)
 * [Prometheus](prometheus)
 * [Datadog](datadog)

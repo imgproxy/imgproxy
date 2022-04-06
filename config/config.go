@@ -89,6 +89,16 @@ var (
 	ABSName             string
 	ABSKey              string
 	ABSEndpoint         string
+	SwiftEnabled        bool
+	SwiftUsername       string
+	SwiftAPIKey         string
+	SwiftAuthURL        string
+	SwiftDomain         string
+	SwiftTenant         string
+	SwiftAuthVersion    int
+
+	SwiftConnectTimeoutSeconds int
+	SwiftTimeoutSeconds        int
 
 	ETagEnabled bool
 	ETagBuster  string
@@ -230,6 +240,15 @@ func Reset() {
 	ABSName = ""
 	ABSKey = ""
 	ABSEndpoint = ""
+	SwiftEnabled = false
+	SwiftUsername = ""
+	SwiftAPIKey = ""
+	SwiftAuthURL = ""
+	SwiftAuthVersion = 0
+	SwiftTenant = ""
+	SwiftDomain = ""
+	SwiftConnectTimeoutSeconds = 10
+	SwiftTimeoutSeconds = 60
 
 	ETagEnabled = false
 	ETagBuster = ""
@@ -383,6 +402,15 @@ func Configure() error {
 	configurators.String(&ABSName, "IMGPROXY_ABS_NAME")
 	configurators.String(&ABSKey, "IMGPROXY_ABS_KEY")
 	configurators.String(&ABSEndpoint, "IMGPROXY_ABS_ENDPOINT")
+
+	configurators.Bool(&SwiftEnabled, "IMGPROXY_USE_SWIFT")
+	configurators.String(&SwiftUsername, "IMGPROXY_SWIFT_USERNAME")
+	configurators.String(&SwiftAPIKey, "IMGPROXY_SWIFT_API_KEY")
+	configurators.String(&SwiftAuthURL, "IMGPROXY_SWIFT_AUTH_URL")
+	configurators.String(&SwiftDomain, "IMGPROXY_SWIFT_DOMAIN")
+	configurators.String(&SwiftTenant, "IMGPROXY_SWIFT_TENANT")
+	configurators.Int(&SwiftConnectTimeoutSeconds, "IMGPROXY_SWIFT_CONNECT_TIMEOUT_SECONDS")
+	configurators.Int(&SwiftTimeoutSeconds, "IMGPROXY_SWIFT_TIMEOUT_SECONDS")
 
 	configurators.Bool(&ETagEnabled, "IMGPROXY_USE_ETAG")
 	configurators.String(&ETagBuster, "IMGPROXY_ETAG_BUSTER")
