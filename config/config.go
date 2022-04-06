@@ -80,23 +80,26 @@ var (
 	CookieBaseURL     string
 
 	LocalFileSystemRoot string
-	S3Enabled           bool
-	S3Region            string
-	S3Endpoint          string
-	GCSEnabled          bool
-	GCSKey              string
-	ABSEnabled          bool
-	ABSName             string
-	ABSKey              string
-	ABSEndpoint         string
-	SwiftEnabled        bool
-	SwiftUsername       string
-	SwiftAPIKey         string
-	SwiftAuthURL        string
-	SwiftDomain         string
-	SwiftTenant         string
-	SwiftAuthVersion    int
 
+	S3Enabled  bool
+	S3Region   string
+	S3Endpoint string
+
+	GCSEnabled bool
+	GCSKey     string
+
+	ABSEnabled  bool
+	ABSName     string
+	ABSKey      string
+	ABSEndpoint string
+
+	SwiftEnabled               bool
+	SwiftUsername              string
+	SwiftAPIKey                string
+	SwiftAuthURL               string
+	SwiftDomain                string
+	SwiftTenant                string
+	SwiftAuthVersion           int
 	SwiftConnectTimeoutSeconds int
 	SwiftTimeoutSeconds        int
 

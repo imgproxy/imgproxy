@@ -7,8 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/ncw/swift/v2"
+
+	"github.com/imgproxy/imgproxy/v3/config"
 )
 
 type transport struct {
@@ -43,9 +44,7 @@ func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error)
 	container := req.URL.Host
 	objectName := strings.TrimPrefix(req.URL.Path, "/")
 
-	headers := make(swift.Headers)
-
-	object, headers, err := t.con.ObjectOpen(req.Context(), container, objectName, false, headers)
+	object, objectHeaders, err := t.con.ObjectOpen(req.Context(), container, objectName, false, make(swift.Headers))
 
 	if err != nil {
 		return nil, fmt.Errorf("error opening object: %v", err)
@@ -54,11 +53,12 @@ func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error)
 	header := make(http.Header)
 
 	if config.ETagEnabled {
-		if etag, ok := headers["Etag"]; ok {
+		if etag, ok := objectHeaders["Etag"]; ok {
 			header.Set("ETag", etag)
 
 			if len(etag) > 0 && etag == req.Header.Get("If-None-Match") {
 				object.Close()
+
 				return &http.Response{
 					StatusCode:    http.StatusNotModified,
 					Proto:         "HTTP/1.0",
@@ -72,6 +72,10 @@ func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error)
 				}, nil
 			}
 		}
+	}
+
+	for k, v := range objectHeaders {
+		header.Set(k, v)
 	}
 
 	return &http.Response{
