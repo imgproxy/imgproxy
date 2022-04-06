@@ -51,8 +51,6 @@ func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error)
 		return nil, fmt.Errorf("error opening object: %v", err)
 	}
 
-	defer object.Close()
-
 	header := make(http.Header)
 
 	if config.ETagEnabled {
@@ -60,6 +58,7 @@ func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error)
 			header.Set("ETag", etag)
 
 			if len(etag) > 0 && etag == req.Header.Get("If-None-Match") {
+				object.Close()
 				return &http.Response{
 					StatusCode:    http.StatusNotModified,
 					Proto:         "HTTP/1.0",
