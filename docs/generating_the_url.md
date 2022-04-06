@@ -465,6 +465,23 @@ If you want to use a custom font, you need to put it in `/usr/share/fonts` insid
 
 Default: blank
 
+### Watermark Size<i class='badge badge-pro'></i> :id=watermark-size
+
+```
+watermark_size:%width:%height
+wms:%width:%height
+```
+
+Defines the desired width and height of the watermark. imgproxy always uses `fit` resizing type when resizing watermarks and enlarges them when needed.
+
+When `%width` is set to `0`, imgproxy will calculate the width using the defined height and watermark's aspect ratio.
+
+When `%height` is set to `0`, imgproxy will calculate the height using the defined width and watermark's aspect ratio.
+
+**📝Note:** This processing option takes effect only when the `scale` argument of the `watermark` option is set to zero.
+
+Default: `0:0`
+
 ### Style<i class='badge badge-pro'></i> :id=style
 
 ```
