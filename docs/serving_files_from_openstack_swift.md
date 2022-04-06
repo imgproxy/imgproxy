@@ -11,4 +11,4 @@ imgproxy can process images from OpenStack Object Storage, also known as Swift. 
    * `IMGPROXY_SWIFT_TENANT`: the tenant name (optional, v2 auth only). Default: blank
    * `IMGPROXY_SWIFT_DOMAIN`: the Swift domain name (optional, v3 auth only): Default: blank
 
-3. Use `swift:///%{account}/%{container}/%{object_path}` as the source image URL
+3. Use `swift:///%{container}/%{object_path}` or `swift://%{swift_host}/%{container}/%{object_path}` as the source image URL.

@@ -55,9 +55,7 @@ func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error)
 
 	headers := make(swift.Headers)
 
-	ctx := context.Background()
-
-	object, headers, err := t.con.ObjectOpen(ctx, container, path, false, headers)
+	object, headers, err := t.con.ObjectOpen(req.Context(), container, path, false, headers)
 
 	if err != nil {
 		return nil, fmt.Errorf("error opening object: %v", err)
@@ -99,11 +97,11 @@ func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error)
 }
 
 func parseObjectURL(url string) (container string, path string, err error) {
-	paths := strings.SplitN(strings.TrimPrefix(url, "/"), "/", 3)
+	paths := strings.SplitN(strings.TrimPrefix(url, "/"), "/", 2)
 
-	if len(paths) != 3 {
-		return "", "", fmt.Errorf("invalid object url: %s. expecting {account}/{container}/{object_path}", url)
+	if len(paths) != 2 {
+		return "", "", fmt.Errorf("invalid object url: %s. expecting {container}/{object_path}", url)
 	}
 
-	return paths[1], paths[2], nil
+	return paths[0], paths[1], nil
 }
