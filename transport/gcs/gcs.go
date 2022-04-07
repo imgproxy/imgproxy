@@ -8,8 +8,9 @@ import (
 	"strings"
 
 	"cloud.google.com/go/storage"
-	"github.com/imgproxy/imgproxy/v3/config"
 	"google.golang.org/api/option"
+
+	"github.com/imgproxy/imgproxy/v3/config"
 )
 
 type transport struct {
@@ -46,13 +47,13 @@ func (t transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	header := make(http.Header)
 
 	if config.ETagEnabled {
-		attrs, err := obj.Attrs(context.Background())
+		attrs, err := obj.Attrs(req.Context())
 		if err != nil {
 			return nil, err
 		}
 		header.Set("ETag", attrs.Etag)
 
-		if attrs.Etag == req.Header.Get("If-None-Match") {
+		if etag := req.Header.Get("If-None-Match"); len(etag) > 0 && attrs.Etag == etag {
 			return &http.Response{
 				StatusCode:    http.StatusNotModified,
 				Proto:         "HTTP/1.0",
@@ -67,7 +68,7 @@ func (t transport) RoundTrip(req *http.Request) (*http.Response, error) {
 		}
 	}
 
-	reader, err := obj.NewReader(context.Background())
+	reader, err := obj.NewReader(req.Context())
 	if err != nil {
 		return nil, err
 	}
