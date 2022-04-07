@@ -308,9 +308,11 @@ Check out the [Serving files from S3](serving_files_from_s3.md) guide to learn m
 
 ## Serving files from Google Cloud Storage
 
-imgproxy can process files from Google Cloud Storage buckets, but this feature is disabled by default. To enable it, set the value of `IMGPROXY_GCS_KEY` to the content of the Google Cloud JSON key:
+imgproxy can process files from Google Cloud Storage buckets, but this feature is disabled by default. To enable it, set the value of `IMGPROXY_USE_GCS` to `true`:
 
+* `IMGPROXY_USE_GCS`: when `true`, enables image fetching from Google Cloud Storage buckets. Default: `false`
 * `IMGPROXY_GCS_KEY`: the Google Cloud JSON key. When set, enables image fetching from Google Cloud Storage buckets. Default: blank
+* `IMGPROXY_GCS_ENDPOINT`: a custom Google Cloud Storage endpoint to being used by imgproxy
 
 Check out the [Serving files from Google Cloud Storage](serving_files_from_google_cloud_storage.md) guide to learn more.
 

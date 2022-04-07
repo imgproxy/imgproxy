@@ -5,6 +5,7 @@
 - Add `IMGPROXY_FALLBACK_IMAGE_TTL` config.
 - (pro) Add [watermark_size](https://docs.imgproxy.net/generating_the_url?id=watermark-size) processing option.
 - Add OpenStack Object Storage ("Swift") support.
+- Add `IMGPROXY_GCS_ENDPOINT` config.
 
 ### Change
 - (pro) Don't check `Content-Length` header of videos.

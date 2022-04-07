@@ -85,8 +85,9 @@ var (
 	S3Region   string
 	S3Endpoint string
 
-	GCSEnabled bool
-	GCSKey     string
+	GCSEnabled  bool
+	GCSKey      string
+	GCSEndpoint string
 
 	ABSEnabled  bool
 	ABSName     string
@@ -400,6 +401,7 @@ func Configure() error {
 
 	configurators.Bool(&GCSEnabled, "IMGPROXY_USE_GCS")
 	configurators.String(&GCSKey, "IMGPROXY_GCS_KEY")
+	configurators.String(&GCSEndpoint, "IMGPROXY_GCS_ENDPOINT")
 
 	configurators.Bool(&ABSEnabled, "IMGPROXY_USE_ABS")
 	configurators.String(&ABSName, "IMGPROXY_ABS_NAME")

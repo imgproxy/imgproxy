@@ -13,6 +13,9 @@ import (
 	"github.com/imgproxy/imgproxy/v3/config"
 )
 
+// For tests
+var noAuth bool = false
+
 type transport struct {
 	client *storage.Client
 }
@@ -23,11 +26,21 @@ func New() (http.RoundTripper, error) {
 		err    error
 	)
 
+	opts := []option.ClientOption{}
+
 	if len(config.GCSKey) > 0 {
-		client, err = storage.NewClient(context.Background(), option.WithCredentialsJSON([]byte(config.GCSKey)))
-	} else {
-		client, err = storage.NewClient(context.Background())
+		opts = append(opts, option.WithCredentialsJSON([]byte(config.GCSKey)))
 	}
+
+	if len(config.GCSEndpoint) > 0 {
+		opts = append(opts, option.WithEndpoint(config.GCSEndpoint))
+	}
+
+	if noAuth {
+		opts = append(opts, option.WithoutAuthentication())
+	}
+
+	client, err = storage.NewClient(context.Background(), opts...)
 
 	if err != nil {
 		return nil, fmt.Errorf("Can't create GCS client: %s", err)

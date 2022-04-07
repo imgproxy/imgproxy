@@ -4,7 +4,8 @@ imgproxy can process images from Google Cloud Storage buckets. To use this featu
 
 1. Set the `IMGPROXY_USE_GCS` environment variable to `true`.
 2. [Set up credentials](#setup-credentials) to grant access to your bucket.
-3. Use `gs://%bucket_name/%file_key` as the source image URL.
+3. _(optional)_ Specify the Google Cloud Storage endpoint with `IMGPROXY_GCS_ENDPOINT`.
+4. Use `gs://%bucket_name/%file_key` as the source image URL.
 
 If you need to specify generation of the source object, you can use the query string of the source URL:
 
