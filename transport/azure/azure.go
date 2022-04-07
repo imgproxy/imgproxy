@@ -1,7 +1,6 @@
 package azure
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -41,7 +40,7 @@ func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error)
 	containerURL := t.serviceURL.NewContainerURL(strings.ToLower(req.URL.Host))
 	blobURL := containerURL.NewBlockBlobURL(strings.TrimPrefix(req.URL.Path, "/"))
 
-	get, err := blobURL.Download(context.Background(), 0, azblob.CountToEnd, azblob.BlobAccessConditions{}, false, azblob.ClientProvidedKeyOptions{})
+	get, err := blobURL.Download(req.Context(), 0, azblob.CountToEnd, azblob.BlobAccessConditions{}, false, azblob.ClientProvidedKeyOptions{})
 	if err != nil {
 		return nil, err
 	}

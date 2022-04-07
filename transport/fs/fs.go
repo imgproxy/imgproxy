@@ -41,6 +41,8 @@ func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error)
 		header.Set("ETag", etag)
 
 		if etag == req.Header.Get("If-None-Match") {
+			f.Close()
+
 			return &http.Response{
 				StatusCode:    http.StatusNotModified,
 				Proto:         "HTTP/1.0",

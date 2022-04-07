@@ -2,10 +2,7 @@ package swift
 
 import (
 	"context"
-	"io/ioutil"
 	"net/http"
-	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/ncw/swift/v2"
@@ -67,11 +64,7 @@ func (s *SwiftTestSuite) setupTestFile() {
 
 	defer f.Close()
 
-	wd, err := os.Getwd()
-	require.Nil(t, err)
-
-	data, err := ioutil.ReadFile(filepath.Join(wd, "..", "..", "testdata", "test1.png"))
-	require.Nil(t, err, "failed to read testdata/test1.png")
+	data := make([]byte, 32)
 
 	n, err := f.Write(data)
 	require.Equal(t, n, len(data))
