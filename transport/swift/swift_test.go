@@ -8,11 +8,12 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/ncw/swift/v2"
 	"github.com/ncw/swift/v2/swifttest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/imgproxy/imgproxy/v3/config"
 )
 
 const (
@@ -24,6 +25,7 @@ type SwiftTestSuite struct {
 	suite.Suite
 	server    *swifttest.SwiftServer
 	transport http.RoundTripper
+	etag      string
 }
 
 func (s *SwiftTestSuite) SetupSuite() {
@@ -41,7 +43,6 @@ func (s *SwiftTestSuite) SetupSuite() {
 	var err error
 	s.transport, err = New()
 	assert.Nil(s.T(), err, "failed to initialize swift transport")
-	assert.IsType(s.T(), transport{}, s.transport)
 }
 
 func (s *SwiftTestSuite) setupTestFile() {
@@ -72,9 +73,15 @@ func (s *SwiftTestSuite) setupTestFile() {
 	data, err := ioutil.ReadFile(filepath.Join(wd, "..", "..", "testdata", "test1.png"))
 	assert.Nil(t, err, "failed to read testdata/test1.png")
 
-	b, err := f.Write(data)
-	assert.Greater(t, b, 100)
+	n, err := f.Write(data)
+	assert.Equal(t, n, len(data))
 	assert.Nil(t, err)
+
+	f.Close()
+
+	h, err := f.Headers()
+	assert.Nil(t, err)
+	s.etag = h["Etag"]
 }
 
 func (s *SwiftTestSuite) TearDownSuite() {
@@ -97,14 +104,14 @@ func (s *SwiftTestSuite) TestRoundTripWithETagEnabled() {
 	response, err := s.transport.RoundTrip(request)
 	assert.Nil(s.T(), err)
 	assert.Equal(s.T(), 200, response.StatusCode)
-	assert.Equal(s.T(), "e27ca34142be8e55220e44155c626cd0", response.Header.Get("ETag"))
+	assert.Equal(s.T(), s.etag, response.Header.Get("ETag"))
 }
 
 func (s *SwiftTestSuite) TestRoundTripWithIfNoneMatchReturns304() {
 	config.ETagEnabled = true
 
 	request, _ := http.NewRequest("GET", "swift://test/foo/test.png", nil)
-	request.Header.Set("If-None-Match", "e27ca34142be8e55220e44155c626cd0")
+	request.Header.Set("If-None-Match", s.etag)
 
 	response, err := s.transport.RoundTrip(request)
 	assert.Nil(s.T(), err)
@@ -115,7 +122,7 @@ func (s *SwiftTestSuite) TestRoundTripWithUpdatedETagReturns200() {
 	config.ETagEnabled = true
 
 	request, _ := http.NewRequest("GET", "swift://test/foo/test.png", nil)
-	request.Header.Set("If-None-Match", "foobar")
+	request.Header.Set("If-None-Match", s.etag+"_wrong")
 
 	response, err := s.transport.RoundTrip(request)
 	assert.Nil(s.T(), err)
