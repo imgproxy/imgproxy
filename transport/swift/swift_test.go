@@ -10,7 +10,7 @@ import (
 
 	"github.com/ncw/swift/v2"
 	"github.com/ncw/swift/v2/swifttest"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/imgproxy/imgproxy/v3/config"
@@ -42,7 +42,7 @@ func (s *SwiftTestSuite) SetupSuite() {
 
 	var err error
 	s.transport, err = New()
-	assert.Nil(s.T(), err, "failed to initialize swift transport")
+	require.Nil(s.T(), err, "failed to initialize swift transport")
 }
 
 func (s *SwiftTestSuite) setupTestFile() {
@@ -57,30 +57,30 @@ func (s *SwiftTestSuite) setupTestFile() {
 	ctx := context.Background()
 
 	err := c.Authenticate(ctx)
-	assert.Nil(t, err, "failed to authenticate with test server")
+	require.Nil(t, err, "failed to authenticate with test server")
 
 	err = c.ContainerCreate(ctx, testContainer, nil)
-	assert.Nil(t, err, "failed to create container")
+	require.Nil(t, err, "failed to create container")
 
 	f, err := c.ObjectCreate(ctx, testContainer, testObject, true, "", "image/png", nil)
-	assert.Nil(t, err, "failed to create object")
+	require.Nil(t, err, "failed to create object")
 
 	defer f.Close()
 
 	wd, err := os.Getwd()
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	data, err := ioutil.ReadFile(filepath.Join(wd, "..", "..", "testdata", "test1.png"))
-	assert.Nil(t, err, "failed to read testdata/test1.png")
+	require.Nil(t, err, "failed to read testdata/test1.png")
 
 	n, err := f.Write(data)
-	assert.Equal(t, n, len(data))
-	assert.Nil(t, err)
+	require.Equal(t, n, len(data))
+	require.Nil(t, err)
 
 	f.Close()
 
 	h, err := f.Headers()
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	s.etag = h["Etag"]
 }
 
@@ -93,8 +93,8 @@ func (s *SwiftTestSuite) TestRoundTripWithETagDisabledReturns200() {
 	request, _ := http.NewRequest("GET", "swift://test/foo/test.png", nil)
 
 	response, err := s.transport.RoundTrip(request)
-	assert.Nil(s.T(), err)
-	assert.Equal(s.T(), 200, response.StatusCode)
+	require.Nil(s.T(), err)
+	require.Equal(s.T(), 200, response.StatusCode)
 }
 
 func (s *SwiftTestSuite) TestRoundTripWithETagEnabled() {
@@ -102,9 +102,9 @@ func (s *SwiftTestSuite) TestRoundTripWithETagEnabled() {
 	request, _ := http.NewRequest("GET", "swift://test/foo/test.png", nil)
 
 	response, err := s.transport.RoundTrip(request)
-	assert.Nil(s.T(), err)
-	assert.Equal(s.T(), 200, response.StatusCode)
-	assert.Equal(s.T(), s.etag, response.Header.Get("ETag"))
+	require.Nil(s.T(), err)
+	require.Equal(s.T(), 200, response.StatusCode)
+	require.Equal(s.T(), s.etag, response.Header.Get("ETag"))
 }
 
 func (s *SwiftTestSuite) TestRoundTripWithIfNoneMatchReturns304() {
@@ -114,8 +114,8 @@ func (s *SwiftTestSuite) TestRoundTripWithIfNoneMatchReturns304() {
 	request.Header.Set("If-None-Match", s.etag)
 
 	response, err := s.transport.RoundTrip(request)
-	assert.Nil(s.T(), err)
-	assert.Equal(s.T(), http.StatusNotModified, response.StatusCode)
+	require.Nil(s.T(), err)
+	require.Equal(s.T(), http.StatusNotModified, response.StatusCode)
 }
 
 func (s *SwiftTestSuite) TestRoundTripWithUpdatedETagReturns200() {
@@ -125,8 +125,8 @@ func (s *SwiftTestSuite) TestRoundTripWithUpdatedETagReturns200() {
 	request.Header.Set("If-None-Match", s.etag+"_wrong")
 
 	response, err := s.transport.RoundTrip(request)
-	assert.Nil(s.T(), err)
-	assert.Equal(s.T(), http.StatusOK, response.StatusCode)
+	require.Nil(s.T(), err)
+	require.Equal(s.T(), http.StatusOK, response.StatusCode)
 }
 
 func TestSwiftTransport(t *testing.T) {
