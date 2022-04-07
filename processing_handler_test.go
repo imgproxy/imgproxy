@@ -40,9 +40,9 @@ func (s *ProcessingHandlerTestSuite) SetupSuite() {
 
 	config.LocalFileSystemRoot = filepath.Join(wd, "/testdata")
 
-	logrus.SetOutput(ioutil.Discard)
-
 	initialize()
+
+	logrus.SetOutput(ioutil.Discard)
 
 	s.router = buildRouter()
 }
