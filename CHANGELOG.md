@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+
+## [3.4.0] - 2022-04-07
 ### Add
 - Add `IMGPROXY_FALLBACK_IMAGE_TTL` config.
 - (pro) Add [watermark_size](https://docs.imgproxy.net/generating_the_url?id=watermark-size) processing option.
