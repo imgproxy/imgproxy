@@ -80,7 +80,7 @@ width:%width
 w:%width
 ```
 
-Defines the width of the resulting image. When set to `0`, imgproxy will calculate width using the defined height and source aspect ratio. When set to `0` and rezizing type is `force`, imgproxy will keep the original width.
+Defines the width of the resulting image. When set to `0`, imgproxy will calculate width using the defined height and source aspect ratio. When set to `0` and resizing type is `force`, imgproxy will keep the original width.
 
 Default: `0`
 
@@ -91,7 +91,7 @@ height:%height
 h:%height
 ```
 
-Defines the height of the resulting image. When set to `0`, imgproxy will calculate resulting height using the defined width and source aspect ratio. When set to `0` and rezizing type is `force`, imgproxy will keep the original height.
+Defines the height of the resulting image. When set to `0`, imgproxy will calculate resulting height using the defined width and source aspect ratio. When set to `0` and resizing type is `force`, imgproxy will keep the original height.
 
 Default: `0`
 
@@ -651,7 +651,7 @@ cachebuster:%string
 cb:%string
 ```
 
-Cache buster doesn't affect image processing but it's changing allows for bypassing the CDN, proxy server and browser cache. Useful when you have changed some things that are not reflected in the URL, like image quality settings, presets, or watermark data.
+Cache buster doesn't affect image processing but its changing allows for bypassing the CDN, proxy server and browser cache. Useful when you have changed some things that are not reflected in the URL, like image quality settings, presets, or watermark data.
 
 It's highly recommended to prefer the `cachebuster` option over a URL query string because that option can be properly signed.
 
@@ -698,7 +698,7 @@ There are two ways to specify the source url:
 
 ### Plain
 
-The source URL can be provided as is, prendended by the `/plain/` segment:
+The source URL can be provided as is, prepended by the `/plain/` segment:
 
 ```
 /plain/http://example.com/images/curiosity.jpg
