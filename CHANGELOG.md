@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+## Add
+- Add support of RLE-encoded BMP.
 
 ## [3.4.0] - 2022-04-07
 ### Add

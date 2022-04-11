@@ -15,6 +15,7 @@ import (
 
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
+	"github.com/imgproxy/imgproxy/v3/imath"
 )
 
 type bmpHeader struct {
@@ -60,7 +61,29 @@ func prepareBmpCanvas(width, height, bands int) (*C.VipsImage, []byte, error) {
 	return tmp, ptrToBytes(data, datalen), nil
 }
 
-// decodeBmpPaletted reads an 8 bit-per-pixel BMP image from r.
+func bmpClearOnPanic(img **C.VipsImage) {
+	if rerr := recover(); rerr != nil {
+		C.clear_image(img)
+		panic(rerr)
+	}
+}
+
+func bmpSetBitDepth(img *Image, colors int) {
+	var bitdepth int
+
+	switch {
+	case colors > 16:
+		bitdepth = 8
+	case colors > 4:
+		bitdepth = 4
+	case colors > 2:
+		bitdepth = 2
+	}
+
+	img.SetInt("palette-bit-depth", bitdepth)
+}
+
+// decodeBmpPaletted reads an 8/4/2/1 bit-per-pixel BMP image from r.
 // If topDown is false, the image rows will be read bottom-up.
 func (img *Image) decodeBmpPaletted(r io.Reader, width, height, bpp int, palette []Color, topDown bool) error {
 	tmp, imgData, err := prepareBmpCanvas(width, height, 3)
@@ -68,12 +91,7 @@ func (img *Image) decodeBmpPaletted(r io.Reader, width, height, bpp int, palette
 		return err
 	}
 
-	defer func() {
-		if rerr := recover(); rerr != nil {
-			C.clear_image(&tmp)
-			panic(rerr)
-		}
-	}()
+	defer bmpClearOnPanic(&tmp)
 
 	// Each row is 4-byte aligned.
 	cap := 8 / bpp
@@ -115,19 +133,129 @@ func (img *Image) decodeBmpPaletted(r io.Reader, width, height, bpp int, palette
 
 	C.swap_and_clear(&img.VipsImage, tmp)
 
-	var bitdepth int
-	colors := len(palette)
+	bmpSetBitDepth(img, len(palette))
 
-	switch {
-	case colors > 16:
-		bitdepth = 8
-	case colors > 4:
-		bitdepth = 4
-	case colors > 2:
-		bitdepth = 2
+	return nil
+}
+
+// decodeBmpRLE reads an 8/4 bit-per-pixel RLE-encoded BMP image from r.
+func (img *Image) decodeBmpRLE(r io.Reader, width, height, bpp int, palette []Color) error {
+	tmp, imgData, err := prepareBmpCanvas(width, height, 3)
+	if err != nil {
+		return err
 	}
 
-	img.SetInt("palette-bit-depth", bitdepth)
+	defer bmpClearOnPanic(&tmp)
+
+	b := make([]byte, 256)
+
+	readPair := func() (byte, byte, error) {
+		_, err := io.ReadFull(r, b[:2])
+		return b[0], b[1], err
+	}
+
+	x, y := 0, height-1
+	cap := 8 / bpp
+
+Loop:
+	for {
+		b1, b2, err := readPair()
+		if err != nil {
+			C.clear_image(&tmp)
+			return err
+		}
+
+		if b1 == 0 {
+			switch b2 {
+			case 0: // End of line
+				x, y = 0, y-1
+				if y < 0 {
+					// We should probably return an error here,
+					// but it's safier to just stop decoding
+					break Loop
+				}
+			case 1: // End of file
+				break Loop
+			case 2:
+				dx, dy, err := readPair()
+				if err != nil {
+					C.clear_image(&tmp)
+					return err
+				}
+
+				x = imath.Min(x+int(dx), width)
+				y -= int(dy)
+				if y < 0 {
+					break Loop
+				}
+			default:
+				pixelsCount := int(b2)
+
+				n := ((pixelsCount+cap-1)/cap + 1) &^ 1
+				if _, err := io.ReadFull(r, b[:n]); err != nil {
+					C.clear_image(&tmp)
+					return err
+				}
+
+				pixelsCount = imath.Min(pixelsCount, width-x)
+
+				if pixelsCount > 0 {
+					start := (y*width + x) * 3
+					p := imgData[start : start+pixelsCount*3]
+
+					j, bit := 0, 8-bpp
+					for i := 0; i < len(p); i += 3 {
+						pind := (b[j] >> bit) & (1<<bpp - 1)
+
+						if bit == 0 {
+							bit = 8 - bpp
+							j++
+						} else {
+							bit -= bpp
+						}
+
+						c := palette[pind]
+
+						p[i+0] = c.R
+						p[i+1] = c.G
+						p[i+2] = c.B
+					}
+
+					x += pixelsCount
+				}
+			}
+		} else {
+			pixelsCount := imath.Min(int(b1), width-x)
+
+			if pixelsCount > 0 {
+				start := (y*width + x) * 3
+				p := imgData[start : start+pixelsCount*3]
+
+				bit := 8 - bpp
+				for i := 0; i < len(p); i += 3 {
+					pind := (b2 >> bit) & (1<<bpp - 1)
+
+					if bit == 0 {
+						bit = 8 - bpp
+					} else {
+						bit -= bpp
+					}
+
+					c := palette[pind]
+
+					p[i+0] = c.R
+					p[i+1] = c.G
+					p[i+2] = c.B
+				}
+
+				x += pixelsCount
+			}
+		}
+	}
+
+	C.swap_and_clear(&img.VipsImage, tmp)
+
+	bmpSetBitDepth(img, len(palette))
 
 	return nil
 }
@@ -150,12 +278,7 @@ func (img *Image) decodeBmpRGB(r io.Reader, width, height, bands int, topDown, n
 		return err
 	}
 
-	defer func() {
-		if rerr := recover(); rerr != nil {
-			C.clear_image(&tmp)
-			panic(rerr)
-		}
-	}()
+	defer bmpClearOnPanic(&tmp)
 
 	// Each row is 4-byte aligned.
 	b := make([]byte, (bands*width+3)&^3)
@@ -239,9 +362,12 @@ func (img *Image) loadBmp(data []byte, noAlpha bool) error {
 		return errBmpUnsupported
 	}
 
-	// We only support 1 plane and 8, 24 or 32 bits per pixel and no
-	// compression.
+	// We only support 1 plane and 8, 24 or 32 bits per pixel
 	planes, bpp, compression := readUint16(b[26:28]), readUint16(b[28:30]), readUint32(b[30:34])
+
+	if planes != 1 {
+		return errBmpUnsupported
+	}
 
 	// if compression is set to BITFIELDS, but the bitmask is set to the default bitmask
 	// that would be used if compression was set to 0, we can continue as if compression was 0
@@ -251,44 +377,50 @@ func (img *Image) loadBmp(data []byte, noAlpha bool) error {
 		compression = 0
 	}
 
-	if planes != 1 || compression != 0 {
+	rle := false
+	if compression == 1 && bpp == 8 || compression == 2 && bpp == 4 {
+		rle = true
+	} else if compression != 0 {
 		return errBmpUnsupported
 	}
 
-	switch bpp {
-	case 1, 2, 4, 8:
+	var palette []Color
+	if bpp <= 8 {
 		palColors := readUint32(b[46:50])
+		if palColors == 0 {
+			palColors = 1 << bpp
+		}
 
 		_, err := io.ReadFull(r, b[:palColors*4])
 		if err != nil {
 			return err
 		}
 
-		palette := make([]Color, palColors)
+		palette = make([]Color, palColors)
 		for i := range palette {
 			// BMP images are stored in BGR order rather than RGB order.
 			// Every 4th byte is padding.
 			palette[i] = Color{b[4*i+2], b[4*i+1], b[4*i+0]}
 		}
+	}
 
-		if _, err := r.Seek(int64(offset), io.SeekStart); err != nil {
-			return err
-		}
+	if _, err := r.Seek(int64(offset), io.SeekStart); err != nil {
+		return err
+	}
 
+	if rle {
+		return img.decodeBmpRLE(r, width, height, int(bpp), palette)
+	}
+
+	switch bpp {
+	case 1, 2, 4, 8:
 		return img.decodeBmpPaletted(r, width, height, int(bpp), palette, topDown)
 	case 24:
-		if _, err := r.Seek(int64(offset), io.SeekStart); err != nil {
-			return err
-		}
 		return img.decodeBmpRGB(r, width, height, 3, topDown, true)
 	case 32:
 		if infoLen >= 70 {
 			// Alpha mask is empty, so no alpha here
 			noAlpha = readUint32(b[66:70]) == 0
-		}
-
-		if _, err := r.Seek(int64(offset), io.SeekStart); err != nil {
-			return err
 		}
 
 		return img.decodeBmpRGB(r, width, height, 4, topDown, noAlpha)
