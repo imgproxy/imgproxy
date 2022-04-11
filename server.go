@@ -128,7 +128,7 @@ func withPanicHandler(h router.RouteHandler) router.RouteHandler {
 					panic(rerr)
 				}
 
-				ierr := ierrors.Wrap(err, 3)
+				ierr := ierrors.Wrap(err, 2)
 
 				if ierr.Unexpected {
 					errorreport.Report(err, r)
