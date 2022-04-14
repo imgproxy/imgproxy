@@ -33,7 +33,7 @@ if [[ $BUILDPLATFORM != $TARGETPLATFORM ]]; then
       exit 1
   esac
 
-  GOLANG_VERSION=$(go version | sed -E 's/.*go([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
+  GOLANG_VERSION=$(go version | sed -E 's/.*go([0-9]+\.[0-9]+(\.[0-9]+)?).*/\1/')
 
   rm -rf /usr/local/go
 
