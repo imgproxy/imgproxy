@@ -229,13 +229,32 @@ func (img *Image) Load(imgdata *imagedata.ImageData, shrink int, scale float64, 
 	case imagetype.SVG:
 		err = C.vips_svgload_go(data, dataSize, C.double(scale), &tmp)
 	case imagetype.HEIC, imagetype.AVIF:
-		err = C.vips_heifload_go(data, dataSize, &tmp)
+		err = C.vips_heifload_go(data, dataSize, &tmp, C.int(0))
 	case imagetype.TIFF:
 		err = C.vips_tiffload_go(data, dataSize, &tmp)
 	default:
 		return errors.New("Usupported image type to load")
 	}
 	if err != 0 {
+		return Error()
+	}
+
+	C.swap_and_clear(&img.VipsImage, tmp)
+
+	return nil
+}
+
+func (img *Image) LoadThumbnail(imgdata *imagedata.ImageData) error {
+	if imgdata.Type != imagetype.HEIC && imgdata.Type != imagetype.AVIF {
+		return errors.New("Usupported image type to load thumbnail")
+	}
+
+	var tmp *C.VipsImage
+
+	data := unsafe.Pointer(&imgdata.Data[0])
+	dataSize := C.size_t(len(imgdata.Data))
+
+	if err := C.vips_heifload_go(data, dataSize, &tmp, C.int(1)); err != 0 {
 		return Error()
 	}
 
@@ -312,6 +331,10 @@ func (img *Image) Arrayjoin(in []*Image) error {
 
 	C.swap_and_clear(&img.VipsImage, tmp)
 	return nil
+}
+
+func (img *Image) Swap(in *Image) {
+	img.VipsImage, in.VipsImage = in.VipsImage, img.VipsImage
 }
 
 func (img *Image) IsAnimated() bool {

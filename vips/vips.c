@@ -82,8 +82,13 @@ vips_svgload_go(void *buf, size_t len, double scale, VipsImage **out) {
 }
 
 int
-vips_heifload_go(void *buf, size_t len, VipsImage **out) {
-  return vips_heifload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, NULL);
+vips_heifload_go(void *buf, size_t len, VipsImage **out, int thumbnail) {
+  return vips_heifload_buffer(
+    buf, len, out,
+    "access", VIPS_ACCESS_SEQUENTIAL,
+    "thumbnail", thumbnail,
+    NULL
+  );
 }
 
 int

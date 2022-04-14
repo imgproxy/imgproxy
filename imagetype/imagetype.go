@@ -130,3 +130,7 @@ func (it Type) SupportsColourProfile() bool {
 		it == WEBP ||
 		it == AVIF
 }
+
+func (it Type) SupportsThumbnail() bool {
+	return it == HEIC || it == AVIF
+}

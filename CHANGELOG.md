@@ -1,8 +1,11 @@
 # Changelog
 
 ## [Unreleased]
-## Add
+### Add
 - Add support of RLE-encoded BMP.
+
+### Change
+- Use thumbnail embedded to HEIC/AVIF if its size is larger than or equal to the requested.
 
 ## [3.4.0] - 2022-04-07
 ### Add

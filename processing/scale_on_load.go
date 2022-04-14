@@ -11,8 +11,12 @@ import (
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
-func canScaleOnLoad(imgtype imagetype.Type, scale float64) bool {
-	if imgtype == imagetype.SVG {
+func canScaleOnLoad(pctx *pipelineContext, imgdata *imagedata.ImageData, scale float64) bool {
+	if imgdata == nil || pctx.trimmed || scale == 1 {
+		return false
+	}
+
+	if imgdata.Type == imagetype.SVG {
 		return true
 	}
 
@@ -20,7 +24,10 @@ func canScaleOnLoad(imgtype imagetype.Type, scale float64) bool {
 		return false
 	}
 
-	return imgtype == imagetype.JPEG || imgtype == imagetype.WEBP
+	return imgdata.Type == imagetype.JPEG ||
+		imgdata.Type == imagetype.WEBP ||
+		imgdata.Type == imagetype.HEIC ||
+		imgdata.Type == imagetype.AVIF
 }
 
 func calcJpegShink(scale float64, imgtype imagetype.Type) int {
@@ -41,23 +48,45 @@ func calcJpegShink(scale float64, imgtype imagetype.Type) int {
 func scaleOnLoad(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata *imagedata.ImageData) error {
 	prescale := math.Max(pctx.wscale, pctx.hscale)
 
-	if pctx.trimmed || prescale == 1 || imgdata == nil || !canScaleOnLoad(pctx.imgtype, prescale) {
+	if !canScaleOnLoad(pctx, imgdata, prescale) {
 		return nil
 	}
 
-	jpegShrink := calcJpegShink(prescale, pctx.imgtype)
+	var newWidth, newHeight int
 
-	if pctx.imgtype == imagetype.JPEG && jpegShrink == 1 {
-		return nil
-	}
+	if imgdata.Type.SupportsThumbnail() {
+		thumbnail := new(vips.Image)
+		defer thumbnail.Clear()
 
-	if err := img.Load(imgdata, jpegShrink, prescale, 1); err != nil {
-		return err
+		if err := thumbnail.LoadThumbnail(imgdata); err != nil {
+			return err
+		}
+
+		angle, flip := 0, false
+		newWidth, newHeight, angle, flip = extractMeta(thumbnail, po.Rotate, po.AutoRotate)
+
+		if newWidth >= pctx.srcWidth || float64(newWidth)/float64(pctx.srcWidth) < prescale {
+			return nil
+		}
+
+		img.Swap(thumbnail)
+		pctx.angle = angle
+		pctx.flip = flip
+	} else {
+		jpegShrink := calcJpegShink(prescale, pctx.imgtype)
+
+		if pctx.imgtype == imagetype.JPEG && jpegShrink == 1 {
+			return nil
+		}
+
+		if err := img.Load(imgdata, jpegShrink, prescale, 1); err != nil {
+			return err
+		}
+
+		newWidth, newHeight, _, _ = extractMeta(img, po.Rotate, po.AutoRotate)
 	}
 
 	// Update scales after scale-on-load
-	newWidth, newHeight, _, _ := extractMeta(img, po.Rotate, po.AutoRotate)
-
 	wpreshrink := float64(pctx.srcWidth) / float64(newWidth)
 	hpreshrink := float64(pctx.srcHeight) / float64(newHeight)
 
