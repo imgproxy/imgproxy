@@ -417,5 +417,6 @@ imgproxy can send logs to syslog, but this feature is disabled by default. To en
 * `IMGPROXY_STRIP_METADATA`: when `true`, imgproxy will strip all metadata (EXIF, IPTC, etc.) from JPEG and WebP output images. Default: `true`
 * `IMGPROXY_STRIP_COLOR_PROFILE`: when `true`, imgproxy will transform the embedded color profile (ICC) to sRGB and remove it from the image. Otherwise, imgproxy will try to keep it as is. Default: `true`
 * `IMGPROXY_AUTO_ROTATE`: when `true`, imgproxy will automatically rotate images based on the EXIF Orientation parameter (if available in the image meta data). The orientation tag will be removed from the image in all cases. Default: `true`
+* `IMGPROXY_ENFORCE_THUMBNAIL`: when `true` and the source image has an embedded thumbnail, imgproxy will always use the embedded thumbnail instead on the main image. Currently, only thumbnails embedded in `heic` and `avif` are supported. Default: `false`
 * `IMGPROXY_HEALTH_CHECK_MESSAGE`: <i class='badge badge-pro'></i> the content of the health check response. Default: `imgproxy is running`
 * `IMGPROXY_HEALTH_CHECK_PATH`: an additional path of the health check. Default: blank

@@ -511,6 +511,15 @@ scp:%strip_color_profile
 
 When set to `1`, `t` or `true`, imgproxy will transform the embedded color profile (ICC) to sRGB and remove it from the image. Otherwise, imgproxy will try to keep it as is. This is normally controlled by the [IMGPROXY_STRIP_COLOR_PROFILE](configuration.md#miscellaneous) configuration but this procesing option allows the configuration to be set for each request.
 
+### Enforce thumbnail
+
+```
+enforce_thumbnail:%enforce_thumbnail
+eth:%enforce_thumbnail
+```
+
+When set to `1`, `t` or `true` and the source image has an embedded thumbnail, imgproxy will always use the embedded thumbnail instead on the main image. Currently, only thumbnails embedded in `heic` and `avif` are supported. This is normally controlled by the [IMGPROXY_ENFORCE_THUMBNAIL](configuration.md#miscellaneous) configuration but this procesing option allows the configuration to be set for each request.
+
 ### Quality
 
 ```

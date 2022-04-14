@@ -239,8 +239,14 @@ func ProcessImage(ctx context.Context, imgdata *imagedata.ImageData, po *options
 	img := new(vips.Image)
 	defer img.Clear()
 
-	if err := img.Load(imgdata, 1, 1.0, pages); err != nil {
-		return nil, err
+	if po.EnforceThumbnail && imgdata.Type.SupportsThumbnail() {
+		if err := img.LoadThumbnail(imgdata); err != nil {
+			return nil, err
+		}
+	} else {
+		if err := img.Load(imgdata, 1, 1.0, pages); err != nil {
+			return nil, err
+		}
 	}
 
 	originWidth, originHeight := getImageSize(img)

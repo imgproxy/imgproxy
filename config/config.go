@@ -49,6 +49,7 @@ var (
 	StripMetadata         bool
 	StripColorProfile     bool
 	AutoRotate            bool
+	EnforceThumbnail      bool
 
 	EnableWebpDetection bool
 	EnforceWebp         bool
@@ -204,6 +205,7 @@ func Reset() {
 	StripMetadata = true
 	StripColorProfile = true
 	AutoRotate = true
+	EnforceThumbnail = false
 
 	EnableWebpDetection = false
 	EnforceWebp = false
@@ -350,6 +352,7 @@ func Configure() error {
 	configurators.Bool(&StripMetadata, "IMGPROXY_STRIP_METADATA")
 	configurators.Bool(&StripColorProfile, "IMGPROXY_STRIP_COLOR_PROFILE")
 	configurators.Bool(&AutoRotate, "IMGPROXY_AUTO_ROTATE")
+	configurators.Bool(&EnforceThumbnail, "IMGPROXY_ENFORCE_THUMBNAIL")
 
 	configurators.Bool(&EnableWebpDetection, "IMGPROXY_ENABLE_WEBP_DETECTION")
 	configurators.Bool(&EnforceWebp, "IMGPROXY_ENFORCE_WEBP")

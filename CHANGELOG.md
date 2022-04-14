@@ -3,6 +3,7 @@
 ## [Unreleased]
 ### Add
 - Add support of RLE-encoded BMP.
+- Add `IMGPROXY_ENFORCE_THUMBNAIL` config and [enforce_thumbnail](https://docs.imgproxy.net/generating_the_url?id=enforce-thumbnail) processing option.
 
 ### Change
 - Use thumbnail embedded to HEIC/AVIF if its size is larger than or equal to the requested.
