@@ -518,7 +518,7 @@ enforce_thumbnail:%enforce_thumbnail
 eth:%enforce_thumbnail
 ```
 
-When set to `1`, `t` or `true` and the source image has an embedded thumbnail, imgproxy will always use the embedded thumbnail instead on the main image. Currently, only thumbnails embedded in `heic` and `avif` are supported. This is normally controlled by the [IMGPROXY_ENFORCE_THUMBNAIL](configuration.md#miscellaneous) configuration but this procesing option allows the configuration to be set for each request.
+When set to `1`, `t` or `true` and the source image has an embedded thumbnail, imgproxy will always use the embedded thumbnail instead of the main image. Currently, only thumbnails embedded in `heic` and `avif` are supported. This is normally controlled by the [IMGPROXY_ENFORCE_THUMBNAIL](configuration.md#miscellaneous) configuration but this procesing option allows the configuration to be set for each request.
 
 ### Quality
 
