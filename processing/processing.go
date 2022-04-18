@@ -282,6 +282,8 @@ func ProcessImage(ctx context.Context, imgdata *imagedata.ImageData, po *options
 		}
 		outData.Headers["X-Origin-Width"] = strconv.Itoa(originWidth)
 		outData.Headers["X-Origin-Height"] = strconv.Itoa(originHeight)
+		outData.Headers["X-Result-Width"] = strconv.Itoa(img.Width())
+		outData.Headers["X-Result-Height"] = strconv.Itoa(img.Height())
 	}
 
 	return outData, err

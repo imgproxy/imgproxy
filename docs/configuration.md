@@ -49,6 +49,8 @@ echo $(xxd -g 2 -l 64 -p /dev/random | tr -d '\n')
   * `X-Origin-Content-Length`: the size of the source image
   * `X-Origin-Width`: the width of the source image
   * `X-Origin-Height`: the height of the source image
+  * `X-Result-Width`: the width of the resultant image
+  * `X-Result-Height`: the height of the resultant image
 * `IMGPROXY_SERVER_NAME`: <i class='badge badge-pro'></i> the `Server` header value. Default: `imgproxy`
 
 ## Security
