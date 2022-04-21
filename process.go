@@ -502,7 +502,7 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 	transparentBg := po.Format.SupportsAlpha() && !po.Flatten
 
 	if hasAlpha && !transparentBg {
-		if err = img.Flatten(po.Background); err != nil {
+		if err = img.Flatten(po.Background.Color); err != nil {
 			return err
 		}
 	}
@@ -529,7 +529,7 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 
 	if po.Extend.Enabled && (dprWidth > img.Width() || dprHeight > img.Height()) {
 		offX, offY := calcPosition(dprWidth, dprHeight, img.Width(), img.Height(), &po.Extend.Gravity, false)
-		if err = img.Embed(dprWidth, dprHeight, offX, offY, po.Background, transparentBg); err != nil {
+		if err = img.Embed(dprWidth, dprHeight, offX, offY, po.Background.Color, transparentBg); err != nil {
 			return err
 		}
 	}
@@ -539,15 +539,72 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 		paddingRight := scaleInt(po.Padding.Right, po.Dpr)
 		paddingBottom := scaleInt(po.Padding.Bottom, po.Dpr)
 		paddingLeft := scaleInt(po.Padding.Left, po.Dpr)
-		if err = img.Embed(
-			img.Width()+paddingLeft+paddingRight,
-			img.Height()+paddingTop+paddingBottom,
-			paddingLeft,
-			paddingTop,
-			po.Background,
-			transparentBg,
-		); err != nil {
-			return err
+
+		// Use blur effect for background. This uses a darkened, blurred, and
+		// slightly blown up version of the image instead of a solid color.
+		if po.Background.Effect == "blur" {
+			// Watermark Hack (Broken, always centered and 80% size)
+			// if err = img.Resize(2, false); err != nil {
+			// 	return err
+			// }
+
+			// if err = img.ColorAdjust(0.6); err != nil {
+			// 	return err
+			// }
+
+			// if err = img.Blur(10); err != nil {
+			// 	return err
+			// }
+			// wmData := imageData{Data: data, Type: imgtype}
+			// opts := po.Watermark
+			// opts.Enabled = true
+			// opts.Scale = 0.8
+			// if err = applyWatermark(img, &wmData, &opts, 1); err != nil {
+			// 	return err
+			// }
+
+			// Composite test
+			// TODO: this centerImage needs to be scaled to match output size
+			centerImage := new(vipsImage)
+			if err = centerImage.Load(data, imgtype, 1, 1, 1); err != nil {
+				return err
+			}
+
+			// TODO: This needs to be a real resize based on output dimensions
+			if err = img.Resize(1.5, false); err != nil {
+				return err
+			}
+
+			if err = img.ColorAdjust(0.6); err != nil {
+				return err
+			}
+
+			if err = img.Blur(10); err != nil {
+				return err
+			}
+
+			if err = img.EmbedImage(
+				paddingLeft,
+				paddingTop,
+				centerImage,
+			); err != nil {
+				return err
+			}
+
+			// TODO: need to composite backgroundImage on the bottom (and the exact size of requested
+			// output) and img on top of that according to paddinhg/crop/etc.
+		} else {
+			// Padding with color fill
+			if err = img.Embed(
+				img.Width()+paddingLeft+paddingRight,
+				img.Height()+paddingTop+paddingBottom,
+				paddingLeft,
+				paddingTop,
+				po.Background.Color,
+				transparentBg,
+			); err != nil {
+				return err
+			}
 		}
 	}
 

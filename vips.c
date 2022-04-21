@@ -575,12 +575,23 @@ vips_embed_go(VipsImage *in, VipsImage **out, int x, int y, int width, int heigh
 }
 
 int
+vips_embed_image_go(VipsImage *in, VipsImage *sub, VipsImage **out, int x, int y, gboolean expand) {
+  int ret = vips_insert(in, sub, out, x, y, "expand", expand, NULL);
+  return ret;
+}
+
+int
 vips_ensure_alpha(VipsImage *in, VipsImage **out) {
   if (vips_image_hasalpha_go(in)) {
     return vips_copy(in, out, NULL);
   }
 
   return vips_bandjoin_const1(in, out, 255, NULL);
+}
+
+int
+vips_color_adjust(VipsImage *in, VipsImage **out, double scale) {
+  return vips_linear1(in, out, scale, 0, NULL);
 }
 
 int

@@ -307,9 +307,9 @@ func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedBackground() {
 
 	po := getProcessingOptions(ctx)
 	assert.True(s.T(), po.Flatten)
-	assert.Equal(s.T(), uint8(128), po.Background.R)
-	assert.Equal(s.T(), uint8(129), po.Background.G)
-	assert.Equal(s.T(), uint8(130), po.Background.B)
+	assert.Equal(s.T(), uint8(128), po.Background.Color.R)
+	assert.Equal(s.T(), uint8(129), po.Background.Color.G)
+	assert.Equal(s.T(), uint8(130), po.Background.Color.B)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedBackgroundHex() {
@@ -320,9 +320,20 @@ func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedBackgroundHex() {
 
 	po := getProcessingOptions(ctx)
 	assert.True(s.T(), po.Flatten)
-	assert.Equal(s.T(), uint8(0xff), po.Background.R)
-	assert.Equal(s.T(), uint8(0xdd), po.Background.G)
-	assert.Equal(s.T(), uint8(0xee), po.Background.B)
+	assert.Equal(s.T(), uint8(0xff), po.Background.Color.R)
+	assert.Equal(s.T(), uint8(0xdd), po.Background.Color.G)
+	assert.Equal(s.T(), uint8(0xee), po.Background.Color.B)
+}
+
+func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedBackgroundEffect() {
+	req := s.getRequest("/unsafe/background:blur/plain/http://images.dev/lorem/ipsum.jpg")
+	ctx, err := parsePath(context.Background(), req)
+
+	require.Nil(s.T(), err)
+
+	po := getProcessingOptions(ctx)
+	assert.True(s.T(), po.Flatten)
+	assert.Equal(s.T(), "blur", po.Background.Effect)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedBackgroundDisable() {

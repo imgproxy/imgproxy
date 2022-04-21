@@ -408,6 +408,17 @@ func (img *vipsImage) Rad2Float() error {
 	return nil
 }
 
+func (img *vipsImage) ColorAdjust(scale float64) error {
+	var tmp *C.VipsImage
+	if C.vips_color_adjust(img.VipsImage, &tmp, C.double(scale)) != 0 {
+		return vipsError()
+	}
+
+	C.swap_and_clear(&img.VipsImage, tmp)
+
+	return nil
+}
+
 func (img *vipsImage) Resize(scale float64, hasAlpa bool) error {
 	var tmp *C.VipsImage
 
@@ -698,6 +709,21 @@ func (img *vipsImage) Embed(width, height int, offX, offY int, bg rgbColor, tran
 	bgn := minInt(int(img.VipsImage.Bands), len(bgc))
 
 	if C.vips_embed_go(img.VipsImage, &tmp, C.int(offX), C.int(offY), C.int(width), C.int(height), &bgc[0], C.int(bgn)) != 0 {
+		return vipsError()
+	}
+	C.swap_and_clear(&img.VipsImage, tmp)
+
+	return nil
+}
+
+func (img *vipsImage) EmbedImage(offX, offY int, sub *vipsImage) error {
+	var tmp *C.VipsImage
+
+	if err := img.RgbColourspace(); err != nil {
+		return err
+	}
+
+	if C.vips_embed_image_go(img.VipsImage, sub.VipsImage, &tmp, C.int(offX), C.int(offY), gbool(true)) != 0 {
 		return vipsError()
 	}
 	C.swap_and_clear(&img.VipsImage, tmp)
