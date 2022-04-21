@@ -71,14 +71,15 @@ int vips_apply_filters(VipsImage *in, VipsImage **out, double blur_sigma, double
 int vips_flatten_go(VipsImage *in, VipsImage **out, double r, double g, double b);
 
 int vips_replicate_go(VipsImage *in, VipsImage **out, int across, int down);
-int vips_embed_go(VipsImage *in, VipsImage **out, int x, int y, int width, int height);
+int vips_embed_go(VipsImage *in, VipsImage **out, int x, int y, int width, int height, double *bg, int bgn);
 
-int vips_apply_watermark(VipsImage *in, VipsImage *watermark, VipsImage **out, int left, int top,
-    double opacity);
+int vips_ensure_alpha(VipsImage *in, VipsImage **out);
+
+int vips_apply_watermark(VipsImage *in, VipsImage *watermark, VipsImage **out, double opacity);
 
 int vips_arrayjoin_go(VipsImage **in, VipsImage **out, int n);
 
-int vips_strip(VipsImage *in, VipsImage **out, int keep_exif_copyright);
+int vips_strip(VipsImage *in, VipsImage **out);
 
 int vips_jpegsave_go(VipsImage *in, void **buf, size_t *len, int quality, int interlace);
 int vips_pngsave_go(VipsImage *in, void **buf, size_t *len, int interlace, int quantize,
