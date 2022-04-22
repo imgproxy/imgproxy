@@ -446,6 +446,16 @@ vips_smartcrop_go(VipsImage *in, VipsImage **out, int width, int height) {
 }
 
 int
+vips_smartcrop_center_go(VipsImage *in, VipsImage **out, int width, int height) {
+#if VIPS_SUPPORT_SMARTCROP
+  return vips_smartcrop(in, out, width, height, "interesting", VIPS_INTERESTING_CENTRE, NULL);
+#else
+  vips_error("vips_smartcrop_center_go", "Smart crop is not supported (libvips 8.5+ reuired)");
+  return 1;
+#endif
+}
+
+int
 vips_gaussblur_go(VipsImage *in, VipsImage **out, double sigma) {
   return vips_gaussblur(in, out, sigma, NULL);
 }

@@ -543,35 +543,26 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 		// Use blur effect for background. This uses a darkened, blurred, and
 		// slightly blown up version of the image instead of a solid color.
 		if po.Background.Effect == "blur" {
-			// Watermark Hack (Broken, always centered and 80% size)
-			// if err = img.Resize(2, false); err != nil {
-			// 	return err
-			// }
+			outputWidth := img.Width() + paddingLeft + paddingRight
+			outputHeight := img.Height() + paddingTop + paddingBottom
 
-			// if err = img.ColorAdjust(0.6); err != nil {
-			// 	return err
-			// }
-
-			// if err = img.Blur(10); err != nil {
-			// 	return err
-			// }
-			// wmData := imageData{Data: data, Type: imgtype}
-			// opts := po.Watermark
-			// opts.Enabled = true
-			// opts.Scale = 0.8
-			// if err = applyWatermark(img, &wmData, &opts, 1); err != nil {
-			// 	return err
-			// }
-
-			// Composite test
-			// TODO: this centerImage needs to be scaled to match output size
+			// Make a copy of the image for embedding later
 			centerImage := new(vipsImage)
 			if err = centerImage.Load(data, imgtype, 1, 1, 1); err != nil {
 				return err
 			}
 
-			// TODO: This needs to be a real resize based on output dimensions
-			if err = img.Resize(1.5, false); err != nil {
+			// Resize to the image area and then center smart crop to trim off excess.
+			outputScale := math.Max((float64(outputWidth) / float64(img.Width())), (float64(outputHeight) / float64(img.Height())))
+			// Pad out a little more that image size because the edge of the image repeating
+			// looks bad.
+			outputScale *= 1.1
+
+			if err = img.Resize(outputScale, false); err != nil {
+				return err
+			}
+
+			if err = img.CenterFill(outputWidth, outputHeight); err != nil {
 				return err
 			}
 
@@ -590,9 +581,6 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 			); err != nil {
 				return err
 			}
-
-			// TODO: need to composite backgroundImage on the bottom (and the exact size of requested
-			// output) and img on top of that according to paddinhg/crop/etc.
 		} else {
 			// Padding with color fill
 			if err = img.Embed(

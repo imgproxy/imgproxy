@@ -496,6 +496,17 @@ func (img *vipsImage) SmartCrop(width, height int) error {
 	return nil
 }
 
+func (img *vipsImage) CenterFill(width, height int) error {
+	var tmp *C.VipsImage
+
+	if C.vips_smartcrop_center_go(img.VipsImage, &tmp, C.int(width), C.int(height)) != 0 {
+		return vipsError()
+	}
+
+	C.swap_and_clear(&img.VipsImage, tmp)
+	return nil
+}
+
 func (img *vipsImage) Trim(threshold float64, smart bool, color rgbColor, equalHor bool, equalVer bool) error {
 	var tmp *C.VipsImage
 
