@@ -75,6 +75,7 @@ int vips_flip_horizontal_go(VipsImage *in, VipsImage **out);
 
 int vips_extract_area_go(VipsImage *in, VipsImage **out, int left, int top, int width, int height);
 int vips_smartcrop_go(VipsImage *in, VipsImage **out, int width, int height);
+int vips_smartcrop_center_go(VipsImage *in, VipsImage **out, int width, int height);
 int vips_trim(VipsImage *in, VipsImage **out, double threshold,
               gboolean smart, double r, double g, double b,
               gboolean equal_hor, gboolean equal_ver);
