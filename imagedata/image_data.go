@@ -1,9 +1,11 @@
 package imagedata
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/cookiejar"
 	"os"
@@ -142,4 +144,22 @@ func Download(imageURL, desc string, header http.Header, jar *cookiejar.Jar) (*I
 	}
 
 	return imgdata, nil
+}
+
+func FromFormData(r *http.Request, desc string) (*ImageData, error) {
+	image, header, err := r.FormFile("image")
+	defer image.Close()
+	if err != nil {
+		return nil, err
+	}
+	buf := bytes.NewBuffer(nil)
+	if _, err := io.Copy(buf, image); err != nil {
+		return nil, err
+	}
+	filenameParts := strings.Split(header.Filename, ".")
+
+	return &ImageData{
+		Data: buf.Bytes(),
+		Type: imagetype.Types[filenameParts[1]],
+	}, nil
 }

@@ -28,12 +28,14 @@ func buildRouter() *router.Router {
 	r := router.New(config.PathPrefix)
 
 	r.GET("/", handleLanding, true)
+	r.POST("/", handleLanding, true)
 	r.GET("/health", handleHealth, true)
 	if len(config.HealthCheckPath) > 0 {
 		r.GET(config.HealthCheckPath, handleHealth, true)
 	}
 	r.GET("/favicon.ico", handleFavicon, true)
 	r.GET("/", withMetrics(withPanicHandler(withCORS(withSecret(handleProcessing)))), false)
+	r.POST("/", withMetrics(withPanicHandler(withCORS(withSecret(handleProcessing)))), false)
 	r.HEAD("/", withCORS(handleHead), false)
 	r.OPTIONS("/", withCORS(handleHead), false)
 

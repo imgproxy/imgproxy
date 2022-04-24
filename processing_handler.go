@@ -225,7 +225,11 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		return imagedata.Download(imageURL, "source image", imgRequestHeader, cookieJar)
+		if r.Method == "POST" {
+			return imagedata.FromFormData(r, "form-data")
+		} else {
+			return imagedata.Download(imageURL, "source image", imgRequestHeader, cookieJar)
+		}
 	}()
 
 	if err == nil {
