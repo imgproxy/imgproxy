@@ -356,6 +356,7 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 	heightToScale := minNonZeroInt(cropHeight, srcHeight)
 
 	scale := calcScale(widthToScale, heightToScale, po, imgtype)
+	preLoadScale := scale
 
 	if cropWidth > 0 {
 		cropWidth = maxInt(1, scaleInt(cropWidth, scale))
@@ -540,17 +541,72 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 		paddingBottom := scaleInt(po.Padding.Bottom, po.Dpr)
 		paddingLeft := scaleInt(po.Padding.Left, po.Dpr)
 
+		outputWidth := img.Width() + paddingLeft + paddingRight
+		outputHeight := img.Height() + paddingTop + paddingBottom
+
 		// Use blur effect for background. This uses a darkened, blurred, and
 		// slightly blown up version of the image instead of a solid color.
 		if po.Background.Effect == "blur" {
-			outputWidth := img.Width() + paddingLeft + paddingRight
-			outputHeight := img.Height() + paddingTop + paddingBottom
 
 			// Make a copy of the image for embedding later
 			centerImage := new(vipsImage)
-			if err = centerImage.Load(data, imgtype, 1, 1, 1); err != nil {
+			centerScale := preLoadScale
+
+			// Load the second copy and reapply transformations that effect the size/shape
+			// of the image.
+			// TODO: Refactor so this is shared with the earlier version
+			if !trimmed && centerScale != 1 && data != nil && canScaleOnLoad(imgtype, centerScale) {
+				jpegShrink := calcJpegShink(centerScale, imgtype)
+
+				if imgtype != imageTypeJPEG || jpegShrink != 1 {
+					// Do some scale-on-load
+					if err = centerImage.Load(data, imgtype, jpegShrink, centerScale, 1); err != nil {
+						return err
+					}
+				}
+
+				// Update scale after scale-on-load
+				newWidth, newHeight, _, _ := extractMeta(centerImage, po.Rotate, po.AutoRotate)
+				if srcWidth > srcHeight {
+					centerScale = float64(srcWidth) * centerScale / float64(newWidth)
+				} else {
+					centerScale = float64(srcHeight) * centerScale / float64(newHeight)
+				}
+				if srcWidth == scaleInt(srcWidth, centerScale) && srcHeight == scaleInt(srcHeight, scale) {
+					centerScale = 1.0
+				}
+			}
+
+			if centerScale != 1 {
+				if err = centerImage.Resize(centerScale, hasAlpha); err != nil {
+					return err
+				}
+			}
+
+			if err = copyMemoryAndCheckTimeout(ctx, centerImage); err != nil {
 				return err
 			}
+
+			if err = centerImage.Rotate(angle); err != nil {
+				return err
+			}
+
+			if flip {
+				if err = centerImage.Flip(); err != nil {
+					return err
+				}
+			}
+
+			if err = centerImage.Rotate(po.Rotate); err != nil {
+				return err
+			}
+			if err = cropImage(centerImage, cropWidth, cropHeight, &cropGravity); err != nil {
+				return err
+			}
+			if err = cropImage(centerImage, dprWidth, dprHeight, &po.Gravity); err != nil {
+				return err
+			}
+			// end transforms
 
 			// Resize to the image area and then center smart crop to trim off excess.
 			outputScale := math.Max((float64(outputWidth) / float64(img.Width())), (float64(outputHeight) / float64(img.Height())))
@@ -584,8 +640,8 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 		} else {
 			// Padding with color fill
 			if err = img.Embed(
-				img.Width()+paddingLeft+paddingRight,
-				img.Height()+paddingTop+paddingBottom,
+				outputWidth,
+				outputHeight,
 				paddingLeft,
 				paddingTop,
 				po.Background.Color,
