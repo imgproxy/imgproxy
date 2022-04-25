@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+
+## [3.5.0] - 2022-04-25
 ### Add
 - Add support of RLE-encoded BMP.
 - Add `IMGPROXY_ENFORCE_THUMBNAIL` config and [enforce_thumbnail](https://docs.imgproxy.net/generating_the_url?id=enforce-thumbnail) processing option.
