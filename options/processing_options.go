@@ -85,6 +85,7 @@ type ProcessingOptions struct {
 	Sharpen           float32
 	Pixelate          int
 	StripMetadata     bool
+	KeepCopyright     bool
 	StripColorProfile bool
 	AutoRotate        bool
 	EnforceThumbnail  bool
@@ -135,6 +136,7 @@ func NewProcessingOptions() *ProcessingOptions {
 			Dpr:               1,
 			Watermark:         WatermarkOptions{Opacity: 1, Replicate: false, Gravity: GravityOptions{Type: GravityCenter}},
 			StripMetadata:     config.StripMetadata,
+			KeepCopyright:     config.KeepCopyright,
 			StripColorProfile: config.StripColorProfile,
 			AutoRotate:        config.AutoRotate,
 			EnforceThumbnail:  config.EnforceThumbnail,
@@ -817,6 +819,16 @@ func applyStripMetadataOption(po *ProcessingOptions, args []string) error {
 	return nil
 }
 
+func applyKeepCopyrightOption(po *ProcessingOptions, args []string) error {
+	if len(args) > 1 {
+		return fmt.Errorf("Invalid keep copyright arguments: %v", args)
+	}
+
+	po.KeepCopyright = parseBoolOption(args[0])
+
+	return nil
+}
+
 func applyStripColorProfileOption(po *ProcessingOptions, args []string) error {
 	if len(args) > 1 {
 		return fmt.Errorf("Invalid strip color profile arguments: %v", args)
@@ -895,6 +907,8 @@ func applyURLOption(po *ProcessingOptions, name string, args []string) error {
 		return applyWatermarkOption(po, args)
 	case "strip_metadata", "sm":
 		return applyStripMetadataOption(po, args)
+	case "keep_copyright", "kcr":
+		return applyKeepCopyrightOption(po, args)
 	case "strip_color_profile", "scp":
 		return applyStripColorProfileOption(po, args)
 	case "enforce_thumbnail", "eth":

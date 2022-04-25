@@ -47,6 +47,7 @@ var (
 	Quality               int
 	FormatQuality         map[imagetype.Type]int
 	StripMetadata         bool
+	KeepCopyright         bool
 	StripColorProfile     bool
 	AutoRotate            bool
 	EnforceThumbnail      bool
@@ -203,6 +204,7 @@ func Reset() {
 	Quality = 80
 	FormatQuality = map[imagetype.Type]int{imagetype.AVIF: 50}
 	StripMetadata = true
+	KeepCopyright = true
 	StripColorProfile = true
 	AutoRotate = true
 	EnforceThumbnail = false
@@ -350,6 +352,7 @@ func Configure() error {
 		return err
 	}
 	configurators.Bool(&StripMetadata, "IMGPROXY_STRIP_METADATA")
+	configurators.Bool(&KeepCopyright, "IMGPROXY_KEEP_COPYRIGHT")
 	configurators.Bool(&StripColorProfile, "IMGPROXY_STRIP_COLOR_PROFILE")
 	configurators.Bool(&AutoRotate, "IMGPROXY_AUTO_ROTATE")
 	configurators.Bool(&EnforceThumbnail, "IMGPROXY_ENFORCE_THUMBNAIL")

@@ -502,6 +502,15 @@ sm:%strip_metadata
 
 When set to `1`, `t` or `true`, imgproxy will strip the metadata (EXIF, IPTC, etc.) on JPEG and WebP output images. This is normally controlled by the [IMGPROXY_STRIP_METADATA](configuration.md#miscellaneous) configuration but this procesing option allows the configuration to be set for each request.
 
+### Keep Copyright
+
+```
+keep_copyright:%keep_copyright
+kcr:%keep_copyright
+```
+
+When set to `1`, `t` or `true`, imgproxy will not remove copyright info while stripping metadata. This is normally controlled by the [IMGPROXY_KEEP_COPYRIGHT](configuration.md#miscellaneous) configuration but this procesing option allows the configuration to be set for each request.
+
 ### Strip Color Profile
 
 ```

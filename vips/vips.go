@@ -414,6 +414,18 @@ func (img *Image) GetIntSliceDefault(name string, def []int) ([]int, error) {
 	return img.GetIntSlice(name)
 }
 
+func (img *Image) GetBlob(name string) ([]byte, error) {
+	var (
+		tmp  unsafe.Pointer
+		size C.size_t
+	)
+
+	if C.vips_image_get_blob(img.VipsImage, cachedCString(name), &tmp, &size) != 0 {
+		return nil, Error()
+	}
+	return C.GoBytes(tmp, C.int(size)), nil
+}
+
 func (img *Image) SetInt(name string, value int) {
 	C.vips_image_set_int(img.VipsImage, cachedCString(name), C.int(value))
 }
@@ -424,6 +436,11 @@ func (img *Image) SetIntSlice(name string, value []int) {
 		in[i] = C.int(el)
 	}
 	C.vips_image_set_array_int_go(img.VipsImage, cachedCString(name), &in[0], C.int(len(value)))
+}
+
+func (img *Image) SetBlob(name string, value []byte) {
+	defer runtime.KeepAlive(value)
+	C.vips_image_set_blob_copy(img.VipsImage, cachedCString(name), unsafe.Pointer(&value[0]), C.size_t(len(value)))
 }
 
 func (img *Image) CastUchar() error {
@@ -750,10 +767,10 @@ func (img *Image) ApplyWatermark(wm *Image, opacity float64) error {
 	return nil
 }
 
-func (img *Image) Strip() error {
+func (img *Image) Strip(keepExifCopyright bool) error {
 	var tmp *C.VipsImage
 
-	if C.vips_strip(img.VipsImage, &tmp) != 0 {
+	if C.vips_strip(img.VipsImage, &tmp, gbool(keepExifCopyright)) != 0 {
 		return Error()
 	}
 	C.swap_and_clear(&img.VipsImage, tmp)

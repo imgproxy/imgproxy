@@ -23,6 +23,7 @@ require (
 	github.com/prometheus/client_golang v1.12.1
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.1
+	github.com/trimmer-io/go-xmp v1.0.0 // indirect
 	go.uber.org/automaxprocs v1.5.0
 	golang.org/x/image v0.0.0-20220321031419-a8550c1d254a
 	golang.org/x/net v0.0.0-20220403103023-749bd193bc2b

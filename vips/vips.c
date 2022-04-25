@@ -522,7 +522,7 @@ vips_arrayjoin_go(VipsImage **in, VipsImage **out, int n) {
 }
 
 int
-vips_strip(VipsImage *in, VipsImage **out) {
+vips_strip(VipsImage *in, VipsImage **out, int keep_exif_copyright) {
   static double default_resolution = 72.0 / 25.4;
 
   if (vips_copy(
@@ -539,6 +539,12 @@ vips_strip(VipsImage *in, VipsImage **out) {
 
     if (strcmp(name, VIPS_META_ICC_NAME) == 0) continue;
     if (strcmp(name, "palette-bit-depth") == 0) continue;
+
+    if (keep_exif_copyright) {
+      if (strcmp(name, VIPS_META_EXIF_NAME) == 0) continue;
+      if (strcmp(name, "exif-ifd0-Copyright") == 0) continue;
+      if (strcmp(name, "exif-ifd0-Artist") == 0) continue;
+    }
 
     vips_image_remove(*out, name);
   }
