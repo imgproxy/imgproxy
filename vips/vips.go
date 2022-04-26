@@ -116,6 +116,7 @@ func Cleanup() {
 }
 
 func Error() error {
+	defer C.vips_error_clear()
 	return ierrors.NewUnexpected(C.GoString(C.vips_error_buffer()), 1)
 }
 
