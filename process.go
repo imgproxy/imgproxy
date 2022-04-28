@@ -549,6 +549,7 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 
 			// Make a copy of the image for embedding later
 			centerImage := new(vipsImage)
+			defer centerImage.Clear()
 
 			// Load the second copy and reapply transformations that effect the size/shape
 			// of the image.
@@ -665,6 +666,11 @@ func loadAndTransform(ctx context.Context,
 		if imgtype != imageTypeJPEG || jpegShrink != 1 {
 			// Do some scale-on-load
 			if err = img.Load(data, imgtype, jpegShrink, scale, 1); err != nil {
+				return err
+			}
+		} else {
+			// No scale-on-load
+			if err := img.Load(data, imgtype, 1, 1.0, 1); err != nil {
 				return err
 			}
 		}
