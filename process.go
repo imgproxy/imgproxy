@@ -553,7 +553,6 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 
 			// Load the second copy and reapply transformations that effect the size/shape
 			// of the image.
-			// TODO: Refactor the earlier transform code to share this
 			loadAndTransform(ctx, centerImage, data, po, imgtype, srcWidth, srcHeight, angle, flip)
 
 			// Resize to the image area and then center smart crop to trim off excess.
