@@ -75,6 +75,7 @@ int vips_flip_horizontal_go(VipsImage *in, VipsImage **out);
 
 int vips_extract_area_go(VipsImage *in, VipsImage **out, int left, int top, int width, int height);
 int vips_smartcrop_go(VipsImage *in, VipsImage **out, int width, int height);
+int vips_smartcrop_center_go(VipsImage *in, VipsImage **out, int width, int height);
 int vips_trim(VipsImage *in, VipsImage **out, double threshold,
               gboolean smart, double r, double g, double b,
               gboolean equal_hor, gboolean equal_ver);
@@ -86,12 +87,14 @@ int vips_flatten_go(VipsImage *in, VipsImage **out, double r, double g, double b
 
 int vips_replicate_go(VipsImage *in, VipsImage **out, int across, int down);
 int vips_embed_go(VipsImage *in, VipsImage **out, int x, int y, int width, int height, double *bg, int bgn);
-
+int vips_embed_image_go(VipsImage *in, VipsImage *sub, VipsImage **out, int x, int y, gboolean expand);
 int vips_ensure_alpha(VipsImage *in, VipsImage **out);
 
 int vips_apply_watermark(VipsImage *in, VipsImage *watermark, VipsImage **out, double opacity);
 
 int vips_arrayjoin_go(VipsImage **in, VipsImage **out, int n);
+
+int vips_color_adjust(VipsImage *in, VipsImage **out, double scale);
 
 int vips_strip(VipsImage *in, VipsImage **out);
 

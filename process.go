@@ -502,7 +502,7 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 	transparentBg := po.Format.SupportsAlpha() && !po.Flatten
 
 	if hasAlpha && !transparentBg {
-		if err = img.Flatten(po.Background); err != nil {
+		if err = img.Flatten(po.Background.Color); err != nil {
 			return err
 		}
 	}
@@ -529,7 +529,7 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 
 	if po.Extend.Enabled && (dprWidth > img.Width() || dprHeight > img.Height()) {
 		offX, offY := calcPosition(dprWidth, dprHeight, img.Width(), img.Height(), &po.Extend.Gravity, false)
-		if err = img.Embed(dprWidth, dprHeight, offX, offY, po.Background, transparentBg); err != nil {
+		if err = img.Embed(dprWidth, dprHeight, offX, offY, po.Background.Color, transparentBg); err != nil {
 			return err
 		}
 	}
@@ -539,15 +539,63 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 		paddingRight := scaleInt(po.Padding.Right, po.Dpr)
 		paddingBottom := scaleInt(po.Padding.Bottom, po.Dpr)
 		paddingLeft := scaleInt(po.Padding.Left, po.Dpr)
-		if err = img.Embed(
-			img.Width()+paddingLeft+paddingRight,
-			img.Height()+paddingTop+paddingBottom,
-			paddingLeft,
-			paddingTop,
-			po.Background,
-			transparentBg,
-		); err != nil {
-			return err
+
+		outputWidth := img.Width() + paddingLeft + paddingRight
+		outputHeight := img.Height() + paddingTop + paddingBottom
+
+		// Use blur effect for background. This uses a darkened, blurred, and
+		// slightly blown up version of the image instead of a solid color.
+		if po.Background.Effect == "blur" {
+
+			// Make a copy of the image for embedding later
+			centerImage := new(vipsImage)
+			defer centerImage.Clear()
+
+			// Load the second copy and reapply transformations that effect the size/shape
+			// of the image.
+			loadAndTransform(ctx, centerImage, data, po, imgtype, srcWidth, srcHeight, angle, flip)
+
+			// Resize to the image area and then center smart crop to trim off excess.
+			outputScale := math.Max((float64(outputWidth) / float64(img.Width())), (float64(outputHeight) / float64(img.Height())))
+			// Pad out a little more that image size because the edge of the image repeating
+			// looks bad.
+			outputScale *= 1.1
+
+			if err = img.Resize(outputScale, false); err != nil {
+				return err
+			}
+
+			if err = img.CenterFill(outputWidth, outputHeight); err != nil {
+				return err
+			}
+
+			if err = img.ColorAdjust(0.6); err != nil {
+				return err
+			}
+
+			if err = img.Blur(10); err != nil {
+				return err
+			}
+
+			if err = img.EmbedImage(
+				paddingLeft,
+				paddingTop,
+				centerImage,
+			); err != nil {
+				return err
+			}
+		} else {
+			// Padding with color fill
+			if err = img.Embed(
+				outputWidth,
+				outputHeight,
+				paddingLeft,
+				paddingTop,
+				po.Background.Color,
+				transparentBg,
+			); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -572,6 +620,102 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 	}
 
 	return copyMemoryAndCheckTimeout(ctx, img)
+}
+
+func loadAndTransform(ctx context.Context,
+	img *vipsImage,
+	data []byte,
+	po *processingOptions,
+	imgtype imageType,
+	srcWidth int,
+	srcHeight int,
+	angle int,
+	flip bool) error {
+	var err error
+
+	cropWidth := calcCropSize(srcWidth, po.Crop.Width)
+	cropHeight := calcCropSize(srcHeight, po.Crop.Height)
+
+	cropGravity := po.Crop.Gravity
+	if cropGravity.Type == gravityUnknown {
+		cropGravity = po.Gravity
+	}
+
+	widthToScale := minNonZeroInt(cropWidth, srcWidth)
+	heightToScale := minNonZeroInt(cropHeight, srcHeight)
+
+	scale := calcScale(widthToScale, heightToScale, po, imgtype)
+	dprWidth := scaleInt(po.Width, po.Dpr)
+	dprHeight := scaleInt(po.Height, po.Dpr)
+
+	if cropWidth > 0 {
+		cropWidth = maxInt(1, scaleInt(cropWidth, scale))
+	}
+	if cropHeight > 0 {
+		cropHeight = maxInt(1, scaleInt(cropHeight, scale))
+	}
+	if cropGravity.Type != gravityFocusPoint {
+		cropGravity.X *= scale
+		cropGravity.Y *= scale
+	}
+
+	if scale != 1 && data != nil && canScaleOnLoad(imgtype, scale) {
+		jpegShrink := calcJpegShink(scale, imgtype)
+
+		if imgtype != imageTypeJPEG || jpegShrink != 1 {
+			// Do some scale-on-load
+			if err = img.Load(data, imgtype, jpegShrink, scale, 1); err != nil {
+				return err
+			}
+		} else {
+			// No scale-on-load
+			if err := img.Load(data, imgtype, 1, 1.0, 1); err != nil {
+				return err
+			}
+		}
+
+		// Update scale after scale-on-load
+		newWidth, newHeight, _, _ := extractMeta(img, po.Rotate, po.AutoRotate)
+		if srcWidth > srcHeight {
+			scale = float64(srcWidth) * scale / float64(newWidth)
+		} else {
+			scale = float64(srcHeight) * scale / float64(newHeight)
+		}
+		if srcWidth == scaleInt(srcWidth, scale) && srcHeight == scaleInt(srcHeight, scale) {
+			scale = 1.0
+		}
+	}
+
+	if scale != 1 {
+		if err = img.Resize(scale, img.HasAlpha()); err != nil {
+			return err
+		}
+	}
+
+	if err = copyMemoryAndCheckTimeout(ctx, img); err != nil {
+		return err
+	}
+
+	if err = img.Rotate(angle); err != nil {
+		return err
+	}
+
+	if flip {
+		if err = img.Flip(); err != nil {
+			return err
+		}
+	}
+
+	if err = img.Rotate(po.Rotate); err != nil {
+		return err
+	}
+	if err = cropImage(img, cropWidth, cropHeight, &cropGravity); err != nil {
+		return err
+	}
+	if err = cropImage(img, dprWidth, dprHeight, &po.Gravity); err != nil {
+		return err
+	}
+	return nil
 }
 
 func transformAnimated(ctx context.Context, img *vipsImage, data []byte, po *processingOptions, imgtype imageType) error {
