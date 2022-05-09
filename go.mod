@@ -11,7 +11,7 @@ require (
 	github.com/aws/aws-sdk-go v1.43.45
 	github.com/benesch/cgosymbolizer v0.0.0-20190515212042-bec6fe6e597b
 	github.com/bugsnag/bugsnag-go/v2 v2.1.2
-	github.com/fsouza/fake-gcs-server v1.37.10
+	github.com/fsouza/fake-gcs-server v1.37.11
 	github.com/getsentry/sentry-go v0.13.0
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/honeybadger-io/honeybadger-go v0.5.0
@@ -29,7 +29,7 @@ require (
 	golang.org/x/net v0.0.0-20220421235706-1d1ef9303861
 	golang.org/x/sys v0.0.0-20220422013727-9388b58f7150
 	golang.org/x/text v0.3.7
-	google.golang.org/api v0.75.0
+	google.golang.org/api v0.77.0
 	gopkg.in/DataDog/dd-trace-go.v1 v1.38.0
 )
 
