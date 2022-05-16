@@ -7,7 +7,7 @@ require (
 	github.com/Azure/azure-storage-blob-go v0.14.0
 	github.com/Microsoft/go-winio v0.5.2 // indirect
 	github.com/StackExchange/wmi v1.2.1 // indirect
-	github.com/airbrake/gobrake/v5 v5.4.0
+	github.com/airbrake/gobrake/v5 v5.5.1
 	github.com/aws/aws-sdk-go v1.43.45
 	github.com/benesch/cgosymbolizer v0.0.0-20190515212042-bec6fe6e597b
 	github.com/bugsnag/bugsnag-go/v2 v2.1.2
@@ -20,6 +20,7 @@ require (
 	github.com/matoous/go-nanoid/v2 v2.0.0
 	github.com/ncw/swift/v2 v2.0.1
 	github.com/newrelic/go-agent/v3 v3.15.2
+	github.com/onsi/ginkgo v1.16.5 // indirect
 	github.com/prometheus/client_golang v1.12.1
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.1
