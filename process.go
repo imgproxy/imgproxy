@@ -573,7 +573,7 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 				return err
 			}
 
-			if err = img.Blur(10); err != nil {
+			if err = img.Blur(40); err != nil {
 				return err
 			}
 
