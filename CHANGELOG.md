@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+
+## [3.5.1] - 2022-05-20
 ### Change
 - Fallback from AVIF to JPEG/PNG if one of the result dimensions is smaller than 16px.
 
