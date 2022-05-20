@@ -4,6 +4,9 @@
 ### Change
 - Fallback from AVIF to JPEG/PNG if one of the result dimensions is smaller than 16px.
 
+### Fix
+- (docker) Fix loading some HEIF images.
+
 ## [3.5.0] - 2022-04-25
 ### Add
 - Add support of RLE-encoded BMP.
