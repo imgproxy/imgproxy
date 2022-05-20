@@ -265,6 +265,19 @@ func ProcessImage(ctx context.Context, imgdata *imagedata.ImageData, po *options
 		return nil, err
 	}
 
+	if po.Format == imagetype.AVIF && (img.Width() < 16 || img.Height() < 16) {
+		if img.HasAlpha() {
+			po.Format = imagetype.PNG
+		} else {
+			po.Format = imagetype.JPEG
+		}
+
+		log.Warningf(
+			"Minimal dimension of AVIF is 16, current image size is %dx%d. Image will be saved as %s", 
+			img.Width(), img.Height(), po.Format,
+		)
+	}
+
 	var (
 		outData *imagedata.ImageData
 		err     error
