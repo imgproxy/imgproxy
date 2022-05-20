@@ -5,6 +5,7 @@
 - Fallback from AVIF to JPEG/PNG if one of the result dimensions is smaller than 16px.
 
 ### Fix
+- (pro) Fix some PDF pages background.
 - (docker) Fix loading some HEIF images.
 
 ## [3.5.0] - 2022-04-25
