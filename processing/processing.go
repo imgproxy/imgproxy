@@ -273,7 +273,7 @@ func ProcessImage(ctx context.Context, imgdata *imagedata.ImageData, po *options
 		}
 
 		log.Warningf(
-			"Minimal dimension of AVIF is 16, current image size is %dx%d. Image will be saved as %s", 
+			"Minimal dimension of AVIF is 16, current image size is %dx%d. Image will be saved as %s",
 			img.Width(), img.Height(), po.Format,
 		)
 	}
