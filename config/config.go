@@ -51,6 +51,7 @@ var (
 	StripColorProfile     bool
 	AutoRotate            bool
 	EnforceThumbnail      bool
+	Attachment            bool
 
 	EnableWebpDetection bool
 	EnforceWebp         bool
@@ -208,6 +209,7 @@ func Reset() {
 	StripColorProfile = true
 	AutoRotate = true
 	EnforceThumbnail = false
+	Attachment = false
 
 	EnableWebpDetection = false
 	EnforceWebp = false

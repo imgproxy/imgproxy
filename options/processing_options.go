@@ -141,6 +141,7 @@ func NewProcessingOptions() *ProcessingOptions {
 			StripColorProfile: config.StripColorProfile,
 			AutoRotate:        config.AutoRotate,
 			EnforceThumbnail:  config.EnforceThumbnail,
+			Attachment:        config.Attachment,
 
 			// Basically, we need this to update ETag when `IMGPROXY_QUALITY` is changed
 			defaultQuality: config.Quality,
