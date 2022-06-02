@@ -89,6 +89,7 @@ type ProcessingOptions struct {
 	StripColorProfile bool
 	AutoRotate        bool
 	EnforceThumbnail  bool
+	Attachment        bool
 
 	SkipProcessingFormats []imagetype.Type
 
@@ -859,6 +860,16 @@ func applyEnforceThumbnailOption(po *ProcessingOptions, args []string) error {
 	return nil
 }
 
+func applyAttachmentOption(po *ProcessingOptions, args []string) error {
+	if len(args) > 1 {
+		return fmt.Errorf("Invalid attachment arguments: %v", args)
+	}
+
+	po.Attachment = parseBoolOption(args[0])
+
+	return nil
+}
+
 func applyURLOption(po *ProcessingOptions, name string, args []string) error {
 	switch name {
 	case "resize", "rs":
@@ -913,6 +924,8 @@ func applyURLOption(po *ProcessingOptions, name string, args []string) error {
 		return applyStripColorProfileOption(po, args)
 	case "enforce_thumbnail", "eth":
 		return applyEnforceThumbnailOption(po, args)
+	case "attachment", "att":
+		return applyAttachmentOption(po, args)
 	// Saving options
 	case "quality", "q":
 		return applyQualityOption(po, args)
