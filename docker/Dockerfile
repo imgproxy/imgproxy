@@ -5,6 +5,10 @@ FROM darthsim/imgproxy-base:${BASE_IMAGE_VERSION}
 ARG BUILDPLATFORM
 ARG TARGETPLATFORM
 
+
+COPY go.mod .
+COPY go.sum .
+RUN go mod download
 COPY . .
 RUN docker/go.sh build -v -o /usr/local/bin/imgproxy
 
