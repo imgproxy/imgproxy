@@ -3,7 +3,7 @@ module github.com/imgproxy/imgproxy/v3
 go 1.16
 
 require (
-	cloud.google.com/go/storage v1.22.0
+	cloud.google.com/go/storage v1.22.1
 	github.com/Azure/azure-storage-blob-go v0.14.0
 	github.com/Microsoft/go-winio v0.5.2 // indirect
 	github.com/StackExchange/wmi v1.2.1 // indirect
@@ -11,7 +11,7 @@ require (
 	github.com/aws/aws-sdk-go v1.43.45
 	github.com/benesch/cgosymbolizer v0.0.0-20190515212042-bec6fe6e597b
 	github.com/bugsnag/bugsnag-go/v2 v2.1.2
-	github.com/fsouza/fake-gcs-server v1.37.10
+	github.com/fsouza/fake-gcs-server v1.38.0
 	github.com/getsentry/sentry-go v0.13.0
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/honeybadger-io/honeybadger-go v0.5.0
@@ -26,10 +26,10 @@ require (
 	github.com/trimmer-io/go-xmp v1.0.0
 	go.uber.org/automaxprocs v1.5.1
 	golang.org/x/image v0.0.0-20220413100746-70e8d0d3baa9
-	golang.org/x/net v0.0.0-20220421235706-1d1ef9303861
-	golang.org/x/sys v0.0.0-20220422013727-9388b58f7150
+	golang.org/x/net v0.0.0-20220526153639-5463443f8c37
+	golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a
 	golang.org/x/text v0.3.7
-	google.golang.org/api v0.75.0
+	google.golang.org/api v0.82.0
 	gopkg.in/DataDog/dd-trace-go.v1 v1.38.0
 )
 
