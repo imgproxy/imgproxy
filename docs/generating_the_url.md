@@ -536,8 +536,9 @@ attachment:%attachment
 att:%attachment
 ```
 
-When set to `1`, `t` or `true`, imgproxy will return `attachment` in `Content-Disposition` header and browser will open a 'Save as' dialog.
+When set to `1`, `t` or `true`, imgproxy will return `attachment` in the `Content-Disposition` header, and the browser will open a 'Save as' dialog.
 
+Default: `false`.
 
 ### Quality
 
