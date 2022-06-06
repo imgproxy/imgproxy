@@ -4,6 +4,7 @@ import (
 	"compress/gzip"
 	"crypto/tls"
 	"fmt"
+	"github.com/imgproxy/imgproxy/v3/transport/ipfs"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -113,6 +114,14 @@ func initDownloading() error {
 			}
 			return nil
 		},
+	}
+
+	if config.IPFSGateway != "" {
+		ipfsTransport, err := ipfs.New(downloadClient)
+		if err != nil {
+			return err
+		}
+		registerProtocol("ipfs", ipfsTransport)
 	}
 
 	return nil
