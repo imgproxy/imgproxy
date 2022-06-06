@@ -529,6 +529,15 @@ eth:%enforce_thumbnail
 
 When set to `1`, `t` or `true` and the source image has an embedded thumbnail, imgproxy will always use the embedded thumbnail instead of the main image. Currently, only thumbnails embedded in `heic` and `avif` are supported. This is normally controlled by the [IMGPROXY_ENFORCE_THUMBNAIL](configuration.md#miscellaneous) configuration but this procesing option allows the configuration to be set for each request.
 
+### Return attachment
+
+```
+return_attachment:%return_attachment
+att:%return_attachment
+```
+
+When set to `1`, `t` or `true`, imgproxy will return `attachment` in the `Content-Disposition` header, and the browser will open a 'Save as' dialog. This is normally controlled by the [IMGPROXY_RETURN_ATTACHMENT](configuration.md#miscellaneous) configuration but this procesing option allows the configuration to be set for each request.
+
 ### Quality
 
 ```

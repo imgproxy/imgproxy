@@ -54,16 +54,16 @@ var (
 	}
 
 	contentDispositionsFmt = map[Type]string{
-		JPEG: "inline; filename=\"%s.jpg\"",
-		PNG:  "inline; filename=\"%s.png\"",
-		WEBP: "inline; filename=\"%s.webp\"",
-		GIF:  "inline; filename=\"%s.gif\"",
-		ICO:  "inline; filename=\"%s.ico\"",
-		SVG:  "inline; filename=\"%s.svg\"",
-		HEIC: "inline; filename=\"%s.heic\"",
-		AVIF: "inline; filename=\"%s.avif\"",
-		BMP:  "inline; filename=\"%s.bmp\"",
-		TIFF: "inline; filename=\"%s.tiff\"",
+		JPEG: "%s; filename=\"%s.jpg\"",
+		PNG:  "%s; filename=\"%s.png\"",
+		WEBP: "%s; filename=\"%s.webp\"",
+		GIF:  "%s; filename=\"%s.gif\"",
+		ICO:  "%s; filename=\"%s.ico\"",
+		SVG:  "%s; filename=\"%s.svg\"",
+		HEIC: "%s; filename=\"%s.heic\"",
+		AVIF: "%s; filename=\"%s.avif\"",
+		BMP:  "%s; filename=\"%s.bmp\"",
+		TIFF: "%s; filename=\"%s.tiff\"",
 	}
 )
 
@@ -93,27 +93,33 @@ func (it Type) Mime() string {
 	return "application/octet-stream"
 }
 
-func (it Type) ContentDisposition(filename string) string {
-	format, ok := contentDispositionsFmt[it]
-	if !ok {
-		return "inline"
+func (it Type) ContentDisposition(filename string, returnAttachment bool) string {
+	disposition := "inline"
+
+	if returnAttachment {
+		disposition = "attachment"
 	}
 
-	return fmt.Sprintf(format, strings.ReplaceAll(filename, `"`, "%22"))
+	format, ok := contentDispositionsFmt[it]
+	if !ok {
+		return disposition
+	}
+
+	return fmt.Sprintf(format, disposition, strings.ReplaceAll(filename, `"`, "%22"))
 }
 
-func (it Type) ContentDispositionFromURL(imageURL string) string {
+func (it Type) ContentDispositionFromURL(imageURL string, returnAttachment bool) string {
 	url, err := url.Parse(imageURL)
 	if err != nil {
-		return it.ContentDisposition(contentDispositionFilenameFallback)
+		return it.ContentDisposition(contentDispositionFilenameFallback, returnAttachment)
 	}
 
 	_, filename := filepath.Split(url.Path)
 	if len(filename) == 0 {
-		return it.ContentDisposition(contentDispositionFilenameFallback)
+		return it.ContentDisposition(contentDispositionFilenameFallback, returnAttachment)
 	}
 
-	return it.ContentDisposition(strings.TrimSuffix(filename, filepath.Ext(filename)))
+	return it.ContentDisposition(strings.TrimSuffix(filename, filepath.Ext(filename)), returnAttachment)
 }
 
 func (it Type) SupportsAlpha() bool {

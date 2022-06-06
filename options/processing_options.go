@@ -89,6 +89,7 @@ type ProcessingOptions struct {
 	StripColorProfile bool
 	AutoRotate        bool
 	EnforceThumbnail  bool
+	ReturnAttachment  bool
 
 	SkipProcessingFormats []imagetype.Type
 
@@ -140,6 +141,7 @@ func NewProcessingOptions() *ProcessingOptions {
 			StripColorProfile: config.StripColorProfile,
 			AutoRotate:        config.AutoRotate,
 			EnforceThumbnail:  config.EnforceThumbnail,
+			ReturnAttachment:  config.ReturnAttachment,
 
 			// Basically, we need this to update ETag when `IMGPROXY_QUALITY` is changed
 			defaultQuality: config.Quality,
@@ -859,6 +861,16 @@ func applyEnforceThumbnailOption(po *ProcessingOptions, args []string) error {
 	return nil
 }
 
+func applyReturnAttachmentOption(po *ProcessingOptions, args []string) error {
+	if len(args) > 1 {
+		return fmt.Errorf("Invalid return_attachment arguments: %v", args)
+	}
+
+	po.ReturnAttachment = parseBoolOption(args[0])
+
+	return nil
+}
+
 func applyURLOption(po *ProcessingOptions, name string, args []string) error {
 	switch name {
 	case "resize", "rs":
@@ -913,6 +925,8 @@ func applyURLOption(po *ProcessingOptions, name string, args []string) error {
 		return applyStripColorProfileOption(po, args)
 	case "enforce_thumbnail", "eth":
 		return applyEnforceThumbnailOption(po, args)
+	case "return_attachment", "att":
+		return applyReturnAttachmentOption(po, args)
 	// Saving options
 	case "quality", "q":
 		return applyQualityOption(po, args)

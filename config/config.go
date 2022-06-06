@@ -51,6 +51,7 @@ var (
 	StripColorProfile     bool
 	AutoRotate            bool
 	EnforceThumbnail      bool
+	ReturnAttachment      bool
 
 	EnableWebpDetection bool
 	EnforceWebp         bool
@@ -208,6 +209,7 @@ func Reset() {
 	StripColorProfile = true
 	AutoRotate = true
 	EnforceThumbnail = false
+	ReturnAttachment = false
 
 	EnableWebpDetection = false
 	EnforceWebp = false
@@ -356,6 +358,7 @@ func Configure() error {
 	configurators.Bool(&StripColorProfile, "IMGPROXY_STRIP_COLOR_PROFILE")
 	configurators.Bool(&AutoRotate, "IMGPROXY_AUTO_ROTATE")
 	configurators.Bool(&EnforceThumbnail, "IMGPROXY_ENFORCE_THUMBNAIL")
+	configurators.Bool(&ReturnAttachment, "IMGPROXY_RETURN_ATTACHMENT")
 
 	configurators.Bool(&EnableWebpDetection, "IMGPROXY_ENABLE_WEBP_DETECTION")
 	configurators.Bool(&EnforceWebp, "IMGPROXY_ENFORCE_WEBP")
