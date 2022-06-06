@@ -81,7 +81,8 @@ var (
 	CookiePassthrough bool
 	CookieBaseURL     string
 
-	LocalFileSystemRoot string
+	LocalFileSystemRoot  string
+	LocalFileSystemCache string
 
 	S3Enabled  bool
 	S3Region   string
@@ -241,6 +242,7 @@ func Reset() {
 	CookieBaseURL = ""
 
 	LocalFileSystemRoot = ""
+	LocalFileSystemCache = ""
 	S3Enabled = false
 	S3Region = ""
 	S3Endpoint = ""
@@ -403,6 +405,7 @@ func Configure() error {
 	configurators.String(&CookieBaseURL, "IMGPROXY_COOKIE_BASE_URL")
 
 	configurators.String(&LocalFileSystemRoot, "IMGPROXY_LOCAL_FILESYSTEM_ROOT")
+	configurators.String(&LocalFileSystemCache, "IMGPROXY_LOCAL_FILESYSTEM_CACHE")
 
 	configurators.Bool(&S3Enabled, "IMGPROXY_USE_S3")
 	configurators.String(&S3Region, "IMGPROXY_S3_REGION")
