@@ -86,9 +86,9 @@ func setVary(rw http.ResponseWriter) {
 func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, statusCode int, resultData *imagedata.ImageData, po *options.ProcessingOptions, originURL string, originData *imagedata.ImageData) {
 	var contentDisposition string
 	if len(po.Filename) > 0 {
-		contentDisposition = resultData.Type.ContentDisposition(po.Filename, po.Attachment)
+		contentDisposition = resultData.Type.ContentDisposition(po.Filename, po.ReturnAttachment)
 	} else {
-		contentDisposition = resultData.Type.ContentDispositionFromURL(originURL, po.Attachment)
+		contentDisposition = resultData.Type.ContentDispositionFromURL(originURL, po.ReturnAttachment)
 	}
 
 	rw.Header().Set("Content-Type", resultData.Type.Mime())
