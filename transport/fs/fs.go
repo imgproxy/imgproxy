@@ -4,8 +4,11 @@ import (
 	"crypto/md5"
 	"encoding/base64"
 	"fmt"
+	"io"
 	"io/fs"
 	"net/http"
+	"os"
+	"strings"
 
 	"github.com/imgproxy/imgproxy/v3/config"
 )
@@ -19,9 +22,25 @@ func New() transport {
 }
 
 func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
-	f, err := t.fs.Open(req.URL.Path)
+	header := make(http.Header)
 
+	f, err := t.fs.Open(req.URL.Path)
 	if err != nil {
+		if os.IsNotExist(err) {
+			return &http.Response{
+				StatusCode:    http.StatusNotFound,
+				Proto:         "HTTP/1.0",
+				ProtoMajor:    1,
+				ProtoMinor:    0,
+				Header:        header,
+				ContentLength: 0,
+				Body: io.NopCloser(strings.NewReader(
+					fmt.Sprintf("%s doesn't exist", req.URL.Path),
+				)),
+				Close:   false,
+				Request: req,
+			}, nil
+		}
 		return nil, err
 	}
 
@@ -31,10 +50,20 @@ func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error)
 	}
 
 	if fi.IsDir() {
-		return nil, fmt.Errorf("%s is a directory", req.URL.Path)
+		return &http.Response{
+			StatusCode:    http.StatusNotFound,
+			Proto:         "HTTP/1.0",
+			ProtoMajor:    1,
+			ProtoMinor:    0,
+			Header:        header,
+			ContentLength: 0,
+			Body: io.NopCloser(strings.NewReader(
+				fmt.Sprintf("%s is directory", req.URL.Path),
+			)),
+			Close:   false,
+			Request: req,
+		}, nil
 	}
-
-	header := make(http.Header)
 
 	if config.ETagEnabled {
 		etag := BuildEtag(req.URL.Path, fi)
