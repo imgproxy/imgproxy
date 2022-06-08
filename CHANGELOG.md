@@ -1,6 +1,11 @@
 # Changelog
 
 ## [Unreleased]
+### Add
+- Add `IMGPROXY_RETURN_ATTACHMENT` config and [return_attachment](https://docs.imgproxy.net/generating_the_url?return-attachment) processing option.
+
+### Fix
+- Respond with 404 when file wasn't found in the local storage.
 
 ## [3.5.1] - 2022-05-20
 ### Change
