@@ -3,6 +3,8 @@ package processing
 import (
 	"math"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
@@ -59,7 +61,8 @@ func scaleOnLoad(pctx *pipelineContext, img *vips.Image, po *options.ProcessingO
 		defer thumbnail.Clear()
 
 		if err := thumbnail.LoadThumbnail(imgdata); err != nil {
-			return err
+			log.Debugf("Can't load thumbnail: %s", err)
+			return nil
 		}
 
 		angle, flip := 0, false

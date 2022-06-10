@@ -208,7 +208,11 @@ func ProcessImage(ctx context.Context, imgdata *imagedata.ImageData, po *options
 
 	if po.EnforceThumbnail && imgdata.Type.SupportsThumbnail() {
 		if err := img.LoadThumbnail(imgdata); err != nil {
-			return nil, err
+			log.Debugf("Can't load thumbnail: %s", err)
+			// Failed to load thumbnail, rollback to the full image
+			if err := img.Load(imgdata, 1, 1.0, pages); err != nil {
+				return nil, err
+			}
 		}
 	} else {
 		if err := img.Load(imgdata, 1, 1.0, pages); err != nil {
