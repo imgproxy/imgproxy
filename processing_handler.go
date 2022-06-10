@@ -22,6 +22,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/processing"
 	"github.com/imgproxy/imgproxy/v3/router"
 	"github.com/imgproxy/imgproxy/v3/security"
+	"github.com/imgproxy/imgproxy/v3/svg"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
@@ -275,6 +276,22 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	if originData.Type == po.Format || po.Format == imagetype.Unknown {
 		// Don't process SVG
 		if originData.Type == imagetype.SVG {
+			if config.SanitizeSvg {
+				sanitized, svgErr := svg.Satitize(originData.Data)
+				if svgErr != nil {
+					panic(svgErr)
+				}
+
+				// Since we'll replace origin data, it's better to close it to return
+				// it's buffer to the pool
+				originData.Close()
+
+				originData = &imagedata.ImageData{
+					Data: sanitized,
+					Type: imagetype.SVG,
+				}
+			}
+
 			respondWithImage(reqID, r, rw, statusCode, originData, po, imageURL, originData)
 			return
 		}

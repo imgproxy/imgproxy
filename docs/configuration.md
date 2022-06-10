@@ -91,6 +91,8 @@ You can limit allowed source URLs with the following variable:
 * Good: `http://example.com/`
 If the trailing slash is absent, `http://example.com@baddomain.com` would be a permissable URL, however, the request would be made to `baddomain.com`.
 
+* `IMGPROXY_SANITIZE_SVG`: when true, imgproxy will remove scripts from SVG images to prevent XSS attacks. Defaut: `true`
+
 When using imgproxy in a development environment, it can be useful to ignore SSL verification:
 
 * `IMGPROXY_IGNORE_SSL_VERIFICATION`: when true, disables SSL verification, so imgproxy can be used in a development environment with self-signed SSL certificates.

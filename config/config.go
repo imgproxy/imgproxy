@@ -79,6 +79,8 @@ var (
 
 	AllowedSources []*regexp.Regexp
 
+	SanitizeSvg bool
+
 	CookiePassthrough bool
 	CookieBaseURL     string
 
@@ -237,6 +239,8 @@ func Reset() {
 
 	AllowedSources = make([]*regexp.Regexp, 0)
 
+	SanitizeSvg = true
+
 	CookiePassthrough = false
 	CookieBaseURL = ""
 
@@ -343,6 +347,8 @@ func Configure() error {
 	configurators.Int(&MaxRedirects, "IMGPROXY_MAX_REDIRECTS")
 
 	configurators.Patterns(&AllowedSources, "IMGPROXY_ALLOWED_SOURCES")
+
+	configurators.Bool(&SanitizeSvg, "IMGPROXY_SANITIZE_SVG")
 
 	configurators.Bool(&JpegProgressive, "IMGPROXY_JPEG_PROGRESSIVE")
 	configurators.Bool(&PngInterlaced, "IMGPROXY_PNG_INTERLACED")

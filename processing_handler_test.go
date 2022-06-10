@@ -20,6 +20,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/router"
+	"github.com/imgproxy/imgproxy/v3/svg"
 	"github.com/imgproxy/imgproxy/v3/vips"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
@@ -289,7 +290,9 @@ func (s *ProcessingHandlerTestSuite) TestSkipProcessingSVG() {
 	assert.Equal(s.T(), 200, res.StatusCode)
 
 	actual := s.readBody(res)
-	expected := s.readTestFile("test1.svg")
+	expected, err := svg.Satitize(s.readTestFile("test1.svg"))
+
+	assert.Nil(s.T(), err)
 
 	assert.True(s.T(), bytes.Equal(expected, actual))
 }
