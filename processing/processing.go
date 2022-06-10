@@ -42,20 +42,6 @@ func imageTypeGoodForWeb(imgtype imagetype.Type) bool {
 		imgtype != imagetype.BMP
 }
 
-// src  - the source image format
-// dst  - what the user specified
-// want - what we want switch to
-func canSwitchFormat(src, dst, want imagetype.Type) bool {
-	// If the format we want is not supported, we can't switch to it anyway
-	return vips.SupportsSave(want) &&
-		// if src format does't support animation, we can switch to whatever we want
-		(!src.SupportsAnimation() ||
-			// if user specified the format and it doesn't support animation, we can switch to whatever we want
-			(dst != imagetype.Unknown && !dst.SupportsAnimation()) ||
-			// if the format we want supports animation, we can switch in any case
-			want.SupportsAnimation())
-}
-
 func canFitToBytes(imgtype imagetype.Type) bool {
 	switch imgtype {
 	case imagetype.JPEG, imagetype.WEBP, imagetype.AVIF, imagetype.TIFF:
@@ -96,7 +82,7 @@ func transformAnimated(ctx context.Context, img *vips.Image, po *options.Process
 	}
 
 	// Vips 8.8+ supports n-pages and doesn't load the whole animated image on header access
-	if nPages, _ := img.GetIntDefault("n-pages", 0); nPages > framesCount {
+	if nPages, _ := img.GetIntDefault("n-pages", 1); nPages > framesCount {
 		// Load only the needed frames
 		if err = img.Load(imgdata, 1, 1.0, framesCount); err != nil {
 			return err
@@ -117,7 +103,7 @@ func transformAnimated(ctx context.Context, img *vips.Image, po *options.Process
 	po.Watermark.Enabled = false
 	defer func() { po.Watermark.Enabled = watermarkEnabled }()
 
-	frames := make([]*vips.Image, framesCount)
+	frames := make([]*vips.Image, 0, framesCount)
 	defer func() {
 		for _, frame := range frames {
 			if frame != nil {
@@ -133,7 +119,7 @@ func transformAnimated(ctx context.Context, img *vips.Image, po *options.Process
 			return err
 		}
 
-		frames[i] = frame
+		frames = append(frames, frame)
 
 		if err = mainPipeline.Run(ctx, frame, po, nil); err != nil {
 			return err
@@ -207,29 +193,10 @@ func ProcessImage(ctx context.Context, imgdata *imagedata.ImageData, po *options
 
 	defer vips.Cleanup()
 
-	switch {
-	case po.Format == imagetype.Unknown:
-		switch {
-		case po.PreferAvif && canSwitchFormat(imgdata.Type, imagetype.Unknown, imagetype.AVIF):
-			po.Format = imagetype.AVIF
-		case po.PreferWebP && canSwitchFormat(imgdata.Type, imagetype.Unknown, imagetype.WEBP):
-			po.Format = imagetype.WEBP
-		case vips.SupportsSave(imgdata.Type) && imageTypeGoodForWeb(imgdata.Type):
-			po.Format = imgdata.Type
-		default:
-			po.Format = imagetype.JPEG
-		}
-	case po.EnforceAvif && canSwitchFormat(imgdata.Type, po.Format, imagetype.AVIF):
-		po.Format = imagetype.AVIF
-	case po.EnforceWebP && canSwitchFormat(imgdata.Type, po.Format, imagetype.WEBP):
-		po.Format = imagetype.WEBP
-	}
-
-	if !vips.SupportsSave(po.Format) {
-		return nil, fmt.Errorf("Can't save %s, probably not supported by your libvips", po.Format)
-	}
-
-	animationSupport := config.MaxAnimationFrames > 1 && imgdata.Type.SupportsAnimation() && po.Format.SupportsAnimation()
+	animationSupport :=
+		config.MaxAnimationFrames > 1 &&
+			imgdata.Type.SupportsAnimation() &&
+			(po.Format == imagetype.Unknown || po.Format.SupportsAnimation())
 
 	pages := 1
 	if animationSupport {
@@ -251,11 +218,43 @@ func ProcessImage(ctx context.Context, imgdata *imagedata.ImageData, po *options
 
 	originWidth, originHeight := getImageSize(img)
 
-	if animationSupport && img.IsAnimated() {
+	animated := img.IsAnimated()
+
+	switch {
+	case po.Format == imagetype.Unknown:
+		switch {
+		case po.PreferAvif && !animated:
+			po.Format = imagetype.AVIF
+		case po.PreferWebP:
+			po.Format = imagetype.WEBP
+		case vips.SupportsSave(imgdata.Type) && imageTypeGoodForWeb(imgdata.Type):
+			po.Format = imgdata.Type
+		default:
+			po.Format = imagetype.JPEG
+		}
+	case po.EnforceAvif && !animated:
+		po.Format = imagetype.AVIF
+	case po.EnforceWebP:
+		po.Format = imagetype.WEBP
+	}
+
+	if !vips.SupportsSave(po.Format) {
+		return nil, fmt.Errorf("Can't save %s, probably not supported by your libvips", po.Format)
+	}
+
+	if po.Format.SupportsAnimation() && animated {
 		if err := transformAnimated(ctx, img, po, imgdata); err != nil {
 			return nil, err
 		}
 	} else {
+		if animated {
+			// We loaded animated image but the resulting format doesn't support
+			// animations, so we need to reload image as not animated
+			if err := img.Load(imgdata, 1, 1.0, 1); err != nil {
+				return nil, err
+			}
+		}
+
 		if err := mainPipeline.Run(ctx, img, po, imgdata); err != nil {
 			return nil, err
 		}
