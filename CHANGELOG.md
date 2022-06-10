@@ -3,6 +3,10 @@
 ## [Unreleased]
 ### Add
 - Add `IMGPROXY_RETURN_ATTACHMENT` config and [return_attachment](https://docs.imgproxy.net/generating_the_url?return-attachment) processing option.
+- Add SVG sanitization and `IMGPROXY_SANITIZE_SVG` config.
+
+### Change
+- Better animation detection.
 
 ### Fix
 - Respond with 404 when file wasn't found in the local storage.
