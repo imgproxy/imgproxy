@@ -20,10 +20,10 @@ require (
 	github.com/matoous/go-nanoid/v2 v2.0.0
 	github.com/ncw/swift/v2 v2.0.1
 	github.com/newrelic/go-agent/v3 v3.15.2
-	github.com/prometheus/client_golang v1.12.1
+	github.com/prometheus/client_golang v1.12.2
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.1
-	github.com/tdewolff/parse/v2 v2.6.0 // indirect
+	github.com/tdewolff/parse/v2 v2.6.0
 	github.com/trimmer-io/go-xmp v1.0.0
 	go.uber.org/automaxprocs v1.5.1
 	golang.org/x/image v0.0.0-20220413100746-70e8d0d3baa9
