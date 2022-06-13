@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+
+## [3.6.0] - 2022-06-13
 ### Add
 - Add `IMGPROXY_RETURN_ATTACHMENT` config and [return_attachment](https://docs.imgproxy.net/generating_the_url?return-attachment) processing option.
 - Add SVG sanitization and `IMGPROXY_SANITIZE_SVG` config.
