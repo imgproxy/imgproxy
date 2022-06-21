@@ -314,6 +314,52 @@ func (img *Image) decodeBmpRGB(r io.Reader, width, height, bands int, topDown, n
 	return nil
 }
 
+// decodeBmpRGB16 reads a 16 bit-per-pixel BMP image from r.
+// If topDown is false, the image rows will be read bottom-up.
+func (img *Image) decodeBmpRGB16(r io.Reader, width, height int, topDown, bmp565 bool) error {
+	tmp, imgData, err := prepareBmpCanvas(width, height, 3)
+	if err != nil {
+		return err
+	}
+
+	defer bmpClearOnPanic(&tmp)
+
+	// Each row is 4-byte aligned.
+	b := make([]byte, (2*width+3)&^3)
+
+	y0, y1, yDelta := height-1, -1, -1
+	if topDown {
+		y0, y1, yDelta = 0, height, +1
+	}
+
+	stride := width * 3
+
+	for y := y0; y != y1; y += yDelta {
+		if _, err = io.ReadFull(r, b); err != nil {
+			C.clear_image(&tmp)
+			return err
+		}
+
+		p := imgData[y*stride : (y+1)*stride]
+		for i, j := 0, 0; i < len(p); i, j = i+3, j+2 {
+			pixel := readUint16(b[j:])
+
+			if bmp565 {
+				p[i+0] = uint8((pixel&0xF800)>>11) << 3
+				p[i+1] = uint8((pixel&0x7E0)>>5) << 2
+			} else {
+				p[i+0] = uint8((pixel&0x7C00)>>10) << 3
+				p[i+1] = uint8((pixel&0x3E0)>>5) << 3
+			}
+			p[i+2] = uint8(pixel&0x1F) << 3
+		}
+	}
+
+	C.swap_and_clear(&img.VipsImage, tmp)
+
+	return nil
+}
+
 func (img *Image) loadBmp(data []byte, noAlpha bool) error {
 	// We only support those BMP images that are a BITMAPFILEHEADER
 	// immediately followed by a BITMAPINFOHEADER.
@@ -369,18 +415,41 @@ func (img *Image) loadBmp(data []byte, noAlpha bool) error {
 		return errBmpUnsupported
 	}
 
-	// if compression is set to BITFIELDS, but the bitmask is set to the default bitmask
-	// that would be used if compression was set to 0, we can continue as if compression was 0
-	if compression == 3 && infoLen > infoHeaderLen &&
-		readUint32(b[54:58]) == 0xff0000 && readUint32(b[58:62]) == 0xff00 &&
-		readUint32(b[62:66]) == 0xff && readUint32(b[66:70]) == 0xff000000 {
-		compression = 0
-	}
-
 	rle := false
-	if compression == 1 && bpp == 8 || compression == 2 && bpp == 4 {
+	bmp565 := false
+
+	switch {
+	case compression == 0:
+		// Go ahead
+	case compression == 1 && bpp == 8 || compression == 2 && bpp == 4:
 		rle = true
-	} else if compression != 0 {
+	case compression == 3 && infoLen >= infoHeaderLen:
+		if infoLen == infoHeaderLen {
+			// Color mask is stored after the info header
+			if _, err := io.ReadFull(r, b[54:66]); err != nil {
+				if err == io.EOF {
+					err = io.ErrUnexpectedEOF
+				}
+				return err
+			}
+		}
+
+		rmask := readUint32(b[54:58])
+		gmask := readUint32(b[58:62])
+		bmask := readUint32(b[62:66])
+		amask := readUint32(b[66:70])
+
+		switch {
+		case bpp == 16 && rmask == 0xF800 && gmask == 0x7E0 && bmask == 0x1F:
+			bmp565 = true
+		case bpp == 16 && rmask == 0x7C00 && gmask == 0x3E0 && bmask == 0x1F:
+			// Go ahead, it's a regular 16 bit image
+		case bpp == 32 && rmask == 0xff0000 && gmask == 0xff00 && bmask == 0xff && amask == 0xff000000:
+			// Go ahead, it's a regular 32-bit image
+		default:
+			return errBmpUnsupported
+		}
+	default:
 		return errBmpUnsupported
 	}
 
@@ -415,6 +484,8 @@ func (img *Image) loadBmp(data []byte, noAlpha bool) error {
 	switch bpp {
 	case 1, 2, 4, 8:
 		return img.decodeBmpPaletted(r, width, height, int(bpp), palette, topDown)
+	case 16:
+		return img.decodeBmpRGB16(r, width, height, topDown, bmp565)
 	case 24:
 		return img.decodeBmpRGB(r, width, height, 3, topDown, true)
 	case 32:

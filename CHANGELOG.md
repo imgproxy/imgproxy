@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+## Add
+- Add support of 16-bit BMP.
 
 ## [3.6.0] - 2022-06-13
 ### Add
