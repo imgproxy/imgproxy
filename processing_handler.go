@@ -202,17 +202,6 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// The heavy part start here, so we need to restrict concurrency
-	select {
-	case processingSem <- struct{}{}:
-	case <-ctx.Done():
-		// We don't actually need to check timeout here,
-		// but it's an easy way to check if this is an actual timeout
-		// or the request was cancelled
-		router.CheckTimeout(ctx)
-	}
-	defer func() { <-processingSem }()
-
 	statusCode := http.StatusOK
 
 	originData, err := func() (*imagedata.ImageData, error) {
@@ -320,6 +309,18 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	}
 
 	resultData, err := func() (*imagedata.ImageData, error) {
+
+		// The heavy part start here, so we need to restrict concurrency
+		select {
+		case processingSem <- struct{}{}:
+		case <-ctx.Done():
+			// We don't actually need to check timeout here,
+			// but it's an easy way to check if this is an actual timeout
+			// or the request was cancelled
+			router.CheckTimeout(ctx)
+		}
+		defer func() { <-processingSem }()
+
 		defer metrics.StartProcessingSegment(ctx)()
 		return processing.ProcessImage(ctx, originData, po)
 	}()
