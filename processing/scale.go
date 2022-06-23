@@ -18,5 +18,5 @@ func scale(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions
 		}
 	}
 
-	return copyMemoryAndCheckTimeout(pctx.ctx, img)
+	return img.CopyMemory()
 }

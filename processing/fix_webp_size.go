@@ -29,5 +29,5 @@ func fixWebpSize(pctx *pipelineContext, img *vips.Image, po *options.ProcessingO
 
 	log.Warningf("WebP dimension size is limited to %d. The image is rescaled to %dx%d", int(webpMaxDimension), img.Width(), img.Height())
 
-	return copyMemoryAndCheckTimeout(pctx.ctx, img)
+	return img.CopyMemory()
 }

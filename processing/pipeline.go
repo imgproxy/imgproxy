@@ -6,6 +6,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/options"
+	"github.com/imgproxy/imgproxy/v3/router"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
@@ -52,6 +53,7 @@ func (p pipeline) Run(ctx context.Context, img *vips.Image, po *options.Processi
 		if err := step(&pctx, img, po, imgdata); err != nil {
 			return err
 		}
+		router.CheckTimeout(ctx)
 	}
 
 	return nil

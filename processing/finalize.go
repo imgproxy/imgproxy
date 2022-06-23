@@ -106,5 +106,5 @@ func finalize(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOpti
 		}
 	}
 
-	return copyMemoryAndCheckTimeout(pctx.ctx, img)
+	return img.CopyMemory()
 }

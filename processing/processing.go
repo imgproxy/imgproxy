@@ -140,7 +140,7 @@ func transformAnimated(ctx context.Context, img *vips.Image, po *options.Process
 		return err
 	}
 
-	if err = copyMemoryAndCheckTimeout(ctx, img); err != nil {
+	if err = img.CopyMemory(); err != nil {
 		return err
 	}
 
@@ -262,10 +262,6 @@ func ProcessImage(ctx context.Context, imgdata *imagedata.ImageData, po *options
 		if err := mainPipeline.Run(ctx, img, po, imgdata); err != nil {
 			return nil, err
 		}
-	}
-
-	if err := copyMemoryAndCheckTimeout(ctx, img); err != nil {
-		return nil, err
 	}
 
 	if po.Format == imagetype.AVIF && (img.Width() < 16 || img.Height() < 16) {

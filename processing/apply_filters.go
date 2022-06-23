@@ -12,7 +12,7 @@ func applyFilters(pctx *pipelineContext, img *vips.Image, po *options.Processing
 		return nil
 	}
 
-	if err := copyMemoryAndCheckTimeout(pctx.ctx, img); err != nil {
+	if err := img.CopyMemory(); err != nil {
 		return err
 	}
 
@@ -52,5 +52,5 @@ func applyFilters(pctx *pipelineContext, img *vips.Image, po *options.Processing
 		return err
 	}
 
-	return copyMemoryAndCheckTimeout(pctx.ctx, img)
+	return img.CopyMemory()
 }

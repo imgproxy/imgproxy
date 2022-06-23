@@ -14,7 +14,7 @@ func trim(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions,
 	if err := img.Trim(po.Trim.Threshold, po.Trim.Smart, po.Trim.Color, po.Trim.EqualHor, po.Trim.EqualVer); err != nil {
 		return err
 	}
-	if err := copyMemoryAndCheckTimeout(pctx.ctx, img); err != nil {
+	if err := img.CopyMemory(); err != nil {
 		return err
 	}
 
