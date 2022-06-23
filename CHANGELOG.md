@@ -1,8 +1,11 @@
 # Changelog
 
 ## [Unreleased]
-## Add
+### Add
 - Add support of 16-bit BMP.
+
+### Fix
+- Fix trimming of CMYK images.
 
 ## [3.6.0] - 2022-06-13
 ### Add

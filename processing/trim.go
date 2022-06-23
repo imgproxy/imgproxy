@@ -11,6 +11,11 @@ func trim(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions,
 		return nil
 	}
 
+	// We need to import color profile before trim
+	if err := importColorProfile(pctx, img, po, imgdata); err != nil {
+		return err
+	}
+
 	if err := img.Trim(po.Trim.Threshold, po.Trim.Smart, po.Trim.Color, po.Trim.EqualHor, po.Trim.EqualVer); err != nil {
 		return err
 	}

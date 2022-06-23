@@ -8,6 +8,10 @@ import (
 )
 
 func importColorProfile(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata *imagedata.ImageData) error {
+	if pctx.iccImported {
+		return nil
+	}
+
 	if err := img.Rad2Float(); err != nil {
 		return err
 	}
