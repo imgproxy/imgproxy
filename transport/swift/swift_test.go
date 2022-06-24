@@ -90,6 +90,24 @@ func (s *SwiftTestSuite) TestRoundTripWithETagDisabledReturns200() {
 	require.Equal(s.T(), 200, response.StatusCode)
 }
 
+func (s *SwiftTestSuite) TestRoundTripReturns404WhenObjectNotFound() {
+	config.ETagEnabled = true
+	request, _ := http.NewRequest("GET", "swift://test/foo/not-here.png", nil)
+
+	response, err := s.transport.RoundTrip(request)
+	require.Nil(s.T(), err)
+	require.Equal(s.T(), 404, response.StatusCode)
+}
+
+func (s *SwiftTestSuite) TestRoundTripReturns404WhenContainerNotFound() {
+	config.ETagEnabled = true
+	request, _ := http.NewRequest("GET", "swift://invalid/foo/test.png", nil)
+
+	response, err := s.transport.RoundTrip(request)
+	require.Nil(s.T(), err)
+	require.Equal(s.T(), 404, response.StatusCode)
+}
+
 func (s *SwiftTestSuite) TestRoundTripWithETagEnabled() {
 	config.ETagEnabled = true
 	request, _ := http.NewRequest("GET", "swift://test/foo/test.png", nil)
