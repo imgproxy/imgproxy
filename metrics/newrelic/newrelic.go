@@ -33,6 +33,11 @@ func Init() error {
 	newRelicApp, err = newrelic.NewApplication(
 		newrelic.ConfigAppName(name),
 		newrelic.ConfigLicense(config.NewRelicKey),
+		func(c *newrelic.Config) {
+			if len(config.NewRelicLabels) > 0 {
+				c.Labels = config.NewRelicLabels
+			}
+		},
 	)
 
 	if err != nil {

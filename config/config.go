@@ -132,6 +132,7 @@ var (
 
 	NewRelicAppName string
 	NewRelicKey     string
+	NewRelicLabels  map[string]string
 
 	PrometheusBind      string
 	PrometheusNamespace string
@@ -287,6 +288,7 @@ func Reset() {
 
 	NewRelicAppName = ""
 	NewRelicKey = ""
+	NewRelicLabels = make(map[string]string)
 
 	PrometheusBind = ""
 	PrometheusNamespace = ""
@@ -458,6 +460,7 @@ func Configure() error {
 
 	configurators.String(&NewRelicAppName, "IMGPROXY_NEW_RELIC_APP_NAME")
 	configurators.String(&NewRelicKey, "IMGPROXY_NEW_RELIC_KEY")
+	configurators.StringMap(&NewRelicLabels, "IMGPROXY_NEW_RELIC_LABELS")
 
 	configurators.String(&PrometheusBind, "IMGPROXY_PROMETHEUS_BIND")
 	configurators.String(&PrometheusNamespace, "IMGPROXY_PROMETHEUS_NAMESPACE")

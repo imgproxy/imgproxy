@@ -350,6 +350,7 @@ imgproxy can send its metrics to New Relic. Specify your New Relic license key t
 
 * `IMGPROXY_NEW_RELIC_KEY`: the New Relic license key
 * `IMGPROXY_NEW_RELIC_APP_NAME`: a New Relic application name. Default: `imgproxy`
+* `IMGPROXY_NEW_RELIC_LABELS`: the list of New Relic labels, semicolon divided. Example: `label1=value1;label2=value2`. Default: blank
 
 Check out the [New Relic](new_relic.md) guide to learn more.
 

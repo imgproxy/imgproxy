@@ -3,6 +3,7 @@
 ## [Unreleased]
 ### Add
 - Add support of 16-bit BMP.
+- Add `IMGPROXY_NEW_RELIC_LABELS` config.
 
 ### Fix
 - Fix trimming of CMYK images.

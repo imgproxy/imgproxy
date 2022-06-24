@@ -76,6 +76,26 @@ func StringSliceFile(s *[]string, filepath string) error {
 	return nil
 }
 
+func StringMap(m *map[string]string, name string) error {
+	if env := os.Getenv(name); len(env) > 0 {
+		mm := make(map[string]string)
+
+		keyvalues := strings.Split(env, ";")
+
+		for _, keyvalue := range keyvalues {
+			parts := strings.SplitN(keyvalue, "=", 2)
+			if len(parts) != 2 {
+				return fmt.Errorf("Invalid key/value: %s", keyvalue)
+			}
+			mm[parts[0]] = parts[1]
+		}
+
+		*m = mm
+	}
+
+	return nil
+}
+
 func Bool(b *bool, name string) {
 	if env, err := strconv.ParseBool(os.Getenv(name)); err == nil {
 		*b = env
