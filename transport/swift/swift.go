@@ -2,7 +2,9 @@ package swift
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -46,11 +48,24 @@ func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error)
 
 	object, objectHeaders, err := t.con.ObjectOpen(req.Context(), container, objectName, false, make(swift.Headers))
 
+	header := make(http.Header)
+
 	if err != nil {
+		if errors.Is(err, swift.ObjectNotFound) || errors.Is(err, swift.ContainerNotFound) {
+			return &http.Response{
+				StatusCode: http.StatusNotFound,
+				Proto:      "HTTP/1.0",
+				ProtoMajor: 1,
+				ProtoMinor: 0,
+				Header:     header,
+				Body:       io.NopCloser(strings.NewReader(err.Error())),
+				Close:      false,
+				Request:    req,
+			}, nil
+		}
+
 		return nil, fmt.Errorf("error opening object: %v", err)
 	}
-
-	header := make(http.Header)
 
 	if config.ETagEnabled {
 		if etag, ok := objectHeaders["Etag"]; ok {

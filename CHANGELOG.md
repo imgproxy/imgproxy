@@ -6,6 +6,7 @@
 
 ### Fix
 - Fix trimming of CMYK images.
+- Respond with 404 when the source image can not be found in OpenStack Object Storage.
 
 ## [3.6.0] - 2022-06-13
 ### Add
