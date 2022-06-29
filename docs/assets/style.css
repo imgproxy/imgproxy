@@ -88,29 +88,28 @@ body::before {
     transform: rotate(360deg);
   }
 }
+.sidebar-nav li>a:only-child {
+  padding: var(--sidebar-nav-pagelink-padding, var(--sidebar-nav-link-padding));
+}
 
-i.badge::before {
-  display: inline-block;
-  height: 1.5em;
-  line-height: 1.5em;
+.sidebar-nav li > a > img {
+  height: 1em;
+}
+
+.badge img {
+  height: 1em;
   vertical-align: middle;
-  border: 1px solid;
-  font-size: .6em;
-  font-weight: 700;
-  font-style: normal;
-  border-radius: 0.75em;
-  padding: 0 .5em;
+  margin-top: -0.25em;
 }
 
-i.badge-pro::before {
-  content: "pro";
-  color: #177bd3;
-  border-color: #177bd3;
-  text-transform: uppercase;
+.badge img:hover {
+  filter: brightness(1.5);
 }
 
-h1 i.badge, h2 i.badge, h3 i.badge, h4 i.badge, .sidebar-nav i.badge {
-  margin-left: .5ch;
+h1 .badge img, h3 .badge img, h3 .badge img, h4 .badge img, h5 .badge img {
+  height: 0.8em;
+  margin-top: -0.20em;
+  margin-left: .1em;
 }
 
 .github-edit-btn {

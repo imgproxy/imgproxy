@@ -41,8 +41,9 @@
       <div class="loading__spinner"></div>
     </div>
   </div>
-  <script src="assets/docsify-edit-link.js"></script>
-  <script src="assets/docsify-gitter.js"></script>
+  <script src="/assets/docsify-edit-link.js"></script>
+  <script src="/assets/docsify-gitter.js"></script>
+  <script src="/assets/docsify-pro-badge.js"></script>
   <script>
     if (window.DOCSIFY_ROUTER_MODE === "history") {
       var clink = document.createElement("link")
@@ -68,6 +69,7 @@
       plugins: [
         EditOnGithubPlugin.create('https://github.com/imgproxy/imgproxy/blob/master/docs/'),
         GitterPlugin.create("imgproxy/imgproxy", "1775d3"),
+        ProBadgePlugin.create(),
         function (hook, vm) {
           hook.beforeEach(function () {
             if (clink) {
