@@ -8,13 +8,13 @@ import (
 )
 
 const (
-	jpegSof0Marker = 0xc0 // Start Of Frame (Baseline Sequential).
-	jpegSof2Marker = 0xc2 // Start Of Frame (Progressive).
-	jpegRst0Marker = 0xd0 // ReSTart (0).
-	jpegRst7Marker = 0xd7 // ReSTart (7).
-	jpegSoiMarker  = 0xd8 // Start Of Image.
-	jpegEoiMarker  = 0xd9 // End Of Image.
-	jpegSosMarker  = 0xda // Start Of Scan.
+	jpegSof0Marker  = 0xc0 // Start Of Frame (Baseline Sequential).
+	jpegSof15Marker = 0xcf // Start Of Frame (Lossless, differential arithmetic coding).
+	jpegRst0Marker  = 0xd0 // ReSTart (0).
+	jpegRst7Marker  = 0xd7 // ReSTart (7).
+	jpegSoiMarker   = 0xd8 // Start Of Image.
+	jpegEoiMarker   = 0xd9 // End Of Image.
+	jpegSosMarker   = 0xda // Start Of Scan.
 )
 
 type jpegReader interface {
@@ -89,11 +89,11 @@ func DecodeJpegMeta(rr io.Reader) (Meta, error) {
 		}
 		n := int(tmp[0])<<8 + int(tmp[1]) - 2
 		if n <= 0 {
-			// We should fail here, but libvips if more tolerant to this, so, contunue
+			// We should fail here, but libvips is more tolerant to this, so, continue
 			continue
 		}
 
-		if marker >= jpegSof0Marker && marker <= jpegSof2Marker {
+		if marker >= jpegSof0Marker && marker <= jpegSof15Marker {
 			if _, err := io.ReadFull(r, tmp[:5]); err != nil {
 				return nil, err
 			}
