@@ -37,12 +37,14 @@ func (s *JpegTestSuite) TestDecodeJpegMeta() {
 	}
 
 	for _, file := range files {
-		f := s.openFile(file)
-		defer f.Close()
+		func() {
+			f := s.openFile(file)
+			defer f.Close()
 
-		metadata, err := DecodeJpegMeta(f)
-		assert.Nil(s.T(), err)
-		assert.Equal(s.T(), expectedMeta, metadata)
+			metadata, err := DecodeJpegMeta(f)
+			assert.Nil(s.T(), err)
+			assert.Equal(s.T(), expectedMeta, metadata)
+		}()
 	}
 }
 

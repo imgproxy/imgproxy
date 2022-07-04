@@ -8,7 +8,11 @@ import (
 )
 
 const (
+	// https://www.disktuna.com/list-of-jpeg-markers/
 	jpegSof0Marker  = 0xc0 // Start Of Frame (Baseline Sequential).
+	jpegDhtMarker   = 0xc4 // Define Huffman Table
+	jpegJpgMarker   = 0xc8 // JPEG Extensions
+	jpegDacMarker   = 0xcc // Define Arithmetic Coding
 	jpegSof15Marker = 0xcf // Start Of Frame (Lossless, differential arithmetic coding).
 	jpegRst0Marker  = 0xd0 // ReSTart (0).
 	jpegRst7Marker  = 0xd7 // ReSTart (7).
@@ -93,6 +97,14 @@ func DecodeJpegMeta(rr io.Reader) (Meta, error) {
 			continue
 		}
 
+		// Skip special markers within the range between SOF0 and SOF15
+		if marker == jpegDhtMarker || marker == jpegJpgMarker || marker == jpegDacMarker {
+			if _, err := r.Discard(n); err != nil {
+				return nil, err
+			}
+			continue
+		}
+
 		if marker >= jpegSof0Marker && marker <= jpegSof15Marker {
 			if _, err := io.ReadFull(r, tmp[:5]); err != nil {
 				return nil, err
@@ -113,10 +125,9 @@ func DecodeJpegMeta(rr io.Reader) (Meta, error) {
 			return nil, JpegFormatError("missing SOF marker")
 		}
 
-		if n > 0 {
-			if _, err := r.Discard(n); err != nil {
-				return nil, err
-			}
+		// Skip any other uninteresting segments
+		if _, err := r.Discard(n); err != nil {
+			return nil, err
 		}
 	}
 }
