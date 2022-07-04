@@ -1,0 +1,19 @@
+#!/bin/bash
+
+re="^v([3-9]\.[0-9]+)\.0$"
+
+versions=$(cat docs/assets/versions.js)
+
+exitcode=0
+
+while read -r tag; do
+  if [[ $tag =~ $re ]]; then
+    version=${BASH_REMATCH[1]};
+    if [[ $versions != *$version* ]]; then
+      echo "Add $version to docs versions" 1>&2;
+      exitcode=1
+    fi
+  fi
+done < <(git tag);
+
+exit $exitcode
