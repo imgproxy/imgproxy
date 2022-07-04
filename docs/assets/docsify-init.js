@@ -111,7 +111,6 @@ window.$docsify = {
       hook.beforeEach(function (content, next) {
         content = content.replaceAll(proBadgeRegex, proLink)
         content = content.replaceAll(oldProBadge, proLink)
-        console.log(content)
         next(content)
       })
 
