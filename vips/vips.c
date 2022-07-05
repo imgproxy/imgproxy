@@ -591,6 +591,8 @@ vips_pngsave_go(VipsImage *in, void **buf, size_t *len, int interlace, int quant
   } else {
     bitdepth = vips_get_palette_bit_depth(in);
     if (bitdepth) {
+      if (bitdepth > 4) bitdepth = 8;
+      else if (bitdepth > 2) bitdepth = 4;
       quantize = 1;
       colors = 1 << bitdepth;
     }
