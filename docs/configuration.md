@@ -385,6 +385,9 @@ Check out the [Prometheus](prometheus.md) guide to learn more.
 imgproxy can send its metrics to Datadog:
 
 * `IMGPROXY_DATADOG_ENABLE`: when `true`, enables sending metrics to Datadog. Default: false
+* `IMGPROXY_DATADOG_ENABLE_ADDITIONAL_METRICS`: when true, enables sending the additional metrics to Datadog. Default: false
+
+**⚠️Warning:** Since the additional metrics are treated by Datadog as custom, Datadog can additionally bill you for their usage. Please, check out Datadog's [Custom Metrics Billing](https://docs.datadoghq.com/account_management/billing/custom_metrics/) page for additional details.
 
 Check out the [Datadog](datadog.md) guide to learn more.
 

@@ -8,7 +8,7 @@ import (
 
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/imath"
-	"github.com/imgproxy/imgproxy/v3/metrics/prometheus"
+	"github.com/imgproxy/imgproxy/v3/metrics"
 )
 
 type intSlice []int
@@ -69,8 +69,8 @@ func (p *Pool) calibrateAndClean() {
 		runtime.GC()
 	}
 
-	prometheus.SetBufferDefaultSize(p.name, p.defaultSize)
-	prometheus.SetBufferMaxSize(p.name, p.maxSize)
+	metrics.SetBufferDefaultSize(p.name, p.defaultSize)
+	metrics.SetBufferMaxSize(p.name, p.maxSize)
 }
 
 func (p *Pool) Get(size int) *bytes.Buffer {
@@ -146,7 +146,7 @@ func (p *Pool) Put(buf *bytes.Buffer) {
 			p.buffers[i] = buf
 
 			if buf.Cap() > 0 {
-				prometheus.ObserveBufferSize(p.name, buf.Cap())
+				metrics.ObserveBufferSize(p.name, buf.Cap())
 			}
 
 			return

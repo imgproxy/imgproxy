@@ -78,3 +78,18 @@ func SendError(ctx context.Context, errType string, err error) {
 	newrelic.SendError(ctx, errType, err)
 	datadog.SendError(ctx, errType, err)
 }
+
+func ObserveBufferSize(t string, size int) {
+	prometheus.ObserveBufferSize(t, size)
+	datadog.ObserveBufferSize(t, size)
+}
+
+func SetBufferDefaultSize(t string, size int) {
+	prometheus.SetBufferDefaultSize(t, size)
+	datadog.SetBufferDefaultSize(t, size)
+}
+
+func SetBufferMaxSize(t string, size int) {
+	prometheus.SetBufferMaxSize(t, size)
+	datadog.SetBufferMaxSize(t, size)
+}

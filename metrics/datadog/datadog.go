@@ -2,9 +2,13 @@ package datadog
 
 import (
 	"context"
+	"net"
 	"net/http"
 	"os"
+	"sync"
+	"time"
 
+	"github.com/DataDog/datadog-go/v5/statsd"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/ext"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
@@ -16,7 +20,18 @@ import (
 
 type spanCtxKey struct{}
 
-var enabled bool
+type GaugeFunc func() float64
+
+var (
+	enabled        bool
+	enabledMetrics bool
+
+	statsdClient     *statsd.Client
+	statsdClientStop chan struct{}
+
+	gaugeFuncs      = make(map[string]GaugeFunc)
+	gaugeFuncsMutex sync.RWMutex
+)
 
 func Init() {
 	if !config.DataDogEnable {
@@ -35,11 +50,44 @@ func Init() {
 	)
 
 	enabled = true
+
+	statsdHost, statsdPort := os.Getenv("DD_AGENT_HOST"), os.Getenv("DD_DOGSTATSD_PORT")
+	if len(statsdHost) == 0 {
+		statsdHost = "localhost"
+	}
+	if len(statsdPort) == 0 {
+		statsdPort = "8125"
+	}
+
+	if !config.DataDogEnableMetrics {
+		return
+	}
+
+	var err error
+	statsdClient, err = statsd.New(
+		net.JoinHostPort(statsdHost, statsdPort),
+		statsd.WithTags([]string{
+			"service:" + name,
+			"version:" + version.Version(),
+		}),
+	)
+	if err == nil {
+		statsdClientStop = make(chan struct{})
+		enabledMetrics = true
+		go runMetricsCollector()
+	} else {
+		log.Warnf("Can't initialize DogStatsD client: %s", err)
+	}
 }
 
 func Stop() {
 	if enabled {
 		tracer.Stop()
+
+		if statsdClient != nil {
+			close(statsdClientStop)
+			statsdClient.Close()
+		}
 	}
 }
 
@@ -86,6 +134,51 @@ func SendError(ctx context.Context, errType string, err error) {
 	if rootSpan, ok := ctx.Value(spanCtxKey{}).(tracer.Span); ok {
 		rootSpan.SetTag(ext.Error, err)
 		rootSpan.SetTag(ext.ErrorType, errformat.FormatErrType(errType, err))
+	}
+}
+
+func AddGaugeFunc(name string, f GaugeFunc) {
+	gaugeFuncsMutex.Lock()
+	defer gaugeFuncsMutex.Unlock()
+
+	gaugeFuncs["imgproxy."+name] = f
+}
+
+func ObserveBufferSize(t string, size int) {
+	if enabledMetrics {
+		statsdClient.Histogram("imgproxy.buffer.size", float64(size), []string{"type:" + t}, 1)
+	}
+}
+
+func SetBufferDefaultSize(t string, size int) {
+	if enabledMetrics {
+		statsdClient.Gauge("imgproxy.buffer.default_size", float64(size), []string{"type:" + t}, 1)
+	}
+}
+
+func SetBufferMaxSize(t string, size int) {
+	if enabledMetrics {
+		statsdClient.Gauge("imgproxy.buffer.max_size", float64(size), []string{"type:" + t}, 1)
+	}
+}
+
+func runMetricsCollector() {
+	tick := time.NewTicker(10 * time.Second)
+	defer tick.Stop()
+	for {
+		select {
+		case <-tick.C:
+			func() {
+				gaugeFuncsMutex.RLock()
+				defer gaugeFuncsMutex.RUnlock()
+
+				for name, f := range gaugeFuncs {
+					statsdClient.Gauge(name, f(), nil, 1)
+				}
+			}()
+		case <-statsdClientStop:
+			return
+		}
 	}
 }
 
