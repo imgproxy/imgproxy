@@ -8,6 +8,7 @@
 - Add `IMGPROXY_PREFERRED_FORMATS` config.
 - Add `IMGPROXY_REQUESTS_QUEUE_SIZE` config.
 - Add sending additional metrics to Datadog and `IMGPROXY_DATADOG_ENABLE_ADDITIONAL_METRICS` config.
+- Add sending additional metrics to New Relic.
 
 ### Change
 - Change `IMGPROXY_MAX_CLIENTS` default value to 2048.

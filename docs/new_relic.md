@@ -14,3 +14,12 @@ imgproxy will send the following info to New Relic:
 * Image downloading time
 * Image processing time
 * Errors that occurred while downloading and processing an image
+
+Additionally, imgproxy sends the following metrics over [Metrics API](https://docs.newrelic.com/docs/data-apis/ingest-apis/metric-api/introduction-metric-api/):
+
+* `imgproxy.buffer.size`: a summary of the download/gzip buffers sizes (in bytes)
+* `imgproxy.buffer.default_size`: calibrated default buffer size (in bytes)
+* `imgproxy.buffer.max_size`: calibrated maximum buffer size (in bytes)
+* `imgproxy.vips.memory`: libvips memory usage (in bytes)
+* `imgproxy.vips.max_memory`: libvips maximum memory usage (in bytes)
+* `imgproxy.vips.allocs`: the number of active vips allocations

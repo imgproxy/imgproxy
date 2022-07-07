@@ -22,6 +22,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/metrics/datadog"
+	"github.com/imgproxy/imgproxy/v3/metrics/newrelic"
 	"github.com/imgproxy/imgproxy/v3/metrics/prometheus"
 )
 
@@ -99,6 +100,10 @@ func Init() error {
 	datadog.AddGaugeFunc("vips.memory", GetMem)
 	datadog.AddGaugeFunc("vips.max_memory", GetMemHighwater)
 	datadog.AddGaugeFunc("vips.allocs", GetAllocs)
+
+	newrelic.AddGaugeFunc("vips.memory", GetMem)
+	newrelic.AddGaugeFunc("vips.max_memory", GetMemHighwater)
+	newrelic.AddGaugeFunc("vips.allocs", GetAllocs)
 
 	return nil
 }

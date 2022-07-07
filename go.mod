@@ -21,6 +21,7 @@ require (
 	github.com/matoous/go-nanoid/v2 v2.0.0
 	github.com/ncw/swift/v2 v2.0.1
 	github.com/newrelic/go-agent/v3 v3.16.1
+	github.com/newrelic/newrelic-telemetry-sdk-go v0.8.1 // indirect
 	github.com/onsi/ginkgo v1.16.5 // indirect
 	github.com/prometheus/client_golang v1.12.2
 	github.com/sirupsen/logrus v1.8.1
