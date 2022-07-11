@@ -24,7 +24,7 @@ require (
 	github.com/prometheus/client_golang v1.12.2
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.2
-	github.com/tdewolff/parse/v2 v2.6.0
+	github.com/tdewolff/parse/v2 v2.6.1
 	github.com/trimmer-io/go-xmp v1.0.0
 	go.uber.org/automaxprocs v1.5.1
 	golang.org/x/image v0.0.0-20220601225756-64ec528b34cd
