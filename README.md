@@ -17,7 +17,7 @@ To get an even better introduction, and to dive deeper into the nitty gritty det
 <img src="https://evilmartians.com/badges/sponsored-by-evil-martians_v2.0.svg" alt="Sponsored by Evil Martians" width="236" height="54">
 </a>
 
-#### Simplicity
+### Simplicity
 
 > "No code is better than no code."
 
@@ -27,7 +27,7 @@ imgproxy only includes the must-have features for image processing, fine-tuning 
 * It may be great to have built-in HTTP caching of some kind, but it is way better to use a Content-Delivery Network or a caching proxy server for this, as you will have to do this sooner or later in the production environment.
 * It might be useful to have everything built in — such as HTTPS support — but an easy way to solve that would be just to use a proxying HTTP server such as nginx.
 
-#### Speed
+### Speed
 
 imgproxy takes advantage of probably the most efficient image processing library out there – `libvips`. It’s scary fast and comes with a very low memory footprint. Thanks to libvips, we can readily and extemporaneously process a massive amount of images.
 
@@ -35,7 +35,7 @@ imgproxy uses Go’s raw (no wrappers) native `net/http` package to omit any ove
 
 You can take a look at some benchmarking results and compare imgproxy with some well-known alternatives in our [benchmark report](https://github.com/imgproxy/imgproxy/blob/master/BENCHMARK.md).
 
-#### Security
+### Security
 
 In terms of security, the massive processing of remote images is a potentially dangerous endeavor. There are a number of possible attack vectors, so it’s a good idea to take an approach that considers attack prevention measures as a priority. Here’s how imgproxy does this:
 
