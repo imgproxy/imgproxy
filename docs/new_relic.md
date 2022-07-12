@@ -11,12 +11,15 @@ imgproxy will send the following info to New Relic:
 
 * CPU and memory usage
 * Response time
+* Queue time
 * Image downloading time
 * Image processing time
 * Errors that occurred while downloading and processing an image
 
 Additionally, imgproxy sends the following metrics over [Metrics API](https://docs.newrelic.com/docs/data-apis/ingest-apis/metric-api/introduction-metric-api/):
 
+* `imgproxy.requests_in_progress`: a number of requests currently being in progress
+* `imgproxy.images_in_progress`: a number of images currently being in progress
 * `imgproxy.buffer.size`: a summary of the download/gzip buffers sizes (in bytes)
 * `imgproxy.buffer.default_size`: calibrated default buffer size (in bytes)
 * `imgproxy.buffer.max_size`: calibrated maximum buffer size (in bytes)

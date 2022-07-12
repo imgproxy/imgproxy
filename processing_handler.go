@@ -19,6 +19,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/metrics"
+	"github.com/imgproxy/imgproxy/v3/metrics/stats"
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/processing"
 	"github.com/imgproxy/imgproxy/v3/router"
@@ -179,6 +180,9 @@ func checkErr(ctx context.Context, errType string, err error) {
 }
 
 func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
+	stats.IncRequestsInProgress()
+	defer stats.DecRequestsInProgress()
+
 	ctx := r.Context()
 
 	if queueSem != nil {
@@ -249,14 +253,23 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	}
 
 	// The heavy part start here, so we need to restrict concurrency
-	processingSemToken, aquired := processingSem.Aquire(ctx)
-	if !aquired {
-		// We don't actually need to check timeout here,
-		// but it's an easy way to check if this is an actual timeout
-		// or the request was cancelled
-		checkErr(ctx, "queue", router.CheckTimeout(ctx))
-	}
+	var processingSemToken *semaphore.Token
+	func() {
+		defer metrics.StartQueueSegment(ctx)()
+
+		var aquired bool
+		processingSemToken, aquired = processingSem.Aquire(ctx)
+		if !aquired {
+			// We don't actually need to check timeout here,
+			// but it's an easy way to check if this is an actual timeout
+			// or the request was cancelled
+			checkErr(ctx, "queue", router.CheckTimeout(ctx))
+		}
+	}()
 	defer processingSemToken.Release()
+
+	stats.IncImagesInProgress()
+	defer stats.DecImagesInProgress()
 
 	statusCode := http.StatusOK
 

@@ -15,6 +15,7 @@ import (
 
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/metrics/errformat"
+	"github.com/imgproxy/imgproxy/v3/metrics/stats"
 	"github.com/imgproxy/imgproxy/v3/version"
 )
 
@@ -176,6 +177,9 @@ func runMetricsCollector() {
 					statsdClient.Gauge(name, f(), nil, 1)
 				}
 			}()
+
+			statsdClient.Gauge("imgproxy.requests_in_progress", stats.RequestsInProgress(), nil, 1)
+			statsdClient.Gauge("imgproxy.images_in_progress", stats.ImagesInProgress(), nil, 1)
 		case <-statsdClientStop:
 			return
 		}

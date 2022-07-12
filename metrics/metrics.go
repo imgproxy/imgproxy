@@ -46,6 +46,20 @@ func StartRequest(ctx context.Context, rw http.ResponseWriter, r *http.Request) 
 	return ctx, cancel, rw
 }
 
+func StartQueueSegment(ctx context.Context) context.CancelFunc {
+	promCancel := prometheus.StartQueueSegment()
+	nrCancel := newrelic.StartSegment(ctx, "Queue")
+	ddCancel := datadog.StartSpan(ctx, "queue")
+
+	cancel := func() {
+		promCancel()
+		nrCancel()
+		ddCancel()
+	}
+
+	return cancel
+}
+
 func StartDownloadingSegment(ctx context.Context) context.CancelFunc {
 	promCancel := prometheus.StartDownloadingSegment()
 	nrCancel := newrelic.StartSegment(ctx, "Downloading image")
