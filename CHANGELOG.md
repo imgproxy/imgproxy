@@ -4,6 +4,7 @@
 ### Add
 - Add support of 16-bit BMP.
 - Add `IMGPROXY_NEW_RELIC_LABELS` config.
+- Add support of JPEG files with differential Huffman coding or arithmetic coding.
 
 ### Fix
 - Fix trimming of CMYK images.

@@ -8,13 +8,25 @@ import (
 )
 
 const (
-	jpegSof0Marker = 0xc0 // Start Of Frame (Baseline Sequential).
-	jpegSof2Marker = 0xc2 // Start Of Frame (Progressive).
-	jpegRst0Marker = 0xd0 // ReSTart (0).
-	jpegRst7Marker = 0xd7 // ReSTart (7).
-	jpegSoiMarker  = 0xd8 // Start Of Image.
-	jpegEoiMarker  = 0xd9 // End Of Image.
-	jpegSosMarker  = 0xda // Start Of Scan.
+	// https://www.disktuna.com/list-of-jpeg-markers/
+	jpegSof0Marker  = 0xc0 // Start Of Frame (Baseline Sequential).
+	jpegSof1Marker  = 0xc1 // Start Of Frame (Extended Sequential DCT)
+	jpegSof2Marker  = 0xc2 // Start Of Frame (Progressive DCT )
+	jpegSof3Marker  = 0xc3 // Start Of Frame (Lossless sequential)
+	jpegSof5Marker  = 0xc5 // Start Of Frame (Differential sequential DCT)
+	jpegSof6Marker  = 0xc6 // Start Of Frame (Differential progressive DCT)
+	jpegSof7Marker  = 0xc7 // Start Of Frame (Differential lossless sequential)
+	jpegSof9Marker  = 0xc9 // Start Of Frame (Extended sequential DCT, Arithmetic coding)
+	jpegSof10Marker = 0xca // Start Of Frame (Progressive DCT, Arithmetic coding)
+	jpegSof11Marker = 0xcb // Start Of Frame (Lossless sequential, Arithmetic coding)
+	jpegSof13Marker = 0xcd // Start Of Frame (Differential sequential DCT, Arithmetic coding)
+	jpegSof14Marker = 0xce // Start Of Frame (Differential progressive DCT, Arithmetic coding)
+	jpegSof15Marker = 0xcf // Start Of Frame (Differential lossless sequential, Arithmetic coding).
+	jpegRst0Marker  = 0xd0 // ReSTart (0).
+	jpegRst7Marker  = 0xd7 // ReSTart (7).
+	jpegSoiMarker   = 0xd8 // Start Of Image.
+	jpegEoiMarker   = 0xd9 // End Of Image.
+	jpegSosMarker   = 0xda // Start Of Scan.
 )
 
 type jpegReader interface {
@@ -89,11 +101,14 @@ func DecodeJpegMeta(rr io.Reader) (Meta, error) {
 		}
 		n := int(tmp[0])<<8 + int(tmp[1]) - 2
 		if n <= 0 {
-			// We should fail here, but libvips if more tolerant to this, so, contunue
+			// We should fail here, but libvips is more tolerant to this, so, continue
 			continue
 		}
 
-		if marker >= jpegSof0Marker && marker <= jpegSof2Marker {
+		switch marker {
+		case jpegSof0Marker, jpegSof1Marker, jpegSof2Marker, jpegSof3Marker, jpegSof5Marker,
+			jpegSof6Marker, jpegSof7Marker, jpegSof9Marker, jpegSof10Marker, jpegSof11Marker,
+			jpegSof13Marker, jpegSof14Marker, jpegSof15Marker:
 			if _, err := io.ReadFull(r, tmp[:5]); err != nil {
 				return nil, err
 			}
@@ -107,16 +122,14 @@ func DecodeJpegMeta(rr io.Reader) (Meta, error) {
 				width:  int(tmp[3])<<8 + int(tmp[4]),
 				height: int(tmp[1])<<8 + int(tmp[2]),
 			}, nil
-		}
 
-		if marker == jpegSosMarker {
+		case jpegSosMarker:
 			return nil, JpegFormatError("missing SOF marker")
 		}
 
-		if n > 0 {
-			if _, err := r.Discard(n); err != nil {
-				return nil, err
-			}
+		// Skip any other uninteresting segments
+		if _, err := r.Discard(n); err != nil {
+			return nil, err
 		}
 	}
 }
