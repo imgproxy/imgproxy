@@ -6,8 +6,7 @@ ARG BUILDPLATFORM
 ARG TARGETPLATFORM
 
 COPY . .
-RUN docker/fix-go.sh
-RUN go build -v -ldflags "-s -w" -o /usr/local/bin/imgproxy
+RUN docker/build.sh
 
 # ==================================================================================================
 # Final image

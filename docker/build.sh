@@ -48,3 +48,5 @@ if [[ $BUILDPLATFORM != $TARGETPLATFORM ]]; then
   export GOOS=linux
   export GOARCH=$TARGET_ARCH
 fi
+
+go build -v -ldflags "-s -w" -o /usr/local/bin/imgproxy
