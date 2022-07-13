@@ -16,7 +16,12 @@ export let options = {
 randomSeed(42)
 
 const urls = new SharedArray('urls', function () {
-  const data = JSON.parse(open('./urls.json'));
+  let data = JSON.parse(open('./urls.json'));
+
+  const groups = (__ENV.URL_GROUPS || "").split(",").filter((g) => g != "")
+  if (groups.length > 0) {
+    data = data.filter((d) => groups.includes(d.group))
+  }
 
   let unshuffled = [];
   data.forEach((e) => {
@@ -35,6 +40,10 @@ const urls = new SharedArray('urls', function () {
 
   return shuffled;
 });
+
+if (urls.length == 0) {
+  throw "URLs list is empty"
+}
 
 export default function() {
   http.get(urls[exec.scenario.iterationInTest % urls.length])
