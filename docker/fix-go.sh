@@ -11,7 +11,7 @@ if [[ $BUILDPLATFORM != $TARGETPLATFORM ]]; then
       ;;
 
     arm64 | "arm64/v8" | "linux/arm64" | "linux/arm64/v8")
-      BUILDPLATFORM="arm64"
+      BUILD_ARCH="arm64"
       ;;
 
     *)
@@ -48,5 +48,3 @@ if [[ $BUILDPLATFORM != $TARGETPLATFORM ]]; then
   export GOOS=linux
   export GOARCH=$TARGET_ARCH
 fi
-
-go $@
