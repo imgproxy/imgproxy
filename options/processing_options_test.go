@@ -7,7 +7,6 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
@@ -29,8 +28,8 @@ func (s *ProcessingOptionsTestSuite) TestParseBase64URL() {
 	po, imageURL, err := ParsePath(path, make(http.Header))
 
 	require.Nil(s.T(), err)
-	assert.Equal(s.T(), originURL, imageURL)
-	assert.Equal(s.T(), imagetype.PNG, po.Format)
+	require.Equal(s.T(), originURL, imageURL)
+	require.Equal(s.T(), imagetype.PNG, po.Format)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParseBase64URLWithoutExtension() {
@@ -39,8 +38,8 @@ func (s *ProcessingOptionsTestSuite) TestParseBase64URLWithoutExtension() {
 	po, imageURL, err := ParsePath(path, make(http.Header))
 
 	require.Nil(s.T(), err)
-	assert.Equal(s.T(), originURL, imageURL)
-	assert.Equal(s.T(), imagetype.Unknown, po.Format)
+	require.Equal(s.T(), originURL, imageURL)
+	require.Equal(s.T(), imagetype.Unknown, po.Format)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParseBase64URLWithBase() {
@@ -51,8 +50,8 @@ func (s *ProcessingOptionsTestSuite) TestParseBase64URLWithBase() {
 	po, imageURL, err := ParsePath(path, make(http.Header))
 
 	require.Nil(s.T(), err)
-	assert.Equal(s.T(), fmt.Sprintf("%s%s", config.BaseURL, originURL), imageURL)
-	assert.Equal(s.T(), imagetype.PNG, po.Format)
+	require.Equal(s.T(), fmt.Sprintf("%s%s", config.BaseURL, originURL), imageURL)
+	require.Equal(s.T(), imagetype.PNG, po.Format)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePlainURL() {
@@ -61,8 +60,8 @@ func (s *ProcessingOptionsTestSuite) TestParsePlainURL() {
 	po, imageURL, err := ParsePath(path, make(http.Header))
 
 	require.Nil(s.T(), err)
-	assert.Equal(s.T(), originURL, imageURL)
-	assert.Equal(s.T(), imagetype.PNG, po.Format)
+	require.Equal(s.T(), originURL, imageURL)
+	require.Equal(s.T(), imagetype.PNG, po.Format)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePlainURLWithoutExtension() {
@@ -72,8 +71,8 @@ func (s *ProcessingOptionsTestSuite) TestParsePlainURLWithoutExtension() {
 	po, imageURL, err := ParsePath(path, make(http.Header))
 
 	require.Nil(s.T(), err)
-	assert.Equal(s.T(), originURL, imageURL)
-	assert.Equal(s.T(), imagetype.Unknown, po.Format)
+	require.Equal(s.T(), originURL, imageURL)
+	require.Equal(s.T(), imagetype.Unknown, po.Format)
 }
 func (s *ProcessingOptionsTestSuite) TestParsePlainURLEscaped() {
 	originURL := "http://images.dev/lorem/ipsum.jpg?param=value"
@@ -81,8 +80,8 @@ func (s *ProcessingOptionsTestSuite) TestParsePlainURLEscaped() {
 	po, imageURL, err := ParsePath(path, make(http.Header))
 
 	require.Nil(s.T(), err)
-	assert.Equal(s.T(), originURL, imageURL)
-	assert.Equal(s.T(), imagetype.PNG, po.Format)
+	require.Equal(s.T(), originURL, imageURL)
+	require.Equal(s.T(), imagetype.PNG, po.Format)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePlainURLWithBase() {
@@ -93,8 +92,8 @@ func (s *ProcessingOptionsTestSuite) TestParsePlainURLWithBase() {
 	po, imageURL, err := ParsePath(path, make(http.Header))
 
 	require.Nil(s.T(), err)
-	assert.Equal(s.T(), fmt.Sprintf("%s%s", config.BaseURL, originURL), imageURL)
-	assert.Equal(s.T(), imagetype.PNG, po.Format)
+	require.Equal(s.T(), fmt.Sprintf("%s%s", config.BaseURL, originURL), imageURL)
+	require.Equal(s.T(), imagetype.PNG, po.Format)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePlainURLEscapedWithBase() {
@@ -105,8 +104,8 @@ func (s *ProcessingOptionsTestSuite) TestParsePlainURLEscapedWithBase() {
 	po, imageURL, err := ParsePath(path, make(http.Header))
 
 	require.Nil(s.T(), err)
-	assert.Equal(s.T(), fmt.Sprintf("%s%s", config.BaseURL, originURL), imageURL)
-	assert.Equal(s.T(), imagetype.PNG, po.Format)
+	require.Equal(s.T(), fmt.Sprintf("%s%s", config.BaseURL, originURL), imageURL)
+	require.Equal(s.T(), imagetype.PNG, po.Format)
 }
 
 // func (s *ProcessingOptionsTestSuite) TestParseURLAllowedSource() {
@@ -133,7 +132,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathFormat() {
 
 	require.Nil(s.T(), err)
 
-	assert.Equal(s.T(), imagetype.WEBP, po.Format)
+	require.Equal(s.T(), imagetype.WEBP, po.Format)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathResize() {
@@ -142,10 +141,10 @@ func (s *ProcessingOptionsTestSuite) TestParsePathResize() {
 
 	require.Nil(s.T(), err)
 
-	assert.Equal(s.T(), ResizeFill, po.ResizingType)
-	assert.Equal(s.T(), 100, po.Width)
-	assert.Equal(s.T(), 200, po.Height)
-	assert.True(s.T(), po.Enlarge)
+	require.Equal(s.T(), ResizeFill, po.ResizingType)
+	require.Equal(s.T(), 100, po.Width)
+	require.Equal(s.T(), 200, po.Height)
+	require.True(s.T(), po.Enlarge)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathResizingType() {
@@ -154,7 +153,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathResizingType() {
 
 	require.Nil(s.T(), err)
 
-	assert.Equal(s.T(), ResizeFill, po.ResizingType)
+	require.Equal(s.T(), ResizeFill, po.ResizingType)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathSize() {
@@ -163,9 +162,9 @@ func (s *ProcessingOptionsTestSuite) TestParsePathSize() {
 
 	require.Nil(s.T(), err)
 
-	assert.Equal(s.T(), 100, po.Width)
-	assert.Equal(s.T(), 200, po.Height)
-	assert.True(s.T(), po.Enlarge)
+	require.Equal(s.T(), 100, po.Width)
+	require.Equal(s.T(), 200, po.Height)
+	require.True(s.T(), po.Enlarge)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathWidth() {
@@ -174,7 +173,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathWidth() {
 
 	require.Nil(s.T(), err)
 
-	assert.Equal(s.T(), 100, po.Width)
+	require.Equal(s.T(), 100, po.Width)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathHeight() {
@@ -183,7 +182,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathHeight() {
 
 	require.Nil(s.T(), err)
 
-	assert.Equal(s.T(), 100, po.Height)
+	require.Equal(s.T(), 100, po.Height)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathEnlarge() {
@@ -192,7 +191,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathEnlarge() {
 
 	require.Nil(s.T(), err)
 
-	assert.True(s.T(), po.Enlarge)
+	require.True(s.T(), po.Enlarge)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathExtend() {
@@ -201,10 +200,10 @@ func (s *ProcessingOptionsTestSuite) TestParsePathExtend() {
 
 	require.Nil(s.T(), err)
 
-	assert.Equal(s.T(), true, po.Extend.Enabled)
-	assert.Equal(s.T(), GravitySouth, po.Extend.Gravity.Type)
-	assert.Equal(s.T(), 10.0, po.Extend.Gravity.X)
-	assert.Equal(s.T(), 20.0, po.Extend.Gravity.Y)
+	require.Equal(s.T(), true, po.Extend.Enabled)
+	require.Equal(s.T(), GravitySouth, po.Extend.Gravity.Type)
+	require.Equal(s.T(), 10.0, po.Extend.Gravity.X)
+	require.Equal(s.T(), 20.0, po.Extend.Gravity.Y)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathGravity() {
@@ -213,7 +212,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathGravity() {
 
 	require.Nil(s.T(), err)
 
-	assert.Equal(s.T(), GravitySouthEast, po.Gravity.Type)
+	require.Equal(s.T(), GravitySouthEast, po.Gravity.Type)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathGravityFocuspoint() {
@@ -222,9 +221,9 @@ func (s *ProcessingOptionsTestSuite) TestParsePathGravityFocuspoint() {
 
 	require.Nil(s.T(), err)
 
-	assert.Equal(s.T(), GravityFocusPoint, po.Gravity.Type)
-	assert.Equal(s.T(), 0.5, po.Gravity.X)
-	assert.Equal(s.T(), 0.75, po.Gravity.Y)
+	require.Equal(s.T(), GravityFocusPoint, po.Gravity.Type)
+	require.Equal(s.T(), 0.5, po.Gravity.X)
+	require.Equal(s.T(), 0.75, po.Gravity.Y)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathQuality() {
@@ -233,7 +232,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathQuality() {
 
 	require.Nil(s.T(), err)
 
-	assert.Equal(s.T(), 55, po.Quality)
+	require.Equal(s.T(), 55, po.Quality)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathBackground() {
@@ -242,10 +241,10 @@ func (s *ProcessingOptionsTestSuite) TestParsePathBackground() {
 
 	require.Nil(s.T(), err)
 
-	assert.True(s.T(), po.Flatten)
-	assert.Equal(s.T(), uint8(128), po.Background.R)
-	assert.Equal(s.T(), uint8(129), po.Background.G)
-	assert.Equal(s.T(), uint8(130), po.Background.B)
+	require.True(s.T(), po.Flatten)
+	require.Equal(s.T(), uint8(128), po.Background.R)
+	require.Equal(s.T(), uint8(129), po.Background.G)
+	require.Equal(s.T(), uint8(130), po.Background.B)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathBackgroundHex() {
@@ -254,10 +253,10 @@ func (s *ProcessingOptionsTestSuite) TestParsePathBackgroundHex() {
 
 	require.Nil(s.T(), err)
 
-	assert.True(s.T(), po.Flatten)
-	assert.Equal(s.T(), uint8(0xff), po.Background.R)
-	assert.Equal(s.T(), uint8(0xdd), po.Background.G)
-	assert.Equal(s.T(), uint8(0xee), po.Background.B)
+	require.True(s.T(), po.Flatten)
+	require.Equal(s.T(), uint8(0xff), po.Background.R)
+	require.Equal(s.T(), uint8(0xdd), po.Background.G)
+	require.Equal(s.T(), uint8(0xee), po.Background.B)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathBackgroundDisable() {
@@ -266,7 +265,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathBackgroundDisable() {
 
 	require.Nil(s.T(), err)
 
-	assert.False(s.T(), po.Flatten)
+	require.False(s.T(), po.Flatten)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathBlur() {
@@ -275,7 +274,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathBlur() {
 
 	require.Nil(s.T(), err)
 
-	assert.Equal(s.T(), float32(0.2), po.Blur)
+	require.Equal(s.T(), float32(0.2), po.Blur)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathSharpen() {
@@ -284,7 +283,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathSharpen() {
 
 	require.Nil(s.T(), err)
 
-	assert.Equal(s.T(), float32(0.2), po.Sharpen)
+	require.Equal(s.T(), float32(0.2), po.Sharpen)
 }
 func (s *ProcessingOptionsTestSuite) TestParsePathDpr() {
 	path := "/dpr:2/plain/http://images.dev/lorem/ipsum.jpg"
@@ -292,7 +291,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathDpr() {
 
 	require.Nil(s.T(), err)
 
-	assert.Equal(s.T(), 2.0, po.Dpr)
+	require.Equal(s.T(), 2.0, po.Dpr)
 }
 func (s *ProcessingOptionsTestSuite) TestParsePathWatermark() {
 	path := "/watermark:0.5:soea:10:20:0.6/plain/http://images.dev/lorem/ipsum.jpg"
@@ -300,11 +299,11 @@ func (s *ProcessingOptionsTestSuite) TestParsePathWatermark() {
 
 	require.Nil(s.T(), err)
 
-	assert.True(s.T(), po.Watermark.Enabled)
-	assert.Equal(s.T(), GravitySouthEast, po.Watermark.Gravity.Type)
-	assert.Equal(s.T(), 10.0, po.Watermark.Gravity.X)
-	assert.Equal(s.T(), 20.0, po.Watermark.Gravity.Y)
-	assert.Equal(s.T(), 0.6, po.Watermark.Scale)
+	require.True(s.T(), po.Watermark.Enabled)
+	require.Equal(s.T(), GravitySouthEast, po.Watermark.Gravity.Type)
+	require.Equal(s.T(), 10.0, po.Watermark.Gravity.X)
+	require.Equal(s.T(), 20.0, po.Watermark.Gravity.Y)
+	require.Equal(s.T(), 0.6, po.Watermark.Scale)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathPreset() {
@@ -322,9 +321,9 @@ func (s *ProcessingOptionsTestSuite) TestParsePathPreset() {
 
 	require.Nil(s.T(), err)
 
-	assert.Equal(s.T(), ResizeFill, po.ResizingType)
-	assert.Equal(s.T(), float32(0.2), po.Blur)
-	assert.Equal(s.T(), 50, po.Quality)
+	require.Equal(s.T(), ResizeFill, po.ResizingType)
+	require.Equal(s.T(), float32(0.2), po.Blur)
+	require.Equal(s.T(), 50, po.Quality)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathPresetDefault() {
@@ -339,9 +338,9 @@ func (s *ProcessingOptionsTestSuite) TestParsePathPresetDefault() {
 
 	require.Nil(s.T(), err)
 
-	assert.Equal(s.T(), ResizeFill, po.ResizingType)
-	assert.Equal(s.T(), float32(0.2), po.Blur)
-	assert.Equal(s.T(), 70, po.Quality)
+	require.Equal(s.T(), ResizeFill, po.ResizingType)
+	require.Equal(s.T(), float32(0.2), po.Blur)
+	require.Equal(s.T(), 70, po.Quality)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathPresetLoopDetection() {
@@ -368,7 +367,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathCachebuster() {
 
 	require.Nil(s.T(), err)
 
-	assert.Equal(s.T(), "123", po.CacheBuster)
+	require.Equal(s.T(), "123", po.CacheBuster)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathStripMetadata() {
@@ -377,7 +376,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathStripMetadata() {
 
 	require.Nil(s.T(), err)
 
-	assert.True(s.T(), po.StripMetadata)
+	require.True(s.T(), po.StripMetadata)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathWebpDetection() {
@@ -389,8 +388,8 @@ func (s *ProcessingOptionsTestSuite) TestParsePathWebpDetection() {
 
 	require.Nil(s.T(), err)
 
-	assert.Equal(s.T(), true, po.PreferWebP)
-	assert.Equal(s.T(), false, po.EnforceWebP)
+	require.Equal(s.T(), true, po.PreferWebP)
+	require.Equal(s.T(), false, po.EnforceWebP)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathWebpEnforce() {
@@ -402,8 +401,8 @@ func (s *ProcessingOptionsTestSuite) TestParsePathWebpEnforce() {
 
 	require.Nil(s.T(), err)
 
-	assert.Equal(s.T(), true, po.PreferWebP)
-	assert.Equal(s.T(), true, po.EnforceWebP)
+	require.Equal(s.T(), true, po.PreferWebP)
+	require.Equal(s.T(), true, po.EnforceWebP)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathWidthHeader() {
@@ -415,7 +414,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathWidthHeader() {
 
 	require.Nil(s.T(), err)
 
-	assert.Equal(s.T(), 100, po.Width)
+	require.Equal(s.T(), 100, po.Width)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathWidthHeaderDisabled() {
@@ -425,7 +424,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathWidthHeaderDisabled() {
 
 	require.Nil(s.T(), err)
 
-	assert.Equal(s.T(), 0, po.Width)
+	require.Equal(s.T(), 0, po.Width)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathWidthHeaderRedefine() {
@@ -437,7 +436,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathWidthHeaderRedefine() {
 
 	require.Nil(s.T(), err)
 
-	assert.Equal(s.T(), 150, po.Width)
+	require.Equal(s.T(), 150, po.Width)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathViewportWidthHeader() {
@@ -449,7 +448,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathViewportWidthHeader() {
 
 	require.Nil(s.T(), err)
 
-	assert.Equal(s.T(), 100, po.Width)
+	require.Equal(s.T(), 100, po.Width)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathViewportWidthHeaderDisabled() {
@@ -459,7 +458,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathViewportWidthHeaderDisabled() 
 
 	require.Nil(s.T(), err)
 
-	assert.Equal(s.T(), 0, po.Width)
+	require.Equal(s.T(), 0, po.Width)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathViewportWidthHeaderRedefine() {
@@ -471,7 +470,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathViewportWidthHeaderRedefine() 
 
 	require.Nil(s.T(), err)
 
-	assert.Equal(s.T(), 150, po.Width)
+	require.Equal(s.T(), 150, po.Width)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathDprHeader() {
@@ -483,7 +482,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathDprHeader() {
 
 	require.Nil(s.T(), err)
 
-	assert.Equal(s.T(), 2.0, po.Dpr)
+	require.Equal(s.T(), 2.0, po.Dpr)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathDprHeaderDisabled() {
@@ -493,7 +492,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathDprHeaderDisabled() {
 
 	require.Nil(s.T(), err)
 
-	assert.Equal(s.T(), 1.0, po.Dpr)
+	require.Equal(s.T(), 1.0, po.Dpr)
 }
 
 // func (s *ProcessingOptionsTestSuite) TestParsePathSigned() {
@@ -514,7 +513,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathDprHeaderDisabled() {
 // 	_, _, err := ParsePath(path, make(http.Header))
 
 // 	require.Error(s.T(), err)
-// 	assert.Equal(s.T(), signature.ErrInvalidSignature.Error(), err.Error())
+// 	require.Equal(s.T(), signature.ErrInvalidSignature.Error(), err.Error())
 // }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathOnlyPresets() {
@@ -532,8 +531,8 @@ func (s *ProcessingOptionsTestSuite) TestParsePathOnlyPresets() {
 
 	require.Nil(s.T(), err)
 
-	assert.Equal(s.T(), float32(0.2), po.Blur)
-	assert.Equal(s.T(), 50, po.Quality)
+	require.Equal(s.T(), float32(0.2), po.Blur)
+	require.Equal(s.T(), 50, po.Quality)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParseSkipProcessing() {
@@ -543,7 +542,7 @@ func (s *ProcessingOptionsTestSuite) TestParseSkipProcessing() {
 
 	require.Nil(s.T(), err)
 
-	assert.Equal(s.T(), []imagetype.Type{imagetype.JPEG, imagetype.PNG}, po.SkipProcessingFormats)
+	require.Equal(s.T(), []imagetype.Type{imagetype.JPEG, imagetype.PNG}, po.SkipProcessingFormats)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParseSkipProcessingInvalid() {
@@ -552,7 +551,7 @@ func (s *ProcessingOptionsTestSuite) TestParseSkipProcessingInvalid() {
 	_, _, err := ParsePath(path, make(http.Header))
 
 	require.Error(s.T(), err)
-	assert.Equal(s.T(), "Invalid image format in skip processing: bad_format", err.Error())
+	require.Equal(s.T(), "Invalid image format in skip processing: bad_format", err.Error())
 }
 
 func (s *ProcessingOptionsTestSuite) TestParseExpires() {
@@ -567,7 +566,7 @@ func (s *ProcessingOptionsTestSuite) TestParseExpiresExpired() {
 	_, _, err := ParsePath(path, make(http.Header))
 
 	require.Error(s.T(), err)
-	assert.Equal(s.T(), errExpiredURL.Error(), err.Error())
+	require.Equal(s.T(), errExpiredURL.Error(), err.Error())
 }
 
 func (s *ProcessingOptionsTestSuite) TestParseBase64URLOnlyPresets() {
@@ -586,9 +585,9 @@ func (s *ProcessingOptionsTestSuite) TestParseBase64URLOnlyPresets() {
 
 	require.Nil(s.T(), err)
 
-	assert.Equal(s.T(), float32(0.2), po.Blur)
-	assert.Equal(s.T(), 50, po.Quality)
-	assert.Equal(s.T(), originURL, imageURL)
+	require.Equal(s.T(), float32(0.2), po.Blur)
+	require.Equal(s.T(), 50, po.Quality)
+	require.Equal(s.T(), originURL, imageURL)
 }
 
 func TestProcessingOptions(t *testing.T) {

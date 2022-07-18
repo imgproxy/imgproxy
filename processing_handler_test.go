@@ -23,7 +23,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/svg"
 	"github.com/imgproxy/imgproxy/v3/vips"
 	"github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -37,11 +37,12 @@ func (s *ProcessingHandlerTestSuite) SetupSuite() {
 	config.Reset()
 
 	wd, err := os.Getwd()
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	config.LocalFileSystemRoot = filepath.Join(wd, "/testdata")
 
-	initialize()
+	err = initialize()
+	require.Nil(s.T(), err)
 
 	logrus.SetOutput(ioutil.Discard)
 
@@ -74,17 +75,17 @@ func (s *ProcessingHandlerTestSuite) send(path string, header ...http.Header) *h
 
 func (s *ProcessingHandlerTestSuite) readTestFile(name string) []byte {
 	wd, err := os.Getwd()
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	data, err := ioutil.ReadFile(filepath.Join(wd, "testdata", name))
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	return data
 }
 
 func (s *ProcessingHandlerTestSuite) readBody(res *http.Response) []byte {
 	data, err := ioutil.ReadAll(res.Body)
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 	return data
 }
 
@@ -116,15 +117,15 @@ func (s *ProcessingHandlerTestSuite) TestRequest() {
 	rw := s.send("/unsafe/rs:fill:4:4/plain/local:///test1.png")
 	res := rw.Result()
 
-	assert.Equal(s.T(), 200, res.StatusCode)
-	assert.Equal(s.T(), "image/png", res.Header.Get("Content-Type"))
+	require.Equal(s.T(), 200, res.StatusCode)
+	require.Equal(s.T(), "image/png", res.Header.Get("Content-Type"))
 
 	meta, err := imagemeta.DecodeMeta(res.Body)
 
-	assert.Nil(s.T(), err)
-	assert.Equal(s.T(), imagetype.PNG, meta.Format())
-	assert.Equal(s.T(), 4, meta.Width())
-	assert.Equal(s.T(), 4, meta.Height())
+	require.Nil(s.T(), err)
+	require.Equal(s.T(), imagetype.PNG, meta.Format())
+	require.Equal(s.T(), 4, meta.Width())
+	require.Equal(s.T(), 4, meta.Height())
 }
 
 func (s *ProcessingHandlerTestSuite) TestSignatureValidationFailure() {
@@ -134,7 +135,7 @@ func (s *ProcessingHandlerTestSuite) TestSignatureValidationFailure() {
 	rw := s.send("/unsafe/rs:fill:4:4/plain/local:///test1.png")
 	res := rw.Result()
 
-	assert.Equal(s.T(), 403, res.StatusCode)
+	require.Equal(s.T(), 403, res.StatusCode)
 }
 
 func (s *ProcessingHandlerTestSuite) TestSignatureValidationSuccess() {
@@ -144,7 +145,7 @@ func (s *ProcessingHandlerTestSuite) TestSignatureValidationSuccess() {
 	rw := s.send("/My9d3xq_PYpVHsPrCyww0Kh1w5KZeZhIlWhsa4az1TI/rs:fill:4:4/plain/local:///test1.png")
 	res := rw.Result()
 
-	assert.Equal(s.T(), 200, res.StatusCode)
+	require.Equal(s.T(), 200, res.StatusCode)
 }
 
 func (s *ProcessingHandlerTestSuite) TestSourceValidation() {
@@ -201,9 +202,9 @@ func (s *ProcessingHandlerTestSuite) TestSourceValidation() {
 			res := rw.Result()
 
 			if tc.expectedError {
-				assert.Equal(s.T(), 404, res.StatusCode)
+				require.Equal(s.T(), 404, res.StatusCode)
 			} else {
-				assert.Equal(s.T(), 200, res.StatusCode)
+				require.Equal(s.T(), 200, res.StatusCode)
 			}
 		})
 	}
@@ -216,7 +217,7 @@ func (s *ProcessingHandlerTestSuite) TestSourceFormatNotSupported() {
 	rw := s.send("/unsafe/rs:fill:4:4/plain/local:///test1.png")
 	res := rw.Result()
 
-	assert.Equal(s.T(), 422, res.StatusCode)
+	require.Equal(s.T(), 422, res.StatusCode)
 }
 
 func (s *ProcessingHandlerTestSuite) TestResultingFormatNotSupported() {
@@ -226,7 +227,7 @@ func (s *ProcessingHandlerTestSuite) TestResultingFormatNotSupported() {
 	rw := s.send("/unsafe/rs:fill:4:4/plain/local:///test1.png@png")
 	res := rw.Result()
 
-	assert.Equal(s.T(), 422, res.StatusCode)
+	require.Equal(s.T(), 422, res.StatusCode)
 }
 
 func (s *ProcessingHandlerTestSuite) TestSkipProcessingConfig() {
@@ -235,24 +236,24 @@ func (s *ProcessingHandlerTestSuite) TestSkipProcessingConfig() {
 	rw := s.send("/unsafe/rs:fill:4:4/plain/local:///test1.png")
 	res := rw.Result()
 
-	assert.Equal(s.T(), 200, res.StatusCode)
+	require.Equal(s.T(), 200, res.StatusCode)
 
 	actual := s.readBody(res)
 	expected := s.readTestFile("test1.png")
 
-	assert.True(s.T(), bytes.Equal(expected, actual))
+	require.True(s.T(), bytes.Equal(expected, actual))
 }
 
 func (s *ProcessingHandlerTestSuite) TestSkipProcessingPO() {
 	rw := s.send("/unsafe/rs:fill:4:4/skp:png/plain/local:///test1.png")
 	res := rw.Result()
 
-	assert.Equal(s.T(), 200, res.StatusCode)
+	require.Equal(s.T(), 200, res.StatusCode)
 
 	actual := s.readBody(res)
 	expected := s.readTestFile("test1.png")
 
-	assert.True(s.T(), bytes.Equal(expected, actual))
+	require.True(s.T(), bytes.Equal(expected, actual))
 }
 
 func (s *ProcessingHandlerTestSuite) TestSkipProcessingSameFormat() {
@@ -261,12 +262,12 @@ func (s *ProcessingHandlerTestSuite) TestSkipProcessingSameFormat() {
 	rw := s.send("/unsafe/rs:fill:4:4/plain/local:///test1.png@png")
 	res := rw.Result()
 
-	assert.Equal(s.T(), 200, res.StatusCode)
+	require.Equal(s.T(), 200, res.StatusCode)
 
 	actual := s.readBody(res)
 	expected := s.readTestFile("test1.png")
 
-	assert.True(s.T(), bytes.Equal(expected, actual))
+	require.True(s.T(), bytes.Equal(expected, actual))
 }
 
 func (s *ProcessingHandlerTestSuite) TestSkipProcessingDifferentFormat() {
@@ -275,45 +276,45 @@ func (s *ProcessingHandlerTestSuite) TestSkipProcessingDifferentFormat() {
 	rw := s.send("/unsafe/rs:fill:4:4/plain/local:///test1.png@jpg")
 	res := rw.Result()
 
-	assert.Equal(s.T(), 200, res.StatusCode)
+	require.Equal(s.T(), 200, res.StatusCode)
 
 	actual := s.readBody(res)
 	expected := s.readTestFile("test1.png")
 
-	assert.False(s.T(), bytes.Equal(expected, actual))
+	require.False(s.T(), bytes.Equal(expected, actual))
 }
 
 func (s *ProcessingHandlerTestSuite) TestSkipProcessingSVG() {
 	rw := s.send("/unsafe/rs:fill:4:4/plain/local:///test1.svg")
 	res := rw.Result()
 
-	assert.Equal(s.T(), 200, res.StatusCode)
+	require.Equal(s.T(), 200, res.StatusCode)
 
 	actual := s.readBody(res)
 	expected, err := svg.Satitize(s.readTestFile("test1.svg"))
 
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
-	assert.True(s.T(), bytes.Equal(expected, actual))
+	require.True(s.T(), bytes.Equal(expected, actual))
 }
 
 func (s *ProcessingHandlerTestSuite) TestNotSkipProcessingSVGToJPG() {
 	rw := s.send("/unsafe/rs:fill:4:4/plain/local:///test1.svg@jpg")
 	res := rw.Result()
 
-	assert.Equal(s.T(), 200, res.StatusCode)
+	require.Equal(s.T(), 200, res.StatusCode)
 
 	actual := s.readBody(res)
 	expected := s.readTestFile("test1.svg")
 
-	assert.False(s.T(), bytes.Equal(expected, actual))
+	require.False(s.T(), bytes.Equal(expected, actual))
 }
 
 func (s *ProcessingHandlerTestSuite) TestErrorSavingToSVG() {
 	rw := s.send("/unsafe/rs:fill:4:4/plain/local:///test1.png@svg")
 	res := rw.Result()
 
-	assert.Equal(s.T(), 422, res.StatusCode)
+	require.Equal(s.T(), 422, res.StatusCode)
 }
 
 func (s *ProcessingHandlerTestSuite) TestCacheControlPassthrough() {
@@ -330,8 +331,8 @@ func (s *ProcessingHandlerTestSuite) TestCacheControlPassthrough() {
 	rw := s.send("/unsafe/rs:fill:4:4/plain/" + ts.URL)
 	res := rw.Result()
 
-	assert.Equal(s.T(), "fake-cache-control", res.Header.Get("Cache-Control"))
-	assert.Equal(s.T(), "fake-expires", res.Header.Get("Expires"))
+	require.Equal(s.T(), "fake-cache-control", res.Header.Get("Cache-Control"))
+	require.Equal(s.T(), "fake-expires", res.Header.Get("Expires"))
 }
 
 func (s *ProcessingHandlerTestSuite) TestCacheControlPassthroughDisabled() {
@@ -348,8 +349,8 @@ func (s *ProcessingHandlerTestSuite) TestCacheControlPassthroughDisabled() {
 	rw := s.send("/unsafe/rs:fill:4:4/plain/" + ts.URL)
 	res := rw.Result()
 
-	assert.NotEqual(s.T(), "fake-cache-control", res.Header.Get("Cache-Control"))
-	assert.NotEqual(s.T(), "fake-expires", res.Header.Get("Expires"))
+	require.NotEqual(s.T(), "fake-cache-control", res.Header.Get("Cache-Control"))
+	require.NotEqual(s.T(), "fake-expires", res.Header.Get("Expires"))
 }
 
 func (s *ProcessingHandlerTestSuite) TestETagDisabled() {
@@ -358,8 +359,8 @@ func (s *ProcessingHandlerTestSuite) TestETagDisabled() {
 	rw := s.send("/unsafe/rs:fill:4:4/plain/local:///test1.png")
 	res := rw.Result()
 
-	assert.Equal(s.T(), 200, res.StatusCode)
-	assert.Empty(s.T(), res.Header.Get("ETag"))
+	require.Equal(s.T(), 200, res.StatusCode)
+	require.Empty(s.T(), res.Header.Get("ETag"))
 }
 
 func (s *ProcessingHandlerTestSuite) TestETagReqNoIfNotModified() {
@@ -368,7 +369,7 @@ func (s *ProcessingHandlerTestSuite) TestETagReqNoIfNotModified() {
 	poStr, imgdata, etag := s.sampleETagData("loremipsumdolor")
 
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		assert.Empty(s.T(), r.Header.Get("If-None-Match"))
+		require.Empty(s.T(), r.Header.Get("If-None-Match"))
 
 		rw.Header().Set("ETag", imgdata.Headers["ETag"])
 		rw.WriteHeader(200)
@@ -379,8 +380,8 @@ func (s *ProcessingHandlerTestSuite) TestETagReqNoIfNotModified() {
 	rw := s.send(fmt.Sprintf("/unsafe/%s/plain/%s", poStr, ts.URL))
 	res := rw.Result()
 
-	assert.Equal(s.T(), 200, res.StatusCode)
-	assert.Equal(s.T(), etag, res.Header.Get("ETag"))
+	require.Equal(s.T(), 200, res.StatusCode)
+	require.Equal(s.T(), etag, res.Header.Get("ETag"))
 }
 
 func (s *ProcessingHandlerTestSuite) TestETagDataNoIfNotModified() {
@@ -389,7 +390,7 @@ func (s *ProcessingHandlerTestSuite) TestETagDataNoIfNotModified() {
 	poStr, imgdata, etag := s.sampleETagData("")
 
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		assert.Empty(s.T(), r.Header.Get("If-None-Match"))
+		require.Empty(s.T(), r.Header.Get("If-None-Match"))
 
 		rw.WriteHeader(200)
 		rw.Write(imgdata.Data)
@@ -399,8 +400,8 @@ func (s *ProcessingHandlerTestSuite) TestETagDataNoIfNotModified() {
 	rw := s.send(fmt.Sprintf("/unsafe/%s/plain/%s", poStr, ts.URL))
 	res := rw.Result()
 
-	assert.Equal(s.T(), 200, res.StatusCode)
-	assert.Equal(s.T(), etag, res.Header.Get("ETag"))
+	require.Equal(s.T(), 200, res.StatusCode)
+	require.Equal(s.T(), etag, res.Header.Get("ETag"))
 }
 
 func (s *ProcessingHandlerTestSuite) TestETagReqMatch() {
@@ -409,7 +410,7 @@ func (s *ProcessingHandlerTestSuite) TestETagReqMatch() {
 	poStr, imgdata, etag := s.sampleETagData(`"loremipsumdolor"`)
 
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		assert.Equal(s.T(), imgdata.Headers["ETag"], r.Header.Get("If-None-Match"))
+		require.Equal(s.T(), imgdata.Headers["ETag"], r.Header.Get("If-None-Match"))
 
 		rw.WriteHeader(304)
 	}))
@@ -421,8 +422,8 @@ func (s *ProcessingHandlerTestSuite) TestETagReqMatch() {
 	rw := s.send(fmt.Sprintf("/unsafe/%s/plain/%s", poStr, ts.URL), header)
 	res := rw.Result()
 
-	assert.Equal(s.T(), 304, res.StatusCode)
-	assert.Equal(s.T(), etag, res.Header.Get("ETag"))
+	require.Equal(s.T(), 304, res.StatusCode)
+	require.Equal(s.T(), etag, res.Header.Get("ETag"))
 }
 
 func (s *ProcessingHandlerTestSuite) TestETagDataMatch() {
@@ -431,7 +432,7 @@ func (s *ProcessingHandlerTestSuite) TestETagDataMatch() {
 	poStr, imgdata, etag := s.sampleETagData("")
 
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		assert.Empty(s.T(), r.Header.Get("If-None-Match"))
+		require.Empty(s.T(), r.Header.Get("If-None-Match"))
 
 		rw.WriteHeader(200)
 		rw.Write(imgdata.Data)
@@ -444,8 +445,8 @@ func (s *ProcessingHandlerTestSuite) TestETagDataMatch() {
 	rw := s.send(fmt.Sprintf("/unsafe/%s/plain/%s", poStr, ts.URL), header)
 	res := rw.Result()
 
-	assert.Equal(s.T(), 304, res.StatusCode)
-	assert.Equal(s.T(), etag, res.Header.Get("ETag"))
+	require.Equal(s.T(), 304, res.StatusCode)
+	require.Equal(s.T(), etag, res.Header.Get("ETag"))
 }
 
 func (s *ProcessingHandlerTestSuite) TestETagReqNotMatch() {
@@ -455,7 +456,7 @@ func (s *ProcessingHandlerTestSuite) TestETagReqNotMatch() {
 	_, _, expectedETag := s.sampleETagData(`"loremipsum"`)
 
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		assert.Equal(s.T(), `"loremipsum"`, r.Header.Get("If-None-Match"))
+		require.Equal(s.T(), `"loremipsum"`, r.Header.Get("If-None-Match"))
 
 		rw.Header().Set("ETag", imgdata.Headers["ETag"])
 		rw.WriteHeader(200)
@@ -469,8 +470,8 @@ func (s *ProcessingHandlerTestSuite) TestETagReqNotMatch() {
 	rw := s.send(fmt.Sprintf("/unsafe/%s/plain/%s", poStr, ts.URL), header)
 	res := rw.Result()
 
-	assert.Equal(s.T(), 200, res.StatusCode)
-	assert.Equal(s.T(), actualETag, res.Header.Get("ETag"))
+	require.Equal(s.T(), 200, res.StatusCode)
+	require.Equal(s.T(), actualETag, res.Header.Get("ETag"))
 }
 
 func (s *ProcessingHandlerTestSuite) TestETagDataNotMatch() {
@@ -481,7 +482,7 @@ func (s *ProcessingHandlerTestSuite) TestETagDataNotMatch() {
 	expectedETag := actualETag[:strings.IndexByte(actualETag, '/')] + "/Dasdbefj"
 
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		assert.Empty(s.T(), r.Header.Get("If-None-Match"))
+		require.Empty(s.T(), r.Header.Get("If-None-Match"))
 
 		rw.WriteHeader(200)
 		rw.Write(imgdata.Data)
@@ -494,8 +495,8 @@ func (s *ProcessingHandlerTestSuite) TestETagDataNotMatch() {
 	rw := s.send(fmt.Sprintf("/unsafe/%s/plain/%s", poStr, ts.URL), header)
 	res := rw.Result()
 
-	assert.Equal(s.T(), 200, res.StatusCode)
-	assert.Equal(s.T(), actualETag, res.Header.Get("ETag"))
+	require.Equal(s.T(), 200, res.StatusCode)
+	require.Equal(s.T(), actualETag, res.Header.Get("ETag"))
 }
 
 func (s *ProcessingHandlerTestSuite) TestETagProcessingOptionsNotMatch() {
@@ -506,7 +507,7 @@ func (s *ProcessingHandlerTestSuite) TestETagProcessingOptionsNotMatch() {
 	expectedETag := "abcdefj" + actualETag[strings.IndexByte(actualETag, '/'):]
 
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		assert.Empty(s.T(), r.Header.Get("If-None-Match"))
+		require.Empty(s.T(), r.Header.Get("If-None-Match"))
 
 		rw.Header().Set("ETag", imgdata.Headers["ETag"])
 		rw.WriteHeader(200)
@@ -520,8 +521,8 @@ func (s *ProcessingHandlerTestSuite) TestETagProcessingOptionsNotMatch() {
 	rw := s.send(fmt.Sprintf("/unsafe/%s/plain/%s", poStr, ts.URL), header)
 	res := rw.Result()
 
-	assert.Equal(s.T(), 200, res.StatusCode)
-	assert.Equal(s.T(), actualETag, res.Header.Get("ETag"))
+	require.Equal(s.T(), 200, res.StatusCode)
+	require.Equal(s.T(), actualETag, res.Header.Get("ETag"))
 }
 
 func TestProcessingHandler(t *testing.T) {

@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/imgproxy/imgproxy/v3/imagetype"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -42,8 +41,8 @@ func (s *JpegTestSuite) TestDecodeJpegMeta() {
 			defer f.Close()
 
 			metadata, err := DecodeJpegMeta(f)
-			assert.Nil(s.T(), err)
-			assert.Equal(s.T(), expectedMeta, metadata)
+			require.Nil(s.T(), err)
+			require.Equal(s.T(), expectedMeta, metadata)
 		}()
 	}
 }

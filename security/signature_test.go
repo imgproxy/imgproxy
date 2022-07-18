@@ -3,7 +3,7 @@ package security
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/imgproxy/imgproxy/v3/config"
@@ -22,19 +22,19 @@ func (s *SignatureTestSuite) SetupTest() {
 
 func (s *SignatureTestSuite) TestVerifySignature() {
 	err := VerifySignature("dtLwhdnPPiu_epMl1LrzheLpvHas-4mwvY6L3Z8WwlY", "asd")
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 }
 
 func (s *SignatureTestSuite) TestVerifySignatureTruncated() {
 	config.SignatureSize = 8
 
 	err := VerifySignature("dtLwhdnPPis", "asd")
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 }
 
 func (s *SignatureTestSuite) TestVerifySignatureInvalid() {
 	err := VerifySignature("dtLwhdnPPis", "asd")
-	assert.Error(s.T(), err)
+	require.Error(s.T(), err)
 }
 
 func (s *SignatureTestSuite) TestVerifySignatureMultiplePairs() {
@@ -42,13 +42,13 @@ func (s *SignatureTestSuite) TestVerifySignatureMultiplePairs() {
 	config.Salts = append(config.Salts, []byte("test-salt2"))
 
 	err := VerifySignature("dtLwhdnPPiu_epMl1LrzheLpvHas-4mwvY6L3Z8WwlY", "asd")
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	err = VerifySignature("jbDffNPt1-XBgDccsaE-XJB9lx8JIJqdeYIZKgOqZpg", "asd")
-	assert.Nil(s.T(), err)
+	require.Nil(s.T(), err)
 
 	err = VerifySignature("dtLwhdnPPis", "asd")
-	assert.Error(s.T(), err)
+	require.Error(s.T(), err)
 }
 
 func TestSignature(t *testing.T) {

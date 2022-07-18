@@ -10,7 +10,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -52,31 +52,31 @@ func (s *EtagTestSuite) TestGenerateActualReq() {
 	s.h.SetActualProcessingOptions(po)
 	s.h.SetActualImageData(&imgWithETag)
 
-	assert.Equal(s.T(), etagReq, s.h.GenerateActualETag())
+	require.Equal(s.T(), etagReq, s.h.GenerateActualETag())
 }
 
 func (s *EtagTestSuite) TestGenerateActualData() {
 	s.h.SetActualProcessingOptions(po)
 	s.h.SetActualImageData(&imgWithoutETag)
 
-	assert.Equal(s.T(), etagData, s.h.GenerateActualETag())
+	require.Equal(s.T(), etagData, s.h.GenerateActualETag())
 }
 
 func (s *EtagTestSuite) TestGenerateExpectedReq() {
 	s.h.ParseExpectedETag(etagReq)
-	assert.Equal(s.T(), etagReq, s.h.GenerateExpectedETag())
+	require.Equal(s.T(), etagReq, s.h.GenerateExpectedETag())
 }
 
 func (s *EtagTestSuite) TestGenerateExpectedData() {
 	s.h.ParseExpectedETag(etagData)
-	assert.Equal(s.T(), etagData, s.h.GenerateExpectedETag())
+	require.Equal(s.T(), etagData, s.h.GenerateExpectedETag())
 }
 
 func (s *EtagTestSuite) TestProcessingOptionsCheckSuccess() {
 	s.h.ParseExpectedETag(etagReq)
 
-	assert.True(s.T(), s.h.SetActualProcessingOptions(po))
-	assert.True(s.T(), s.h.ProcessingOptionsMatch())
+	require.True(s.T(), s.h.SetActualProcessingOptions(po))
+	require.True(s.T(), s.h.ProcessingOptionsMatch())
 }
 
 func (s *EtagTestSuite) TestProcessingOptionsCheckFailure() {
@@ -85,25 +85,25 @@ func (s *EtagTestSuite) TestProcessingOptionsCheckFailure() {
 
 	s.h.ParseExpectedETag(wrongEtag)
 
-	assert.False(s.T(), s.h.SetActualProcessingOptions(po))
-	assert.False(s.T(), s.h.ProcessingOptionsMatch())
+	require.False(s.T(), s.h.SetActualProcessingOptions(po))
+	require.False(s.T(), s.h.ProcessingOptionsMatch())
 }
 
 func (s *EtagTestSuite) TestImageETagExpectedPresent() {
 	s.h.ParseExpectedETag(etagReq)
 
-	assert.Equal(s.T(), imgWithETag.Headers["ETag"], s.h.ImageEtagExpected())
+	require.Equal(s.T(), imgWithETag.Headers["ETag"], s.h.ImageEtagExpected())
 }
 
 func (s *EtagTestSuite) TestImageETagExpectedBlank() {
 	s.h.ParseExpectedETag(etagData)
 
-	assert.Empty(s.T(), s.h.ImageEtagExpected())
+	require.Empty(s.T(), s.h.ImageEtagExpected())
 }
 
 func (s *EtagTestSuite) TestImageDataCheckDataToDataSuccess() {
 	s.h.ParseExpectedETag(etagData)
-	assert.True(s.T(), s.h.SetActualImageData(&imgWithoutETag))
+	require.True(s.T(), s.h.SetActualImageData(&imgWithoutETag))
 }
 
 func (s *EtagTestSuite) TestImageDataCheckDataToDataFailure() {
@@ -111,12 +111,12 @@ func (s *EtagTestSuite) TestImageDataCheckDataToDataFailure() {
 	wrongEtag := etagData[:i] + `/Dwrongimghash"`
 
 	s.h.ParseExpectedETag(wrongEtag)
-	assert.False(s.T(), s.h.SetActualImageData(&imgWithoutETag))
+	require.False(s.T(), s.h.SetActualImageData(&imgWithoutETag))
 }
 
 func (s *EtagTestSuite) TestImageDataCheckDataToReqSuccess() {
 	s.h.ParseExpectedETag(etagData)
-	assert.True(s.T(), s.h.SetActualImageData(&imgWithETag))
+	require.True(s.T(), s.h.SetActualImageData(&imgWithETag))
 }
 
 func (s *EtagTestSuite) TestImageDataCheckDataToReqFailure() {
@@ -124,19 +124,19 @@ func (s *EtagTestSuite) TestImageDataCheckDataToReqFailure() {
 	wrongEtag := etagData[:i] + `/Dwrongimghash"`
 
 	s.h.ParseExpectedETag(wrongEtag)
-	assert.False(s.T(), s.h.SetActualImageData(&imgWithETag))
+	require.False(s.T(), s.h.SetActualImageData(&imgWithETag))
 }
 
 func (s *EtagTestSuite) TestImageDataCheckReqToDataFailure() {
 	s.h.ParseExpectedETag(etagReq)
-	assert.False(s.T(), s.h.SetActualImageData(&imgWithoutETag))
+	require.False(s.T(), s.h.SetActualImageData(&imgWithoutETag))
 }
 
 func (s *EtagTestSuite) TestETagBusterFailure() {
 	config.ETagBuster = "busted"
 
 	s.h.ParseExpectedETag(etagReq)
-	assert.False(s.T(), s.h.SetActualImageData(&imgWithoutETag))
+	require.False(s.T(), s.h.SetActualImageData(&imgWithoutETag))
 }
 
 func TestEtag(t *testing.T) {
