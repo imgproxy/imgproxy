@@ -2,6 +2,7 @@ package processing
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"runtime"
 	"strconv"
@@ -64,11 +65,21 @@ func findBestFormat(srcType imagetype.Type, animated, expectAlpha bool) imagetyp
 }
 
 func ValidatePreferredFormats() error {
+	filtered := config.PreferredFormats[:0]
+
 	for _, t := range config.PreferredFormats {
 		if !vips.SupportsSave(t) {
-			return fmt.Errorf("%s can't be a preferred format as it's saving is not supported", t)
+			log.Warnf("%s can't be a preferred format as it's saving is not supported", t)
+		} else {
+			filtered = append(filtered, t)
 		}
 	}
+
+	if len(filtered) == 0 {
+		return errors.New("No supported preferred formats specified")
+	}
+
+	config.PreferredFormats = filtered
 
 	return nil
 }
