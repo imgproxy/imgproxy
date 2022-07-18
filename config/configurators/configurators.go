@@ -103,17 +103,17 @@ func Bool(b *bool, name string) {
 }
 
 func ImageTypes(it *[]imagetype.Type, name string) error {
-	*it = []imagetype.Type{}
-
 	if env := os.Getenv(name); len(env) > 0 {
 		parts := strings.Split(env, ",")
+
+		*it = make([]imagetype.Type, 0, len(parts))
 
 		for _, p := range parts {
 			pt := strings.TrimSpace(p)
 			if t, ok := imagetype.Types[pt]; ok {
 				*it = append(*it, t)
 			} else {
-				return fmt.Errorf("Unknown image format to skip: %s", pt)
+				return fmt.Errorf("Unknown image format: %s", pt)
 			}
 		}
 	}

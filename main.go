@@ -20,6 +20,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/metrics"
 	"github.com/imgproxy/imgproxy/v3/metrics/prometheus"
 	"github.com/imgproxy/imgproxy/v3/options"
+	"github.com/imgproxy/imgproxy/v3/processing"
 	"github.com/imgproxy/imgproxy/v3/version"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
@@ -48,6 +49,11 @@ func initialize() error {
 	errorreport.Init()
 
 	if err := vips.Init(); err != nil {
+		return err
+	}
+
+	if err := processing.ValidatePreferredFormats(); err != nil {
+		vips.Shutdown()
 		return err
 	}
 

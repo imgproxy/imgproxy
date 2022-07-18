@@ -59,6 +59,8 @@ var (
 	EnforceAvif         bool
 	EnableClientHints   bool
 
+	PreferredFormats []imagetype.Type
+
 	SkipProcessingFormats []imagetype.Type
 
 	UseLinearColorspace bool
@@ -220,6 +222,15 @@ func Reset() {
 	EnforceAvif = false
 	EnableClientHints = false
 
+	PreferredFormats = []imagetype.Type{
+		imagetype.JPEG,
+		imagetype.PNG,
+		imagetype.GIF,
+		imagetype.WEBP,
+		imagetype.AVIF,
+		imagetype.ICO,
+	}
+
 	SkipProcessingFormats = make([]imagetype.Type, 0)
 
 	UseLinearColorspace = false
@@ -375,6 +386,10 @@ func Configure() error {
 	configurators.Bool(&EnableClientHints, "IMGPROXY_ENABLE_CLIENT_HINTS")
 
 	configurators.String(&HealthCheckPath, "IMGPROXY_HEALTH_CHECK_PATH")
+
+	if err := configurators.ImageTypes(&PreferredFormats, "IMGPROXY_PREFERRED_FORMATS"); err != nil {
+		return err
+	}
 
 	if err := configurators.ImageTypes(&SkipProcessingFormats, "IMGPROXY_SKIP_PROCESSING_FORMATS"); err != nil {
 		return err
@@ -555,6 +570,10 @@ func Configure() error {
 		return fmt.Errorf("Quality should be greater than 0, now - %d\n", Quality)
 	} else if Quality > 100 {
 		return fmt.Errorf("Quality can't be greater than 100, now - %d\n", Quality)
+	}
+
+	if len(PreferredFormats) == 0 {
+		return fmt.Errorf("At least one preferred format should be specified")
 	}
 
 	if IgnoreSslVerification {

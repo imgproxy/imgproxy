@@ -249,6 +249,22 @@ You can set up a fallback image that will be used in case imgproxy is unable to 
 * `IMGPROXY_FALLBACK_IMAGE_TTL`: a duration (in seconds) sent via the `Expires` and `Cache-Control: max-age` HTTP headers when a fallback image was used. When blank or `0`, the value from `IMGPROXY_TTL` is used.
 * `IMGPROXY_FALLBACK_IMAGES_CACHE_SIZE`: ![pro](/assets/pro.svg) the size of custom fallback images cache. When set to `0`, the fallback image cache is disabled. 256 fallback images are cached by default.
 
+## Preferred formats
+
+When the resulting image format is not explicitly specified in the imgproxy URL via the extension or the `format` processing option, imgproxy will choose one of the preferred formats as the resultant:
+
+* `IMGPROXY_PREFERRED_FORMATS`: a list of preferred formats, comma divided. Default: `jpeg,png,gif,webp,avif,ico`
+
+imgproxy is guided by the following rules when choosing the resulting format:
+
+1. If the preferred formats list contains the source image format, it will be used as the resultant
+2. If the resulting image is animated, the resulting image format should support animations
+3. If the resulting image contains transparency, the resulting image format should support transparency
+4. imgproxy chooses the first preferred format that meets those requirements
+5. If none of the preferred formats meet the requirements, the first preferred format is used as the resultant
+
+**📝Note:** When AVIF/WebP support detection is enabled and the browser supports AVIF/WebP, it may be used as the resultant format even if the preferred formats list doesn't contain it.
+
 ## Skip processing
 
 You can configure imgproxy to skip processing of some formats:
