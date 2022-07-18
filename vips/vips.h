@@ -11,8 +11,7 @@ void g_free_go(void **buf);
 
 void swap_and_clear(VipsImage **in, VipsImage *out);
 
-int vips_type_find_load_go(int imgtype);
-int vips_type_find_save_go(int imgtype);
+int gif_resolution_limit();
 
 int vips_jpegload_go(void *buf, size_t len, int shrink, VipsImage **out);
 int vips_pngload_go(void *buf, size_t len, VipsImage **out);

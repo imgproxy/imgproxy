@@ -12,6 +12,9 @@
 #define VIPS_SUPPORT_GIFSAVE \
   (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 12))
 
+#define VIPS_GIF_RESOLUTION_LIMITED \
+  (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION <= 12)
+
 int
 vips_initialize() {
   return vips_init("imgproxy");
@@ -31,6 +34,16 @@ void
 swap_and_clear(VipsImage **in, VipsImage *out) {
   clear_image(in);
   *in = out;
+}
+
+int
+gif_resolution_limit() {
+#if VIPS_GIF_RESOLUTION_LIMITED
+  // https://github.com/libvips/libvips/blob/v8.12.2/libvips/foreign/cgifsave.c#L437-L442
+  return 2000 * 2000;
+#else
+  return INT_MAX / 4;
+#endif
 }
 
 int

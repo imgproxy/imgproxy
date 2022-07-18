@@ -31,6 +31,8 @@ type Image struct {
 var (
 	typeSupportLoad sync.Map
 	typeSupportSave sync.Map
+
+	gifResolutionLimit int
 )
 
 var vipsConf struct {
@@ -68,6 +70,8 @@ func Init() error {
 	if len(os.Getenv("IMGPROXY_VIPS_CACHE_TRACE")) > 0 {
 		C.vips_cache_set_trace(C.gboolean(1))
 	}
+
+	gifResolutionLimit = int(C.gif_resolution_limit())
 
 	vipsConf.JpegProgressive = gbool(config.JpegProgressive)
 	vipsConf.PngInterlaced = gbool(config.PngInterlaced)
@@ -181,6 +185,10 @@ func SupportsSave(it imagetype.Type) bool {
 	typeSupportSave.Store(it, sup)
 
 	return sup
+}
+
+func GifResolutionLimit() int {
+	return gifResolutionLimit
 }
 
 func gbool(b bool) C.gboolean {
