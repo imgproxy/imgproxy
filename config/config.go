@@ -188,7 +188,7 @@ func Reset() {
 	Concurrency = runtime.NumCPU() * 2
 	MaxClients = 2048
 
-	TTL = 3600
+	TTL = 31536000
 	CacheControlPassthrough = false
 	SetCanonicalHeader = false
 

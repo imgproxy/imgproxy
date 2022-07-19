@@ -34,7 +34,7 @@ echo $(xxd -g 2 -l 64 -p /dev/random | tr -d '\n')
 * `IMGPROXY_DOWNLOAD_TIMEOUT`: the maximum duration (in seconds) for downloading the source image. Default: `5`
 * `IMGPROXY_CONCURRENCY`: the maximum number of image requests to be processed simultaneously. Default: the number of CPU cores multiplied by two
 * `IMGPROXY_MAX_CLIENTS`: the maximum number of simultaneous active connections. When set to `0`, connections number limitation is disabled. Default: `2048`
-* `IMGPROXY_TTL`: a duration (in seconds) sent via the `Expires` and `Cache-Control: max-age` HTTP headers. Default: `3600` (1 hour)
+* `IMGPROXY_TTL`: a duration (in seconds) sent via the `Expires` and `Cache-Control: max-age` HTTP headers. Default: `31536000` (1 year)
 * `IMGPROXY_CACHE_CONTROL_PASSTHROUGH`: when `true` and the source image response contains the `Expires` or `Cache-Control` headers, reuse those headers. Default: false
 * `IMGPROXY_SET_CANONICAL_HEADER`: when `true` and the source image has an `http` or `https` scheme, set a `rel="canonical"` HTTP header to the value of the source image URL. More details [here](https://developers.google.com/search/docs/advanced/crawling/consolidate-duplicate-urls#rel-canonical-header-method). Default: `false`
 * `IMGPROXY_SO_REUSEPORT`: when `true`, enables `SO_REUSEPORT` socket option (currently only available on Linux and macOS);
