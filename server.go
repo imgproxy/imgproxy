@@ -45,7 +45,10 @@ func startServer(cancel context.CancelFunc) (*http.Server, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Can't start server: %s", err)
 	}
-	l = netutil.LimitListener(l, config.MaxClients)
+
+	if config.MaxClients > 0 {
+		l = netutil.LimitListener(l, config.MaxClients)
+	}
 
 	s := &http.Server{
 		Handler:        buildRouter(),

@@ -186,7 +186,7 @@ func Reset() {
 	KeepAliveTimeout = 10
 	DownloadTimeout = 5
 	Concurrency = runtime.NumCPU() * 2
-	MaxClients = 0
+	MaxClients = 2048
 
 	TTL = 3600
 	CacheControlPassthrough = false
@@ -534,8 +534,8 @@ func Configure() error {
 		return fmt.Errorf("Concurrency should be greater than 0, now - %d\n", Concurrency)
 	}
 
-	if MaxClients <= 0 {
-		MaxClients = Concurrency * 10
+	if MaxClients < 0 {
+		return fmt.Errorf("Concurrency should be greater than or equal 0, now - %d\n", MaxClients)
 	}
 
 	if TTL <= 0 {
