@@ -32,13 +32,16 @@ func CheckTimeout(ctx context.Context) {
 	case <-ctx.Done():
 		d := ctxTime(ctx)
 
-		if ctx.Err() != context.DeadlineExceeded {
+		err := ctx.Err()
+		switch err {
+		case context.Canceled:
 			panic(ierrors.New(499, fmt.Sprintf("Request was cancelled after %v", d), "Cancelled"))
+		case context.DeadlineExceeded:
+			metrics.SendTimeout(ctx, d)
+			panic(ierrors.New(503, fmt.Sprintf("Timeout after %v", d), "Timeout"))
+		default:
+			panic(err)
 		}
-
-		metrics.SendTimeout(ctx, d)
-
-		panic(ierrors.New(503, fmt.Sprintf("Timeout after %v", d), "Timeout"))
 	default:
 		// Go ahead
 	}
