@@ -23,18 +23,19 @@ import (
 	"github.com/imgproxy/imgproxy/v3/processing"
 	"github.com/imgproxy/imgproxy/v3/router"
 	"github.com/imgproxy/imgproxy/v3/security"
+	"github.com/imgproxy/imgproxy/v3/semaphore"
 	"github.com/imgproxy/imgproxy/v3/svg"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
 var (
-	processingSem chan struct{}
+	processingSem *semaphore.Semaphore
 
 	headerVaryValue string
 )
 
 func initProcessingHandler() {
-	processingSem = make(chan struct{}, config.Concurrency)
+	processingSem = semaphore.New(config.Concurrency)
 
 	vary := make([]string, 0)
 
@@ -235,15 +236,14 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	}
 
 	// The heavy part start here, so we need to restrict concurrency
-	select {
-	case processingSem <- struct{}{}:
-	case <-ctx.Done():
+	processingSemToken, aquired := processingSem.Aquire(ctx)
+	if !aquired {
 		// We don't actually need to check timeout here,
 		// but it's an easy way to check if this is an actual timeout
 		// or the request was cancelled
 		checkErr(ctx, "queue", router.CheckTimeout(ctx))
 	}
-	defer func() { <-processingSem }()
+	defer processingSemToken.Release()
 
 	statusCode := http.StatusOK
 
