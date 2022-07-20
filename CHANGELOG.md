@@ -6,6 +6,13 @@
 - Add `IMGPROXY_NEW_RELIC_LABELS` config.
 - Add support of JPEG files with differential Huffman coding or arithmetic coding.
 - Add `IMGPROXY_PREFERRED_FORMATS` config.
+- Add `IMGPROXY_REQUESTS_QUEUE_SIZE` config.
+
+### Change
+- Change `IMGPROXY_MAX_CLIENTS` default value to 2048.
+- Allow unlimited connections when `IMGPROXY_MAX_CLIENTS` is set to `0`.
+- Change `IMGPROXY_TTL` default value to `31536000` (1 year).
+- Better errors tracking with metrics services.
 
 ### Fix
 - Fix trimming of CMYK images.
