@@ -53,7 +53,10 @@ func (p pipeline) Run(ctx context.Context, img *vips.Image, po *options.Processi
 		if err := step(&pctx, img, po, imgdata); err != nil {
 			return err
 		}
-		router.CheckTimeout(ctx)
+
+		if err := router.CheckTimeout(ctx); err != nil {
+			return err
+		}
 	}
 
 	return nil

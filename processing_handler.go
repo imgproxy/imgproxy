@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/http/cookiejar"
@@ -144,6 +145,33 @@ func respondWithNotModified(reqID string, r *http.Request, rw http.ResponseWrite
 	)
 }
 
+func sendErrAndPanic(ctx context.Context, errType string, err error) {
+	send := true
+
+	if ierr, ok := err.(*ierrors.Error); ok {
+		switch ierr.StatusCode {
+		case http.StatusServiceUnavailable:
+			errType = "timeout"
+		case 499:
+			// Don't need to send a "request cancelled" error
+			send = false
+		}
+	}
+
+	if send {
+		metrics.SendError(ctx, errType, err)
+	}
+
+	panic(err)
+}
+
+func checkErr(ctx context.Context, errType string, err error) {
+	if err == nil {
+		return
+	}
+	sendErrAndPanic(ctx, errType, err)
+}
+
 func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -163,25 +191,29 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		signature = path[:signatureEnd]
 		path = path[signatureEnd:]
 	} else {
-		panic(ierrors.New(404, fmt.Sprintf("Invalid path: %s", path), "Invalid URL"))
+		sendErrAndPanic(ctx, "path_parsing", ierrors.New(
+			404, fmt.Sprintf("Invalid path: %s", path), "Invalid URL",
+		))
 	}
 
 	if err := security.VerifySignature(signature, path); err != nil {
-		panic(ierrors.New(403, err.Error(), "Forbidden"))
+		sendErrAndPanic(ctx, "security", ierrors.New(403, err.Error(), "Forbidden"))
 	}
 
 	po, imageURL, err := options.ParsePath(path, r.Header)
-	if err != nil {
-		panic(err)
-	}
+	checkErr(ctx, "path_parsing", err)
 
 	if !security.VerifySourceURL(imageURL) {
-		panic(ierrors.New(404, fmt.Sprintf("Source URL is not allowed: %s", imageURL), "Invalid source"))
+		sendErrAndPanic(ctx, "security", ierrors.New(
+			404,
+			fmt.Sprintf("Source URL is not allowed: %s", imageURL),
+			"Invalid source",
+		))
 	}
 
 	// SVG is a special case. Though saving to svg is not supported, SVG->SVG is.
 	if !vips.SupportsSave(po.Format) && po.Format != imagetype.Unknown && po.Format != imagetype.SVG {
-		panic(ierrors.New(
+		sendErrAndPanic(ctx, "path_parsing", ierrors.New(
 			422,
 			fmt.Sprintf("Resulting image format is not supported: %s", po.Format),
 			"Invalid URL",
@@ -209,7 +241,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		// We don't actually need to check timeout here,
 		// but it's an easy way to check if this is an actual timeout
 		// or the request was cancelled
-		router.CheckTimeout(ctx)
+		checkErr(ctx, "queue", router.CheckTimeout(ctx))
 	}
 	defer func() { <-processingSem }()
 
@@ -221,9 +253,8 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		var cookieJar *cookiejar.Jar
 
 		if config.CookiePassthrough {
-			if cookieJar, err = cookies.JarFromRequest(r); err != nil {
-				panic(err)
-			}
+			cookieJar, err = cookies.JarFromRequest(r)
+			checkErr(ctx, "download", err)
 		}
 
 		return imagedata.Download(imageURL, "source image", imgRequestHeader, cookieJar)
@@ -258,7 +289,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		originData = imagedata.FallbackImage
 	}
 
-	router.CheckTimeout(ctx)
+	checkErr(ctx, "timeout", router.CheckTimeout(ctx))
 
 	if config.ETagEnabled && statusCode == http.StatusOK {
 		imgDataMatch := etagHandler.SetActualImageData(originData)
@@ -271,16 +302,14 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	router.CheckTimeout(ctx)
+	checkErr(ctx, "timeout", router.CheckTimeout(ctx))
 
 	if originData.Type == po.Format || po.Format == imagetype.Unknown {
 		// Don't process SVG
 		if originData.Type == imagetype.SVG {
 			if config.SanitizeSvg {
 				sanitized, svgErr := svg.Satitize(originData.Data)
-				if svgErr != nil {
-					panic(svgErr)
-				}
+				checkErr(ctx, "svg_processing", svgErr)
 
 				// Since we'll replace origin data, it's better to close it to return
 				// it's buffer to the pool
@@ -307,7 +336,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	}
 
 	if !vips.SupportsLoad(originData.Type) {
-		panic(ierrors.New(
+		sendErrAndPanic(ctx, "processing", ierrors.New(
 			422,
 			fmt.Sprintf("Source image format is not supported: %s", originData.Type),
 			"Invalid URL",
@@ -316,20 +345,20 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 
 	// At this point we can't allow requested format to be SVG as we can't save SVGs
 	if po.Format == imagetype.SVG {
-		panic(ierrors.New(422, "Resulting image format is not supported: svg", "Invalid URL"))
+		sendErrAndPanic(ctx, "processing", ierrors.New(
+			422, "Resulting image format is not supported: svg", "Invalid URL",
+		))
 	}
 
 	resultData, err := func() (*imagedata.ImageData, error) {
 		defer metrics.StartProcessingSegment(ctx)()
 		return processing.ProcessImage(ctx, originData, po)
 	}()
-	if err != nil {
-		metrics.SendError(ctx, "processing", err)
-		panic(err)
-	}
+	checkErr(ctx, "processing", err)
+
 	defer resultData.Close()
 
-	router.CheckTimeout(ctx)
+	checkErr(ctx, "timeout", router.CheckTimeout(ctx))
 
 	respondWithImage(reqID, r, rw, statusCode, resultData, po, imageURL, originData)
 }

@@ -214,7 +214,9 @@ func saveImageToFitBytes(ctx context.Context, po *options.ProcessingOptions, img
 		}
 		imgdata.Close()
 
-		router.CheckTimeout(ctx)
+		if err := router.CheckTimeout(ctx); err != nil {
+			return nil, err
+		}
 
 		delta := float64(len(imgdata.Data)) / float64(po.MaxBytes)
 		switch {

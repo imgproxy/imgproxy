@@ -3,7 +3,6 @@ package metrics
 import (
 	"context"
 	"net/http"
-	"time"
 
 	"github.com/imgproxy/imgproxy/v3/metrics/datadog"
 	"github.com/imgproxy/imgproxy/v3/metrics/newrelic"
@@ -76,12 +75,6 @@ func StartProcessingSegment(ctx context.Context) context.CancelFunc {
 
 func SendError(ctx context.Context, errType string, err error) {
 	prometheus.IncrementErrorsTotal(errType)
-	newrelic.SendError(ctx, err)
-	datadog.SendError(ctx, err)
-}
-
-func SendTimeout(ctx context.Context, d time.Duration) {
-	prometheus.IncrementErrorsTotal("timeout")
-	newrelic.SendTimeout(ctx, d)
-	datadog.SendTimeout(ctx, d)
+	newrelic.SendError(ctx, errType, err)
+	datadog.SendError(ctx, errType, err)
 }

@@ -2,16 +2,15 @@ package datadog
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"os"
-	"time"
 
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/ext"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 
 	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/metrics/errformat"
 	"github.com/imgproxy/imgproxy/v3/version"
 )
 
@@ -79,24 +78,14 @@ func StartSpan(ctx context.Context, name string) context.CancelFunc {
 	return func() {}
 }
 
-func SendError(ctx context.Context, err error) {
+func SendError(ctx context.Context, errType string, err error) {
 	if !enabled {
 		return
 	}
 
 	if rootSpan, ok := ctx.Value(spanCtxKey{}).(tracer.Span); ok {
-		rootSpan.Finish(tracer.WithError(err))
-	}
-}
-
-func SendTimeout(ctx context.Context, d time.Duration) {
-	if !enabled {
-		return
-	}
-
-	if rootSpan, ok := ctx.Value(spanCtxKey{}).(tracer.Span); ok {
-		rootSpan.SetTag("timeout_duration", d)
-		rootSpan.Finish(tracer.WithError(errors.New("Timeout")))
+		rootSpan.SetTag(ext.Error, err)
+		rootSpan.SetTag(ext.ErrorType, errformat.FormatErrType(errType, err))
 	}
 }
 

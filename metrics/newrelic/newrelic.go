@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/metrics/errformat"
 	"github.com/newrelic/go-agent/v3/newrelic"
 )
 
@@ -78,28 +78,15 @@ func StartSegment(ctx context.Context, name string) context.CancelFunc {
 	return func() {}
 }
 
-func SendError(ctx context.Context, err error) {
-	if !enabled {
-		return
-	}
-
-	if txn, ok := ctx.Value(transactionCtxKey{}).(*newrelic.Transaction); ok {
-		txn.NoticeError(err)
-	}
-}
-
-func SendTimeout(ctx context.Context, d time.Duration) {
+func SendError(ctx context.Context, errType string, err error) {
 	if !enabled {
 		return
 	}
 
 	if txn, ok := ctx.Value(transactionCtxKey{}).(*newrelic.Transaction); ok {
 		txn.NoticeError(newrelic.Error{
-			Message: "Timeout",
-			Class:   "Timeout",
-			Attributes: map[string]interface{}{
-				"time": d.Seconds(),
-			},
+			Message: err.Error(),
+			Class:   errformat.FormatErrType(errType, err),
 		})
 	}
 }
