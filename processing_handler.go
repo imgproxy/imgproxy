@@ -29,12 +29,17 @@ import (
 )
 
 var (
+	queueSem      *semaphore.Semaphore
 	processingSem *semaphore.Semaphore
 
 	headerVaryValue string
 )
 
 func initProcessingHandler() {
+	if config.RequestsQueueSize > 0 {
+		queueSem = semaphore.New(config.RequestsQueueSize + config.Concurrency)
+	}
+
 	processingSem = semaphore.New(config.Concurrency)
 
 	vary := make([]string, 0)
@@ -175,6 +180,14 @@ func checkErr(ctx context.Context, errType string, err error) {
 
 func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+
+	if queueSem != nil {
+		token, aquired := queueSem.TryAquire()
+		if !aquired {
+			panic(ierrors.New(429, "Too many requests", "Too many requests"))
+		}
+		defer token.Release()
+	}
 
 	path := r.RequestURI
 	if queryStart := strings.IndexByte(path, '?'); queryStart >= 0 {

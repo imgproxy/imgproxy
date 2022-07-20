@@ -32,7 +32,8 @@ echo $(xxd -g 2 -l 64 -p /dev/random | tr -d '\n')
 * `IMGPROXY_WRITE_TIMEOUT`: the maximum duration (in seconds) for writing the response. Default: `10`
 * `IMGPROXY_KEEP_ALIVE_TIMEOUT`: the maximum duration (in seconds) to wait for the next request before closing the connection. When set to `0`, keep-alive is disabled. Default: `10`
 * `IMGPROXY_DOWNLOAD_TIMEOUT`: the maximum duration (in seconds) for downloading the source image. Default: `5`
-* `IMGPROXY_CONCURRENCY`: the maximum number of image requests to be processed simultaneously. Default: the number of CPU cores multiplied by two
+* `IMGPROXY_CONCURRENCY`: the maximum number of image requests to be processed simultaneously. Requests that exceed this limit are put in the queue. Default: the number of CPU cores multiplied by two
+* `IMGPROXY_REQUESTS_QUEUE_SIZE`: the maximum number of image requests that can be put in the queue. Requests that exceed this limit are rejected with `429` HTTP status. When set to `0`, the requests queue is unlimited. Default: `0`
 * `IMGPROXY_MAX_CLIENTS`: the maximum number of simultaneous active connections. When set to `0`, connections number limitation is disabled. Default: `2048`
 * `IMGPROXY_TTL`: a duration (in seconds) sent via the `Expires` and `Cache-Control: max-age` HTTP headers. Default: `31536000` (1 year)
 * `IMGPROXY_CACHE_CONTROL_PASSTHROUGH`: when `true` and the source image response contains the `Expires` or `Cache-Control` headers, reuse those headers. Default: false

@@ -16,14 +16,15 @@ import (
 )
 
 var (
-	Network          string
-	Bind             string
-	ReadTimeout      int
-	WriteTimeout     int
-	KeepAliveTimeout int
-	DownloadTimeout  int
-	Concurrency      int
-	MaxClients       int
+	Network           string
+	Bind              string
+	ReadTimeout       int
+	WriteTimeout      int
+	KeepAliveTimeout  int
+	DownloadTimeout   int
+	Concurrency       int
+	RequestsQueueSize int
+	MaxClients        int
 
 	TTL                     int
 	CacheControlPassthrough bool
@@ -186,6 +187,7 @@ func Reset() {
 	KeepAliveTimeout = 10
 	DownloadTimeout = 5
 	Concurrency = runtime.NumCPU() * 2
+	RequestsQueueSize = 0
 	MaxClients = 2048
 
 	TTL = 31536000
@@ -341,6 +343,7 @@ func Configure() error {
 	configurators.Int(&KeepAliveTimeout, "IMGPROXY_KEEP_ALIVE_TIMEOUT")
 	configurators.Int(&DownloadTimeout, "IMGPROXY_DOWNLOAD_TIMEOUT")
 	configurators.Int(&Concurrency, "IMGPROXY_CONCURRENCY")
+	configurators.Int(&RequestsQueueSize, "IMGPROXY_REQUESTS_QUEUE_SIZE")
 	configurators.Int(&MaxClients, "IMGPROXY_MAX_CLIENTS")
 
 	configurators.Int(&TTL, "IMGPROXY_TTL")
@@ -532,6 +535,10 @@ func Configure() error {
 
 	if Concurrency <= 0 {
 		return fmt.Errorf("Concurrency should be greater than 0, now - %d\n", Concurrency)
+	}
+
+	if RequestsQueueSize < 0 {
+		return fmt.Errorf("Requests queue size should be greater than or equal 0, now - %d\n", RequestsQueueSize)
 	}
 
 	if MaxClients < 0 {
