@@ -125,12 +125,12 @@ int
 vips_get_orientation(VipsImage *image) {
   int orientation;
 
-	if (
+  if (
     vips_image_get_typeof(image, VIPS_META_ORIENTATION) == G_TYPE_INT &&
     vips_image_get_int(image, VIPS_META_ORIENTATION, &orientation) == 0
   ) return orientation;
 
-	return 1;
+  return 1;
 }
 
 int
@@ -142,7 +142,7 @@ vips_get_palette_bit_depth(VipsImage *image) {
     vips_image_get_int(image, "palette-bit-depth", &palette_bit_depth) == 0
   ) return palette_bit_depth;
 
-	return 0;
+  return 0;
 }
 
 VipsBandFormat
@@ -205,7 +205,7 @@ vips_cast_go(VipsImage *in, VipsImage **out, VipsBandFormat format) {
 
 int
 vips_rad2float_go(VipsImage *in, VipsImage **out) {
-	return vips_rad2float(in, out, NULL);
+  return vips_rad2float(in, out, NULL);
 }
 
 int
@@ -216,7 +216,7 @@ vips_resize_go(VipsImage *in, VipsImage **out, double wscale, double hscale) {
   VipsBandFormat format = vips_band_format(in);
 
   VipsImage *base = vips_image_new();
-	VipsImage **t = (VipsImage **) vips_object_local_array(VIPS_OBJECT(base), 3);
+  VipsImage **t = (VipsImage **) vips_object_local_array(VIPS_OBJECT(base), 3);
 
   int res =
     vips_premultiply(in, &t[0], NULL) ||
@@ -395,7 +395,7 @@ vips_trim(VipsImage *in, VipsImage **out, double threshold,
           gboolean equal_hor, gboolean equal_ver) {
 
   VipsImage *base = vips_image_new();
-	VipsImage **t = (VipsImage **) vips_object_local_array(VIPS_OBJECT(base), 2);
+  VipsImage **t = (VipsImage **) vips_object_local_array(VIPS_OBJECT(base), 2);
 
   VipsImage *tmp = in;
 
@@ -476,9 +476,9 @@ vips_replicate_go(VipsImage *in, VipsImage **out, int width, int height) {
   if (vips_replicate(in, &tmp, 1 + width / in->Xsize, 1 + height / in->Ysize, NULL))
     return 1;
 
-	if (vips_extract_area(tmp, out, 0, 0, width, height, NULL)) {
+  if (vips_extract_area(tmp, out, 0, 0, width, height, NULL)) {
     clear_image(&tmp);
-		return 1;
+    return 1;
   }
 
   clear_image(&tmp);
@@ -510,24 +510,24 @@ vips_ensure_alpha(VipsImage *in, VipsImage **out) {
 int
 vips_apply_watermark(VipsImage *in, VipsImage *watermark, VipsImage **out, double opacity) {
   VipsImage *base = vips_image_new();
-	VipsImage **t = (VipsImage **) vips_object_local_array(VIPS_OBJECT(base), 6);
+  VipsImage **t = (VipsImage **) vips_object_local_array(VIPS_OBJECT(base), 6);
 
   if (vips_ensure_alpha(watermark, &t[0])) {
     clear_image(&base);
-		return 1;
+    return 1;
   }
 
-	if (opacity < 1) {
+  if (opacity < 1) {
     if (
       vips_extract_band(t[0], &t[1], 0, "n", t[0]->Bands - 1, NULL) ||
       vips_extract_band(t[0], &t[2], t[0]->Bands - 1, "n", 1, NULL) ||
-		  vips_linear1(t[2], &t[3], opacity, 0, NULL) ||
+      vips_linear1(t[2], &t[3], opacity, 0, NULL) ||
       vips_bandjoin2(t[1], t[3], &t[4], NULL)
     ) {
       clear_image(&base);
-			return 1;
-		}
-	} else {
+      return 1;
+    }
+  } else {
     if (vips_copy(t[0], &t[4], NULL)) {
       clear_image(&base);
       return 1;
