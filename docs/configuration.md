@@ -34,7 +34,7 @@ echo $(xxd -g 2 -l 64 -p /dev/random | tr -d '\n')
 * `IMGPROXY_DOWNLOAD_TIMEOUT`: the maximum duration (in seconds) for downloading the source image. Default: `5`
 * `IMGPROXY_CONCURRENCY`: the maximum number of image requests to be processed simultaneously. Requests that exceed this limit are put in the queue. Default: the number of CPU cores multiplied by two
 * `IMGPROXY_REQUESTS_QUEUE_SIZE`: the maximum number of image requests that can be put in the queue. Requests that exceed this limit are rejected with `429` HTTP status. When set to `0`, the requests queue is unlimited. Default: `0`
-* `IMGPROXY_MAX_CLIENTS`: the maximum number of simultaneous active connections. When set to `0`, connections number limitation is disabled. Default: `2048`
+* `IMGPROXY_MAX_CLIENTS`: the maximum number of simultaneous active connections. When set to `0`, connection limit is disabled. Default: `2048`
 * `IMGPROXY_TTL`: a duration (in seconds) sent via the `Expires` and `Cache-Control: max-age` HTTP headers. Default: `31536000` (1 year)
 * `IMGPROXY_CACHE_CONTROL_PASSTHROUGH`: when `true` and the source image response contains the `Expires` or `Cache-Control` headers, reuse those headers. Default: false
 * `IMGPROXY_SET_CANONICAL_HEADER`: when `true` and the source image has an `http` or `https` scheme, set a `rel="canonical"` HTTP header to the value of the source image URL. More details [here](https://developers.google.com/search/docs/advanced/crawling/consolidate-duplicate-urls#rel-canonical-header-method). Default: `false`
@@ -252,17 +252,17 @@ You can set up a fallback image that will be used in case imgproxy is unable to 
 
 ## Preferred formats
 
-When the resulting image format is not explicitly specified in the imgproxy URL via the extension or the `format` processing option, imgproxy will choose one of the preferred formats as the resultant:
+When the resulting image format is not explicitly specified in the imgproxy URL via the extension or the `format` processing option, imgproxy will choose one of the preferred formats:
 
 * `IMGPROXY_PREFERRED_FORMATS`: a list of preferred formats, comma divided. Default: `jpeg,png,gif,webp,avif,ico`
 
 imgproxy is guided by the following rules when choosing the resulting format:
 
-1. If the preferred formats list contains the source image format, it will be used as the resultant
+1. If the preferred formats list contains the source image format, it will be used
 2. If the resulting image is animated, the resulting image format should support animations
 3. If the resulting image contains transparency, the resulting image format should support transparency
 4. imgproxy chooses the first preferred format that meets those requirements
-5. If none of the preferred formats meet the requirements, the first preferred format is used as the resultant
+5. If none of the preferred formats meet the requirements, the first preferred format is used
 
 **📝Note:** When AVIF/WebP support detection is enabled and the browser supports AVIF/WebP, it may be used as the resultant format even if the preferred formats list doesn't contain it.
 
@@ -385,6 +385,9 @@ Check out the [Prometheus](prometheus.md) guide to learn more.
 imgproxy can send its metrics to Datadog:
 
 * `IMGPROXY_DATADOG_ENABLE`: when `true`, enables sending metrics to Datadog. Default: false
+* `IMGPROXY_DATADOG_ENABLE_ADDITIONAL_METRICS`: when true, enables sending the additional metrics to Datadog. Default: false
+
+**⚠️Warning:** Since the additional metrics are treated by Datadog as custom, Datadog can additionally bill you for their usage. Please, check out Datadog's [Custom Metrics Billing](https://docs.datadoghq.com/account_management/billing/custom_metrics/) page for additional details.
 
 Check out the [Datadog](datadog.md) guide to learn more.
 

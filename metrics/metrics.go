@@ -22,6 +22,7 @@ func Init() error {
 }
 
 func Stop() {
+	newrelic.Stop()
 	datadog.Stop()
 }
 
@@ -43,6 +44,20 @@ func StartRequest(ctx context.Context, rw http.ResponseWriter, r *http.Request) 
 	}
 
 	return ctx, cancel, rw
+}
+
+func StartQueueSegment(ctx context.Context) context.CancelFunc {
+	promCancel := prometheus.StartQueueSegment()
+	nrCancel := newrelic.StartSegment(ctx, "Queue")
+	ddCancel := datadog.StartSpan(ctx, "queue")
+
+	cancel := func() {
+		promCancel()
+		nrCancel()
+		ddCancel()
+	}
+
+	return cancel
 }
 
 func StartDownloadingSegment(ctx context.Context) context.CancelFunc {
@@ -77,4 +92,22 @@ func SendError(ctx context.Context, errType string, err error) {
 	prometheus.IncrementErrorsTotal(errType)
 	newrelic.SendError(ctx, errType, err)
 	datadog.SendError(ctx, errType, err)
+}
+
+func ObserveBufferSize(t string, size int) {
+	prometheus.ObserveBufferSize(t, size)
+	newrelic.ObserveBufferSize(t, size)
+	datadog.ObserveBufferSize(t, size)
+}
+
+func SetBufferDefaultSize(t string, size int) {
+	prometheus.SetBufferDefaultSize(t, size)
+	newrelic.SetBufferDefaultSize(t, size)
+	datadog.SetBufferDefaultSize(t, size)
+}
+
+func SetBufferMaxSize(t string, size int) {
+	prometheus.SetBufferMaxSize(t, size)
+	newrelic.SetBufferMaxSize(t, size)
+	datadog.SetBufferMaxSize(t, size)
 }

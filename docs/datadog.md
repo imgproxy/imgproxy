@@ -18,10 +18,25 @@ imgproxy can send its metrics to Datadog. To use this feature, do the following:
     * `DD_RUNTIME_METRICS_ENABLED`: enables automatic collection of runtime metrics every 10 seconds. Default: `false`
     * `DD_TRACE_STARTUP_LOGS`: causes various startup info to be written when the tracer starts. Default: `true`
     * `DD_TRACE_DEBUG`: enables detailed logs. Default: `false`
+4. _(optional)_ Set the `IMGPROXY_DATADOG_ENABLE_ADDITIONAL_METRICS` environment variable to `true` to collect the [additional metrics](#additional-metrics).
 
 imgproxy will send the following info to Datadog:
 
 * Response time
+* Queue time
 * Image downloading time
 * Image processing time
 * Errors that occurred while downloading and processing image
+
+## Additional metrics
+
+When the `IMGPROXY_DATADOG_ENABLE_ADDITIONAL_METRICS` environment variable is set to `true`, imgproxy will send the following additional metrics to Datadog:
+
+* `imgproxy.requests_in_progress`: the number of requests currently in progress
+* `imgproxy.images_in_progress`: the number of images currently in progress
+* `imgproxy.buffer.size`: a histogram of the download/gzip buffers sizes (in bytes)
+* `imgproxy.buffer.default_size`: calibrated default buffer size (in bytes)
+* `imgproxy.buffer.max_size`: calibrated maximum buffer size (in bytes)
+* `imgproxy.vips.memory`: libvips memory usage (in bytes)
+* `imgproxy.vips.max_memory`: libvips maximum memory usage (in bytes)
+* `imgproxy.vips.allocs`: the number of active vips allocations

@@ -11,20 +11,27 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/metrics/stats"
 	"github.com/imgproxy/imgproxy/v3/reuseport"
 )
 
 var (
 	enabled = false
 
-	requestsTotal      prometheus.Counter
-	errorsTotal        *prometheus.CounterVec
-	requestDuration    prometheus.Histogram
-	downloadDuration   prometheus.Histogram
-	processingDuration prometheus.Histogram
-	bufferSize         *prometheus.HistogramVec
-	bufferDefaultSize  *prometheus.GaugeVec
-	bufferMaxSize      *prometheus.GaugeVec
+	requestsTotal prometheus.Counter
+	errorsTotal   *prometheus.CounterVec
+
+	requestDuration     prometheus.Histogram
+	requestSpanDuration *prometheus.HistogramVec
+	downloadDuration    prometheus.Histogram
+	processingDuration  prometheus.Histogram
+
+	bufferSize        *prometheus.HistogramVec
+	bufferDefaultSize *prometheus.GaugeVec
+	bufferMaxSize     *prometheus.GaugeVec
+
+	requestsInProgress prometheus.GaugeFunc
+	imagesInProgress   prometheus.GaugeFunc
 )
 
 func Init() {
@@ -49,6 +56,12 @@ func Init() {
 		Name:      "request_duration_seconds",
 		Help:      "A histogram of the response latency.",
 	})
+
+	requestSpanDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Namespace: config.PrometheusNamespace,
+		Name:      "request_span_duration_seconds",
+		Help:      "A histogram of the queue latency.",
+	}, []string{"span"})
 
 	downloadDuration = prometheus.NewHistogram(prometheus.HistogramOpts{
 		Namespace: config.PrometheusNamespace,
@@ -81,15 +94,30 @@ func Init() {
 		Help:      "A gauge of the buffer max size in bytes.",
 	}, []string{"type"})
 
+	requestsInProgress = prometheus.NewGaugeFunc(prometheus.GaugeOpts{
+		Namespace: config.PrometheusNamespace,
+		Name:      "requests_in_progress",
+		Help:      "A gauge of the number of requests currently being in progress.",
+	}, stats.RequestsInProgress)
+
+	imagesInProgress = prometheus.NewGaugeFunc(prometheus.GaugeOpts{
+		Namespace: config.PrometheusNamespace,
+		Name:      "images_in_progress",
+		Help:      "A gauge of the number of images currently being in progress.",
+	}, stats.ImagesInProgress)
+
 	prometheus.MustRegister(
 		requestsTotal,
 		errorsTotal,
 		requestDuration,
+		requestSpanDuration,
 		downloadDuration,
 		processingDuration,
 		bufferSize,
 		bufferDefaultSize,
 		bufferMaxSize,
+		requestsInProgress,
+		imagesInProgress,
 	)
 
 	enabled = true
@@ -131,19 +159,43 @@ func StartRequest() context.CancelFunc {
 	return startDuration(requestDuration)
 }
 
-func StartDownloadingSegment() context.CancelFunc {
-	return startDuration(downloadDuration)
-}
-
-func StartProcessingSegment() context.CancelFunc {
-	return startDuration(processingDuration)
-}
-
-func startDuration(m prometheus.Histogram) context.CancelFunc {
+func StartQueueSegment() context.CancelFunc {
 	if !enabled {
 		return func() {}
 	}
 
+	return startDuration(requestSpanDuration.With(prometheus.Labels{"span": "queue"}))
+}
+
+func StartDownloadingSegment() context.CancelFunc {
+	if !enabled {
+		return func() {}
+	}
+
+	cancel := startDuration(requestSpanDuration.With(prometheus.Labels{"span": "downloading"}))
+	cancelLegacy := startDuration(downloadDuration)
+
+	return func() {
+		cancel()
+		cancelLegacy()
+	}
+}
+
+func StartProcessingSegment() context.CancelFunc {
+	if !enabled {
+		return func() {}
+	}
+
+	cancel := startDuration(requestSpanDuration.With(prometheus.Labels{"span": "processing"}))
+	cancelLegacy := startDuration(processingDuration)
+
+	return func() {
+		cancel()
+		cancelLegacy()
+	}
+}
+
+func startDuration(m prometheus.Observer) context.CancelFunc {
 	t := time.Now()
 	return func() {
 		m.Observe(time.Since(t).Seconds())
