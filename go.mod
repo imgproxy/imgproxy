@@ -5,7 +5,7 @@ go 1.16
 require (
 	cloud.google.com/go/storage v1.22.1
 	github.com/Azure/azure-storage-blob-go v0.15.0
-	github.com/DataDog/datadog-go/v5 v5.1.1 // indirect
+	github.com/DataDog/datadog-go/v5 v5.1.1
 	github.com/Microsoft/go-winio v0.5.2 // indirect
 	github.com/StackExchange/wmi v1.2.1 // indirect
 	github.com/airbrake/gobrake/v5 v5.5.1
@@ -20,8 +20,8 @@ require (
 	github.com/johannesboyne/gofakes3 v0.0.0-20220517215058-83a58ec253b6
 	github.com/matoous/go-nanoid/v2 v2.0.0
 	github.com/ncw/swift/v2 v2.0.1
-	github.com/newrelic/go-agent/v3 v3.16.1
-	github.com/newrelic/newrelic-telemetry-sdk-go v0.8.1 // indirect
+	github.com/newrelic/go-agent/v3 v3.17.0
+	github.com/newrelic/newrelic-telemetry-sdk-go v0.8.1
 	github.com/onsi/ginkgo v1.16.5 // indirect
 	github.com/prometheus/client_golang v1.12.2
 	github.com/sirupsen/logrus v1.8.1
