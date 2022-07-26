@@ -30,10 +30,10 @@ imgproxy will send the following info to Datadog:
 
 ## Additional metrics
 
-When the `IMGPROXY_DATADOG_ENABLE_ADDITIONAL_METRICS` environment variable is set to `true` imgproxy will send the following additional metrics to Datadog:
+When the `IMGPROXY_DATADOG_ENABLE_ADDITIONAL_METRICS` environment variable is set to `true`, imgproxy will send the following additional metrics to Datadog:
 
-* `imgproxy.requests_in_progress`: a number of requests currently being in progress
-* `imgproxy.images_in_progress`: a number of images currently being in progress
+* `imgproxy.requests_in_progress`: the number of requests currently in progress
+* `imgproxy.images_in_progress`: the number of images currently in progress
 * `imgproxy.buffer.size`: a histogram of the download/gzip buffers sizes (in bytes)
 * `imgproxy.buffer.default_size`: calibrated default buffer size (in bytes)
 * `imgproxy.buffer.max_size`: calibrated maximum buffer size (in bytes)
