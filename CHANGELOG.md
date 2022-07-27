@@ -17,6 +17,9 @@
 - Allow unlimited connections when `IMGPROXY_MAX_CLIENTS` is set to `0`.
 - Change `IMGPROXY_TTL` default value to `31536000` (1 year).
 - Better errors tracking with metrics services.
+- (docker) Faster and better saving of GIF.
+- (docker) Faster saving of AVIF.
+- (docker) Faster loading and saving of PNG.
 
 ### Fix
 - Fix trimming of CMYK images.
