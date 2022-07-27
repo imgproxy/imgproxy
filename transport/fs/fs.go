@@ -27,19 +27,7 @@ func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error)
 	f, err := t.fs.Open(req.URL.Path)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return &http.Response{
-				StatusCode:    http.StatusNotFound,
-				Proto:         "HTTP/1.0",
-				ProtoMajor:    1,
-				ProtoMinor:    0,
-				Header:        header,
-				ContentLength: 0,
-				Body: io.NopCloser(strings.NewReader(
-					fmt.Sprintf("%s doesn't exist", req.URL.Path),
-				)),
-				Close:   false,
-				Request: req,
-			}, nil
+			return respNotFound(req, fmt.Sprintf("%s doesn't exist", req.URL.Path)), nil
 		}
 		return nil, err
 	}
@@ -50,19 +38,7 @@ func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error)
 	}
 
 	if fi.IsDir() {
-		return &http.Response{
-			StatusCode:    http.StatusNotFound,
-			Proto:         "HTTP/1.0",
-			ProtoMajor:    1,
-			ProtoMinor:    0,
-			Header:        header,
-			ContentLength: 0,
-			Body: io.NopCloser(strings.NewReader(
-				fmt.Sprintf("%s is directory", req.URL.Path),
-			)),
-			Close:   false,
-			Request: req,
-		}, nil
+		return respNotFound(req, fmt.Sprintf("%s is directory", req.URL.Path)), nil
 	}
 
 	if config.ETagEnabled {
@@ -104,4 +80,18 @@ func BuildEtag(path string, fi fs.FileInfo) string {
 	tag := fmt.Sprintf("%s__%d__%d", path, fi.Size(), fi.ModTime().UnixNano())
 	hash := md5.Sum([]byte(tag))
 	return `"` + string(base64.RawURLEncoding.EncodeToString(hash[:])) + `"`
+}
+
+func respNotFound(req *http.Request, msg string) *http.Response {
+	return &http.Response{
+		StatusCode:    http.StatusNotFound,
+		Proto:         "HTTP/1.0",
+		ProtoMajor:    1,
+		ProtoMinor:    0,
+		Header:        make(http.Header),
+		ContentLength: int64(len(msg)),
+		Body:          io.NopCloser(strings.NewReader(msg)),
+		Close:         false,
+		Request:       req,
+	}
 }
