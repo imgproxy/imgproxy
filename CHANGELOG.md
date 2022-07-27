@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+
+## [3.7.0] - 2022-07-27
 ### Add
 - Add support of 16-bit BMP.
 - Add `IMGPROXY_NEW_RELIC_LABELS` config.
