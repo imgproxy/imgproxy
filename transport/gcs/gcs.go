@@ -3,6 +3,7 @@ package gcs
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -62,7 +63,7 @@ func (t transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	if config.ETagEnabled {
 		attrs, err := obj.Attrs(req.Context())
 		if err != nil {
-			return nil, err
+			return handleError(req, err)
 		}
 		header.Set("ETag", attrs.Etag)
 
@@ -83,7 +84,7 @@ func (t transport) RoundTrip(req *http.Request) (*http.Response, error) {
 
 	reader, err := obj.NewReader(req.Context())
 	if err != nil {
-		return nil, err
+		return handleError(req, err)
 	}
 
 	header.Set("Cache-Control", reader.Attrs.CacheControl)
@@ -98,6 +99,24 @@ func (t transport) RoundTrip(req *http.Request) (*http.Response, error) {
 		ContentLength: reader.Attrs.Size,
 		Body:          reader,
 		Close:         true,
+		Request:       req,
+	}, nil
+}
+
+func handleError(req *http.Request, err error) (*http.Response, error) {
+	if err != storage.ErrBucketNotExist && err != storage.ErrObjectNotExist {
+		return nil, err
+	}
+
+	return &http.Response{
+		StatusCode:    http.StatusNotFound,
+		Proto:         "HTTP/1.0",
+		ProtoMajor:    1,
+		ProtoMinor:    0,
+		Header:        make(http.Header),
+		ContentLength: int64(len(err.Error())),
+		Body:          io.NopCloser(strings.NewReader(err.Error())),
+		Close:         false,
 		Request:       req,
 	}, nil
 }
