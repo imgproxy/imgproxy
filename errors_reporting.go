@@ -62,7 +62,10 @@ func initErrorsReporting() {
 }
 
 func closeErrorsReporting() {
-	airbrake.Close()
+	if airbrake != nil {
+		airbrake.NotifyOnPanic()
+		_ = airbrake.Close()
+	}
 }
 
 func reportError(err error, req *http.Request) {
