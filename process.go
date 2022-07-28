@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"runtime"
@@ -553,7 +554,9 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 
 			// Load the second copy and reapply transformations that effect the size/shape
 			// of the image.
-			loadAndTransform(ctx, centerImage, data, po, imgtype, srcWidth, srcHeight, angle, flip)
+			if err = loadAndTransform(ctx, centerImage, data, po, imgtype, srcWidth, srcHeight, angle, flip); err != nil {
+				return err
+			}
 
 			// Resize to the image area and then center smart crop to trim off excess.
 			outputScale := math.Max((float64(outputWidth) / float64(img.Width())), (float64(outputHeight) / float64(img.Height())))
@@ -684,6 +687,15 @@ func loadAndTransform(ctx context.Context,
 		if srcWidth == scaleInt(srcWidth, scale) && srcHeight == scaleInt(srcHeight, scale) {
 			scale = 1.0
 		}
+	} else {
+		// No scale-on-load
+		if err := img.Load(data, imgtype, 1, 1.0, 1); err != nil {
+			return err
+		}
+	}
+
+	if img.VipsImage == nil {
+		return errors.New("failed to load image")
 	}
 
 	if scale != 1 {

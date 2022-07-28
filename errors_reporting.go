@@ -63,7 +63,8 @@ func initErrorsReporting() {
 
 func closeErrorsReporting() {
 	if airbrake != nil {
-		airbrake.Close()
+		airbrake.NotifyOnPanic()
+		_ = airbrake.Close()
 	}
 }
 
