@@ -363,28 +363,6 @@ func (img *Image) HasAlpha() bool {
 	return C.vips_image_hasalpha(img.VipsImage) > 0
 }
 
-func (img *Image) Premultiply() error {
-	var tmp *C.VipsImage
-
-	if C.vips_premultiply_go(img.VipsImage, &tmp) != 0 {
-		return Error()
-	}
-
-	C.swap_and_clear(&img.VipsImage, tmp)
-	return nil
-}
-
-func (img *Image) Unpremultiply() error {
-	var tmp *C.VipsImage
-
-	if C.vips_unpremultiply_go(img.VipsImage, &tmp) != 0 {
-		return Error()
-	}
-
-	C.swap_and_clear(&img.VipsImage, tmp)
-	return nil
-}
-
 func (img *Image) GetInt(name string) (int, error) {
 	var i C.int
 
@@ -499,18 +477,6 @@ func (img *Image) Resize(wscale, hscale float64) error {
 	return nil
 }
 
-func (img *Image) Pixelate(pixels int) error {
-	var tmp *C.VipsImage
-
-	if C.vips_pixelate(img.VipsImage, &tmp, C.int(pixels)) != 0 {
-		return Error()
-	}
-
-	C.swap_and_clear(&img.VipsImage, tmp)
-
-	return nil
-}
-
 func (img *Image) Orientation() C.int {
 	return C.vips_get_orientation(img.VipsImage)
 }
@@ -609,25 +575,15 @@ func (img *Image) Flatten(bg Color) error {
 	return nil
 }
 
-func (img *Image) Blur(sigma float32) error {
+func (img *Image) ApplyFilters(blurSigma, sharpSigma float32, pixelatePixels int) error {
 	var tmp *C.VipsImage
 
-	if C.vips_gaussblur_go(img.VipsImage, &tmp, C.double(sigma)) != 0 {
+	if C.vips_apply_filters(img.VipsImage, &tmp, C.double(blurSigma), C.double(sharpSigma), C.int(pixelatePixels)) != 0 {
 		return Error()
 	}
 
 	C.swap_and_clear(&img.VipsImage, tmp)
-	return nil
-}
 
-func (img *Image) Sharpen(sigma float32) error {
-	var tmp *C.VipsImage
-
-	if C.vips_sharpen_go(img.VipsImage, &tmp, C.double(sigma)) != 0 {
-		return Error()
-	}
-
-	C.swap_and_clear(&img.VipsImage, tmp)
 	return nil
 }
 
