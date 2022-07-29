@@ -14,6 +14,7 @@ import (
 
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/errorreport"
+	"github.com/imgproxy/imgproxy/v3/gliblog"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/logger"
 	"github.com/imgproxy/imgproxy/v3/memory"
@@ -29,6 +30,8 @@ func initialize() error {
 	if err := logger.Init(); err != nil {
 		return err
 	}
+
+	gliblog.Init()
 
 	maxprocs.Set(maxprocs.Logger(log.Debugf))
 
