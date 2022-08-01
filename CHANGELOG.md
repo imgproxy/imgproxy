@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+
+## [3.7.1] - 2022-08-01
 ### Fix
 - Fix memory bloat in some cases.
 - Fix `format_quality` usage in presets.
