@@ -3,6 +3,7 @@
 ## [Unreleased]
 ### Fix
 - Fix memory bloat in some cases.
+- Fix `format_quality` usage in presets.
 
 ## [3.7.0] - 2022-07-27
 ### Add
