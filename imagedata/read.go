@@ -44,7 +44,7 @@ func readAndCheckImage(r io.Reader, contentLength int) (*ImageData, error) {
 		return nil, ErrSourceFileTooBig
 	}
 
-	buf := downloadBufPool.Get(contentLength)
+	buf := downloadBufPool.Get(contentLength, false)
 	cancel := func() { downloadBufPool.Put(buf) }
 
 	if config.MaxSrcFileSize > 0 {
@@ -54,15 +54,25 @@ func readAndCheckImage(r io.Reader, contentLength int) (*ImageData, error) {
 	br := bufreader.New(r, buf)
 
 	meta, err := imagemeta.DecodeMeta(br)
-	if err == imagemeta.ErrFormat {
-		return nil, ErrSourceImageTypeNotSupported
-	}
 	if err != nil {
+		buf.Reset()
+		cancel()
+
+		if err == imagemeta.ErrFormat {
+			return nil, ErrSourceImageTypeNotSupported
+		}
+
 		return nil, checkTimeoutErr(err)
 	}
 
 	if err = security.CheckDimensions(meta.Width(), meta.Height()); err != nil {
+		buf.Reset()
+		cancel()
 		return nil, err
+	}
+
+	if contentLength > buf.Cap() {
+		buf.Grow(contentLength - buf.Len())
 	}
 
 	if err = br.Flush(); err != nil {

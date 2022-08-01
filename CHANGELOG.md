@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+### Fix
+- Fix memory bloat in some cases.
 
 ## [3.7.0] - 2022-07-27
 ### Add
