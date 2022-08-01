@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -109,50 +108,42 @@ type ProcessingOptions struct {
 	defaultQuality int
 }
 
-var (
-	_newProcessingOptions    ProcessingOptions
-	newProcessingOptionsOnce sync.Once
-)
-
 func NewProcessingOptions() *ProcessingOptions {
-	newProcessingOptionsOnce.Do(func() {
-		_newProcessingOptions = ProcessingOptions{
-			ResizingType:      ResizeFit,
-			Width:             0,
-			Height:            0,
-			ZoomWidth:         1,
-			ZoomHeight:        1,
-			Gravity:           GravityOptions{Type: GravityCenter},
-			Enlarge:           false,
-			Extend:            ExtendOptions{Enabled: false, Gravity: GravityOptions{Type: GravityCenter}},
-			Padding:           PaddingOptions{Enabled: false},
-			Trim:              TrimOptions{Enabled: false, Threshold: 10, Smart: true},
-			Rotate:            0,
-			Quality:           0,
-			MaxBytes:          0,
-			Format:            imagetype.Unknown,
-			Background:        vips.Color{R: 255, G: 255, B: 255},
-			Blur:              0,
-			Sharpen:           0,
-			Dpr:               1,
-			Watermark:         WatermarkOptions{Opacity: 1, Replicate: false, Gravity: GravityOptions{Type: GravityCenter}},
-			StripMetadata:     config.StripMetadata,
-			KeepCopyright:     config.KeepCopyright,
-			StripColorProfile: config.StripColorProfile,
-			AutoRotate:        config.AutoRotate,
-			EnforceThumbnail:  config.EnforceThumbnail,
-			ReturnAttachment:  config.ReturnAttachment,
+	po := ProcessingOptions{
+		ResizingType:      ResizeFit,
+		Width:             0,
+		Height:            0,
+		ZoomWidth:         1,
+		ZoomHeight:        1,
+		Gravity:           GravityOptions{Type: GravityCenter},
+		Enlarge:           false,
+		Extend:            ExtendOptions{Enabled: false, Gravity: GravityOptions{Type: GravityCenter}},
+		Padding:           PaddingOptions{Enabled: false},
+		Trim:              TrimOptions{Enabled: false, Threshold: 10, Smart: true},
+		Rotate:            0,
+		Quality:           0,
+		MaxBytes:          0,
+		Format:            imagetype.Unknown,
+		Background:        vips.Color{R: 255, G: 255, B: 255},
+		Blur:              0,
+		Sharpen:           0,
+		Dpr:               1,
+		Watermark:         WatermarkOptions{Opacity: 1, Replicate: false, Gravity: GravityOptions{Type: GravityCenter}},
+		StripMetadata:     config.StripMetadata,
+		KeepCopyright:     config.KeepCopyright,
+		StripColorProfile: config.StripColorProfile,
+		AutoRotate:        config.AutoRotate,
+		EnforceThumbnail:  config.EnforceThumbnail,
+		ReturnAttachment:  config.ReturnAttachment,
 
-			// Basically, we need this to update ETag when `IMGPROXY_QUALITY` is changed
-			defaultQuality: config.Quality,
-		}
-	})
+		SkipProcessingFormats: append([]imagetype.Type(nil), config.SkipProcessingFormats...),
+		UsedPresets:           make([]string, 0, len(config.Presets)),
 
-	po := _newProcessingOptions
-	po.SkipProcessingFormats = append([]imagetype.Type(nil), config.SkipProcessingFormats...)
-	po.UsedPresets = make([]string, 0, len(config.Presets))
+		// Basically, we need this to update ETag when `IMGPROXY_QUALITY` is changed
+		defaultQuality: config.Quality,
+	}
 
-	po.FormatQuality = make(map[imagetype.Type]int)
+	po.FormatQuality = make(map[imagetype.Type]int, len(config.FormatQuality))
 	for k, v := range config.FormatQuality {
 		po.FormatQuality[k] = v
 	}
