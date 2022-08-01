@@ -22,10 +22,6 @@ func logGLib(cdomain *C.char, logLevel C.GLogLevelFlags, cstr *C.char) {
 	entry := log.WithField("source", domain)
 
 	switch logLevel {
-	case C.G_LOG_LEVEL_DEBUG:
-		entry.Debug(str)
-	case C.G_LOG_LEVEL_INFO, C.G_LOG_LEVEL_MESSAGE:
-		entry.Info(str)
 	case C.G_LOG_LEVEL_WARNING:
 		entry.Warn(str)
 	default:

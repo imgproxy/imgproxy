@@ -5,9 +5,7 @@ static GLogLevelFlags all_levels =
   G_LOG_FLAG_FATAL |
   G_LOG_LEVEL_ERROR |
   G_LOG_LEVEL_CRITICAL |
-  G_LOG_LEVEL_WARNING |
-  G_LOG_LEVEL_MESSAGE |
-  G_LOG_LEVEL_INFO;
+  G_LOG_LEVEL_WARNING;
 
 void
 log_handler(const gchar *log_domain, GLogLevelFlags log_level,
