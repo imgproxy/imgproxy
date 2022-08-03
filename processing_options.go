@@ -728,10 +728,8 @@ func applyBackgroundOption(po *processingOptions, args []string) error {
 			po.Flatten = true
 			po.Background.Color = c
 		} else if args[0] == "blur" {
-			po.Flatten = true
+			po.Flatten = false
 			po.Background.Effect = "blur"
-			// Test hack
-			po.Background.Color = rgbColor{255, 0, 0}
 		} else {
 			return fmt.Errorf("Invalid background argument: %s", err)
 		}
