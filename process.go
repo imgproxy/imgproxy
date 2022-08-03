@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"math"
 	"runtime"
@@ -552,9 +551,7 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 			centerImage := new(vipsImage)
 			defer centerImage.Clear()
 
-			// Load the second copy and reapply transformations that effect the size/shape
-			// of the image.
-			if err = loadAndTransform(ctx, centerImage, data, po, imgtype, srcWidth, srcHeight, angle, flip); err != nil {
+			if err = img.CopyTo(centerImage); err != nil {
 				return err
 			}
 
@@ -623,111 +620,6 @@ func transformImage(ctx context.Context, img *vipsImage, data []byte, po *proces
 	}
 
 	return copyMemoryAndCheckTimeout(ctx, img)
-}
-
-func loadAndTransform(ctx context.Context,
-	img *vipsImage,
-	data []byte,
-	po *processingOptions,
-	imgtype imageType,
-	srcWidth int,
-	srcHeight int,
-	angle int,
-	flip bool) error {
-	var err error
-
-	cropWidth := calcCropSize(srcWidth, po.Crop.Width)
-	cropHeight := calcCropSize(srcHeight, po.Crop.Height)
-
-	cropGravity := po.Crop.Gravity
-	if cropGravity.Type == gravityUnknown {
-		cropGravity = po.Gravity
-	}
-
-	widthToScale := minNonZeroInt(cropWidth, srcWidth)
-	heightToScale := minNonZeroInt(cropHeight, srcHeight)
-
-	scale := calcScale(widthToScale, heightToScale, po, imgtype)
-	dprWidth := scaleInt(po.Width, po.Dpr)
-	dprHeight := scaleInt(po.Height, po.Dpr)
-
-	if cropWidth > 0 {
-		cropWidth = maxInt(1, scaleInt(cropWidth, scale))
-	}
-	if cropHeight > 0 {
-		cropHeight = maxInt(1, scaleInt(cropHeight, scale))
-	}
-	if cropGravity.Type != gravityFocusPoint {
-		cropGravity.X *= scale
-		cropGravity.Y *= scale
-	}
-
-	if scale != 1 && data != nil && canScaleOnLoad(imgtype, scale) {
-		jpegShrink := calcJpegShink(scale, imgtype)
-
-		if imgtype != imageTypeJPEG || jpegShrink != 1 {
-			// Do some scale-on-load
-			if err = img.Load(data, imgtype, jpegShrink, scale, 1); err != nil {
-				return err
-			}
-		} else {
-			// No scale-on-load
-			if err := img.Load(data, imgtype, 1, 1.0, 1); err != nil {
-				return err
-			}
-		}
-
-		// Update scale after scale-on-load
-		newWidth, newHeight, _, _ := extractMeta(img, po.Rotate, po.AutoRotate)
-		if srcWidth > srcHeight {
-			scale = float64(srcWidth) * scale / float64(newWidth)
-		} else {
-			scale = float64(srcHeight) * scale / float64(newHeight)
-		}
-		if srcWidth == scaleInt(srcWidth, scale) && srcHeight == scaleInt(srcHeight, scale) {
-			scale = 1.0
-		}
-	} else {
-		// No scale-on-load
-		if err := img.Load(data, imgtype, 1, 1.0, 1); err != nil {
-			return err
-		}
-	}
-
-	if img.VipsImage == nil {
-		return errors.New("failed to load image")
-	}
-
-	if scale != 1 {
-		if err = img.Resize(scale, img.HasAlpha()); err != nil {
-			return err
-		}
-	}
-
-	if err = copyMemoryAndCheckTimeout(ctx, img); err != nil {
-		return err
-	}
-
-	if err = img.Rotate(angle); err != nil {
-		return err
-	}
-
-	if flip {
-		if err = img.Flip(); err != nil {
-			return err
-		}
-	}
-
-	if err = img.Rotate(po.Rotate); err != nil {
-		return err
-	}
-	if err = cropImage(img, cropWidth, cropHeight, &cropGravity); err != nil {
-		return err
-	}
-	if err = cropImage(img, dprWidth, dprHeight, &po.Gravity); err != nil {
-		return err
-	}
-	return nil
 }
 
 func transformAnimated(ctx context.Context, img *vipsImage, data []byte, po *processingOptions, imgtype imageType) error {
