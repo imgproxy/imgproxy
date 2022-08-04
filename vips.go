@@ -685,6 +685,13 @@ func (img *vipsImage) CopyMemory() error {
 	return nil
 }
 
+func (img *vipsImage) CopyTo(destImg *vipsImage) error {
+	if C.vips_copy_go(img.VipsImage, &destImg.VipsImage) != 0 {
+		return vipsError()
+	}
+	return nil
+}
+
 func (img *vipsImage) Replicate(width, height int) error {
 	var tmp *C.VipsImage
 
