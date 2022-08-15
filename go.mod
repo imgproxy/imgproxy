@@ -3,7 +3,7 @@ module github.com/imgproxy/imgproxy/v3
 go 1.16
 
 require (
-	cloud.google.com/go/storage v1.24.0
+	cloud.google.com/go/storage v1.25.0
 	github.com/Azure/azure-storage-blob-go v0.15.0
 	github.com/DataDog/datadog-go/v5 v5.1.1
 	github.com/Microsoft/go-winio v0.5.2 // indirect
