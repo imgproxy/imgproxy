@@ -1,6 +1,9 @@
 # Changelog
 
 ## [Unreleased]
+### Changed
+- (docker) Faster images quantization.
+- (docker) Faster loading of GIF.
 
 ## [3.7.1] - 2022-08-01
 ### Fix
