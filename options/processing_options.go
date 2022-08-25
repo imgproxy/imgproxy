@@ -66,6 +66,7 @@ type ProcessingOptions struct {
 	MinHeight         int
 	ZoomWidth         float64
 	ZoomHeight        float64
+	Page              int
 	Dpr               float64
 	Gravity           GravityOptions
 	Enlarge           bool
@@ -115,6 +116,7 @@ func NewProcessingOptions() *ProcessingOptions {
 		Height:            0,
 		ZoomWidth:         1,
 		ZoomHeight:        1,
+		Page:              -1,
 		Gravity:           GravityOptions{Type: GravityCenter},
 		Enlarge:           false,
 		Extend:            ExtendOptions{Enabled: false, Gravity: GravityOptions{Type: GravityCenter}},
@@ -278,6 +280,20 @@ func applyMinHeightOption(po *ProcessingOptions, args []string) error {
 	}
 
 	return parseDimension(&po.MinHeight, " min height", args[0])
+}
+
+func applyPageOption(po *ProcessingOptions, args []string) error {
+	if len(args) > 1 {
+		return fmt.Errorf("Invalid page arguments: %v", args)
+	}
+
+	if page, err := strconv.Atoi(args[0]); err == nil && page >= 1 {
+		po.Page = page
+	} else {
+		return fmt.Errorf("Invalid page: %s", args[0])
+	}
+
+	return nil
 }
 
 func applyEnlargeOption(po *ProcessingOptions, args []string) error {
@@ -874,6 +890,8 @@ func applyURLOption(po *ProcessingOptions, name string, args []string) error {
 		return applyWidthOption(po, args)
 	case "height", "h":
 		return applyHeightOption(po, args)
+	case "page", "pg":
+		return applyPageOption(po, args)
 	case "min-width", "mw":
 		return applyMinWidthOption(po, args)
 	case "min-height", "mh":

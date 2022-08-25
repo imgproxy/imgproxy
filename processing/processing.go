@@ -244,7 +244,7 @@ func ProcessImage(ctx context.Context, imgdata *imagedata.ImageData, po *options
 
 	pages := 1
 	if animationSupport {
-		pages = -1
+		pages = po.Page
 	}
 
 	img := new(vips.Image)
