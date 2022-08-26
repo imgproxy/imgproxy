@@ -63,6 +63,6 @@ namespace ImgProxy.Examples
             => Convert.ToBase64String(stream).TrimEnd('=').Replace('+', '-').Replace('/', '_');
 
         static string EncodeBase64URLSafeString(this string str)
-            => EncodeBase64URLSafeString(Encoding.ASCII.GetBytes(str));
+            => EncodeBase64URLSafeString(Encoding.UTF8.GetBytes(str));
     }
 }
