@@ -402,18 +402,18 @@ func Configure() error {
 	configurators.Bool(&UseLinearColorspace, "IMGPROXY_USE_LINEAR_COLORSPACE")
 	configurators.Bool(&DisableShrinkOnLoad, "IMGPROXY_DISABLE_SHRINK_ON_LOAD")
 
-	if err := configurators.Hex(&Keys, "IMGPROXY_KEY"); err != nil {
+	if err := configurators.HexSlice(&Keys, "IMGPROXY_KEY"); err != nil {
 		return err
 	}
-	if err := configurators.Hex(&Salts, "IMGPROXY_SALT"); err != nil {
+	if err := configurators.HexSlice(&Salts, "IMGPROXY_SALT"); err != nil {
 		return err
 	}
 	configurators.Int(&SignatureSize, "IMGPROXY_SIGNATURE_SIZE")
 
-	if err := configurators.HexFile(&Keys, keyPath); err != nil {
+	if err := configurators.HexSliceFile(&Keys, keyPath); err != nil {
 		return err
 	}
-	if err := configurators.HexFile(&Salts, saltPath); err != nil {
+	if err := configurators.HexSliceFile(&Salts, saltPath); err != nil {
 		return err
 	}
 

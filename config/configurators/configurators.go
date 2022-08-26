@@ -150,7 +150,7 @@ func ImageTypesQuality(m map[imagetype.Type]int, name string) error {
 	return nil
 }
 
-func Hex(b *[][]byte, name string) error {
+func HexSlice(b *[][]byte, name string) error {
 	var err error
 
 	if env := os.Getenv(name); len(env) > 0 {
@@ -170,7 +170,7 @@ func Hex(b *[][]byte, name string) error {
 	return nil
 }
 
-func HexFile(b *[][]byte, filepath string) error {
+func HexSliceFile(b *[][]byte, filepath string) error {
 	if len(filepath) == 0 {
 		return nil
 	}
