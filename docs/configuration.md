@@ -79,7 +79,7 @@ You can also specify a secret key to enable authorization with the HTTP `Authori
 
 * `IMGPROXY_SECRET`: the authorization token. If specified, the HTTP request should contain the `Authorization: Bearer %secret%` header.
 
-imgproxy does not send CORS headers by default. CORS will need to be allowed by uisng the following variable:
+imgproxy does not send CORS headers by default. CORS will need to be allowed by using the following variable:
 
 * `IMGPROXY_ALLOW_ORIGIN`: when specified, enables CORS headers with the provided origin. CORS headers are disabled by default.
 
