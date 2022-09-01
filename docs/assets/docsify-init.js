@@ -42,6 +42,7 @@ window.$docsify = {
   nameLink: false,
   repo: 'https://github.com/imgproxy',
   loadSidebar: true,
+  relativePath: true,
   subMaxLevel: 2,
   auto2top: true,
   routerMode: window.DOCSIFY_ROUTER_MODE || "hash",
