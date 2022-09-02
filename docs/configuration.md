@@ -83,7 +83,7 @@ If you don't want to reveal your source URLs, you can encrypt them with the AES-
 
 * `IMGPROXY_SOURCE_URL_ENCRYPRION_KEY`: hex-encoded key used for source URL encryption. Default: blank
 
-**📝Note:** Read more about source URLs encryption in the [Encrypting the source URL](encrypting_the_source_url.md) guide.
+**📝Note:** Read more about source URL encryption in the [encrypting the source URL guide](encrypting_the_source_url.md).
 
 imgproxy does not send CORS headers by default. CORS will need to be allowed by uisng the following variable:
 
