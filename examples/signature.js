@@ -16,15 +16,7 @@ const sign = (salt, target, secret) => {
   return urlSafeBase64(hmac.digest())
 }
 
-const url = 'http://img.example.com/pretty/image.jpg'
-const resizing_type = 'fill'
-const width = 300
-const height = 300
-const gravity = 'no'
-const enlarge = 1
-const extension = 'png'
-const encoded_url = urlSafeBase64(url)
-const path = `/rs:${resizing_type}:${width}:${height}:${enlarge}/g:${gravity}/${encoded_url}.${extension}`
+const path = "/rs:fit:300:300/plain/http://img.example.com/pretty/image.jpg"
 
 const signature = sign(SALT, path, KEY)
 const result = `/${signature}${path}`

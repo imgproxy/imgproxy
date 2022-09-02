@@ -1,7 +1,4 @@
-//go:build exclude
-// +build exclude
-
-package main
+package examples
 
 import (
 	"bytes"
@@ -21,7 +18,7 @@ func pkcs7pad(data []byte, blockSize int) []byte {
 	return append(data, padding...)
 }
 
-func main() {
+func ExcryptSourceURL() {
 	key := "1eb5b0e971ad7f45324c1bb15c947cb207c43152fa5c6c7f35c4f36e0c18e0f1"
 
 	var (

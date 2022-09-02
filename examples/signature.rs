@@ -2,7 +2,7 @@ use std::process;
 
 use base64; // https://crates.io/crates/base64
 use hex::{self, FromHexError}; // https://crates.io/crates/hex
-use hmac::{Hmac, Mac, NewMac}; // https://crates.io/crates/hmac
+use hmac::{Hmac, Mac}; // https://crates.io/crates/hmac
 use sha2::Sha256; // https://crates.io/crates/sha2
 
 type HmacSha256 = Hmac<Sha256>;
@@ -25,16 +25,11 @@ pub enum Error {
 }
 
 fn main() {
-    let img = Image {
-        src: "http://img.example.com/pretty/image.jpg",
-        width: 100,
-        height: 80,
-        dpr: 2,
-        ext: "webp",
-    };
-    match sign_url(img) {
-        Ok(url) => {
-            println!("{}", url);
+    let path = "/rs:fit:300:300/plain/http://img.example.com/pretty/image.jpg";
+
+    match sign_path(path) {
+        Ok(signed_path) => {
+            println!("{}", signed_path);
             process::exit(0);
         }
         Err(err) => {
@@ -44,18 +39,7 @@ fn main() {
     }
 }
 
-pub fn sign_url(img: Image) -> Result<String, Error> {
-    let url = format!(
-        "/rs:{resize_type}:{width}:{height}:{enlarge}:{extend}/dpr:{dpr}/{src}.{ext}",
-        resize_type = "auto",
-        width = img.width,
-        height = img.height,
-        enlarge = 0,
-        extend = 0,
-        dpr = img.dpr,
-        src = base64::encode_config(img.src.as_bytes(), base64::URL_SAFE_NO_PAD),
-        ext = img.ext,
-    );
+pub fn sign_path(path: &str) -> Result<String, Error> {
     let decoded_key = match hex::decode(KEY) {
         Ok(key) => key,
         Err(err) => return Err(Error::InvalidKey(err)),
@@ -64,12 +48,15 @@ pub fn sign_url(img: Image) -> Result<String, Error> {
         Ok(salt) => salt,
         Err(err) => return Err(Error::InvalidSalt(err)),
     };
-    let mut hmac = HmacSha256::new_varkey(&decoded_key).unwrap();
+
+    let mut hmac = HmacSha256::new_from_slice(&decoded_key).unwrap();
     hmac.update(&decoded_salt);
-    hmac.update(url.as_bytes());
+    hmac.update(path.as_bytes());
+
     let signature = hmac.finalize().into_bytes();
     let signature = base64::encode_config(signature.as_slice(), base64::URL_SAFE_NO_PAD);
-    let signed_url = format!("/{signature}{url}", signature = signature, url = url);
 
-    Ok(signed_url)
+    let signed_path = format!("/{}{}", signature, path);
+
+    Ok(signed_path)
 }
