@@ -5,6 +5,7 @@
 * [Generating the URL](generating_the_url)
 * [Getting the image info<img title="imgproxy Pro feature" src="/assets/pro.svg">](getting_the_image_info)
 * [Signing the URL](signing_the_url)
+* [Encrypting the source URL<img src="/assets/pro.svg">](encrypting_the_source_url)
 * [Watermark](watermark)
 * [Presets](presets)
 * [Object detection<img title="imgproxy Pro feature" src="/assets/pro.svg">](object_detection)

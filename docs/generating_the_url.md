@@ -720,9 +720,6 @@ Read more about presets in the [Presets](presets.md) guide.
 Default: empty
 
 ## Source URL
-
-There are two ways to specify the source url:
-
 ### Plain
 
 The source URL can be provided as is, prepended by the `/plain/` segment:
@@ -751,6 +748,20 @@ When using an encoded source URL, you can specify the [extension](#extension) af
 
 ```
 /aHR0cDovL2V4YW1w/bGUuY29tL2ltYWdl/cy9jdXJpb3NpdHku/anBn.png
+```
+
+#### Encrypted with AES-CBC
+
+The source URL can be encrypted with the AES-CBC algorithm, prepended by the `/enc/` segment. The encrypted URL can be split with `/` as desired:
+
+```
+/enc/jwV3wUD9r4VBIzgv/ang3Hbh0vPpcm5cc/VO5rHxzonpvZjppG/2VhDnX2aariBYegH/jlhw_-dqjXDMm4af/ZDU6y5sBog
+```
+
+When using an encrypted source URL, you can specify the [extension](#extension) after `.`:
+
+```
+/enc/jwV3wUD9r4VBIzgv/ang3Hbh0vPpcm5cc/VO5rHxzonpvZjppG/2VhDnX2aariBYegH/jlhw_-dqjXDMm4af/ZDU6y5sBog.png
 ```
 
 ## Extension

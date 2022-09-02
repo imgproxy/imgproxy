@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+### Add
+- (pro) Add encrypted source URL support.
 
 ## [3.7.2] - 2022-08-22
 ### Changed

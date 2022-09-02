@@ -79,6 +79,12 @@ You can also specify a secret key to enable authorization with the HTTP `Authori
 
 * `IMGPROXY_SECRET`: the authorization token. If specified, the HTTP request should contain the `Authorization: Bearer %secret%` header.
 
+If you don't want to reveal your source URLs, you can encrypt them with the AES-CBC algorithm:
+
+* `IMGPROXY_SOURCE_URL_ENCRYPRION_KEY`: hex-encoded key used for source URL encryption. Default: blank
+
+**📝Note:** Read more about source URL encryption in the [encrypting the source URL guide](encrypting_the_source_url.md).
+
 imgproxy does not send CORS headers by default. CORS will need to be allowed by uisng the following variable:
 
 * `IMGPROXY_ALLOW_ORIGIN`: when specified, enables CORS headers with the provided origin. CORS headers are disabled by default.

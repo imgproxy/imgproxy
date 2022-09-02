@@ -18,9 +18,6 @@ A signature protects your URL from being modified by an attacker. It is highly r
 Once you set up your [URL signature](configuration.md#url-signature), check out the [Signing the URL](signing_the_url.md) guide to learn about how to sign your URLs. Otherwise, since the signature is required, feel free to use any string here.
 
 ### Source URL
-
-There are two ways to specify source url:
-
 #### Plain
 
 The source URL can be provided as is, prepended by `/plain/` part:
@@ -37,6 +34,14 @@ The source URL can be encoded with URL-safe Base64. The encoded URL can be split
 
 ```
 /aHR0cDovL2V4YW1w/bGUuY29tL2ltYWdl/cy9jdXJpb3NpdHku/anBn
+```
+
+#### Encrypted with AES-CBC
+
+The source URL can be encrypted with the AES-CBC algorithm, prepended by the `/enc/` segment. The encrypted URL can be split with `/` as desired:
+
+```
+/enc/jwV3wUD9r4VBIzgv/ang3Hbh0vPpcm5cc/VO5rHxzonpvZjppG/2VhDnX2aariBYegH/jlhw_-dqjXDMm4af/ZDU6y5sBog
 ```
 
 ## Response format
