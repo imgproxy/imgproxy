@@ -46,17 +46,7 @@ func customBase64(input: Data) -> String {
 let key = "943b421c9eb07c830af81030552c86009268de4e532ba2ee2eab8247c6da0881".hexadecimal()!;
 let salt = "520f986b998545b4785e0defbc4f3c1203f22de2374a3d53cb7a7fe9fea309c5".hexadecimal()!;
 
-let resizing = "fill";
-let width = 300;
-let height = 300;
-let gravity = "no";
-let enlarge = 1;
-let originalUrl = "http://img.example.com/pretty/image.jpg";
-
-let encodedUrl = customBase64(input: Data(originalUrl.utf8))
-let format = "png";
-
-let partialPath = "/rs:\(resizing):\(width):\(height):\(enlarge)/g:\(gravity)/\(encodedUrl).\(format)"
+let partialPath = "/rs:fit:300:300/plain/http://img.example.com/pretty/image.jpg"
 let toSign = salt + partialPath.utf8
 
 let signature = toSign.hmac256(key: key)
