@@ -88,7 +88,6 @@ type ProcessingOptions struct {
 	StripColorProfile bool
 	AutoRotate        bool
 	EnforceThumbnail  bool
-	ReturnAttachment  bool
 
 	SkipProcessingFormats []imagetype.Type
 
@@ -101,7 +100,8 @@ type ProcessingOptions struct {
 	PreferAvif  bool
 	EnforceAvif bool
 
-	Filename string
+	Filename         string
+	ReturnAttachment bool
 
 	UsedPresets []string
 
@@ -916,8 +916,6 @@ func applyURLOption(po *ProcessingOptions, name string, args []string) error {
 		return applyStripColorProfileOption(po, args)
 	case "enforce_thumbnail", "eth":
 		return applyEnforceThumbnailOption(po, args)
-	case "return_attachment", "att":
-		return applyReturnAttachmentOption(po, args)
 	// Saving options
 	case "quality", "q":
 		return applyQualityOption(po, args)
@@ -936,6 +934,8 @@ func applyURLOption(po *ProcessingOptions, name string, args []string) error {
 		return applyExpiresOption(po, args)
 	case "filename", "fn":
 		return applyFilenameOption(po, args)
+	case "return_attachment", "att":
+		return applyReturnAttachmentOption(po, args)
 	// Presets
 	case "preset", "pr":
 		return applyPresetOption(po, args)
