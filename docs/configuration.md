@@ -85,7 +85,7 @@ If you don't want to reveal your source URLs, you can encrypt them with the AES-
 
 **📝Note:** Read more about source URL encryption in the [encrypting the source URL guide](encrypting_the_source_url.md).
 
-imgproxy does not send CORS headers by default. CORS will need to be allowed by uisng the following variable:
+imgproxy does not send CORS headers by default. CORS will need to be allowed by using the following variable:
 
 * `IMGPROXY_ALLOW_ORIGIN`: when specified, enables CORS headers with the provided origin. CORS headers are disabled by default.
 
