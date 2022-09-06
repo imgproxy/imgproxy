@@ -73,7 +73,7 @@ To check if the source image is SVG, imgproxy reads some amount of bytes; by def
 
 Requests to some image sources may go through too many redirects or enter an infinite loop. You can limit the number of allowed redirects:
 
-* `IMGPROXY_MAX_REDIRECTS`: the max number of redirects imgproxy can follow while requesting the source image. Default: `10`
+* `IMGPROXY_MAX_REDIRECTS`: the max number of redirects imgproxy can follow while requesting the source image. When set to `0`, no redirecting is allowed. Default: `10`
 
 You can also specify a secret key to enable authorization with the HTTP `Authorization` header for use in production environments:
 
