@@ -590,6 +590,24 @@ func (s *ProcessingOptionsTestSuite) TestParseBase64URLOnlyPresets() {
 	require.Equal(s.T(), originURL, imageURL)
 }
 
+func (s *ProcessingOptionsTestSuite) TestWhitelistProcessingOptions() {
+	config.WhitelistProcessingOpts = []string{"width", "height"}
+
+	originURL := "http://images.dev/lorem/ipsum.jpg"
+	path := fmt.Sprintf("/width:200/height:300/zoom:3:3/blur:0.2/plain/%s", originURL)
+
+	po, imageURL, err := ParsePath(path, make(http.Header))
+
+	require.Nil(s.T(), err)
+
+	require.Equal(s.T(), float32(0), po.Blur)
+	require.Equal(s.T(), 200, po.Width)
+	require.Equal(s.T(), 300, po.Height)
+	require.Equal(s.T(), float64(1), po.ZoomWidth)
+	require.Equal(s.T(), float64(1), po.ZoomHeight)
+	require.Equal(s.T(), originURL, imageURL)
+}
+
 func TestProcessingOptions(t *testing.T) {
 	suite.Run(t, new(ProcessingOptionsTestSuite))
 }

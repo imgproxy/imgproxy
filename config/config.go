@@ -117,8 +117,9 @@ var (
 
 	BaseURL string
 
-	Presets     []string
-	OnlyPresets bool
+	WhitelistProcessingOpts []string
+	Presets                 []string
+	OnlyPresets             bool
 
 	WatermarkData    string
 	WatermarkPath    string
@@ -284,6 +285,7 @@ func Reset() {
 
 	BaseURL = ""
 
+	WhitelistProcessingOpts = make([]string, 0)
 	Presets = make([]string, 0)
 	OnlyPresets = false
 
@@ -458,6 +460,7 @@ func Configure() error {
 
 	configurators.String(&BaseURL, "IMGPROXY_BASE_URL")
 
+	configurators.StringSlice(&WhitelistProcessingOpts, "IMGPROXY_WHITELIST_PROCESSING_OPTS")
 	configurators.StringSlice(&Presets, "IMGPROXY_PRESETS")
 	if err := configurators.StringSliceFile(&Presets, presetsPath); err != nil {
 		return err

@@ -946,12 +946,29 @@ func applyURLOption(po *ProcessingOptions, name string, args []string) error {
 
 func applyURLOptions(po *ProcessingOptions, options urlOptions) error {
 	for _, opt := range options {
+		if !isWhitelistedOption(opt) {
+			continue
+		}
+		
 		if err := applyURLOption(po, opt.Name, opt.Args); err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+func isWhitelistedOption(option urlOption) bool {
+	if len(config.WhitelistProcessingOpts) == 0 {
+		return true
+	}
+
+	for _, v := range config.WhitelistProcessingOpts {
+		if v == option.Name {
+			return true
+		}
+	}
+	return false
 }
 
 func defaultProcessingOptions(headers http.Header) (*ProcessingOptions, error) {
