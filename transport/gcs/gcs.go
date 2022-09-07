@@ -129,6 +129,7 @@ func (t transport) RoundTrip(req *http.Request) (*http.Response, error) {
 		size = reader.Attrs.Size
 	}
 
+	header.Set("Accept-Ranges", "bytes")
 	header.Set("Content-Length", strconv.Itoa(int(size)))
 	header.Set("Content-Type", reader.Attrs.ContentType)
 	header.Set("Cache-Control", reader.Attrs.CacheControl)

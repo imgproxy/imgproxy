@@ -91,6 +91,7 @@ func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error)
 		}
 	}
 
+	header.Set("Accept-Ranges", "bytes")
 	header.Set("Content-Length", strconv.Itoa(int(size)))
 
 	return &http.Response{
