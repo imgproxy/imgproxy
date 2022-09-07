@@ -133,6 +133,10 @@ func withPanicHandler(h router.RouteHandler) router.RouteHandler {
 	return func(reqID string, rw http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if rerr := recover(); rerr != nil {
+				if rerr == http.ErrAbortHandler {
+					panic(rerr)
+				}
+
 				err, ok := rerr.(error)
 				if !ok {
 					panic(rerr)

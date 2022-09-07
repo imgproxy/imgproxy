@@ -103,6 +103,8 @@ type ProcessingOptions struct {
 	Filename         string
 	ReturnAttachment bool
 
+	Raw bool
+
 	UsedPresets []string
 
 	defaultQuality int
@@ -775,6 +777,16 @@ func applySkipProcessingFormatsOption(po *ProcessingOptions, args []string) erro
 	return nil
 }
 
+func applyRawOption(po *ProcessingOptions, args []string) error {
+	if len(args) > 1 {
+		return fmt.Errorf("Invalid return_attachment arguments: %v", args)
+	}
+
+	po.Raw = parseBoolOption(args[0])
+
+	return nil
+}
+
 func applyFilenameOption(po *ProcessingOptions, args []string) error {
 	if len(args) > 1 {
 		return fmt.Errorf("Invalid filename arguments: %v", args)
@@ -928,6 +940,8 @@ func applyURLOption(po *ProcessingOptions, name string, args []string) error {
 	// Handling options
 	case "skip_processing", "skp":
 		return applySkipProcessingFormatsOption(po, args)
+	case "raw":
+		return applyRawOption(po, args)
 	case "cachebuster", "cb":
 		return applyCacheBusterOption(po, args)
 	case "expires", "exp":

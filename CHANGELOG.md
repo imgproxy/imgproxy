@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 ### Add
+- Add [raw](https://docs.imgproxy.net/latest/generating_the_url?id=raw) processing option.
 - (pro) Add encrypted source URL support.
 
 ## [3.7.2] - 2022-08-22

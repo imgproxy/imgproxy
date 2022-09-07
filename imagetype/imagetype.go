@@ -67,6 +67,15 @@ var (
 	}
 )
 
+func ByMime(mime string) Type {
+	for k, v := range mimes {
+		if v == mime {
+			return k
+		}
+	}
+	return Unknown
+}
+
 func (it Type) String() string {
 	for k, v := range Types {
 		if v == it {

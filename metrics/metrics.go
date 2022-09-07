@@ -88,6 +88,20 @@ func StartProcessingSegment(ctx context.Context) context.CancelFunc {
 	return cancel
 }
 
+func StartStreamingSegment(ctx context.Context) context.CancelFunc {
+	promCancel := prometheus.StartStreamingSegment()
+	nrCancel := newrelic.StartSegment(ctx, "Streaming image")
+	ddCancel := datadog.StartSpan(ctx, "streaming_image")
+
+	cancel := func() {
+		promCancel()
+		nrCancel()
+		ddCancel()
+	}
+
+	return cancel
+}
+
 func SendError(ctx context.Context, errType string, err error) {
 	prometheus.IncrementErrorsTotal(errType)
 	newrelic.SendError(ctx, errType, err)

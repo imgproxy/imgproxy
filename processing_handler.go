@@ -61,10 +61,10 @@ func setCacheControl(rw http.ResponseWriter, originHeaders map[string]string) {
 	var ttl int
 
 	if config.CacheControlPassthrough && originHeaders != nil {
-		if val, ok := originHeaders["Cache-Control"]; ok {
+		if val, ok := originHeaders["Cache-Control"]; ok && len(val) > 0 {
 			cacheControl = val
 		}
-		if val, ok := originHeaders["Expires"]; ok {
+		if val, ok := originHeaders["Expires"]; ok && len(val) > 0 {
 			expires = val
 		}
 	}
@@ -92,6 +92,15 @@ func setVary(rw http.ResponseWriter) {
 	}
 }
 
+func setCanonical(rw http.ResponseWriter, originURL string) {
+	if config.SetCanonicalHeader {
+		if strings.HasPrefix(originURL, "https://") || strings.HasPrefix(originURL, "http://") {
+			linkHeader := fmt.Sprintf(`<%s>; rel="canonical"`, originURL)
+			rw.Header().Set("Link", linkHeader)
+		}
+	}
+}
+
 func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, statusCode int, resultData *imagedata.ImageData, po *options.ProcessingOptions, originURL string, originData *imagedata.ImageData) {
 	var contentDisposition string
 	if len(po.Filename) > 0 {
@@ -107,15 +116,9 @@ func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, sta
 		rw.Header().Set("Content-DPR", strconv.FormatFloat(po.Dpr, 'f', 2, 32))
 	}
 
-	if config.SetCanonicalHeader {
-		if strings.HasPrefix(originURL, "https://") || strings.HasPrefix(originURL, "http://") {
-			linkHeader := fmt.Sprintf(`<%s>; rel="canonical"`, originURL)
-			rw.Header().Set("Link", linkHeader)
-		}
-	}
-
 	setCacheControl(rw, originData.Headers)
 	setVary(rw)
+	setCanonical(rw, originURL)
 
 	if config.EnableDebugHeaders {
 		rw.Header().Set("X-Origin-Content-Length", strconv.Itoa(len(originData.Data)))
@@ -227,6 +230,11 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 			fmt.Sprintf("Source URL is not allowed: %s", imageURL),
 			"Invalid source",
 		))
+	}
+
+	if po.Raw {
+		streamOriginImage(ctx, reqID, r, rw, po, imageURL)
+		return
 	}
 
 	// SVG is a special case. Though saving to svg is not supported, SVG->SVG is.

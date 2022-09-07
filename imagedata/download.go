@@ -130,7 +130,7 @@ func headersToStore(res *http.Response) map[string]string {
 	return m
 }
 
-func requestImage(imageURL string, header http.Header, jar *cookiejar.Jar) (*http.Response, error) {
+func BuildImageRequest(imageURL string, header http.Header, jar *cookiejar.Jar) (*http.Request, error) {
 	req, err := http.NewRequest("GET", imageURL, nil)
 	if err != nil {
 		return nil, ierrors.New(404, err.Error(), msgSourceImageIsUnreachable)
@@ -158,12 +158,31 @@ func requestImage(imageURL string, header http.Header, jar *cookiejar.Jar) (*htt
 		}
 	}
 
+	return req, nil
+}
+
+func SendRequest(req *http.Request) (*http.Response, error) {
 	res, err := downloadClient.Do(req)
 	if err != nil {
 		return nil, ierrors.New(500, checkTimeoutErr(err).Error(), msgSourceImageIsUnreachable)
 	}
 
+	return res, nil
+}
+
+func requestImage(imageURL string, header http.Header, jar *cookiejar.Jar) (*http.Response, error) {
+	req, err := BuildImageRequest(imageURL, header, jar)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := SendRequest(req)
+	if err != nil {
+		return nil, err
+	}
+
 	if res.StatusCode == http.StatusNotModified {
+		res.Body.Close()
 		return nil, &ErrorNotModified{Message: "Not Modified", Headers: headersToStore(res)}
 	}
 

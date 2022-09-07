@@ -195,6 +195,14 @@ func StartProcessingSegment() context.CancelFunc {
 	}
 }
 
+func StartStreamingSegment() context.CancelFunc {
+	if !enabled {
+		return func() {}
+	}
+
+	return startDuration(requestSpanDuration.With(prometheus.Labels{"span": "streaming"}))
+}
+
 func startDuration(m prometheus.Observer) context.CancelFunc {
 	t := time.Now()
 	return func() {
