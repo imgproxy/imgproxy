@@ -6,11 +6,15 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"mime"
 	"net/http"
 	"os"
+	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/httprange"
 )
 
 type transport struct {
@@ -41,7 +45,32 @@ func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error)
 		return respNotFound(req, fmt.Sprintf("%s is directory", req.URL.Path)), nil
 	}
 
-	if config.ETagEnabled {
+	statusCode := 200
+	size := fi.Size()
+	body := io.ReadCloser(f)
+
+	mime := mime.TypeByExtension(filepath.Ext(fi.Name()))
+	header.Set("Content-Type", mime)
+
+	start, end, err := httprange.Parse(req.Header.Get("Range"))
+	switch {
+	case err != nil:
+		f.Close()
+		return httprange.InvalidHTTPRangeResponse(req), nil
+
+	case end != 0:
+		if end < 0 {
+			end = size - 1
+		}
+
+		f.Seek(start, io.SeekStart)
+
+		statusCode = http.StatusPartialContent
+		size = end - start + 1
+		body = &fileLimiter{f: f, left: int(size)}
+		header.Set("Content-Range", fmt.Sprintf("bytes %d-%d/%d", start, end, fi.Size()))
+
+	case config.ETagEnabled:
 		etag := BuildEtag(req.URL.Path, fi)
 		header.Set("ETag", etag)
 
@@ -62,15 +91,16 @@ func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error)
 		}
 	}
 
+	header.Set("Content-Length", strconv.Itoa(int(size)))
+
 	return &http.Response{
-		Status:        "200 OK",
-		StatusCode:    200,
+		StatusCode:    statusCode,
 		Proto:         "HTTP/1.0",
 		ProtoMajor:    1,
 		ProtoMinor:    0,
 		Header:        header,
-		ContentLength: fi.Size(),
-		Body:          f,
+		ContentLength: size,
+		Body:          body,
 		Close:         true,
 		Request:       req,
 	}, nil

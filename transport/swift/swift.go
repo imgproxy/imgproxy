@@ -46,7 +46,12 @@ func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error)
 	container := req.URL.Host
 	objectName := strings.TrimPrefix(req.URL.Path, "/")
 
-	object, objectHeaders, err := t.con.ObjectOpen(req.Context(), container, objectName, false, make(swift.Headers))
+	reqHeaders := make(swift.Headers)
+	if r := req.Header.Get("Range"); len(r) > 0 {
+		reqHeaders["Range"] = r
+	}
+
+	object, objectHeaders, err := t.con.ObjectOpen(req.Context(), container, objectName, false, reqHeaders)
 
 	header := make(http.Header)
 

@@ -53,7 +53,9 @@ func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error)
 		input.VersionId = aws.String(req.URL.RawQuery)
 	}
 
-	if config.ETagEnabled {
+	if r := req.Header.Get("Range"); len(r) != 0 {
+		input.Range = aws.String(r)
+	} else if config.ETagEnabled {
 		if ifNoneMatch := req.Header.Get("If-None-Match"); len(ifNoneMatch) > 0 {
 			input.IfNoneMatch = aws.String(ifNoneMatch)
 		}
