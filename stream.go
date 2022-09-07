@@ -129,9 +129,7 @@ func streamOriginImage(ctx context.Context, reqID string, r *http.Request, rw ht
 	buf := streamBufPool.Get().(*[]byte)
 	defer streamBufPool.Put(buf)
 
-	if _, err := io.CopyBuffer(rw, res.Body, *buf); err != nil {
-		panic(http.ErrAbortHandler)
-	}
+	_, copyerr := io.CopyBuffer(rw, res.Body, *buf)
 
 	router.LogResponse(
 		reqID, r, res.StatusCode, nil,
@@ -140,4 +138,8 @@ func streamOriginImage(ctx context.Context, reqID string, r *http.Request, rw ht
 			"processing_options": po,
 		},
 	)
+
+	if copyerr != nil {
+		panic(http.ErrAbortHandler)
+	}
 }
