@@ -6,7 +6,7 @@ If you don't want to reveal your source URLs, you can encrypt them with the AES-
 
 The only thing needed for source URL encryption is a key:
 
-* `IMGPROXY_SOURCE_URL_ENCRYPRION_KEY`: hex-encoded key used for source URL encryption. Default: blank
+* `IMGPROXY_SOURCE_URL_ENCRYPTION_KEY`: hex-encoded key used for source URL encryption. Default: blank
 
 The key should be either 16, 24, or 32 bytes long for AES-128-CBC, AES-192-CBC, or AES-256-CBC, respectively.
 
@@ -48,7 +48,7 @@ Before we start, we need an encryption key. We will use the AES-256-CBC algorith
 Run imgproxy using this encryption key, like so:
 
 ```bash
-IMGPROXY_SOURCE_URL_ENCRYPRION_KEY="1eb5b0e971ad7f45324c1bb15c947cb207c43152fa5c6c7f35c4f36e0c18e0f1" imgproxy
+IMGPROXY_SOURCE_URL_ENCRYPTION_KEY="1eb5b0e971ad7f45324c1bb15c947cb207c43152fa5c6c7f35c4f36e0c18e0f1" imgproxy
 ```
 
 Next, assume that you have the following source URL:

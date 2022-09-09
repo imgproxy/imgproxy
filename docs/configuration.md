@@ -81,7 +81,7 @@ You can also specify a secret key to enable authorization with the HTTP `Authori
 
 If you don't want to reveal your source URLs, you can encrypt them with the AES-CBC algorithm:
 
-* `IMGPROXY_SOURCE_URL_ENCRYPRION_KEY`: hex-encoded key used for source URL encryption. Default: blank
+* `IMGPROXY_SOURCE_URL_ENCRYPTION_KEY`: hex-encoded key used for source URL encryption. Default: blank
 
 **📝Note:** Read more about source URL encryption in the [encrypting the source URL guide](encrypting_the_source_url.md).
 
