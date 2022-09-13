@@ -1,9 +1,7 @@
-import { randomSeed } from 'k6';
+import { randomSeed, check } from 'k6';
 import http from 'k6/http';
 import { SharedArray } from 'k6/data';
 import exec from 'k6/execution';
-
-const URL_PREFIX = "http://localhost:8082/unsafe"
 
 export let options = {
   discardResponseBodies: true,
@@ -16,16 +14,19 @@ export let options = {
 randomSeed(42)
 
 const urls = new SharedArray('urls', function () {
-  let data = JSON.parse(open('./urls.json'));
+  const urls_path = __ENV.URLS_PATH || './urls.json'
+  let data = JSON.parse(open(urls_path));
 
   const groups = (__ENV.URL_GROUPS || "").split(",").filter((g) => g != "")
   if (groups.length > 0) {
     data = data.filter((d) => groups.includes(d.group))
   }
 
+  const url_prefix = __ENV.URL_PREFIX || "http://localhost:8082/unsafe"
+
   let unshuffled = [];
   data.forEach((e) => {
-    let url = URL_PREFIX + e.url
+    let url = url_prefix + e.url
     let weight = e.weight || 1
 
     for (var i = 0; i < weight; i++) {
@@ -46,5 +47,8 @@ if (urls.length == 0) {
 }
 
 export default function() {
-  http.get(urls[exec.scenario.iterationInTest % urls.length])
+  const res = http.get(urls[exec.scenario.iterationInTest % urls.length]);
+  check(res, {
+    'is status 200': (r) => r.status === 200,
+  });
 }

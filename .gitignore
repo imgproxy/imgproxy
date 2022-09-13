@@ -9,4 +9,4 @@ docker-base
 docs/sitemap.txt
 .env
 .devcontainer/*
-k6/urls.json
+k6/*.json
