@@ -6,7 +6,7 @@
 - (pro) Add encrypted source URL support.
 
 ### Changed
-- Fix some invalid signature cases that happen because of URL normalization.
+- Try to fix some invalid source URL cases that happen because of URL normalization.
 
 ## [3.7.2] - 2022-08-22
 ### Changed

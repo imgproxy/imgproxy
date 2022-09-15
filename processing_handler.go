@@ -217,14 +217,10 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		))
 	}
 
-	if err := security.VerifySignature(signature, path); err != nil {
-		// Some proxy servers may normalize URL and make signature invalid.
-		// Try to fix the path and repeat the check
-		path = fixPath(path)
+	path = fixPath(path)
 
-		if err = security.VerifySignature(signature, path); err != nil {
-			sendErrAndPanic(ctx, "security", ierrors.New(403, err.Error(), "Forbidden"))
-		}
+	if err := security.VerifySignature(signature, path); err != nil {
+		sendErrAndPanic(ctx, "security", ierrors.New(403, err.Error(), "Forbidden"))
 	}
 
 	po, imageURL, err := options.ParsePath(path, r.Header)
