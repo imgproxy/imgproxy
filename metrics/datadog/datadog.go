@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/DataDog/datadog-go/v5/statsd"
+	"github.com/felixge/httpsnoop"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/ext"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
@@ -109,7 +110,15 @@ func StartRootSpan(ctx context.Context, rw http.ResponseWriter, r *http.Request)
 		tracer.Tag(ext.HTTPURL, r.RequestURI),
 	)
 	cancel := func() { span.Finish() }
-	newRw := dataDogResponseWriter{rw, span}
+
+	newRw := httpsnoop.Wrap(rw, httpsnoop.Hooks{
+		WriteHeader: func(next httpsnoop.WriteHeaderFunc) httpsnoop.WriteHeaderFunc {
+			return func(statusCode int) {
+				span.SetTag(ext.HTTPCode, statusCode)
+				next(statusCode)
+			}
+		},
+	})
 
 	return context.WithValue(ctx, spanCtxKey{}, span), cancel, newRw
 }
@@ -191,20 +200,4 @@ type dataDogLogger struct {
 
 func (l dataDogLogger) Log(msg string) {
 	log.Info(msg)
-}
-
-type dataDogResponseWriter struct {
-	rw   http.ResponseWriter
-	span tracer.Span
-}
-
-func (ddrw dataDogResponseWriter) Header() http.Header {
-	return ddrw.rw.Header()
-}
-func (ddrw dataDogResponseWriter) Write(data []byte) (int, error) {
-	return ddrw.rw.Write(data)
-}
-func (ddrw dataDogResponseWriter) WriteHeader(statusCode int) {
-	ddrw.span.SetTag(ext.HTTPCode, statusCode)
-	ddrw.rw.WriteHeader(statusCode)
 }

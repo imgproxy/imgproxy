@@ -12,6 +12,7 @@ require (
 	github.com/aws/aws-sdk-go v1.44.81
 	github.com/benesch/cgosymbolizer v0.0.0-20190515212042-bec6fe6e597b
 	github.com/bugsnag/bugsnag-go/v2 v2.1.2
+	github.com/felixge/httpsnoop v1.0.3
 	github.com/fsouza/fake-gcs-server v1.38.4
 	github.com/getsentry/sentry-go v0.13.0
 	github.com/go-ole/go-ole v1.2.6 // indirect
