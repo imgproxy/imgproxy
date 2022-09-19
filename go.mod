@@ -9,7 +9,7 @@ require (
 	github.com/Microsoft/go-winio v0.5.2 // indirect
 	github.com/StackExchange/wmi v1.2.1 // indirect
 	github.com/airbrake/gobrake/v5 v5.5.2
-	github.com/aws/aws-sdk-go v1.44.81
+	github.com/aws/aws-sdk-go v1.44.100
 	github.com/benesch/cgosymbolizer v0.0.0-20190515212042-bec6fe6e597b
 	github.com/bugsnag/bugsnag-go/v2 v2.1.2
 	github.com/felixge/httpsnoop v1.0.3
