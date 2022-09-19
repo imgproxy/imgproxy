@@ -63,6 +63,10 @@ body::before {
   }
 }
 
+.markdown-section p {
+  overflow-wrap: break-word;
+}
+
 .loading {
   margin: 150px auto 0;
   position: relative;
