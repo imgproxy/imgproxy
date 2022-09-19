@@ -3,7 +3,7 @@ module github.com/imgproxy/imgproxy/v3
 go 1.16
 
 require (
-	cloud.google.com/go/storage v1.25.0
+	cloud.google.com/go/storage v1.26.0
 	github.com/Azure/azure-storage-blob-go v0.15.0
 	github.com/DataDog/datadog-go/v5 v5.1.1
 	github.com/Microsoft/go-winio v0.5.2 // indirect
@@ -13,7 +13,7 @@ require (
 	github.com/benesch/cgosymbolizer v0.0.0-20190515212042-bec6fe6e597b
 	github.com/bugsnag/bugsnag-go/v2 v2.1.2
 	github.com/felixge/httpsnoop v1.0.3
-	github.com/fsouza/fake-gcs-server v1.38.4
+	github.com/fsouza/fake-gcs-server v1.40.1
 	github.com/getsentry/sentry-go v0.13.0
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/honeybadger-io/honeybadger-go v0.5.0
@@ -33,7 +33,7 @@ require (
 	golang.org/x/image v0.0.0-20220722155232-062f8c9fd539
 	golang.org/x/net v0.0.0-20220812174116-3211cb980234
 	golang.org/x/sys v0.0.0-20220818161305-2296e01440c6
-	google.golang.org/api v0.93.0
+	google.golang.org/api v0.94.0
 	gopkg.in/DataDog/dd-trace-go.v1 v1.41.0
 )
 
