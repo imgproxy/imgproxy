@@ -142,8 +142,6 @@ When cookie forwarding is activated, by default, imgproxy assumes the scope of t
   * `7`: Table from A Visual Detection Model for DCT Coefficient Quantization (1993)
   * `8`: Table from An Improved Detection Model for DCT Coefficient Quantization (1993)
 
-**📝Note:** `IMGPROXY_JPEG_TRELLIS_QUANT`, `IMGPROXY_JPEG_OVERSHOOT_DERINGING`, `IMGPROXY_JPEG_OPTIMIZE_SCANS`, and `IMGPROXY_JPEG_QUANT_TABLE` require libvips to be built with [MozJPEG](https://github.com/mozilla/mozjpeg) since standard libjpeg doesn't support those optimizations.
-
 ### Advanced PNG compression
 
 * `IMGPROXY_PNG_INTERLACED`: when true, enables interlaced PNG compression. Default: `false`
