@@ -510,23 +510,21 @@ vips_replicate_go(VipsImage *in, VipsImage **out, int width, int height) {
 
 int
 vips_embed_go(VipsImage *in, VipsImage **out, int x, int y, int width, int height) {
-  VipsImage *tmp;
+  VipsImage *tmp = NULL;
+
+  if (!vips_image_hasalpha(in)) {
+    if (vips_bandjoin_const1(in, &tmp, 255, NULL))
+      return 1;
+
+    in = tmp;
+  }
 
   int ret =
-    vips_ensure_alpha(in, &tmp) ||
-    vips_embed(tmp, out, x, y, width, height, "extend", VIPS_EXTEND_BLACK, NULL);
+    vips_embed(in, out, x, y, width, height, "extend", VIPS_EXTEND_BLACK, NULL);
 
-  clear_image(&tmp);
+  if (tmp) clear_image(&tmp);
 
   return ret;
-}
-
-int
-vips_ensure_alpha(VipsImage *in, VipsImage **out) {
-  if (vips_image_hasalpha(in))
-    return vips_copy(in, out, NULL);
-
-  return vips_bandjoin_const1(in, out, 255, NULL);
 }
 
 int
@@ -534,30 +532,29 @@ vips_apply_watermark(VipsImage *in, VipsImage *watermark, VipsImage **out, doubl
   VipsImage *base = vips_image_new();
   VipsImage **t = (VipsImage **) vips_object_local_array(VIPS_OBJECT(base), 6);
 
-  if (vips_ensure_alpha(watermark, &t[0])) {
-    clear_image(&base);
-    return 1;
+  if (!vips_image_hasalpha(watermark)) {
+    if (vips_bandjoin_const1(watermark, &t[0], 255, NULL))
+      return 1;
+
+    watermark = t[0];
   }
 
   if (opacity < 1) {
     if (
-      vips_extract_band(t[0], &t[1], 0, "n", t[0]->Bands - 1, NULL) ||
-      vips_extract_band(t[0], &t[2], t[0]->Bands - 1, "n", 1, NULL) ||
+      vips_extract_band(watermark, &t[1], 0, "n", watermark->Bands - 1, NULL) ||
+      vips_extract_band(watermark, &t[2], watermark->Bands - 1, "n", 1, NULL) ||
       vips_linear1(t[2], &t[3], opacity, 0, NULL) ||
       vips_bandjoin2(t[1], t[3], &t[4], NULL)
     ) {
       clear_image(&base);
       return 1;
     }
-  } else {
-    if (vips_copy(t[0], &t[4], NULL)) {
-      clear_image(&base);
-      return 1;
-    }
+
+    watermark = t[4];
   }
 
   int res =
-    vips_composite2(in, t[4], &t[5], VIPS_BLEND_MODE_OVER, "compositing_space", in->Type, NULL) ||
+    vips_composite2(in, watermark, &t[5], VIPS_BLEND_MODE_OVER, "compositing_space", in->Type, NULL) ||
     vips_cast(t[5], out, vips_image_get_format(in), NULL);
 
   clear_image(&base);

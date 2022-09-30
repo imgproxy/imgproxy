@@ -553,17 +553,6 @@ func (img *Image) Trim(threshold float64, smart bool, color Color, equalHor bool
 	return nil
 }
 
-func (img *Image) EnsureAlpha() error {
-	var tmp *C.VipsImage
-
-	if C.vips_ensure_alpha(img.VipsImage, &tmp) != 0 {
-		return Error()
-	}
-
-	C.swap_and_clear(&img.VipsImage, tmp)
-	return nil
-}
-
 func (img *Image) Flatten(bg Color) error {
 	var tmp *C.VipsImage
 
