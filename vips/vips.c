@@ -530,7 +530,7 @@ vips_embed_go(VipsImage *in, VipsImage **out, int x, int y, int width, int heigh
 int
 vips_apply_watermark(VipsImage *in, VipsImage *watermark, VipsImage **out, double opacity) {
   VipsImage *base = vips_image_new();
-  VipsImage **t = (VipsImage **) vips_object_local_array(VIPS_OBJECT(base), 6);
+  VipsImage **t = (VipsImage **) vips_object_local_array(VIPS_OBJECT(base), 7);
 
   if (!vips_image_hasalpha(watermark)) {
     if (vips_bandjoin_const1(watermark, &t[0], 255, NULL))
@@ -553,9 +553,23 @@ vips_apply_watermark(VipsImage *in, VipsImage *watermark, VipsImage **out, doubl
     watermark = t[4];
   }
 
-  int res =
+  int had_alpha = vips_image_hasalpha(in);
+
+  if (
     vips_composite2(in, watermark, &t[5], VIPS_BLEND_MODE_OVER, "compositing_space", in->Type, NULL) ||
-    vips_cast(t[5], out, vips_image_get_format(in), NULL);
+    vips_cast(t[5], &t[6], vips_image_get_format(in), NULL)
+  ) {
+    clear_image(&base);
+    return 1;
+  }
+
+  int res;
+
+  if (!had_alpha && vips_image_hasalpha(t[6])) {
+    res = vips_extract_band(t[6], out, 0, "n", t[6]->Bands - 1, NULL);
+  } else {
+    res = vips_copy(t[6], out, NULL);
+  }
 
   clear_image(&base);
 
