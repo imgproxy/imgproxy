@@ -6,7 +6,6 @@ import (
 	"mime"
 	"net/http"
 	"net/http/cookiejar"
-	"net/url"
 	"path/filepath"
 	"strconv"
 	"sync"
@@ -92,30 +91,26 @@ func streamOriginImage(ctx context.Context, reqID string, r *http.Request, rw ht
 	}
 
 	if res.StatusCode < 300 {
-		imgtype := imagetype.Unknown
+		var filename, ext, mimetype string
 
-		if mimetype := rw.Header().Get("Content-Type"); len(mimetype) > 0 {
-			imgtype = imagetype.ByMime(mimetype)
+		_, filename = filepath.Split(req.URL.Path)
+		ext = filepath.Ext(filename)
+
+		if len(po.Filename) > 0 {
+			filename = po.Filename
 		} else {
-			if u, uerr := url.Parse(imageURL); uerr == nil {
-				if ext := filepath.Ext(u.Path); len(ext) > 1 {
-					imgtype = imagetype.Types[ext[1:]]
+			filename = filename[:len(filename)-len(ext)]
+		}
 
-					if mimetype := mime.TypeByExtension(ext); len(mimetype) > 0 {
-						rw.Header().Set("Content-Type", mimetype)
-					}
-				}
+		mimetype = rw.Header().Get("Content-Type")
+
+		if len(ext) == 0 && len(mimetype) > 0 {
+			if exts, err := mime.ExtensionsByType(mimetype); err == nil && len(exts) != 0 {
+				ext = exts[0]
 			}
 		}
 
-		var contentDisposition string
-		if len(po.Filename) > 0 {
-			contentDisposition = imgtype.ContentDisposition(po.Filename, po.ReturnAttachment)
-		} else {
-			contentDisposition = imgtype.ContentDispositionFromURL(imageURL, po.ReturnAttachment)
-		}
-
-		rw.Header().Set("Content-Disposition", contentDisposition)
+		rw.Header().Set("Content-Disposition", imagetype.ContentDisposition(filename, ext, po.ReturnAttachment))
 	}
 
 	setCacheControl(rw, map[string]string{
