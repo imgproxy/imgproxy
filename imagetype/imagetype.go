@@ -23,7 +23,10 @@ const (
 	TIFF
 )
 
-const contentDispositionFilenameFallback = "image"
+const (
+	contentDispositionFilenameFallback = "image"
+	contentDispositionsFmt             = "%s; filename=\"%s%s\""
+)
 
 var (
 	Types = map[string]Type{
@@ -53,17 +56,17 @@ var (
 		TIFF: "image/tiff",
 	}
 
-	contentDispositionsFmt = map[Type]string{
-		JPEG: "%s; filename=\"%s.jpg\"",
-		PNG:  "%s; filename=\"%s.png\"",
-		WEBP: "%s; filename=\"%s.webp\"",
-		GIF:  "%s; filename=\"%s.gif\"",
-		ICO:  "%s; filename=\"%s.ico\"",
-		SVG:  "%s; filename=\"%s.svg\"",
-		HEIC: "%s; filename=\"%s.heic\"",
-		AVIF: "%s; filename=\"%s.avif\"",
-		BMP:  "%s; filename=\"%s.bmp\"",
-		TIFF: "%s; filename=\"%s.tiff\"",
+	extensions = map[Type]string{
+		JPEG: ".jpg",
+		PNG:  ".png",
+		WEBP: ".webp",
+		GIF:  ".gif",
+		ICO:  ".ico",
+		SVG:  ".svg",
+		HEIC: ".heic",
+		AVIF: ".avif",
+		BMP:  ".bmp",
+		TIFF: ".tiff",
 	}
 )
 
@@ -77,10 +80,22 @@ func ByMime(mime string) Type {
 }
 
 func (it Type) String() string {
+	// JPEG has two names, we should use only the full one
+	if it == JPEG {
+		return "jpeg"
+	}
+
 	for k, v := range Types {
 		if v == it {
 			return k
 		}
+	}
+	return ""
+}
+
+func (it Type) Ext() string {
+	if ext, ok := extensions[it]; ok {
+		return ext
 	}
 	return ""
 }
@@ -103,18 +118,7 @@ func (it Type) Mime() string {
 }
 
 func (it Type) ContentDisposition(filename string, returnAttachment bool) string {
-	disposition := "inline"
-
-	if returnAttachment {
-		disposition = "attachment"
-	}
-
-	format, ok := contentDispositionsFmt[it]
-	if !ok {
-		return disposition
-	}
-
-	return fmt.Sprintf(format, disposition, strings.ReplaceAll(filename, `"`, "%22"))
+	return ContentDisposition(filename, it.Ext(), returnAttachment)
 }
 
 func (it Type) ContentDispositionFromURL(imageURL string, returnAttachment bool) string {
@@ -148,4 +152,14 @@ func (it Type) SupportsColourProfile() bool {
 
 func (it Type) SupportsThumbnail() bool {
 	return it == HEIC || it == AVIF
+}
+
+func ContentDisposition(filename, ext string, returnAttachment bool) string {
+	disposition := "inline"
+
+	if returnAttachment {
+		disposition = "attachment"
+	}
+
+	return fmt.Sprintf(contentDispositionsFmt, disposition, strings.ReplaceAll(filename, `"`, "%22"), ext)
 }
