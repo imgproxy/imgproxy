@@ -49,8 +49,10 @@ func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error)
 	size := fi.Size()
 	body := io.ReadCloser(f)
 
-	mime := mime.TypeByExtension(filepath.Ext(fi.Name()))
-	header.Set("Content-Type", mime)
+	if mimetype := detectContentType(f, fi); len(mimetype) > 0 {
+		header.Set("Content-Type", mimetype)
+	}
+	f.Seek(0, io.SeekStart)
 
 	start, end, err := httprange.Parse(req.Header.Get("Range"))
 	switch {
@@ -125,4 +127,23 @@ func respNotFound(req *http.Request, msg string) *http.Response {
 		Close:         false,
 		Request:       req,
 	}
+}
+
+func detectContentType(f http.File, fi fs.FileInfo) string {
+	var (
+		tmp      [512]byte
+		mimetype string
+	)
+
+	if n, err := io.ReadFull(f, tmp[:]); err == nil {
+		mimetype = http.DetectContentType(tmp[:n])
+	}
+
+	if len(mimetype) == 0 || strings.HasPrefix(mimetype, "text/plain") || strings.HasPrefix(mimetype, "application/octet-stream") {
+		if m := mime.TypeByExtension(filepath.Ext(fi.Name())); len(m) > 0 {
+			mimetype = m
+		}
+	}
+
+	return mimetype
 }
