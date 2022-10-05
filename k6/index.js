@@ -2,6 +2,7 @@ import { randomSeed, check } from 'k6';
 import http from 'k6/http';
 import { SharedArray } from 'k6/data';
 import exec from 'k6/execution';
+import { Trend } from 'k6/metrics';
 
 export let options = {
   discardResponseBodies: true,
@@ -30,7 +31,7 @@ const urls = new SharedArray('urls', function () {
     let weight = e.weight || 1
 
     for (var i = 0; i < weight; i++) {
-      unshuffled.push(url)
+      unshuffled.push({url, group: e.group})
     }
   })
 
@@ -46,9 +47,17 @@ if (urls.length == 0) {
   throw "URLs list is empty"
 }
 
+let group_durations = [...new Set(urls.map(url => url.group))]
+  .reduce((trends, group) => {
+    trends[group] = new Trend(`http_req_duration_${group}`, true);
+    return trends;
+  }, {});
+
 export default function() {
-  const res = http.get(urls[exec.scenario.iterationInTest % urls.length]);
+  const url = urls[exec.scenario.iterationInTest % urls.length]
+  const res = http.get(url.url);
   check(res, {
     'is status 200': (r) => r.status === 200,
   });
+  group_durations[url.group].add(res.timings.duration);
 }
