@@ -38,7 +38,7 @@ type GCSTestSuite struct {
 func (s *GCSTestSuite) SetupSuite() {
 	noAuth = true
 
-	s.etag = "testetag"
+	// s.etag = "testetag"
 
 	port, err := getFreePort()
 	require.Nil(s.T(), err)
@@ -52,13 +52,17 @@ func (s *GCSTestSuite) SetupSuite() {
 				ObjectAttrs: fakestorage.ObjectAttrs{
 					BucketName: "test",
 					Name:       "foo/test.png",
-					Etag:       s.etag,
+					// Etag:       s.etag,
 				},
 				Content: make([]byte, 32),
 			},
 		},
 	})
 	require.Nil(s.T(), err)
+
+	obj, err := s.server.GetObject("test", "foo/test.png")
+	require.Nil(s.T(), err)
+	s.etag = obj.Etag
 
 	config.GCSEnabled = true
 	config.GCSEndpoint = s.server.PublicURL() + "/storage/v1/"
