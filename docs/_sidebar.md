@@ -23,6 +23,7 @@
   * [New Relic](new_relic)
   * [Prometheus](prometheus)
   * [Datadog](datadog)
+  * [OpenTelemetry](open_telemetry)
 * Miscellaneous
   * [Image formats support](image_formats_support)
   * [About processing pipeline](about_processing_pipeline)
