@@ -1,8 +1,11 @@
 # Changelog
 
 ## [Unreleased]
+
+## [3.8.0] - 2022-10-06
 ### Add
 - Add [raw](https://docs.imgproxy.net/latest/generating_the_url?id=raw) processing option.
+- Add [OpenTelemetry](https://docs.imgproxy.net/latest/open_telemetry) support.
 - (pro) Add encrypted source URL support.
 
 ### Changed
