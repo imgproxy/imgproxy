@@ -395,6 +395,22 @@ imgproxy can send its metrics to Datadog:
 
 Check out the [Datadog](datadog.md) guide to learn more.
 
+## OpenTelemetry metrics
+
+imgproxy can send request traces to an OpenTelemetry collector:
+
+* `IMGPROXY_OPEN_TELEMETRY_ENDPOINT`: OpenTelemetry collector endpoint (`host:port`). Default: blank
+* `IMGPROXY_OPEN_TELEMETRY_PROTOCOL`: OpenTelemetry collector protocol. Supported protocols are `grpc`, `https`, and `http`. Default: `grpc`
+* `IMGPROXY_OPEN_TELEMETRY_SERVICE_NAME`: OpenTelemetry service name. Default: `imgproxy`
+* `IMGPROXY_OPEN_TELEMETRY_ENABLE_METRICS`: when `true`, imgproxy will send metrics over OpenTelemetry Metrics API. Default: `false`
+* `IMGPROXY_OPEN_TELEMETRY_SERVER_CERT`: OpenTelemetry collector TLS certificate, PEM-encoded. Default: blank
+* `IMGPROXY_OPEN_TELEMETRY_CLIENT_CERT`: OpenTelemetry client TLS certificate, PEM-encoded. Default: blank
+* `IMGPROXY_OPEN_TELEMETRY_CLIENT_KEY`: OpenTelemetry client TLS key, PEM-encoded. Default: blank
+* `IMGPROXY_OPEN_TELEMETRY_PROPAGATORS`: a list of OpenTelemetry text map propagators, comma divided. Supported propagators are `tracecontext`, `baggage`, `b3`, `b3multi`, `jaeger`, `xray`, and `ottrace`. Default: blank
+* `IMGPROXY_OPEN_TELEMETRY_CONNECTION_TIMEOUT`: the maximum duration (in seconds) for establishing a connection to the OpenTelemetry collector. Default: `5`
+
+Check out the [OpenTelemetry](open_telemetry.md) guide to learn more.
+
 ## Error reporting
 
 imgproxy can report occurred errors to Bugsnag, Honeybadger and Sentry:

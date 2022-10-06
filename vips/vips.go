@@ -23,6 +23,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/metrics/datadog"
 	"github.com/imgproxy/imgproxy/v3/metrics/newrelic"
+	"github.com/imgproxy/imgproxy/v3/metrics/otel"
 	"github.com/imgproxy/imgproxy/v3/metrics/prometheus"
 )
 
@@ -104,6 +105,25 @@ func Init() error {
 	newrelic.AddGaugeFunc("vips.memory", GetMem)
 	newrelic.AddGaugeFunc("vips.max_memory", GetMemHighwater)
 	newrelic.AddGaugeFunc("vips.allocs", GetAllocs)
+
+	otel.AddGaugeFunc(
+		"vips_memory_bytes",
+		"A gauge of the vips tracked memory usage in bytes.",
+		"By",
+		GetMem,
+	)
+	otel.AddGaugeFunc(
+		"vips_max_memory_bytes",
+		"A gauge of the max vips tracked memory usage in bytes.",
+		"By",
+		GetMemHighwater,
+	)
+	otel.AddGaugeFunc(
+		"vips_allocs",
+		"A gauge of the number of active vips allocations.",
+		"By",
+		GetAllocs,
+	)
 
 	return nil
 }
