@@ -7,6 +7,7 @@
 - Add [raw](https://docs.imgproxy.net/latest/generating_the_url?id=raw) processing option.
 - Add [OpenTelemetry](https://docs.imgproxy.net/latest/open_telemetry) support.
 - (pro) Add encrypted source URL support.
+- (pro) Add [watermark_shadow](https://docs.imgproxy.net/generating_the_url?id=watermark-shadow) processing option.
 
 ### Changed
 - Try to fix some invalid source URL cases that happen because of URL normalization.

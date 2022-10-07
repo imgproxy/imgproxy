@@ -482,6 +482,16 @@ When `%height` is set to `0`, imgproxy will calculate the height using the defin
 
 Default: `0:0`
 
+### Watermark Shadow![pro](/assets/pro.svg) :id=watermark-shadow
+
+```
+watermark_shadow:%sigma
+wmsh:%sigma
+```
+When set, imgproxy will add a shadow to the watermark. The value of `sigma` defines the size of the mask imgproxy will use to blur the shadow.
+
+Default: disabled
+
 ### Style![pro](/assets/pro.svg) :id=style
 
 ```
