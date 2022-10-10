@@ -440,7 +440,6 @@ github.com/onsi/gomega v1.10.1/go.mod h1:iN09h71vgCQne3DLsj+A5owkum+a2tYe+TOCB1y
 github.com/onsi/gomega v1.20.2 h1:8uQq0zMgLEfa0vRrrBgaJF2gyW9Da9BmfGV+OyUzfkY=
 github.com/opentracing/opentracing-go v1.2.0 h1:uEJPy/1a5RIPAJ0Ov+OIO8OxWu77jEv+1B0VhjKrZUs=
 github.com/pborman/uuid v1.2.0/go.mod h1:X/NO0urCmaxf9VXbdlT7C2Yzkj2IKimNn4k+gtPdI/k=
-github.com/pborman/uuid v1.2.0/go.mod h1:X/NO0urCmaxf9VXbdlT7C2Yzkj2IKimNn4k+gtPdI/k=
 github.com/pborman/uuid v1.2.1 h1:+ZZIw58t/ozdjRaXh/3awHfmWRbzYxJoAdNJxe/3pvw=
 github.com/pborman/uuid v1.2.1/go.mod h1:X/NO0urCmaxf9VXbdlT7C2Yzkj2IKimNn4k+gtPdI/k=
 github.com/peterbourgon/diskv v2.0.1+incompatible/go.mod h1:uqqh8zWWbv1HBMNONnaR/tNboyR3/BZd58JJSHlUSCU=
@@ -543,8 +542,8 @@ go.opentelemetry.io/contrib/detectors/aws/ecs v1.10.0 h1:JrtNy1B+H8y72eGILz6ec1w
 go.opentelemetry.io/contrib/detectors/aws/ecs v1.10.0/go.mod h1:Cna2fXT/+HBRdnM8Q045ExtLXNqWHMhHwp//hJoN6kM=
 go.opentelemetry.io/contrib/detectors/aws/eks v1.10.0 h1:kCh1gRwjFg8NUqVEK5Xq7EFrPZkExx0TOlkDZW17aFU=
 go.opentelemetry.io/contrib/detectors/aws/eks v1.10.0/go.mod h1:/iIlimdE3kcfbaJdOMqO7vQe4Sa8oDi5bOuQ/UrMLTs=
-go.opentelemetry.io/contrib/propagators/autoprop v0.36.0 h1:BCr2H/NIhiyrv12cRbsqA5zxErkpWtPi2NNj/Ar5lrI=
-go.opentelemetry.io/contrib/propagators/autoprop v0.36.0/go.mod h1:YO90FHfpwzkzUrGZiRI67Mj/1lKwXcQDvHfPzB6Klrc=
+go.opentelemetry.io/contrib/propagators/autoprop v0.36.1 h1:CHg6xE8Gwau9WpI+DjS1NxuaMnVF1BWjGS35fJHMbQM=
+go.opentelemetry.io/contrib/propagators/autoprop v0.36.1/go.mod h1:GgCjE7y4VBoOxdnAGFpfXMOv5kWjfP0tvLd/1pbbomQ=
 go.opentelemetry.io/contrib/propagators/aws v1.10.0 h1:EEQ6YK48gtT2e6DtnFAEEFMiakN7WW0I4KK6Sc1NyEc=
 go.opentelemetry.io/contrib/propagators/aws v1.10.0/go.mod h1:YCy6JRD/MdPJzUQJuwQTW+X6F/5C/NsWZnYS91+k7fE=
 go.opentelemetry.io/contrib/propagators/b3 v1.10.0 h1:6AD2VV8edRdEYNaD8cNckpzgdMLU2kbV9OYyxt2kvCg=
