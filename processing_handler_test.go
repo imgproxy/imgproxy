@@ -291,11 +291,11 @@ func (s *ProcessingHandlerTestSuite) TestSkipProcessingSVG() {
 	require.Equal(s.T(), 200, res.StatusCode)
 
 	actual := s.readBody(res)
-	expected, err := svg.Satitize(s.readTestFile("test1.svg"))
+	expected, err := svg.Satitize(&imagedata.ImageData{Data: s.readTestFile("test1.svg")})
 
 	require.Nil(s.T(), err)
 
-	require.True(s.T(), bytes.Equal(expected, actual))
+	require.True(s.T(), bytes.Equal(expected.Data, actual))
 }
 
 func (s *ProcessingHandlerTestSuite) TestNotSkipProcessingSVGToJPG() {

@@ -7,14 +7,15 @@ import (
 
 	"github.com/tdewolff/parse/v2"
 	"github.com/tdewolff/parse/v2/xml"
+
+	"github.com/imgproxy/imgproxy/v3/imagedata"
 )
 
-func Satitize(data []byte) ([]byte, error) {
-	r := bytes.NewReader(data)
+func Satitize(data *imagedata.ImageData) (*imagedata.ImageData, error) {
+	r := bytes.NewReader(data.Data)
 	l := xml.NewLexer(parse.NewInput(r))
 
-	buf := new(bytes.Buffer)
-	buf.Grow(len(data))
+	buf, cancel := imagedata.BorrowBuffer()
 
 	ignoreTag := 0
 
@@ -35,9 +36,17 @@ func Satitize(data []byte) ([]byte, error) {
 		switch tt {
 		case xml.ErrorToken:
 			if l.Err() != io.EOF {
+				cancel()
 				return nil, l.Err()
 			}
-			return buf.Bytes(), nil
+
+			newData := imagedata.ImageData{
+				Data: buf.Bytes(),
+				Type: data.Type,
+			}
+			newData.SetCancel(cancel)
+
+			return &newData, nil
 		case xml.StartTagToken:
 			if strings.ToLower(string(l.Text())) == "script" {
 				ignoreTag++

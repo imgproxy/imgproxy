@@ -1,6 +1,8 @@
 package imagedata
 
 import (
+	"bytes"
+	"context"
 	"io"
 
 	"github.com/imgproxy/imgproxy/v3/bufpool"
@@ -85,4 +87,11 @@ func readAndCheckImage(r io.Reader, contentLength int) (*ImageData, error) {
 		Type:   meta.Format(),
 		cancel: cancel,
 	}, nil
+}
+
+func BorrowBuffer() (*bytes.Buffer, context.CancelFunc) {
+	buf := downloadBufPool.Get(0, false)
+	cancel := func() { downloadBufPool.Put(buf) }
+
+	return buf, cancel
 }
