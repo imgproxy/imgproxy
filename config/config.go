@@ -53,6 +53,7 @@ var (
 	AutoRotate            bool
 	EnforceThumbnail      bool
 	ReturnAttachment      bool
+	SvgFixUnsupported     bool
 
 	EnableWebpDetection bool
 	EnforceWebp         bool
@@ -228,6 +229,7 @@ func Reset() {
 	AutoRotate = true
 	EnforceThumbnail = false
 	ReturnAttachment = false
+	SvgFixUnsupported = false
 
 	EnableWebpDetection = false
 	EnforceWebp = false
@@ -402,6 +404,7 @@ func Configure() error {
 	configurators.Bool(&AutoRotate, "IMGPROXY_AUTO_ROTATE")
 	configurators.Bool(&EnforceThumbnail, "IMGPROXY_ENFORCE_THUMBNAIL")
 	configurators.Bool(&ReturnAttachment, "IMGPROXY_RETURN_ATTACHMENT")
+	configurators.Bool(&SvgFixUnsupported, "IMGPROXY_SVG_FIX_UNSUPPORTED")
 
 	configurators.Bool(&EnableWebpDetection, "IMGPROXY_ENABLE_WEBP_DETECTION")
 	configurators.Bool(&EnforceWebp, "IMGPROXY_ENFORCE_WEBP")
