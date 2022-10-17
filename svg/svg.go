@@ -81,11 +81,13 @@ func Satitize(data *imagedata.ImageData) (*imagedata.ImageData, error) {
 }
 
 func replaceDropShadowNode(l *xml.Lexer, buf *bytes.Buffer) error {
-	inAttrs := new(bytes.Buffer)
-	blurAttrs := new(bytes.Buffer)
-	offsetAttrs := new(bytes.Buffer)
-	floodAttrs := new(bytes.Buffer)
-	finalAttrs := new(bytes.Buffer)
+	var (
+		inAttrs     strings.Builder
+		blurAttrs   strings.Builder
+		offsetAttrs strings.Builder
+		floodAttrs  strings.Builder
+		finalAttrs  strings.Builder
+	)
 
 	inID, _ := nanoid.New(8)
 	offsetID, _ := nanoid.New(8)
