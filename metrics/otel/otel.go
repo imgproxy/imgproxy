@@ -334,6 +334,8 @@ func StartRootSpan(ctx context.Context, rw http.ResponseWriter, r *http.Request)
 				spanStatus, spanMessage := semconv.SpanStatusFromHTTPStatusCodeAndSpanKind(statusCode, trace.SpanKindServer)
 				span.SetAttributes(attrs...)
 				span.SetStatus(spanStatus, spanMessage)
+
+				next(statusCode)
 			}
 		},
 	})
