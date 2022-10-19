@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+
+## [3.9.0] - 2022-10-19
 ### Add
 - Add `IMGPROXY_SVG_FIX_UNSUPPORTED` config.
 
