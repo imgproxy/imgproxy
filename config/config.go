@@ -16,15 +16,16 @@ import (
 )
 
 var (
-	Network           string
-	Bind              string
-	ReadTimeout       int
-	WriteTimeout      int
-	KeepAliveTimeout  int
-	DownloadTimeout   int
-	Concurrency       int
-	RequestsQueueSize int
-	MaxClients        int
+	Network                string
+	Bind                   string
+	ReadTimeout            int
+	WriteTimeout           int
+	KeepAliveTimeout       int
+	ClientKeepAliveTimeout int
+	DownloadTimeout        int
+	Concurrency            int
+	RequestsQueueSize      int
+	MaxClients             int
 
 	TTL                     int
 	CacheControlPassthrough bool
@@ -197,6 +198,7 @@ func Reset() {
 	ReadTimeout = 10
 	WriteTimeout = 10
 	KeepAliveTimeout = 10
+	ClientKeepAliveTimeout = 90
 	DownloadTimeout = 5
 	Concurrency = runtime.NumCPU() * 2
 	RequestsQueueSize = 0
@@ -364,6 +366,7 @@ func Configure() error {
 	configurators.Int(&ReadTimeout, "IMGPROXY_READ_TIMEOUT")
 	configurators.Int(&WriteTimeout, "IMGPROXY_WRITE_TIMEOUT")
 	configurators.Int(&KeepAliveTimeout, "IMGPROXY_KEEP_ALIVE_TIMEOUT")
+	configurators.Int(&ClientKeepAliveTimeout, "IMGPROXY_CLIENT_KEEP_ALIVE_TIMEOUT")
 	configurators.Int(&DownloadTimeout, "IMGPROXY_DOWNLOAD_TIMEOUT")
 	configurators.Int(&Concurrency, "IMGPROXY_CONCURRENCY")
 	configurators.Int(&RequestsQueueSize, "IMGPROXY_REQUESTS_QUEUE_SIZE")
@@ -562,6 +565,9 @@ func Configure() error {
 	}
 	if KeepAliveTimeout < 0 {
 		return fmt.Errorf("KeepAlive timeout should be greater than or equal to 0, now - %d\n", KeepAliveTimeout)
+	}
+	if ClientKeepAliveTimeout < 0 {
+		return fmt.Errorf("Client KeepAlive timeout should be greater than or equal to 0, now - %d\n", ClientKeepAliveTimeout)
 	}
 
 	if DownloadTimeout <= 0 {

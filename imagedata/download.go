@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"fmt"
 	"io/ioutil"
-	"net"
 	"net/http"
 	"net/http/cookiejar"
 	"time"
@@ -50,12 +49,16 @@ func (e *ErrorNotModified) Error() string {
 }
 
 func initDownloading() error {
-	transport := &http.Transport{
-		Proxy:               http.ProxyFromEnvironment,
-		MaxIdleConns:        config.Concurrency,
-		MaxIdleConnsPerHost: config.Concurrency,
-		DisableCompression:  true,
-		DialContext:         (&net.Dialer{KeepAlive: 600 * time.Second}).DialContext,
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.DisableCompression = true
+
+	if config.ClientKeepAliveTimeout > 0 {
+		transport.MaxIdleConns = config.Concurrency
+		transport.MaxIdleConnsPerHost = config.Concurrency
+		transport.IdleConnTimeout = time.Duration(config.ClientKeepAliveTimeout) * time.Second
+	} else {
+		transport.MaxIdleConns = 0
+		transport.MaxIdleConnsPerHost = 0
 	}
 
 	if config.IgnoreSslVerification {

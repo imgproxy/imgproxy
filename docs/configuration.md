@@ -31,6 +31,7 @@ echo $(xxd -g 2 -l 64 -p /dev/random | tr -d '\n')
 * `IMGPROXY_READ_TIMEOUT`: the maximum duration (in seconds) for reading the entire image request, including the body. Default: `10`
 * `IMGPROXY_WRITE_TIMEOUT`: the maximum duration (in seconds) for writing the response. Default: `10`
 * `IMGPROXY_KEEP_ALIVE_TIMEOUT`: the maximum duration (in seconds) to wait for the next request before closing the connection. When set to `0`, keep-alive is disabled. Default: `10`
+* `IMGPROXY_CLIENT_KEEP_ALIVE_TIMEOUT`: the maximum duration (in seconds) to wait for the next request before closing the HTTP client connection. The HTTP client is used to download source images. When set to `0`, keep-alive is disabled. Default: `90`
 * `IMGPROXY_DOWNLOAD_TIMEOUT`: the maximum duration (in seconds) for downloading the source image. Default: `5`
 * `IMGPROXY_CONCURRENCY`: the maximum number of image requests to be processed simultaneously. Requests that exceed this limit are put in the queue. Default: the number of CPU cores multiplied by two
 * `IMGPROXY_REQUESTS_QUEUE_SIZE`: the maximum number of image requests that can be put in the queue. Requests that exceed this limit are rejected with `429` HTTP status. When set to `0`, the requests queue is unlimited. Default: `0`

@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+### Add
+- Add `IMGPROXY_CLIENT_KEEP_ALIVE_TIMEOUT` config.
 
 ## [3.9.0] - 2022-10-19
 ### Add
