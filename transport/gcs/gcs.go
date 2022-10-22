@@ -12,6 +12,7 @@ import (
 	"google.golang.org/api/option"
 
 	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/ctxreader"
 	"github.com/imgproxy/imgproxy/v3/httprange"
 )
 
@@ -141,7 +142,7 @@ func (t transport) RoundTrip(req *http.Request) (*http.Response, error) {
 		ProtoMinor:    0,
 		Header:        header,
 		ContentLength: reader.Attrs.Size,
-		Body:          reader,
+		Body:          ctxreader.New(req.Context(), reader, true),
 		Close:         true,
 		Request:       req,
 	}, nil

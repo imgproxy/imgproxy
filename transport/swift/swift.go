@@ -12,6 +12,7 @@ import (
 	"github.com/ncw/swift/v2"
 
 	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/ctxreader"
 )
 
 type transport struct {
@@ -105,7 +106,7 @@ func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error)
 		ProtoMajor: 1,
 		ProtoMinor: 0,
 		Header:     header,
-		Body:       object,
+		Body:       ctxreader.New(req.Context(), object, true),
 		Close:      true,
 		Request:    req,
 	}, nil
