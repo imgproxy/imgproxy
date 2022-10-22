@@ -84,9 +84,12 @@ func DecodeMeta(r io.Reader) (Meta, error) {
 	formats, _ := atomicFormats.Load().([]format)
 
 	for _, f := range formats {
-		b, err := rr.Peek(len(f.magic))
-		if err == nil && matchMagic(f.magic, b) {
-			return f.decodeMeta(rr)
+		if b, err := rr.Peek(len(f.magic)); err == nil || err == io.EOF {
+			if matchMagic(f.magic, b) {
+				return f.decodeMeta(rr)
+			}
+		} else {
+			return nil, err
 		}
 	}
 
