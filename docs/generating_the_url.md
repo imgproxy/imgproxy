@@ -413,6 +413,24 @@ dd:%draw:%class_name1:%class_name2:...:%class_nameN
 
 When `draw` is set to `1`, `t` or `true`, imgproxy [detects objects](object_detection.md) of the provided classes and draws their bounding boxes. If class names are omitted, imgproxy draws the bounding boxes of all the detected objects.
 
+### Gradient![pro](/assets/pro.svg) :id=gradient
+
+```
+gradient:%opacity:%color:%direction:%start%stop
+gr:%opacity:%color:%direction:%start%stop
+```
+
+Places a gradient on the processed image. The placed gradient transitions from transparency to the specified color.
+
+* `opacity`: specifies gradient opacity. When set to `0`, gradient is not applied.
+* `color`:  _(optional)_ a hex-coded value of the gradient color. Default: `000` (black).
+* `direction`: _(optional)_ specifies the direction of the gradient. Available values:
+  * `down`: _(default)_ the top side of the gradient is transparrent, the bottom side is opaque
+  * `up`: the bottom side of the gradient is transparrent, the top side is opaque
+  * `right`: the left side of the gradient is transparrent, the right side is opaque
+  * `left`: the right side of the gradient is transparrent, the left side is opaque
+* `start`, `stop`: floating point numbers that define relative positions of where the gradient starts and where it ends. Default values are `0.0` and `1.0` respectively.
+
 ### Watermark
 
 ```
@@ -634,6 +652,17 @@ pg:%page
 When a source image supports pagination (PDF, TIFF) or animation (GIF, WebP), this option allows specifying the page to use it on. Page numeration starts from zero.
 
 Default: 0
+
+### Disable animation![pro](/assets/pro.svg) :id=disable-animation
+
+```
+disable_animation:%disable
+da:%disable
+```
+
+When set to `1`, `t` or `true`, imgproxy will use a single frame of animated images. Use the [page](#page) option to specify which frame imgproxy should use.
+
+Default: `false`
 
 ### Video thumbnail second![pro](/assets/pro.svg) :id=video-thumbnail-second
 

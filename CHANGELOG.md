@@ -3,6 +3,11 @@
 ## [Unreleased]
 ### Add
 - Add `IMGPROXY_CLIENT_KEEP_ALIVE_TIMEOUT` config.
+- (pro) Add [disable_animation](https://docs.imgproxy.net/latest/generating_the_url?id=disable-animation) processing option.
+- (pro) Add [gradient](https://docs.imgproxy.net/latest/generating_the_url?id=gradient) processing option.
+
+### Fix
+- (pro) Fix saving of GIF with variable frame delay to MP4.
 
 ## [3.9.0] - 2022-10-19
 ### Add
