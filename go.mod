@@ -26,19 +26,19 @@ require (
 	github.com/trimmer-io/go-xmp v1.0.0
 	go.opentelemetry.io/contrib/detectors/aws/ec2 v1.11.0
 	go.opentelemetry.io/contrib/detectors/aws/ecs v1.11.0
-	go.opentelemetry.io/contrib/detectors/aws/eks v1.11.0
+	go.opentelemetry.io/contrib/detectors/aws/eks v1.11.1
 	go.opentelemetry.io/contrib/propagators/autoprop v0.36.3
 	go.opentelemetry.io/contrib/propagators/aws v1.11.0
-	go.opentelemetry.io/otel v1.11.0
+	go.opentelemetry.io/otel v1.11.1
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc v0.32.3
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp v0.32.3
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.11.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.11.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.11.0
 	go.opentelemetry.io/otel/metric v0.32.3
-	go.opentelemetry.io/otel/sdk v1.11.0
+	go.opentelemetry.io/otel/sdk v1.11.1
 	go.opentelemetry.io/otel/sdk/metric v0.32.3
-	go.opentelemetry.io/otel/trace v1.11.0
+	go.opentelemetry.io/otel/trace v1.11.1
 	go.uber.org/automaxprocs v1.5.1
 	golang.org/x/image v0.0.0-20221017200508-ffcb3fe7d1bf
 	golang.org/x/net v0.0.0-20221019024206-cb67ada4b0ad
@@ -57,8 +57,6 @@ require (
 	github.com/DataDog/datadog-agent/pkg/obfuscate v0.39.0 // indirect
 	github.com/DataDog/sketches-go v1.4.1 // indirect
 	github.com/Microsoft/go-winio v0.6.0 // indirect
-	github.com/PuerkitoBio/purell v1.2.0 // indirect
-	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
 	github.com/StackExchange/wmi v1.2.1 // indirect
 	github.com/alexbrainman/goissue34681 v0.0.0-20191006012335-3fc7a47baff5 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -69,7 +67,6 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgraph-io/ristretto v0.1.1 // indirect
 	github.com/dustin/go-humanize v1.0.0 // indirect
-	github.com/emicklei/go-restful v2.16.0+incompatible // indirect
 	github.com/emicklei/go-restful/v3 v3.8.0 // indirect
 	github.com/go-logr/logr v1.2.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
@@ -77,7 +74,6 @@ require (
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
 	github.com/go-openapi/jsonreference v0.20.0 // indirect
 	github.com/go-openapi/swag v0.22.3 // indirect
-	github.com/gofrs/uuid v4.3.0+incompatible // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/glog v1.0.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
@@ -114,7 +110,6 @@ require (
 	github.com/ryszard/goskiplist v0.0.0-20150312221310-2dfbae5fcf46 // indirect
 	github.com/shabbyrobe/gocovmerge v0.0.0-20190829150210-3e036491d500 // indirect
 	github.com/shirou/gopsutil v3.21.11+incompatible // indirect
-	github.com/stretchr/objx v0.4.0 // indirect
 	github.com/tinylib/msgp v1.1.6 // indirect
 	go.opencensus.io v0.23.0 // indirect
 	go.opentelemetry.io/contrib/propagators/b3 v1.11.0 // indirect
