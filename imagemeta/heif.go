@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 )
@@ -55,7 +54,7 @@ func heifDiscardN(r io.Reader, n int64) error {
 		return err
 	}
 
-	_, err := io.CopyN(ioutil.Discard, r, n)
+	_, err := io.CopyN(io.Discard, r, n)
 	return err
 }
 

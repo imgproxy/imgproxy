@@ -3,7 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -44,7 +44,7 @@ func (s *ProcessingHandlerTestSuite) SetupSuite() {
 	err = initialize()
 	require.Nil(s.T(), err)
 
-	logrus.SetOutput(ioutil.Discard)
+	logrus.SetOutput(io.Discard)
 
 	s.router = buildRouter()
 }
@@ -77,14 +77,14 @@ func (s *ProcessingHandlerTestSuite) readTestFile(name string) []byte {
 	wd, err := os.Getwd()
 	require.Nil(s.T(), err)
 
-	data, err := ioutil.ReadFile(filepath.Join(wd, "testdata", name))
+	data, err := os.ReadFile(filepath.Join(wd, "testdata", name))
 	require.Nil(s.T(), err)
 
 	return data
 }
 
 func (s *ProcessingHandlerTestSuite) readBody(res *http.Response) []byte {
-	data, err := ioutil.ReadAll(res.Body)
+	data, err := io.ReadAll(res.Body)
 	require.Nil(s.T(), err)
 	return data
 }
