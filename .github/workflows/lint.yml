@@ -34,8 +34,8 @@ jobs:
       - name: Lint
         uses: golangci/golangci-lint-action@v3
         with:
-          version: v1.45.2
-          args: --timeout 2m0s
+          version: v1.46.2
+          args: --timeout 5m0s
           skip-cache: true
         env:
           LD_LIBRARY_PATH: "${{ env.LD_LIBRARY_PATH }}:/root/vips/${{ matrix.vips-version }}/lib"
