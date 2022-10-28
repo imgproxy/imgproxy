@@ -20,12 +20,13 @@ func IsSVG(r io.Reader) (bool, error) {
 
 		switch tt {
 		case xml.ErrorToken:
+			if err := l.Err(); err != io.EOF {
+				return false, err
+			}
 			return false, nil
 
 		case xml.StartTagToken:
-			if strings.ToLower(string(l.Text())) == "svg" {
-				return true, nil
-			}
+			return strings.ToLower(string(l.Text())) == "svg", nil
 		}
 	}
 }

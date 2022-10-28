@@ -7,6 +7,7 @@
 - (pro) Add [gradient](https://docs.imgproxy.net/latest/generating_the_url?id=gradient) processing option.
 
 ### Fix
+- Fix false-positive SVG detections.
 - (pro) Fix saving of GIF with variable frame delay to MP4.
 
 ## [3.9.0] - 2022-10-19
