@@ -8,6 +8,7 @@
 
 ### Fix
 - Fix false-positive SVG detections.
+- Fix possible infinite loop during SVG sanitization.
 - (pro) Fix saving of GIF with variable frame delay to MP4.
 
 ## [3.9.0] - 2022-10-19

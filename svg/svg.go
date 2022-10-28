@@ -40,6 +40,9 @@ func Satitize(data *imagedata.ImageData) (*imagedata.ImageData, error) {
 
 		if ignoreTag > 0 {
 			switch tt {
+			case xml.ErrorToken:
+				cancel()
+				return nil, l.Err()
 			case xml.EndTagToken, xml.StartTagCloseVoidToken:
 				ignoreTag--
 			case xml.StartTagToken:
