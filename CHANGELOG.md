@@ -10,6 +10,7 @@
 - Fix false-positive SVG detections.
 - Fix possible infinite loop during SVG sanitization.
 - (pro) Fix saving of GIF with variable frame delay to MP4.
+- (pro) Fix the size of video thumbnails if the video has a defined sample aspect ratio.
 
 ## [3.9.0] - 2022-10-19
 ### Add
