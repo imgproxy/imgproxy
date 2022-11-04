@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+
+## [3.10.0] - 2022-11-04
 ### Add
 - Add `IMGPROXY_CLIENT_KEEP_ALIVE_TIMEOUT` config.
 - (pro) Add [disable_animation](https://docs.imgproxy.net/latest/generating_the_url?id=disable-animation) processing option.
