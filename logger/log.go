@@ -23,6 +23,13 @@ func Init() error {
 		logrus.SetFormatter(&structuredFormatter{})
 	case "json":
 		logrus.SetFormatter(&logrus.JSONFormatter{})
+	case "gcp":
+		logrus.SetFormatter(&logrus.JSONFormatter{
+			FieldMap: logrus.FieldMap{
+				"level": "severity",
+				"msg":   "message",
+			},
+		})
 	default:
 		logrus.SetFormatter(newPrettyFormatter())
 	}
