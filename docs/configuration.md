@@ -434,6 +434,7 @@ imgproxy can report occurred errors to Bugsnag, Honeybadger and Sentry:
   * `pretty`: _(default)_ colored human-readable format
   * `structured`: machine-readable format
   * `json`: JSON format
+  * `gcp`: Google Cloud Logging agent compliant
 * `IMGPROXY_LOG_LEVEL`: the log level. The following levels are supported `error`, `warn`, `info` and `debug`. Default: `info`
 
 imgproxy can send logs to syslog, but this feature is disabled by default. To enable it, set `IMGPROXY_SYSLOG_ENABLE` to `true`:
