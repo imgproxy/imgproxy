@@ -804,7 +804,7 @@ When using an encoded source URL, you can specify the [extension](#extension) af
 /aHR0cDovL2V4YW1w/bGUuY29tL2ltYWdl/cy9jdXJpb3NpdHku/anBn.png
 ```
 
-#### Encrypted with AES-CBC
+### Encrypted with AES-CBC
 
 The source URL can be encrypted with the AES-CBC algorithm, prepended by the `/enc/` segment. The encrypted URL can be split with `/` as desired:
 
