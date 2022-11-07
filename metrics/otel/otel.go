@@ -175,7 +175,7 @@ func buildGRPCExporters() (*otlptrace.Exporter, sdkmetric.Exporter, error) {
 		creds := credentials.NewTLS(tlsConf)
 		tracerOpts = append(tracerOpts, otlptracegrpc.WithTLSCredentials(creds))
 		meterOpts = append(meterOpts, otlpmetricgrpc.WithTLSCredentials(creds))
-	} else {
+	} else if config.OpenTelemetryGRPCInsecure {
 		tracerOpts = append(tracerOpts, otlptracegrpc.WithInsecure())
 		meterOpts = append(meterOpts, otlpmetricgrpc.WithInsecure())
 	}

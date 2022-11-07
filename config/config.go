@@ -150,6 +150,7 @@ var (
 	OpenTelemetryServerCert        string
 	OpenTelemetryClientCert        string
 	OpenTelemetryClientKey         string
+	OpenTelemetryGRPCInsecure      bool
 	OpenTelemetryPropagators       []string
 	OpenTelemetryConnectionTimeout int
 
@@ -328,6 +329,7 @@ func Reset() {
 	OpenTelemetryServerCert = ""
 	OpenTelemetryClientCert = ""
 	OpenTelemetryClientKey = ""
+	OpenTelemetryGRPCInsecure = true
 	OpenTelemetryPropagators = make([]string, 0)
 	OpenTelemetryConnectionTimeout = 5
 
@@ -518,6 +520,7 @@ func Configure() error {
 	configurators.String(&OpenTelemetryServerCert, "IMGPROXY_OPEN_TELEMETRY_SERVER_CERT")
 	configurators.String(&OpenTelemetryClientCert, "IMGPROXY_OPEN_TELEMETRY_CLIENT_CERT")
 	configurators.String(&OpenTelemetryClientKey, "IMGPROXY_OPEN_TELEMETRY_CLIENT_KEY")
+	configurators.Bool(&OpenTelemetryGRPCInsecure, "IMGPROXY_OPEN_TELEMETRY_GRPC_INSECURE")
 	configurators.StringSlice(&OpenTelemetryPropagators, "IMGPROXY_OPEN_TELEMETRY_PROPAGATORS")
 	configurators.Int(&OpenTelemetryConnectionTimeout, "IMGPROXY_OPEN_TELEMETRY_CONNECTION_TIMEOUT")
 
