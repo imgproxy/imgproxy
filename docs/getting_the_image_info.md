@@ -78,6 +78,25 @@ imgproxy responses with a JSON body and returns the following info:
     "Caption": "Spider-Man swings on the web",
     "Copyright Notice": "Daily Bugle",
     "Keywords": ["spider-man", "menance", "offender"]
+  },
+  "xmp": {
+    "aux": {
+      "ApproximateFocusDistance": "4294967295/1",
+      "ImageNumber": "16604",
+      "Lens": "16.0-35.0 mm f/4.0",
+      "LensID": "163",
+      "LensInfo": "160/10 350/10 40/10 40/10",
+      "SerialNumber": "12345678"
+    },
+    "dc": {
+      "creator": ["Peter B. Parker"],
+      "publisher": ["Daily Bugle"],
+      "subject": ["spider-man", "menance", "offender"],
+      "format": "image/jpeg"
+    },
+    "photoshop": {
+      "DateCreated": "2016-09-11T18:44:50.003"
+    }
   }
 }
 ```
