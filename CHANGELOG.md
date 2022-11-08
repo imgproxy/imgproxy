@@ -3,8 +3,8 @@
 ## [Unreleased]
 ### Add
 - Add `IMGPROXY_OPEN_TELEMETRY_GRPC_INSECURE` config.
+- Better XMP data stripping.
 - (pro) Add XMP data to the `/info` response.
-- (pro) Better XMP data stripping.
 
 ## [3.10.0] - 2022-11-04
 ### Add

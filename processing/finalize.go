@@ -62,11 +62,21 @@ func stripXMP(img *vips.Image) []byte {
 		if n.Name() == "dc" {
 			filteredNodes := n.Nodes[:0]
 			for _, nn := range n.Nodes {
-				if nn.Name() == "rights" || nn.Name() == "contributor" || nn.Name() == "creator" || nn.Name() == "publisher" {
+				name := nn.Name()
+				if name == "rights" || name == "contributor" || name == "creator" || name == "publisher" {
 					filteredNodes = append(filteredNodes, nn)
 				}
 			}
 			n.Nodes = filteredNodes
+
+			filteredAttrs := n.Attr[:0]
+			for _, a := range n.Attr {
+				name := a.Name.Local
+				if name == "dc:rights" || name == "dc:contributor" || name == "dc:creator" || name == "dc:publisher" {
+					filteredAttrs = append(filteredAttrs, a)
+				}
+			}
+			n.Attr = filteredAttrs
 		}
 	}
 
