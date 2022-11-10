@@ -105,7 +105,6 @@ func Init() error {
 
 	tracerProvider = sdktrace.NewTracerProvider(
 		sdktrace.WithResource(res),
-		sdktrace.WithSampler(sdktrace.AlwaysSample()),
 		sdktrace.WithBatcher(traceExporter),
 		sdktrace.WithIDGenerator(idg),
 	)
