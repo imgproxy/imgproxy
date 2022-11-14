@@ -41,8 +41,8 @@ require (
 	go.opentelemetry.io/otel/trace v1.11.1
 	go.uber.org/automaxprocs v1.5.1
 	golang.org/x/image v0.1.0
-	golang.org/x/net v0.1.0
-	golang.org/x/sys v0.1.0
+	golang.org/x/net v0.2.0
+	golang.org/x/sys v0.2.0
 	google.golang.org/api v0.102.0
 	google.golang.org/grpc v1.50.1
 	gopkg.in/DataDog/dd-trace-go.v1 v1.43.1
@@ -126,7 +126,7 @@ require (
 	golang.org/x/mod v0.6.0 // indirect
 	golang.org/x/oauth2 v0.1.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/term v0.1.0 // indirect
+	golang.org/x/term v0.2.0 // indirect
 	golang.org/x/text v0.4.0 // indirect
 	golang.org/x/time v0.1.0 // indirect
 	golang.org/x/tools v0.2.0 // indirect
