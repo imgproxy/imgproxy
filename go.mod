@@ -19,7 +19,7 @@ require (
 	github.com/ncw/swift/v2 v2.0.1
 	github.com/newrelic/go-agent/v3 v3.20.0
 	github.com/newrelic/newrelic-telemetry-sdk-go v0.8.1
-	github.com/prometheus/client_golang v1.13.1
+	github.com/prometheus/client_golang v1.14.0
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.1
 	github.com/tdewolff/parse/v2 v2.6.4
