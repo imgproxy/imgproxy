@@ -12,7 +12,7 @@ require (
 	github.com/bugsnag/bugsnag-go/v2 v2.2.0
 	github.com/felixge/httpsnoop v1.0.3
 	github.com/fsouza/fake-gcs-server v1.42.0
-	github.com/getsentry/sentry-go v0.14.0
+	github.com/getsentry/sentry-go v0.15.0
 	github.com/honeybadger-io/honeybadger-go v0.5.0
 	github.com/johannesboyne/gofakes3 v0.0.0-20220627085814-c3ac35da23b2
 	github.com/matoous/go-nanoid/v2 v2.0.0
