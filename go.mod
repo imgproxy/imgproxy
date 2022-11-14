@@ -43,7 +43,7 @@ require (
 	golang.org/x/image v0.1.0
 	golang.org/x/net v0.1.0
 	golang.org/x/sys v0.1.0
-	google.golang.org/api v0.102.0
+	google.golang.org/api v0.103.0
 	google.golang.org/grpc v1.50.1
 	gopkg.in/DataDog/dd-trace-go.v1 v1.43.1
 )
