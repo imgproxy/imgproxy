@@ -3,11 +3,13 @@
 ## [Unreleased]
 ### Add
 - Add `IMGPROXY_OPEN_TELEMETRY_GRPC_INSECURE` config.
+- Add `IMGPROXY_OPEN_TELEMETRY_TRACE_ID_GENERATOR` config.
 - (pro) Add XMP data to the `/info` response.
 
 ### Change
 - Better XMP data stripping.
 - Use parent-based OpenTelemetry sampler by default.
+- Use fixed TraceIdRatioBased sampler with OpenTelemetry.
 
 ## [3.10.0] - 2022-11-04
 ### Add

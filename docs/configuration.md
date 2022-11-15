@@ -409,6 +409,7 @@ imgproxy can send request traces to an OpenTelemetry collector:
 * `IMGPROXY_OPEN_TELEMETRY_CLIENT_KEY`: OpenTelemetry client TLS key, PEM-encoded. Default: blank
 * `IMGPROXY_OPEN_TELEMETRY_GRPC_INSECURE`: when `true`, imgproxy will use an insecure GRPC connection unless the collector TLS certificate is not provided. Default: `true`
 * `IMGPROXY_OPEN_TELEMETRY_PROPAGATORS`: a list of OpenTelemetry text map propagators, comma divided. Supported propagators are `tracecontext`, `baggage`, `b3`, `b3multi`, `jaeger`, `xray`, and `ottrace`. Default: blank
+* `IMGPROXY_OPEN_TELEMETRY_TRACE_ID_GENERATOR`: OpenTelemetry trace ID generator. Supported generators are `xray` and `random`. Default: `xray`
 * `IMGPROXY_OPEN_TELEMETRY_CONNECTION_TIMEOUT`: the maximum duration (in seconds) for establishing a connection to the OpenTelemetry collector. Default: `5`
 
 Check out the [OpenTelemetry](open_telemetry.md) guide to learn more.

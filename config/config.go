@@ -152,6 +152,7 @@ var (
 	OpenTelemetryClientKey         string
 	OpenTelemetryGRPCInsecure      bool
 	OpenTelemetryPropagators       []string
+	OpenTelemetryTraceIDGenerator  string
 	OpenTelemetryConnectionTimeout int
 
 	BugsnagKey   string
@@ -331,6 +332,7 @@ func Reset() {
 	OpenTelemetryClientKey = ""
 	OpenTelemetryGRPCInsecure = true
 	OpenTelemetryPropagators = make([]string, 0)
+	OpenTelemetryTraceIDGenerator = "xray"
 	OpenTelemetryConnectionTimeout = 5
 
 	BugsnagKey = ""
@@ -522,6 +524,7 @@ func Configure() error {
 	configurators.String(&OpenTelemetryClientKey, "IMGPROXY_OPEN_TELEMETRY_CLIENT_KEY")
 	configurators.Bool(&OpenTelemetryGRPCInsecure, "IMGPROXY_OPEN_TELEMETRY_GRPC_INSECURE")
 	configurators.StringSlice(&OpenTelemetryPropagators, "IMGPROXY_OPEN_TELEMETRY_PROPAGATORS")
+	configurators.String(&OpenTelemetryTraceIDGenerator, "IMGPROXY_OPEN_TELEMETRY_TRACE_ID_GENERATOR")
 	configurators.Int(&OpenTelemetryConnectionTimeout, "IMGPROXY_OPEN_TELEMETRY_CONNECTION_TIMEOUT")
 
 	configurators.String(&BugsnagKey, "IMGPROXY_BUGSNAG_KEY")

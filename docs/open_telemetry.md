@@ -18,6 +18,9 @@ imgproxy can send request traces to an OpenTelemetry collector. To use this feat
     * `ottrace`: [OT Trace](https://github.com/opentracing?q=basic&type=&language=)
 5. _(optional)_ [Set up TLS certificates](#tls-configuration) or set `IMGPROXY_OPEN_TELEMETRY_GRPC_INSECURE` to `false` to use secure connection without TLS certificates set.
 6. _(optional)_ Set `IMGPROXY_OPEN_TELEMETRY_ENABLE_METRICS` to `true` to enable sending metrics via OpenTelemetry Metrics API.
+7. _(optional)_ Set `IMGPROXY_OPEN_TELEMETRY_TRACE_ID_GENERATOR` to environment variable to be the desired trace ID generator. Supported values are:
+    * `xray`: _(default)_ Amazon X-Ray compatible trace ID generator
+    * `random`: random trace ID generator
 
 imgproxy will send the following info to the collector:
 

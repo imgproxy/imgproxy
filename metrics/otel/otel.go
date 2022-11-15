@@ -101,13 +101,26 @@ func Init() error {
 		res, _ = resource.Merge(res, awsRes)
 	}
 
-	idg := xray.NewIDGenerator()
-
-	tracerProvider = sdktrace.NewTracerProvider(
+	opts := []sdktrace.TracerProviderOption{
 		sdktrace.WithResource(res),
 		sdktrace.WithBatcher(traceExporter),
-		sdktrace.WithIDGenerator(idg),
-	)
+	}
+
+	if opts, err = addTraceIDRatioSampler(opts); err != nil {
+		return err
+	}
+
+	switch g := config.OpenTelemetryTraceIDGenerator; g {
+	case "xray":
+		idg := xray.NewIDGenerator()
+		opts = append(opts, sdktrace.WithIDGenerator(idg))
+	case "random":
+		// Do nothing. OTel uses random generator by default
+	default:
+		return fmt.Errorf("Unknown Trace ID generator: %s", g)
+	}
+
+	tracerProvider = sdktrace.NewTracerProvider(opts...)
 
 	tracer = tracerProvider.Tracer("imgproxy")
 
