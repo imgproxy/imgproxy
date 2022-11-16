@@ -54,6 +54,7 @@ imgproxy responses with a JSON body and returns the following info:
 * `size`: file size. Can be zero if the image source doesn't set `Content-Length` header properly
 * `exif`: Exif data
 * `iptc`: IPTC data
+* `xmp`: XMP data
 * `video_meta`: metadata from the video
 
 **📝Note:** There are lots of IPTC tags in the spec, but imgproxy supports only a few of them. If you need some tags to be supported, just contact us.

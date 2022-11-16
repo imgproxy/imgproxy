@@ -28,7 +28,7 @@
 - Add `IMGPROXY_SVG_FIX_UNSUPPORTED` config.
 
 ### Fix
-- Fix fix HTTP response status when OpenTelemetry support is enabled.
+- Fix HTTP response status when OpenTelemetry support is enabled.
 - (docker) Fix saving of paletted PNGs with low bit-depth.
 
 ## [3.8.0] - 2022-10-06
