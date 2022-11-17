@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+
+## [3.11.0] - 2022-11-17
 ### Add
 - Add `IMGPROXY_OPEN_TELEMETRY_GRPC_INSECURE` config.
 - Add `IMGPROXY_OPEN_TELEMETRY_TRACE_ID_GENERATOR` config.
