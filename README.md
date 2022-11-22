@@ -1,20 +1,42 @@
-# imgproxy
+<p align="center">
+  <a href="https://imgproxy.net">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="logo-dark.svg">
+      <source media="(prefers-color-scheme: light)" srcset="logo-light.svg">
+      <img alt="imgproxy logo" src="logo-light.svg">
+    </picture>
+  </a>
+</p>
 
-<img align="right" width="200" height="200" title="imgproxy logo"
-     src="https://cdn.rawgit.com/DarthSim/imgproxy/master/logo.svg">
+<h4 align="center">
+  <a href="https://imgproxy.net">Website</a> |
+  <a href="https://imgproxy.net/blog/">Blog</a> |
+  <a href="https://docs.imgproxy.net">Documentation</a> |
+  <a href="https://imgproxy.net/#pro">imgproxy Pro</a> |
+  <a href="https://hub.docker.com/r/darthsim/imgproxy/">Docker</a> |
+  <a href="https://gitter.im/imgproxy/imgproxy">Chat</a>
+</h4>
 
+<p align="center">
+<a href="https://github.com/imgproxy/imgproxy/actions"><img alt="GH Test" src="https://img.shields.io/github/workflow/status/imgproxy/imgproxy/Test?label=Test&logo=github&style=for-the-badge" /></a>
+<a href="https://github.com/imgproxy/imgproxy/actions"><img alt="GH Lint" src="https://img.shields.io/github/workflow/status/imgproxy/imgproxy/Lint?label=Lint&logo=github&style=for-the-badge" /></a>
+<a href="https://hub.docker.com/r/darthsim/imgproxy/"><img alt="Docker Pulls" src="https://img.shields.io/docker/pulls/darthsim/imgproxy.svg?logo=docker&logoColor=white&style=for-the-badge" /></a>
+</p>
 
-[![GH Test](https://img.shields.io/github/workflow/status/imgproxy/imgproxy/Test?label=Test&logo=github&style=for-the-badge)](https://github.com/imgproxy/imgproxy/actions) [![GH Lint](https://img.shields.io/github/workflow/status/imgproxy/imgproxy/Lint?label=Lint&logo=github&style=for-the-badge)](https://github.com/imgproxy/imgproxy/actions) [![Docker](https://img.shields.io/badge/docker-darthsim%2Fimgproxy-blue.svg?logo=docker&logoColor=white&style=for-the-badge)](https://hub.docker.com/r/darthsim/imgproxy/) [![Docker Pulls](https://img.shields.io/docker/pulls/darthsim/imgproxy.svg?logo=docker&logoColor=white&style=for-the-badge)](https://hub.docker.com/r/darthsim/imgproxy/) [![Gitter](https://img.shields.io/gitter/room/imgproxy/imgproxy?logo=gitter&style=for-the-badge)](https://gitter.im/imgproxy/imgproxy)
+---
 
-
-imgproxy is a fast and secure standalone server for resizing and converting remote images. The guiding principles behind imgproxy are security, speed, and simplicity.
+[imgproxy](https://imgproxy.net) is a fast and secure standalone server for resizing and converting remote images. The guiding principles behind imgproxy are security, speed, and simplicity.
 
 imgproxy is able to quickly and easily resize images on the fly, and it's well-equipped to handle a large amount of image resizing. imgproxy is a fast, secure replacement for all the image resizing code inside your web application (such as resizing libraries, or code that calls ImageMagick or GraphicsMagic). It's also an indispensable tool for processing images from a remote source. With imgproxy, you don’t need to repeatedly prepare images to fit your design every time it changes.
 
 To get an even better introduction, and to dive deeper into the nitty gritty details, check out this article: [imgproxy: Resize your images instantly and securely](https://evilmartians.com/chronicles/introducing-imgproxy)
 
 <a href="https://evilmartians.com/?utm_source=imgproxy" target="_blank">
-<img src="https://evilmartians.com/badges/sponsored-by-evil-martians_v2.0.svg" alt="Sponsored by Evil Martians" width="236" height="54">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://evilmartians.com/badges/sponsored-by-evil-martians_v2.0_for-dark-bg.svg">
+    <source media="(prefers-color-scheme: light)" srcset="https://evilmartians.com/badges/sponsored-by-evil-martians_v2.0.svg">
+    <img alt="Sponsored by Evil Martians" width="236" height="54" src="https://evilmartians.com/badges/sponsored-by-evil-martians_v2.0.svg">
+  </picture>
 </a>
 
 #### Simplicity
