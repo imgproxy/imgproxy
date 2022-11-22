@@ -1,9 +1,9 @@
 <p align="center">
   <a href="https://imgproxy.net">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="logo-dark.svg">
-      <source media="(prefers-color-scheme: light)" srcset="logo-light.svg">
-      <img alt="imgproxy logo" src="logo-light.svg">
+      <source media="(prefers-color-scheme: dark)" srcset="assets/logo-dark.svg?sanitize=true">
+      <source media="(prefers-color-scheme: light)" srcset="assets/logo-light.svg?sanitize=true">
+      <img alt="imgproxy logo" src="assets/logo-light.svg?sanitize=true">
     </picture>
   </a>
 </p>
@@ -33,9 +33,9 @@ To get an even better introduction, and to dive deeper into the nitty gritty det
 
 <a href="https://evilmartians.com/?utm_source=imgproxy" target="_blank">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://evilmartians.com/badges/sponsored-by-evil-martians_v2.0_for-dark-bg.svg">
-    <source media="(prefers-color-scheme: light)" srcset="https://evilmartians.com/badges/sponsored-by-evil-martians_v2.0.svg">
-    <img alt="Sponsored by Evil Martians" width="236" height="54" src="https://evilmartians.com/badges/sponsored-by-evil-martians_v2.0.svg">
+    <source media="(prefers-color-scheme: dark)" srcset="assets/sponsored-dark.svg?sanitize=true">
+    <source media="(prefers-color-scheme: light)" srcset="assets/sponsored-light.svg?sanitize=true">
+    <img alt="Sponsored by Evil Martians" width="236" height="54" src="assets/sponsored-light.svg?sanitize=true">
   </picture>
 </a>
 
