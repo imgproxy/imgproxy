@@ -123,7 +123,7 @@ When cookie forwarding is activated, by default, imgproxy assumes the scope of t
 ## Compression
 
 * `IMGPROXY_QUALITY`: the default quality of the resultant image, percentage. Default: `80`
-* `IMGPROXY_FORMAT_QUALITY`: default quality of the resulting image per format, separated by commas. Example: `jpeg=70,avif=40,webp=60`. When a value for the resulting format is not set, the `IMGPROXY_QUALITY` value is used. Default: `avif=50`
+* `IMGPROXY_FORMAT_QUALITY`: default quality of the resulting image per format, separated by commas. Example: `jpeg=70,avif=40,webp=60`. When a value for the resulting format is not set, the `IMGPROXY_QUALITY` value is used. Default: `avif=65`
 
 ### Advanced JPEG compression
 
@@ -156,7 +156,7 @@ When cookie forwarding is activated, by default, imgproxy assumes the scope of t
 
 ### Advanced AVIF compression
 
-* `IMGPROXY_AVIF_SPEED`: controls the CPU effort spent improving compression. The lowest speed is at 0 and the fastest is at 8. Default: `5`
+* `IMGPROXY_AVIF_SPEED`: controls the CPU effort spent improving compression. The lowest speed is at 0 and the fastest is at 8. Default: `8`
 
 ### Autoquality
 
