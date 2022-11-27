@@ -259,7 +259,7 @@ You can set up a fallback image that will be used in case imgproxy is unable to 
 
 When the resulting image format is not explicitly specified in the imgproxy URL via the extension or the `format` processing option, imgproxy will choose one of the preferred formats:
 
-* `IMGPROXY_PREFERRED_FORMATS`: a list of preferred formats, comma divided. Default: `jpeg,png,gif,webp,avif,ico`
+* `IMGPROXY_PREFERRED_FORMATS`: a list of preferred formats, comma divided. Default: `jpeg,png,gif`
 
 imgproxy is guided by the following rules when choosing the resulting format:
 

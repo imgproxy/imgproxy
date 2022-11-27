@@ -4,6 +4,7 @@
 ### Change
 - Change `IMGPROXY_FORMAT_QUALITY` default value to `avif=65`.
 - Change `IMGPROXY_AVIF_SPEED` default value to `8`.
+- Change `IMGPROXY_PREFERRED_FORMATS` default value to `jpeg,png,gif`;
 
 ## [3.11.0] - 2022-11-17
 ### Add

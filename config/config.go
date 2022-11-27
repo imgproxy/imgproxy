@@ -245,9 +245,6 @@ func Reset() {
 		imagetype.JPEG,
 		imagetype.PNG,
 		imagetype.GIF,
-		imagetype.WEBP,
-		imagetype.AVIF,
-		imagetype.ICO,
 	}
 
 	SkipProcessingFormats = make([]imagetype.Type, 0)
