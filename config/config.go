@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"math"
@@ -556,7 +557,7 @@ func Configure() error {
 	}
 
 	if len(Bind) == 0 {
-		return fmt.Errorf("Bind address is not defined")
+		return errors.New("Bind address is not defined")
 	}
 
 	if ReadTimeout <= 0 {
@@ -624,7 +625,7 @@ func Configure() error {
 	}
 
 	if len(PreferredFormats) == 0 {
-		return fmt.Errorf("At least one preferred format should be specified")
+		return errors.New("At least one preferred format should be specified")
 	}
 
 	if IgnoreSslVerification {
@@ -639,7 +640,7 @@ func Configure() error {
 		}
 
 		if !stat.IsDir() {
-			return fmt.Errorf("Cannot use local directory: not a directory")
+			return errors.New("Cannot use local directory: not a directory")
 		}
 
 		if LocalFileSystemRoot == "/" {
@@ -653,35 +654,35 @@ func Configure() error {
 	}
 
 	if WatermarkOpacity <= 0 {
-		return fmt.Errorf("Watermark opacity should be greater than 0")
+		return errors.New("Watermark opacity should be greater than 0")
 	} else if WatermarkOpacity > 1 {
-		return fmt.Errorf("Watermark opacity should be less than or equal to 1")
+		return errors.New("Watermark opacity should be less than or equal to 1")
 	}
 
 	if FallbackImageHTTPCode < 100 || FallbackImageHTTPCode > 599 {
-		return fmt.Errorf("Fallback image HTTP code should be between 100 and 599")
+		return errors.New("Fallback image HTTP code should be between 100 and 599")
 	}
 
 	if len(PrometheusBind) > 0 && PrometheusBind == Bind {
-		return fmt.Errorf("Can't use the same binding for the main server and Prometheus")
+		return errors.New("Can't use the same binding for the main server and Prometheus")
 	}
 
 	if OpenTelemetryConnectionTimeout < 1 {
-		return fmt.Errorf("OpenTelemetry connection timeout should be greater than zero")
+		return errors.New("OpenTelemetry connection timeout should be greater than zero")
 	}
 
 	if FreeMemoryInterval <= 0 {
-		return fmt.Errorf("Free memory interval should be greater than zero")
+		return errors.New("Free memory interval should be greater than zero")
 	}
 
 	if DownloadBufferSize < 0 {
-		return fmt.Errorf("Download buffer size should be greater than or equal to 0")
+		return errors.New("Download buffer size should be greater than or equal to 0")
 	} else if DownloadBufferSize > math.MaxInt32 {
 		return fmt.Errorf("Download buffer size can't be greater than %d", math.MaxInt32)
 	}
 
 	if BufferPoolCalibrationThreshold < 64 {
-		return fmt.Errorf("Buffer pool calibration threshold should be greater than or equal to 64")
+		return errors.New("Buffer pool calibration threshold should be greater than or equal to 64")
 	}
 
 	return nil

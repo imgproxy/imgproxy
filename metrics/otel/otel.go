@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -281,7 +282,7 @@ func buildTLSConfig() (*tls.Config, error) {
 
 	certPool := x509.NewCertPool()
 	if !certPool.AppendCertsFromPEM([]byte(config.OpenTelemetryServerCert)) {
-		return nil, fmt.Errorf("Can't load OpenTelemetry server cert")
+		return nil, errors.New("Can't load OpenTelemetry server cert")
 	}
 
 	tlsConf := tls.Config{RootCAs: certPool}

@@ -8,7 +8,6 @@ package vips
 import "C"
 import (
 	"errors"
-	"fmt"
 	"math"
 	"os"
 	"runtime"
@@ -52,7 +51,7 @@ func Init() error {
 
 	if err := C.vips_initialize(); err != 0 {
 		C.vips_shutdown()
-		return fmt.Errorf("unable to start vips!")
+		return errors.New("unable to start vips!")
 	}
 
 	// Disable libvips cache. Since processing pipeline is fine tuned, we won't get much profit from it.
