@@ -93,9 +93,7 @@ func DecodeMeta(r io.Reader) (Meta, error) {
 		}
 	}
 
-	if ok, err := IsSVG(rr); err != nil {
-		return nil, err
-	} else if ok {
+	if IsSVG(rr) {
 		return &meta{format: imagetype.SVG, width: 1, height: 1}, nil
 	}
 

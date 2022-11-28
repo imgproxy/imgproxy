@@ -10,7 +10,7 @@ import (
 	"github.com/tdewolff/parse/v2/xml"
 )
 
-func IsSVG(r io.Reader) (bool, error) {
+func IsSVG(r io.Reader) bool {
 	maxBytes := config.MaxSvgCheckBytes
 
 	l := xml.NewLexer(parse.NewInput(io.LimitReader(r, int64(maxBytes))))
@@ -20,13 +20,10 @@ func IsSVG(r io.Reader) (bool, error) {
 
 		switch tt {
 		case xml.ErrorToken:
-			if err := l.Err(); err != io.EOF {
-				return false, err
-			}
-			return false, nil
+			return false
 
 		case xml.StartTagToken:
-			return strings.ToLower(string(l.Text())) == "svg", nil
+			return strings.ToLower(string(l.Text())) == "svg"
 		}
 	}
 }
