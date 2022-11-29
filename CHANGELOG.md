@@ -1,6 +1,9 @@
 # Changelog
 
 ## [Unreleased]
+### Add
+- Add `IMGPROXY_MAX_ANIMATION_FRAME_RESOLUTION` config.
+
 ### Change
 - Change `IMGPROXY_FORMAT_QUALITY` default value to `avif=65`.
 - Change `IMGPROXY_AVIF_SPEED` default value to `8`.

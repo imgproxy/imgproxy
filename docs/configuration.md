@@ -60,13 +60,15 @@ echo $(xxd -g 2 -l 64 -p /dev/random | tr -d '\n')
 imgproxy protects you from so-called image bombs. Here's how you can specify the maximum image resolution which you consider reasonable:
 
 * `IMGPROXY_MAX_SRC_RESOLUTION`: the maximum resolution of the source image, in megapixels. Images with larger actual size will be rejected. Default: `16.8`
+
+**⚠️Warning:** When the source image is animated, imgproxy summarizes all its frames' resolutions while checking the source image resolution unless `IMGPROXY_MAX_ANIMATION_FRAME_RESOLUTION` is greater than zero.
+
 * `IMGPROXY_MAX_SRC_FILE_SIZE`: the maximum size of the source image, in bytes. Images with larger file size will be rejected. When set to `0`, file size check is disabled. Default: `0`
 
 imgproxy can process animated images (GIF, WebP), but since this operation is pretty memory heavy, only one frame is processed by default. You can increase the maximum animation frames that can be processed number of with the following variable:
 
 * `IMGPROXY_MAX_ANIMATION_FRAMES`: the maximum number of animated image frames that may be processed. Default: `1`
-
-**📝Note:** imgproxy summarizes all frame resolutions while checking the source image resolution.
+* `IMGPROXY_MAX_ANIMATION_FRAME_RESOLUTION`: the maximum resolution of the animated source image frame, in megapixels. Images with larger actual frame size will be rejected. When set to `0`, imgproxy will test the whole animated image resolution against `IMGPROXY_MAX_SRC_RESOLUTION` summarising all the frames' resolutions. Default: `0`
 
 To check if the source image is SVG, imgproxy reads some amount of bytes; by default it reads a maximum of 32KB. However, you can change this value using the following variable:
 
