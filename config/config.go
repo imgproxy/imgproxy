@@ -203,7 +203,7 @@ func Reset() {
 	KeepAliveTimeout = 10
 	ClientKeepAliveTimeout = 90
 	DownloadTimeout = 5
-	Concurrency = runtime.NumCPU() * 2
+	Concurrency = runtime.GOMAXPROCS(0) * 2
 	RequestsQueueSize = 0
 	MaxClients = 2048
 
