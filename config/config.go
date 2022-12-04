@@ -156,6 +156,10 @@ var (
 	OpenTelemetryTraceIDGenerator  string
 	OpenTelemetryConnectionTimeout int
 
+	CloudWatchServiceName string
+	CloudWatchNamespace   string
+	CloudWatchRegion      string
+
 	BugsnagKey   string
 	BugsnagStage string
 
@@ -333,6 +337,10 @@ func Reset() {
 	OpenTelemetryPropagators = make([]string, 0)
 	OpenTelemetryTraceIDGenerator = "xray"
 	OpenTelemetryConnectionTimeout = 5
+
+	CloudWatchServiceName = ""
+	CloudWatchNamespace = "imgproxy"
+	CloudWatchRegion = ""
 
 	BugsnagKey = ""
 	BugsnagStage = "production"
@@ -526,6 +534,10 @@ func Configure() error {
 	configurators.StringSlice(&OpenTelemetryPropagators, "IMGPROXY_OPEN_TELEMETRY_PROPAGATORS")
 	configurators.String(&OpenTelemetryTraceIDGenerator, "IMGPROXY_OPEN_TELEMETRY_TRACE_ID_GENERATOR")
 	configurators.Int(&OpenTelemetryConnectionTimeout, "IMGPROXY_OPEN_TELEMETRY_CONNECTION_TIMEOUT")
+
+	configurators.String(&CloudWatchServiceName, "IMGPROXY_CLOUD_WATCH_SERVICE_NAME")
+	configurators.String(&CloudWatchNamespace, "IMGPROXY_CLOUD_WATCH_NAMESPACE")
+	configurators.String(&CloudWatchRegion, "IMGPROXY_CLOUD_WATCH_REGION")
 
 	configurators.String(&BugsnagKey, "IMGPROXY_BUGSNAG_KEY")
 	configurators.String(&BugsnagStage, "IMGPROXY_BUGSNAG_STAGE")

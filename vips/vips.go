@@ -21,6 +21,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
+	"github.com/imgproxy/imgproxy/v3/metrics/cloudwatch"
 	"github.com/imgproxy/imgproxy/v3/metrics/datadog"
 	"github.com/imgproxy/imgproxy/v3/metrics/newrelic"
 	"github.com/imgproxy/imgproxy/v3/metrics/otel"
@@ -124,6 +125,10 @@ func Init() error {
 		"By",
 		GetAllocs,
 	)
+
+	cloudwatch.AddGaugeFunc("VipsMemory", "Bytes", GetMem)
+	cloudwatch.AddGaugeFunc("VipsMaxMemory", "Bytes", GetMemHighwater)
+	cloudwatch.AddGaugeFunc("VipsAllocs", "Count", GetAllocs)
 
 	return nil
 }
