@@ -630,6 +630,15 @@ gifo:%optimize_frames:%optimize_transparency
 
 Allows redefining GIF saving options. All arguments have the same meaning as with the [Advanced GIF compression](configuration.md#advanced-gif-compression) configs. All arguments are optional and can be omitted. -->
 
+### WebP options![pro](/assets/pro.svg) :id=webp-options
+
+```
+webp_options:%compression
+webpo:%compression
+```
+
+Allows redefining WebP saving options. All arguments have the same meaning as with the [Advanced WebP compression](configuration.md#advanced-webp-compression) configs. All arguments are optional and can be omitted.
+
 ### Format
 
 ```
@@ -822,7 +831,11 @@ When using an encrypted source URL, you can specify the [extension](#extension) 
 
 Extension specifies the format of the resulting image. Read more about image formats support [here](image_formats_support.md).
 
-The extension can be omitted. In this case, imgproxy will use the source image format as resulting one. If the source image format is not supported as the resulting image, imgproxy will use `jpg`. You also can [enable WebP support detection](configuration.md#webp-support-detection) to use it as the default resulting format when possible.
+The extension can be omitted. In this case, imgproxy will use the source image format as resulting one. If the source image format is not supported as the resulting image, imgproxy will use `jpg`. You also can [enable WebP support detection](configuration.md#avifwebp-support-detection) to use it as the default resulting format when possible.
+
+### Best format![pro](/assets/pro.svg)
+
+You can use the `best` value for the [format](generating_the_url#format) option or the [extension](generating_the_url#extension) to make imgproxy pick the best format for the resultant image. Check out the [Best format](best_format) guide to learn more.
 
 ## Example
 

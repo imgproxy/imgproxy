@@ -156,6 +156,10 @@ When cookie forwarding is activated, by default, imgproxy assumes the scope of t
 * `IMGPROXY_GIF_OPTIMIZE_FRAMES`: ![pro](/assets/pro.svg) when true, enables GIF frame optimization. This may produce a smaller result, but may increase compression time.
 * `IMGPROXY_GIF_OPTIMIZE_TRANSPARENCY`: ![pro](/assets/pro.svg) when true, enables GIF transparency optimization. This may produce a smaller result, but may also increase compression time. -->
 
+### Advanced WebP compression
+
+* `IMGPROXY_WEBP_COMPRESSION`: ![pro](/assets/pro.svg) the compression method to use. Supported values are `lossy`, `near_lossless`, and `lossless`. Default: `lossy`
+
 ### Advanced AVIF compression
 
 * `IMGPROXY_AVIF_SPEED`: controls the CPU effort spent improving compression. The lowest speed is at 0 and the fastest is at 8. Default: `8`
@@ -194,6 +198,43 @@ imgproxy can use the `Accept` HTTP header to detect if the browser supports AVIF
 **📝Note:** When AVIF/WebP support detection is enabled, please take care to configure your CDN or caching proxy to take the `Accept` HTTP header into account while caching.
 
 **⚠️Warning:** Headers cannot be signed. This means that an attacker can bypass your CDN cache by changing the `Accept` HTTP headers. Keep this in mind when configuring your production caching setup.
+
+## Preferred formats
+
+When the resulting image format is not explicitly specified in the imgproxy URL via the extension or the `format` processing option, imgproxy will choose one of the preferred formats:
+
+* `IMGPROXY_PREFERRED_FORMATS`: a list of preferred formats, comma divided. Default: `jpeg,png,gif`
+
+imgproxy is guided by the following rules when choosing the resulting format:
+
+1. If the preferred formats list contains the source image format, it will be used
+2. If the resulting image is animated, the resulting image format should support animations
+3. If the resulting image contains transparency, the resulting image format should support transparency
+4. imgproxy chooses the first preferred format that meets those requirements
+5. If none of the preferred formats meet the requirements, the first preferred format is used
+
+**📝Note:** When AVIF/WebP support detection is enabled and the browser supports AVIF/WebP, it may be used as the resultant format even if the preferred formats list doesn't contain it.
+
+## Skip processing
+
+You can configure imgproxy to skip processing of some formats:
+
+* `IMGPROXY_SKIP_PROCESSING_FORMATS`: a list of formats that imgproxy shouldn't process, comma divided.
+
+**📝Note:** Processing can only be skipped when the requested format is the same as the source format.
+
+**📝Note:** Video thumbnail processing can't be skipped.
+
+## Best format
+
+You can use the `best` value for the [format](generating_the_url#format) option or the [extension](generating_the_url#extension) to make imgproxy pick the best format for the resultant image.
+
+* `IMGPROXY_BEST_FORMAT_COMPLEXITY_THRESHOLD `: ![pro](/assets/pro.svg) the image complexity threshold. imgproxy will use a lossless or near-lossless encoding for images with low complexity. Default: `5.5`
+* `IMGPROXY_BEST_FORMAT_MAX_RESOLUTION`: ![pro](/assets/pro.svg) when greater than `0` and the image's resolution (in megapixels) is larger than the provided value, imgproxy won't try all the applicable formats and will just pick one that seems the best for the image
+* `IMGPROXY_BEST_FORMAT_BY_DEFAULT`: ![pro](/assets/pro.svg) when `true` and the resulting image format is not specified explicitly, imgproxy will use the `best` format instead of the source image format
+* `IMGPROXY_BEST_FORMAT_ALLOW_SKIPS`: ![pro](/assets/pro.svg) when `true` and the `best` format is used, imgproxy will skip processing of SVG and formats [listed to skip processing](configuration#skip-processing)
+
+Check out the [Best format](best_format) guide to learn more.
 
 ## Client Hints support
 
@@ -257,32 +298,6 @@ You can set up a fallback image that will be used in case imgproxy is unable to 
 * `IMGPROXY_FALLBACK_IMAGE_TTL`: a duration (in seconds) sent via the `Expires` and `Cache-Control: max-age` HTTP headers when a fallback image was used. When blank or `0`, the value from `IMGPROXY_TTL` is used.
 * `IMGPROXY_FALLBACK_IMAGES_CACHE_SIZE`: ![pro](/assets/pro.svg) the size of custom fallback images cache. When set to `0`, the fallback image cache is disabled. 256 fallback images are cached by default.
 
-## Preferred formats
-
-When the resulting image format is not explicitly specified in the imgproxy URL via the extension or the `format` processing option, imgproxy will choose one of the preferred formats:
-
-* `IMGPROXY_PREFERRED_FORMATS`: a list of preferred formats, comma divided. Default: `jpeg,png,gif`
-
-imgproxy is guided by the following rules when choosing the resulting format:
-
-1. If the preferred formats list contains the source image format, it will be used
-2. If the resulting image is animated, the resulting image format should support animations
-3. If the resulting image contains transparency, the resulting image format should support transparency
-4. imgproxy chooses the first preferred format that meets those requirements
-5. If none of the preferred formats meet the requirements, the first preferred format is used
-
-**📝Note:** When AVIF/WebP support detection is enabled and the browser supports AVIF/WebP, it may be used as the resultant format even if the preferred formats list doesn't contain it.
-
-## Skip processing
-
-You can configure imgproxy to skip processing of some formats:
-
-* `IMGPROXY_SKIP_PROCESSING_FORMATS`: a list of formats that imgproxy shouldn't process, comma divided.
-
-**📝Note:** Processing can only be skipped when the requested format is the same as the source format.
-
-**📝Note:** Video thumbnail processing can't be skipped.
-
 ## Presets
 
 Read more about imgproxy presets in the [Presets](presets.md) guide.
@@ -317,7 +332,9 @@ imgproxy can be switched into "presets-only mode". In this mode, imgproxy accept
 
 * `IMGPROXY_ONLY_PRESETS`: disables all URL formats and enables presets-only mode.
 
-## Serving local files
+## Image sources
+
+### Local files :id=serving-local-files
 
 imgproxy can serve your local images, but this feature is disabled by default. To enable it, specify your local filesystem root:
 
@@ -325,7 +342,7 @@ imgproxy can serve your local images, but this feature is disabled by default. T
 
 Check out the [Serving local files](serving_local_files.md) guide to learn more.
 
-## Serving files from Amazon S3
+### Amazon S3 :id=serving-files-from-amazon-s3
 
 imgproxy can process files from Amazon S3 buckets, but this feature is disabled by default. To enable it, set `IMGPROXY_USE_S3` to `true`:
 
@@ -334,7 +351,7 @@ imgproxy can process files from Amazon S3 buckets, but this feature is disabled 
 
 Check out the [Serving files from S3](serving_files_from_s3.md) guide to learn more.
 
-## Serving files from Google Cloud Storage
+### Google Cloud Storage :id=serving-files-from-google-cloud-storage
 
 imgproxy can process files from Google Cloud Storage buckets, but this feature is disabled by default. To enable it, set the value of `IMGPROXY_USE_GCS` to `true`:
 
@@ -344,7 +361,7 @@ imgproxy can process files from Google Cloud Storage buckets, but this feature i
 
 Check out the [Serving files from Google Cloud Storage](serving_files_from_google_cloud_storage.md) guide to learn more.
 
-## Serving files from Azure Blob Storage
+### Azure Blob Storage :id=serving-files-from-azure-blob-storage
 
 imgproxy can process files from Azure Blob Storage containers, but this feature is disabled by default. To enable it, set `IMGPROXY_USE_ABS` to `true`:
 
@@ -355,7 +372,8 @@ imgproxy can process files from Azure Blob Storage containers, but this feature 
 
 Check out the [Serving files from Azure Blob Storage](serving_files_from_azure_blob_storage.md) guide to learn more.
 
-## Serving files from OpenStack Object Storage ("Swift")
+### OpenStack Object Storage ("Swift") :id=serving-files-from-openstack-object-storage-swift
+
 imgproxy can process files from OpenStack Object Storage, but this feature is disabled by default. To enable it, set `IMGPROXY_USE_SWIFT` to `true`.
 * `IMGPROXY_USE_SWIFT`: when `true`, enables image fetching from OpenStack Swift Object Storage. Default: `false`
 * `IMGPROXY_SWIFT_USERNAME`: the username for Swift API access. Default: blank
@@ -367,8 +385,11 @@ imgproxy can process files from OpenStack Object Storage, but this feature is di
 * `IMGRPOXY_SWIFT_TIMEOUT_SECONDS`: the data channel timeout in seconds. Default: 60
 * `IMGRPOXY_SWIFT_CONNECT_TIMEOUT_SECONDS`: the connect channel timeout in seconds. Default: 10
 
+Check out the [Serving files from OpenStack Object Storage](serving_files_from_openstack_swift.md) guide to learn more.
 
-## New Relic metrics
+## Metrics
+
+### New Relic :id=new-relic-metrics
 
 imgproxy can send its metrics to New Relic. Specify your New Relic license key to activate this feature:
 
@@ -378,7 +399,7 @@ imgproxy can send its metrics to New Relic. Specify your New Relic license key t
 
 Check out the [New Relic](new_relic.md) guide to learn more.
 
-## Prometheus metrics
+### Prometheus :id=prometheus-metrics
 
 imgproxy can collect its metrics for Prometheus. Specify a binding for Prometheus metrics server to activate this feature:
 
@@ -387,7 +408,7 @@ imgproxy can collect its metrics for Prometheus. Specify a binding for Prometheu
 
 Check out the [Prometheus](prometheus.md) guide to learn more.
 
-## Datadog metrics
+### Datadog :id=datadog-metrics
 
 imgproxy can send its metrics to Datadog:
 
@@ -398,7 +419,7 @@ imgproxy can send its metrics to Datadog:
 
 Check out the [Datadog](datadog.md) guide to learn more.
 
-## OpenTelemetry metrics
+### OpenTelemetry :id=opentelemetry-metrics
 
 imgproxy can send request traces to an OpenTelemetry collector:
 
@@ -416,21 +437,43 @@ imgproxy can send request traces to an OpenTelemetry collector:
 
 Check out the [OpenTelemetry](open_telemetry.md) guide to learn more.
 
+### Amazon CloudWatch metrics :id=amazon-cloudwatch-metrics
+
+imgproxy can send its metrics to Amazon CloudWatch. Specify a desired `ServiceName` dimesion value to activate this feature:
+
+* `IMGPROXY_CLOUD_WATCH_SERVICE_NAME`: the value of the `ServiceName` dimension which will be used in the metrics. Default: blank
+* `IMGPROXY_CLOUD_WATCH_NAMESPACE`: the CloudWatch namespace for the metrics
+* `IMGPROXY_CLOUD_WATCH_REGION`: the code of the AWS region to which the metrics should be sent
+
+Check out the [CloudWatch](cloud_watch.md) guide to learn more.
+
 ## Error reporting
 
 imgproxy can report occurred errors to Bugsnag, Honeybadger and Sentry:
 
+* `IMGPROXY_REPORT_DOWNLOADING_ERRORS`: when `true`, imgproxy will report downloading errors. Default: `true`
+
+### Bugsnag
+
 * `IMGPROXY_BUGSNAG_KEY`: Bugsnag API key. When provided, enables error reporting to Bugsnag.
 * `IMGPROXY_BUGSNAG_STAGE`: the Bugsnag stage to report to. Default: `production`
+
+### Honeybadger
+
 * `IMGPROXY_HONEYBADGER_KEY`: the Honeybadger API key. When provided, enables error reporting to Honeybadger.
 * `IMGPROXY_HONEYBADGER_ENV`: the Honeybadger env to report to. Default: `production`
+
+### Sentry
+
 * `IMGPROXY_SENTRY_DSN`: Sentry project DSN. When provided, enables error reporting to Sentry.
 * `IMGPROXY_SENTRY_ENVIRONMENT`: the Sentry environment to report to. Default: `production`
 * `IMGPROXY_SENTRY_RELEASE`: the Sentry release to report to. Default: `imgproxy@{imgproxy version}`
+
+### Airbrake
+
 * `IMGPROXY_AIRBRAKE_PROJECT_ID`: an Airbrake project id
 * `IMGPROXY_AIRBRAKE_PROJECT_KEY`: an Airbrake project key
 * `IMGPROXY_AIRBRAKE_ENVIRONMENT`: the Airbrake environment to report to. Default: `production`
-* `IMGPROXY_REPORT_DOWNLOADING_ERRORS`: when `true`, imgproxy will report downloading errors. Default: `true`
 
 ## Log
 
@@ -456,7 +499,6 @@ imgproxy can send logs to syslog, but this feature is disabled by default. To en
 **⚠️Warning:** We highly recommended reading the [Memory usage tweaks](memory_usage_tweaks.md) guide before changing these settings.
 
 * `IMGPROXY_DOWNLOAD_BUFFER_SIZE`: the initial size (in bytes) of a single download buffer. When set to zero, initializes empty download buffers. Default: `0`
-* `IMGPROXY_GZIP_BUFFER_SIZE`: the initial size (in bytes) of a single GZip buffer. When zero, initializes empty GZip buffers. This makess sense only when GZip compression is enabled. Default: `0`
 * `IMGPROXY_FREE_MEMORY_INTERVAL`: the interval (in seconds) at which unused memory will be returned to the OS. Default: `10`
 * `IMGPROXY_BUFFER_POOL_CALIBRATION_THRESHOLD`: the number of buffers that should be returned to a pool before calibration. Default: `1024`
 
