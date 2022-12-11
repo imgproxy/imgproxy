@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+
+## [3.12.0] - 2022-12-11
 ### Add
 - Add `IMGPROXY_MAX_ANIMATION_FRAME_RESOLUTION` config.
 - Add [Amazon CloudWatch](https://docs.imgproxy.net/latest/cloud_watch) support.
