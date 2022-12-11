@@ -120,10 +120,11 @@ var (
 	Presets     []string
 	OnlyPresets bool
 
-	WatermarkData    string
-	WatermarkPath    string
-	WatermarkURL     string
-	WatermarkOpacity float64
+	WatermarkURLImageCacheSize int
+	WatermarkData              string
+	WatermarkPath              string
+	WatermarkURL               string
+	WatermarkOpacity           float64
 
 	FallbackImageData     string
 	FallbackImagePath     string
@@ -287,6 +288,7 @@ func Reset() {
 	Presets = make([]string, 0)
 	OnlyPresets = false
 
+	WatermarkURLImageCacheSize = 32
 	WatermarkData = ""
 	WatermarkPath = ""
 	WatermarkURL = ""

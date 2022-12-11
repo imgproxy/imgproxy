@@ -2,7 +2,6 @@ package processing
 
 import (
 	"context"
-
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imath"
@@ -87,10 +86,33 @@ func applyWatermark(img *vips.Image, wmData *imagedata.ImageData, opts *options.
 	return img.ApplyWatermark(wm, opacity)
 }
 
-func watermark(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata *imagedata.ImageData) error {
-	if !po.Watermark.Enabled || imagedata.Watermark == nil {
+func watermark(_ *pipelineContext, img *vips.Image, po *options.ProcessingOptions, _ *imagedata.ImageData) error {
+	if !po.Watermark.Enabled {
 		return nil
 	}
 
-	return applyWatermark(img, imagedata.Watermark, &po.Watermark, 1)
+	var wm = imagedata.Watermark
+	if &po.Watermark.Url != nil && len(po.Watermark.Url) > 0 {
+		if !imagedata.CachedWatermark.Contains(po.Watermark.Url) {
+			imgData, err := imagedata.Download(po.Watermark.Url, "url-based watermark", nil, nil)
+			if err != nil {
+				return err
+			}
+			imagedata.CachedWatermark.Add(po.Watermark.Url, imgData)
+		}
+
+		wmu, ok := imagedata.CachedWatermark.Get(po.Watermark.Url)
+		if ok {
+			wm = wmu.(*imagedata.ImageData)
+		} else {
+			// 워터마크 url이 존재하는데 이미지를 불러오지 못했다면 nil을 설정한다.
+			wm = nil
+		}
+	}
+
+	if wm == nil {
+		return nil
+	}
+
+	return applyWatermark(img, wm, &po.Watermark, 1)
 }

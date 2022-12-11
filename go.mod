@@ -15,6 +15,8 @@ require (
 	github.com/fsouza/fake-gcs-server v1.38.4
 	github.com/getsentry/sentry-go v0.13.0
 	github.com/go-ole/go-ole v1.2.6 // indirect
+	github.com/hashicorp/golang-lru v0.5.4 // indirect
+	github.com/hashicorp/golang-lru/v2 v2.0.1 // indirect
 	github.com/honeybadger-io/honeybadger-go v0.5.0
 	github.com/ianlancetaylor/cgosymbolizer v0.0.0-20220405231054-a1ae3e4bba26 // indirect
 	github.com/johannesboyne/gofakes3 v0.0.0-20220627085814-c3ac35da23b2

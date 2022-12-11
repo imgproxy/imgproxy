@@ -3,6 +3,7 @@ imgproxy
 tmp/
 .tmp
 .vscode/
+.idea/
 
 .gitmodules
 docker-base

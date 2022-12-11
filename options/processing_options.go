@@ -1,6 +1,7 @@
 package options
 
 import (
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"net/http"
@@ -52,6 +53,7 @@ type TrimOptions struct {
 
 type WatermarkOptions struct {
 	Enabled   bool
+	Url       string
 	Opacity   float64
 	Replicate bool
 	Gravity   GravityOptions
@@ -755,6 +757,66 @@ func applyWatermarkOption(po *ProcessingOptions, args []string) error {
 	return nil
 }
 
+func applyWatermarkUrlOption(po *ProcessingOptions, args []string) error {
+	if len(args) > 7 {
+		return fmt.Errorf("Invalid watermark url arguments: %v", args)
+	}
+
+	urlIndex, opacityIndex, positionIndex, xOffsetIndex, yOffsetIndex, scaleIndex := 0, 1, 2, 3, 4, 5
+	if len(args) > (urlIndex) && len(args[urlIndex]) > 0 {
+		imageURL, err := base64.RawURLEncoding.DecodeString(strings.TrimRight(args[urlIndex], "="))
+		if err != nil {
+			return fmt.Errorf("Invalid base64 watermark url\n%s", err.Error())
+		}
+		po.Watermark.Url = string(imageURL)
+	} else {
+		return fmt.Errorf("Invalid watermark url: %s", args[urlIndex])
+	}
+
+	if o, err := strconv.ParseFloat(args[opacityIndex], 64); err == nil && o >= 0 && o <= 1 {
+		po.Watermark.Enabled = o > 0
+		po.Watermark.Opacity = o
+	} else {
+		return fmt.Errorf("Invalid watermark opacity: %s", args[opacityIndex])
+	}
+
+	if len(args) > (positionIndex) && len(args[positionIndex]) > 0 {
+		if args[positionIndex] == "re" {
+			po.Watermark.Replicate = true
+		} else if g, ok := gravityTypes[args[positionIndex]]; ok && g != GravityFocusPoint && g != GravitySmart {
+			po.Watermark.Gravity.Type = g
+		} else {
+			return fmt.Errorf("Invalid watermark position: %s", args[positionIndex])
+		}
+	}
+
+	if len(args) > (xOffsetIndex) && len(args[xOffsetIndex]) > 0 {
+		if x, err := strconv.Atoi(args[xOffsetIndex]); err == nil {
+			po.Watermark.Gravity.X = float64(x)
+		} else {
+			return fmt.Errorf("Invalid watermark X offset: %s", args[xOffsetIndex])
+		}
+	}
+
+	if len(args) > (yOffsetIndex) && len(args[yOffsetIndex]) > 0 {
+		if y, err := strconv.Atoi(args[yOffsetIndex]); err == nil {
+			po.Watermark.Gravity.Y = float64(y)
+		} else {
+			return fmt.Errorf("Invalid watermark Y offset: %s", args[yOffsetIndex])
+		}
+	}
+
+	if len(args) > (scaleIndex) && len(args[scaleIndex]) > 0 {
+		if s, err := strconv.ParseFloat(args[scaleIndex], 64); err == nil && s >= 0 {
+			po.Watermark.Scale = s
+		} else {
+			return fmt.Errorf("Invalid watermark scale: %s", args[scaleIndex])
+		}
+	}
+
+	return nil
+}
+
 func applyFormatOption(po *ProcessingOptions, args []string) error {
 	if len(args) > 1 {
 		return fmt.Errorf("Invalid format arguments: %v", args)
@@ -926,6 +988,8 @@ func applyURLOption(po *ProcessingOptions, name string, args []string) error {
 		return applyPixelateOption(po, args)
 	case "watermark", "wm":
 		return applyWatermarkOption(po, args)
+	case "watermark_url", "wmu":
+		return applyWatermarkUrlOption(po, args)
 	case "strip_metadata", "sm":
 		return applyStripMetadataOption(po, args)
 	case "keep_copyright", "kcr":

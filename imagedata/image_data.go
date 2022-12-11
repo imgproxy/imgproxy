@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	lru "github.com/hashicorp/golang-lru"
 	"net/http"
 	"net/http/cookiejar"
 	"os"
@@ -16,8 +17,9 @@ import (
 )
 
 var (
-	Watermark     *ImageData
-	FallbackImage *ImageData
+	Watermark       *ImageData
+	FallbackImage   *ImageData
+	CachedWatermark *lru.ARCCache
 )
 
 type ImageData struct {
@@ -43,6 +45,12 @@ func (d *ImageData) SetCancel(cancel context.CancelFunc) {
 
 func Init() error {
 	initRead()
+
+	arc, err := lru.NewARC(config.WatermarkURLImageCacheSize)
+	if err != nil {
+		return err
+	}
+	CachedWatermark = arc
 
 	if err := initDownloading(); err != nil {
 		return err
