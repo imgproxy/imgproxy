@@ -9,6 +9,7 @@
 - Change `IMGPROXY_AVIF_SPEED` default value to `8`.
 - Change `IMGPROXY_PREFERRED_FORMATS` default value to `jpeg,png,gif`.
 - Set `Cache-Control: no-cache` header to the health check responses.
+- Allow replacing line breaks with `\n` in `IMGPROXY_OPEN_TELEMETRY_SERVER_CERT`, `IMGPROXY_OPEN_TELEMETRY_CLIENT_CERT`, and`IMGPROXY_OPEN_TELEMETRY_CLIENT_KEY`.
 
 ## [3.11.0] - 2022-11-17
 ### Add

@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/felixge/httpsnoop"
@@ -280,7 +281,7 @@ func buildTLSConfig() (*tls.Config, error) {
 	}
 
 	certPool := x509.NewCertPool()
-	if !certPool.AppendCertsFromPEM([]byte(config.OpenTelemetryServerCert)) {
+	if !certPool.AppendCertsFromPEM(prepareKeyCert(config.OpenTelemetryServerCert)) {
 		return nil, fmt.Errorf("Can't load OpenTelemetry server cert")
 	}
 
@@ -288,8 +289,8 @@ func buildTLSConfig() (*tls.Config, error) {
 
 	if len(config.OpenTelemetryClientCert) > 0 && len(config.OpenTelemetryClientKey) > 0 {
 		cert, err := tls.X509KeyPair(
-			[]byte(config.OpenTelemetryClientCert),
-			[]byte(config.OpenTelemetryClientKey),
+			prepareKeyCert(config.OpenTelemetryClientCert),
+			prepareKeyCert(config.OpenTelemetryClientKey),
 		)
 		if err != nil {
 			return nil, fmt.Errorf("Can't load OpenTelemetry client cert/key pair: %s", err)
@@ -299,6 +300,10 @@ func buildTLSConfig() (*tls.Config, error) {
 	}
 
 	return &tlsConf, nil
+}
+
+func prepareKeyCert(str string) []byte {
+	return []byte(strings.ReplaceAll(str, `\n`, "\n"))
 }
 
 func Stop() {
