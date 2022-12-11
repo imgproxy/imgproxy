@@ -6,22 +6,24 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/Azure/azure-storage-blob-go/azblob"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
 	"github.com/imgproxy/imgproxy/v3/config"
-	"github.com/imgproxy/imgproxy/v3/httprange"
+	"github.com/imgproxy/imgproxy/v3/ctxreader"
 )
 
 type transport struct {
-	serviceURL *azblob.ServiceURL
+	svc *azblob.Client
 }
 
 func New() (http.RoundTripper, error) {
-	credential, err := azblob.NewSharedKeyCredential(config.ABSName, config.ABSKey)
-	if err != nil {
-		return nil, err
-	}
-
-	pipeline := azblob.NewPipeline(credential, azblob.PipelineOptions{})
+	var (
+		client                 *azblob.Client
+		defaultAzureCredential *azidentity.DefaultAzureCredential
+		err                    error
+		sharedKeyCredential    *azblob.SharedKeyCredential
+	)
 
 	endpoint := config.ABSEndpoint
 	if len(endpoint) == 0 {
@@ -32,44 +34,65 @@ func New() (http.RoundTripper, error) {
 		return nil, err
 	}
 
-	serviceURL := azblob.NewServiceURL(*endpointURL, pipeline)
+	if config.ABSKey != "" {
+		sharedKeyCredential, err = azblob.NewSharedKeyCredential(config.ABSName, config.ABSKey)
+		if err != nil {
+			return nil, err
+		}
 
-	return transport{&serviceURL}, nil
-}
+		client, err = azblob.NewClientWithSharedKeyCredential(endpointURL.String(), sharedKeyCredential, nil)
+	} else {
+		defaultAzureCredential, err = azidentity.NewDefaultAzureCredential(nil)
+		if err != nil {
+			return nil, err
+		}
 
-func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
-	containerURL := t.serviceURL.NewContainerURL(strings.ToLower(req.URL.Host))
-	blobURL := containerURL.NewBlockBlobURL(strings.TrimPrefix(req.URL.Path, "/"))
-
-	start, end, err := httprange.Parse(req.Header.Get("Range"))
-	if err != nil {
-		return httprange.InvalidHTTPRangeResponse(req), nil
+		client, err = azblob.NewClient(endpointURL.String(), defaultAzureCredential, nil)
 	}
 
-	length := end - start + 1
-	if end <= 0 {
-		length = azblob.CountToEnd
-	}
-
-	get, err := blobURL.Download(req.Context(), start, length, azblob.BlobAccessConditions{}, false, azblob.ClientProvidedKeyOptions{})
 	if err != nil {
 		return nil, err
 	}
 
-	if config.ETagEnabled && start == 0 && end == azblob.CountToEnd {
-		etag := string(get.ETag())
+	return transport{client}, nil
+}
 
-		if etag == req.Header.Get("If-None-Match") {
-			if body := get.Response().Body; body != nil {
-				get.Response().Body.Close()
-			}
+func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
+	container := req.URL.Host
+	key := req.URL.Path
 
+	header := make(http.Header)
+
+	result, err := t.svc.DownloadStream(req.Context(), container, strings.TrimPrefix(key, "/"), nil)
+	if err != nil {
+		if azError, ok := err.(*azcore.ResponseError); !ok || azError.StatusCode < 100 || azError.StatusCode == 301 {
+			return nil, err
+		} else {
+			return &http.Response{
+				StatusCode:    azError.StatusCode,
+				Proto:         "HTTP/1.0",
+				ProtoMajor:    1,
+				ProtoMinor:    0,
+				Header:        header,
+				ContentLength: *result.ContentLength,
+				Body:          ctxreader.New(req.Context(), result.Body, true),
+				Close:         true,
+				Request:       req,
+			}, nil
+		}
+	}
+
+	if config.ETagEnabled {
+		azETag := string(*result.ETag)
+		header.Set("ETag", azETag)
+
+		if etag := req.Header.Get("If-None-Match"); len(etag) > 0 && azETag == etag {
 			return &http.Response{
 				StatusCode:    http.StatusNotModified,
 				Proto:         "HTTP/1.0",
 				ProtoMajor:    1,
 				ProtoMinor:    0,
-				Header:        make(http.Header),
+				Header:        header,
 				ContentLength: 0,
 				Body:          nil,
 				Close:         false,
@@ -78,5 +101,15 @@ func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error)
 		}
 	}
 
-	return get.Response(), nil
+	return &http.Response{
+		StatusCode:    http.StatusOK,
+		Proto:         "HTTP/1.0",
+		ProtoMajor:    1,
+		ProtoMinor:    0,
+		Header:        header,
+		ContentLength: *result.ContentLength,
+		Body:          ctxreader.New(req.Context(), result.Body, true),
+		Close:         true,
+		Request:       req,
+	}, nil
 }
