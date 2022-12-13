@@ -117,7 +117,7 @@ func (t transport) RoundTrip(req *http.Request) (*http.Response, error) {
 		}
 	}
 
-	if config.ETagEnabled {
+	if config.ETagEnabled && result.ETag != nil {
 		azETag := string(*result.ETag)
 		header.Set("ETag", azETag)
 
