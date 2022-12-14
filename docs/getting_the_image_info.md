@@ -1,4 +1,4 @@
-# Getting the image info![pro](/assets/pro.svg)
+# Getting the image info![pro](./assets/pro.svg)
 
 imgproxy can fetch and return a source image info without downloading the whole image.
 
