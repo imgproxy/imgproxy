@@ -1,4 +1,4 @@
-# Chained pipelines![pro](/assets/pro.svg)
+# Chained pipelines![pro](./assets/pro.svg)
 
 Though imgproxy's [processing pipeline](about_processing_pipeline.md) is suitable for most cases, sometimes it's handy to run multiple chained pipelines with different options.
 
