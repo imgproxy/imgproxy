@@ -153,3 +153,4 @@ require (
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )
 
+replace go.opentelemetry.io/contrib/detectors/aws/ecs => github.com/DarthSim/opentelemetry-go-contrib/detectors/aws/ecs v0.0.0-20221214183400-5c1bc2f70c1a
