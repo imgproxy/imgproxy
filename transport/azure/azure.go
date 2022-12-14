@@ -9,12 +9,13 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/blob"
 	"github.com/imgproxy/imgproxy/v3/httprange"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
+	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/blob"
+	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/blockblob"
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/ctxreader"
 )
@@ -84,8 +85,8 @@ func (t transport) RoundTrip(req *http.Request) (*http.Response, error) {
 
 		if end != 0 {
 			length := end - start + 1
-			if end < 0 {
-				length = -1
+			if end <= 0 {
+				length = blockblob.CountToEnd
 			}
 
 			opts.Range = blob.HTTPRange{
