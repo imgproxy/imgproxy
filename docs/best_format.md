@@ -1,4 +1,4 @@
-# Best format![pro](/assets/pro.svg)
+# Best format![pro](./assets/pro.svg)
 
 You can use the `best` value for the [format](generating_the_url#format) option or the [extension](generating_the_url#extension) to make imgproxy pick the best format for the resultant image.
 
