@@ -137,8 +137,14 @@ func (t transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	}
 
 	header.Set("Accept-Ranges", "bytes")
-	header.Set("Content-Length", strconv.FormatInt(*result.ContentLength, 10))
-	header.Set("Content-Type", *result.ContentType)
+
+	if result.ContentLength != nil {
+		header.Set("Content-Length", strconv.FormatInt(*result.ContentLength, 10))
+	}
+
+	if result.ContentType != nil {
+		header.Set("Content-Type", *result.ContentType)
+	}
 
 	if result.ContentRange != nil {
 		header.Set("Content-Range", *result.ContentRange)
