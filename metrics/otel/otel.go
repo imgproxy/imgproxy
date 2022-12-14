@@ -30,7 +30,7 @@ import (
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
-	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.12.0"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -99,7 +99,7 @@ func Init() error {
 	)
 
 	if awsRes != nil {
-		res, _ = resource.Merge(res, awsRes)
+		res, _ = resource.Merge(awsRes, res)
 	}
 
 	opts := []sdktrace.TracerProviderOption{
