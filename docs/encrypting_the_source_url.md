@@ -1,4 +1,4 @@
-# Encrypting the source URL![pro](/assets/pro.svg)
+# Encrypting the source URL![pro](./assets/pro.svg)
 
 If you don't want to reveal your source URLs, you can encrypt them with the AES-CBC algorithm.
 
