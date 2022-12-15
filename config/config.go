@@ -36,11 +36,12 @@ var (
 
 	PathPrefix string
 
-	MaxSrcResolution   int
-	MaxSrcFileSize     int
-	MaxAnimationFrames int
-	MaxSvgCheckBytes   int
-	MaxRedirects       int
+	MaxSrcResolution            int
+	MaxSrcFileSize              int
+	MaxAnimationFrames          int
+	MaxAnimationFrameResolution int
+	MaxSvgCheckBytes            int
+	MaxRedirects                int
 
 	JpegProgressive       bool
 	PngInterlaced         bool
@@ -156,6 +157,10 @@ var (
 	OpenTelemetryTraceIDGenerator  string
 	OpenTelemetryConnectionTimeout int
 
+	CloudWatchServiceName string
+	CloudWatchNamespace   string
+	CloudWatchRegion      string
+
 	BugsnagKey   string
 	BugsnagStage string
 
@@ -203,7 +208,7 @@ func Reset() {
 	KeepAliveTimeout = 10
 	ClientKeepAliveTimeout = 90
 	DownloadTimeout = 5
-	Concurrency = runtime.NumCPU() * 2
+	Concurrency = runtime.GOMAXPROCS(0) * 2
 	RequestsQueueSize = 0
 	MaxClients = 2048
 
@@ -218,6 +223,7 @@ func Reset() {
 	MaxSrcResolution = 16800000
 	MaxSrcFileSize = 0
 	MaxAnimationFrames = 1
+	MaxAnimationFrameResolution = 0
 	MaxSvgCheckBytes = 32 * 1024
 	MaxRedirects = 10
 
@@ -333,6 +339,10 @@ func Reset() {
 	OpenTelemetryTraceIDGenerator = "xray"
 	OpenTelemetryConnectionTimeout = 5
 
+	CloudWatchServiceName = ""
+	CloudWatchNamespace = "imgproxy"
+	CloudWatchRegion = ""
+
 	BugsnagKey = ""
 	BugsnagStage = "production"
 
@@ -387,6 +397,7 @@ func Configure() error {
 	configurators.Int(&MaxSvgCheckBytes, "IMGPROXY_MAX_SVG_CHECK_BYTES")
 
 	configurators.Int(&MaxAnimationFrames, "IMGPROXY_MAX_ANIMATION_FRAMES")
+	configurators.MegaInt(&MaxAnimationFrameResolution, "IMGPROXY_MAX_ANIMATION_FRAME_RESOLUTION")
 
 	configurators.Int(&MaxRedirects, "IMGPROXY_MAX_REDIRECTS")
 
@@ -524,6 +535,10 @@ func Configure() error {
 	configurators.StringSlice(&OpenTelemetryPropagators, "IMGPROXY_OPEN_TELEMETRY_PROPAGATORS")
 	configurators.String(&OpenTelemetryTraceIDGenerator, "IMGPROXY_OPEN_TELEMETRY_TRACE_ID_GENERATOR")
 	configurators.Int(&OpenTelemetryConnectionTimeout, "IMGPROXY_OPEN_TELEMETRY_CONNECTION_TIMEOUT")
+
+	configurators.String(&CloudWatchServiceName, "IMGPROXY_CLOUD_WATCH_SERVICE_NAME")
+	configurators.String(&CloudWatchNamespace, "IMGPROXY_CLOUD_WATCH_NAMESPACE")
+	configurators.String(&CloudWatchRegion, "IMGPROXY_CLOUD_WATCH_REGION")
 
 	configurators.String(&BugsnagKey, "IMGPROXY_BUGSNAG_KEY")
 	configurators.String(&BugsnagStage, "IMGPROXY_BUGSNAG_STAGE")

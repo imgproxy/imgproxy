@@ -3,7 +3,7 @@
 imgproxy can process images from S3 buckets. To use this feature, do the following:
 
 1. Set the `IMGPROXY_USE_S3` environment variable to be `true`.
-2. [Set up the necessary credentials](#setup-credentials) to grant access to your bucket.
+2. [Set up the necessary credentials](#set-up-credentials) to grant access to your bucket.
 3. _(optional)_ Specify the AWS region with `IMGPROXY_S3_REGION` or `AWS_REGION`. Default: `us-west-1`
 4. _(optional)_ Specify the S3 endpoint with `IMGPROXY_S3_ENDPOINT`.
 5. Use `s3://%bucket_name/%file_key` as the source image URL.
@@ -16,7 +16,15 @@ s3://%bucket_name/%file_key?%version_id
 
 ### Set up credentials
 
-There are three ways to specify your AWS credentials. The credentials need to have read rights for all of the buckets given in the source URLs.
+There are three ways to specify your AWS credentials. The credentials need to have read rights for all of the buckets given in the source URLs:
+
+#### IAM Roles
+
+If you're running imgproxy on an Amazon Web Services platform, you can use IAM roles to to get the security credentials to make calls to AWS S3.
+
+* **Elastic Container Service (ECS):** Assign an [IAM role to a task](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html).
+* **Elastic Kubernetes Service (EKS):** Assign a [service account to a pod](https://docs.aws.amazon.com/eks/latest/userguide/pod-configuration.html).
+* **Elastic Beanstalk:** Assign an [IAM role to an instance](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/iam-instanceprofile.html).
 
 #### Environment variables
 
@@ -40,12 +48,6 @@ Alternatively, you can create the `.aws/credentials` file in your home directory
 aws_access_key_id = %access_key_id
 aws_secret_access_key = %secret_access_key
 ```
-
-#### IAM Roles for Amazon EC2 Instances
-
-If you're running imgproxy on an Amazon EC2 instance, you can use the instance's [IAM role](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html) to get the security credentials to make calls to AWS S3.
-
-You can learn about credentials in the [Configuring the AWS SDK for Go](https://docs.aws.amazon.com/sdk-for-go/v1/developer-guide/configuring-sdk.html) guide.
 
 ## Minio
 

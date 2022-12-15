@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/imgproxy/imgproxy/v3/metrics/cloudwatch"
 	"github.com/imgproxy/imgproxy/v3/metrics/datadog"
 	"github.com/imgproxy/imgproxy/v3/metrics/newrelic"
 	"github.com/imgproxy/imgproxy/v3/metrics/otel"
@@ -23,6 +24,10 @@ func Init() error {
 		return err
 	}
 
+	if err := cloudwatch.Init(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -30,13 +35,15 @@ func Stop() {
 	newrelic.Stop()
 	datadog.Stop()
 	otel.Stop()
+	cloudwatch.Stop()
 }
 
 func Enabled() bool {
 	return prometheus.Enabled() ||
 		newrelic.Enabled() ||
 		datadog.Enabled() ||
-		otel.Enabled()
+		otel.Enabled() ||
+		cloudwatch.Enabled()
 }
 
 func StartRequest(ctx context.Context, rw http.ResponseWriter, r *http.Request) (context.Context, context.CancelFunc, http.ResponseWriter) {
@@ -130,16 +137,19 @@ func ObserveBufferSize(t string, size int) {
 	prometheus.ObserveBufferSize(t, size)
 	newrelic.ObserveBufferSize(t, size)
 	datadog.ObserveBufferSize(t, size)
+	cloudwatch.ObserveBufferSize(t, size)
 }
 
 func SetBufferDefaultSize(t string, size int) {
 	prometheus.SetBufferDefaultSize(t, size)
 	newrelic.SetBufferDefaultSize(t, size)
 	datadog.SetBufferDefaultSize(t, size)
+	cloudwatch.SetBufferDefaultSize(t, size)
 }
 
 func SetBufferMaxSize(t string, size int) {
 	prometheus.SetBufferMaxSize(t, size)
 	newrelic.SetBufferMaxSize(t, size)
 	datadog.SetBufferMaxSize(t, size)
+	cloudwatch.SetBufferMaxSize(t, size)
 }

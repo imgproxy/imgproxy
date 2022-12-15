@@ -12,13 +12,18 @@
 
   --base-background-color: rgb(13, 15, 21);
   --base-background-color-trans: rgba(13, 15, 21, 0);
-  --base-font-family: "Roboto",sans-serif;
+  --base-font-family: 'Roboto',sans-serif;
 
-  --code-font-family: "Fira Mono",monospace;
+  --code-font-family: 'Martian Mono',monospace;
+  --code-font-weight: 300;
   --code-inline-background: var(--mono-tint1);
 
-  --heading-h1-font-weight: 600;
-  --heading-h2-font-weight: 600;
+  --heading-font-family: 'Roboto Condensed',sans-serif;
+  --heading-h1-font-weight: 700;
+  --heading-h2-font-weight: 700;
+  --heading-h3-font-weight: 700;
+  --heading-h4-font-weight: 700;
+  --heading-h5-font-weight: 700;
 
   --link-color: var(--theme-color);
 
@@ -52,14 +57,16 @@ body::before {
 }
 
 @media (min-width: 1200px) {
-  .content {
-    font-size: 111%;
+  :root {
+    --base-font-size: 18px;
+    --code-font-size: 14px;
   }
 }
 
 @media (min-width: 1400px) {
   :root {
-    --base-font-size: 18px;
+    --base-font-size: 20px;
+    --code-font-size: 16px;
   }
 }
 

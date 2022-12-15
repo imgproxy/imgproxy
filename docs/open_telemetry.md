@@ -42,9 +42,9 @@ If `IMGPROXY_OPEN_TELEMETRY_ENABLE_METRICS` is set to `true`, imgproxy will also
 
 If your OpenTelemetry collector is secured with TLS, you may need to specify the collector's certificate on the imgproxy side:
 
-* `IMGPROXY_OPEN_TELEMETRY_SERVER_CERT`: OpenTelemetry collector TLS certificate, PEM-encoded. Default: blank
+* `IMGPROXY_OPEN_TELEMETRY_SERVER_CERT`: OpenTelemetry collector TLS certificate, PEM-encoded (you can replace line breaks with `\n`). Default: blank
 
 If your collector uses mTLS for mutual authentication, you'll also need to specify the client's certificate/key pair:
 
-* `IMGPROXY_OPEN_TELEMETRY_CLIENT_CERT`: OpenTelemetry client TLS certificate, PEM-encoded. Default: blank
-* `IMGPROXY_OPEN_TELEMETRY_CLIENT_KEY`: OpenTelemetry client TLS key, PEM-encoded. Default: blank
+* `IMGPROXY_OPEN_TELEMETRY_CLIENT_CERT`: OpenTelemetry client TLS certificate, PEM-encoded (you can replace line breaks with `\n`). Default: blank
+* `IMGPROXY_OPEN_TELEMETRY_CLIENT_KEY`: OpenTelemetry client TLS key, PEM-encoded (you can replace line breaks with `\n`). Default: blank

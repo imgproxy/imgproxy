@@ -91,6 +91,6 @@ func (s *AzureTestSuite) TestRoundTripWithUpdatedETagReturns200() {
 	require.Equal(s.T(), http.StatusOK, response.StatusCode)
 }
 
-func TestS3Transport(t *testing.T) {
+func TestAzureTransport(t *testing.T) {
 	suite.Run(t, new(AzureTestSuite))
 }

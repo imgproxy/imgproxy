@@ -67,7 +67,7 @@ func readAndCheckImage(r io.Reader, contentLength int) (*ImageData, error) {
 		return nil, checkTimeoutErr(err)
 	}
 
-	if err = security.CheckDimensions(meta.Width(), meta.Height()); err != nil {
+	if err = security.CheckDimensions(meta.Width(), meta.Height(), 1); err != nil {
 		buf.Reset()
 		cancel()
 		return nil, err

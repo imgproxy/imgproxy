@@ -14,7 +14,7 @@ imgproxy will collect the following metrics:
 * `request_span_duration_seconds`: a histogram of the request latency (in seconds) separated by span (queue, downloading, processing)
 * `requests_in_progress`: the number of requests currently in progress
 * `images_in_progress`: the number of images currently in progress
-* `buffer_size_bytes`: a histogram of the download/gzip buffers sizes (in bytes)
+* `buffer_size_bytes`: a histogram of the download buffers sizes (in bytes)
 * `buffer_default_size_bytes`: calibrated default buffer size (in bytes)
 * `buffer_max_size_bytes`: calibrated maximum buffer size (in bytes)
 * `vips_memory_bytes`: libvips memory usage

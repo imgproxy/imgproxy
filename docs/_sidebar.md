@@ -12,6 +12,7 @@
   * [Watermark](watermark)
   * [Object detection<img title="imgproxy Pro feature" src="/assets/pro.svg">](object_detection)
   * [Autoquality<img title="imgproxy Pro feature" src="/assets/pro.svg">](autoquality)
+  * [Best format<img title="imgproxy Pro feature" src="/assets/pro.svg">](best_format)
   * [Chained pipelines<img title="imgproxy Pro feature" src="/assets/pro.svg">](chained_pipelines)
 * Image sources
   * [Local files](serving_local_files)
@@ -24,6 +25,7 @@
   * [Prometheus](prometheus)
   * [Datadog](datadog)
   * [OpenTelemetry](open_telemetry)
+  * [Amazon CloudWatch](cloud_watch)
 * Miscellaneous
   * [Image formats support](image_formats_support)
   * [About processing pipeline](about_processing_pipeline)

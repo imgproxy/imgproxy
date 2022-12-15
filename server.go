@@ -166,6 +166,7 @@ func withPanicHandler(h router.RouteHandler) router.RouteHandler {
 
 func handleHealth(reqID string, rw http.ResponseWriter, r *http.Request) {
 	router.LogResponse(reqID, r, 200, nil)
+	rw.Header().Set("Cache-Control", "no-cache")
 	rw.WriteHeader(200)
 	rw.Write(imgproxyIsRunningMsg)
 }

@@ -34,7 +34,7 @@ When the `IMGPROXY_DATADOG_ENABLE_ADDITIONAL_METRICS` environment variable is se
 
 * `imgproxy.requests_in_progress`: the number of requests currently in progress
 * `imgproxy.images_in_progress`: the number of images currently in progress
-* `imgproxy.buffer.size`: a histogram of the download/gzip buffers sizes (in bytes)
+* `imgproxy.buffer.size`: a histogram of the download buffers sizes (in bytes)
 * `imgproxy.buffer.default_size`: calibrated default buffer size (in bytes)
 * `imgproxy.buffer.max_size`: calibrated maximum buffer size (in bytes)
 * `imgproxy.vips.memory`: libvips memory usage (in bytes)
