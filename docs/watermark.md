@@ -43,7 +43,7 @@ The available arguments are:
 * `x_offset`, `y_offset` - (optional) specify watermark offset by X and Y axes. When using `re` position, these values define the spacing between the tiles.
 * `scale` - (optional) a floating point number that defines the watermark size relative to the resulting image size. When set to `0` or omitted, the watermark size won't be changed.
 
-## Custom watermarks![pro](/assets/pro.svg) :id=custom-watermarks
+## Custom watermarks![pro](./assets/pro.svg) :id=custom-watermarks
 
 You can use a custom watermark by specifying its URL with the `watermark_url` processing option:
 

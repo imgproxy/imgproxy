@@ -44,16 +44,16 @@ echo $(xxd -g 2 -l 64 -p /dev/random | tr -d '\n')
 * `IMGPROXY_USER_AGENT`: the User-Agent header that will be sent with the source image request. Default: `imgproxy/%current_version`
 * `IMGPROXY_USE_ETAG`: when set to `true`, enables using the [ETag](https://en.wikipedia.org/wiki/HTTP_ETag) HTTP header for HTTP cache control. Default: `false`
 * `IMGPROXY_ETAG_BUSTER`: change this to change ETags for all the images. Default: blank
-* `IMGPROXY_CUSTOM_REQUEST_HEADERS`: ![pro](/assets/pro.svg) list of custom headers that imgproxy will send while requesting the source image, divided by `\;` (can be redefined by `IMGPROXY_CUSTOM_HEADERS_SEPARATOR`). Example: `X-MyHeader1=Lorem\;X-MyHeader2=Ipsum`
-* `IMGPROXY_CUSTOM_RESPONSE_HEADERS`: ![pro](/assets/pro.svg) a list of custom response headers, separated by `\;` (can be redefined by `IMGPROXY_CUSTOM_HEADERS_SEPARATOR`). Example: `X-MyHeader1=Lorem\;X-MyHeader2=Ipsum`
-* `IMGPROXY_CUSTOM_HEADERS_SEPARATOR`: ![pro](/assets/pro.svg) a string that will be used as a custom header separator. Default: `\;`
+* `IMGPROXY_CUSTOM_REQUEST_HEADERS`: ![pro](./assets/pro.svg) list of custom headers that imgproxy will send while requesting the source image, divided by `\;` (can be redefined by `IMGPROXY_CUSTOM_HEADERS_SEPARATOR`). Example: `X-MyHeader1=Lorem\;X-MyHeader2=Ipsum`
+* `IMGPROXY_CUSTOM_RESPONSE_HEADERS`: ![pro](./assets/pro.svg) a list of custom response headers, separated by `\;` (can be redefined by `IMGPROXY_CUSTOM_HEADERS_SEPARATOR`). Example: `X-MyHeader1=Lorem\;X-MyHeader2=Ipsum`
+* `IMGPROXY_CUSTOM_HEADERS_SEPARATOR`: ![pro](./assets/pro.svg) a string that will be used as a custom header separator. Default: `\;`
 * `IMGPROXY_ENABLE_DEBUG_HEADERS`: when set to `true`, imgproxy will add debug headers to the response. Default: `false`. The following headers will be added:
   * `X-Origin-Content-Length`: the size of the source image
   * `X-Origin-Width`: the width of the source image
   * `X-Origin-Height`: the height of the source image
   * `X-Result-Width`: the width of the resultant image
   * `X-Result-Height`: the height of the resultant image
-* `IMGPROXY_SERVER_NAME`: ![pro](/assets/pro.svg) the `Server` header value. Default: `imgproxy`
+* `IMGPROXY_SERVER_NAME`: ![pro](./assets/pro.svg) the `Server` header value. Default: `imgproxy`
 
 ## Security
 
@@ -130,11 +130,11 @@ When cookie forwarding is activated, by default, imgproxy assumes the scope of t
 ### Advanced JPEG compression
 
 * `IMGPROXY_JPEG_PROGRESSIVE`: when true, enables progressive JPEG compression. Default: `false`
-* `IMGPROXY_JPEG_NO_SUBSAMPLE`: ![pro](/assets/pro.svg) when true, chrominance subsampling is disabled. This will improve quality at the cost of larger file size. Default: `false`
-* `IMGPROXY_JPEG_TRELLIS_QUANT`: ![pro](/assets/pro.svg) when true, enables trellis quantisation for each 8x8 block. Reduces file size but increases compression time. Default: `false`
-* `IMGPROXY_JPEG_OVERSHOOT_DERINGING`: ![pro](/assets/pro.svg) when true, enables overshooting of samples with extreme values. Overshooting may reduce ringing artifacts from compression, in particular in areas where black text appears on a white background. Default: `false`
-* `IMGPROXY_JPEG_OPTIMIZE_SCANS`: ![pro](/assets/pro.svg) when true, splits the spectrum of DCT coefficients into separate scans. Reduces file size but increases compression time. Requires `IMGPROXY_JPEG_PROGRESSIVE` to be true. Default: `false`
-* `IMGPROXY_JPEG_QUANT_TABLE`: ![pro](/assets/pro.svg) quantization table to use. Supported values are:
+* `IMGPROXY_JPEG_NO_SUBSAMPLE`: ![pro](./assets/pro.svg) when true, chrominance subsampling is disabled. This will improve quality at the cost of larger file size. Default: `false`
+* `IMGPROXY_JPEG_TRELLIS_QUANT`: ![pro](./assets/pro.svg) when true, enables trellis quantisation for each 8x8 block. Reduces file size but increases compression time. Default: `false`
+* `IMGPROXY_JPEG_OVERSHOOT_DERINGING`: ![pro](./assets/pro.svg) when true, enables overshooting of samples with extreme values. Overshooting may reduce ringing artifacts from compression, in particular in areas where black text appears on a white background. Default: `false`
+* `IMGPROXY_JPEG_OPTIMIZE_SCANS`: ![pro](./assets/pro.svg) when true, splits the spectrum of DCT coefficients into separate scans. Reduces file size but increases compression time. Requires `IMGPROXY_JPEG_PROGRESSIVE` to be true. Default: `false`
+* `IMGPROXY_JPEG_QUANT_TABLE`: ![pro](./assets/pro.svg) quantization table to use. Supported values are:
   * `0`: Table from JPEG Annex K (default)
   * `1`: Flat table
   * `2`: Table tuned for MSSIM on Kodak image set
@@ -153,12 +153,12 @@ When cookie forwarding is activated, by default, imgproxy assumes the scope of t
 
 <!-- ### Advanced GIF compression
 
-* `IMGPROXY_GIF_OPTIMIZE_FRAMES`: ![pro](/assets/pro.svg) when true, enables GIF frame optimization. This may produce a smaller result, but may increase compression time.
-* `IMGPROXY_GIF_OPTIMIZE_TRANSPARENCY`: ![pro](/assets/pro.svg) when true, enables GIF transparency optimization. This may produce a smaller result, but may also increase compression time. -->
+* `IMGPROXY_GIF_OPTIMIZE_FRAMES`: ![pro](./assets/pro.svg) when true, enables GIF frame optimization. This may produce a smaller result, but may increase compression time.
+* `IMGPROXY_GIF_OPTIMIZE_TRANSPARENCY`: ![pro](./assets/pro.svg) when true, enables GIF transparency optimization. This may produce a smaller result, but may also increase compression time. -->
 
 ### Advanced WebP compression
 
-* `IMGPROXY_WEBP_COMPRESSION`: ![pro](/assets/pro.svg) the compression method to use. Supported values are `lossy`, `near_lossless`, and `lossless`. Default: `lossy`
+* `IMGPROXY_WEBP_COMPRESSION`: ![pro](./assets/pro.svg) the compression method to use. Supported values are `lossy`, `near_lossless`, and `lossless`. Default: `lossy`
 
 ### Advanced AVIF compression
 
@@ -170,17 +170,17 @@ imgproxy can calculate the quality of the resulting image based on selected metr
 
 **⚠️Warning:** Autoquality requires the image to be saved several times. Use it only when you prefer the resulting size and quality over the speed.
 
-* `IMGPROXY_AUTOQUALITY_METHOD`: ![pro](/assets/pro.svg) the method of quality calculation. Default: `none`
-* `IMGPROXY_AUTOQUALITY_TARGET`: ![pro](/assets/pro.svg) desired value of the autoquality method metric. Default: 0.02
-* `IMGPROXY_AUTOQUALITY_MIN`: ![pro](/assets/pro.svg) minimal quality imgproxy can use. Default: 70
-* `IMGPROXY_AUTOQUALITY_FORMAT_MIN`: ![pro](/assets/pro.svg) the minimal quality imgproxy can use per format, comma divided. Example: `jpeg=70,avif=40,webp=60`. When value for the resulting format is not set, `IMGPROXY_AUTOQUALITY_MIN` value is used. Default: `avif=40`
-* `IMGPROXY_AUTOQUALITY_MAX`: ![pro](/assets/pro.svg) the maximum quality imgproxy can use. Default: 80
-* `IMGPROXY_AUTOQUALITY_FORMAT_MAX`: ![pro](/assets/pro.svg) the maximum quality imgproxy can use per format, comma divided. Example: `jpeg=70,avif=40,webp=60`. When a value for the resulting format is not set, the `IMGPROXY_AUTOQUALITY_MAX` value is used. Default: `avif=50`
-* `IMGPROXY_AUTOQUALITY_ALLOWED_ERROR`: ![pro](/assets/pro.svg) the allowed `IMGPROXY_AUTOQUALITY_TARGET` error. Applicable only to `dssim` and `ml` methods. Default: 0.001
-* `IMGPROXY_AUTOQUALITY_MAX_RESOLUTION`: ![pro](/assets/pro.svg) when this value is greater then zero and the resultant resolution exceeds the value, autoquality won't be used. Default: 0
-* `IMGPROXY_AUTOQUALITY_JPEG_NET`: ![pro](/assets/pro.svg) the path to the neural network for JPEG.
-* `IMGPROXY_AUTOQUALITY_WEBP_NET`: ![pro](/assets/pro.svg) the path to the neural network for WebP.
-* `IMGPROXY_AUTOQUALITY_AVIF_NET`: ![pro](/assets/pro.svg) the path to the neural network for AVIF.
+* `IMGPROXY_AUTOQUALITY_METHOD`: ![pro](./assets/pro.svg) the method of quality calculation. Default: `none`
+* `IMGPROXY_AUTOQUALITY_TARGET`: ![pro](./assets/pro.svg) desired value of the autoquality method metric. Default: 0.02
+* `IMGPROXY_AUTOQUALITY_MIN`: ![pro](./assets/pro.svg) minimal quality imgproxy can use. Default: 70
+* `IMGPROXY_AUTOQUALITY_FORMAT_MIN`: ![pro](./assets/pro.svg) the minimal quality imgproxy can use per format, comma divided. Example: `jpeg=70,avif=40,webp=60`. When value for the resulting format is not set, `IMGPROXY_AUTOQUALITY_MIN` value is used. Default: `avif=40`
+* `IMGPROXY_AUTOQUALITY_MAX`: ![pro](./assets/pro.svg) the maximum quality imgproxy can use. Default: 80
+* `IMGPROXY_AUTOQUALITY_FORMAT_MAX`: ![pro](./assets/pro.svg) the maximum quality imgproxy can use per format, comma divided. Example: `jpeg=70,avif=40,webp=60`. When a value for the resulting format is not set, the `IMGPROXY_AUTOQUALITY_MAX` value is used. Default: `avif=50`
+* `IMGPROXY_AUTOQUALITY_ALLOWED_ERROR`: ![pro](./assets/pro.svg) the allowed `IMGPROXY_AUTOQUALITY_TARGET` error. Applicable only to `dssim` and `ml` methods. Default: 0.001
+* `IMGPROXY_AUTOQUALITY_MAX_RESOLUTION`: ![pro](./assets/pro.svg) when this value is greater then zero and the resultant resolution exceeds the value, autoquality won't be used. Default: 0
+* `IMGPROXY_AUTOQUALITY_JPEG_NET`: ![pro](./assets/pro.svg) the path to the neural network for JPEG.
+* `IMGPROXY_AUTOQUALITY_WEBP_NET`: ![pro](./assets/pro.svg) the path to the neural network for WebP.
+* `IMGPROXY_AUTOQUALITY_AVIF_NET`: ![pro](./assets/pro.svg) the path to the neural network for AVIF.
 
 ## AVIF/WebP support detection
 
@@ -229,10 +229,10 @@ You can configure imgproxy to skip processing of some formats:
 
 You can use the `best` value for the [format](generating_the_url#format) option or the [extension](generating_the_url#extension) to make imgproxy pick the best format for the resultant image.
 
-* `IMGPROXY_BEST_FORMAT_COMPLEXITY_THRESHOLD `: ![pro](/assets/pro.svg) the image complexity threshold. imgproxy will use a lossless or near-lossless encoding for images with low complexity. Default: `5.5`
-* `IMGPROXY_BEST_FORMAT_MAX_RESOLUTION`: ![pro](/assets/pro.svg) when greater than `0` and the image's resolution (in megapixels) is larger than the provided value, imgproxy won't try all the applicable formats and will just pick one that seems the best for the image
-* `IMGPROXY_BEST_FORMAT_BY_DEFAULT`: ![pro](/assets/pro.svg) when `true` and the resulting image format is not specified explicitly, imgproxy will use the `best` format instead of the source image format
-* `IMGPROXY_BEST_FORMAT_ALLOW_SKIPS`: ![pro](/assets/pro.svg) when `true` and the `best` format is used, imgproxy will skip processing of SVG and formats [listed to skip processing](configuration#skip-processing)
+* `IMGPROXY_BEST_FORMAT_COMPLEXITY_THRESHOLD `: ![pro](./assets/pro.svg) the image complexity threshold. imgproxy will use a lossless or near-lossless encoding for images with low complexity. Default: `5.5`
+* `IMGPROXY_BEST_FORMAT_MAX_RESOLUTION`: ![pro](./assets/pro.svg) when greater than `0` and the image's resolution (in megapixels) is larger than the provided value, imgproxy won't try all the applicable formats and will just pick one that seems the best for the image
+* `IMGPROXY_BEST_FORMAT_BY_DEFAULT`: ![pro](./assets/pro.svg) when `true` and the resulting image format is not specified explicitly, imgproxy will use the `best` format instead of the source image format
+* `IMGPROXY_BEST_FORMAT_ALLOW_SKIPS`: ![pro](./assets/pro.svg) when `true` and the `best` format is used, imgproxy will skip processing of SVG and formats [listed to skip processing](configuration#skip-processing)
 
 Check out the [Best format](best_format) guide to learn more.
 
@@ -248,10 +248,10 @@ imgproxy can use the `Width`, `Viewport-Width` or `DPR` HTTP headers to determin
 
 imgproxy Pro can extract specific video frames to create thumbnails. This feature is disabled by default, but can be enabled with `IMGPROXY_ENABLE_VIDEO_THUMBNAILS`.
 
-* `IMGPROXY_ENABLE_VIDEO_THUMBNAILS`: ![pro](/assets/pro.svg) when true, enables video thumbnail generation. Default: `false`
-* `IMGPROXY_VIDEO_THUMBNAIL_SECOND`: ![pro](/assets/pro.svg) the timestamp of the frame (in seconds) that will be used for a thumbnail. Default: 1
-* `IMGPROXY_VIDEO_THUMBNAIL_PROBE_SIZE`: ![pro](/assets/pro.svg) the maximum amount of bytes used to determine the format. Lower values can decrease memory usage but can produce inaccurate data, or even lead to errors. Default: 5000000
-* `IMGPROXY_VIDEO_THUMBNAIL_MAX_ANALYZE_DURATION`: ![pro](/assets/pro.svg) the maximum number of milliseconds used to get the stream info. Lower values can decrease memory usage but can produce inaccurate data, or even lead to errors. When set to 0, the heuristic is used. Default: 0
+* `IMGPROXY_ENABLE_VIDEO_THUMBNAILS`: ![pro](./assets/pro.svg) when true, enables video thumbnail generation. Default: `false`
+* `IMGPROXY_VIDEO_THUMBNAIL_SECOND`: ![pro](./assets/pro.svg) the timestamp of the frame (in seconds) that will be used for a thumbnail. Default: 1
+* `IMGPROXY_VIDEO_THUMBNAIL_PROBE_SIZE`: ![pro](./assets/pro.svg) the maximum amount of bytes used to determine the format. Lower values can decrease memory usage but can produce inaccurate data, or even lead to errors. Default: 5000000
+* `IMGPROXY_VIDEO_THUMBNAIL_MAX_ANALYZE_DURATION`: ![pro](./assets/pro.svg) the maximum number of milliseconds used to get the stream info. Lower values can decrease memory usage but can produce inaccurate data, or even lead to errors. When set to 0, the heuristic is used. Default: 0
 
 **⚠️Warning:** Though using `IMGPROXY_VIDEO_THUMBNAIL_PROBE_SIZE` and `IMGPROXY_VIDEO_THUMBNAIL_MAX_ANALYZE_DURATION` can lower the memory footprint of video thumbnail generation, they should be used in production only when you know what you're doing.
 
@@ -261,7 +261,7 @@ imgproxy Pro can extract specific video frames to create thumbnails. This featur
 * `IMGPROXY_WATERMARK_PATH`: the path to the locally stored image
 * `IMGPROXY_WATERMARK_URL`: the watermark image URL
 * `IMGPROXY_WATERMARK_OPACITY`: the watermark's base opacity
-* `IMGPROXY_WATERMARKS_CACHE_SIZE`: ![pro](/assets/pro.svg) custom watermarks cache size. When set to `0`, the watermark cache is disabled. 256 watermarks are cached by default.
+* `IMGPROXY_WATERMARKS_CACHE_SIZE`: ![pro](./assets/pro.svg) custom watermarks cache size. When set to `0`, the watermark cache is disabled. 256 watermarks are cached by default.
 
 Read more about watermarks in the [Watermark](watermark.md) guide.
 
@@ -269,23 +269,23 @@ Read more about watermarks in the [Watermark](watermark.md) guide.
 
 imgproxy Pro can apply an unsharpening mask to your images.
 
-* `IMGPROXY_UNSHARPENING_MODE`: ![pro](/assets/pro.svg) controls when an unsharpenning mask should be applied. The following modes are supported:
+* `IMGPROXY_UNSHARPENING_MODE`: ![pro](./assets/pro.svg) controls when an unsharpenning mask should be applied. The following modes are supported:
   * `auto`: _(default)_ apply an unsharpening mask only when an image is downscaled and the `sharpen` option has not been set.
   * `none`: the unsharpening mask is not applied.
   * `always`: always applies the unsharpening mask.
-* `IMGPROXY_UNSHARPENING_WEIGHT`: ![pro](/assets/pro.svg) a floating-point number that defines how neighboring pixels will affect the current pixel. The greater the value, the sharper the image. This value should be greater than zero. Default: `1`
-* `IMGPROXY_UNSHARPENING_DIVIDOR`: ![pro](/assets/pro.svg) a floating-point number that defines the unsharpening strength. The lesser the value, the sharper the image. This value be greater than zero. Default: `24`
+* `IMGPROXY_UNSHARPENING_WEIGHT`: ![pro](./assets/pro.svg) a floating-point number that defines how neighboring pixels will affect the current pixel. The greater the value, the sharper the image. This value should be greater than zero. Default: `1`
+* `IMGPROXY_UNSHARPENING_DIVIDOR`: ![pro](./assets/pro.svg) a floating-point number that defines the unsharpening strength. The lesser the value, the sharper the image. This value be greater than zero. Default: `24`
 
 ## Object detection
 
 imgproxy can detect objects on the image and use them to perform smart cropping, to blur the detections, or to draw the detections.
 
-* `IMGPROXY_OBJECT_DETECTION_CONFIG`: ![pro](/assets/pro.svg) the path to the neural network config. Default: blank
-* `IMGPROXY_OBJECT_DETECTION_WEIGHTS`: ![pro](/assets/pro.svg) the path to the neural network weights. Default: blank
-* `IMGPROXY_OBJECT_DETECTION_CLASSES`: ![pro](/assets/pro.svg) the path to the text file with the classes names, one per line. Default: blank
-* `IMGPROXY_OBJECT_DETECTION_NET_SIZE`: ![pro](/assets/pro.svg) the size of the neural network input. The width and the heights of the inputs should be the same, so this config value should be a single number. Default: 416
-* `IMGPROXY_OBJECT_DETECTION_CONFIDENCE_THRESHOLD`: ![pro](/assets/pro.svg) detections with confidences below this value will be discarded. Default: 0.2
-* `IMGPROXY_OBJECT_DETECTION_NMS_THRESHOLD`: ![pro](/assets/pro.svg) non-max supression threshold. Don't change this if you don't know what you're doing. Default: 0.4
+* `IMGPROXY_OBJECT_DETECTION_CONFIG`: ![pro](./assets/pro.svg) the path to the neural network config. Default: blank
+* `IMGPROXY_OBJECT_DETECTION_WEIGHTS`: ![pro](./assets/pro.svg) the path to the neural network weights. Default: blank
+* `IMGPROXY_OBJECT_DETECTION_CLASSES`: ![pro](./assets/pro.svg) the path to the text file with the classes names, one per line. Default: blank
+* `IMGPROXY_OBJECT_DETECTION_NET_SIZE`: ![pro](./assets/pro.svg) the size of the neural network input. The width and the heights of the inputs should be the same, so this config value should be a single number. Default: 416
+* `IMGPROXY_OBJECT_DETECTION_CONFIDENCE_THRESHOLD`: ![pro](./assets/pro.svg) detections with confidences below this value will be discarded. Default: 0.2
+* `IMGPROXY_OBJECT_DETECTION_NMS_THRESHOLD`: ![pro](./assets/pro.svg) non-max supression threshold. Don't change this if you don't know what you're doing. Default: 0.4
 
 ## Fallback image
 
@@ -296,7 +296,7 @@ You can set up a fallback image that will be used in case imgproxy is unable to 
 * `IMGPROXY_FALLBACK_IMAGE_URL`: the fallback image URL
 * `IMGPROXY_FALLBACK_IMAGE_HTTP_CODE`: the HTTP code for the fallback image response. When set to zero, imgproxy will respond with the usual HTTP code. Default: `200`
 * `IMGPROXY_FALLBACK_IMAGE_TTL`: a duration (in seconds) sent via the `Expires` and `Cache-Control: max-age` HTTP headers when a fallback image was used. When blank or `0`, the value from `IMGPROXY_TTL` is used.
-* `IMGPROXY_FALLBACK_IMAGES_CACHE_SIZE`: ![pro](/assets/pro.svg) the size of custom fallback images cache. When set to `0`, the fallback image cache is disabled. 256 fallback images are cached by default.
+* `IMGPROXY_FALLBACK_IMAGES_CACHE_SIZE`: ![pro](./assets/pro.svg) the size of custom fallback images cache. When set to `0`, the fallback image cache is disabled. 256 fallback images are cached by default.
 
 ## Presets
 
@@ -514,5 +514,5 @@ imgproxy can send logs to syslog, but this feature is disabled by default. To en
 * `IMGPROXY_ENFORCE_THUMBNAIL`: when `true` and the source image has an embedded thumbnail, imgproxy will always use the embedded thumbnail instead of the main image. Currently, only thumbnails embedded in `heic` and `avif` are supported. Default: `false`
 * `IMGPROXY_RETURN_ATTACHMENT`: when `true`, response header `Content-Disposition` will include `attachment`. Default: `false`
 * `IMGPROXY_SVG_FIX_UNSUPPORTED`: when `true`, imgproxy will try to replace SVG features unsupported by librsvg to minimize SVG rendering error. This config only takes effect on SVG rasterization. Default: `false`
-* `IMGPROXY_HEALTH_CHECK_MESSAGE`: ![pro](/assets/pro.svg) the content of the health check response. Default: `imgproxy is running`
+* `IMGPROXY_HEALTH_CHECK_MESSAGE`: ![pro](./assets/pro.svg) the content of the health check response. Default: `imgproxy is running`
 * `IMGPROXY_HEALTH_CHECK_PATH`: an additional path of the health check. Default: blank
