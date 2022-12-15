@@ -1,4 +1,4 @@
-# Object detection![pro](/assets/pro.svg)
+# Object detection![pro](./assets/pro.svg)
 
 imgproxy can detect objects on the image and use them for smart cropping, bluring the detections, or drawing the detections.
 
