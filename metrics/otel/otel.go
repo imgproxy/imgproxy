@@ -39,6 +39,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/metrics/errformat"
 	"github.com/imgproxy/imgproxy/v3/metrics/stats"
+	"github.com/imgproxy/imgproxy/v3/version"
 )
 
 type hasSpanCtxKey struct{}
@@ -86,9 +87,12 @@ func Init() error {
 		return err
 	}
 
-	res := resource.NewWithAttributes(
-		semconv.SchemaURL,
-		semconv.ServiceNameKey.String(config.OpenTelemetryServiceName),
+	res, _ := resource.Merge(
+		resource.Default(),
+		resource.NewSchemaless(
+			semconv.ServiceNameKey.String(config.OpenTelemetryServiceName),
+			semconv.ServiceVersionKey.String(version.Version()),
+		),
 	)
 
 	awsRes, _ := resource.Detect(
@@ -98,8 +102,10 @@ func Init() error {
 		eks.NewResourceDetector(),
 	)
 
-	if awsRes != nil {
-		res, _ = resource.Merge(awsRes, res)
+	if merged, merr := resource.Merge(awsRes, res); merr == nil {
+		res = merged
+	} else {
+		logrus.Warnf("Can't add AWS attributes to OpenTelemetry: %s", merr)
 	}
 
 	opts := []sdktrace.TracerProviderOption{
