@@ -57,8 +57,6 @@ github.com/AzureAD/microsoft-authentication-library-for-go v0.7.0 h1:VgSJlZH5u0k
 github.com/AzureAD/microsoft-authentication-library-for-go v0.7.0/go.mod h1:BDJ5qMFKx9DugEg3+uQSDCdbYPr5s9vBTrL9P8TpqOU=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
-github.com/DarthSim/opentelemetry-go-contrib/detectors/aws/ecs v0.0.0-20221214183400-5c1bc2f70c1a h1:o0Q/c0Rz43mkWUm4rNotKY0R2shamx2lzbuHovg3go0=
-github.com/DarthSim/opentelemetry-go-contrib/detectors/aws/ecs v0.0.0-20221214183400-5c1bc2f70c1a/go.mod h1:k/l1d1vqL/RVv3cf0qKMXwCMx6hil3XzkKoM9806F/Q=
 github.com/DataDog/datadog-agent/pkg/obfuscate v0.40.1 h1:2BL6Ek+TJdZudQdNdTz9XEpLCrN60aED/cKfQRTywVU=
 github.com/DataDog/datadog-agent/pkg/obfuscate v0.40.1/go.mod h1:sqAOmqMk+eRSdoxm+ZVUhMzHCNVDAyO4e7oNj4mDwPU=
 github.com/DataDog/datadog-agent/pkg/remoteconfig/state v0.41.0-rc.3.0.20221208094921-9e0b0bfca62a h1:KBQQj/7lzEyou2I7RGdYaax81fjDmrc06o3MXR0euv0=
@@ -425,6 +423,8 @@ go.opencensus.io v0.24.0 h1:y73uSU6J157QMP2kn2r30vwW1A2W2WFwSCGnAVxeaD0=
 go.opencensus.io v0.24.0/go.mod h1:vNK8G9p7aAivkbmorf4v+7Hgx+Zs0yY+0fOtgBfjQKo=
 go.opentelemetry.io/contrib/detectors/aws/ec2 v1.12.0 h1:wTOSNEe6iXer9FOg8N59qIkGUl4rw23FrJ/VoEhWMzc=
 go.opentelemetry.io/contrib/detectors/aws/ec2 v1.12.0/go.mod h1:aiiPQq21t0LI9fSvdCJrRJwzI+AKBegd59FilLPnwII=
+go.opentelemetry.io/contrib/detectors/aws/ecs v1.12.0 h1:h+iYx4OIp9mIgwgVr9xb+qf5/UIzrnQsKJ6KYc50obg=
+go.opentelemetry.io/contrib/detectors/aws/ecs v1.12.0/go.mod h1:k/l1d1vqL/RVv3cf0qKMXwCMx6hil3XzkKoM9806F/Q=
 go.opentelemetry.io/contrib/detectors/aws/eks v1.12.0 h1:vrRVounYoB/zeA3stkbr+6cwxBavsF0DW2dNG3WHZDI=
 go.opentelemetry.io/contrib/detectors/aws/eks v1.12.0/go.mod h1:vIzKl3wEMfUbeuJ8wlQWyWFiLZnyNfi28w8Qz/XSzeg=
 go.opentelemetry.io/contrib/propagators/autoprop v0.37.0 h1:7BO8yg+5TE8QWzA6apuj8nPjoIdQUw8OhsFSYU6DPeo=
