@@ -127,8 +127,8 @@ Default: `0`
 zoom:%zoom_x_y
 z:%zoom_x_y
 
-zoom:%zoom_x %zoom_y
-z:%zoom_x %zoom_y
+zoom:%zoom_x:%zoom_y
+z:%zoom_x:%zoom_y
 ```
 
 When set, imgproxy will multiply the image dimensions according to these factors. The values must be greater than 0.
