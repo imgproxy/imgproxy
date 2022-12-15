@@ -114,7 +114,7 @@ func (t transport) RoundTrip(req *http.Request) (*http.Response, error) {
 				Body:          io.NopCloser(body),
 				Close:         false,
 				Request:       req,
-			}, err
+			}, nil
 		}
 	}
 
@@ -133,7 +133,7 @@ func (t transport) RoundTrip(req *http.Request) (*http.Response, error) {
 				Body:          nil,
 				Close:         false,
 				Request:       req,
-			}, err
+			}, nil
 		}
 	}
 
@@ -165,5 +165,5 @@ func (t transport) RoundTrip(req *http.Request) (*http.Response, error) {
 		Body:          ctxreader.New(req.Context(), result.Body, true),
 		Close:         true,
 		Request:       req,
-	}, err
+	}, nil
 }
