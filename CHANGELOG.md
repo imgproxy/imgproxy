@@ -1,6 +1,12 @@
 # Changelog
 
 ## [Unreleased]
+### Change
+- Add support for Managed Identity or Service Principal credentials to Azure Blob Storage integration.
+
+### Fix
+- Fix craches in some cases when using OpenTelemetry in Amazon ECS.
+- (pro) Fix saving of GIF with too small frame delay to MP4
 
 ## [3.12.0] - 2022-12-11
 ### Add
