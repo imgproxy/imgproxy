@@ -19,8 +19,8 @@
 </h4>
 
 <p align="center">
-<a href="https://github.com/imgproxy/imgproxy/actions"><img alt="GH Test" src="https://img.shields.io/github/workflow/status/imgproxy/imgproxy/Test?label=Test&logo=github&style=for-the-badge" /></a>
-<a href="https://github.com/imgproxy/imgproxy/actions"><img alt="GH Lint" src="https://img.shields.io/github/workflow/status/imgproxy/imgproxy/Lint?label=Lint&logo=github&style=for-the-badge" /></a>
+<a href="https://github.com/imgproxy/imgproxy/actions"><img alt="GH Test" src="https://img.shields.io/github/actions/workflow/status/imgproxy/imgproxy/test.yml?branch=master&label=Test&style=for-the-badge" /></a>
+<a href="https://github.com/imgproxy/imgproxy/actions"><img alt="GH Lint" src="https://img.shields.io/github/actions/workflow/status/imgproxy/imgproxy/lint.yml?branch=master&label=Lint&style=for-the-badge" /></a>
 <a href="https://hub.docker.com/r/darthsim/imgproxy/"><img alt="Docker Pulls" src="https://img.shields.io/docker/pulls/darthsim/imgproxy.svg?logo=docker&logoColor=white&style=for-the-badge" /></a>
 </p>
 
