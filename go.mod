@@ -24,7 +24,7 @@ require (
 	github.com/prometheus/client_golang v1.14.0
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.1
-	github.com/tdewolff/parse/v2 v2.6.4
+	github.com/tdewolff/parse/v2 v2.6.5
 	github.com/trimmer-io/go-xmp v1.0.0
 	go.opentelemetry.io/contrib/detectors/aws/ec2 v1.12.0
 	go.opentelemetry.io/contrib/detectors/aws/ecs v1.12.0
