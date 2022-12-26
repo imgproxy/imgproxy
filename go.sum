@@ -61,8 +61,8 @@ github.com/DarthSim/opentelemetry-go-contrib/detectors/aws/ecs v0.0.0-2022121711
 github.com/DarthSim/opentelemetry-go-contrib/detectors/aws/ecs v0.0.0-20221217113508-d2efe20e209d/go.mod h1:k/l1d1vqL/RVv3cf0qKMXwCMx6hil3XzkKoM9806F/Q=
 github.com/DataDog/datadog-agent/pkg/obfuscate v0.40.1 h1:2BL6Ek+TJdZudQdNdTz9XEpLCrN60aED/cKfQRTywVU=
 github.com/DataDog/datadog-agent/pkg/obfuscate v0.40.1/go.mod h1:sqAOmqMk+eRSdoxm+ZVUhMzHCNVDAyO4e7oNj4mDwPU=
-github.com/DataDog/datadog-agent/pkg/remoteconfig/state v0.41.0-rc.3.0.20221208094921-9e0b0bfca62a h1:KBQQj/7lzEyou2I7RGdYaax81fjDmrc06o3MXR0euv0=
-github.com/DataDog/datadog-agent/pkg/remoteconfig/state v0.41.0-rc.3.0.20221208094921-9e0b0bfca62a/go.mod h1:kPB1a9UI4slPxxO/9/aF2zxXdj3xR83vhN8v2IeVEds=
+github.com/DataDog/datadog-agent/pkg/remoteconfig/state v0.42.0-rc.1 h1:Rmz52Xlc5k3WzAHzD0SCH4USCzyti7EbK4HtrHys3ME=
+github.com/DataDog/datadog-agent/pkg/remoteconfig/state v0.42.0-rc.1/go.mod h1:VVMDDibJxYEkwcLdZBT2g8EHKpbMT4JdOhRbQ9GdjbM=
 github.com/DataDog/datadog-go/v5 v5.1.0/go.mod h1:KhiYb2Badlv9/rofz+OznKoEF5XKTonWyhx5K83AP8E=
 github.com/DataDog/datadog-go/v5 v5.1.1 h1:JLZ6s2K1pG2h9GkvEvMdEGqMDyVLEAccdX5TltWcLMU=
 github.com/DataDog/datadog-go/v5 v5.1.1/go.mod h1:KhiYb2Badlv9/rofz+OznKoEF5XKTonWyhx5K83AP8E=
@@ -812,8 +812,8 @@ google.golang.org/protobuf v1.27.1/go.mod h1:9q0QmTI4eRPtz6boOQmLYwt+qCgq0jsYwAQ
 google.golang.org/protobuf v1.28.0/go.mod h1:HV8QOd/L58Z+nl8r43ehVNZIU/HEI6OcFqwMG9pJV4I=
 google.golang.org/protobuf v1.28.1 h1:d0NfwRgPtno5B1Wa6L2DAG+KivqkdutMf1UhdNx175w=
 google.golang.org/protobuf v1.28.1/go.mod h1:HV8QOd/L58Z+nl8r43ehVNZIU/HEI6OcFqwMG9pJV4I=
-gopkg.in/DataDog/dd-trace-go.v1 v1.44.1 h1:bkLt8PKgdT27tJ54PCBlrq6wW2/T7QMa44XbyWCt+ZA=
-gopkg.in/DataDog/dd-trace-go.v1 v1.44.1/go.mod h1:KvkCa8+idBnqYHg/pFHMo50IggqPUMQRYzRjZMSLW4k=
+gopkg.in/DataDog/dd-trace-go.v1 v1.45.1 h1:yx7Hv2It/xxa/ETigd4bSvYMB22PxgGP8Y5N+K+Ibpo=
+gopkg.in/DataDog/dd-trace-go.v1 v1.45.1/go.mod h1:kaa8caaECrtY0V/MUtPQAh1lx/euFzPJwrY1taTx3O4=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=

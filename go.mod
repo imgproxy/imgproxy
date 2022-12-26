@@ -47,7 +47,7 @@ require (
 	golang.org/x/sys v0.3.0
 	google.golang.org/api v0.104.0
 	google.golang.org/grpc v1.51.0
-	gopkg.in/DataDog/dd-trace-go.v1 v1.44.1
+	gopkg.in/DataDog/dd-trace-go.v1 v1.45.1
 )
 
 require (
@@ -59,7 +59,7 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.0.1 // indirect
 	github.com/AzureAD/microsoft-authentication-library-for-go v0.7.0 // indirect
 	github.com/DataDog/datadog-agent/pkg/obfuscate v0.40.1 // indirect
-	github.com/DataDog/datadog-agent/pkg/remoteconfig/state v0.41.0-rc.3.0.20221208094921-9e0b0bfca62a // indirect
+	github.com/DataDog/datadog-agent/pkg/remoteconfig/state v0.42.0-rc.1 // indirect
 	github.com/DataDog/go-tuf v0.3.0--fix-localmeta-fork // indirect
 	github.com/DataDog/sketches-go v1.4.1 // indirect
 	github.com/Microsoft/go-winio v0.6.0 // indirect
