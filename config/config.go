@@ -97,7 +97,8 @@ var (
 	ABSKey      string
 	ABSEndpoint string
 
-	IPFSGateway string
+	IPFSGateway       string
+	TonstorageGateway string
 
 	SwiftEnabled               bool
 	SwiftUsername              string
@@ -253,6 +254,7 @@ func Reset() {
 	ABSKey = ""
 	ABSEndpoint = ""
 	IPFSGateway = ""
+	TonstorageGateway = ""
 	SwiftEnabled = false
 	SwiftUsername = ""
 	SwiftAPIKey = ""
@@ -421,6 +423,7 @@ func Configure() error {
 	configurators.String(&ABSEndpoint, "IMGPROXY_ABS_ENDPOINT")
 
 	configurators.String(&IPFSGateway, "IPFS_GATEWAY")
+	configurators.String(&TonstorageGateway, "TONSTORAGE_GATEWAY")
 
 	configurators.Bool(&SwiftEnabled, "IMGPROXY_USE_SWIFT")
 	configurators.String(&SwiftUsername, "IMGPROXY_SWIFT_USERNAME")

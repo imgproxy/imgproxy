@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"github.com/imgproxy/imgproxy/v3/transport/ipfs"
+	"github.com/imgproxy/imgproxy/v3/transport/tonstorage"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -122,6 +123,10 @@ func initDownloading() error {
 			return err
 		}
 		registerProtocol("ipfs", ipfsTransport)
+	}
+	if config.TonstorageGateway != "" {
+		tonTransport := tonstorage.New(downloadClient)
+		registerProtocol("tonstorage", tonTransport)
 	}
 
 	return nil
