@@ -79,8 +79,8 @@ github.com/airbrake/gobrake/v5 v5.6.0 h1:vZcScLnmvrzgWdyxHNr0iS647Z5NPL/M2zowW0b
 github.com/airbrake/gobrake/v5 v5.6.0/go.mod h1:KLYxoNCG7hV/90fadEh8yvairmPChQl7QFbZnnT4G00=
 github.com/antihax/optional v1.0.0/go.mod h1:uupD/76wgC+ih3iEmQUL+0Ugr19nfwCT1kdvxnR2qWY=
 github.com/aws/aws-sdk-go v1.17.4/go.mod h1:KmX6BPdI08NWTb3/sm4ZGu5ShLoqVDhKgpiN924inxo=
-github.com/aws/aws-sdk-go v1.44.157 h1:JVBPpEWC8+yA7CbfAuTl/ZFFlHS3yoqWFqxFyTCISwg=
-github.com/aws/aws-sdk-go v1.44.157/go.mod h1:aVsgQcEevwlmQ7qHE9I3h+dtQgpqhFB+i8Phjh7fkwI=
+github.com/aws/aws-sdk-go v1.44.171 h1:maREiPAmibvuONMOEZIkCH2OTosLRnDelceTtH3SYfo=
+github.com/aws/aws-sdk-go v1.44.171/go.mod h1:aVsgQcEevwlmQ7qHE9I3h+dtQgpqhFB+i8Phjh7fkwI=
 github.com/benesch/cgosymbolizer v0.0.0-20190515212042-bec6fe6e597b h1:5JgaFtHFRnOPReItxvhMDXbvuBkjSWE+9glJyF466yw=
 github.com/benesch/cgosymbolizer v0.0.0-20190515212042-bec6fe6e597b/go.mod h1:eMD2XUcPsHYbakFEocKrWZp47G0MRJYoC60qFblGjpA=
 github.com/beorn7/perks v1.0.1 h1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM=
