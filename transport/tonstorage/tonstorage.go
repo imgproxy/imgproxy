@@ -1,8 +1,11 @@
 package tonstorage
 
 import (
+	"context"
+	"errors"
 	"github.com/imgproxy/imgproxy/v3/config"
 	"net/http"
+	"time"
 )
 
 // transport implements RoundTripper for the 's3' protocol.
@@ -16,10 +19,19 @@ func New(client *http.Client) http.RoundTripper {
 }
 
 func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
-	newReq, err := http.NewRequest("GET", t.gateway+req.URL.Host+req.URL.RequestURI(), nil)
-	if err != nil {
-		return nil, err
+	for i := 0; i < 5; i++ {
+		newReq, err := http.NewRequest("GET", t.gateway+req.URL.Host+req.URL.RequestURI(), nil)
+		if err != nil {
+			return nil, err
+		}
+		resp, err = t.client.Do(newReq.WithContext(req.Context()))
+		if err == nil {
+			return resp, nil
+		}
+		if errors.Is(err, context.Canceled) {
+			return nil, err
+		}
+		time.Sleep(time.Second)
 	}
-	resp, err = t.client.Do(newReq.WithContext(req.Context()))
 	return resp, err
 }
