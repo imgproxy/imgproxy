@@ -7,6 +7,14 @@ import (
 )
 
 func rotateAndFlip(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata *imagedata.ImageData) error {
+	if pctx.angle%360 == 0 && po.Rotate%360 == 0 && !pctx.flip {
+		return nil
+	}
+
+	if err := img.CopyMemory(); err != nil {
+		return err
+	}
+
 	if err := img.Rotate(pctx.angle); err != nil {
 		return err
 	}

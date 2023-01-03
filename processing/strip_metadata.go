@@ -92,29 +92,31 @@ func stripXMP(img *vips.Image) []byte {
 	return xmpData
 }
 
-func finalize(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata *imagedata.ImageData) error {
-	if po.StripMetadata {
-		var iptcData, xmpData []byte
+func stripMetadata(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata *imagedata.ImageData) error {
+	if !po.StripMetadata {
+		return nil
+	}
 
-		if po.KeepCopyright {
-			iptcData = stripIPTC(img)
-			xmpData = stripXMP(img)
+	var iptcData, xmpData []byte
+
+	if po.KeepCopyright {
+		iptcData = stripIPTC(img)
+		xmpData = stripXMP(img)
+	}
+
+	if err := img.Strip(po.KeepCopyright); err != nil {
+		return err
+	}
+
+	if po.KeepCopyright {
+		if len(iptcData) > 0 {
+			img.SetBlob("iptc-data", iptcData)
 		}
 
-		if err := img.Strip(po.KeepCopyright); err != nil {
-			return err
-		}
-
-		if po.KeepCopyright {
-			if len(iptcData) > 0 {
-				img.SetBlob("iptc-data", iptcData)
-			}
-
-			if len(xmpData) > 0 {
-				img.SetBlob("xmp-data", xmpData)
-			}
+		if len(xmpData) > 0 {
+			img.SetBlob("xmp-data", xmpData)
 		}
 	}
 
-	return img.CopyMemory()
+	return nil
 }

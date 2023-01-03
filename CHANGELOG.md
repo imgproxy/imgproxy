@@ -3,6 +3,7 @@
 ## [Unreleased]
 ### Change
 - Add support for Managed Identity or Service Principal credentials to Azure Blob Storage integration.
+- Optimize memory usage in some scenarios.
 
 ### Fix
 - Fix craches in some cases when using OpenTelemetry in Amazon ECS.

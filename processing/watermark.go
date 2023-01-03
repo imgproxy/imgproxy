@@ -17,7 +17,6 @@ var watermarkPipeline = pipeline{
 	scale,
 	rotateAndFlip,
 	padding,
-	finalize,
 }
 
 func prepareWatermark(wm *vips.Image, wmData *imagedata.ImageData, opts *options.WatermarkOptions, imgWidth, imgHeight int) error {
@@ -59,10 +58,6 @@ func prepareWatermark(wm *vips.Image, wmData *imagedata.ImageData, opts *options
 
 func applyWatermark(img *vips.Image, wmData *imagedata.ImageData, opts *options.WatermarkOptions, framesCount int) error {
 	if err := img.RgbColourspace(); err != nil {
-		return err
-	}
-
-	if err := img.CopyMemory(); err != nil {
 		return err
 	}
 
