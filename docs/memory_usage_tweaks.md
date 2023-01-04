@@ -36,6 +36,6 @@ If setting `MALLOC_ARENA_MAX` doesn't show you satisfying results, it's time to 
 Most Linux distributives provide their jemalloc packages. Using jemalloc doesn't require rebuilding imgproxy or it's dependencies and can be enabled by the `LD_PRELOAD` environment variable. See the example with Debian below. Note that jemalloc library path may vary on your system.
 
 ```
-sudo apt-get install libjemalloc1
-LD_PRELOAD='/usr/lib/x86_64-linux-gnu/libjemalloc.so.1' imgproxy
+sudo apt-get install libjemalloc2
+LD_PRELOAD='/usr/lib/x86_64-linux-gnu/libjemalloc.so.2' imgproxy
 ```
