@@ -15,7 +15,7 @@
   <a href="https://imgproxy.net/#pro">imgproxy Pro</a> |
   <a href="https://hub.docker.com/r/darthsim/imgproxy/">Docker</a> |
   <a href="https://twitter.com/imgproxy_net">Twitter</a> |
-  <a href="https://gitter.im/imgproxy/imgproxy">Chat</a>
+  <a href="https://discord.gg/5GgpXgtC9u">Discord</a>
 </h4>
 
 <p align="center">
