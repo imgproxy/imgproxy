@@ -597,13 +597,30 @@ vips_strip(VipsImage *in, VipsImage **out, int keep_exif_copyright) {
   for (int i = 0; fields[i] != NULL; i++) {
     gchar *name = fields[i];
 
-    if (strcmp(name, VIPS_META_ICC_NAME) == 0) continue;
-    if (strcmp(name, "palette-bit-depth") == 0) continue;
+    if (
+      (strcmp(name, VIPS_META_ICC_NAME) == 0) ||
+      (strcmp(name, "palette-bit-depth") == 0) ||
+      (strcmp(name, "width") == 0) ||
+      (strcmp(name, "height") == 0) ||
+      (strcmp(name, "bands") == 0) ||
+      (strcmp(name, "format") == 0) ||
+      (strcmp(name, "coding") == 0) ||
+      (strcmp(name, "interpretation") == 0) ||
+      (strcmp(name, "xoffset") == 0) ||
+      (strcmp(name, "yoffset") == 0) ||
+      (strcmp(name, "xres") == 0) ||
+      (strcmp(name, "yres") == 0) ||
+      (strcmp(name, "vips-loader") == 0) ||
+      (strcmp(name, "background") == 0) ||
+      (strcmp(name, "vips-sequential") == 0)
+    ) continue;
 
     if (keep_exif_copyright) {
-      if (strcmp(name, VIPS_META_EXIF_NAME) == 0) continue;
-      if (strcmp(name, "exif-ifd0-Copyright") == 0) continue;
-      if (strcmp(name, "exif-ifd0-Artist") == 0) continue;
+      if (
+        (strcmp(name, VIPS_META_EXIF_NAME) == 0) ||
+        (strcmp(name, "exif-ifd0-Copyright") == 0) ||
+        (strcmp(name, "exif-ifd0-Artist") == 0)
+      ) continue;
     }
 
     vips_image_remove(*out, name);

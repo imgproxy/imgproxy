@@ -16,9 +16,5 @@ func scale(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions
 		wscale, hscale = hscale, wscale
 	}
 
-	if err := img.Resize(wscale, hscale); err != nil {
-		return err
-	}
-
-	return img.CopyMemory()
+	return img.Resize(wscale, hscale)
 }
