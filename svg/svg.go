@@ -73,7 +73,7 @@ func Satitize(data *imagedata.ImageData) (*imagedata.ImageData, error) {
 			}
 			buf.Write(tdata)
 		case xml.AttributeToken:
-			if strings.ToLower(string(l.Text())) == "onload" {
+			if _, unsafe := unsafeAttrs[strings.ToLower(string(l.Text()))]; unsafe {
 				continue
 			}
 			buf.Write(tdata)
