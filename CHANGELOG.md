@@ -7,6 +7,7 @@
 - Add support for Managed Identity or Service Principal credentials to Azure Blob Storage integration.
 - Optimize memory usage in some scenarios.
 - Better SVG sanitization.
+- (pro) Allow usage of floating-point numbers in the `IMGPROXY_VIDEO_THUMBNAIL_SECOND` config and the `video_thumbnail_second` processing option.
 
 ### Fix
 - Fix craches in some cases when using OpenTelemetry in Amazon ECS.
