@@ -19,7 +19,7 @@ var watermarkPipeline = pipeline{
 	padding,
 }
 
-func prepareWatermark(wm *vips.Image, wmData *imagedata.ImageData, opts *options.WatermarkOptions, imgWidth, imgHeight int) error {
+func prepareWatermark(wm *vips.Image, wmData *imagedata.ImageData, opts *options.WatermarkOptions, imgWidth, imgHeight, framesCount int) error {
 	if err := wm.Load(wmData, 1, 1.0, 1); err != nil {
 		return err
 	}
@@ -47,13 +47,33 @@ func prepareWatermark(wm *vips.Image, wmData *imagedata.ImageData, opts *options
 		return err
 	}
 
-	if opts.Replicate {
-		return wm.Replicate(imgWidth, imgHeight)
+	if opts.Replicate || framesCount > 1 {
+		// We need to copy image if we're going to replicate.
+		// Replication requires image to be read several times, and this requires
+		// random access to pixels
+		if err := wm.CopyMemory(); err != nil {
+			return err
+		}
 	}
 
-	left, top := calcPosition(imgWidth, imgHeight, wm.Width(), wm.Height(), &opts.Gravity, true)
+	if opts.Replicate {
+		if err := wm.Replicate(imgWidth, imgHeight); err != nil {
+			return err
+		}
+	} else {
+		left, top := calcPosition(imgWidth, imgHeight, wm.Width(), wm.Height(), &opts.Gravity, true)
+		if err := wm.Embed(imgWidth, imgHeight, left, top); err != nil {
+			return err
+		}
+	}
 
-	return wm.Embed(imgWidth, imgHeight, left, top)
+	if framesCount > 1 {
+		if err := wm.Replicate(imgWidth, imgWidth*framesCount); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func applyWatermark(img *vips.Image, wmData *imagedata.ImageData, opts *options.WatermarkOptions, framesCount int) error {
@@ -67,14 +87,8 @@ func applyWatermark(img *vips.Image, wmData *imagedata.ImageData, opts *options.
 	width := img.Width()
 	height := img.Height()
 
-	if err := prepareWatermark(wm, wmData, opts, width, height/framesCount); err != nil {
+	if err := prepareWatermark(wm, wmData, opts, width, height/framesCount, framesCount); err != nil {
 		return err
-	}
-
-	if framesCount > 1 {
-		if err := wm.Replicate(width, height); err != nil {
-			return err
-		}
 	}
 
 	opacity := opts.Opacity * config.WatermarkOpacity
