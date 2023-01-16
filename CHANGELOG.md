@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [3.13.1] - 2023-01-16
+### Fix
+- Fix applying watermarks with replication.
+
 ## [3.13.0] - 2023-01-11
 ### Change
 - Add support for Managed Identity or Service Principal credentials to Azure Blob Storage integration.
