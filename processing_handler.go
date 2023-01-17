@@ -189,6 +189,11 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 
 	imgRequestHeader := make(http.Header)
 
+	cacheControl := r.Header.Get("Cache-Control")
+	if cacheControl != "" {
+		imgRequestHeader.Set("Cache-Control", cacheControl)
+	}
+
 	var etagHandler etag.Handler
 
 	if config.ETagEnabled {

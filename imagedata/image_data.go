@@ -134,7 +134,7 @@ func FromFile(path, desc string) (*ImageData, error) {
 
 func Download(imageURL, desc string, header http.Header, jar *cookiejar.Jar) (*ImageData, error) {
 	path := path2.Join(config.LocalFileSystemCache, base64.URLEncoding.EncodeToString([]byte(imageURL)))
-	if config.LocalFileSystemCache != "" {
+	if config.LocalFileSystemCache != "" && header.Get("Cache-Control") != "no-cache" {
 		imgdata, err := FromFile(path, desc)
 		if err == nil {
 			fmt.Println("hit")
