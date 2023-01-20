@@ -9,3 +9,7 @@ pre-push:
       tags: test
     check-docs-versions:
       tags: docs
+  commands:
+    check-links:
+      tags: docs
+      run: command -v lychee && lychee docs README.md CHANGELOG.md --exclude localhost --exclude-path docs/index.html
