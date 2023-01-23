@@ -142,7 +142,7 @@ func BuildImageRequest(imageURL string, header http.Header, jar *cookiejar.Jar) 
 	if _, ok := enabledSchemes[req.URL.Scheme]; !ok {
 		return nil, ierrors.New(
 			404,
-			fmt.Sprintf("Unknown sheme: %s", req.URL.Scheme),
+			fmt.Sprintf("Unknown scheme: %s", req.URL.Scheme),
 			msgSourceImageIsUnreachable,
 		)
 	}
