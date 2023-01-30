@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+### Change
+- Remove color-related EXIF data when stripping ICC profile.
 
 ## [3.13.1] - 2023-01-16
 ### Fix

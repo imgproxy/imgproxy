@@ -274,6 +274,9 @@ vips_icc_remove(VipsImage *in, VipsImage **out) {
   if (vips_copy(in, out, NULL)) return 1;
 
   vips_image_remove(*out, VIPS_META_ICC_NAME);
+  vips_image_remove(*out, "exif-ifd0-WhitePoint");
+  vips_image_remove(*out, "exif-ifd0-PrimaryChromaticities");
+  vips_image_remove(*out, "exif-ifd2-ColorSpace");
 
   return 0;
 }
