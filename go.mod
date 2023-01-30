@@ -5,7 +5,7 @@ go 1.18
 require (
 	cloud.google.com/go/storage v1.28.1
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.3.0
-	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.2.0
+	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.2.1
 	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v0.6.1
 	github.com/DataDog/datadog-go/v5 v5.2.0
 	github.com/airbrake/gobrake/v5 v5.6.1
@@ -57,7 +57,7 @@ require (
 	cloud.google.com/go/iam v0.10.0 // indirect
 	cloud.google.com/go/pubsub v1.28.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.1.2 // indirect
-	github.com/AzureAD/microsoft-authentication-library-for-go v0.7.0 // indirect
+	github.com/AzureAD/microsoft-authentication-library-for-go v0.8.1 // indirect
 	github.com/DataDog/datadog-agent/pkg/obfuscate v0.41.1 // indirect
 	github.com/DataDog/datadog-agent/pkg/remoteconfig/state v0.42.0-rc.5 // indirect
 	github.com/DataDog/go-tuf v0.3.0--fix-localmeta-fork // indirect
