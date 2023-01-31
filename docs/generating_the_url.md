@@ -258,7 +258,7 @@ Defines padding size using CSS-style syntax. All arguments are optional but at l
 
 **📝Note:** Padding follows the [dpr](#dpr) option so it will also be scaled if you've set it.
 
-### Auto Rotate
+### Auto rotate
 
 ```
 auto_rotate:%auto_rotate
@@ -464,7 +464,7 @@ watermark_url:%url
 wmu:%url
 ```
 
-When set, imgproxy will use the image from the specified URL as a watermark. `url` is the Base64-encoded URL of the custom watermark.
+When set, imgproxy will use the image from the specified URL as a watermark. `url` is the URL-safe Base64-encoded URL of the custom watermark.
 
 Default: blank
 
@@ -475,7 +475,7 @@ watermark_text:%text
 wmt:%text
 ```
 
-When set, imgproxy will generate an image from the provided text and use it as a watermark. `text` is the Base64-encoded text of the custom watermark.
+When set, imgproxy will generate an image from the provided text and use it as a watermark. `text` is the URL-safe Base64-encoded text of the custom watermark.
 
 By default, the text color is black and the font is `sans 16`. You can use [Pango markup](https://docs.gtk.org/Pango/pango_markup.html) in the `text` value to change the style.
 
@@ -483,7 +483,7 @@ If you want to use a custom font, you need to put it in `/usr/share/fonts` insid
 
 Default: blank
 
-### Watermark Size![pro](./assets/pro.svg) :id=watermark-size
+### Watermark size![pro](./assets/pro.svg) :id=watermark-size
 
 ```
 watermark_size:%width:%height
@@ -500,7 +500,7 @@ When `%height` is set to `0`, imgproxy will calculate the height using the defin
 
 Default: `0:0`
 
-### Watermark Shadow![pro](./assets/pro.svg) :id=watermark-shadow
+### Watermark shadow![pro](./assets/pro.svg) :id=watermark-shadow
 
 ```
 watermark_shadow:%sigma
@@ -517,11 +517,11 @@ style:%style
 st:%style
 ```
 
-When set, imgproxy will prepend a `<style>` node with the provided content to the `<svg>` node of a source SVG image. `%style` is url-safe Base64-encoded CSS-styles.
+When set, imgproxy will prepend a `<style>` node with the provided content to the `<svg>` node of a source SVG image. `%style` is URL-safe Base64-encoded CSS-styles.
 
 Default: blank
 
-### Strip Metadata
+### Strip metadata
 
 ```
 strip_metadata:%strip_metadata
@@ -530,7 +530,7 @@ sm:%strip_metadata
 
 When set to `1`, `t` or `true`, imgproxy will strip the metadata (EXIF, IPTC, etc.) on JPEG and WebP output images. This is normally controlled by the [IMGPROXY_STRIP_METADATA](configuration.md#miscellaneous) configuration but this procesing option allows the configuration to be set for each request.
 
-### Keep Copyright
+### Keep copyright
 
 ```
 keep_copyright:%keep_copyright
@@ -539,7 +539,7 @@ kcr:%keep_copyright
 
 When set to `1`, `t` or `true`, imgproxy will not remove copyright info while stripping metadata. This is normally controlled by the [IMGPROXY_KEEP_COPYRIGHT](configuration.md#miscellaneous) configuration but this procesing option allows the configuration to be set for each request.
 
-### Strip Color Profile
+### Strip color profile
 
 ```
 strip_color_profile:%strip_color_profile
@@ -588,7 +588,7 @@ Redefines autoquality settings. All arguments have the same meaning as [Autoqual
 
 **⚠️Warning:** Autoquality requires the image to be saved several times. Use it only when you prefer the resulting size and quality over the speed.
 
-### Max Bytes
+### Max bytes
 
 ```
 max_bytes:%bytes
@@ -691,7 +691,7 @@ fallback_image_url:%url
 fiu:%url
 ```
 
-The value of `url` is the Base64-encoded URL of the custom fallback image.
+The value of `url` is the URL-safe Base64-encoded URL of the custom fallback image.
 
 Default: blank
 
