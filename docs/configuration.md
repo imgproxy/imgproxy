@@ -97,8 +97,10 @@ You can limit allowed source URLs with the following variable:
 * `IMGPROXY_ALLOWED_SOURCES`: a whitelist of source image URL prefixes divided by comma. Wildcards can be included with `*` to match all characters except `/`. When blank, imgproxy allows all source image URLs. Example: `s3://,https://*.example.com/,local://`. Default: blank
 
 **⚠️Warning:** Be careful when using this config to limit source URL hosts, and always add a trailing slash after the host.
-* Bad: `http://example.com`
-* Good: `http://example.com/`
+
+❌ Bad: `http://example.com`
+✅ Good: `http://example.com/`
+
 If the trailing slash is absent, `http://example.com@baddomain.com` would be a permissable URL, however, the request would be made to `baddomain.com`.
 
 * `IMGPROXY_SANITIZE_SVG`: when true, imgproxy will remove scripts from SVG images to prevent XSS attacks. Defaut: `true`
