@@ -23,6 +23,7 @@ RUN apt-get update \
     liblzma5 \
     libzstd1 \
     libpcre3 \
+    fontconfig-config \
     media-types \
   && rm -rf /var/lib/apt/lists/*
 
