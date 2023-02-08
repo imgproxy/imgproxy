@@ -4,6 +4,9 @@
 ### Change
 - Remove color-related EXIF data when stripping ICC profile.
 
+### Fix
+- Fix saving with autoquality in some cases.
+
 ## [3.13.1] - 2023-01-16
 ### Fix
 - Fix applying watermarks with replication.
