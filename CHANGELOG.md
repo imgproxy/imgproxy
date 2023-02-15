@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+
+## [3.13.2] - 2023-02-15
 ### Change
 - Remove color-related EXIF data when stripping ICC profile.
 - (pro) Optimize saving to MP4.
