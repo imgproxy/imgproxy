@@ -3,9 +3,11 @@
 ## [Unreleased]
 ### Change
 - Remove color-related EXIF data when stripping ICC profile.
+- (pro) Optimize saving to MP4.
 
 ### Fix
-- Fix saving with autoquality in some cases.
+- (pro) Fix saving with autoquality in some cases.
+- (pro) Fix saving large images to MP4.
 
 ## [3.13.1] - 2023-01-16
 ### Fix
