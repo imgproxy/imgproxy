@@ -56,13 +56,16 @@ func cropToResult(pctx *pipelineContext, img *vips.Image, po *options.Processing
 	resultWidth, resultHeight := resultSize(po)
 
 	if po.ResizingType == options.ResizeFillDown {
-		if resultWidth > img.Width() {
-			resultHeight = imath.Scale(resultHeight, float64(img.Width())/float64(resultWidth))
-			resultWidth = img.Width()
-		}
+		diffW := float64(resultWidth) / float64(img.Width())
+		diffH := float64(resultHeight) / float64(img.Height())
 
-		if resultHeight > img.Height() {
-			resultWidth = imath.Scale(resultWidth, float64(img.Height())/float64(resultHeight))
+		switch {
+		case diffW > diffH && diffW > 1.0:
+			resultHeight = imath.Scale(img.Width(), float64(resultHeight)/float64(resultWidth))
+			resultWidth = img.Width()
+
+		case diffH > diffW && diffH > 1.0:
+			resultWidth = imath.Scale(img.Height(), float64(resultWidth)/float64(resultHeight))
 			resultHeight = img.Height()
 		}
 	}

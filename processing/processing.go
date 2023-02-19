@@ -30,6 +30,7 @@ var mainPipeline = pipeline{
 	cropToResult,
 	applyFilters,
 	extend,
+	extendAspectRatio,
 	padding,
 	fixSize,
 	flatten,

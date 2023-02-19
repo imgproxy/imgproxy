@@ -70,6 +70,7 @@ type ProcessingOptions struct {
 	Gravity           GravityOptions
 	Enlarge           bool
 	Extend            ExtendOptions
+	ExtendAspectRatio ExtendOptions
 	Crop              CropOptions
 	Padding           PaddingOptions
 	Trim              TrimOptions
@@ -120,6 +121,7 @@ func NewProcessingOptions() *ProcessingOptions {
 		Gravity:           GravityOptions{Type: GravityCenter},
 		Enlarge:           false,
 		Extend:            ExtendOptions{Enabled: false, Gravity: GravityOptions{Type: GravityCenter}},
+		ExtendAspectRatio: ExtendOptions{Enabled: false, Gravity: GravityOptions{Type: GravityCenter}},
 		Padding:           PaddingOptions{Enabled: false},
 		Trim:              TrimOptions{Enabled: false, Threshold: 10, Smart: true},
 		Rotate:            0,
@@ -250,6 +252,26 @@ func parseGravity(g *GravityOptions, args []string) error {
 	return nil
 }
 
+func parseExtend(opts *ExtendOptions, name string, args []string) error {
+	if len(args) > 4 {
+		return fmt.Errorf("Invalid %s arguments: %v", name, args)
+	}
+
+	opts.Enabled = parseBoolOption(args[0])
+
+	if len(args) > 1 {
+		if err := parseGravity(&opts.Gravity, args[1:]); err != nil {
+			return err
+		}
+
+		if opts.Gravity.Type == GravitySmart {
+			return fmt.Errorf("%s doesn't support smart gravity", name)
+		}
+	}
+
+	return nil
+}
+
 func applyWidthOption(po *ProcessingOptions, args []string) error {
 	if len(args) > 1 {
 		return fmt.Errorf("Invalid width arguments: %v", args)
@@ -293,23 +315,11 @@ func applyEnlargeOption(po *ProcessingOptions, args []string) error {
 }
 
 func applyExtendOption(po *ProcessingOptions, args []string) error {
-	if len(args) > 4 {
-		return fmt.Errorf("Invalid extend arguments: %v", args)
-	}
+	return parseExtend(&po.Extend, "extend", args)
+}
 
-	po.Extend.Enabled = parseBoolOption(args[0])
-
-	if len(args) > 1 {
-		if err := parseGravity(&po.Extend.Gravity, args[1:]); err != nil {
-			return err
-		}
-
-		if po.Extend.Gravity.Type == GravitySmart {
-			return errors.New("extend doesn't support smart gravity")
-		}
-	}
-
-	return nil
+func applyExtendAspectRatioOption(po *ProcessingOptions, args []string) error {
+	return parseExtend(&po.ExtendAspectRatio, "extend_aspect_ratio", args)
 }
 
 func applySizeOption(po *ProcessingOptions, args []string) (err error) {
@@ -898,6 +908,8 @@ func applyURLOption(po *ProcessingOptions, name string, args []string) error {
 		return applyEnlargeOption(po, args)
 	case "extend", "ex":
 		return applyExtendOption(po, args)
+	case "extend_aspect_ratio", "extend_ar", "exar":
+		return applyExtendAspectRatioOption(po, args)
 	case "gravity", "g":
 		return applyGravityOption(po, args)
 	case "crop", "c":

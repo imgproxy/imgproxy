@@ -174,6 +174,19 @@ ex:%extend:%gravity
 
 Default: `false:ce:0:0`
 
+### Extend aspect ratio
+
+```
+extend_aspect_ratio:%extend:%gravity
+extend_ar:%extend:%gravity
+exar:%extend:%gravity
+```
+
+* When `extend` is set to `1`, `t` or `true`, imgproxy will extend the image to the requested aspect ratio.
+* `gravity` _(optional)_ accepts the same values as the [gravity](#gravity) option, except `sm`. When `gravity` is not set, imgproxy will use `ce` gravity without offsets.
+
+Default: `false:ce:0:0`
+
 ### Gravity
 
 ```

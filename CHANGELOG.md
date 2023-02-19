@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+## Add
+- Add [extend_aspect_ratio](https://docs.imgproxy.net/latest/generating_the_url?id=extend-aspect-ratio) processing option.
 
 ## [3.13.2] - 2023-02-15
 ### Change
