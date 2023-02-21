@@ -99,6 +99,7 @@ You can limit allowed source URLs with the following variable:
 **⚠️Warning:** Be careful when using this config to limit source URL hosts, and always add a trailing slash after the host.
 
 ❌ Bad: `http://example.com`
+
 ✅ Good: `http://example.com/`
 
 If the trailing slash is absent, `http://example.com@baddomain.com` would be a permissable URL, however, the request would be made to `baddomain.com`.
@@ -277,6 +278,11 @@ imgproxy Pro can apply an unsharpening mask to your images.
   * `always`: always applies the unsharpening mask.
 * `IMGPROXY_UNSHARPENING_WEIGHT`: ![pro](./assets/pro.svg) a floating-point number that defines how neighboring pixels will affect the current pixel. The greater the value, the sharper the image. This value should be greater than zero. Default: `1`
 * `IMGPROXY_UNSHARPENING_DIVIDOR`: ![pro](./assets/pro.svg) a floating-point number that defines the unsharpening strength. The lesser the value, the sharper the image. This value be greater than zero. Default: `24`
+
+## Smart crop
+
+* `IMGPROXY_SMART_CROP_ADVANCED`: ![pro](./assets/pro.svg) when `true`, enables usage of the advanced smart crop method. Advanced smart crop may take more time than regular one, yet it produces better results.
+* `IMGPROXY_SMART_CROP_FACE_DETECTION`: ![pro](./assets/pro.svg) when `true`, adds an additional fast face detection step to smart crop.
 
 ## Object detection
 
