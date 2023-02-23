@@ -40,6 +40,11 @@ var (
 
 const msgSourceImageIsUnreachable = "Source image is unreachable"
 
+type DownloadOptions struct {
+	Header    http.Header
+	CookieJar *cookiejar.Jar
+}
+
 type ErrorNotModified struct {
 	Message string
 	Headers map[string]string
@@ -174,8 +179,8 @@ func SendRequest(req *http.Request) (*http.Response, error) {
 	return res, nil
 }
 
-func requestImage(imageURL string, header http.Header, jar *cookiejar.Jar) (*http.Response, error) {
-	req, err := BuildImageRequest(imageURL, header, jar)
+func requestImage(imageURL string, opts DownloadOptions) (*http.Response, error) {
+	req, err := BuildImageRequest(imageURL, opts.Header, opts.CookieJar)
 	if err != nil {
 		return nil, err
 	}
@@ -206,13 +211,13 @@ func requestImage(imageURL string, header http.Header, jar *cookiejar.Jar) (*htt
 	return res, nil
 }
 
-func download(imageURL string, header http.Header, jar *cookiejar.Jar, secopts security.Options) (*ImageData, error) {
+func download(imageURL string, opts DownloadOptions, secopts security.Options) (*ImageData, error) {
 	// We use this for testing
 	if len(redirectAllRequestsTo) > 0 {
 		imageURL = redirectAllRequestsTo
 	}
 
-	res, err := requestImage(imageURL, header, jar)
+	res, err := requestImage(imageURL, opts)
 	if res != nil {
 		defer res.Body.Close()
 	}

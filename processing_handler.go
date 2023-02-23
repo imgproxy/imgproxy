@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"net/http/cookiejar"
 	"strconv"
 	"strings"
 	"time"
@@ -288,14 +287,17 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	originData, err := func() (*imagedata.ImageData, error) {
 		defer metrics.StartDownloadingSegment(ctx)()
 
-		var cookieJar *cookiejar.Jar
+		downloadOpts := imagedata.DownloadOptions{
+			Header:    imgRequestHeader,
+			CookieJar: nil,
+		}
 
 		if config.CookiePassthrough {
-			cookieJar, err = cookies.JarFromRequest(r)
+			downloadOpts.CookieJar, err = cookies.JarFromRequest(r)
 			checkErr(ctx, "download", err)
 		}
 
-		return imagedata.Download(imageURL, "source image", imgRequestHeader, cookieJar, po.SecurityOptions)
+		return imagedata.Download(imageURL, "source image", downloadOpts, po.SecurityOptions)
 	}()
 
 	if err == nil {
