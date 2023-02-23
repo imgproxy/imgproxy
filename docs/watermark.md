@@ -15,7 +15,7 @@ There are three ways to specify a watermark image using environment variables:
 
 You can also specify the base opacity of a watermark using `IMGPROXY_WATERMARK_OPACITY`.
 
-**📝Note:** If you're going to use the `scale` argument of `watermark`, it's highly recommended to use SVG, WebP or JPEG watermarks since these formats support scale-on-load.
+**📝 Note:** If you're going to use the `scale` argument of `watermark`, it's highly recommended to use SVG, WebP or JPEG watermarks since these formats support scale-on-load.
 
 ## Watermarking an image
 

@@ -26,7 +26,7 @@ The source URL can be provided as is, prepended by `/plain/` part:
 /plain/http://example.com/images/curiosity.jpg
 ```
 
-**📝Note:** If the source URL contains a query string or `@`, you'll need to escape it.
+**📝 Note:** If the source URL contains a query string or `@`, you'll need to escape it.
 
 #### Base64 encoded
 
@@ -57,7 +57,7 @@ imgproxy responses with a JSON body and returns the following info:
 * `xmp`: XMP data
 * `video_meta`: metadata from the video
 
-**📝Note:** There are lots of IPTC tags in the spec, but imgproxy supports only a few of them. If you need some tags to be supported, just contact us.
+**📝 Note:** There are lots of IPTC tags in the spec, but imgproxy supports only a few of them. If you need some tags to be supported, just contact us.
 
 #### Example (JPEG)
 
