@@ -114,6 +114,10 @@ Also you may want imgproxy to respond with the same error message that it writes
 
 * `IMGPROXY_DEVELOPMENT_ERRORS_MODE`: when true, imgproxy will respond with detailed error messages. Not recommended for production because some errors may contain stack traces.
 
+* `IMGPROXY_ALLOW_SECURITY_OPTIONS`: when `true`, allows usage of security-related processing options such as `max_src_resolution`, `max_src_file_size`, `max_animation_frames`, and `max_animation_frame_resolution`. Default: `false`.
+
+**⚠️Warning:** `IMGPROXY_ALLOW_SECURITY_OPTIONS` allows bypassing your security restrictions. Don't set it to `true` unless you are completely sure that an attacker can't change your imgproxy URLs.
+
 ## Cookies
 
 imgproxy can pass cookies in image requests. This can be activated with `IMGPROXY_COOKIE_PASSTHROUGH`. Unfortunately the `Cookie` header doesn't contain information about which URLs these cookies are applicable to, so imgproxy can only assume (or must be told).

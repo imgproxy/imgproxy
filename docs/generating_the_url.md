@@ -795,6 +795,50 @@ Read more about presets in the [Presets](presets.md) guide.
 
 Default: empty
 
+### Max src resolution
+
+```
+max_src_resolution:%resolution
+msr:%resolution
+```
+
+Allows redefining `IMGPROXY_MAX_SRC_RESOLUTION` config.
+
+**⚠️Warning:** Since this option allows redefining a security restriction, its usage is not allowed unless the `IMGPROXY_ALLOW_SECURITY_OPTIONS` config is set to `true`.
+
+### Max src file size
+
+```
+max_src_file_size:%size
+msfs:%size
+```
+
+Allows redefining `IMGPROXY_MAX_SRC_FILE_SIZE` config.
+
+**⚠️Warning:** Since this option allows redefining a security restriction, its usage is not allowed unless the `IMGPROXY_ALLOW_SECURITY_OPTIONS` config is set to `true`.
+
+### Max animation frames
+
+```
+max_animation_frames:%size
+maf:%size
+```
+
+Allows redefining `IMGPROXY_MAX_ANIMATION_FRAMES` config.
+
+**⚠️Warning:** Since this option allows redefining a security restriction, its usage is not allowed unless the `IMGPROXY_ALLOW_SECURITY_OPTIONS` config is set to `true`.
+
+### Max animation frame resolution
+
+```
+max_animation_frame_resolution:%size
+mafr:%size
+```
+
+Allows redefining `IMGPROXY_MAX_ANIMATION_FRAME_RESOLUTION` config.
+
+**⚠️Warning:** Since this option allows redefining a security restriction, its usage is not allowed unless the `IMGPROXY_ALLOW_SECURITY_OPTIONS` config is set to `true`.
+
 ## Source URL
 ### Plain
 

@@ -14,6 +14,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/imath"
+	"github.com/imgproxy/imgproxy/v3/security"
 	"github.com/imgproxy/imgproxy/v3/structdiff"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
@@ -108,6 +109,8 @@ type ProcessingOptions struct {
 
 	UsedPresets []string
 
+	SecurityOptions security.Options
+
 	defaultQuality int
 }
 
@@ -142,6 +145,8 @@ func NewProcessingOptions() *ProcessingOptions {
 
 		SkipProcessingFormats: append([]imagetype.Type(nil), config.SkipProcessingFormats...),
 		UsedPresets:           make([]string, 0, len(config.Presets)),
+
+		SecurityOptions: security.DefaultOptions(),
 
 		// Basically, we need this to update ETag when `IMGPROXY_QUALITY` is changed
 		defaultQuality: config.Quality,
@@ -884,6 +889,78 @@ func applyReturnAttachmentOption(po *ProcessingOptions, args []string) error {
 	return nil
 }
 
+func applyMaxSrcResolutionOption(po *ProcessingOptions, args []string) error {
+	if err := security.IsSecurityOptionsAllowed(); err != nil {
+		return err
+	}
+
+	if len(args) > 1 {
+		return fmt.Errorf("Invalid max_src_resolution arguments: %v", args)
+	}
+
+	if x, err := strconv.ParseFloat(args[0], 64); err == nil && x > 0 {
+		po.SecurityOptions.MaxSrcResolution = int(x * 1000000)
+	} else {
+		return fmt.Errorf("Invalid max_src_resolution: %s", args[0])
+	}
+
+	return nil
+}
+
+func applyMaxSrcFileSizeOption(po *ProcessingOptions, args []string) error {
+	if err := security.IsSecurityOptionsAllowed(); err != nil {
+		return err
+	}
+
+	if len(args) > 1 {
+		return fmt.Errorf("Invalid max_src_file_size arguments: %v", args)
+	}
+
+	if x, err := strconv.Atoi(args[0]); err == nil {
+		po.SecurityOptions.MaxSrcFileSize = x
+	} else {
+		return fmt.Errorf("Invalid max_src_file_size: %s", args[0])
+	}
+
+	return nil
+}
+
+func applyMaxAnimationFramesOption(po *ProcessingOptions, args []string) error {
+	if err := security.IsSecurityOptionsAllowed(); err != nil {
+		return err
+	}
+
+	if len(args) > 1 {
+		return fmt.Errorf("Invalid max_animation_frames arguments: %v", args)
+	}
+
+	if x, err := strconv.Atoi(args[0]); err == nil && x > 0 {
+		po.SecurityOptions.MaxAnimationFrames = x
+	} else {
+		return fmt.Errorf("Invalid max_animation_frames: %s", args[0])
+	}
+
+	return nil
+}
+
+func applyMaxAnimationFrameResolutionOption(po *ProcessingOptions, args []string) error {
+	if err := security.IsSecurityOptionsAllowed(); err != nil {
+		return err
+	}
+
+	if len(args) > 1 {
+		return fmt.Errorf("Invalid max_animation_frame_resolution arguments: %v", args)
+	}
+
+	if x, err := strconv.ParseFloat(args[0], 64); err == nil {
+		po.SecurityOptions.MaxAnimationFrameResolution = int(x * 1000000)
+	} else {
+		return fmt.Errorf("Invalid max_animation_frame_resolution: %s", args[0])
+	}
+
+	return nil
+}
+
 func applyURLOption(po *ProcessingOptions, name string, args []string) error {
 	switch name {
 	case "resize", "rs":
@@ -965,6 +1042,15 @@ func applyURLOption(po *ProcessingOptions, name string, args []string) error {
 	// Presets
 	case "preset", "pr":
 		return applyPresetOption(po, args)
+	// Security
+	case "max_src_resolution", "msr":
+		return applyMaxSrcResolutionOption(po, args)
+	case "max_src_file_size", "msfs":
+		return applyMaxSrcFileSizeOption(po, args)
+	case "max_animation_frames", "maf":
+		return applyMaxAnimationFramesOption(po, args)
+	case "max_animation_frame_resolution", "mafr":
+		return applyMaxAnimationFrameResolutionOption(po, args)
 	}
 
 	return fmt.Errorf("Unknown processing option: %s", name)

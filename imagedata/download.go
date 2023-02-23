@@ -11,6 +11,7 @@ import (
 
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
+	"github.com/imgproxy/imgproxy/v3/security"
 
 	azureTransport "github.com/imgproxy/imgproxy/v3/transport/azure"
 	fsTransport "github.com/imgproxy/imgproxy/v3/transport/fs"
@@ -205,7 +206,7 @@ func requestImage(imageURL string, header http.Header, jar *cookiejar.Jar) (*htt
 	return res, nil
 }
 
-func download(imageURL string, header http.Header, jar *cookiejar.Jar) (*ImageData, error) {
+func download(imageURL string, header http.Header, jar *cookiejar.Jar, secopts security.Options) (*ImageData, error) {
 	// We use this for testing
 	if len(redirectAllRequestsTo) > 0 {
 		imageURL = redirectAllRequestsTo
@@ -234,7 +235,7 @@ func download(imageURL string, header http.Header, jar *cookiejar.Jar) (*ImageDa
 		contentLength = 0
 	}
 
-	imgdata, err := readAndCheckImage(body, contentLength)
+	imgdata, err := readAndCheckImage(body, contentLength, secopts)
 	if err != nil {
 		return nil, ierrors.Wrap(err, 0)
 	}

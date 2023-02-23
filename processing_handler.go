@@ -295,7 +295,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 			checkErr(ctx, "download", err)
 		}
 
-		return imagedata.Download(imageURL, "source image", imgRequestHeader, cookieJar)
+		return imagedata.Download(imageURL, "source image", imgRequestHeader, cookieJar, po.SecurityOptions)
 	}()
 
 	if err == nil {
