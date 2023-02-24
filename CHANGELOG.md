@@ -5,6 +5,9 @@
 - Add [extend_aspect_ratio](https://docs.imgproxy.net/latest/generating_the_url?id=extend-aspect-ratio) processing option.
 - (pro) Add [advanced smart crop](https://docs.imgproxy.net/latest/configuration?id=smart-crop)
 
+### Change
+- Make the `expires` processing option set `Expires` and `Cache-Control` headers.
+
 ## [3.13.2] - 2023-02-15
 ### Change
 - Remove color-related EXIF data when stripping ICC profile.

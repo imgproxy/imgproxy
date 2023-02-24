@@ -95,6 +95,8 @@ type ProcessingOptions struct {
 
 	CacheBuster string
 
+	Expires *time.Time
+
 	Watermark WatermarkOptions
 
 	PreferWebP  bool
@@ -825,6 +827,9 @@ func applyExpiresOption(po *ProcessingOptions, args []string) error {
 	if timestamp > 0 && timestamp < time.Now().Unix() {
 		return errExpiredURL
 	}
+
+	expires := time.Unix(timestamp, 0)
+	po.Expires = &expires
 
 	return nil
 }
