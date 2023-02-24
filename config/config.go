@@ -42,6 +42,7 @@ var (
 	MaxAnimationFrameResolution int
 	MaxSvgCheckBytes            int
 	MaxRedirects                int
+	AllowSecurityOptions        bool
 
 	JpegProgressive       bool
 	PngInterlaced         bool
@@ -226,6 +227,7 @@ func Reset() {
 	MaxAnimationFrameResolution = 0
 	MaxSvgCheckBytes = 32 * 1024
 	MaxRedirects = 10
+	AllowSecurityOptions = false
 
 	JpegProgressive = false
 	PngInterlaced = false
@@ -404,6 +406,8 @@ func Configure() error {
 	configurators.Patterns(&AllowedSources, "IMGPROXY_ALLOWED_SOURCES")
 
 	configurators.Bool(&SanitizeSvg, "IMGPROXY_SANITIZE_SVG")
+
+	configurators.Bool(&AllowSecurityOptions, "IMGPROXY_ALLOW_SECURITY_OPTIONS")
 
 	configurators.Bool(&JpegProgressive, "IMGPROXY_JPEG_PROGRESSIVE")
 	configurators.Bool(&PngInterlaced, "IMGPROXY_PNG_INTERLACED")

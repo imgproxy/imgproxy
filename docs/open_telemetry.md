@@ -11,8 +11,8 @@ imgproxy can send request traces to an OpenTelemetry collector. To use this feat
 4. _(optional)_ Set the `IMGPROXY_OPEN_TELEMETRY_PROPAGATORS` environment variable to be the desired list of text map propagators. Supported propagators are:
     * `tracecontext`: [W3C Trace Context](https://www.w3.org/TR/trace-context/)
     * `baggage`: [W3C Baggage](https://www.w3.org/TR/baggage/)
-    * `b3`: [B3 Single](./context/api-propagators.md#configuration)
-    * `b3multi`: [B3 Multi](./context/api-propagators.md#configuration)
+    * `b3`: [B3 Single](https://opentelemetry.io/docs/reference/specification/context/api-propagators/#configuration)
+    * `b3multi`: [B3 Multi](https://opentelemetry.io/docs/reference/specification/context/api-propagators/#configuration)
     * `jaeger`: [Jaeger](https://www.jaegertracing.io/docs/1.21/client-libraries/#propagation-format)
     * `xray`: [AWS X-Ray](https://docs.aws.amazon.com/xray/latest/devguide/xray-concepts.html#xray-concepts-tracingheader)
     * `ottrace`: [OT Trace](https://github.com/opentracing?q=basic&type=&language=)

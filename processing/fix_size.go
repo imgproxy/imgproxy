@@ -32,7 +32,7 @@ func fixWebpSize(img *vips.Image) error {
 
 	log.Warningf("WebP dimension size is limited to %d. The image is rescaled to %dx%d", int(webpMaxDimension), img.Width(), img.Height())
 
-	return img.CopyMemory()
+	return nil
 }
 
 func fixGifSize(img *vips.Image) error {
@@ -53,7 +53,7 @@ func fixGifSize(img *vips.Image) error {
 
 	log.Warningf("GIF resolution is limited to %d and dimension size is limited to %d. The image is rescaled to %dx%d", int(gifMaxResolution), int(gifMaxDimension), img.Width(), img.Height())
 
-	return img.CopyMemory()
+	return nil
 }
 
 func fixIcoSize(img *vips.Image) error {
@@ -70,7 +70,7 @@ func fixIcoSize(img *vips.Image) error {
 
 	log.Warningf("ICO dimension size is limited to %d. The image is rescaled to %dx%d", int(icoMaxDimension), img.Width(), img.Height())
 
-	return img.CopyMemory()
+	return nil
 }
 
 func fixSize(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata *imagedata.ImageData) error {

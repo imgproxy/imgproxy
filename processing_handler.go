@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"net/http/cookiejar"
 	"strconv"
 	"strings"
 	"time"
@@ -56,9 +55,15 @@ func initProcessingHandler() {
 	headerVaryValue = strings.Join(vary, ", ")
 }
 
-func setCacheControl(rw http.ResponseWriter, originHeaders map[string]string) {
+func setCacheControl(rw http.ResponseWriter, force *time.Time, originHeaders map[string]string) {
 	var cacheControl, expires string
 	var ttl int
+
+	if force != nil {
+		rw.Header().Set("Cache-Control", fmt.Sprintf("max-age=%d, public", int(time.Until(*force).Seconds())))
+		rw.Header().Set("Expires", force.Format(http.TimeFormat))
+		return
+	}
 
 	if config.CacheControlPassthrough && originHeaders != nil {
 		if val, ok := originHeaders["Cache-Control"]; ok && len(val) > 0 {
@@ -116,7 +121,7 @@ func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, sta
 		rw.Header().Set("Content-DPR", strconv.FormatFloat(po.Dpr, 'f', 2, 32))
 	}
 
-	setCacheControl(rw, originData.Headers)
+	setCacheControl(rw, po.Expires, originData.Headers)
 	setVary(rw)
 	setCanonical(rw, originURL)
 
@@ -144,7 +149,7 @@ func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, sta
 }
 
 func respondWithNotModified(reqID string, r *http.Request, rw http.ResponseWriter, po *options.ProcessingOptions, originURL string, originHeaders map[string]string) {
-	setCacheControl(rw, originHeaders)
+	setCacheControl(rw, po.Expires, originHeaders)
 	setVary(rw)
 
 	rw.WriteHeader(304)
@@ -288,14 +293,17 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	originData, err := func() (*imagedata.ImageData, error) {
 		defer metrics.StartDownloadingSegment(ctx)()
 
-		var cookieJar *cookiejar.Jar
+		downloadOpts := imagedata.DownloadOptions{
+			Header:    imgRequestHeader,
+			CookieJar: nil,
+		}
 
 		if config.CookiePassthrough {
-			cookieJar, err = cookies.JarFromRequest(r)
+			downloadOpts.CookieJar, err = cookies.JarFromRequest(r)
 			checkErr(ctx, "download", err)
 		}
 
-		return imagedata.Download(imageURL, "source image", imgRequestHeader, cookieJar)
+		return imagedata.Download(imageURL, "source image", downloadOpts, po.SecurityOptions)
 	}()
 
 	if err == nil {

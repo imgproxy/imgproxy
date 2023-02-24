@@ -34,7 +34,7 @@ Since the processing of animated images is a pretty heavy process, only one fram
 
 * `IMGPROXY_MAX_ANIMATION_FRAMES`: the maximum of animated image frames to be processed. Default: `1`.
 
-**📝Note:** imgproxy summarizes all frames resolutions while the checking source image resolution.
+**📝 Note:** imgproxy summarizes all frames resolutions while the checking source image resolution.
 
 ## Converting animated images to MP4![pro](./assets/pro.svg) :id=converting-animated-images-to-mp4
 

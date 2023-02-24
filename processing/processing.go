@@ -30,6 +30,7 @@ var mainPipeline = pipeline{
 	cropToResult,
 	applyFilters,
 	extend,
+	extendAspectRatio,
 	padding,
 	fixSize,
 	flatten,
@@ -116,10 +117,10 @@ func transformAnimated(ctx context.Context, img *vips.Image, po *options.Process
 		return err
 	}
 
-	framesCount := imath.Min(img.Height()/frameHeight, config.MaxAnimationFrames)
+	framesCount := imath.Min(img.Height()/frameHeight, po.SecurityOptions.MaxAnimationFrames)
 
 	// Double check dimensions because animated image has many frames
-	if err = security.CheckDimensions(imgWidth, frameHeight, framesCount); err != nil {
+	if err = security.CheckDimensions(imgWidth, frameHeight, framesCount, po.SecurityOptions); err != nil {
 		return err
 	}
 
@@ -234,7 +235,7 @@ func ProcessImage(ctx context.Context, imgdata *imagedata.ImageData, po *options
 	defer vips.Cleanup()
 
 	animationSupport :=
-		config.MaxAnimationFrames > 1 &&
+		po.SecurityOptions.MaxAnimationFrames > 1 &&
 			imgdata.Type.SupportsAnimation() &&
 			(po.Format == imagetype.Unknown || po.Format.SupportsAnimation())
 

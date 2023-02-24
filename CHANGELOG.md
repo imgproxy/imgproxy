@@ -1,6 +1,22 @@
 # Changelog
 
 ## [Unreleased]
+## Add
+- Add [extend_aspect_ratio](https://docs.imgproxy.net/latest/generating_the_url?id=extend-aspect-ratio) processing option.
+- Add the `IMGPROXY_ALLOW_SECURITY_OPTIONS` config + `max_src_resolution`, `max_src_file_size`, `max_animation_frames`, and `max_animation_frame_resolution` processing options.
+- (pro) Add [advanced smart crop](https://docs.imgproxy.net/latest/configuration?id=smart-crop).
+
+### Change
+- Make the `expires` processing option set `Expires` and `Cache-Control` headers.
+
+## [3.13.2] - 2023-02-15
+### Change
+- Remove color-related EXIF data when stripping ICC profile.
+- (pro) Optimize saving to MP4.
+
+### Fix
+- (pro) Fix saving with autoquality in some cases.
+- (pro) Fix saving large images to MP4.
 
 ## [3.13.1] - 2023-01-16
 ### Fix

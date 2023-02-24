@@ -104,7 +104,7 @@ mw:%width
 
 Defines the minimum width of the resulting image.
 
-**⚠️Warning:** When both `width` and `min-width` are set, the final image will be cropped according to `width`, so use this combination with care.
+**⚠️ Warning:** When both `width` and `min-width` are set, the final image will be cropped according to `width`, so use this combination with care.
 
 Default: `0`
 
@@ -117,7 +117,7 @@ mh:%height
 
 Defines the minimum height of the resulting image.
 
-**⚠️Warning:** When both `height` and `min-height` are set, the final image will be cropped according to `height`, so use this combination with care.
+**⚠️ Warning:** When both `height` and `min-height` are set, the final image will be cropped according to `height`, so use this combination with care.
 
 Default: `0`
 
@@ -135,7 +135,7 @@ When set, imgproxy will multiply the image dimensions according to these factors
 
 Can be combined with `width` and `height` options. In this case, imgproxy calculates scale factors for the provided size and then multiplies it with the provided zoom factors.
 
-**📝Note:** Unlike [dpr](#dpr), `zoom` doesn't set the `Content-DPR` header in the response.
+**📝 Note:** Unlike [dpr](#dpr), `zoom` doesn't set the `Content-DPR` header in the response.
 
 Default: `1`
 
@@ -147,7 +147,7 @@ dpr:%dpr
 
 When set, imgproxy will multiply the image dimensions according to this factor for HiDPI (Retina) devices. The value must be greater than 0.
 
-**📝Note:** `dpr` also sets the `Content-DPR` header in the response so the browser can correctly render the image.
+**📝 Note:** `dpr` also sets the `Content-DPR` header in the response so the browser can correctly render the image.
 
 Default: `1`
 
@@ -170,6 +170,19 @@ ex:%extend:%gravity
 ```
 
 * When `extend` is set to `1`, `t` or `true`, imgproxy will extend the image if it is smaller than the given size.
+* `gravity` _(optional)_ accepts the same values as the [gravity](#gravity) option, except `sm`. When `gravity` is not set, imgproxy will use `ce` gravity without offsets.
+
+Default: `false:ce:0:0`
+
+### Extend aspect ratio
+
+```
+extend_aspect_ratio:%extend:%gravity
+extend_ar:%extend:%gravity
+exar:%extend:%gravity
+```
+
+* When `extend` is set to `1`, `t` or `true`, imgproxy will extend the image to the requested aspect ratio.
 * `gravity` _(optional)_ accepts the same values as the [gravity](#gravity) option, except `sm`. When `gravity` is not set, imgproxy will use `ce` gravity without offsets.
 
 Default: `false:ce:0:0`
@@ -232,13 +245,13 @@ Removes surrounding background.
 * `equal_hor` - _(optional)_ set to `1`, `t` or `true`, imgproxy will cut only equal parts from left and right sides. That means that if 10px of background can be cut off from the left and 5px from the right, then 5px will be cut off from both sides. For example, this can be useful if objects on your images are centered but have non-symmetrical shadow.
 * `equal_ver` - _(optional)_ acts like `equal_hor` but for top/bottom sides.
 
-**⚠️Warning:** Trimming requires an image to be fully loaded into memory. This disables scale-on-load and significantly increases memory usage and processing time. Use it carefully with large images.
+**⚠️ Warning:** Trimming requires an image to be fully loaded into memory. This disables scale-on-load and significantly increases memory usage and processing time. Use it carefully with large images.
 
-**📝Note:** If you know background color of your images then setting it explicitly via `color` will also save some resources because imgproxy won't need to automatically detect it.
+**📝 Note:** If you know background color of your images then setting it explicitly via `color` will also save some resources because imgproxy won't need to automatically detect it.
 
-**📝Note:** Use a `color` value of `FF00FF` for trimming transparent backgrounds as imgproxy uses magenta as a transparency key.
+**📝 Note:** Use a `color` value of `FF00FF` for trimming transparent backgrounds as imgproxy uses magenta as a transparency key.
 
-**📝Note:** The trimming of animated images is not supported.
+**📝 Note:** The trimming of animated images is not supported.
 
 ### Padding
 
@@ -254,11 +267,11 @@ Defines padding size using CSS-style syntax. All arguments are optional but at l
 * `bottom` - bottom padding
 * `left` - left padding
 
-**📝Note:** Padding is applied after all image transformations (except watermarking) and enlarges the generated image. This means that if your resize dimensions were 100x200px and you applied the `padding:10` option, then you will end up with an image with dimensions of 120x220px.
+**📝 Note:** Padding is applied after all image transformations (except watermarking) and enlarges the generated image. This means that if your resize dimensions were 100x200px and you applied the `padding:10` option, then you will end up with an image with dimensions of 120x220px.
 
-**📝Note:** Padding follows the [dpr](#dpr) option so it will also be scaled if you've set it.
+**📝 Note:** Padding follows the [dpr](#dpr) option so it will also be scaled if you've set it.
 
-### Auto Rotate
+### Auto rotate
 
 ```
 auto_rotate:%auto_rotate
@@ -276,7 +289,7 @@ rot:%angle
 
 Rotates the image on the specified angle. The orientation from the image metadata is applied before the rotation unless autorotation is disabled.
 
-**📝Note:** Only 0, 90, 180, 270, etc., degree angles are supported.
+**📝 Note:** Only 0, 90, 180, 270, etc., degree angles are supported.
 
 Default: 0
 
@@ -464,7 +477,7 @@ watermark_url:%url
 wmu:%url
 ```
 
-When set, imgproxy will use the image from the specified URL as a watermark. `url` is the Base64-encoded URL of the custom watermark.
+When set, imgproxy will use the image from the specified URL as a watermark. `url` is the URL-safe Base64-encoded URL of the custom watermark.
 
 Default: blank
 
@@ -475,7 +488,7 @@ watermark_text:%text
 wmt:%text
 ```
 
-When set, imgproxy will generate an image from the provided text and use it as a watermark. `text` is the Base64-encoded text of the custom watermark.
+When set, imgproxy will generate an image from the provided text and use it as a watermark. `text` is the URL-safe Base64-encoded text of the custom watermark.
 
 By default, the text color is black and the font is `sans 16`. You can use [Pango markup](https://docs.gtk.org/Pango/pango_markup.html) in the `text` value to change the style.
 
@@ -483,7 +496,7 @@ If you want to use a custom font, you need to put it in `/usr/share/fonts` insid
 
 Default: blank
 
-### Watermark Size![pro](./assets/pro.svg) :id=watermark-size
+### Watermark size![pro](./assets/pro.svg) :id=watermark-size
 
 ```
 watermark_size:%width:%height
@@ -496,11 +509,11 @@ When `%width` is set to `0`, imgproxy will calculate the width using the defined
 
 When `%height` is set to `0`, imgproxy will calculate the height using the defined width and watermark's aspect ratio.
 
-**📝Note:** This processing option takes effect only when the `scale` argument of the `watermark` option is set to zero.
+**📝 Note:** This processing option takes effect only when the `scale` argument of the `watermark` option is set to zero.
 
 Default: `0:0`
 
-### Watermark Shadow![pro](./assets/pro.svg) :id=watermark-shadow
+### Watermark shadow![pro](./assets/pro.svg) :id=watermark-shadow
 
 ```
 watermark_shadow:%sigma
@@ -517,11 +530,11 @@ style:%style
 st:%style
 ```
 
-When set, imgproxy will prepend a `<style>` node with the provided content to the `<svg>` node of a source SVG image. `%style` is url-safe Base64-encoded CSS-styles.
+When set, imgproxy will prepend a `<style>` node with the provided content to the `<svg>` node of a source SVG image. `%style` is URL-safe Base64-encoded CSS-styles.
 
 Default: blank
 
-### Strip Metadata
+### Strip metadata
 
 ```
 strip_metadata:%strip_metadata
@@ -530,7 +543,7 @@ sm:%strip_metadata
 
 When set to `1`, `t` or `true`, imgproxy will strip the metadata (EXIF, IPTC, etc.) on JPEG and WebP output images. This is normally controlled by the [IMGPROXY_STRIP_METADATA](configuration.md#miscellaneous) configuration but this procesing option allows the configuration to be set for each request.
 
-### Keep Copyright
+### Keep copyright
 
 ```
 keep_copyright:%keep_copyright
@@ -539,7 +552,7 @@ kcr:%keep_copyright
 
 When set to `1`, `t` or `true`, imgproxy will not remove copyright info while stripping metadata. This is normally controlled by the [IMGPROXY_KEEP_COPYRIGHT](configuration.md#miscellaneous) configuration but this procesing option allows the configuration to be set for each request.
 
-### Strip Color Profile
+### Strip color profile
 
 ```
 strip_color_profile:%strip_color_profile
@@ -586,9 +599,9 @@ aq:%method:%target:%min_quality:%max_quality:%allowed_error
 
 Redefines autoquality settings. All arguments have the same meaning as [Autoquality](configuration.md#autoquality) configs. All arguments are optional and can be omitted.
 
-**⚠️Warning:** Autoquality requires the image to be saved several times. Use it only when you prefer the resulting size and quality over the speed.
+**⚠️ Warning:** Autoquality requires the image to be saved several times. Use it only when you prefer the resulting size and quality over the speed.
 
-### Max Bytes
+### Max bytes
 
 ```
 max_bytes:%bytes
@@ -597,9 +610,9 @@ mb:%bytes
 
 When set, imgproxy automatically degrades the quality of the image until the image size is under the specified amount of bytes.
 
-**📝Note:** Applicable only to `jpg`, `webp`, `heic`, and `tiff`.
+**📝 Note:** Applicable only to `jpg`, `webp`, `heic`, and `tiff`.
 
-**⚠️Warning:** When `max_bytes` is set, imgproxy saves image multiple times to achieve the specified image size.
+**⚠️ Warning:** When `max_bytes` is set, imgproxy saves image multiple times to achieve the specified image size.
 
 Default: 0
 
@@ -691,7 +704,7 @@ fallback_image_url:%url
 fiu:%url
 ```
 
-The value of `url` is the Base64-encoded URL of the custom fallback image.
+The value of `url` is the URL-safe Base64-encoded URL of the custom fallback image.
 
 Default: blank
 
@@ -704,9 +717,9 @@ skp:%extension1:%extension2:...:%extensionN
 
 When set, imgproxy will skip the processing of the listed formats. Also available as the [IMGPROXY_SKIP_PROCESSING_FORMATS](configuration.md#skip-processing) configuration.
 
-**📝Note:** Processing can only be skipped when the requested format is the same as the source format.
+**📝 Note:** Processing can only be skipped when the requested format is the same as the source format.
 
-**📝Note:** Video thumbnail processing can't be skipped.
+**📝 Note:** Video thumbnail processing can't be skipped.
 
 Default: empty
 
@@ -782,6 +795,50 @@ Read more about presets in the [Presets](presets.md) guide.
 
 Default: empty
 
+### Max src resolution
+
+```
+max_src_resolution:%resolution
+msr:%resolution
+```
+
+Allows redefining `IMGPROXY_MAX_SRC_RESOLUTION` config.
+
+**⚠️ Warning:** Since this option allows redefining a security restriction, its usage is not allowed unless the `IMGPROXY_ALLOW_SECURITY_OPTIONS` config is set to `true`.
+
+### Max src file size
+
+```
+max_src_file_size:%size
+msfs:%size
+```
+
+Allows redefining `IMGPROXY_MAX_SRC_FILE_SIZE` config.
+
+**⚠️ Warning:** Since this option allows redefining a security restriction, its usage is not allowed unless the `IMGPROXY_ALLOW_SECURITY_OPTIONS` config is set to `true`.
+
+### Max animation frames
+
+```
+max_animation_frames:%size
+maf:%size
+```
+
+Allows redefining `IMGPROXY_MAX_ANIMATION_FRAMES` config.
+
+**⚠️ Warning:** Since this option allows redefining a security restriction, its usage is not allowed unless the `IMGPROXY_ALLOW_SECURITY_OPTIONS` config is set to `true`.
+
+### Max animation frame resolution
+
+```
+max_animation_frame_resolution:%size
+mafr:%size
+```
+
+Allows redefining `IMGPROXY_MAX_ANIMATION_FRAME_RESOLUTION` config.
+
+**⚠️ Warning:** Since this option allows redefining a security restriction, its usage is not allowed unless the `IMGPROXY_ALLOW_SECURITY_OPTIONS` config is set to `true`.
+
 ## Source URL
 ### Plain
 
@@ -791,7 +848,7 @@ The source URL can be provided as is, prepended by the `/plain/` segment:
 /plain/http://example.com/images/curiosity.jpg
 ```
 
-**📝Note:** If the source URL contains a query string or `@`, you'll need to escape it.
+**📝 Note:** If the source URL contains a query string or `@`, you'll need to escape it.
 
 When using a plain source URL, you can specify the [extension](#extension) after `@`:
 

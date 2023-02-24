@@ -1,4 +1,4 @@
-ARG BASE_IMAGE_VERSION="v3.3.4"
+ARG BASE_IMAGE_VERSION="v3.3.5"
 
 FROM darthsim/imgproxy-base:${BASE_IMAGE_VERSION}
 
@@ -23,6 +23,7 @@ RUN apt-get update \
     liblzma5 \
     libzstd1 \
     libpcre3 \
+    fontconfig-config \
     media-types \
   && rm -rf /var/lib/apt/lists/*
 

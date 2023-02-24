@@ -2,7 +2,7 @@
 
 imgproxy can calculate quality for your resultant images so they best fit the selected metric. The supported methods are [none](#none), [size](#autoquality-by-file-size), [dssim](#autoquality-by-dssim), and [ml](#autoquality-with-ml).
 
-**⚠️Warning:** Autoquality requires an image to be saved several times. Use it only when you prefer the resultant quality and size over speed.
+**⚠️ Warning:** Autoquality requires an image to be saved several times. Use it only when you prefer the resultant quality and size over speed.
 
 You can enable autoquality using [config options](configuration.md#autoquality) (for all images) or with [processing options](generating_the_url.md#autoquality) (for each image individually).
 
@@ -83,7 +83,7 @@ IMGPROXY_AUTOQUALITY_FORMAT_MAX="avif=50"
 
 This method is almost the same as autoquality with [DSSIM](#autoquality-by-dssim) but imgproxy will try to predict the initial quality using neural networks. This requires neural networks to be configured (see the config examlpe or the config documentation). If a neural network for the resulting format is not provided, the [DSSIM](#autoquality-by-dssim) method will be used instead.
 
-**📝Note:** When this method is used, imgproxy will save JPEG images with the most optimal [advanced JPEG compression](configuration.md#advanced-jpeg-compression) settings, ignoring config and processing options.
+**📝 Note:** When this method is used, imgproxy will save JPEG images with the most optimal [advanced JPEG compression](configuration.md#advanced-jpeg-compression) settings, ignoring config and processing options.
 
 **Method name:** `ml`
 
@@ -108,7 +108,7 @@ IMGPROXY_AUTOQUALITY_WEBP_NET="/networks/autoquality-webp.pb"
 IMGPROXY_AUTOQUALITY_AVIF_NET="/networks/autoquality-avif.pb"
 ```
 
-**📝Note:** If you trust your neural network's autoquality, you may want to set `IMGPROXY_AUTOQUALITY_ALLOWED_ERROR` to 1 (the maximum possible DSSIM value). In this case, imgproxy will always use the quality predicted by the neural network.
+**📝 Note:** If you trust your neural network's autoquality, you may want to set `IMGPROXY_AUTOQUALITY_ALLOWED_ERROR` to 1 (the maximum possible DSSIM value). In this case, imgproxy will always use the quality predicted by the neural network.
 
 #### Processing options example
 

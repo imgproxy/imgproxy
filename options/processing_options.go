@@ -14,6 +14,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/imath"
+	"github.com/imgproxy/imgproxy/v3/security"
 	"github.com/imgproxy/imgproxy/v3/structdiff"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
@@ -70,6 +71,7 @@ type ProcessingOptions struct {
 	Gravity           GravityOptions
 	Enlarge           bool
 	Extend            ExtendOptions
+	ExtendAspectRatio ExtendOptions
 	Crop              CropOptions
 	Padding           PaddingOptions
 	Trim              TrimOptions
@@ -93,6 +95,8 @@ type ProcessingOptions struct {
 
 	CacheBuster string
 
+	Expires *time.Time
+
 	Watermark WatermarkOptions
 
 	PreferWebP  bool
@@ -107,6 +111,8 @@ type ProcessingOptions struct {
 
 	UsedPresets []string
 
+	SecurityOptions security.Options
+
 	defaultQuality int
 }
 
@@ -120,6 +126,7 @@ func NewProcessingOptions() *ProcessingOptions {
 		Gravity:           GravityOptions{Type: GravityCenter},
 		Enlarge:           false,
 		Extend:            ExtendOptions{Enabled: false, Gravity: GravityOptions{Type: GravityCenter}},
+		ExtendAspectRatio: ExtendOptions{Enabled: false, Gravity: GravityOptions{Type: GravityCenter}},
 		Padding:           PaddingOptions{Enabled: false},
 		Trim:              TrimOptions{Enabled: false, Threshold: 10, Smart: true},
 		Rotate:            0,
@@ -140,6 +147,8 @@ func NewProcessingOptions() *ProcessingOptions {
 
 		SkipProcessingFormats: append([]imagetype.Type(nil), config.SkipProcessingFormats...),
 		UsedPresets:           make([]string, 0, len(config.Presets)),
+
+		SecurityOptions: security.DefaultOptions(),
 
 		// Basically, we need this to update ETag when `IMGPROXY_QUALITY` is changed
 		defaultQuality: config.Quality,
@@ -250,6 +259,26 @@ func parseGravity(g *GravityOptions, args []string) error {
 	return nil
 }
 
+func parseExtend(opts *ExtendOptions, name string, args []string) error {
+	if len(args) > 4 {
+		return fmt.Errorf("Invalid %s arguments: %v", name, args)
+	}
+
+	opts.Enabled = parseBoolOption(args[0])
+
+	if len(args) > 1 {
+		if err := parseGravity(&opts.Gravity, args[1:]); err != nil {
+			return err
+		}
+
+		if opts.Gravity.Type == GravitySmart {
+			return fmt.Errorf("%s doesn't support smart gravity", name)
+		}
+	}
+
+	return nil
+}
+
 func applyWidthOption(po *ProcessingOptions, args []string) error {
 	if len(args) > 1 {
 		return fmt.Errorf("Invalid width arguments: %v", args)
@@ -293,23 +322,11 @@ func applyEnlargeOption(po *ProcessingOptions, args []string) error {
 }
 
 func applyExtendOption(po *ProcessingOptions, args []string) error {
-	if len(args) > 4 {
-		return fmt.Errorf("Invalid extend arguments: %v", args)
-	}
+	return parseExtend(&po.Extend, "extend", args)
+}
 
-	po.Extend.Enabled = parseBoolOption(args[0])
-
-	if len(args) > 1 {
-		if err := parseGravity(&po.Extend.Gravity, args[1:]); err != nil {
-			return err
-		}
-
-		if po.Extend.Gravity.Type == GravitySmart {
-			return errors.New("extend doesn't support smart gravity")
-		}
-	}
-
-	return nil
+func applyExtendAspectRatioOption(po *ProcessingOptions, args []string) error {
+	return parseExtend(&po.ExtendAspectRatio, "extend_aspect_ratio", args)
 }
 
 func applySizeOption(po *ProcessingOptions, args []string) (err error) {
@@ -811,6 +828,9 @@ func applyExpiresOption(po *ProcessingOptions, args []string) error {
 		return errExpiredURL
 	}
 
+	expires := time.Unix(timestamp, 0)
+	po.Expires = &expires
+
 	return nil
 }
 
@@ -874,6 +894,78 @@ func applyReturnAttachmentOption(po *ProcessingOptions, args []string) error {
 	return nil
 }
 
+func applyMaxSrcResolutionOption(po *ProcessingOptions, args []string) error {
+	if err := security.IsSecurityOptionsAllowed(); err != nil {
+		return err
+	}
+
+	if len(args) > 1 {
+		return fmt.Errorf("Invalid max_src_resolution arguments: %v", args)
+	}
+
+	if x, err := strconv.ParseFloat(args[0], 64); err == nil && x > 0 {
+		po.SecurityOptions.MaxSrcResolution = int(x * 1000000)
+	} else {
+		return fmt.Errorf("Invalid max_src_resolution: %s", args[0])
+	}
+
+	return nil
+}
+
+func applyMaxSrcFileSizeOption(po *ProcessingOptions, args []string) error {
+	if err := security.IsSecurityOptionsAllowed(); err != nil {
+		return err
+	}
+
+	if len(args) > 1 {
+		return fmt.Errorf("Invalid max_src_file_size arguments: %v", args)
+	}
+
+	if x, err := strconv.Atoi(args[0]); err == nil {
+		po.SecurityOptions.MaxSrcFileSize = x
+	} else {
+		return fmt.Errorf("Invalid max_src_file_size: %s", args[0])
+	}
+
+	return nil
+}
+
+func applyMaxAnimationFramesOption(po *ProcessingOptions, args []string) error {
+	if err := security.IsSecurityOptionsAllowed(); err != nil {
+		return err
+	}
+
+	if len(args) > 1 {
+		return fmt.Errorf("Invalid max_animation_frames arguments: %v", args)
+	}
+
+	if x, err := strconv.Atoi(args[0]); err == nil && x > 0 {
+		po.SecurityOptions.MaxAnimationFrames = x
+	} else {
+		return fmt.Errorf("Invalid max_animation_frames: %s", args[0])
+	}
+
+	return nil
+}
+
+func applyMaxAnimationFrameResolutionOption(po *ProcessingOptions, args []string) error {
+	if err := security.IsSecurityOptionsAllowed(); err != nil {
+		return err
+	}
+
+	if len(args) > 1 {
+		return fmt.Errorf("Invalid max_animation_frame_resolution arguments: %v", args)
+	}
+
+	if x, err := strconv.ParseFloat(args[0], 64); err == nil {
+		po.SecurityOptions.MaxAnimationFrameResolution = int(x * 1000000)
+	} else {
+		return fmt.Errorf("Invalid max_animation_frame_resolution: %s", args[0])
+	}
+
+	return nil
+}
+
 func applyURLOption(po *ProcessingOptions, name string, args []string) error {
 	switch name {
 	case "resize", "rs":
@@ -898,6 +990,8 @@ func applyURLOption(po *ProcessingOptions, name string, args []string) error {
 		return applyEnlargeOption(po, args)
 	case "extend", "ex":
 		return applyExtendOption(po, args)
+	case "extend_aspect_ratio", "extend_ar", "exar":
+		return applyExtendAspectRatioOption(po, args)
 	case "gravity", "g":
 		return applyGravityOption(po, args)
 	case "crop", "c":
@@ -953,6 +1047,15 @@ func applyURLOption(po *ProcessingOptions, name string, args []string) error {
 	// Presets
 	case "preset", "pr":
 		return applyPresetOption(po, args)
+	// Security
+	case "max_src_resolution", "msr":
+		return applyMaxSrcResolutionOption(po, args)
+	case "max_src_file_size", "msfs":
+		return applyMaxSrcFileSizeOption(po, args)
+	case "max_animation_frames", "maf":
+		return applyMaxAnimationFramesOption(po, args)
+	case "max_animation_frame_resolution", "mafr":
+		return applyMaxAnimationFrameResolutionOption(po, args)
 	}
 
 	return fmt.Errorf("Unknown processing option: %s", name)

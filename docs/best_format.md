@@ -4,11 +4,11 @@ You can use the `best` value for the [format](generating_the_url.md#format) opti
 
 imgproxy measures the complexity of the image to choose when it should use a lossless or near-lossless encoding. Then imgproxy tries to save the image in multiple formats to pick one with the smallest resulting size.
 
-**📝Note:** imgproxy uses only the formats listed as [preferred](configuration.md#preferred-formats) when choosing the best format. It may also use AVIF or WebP if [AVIF/WebP support detection](configuration.md#avifwebp-support-detection) is enabled.
+**📝 Note:** imgproxy uses only the formats listed as [preferred](configuration.md#preferred-formats) when choosing the best format. It may also use AVIF or WebP if [AVIF/WebP support detection](configuration.md#avifwebp-support-detection) is enabled.
 
-**📝Note:** imgproxy will use AVIF or WebP _only_ if [AVIF/WebP support detection](configuration.md#avifwebp-support-detection) is enabled.
+**📝 Note:** imgproxy will use AVIF or WebP _only_ if [AVIF/WebP support detection](configuration.md#avifwebp-support-detection) is enabled.
 
-**📝Note:** imgproxy may change your quality and autoquality settings if the `best` format is used.
+**📝 Note:** imgproxy may change your quality and autoquality settings if the `best` format is used.
 
 ## Configuration
 

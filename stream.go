@@ -113,7 +113,7 @@ func streamOriginImage(ctx context.Context, reqID string, r *http.Request, rw ht
 		rw.Header().Set("Content-Disposition", imagetype.ContentDisposition(filename, ext, po.ReturnAttachment))
 	}
 
-	setCacheControl(rw, map[string]string{
+	setCacheControl(rw, po.Expires, map[string]string{
 		"Cache-Control": rw.Header().Get("Cache-Control"),
 		"Expires":       rw.Header().Get("Expires"),
 	})
