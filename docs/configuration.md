@@ -234,14 +234,14 @@ You can configure imgproxy to skip processing of some formats:
 
 ## Best format
 
-You can use the `best` value for the [format](generating_the_url#format) option or the [extension](generating_the_url#extension) to make imgproxy pick the best format for the resultant image.
+You can use the `best` value for the [format](generating_the_url.md#format) option or the [extension](generating_the_url.md#extension) to make imgproxy pick the best format for the resultant image.
 
 * `IMGPROXY_BEST_FORMAT_COMPLEXITY_THRESHOLD `: ![pro](./assets/pro.svg) the image complexity threshold. imgproxy will use a lossless or near-lossless encoding for images with low complexity. Default: `5.5`
 * `IMGPROXY_BEST_FORMAT_MAX_RESOLUTION`: ![pro](./assets/pro.svg) when greater than `0` and the image's resolution (in megapixels) is larger than the provided value, imgproxy won't try all the applicable formats and will just pick one that seems the best for the image
 * `IMGPROXY_BEST_FORMAT_BY_DEFAULT`: ![pro](./assets/pro.svg) when `true` and the resulting image format is not specified explicitly, imgproxy will use the `best` format instead of the source image format
-* `IMGPROXY_BEST_FORMAT_ALLOW_SKIPS`: ![pro](./assets/pro.svg) when `true` and the `best` format is used, imgproxy will skip processing of SVG and formats [listed to skip processing](configuration#skip-processing)
+* `IMGPROXY_BEST_FORMAT_ALLOW_SKIPS`: ![pro](./assets/pro.svg) when `true` and the `best` format is used, imgproxy will skip processing of SVG and formats [listed to skip processing](configuration.md#skip-processing)
 
-Check out the [Best format](best_format) guide to learn more.
+Check out the [Best format](best_format.md) guide to learn more.
 
 ## Client Hints support
 
