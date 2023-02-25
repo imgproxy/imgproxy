@@ -118,6 +118,7 @@ func streamOriginImage(ctx context.Context, reqID string, r *http.Request, rw ht
 		"Expires":       rw.Header().Get("Expires"),
 	})
 	setCanonical(rw, imageURL)
+	rw.Header().Set("Content-Security-Policy", "script-src 'none'")
 
 	rw.WriteHeader(res.StatusCode)
 
