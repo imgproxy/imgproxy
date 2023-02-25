@@ -8,6 +8,7 @@
 
 ### Change
 - Make the `expires` processing option set `Expires` and `Cache-Control` headers.
+- Sanitize `use` tags in SVGs.
 
 ## [3.13.2] - 2023-02-15
 ### Change

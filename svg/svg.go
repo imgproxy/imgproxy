@@ -35,6 +35,8 @@ func Satitize(data *imagedata.ImageData) (*imagedata.ImageData, error) {
 
 	ignoreTag := 0
 
+	var curTagName string
+
 	for {
 		tt, tdata := l.Next()
 
@@ -67,15 +69,28 @@ func Satitize(data *imagedata.ImageData) (*imagedata.ImageData, error) {
 
 			return &newData, nil
 		case xml.StartTagToken:
-			if strings.ToLower(string(l.Text())) == "script" {
+			curTagName = strings.ToLower(string(l.Text()))
+
+			if curTagName == "script" {
 				ignoreTag++
 				continue
 			}
+
 			buf.Write(tdata)
 		case xml.AttributeToken:
-			if _, unsafe := unsafeAttrs[strings.ToLower(string(l.Text()))]; unsafe {
+			attrName := strings.ToLower(string(l.Text()))
+
+			if _, unsafe := unsafeAttrs[attrName]; unsafe {
 				continue
 			}
+
+			if curTagName == "use" && (attrName == "href" || attrName == "xlink:href") {
+				val := strings.TrimSpace(strings.Trim(string(l.AttrVal()), `"'`))
+				if len(val) > 0 && val[0] != '#' {
+					continue
+				}
+			}
+
 			buf.Write(tdata)
 		default:
 			buf.Write(tdata)
