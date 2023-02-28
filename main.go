@@ -13,6 +13,7 @@ import (
 	"go.uber.org/automaxprocs/maxprocs"
 
 	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/config/loadenv"
 	"github.com/imgproxy/imgproxy/v3/errorreport"
 	"github.com/imgproxy/imgproxy/v3/gliblog"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
@@ -34,6 +35,10 @@ func initialize() error {
 	gliblog.Init()
 
 	maxprocs.Set(maxprocs.Logger(log.Debugf))
+
+	if err := loadenv.Load(); err != nil {
+		return err
+	}
 
 	if err := config.Configure(); err != nil {
 		return err

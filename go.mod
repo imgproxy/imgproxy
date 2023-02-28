@@ -7,6 +7,7 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.6.0
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.3.0
 	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.0.0
+	github.com/DarthSim/godotenv v1.3.1
 	github.com/DataDog/datadog-go/v5 v5.3.0
 	github.com/airbrake/gobrake/v5 v5.6.1
 	github.com/aws/aws-sdk-go v1.44.260
@@ -58,6 +59,7 @@ require (
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	cloud.google.com/go/iam v1.0.1 // indirect
 	cloud.google.com/go/pubsub v1.30.0 // indirect
+	cloud.google.com/go/secretmanager v1.10.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.3.0 // indirect
 	github.com/AzureAD/microsoft-authentication-library-for-go v1.0.0 // indirect
 	github.com/DataDog/appsec-internal-go v1.0.0 // indirect

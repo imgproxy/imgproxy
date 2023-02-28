@@ -37,6 +37,8 @@ cloud.google.com/go/pubsub v1.2.0/go.mod h1:jhfEVHT8odbXTkndysNHCcx0awwzvfOlguIA
 cloud.google.com/go/pubsub v1.3.1/go.mod h1:i+ucay31+CNRpDW4Lu78I4xXG+O1r/MAHgjpRVR+TSU=
 cloud.google.com/go/pubsub v1.30.0 h1:vCge8m7aUKBJYOgrZp7EsNDf6QMd2CAlXZqWTn3yq6s=
 cloud.google.com/go/pubsub v1.30.0/go.mod h1:qWi1OPS0B+b5L+Sg6Gmc9zD1Y+HaM0MdUr7LsupY1P4=
+cloud.google.com/go/secretmanager v1.10.0 h1:pu03bha7ukxF8otyPKTFdDz+rr9sE3YauS5PliDXK60=
+cloud.google.com/go/secretmanager v1.10.0/go.mod h1:MfnrdvKMPNra9aZtQFvBcvRU54hbPD8/HayQdlUgJpU=
 cloud.google.com/go/storage v1.0.0/go.mod h1:IhtSnM/ZTZV8YYJWCY8RULGVqBDmpoyjwiyrjsg+URw=
 cloud.google.com/go/storage v1.5.0/go.mod h1:tpKbwo567HUNpVclU5sGELwQWBDZ8gh0ZeosJ0Rtdos=
 cloud.google.com/go/storage v1.6.0/go.mod h1:N7U0C8pVQ/+NIKOBQyamJIeKQKkZ+mxpohlUTyfDhBk=
@@ -59,6 +61,8 @@ github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
 github.com/DarthSim/gofakes3 v0.0.0-20230502153341-3fc66d2bc272 h1:Gj21neabaU3DEwwVPG6/Vn0GSuDQ1n2m2z1qV33SCI0=
 github.com/DarthSim/gofakes3 v0.0.0-20230502153341-3fc66d2bc272/go.mod h1:Cnosl0cRZIfKjTMuH49sQog2LeNsU5Hf4WnPIDWIDV0=
+github.com/DarthSim/godotenv v1.3.1 h1:NMWdswlRx2M9uPY4Ux8p/Q/rDs7A97OG89fECiQ/Tz0=
+github.com/DarthSim/godotenv v1.3.1/go.mod h1:B3ySe1HYTUFFR6+TPyHyxPWjUdh48il0Blebg9p1cCc=
 github.com/DarthSim/opentelemetry-go-contrib/detectors/aws/ecs v0.0.0-20230510163401-1a377505ea6c h1:6XK2HjE3YbWRAl4nNpXFwiZ8LP+JZjxihvZw5ZUgyss=
 github.com/DarthSim/opentelemetry-go-contrib/detectors/aws/ecs v0.0.0-20230510163401-1a377505ea6c/go.mod h1:OshtJzwB+6SKoFM4ovJIbsHuwg7PpLGIbpaAOHJwyUU=
 github.com/DataDog/appsec-internal-go v1.0.0 h1:2u5IkF4DBj3KVeQn5Vg2vjPUtt513zxEYglcqnd500U=

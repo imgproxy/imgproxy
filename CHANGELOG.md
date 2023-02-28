@@ -3,6 +3,7 @@
 ## [Unreleased]
 ### Add
 - Add [multi-region mode](https://docs.imgproxy.net/latest/serving_files_from_s3?id=multi-region-mode) to S3 integration.
+- Add the ability to [load environment variables](https://docs.imgproxy.net/latest/loading_environment_variables) from a file or a cloud secret.
 - Add `IMGPROXY_WORKERS` alias for the `IMGPROXY_CONCURRENCY` config.
 
 ### Change
