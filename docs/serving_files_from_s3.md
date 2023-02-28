@@ -39,8 +39,6 @@ AWS_ACCESS_KEY_ID=my_access_key AWS_SECRET_ACCESS_KEY=my_secret_key imgproxy
 docker run -e AWS_ACCESS_KEY_ID=my_access_key -e AWS_SECRET_ACCESS_KEY=my_secret_key -it darthsim/imgproxy
 ```
 
-This is the recommended method when using dockerized imgproxy.
-
 #### Shared credentials file
 
 Alternatively, you can create the `.aws/credentials` file in your home directory with the following content:

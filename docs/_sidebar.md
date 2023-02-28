@@ -1,7 +1,9 @@
 * [Getting started](GETTING_STARTED.md)
 * [Pro version<img src="/assets/pro.svg">](https://imgproxy.net/#pro)
 * [Installation](installation.md)
-* [Configuration](configuration.md)
+* Configuration
+  * [Configuration](configuration.md)
+  * [Loading environment variables](loading_environment_variables.md)
 * Generating the URL
   * [Generating the URL](generating_the_url.md)
   * [Getting the image info<img title="imgproxy Pro feature" src="/assets/pro.svg">](getting_the_image_info.md)
