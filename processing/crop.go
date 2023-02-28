@@ -25,12 +25,7 @@ func cropImage(img *vips.Image, cropWidth, cropHeight int, gravity *options.Grav
 		if err := img.CopyMemory(); err != nil {
 			return err
 		}
-		if err := img.SmartCrop(cropWidth, cropHeight); err != nil {
-			return err
-		}
-		// Applying additional modifications after smart crop causes SIGSEGV on Alpine
-		// so we have to copy memory after it
-		return img.CopyMemory()
+		return img.SmartCrop(cropWidth, cropHeight)
 	}
 
 	left, top := calcPosition(imgWidth, imgHeight, cropWidth, cropHeight, gravity, false)
