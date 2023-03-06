@@ -9,7 +9,7 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.0.0
 	github.com/DataDog/datadog-go/v5 v5.2.0
 	github.com/airbrake/gobrake/v5 v5.6.1
-	github.com/aws/aws-sdk-go v1.44.202
+	github.com/aws/aws-sdk-go v1.44.210
 	github.com/benesch/cgosymbolizer v0.0.0-20190515212042-bec6fe6e597b
 	github.com/bugsnag/bugsnag-go/v2 v2.2.0
 	github.com/felixge/httpsnoop v1.0.3
@@ -23,24 +23,24 @@ require (
 	github.com/newrelic/newrelic-telemetry-sdk-go v0.8.1
 	github.com/prometheus/client_golang v1.14.0
 	github.com/sirupsen/logrus v1.9.0
-	github.com/stretchr/testify v1.8.1
+	github.com/stretchr/testify v1.8.2
 	github.com/tdewolff/parse/v2 v2.6.5
 	github.com/trimmer-io/go-xmp v1.0.0
-	go.opentelemetry.io/contrib/detectors/aws/ec2 v1.14.0
+	go.opentelemetry.io/contrib/detectors/aws/ec2 v1.15.0
 	go.opentelemetry.io/contrib/detectors/aws/ecs v1.14.0
 	go.opentelemetry.io/contrib/detectors/aws/eks v1.14.0
 	go.opentelemetry.io/contrib/propagators/autoprop v0.39.0
 	go.opentelemetry.io/contrib/propagators/aws v1.14.0
-	go.opentelemetry.io/otel v1.13.0
+	go.opentelemetry.io/otel v1.14.0
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc v0.36.0
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp v0.36.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.13.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.13.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.13.0
 	go.opentelemetry.io/otel/metric v0.36.0
-	go.opentelemetry.io/otel/sdk v1.13.0
+	go.opentelemetry.io/otel/sdk v1.14.0
 	go.opentelemetry.io/otel/sdk/metric v0.36.0
-	go.opentelemetry.io/otel/trace v1.13.0
+	go.opentelemetry.io/otel/trace v1.14.0
 	go.uber.org/automaxprocs v1.5.1
 	golang.org/x/image v0.5.0
 	golang.org/x/net v0.7.0
