@@ -18,7 +18,7 @@ func importColorProfile(pctx *pipelineContext, img *vips.Image, po *options.Proc
 
 	convertToLinear := config.UseLinearColorspace && (pctx.wscale != 1 || pctx.hscale != 1)
 
-	if convertToLinear || img.IsCMYK() {
+	if convertToLinear || !img.IsRGB() {
 		if err := img.ImportColourProfile(); err != nil {
 			return err
 		}

@@ -600,8 +600,11 @@ func (img *Image) ApplyFilters(blurSigma, sharpSigma float32, pixelatePixels int
 	return nil
 }
 
-func (img *Image) IsCMYK() bool {
-	return C.vips_image_guess_interpretation(img.VipsImage) == C.VIPS_INTERPRETATION_CMYK
+func (img *Image) IsRGB() bool {
+	format := C.vips_image_guess_interpretation(img.VipsImage)
+	return format == C.VIPS_INTERPRETATION_sRGB ||
+		format == C.VIPS_INTERPRETATION_scRGB ||
+		format == C.VIPS_INTERPRETATION_RGB16
 }
 
 func (img *Image) ImportColourProfile() error {
