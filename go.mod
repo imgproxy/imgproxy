@@ -9,7 +9,7 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.0.0
 	github.com/DataDog/datadog-go/v5 v5.2.0
 	github.com/airbrake/gobrake/v5 v5.6.1
-	github.com/aws/aws-sdk-go v1.44.202
+	github.com/aws/aws-sdk-go v1.44.214
 	github.com/benesch/cgosymbolizer v0.0.0-20190515212042-bec6fe6e597b
 	github.com/bugsnag/bugsnag-go/v2 v2.2.0
 	github.com/felixge/httpsnoop v1.0.3
