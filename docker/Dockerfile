@@ -32,6 +32,9 @@ COPY --from=0 /usr/local/lib /usr/local/lib
 
 COPY NOTICE /usr/local/share/doc/imgproxy/
 
+RUN mkdir /images
+VOLUME /images
+
 ENV VIPS_WARNING=0
 ENV MALLOC_ARENA_MAX=2
 ENV LD_LIBRARY_PATH /usr/local/lib
