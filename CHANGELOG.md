@@ -10,6 +10,9 @@
 - Make the `expires` processing option set `Expires` and `Cache-Control` headers.
 - Sanitize `use` tags in SVGs.
 
+### Fix
+- Fix handling some ICC profiles.
+
 ## [3.13.2] - 2023-02-15
 ### Change
 - Remove color-related EXIF data when stripping ICC profile.
