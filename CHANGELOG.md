@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+
+## [3.14.0] - 2023-03-07
 ## Add
 - Add [extend_aspect_ratio](https://docs.imgproxy.net/latest/generating_the_url?id=extend-aspect-ratio) processing option.
 - Add the `IMGPROXY_ALLOW_SECURITY_OPTIONS` config + `max_src_resolution`, `max_src_file_size`, `max_animation_frames`, and `max_animation_frame_resolution` processing options.
