@@ -32,11 +32,18 @@ imgproxy is able to quickly and easily resize images on the fly, and it's well-e
 
 To get an even better introduction, and to dive deeper into the nitty gritty details, check out this article: [imgproxy: Resize your images instantly and securely](https://evilmartians.com/chronicles/introducing-imgproxy)
 
-<a href="https://evilmartians.com/?utm_source=imgproxy" target="_blank">
+<a href="https://evilmartians.com/?utm_source=opensource">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="assets/sponsored-dark.svg?sanitize=true">
-    <source media="(prefers-color-scheme: light)" srcset="assets/sponsored-light.svg?sanitize=true">
-    <img alt="Sponsored by Evil Martians" width="236" height="54" src="assets/sponsored-light.svg?sanitize=true">
+    <source
+      media="(prefers-color-scheme: dark)"
+      srcset="https://evilmartians.com/badges/sponsored-by-evil-martians_v2.0_for-dark-bg@2x.png"
+    >
+    <img
+      src="https://evilmartians.com/badges/sponsored-by-evil-martians_v2.0@2x.png"
+      alt="Sponsored by Evil Martians"
+      width="236"
+      height="54"
+    >
   </picture>
 </a>
 
