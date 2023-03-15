@@ -428,18 +428,17 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	resultData, err := func() (*imagedata.ImageData, error) {
-		defer metrics.StartProcessingSegment(ctx)()
-		return processing.ProcessImage(ctx, originData, po)
-	}()
-	checkErr(ctx, "processing", err)
+	// copy imgData for thread safety
+	imgDataForS3 := make([]byte, len(imgData))
+	copy(imgDataForS3, imgData)
+	uploaded := beforeResponse(imgDataForS3, cachePath))
 
 	defer resultData.Close()
         uploaded := beforeResponse(imageData)
 
-	respondWithImage(ctx, reqID, r, rw, imageData)
+	respondWithImage(ctx, reqID, r, rw, imgData)
 
 
 	// Waiting for S3 Upload to finish.
-	<- uploaded
+	<-uploaded
 }
