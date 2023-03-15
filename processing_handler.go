@@ -221,7 +221,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	imageData, processcancel, err := processImage(ctx)
+	imgData, processcancel, err := processImage(ctx)
 	defer processcancel()
 	if err != nil {
 		if newRelicEnabled {
@@ -233,12 +233,15 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	uploaded := beforeResponse(imageData, cachePath)
+	// copy imgData for thread safety
+	imgDataForS3 := make([]byte, len(imgData))
+	copy(imgDataForS3, imgData)
+	uploaded := beforeResponse(imgDataForS3, cachePath)
 
 	checkTimeout(ctx)
 
-	respondWithImage(ctx, reqID, r, rw, imageData)
+	respondWithImage(ctx, reqID, r, rw, imgData)
 
 	// Waiting for S3 Upload to finish.
-	<- uploaded
+	<-uploaded
 }
