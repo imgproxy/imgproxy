@@ -62,6 +62,7 @@ func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error)
 	}
 
 	s3req, _ := t.svc.GetObjectRequest(input)
+	s3req.SetContext(req.Context())
 
 	if err := s3req.Send(); err != nil {
 		if s3req.HTTPResponse != nil && s3req.HTTPResponse.Body != nil {
