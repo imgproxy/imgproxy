@@ -64,6 +64,10 @@ func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error)
 	s3req, _ := t.svc.GetObjectRequest(input)
 
 	if err := s3req.Send(); err != nil {
+		if s3req.HTTPResponse != nil && s3req.HTTPResponse.Body != nil {
+			s3req.HTTPResponse.Body.Close()
+		}
+
 		if s3err, ok := err.(awserr.RequestFailure); !ok || s3err.StatusCode() < 100 || s3err.StatusCode() == 301 {
 			return nil, err
 		} else {
