@@ -5,6 +5,7 @@ LABEL maintainer="Sergey Alexandrovich <darthsim@gmail.com>"
 
 RUN mkdir /imgproxy_build
 COPY . /imgproxy_build
+RUN cd /imgproxy_build; go mod tidy
 RUN cd /imgproxy_build; go build -v -o /usr/local/bin/imgproxy
 
 # ==================================================================================================
