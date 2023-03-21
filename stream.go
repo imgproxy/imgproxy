@@ -71,13 +71,15 @@ func streamOriginImage(ctx context.Context, reqID string, r *http.Request, rw ht
 		checkErr(ctx, "streaming", err)
 	}
 
-	req, err := imagedata.BuildImageRequest(imageURL, imgRequestHeader, cookieJar)
+	req, reqCancel, err := imagedata.BuildImageRequest(r.Context(), imageURL, imgRequestHeader, cookieJar)
+	defer reqCancel()
 	checkErr(ctx, "streaming", err)
 
 	res, err := imagedata.SendRequest(req)
+	if res != nil {
+		defer res.Body.Close()
+	}
 	checkErr(ctx, "streaming", err)
-
-	defer res.Body.Close()
 
 	for _, k := range streamRespHeaders {
 		vv := res.Header.Values(k)

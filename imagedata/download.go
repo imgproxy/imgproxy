@@ -2,9 +2,11 @@ package imagedata
 
 import (
 	"compress/gzip"
+	"context"
 	"crypto/tls"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/http/cookiejar"
 	"time"
@@ -55,16 +57,25 @@ func (e *ErrorNotModified) Error() string {
 }
 
 func initDownloading() error {
-	transport := http.DefaultTransport.(*http.Transport).Clone()
-	transport.DisableCompression = true
+	transport := &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+		DialContext: (&net.Dialer{
+			Timeout:   30 * time.Second,
+			KeepAlive: 30 * time.Second,
+			DualStack: true,
+		}).DialContext,
+		MaxIdleConns:          100,
+		MaxIdleConnsPerHost:   config.Concurrency + 1,
+		IdleConnTimeout:       time.Duration(config.ClientKeepAliveTimeout) * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+		ForceAttemptHTTP2:     true,
+		DisableCompression:    true,
+	}
 
-	if config.ClientKeepAliveTimeout > 0 {
-		transport.MaxIdleConns = config.Concurrency
-		transport.MaxIdleConnsPerHost = config.Concurrency
-		transport.IdleConnTimeout = time.Duration(config.ClientKeepAliveTimeout) * time.Second
-	} else {
-		transport.MaxIdleConns = 0
-		transport.MaxIdleConnsPerHost = 0
+	if config.ClientKeepAliveTimeout <= 0 {
+		transport.MaxIdleConnsPerHost = -1
+		transport.DisableKeepAlives = true
 	}
 
 	if config.IgnoreSslVerification {
@@ -113,7 +124,6 @@ func initDownloading() error {
 	}
 
 	downloadClient = &http.Client{
-		Timeout:   time.Duration(config.DownloadTimeout) * time.Second,
 		Transport: transport,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			redirects := len(via)
@@ -139,14 +149,18 @@ func headersToStore(res *http.Response) map[string]string {
 	return m
 }
 
-func BuildImageRequest(imageURL string, header http.Header, jar *cookiejar.Jar) (*http.Request, error) {
-	req, err := http.NewRequest("GET", imageURL, nil)
+func BuildImageRequest(ctx context.Context, imageURL string, header http.Header, jar *cookiejar.Jar) (*http.Request, context.CancelFunc, error) {
+	reqCtx, reqCancel := context.WithTimeout(ctx, time.Duration(config.DownloadTimeout)*time.Second)
+
+	req, err := http.NewRequestWithContext(reqCtx, "GET", imageURL, nil)
 	if err != nil {
-		return nil, ierrors.New(404, err.Error(), msgSourceImageIsUnreachable)
+		reqCancel()
+		return nil, func() {}, ierrors.New(404, err.Error(), msgSourceImageIsUnreachable)
 	}
 
 	if _, ok := enabledSchemes[req.URL.Scheme]; !ok {
-		return nil, ierrors.New(
+		reqCancel()
+		return nil, func() {}, ierrors.New(
 			404,
 			fmt.Sprintf("Unknown scheme: %s", req.URL.Scheme),
 			msgSourceImageIsUnreachable,
@@ -167,37 +181,41 @@ func BuildImageRequest(imageURL string, header http.Header, jar *cookiejar.Jar) 
 		}
 	}
 
-	return req, nil
+	return req, reqCancel, nil
 }
 
 func SendRequest(req *http.Request) (*http.Response, error) {
 	res, err := downloadClient.Do(req)
 	if err != nil {
-		return nil, ierrors.New(500, checkTimeoutErr(err).Error(), msgSourceImageIsUnreachable)
+		return nil, wrapError(err)
 	}
 
 	return res, nil
 }
 
-func requestImage(imageURL string, opts DownloadOptions) (*http.Response, error) {
-	req, err := BuildImageRequest(imageURL, opts.Header, opts.CookieJar)
+func requestImage(ctx context.Context, imageURL string, opts DownloadOptions) (*http.Response, context.CancelFunc, error) {
+	req, reqCancel, err := BuildImageRequest(ctx, imageURL, opts.Header, opts.CookieJar)
 	if err != nil {
-		return nil, err
+		reqCancel()
+		return nil, func() {}, err
 	}
 
 	res, err := SendRequest(req)
 	if err != nil {
-		return nil, err
+		reqCancel()
+		return nil, func() {}, err
 	}
 
 	if res.StatusCode == http.StatusNotModified {
 		res.Body.Close()
-		return nil, &ErrorNotModified{Message: "Not Modified", Headers: headersToStore(res)}
+		reqCancel()
+		return nil, func() {}, &ErrorNotModified{Message: "Not Modified", Headers: headersToStore(res)}
 	}
 
 	if res.StatusCode != 200 {
 		body, _ := io.ReadAll(res.Body)
 		res.Body.Close()
+		reqCancel()
 
 		status := 404
 		if res.StatusCode >= 500 {
@@ -205,19 +223,21 @@ func requestImage(imageURL string, opts DownloadOptions) (*http.Response, error)
 		}
 
 		msg := fmt.Sprintf("Status: %d; %s", res.StatusCode, string(body))
-		return nil, ierrors.New(status, msg, msgSourceImageIsUnreachable)
+		return nil, func() {}, ierrors.New(status, msg, msgSourceImageIsUnreachable)
 	}
 
-	return res, nil
+	return res, reqCancel, nil
 }
 
-func download(imageURL string, opts DownloadOptions, secopts security.Options) (*ImageData, error) {
+func download(ctx context.Context, imageURL string, opts DownloadOptions, secopts security.Options) (*ImageData, error) {
 	// We use this for testing
 	if len(redirectAllRequestsTo) > 0 {
 		imageURL = redirectAllRequestsTo
 	}
 
-	res, err := requestImage(imageURL, opts)
+	res, reqCancel, err := requestImage(ctx, imageURL, opts)
+	defer reqCancel()
+
 	if res != nil {
 		defer res.Body.Close()
 	}
