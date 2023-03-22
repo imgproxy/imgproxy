@@ -85,7 +85,10 @@ var (
 	IgnoreSslVerification bool
 	DevelopmentErrorsMode bool
 
-	AllowedSources []*regexp.Regexp
+	AllowedSources                []*regexp.Regexp
+	AllowLoopbackSourceAddresses  bool
+	AllowLinkLocalSourceAddresses bool
+	AllowPrivateSourceAddresses   bool
 
 	SanitizeSvg bool
 
@@ -275,6 +278,9 @@ func Reset() {
 	DevelopmentErrorsMode = false
 
 	AllowedSources = make([]*regexp.Regexp, 0)
+	AllowLoopbackSourceAddresses = false
+	AllowLinkLocalSourceAddresses = false
+	AllowPrivateSourceAddresses = true
 
 	SanitizeSvg = true
 
@@ -404,6 +410,9 @@ func Configure() error {
 	configurators.Int(&MaxRedirects, "IMGPROXY_MAX_REDIRECTS")
 
 	configurators.Patterns(&AllowedSources, "IMGPROXY_ALLOWED_SOURCES")
+	configurators.Bool(&AllowLoopbackSourceAddresses, "IMGPROXY_ALLOW_LOOPBACK_SOURCE_ADDRESSES")
+	configurators.Bool(&AllowLinkLocalSourceAddresses, "IMGPROXY_ALLOW_LINK_LOCAL_SOURCE_ADDRESSES")
+	configurators.Bool(&AllowPrivateSourceAddresses, "IMGPROXY_ALLOW_PRIVATE_SOURCE_ADDRESSES")
 
 	configurators.Bool(&SanitizeSvg, "IMGPROXY_SANITIZE_SVG")
 

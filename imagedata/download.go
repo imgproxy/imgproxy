@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/cookiejar"
+	"syscall"
 	"time"
 
 	"github.com/imgproxy/imgproxy/v3/config"
@@ -63,6 +64,9 @@ func initDownloading() error {
 			Timeout:   30 * time.Second,
 			KeepAlive: 30 * time.Second,
 			DualStack: true,
+			Control: func(network, address string, c syscall.RawConn) error {
+				return security.VerifySourceNetwork(address)
+			},
 		}).DialContext,
 		MaxIdleConns:          100,
 		MaxIdleConnsPerHost:   config.Concurrency + 1,

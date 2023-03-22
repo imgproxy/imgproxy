@@ -233,13 +233,8 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	po, imageURL, err := options.ParsePath(path, r.Header)
 	checkErr(ctx, "path_parsing", err)
 
-	if !security.VerifySourceURL(imageURL) {
-		sendErrAndPanic(ctx, "security", ierrors.New(
-			404,
-			fmt.Sprintf("Source URL is not allowed: %s", imageURL),
-			"Invalid source",
-		))
-	}
+	err = security.VerifySourceURL(imageURL)
+	checkErr(ctx, "security", err)
 
 	if po.Raw {
 		streamOriginImage(ctx, reqID, r, rw, po, imageURL)

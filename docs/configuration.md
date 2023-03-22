@@ -102,7 +102,11 @@ You can limit allowed source URLs with the following variable:
 
   ✅ Good: `http://example.com/`
 
-If the trailing slash is absent, `http://example.com@baddomain.com` would be a permissable URL, however, the request would be made to `baddomain.com`.
+  If the trailing slash is absent, `http://example.com@baddomain.com` would be a permissable URL, however, the request would be made to `baddomain.com`.
+
+* `IMGPROXY_ALLOW_LOOPBACK_SOURCE_ADDRESSES`: when `true`, allows connecting to loopback IP addresses (`127.0.0.1`-`127.255.255.255` and IPv6 analogues) when requesting source images. Default: `false`
+* `IMGPROXY_ALLOW_LINK_LOCAL_SOURCE_ADDRESSES`:  when `true`, allows connecting to link-local multicast and unicast IP addresses (`224.0.0.1`-`224.0.0.255`, `169.254.0.1`-`169.254.255.255`, and IPv6 analogues) when requesting source images. Default: `false`
+* `IMGPROXY_ALLOW_PRIVATE_SOURCE_ADDRESSES`: when `true`, allows connecting to private IP addresses (`10.0.0.0 - 10.255.255.255`, `172.16.0.0 - 172.31.255.255`, `192.168.0.0 - 192.168.255.255`, and IPv6 analogues) when requesting source images. Default: `true`
 
 * `IMGPROXY_SANITIZE_SVG`: when `true`, imgproxy will remove scripts from SVG images to prevent XSS attacks. Defaut: `true`
 

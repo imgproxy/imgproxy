@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/imgproxy/imgproxy/v3/ierrors"
+	"github.com/imgproxy/imgproxy/v3/security"
 )
 
 type httpError interface {
@@ -16,16 +17,25 @@ type httpError interface {
 func wrapError(err error) error {
 	isTimeout := false
 
-	if errors.Is(err, context.Canceled) {
+	switch {
+	case errors.Is(err, context.DeadlineExceeded):
+		isTimeout = true
+	case errors.Is(err, context.Canceled):
 		return ierrors.New(
 			499,
 			fmt.Sprintf("The image request is cancelled: %s", err),
 			msgSourceImageIsUnreachable,
 		)
-	} else if errors.Is(err, context.DeadlineExceeded) {
-		isTimeout = true
-	} else if httpErr, ok := err.(httpError); ok {
-		isTimeout = httpErr.Timeout()
+	case errors.Is(err, security.ErrSourceAddressNotAllowed), errors.Is(err, security.ErrInvalidSourceAddress):
+		return ierrors.New(
+			404,
+			err.Error(),
+			msgSourceImageIsUnreachable,
+		)
+	default:
+		if httpErr, ok := err.(httpError); ok {
+			isTimeout = httpErr.Timeout()
+		}
 	}
 
 	if !isTimeout {

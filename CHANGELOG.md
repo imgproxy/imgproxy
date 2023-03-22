@@ -1,6 +1,11 @@
 # Changelog
 
 ## [Unreleased]
+### Add
+- Add the `IMGPROXY_ALLOW_LOOPBACK_SOURCE_ADDRESSES`, `IMGPROXY_ALLOW_LINK_LOCAL_SOURCE_ADDRESSES`, and `IMGPROXY_ALLOW_PRIVATE_SOURCE_ADDRESSES` configs.
+
+### Change
+- Connecting to loopback, link-local multicast, and link-local unicast IP addresses when requesting source images is prohibited by default.
 
 ## [3.14.0] - 2023-03-07
 ## Add

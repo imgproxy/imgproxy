@@ -40,6 +40,8 @@ func (s *ProcessingHandlerTestSuite) SetupSuite() {
 	require.Nil(s.T(), err)
 
 	config.LocalFileSystemRoot = filepath.Join(wd, "/testdata")
+	// Disable keep-alive to test connection restrictions
+	config.ClientKeepAliveTimeout = 0
 
 	err = initialize()
 	require.Nil(s.T(), err)
@@ -58,6 +60,7 @@ func (s *ProcessingHandlerTestSuite) SetupTest() {
 	// We don't need config.LocalFileSystemRoot anymore as it is used
 	// only during initialization
 	config.Reset()
+	config.AllowLoopbackSourceAddresses = true
 }
 
 func (s *ProcessingHandlerTestSuite) send(path string, header ...http.Header) *httptest.ResponseRecorder {
@@ -208,6 +211,28 @@ func (s *ProcessingHandlerTestSuite) TestSourceValidation() {
 			}
 		})
 	}
+}
+
+func (s *ProcessingHandlerTestSuite) TestSourceNetworkValidation() {
+	data := s.readTestFile("test1.png")
+
+	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		rw.WriteHeader(200)
+		rw.Write(data)
+	}))
+	defer server.Close()
+
+	var rw *httptest.ResponseRecorder
+
+	u := fmt.Sprintf("/unsafe/rs:fill:4:4/plain/%s/test1.png", server.URL)
+	fmt.Println(u)
+
+	rw = s.send(u)
+	require.Equal(s.T(), 200, rw.Result().StatusCode)
+
+	config.AllowLoopbackSourceAddresses = false
+	rw = s.send(u)
+	require.Equal(s.T(), 404, rw.Result().StatusCode)
 }
 
 func (s *ProcessingHandlerTestSuite) TestSourceFormatNotSupported() {
