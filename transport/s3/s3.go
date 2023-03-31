@@ -8,6 +8,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 
@@ -67,6 +68,12 @@ func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error)
 	if err := s3req.Send(); err != nil {
 		if s3req.HTTPResponse != nil && s3req.HTTPResponse.Body != nil {
 			s3req.HTTPResponse.Body.Close()
+		}
+
+		if s3err, ok := err.(awserr.Error); ok && s3err.Code() == request.CanceledErrorCode {
+			if e := s3err.OrigErr(); e != nil {
+				return nil, e
+			}
 		}
 
 		if s3err, ok := err.(awserr.RequestFailure); !ok || s3err.StatusCode() < 100 || s3err.StatusCode() == 301 {
