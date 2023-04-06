@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"golang.org/x/net/proxy"
 	"net/http"
 	"net/http/cookiejar"
 	"os"
@@ -42,10 +43,10 @@ func (d *ImageData) SetCancel(cancel context.CancelFunc) {
 	d.cancel = cancel
 }
 
-func Init() error {
+func Init(dialer proxy.Dialer) error {
 	initRead()
 
-	if err := initDownloading(); err != nil {
+	if err := initDownloading(dialer); err != nil {
 		return err
 	}
 

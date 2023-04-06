@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/imgproxy/imgproxy/v3/proxy"
 	"os"
 	"os/signal"
 	"syscall"
@@ -39,7 +40,9 @@ func initialize() error {
 		return err
 	}
 
-	if err := imagedata.Init(); err != nil {
+	dialer := proxy.Init(config.Proxy.Username, config.Proxy.Password, config.Proxy.Host)
+
+	if err := imagedata.Init(dialer); err != nil {
 		return err
 	}
 
