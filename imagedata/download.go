@@ -2,10 +2,12 @@ package imagedata
 
 import (
 	"compress/gzip"
+	"context"
 	"crypto/tls"
 	"fmt"
 	"github.com/imgproxy/imgproxy/v3/transport/ipfs"
 	"github.com/imgproxy/imgproxy/v3/transport/tonstorage"
+	"golang.org/x/net/proxy"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -51,7 +53,7 @@ func (e *ErrorNotModified) Error() string {
 	return e.Message
 }
 
-func initDownloading() error {
+func initDownloading(dialer proxy.Dialer) error {
 	transport := &http.Transport{
 		Proxy:               http.ProxyFromEnvironment,
 		MaxIdleConns:        config.Concurrency,
@@ -127,6 +129,16 @@ func initDownloading() error {
 	if config.TonstorageGateway != "" {
 		tonTransport := tonstorage.New(downloadClient)
 		registerProtocol("tonstorage", tonTransport)
+	}
+
+	if dialer != nil {
+		dialContext := func(ctx context.Context, network, address string) (net.Conn, error) {
+			return dialer.Dial(network, address)
+		}
+
+		transport.DialContext = dialContext
+		downloadClient.Timeout = 10 * time.Second
+		downloadClient.Transport = transport
 	}
 
 	return nil

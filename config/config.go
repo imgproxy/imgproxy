@@ -3,6 +3,7 @@ package config
 import (
 	"flag"
 	"fmt"
+	"github.com/imgproxy/imgproxy/v3/proxy"
 	"math"
 	"os"
 	"regexp"
@@ -160,6 +161,8 @@ var (
 	BufferPoolCalibrationThreshold int
 
 	HealthCheckPath string
+
+	Proxy proxy.Auth
 )
 
 var (
@@ -476,6 +479,10 @@ func Configure() error {
 	configurators.String(&AirbrakeEnv, "IMGPROXY_AIRBRAKE_ENVIRONMENT")
 	configurators.Bool(&ReportDownloadingErrors, "IMGPROXY_REPORT_DOWNLOADING_ERRORS")
 	configurators.Bool(&EnableDebugHeaders, "IMGPROXY_ENABLE_DEBUG_HEADERS")
+
+	configurators.String(&Proxy.Username, "PROXY_USERNAME")
+	configurators.String(&Proxy.Password, "PROXY_PASSWORD")
+	configurators.String(&Proxy.Host, "PROXY_HOST")
 
 	configurators.Int(&FreeMemoryInterval, "IMGPROXY_FREE_MEMORY_INTERVAL")
 	configurators.Int(&DownloadBufferSize, "IMGPROXY_DOWNLOAD_BUFFER_SIZE")
