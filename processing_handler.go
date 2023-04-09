@@ -269,8 +269,8 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if modifiedSince := r.Header.Get("If-Modified-Since"); len(modifiedSince) != 0 {
-		if _, ok := r.Header["If-None-Match"]; !ok {
+	if config.LastModifiedEnabled {
+		if modifiedSince := r.Header.Get("If-Modified-Since"); len(modifiedSince) != 0 {
 			imgRequestHeader.Set("If-Modified-Since", modifiedSince)
 		}
 	}
@@ -315,7 +315,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		defer originData.Close()
 	} else if nmErr, ok := err.(*imagedata.ErrorNotModified); ok {
-		if config.ETagEnabled {
+		if config.ETagEnabled && len(etagHandler.ImageEtagExpected()) != 0 {
 			rw.Header().Set("ETag", etagHandler.GenerateExpectedETag())
 		}
 		respondWithNotModified(reqID, r, rw, po, imageURL, nmErr.Headers)
