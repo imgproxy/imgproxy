@@ -1138,7 +1138,7 @@ func parsePathOptions(parts []string, headers http.Header) (*ProcessingOptions, 
 		return nil, "", err
 	}
 
-	if len(extension) > 0 {
+	if !po.Raw && len(extension) > 0 {
 		if err = applyFormatOption(po, []string{extension}); err != nil {
 			return nil, "", err
 		}
@@ -1165,7 +1165,7 @@ func parsePathPresets(parts []string, headers http.Header) (*ProcessingOptions, 
 		return nil, "", err
 	}
 
-	if len(extension) > 0 {
+	if !po.Raw && len(extension) > 0 {
 		if err = applyFormatOption(po, []string{extension}); err != nil {
 			return nil, "", err
 		}

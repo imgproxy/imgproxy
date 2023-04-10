@@ -7,6 +7,7 @@
 ### Change
 - Connecting to loopback, link-local multicast, and link-local unicast IP addresses when requesting source images is prohibited by default.
 - Tuned source image downloading flow.
+- Disable extension checking if the `raw` processing option is used.
 
 ### Fix
 - (pro) Fix face detection during advanced smart crop in some cases.
