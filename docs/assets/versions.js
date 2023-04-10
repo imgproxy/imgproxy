@@ -1,4 +1,5 @@
 window.IMGPROXY_VERSIONS = [
+  "3.15",
   "3.14",
   "3.13",
   "3.12",
