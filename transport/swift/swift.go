@@ -13,6 +13,7 @@ import (
 
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/ctxreader"
+	"github.com/imgproxy/imgproxy/v3/transport/notmodified"
 )
 
 type transport struct {
@@ -76,22 +77,11 @@ func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error)
 	if config.ETagEnabled {
 		if etag, ok := objectHeaders["Etag"]; ok {
 			header.Set("ETag", etag)
+		}
 
-			if len(etag) > 0 && etag == req.Header.Get("If-None-Match") {
-				object.Close()
-
-				return &http.Response{
-					StatusCode:    http.StatusNotModified,
-					Proto:         "HTTP/1.0",
-					ProtoMajor:    1,
-					ProtoMinor:    0,
-					Header:        header,
-					ContentLength: 0,
-					Body:          nil,
-					Close:         false,
-					Request:       req,
-				}, nil
-			}
+		if resp := notmodified.Response(req, header); resp != nil {
+			object.Close()
+			return resp, nil
 		}
 	}
 

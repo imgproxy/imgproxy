@@ -16,6 +16,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/ctxreader"
 	"github.com/imgproxy/imgproxy/v3/httprange"
+	"github.com/imgproxy/imgproxy/v3/transport/notmodified"
 )
 
 type transport struct {
@@ -73,25 +74,16 @@ func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error)
 		body = &fileLimiter{f: f, left: int(size)}
 		header.Set("Content-Range", fmt.Sprintf("bytes %d-%d/%d", start, end, fi.Size()))
 
-	case config.ETagEnabled:
-		etag := BuildEtag(req.URL.Path, fi)
-		header.Set("ETag", etag)
-
-		if etag == req.Header.Get("If-None-Match") {
-			f.Close()
-
-			return &http.Response{
-				StatusCode:    http.StatusNotModified,
-				Proto:         "HTTP/1.0",
-				ProtoMajor:    1,
-				ProtoMinor:    0,
-				Header:        header,
-				ContentLength: 0,
-				Body:          nil,
-				Close:         false,
-				Request:       req,
-			}, nil
+	default:
+		if config.ETagEnabled {
+			etag := BuildEtag(req.URL.Path, fi)
+			header.Set("ETag", etag)
 		}
+	}
+
+	if resp := notmodified.Response(req, header); resp != nil {
+		f.Close()
+		return resp, nil
 	}
 
 	header.Set("Accept-Ranges", "bytes")

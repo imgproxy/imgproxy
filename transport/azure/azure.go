@@ -18,6 +18,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/ctxreader"
 	"github.com/imgproxy/imgproxy/v3/httprange"
+	"github.com/imgproxy/imgproxy/v3/transport/notmodified"
 )
 
 type transport struct {
@@ -120,22 +121,15 @@ func (t transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	}
 
 	if config.ETagEnabled && result.ETag != nil {
-		azETag := string(*result.ETag)
-		header.Set("ETag", azETag)
+		etag := string(*result.ETag)
+		header.Set("ETag", etag)
+	}
 
-		if etag := req.Header.Get("If-None-Match"); len(etag) > 0 && azETag == etag {
-			return &http.Response{
-				StatusCode:    http.StatusNotModified,
-				Proto:         "HTTP/1.0",
-				ProtoMajor:    1,
-				ProtoMinor:    0,
-				Header:        header,
-				ContentLength: 0,
-				Body:          nil,
-				Close:         false,
-				Request:       req,
-			}, nil
+	if resp := notmodified.Response(req, header); resp != nil {
+		if result.Body != nil {
+			result.Body.Close()
 		}
+		return resp, nil
 	}
 
 	header.Set("Accept-Ranges", "bytes")

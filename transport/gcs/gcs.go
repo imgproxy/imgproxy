@@ -14,6 +14,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/ctxreader"
 	"github.com/imgproxy/imgproxy/v3/httprange"
+	"github.com/imgproxy/imgproxy/v3/transport/notmodified"
 )
 
 // For tests
@@ -104,20 +105,10 @@ func (t transport) RoundTrip(req *http.Request) (*http.Response, error) {
 				return handleError(req, err)
 			}
 			header.Set("ETag", attrs.Etag)
+		}
 
-			if etag := req.Header.Get("If-None-Match"); len(etag) > 0 && attrs.Etag == etag {
-				return &http.Response{
-					StatusCode:    http.StatusNotModified,
-					Proto:         "HTTP/1.0",
-					ProtoMajor:    1,
-					ProtoMinor:    0,
-					Header:        header,
-					ContentLength: 0,
-					Body:          nil,
-					Close:         false,
-					Request:       req,
-				}, nil
-			}
+		if resp := notmodified.Response(req, header); resp != nil {
+			return resp, nil
 		}
 
 		var err error
