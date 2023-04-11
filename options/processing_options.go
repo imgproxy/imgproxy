@@ -1087,17 +1087,21 @@ func defaultProcessingOptions(headers http.Header) (*ProcessingOptions, error) {
 	}
 
 	if config.EnableClientHints {
-		if headerDPR := headers.Get("DPR"); len(headerDPR) > 0 {
+		headerDPR := headers.Get("Sec-CH-DPR")
+		if len(headerDPR) == 0 {
+			headerDPR = headers.Get("DPR")
+		}
+		if len(headerDPR) > 0 {
 			if dpr, err := strconv.ParseFloat(headerDPR, 64); err == nil && (dpr > 0 && dpr <= maxClientHintDPR) {
 				po.Dpr = dpr
 			}
 		}
-		if headerViewportWidth := headers.Get("Viewport-Width"); len(headerViewportWidth) > 0 {
-			if vw, err := strconv.Atoi(headerViewportWidth); err == nil {
-				po.Width = vw
-			}
+
+		headerWidth := headers.Get("Sec-CH-Width")
+		if len(headerWidth) == 0 {
+			headerWidth = headers.Get("Width")
 		}
-		if headerWidth := headers.Get("Width"); len(headerWidth) > 0 {
+		if len(headerWidth) > 0 {
 			if w, err := strconv.Atoi(headerWidth); err == nil {
 				po.Width = imath.Scale(w, 1/po.Dpr)
 			}

@@ -249,11 +249,11 @@ Check out the [Best format](best_format.md) guide to learn more.
 
 ## Client Hints support
 
-imgproxy can use the `Width`, `Viewport-Width` or `DPR` HTTP headers to determine default width and DPR options using Client Hints. This feature is disabled by default and can be enabled by the following option:
+imgproxy can use the `Width` and `DPR` HTTP headers to determine default width and DPR options using Client Hints. This feature is disabled by default and can be enabled by the following option:
 
 * `IMGPROXY_ENABLE_CLIENT_HINTS`: enables Client Hints support to determine default width and DPR options. Read more details [here](https://developers.google.com/web/updates/2015/09/automating-resource-selection-with-client-hints) about Client Hints.
 
-**⚠️ Warning:** Headers cannot be signed. This means that an attacker can bypass your CDN cache by changing the `Width`, `Viewport-Width` or `DPR` HTTP headers. Keep this in mind when configuring your production caching setup.
+**⚠️ Warning:** Headers cannot be signed. This means that an attacker can bypass your CDN cache by changing the `Width` or `DPR` HTTP headers. Keep this in mind when configuring your production caching setup.
 
 ## Video thumbnails
 

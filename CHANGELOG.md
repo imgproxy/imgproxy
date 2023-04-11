@@ -1,6 +1,11 @@
 # Changelog
 
 ## [Unreleased]
+### Add
+- Add support for `Sec-CH-DPR` and `Sec-CH-Width` client hints.
+
+### Remove
+- Remove suport for `Viewport-Width` client hint.
 
 ## [3.15.0] - 2023-04-10
 ### Add

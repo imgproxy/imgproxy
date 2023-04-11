@@ -439,40 +439,6 @@ func (s *ProcessingOptionsTestSuite) TestParsePathWidthHeaderRedefine() {
 	require.Equal(s.T(), 150, po.Width)
 }
 
-func (s *ProcessingOptionsTestSuite) TestParsePathViewportWidthHeader() {
-	config.EnableClientHints = true
-
-	path := "/plain/http://images.dev/lorem/ipsum.jpg@png"
-	headers := http.Header{"Viewport-Width": []string{"100"}}
-	po, _, err := ParsePath(path, headers)
-
-	require.Nil(s.T(), err)
-
-	require.Equal(s.T(), 100, po.Width)
-}
-
-func (s *ProcessingOptionsTestSuite) TestParsePathViewportWidthHeaderDisabled() {
-	path := "/plain/http://images.dev/lorem/ipsum.jpg@png"
-	headers := http.Header{"Viewport-Width": []string{"100"}}
-	po, _, err := ParsePath(path, headers)
-
-	require.Nil(s.T(), err)
-
-	require.Equal(s.T(), 0, po.Width)
-}
-
-func (s *ProcessingOptionsTestSuite) TestParsePathViewportWidthHeaderRedefine() {
-	config.EnableClientHints = true
-
-	path := "/width:150/plain/http://images.dev/lorem/ipsum.jpg@png"
-	headers := http.Header{"Viewport-Width": []string{"100"}}
-	po, _, err := ParsePath(path, headers)
-
-	require.Nil(s.T(), err)
-
-	require.Equal(s.T(), 150, po.Width)
-}
-
 func (s *ProcessingOptionsTestSuite) TestParsePathDprHeader() {
 	config.EnableClientHints = true
 
