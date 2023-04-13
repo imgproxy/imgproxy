@@ -13,6 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 
 	"github.com/imgproxy/imgproxy/v3/config"
+	defaultTransport "github.com/imgproxy/imgproxy/v3/transport"
 )
 
 // transport implements RoundTripper for the 's3' protocol.
@@ -22,6 +23,13 @@ type transport struct {
 
 func New() (http.RoundTripper, error) {
 	s3Conf := aws.NewConfig()
+
+	trans, err := defaultTransport.New(false)
+	if err != nil {
+		return nil, err
+	}
+
+	s3Conf.HTTPClient = &http.Client{Transport: trans}
 
 	if len(config.S3Region) != 0 {
 		s3Conf.Region = aws.String(config.S3Region)

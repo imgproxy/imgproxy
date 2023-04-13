@@ -13,6 +13,7 @@ import (
 
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/ctxreader"
+	defaultTransport "github.com/imgproxy/imgproxy/v3/transport"
 	"github.com/imgproxy/imgproxy/v3/transport/notmodified"
 )
 
@@ -21,6 +22,11 @@ type transport struct {
 }
 
 func New() (http.RoundTripper, error) {
+	trans, err := defaultTransport.New(false)
+	if err != nil {
+		return nil, err
+	}
+
 	c := &swift.Connection{
 		UserName:       config.SwiftUsername,
 		ApiKey:         config.SwiftAPIKey,
@@ -30,11 +36,12 @@ func New() (http.RoundTripper, error) {
 		Tenant:         config.SwiftTenant, // v2 auth only
 		Timeout:        time.Duration(config.SwiftTimeoutSeconds) * time.Second,
 		ConnectTimeout: time.Duration(config.SwiftConnectTimeoutSeconds) * time.Second,
+		Transport:      trans,
 	}
 
 	ctx := context.Background()
 
-	err := c.Authenticate(ctx)
+	err = c.Authenticate(ctx)
 
 	if err != nil {
 		return nil, fmt.Errorf("swift authentication error: %s", err)

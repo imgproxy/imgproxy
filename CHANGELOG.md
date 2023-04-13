@@ -4,6 +4,9 @@
 ### Add
 - Add support for `Sec-CH-DPR` and `Sec-CH-Width` client hints.
 
+### Fix
+- Fix detection of dead HTTP/2 connections.
+
 ### Remove
 - Remove suport for `Viewport-Width` client hint.
 

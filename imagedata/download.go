@@ -3,19 +3,17 @@ package imagedata
 import (
 	"compress/gzip"
 	"context"
-	"crypto/tls"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
 	"net/http/cookiejar"
-	"syscall"
 	"time"
 
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/security"
 
+	defaultTransport "github.com/imgproxy/imgproxy/v3/transport"
 	azureTransport "github.com/imgproxy/imgproxy/v3/transport/azure"
 	fsTransport "github.com/imgproxy/imgproxy/v3/transport/fs"
 	gcsTransport "github.com/imgproxy/imgproxy/v3/transport/gcs"
@@ -58,32 +56,9 @@ func (e *ErrorNotModified) Error() string {
 }
 
 func initDownloading() error {
-	transport := &http.Transport{
-		Proxy: http.ProxyFromEnvironment,
-		DialContext: (&net.Dialer{
-			Timeout:   30 * time.Second,
-			KeepAlive: 30 * time.Second,
-			DualStack: true,
-			Control: func(network, address string, c syscall.RawConn) error {
-				return security.VerifySourceNetwork(address)
-			},
-		}).DialContext,
-		MaxIdleConns:          100,
-		MaxIdleConnsPerHost:   config.Concurrency + 1,
-		IdleConnTimeout:       time.Duration(config.ClientKeepAliveTimeout) * time.Second,
-		TLSHandshakeTimeout:   10 * time.Second,
-		ExpectContinueTimeout: 1 * time.Second,
-		ForceAttemptHTTP2:     true,
-		DisableCompression:    true,
-	}
-
-	if config.ClientKeepAliveTimeout <= 0 {
-		transport.MaxIdleConnsPerHost = -1
-		transport.DisableKeepAlives = true
-	}
-
-	if config.IgnoreSslVerification {
-		transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	transport, err := defaultTransport.New(true)
+	if err != nil {
+		return err
 	}
 
 	registerProtocol := func(scheme string, rt http.RoundTripper) {
