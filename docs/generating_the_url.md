@@ -765,11 +765,14 @@ Default: empty
 ### Filename
 
 ```
-filename:%string
-fn:%string
+filename:%filename:%encoded
+fn:%filename:%encoded
 ```
 
-Defines a filename for the `Content-Disposition` header. When not specified, imgproxy will get the filename from the source url.
+Defines a filename for the `Content-Disposition` header. When not specified, imgproxy will get the filename from the source URL.
+
+* `filename`: escaped or URL-safe Base64-encoded filename to be used in the `Content-Disposition` header
+* `encoded`: _(optionsl)_ identifies if `filename` is Base64-encoded. Set it to `1`, `t`, or `true` if you encoded the `filename` value with URL-safe Base64 encoding.
 
 Default: empty
 

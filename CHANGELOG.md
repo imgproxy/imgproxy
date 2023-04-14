@@ -3,6 +3,7 @@
 ## [Unreleased]
 ### Add
 - Add support for `Sec-CH-DPR` and `Sec-CH-Width` client hints.
+- Add support for Base64-encoded `filename` processing option values.
 
 ### Fix
 - Fix detection of dead HTTP/2 connections.

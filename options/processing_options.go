@@ -1,6 +1,7 @@
 package options
 
 import (
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"net/http"
@@ -805,11 +806,20 @@ func applyRawOption(po *ProcessingOptions, args []string) error {
 }
 
 func applyFilenameOption(po *ProcessingOptions, args []string) error {
-	if len(args) > 1 {
+	if len(args) > 2 {
 		return fmt.Errorf("Invalid filename arguments: %v", args)
 	}
 
 	po.Filename = args[0]
+
+	if len(args) > 1 && parseBoolOption(args[1]) {
+		decoded, err := base64.RawURLEncoding.DecodeString(po.Filename)
+		if err != nil {
+			return fmt.Errorf("Invalid filename encoding: %s", err)
+		}
+
+		po.Filename = string(decoded)
+	}
 
 	return nil
 }
