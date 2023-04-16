@@ -135,6 +135,8 @@ When set, imgproxy will multiply the image dimensions according to these factors
 
 Can be combined with `width` and `height` options. In this case, imgproxy calculates scale factors for the provided size and then multiplies it with the provided zoom factors.
 
+**📝 Note:** Unlike the `dpr` option, the `zoom` option doesn't affect gravities offsets, watermark offsets, and paddings.
+
 **📝 Note:** Unlike [dpr](#dpr), `zoom` doesn't set the `Content-DPR` header in the response.
 
 Default: `1`
@@ -146,6 +148,8 @@ dpr:%dpr
 ```
 
 When set, imgproxy will multiply the image dimensions according to this factor for HiDPI (Retina) devices. The value must be greater than 0.
+
+**📝 Note:** The `dpr` option affects gravities offsets, watermark offsets, and paddings to make the resulting image structures with and without the `dpr` option applied match.
 
 **📝 Note:** `dpr` also sets the `Content-DPR` header in the response so the browser can correctly render the image.
 

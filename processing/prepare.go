@@ -41,7 +41,7 @@ func extractMeta(img *vips.Image, baseAngle int, useOrientation bool) (int, int,
 	return width, height, angle, flip
 }
 
-func calcScale(width, height int, po *options.ProcessingOptions, imgtype imagetype.Type) (float64, float64) {
+func calcScale(width, height int, po *options.ProcessingOptions, imgtype imagetype.Type) (float64, float64, float64) {
 	var wshrink, hshrink float64
 
 	srcW, srcH := float64(width), float64(height)
@@ -66,9 +66,6 @@ func calcScale(width, height int, po *options.ProcessingOptions, imgtype imagety
 	} else {
 		hshrink = srcH / dstH
 	}
-
-	wshrink /= po.Dpr
-	hshrink /= po.Dpr
 
 	if wshrink != 1 || hshrink != 1 {
 		rt := po.ResizingType
@@ -101,16 +98,23 @@ func calcScale(width, height int, po *options.ProcessingOptions, imgtype imagety
 	wshrink /= po.ZoomWidth
 	hshrink /= po.ZoomHeight
 
+	dprScale := po.Dpr
+
 	if !po.Enlarge && imgtype != imagetype.SVG {
-		if wshrink < 1 {
-			hshrink /= wshrink
-			wshrink = 1
+		minShrink := math.Min(wshrink, hshrink)
+		if minShrink < 1 {
+			wshrink /= minShrink
+			hshrink /= minShrink
+
+			if !po.Extend.Enabled {
+				dprScale /= minShrink
+			}
 		}
-		if hshrink < 1 {
-			wshrink /= hshrink
-			hshrink = 1
-		}
+		dprScale = math.Min(dprScale, math.Min(wshrink, hshrink))
 	}
+
+	wshrink /= dprScale
+	hshrink /= dprScale
 
 	if po.MinWidth > 0 {
 		if minShrink := srcW / float64(po.MinWidth); minShrink < wshrink {
@@ -134,7 +138,7 @@ func calcScale(width, height int, po *options.ProcessingOptions, imgtype imagety
 		hshrink = srcH
 	}
 
-	return 1.0 / wshrink, 1.0 / hshrink
+	return 1.0 / wshrink, 1.0 / hshrink, dprScale
 }
 
 func calcCropSize(orig int, crop float64) int {
@@ -162,7 +166,7 @@ func prepare(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptio
 	widthToScale := imath.MinNonZero(pctx.cropWidth, pctx.srcWidth)
 	heightToScale := imath.MinNonZero(pctx.cropHeight, pctx.srcHeight)
 
-	pctx.wscale, pctx.hscale = calcScale(widthToScale, heightToScale, po, pctx.imgtype)
+	pctx.wscale, pctx.hscale, pctx.dprScale = calcScale(widthToScale, heightToScale, po, pctx.imgtype)
 
 	return nil
 }

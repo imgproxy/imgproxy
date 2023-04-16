@@ -29,6 +29,8 @@ type pipelineContext struct {
 	wscale float64
 	hscale float64
 
+	dprScale float64
+
 	iccImported bool
 }
 
@@ -58,6 +60,8 @@ func (p pipeline) Run(ctx context.Context, img *vips.Image, po *options.Processi
 			return err
 		}
 	}
+
+	img.SetDouble("imgproxy-dpr-scale", pctx.dprScale)
 
 	return nil
 }

@@ -434,6 +434,23 @@ func (img *Image) GetIntSliceDefault(name string, def []int) ([]int, error) {
 	return img.GetIntSlice(name)
 }
 
+func (img *Image) GetDouble(name string) (float64, error) {
+	var d C.double
+
+	if C.vips_image_get_double(img.VipsImage, cachedCString(name), &d) != 0 {
+		return 0, Error()
+	}
+	return float64(d), nil
+}
+
+func (img *Image) GetDoubleDefault(name string, def float64) (float64, error) {
+	if C.vips_image_get_typeof(img.VipsImage, cachedCString(name)) == 0 {
+		return def, nil
+	}
+
+	return img.GetDouble(name)
+}
+
 func (img *Image) GetBlob(name string) ([]byte, error) {
 	var (
 		tmp  unsafe.Pointer
@@ -456,6 +473,10 @@ func (img *Image) SetIntSlice(name string, value []int) {
 		in[i] = C.int(el)
 	}
 	C.vips_image_set_array_int_go(img.VipsImage, cachedCString(name), &in[0], C.int(len(value)))
+}
+
+func (img *Image) SetDouble(name string, value float64) {
+	C.vips_image_set_double(img.VipsImage, cachedCString(name), C.double(value))
 }
 
 func (img *Image) SetBlob(name string, value []byte) {

@@ -7,6 +7,7 @@
 
 ### Fix
 - Fix detection of dead HTTP/2 connections.
+- Fix the way the `dpr` processing option affects offsets and paddings.
 
 ### Remove
 - Remove suport for `Viewport-Width` client hint.

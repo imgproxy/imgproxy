@@ -174,7 +174,12 @@ func transformAnimated(ctx context.Context, img *vips.Image, po *options.Process
 	}
 
 	if watermarkEnabled && imagedata.Watermark != nil {
-		if err = applyWatermark(img, imagedata.Watermark, &po.Watermark, framesCount); err != nil {
+		dprScale, derr := img.GetDoubleDefault("imgproxy-dpr-scale", 1.0)
+		if derr != nil {
+			dprScale = 1.0
+		}
+
+		if err = applyWatermark(img, imagedata.Watermark, &po.Watermark, dprScale, framesCount); err != nil {
 			return err
 		}
 	}

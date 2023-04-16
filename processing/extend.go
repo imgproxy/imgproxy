@@ -7,7 +7,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
-func extendImage(img *vips.Image, resultWidth, resultHeight int, opts *options.ExtendOptions, extendAr bool) error {
+func extendImage(img *vips.Image, resultWidth, resultHeight int, opts *options.ExtendOptions, offsetScale float64, extendAr bool) error {
 	if !opts.Enabled || (resultWidth <= img.Width() && resultHeight <= img.Height()) {
 		return nil
 	}
@@ -31,16 +31,16 @@ func extendImage(img *vips.Image, resultWidth, resultHeight int, opts *options.E
 		}
 	}
 
-	offX, offY := calcPosition(resultWidth, resultHeight, img.Width(), img.Height(), &opts.Gravity, false)
+	offX, offY := calcPosition(resultWidth, resultHeight, img.Width(), img.Height(), &opts.Gravity, offsetScale, false)
 	return img.Embed(resultWidth, resultHeight, offX, offY)
 }
 
 func extend(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata *imagedata.ImageData) error {
-	resultWidth, resultHeight := resultSize(po)
-	return extendImage(img, resultWidth, resultHeight, &po.Extend, false)
+	resultWidth, resultHeight := resultSize(po, pctx.dprScale)
+	return extendImage(img, resultWidth, resultHeight, &po.Extend, pctx.dprScale, false)
 }
 
 func extendAspectRatio(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata *imagedata.ImageData) error {
-	resultWidth, resultHeight := resultSize(po)
-	return extendImage(img, resultWidth, resultHeight, &po.ExtendAspectRatio, true)
+	resultWidth, resultHeight := resultSize(po, pctx.dprScale)
+	return extendImage(img, resultWidth, resultHeight, &po.ExtendAspectRatio, pctx.dprScale, true)
 }

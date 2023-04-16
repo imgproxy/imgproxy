@@ -7,7 +7,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
-func cropImage(img *vips.Image, cropWidth, cropHeight int, gravity *options.GravityOptions) error {
+func cropImage(img *vips.Image, cropWidth, cropHeight int, gravity *options.GravityOptions, offsetScale float64) error {
 	if cropWidth == 0 && cropHeight == 0 {
 		return nil
 	}
@@ -28,7 +28,7 @@ func cropImage(img *vips.Image, cropWidth, cropHeight int, gravity *options.Grav
 		return img.SmartCrop(cropWidth, cropHeight)
 	}
 
-	left, top := calcPosition(imgWidth, imgHeight, cropWidth, cropHeight, gravity, false)
+	left, top := calcPosition(imgWidth, imgHeight, cropWidth, cropHeight, gravity, offsetScale, false)
 	return img.Crop(left, top, cropWidth, cropHeight)
 }
 
@@ -43,12 +43,13 @@ func crop(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions,
 		width, height = height, width
 	}
 
-	return cropImage(img, width, height, &opts)
+	// Since we crop before scaling, we shouldn't consider DPR
+	return cropImage(img, width, height, &opts, 1.0)
 }
 
 func cropToResult(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata *imagedata.ImageData) error {
 	// Crop image to the result size
-	resultWidth, resultHeight := resultSize(po)
+	resultWidth, resultHeight := resultSize(po, pctx.dprScale)
 
 	if po.ResizingType == options.ResizeFillDown {
 		diffW := float64(resultWidth) / float64(img.Width())
@@ -65,5 +66,5 @@ func cropToResult(pctx *pipelineContext, img *vips.Image, po *options.Processing
 		}
 	}
 
-	return cropImage(img, resultWidth, resultHeight, &po.Gravity)
+	return cropImage(img, resultWidth, resultHeight, &po.Gravity, pctx.dprScale)
 }

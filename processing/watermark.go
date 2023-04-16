@@ -2,6 +2,7 @@ package processing
 
 import (
 	"context"
+	"math"
 
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
@@ -19,7 +20,7 @@ var watermarkPipeline = pipeline{
 	padding,
 }
 
-func prepareWatermark(wm *vips.Image, wmData *imagedata.ImageData, opts *options.WatermarkOptions, imgWidth, imgHeight, framesCount int) error {
+func prepareWatermark(wm *vips.Image, wmData *imagedata.ImageData, opts *options.WatermarkOptions, imgWidth, imgHeight int, offsetScale float64, framesCount int) error {
 	if err := wm.Load(wmData, 1, 1.0, 1); err != nil {
 		return err
 	}
@@ -36,11 +37,14 @@ func prepareWatermark(wm *vips.Image, wmData *imagedata.ImageData, opts *options
 	}
 
 	if opts.Replicate {
+		offX := int(math.RoundToEven(opts.Gravity.X * offsetScale))
+		offY := int(math.RoundToEven(opts.Gravity.Y * offsetScale))
+
 		po.Padding.Enabled = true
-		po.Padding.Left = int(opts.Gravity.X / 2)
-		po.Padding.Right = int(opts.Gravity.X) - po.Padding.Left
-		po.Padding.Top = int(opts.Gravity.Y / 2)
-		po.Padding.Bottom = int(opts.Gravity.Y) - po.Padding.Top
+		po.Padding.Left = offX / 2
+		po.Padding.Right = offX - po.Padding.Left
+		po.Padding.Top = offY / 2
+		po.Padding.Bottom = offY - po.Padding.Top
 	}
 
 	if err := watermarkPipeline.Run(context.Background(), wm, po, wmData); err != nil {
@@ -61,7 +65,7 @@ func prepareWatermark(wm *vips.Image, wmData *imagedata.ImageData, opts *options
 			return err
 		}
 	} else {
-		left, top := calcPosition(imgWidth, imgHeight, wm.Width(), wm.Height(), &opts.Gravity, true)
+		left, top := calcPosition(imgWidth, imgHeight, wm.Width(), wm.Height(), &opts.Gravity, offsetScale, true)
 		if err := wm.Embed(imgWidth, imgHeight, left, top); err != nil {
 			return err
 		}
@@ -76,7 +80,7 @@ func prepareWatermark(wm *vips.Image, wmData *imagedata.ImageData, opts *options
 	return nil
 }
 
-func applyWatermark(img *vips.Image, wmData *imagedata.ImageData, opts *options.WatermarkOptions, framesCount int) error {
+func applyWatermark(img *vips.Image, wmData *imagedata.ImageData, opts *options.WatermarkOptions, offsetScale float64, framesCount int) error {
 	if err := img.RgbColourspace(); err != nil {
 		return err
 	}
@@ -87,7 +91,7 @@ func applyWatermark(img *vips.Image, wmData *imagedata.ImageData, opts *options.
 	width := img.Width()
 	height := img.Height()
 
-	if err := prepareWatermark(wm, wmData, opts, width, height/framesCount, framesCount); err != nil {
+	if err := prepareWatermark(wm, wmData, opts, width, height/framesCount, offsetScale, framesCount); err != nil {
 		return err
 	}
 
@@ -101,5 +105,5 @@ func watermark(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOpt
 		return nil
 	}
 
-	return applyWatermark(img, imagedata.Watermark, &po.Watermark, 1)
+	return applyWatermark(img, imagedata.Watermark, &po.Watermark, pctx.dprScale, 1)
 }
