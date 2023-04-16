@@ -12,10 +12,10 @@ func padding(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptio
 		return nil
 	}
 
-	paddingTop := imath.Scale(po.Padding.Top, pctx.dprScale)
-	paddingRight := imath.Scale(po.Padding.Right, pctx.dprScale)
-	paddingBottom := imath.Scale(po.Padding.Bottom, pctx.dprScale)
-	paddingLeft := imath.Scale(po.Padding.Left, pctx.dprScale)
+	paddingTop := imath.ScaleToEven(po.Padding.Top, pctx.dprScale)
+	paddingRight := imath.ScaleToEven(po.Padding.Right, pctx.dprScale)
+	paddingBottom := imath.ScaleToEven(po.Padding.Bottom, pctx.dprScale)
+	paddingLeft := imath.ScaleToEven(po.Padding.Left, pctx.dprScale)
 
 	return img.Embed(
 		img.Width()+paddingLeft+paddingRight,

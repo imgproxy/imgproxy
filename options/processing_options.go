@@ -1113,7 +1113,7 @@ func defaultProcessingOptions(headers http.Header) (*ProcessingOptions, error) {
 		}
 		if len(headerWidth) > 0 {
 			if w, err := strconv.Atoi(headerWidth); err == nil {
-				po.Width = imath.Scale(w, 1/po.Dpr)
+				po.Width = imath.Shrink(w, po.Dpr)
 			}
 		}
 	}

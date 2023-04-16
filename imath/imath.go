@@ -58,3 +58,11 @@ func Shrink(a int, shrink float64) int {
 
 	return Round(float64(a) / shrink)
 }
+
+func ShrinkToEven(a int, shrink float64) int {
+	if a == 0 {
+		return 0
+	}
+
+	return RoundToEven(float64(a) / shrink)
+}
