@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/cookiejar"
+	"strings"
 	"time"
 
 	"github.com/imgproxy/imgproxy/v3/config"
@@ -164,12 +165,27 @@ func BuildImageRequest(ctx context.Context, imageURL string, header http.Header,
 }
 
 func SendRequest(req *http.Request) (*http.Response, error) {
-	res, err := downloadClient.Do(req)
-	if err != nil {
+	for {
+		res, err := downloadClient.Do(req)
+		if err == nil {
+			return res, nil
+		}
+
+		if res != nil && res.Body != nil {
+			res.Body.Close()
+		}
+
+		if strings.Contains(err.Error(), "client connection lost") {
+			select {
+			case <-req.Context().Done():
+				return nil, err
+			case <-time.After(100 * time.Microsecond):
+				continue
+			}
+		}
+
 		return nil, wrapError(err)
 	}
-
-	return res, nil
 }
 
 func requestImage(ctx context.Context, imageURL string, opts DownloadOptions) (*http.Response, context.CancelFunc, error) {
