@@ -92,7 +92,7 @@ func setCacheControl(rw http.ResponseWriter, force *time.Time, originHeaders map
 }
 
 func setLastModified(rw http.ResponseWriter, originHeaders map[string]string) {
-	if originHeaders != nil {
+	if config.LastModifiedEnabled {
 		if val, ok := originHeaders["Last-Modified"]; ok && len(val) != 0 {
 			rw.Header().Set("Last-Modified", val)
 		}

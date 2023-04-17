@@ -379,20 +379,6 @@ func (s *ProcessingHandlerTestSuite) TestCacheControlPassthroughDisabled() {
 	require.NotEqual(s.T(), "fake-expires", res.Header.Get("Expires"))
 }
 
-func (s *ProcessingHandlerTestSuite) TestLastModified() {
-	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		rw.Header().Set("Last-Modified", "Wed, 21 Oct 2015 07:28:00 GMT")
-		rw.WriteHeader(200)
-		rw.Write(s.readTestFile("test1.png"))
-	}))
-	defer ts.Close()
-
-	rw := s.send("/unsafe/rs:fill:4:4/plain/" + ts.URL)
-	res := rw.Result()
-
-	require.Equal(s.T(), "Wed, 21 Oct 2015 07:28:00 GMT", res.Header.Get("Last-Modified"))
-}
-
 func (s *ProcessingHandlerTestSuite) TestETagDisabled() {
 	config.ETagEnabled = false
 
@@ -563,6 +549,36 @@ func (s *ProcessingHandlerTestSuite) TestETagProcessingOptionsNotMatch() {
 
 	require.Equal(s.T(), 200, res.StatusCode)
 	require.Equal(s.T(), actualETag, res.Header.Get("ETag"))
+}
+
+func (s *ProcessingHandlerTestSuite) TestLastModifiedEnabled() {
+	config.LastModifiedEnabled = true
+	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		rw.Header().Set("Last-Modified", "Wed, 21 Oct 2015 07:28:00 GMT")
+		rw.WriteHeader(200)
+		rw.Write(s.readTestFile("test1.png"))
+	}))
+	defer ts.Close()
+
+	rw := s.send("/unsafe/rs:fill:4:4/plain/" + ts.URL)
+	res := rw.Result()
+
+	require.Equal(s.T(), "Wed, 21 Oct 2015 07:28:00 GMT", res.Header.Get("Last-Modified"))
+}
+
+func (s *ProcessingHandlerTestSuite) TestLastModifiedDisabled() {
+	config.LastModifiedEnabled = false
+	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		rw.Header().Set("Last-Modified", "Wed, 21 Oct 2015 07:28:00 GMT")
+		rw.WriteHeader(200)
+		rw.Write(s.readTestFile("test1.png"))
+	}))
+	defer ts.Close()
+
+	rw := s.send("/unsafe/rs:fill:4:4/plain/" + ts.URL)
+	res := rw.Result()
+
+	require.Equal(s.T(), "", res.Header.Get("Last-Modified"))
 }
 
 func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqExactMatchLastModifiedDisabled() {
