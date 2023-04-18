@@ -15,6 +15,7 @@
 
 ### Remove
 - Remove suport for `Viewport-Width` client hint.
+- Don't set `Content-DPR` header (deprecated in the specification).
 
 ## [3.15.0] - 2023-04-10
 ### Add

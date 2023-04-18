@@ -117,10 +117,6 @@ func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, sta
 	rw.Header().Set("Content-Type", resultData.Type.Mime())
 	rw.Header().Set("Content-Disposition", contentDisposition)
 
-	if po.Dpr != 1 {
-		rw.Header().Set("Content-DPR", strconv.FormatFloat(po.Dpr, 'f', 2, 32))
-	}
-
 	setCacheControl(rw, po.Expires, originData.Headers)
 	setVary(rw)
 	setCanonical(rw, originURL)
