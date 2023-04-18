@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+
+## [3.16.0] - 2023-04-18
 ### Add
 - Add support for `Sec-CH-DPR` and `Sec-CH-Width` client hints.
 - Add support for Base64-encoded `filename` processing option values.
