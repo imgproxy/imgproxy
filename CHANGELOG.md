@@ -4,6 +4,10 @@
 ### Add
 - Add support for `Sec-CH-DPR` and `Sec-CH-Width` client hints.
 - Add support for Base64-encoded `filename` processing option values.
+- Add `IMGPROXY_REQUEST_HEADERS_PASSTHROUGH` and `IMGPROXY_RESPONSE_HEADERS_PASSTHROUGH` configs.
+
+### Change
+- Improved object-oriented crop.
 
 ### Fix
 - Fix detection of dead HTTP/2 connections.

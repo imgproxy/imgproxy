@@ -47,6 +47,8 @@ echo $(xxd -g 2 -l 64 -p /dev/random | tr -d '\n')
 * `IMGPROXY_CUSTOM_REQUEST_HEADERS`: ![pro](./assets/pro.svg) list of custom headers that imgproxy will send while requesting the source image, divided by `\;` (can be redefined by `IMGPROXY_CUSTOM_HEADERS_SEPARATOR`). Example: `X-MyHeader1=Lorem\;X-MyHeader2=Ipsum`
 * `IMGPROXY_CUSTOM_RESPONSE_HEADERS`: ![pro](./assets/pro.svg) a list of custom response headers, separated by `\;` (can be redefined by `IMGPROXY_CUSTOM_HEADERS_SEPARATOR`). Example: `X-MyHeader1=Lorem\;X-MyHeader2=Ipsum`
 * `IMGPROXY_CUSTOM_HEADERS_SEPARATOR`: ![pro](./assets/pro.svg) a string that will be used as a custom header separator. Default: `\;`
+* `IMGPROXY_REQUEST_HEADERS_PASSTHROUGH`: ![pro](./assets/pro.svg) a list of names of incoming request headers that should be passed through to the source image request.
+* `IMGPROXY_RESPONSE_HEADERS_PASSTHROUGH`: ![pro](./assets/pro.svg) a list of names of source image response headers that should be passed through to the imgproxy response.
 * `IMGPROXY_ENABLE_DEBUG_HEADERS`: when set to `true`, imgproxy will add debug headers to the response. Default: `false`. The following headers will be added:
   * `X-Origin-Content-Length`: the size of the source image
   * `X-Origin-Width`: the width of the source image
