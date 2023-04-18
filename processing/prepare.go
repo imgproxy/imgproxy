@@ -113,9 +113,6 @@ func calcScale(width, height int, po *options.ProcessingOptions, imgtype imagety
 		dprScale = math.Min(dprScale, math.Min(wshrink, hshrink))
 	}
 
-	wshrink /= dprScale
-	hshrink /= dprScale
-
 	if po.MinWidth > 0 {
 		if minShrink := srcW / float64(po.MinWidth); minShrink < wshrink {
 			hshrink /= wshrink / minShrink
@@ -129,6 +126,9 @@ func calcScale(width, height int, po *options.ProcessingOptions, imgtype imagety
 			hshrink = minShrink
 		}
 	}
+
+	wshrink /= dprScale
+	hshrink /= dprScale
 
 	if wshrink > srcW {
 		wshrink = srcW
