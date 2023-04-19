@@ -211,7 +211,7 @@ func saveImageToFitBytes(ctx context.Context, po *options.ProcessingOptions, img
 
 	for {
 		imgdata, err := img.Save(po.Format, quality)
-		if len(imgdata.Data) <= po.MaxBytes || quality <= 10 || err != nil {
+		if err != nil || len(imgdata.Data) <= po.MaxBytes || quality <= 10 {
 			return imgdata, err
 		}
 		imgdata.Close()

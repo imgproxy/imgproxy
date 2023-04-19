@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+### Fix
+- Fix crashes in cases where the `max_bytes` processing option was used and image saving failed.
 
 ## [3.16.0] - 2023-04-18
 ### Add
@@ -65,7 +67,7 @@
 - (pro) Allow usage of floating-point numbers in the `IMGPROXY_VIDEO_THUMBNAIL_SECOND` config and the `video_thumbnail_second` processing option.
 
 ### Fix
-- Fix craches in some cases when using OpenTelemetry in Amazon ECS.
+- Fix crashes in some cases when using OpenTelemetry in Amazon ECS.
 - (pro) Fix saving of GIF with too small frame delay to MP4
 
 ## [3.12.0] - 2022-12-11
