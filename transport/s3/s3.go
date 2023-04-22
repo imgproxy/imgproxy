@@ -5,6 +5,7 @@ import (
 	"io"
 	http "net/http"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -64,9 +65,19 @@ func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error)
 
 	if r := req.Header.Get("Range"); len(r) != 0 {
 		input.Range = aws.String(r)
-	} else if config.ETagEnabled {
-		if ifNoneMatch := req.Header.Get("If-None-Match"); len(ifNoneMatch) > 0 {
-			input.IfNoneMatch = aws.String(ifNoneMatch)
+	} else {
+		if config.ETagEnabled {
+			if ifNoneMatch := req.Header.Get("If-None-Match"); len(ifNoneMatch) > 0 {
+				input.IfNoneMatch = aws.String(ifNoneMatch)
+			}
+		}
+		if config.LastModifiedEnabled {
+			if ifModifiedSince := req.Header.Get("If-Modified-Since"); len(ifModifiedSince) > 0 {
+				parsedIfModifiedSince, err := time.Parse(http.TimeFormat, ifModifiedSince)
+				if err == nil {
+					input.IfModifiedSince = &parsedIfModifiedSince
+				}
+			}
 		}
 	}
 

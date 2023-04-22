@@ -84,11 +84,17 @@ func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error)
 		if etag, ok := objectHeaders["Etag"]; ok {
 			header.Set("ETag", etag)
 		}
+	}
 
-		if resp := notmodified.Response(req, header); resp != nil {
-			object.Close()
-			return resp, nil
+	if config.LastModifiedEnabled {
+		if lastModified, ok := objectHeaders["Last-Modified"]; ok {
+			header.Set("Last-Modified", lastModified)
 		}
+	}
+
+	if resp := notmodified.Response(req, header); resp != nil {
+		object.Close()
+		return resp, nil
 	}
 
 	for k, v := range objectHeaders {
