@@ -37,6 +37,7 @@ var (
 		"Content-Encoding",
 		"Content-Range",
 		"Accept-Ranges",
+		"Last-Modified",
 	}
 
 	streamBufPool = sync.Pool{
