@@ -21,12 +21,12 @@ func Response(req *http.Request, header http.Header) *http.Response {
 		if len(lastModifiedRaw) == 0 {
 			return nil
 		}
-		lastModified, err := time.Parse(http.TimeFormat, lastModifiedRaw)
-		if err != nil {
-			return nil
-		}
 		ifModifiedSinceRaw := req.Header.Get("If-Modified-Since")
 		if len(ifModifiedSinceRaw) == 0 {
+			return nil
+		}
+		lastModified, err := time.Parse(http.TimeFormat, lastModifiedRaw)
+		if err != nil {
 			return nil
 		}
 		ifModifiedSince, err := time.Parse(http.TimeFormat, ifModifiedSinceRaw)
