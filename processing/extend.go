@@ -8,7 +8,7 @@ import (
 )
 
 func extendImage(img *vips.Image, resultWidth, resultHeight int, opts *options.ExtendOptions, offsetScale float64, extendAr bool) error {
-	if !opts.Enabled || (resultWidth <= img.Width() && resultHeight <= img.Height()) {
+	if !opts.Enabled || (resultWidth <= img.Width() && resultHeight <= img.Height()) || resultWidth == 0 || resultHeight == 0 {
 		return nil
 	}
 

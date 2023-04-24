@@ -3,6 +3,7 @@
 ## [Unreleased]
 ### Fix
 - Fix crashes in cases where the `max_bytes` processing option was used and image saving failed.
+- Fix error when using the `extend` or `extend_aspect_ratio` processing option while setting zero width or height.
 
 ## [3.16.0] - 2023-04-18
 ### Add
