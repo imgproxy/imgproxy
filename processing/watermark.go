@@ -18,6 +18,7 @@ var watermarkPipeline = pipeline{
 	scale,
 	rotateAndFlip,
 	padding,
+	stripMetadata,
 }
 
 func prepareWatermark(wm *vips.Image, wmData *imagedata.ImageData, opts *options.WatermarkOptions, imgWidth, imgHeight int, offsetScale float64, framesCount int) error {
@@ -30,6 +31,8 @@ func prepareWatermark(wm *vips.Image, wmData *imagedata.ImageData, opts *options
 	po.Dpr = 1
 	po.Enlarge = true
 	po.Format = wmData.Type
+	po.StripMetadata = true
+	po.KeepCopyright = false
 
 	if opts.Scale > 0 {
 		po.Width = imath.Max(imath.ScaleToEven(imgWidth, opts.Scale), 1)
@@ -76,6 +79,8 @@ func prepareWatermark(wm *vips.Image, wmData *imagedata.ImageData, opts *options
 			return err
 		}
 	}
+
+	wm.RemoveHeader("palette-bit-depth")
 
 	return nil
 }

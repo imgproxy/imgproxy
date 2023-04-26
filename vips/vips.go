@@ -484,6 +484,10 @@ func (img *Image) SetBlob(name string, value []byte) {
 	C.vips_image_set_blob_copy(img.VipsImage, cachedCString(name), unsafe.Pointer(&value[0]), C.size_t(len(value)))
 }
 
+func (img *Image) RemoveHeader(name string) {
+	C.vips_image_remove(img.VipsImage, cachedCString(name))
+}
+
 func (img *Image) CastUchar() error {
 	var tmp *C.VipsImage
 
