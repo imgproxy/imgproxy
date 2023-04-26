@@ -5,6 +5,7 @@
 - Fix crashes in cases where the `max_bytes` processing option was used and image saving failed.
 - Fix error when using the `extend` or `extend_aspect_ratio` processing option while setting zero width or height.
 - (pro) Fix crashes when using `IMGPROXY_SMART_CROP_FACE_DETECTION` with large `IMGPROXY_CONCURRENCY`.
+- (pro) Fix watermark scaling when neither watermark scale nor watermark size is specified.
 
 ## [3.16.0] - 2023-04-18
 ### Add
