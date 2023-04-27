@@ -404,24 +404,18 @@ func AddGaugeFunc(name, desc, u string, f GaugeFunc) {
 		return
 	}
 
-	gauge, err := meter.Float64ObservableGauge(
+	_, err := meter.Float64ObservableGauge(
 		name,
 		instrument.WithUnit(u),
 		instrument.WithDescription(desc),
+		instrument.WithFloat64Callback(func(_ context.Context, obsrv instrument.Float64Observer) error {
+			obsrv.Observe(f())
+			return nil
+		}),
 	)
 	if err != nil {
 		logrus.Warnf("Can't add %s gauge to OpenTelemetry: %s", name, err)
 		return
-	}
-
-	if _, err = meter.RegisterCallback(
-		func(ctx context.Context, o metric.Observer) error {
-			o.ObserveFloat64(gauge, f())
-			return nil
-		},
-		gauge,
-	); err != nil {
-		logrus.Warnf("Can't add %s gauge to OpenTelemetry: %s", name, err)
 	}
 }
 
