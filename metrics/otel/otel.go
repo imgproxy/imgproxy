@@ -26,12 +26,12 @@ import (
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/metric/instrument"
-	"go.opentelemetry.io/otel/metric/unit"
 	"go.opentelemetry.io/otel/propagation"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
-	semconv "go.opentelemetry.io/otel/semconv/v1.12.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
+	"go.opentelemetry.io/otel/semconv/v1.17.0/httpconv"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -345,19 +345,15 @@ func StartRootSpan(ctx context.Context, rw http.ResponseWriter, r *http.Request)
 	ctx, span := tracer.Start(
 		ctx, "/request",
 		trace.WithSpanKind(trace.SpanKindServer),
-		trace.WithAttributes(semconv.NetAttributesFromHTTPRequest("tcp", r)...),
-		trace.WithAttributes(semconv.EndUserAttributesFromHTTPRequest(r)...),
-		trace.WithAttributes(semconv.HTTPServerAttributesFromHTTPRequest("imgproxy", "/", r)...),
+		trace.WithAttributes(httpconv.ServerRequest("imgproxy", r)...),
 	)
 	ctx = context.WithValue(ctx, hasSpanCtxKey{}, struct{}{})
 
 	newRw := httpsnoop.Wrap(rw, httpsnoop.Hooks{
 		WriteHeader: func(next httpsnoop.WriteHeaderFunc) httpsnoop.WriteHeaderFunc {
 			return func(statusCode int) {
-				attrs := semconv.HTTPAttributesFromHTTPStatusCode(statusCode)
-				spanStatus, spanMessage := semconv.SpanStatusFromHTTPStatusCodeAndSpanKind(statusCode, trace.SpanKindServer)
-				span.SetAttributes(attrs...)
-				span.SetStatus(spanStatus, spanMessage)
+				span.SetStatus(httpconv.ServerStatus(statusCode))
+				span.SetAttributes(semconv.HTTPStatusCode(statusCode))
 
 				next(statusCode)
 			}
@@ -410,7 +406,7 @@ func AddGaugeFunc(name, desc, u string, f GaugeFunc) {
 
 	gauge, err := meter.Float64ObservableGauge(
 		name,
-		instrument.WithUnit(unit.Unit(u)),
+		instrument.WithUnit(u),
 		instrument.WithDescription(desc),
 	)
 	if err != nil {
