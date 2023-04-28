@@ -1,6 +1,6 @@
 module github.com/imgproxy/imgproxy/v3
 
-go 1.18
+go 1.19
 
 require (
 	cloud.google.com/go/storage v1.30.1
