@@ -34,9 +34,13 @@ If `IMGPROXY_OPEN_TELEMETRY_ENABLE_METRICS` is set to `true`, imgproxy will also
 
 * `requests_in_progress`: the number of requests currently in progress
 * `images_in_progress`: the number of images currently in progress
+* `buffer_size_bytes`: a histogram of buffer sizes (in bytes)
+* `buffer_default_size_bytes`: calibrated default buffer size (in bytes)
+* `buffer_max_size_bytes`: calibrated maximum buffer size (in bytes)
 * `vips_memory_bytes`: libvips memory usage
 * `vips_max_memory_bytes`: libvips maximum memory usage
 * `vips_allocs`: the number of active vips allocations
+* Some useful Go metrics like memstats and goroutines count
 
 ## TLS Configuration
 

@@ -7,10 +7,14 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
+	"runtime"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/felixge/httpsnoop"
+	"github.com/shirou/gopsutil/process"
 	"github.com/sirupsen/logrus"
 	"go.opentelemetry.io/contrib/detectors/aws/ec2"
 	"go.opentelemetry.io/contrib/detectors/aws/ecs"
@@ -58,6 +62,11 @@ var (
 	meter         metric.Meter
 
 	propagator propagation.TextMapPropagator
+
+	bufferSizeHist     instrument.Int64Histogram
+	bufferDefaultSizes = make(map[string]int)
+	bufferMaxSizes     = make(map[string]int)
+	bufferStatsMutex   sync.Mutex
 )
 
 func Init() error {
@@ -157,20 +166,11 @@ func Init() error {
 
 	meter = meterProvider.Meter("imgproxy")
 
-	enabledMetrics = true
+	if err = addDefaultMetrics(); err != nil {
+		return err
+	}
 
-	AddGaugeFunc(
-		"requests_in_progress",
-		"A gauge of the number of requests currently being in progress.",
-		"1",
-		stats.RequestsInProgress,
-	)
-	AddGaugeFunc(
-		"images_in_progress",
-		"A gauge of the number of images currently being in progress.",
-		"1",
-		stats.ImagesInProgress,
-	)
+	enabledMetrics = true
 
 	return nil
 }
@@ -399,8 +399,176 @@ func SendError(ctx context.Context, errType string, err error) {
 	span.AddEvent(semconv.ExceptionEventName, trace.WithAttributes(attributes...))
 }
 
+func addDefaultMetrics() error {
+	proc, err := process.NewProcess(int32(os.Getpid()))
+	if err != nil {
+		return fmt.Errorf("Can't initialize process data for OpenTelemetry: %s", err)
+	}
+
+	processResidentMemory, err := meter.Int64ObservableGauge(
+		"process_resident_memory_bytes",
+		instrument.WithUnit("By"),
+		instrument.WithDescription("Resident memory size in bytes."),
+	)
+	if err != nil {
+		return fmt.Errorf("Can't add process_resident_memory_bytes gauge to OpenTelemetry: %s", err)
+	}
+
+	processVirtualMemory, err := meter.Int64ObservableGauge(
+		"process_virtual_memory_bytes",
+		instrument.WithUnit("By"),
+		instrument.WithDescription("Virtual memory size in bytes."),
+	)
+	if err != nil {
+		return fmt.Errorf("Can't add process_virtual_memory_bytes gauge to OpenTelemetry: %s", err)
+	}
+
+	goMemstatsSys, err := meter.Int64ObservableGauge(
+		"go_memstats_sys_bytes",
+		instrument.WithUnit("By"),
+		instrument.WithDescription("Number of bytes obtained from system."),
+	)
+	if err != nil {
+		return fmt.Errorf("Can't add go_memstats_sys_bytes gauge to OpenTelemetry: %s", err)
+	}
+
+	goMemstatsHeapIdle, err := meter.Int64ObservableGauge(
+		"go_memstats_heap_idle_bytes",
+		instrument.WithUnit("By"),
+		instrument.WithDescription("Number of heap bytes waiting to be used."),
+	)
+	if err != nil {
+		return fmt.Errorf("Can't add go_memstats_heap_idle_bytes gauge to OpenTelemetry: %s", err)
+	}
+
+	goMemstatsHeapInuse, err := meter.Int64ObservableGauge(
+		"go_memstats_heap_inuse_bytes",
+		instrument.WithUnit("By"),
+		instrument.WithDescription("Number of heap bytes that are in use."),
+	)
+	if err != nil {
+		return fmt.Errorf("Can't add go_memstats_heap_inuse_bytes gauge to OpenTelemetry: %s", err)
+	}
+
+	goGoroutines, err := meter.Int64ObservableGauge(
+		"go_goroutines",
+		instrument.WithUnit("1"),
+		instrument.WithDescription("Number of goroutines that currently exist."),
+	)
+	if err != nil {
+		return fmt.Errorf("Can't add go_goroutines gauge to OpenTelemetry: %s", err)
+	}
+
+	goThreads, err := meter.Int64ObservableGauge(
+		"go_threads",
+		instrument.WithUnit("1"),
+		instrument.WithDescription("Number of OS threads created."),
+	)
+	if err != nil {
+		return fmt.Errorf("Can't add go_threads gauge to OpenTelemetry: %s", err)
+	}
+
+	requestsInProgressGauge, err := meter.Float64ObservableGauge(
+		"requests_in_progress",
+		instrument.WithUnit("1"),
+		instrument.WithDescription("A gauge of the number of requests currently being in progress."),
+	)
+	if err != nil {
+		return fmt.Errorf("Can't add requests_in_progress gauge to OpenTelemetry: %s", err)
+	}
+
+	imagesInProgressGauge, err := meter.Float64ObservableGauge(
+		"images_in_progress",
+		instrument.WithUnit("1"),
+		instrument.WithDescription("A gauge of the number of images currently being in progress."),
+	)
+	if err != nil {
+		return fmt.Errorf("Can't add images_in_progress gauge to OpenTelemetry: %s", err)
+	}
+
+	bufferDefaultSizeGauge, err := meter.Int64ObservableGauge(
+		"buffer_default_size_bytes",
+		instrument.WithUnit("By"),
+		instrument.WithDescription("A gauge of the buffer default size in bytes."),
+	)
+	if err != nil {
+		return fmt.Errorf("Can't add buffer_default_size_bytes gauge to OpenTelemetry: %s", err)
+	}
+
+	bufferMaxSizeGauge, err := meter.Int64ObservableGauge(
+		"buffer_max_size_bytes",
+		instrument.WithUnit("By"),
+		instrument.WithDescription("A gauge of the buffer max size in bytes."),
+	)
+	if err != nil {
+		return fmt.Errorf("Can't add buffer_max_size_bytes gauge to OpenTelemetry: %s", err)
+	}
+
+	_, err = meter.RegisterCallback(
+		func(ctx context.Context, o metric.Observer) error {
+			memStats, merr := proc.MemoryInfo()
+			if merr != nil {
+				return merr
+			}
+
+			o.ObserveInt64(processResidentMemory, int64(memStats.RSS))
+			o.ObserveInt64(processVirtualMemory, int64(memStats.VMS))
+
+			goMemStats := &runtime.MemStats{}
+			runtime.ReadMemStats(goMemStats)
+
+			o.ObserveInt64(goMemstatsSys, int64(goMemStats.Sys))
+			o.ObserveInt64(goMemstatsHeapIdle, int64(goMemStats.HeapIdle))
+			o.ObserveInt64(goMemstatsHeapInuse, int64(goMemStats.HeapInuse))
+
+			threadsNum, _ := runtime.ThreadCreateProfile(nil)
+			o.ObserveInt64(goGoroutines, int64(runtime.NumGoroutine()))
+			o.ObserveInt64(goThreads, int64(threadsNum))
+
+			o.ObserveFloat64(requestsInProgressGauge, stats.RequestsInProgress())
+			o.ObserveFloat64(imagesInProgressGauge, stats.ImagesInProgress())
+
+			bufferStatsMutex.Lock()
+			defer bufferStatsMutex.Unlock()
+
+			for t, v := range bufferDefaultSizes {
+				o.ObserveInt64(bufferDefaultSizeGauge, int64(v), attribute.String("type", t))
+			}
+			for t, v := range bufferMaxSizes {
+				o.ObserveInt64(bufferMaxSizeGauge, int64(v), attribute.String("type", t))
+			}
+			return nil
+		},
+		processResidentMemory,
+		processVirtualMemory,
+		goMemstatsSys,
+		goMemstatsHeapIdle,
+		goMemstatsHeapInuse,
+		goGoroutines,
+		goThreads,
+		requestsInProgressGauge,
+		imagesInProgressGauge,
+		bufferDefaultSizeGauge,
+		bufferMaxSizeGauge,
+	)
+	if err != nil {
+		return fmt.Errorf("Can't register OpenTelemetry callbacks: %s", err)
+	}
+
+	bufferSizeHist, err = meter.Int64Histogram(
+		"buffer_size_bytes",
+		instrument.WithUnit("By"),
+		instrument.WithDescription("A histogram of the buffer size in bytes."),
+	)
+	if err != nil {
+		return fmt.Errorf("Can't add buffer_size_bytes histogram to OpenTelemetry: %s", err)
+	}
+
+	return nil
+}
+
 func AddGaugeFunc(name, desc, u string, f GaugeFunc) {
-	if !enabledMetrics {
+	if meter == nil {
 		return
 	}
 
@@ -415,7 +583,30 @@ func AddGaugeFunc(name, desc, u string, f GaugeFunc) {
 	)
 	if err != nil {
 		logrus.Warnf("Can't add %s gauge to OpenTelemetry: %s", name, err)
-		return
+	}
+}
+
+func ObserveBufferSize(t string, size int) {
+	if enabledMetrics {
+		bufferSizeHist.Record(context.Background(), int64(size), attribute.String("type", t))
+	}
+}
+
+func SetBufferDefaultSize(t string, size int) {
+	if enabledMetrics {
+		bufferStatsMutex.Lock()
+		defer bufferStatsMutex.Unlock()
+
+		bufferDefaultSizes[t] = size
+	}
+}
+
+func SetBufferMaxSize(t string, size int) {
+	if enabledMetrics {
+		bufferStatsMutex.Lock()
+		defer bufferStatsMutex.Unlock()
+
+		bufferMaxSizes[t] = size
 	}
 }
 

@@ -137,6 +137,7 @@ func ObserveBufferSize(t string, size int) {
 	prometheus.ObserveBufferSize(t, size)
 	newrelic.ObserveBufferSize(t, size)
 	datadog.ObserveBufferSize(t, size)
+	otel.ObserveBufferSize(t, size)
 	cloudwatch.ObserveBufferSize(t, size)
 }
 
@@ -144,6 +145,7 @@ func SetBufferDefaultSize(t string, size int) {
 	prometheus.SetBufferDefaultSize(t, size)
 	newrelic.SetBufferDefaultSize(t, size)
 	datadog.SetBufferDefaultSize(t, size)
+	otel.SetBufferDefaultSize(t, size)
 	cloudwatch.SetBufferDefaultSize(t, size)
 }
 
@@ -151,5 +153,6 @@ func SetBufferMaxSize(t string, size int) {
 	prometheus.SetBufferMaxSize(t, size)
 	newrelic.SetBufferMaxSize(t, size)
 	datadog.SetBufferMaxSize(t, size)
+	otel.SetBufferMaxSize(t, size)
 	cloudwatch.SetBufferMaxSize(t, size)
 }
