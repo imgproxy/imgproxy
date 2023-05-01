@@ -12,7 +12,6 @@ import (
 	"github.com/ncw/swift/v2"
 
 	"github.com/imgproxy/imgproxy/v3/config"
-	"github.com/imgproxy/imgproxy/v3/ctxreader"
 	defaultTransport "github.com/imgproxy/imgproxy/v3/transport"
 	"github.com/imgproxy/imgproxy/v3/transport/notmodified"
 )
@@ -103,7 +102,7 @@ func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error)
 		ProtoMajor: 1,
 		ProtoMinor: 0,
 		Header:     header,
-		Body:       ctxreader.New(req.Context(), object, true),
+		Body:       object,
 		Close:      true,
 		Request:    req,
 	}, nil

@@ -16,7 +16,6 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/blockblob"
 
 	"github.com/imgproxy/imgproxy/v3/config"
-	"github.com/imgproxy/imgproxy/v3/ctxreader"
 	"github.com/imgproxy/imgproxy/v3/httprange"
 	"github.com/imgproxy/imgproxy/v3/transport/notmodified"
 )
@@ -159,7 +158,7 @@ func (t transport) RoundTrip(req *http.Request) (*http.Response, error) {
 		ProtoMinor:    0,
 		Header:        header,
 		ContentLength: contentLength,
-		Body:          ctxreader.New(req.Context(), result.Body, true),
+		Body:          result.Body,
 		Close:         true,
 		Request:       req,
 	}, nil

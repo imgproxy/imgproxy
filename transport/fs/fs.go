@@ -14,7 +14,6 @@ import (
 	"strings"
 
 	"github.com/imgproxy/imgproxy/v3/config"
-	"github.com/imgproxy/imgproxy/v3/ctxreader"
 	"github.com/imgproxy/imgproxy/v3/httprange"
 	"github.com/imgproxy/imgproxy/v3/transport/notmodified"
 )
@@ -96,7 +95,7 @@ func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error)
 		ProtoMinor:    0,
 		Header:        header,
 		ContentLength: size,
-		Body:          ctxreader.New(req.Context(), body, true),
+		Body:          body,
 		Close:         true,
 		Request:       req,
 	}, nil
