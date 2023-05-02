@@ -23,6 +23,7 @@ require (
 	github.com/newrelic/newrelic-telemetry-sdk-go v0.8.1
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.15.0
+	github.com/shirou/gopsutil v3.21.11+incompatible
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.2
 	github.com/tdewolff/parse/v2 v2.6.5
@@ -121,7 +122,6 @@ require (
 	github.com/ryszard/goskiplist v0.0.0-20150312221310-2dfbae5fcf46 // indirect
 	github.com/secure-systems-lab/go-securesystemslib v0.5.0 // indirect
 	github.com/shabbyrobe/gocovmerge v0.0.0-20190829150210-3e036491d500 // indirect
-	github.com/shirou/gopsutil v3.21.11+incompatible // indirect
 	github.com/tinylib/msgp v1.1.8 // indirect
 	github.com/tklauser/go-sysconf v0.3.11 // indirect
 	github.com/tklauser/numcpus v0.6.0 // indirect
@@ -165,3 +165,5 @@ require (
 )
 
 replace go.opentelemetry.io/contrib/detectors/aws/ecs => github.com/DarthSim/opentelemetry-go-contrib/detectors/aws/ecs v0.0.0-20230427152948-68533231536c
+
+replace github.com/johannesboyne/gofakes3 => github.com/DarthSim/gofakes3 v0.0.0-20230502153341-3fc66d2bc272
