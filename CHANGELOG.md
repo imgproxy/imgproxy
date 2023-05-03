@@ -3,6 +3,7 @@
 ## [Unreleased]
 ### Add
 - Add `process_resident_memory_bytes`, `process_virtual_memory_bytes`, `go_memstats_sys_bytes`, `go_memstats_heap_idle_bytes`, `go_memstats_heap_inuse_bytes`, `go_goroutines`, `go_threads`, `buffer_default_size_bytes`, `buffer_max_size_bytes`, and `buffer_size_bytes` metrics to OpenTelemetry.
+- Add support for the `Last-Modified` response header and the `If-Modified-Since` request header (conrolled by the `IMGPROXY_USE_LAST_MODIFIED` config).
 
 ### Change
 - Optimized memory buffers pooling for better performance and memory reusage.
