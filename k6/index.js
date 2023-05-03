@@ -53,6 +53,12 @@ let group_durations = [...new Set(urls.map(url => url.group))]
     return trends;
   }, {});
 
+let group_sizes = [...new Set(urls.map(url => url.group))]
+  .reduce((trends, group) => {
+    trends[group] = new Trend(`http_res_body_size_${group}`, false);
+    return trends;
+  }, {});
+
 export default function() {
   const url = urls[exec.scenario.iterationInTest % urls.length]
   const res = http.get(url.url);
@@ -60,4 +66,7 @@ export default function() {
     'is status 200': (r) => r.status === 200,
   });
   group_durations[url.group].add(res.timings.duration);
+
+  const body_size = Math.round(parseInt(res.headers["Content-Length"]) / 10.24) / 100;
+  group_sizes[url.group].add(body_size);
 }
