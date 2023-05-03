@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/ncw/swift/v2"
 	"github.com/ncw/swift/v2/swifttest"
@@ -20,9 +21,10 @@ const (
 
 type SwiftTestSuite struct {
 	suite.Suite
-	server    *swifttest.SwiftServer
-	transport http.RoundTripper
-	etag      string
+	server       *swifttest.SwiftServer
+	transport    http.RoundTripper
+	etag         string
+	lastModified time.Time
 }
 
 func (s *SwiftTestSuite) SetupSuite() {
@@ -71,10 +73,12 @@ func (s *SwiftTestSuite) setupTestFile() {
 	require.Nil(t, err)
 
 	f.Close()
-
-	h, err := f.Headers()
+	// The Etag is written on file close; but Last-Modified is only available when we get the object again.
+	_, h, err := c.Object(ctx, testContainer, testObject)
 	require.Nil(t, err)
 	s.etag = h["Etag"]
+	s.lastModified, err = time.Parse(http.TimeFormat, h["Date"])
+	require.Nil(t, err)
 }
 
 func (s *SwiftTestSuite) TearDownSuite() {
@@ -134,6 +138,47 @@ func (s *SwiftTestSuite) TestRoundTripWithUpdatedETagReturns200() {
 
 	request, _ := http.NewRequest("GET", "swift://test/foo/test.png", nil)
 	request.Header.Set("If-None-Match", s.etag+"_wrong")
+
+	response, err := s.transport.RoundTrip(request)
+	require.Nil(s.T(), err)
+	require.Equal(s.T(), http.StatusOK, response.StatusCode)
+}
+
+func (s *SwiftTestSuite) TestRoundTripWithLastModifiedDisabledReturns200() {
+	config.LastModifiedEnabled = false
+	request, _ := http.NewRequest("GET", "swift://test/foo/test.png", nil)
+
+	response, err := s.transport.RoundTrip(request)
+	require.Nil(s.T(), err)
+	require.Equal(s.T(), 200, response.StatusCode)
+}
+
+func (s *SwiftTestSuite) TestRoundTripWithLastModifiedEnabled() {
+	config.LastModifiedEnabled = true
+	request, _ := http.NewRequest("GET", "swift://test/foo/test.png", nil)
+
+	response, err := s.transport.RoundTrip(request)
+	require.Nil(s.T(), err)
+	require.Equal(s.T(), 200, response.StatusCode)
+	require.Equal(s.T(), s.lastModified.Format(http.TimeFormat), response.Header.Get("Last-Modified"))
+}
+
+func (s *SwiftTestSuite) TestRoundTripWithIfModifiedSinceReturns304() {
+	config.LastModifiedEnabled = true
+
+	request, _ := http.NewRequest("GET", "swift://test/foo/test.png", nil)
+	request.Header.Set("If-Modified-Since", s.lastModified.Format(http.TimeFormat))
+
+	response, err := s.transport.RoundTrip(request)
+	require.Nil(s.T(), err)
+	require.Equal(s.T(), http.StatusNotModified, response.StatusCode)
+}
+
+func (s *SwiftTestSuite) TestRoundTripWithUpdatedLastModifiedReturns200() {
+	config.LastModifiedEnabled = true
+
+	request, _ := http.NewRequest("GET", "swift://test/foo/test.png", nil)
+	request.Header.Set("If-Modified-Since", s.lastModified.Add(-24*time.Hour).Format(http.TimeFormat))
 
 	response, err := s.transport.RoundTrip(request)
 	require.Nil(s.T(), err)

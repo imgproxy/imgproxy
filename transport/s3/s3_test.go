@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -20,9 +21,10 @@ import (
 type S3TestSuite struct {
 	suite.Suite
 
-	server    *httptest.Server
-	transport http.RoundTripper
-	etag      string
+	server       *httptest.Server
+	transport    http.RoundTripper
+	etag         string
+	lastModified time.Time
 }
 
 func (s *S3TestSuite) SetupSuite() {
@@ -63,6 +65,7 @@ func (s *S3TestSuite) SetupSuite() {
 	defer obj.Body.Close()
 
 	s.etag = *obj.ETag
+	s.lastModified = *obj.LastModified
 }
 
 func (s *S3TestSuite) TearDownSuite() {
@@ -104,6 +107,48 @@ func (s *S3TestSuite) TestRoundTripWithUpdatedETagReturns200() {
 
 	request, _ := http.NewRequest("GET", "s3://test/foo/test.png", nil)
 	request.Header.Set("If-None-Match", s.etag+"_wrong")
+
+	response, err := s.transport.RoundTrip(request)
+	require.Nil(s.T(), err)
+	require.Equal(s.T(), http.StatusOK, response.StatusCode)
+}
+
+func (s *S3TestSuite) TestRoundTripWithLastModifiedDisabledReturns200() {
+	config.LastModifiedEnabled = false
+	request, _ := http.NewRequest("GET", "s3://test/foo/test.png", nil)
+
+	response, err := s.transport.RoundTrip(request)
+	require.Nil(s.T(), err)
+	require.Equal(s.T(), 200, response.StatusCode)
+}
+
+func (s *S3TestSuite) TestRoundTripWithLastModifiedEnabled() {
+	config.ETagEnabled = true
+	request, _ := http.NewRequest("GET", "s3://test/foo/test.png", nil)
+
+	response, err := s.transport.RoundTrip(request)
+	require.Nil(s.T(), err)
+	require.Equal(s.T(), 200, response.StatusCode)
+	require.Equal(s.T(), s.lastModified.Format(http.TimeFormat), response.Header.Get("Last-Modified"))
+}
+
+// gofakes3 doesn't support If-Modified-Since (yet?)
+func (s *S3TestSuite) TestRoundTripWithIfModifiedSinceReturns304() {
+	config.LastModifiedEnabled = true
+
+	request, _ := http.NewRequest("GET", "s3://test/foo/test.png", nil)
+	request.Header.Set("If-Modified-Since", s.lastModified.Format(http.TimeFormat))
+
+	response, err := s.transport.RoundTrip(request)
+	require.Nil(s.T(), err)
+	require.Equal(s.T(), http.StatusNotModified, response.StatusCode)
+}
+
+func (s *S3TestSuite) TestRoundTripWithUpdatedLastModifiedReturns200() {
+	config.LastModifiedEnabled = true
+
+	request, _ := http.NewRequest("GET", "s3://test/foo/test.png", nil)
+	request.Header.Set("If-Modified-Since", s.lastModified.Add(-24*time.Hour).Format(http.TimeFormat))
 
 	response, err := s.transport.RoundTrip(request)
 	require.Nil(s.T(), err)

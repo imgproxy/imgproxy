@@ -123,6 +123,8 @@ var (
 	ETagEnabled bool
 	ETagBuster  string
 
+	LastModifiedEnabled bool
+
 	BaseURL string
 
 	Presets     []string
@@ -309,6 +311,8 @@ func Reset() {
 
 	ETagEnabled = false
 	ETagBuster = ""
+
+	LastModifiedEnabled = false
 
 	BaseURL = ""
 
@@ -507,6 +511,8 @@ func Configure() error {
 
 	configurators.Bool(&ETagEnabled, "IMGPROXY_USE_ETAG")
 	configurators.String(&ETagBuster, "IMGPROXY_ETAG_BUSTER")
+
+	configurators.Bool(&LastModifiedEnabled, "IMGPROXY_USE_LAST_MODIFIED")
 
 	configurators.String(&BaseURL, "IMGPROXY_BASE_URL")
 

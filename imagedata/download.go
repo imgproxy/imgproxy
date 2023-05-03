@@ -34,6 +34,7 @@ var (
 		"Cache-Control",
 		"Expires",
 		"ETag",
+		"Last-Modified",
 	}
 
 	// For tests

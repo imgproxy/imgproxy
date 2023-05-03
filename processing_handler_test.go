@@ -11,6 +11,7 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/config/configurators"
@@ -550,6 +551,158 @@ func (s *ProcessingHandlerTestSuite) TestETagProcessingOptionsNotMatch() {
 	require.Equal(s.T(), actualETag, res.Header.Get("ETag"))
 }
 
+func (s *ProcessingHandlerTestSuite) TestLastModifiedEnabled() {
+	config.LastModifiedEnabled = true
+	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		rw.Header().Set("Last-Modified", "Wed, 21 Oct 2015 07:28:00 GMT")
+		rw.WriteHeader(200)
+		rw.Write(s.readTestFile("test1.png"))
+	}))
+	defer ts.Close()
+
+	rw := s.send("/unsafe/rs:fill:4:4/plain/" + ts.URL)
+	res := rw.Result()
+
+	require.Equal(s.T(), "Wed, 21 Oct 2015 07:28:00 GMT", res.Header.Get("Last-Modified"))
+}
+
+func (s *ProcessingHandlerTestSuite) TestLastModifiedDisabled() {
+	config.LastModifiedEnabled = false
+	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		rw.Header().Set("Last-Modified", "Wed, 21 Oct 2015 07:28:00 GMT")
+		rw.WriteHeader(200)
+		rw.Write(s.readTestFile("test1.png"))
+	}))
+	defer ts.Close()
+
+	rw := s.send("/unsafe/rs:fill:4:4/plain/" + ts.URL)
+	res := rw.Result()
+
+	require.Equal(s.T(), "", res.Header.Get("Last-Modified"))
+}
+
+func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqExactMatchLastModifiedDisabled() {
+	config.LastModifiedEnabled = false
+	data := s.readTestFile("test1.png")
+	lastModified := "Wed, 21 Oct 2015 07:28:00 GMT"
+	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		modifiedSince := r.Header.Get("If-Modified-Since")
+		require.Equal(s.T(), "", modifiedSince)
+		rw.WriteHeader(200)
+		rw.Write(data)
+
+	}))
+	defer ts.Close()
+
+	header := make(http.Header)
+	header.Set("If-Modified-Since", lastModified)
+	rw := s.send(fmt.Sprintf("/unsafe/plain/%s", ts.URL), header)
+	res := rw.Result()
+
+	require.Equal(s.T(), 200, res.StatusCode)
+}
+func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqExactMatchLastModifiedEnabled() {
+	config.LastModifiedEnabled = true
+	lastModified := "Wed, 21 Oct 2015 07:28:00 GMT"
+	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		modifiedSince := r.Header.Get("If-Modified-Since")
+		require.Equal(s.T(), lastModified, modifiedSince)
+		rw.WriteHeader(304)
+	}))
+	defer ts.Close()
+
+	header := make(http.Header)
+	header.Set("If-Modified-Since", lastModified)
+	rw := s.send(fmt.Sprintf("/unsafe/plain/%s", ts.URL), header)
+	res := rw.Result()
+
+	require.Equal(s.T(), 304, res.StatusCode)
+}
+
+func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqCompareMoreRecentLastModifiedDisabled() {
+	data := s.readTestFile("test1.png")
+	config.LastModifiedEnabled = false
+	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		modifiedSince := r.Header.Get("If-Modified-Since")
+		require.Equal(s.T(), modifiedSince, "")
+		rw.WriteHeader(200)
+		rw.Write(data)
+	}))
+	defer ts.Close()
+
+	recentTimestamp := "Thu, 25 Feb 2021 01:45:00 GMT"
+
+	header := make(http.Header)
+	header.Set("If-Modified-Since", recentTimestamp)
+	rw := s.send(fmt.Sprintf("/unsafe/plain/%s", ts.URL), header)
+	res := rw.Result()
+
+	require.Equal(s.T(), 200, res.StatusCode)
+}
+func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqCompareMoreRecentLastModifiedEnabled() {
+	config.LastModifiedEnabled = true
+	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		fileLastModified, _ := time.Parse(http.TimeFormat, "Wed, 21 Oct 2015 07:28:00 GMT")
+		modifiedSince := r.Header.Get("If-Modified-Since")
+		parsedModifiedSince, err := time.Parse(http.TimeFormat, modifiedSince)
+		require.Nil(s.T(), err)
+		require.True(s.T(), fileLastModified.Before(parsedModifiedSince))
+		rw.WriteHeader(304)
+	}))
+	defer ts.Close()
+
+	recentTimestamp := "Thu, 25 Feb 2021 01:45:00 GMT"
+
+	header := make(http.Header)
+	header.Set("If-Modified-Since", recentTimestamp)
+	rw := s.send(fmt.Sprintf("/unsafe/plain/%s", ts.URL), header)
+	res := rw.Result()
+
+	require.Equal(s.T(), 304, res.StatusCode)
+}
+func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqCompareTooOldLastModifiedDisabled() {
+	config.LastModifiedEnabled = false
+	data := s.readTestFile("test1.png")
+	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		modifiedSince := r.Header.Get("If-Modified-Since")
+		require.Equal(s.T(), modifiedSince, "")
+		rw.WriteHeader(200)
+		rw.Write(data)
+	}))
+	defer ts.Close()
+
+	oldTimestamp := "Tue, 01 Oct 2013 17:31:00 GMT"
+
+	header := make(http.Header)
+	header.Set("If-Modified-Since", oldTimestamp)
+	rw := s.send(fmt.Sprintf("/unsafe/plain/%s", ts.URL), header)
+	res := rw.Result()
+
+	require.Equal(s.T(), 200, res.StatusCode)
+}
+func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqCompareTooOldLastModifiedEnabled() {
+	config.LastModifiedEnabled = true
+	data := s.readTestFile("test1.png")
+	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		fileLastModified, _ := time.Parse(http.TimeFormat, "Wed, 21 Oct 2015 07:28:00 GMT")
+		modifiedSince := r.Header.Get("If-Modified-Since")
+		parsedModifiedSince, err := time.Parse(http.TimeFormat, modifiedSince)
+		require.Nil(s.T(), err)
+		require.True(s.T(), fileLastModified.After(parsedModifiedSince))
+		rw.WriteHeader(200)
+		rw.Write(data)
+	}))
+	defer ts.Close()
+
+	oldTimestamp := "Tue, 01 Oct 2013 17:31:00 GMT"
+
+	header := make(http.Header)
+	header.Set("If-Modified-Since", oldTimestamp)
+	rw := s.send(fmt.Sprintf("/unsafe/plain/%s", ts.URL), header)
+	res := rw.Result()
+
+	require.Equal(s.T(), 200, res.StatusCode)
+}
 func TestProcessingHandler(t *testing.T) {
 	suite.Run(t, new(ProcessingHandlerTestSuite))
 }

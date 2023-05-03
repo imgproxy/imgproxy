@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/fsouza/fake-gcs-server/fakestorage"
 	"github.com/stretchr/testify/require"
@@ -30,15 +31,17 @@ func getFreePort() (int, error) {
 type GCSTestSuite struct {
 	suite.Suite
 
-	server    *fakestorage.Server
-	transport http.RoundTripper
-	etag      string
+	server       *fakestorage.Server
+	transport    http.RoundTripper
+	etag         string
+	lastModified time.Time
 }
 
 func (s *GCSTestSuite) SetupSuite() {
 	noAuth = true
 
 	// s.etag = "testetag"
+	s.lastModified, _ = time.Parse(http.TimeFormat, "Wed, 21 Oct 2015 07:28:00 GMT")
 
 	port, err := getFreePort()
 	require.Nil(s.T(), err)
@@ -53,6 +56,7 @@ func (s *GCSTestSuite) SetupSuite() {
 					BucketName: "test",
 					Name:       "foo/test.png",
 					// Etag:       s.etag,
+					Updated: s.lastModified,
 				},
 				Content: make([]byte, 32),
 			},
@@ -116,6 +120,43 @@ func (s *GCSTestSuite) TestRoundTripWithUpdatedETagReturns200() {
 	require.Equal(s.T(), http.StatusOK, response.StatusCode)
 }
 
+func (s *GCSTestSuite) TestRoundTripWithLastModifiedDisabledReturns200() {
+	config.LastModifiedEnabled = false
+	request, _ := http.NewRequest("GET", "gcs://test/foo/test.png", nil)
+
+	response, err := s.transport.RoundTrip(request)
+	require.Nil(s.T(), err)
+	require.Equal(s.T(), 200, response.StatusCode)
+}
+func (s *GCSTestSuite) TestRoundTripWithLastModifiedEnabled() {
+	config.LastModifiedEnabled = true
+	request, _ := http.NewRequest("GET", "gcs://test/foo/test.png", nil)
+
+	response, err := s.transport.RoundTrip(request)
+	require.Nil(s.T(), err)
+	require.Equal(s.T(), 200, response.StatusCode)
+	require.Equal(s.T(), s.lastModified.Format(http.TimeFormat), response.Header.Get("Last-Modified"))
+}
+func (s *GCSTestSuite) TestRoundTripWithIfModifiedSinceReturns304() {
+	config.LastModifiedEnabled = true
+
+	request, _ := http.NewRequest("GET", "gcs://test/foo/test.png", nil)
+	request.Header.Set("If-Modified-Since", s.lastModified.Format(http.TimeFormat))
+
+	response, err := s.transport.RoundTrip(request)
+	require.Nil(s.T(), err)
+	require.Equal(s.T(), http.StatusNotModified, response.StatusCode)
+}
+func (s *GCSTestSuite) TestRoundTripWithUpdatedLastModifiedReturns200() {
+	config.LastModifiedEnabled = true
+
+	request, _ := http.NewRequest("GET", "gcs://test/foo/test.png", nil)
+	request.Header.Set("If-Modified-Sicne", s.lastModified.Add(-24*time.Hour).Format(http.TimeFormat))
+
+	response, err := s.transport.RoundTrip(request)
+	require.Nil(s.T(), err)
+	require.Equal(s.T(), http.StatusOK, response.StatusCode)
+}
 func TestGCSTransport(t *testing.T) {
 	suite.Run(t, new(GCSTestSuite))
 }

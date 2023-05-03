@@ -78,6 +78,11 @@ func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error)
 			etag := BuildEtag(req.URL.Path, fi)
 			header.Set("ETag", etag)
 		}
+
+		if config.LastModifiedEnabled {
+			lastModified := fi.ModTime().Format(http.TimeFormat)
+			header.Set("Last-Modified", lastModified)
+		}
 	}
 
 	if resp := notmodified.Response(req, header); resp != nil {

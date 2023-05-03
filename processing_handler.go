@@ -91,6 +91,14 @@ func setCacheControl(rw http.ResponseWriter, force *time.Time, originHeaders map
 	}
 }
 
+func setLastModified(rw http.ResponseWriter, originHeaders map[string]string) {
+	if config.LastModifiedEnabled {
+		if val, ok := originHeaders["Last-Modified"]; ok && len(val) != 0 {
+			rw.Header().Set("Last-Modified", val)
+		}
+	}
+}
+
 func setVary(rw http.ResponseWriter) {
 	if len(headerVaryValue) > 0 {
 		rw.Header().Set("Vary", headerVaryValue)
@@ -118,6 +126,7 @@ func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, sta
 	rw.Header().Set("Content-Disposition", contentDisposition)
 
 	setCacheControl(rw, po.Expires, originData.Headers)
+	setLastModified(rw, originData.Headers)
 	setVary(rw)
 	setCanonical(rw, originURL)
 
@@ -260,6 +269,12 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	if config.LastModifiedEnabled {
+		if modifiedSince := r.Header.Get("If-Modified-Since"); len(modifiedSince) != 0 {
+			imgRequestHeader.Set("If-Modified-Since", modifiedSince)
+		}
+	}
+
 	// The heavy part start here, so we need to restrict concurrency
 	var processingSemToken *semaphore.Token
 	func() {
@@ -299,8 +314,10 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 
 	if err == nil {
 		defer originData.Close()
-	} else if nmErr, ok := err.(*imagedata.ErrorNotModified); ok && config.ETagEnabled {
-		rw.Header().Set("ETag", etagHandler.GenerateExpectedETag())
+	} else if nmErr, ok := err.(*imagedata.ErrorNotModified); ok {
+		if config.ETagEnabled && len(etagHandler.ImageEtagExpected()) != 0 {
+			rw.Header().Set("ETag", etagHandler.GenerateExpectedETag())
+		}
 		respondWithNotModified(reqID, r, rw, po, imageURL, nmErr.Headers)
 		return
 	} else {

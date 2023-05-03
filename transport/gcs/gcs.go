@@ -122,12 +122,17 @@ func (t transport) RoundTrip(req *http.Request) (*http.Response, error) {
 
 	// We haven't initialize reader yet, this means that we need non-ranged reader
 	if reader == nil {
-		if config.ETagEnabled {
+		if config.ETagEnabled || config.LastModifiedEnabled {
 			attrs, err := obj.Attrs(req.Context())
 			if err != nil {
 				return handleError(req, err)
 			}
-			header.Set("ETag", attrs.Etag)
+			if config.ETagEnabled {
+				header.Set("ETag", attrs.Etag)
+			}
+			if config.LastModifiedEnabled {
+				header.Set("Last-Modified", attrs.Updated.Format(http.TimeFormat))
+			}
 		}
 
 		if resp := notmodified.Response(req, header); resp != nil {
