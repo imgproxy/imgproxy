@@ -133,7 +133,6 @@ func (s *S3TestSuite) TestRoundTripWithLastModifiedEnabled() {
 }
 
 // gofakes3 doesn't support If-Modified-Since (yet?)
-/*
 func (s *S3TestSuite) TestRoundTripWithIfModifiedSinceReturns304() {
 	config.LastModifiedEnabled = true
 
@@ -144,7 +143,6 @@ func (s *S3TestSuite) TestRoundTripWithIfModifiedSinceReturns304() {
 	require.Nil(s.T(), err)
 	require.Equal(s.T(), http.StatusNotModified, response.StatusCode)
 }
-*/
 
 func (s *S3TestSuite) TestRoundTripWithUpdatedLastModifiedReturns200() {
 	config.LastModifiedEnabled = true
