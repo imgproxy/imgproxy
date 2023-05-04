@@ -6,7 +6,8 @@ imgproxy can process images from S3 buckets. To use this feature, do the followi
 2. [Set up the necessary credentials](#set-up-credentials) to grant access to your bucket.
 3. _(optional)_ Specify the AWS region with `IMGPROXY_S3_REGION` or `AWS_REGION`. Default: `us-west-1`
 4. _(optional)_ Specify the S3 endpoint with `IMGPROXY_S3_ENDPOINT`.
-5. Use `s3://%bucket_name/%file_key` as the source image URL.
+5. _(optional)_ Specify the AWS IAM Role to Assume with `IMGPROXY_S3_ASSUME_ROLE_ARN`
+6. Use `s3://%bucket_name/%file_key` as the source image URL.
 
 If you need to specify the version of the source object, you can use the query string of the source URL:
 
@@ -25,6 +26,8 @@ If you're running imgproxy on an Amazon Web Services platform, you can use IAM r
 * **Elastic Container Service (ECS):** Assign an [IAM role to a task](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html).
 * **Elastic Kubernetes Service (EKS):** Assign a [service account to a pod](https://docs.aws.amazon.com/eks/latest/userguide/pod-configuration.html).
 * **Elastic Beanstalk:** Assign an [IAM role to an instance](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/iam-instanceprofile.html).
+
+S3 access credentials may be acquired by assuming a role using STS. To do so specify the IAM Role arn with `IMGPROXY_S3_ASSUME_ROLE_ARN` environment variable. This approach still requires you to provide initial AWS credentials by using one of the three ways described above.
 
 #### Environment variables
 
