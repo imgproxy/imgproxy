@@ -27,8 +27,6 @@ If you're running imgproxy on an Amazon Web Services platform, you can use IAM r
 * **Elastic Kubernetes Service (EKS):** Assign a [service account to a pod](https://docs.aws.amazon.com/eks/latest/userguide/pod-configuration.html).
 * **Elastic Beanstalk:** Assign an [IAM role to an instance](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/iam-instanceprofile.html).
 
-S3 access credentials may be acquired by assuming a role using STS. To do so specify the IAM Role arn with `IMGPROXY_S3_ASSUME_ROLE_ARN` environment variable. This approach still requires you to provide initial AWS credentials by using one of the three ways described above.
-
 #### Environment variables
 
 You can specify an AWS Access Key ID and a Secret Access Key by setting the standard `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` environment variables.
@@ -51,6 +49,10 @@ Alternatively, you can create the `.aws/credentials` file in your home directory
 aws_access_key_id = %access_key_id
 aws_secret_access_key = %secret_access_key
 ```
+
+#### Cross-Account Access
+
+S3 access credentials may be acquired by assuming a role using STS. To do so specify the IAM Role arn with `IMGPROXY_S3_ASSUME_ROLE_ARN` environment variable. This approach still requires you to provide initial AWS credentials by using one of the ways described above.
 
 ## Minio
 
