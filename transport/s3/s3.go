@@ -9,6 +9,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -44,6 +45,10 @@ func New() (http.RoundTripper, error) {
 	sess, err := session.NewSession()
 	if err != nil {
 		return nil, fmt.Errorf("Can't create S3 session: %s", err)
+	}
+
+	if len(config.S3AssumeRoleArn) != 0 {
+		s3Conf.Credentials = stscreds.NewCredentials(sess, config.S3AssumeRoleArn)
 	}
 
 	if sess.Config.Region == nil || len(*sess.Config.Region) == 0 {
