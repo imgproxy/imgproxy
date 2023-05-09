@@ -52,7 +52,7 @@ aws_secret_access_key = %secret_access_key
 
 #### Cross-Account Access
 
-S3 access credentials may be acquired by assuming a role using STS. To do so specify the IAM Role arn with `IMGPROXY_S3_ASSUME_ROLE_ARN` environment variable. This approach still requires you to provide initial AWS credentials by using one of the ways described above.
+S3 access credentials may be acquired by assuming a role using STS. To do so specify the IAM Role arn with the `IMGPROXY_S3_ASSUME_ROLE_ARN` environment variable. This approach still requires you to provide initial AWS credentials by using one of the ways described above. The provided credentials role should allow assuming the role with provided ARN.
 
 ## Minio
 
