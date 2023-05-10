@@ -67,7 +67,8 @@ int vips_flatten_go(VipsImage *in, VipsImage **out, double r, double g, double b
 int vips_replicate_go(VipsImage *in, VipsImage **out, int across, int down);
 int vips_embed_go(VipsImage *in, VipsImage **out, int x, int y, int width, int height);
 
-int vips_apply_watermark(VipsImage *in, VipsImage *watermark, VipsImage **out, double opacity);
+int vips_apply_watermark(VipsImage *in, VipsImage *watermark, VipsImage **out,
+                         int left, int top, double opacity);
 
 int vips_arrayjoin_go(VipsImage **in, VipsImage **out, int n);
 

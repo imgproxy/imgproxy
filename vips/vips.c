@@ -531,7 +531,7 @@ vips_embed_go(VipsImage *in, VipsImage **out, int x, int y, int width, int heigh
 }
 
 int
-vips_apply_watermark(VipsImage *in, VipsImage *watermark, VipsImage **out, double opacity) {
+vips_apply_watermark(VipsImage *in, VipsImage *watermark, VipsImage **out, int left, int top, double opacity) {
   VipsImage *base = vips_image_new();
   VipsImage **t = (VipsImage **) vips_object_local_array(VIPS_OBJECT(base), 7);
 
@@ -559,7 +559,11 @@ vips_apply_watermark(VipsImage *in, VipsImage *watermark, VipsImage **out, doubl
   int had_alpha = vips_image_hasalpha(in);
 
   if (
-    vips_composite2(in, watermark, &t[5], VIPS_BLEND_MODE_OVER, "compositing_space", in->Type, NULL) ||
+    vips_composite2(
+      in, watermark, &t[5], VIPS_BLEND_MODE_OVER,
+      "x", left, "y", top, "compositing_space", in->Type,
+      NULL
+    ) ||
     vips_cast(t[5], &t[6], vips_image_get_format(in), NULL)
   ) {
     clear_image(&base);

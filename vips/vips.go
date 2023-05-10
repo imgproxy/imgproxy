@@ -771,10 +771,10 @@ func (img *Image) Embed(width, height int, offX, offY int) error {
 	return nil
 }
 
-func (img *Image) ApplyWatermark(wm *Image, opacity float64) error {
+func (img *Image) ApplyWatermark(wm *Image, left, top int, opacity float64) error {
 	var tmp *C.VipsImage
 
-	if C.vips_apply_watermark(img.VipsImage, wm.VipsImage, &tmp, C.double(opacity)) != 0 {
+	if C.vips_apply_watermark(img.VipsImage, wm.VipsImage, &tmp, C.int(left), C.int(top), C.double(opacity)) != 0 {
 		return Error()
 	}
 	C.swap_and_clear(&img.VipsImage, tmp)

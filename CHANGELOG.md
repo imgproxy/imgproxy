@@ -7,6 +7,7 @@
 
 ### Change
 - Optimized memory buffers pooling for better performance and memory reusage.
+- Optimized watermarks application.
 
 ## [3.16.1] - 2023-04-26
 ### Fix

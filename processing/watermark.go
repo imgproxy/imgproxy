@@ -67,17 +67,6 @@ func prepareWatermark(wm *vips.Image, wmData *imagedata.ImageData, opts *options
 		if err := wm.Replicate(imgWidth, imgHeight); err != nil {
 			return err
 		}
-	} else {
-		left, top := calcPosition(imgWidth, imgHeight, wm.Width(), wm.Height(), &opts.Gravity, offsetScale, true)
-		if err := wm.Embed(imgWidth, imgHeight, left, top); err != nil {
-			return err
-		}
-	}
-
-	if framesCount > 1 {
-		if err := wm.Replicate(imgWidth, imgWidth*framesCount); err != nil {
-			return err
-		}
 	}
 
 	wm.RemoveHeader("palette-bit-depth")
@@ -95,14 +84,38 @@ func applyWatermark(img *vips.Image, wmData *imagedata.ImageData, opts *options.
 
 	width := img.Width()
 	height := img.Height()
+	frameHeight := height / framesCount
 
-	if err := prepareWatermark(wm, wmData, opts, width, height/framesCount, offsetScale, framesCount); err != nil {
+	if err := prepareWatermark(wm, wmData, opts, width, frameHeight, offsetScale, framesCount); err != nil {
 		return err
 	}
 
 	opacity := opts.Opacity * config.WatermarkOpacity
 
-	return img.ApplyWatermark(wm, opacity)
+	// If we replicated the watermark and need to apply it to an animated image,
+	// it is faster to replicate the watermark to all the image and apply it single-pass
+	if opts.Replicate && framesCount > 1 {
+		if err := wm.Replicate(width, height); err != nil {
+			return err
+		}
+
+		return img.ApplyWatermark(wm, 0, 0, opacity)
+	}
+
+	left, top := 0, 0
+
+	if !opts.Replicate {
+		left, top = calcPosition(width, frameHeight, wm.Width(), wm.Height(), &opts.Gravity, offsetScale, true)
+	}
+
+	for i := 0; i < framesCount; i++ {
+		if err := img.ApplyWatermark(wm, left, top, opacity); err != nil {
+			return err
+		}
+		top += frameHeight
+	}
+
+	return nil
 }
 
 func watermark(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata *imagedata.ImageData) error {
