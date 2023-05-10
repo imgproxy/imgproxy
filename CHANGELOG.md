@@ -10,6 +10,9 @@
 - Optimized memory buffers pooling for better performance and memory reusage.
 - Optimized watermarks application.
 
+### Fix
+- Fix crushes when `watermark_text` has an invalid value.
+
 ## [3.16.1] - 2023-04-26
 ### Fix
 - Fix crashes in cases where the `max_bytes` processing option was used and image saving failed.
