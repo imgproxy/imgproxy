@@ -519,6 +519,10 @@ imgproxy can send logs to syslog, but this feature is disabled by default. To en
 * `IMGPROXY_DOWNLOAD_BUFFER_SIZE`: the initial size (in bytes) of a single download buffer. When set to zero, initializes empty download buffers. Default: `0`
 * `IMGPROXY_FREE_MEMORY_INTERVAL`: the interval (in seconds) at which unused memory will be returned to the OS. Default: `10`
 * `IMGPROXY_BUFFER_POOL_CALIBRATION_THRESHOLD`: the number of buffers that should be returned to a pool before calibration. Default: `1024`
+* `IMGPROXY_MALLOC`: _(Docker only)_ malloc implementation to use. The following implementations are supported:
+  * `malloc`: standard malloc implementation
+  * `jemalloc`: https://jemalloc.net/
+  * `tcmalloc`: https://github.com/google/tcmalloc
 
 ## Miscellaneous
 

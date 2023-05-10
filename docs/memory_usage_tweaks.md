@@ -27,9 +27,11 @@ MALLOC_ARENA_MAX=2 imgproxy
 This will reduce GLib memory appetites by reducing the number of malloc arenas that it can create. By default GLib creates one are per thread, and this would follow to a memory fragmentation.
 
 
-### Using jemalloc
+### Using alternative malloc implementations
 
-If setting `MALLOC_ARENA_MAX` doesn't show you satisfying results, it's time to try [jemalloc](http://jemalloc.net/). As [jemalloc site](http://jemalloc.net/) says:
+If setting `MALLOC_ARENA_MAX` doesn't show you satisfying results, it's time to try alternative malloc implementations.
+
+#### jemalloc
 
 > jemalloc is a general purpose malloc(3) implementation that emphasizes fragmentation avoidance and scalable concurrency support.
 
@@ -39,3 +41,18 @@ Most Linux distributives provide their jemalloc packages. Using jemalloc doesn't
 sudo apt-get install libjemalloc2
 LD_PRELOAD='/usr/lib/x86_64-linux-gnu/libjemalloc.so.2' imgproxy
 ```
+
+Official imgproxy Docker images starting `v3.17.0` have jemalloc preinstalled. Its usage can be enabled by setting the `IMGPROXY_MALLOC` environment variable to `jemalloc`.
+
+#### TCMalloc
+
+> TCMalloc is Google's customized implementation of C's malloc() and C++'s operator new used for memory allocation within our C and C++ code. TCMalloc is a fast, multi-threaded malloc implementation.
+
+Most Linux distributives provide their TCMalloc packages. Using TCMalloc doesn't require rebuilding imgproxy or it's dependencies and can be enabled by the `LD_PRELOAD` environment variable. See the example with Debian below. Note that TCMalloc library path may vary on your system.
+
+```
+sudo apt-get install libtcmalloc-minimal4
+LD_PRELOAD='/usr/lib/x86_64-linux-gnu/libtcmalloc_minimal.so.4' imgproxy
+```
+
+Official imgproxy Docker images starting `v3.17.0` have TCMalloc preinstalled. Its usage can be enabled by setting the `IMGPROXY_MALLOC` environment variable to `tcmalloc`.
