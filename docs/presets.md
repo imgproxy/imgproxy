@@ -30,4 +30,4 @@ Setting `IMGPROXY_ONLY_PRESETS` to `true` switches imgproxy into "presets-only m
 http://imgproxy.example.com/unsafe/thumbnail:blurry:watermarked/plain/http://example.com/images/curiosity.jpg@png
 ```
 
-All othe URL formats are disabled in this mode.
+All other URL formats are disabled in this mode.
