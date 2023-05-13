@@ -7,8 +7,6 @@ pre-push:
   scripts:
     test:
       tags: test
-    check-docs-versions:
-      tags: docs
   commands:
     check-links:
       tags: docs
