@@ -6,13 +6,12 @@ if (window.DOCSIFY_ROUTER_MODE === "history") {
 
 var documentTitleBase = document.title;
 
-var gitterURL = "https://discord.gg/5GgpXgtC9u";
-var gitterBadgeURL = "https://img.shields.io/badge/chat-on%20Discord-blue"
-  + "?logo=discord&logoColor=white&style=for-the-badge";
-var gitterBadge = '<div class="gitter">' +
-  '<a class="gitter-link" href="' + gitterURL + '" target="_blank">' +
-  '<img alt="Chat on Gitter" src="' + gitterBadgeURL + '">' +
-  '</div></a>';
+var linksMenu = '<div class="links-menu">' +
+  '<a href="https://imgproxy.net" target="_blank" title="Website"><img src="/assets/website.svg" /></a>' +
+  '<a href="https://github/imgproxy" target="_blank" title="GitHub"><img src="/assets/github.svg" /></a>' +
+  '<a href="https://twitter.com/imgproxy_net" target="_blank" title="Twitter"><img src="/assets/twitter.svg" /></a>' +
+  '<a href="https://discord.gg/5GgpXgtC9u" target="_blank" title="Discord"><img src="/assets/discord.svg" /></a>' +
+  '</div>';
 
 var docEditBase = 'https://github.com/imgproxy/imgproxy/edit/master/docs/';
 
@@ -37,10 +36,9 @@ versionSelect = versionSelect + '</select>';
 
 window.$docsify = {
   name: '<a id="home-link" class="app-name-link" href="/"><img src="/assets/logo.svg"></a>' +
-    gitterBadge +
+    linksMenu +
     versionSelect,
   nameLink: false,
-  repo: 'https://github.com/imgproxy',
   loadSidebar: true,
   relativePath: true,
   subMaxLevel: 3,

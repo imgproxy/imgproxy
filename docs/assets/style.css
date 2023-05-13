@@ -160,9 +160,17 @@ h1 .badge img, h3 .badge img, h3 .badge img, h4 .badge img, h5 .badge img {
   position: fixed;
 }
 
-.gitter img {
-  display: block;
-  margin: 5px auto 0;
+.links-menu {
+  width: 100%;
+  text-align: center;
+}
+
+.links-menu a {
+  margin: 0 .5em;
+}
+
+.links-menu a img {
+  height: 1em;
 }
 
 .sidebar-version-select {
