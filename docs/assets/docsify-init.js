@@ -10,7 +10,7 @@ const documentTitleBase = document.title;
 
 const linksMenu = '<div class="links-menu">' +
   '<a href="https://imgproxy.net" target="_blank" title="Website"><img src="/assets/website.svg" /></a>' +
-  '<a href="https://github/imgproxy" target="_blank" title="GitHub"><img src="/assets/github.svg" /></a>' +
+  '<a href="https://github.com/imgproxy" target="_blank" title="GitHub"><img src="/assets/github.svg" /></a>' +
   '<a href="https://twitter.com/imgproxy_net" target="_blank" title="Twitter"><img src="/assets/twitter.svg" /></a>' +
   '<a href="https://discord.gg/5GgpXgtC9u" target="_blank" title="Discord"><img src="/assets/discord.svg" /></a>' +
   '</div>';
