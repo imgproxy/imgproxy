@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"regexp"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -54,6 +55,20 @@ func (s *ProcessingOptionsTestSuite) TestParseBase64URLWithBase() {
 	require.Equal(s.T(), imagetype.PNG, po.Format)
 }
 
+func (s *ProcessingOptionsTestSuite) TestParseBase64URLWithReplacement() {
+	config.URLReplacements = map[*regexp.Regexp]string{
+		regexp.MustCompile("^test://([^/]*)/"): "http://images.dev/${1}/dolor/",
+	}
+
+	originURL := "test://lorem/ipsum.jpg?param=value"
+	path := fmt.Sprintf("/size:100:100/%s.png", base64.RawURLEncoding.EncodeToString([]byte(originURL)))
+	po, imageURL, err := ParsePath(path, make(http.Header))
+
+	require.Nil(s.T(), err)
+	require.Equal(s.T(), "http://images.dev/lorem/dolor/ipsum.jpg?param=value", imageURL)
+	require.Equal(s.T(), imagetype.PNG, po.Format)
+}
+
 func (s *ProcessingOptionsTestSuite) TestParsePlainURL() {
 	originURL := "http://images.dev/lorem/ipsum.jpg"
 	path := fmt.Sprintf("/size:100:100/plain/%s@png", originURL)
@@ -93,6 +108,20 @@ func (s *ProcessingOptionsTestSuite) TestParsePlainURLWithBase() {
 
 	require.Nil(s.T(), err)
 	require.Equal(s.T(), fmt.Sprintf("%s%s", config.BaseURL, originURL), imageURL)
+	require.Equal(s.T(), imagetype.PNG, po.Format)
+}
+
+func (s *ProcessingOptionsTestSuite) TestParsePlainURLWithReplacement() {
+	config.URLReplacements = map[*regexp.Regexp]string{
+		regexp.MustCompile("^test://([^/]*)/"): "http://images.dev/${1}/dolor/",
+	}
+
+	originURL := "test://lorem/ipsum.jpg"
+	path := fmt.Sprintf("/size:100:100/plain/%s@png", originURL)
+	po, imageURL, err := ParsePath(path, make(http.Header))
+
+	require.Nil(s.T(), err)
+	require.Equal(s.T(), "http://images.dev/lorem/dolor/ipsum.jpg", imageURL)
 	require.Equal(s.T(), imagetype.PNG, po.Format)
 }
 

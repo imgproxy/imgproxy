@@ -406,6 +406,16 @@ imgproxy can process files from OpenStack Object Storage, but this feature is di
 
 Check out the [Serving files from OpenStack Object Storage](serving_files_from_openstack_swift.md) guide to learn more.
 
+## Source image URLs
+
+* `IMGPROXY_BASE_URL`: a base URL prefix that will be added to each source image URL. For example, if the base URL is `http://example.com/images` and `/path/to/image.png` is requested, imgproxy will download the source image from `http://example.com/images/path/to/image.png`. If the image URL already contains the prefix, it won't be added. Default: blank
+
+* `IMGPROXY_URL_REPLACEMENTS`: a list of `pattern=replacement` pairs, semicolon (`;`) divided. imgproxy will replace source URL prefixes matching the pattern with the corresponding replacement. Wildcards can be included in patterns with `*` to match all characters except `/`. `${N}` in replacement strings will be replaced with wildcard values, where `N` is the number of the wildcard. Examples:
+  * `mys3://=s3://my_bucket/images/` will replace `mys3://image01.jpg` with `s3://my_bucket/images/image01.jpg`
+  * `mys3://*/=s3://my_bucket/${1}/images` will replace `mys3://items/image01.jpg` with `s3://my_bucket/items/images/image01.jpg`
+
+**📝 Note:** Replacements defined in `IMGPROXY_URL_REPLACEMENTS` are applied before `IMGPROXY_BASE_URL` is added.
+
 ## Metrics
 
 ### New Relic :id=new-relic-metrics
@@ -527,7 +537,6 @@ imgproxy can send logs to syslog, but this feature is disabled by default. To en
 
 ## Miscellaneous
 
-* `IMGPROXY_BASE_URL`: a base URL prefix that will be added to each requested image URL. For example, if the base URL is `http://example.com/images` and `/path/to/image.png` is requested, imgproxy will download the source image from `http://example.com/images/path/to/image.png`. If the image URL already contains the prefix, it won't be added. Default: blank
 * `IMGPROXY_USE_LINEAR_COLORSPACE`: when `true`, imgproxy will process images in linear colorspace. This will slow down processing. Note that images won't be fully processed in linear colorspace while shrink-on-load is enabled (see below).
 * `IMGPROXY_DISABLE_SHRINK_ON_LOAD`: when `true`, disables shrink-on-load for JPEGs and WebP files. Allows processing the entire image in linear colorspace but dramatically slows down resizing and increases memory usage when working with large images.
 * `IMGPROXY_STRIP_METADATA`: when `true`, imgproxy will strip all metadata (EXIF, IPTC, etc.) from JPEG and WebP output images. Default: `true`

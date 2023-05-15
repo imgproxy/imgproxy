@@ -221,6 +221,26 @@ func Patterns(s *[]*regexp.Regexp, name string) {
 	}
 }
 
+func Replacements(m *map[*regexp.Regexp]string, name string) error {
+	var sm map[string]string
+
+	if err := StringMap(&sm, name); err != nil {
+		return err
+	}
+
+	if len(sm) > 0 {
+		mm := make(map[*regexp.Regexp]string)
+
+		for k, v := range sm {
+			mm[RegexpFromPattern(k)] = v
+		}
+
+		*m = mm
+	}
+
+	return nil
+}
+
 func RegexpFromPattern(pattern string) *regexp.Regexp {
 	var result strings.Builder
 	// Perform prefix matching
@@ -228,7 +248,7 @@ func RegexpFromPattern(pattern string) *regexp.Regexp {
 	for i, part := range strings.Split(pattern, "*") {
 		// Add a regexp match all without slashes for each wildcard character
 		if i > 0 {
-			result.WriteString("[^/]*")
+			result.WriteString("([^/]*)")
 		}
 
 		// Quote other parts of the pattern

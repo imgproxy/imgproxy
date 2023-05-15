@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+### Add
+- Add `IMGPROXY_URL_REPLACEMENTS` config.
 
 ## [3.17.0] - 2023-05-10
 ### Add

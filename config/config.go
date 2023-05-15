@@ -126,7 +126,8 @@ var (
 
 	LastModifiedEnabled bool
 
-	BaseURL string
+	BaseURL         string
+	URLReplacements map[*regexp.Regexp]string
 
 	Presets     []string
 	OnlyPresets bool
@@ -317,6 +318,7 @@ func Reset() {
 	LastModifiedEnabled = false
 
 	BaseURL = ""
+	URLReplacements = make(map[*regexp.Regexp]string)
 
 	Presets = make([]string, 0)
 	OnlyPresets = false
@@ -518,6 +520,9 @@ func Configure() error {
 	configurators.Bool(&LastModifiedEnabled, "IMGPROXY_USE_LAST_MODIFIED")
 
 	configurators.String(&BaseURL, "IMGPROXY_BASE_URL")
+	if err := configurators.Replacements(&URLReplacements, "IMGPROXY_URL_REPLACEMENTS"); err != nil {
+		return err
+	}
 
 	configurators.StringSlice(&Presets, "IMGPROXY_PRESETS")
 	if err := configurators.StringSliceFile(&Presets, presetsPath); err != nil {
