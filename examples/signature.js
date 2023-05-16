@@ -10,7 +10,7 @@ const sign = (salt, target, secret) => {
   hmac.update(hexDecode(salt))
   hmac.update(target)
 
-  return hmac.digest().toString('base64url')
+  return hmac.digest('base64url')
 }
 
 const path = "/rs:fit:300:300/plain/http://img.example.com/pretty/image.jpg"
