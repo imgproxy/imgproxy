@@ -62,9 +62,7 @@ func Init() error {
 
 	C.vips_concurrency_set(1)
 
-	// Vector calculations cause SIGSEGV sometimes when working with JPEG.
-	// It's better to disable it since profit it quite small
-	C.vips_vector_set_enabled(0)
+	C.vips_vector_set_enabled(1)
 
 	if len(os.Getenv("IMGPROXY_VIPS_LEAK_CHECK")) > 0 {
 		C.vips_leak_set(C.gboolean(1))
