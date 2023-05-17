@@ -102,6 +102,25 @@ func Bool(b *bool, name string) {
 	}
 }
 
+func URLPath(s *string, name string) {
+	if env := os.Getenv(name); len(env) > 0 {
+		if i := strings.IndexByte(env, '?'); i >= 0 {
+			env = env[:i]
+		}
+		if i := strings.IndexByte(env, '#'); i >= 0 {
+			env = env[:i]
+		}
+		if len(env) > 0 && env[len(env)-1] == '/' {
+			env = env[:len(env)-1]
+		}
+		if len(env) > 0 && env[0] != '/' {
+			env = "/" + env
+		}
+
+		*s = env
+	}
+}
+
 func ImageTypes(it *[]imagetype.Type, name string) error {
 	if env := os.Getenv(name); len(env) > 0 {
 		parts := strings.Split(env, ",")

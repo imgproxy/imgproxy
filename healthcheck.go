@@ -19,7 +19,7 @@ func healthcheck() int {
 
 	configurators.String(&network, "IMGPROXY_NETWORK")
 	configurators.String(&bind, "IMGPROXY_BIND")
-	configurators.String(&pathprefix, "IMGPROXY_PATH_PREFIX")
+	configurators.URLPath(&pathprefix, "IMGPROXY_PATH_PREFIX")
 
 	httpc := http.Client{
 		Transport: &http.Transport{

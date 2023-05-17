@@ -406,7 +406,7 @@ func Configure() error {
 
 	configurators.Bool(&SoReuseport, "IMGPROXY_SO_REUSEPORT")
 
-	configurators.String(&PathPrefix, "IMGPROXY_PATH_PREFIX")
+	configurators.URLPath(&PathPrefix, "IMGPROXY_PATH_PREFIX")
 
 	configurators.MegaInt(&MaxSrcResolution, "IMGPROXY_MAX_SRC_RESOLUTION")
 	configurators.Int(&MaxSrcFileSize, "IMGPROXY_MAX_SRC_FILE_SIZE")
@@ -449,7 +449,7 @@ func Configure() error {
 	configurators.Bool(&EnforceAvif, "IMGPROXY_ENFORCE_AVIF")
 	configurators.Bool(&EnableClientHints, "IMGPROXY_ENABLE_CLIENT_HINTS")
 
-	configurators.String(&HealthCheckPath, "IMGPROXY_HEALTH_CHECK_PATH")
+	configurators.URLPath(&HealthCheckPath, "IMGPROXY_HEALTH_CHECK_PATH")
 
 	if err := configurators.ImageTypes(&PreferredFormats, "IMGPROXY_PREFERRED_FORMATS"); err != nil {
 		return err
