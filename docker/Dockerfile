@@ -1,4 +1,4 @@
-ARG BASE_IMAGE_VERSION="v3.3.5"
+ARG BASE_IMAGE_VERSION="v3.4.0"
 
 FROM darthsim/imgproxy-base:${BASE_IMAGE_VERSION}
 
