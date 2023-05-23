@@ -28,6 +28,8 @@ void vips_strip_meta(VipsImage *image);
 
 VipsBandFormat vips_band_format(VipsImage *in);
 
+void vips_remove_bits_per_sample(VipsImage * image);
+
 gboolean vips_is_animated(VipsImage * in);
 
 int vips_image_get_array_int_go(VipsImage *image, const char *name, int **out, int *n);

@@ -15,6 +15,10 @@
 #define VIPS_GIF_RESOLUTION_LIMITED \
   (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION <= 12)
 
+#ifndef VIPS_META_BITS_PER_SAMPLE
+#define VIPS_META_BITS_PER_SAMPLE "palette-bit-depth"
+#endif
+
 int
 vips_initialize() {
   return vips_init("imgproxy");
@@ -134,15 +138,20 @@ vips_get_orientation(VipsImage *image) {
 }
 
 int
-vips_get_palette_bit_depth(VipsImage *image) {
-  int palette_bit_depth;
+vips_get_bits_per_sample(VipsImage *image) {
+  int bits_per_sample;
 
   if (
-    vips_image_get_typeof(image, "palette-bit-depth") == G_TYPE_INT &&
-    vips_image_get_int(image, "palette-bit-depth", &palette_bit_depth) == 0
-  ) return palette_bit_depth;
+    vips_image_get_typeof(image, VIPS_META_BITS_PER_SAMPLE) == G_TYPE_INT &&
+    vips_image_get_int(image, VIPS_META_BITS_PER_SAMPLE, &bits_per_sample) == 0
+  ) return bits_per_sample;
 
   return 0;
+}
+
+void
+vips_remove_bits_per_sample(VipsImage *image) {
+  vips_image_remove(image, VIPS_META_BITS_PER_SAMPLE);
 }
 
 VipsBandFormat
@@ -610,7 +619,7 @@ vips_strip(VipsImage *in, VipsImage **out, int keep_exif_copyright) {
 
     if (
       (strcmp(name, VIPS_META_ICC_NAME) == 0) ||
-      (strcmp(name, "palette-bit-depth") == 0) ||
+      (strcmp(name, VIPS_META_BITS_PER_SAMPLE) == 0) ||
       (strcmp(name, "width") == 0) ||
       (strcmp(name, "height") == 0) ||
       (strcmp(name, "bands") == 0) ||
@@ -664,8 +673,8 @@ vips_pngsave_go(VipsImage *in, void **buf, size_t *len, int interlace, int quant
     else if (colors > 4) bitdepth = 4;
     else if (colors > 2) bitdepth = 2;
   } else {
-    bitdepth = vips_get_palette_bit_depth(in);
-    if (bitdepth) {
+    bitdepth = vips_get_bits_per_sample(in);
+    if (bitdepth && bitdepth <= 8) {
       if (bitdepth > 4) bitdepth = 8;
       else if (bitdepth > 2) bitdepth = 4;
       quantize = 1;
