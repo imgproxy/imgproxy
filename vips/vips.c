@@ -712,7 +712,9 @@ vips_webpsave_go(VipsImage *in, void **buf, size_t *len, int quality) {
 int
 vips_gifsave_go(VipsImage *in, void **buf, size_t *len) {
 #if VIPS_SUPPORT_GIFSAVE
-  return vips_gifsave_buffer(in, buf, len, NULL);
+  int bitdepth = vips_get_bits_per_sample(in);
+  if (bitdepth <= 0 || bitdepth > 8 ) bitdepth = 8;
+  return vips_gifsave_buffer(in, buf, len, "bitdepth", bitdepth, NULL);
 #else
   vips_error("vips_gifsave_go", "Saving GIF is not supported (libvips 8.12+ reuired)");
   return 1;
