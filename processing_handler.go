@@ -257,6 +257,14 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 
 	imgRequestHeader := make(http.Header)
 
+	// Pass source IP validating headers from the original request.
+	headers := []string{"CF-Connecting-IP", "X-Real-IP", "X-Forwarded-For"}
+	for _, header := range headers {
+		if value := r.Header.Get(header); len(value) != 0 {
+			imgRequestHeader.Set(header, value)
+		}
+	}
+
 	var etagHandler etag.Handler
 
 	if config.ETagEnabled {
