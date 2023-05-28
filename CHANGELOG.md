@@ -6,6 +6,7 @@
 
 ### Change
 - Preserve GIF's bit-per-sample.
+- Respond with 422 on error during image loading.
 
 ## [3.17.0] - 2023-05-10
 ### Add

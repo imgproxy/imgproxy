@@ -11,6 +11,7 @@ import (
 	"math"
 	"os"
 	"runtime"
+	"strings"
 	"sync"
 	"unsafe"
 
@@ -152,7 +153,14 @@ func Cleanup() {
 
 func Error() error {
 	defer C.vips_error_clear()
-	return ierrors.NewUnexpected(C.GoString(C.vips_error_buffer()), 1)
+
+	errstr := strings.TrimSpace(C.GoString(C.vips_error_buffer()))
+
+	if strings.Contains(errstr, "load_buffer: ") {
+		return ierrors.New(422, errstr, "Broken or unsupported image")
+	}
+
+	return ierrors.NewUnexpected(errstr, 1)
 }
 
 func hasOperation(name string) bool {
