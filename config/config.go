@@ -16,6 +16,8 @@ import (
 	"github.com/imgproxy/imgproxy/v3/version"
 )
 
+type URLReplacement = configurators.URLReplacement
+
 var (
 	Network                string
 	Bind                   string
@@ -127,7 +129,7 @@ var (
 	LastModifiedEnabled bool
 
 	BaseURL         string
-	URLReplacements map[*regexp.Regexp]string
+	URLReplacements []URLReplacement
 
 	Presets     []string
 	OnlyPresets bool
@@ -318,7 +320,7 @@ func Reset() {
 	LastModifiedEnabled = false
 
 	BaseURL = ""
-	URLReplacements = make(map[*regexp.Regexp]string)
+	URLReplacements = make([]URLReplacement, 0)
 
 	Presets = make([]string, 0)
 	OnlyPresets = false

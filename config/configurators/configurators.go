@@ -12,6 +12,11 @@ import (
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 )
 
+type URLReplacement struct {
+	Regexp      *regexp.Regexp
+	Replacement string
+}
+
 func Int(i *int, name string) {
 	if env, err := strconv.Atoi(os.Getenv(name)); err == nil {
 		*i = env
@@ -240,21 +245,24 @@ func Patterns(s *[]*regexp.Regexp, name string) {
 	}
 }
 
-func Replacements(m *map[*regexp.Regexp]string, name string) error {
-	var sm map[string]string
+func Replacements(s *[]URLReplacement, name string) error {
+	if env := os.Getenv(name); len(env) > 0 {
+		ss := []URLReplacement(nil)
 
-	if err := StringMap(&sm, name); err != nil {
-		return err
-	}
+		keyvalues := strings.Split(env, ";")
 
-	if len(sm) > 0 {
-		mm := make(map[*regexp.Regexp]string)
-
-		for k, v := range sm {
-			mm[RegexpFromPattern(k)] = v
+		for _, keyvalue := range keyvalues {
+			parts := strings.SplitN(keyvalue, "=", 2)
+			if len(parts) != 2 {
+				return fmt.Errorf("Invalid key/value: %s", keyvalue)
+			}
+			ss = append(ss, URLReplacement{
+				Regexp:      RegexpFromPattern(parts[0]),
+				Replacement: parts[1],
+			})
 		}
 
-		*m = mm
+		*s = ss
 	}
 
 	return nil

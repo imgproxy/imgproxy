@@ -56,8 +56,9 @@ func (s *ProcessingOptionsTestSuite) TestParseBase64URLWithBase() {
 }
 
 func (s *ProcessingOptionsTestSuite) TestParseBase64URLWithReplacement() {
-	config.URLReplacements = map[*regexp.Regexp]string{
-		regexp.MustCompile("^test://([^/]*)/"): "http://images.dev/${1}/dolor/",
+	config.URLReplacements = []config.URLReplacement{
+		{Regexp: regexp.MustCompile("^test://([^/]*)/"), Replacement: "test2://images.dev/${1}/dolor/"},
+		{Regexp: regexp.MustCompile("^test2://"), Replacement: "http://"},
 	}
 
 	originURL := "test://lorem/ipsum.jpg?param=value"
@@ -112,8 +113,9 @@ func (s *ProcessingOptionsTestSuite) TestParsePlainURLWithBase() {
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePlainURLWithReplacement() {
-	config.URLReplacements = map[*regexp.Regexp]string{
-		regexp.MustCompile("^test://([^/]*)/"): "http://images.dev/${1}/dolor/",
+	config.URLReplacements = []config.URLReplacement{
+		{Regexp: regexp.MustCompile("^test://([^/]*)/"), Replacement: "test2://images.dev/${1}/dolor/"},
+		{Regexp: regexp.MustCompile("^test2://"), Replacement: "http://"},
 	}
 
 	originURL := "test://lorem/ipsum.jpg"

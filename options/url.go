@@ -13,8 +13,8 @@ import (
 const urlTokenPlain = "plain"
 
 func preprocessURL(u string) string {
-	for re, repl := range config.URLReplacements {
-		u = re.ReplaceAllString(u, repl)
+	for _, repl := range config.URLReplacements {
+		u = repl.Regexp.ReplaceAllString(u, repl.Replacement)
 	}
 
 	if len(config.BaseURL) == 0 || strings.HasPrefix(u, config.BaseURL) {
