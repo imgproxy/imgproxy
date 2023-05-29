@@ -67,9 +67,13 @@ func (m PhotoshopMap) Dump() []byte {
 	buf.Grow(26)
 
 	buf.Write(ps3Header)
-	buf.Write(ps3BlockHeader)
 
 	for id, data := range m {
+		if len(data) == 0 {
+			continue
+		}
+
+		buf.Write(ps3BlockHeader)
 		buf.WriteString(id)
 		// Write empty name
 		buf.Write([]byte{0, 0})
