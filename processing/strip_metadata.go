@@ -7,18 +7,27 @@ import (
 
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagemeta/iptc"
+	"github.com/imgproxy/imgproxy/v3/imagemeta/photoshop"
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
-func stripIPTC(img *vips.Image) []byte {
-	iptcData, err := img.GetBlob("iptc-data")
-	if err != nil || len(iptcData) == 0 {
+func stripPS3(img *vips.Image) []byte {
+	ps3Data, err := img.GetBlob("iptc-data")
+	if err != nil || len(ps3Data) == 0 {
+		return nil
+	}
+
+	ps3Map := make(photoshop.PhotoshopMap)
+	photoshop.Parse(ps3Data, ps3Map)
+
+	iptcData, found := ps3Map[photoshop.IptcKey]
+	if !found {
 		return nil
 	}
 
 	iptcMap := make(iptc.IptcMap)
-	err = iptc.ParsePS3(iptcData, iptcMap)
+	err = iptc.Parse(iptcData, iptcMap)
 	if err != nil {
 		return nil
 	}
@@ -33,7 +42,11 @@ func stripIPTC(img *vips.Image) []byte {
 		return nil
 	}
 
-	return iptcMap.Dump()
+	ps3Map = photoshop.PhotoshopMap{
+		photoshop.IptcKey: iptcMap.Dump(),
+	}
+
+	return ps3Map.Dump()
 }
 
 func stripXMP(img *vips.Image) []byte {
@@ -97,10 +110,10 @@ func stripMetadata(pctx *pipelineContext, img *vips.Image, po *options.Processin
 		return nil
 	}
 
-	var iptcData, xmpData []byte
+	var ps3Data, xmpData []byte
 
 	if po.KeepCopyright {
-		iptcData = stripIPTC(img)
+		ps3Data = stripPS3(img)
 		xmpData = stripXMP(img)
 	}
 
@@ -109,8 +122,8 @@ func stripMetadata(pctx *pipelineContext, img *vips.Image, po *options.Processin
 	}
 
 	if po.KeepCopyright {
-		if len(iptcData) > 0 {
-			img.SetBlob("iptc-data", iptcData)
+		if len(ps3Data) > 0 {
+			img.SetBlob("iptc-data", ps3Data)
 		}
 
 		if len(xmpData) > 0 {
