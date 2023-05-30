@@ -4,7 +4,7 @@
 ### Add
 - Add `IMGPROXY_URL_REPLACEMENTS` config.
 - (pro) Add `IMGPROXY_STRIP_METADATA_DPI` config.
-- (pro) Add [dpi](https://docs.imgproxy.net/latest/configuration?id=dpi) processing option.
+- (pro) Add [dpi](https://docs.imgproxy.net/latest/generating_the_url?id=dpi) processing option.
 - (pro) Add WebP EXIF and XMP to the `/info` response.
 - (pro) Add Photoshop resolution data to the `/info` response.
 
