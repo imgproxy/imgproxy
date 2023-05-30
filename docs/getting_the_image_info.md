@@ -55,6 +55,7 @@ imgproxy responses with a JSON body and returns the following info:
 * `exif`: Exif data
 * `iptc`: IPTC data
 * `xmp`: XMP data
+* `photoshop`: Photoshop metadata (currently, only the resolution data)
 * `video_meta`: metadata from the video
 
 **📝 Note:** There are lots of IPTC tags in the spec, but imgproxy supports only a few of them. If you need some tags to be supported, just contact us.
@@ -97,6 +98,16 @@ imgproxy responses with a JSON body and returns the following info:
     },
     "photoshop": {
       "DateCreated": "2016-09-11T18:44:50.003"
+    }
+  },
+  "photoshop": {
+    "resolution": {
+      "XResolution": 240,
+      "XResolutionUnit": "inches",
+      "WidthUnit": "inches",
+      "YResolution": 240,
+      "YResolutionUnit": "inches",
+      "HeightUnit": "inches"
     }
   }
 }

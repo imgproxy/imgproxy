@@ -552,6 +552,18 @@ kcr:%keep_copyright
 
 When set to `1`, `t` or `true`, imgproxy will not remove copyright info while stripping metadata. This is normally controlled by the [IMGPROXY_KEEP_COPYRIGHT](configuration.md#miscellaneous) configuration but this procesing option allows the configuration to be set for each request.
 
+### DPI![pro](./assets/pro.svg) :id=dpi
+
+```
+dpi:%dpi
+```
+
+When set, imgproxy will replace the image's DPI metadata with the provided value. When set to `0`, imgproxy won't change the image's DPI or will reset it to the default value if the image's metadata should be stripped.
+
+**📝 Note:** This processing option takes effect whether imgproxy should strip the image's metadata or not.
+
+Default: `0`
+
 ### Strip color profile
 
 ```
