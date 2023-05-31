@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+
+## [3.18.0] - 2023-05-31
 ### Add
 - Add `IMGPROXY_URL_REPLACEMENTS` config.
 - (pro) Add `IMGPROXY_STRIP_METADATA_DPI` config.
