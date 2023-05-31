@@ -12,6 +12,9 @@
 - Preserve GIF's bit-per-sample.
 - Respond with 422 on error during image loading.
 
+### Fix
+- (pro) Fix applying the `resizing_algorithm` processing option when resizing images with an alpha channel.
+
 ## [3.17.0] - 2023-05-10
 ### Add
 - Add `process_resident_memory_bytes`, `process_virtual_memory_bytes`, `go_memstats_sys_bytes`, `go_memstats_heap_idle_bytes`, `go_memstats_heap_inuse_bytes`, `go_goroutines`, `go_threads`, `buffer_default_size_bytes`, `buffer_max_size_bytes`, and `buffer_size_bytes` metrics to OpenTelemetry.
