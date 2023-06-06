@@ -220,7 +220,7 @@ vips_resize_go(VipsImage *in, VipsImage **out, double wscale, double hscale) {
 
   clear_image(&base);
 
-  return 0;
+  return res;
 }
 
 int
