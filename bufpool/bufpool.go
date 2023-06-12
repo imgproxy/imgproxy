@@ -106,7 +106,7 @@ func (p *Pool) calibrateAndClean() {
 	for i := 0; i < steps; i++ {
 		callsSum += p.tmpCalls[i]
 
-		if callsSum > defSum || defStep < 0 {
+		if defStep < 0 && callsSum > defSum {
 			defStep = i
 		}
 
@@ -219,7 +219,7 @@ func (p *Pool) Get(size int, grow bool) *bytes.Buffer {
 
 	growSize := p.defaultSize
 	if grow {
-		growSize = imath.Max(size, growSize)
+		growSize = imath.Max(p.normalizeCap(size), growSize)
 	}
 
 	// Grow the buffer only if we know the requested size and it is smaller than
@@ -259,6 +259,26 @@ func (p *Pool) Put(buf *bytes.Buffer) {
 	defer p.storeMu.Unlock()
 
 	p.insert(buf)
+}
+
+// GrowBuffer growth capacity of the buffer to the normalized provided value
+func (p *Pool) GrowBuffer(buf *bytes.Buffer, cap int) {
+	cap = p.normalizeCap(cap)
+	if buf.Cap() < cap {
+		buf.Grow(cap - buf.Len())
+	}
+}
+
+func (p *Pool) normalizeCap(cap int) int {
+	// Don't normalize cap if it's larger than maxSize
+	// since we'll throw this buf out anyway
+	maxSize := int(atomic.LoadUint64(&p.maxSize))
+	if maxSize > 0 && cap > maxSize {
+		return cap
+	}
+
+	ind := index(cap)
+	return imath.Max(cap, minSize<<ind)
 }
 
 func saveEntry(e *entry) {

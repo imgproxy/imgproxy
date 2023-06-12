@@ -52,9 +52,7 @@ func readAndCheckImage(r io.Reader, contentLength int, secopts security.Options)
 		return nil, wrapError(err)
 	}
 
-	if contentLength > buf.Cap() {
-		buf.Grow(contentLength - buf.Len())
-	}
+	downloadBufPool.GrowBuffer(buf, contentLength)
 
 	if err = br.Flush(); err != nil {
 		buf.Reset()
