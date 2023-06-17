@@ -36,7 +36,7 @@ The source URL can be encoded with URL-safe Base64. The encoded URL can be split
 /aHR0cDovL2V4YW1w/bGUuY29tL2ltYWdl/cy9jdXJpb3NpdHku/anBn
 ```
 
-#### Encrypted with AES-CBC
+#### Encrypted with AES-CBC![pro](./assets/pro.svg) :id=encrypted-with-aes-cbc
 
 The source URL can be encrypted with the AES-CBC algorithm, prepended by the `/enc/` segment. The encrypted URL can be split with `/` as desired:
 

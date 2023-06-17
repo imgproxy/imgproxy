@@ -23,8 +23,8 @@ A signature is a URL-safe Base64-encoded HMAC digest of the rest of the path, in
 
 
 * Take the part of the path after the signature:
-  * For [processing URLs](generating_the_url.md): `/%processing_options/%encoded_url.%extension` or `/%processing_options/plain/%plain_url@%extension`
-  * For [info URLs](getting_the_image_info.md): `/%encoded_url` or `/plain/%plain_url`
+  * For [processing URLs](generating_the_url.md): `/%processing_options/%encoded_url.%extension`, `/%processing_options/plain/%plain_url@%extension`, or `/%processing_options/enc/%encrypted_url.%extension`
+  * For [info URLs](getting_the_image_info.md): `/%encoded_url`, `/plain/%plain_url`, or `/enc/%encrypted_url`
 * Add a salt to the beginning.
 * Calculate the HMAC digest using SHA256.
 * Encode the result with URL-safe Base64.
