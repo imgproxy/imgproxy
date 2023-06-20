@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -1188,9 +1189,41 @@ func parsePathPresets(parts []string, headers http.Header) (*ProcessingOptions, 
 	return po, url, nil
 }
 
+func normilizeQueryParams(path string) (string, error) {
+	var queryStart int
+	if queryStart = strings.IndexByte(path, '?'); queryStart < 0 {
+		return path, nil
+	}
+
+	params := path[queryStart:]
+	path = path[:queryStart]
+
+	params, err := url.QueryUnescape(params)
+	if err != nil {
+		return "", err
+	}
+
+	params, err = url.QueryUnescape(params)
+	if err != nil {
+		return "", fmt.Errorf("query unescape: %w", err)
+	}
+
+	params = strings.ReplaceAll(params, "?", "/")
+	params = strings.ReplaceAll(params, "&", "/")
+	params = strings.ReplaceAll(params, "=", ":")
+
+	return params + path, nil
+}
+
 func ParsePath(path string, headers http.Header) (*ProcessingOptions, string, error) {
 	if path == "" || path == "/" {
 		return nil, "", ierrors.New(404, fmt.Sprintf("Invalid path: %s", path), "Invalid URL")
+	}
+
+	if normilizedPath, err := normilizeQueryParams(path); err != nil {
+		return nil, "", ierrors.New(404, fmt.Sprintf("Invalid path: %s", path), "Invalid Query Params")
+	} else {
+		path = normilizedPath
 	}
 
 	parts := strings.Split(strings.TrimPrefix(path, "/"), "/")

@@ -587,6 +587,18 @@ func (s *ProcessingOptionsTestSuite) TestParseBase64URLOnlyPresets() {
 	require.Equal(s.T(), originURL, imageURL)
 }
 
+func (s *ProcessingOptionsTestSuite) TestUseQueryParams() {
+	config.UseQueryParams = true
+	originURL := "http://images.dev/lorem/ipsum.jpg?param=value"
+	path := fmt.Sprintf("/%s?size=100:100&strip_metadata=true", base64.RawURLEncoding.EncodeToString([]byte(originURL)))
+	po, imageURL, err := ParsePath(path, make(http.Header))
+
+	require.Nil(s.T(), err)
+	require.Equal(s.T(), originURL, imageURL)
+	require.Equal(s.T(), imagetype.Unknown, po.Format)
+	require.True(s.T(), po.StripMetadata)
+}
+
 func TestProcessingOptions(t *testing.T) {
 	suite.Run(t, new(ProcessingOptionsTestSuite))
 }

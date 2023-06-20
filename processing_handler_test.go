@@ -703,6 +703,23 @@ func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqCompareTooOldLastModifi
 
 	require.Equal(s.T(), 200, res.StatusCode)
 }
+
+func (s *ProcessingHandlerTestSuite) TestQueryParams() {
+	config.UseQueryParams = true
+	rw := s.send("/unsafe/plain/local:///test1.png?rs=fill:4:4")
+	res := rw.Result()
+
+	require.Equal(s.T(), 200, res.StatusCode)
+	require.Equal(s.T(), "image/png", res.Header.Get("Content-Type"))
+
+	meta, err := imagemeta.DecodeMeta(res.Body)
+
+	require.Nil(s.T(), err)
+	require.Equal(s.T(), imagetype.PNG, meta.Format())
+	require.Equal(s.T(), 4, meta.Width())
+	require.Equal(s.T(), 4, meta.Height())
+}
+
 func TestProcessingHandler(t *testing.T) {
 	suite.Run(t, new(ProcessingHandlerTestSuite))
 }

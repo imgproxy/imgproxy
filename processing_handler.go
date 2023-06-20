@@ -209,7 +209,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	}
 
 	path := r.RequestURI
-	if queryStart := strings.IndexByte(path, '?'); queryStart >= 0 {
+	if queryStart := strings.IndexByte(path, '?'); !config.UseQueryParams && queryStart >= 0 {
 		path = path[:queryStart]
 	}
 
