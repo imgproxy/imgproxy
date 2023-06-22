@@ -27,7 +27,7 @@ const feDropShadowTemplate = `
 	</feMerge>
 `
 
-func Satitize(data *imagedata.ImageData) (*imagedata.ImageData, error) {
+func Sanitize(data *imagedata.ImageData) (*imagedata.ImageData, error) {
 	r := bytes.NewReader(data.Data)
 	l := xml.NewLexer(parse.NewInput(r))
 
@@ -62,8 +62,9 @@ func Satitize(data *imagedata.ImageData) (*imagedata.ImageData, error) {
 			}
 
 			newData := imagedata.ImageData{
-				Data: buf.Bytes(),
-				Type: data.Type,
+				Data:    buf.Bytes(),
+				Type:    data.Type,
+				Headers: data.Headers,
 			}
 			newData.SetCancel(cancel)
 
