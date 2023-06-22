@@ -362,7 +362,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		// Don't process SVG
 		if originData.Type == imagetype.SVG {
 			if config.SanitizeSvg {
-				sanitized, svgErr := svg.Satitize(originData)
+				sanitized, svgErr := svg.Sanitize(originData)
 				checkErr(ctx, "svg_processing", svgErr)
 
 				// Since we'll replace origin data, it's better to close it to return

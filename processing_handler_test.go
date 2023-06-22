@@ -317,11 +317,34 @@ func (s *ProcessingHandlerTestSuite) TestSkipProcessingSVG() {
 	require.Equal(s.T(), 200, res.StatusCode)
 
 	actual := s.readBody(res)
-	expected, err := svg.Satitize(&imagedata.ImageData{Data: s.readTestFile("test1.svg")})
+	expected, err := svg.Sanitize(&imagedata.ImageData{Data: s.readTestFile("test1.svg")})
 
 	require.Nil(s.T(), err)
 
 	require.True(s.T(), bytes.Equal(expected.Data, actual))
+}
+
+func (s *ProcessingHandlerTestSuite) TestPreserveOriginSVGHeaders() {
+	rw := s.send("/unsafe/rs:fill:4:4/plain/local:///test1.svg")
+	res := rw.Result()
+
+	require.Equal(s.T(), 200, res.StatusCode)
+
+	actual := s.readBody(res)
+	originHeaders := map[string]string{
+		"Content-Type":  "image/svg+xml",
+		"Cache-Control": "public, max-age=12345",
+	}
+
+	expected, err := svg.Sanitize(&imagedata.ImageData{
+		Data:    s.readTestFile("test1.svg"),
+		Headers: originHeaders,
+	})
+
+	require.Nil(s.T(), err)
+
+	require.True(s.T(), bytes.Equal(expected.Data, actual))
+	require.Equal(s.T(), originHeaders, expected.Headers)
 }
 
 func (s *ProcessingHandlerTestSuite) TestNotSkipProcessingSVGToJPG() {
