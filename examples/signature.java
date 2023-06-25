@@ -20,7 +20,7 @@ public class ImgProxy{
 
         String pathWithHash = signPath(key, salt, path);
 
-        assertEquals("/m3k5QADfcKPDj-SDI2AIogZbC3FlAXszuwhtWXYqavc/rs:fit:300:300/plain/http://img.example.com/pretty/image.jp", pathWithHash);
+        assertEquals("/m3k5QADfcKPDj-SDI2AIogZbC3FlAXszuwhtWXYqavc/rs:fit:300:300/plain/http://img.example.com/pretty/image.jpg", pathWithHash);
     }
 
     public static String signPath(byte[] key, byte[] salt, String path) throws Exception {
