@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+
+## [3.18.1] - 2023-07-29
 ### Change
 - Change maximum and default values of `IMGPROXY_AVIF_SPEED` to `9`.
 - (pro) Fix detection of some videos.
