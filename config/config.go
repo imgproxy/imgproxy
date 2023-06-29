@@ -242,7 +242,7 @@ func Reset() {
 	PngInterlaced = false
 	PngQuantize = false
 	PngQuantizationColors = 256
-	AvifSpeed = 8
+	AvifSpeed = 9
 	Quality = 80
 	FormatQuality = map[imagetype.Type]int{imagetype.AVIF: 65}
 	StripMetadata = true
@@ -658,8 +658,8 @@ func Configure() error {
 
 	if AvifSpeed < 0 {
 		return fmt.Errorf("Avif speed should be greater than 0, now - %d\n", AvifSpeed)
-	} else if AvifSpeed > 8 {
-		return fmt.Errorf("Avif speed can't be greater than 8, now - %d\n", AvifSpeed)
+	} else if AvifSpeed > 9 {
+		return fmt.Errorf("Avif speed can't be greater than 9, now - %d\n", AvifSpeed)
 	}
 
 	if Quality <= 0 {

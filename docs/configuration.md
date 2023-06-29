@@ -176,7 +176,7 @@ When cookie forwarding is activated, by default, imgproxy assumes the scope of t
 
 ### Advanced AVIF compression
 
-* `IMGPROXY_AVIF_SPEED`: controls the CPU effort spent improving compression. The lowest speed is at 0 and the fastest is at 8. Default: `8`
+* `IMGPROXY_AVIF_SPEED`: controls the CPU effort spent improving compression. The lowest speed is at 0 and the fastest is at 9. Default: `9`
 
 ### Autoquality
 

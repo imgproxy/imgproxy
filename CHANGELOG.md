@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+### Change
+- Change maximum and default values of `IMGPROXY_AVIF_SPEED` to `9`.
 
 ## [3.18.0] - 2023-05-31
 ### Add
