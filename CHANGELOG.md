@@ -3,6 +3,8 @@
 ## [Unreleased]
 ### Change
 - Change maximum and default values of `IMGPROXY_AVIF_SPEED` to `9`.
+- (pro) Fix detection of some videos.
+- (pro) Better calculation of the image complexity during choosing the best format.
 
 ## [3.18.0] - 2023-05-31
 ### Add
