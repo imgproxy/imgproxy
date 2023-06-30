@@ -279,16 +279,16 @@ imgproxy Pro can extract specific video frames to create thumbnails. This featur
 
 Read more about watermarks in the [Watermark](watermark.md) guide.
 
-## Unsharpening
+## Unsharp masking
 
-imgproxy Pro can apply an unsharpening mask to your images.
+imgproxy Pro can apply unsharp masking to your images.
 
-* `IMGPROXY_UNSHARPENING_MODE`: ![pro](./assets/pro.svg) controls when an unsharpenning mask should be applied. The following modes are supported:
-  * `auto`: _(default)_ apply an unsharpening mask only when an image is downscaled and the `sharpen` option has not been set.
-  * `none`: the unsharpening mask is not applied.
-  * `always`: always applies the unsharpening mask.
-* `IMGPROXY_UNSHARPENING_WEIGHT`: ![pro](./assets/pro.svg) a floating-point number that defines how neighboring pixels will affect the current pixel. The greater the value, the sharper the image. This value should be greater than zero. Default: `1`
-* `IMGPROXY_UNSHARPENING_DIVIDOR`: ![pro](./assets/pro.svg) a floating-point number that defines the unsharpening strength. The lesser the value, the sharper the image. This value be greater than zero. Default: `24`
+* `IMGPROXY_UNSHARP_MASKING_MODE`: ![pro](./assets/pro.svg) controls when unsharp masking should be applied. The following modes are supported:
+  * `auto`: _(default)_ apply unsharp masking only when an image is downscaled and the `sharpen` option has not been set.
+  * `none`: unsharp masking is not applied.
+  * `always`: always applies unsharp masking.
+* `IMGPROXY_UNSHARP_MASKING_WEIGHT`: ![pro](./assets/pro.svg) a floating-point number that defines how neighboring pixels will affect the current pixel. The greater the value, the sharper the image. This value should be greater than zero. Default: `1`
+* `IMGPROXY_UNSHARP_MASKING_DIVIDER`: ![pro](./assets/pro.svg) a floating-point number that defines unsharp masking strength. The lesser the value, the sharper the image. This value be greater than zero. Default: `24`
 
 ## Smart crop
 

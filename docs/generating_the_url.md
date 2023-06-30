@@ -397,14 +397,14 @@ When set, imgproxy will apply the pixelate filter to the resulting image. The va
 
 Default: disabled
 
-### Unsharpening![pro](./assets/pro.svg) :id=unsharpening
+### Unsharp masking![pro](./assets/pro.svg) :id=unsharp-masking
 
 ```
-unsharpening:%mode:%weight:%dividor
-ush:%mode:%weight:%dividor
+unsharp_masking:%mode:%weight:%divider
+ush:%mode:%weight:%divider
 ```
 
-Allows redefining unsharpening options. All arguments have the same meaning as [Unsharpening](configuration.md#unsharpening) configs. All arguments are optional and can be omitted.
+Allows redefining unsharp masking options. All arguments have the same meaning as [Unsharp masking](configuration.md#unsharp-masking) configs. All arguments are optional and can be omitted.
 
 ### Blur detections![pro](./assets/pro.svg) :id=blur-detections
 
