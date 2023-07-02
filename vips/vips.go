@@ -638,6 +638,10 @@ func (img *Image) IsRGB() bool {
 		format == C.VIPS_INTERPRETATION_RGB16
 }
 
+func (img *Image) IsLinear() bool {
+	return C.vips_image_guess_interpretation(img.VipsImage) == C.VIPS_INTERPRETATION_scRGB
+}
+
 func (img *Image) ImportColourProfile() error {
 	var tmp *C.VipsImage
 

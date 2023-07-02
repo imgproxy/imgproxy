@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+### Fix
+- Fix saving to JPEG when using linear colorspace.
 
 ## [3.18.1] - 2023-07-29
 ### Change

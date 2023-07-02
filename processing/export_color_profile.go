@@ -9,6 +9,12 @@ import (
 func exportColorProfile(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata *imagedata.ImageData) error {
 	keepProfile := !po.StripColorProfile && po.Format.SupportsColourProfile()
 
+	if img.IsLinear() {
+		if err := img.RgbColourspace(); err != nil {
+			return err
+		}
+	}
+
 	if pctx.iccImported {
 		if keepProfile {
 			// We imported ICC profile and want to keep it,
