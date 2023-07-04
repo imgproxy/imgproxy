@@ -3,6 +3,7 @@
 ## [Unreleased]
 ### Fix
 - Fix saving to JPEG when using linear colorspace.
+- Fix the `Cache-Control` and `Expires` headers passthrough when SVG is sanitized or fixed.
 
 ## [3.18.1] - 2023-07-29
 ### Change
