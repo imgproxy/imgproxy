@@ -194,8 +194,9 @@ func FixUnsupported(data *imagedata.ImageData) (*imagedata.ImageData, bool, erro
 			}
 
 			newData := imagedata.ImageData{
-				Data: buf.Bytes(),
-				Type: data.Type,
+				Data:    buf.Bytes(),
+				Type:    data.Type,
+				Headers: data.Headers,
 			}
 			newData.SetCancel(cancel)
 
