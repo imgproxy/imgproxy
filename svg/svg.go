@@ -15,17 +15,17 @@ import (
 
 var feDropShadowName = []byte("feDropShadow")
 
-const feDropShadowTemplate = `
-	<feMerge result="dsin-%[1]s"><feMergeNode %[3]s /></feMerge>
-	<feGaussianBlur %[4]s />
-	<feOffset %[5]s result="dsof-%[2]s" />
-	<feFlood %[6]s />
-	<feComposite in2="dsof-%[2]s" operator="in" />
-	<feMerge %[7]s>
-		<feMergeNode />
-		<feMergeNode in="dsin-%[1]s" />
-	</feMerge>
-`
+var feDropShadowTemplate = strings.TrimSpace(`
+  <feMerge result="dsin-%[1]s"><feMergeNode %[3]s /></feMerge>
+  <feGaussianBlur %[4]s />
+  <feOffset %[5]s result="dsof-%[2]s" />
+  <feFlood %[6]s />
+  <feComposite in2="dsof-%[2]s" operator="in" />
+  <feMerge %[7]s>
+    <feMergeNode />
+    <feMergeNode in="dsin-%[1]s" />
+  </feMerge>
+`)
 
 func Sanitize(data *imagedata.ImageData) (*imagedata.ImageData, error) {
 	r := bytes.NewReader(data.Data)
