@@ -27,6 +27,19 @@ var feDropShadowTemplate = strings.TrimSpace(`
   </feMerge>
 `)
 
+func cloneHeaders(src map[string]string) map[string]string {
+	if src == nil {
+		return nil
+	}
+
+	dst := make(map[string]string, len(src))
+	for k, v := range src {
+		dst[k] = v
+	}
+
+	return dst
+}
+
 func Sanitize(data *imagedata.ImageData) (*imagedata.ImageData, error) {
 	r := bytes.NewReader(data.Data)
 	l := xml.NewLexer(parse.NewInput(r))
@@ -64,7 +77,7 @@ func Sanitize(data *imagedata.ImageData) (*imagedata.ImageData, error) {
 			newData := imagedata.ImageData{
 				Data:    buf.Bytes(),
 				Type:    data.Type,
-				Headers: data.Headers,
+				Headers: cloneHeaders(data.Headers),
 			}
 			newData.SetCancel(cancel)
 
@@ -196,7 +209,7 @@ func FixUnsupported(data *imagedata.ImageData) (*imagedata.ImageData, bool, erro
 			newData := imagedata.ImageData{
 				Data:    buf.Bytes(),
 				Type:    data.Type,
-				Headers: data.Headers,
+				Headers: cloneHeaders(data.Headers),
 			}
 			newData.SetCancel(cancel)
 
