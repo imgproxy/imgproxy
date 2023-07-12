@@ -4,8 +4,9 @@
 ### Fix
 - Fix saving to JPEG when using linear colorspace.
 - Fix the `Cache-Control` and `Expires` headers passthrough when SVG is sanitized or fixed.
+- (pro) Fix complexity calculation for still images.
 
-## [3.18.1] - 2023-07-29
+## [3.18.1] - 2023-06-29
 ### Change
 - Change maximum and default values of `IMGPROXY_AVIF_SPEED` to `9`.
 - (pro) Fix detection of some videos.
