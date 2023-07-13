@@ -5,6 +5,7 @@
 - Fix saving to JPEG when using linear colorspace.
 - Fix the `Cache-Control` and `Expires` headers passthrough when SVG is sanitized or fixed.
 - (pro) Fix complexity calculation for still images.
+- (docker) Fix crashes during some resizing cases.
 
 ## [3.18.1] - 2023-06-29
 ### Change
