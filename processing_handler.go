@@ -167,7 +167,7 @@ func respondWithNotModified(reqID string, r *http.Request, rw http.ResponseWrite
 	)
 }
 
-func sendErrAndPanic(ctx context.Context, errType string, err error) {
+func sendErr(ctx context.Context, errType string, err error) {
 	send := true
 
 	if ierr, ok := err.(*ierrors.Error); ok {
@@ -183,7 +183,10 @@ func sendErrAndPanic(ctx context.Context, errType string, err error) {
 	if send {
 		metrics.SendError(ctx, errType, err)
 	}
+}
 
+func sendErrAndPanic(ctx context.Context, errType string, err error) {
+	sendErr(ctx, errType, err)
 	panic(err)
 }
 
@@ -329,7 +332,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 			errorreport.Report(err, r)
 		}
 
-		metrics.SendError(ctx, "download", err)
+		sendErr(ctx, "download", err)
 
 		if imagedata.FallbackImage == nil {
 			panic(err)

@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+### Change
+- Don't report `The image request is cancelled` errors.
 
 ## [3.18.2] - 2023-07-13
 ### Fix
