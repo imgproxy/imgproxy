@@ -4,6 +4,10 @@
 ### Change
 - Don't report `The image request is cancelled` errors.
 
+### Fix
+- Fix the `Cache-Control` and `Expires` headers behavior when both `IMGPROXY_CACHE_CONTROL_PASSTHROUGH` and `IMGPROXY_FALLBACK_IMAGE_TTL` configs are set.
+- (pro) Fix the `IMGPROXY_FALLBACK_IMAGE_TTL` config behavior when the `fallback_image_url` processing option is used.
+
 ## [3.18.2] - 2023-07-13
 ### Fix
 - Fix saving to JPEG when using linear colorspace.
