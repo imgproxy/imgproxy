@@ -155,12 +155,14 @@ func Error() error {
 	defer C.vips_error_clear()
 
 	errstr := strings.TrimSpace(C.GoString(C.vips_error_buffer()))
+	err := ierrors.NewUnexpected(errstr, 1)
 
 	if strings.Contains(errstr, "load_buffer: ") {
-		return ierrors.New(422, errstr, "Broken or unsupported image")
+		err.StatusCode = 422
+		err.PublicMessage = "Broken or unsupported image"
 	}
 
-	return ierrors.NewUnexpected(errstr, 1)
+	return err
 }
 
 func hasOperation(name string) bool {

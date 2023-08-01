@@ -6,6 +6,9 @@
 - (pro) Change the `/info` endpoint behavior to return only the first EXIF/XMP/IPTC block data of JPEG if the image contains multiple metadata blocks of the same type.
 
 ### Fix
+- Fix reporting image loading errors.
+
+### Fix
 - Fix the `Cache-Control` and `Expires` headers behavior when both `IMGPROXY_CACHE_CONTROL_PASSTHROUGH` and `IMGPROXY_FALLBACK_IMAGE_TTL` configs are set.
 - (pro) Fix the `IMGPROXY_FALLBACK_IMAGE_TTL` config behavior when the `fallback_image_url` processing option is used.
 

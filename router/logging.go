@@ -24,7 +24,7 @@ func LogResponse(reqID string, r *http.Request, status int, err *ierrors.Error, 
 	var level log.Level
 
 	switch {
-	case status >= 500:
+	case status >= 500 || (err != nil && err.Unexpected):
 		level = log.ErrorLevel
 	case status >= 400:
 		level = log.WarnLevel
