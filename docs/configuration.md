@@ -366,7 +366,9 @@ Check out the [Serving local files](serving_local_files.md) guide to learn more.
 imgproxy can process files from Amazon S3 buckets, but this feature is disabled by default. To enable it, set `IMGPROXY_USE_S3` to `true`:
 
 * `IMGPROXY_USE_S3`: when `true`, enables image fetching from Amazon S3 buckets. Default: `false`
+* `IMGPROXY_S3_REGION`: an S3 buckets region
 * `IMGPROXY_S3_ENDPOINT`: a custom S3 endpoint to being used by imgproxy
+* `IMGPROXY_S3_MULTI_REGION`: when `true`, allows using S3 buckets from different regions
 
 Check out the [Serving files from S3](serving_files_from_s3.md) guide to learn more.
 

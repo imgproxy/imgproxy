@@ -6,8 +6,9 @@ imgproxy can process images from S3 buckets. To use this feature, do the followi
 2. [Set up the necessary credentials](#set-up-credentials) to grant access to your bucket.
 3. _(optional)_ Specify the AWS region with `IMGPROXY_S3_REGION` or `AWS_REGION`. Default: `us-west-1`
 4. _(optional)_ Specify the S3 endpoint with `IMGPROXY_S3_ENDPOINT`.
-5. _(optional)_ Specify the AWS IAM Role to Assume with `IMGPROXY_S3_ASSUME_ROLE_ARN`
-6. Use `s3://%bucket_name/%file_key` as the source image URL.
+5. _(optional)_ Set the `IMGPROXY_S3_MULTI_REGION` environment variable to be `true`.
+6. _(optional)_ Specify the AWS IAM Role to Assume with `IMGPROXY_S3_ASSUME_ROLE_ARN`
+7. Use `s3://%bucket_name/%file_key` as the source image URL.
 
 If you need to specify the version of the source object, you can use the query string of the source URL:
 
@@ -54,11 +55,17 @@ aws_secret_access_key = %secret_access_key
 
 S3 access credentials may be acquired by assuming a role using STS. To do so specify the IAM Role arn with the `IMGPROXY_S3_ASSUME_ROLE_ARN` environment variable. This approach still requires you to provide initial AWS credentials by using one of the ways described above. The provided credentials role should allow assuming the role with provided ARN.
 
-## Minio
+## Multi-Region mode
 
-[Minio](https://github.com/minio/minio) is an object storage server released under Apache License v2.0. It is compatible with Amazon S3, so it can be used with imgproxy.
+By default, imgproxy allows using S3 buckets located in a single region specified with `IMGPROXY_S3_REGION` or `AWS_REGION`. If your buckets are located in different regions, set `IMGPROXY_S3_MULTI_REGION` environment variable to be `true` to enable multi-region mode. In this mode, imgproxy will make an additional request to determine the bucket's region when the bucket is accessed for the first time.
 
-To use Minio as source images provider, do the following:
+In this mode, imgroxy uses a region specified with  `IMGPROXY_S3_REGION` or `AWS_REGION` to determine the endpoint to which it should send the bucket's region determination request. Thus, it's a good idea to use one of these variables to specify a region closest to the imgproxy instance.
+
+## MinIO
+
+[MinIO](https://github.com/minio/minio) is an object storage server released under Apache License v2.0. It is compatible with Amazon S3, so it can be used with imgproxy.
+
+To use MinIO as source images provider, do the following:
 
 * Set up Amazon S3 support as usual using environment variables or a shared config file.
 * Specify an endpoint with `IMGPROXY_S3_ENDPOINT`. Use the `http://...` endpoint to disable SSL.

@@ -2,6 +2,7 @@ package s3
 
 import (
 	"bytes"
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -43,12 +44,12 @@ func (s *S3TestSuite) SetupSuite() {
 	s.transport, err = New()
 	require.Nil(s.T(), err)
 
-	svc := s.transport.(transport).svc
-
-	_, err = svc.CreateBucket(&s3.CreateBucketInput{
-		Bucket: aws.String("test"),
-	})
+	err = backend.CreateBucket("test")
 	require.Nil(s.T(), err)
+
+	svc, err := s.transport.(*transport).getClient(context.Background(), "test")
+	require.Nil(s.T(), err)
+	require.NotNil(s.T(), svc)
 
 	_, err = svc.PutObject(&s3.PutObjectInput{
 		Body:   bytes.NewReader(make([]byte, 32)),
@@ -70,6 +71,7 @@ func (s *S3TestSuite) SetupSuite() {
 
 func (s *S3TestSuite) TearDownSuite() {
 	s.server.Close()
+	config.Reset()
 }
 
 func (s *S3TestSuite) TestRoundTripWithETagDisabledReturns200() {
@@ -153,6 +155,15 @@ func (s *S3TestSuite) TestRoundTripWithUpdatedLastModifiedReturns200() {
 	response, err := s.transport.RoundTrip(request)
 	require.Nil(s.T(), err)
 	require.Equal(s.T(), http.StatusOK, response.StatusCode)
+}
+
+func (s *S3TestSuite) TestRoundTripWithMultiregionEnabledReturns200() {
+	config.S3MultiRegion = true
+	request, _ := http.NewRequest("GET", "s3://test/foo/test.png", nil)
+
+	response, err := s.transport.RoundTrip(request)
+	require.Nil(s.T(), err)
+	require.Equal(s.T(), 200, response.StatusCode)
 }
 
 func TestS3Transport(t *testing.T) {
