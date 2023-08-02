@@ -1,6 +1,9 @@
 # Changelog
 
 ## [Unreleased]
+### Add
+- Add [multi-region mode](https://docs.imgproxy.net/latest/serving_files_from_s3?id=multi-region-mode) to S3 integration.
+
 ### Change
 - Don't report `The image request is cancelled` errors.
 - (pro) Change the `/info` endpoint behavior to return only the first EXIF/XMP/IPTC block data of JPEG if the image contains multiple metadata blocks of the same type.
