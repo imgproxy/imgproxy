@@ -1,6 +1,6 @@
 # Amazon CloudWatch
 
-imgproxy can send its metrics to AmazonCloudFront. To use this feature, do the following:
+imgproxy can send its metrics to Amazon CloudWatch. To use this feature, do the following:
 
 1. Set the `IMGPROXY_CLOUD_WATCH_SERVICE_NAME` environment variable. imgproxy will use the value of this variable as a value for the `ServiceName` dimension.
 2. [Set up the necessary credentials](#set-up-credentials) to grant access to CloudWatch.
