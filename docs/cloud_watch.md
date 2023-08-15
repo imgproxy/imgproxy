@@ -11,7 +11,7 @@ imgproxy sends the following metrics to CloudWatch:
 
 * `RequestsInProgress`: the number of requests currently in progress
 * `ImagesInProgress`: the number of images currently in progress
-* `ConcurrencyUtilization`: the percentage of imgproxy's concurrency utilization. Calculated as `RequestsInProgress / IMGPROXY_CONCURRENCY * 100`
+* `WorkersUtilization`, `ConcurrencyUtilization`: the percentage of imgproxy's workers utilization. Calculated as `RequestsInProgress / IMGPROXY_WORKERS * 100`
 * `BufferSize`: a summary of the download buffers sizes (in bytes)
 * `BufferDefaultSize`: calibrated default buffer size (in bytes)
 * `BufferMaxSize`: calibrated maximum buffer size (in bytes)

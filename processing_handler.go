@@ -37,10 +37,10 @@ var (
 
 func initProcessingHandler() {
 	if config.RequestsQueueSize > 0 {
-		queueSem = semaphore.New(config.RequestsQueueSize + config.Concurrency)
+		queueSem = semaphore.New(config.RequestsQueueSize + config.Workers)
 	}
 
-	processingSem = semaphore.New(config.Concurrency)
+	processingSem = semaphore.New(config.Workers)
 
 	vary := make([]string, 0)
 
@@ -282,7 +282,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// The heavy part start here, so we need to restrict concurrency
+	// The heavy part start here, so we need to restrict workers number
 	var processingSemToken *semaphore.Token
 	func() {
 		defer metrics.StartQueueSegment(ctx)()

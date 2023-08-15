@@ -3,6 +3,7 @@
 ## [Unreleased]
 ### Add
 - Add [multi-region mode](https://docs.imgproxy.net/latest/serving_files_from_s3?id=multi-region-mode) to S3 integration.
+- Add `IMGPROXY_WORKERS` alias for the `IMGPROXY_CONCURRENCY` config.
 
 ### Change
 - Don't report `The image request is cancelled` errors.
@@ -10,8 +11,6 @@
 
 ### Fix
 - Fix reporting image loading errors.
-
-### Fix
 - Fix the `Cache-Control` and `Expires` headers behavior when both `IMGPROXY_CACHE_CONTROL_PASSTHROUGH` and `IMGPROXY_FALLBACK_IMAGE_TTL` configs are set.
 - (pro) Fix the `IMGPROXY_FALLBACK_IMAGE_TTL` config behavior when the `fallback_image_url` processing option is used.
 

@@ -30,7 +30,7 @@ func New(verifyNetworks bool) (*http.Transport, error) {
 		Proxy:                 http.ProxyFromEnvironment,
 		DialContext:           dialer.DialContext,
 		MaxIdleConns:          100,
-		MaxIdleConnsPerHost:   config.Concurrency + 1,
+		MaxIdleConnsPerHost:   config.Workers + 1,
 		IdleConnTimeout:       time.Duration(config.ClientKeepAliveTimeout) * time.Second,
 		TLSHandshakeTimeout:   10 * time.Second,
 		ExpectContinueTimeout: 1 * time.Second,

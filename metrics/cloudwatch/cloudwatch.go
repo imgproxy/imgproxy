@@ -232,7 +232,16 @@ func runMetricsCollector() {
 				MetricName: aws.String("ConcurrencyUtilization"),
 				Unit:       aws.String("Percent"),
 				Value: aws.Float64(
-					stats.RequestsInProgress() / float64(config.Concurrency) * 100.0,
+					stats.RequestsInProgress() / float64(config.Workers) * 100.0,
+				),
+			})
+
+			metrics = append(metrics, &cloudwatch.MetricDatum{
+				Dimensions: []*cloudwatch.Dimension{dimension},
+				MetricName: aws.String("WorkersUtilization"),
+				Unit:       aws.String("Percent"),
+				Value: aws.Float64(
+					stats.RequestsInProgress() / float64(config.Workers) * 100.0,
 				),
 			})
 

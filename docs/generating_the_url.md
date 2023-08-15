@@ -746,7 +746,7 @@ When set to `1`, `t` or `true`, imgproxy will respond with a raw unprocessed, an
 * While the `skip_processing` option has some conditions to skip the processing, the `raw` option allows to skip processing no matter what
 * With the `raw` option set, imgproxy doesn't check the source image's type, resolution, and file size. Basically, the `raw` option allows streaming of any file type
 * With the `raw` option set, imgproxy won't download the whole image to the memory. Instead, it will stream the source image directly to the response lowering memory usage
-* The requests with the `raw` option set are not limited by the `IMGPROXY_CONCURRENCY` config
+* The requests with the `raw` option set are not limited by the `IMGPROXY_WORKERS` config
 
 Default: `false`
 

@@ -26,7 +26,7 @@ var (
 	KeepAliveTimeout       int
 	ClientKeepAliveTimeout int
 	DownloadTimeout        int
-	Concurrency            int
+	Workers                int
 	RequestsQueueSize      int
 	MaxClients             int
 
@@ -219,7 +219,7 @@ func Reset() {
 	KeepAliveTimeout = 10
 	ClientKeepAliveTimeout = 90
 	DownloadTimeout = 5
-	Concurrency = runtime.GOMAXPROCS(0) * 2
+	Workers = runtime.GOMAXPROCS(0) * 2
 	RequestsQueueSize = 0
 	MaxClients = 2048
 
@@ -400,7 +400,8 @@ func Configure() error {
 	configurators.Int(&KeepAliveTimeout, "IMGPROXY_KEEP_ALIVE_TIMEOUT")
 	configurators.Int(&ClientKeepAliveTimeout, "IMGPROXY_CLIENT_KEEP_ALIVE_TIMEOUT")
 	configurators.Int(&DownloadTimeout, "IMGPROXY_DOWNLOAD_TIMEOUT")
-	configurators.Int(&Concurrency, "IMGPROXY_CONCURRENCY")
+	configurators.Int(&Workers, "IMGPROXY_CONCURRENCY")
+	configurators.Int(&Workers, "IMGPROXY_WORKERS")
 	configurators.Int(&RequestsQueueSize, "IMGPROXY_REQUESTS_QUEUE_SIZE")
 	configurators.Int(&MaxClients, "IMGPROXY_MAX_CLIENTS")
 
@@ -625,8 +626,8 @@ func Configure() error {
 		return fmt.Errorf("Download timeout should be greater than 0, now - %d\n", DownloadTimeout)
 	}
 
-	if Concurrency <= 0 {
-		return fmt.Errorf("Concurrency should be greater than 0, now - %d\n", Concurrency)
+	if Workers <= 0 {
+		return fmt.Errorf("Workers number should be greater than 0, now - %d\n", Workers)
 	}
 
 	if RequestsQueueSize < 0 {
@@ -634,7 +635,7 @@ func Configure() error {
 	}
 
 	if MaxClients < 0 {
-		return fmt.Errorf("Concurrency should be greater than or equal 0, now - %d\n", MaxClients)
+		return fmt.Errorf("Max clients number should be greater than or equal 0, now - %d\n", MaxClients)
 	}
 
 	if TTL <= 0 {
