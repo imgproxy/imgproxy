@@ -26,6 +26,8 @@ const proLink = `<a class="badge" href="https://imgproxy.net/#pro" target="_blan
 
 const oldProBadge = "<i class='badge badge-pro'></i>";
 
+const configRegex = /^\* `([^`]+)`:/gm;
+
 const defaultVersions = [["latest", "latest"]];
 
 const configureDocsify = (additionalVersions, latestVersion, latestTag) => {
@@ -124,6 +126,10 @@ const configureDocsify = (additionalVersions, latestVersion, latestTag) => {
         hook.beforeEach((content, next) => {
           content = content.replaceAll(proBadgeRegex, proLink);
           content = content.replaceAll(oldProBadge, proLink);
+
+          if (vm.route.path.endsWith('/configuration'))
+            content = content.replaceAll(configRegex, '* <code id="$1">$1</code>:');
+
           next(content);
         })
 
