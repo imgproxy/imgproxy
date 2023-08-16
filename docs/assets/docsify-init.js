@@ -29,6 +29,8 @@ const oldProBadge = "<i class='badge badge-pro'></i>";
 
 const configRegex = /^\* `([^`]+)`:/gm;
 
+const copyCodeBtn = '<button class="copy-code" title="Copy code"></button>';
+
 const defaultVersions = [["latest", "latest"]];
 
 const configureDocsify = (additionalVersions, latestVersion, latestTag) => {
@@ -148,6 +150,36 @@ const configureDocsify = (additionalVersions, latestVersion, latestTag) => {
           // Docsify cuts off "target" sometimes
           const links = Docsify.dom.findAll("a.badge");
           links.forEach(l => { l.setAttribute("target", "_blank") });
+
+          const codeBlocks = Docsify.dom.findAll('pre[data-lang]');
+          codeBlocks.forEach(elm =>
+            elm.insertAdjacentHTML('beforeend', copyCodeBtn));
+        })
+
+        hook.mounted(() => {
+          const content = Docsify.dom.find('.content');
+
+          content.addEventListener('click', function(e) {
+            if (!e.target.classList.contains('copy-code'))
+              return;
+
+            const btn = e.target;
+            const code = Docsify.dom.find(btn.parentNode, 'code');
+
+            navigator.clipboard.writeText(code.innerText).then(() => {
+              btn.classList.add('copy-code-success');
+              setTimeout(() => {
+                btn.classList.remove('copy-code-success');
+              }, 1500);
+            }).catch((err)  =>{
+              console.log(`Can't copy code: ${err}`);
+
+              btn.classList.add('copy-code-error');
+              setTimeout(() => {
+                btn.classList.remove('copy-code-error');
+              }, 1500);
+            });
+          });
         })
       }
     ])

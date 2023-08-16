@@ -38,8 +38,6 @@
   --sidebar-width: 20rem;
   --sidebar-nav-link-before-content-l3: "";
 
-  --copycode-background: linear-gradient(0deg, #1d40b2, #1680d6);
-
   --table-row-even-background: var(--base-background-color);
 
   --selection-color: rgba(255, 255, 255, 0.3);
@@ -90,27 +88,63 @@
 .markdown-section pre[data-lang] {
   border: 2px solid var(--white-20);
 }
-.markdown-section pre[data-lang]:hover {
-  border: 2px solid var(--theme-color);
+.markdown-section pre[data-lang]::after {
+  display: none;
 }
 
-body .docsify-copy-code-button {
-  transition: none;
-}
-body .docsify-copy-code-button,
-body .docsify-copy-code-button::after {
-  border-radius: 0;
-}
-body .docsify-copy-code-button span {
+.copy-code {
+  appearance: none;
+  cursor: pointer;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 20px;
+  height: 20px;
+  border: none;
+  padding: 0;
   background: none;
+  background-image: url(/assets/copy.svg);
+  background-position: center;
+  background-size: contain;
+  background-repeat: no-repeat;
+  opacity: 0.8;
 }
-body .docsify-copy-code-button .success {
+.copy-code:hover {
+  opacity: 1;
+}
+.copy-code::before {
+  content: "";
+  position: absolute;
+  display: block;
+  font-size: 16px;
+  font-weight: bold;
+  line-height: 16px;
+  height: 16px;
+  left: 0;
+  top: 50%;
+  transform: translate3d(0, -50%, 0);
+}
+.copy-code-success {
+  background-image: url(/assets/check.svg);
+  opacity: 1;
+}
+.copy-code-success::before {
+  content: "Copied!";
   color: #77b33a;
-  font-weight: bold;
 }
-body .docsify-copy-code-button .error {
+.copy-code-error {
+  background-image: url(/assets/cross.svg);
+  opacity: 1;
+}
+.copy-code-error::before {
+  content: "Can't copy";
   color: #e65855;
-  font-weight: bold;
+}
+.copy-code-success::before,
+.copy-code-error::before {
+  padding-right: 8px;
+  transform: translate3d(-100%, -50%, 0);
+  transition: transform .2s;
 }
 
 .loading {
@@ -199,7 +233,7 @@ i.icon-cross::after {
   position: fixed;
   bottom: 0;
   right: 1em;
-  background: var(--copycode-background);
+  background: linear-gradient(0deg, #1d40b2, #1680d6);
   color: var(--base-color) !important;
   text-decoration: none !important;
   font-size: .8em;
