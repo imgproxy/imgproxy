@@ -35,7 +35,7 @@ const configureDocsify = (additionalVersions, latestVersion, latestTag) => {
 
   const versionAliases = {};
 
-  const versionSelect = ['<select id="version-selector" name="version" class="sidebar-version-select">'];
+  const versionSelect = ['<div class="sidebar-version-select"><select id="version-selector" name="version">'];
   versions.forEach(([version, tag]) => {
     const value = version == latestVersion ? "" : version;
     versionSelect.push(`<option value="${value}">${version}</value>`);
@@ -47,7 +47,7 @@ const configureDocsify = (additionalVersions, latestVersion, latestTag) => {
         `https://raw.githubusercontent.com/imgproxy/imgproxy/${tag}/docs/README.md`;
     }
   });
-  versionSelect.push('</select>');
+  versionSelect.push('</select></div>');
 
   if (latestTag === "latest") latestTag = "master";
 
@@ -124,8 +124,15 @@ const configureDocsify = (additionalVersions, latestVersion, latestTag) => {
         })
 
         hook.beforeEach((content, next) => {
-          content = content.replaceAll(proBadgeRegex, proLink);
-          content = content.replaceAll(oldProBadge, proLink);
+          content = content
+            .replaceAll(proBadgeRegex, proLink)
+            .replaceAll(oldProBadge, proLink);
+
+          content = content
+            .replaceAll("📝", '<i class="icon icon-note"></i>')
+            .replaceAll("⚠️", '<i class="icon icon-warn"></i>')
+            .replaceAll("✅", '<i class="icon icon-check"></i>')
+            .replaceAll("❌", '<i class="icon icon-cross"></i>');
 
           if (vm.route.path.endsWith('/configuration'))
             content = content.replaceAll(configRegex, '* <code id="$1">$1</code>:');
