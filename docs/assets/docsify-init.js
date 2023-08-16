@@ -13,6 +13,7 @@ const linksMenu = '<div class="links-menu">' +
   '<a href="https://github.com/imgproxy" target="_blank" title="GitHub"><img src="/assets/github.svg" /></a>' +
   '<a href="https://twitter.com/imgproxy_net" target="_blank" title="Twitter"><img src="/assets/twitter.svg" /></a>' +
   '<a href="https://discord.gg/5GgpXgtC9u" target="_blank" title="Discord"><img src="/assets/discord.svg" /></a>' +
+  '<a href="https://github.com/sponsors/imgproxy" target="_blank" title="Sponsor"><img src="/assets/heart.svg" /></a>' +
   '</div>';
 
 const docEditBase = 'https://github.com/imgproxy/imgproxy/edit/master/docs/';
