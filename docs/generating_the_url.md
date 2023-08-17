@@ -683,9 +683,24 @@ page:%page
 pg:%page
 ```
 
-When a source image supports pagination (PDF, TIFF) or animation (GIF, WebP), this option allows specifying the page to use it on. Page numeration starts from zero.
+When a source image supports pagination (PDF, TIFF) or animation (GIF, WebP), this option allows specifying the page to use. Page numeration starts from zero.
+
+**📝 Note:** If both the source and the resulting image formats supoprt animation, imgproxy will ignore this option and use all the source image pages. Use the [disable_animation](#disable-animation) option to make imgproxy treat all images as not animated.
 
 Default: 0
+
+### Pages![pro](./assets/pro.svg) :id=pages
+
+```
+pages:%pages
+pgs:%pages
+```
+
+When a source image supports pagination (PDF, TIFF) or animation (GIF, WebP), this option allows specifying the number of pages to use. The pages will be stacked vertically and left-aligned.
+
+**📝 Note:** If both the source and the resulting image formats supoprt animation, imgproxy will ignore this option and use all the source image pages. Use the [disable_animation](#disable-animation) option to make imgproxy treat all images as not animated.
+
+Default: 1
 
 ### Disable animation![pro](./assets/pro.svg) :id=disable-animation
 
@@ -694,7 +709,7 @@ disable_animation:%disable
 da:%disable
 ```
 
-When set to `1`, `t` or `true`, imgproxy will use a single frame of animated images. Use the [page](#page) option to specify which frame imgproxy should use.
+When set to `1`, `t` or `true`, imgproxy will treat all images as not animated. Use the [page](#page) and the [pages](#pages) options to specify which frames imgproxy should use.
 
 Default: `false`
 
