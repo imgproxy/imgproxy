@@ -23,12 +23,18 @@
   --code-theme-background: var(--white-5);
   --code-inline-background: var(--white-20);
 
+  --blockquote-background: var(--white-5);
+  --blockquote-border-width: 0 0 0 2px;
+
   --heading-font-family: 'Roboto Condensed',sans-serif;
   --heading-h1-font-weight: 700;
   --heading-h2-font-weight: 700;
   --heading-h3-font-weight: 700;
   --heading-h4-font-weight: 700;
   --heading-h5-font-weight: 700;
+
+  --heading-h2-border-color: var(--white-20);
+  --heading-h2-border-width: 0 0 2px;
 
   --link-color: var(--theme-color);
 
@@ -199,8 +205,10 @@
 }
 
 h1 .badge img, h3 .badge img, h3 .badge img, h4 .badge img, h5 .badge img {
-  height: 0.8em;
-  margin-top: -0.20em;
+  display: inline-block;
+  position: relative;
+  height: .8em;
+  top: .125em;
   margin-left: .1em;
 }
 
