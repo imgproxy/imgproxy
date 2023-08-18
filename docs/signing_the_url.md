@@ -49,10 +49,10 @@ IMGPROXY_KEY=736563726574 IMGPROXY_SALT=68656C6C6F imgproxy
 
 Note that all your unsigned URL will stop working since imgproxy now checks all URL signatures.
 
-First, you need to take the path after the signature and add the salt to the beginning:
+First, you need to take the path after the signature:
 
 ```
-hello/rs:fill:300:400:0/g:sm/aHR0cDovL2V4YW1w/bGUuY29tL2ltYWdl/cy9jdXJpb3NpdHku/anBn.png
+/rs:fill:300:400:0/g:sm/aHR0cDovL2V4YW1w/bGUuY29tL2ltYWdl/cy9jdXJpb3NpdHku/anBn.png
 ```
 
 Then calculate the HMAC digest of this string using SHA256 and encode it with URL-safe Base64:
