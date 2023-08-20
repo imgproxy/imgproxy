@@ -190,25 +190,23 @@
   padding: var(--sidebar-nav-pagelink-padding, var(--sidebar-nav-link-padding));
 }
 
+.badge img,
 .sidebar-nav li > a > img {
+  display: inline-block;
+  position: relative;
   height: 1em;
-}
-
-.badge img {
-  height: 1em;
-  vertical-align: middle;
-  margin-top: -0.25em;
+  top: .125em;
 }
 
 .badge img:hover {
   filter: brightness(1.2);
 }
 
-h1 .badge img, h3 .badge img, h3 .badge img, h4 .badge img, h5 .badge img {
-  display: inline-block;
-  position: relative;
+h1 .badge img, h3 .badge img, h3 .badge img {
   height: .8em;
-  top: .125em;
+}
+
+h1 .badge img, h3 .badge img, h3 .badge img, h4 .badge img, h5 .badge img {
   margin-left: .1em;
 }
 
