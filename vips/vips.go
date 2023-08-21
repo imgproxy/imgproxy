@@ -7,12 +7,14 @@ package vips
 */
 import "C"
 import (
+	"context"
 	"errors"
 	"math"
 	"os"
 	"runtime"
 	"strings"
 	"sync"
+	"time"
 	"unsafe"
 
 	log "github.com/sirupsen/logrus"
@@ -145,6 +147,35 @@ func GetMemHighwater() float64 {
 
 func GetAllocs() float64 {
 	return float64(C.vips_tracked_get_allocs())
+}
+
+func Health() error {
+	timer := time.NewTimer(5 * time.Second)
+	defer timer.Stop()
+
+	done := make(chan struct{})
+
+	var err error
+
+	go func(done chan struct{}) {
+		runtime.LockOSThread()
+		defer runtime.UnlockOSThread()
+
+		defer Cleanup()
+
+		if C.vips_health() != 0 {
+			err = Error()
+		}
+
+		close(done)
+	}(done)
+
+	select {
+	case <-done:
+		return err
+	case <-timer.C:
+		return context.DeadlineExceeded
+	}
 }
 
 func Cleanup() {

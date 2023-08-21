@@ -17,6 +17,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/metrics"
 	"github.com/imgproxy/imgproxy/v3/reuseport"
 	"github.com/imgproxy/imgproxy/v3/router"
+	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
 var (
@@ -165,10 +166,26 @@ func withPanicHandler(h router.RouteHandler) router.RouteHandler {
 }
 
 func handleHealth(reqID string, rw http.ResponseWriter, r *http.Request) {
-	router.LogResponse(reqID, r, 200, nil)
+	var (
+		status int
+		msg    []byte
+		ierr   *ierrors.Error
+	)
+
+	if err := vips.Health(); err == nil {
+		status = http.StatusOK
+		msg = imgproxyIsRunningMsg
+	} else {
+		status = http.StatusInternalServerError
+		msg = []byte("Error")
+		ierr = ierrors.Wrap(err, 1)
+	}
+
+	router.LogResponse(reqID, r, status, ierr)
+
 	rw.Header().Set("Cache-Control", "no-cache")
-	rw.WriteHeader(200)
-	rw.Write(imgproxyIsRunningMsg)
+	rw.WriteHeader(status)
+	rw.Write(msg)
 }
 
 func handleHead(reqID string, rw http.ResponseWriter, r *http.Request) {

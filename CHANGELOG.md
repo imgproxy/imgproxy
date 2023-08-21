@@ -9,6 +9,7 @@
 
 ### Change
 - Don't report `The image request is cancelled` errors.
+- Create and destroy a tiny image during health check to check that vips is operational.
 - (pro) Change the `/info` endpoint behavior to return only the first EXIF/XMP/IPTC block data of JPEG if the image contains multiple metadata blocks of the same type.
 
 ### Fix

@@ -50,6 +50,20 @@ gif_resolution_limit() {
 #endif
 }
 
+// Just create and destroy a tiny image to ensure vips is operational
+int
+vips_health() {
+  VipsImage *base = vips_image_new();
+  VipsImage **t = (VipsImage **) vips_object_local_array(VIPS_OBJECT(base), 2);
+
+  int res = vips_black(&t[0], 4, 4, "bands", 4, NULL) ||
+    !(t[1] = vips_image_copy_memory(t[0]));
+
+  clear_image(&base);
+
+  return res;
+}
+
 int
 vips_jpegload_go(void *buf, size_t len, int shrink, VipsImage **out) {
   if (shrink > 1)

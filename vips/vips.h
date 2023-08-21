@@ -13,6 +13,8 @@ void swap_and_clear(VipsImage **in, VipsImage *out);
 
 int gif_resolution_limit();
 
+int vips_health();
+
 int vips_jpegload_go(void *buf, size_t len, int shrink, VipsImage **out);
 int vips_pngload_go(void *buf, size_t len, VipsImage **out);
 int vips_webpload_go(void *buf, size_t len, double scale, int pages, VipsImage **out);
