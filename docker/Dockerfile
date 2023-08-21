@@ -1,4 +1,4 @@
-ARG BASE_IMAGE_VERSION="v3.6.1"
+ARG BASE_IMAGE_VERSION="v3.7.0"
 
 FROM darthsim/imgproxy-base:${BASE_IMAGE_VERSION}
 
@@ -11,7 +11,7 @@ RUN docker/build.sh
 # ==================================================================================================
 # Final image
 
-FROM debian:bullseye-slim
+FROM debian:stable-slim
 LABEL maintainer="Sergey Alexandrovich <darthsim@gmail.com>"
 
 RUN apt-get update \
