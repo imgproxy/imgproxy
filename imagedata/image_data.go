@@ -4,13 +4,14 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"golang.org/x/net/proxy"
 	"net/http"
 	"net/http/cookiejar"
 	"os"
 	path2 "path"
 	"strings"
 	"sync"
+
+	"golang.org/x/net/proxy"
 
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
@@ -151,13 +152,6 @@ func Download(imageURL, desc string, header http.Header, jar *cookiejar.Jar) (*I
 		}
 		return nil, ierrors.WrapWithPrefix(err, 1, fmt.Sprintf("Can't download %s", desc))
 	}
-	if config.LocalFileSystemCache != "" {
-		f, err := os.Create(path)
-		if err == nil {
-			f.Write(imgdata.Data)
-			f.Close()
-			fmt.Println("save")
-		}
-	}
+
 	return imgdata, nil
 }
