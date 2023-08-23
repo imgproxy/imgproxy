@@ -1,9 +1,12 @@
 package main
 
 import (
+	"encoding/base64"
 	"fmt"
 	"net/http"
 	"net/http/cookiejar"
+	"os"
+	path2 "path"
 	"strconv"
 	"strings"
 	"time"
@@ -309,7 +312,24 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 
 	resultData, err := func() (*imagedata.ImageData, error) {
 		defer metrics.StartProcessingSegment(ctx)()
-		return processing.ProcessImage(ctx, originData, po)
+		updatedImage, err := processing.ProcessImage(ctx, originData, po)
+		if err != nil {
+			return nil, err
+		}
+		if config.LocalFileSystemCache == "" {
+			return updatedImage, nil
+		}
+		saveImage := updatedImage
+		imagePath := path2.Join(config.LocalFileSystemCache, base64.URLEncoding.EncodeToString([]byte(imageURL)))
+		if len(originData.Data) < 1024*1024 || !(originData.Type == imagetype.JPEG || originData.Type == imagetype.PNG || originData.Type == imagetype.TIFF) {
+			saveImage = originData
+		}
+		if f, err := os.Create(imagePath); err == nil {
+			defer f.Close()
+			f.Write(saveImage.Data)
+			fmt.Println("save")
+		}
+		return updatedImage, nil
 	}()
 	if err != nil {
 		metrics.SendError(ctx, "processing", err)
