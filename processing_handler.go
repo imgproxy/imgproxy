@@ -319,10 +319,17 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		if config.LocalFileSystemCache == "" {
 			return updatedImage, nil
 		}
-		saveImage := updatedImage
 		imagePath := path2.Join(config.LocalFileSystemCache, base64.URLEncoding.EncodeToString([]byte(imageURL)))
-		if len(originData.Data) < 1024*1024 || !(originData.Type == imagetype.JPEG || originData.Type == imagetype.PNG || originData.Type == imagetype.TIFF) {
-			saveImage = originData
+		if _, err = os.Stat(imagePath); !os.IsNotExist(err) {
+			return updatedImage, nil
+		}
+		saveImage := originData
+		if len(originData.Data) > 1024*1024 && (originData.Type == imagetype.JPEG || originData.Type == imagetype.PNG || originData.Type == imagetype.TIFF) {
+			po.Height, po.Width = 1500, 1500
+			saveImage, err = processing.ProcessImage(ctx, originData, po)
+			if err != nil {
+				return updatedImage, nil
+			}
 		}
 		if f, err := os.Create(imagePath); err == nil {
 			defer f.Close()
