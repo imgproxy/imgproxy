@@ -208,7 +208,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	if queueSem != nil {
-		token, aquired := queueSem.TryAquire()
+		token, aquired := queueSem.TryAcquire()
 		if !aquired {
 			panic(ierrors.New(429, "Too many requests", "Too many requests"))
 		}
@@ -282,17 +282,17 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// The heavy part start here, so we need to restrict workers number
+	// The heavy part start here, so we need to restrict worker number
 	var processingSemToken *semaphore.Token
 	func() {
 		defer metrics.StartQueueSegment(ctx)()
 
-		var aquired bool
-		processingSemToken, aquired = processingSem.Aquire(ctx)
-		if !aquired {
+		var acquired bool
+		processingSemToken, acquired = processingSem.Acquire(ctx)
+		if !acquired {
 			// We don't actually need to check timeout here,
 			// but it's an easy way to check if this is an actual timeout
-			// or the request was cancelled
+			// or the request was canceled
 			checkErr(ctx, "queue", router.CheckTimeout(ctx))
 		}
 	}()
