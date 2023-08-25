@@ -70,6 +70,7 @@ int vips_trim(VipsImage *in, VipsImage **out, double threshold, gboolean smart, 
 
 int vips_apply_filters(VipsImage *in, VipsImage **out, double blur_sigma, double sharp_sigma,
     int pixelate_pixels);
+int vips_blur_region(VipsImage *in, VipsImage **out, int left, int top, int width, int height, double blur_sigma);
 
 int vips_flatten_go(VipsImage *in, VipsImage **out, RGB bg);
 

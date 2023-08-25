@@ -28,6 +28,7 @@ var mainPipeline = pipeline{
 	rotateAndFlip,
 	cropToResult,
 	applyFilters,
+	applyBlurRegions,
 	extend,
 	extendAspectRatio,
 	padding,

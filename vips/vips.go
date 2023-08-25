@@ -764,6 +764,21 @@ func (img *Image) ApplyFilters(blurSigma, sharpSigma float32, pixelatePixels int
 	return nil
 }
 
+func (img *Image) BlurRegion(x0 int, y0 int, x1 int, y1 int, sigma float32) error {
+
+	var tmp *C.VipsImage
+
+	log.Printf("Left = %d, Top = %d, Width = %d, Height = %d, Sigma = %f", x0, y0, x1-x0, y1-y0, sigma)
+
+	if C.vips_blur_region(img.VipsImage, &tmp, C.int(x0), C.int(y0), C.int(x1-x0), C.int(y1-y0), C.double(sigma)) != 0 {
+		return Error()
+	}
+
+	C.swap_and_clear(&img.VipsImage, tmp)
+
+	return nil
+}
+
 func (img *Image) IsRGB() bool {
 	format := C.vips_image_guess_interpretation(img.VipsImage)
 	return format == C.VIPS_INTERPRETATION_sRGB ||

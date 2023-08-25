@@ -681,6 +681,30 @@ vips_apply_filters(VipsImage *in, VipsImage **out, double blur_sigma,
   return res;
 }
 
+int vips_blur_region(VipsImage *in, VipsImage **out, int left, int top, int width, int height, double blur_sigma) {
+  VipsImage *base = vips_image_new();
+  VipsImage **t = (VipsImage **) vips_object_local_array(VIPS_OBJECT(base), 2);
+
+  if (vips_extract_area(in, &t[0], left, top, width, height, NULL)) {
+    clear_image(&base);
+    return 1;
+  }
+
+  if (vips_gaussblur(t[0], &t[1], blur_sigma, NULL)) {
+    clear_image(&base);
+    return 1;
+  }
+
+  if (vips_insert(in, t[1], out, left, top, NULL)) {
+    clear_image(&base);
+    return 1;
+  }
+
+  clear_image(&base);
+
+  return 0;
+}
+
 int
 vips_flatten_go(VipsImage *in, VipsImage **out, RGB bg)
 {
