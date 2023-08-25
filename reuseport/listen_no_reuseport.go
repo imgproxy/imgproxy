@@ -6,6 +6,8 @@ package reuseport
 import (
 	"net"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/imgproxy/imgproxy/v3/config"
 )
 
