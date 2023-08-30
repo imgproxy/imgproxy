@@ -70,7 +70,8 @@ vips_health() {
 int
 vips_jpegload_go(void *buf, size_t len, int shrink, VipsImage **out) {
   if (shrink > 1)
-    return vips_jpegload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, "shrink", shrink, NULL);
+    return vips_jpegload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, "shrink", shrink,
+      NULL);
 
   return vips_jpegload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, NULL);
 }
@@ -228,15 +229,15 @@ vips_fix_BW_float_tiff(VipsImage *in, VipsImage **out) {
 int
 vips_fix_float_tiff(VipsImage *in, VipsImage **out) {
   /* Vips loads linear alpha in the 0.0-1.0 range but uses the 0.0-255.0 range.
-  * https://github.com/libvips/libvips/pull/3627 fixes this behavior
-  */
+   * https://github.com/libvips/libvips/pull/3627 fixes this behavior
+   */
   if (in->Type == VIPS_INTERPRETATION_scRGB && in->Bands > 3)
     return vips_fix_scRGB_alpha_tiff(in, out);
 
   /* Vips loads linear BW TIFFs as VIPS_INTERPRETATION_B_W or VIPS_INTERPRETATION_GREY16
-  * but these colourspaces are not linear. We should properly convert them to
-  * VIPS_INTERPRETATION_GREY16
-  */
+   * but these colourspaces are not linear. We should properly convert them to
+   * VIPS_INTERPRETATION_GREY16
+   */
   if (
     (in->Type == VIPS_INTERPRETATION_B_W || in->Type == VIPS_INTERPRETATION_GREY16) &&
     (in->BandFmt == VIPS_FORMAT_FLOAT || in->BandFmt == VIPS_FORMAT_DOUBLE)
@@ -354,20 +355,16 @@ vips_icc_is_srgb_iec61966(VipsImage *in) {
   // 2.1
   static char version[] = { 2, 16, 0, 0 };
 
-  // The image had no profile and built-in CMYK was imported.
-  // Vips gives us an invalid data pointer when the built-in profile was imported,
-  // so we check this mark before receiving an actual profile.
-  // if (vips_image_get_typeof(in, "icc-cmyk-no-profile"))
-  //   return FALSE;
-
   if (vips_image_get_blob(in, VIPS_META_ICC_NAME, &data, &data_len))
     return FALSE;
 
-  // Less than header size
+  /* Less than header size
+   */
   if (data_len < 128)
     return FALSE;
 
-  // Predict it is sRGB IEC61966 2.1 by checking some header fields
+  /* Predict it is sRGB IEC61966 2.1 by checking some header fields
+   */
   return ((memcmp(data + 48, "IEC ",  4) == 0) && // Device manufacturer
           (memcmp(data + 52, "sRGB",  4) == 0) && // Device model
           (memcmp(data + 80, "HP  ",  4) == 0) && // Profile creator
