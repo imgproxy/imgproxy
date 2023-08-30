@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+### Fix
+- Fix parsing of HEIF files with large boxes.
 
 ## [3.19.0] - 2023-08-21
 ### Add

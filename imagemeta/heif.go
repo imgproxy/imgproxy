@@ -6,11 +6,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 )
 
-const heifBoxHeaderSize = int64(8)
+const heifBoxHeaderSize = uint64(8)
 
 var heicBrand = []byte("heic")
 var avifBrand = []byte("avif")
@@ -29,7 +30,7 @@ func (d *heifData) IsFilled() bool {
 	return d.Format != imagetype.Unknown && d.Width > 0 && d.Height > 0
 }
 
-func heifReadN(r io.Reader, n int64) (b []byte, err error) {
+func heifReadN(r io.Reader, n uint64) (b []byte, err error) {
 	if buf, ok := r.(*bytes.Buffer); ok {
 		b = buf.Next(int(n))
 		if len(b) == 0 {
@@ -43,7 +44,7 @@ func heifReadN(r io.Reader, n int64) (b []byte, err error) {
 	return
 }
 
-func heifDiscardN(r io.Reader, n int64) error {
+func heifDiscardN(r io.Reader, n uint64) error {
 	if buf, ok := r.(*bytes.Buffer); ok {
 		_ = buf.Next(int(n))
 		return nil
@@ -54,11 +55,11 @@ func heifDiscardN(r io.Reader, n int64) error {
 		return err
 	}
 
-	_, err := io.CopyN(io.Discard, r, n)
+	_, err := io.CopyN(io.Discard, r, int64(n))
 	return err
 }
 
-func heifReadBoxHeader(r io.Reader) (boxType string, boxDataSize int64, err error) {
+func heifReadBoxHeader(r io.Reader) (boxType string, boxDataSize uint64, err error) {
 	var b []byte
 
 	b, err = heifReadN(r, heifBoxHeaderSize)
@@ -66,8 +67,27 @@ func heifReadBoxHeader(r io.Reader) (boxType string, boxDataSize int64, err erro
 		return
 	}
 
-	boxDataSize = int64(binary.BigEndian.Uint32(b[0:4])) - heifBoxHeaderSize
+	headerSize := heifBoxHeaderSize
+
+	boxDataSize = uint64(binary.BigEndian.Uint32(b[0:4]))
 	boxType = string(b[4:8])
+
+	if boxDataSize == 1 {
+		b, err = heifReadN(r, 8)
+		if err != nil {
+			return
+		}
+
+		boxDataSize = (uint64(binary.BigEndian.Uint32(b[0:4])) << 32) |
+			uint64(binary.BigEndian.Uint32(b[4:8]))
+		headerSize += 8
+	}
+
+	if boxDataSize < heifBoxHeaderSize || boxDataSize > math.MaxInt64 {
+		return "", 0, errors.New("Invalid box data size")
+	}
+
+	boxDataSize -= headerSize
 
 	return
 }
@@ -86,7 +106,7 @@ func heifAssignFormat(d *heifData, brand []byte) bool {
 	return false
 }
 
-func heifReadFtyp(d *heifData, r io.Reader, boxDataSize int64) error {
+func heifReadFtyp(d *heifData, r io.Reader, boxDataSize uint64) error {
 	if boxDataSize < 8 {
 		return errors.New("Invalid ftyp data")
 	}
@@ -101,7 +121,7 @@ func heifReadFtyp(d *heifData, r io.Reader, boxDataSize int64) error {
 	}
 
 	if boxDataSize >= 12 {
-		for i := int64(8); i < boxDataSize; i += 4 {
+		for i := uint64(8); i < boxDataSize; i += 4 {
 			if heifAssignFormat(d, data[i:i+4]) {
 				return nil
 			}
@@ -111,7 +131,7 @@ func heifReadFtyp(d *heifData, r io.Reader, boxDataSize int64) error {
 	return errors.New("Image is not compatible with heic/avif")
 }
 
-func heifReadMeta(d *heifData, r io.Reader, boxDataSize int64) error {
+func heifReadMeta(d *heifData, r io.Reader, boxDataSize uint64) error {
 	if boxDataSize < 4 {
 		return errors.New("Invalid meta data")
 	}
@@ -130,7 +150,7 @@ func heifReadMeta(d *heifData, r io.Reader, boxDataSize int64) error {
 	return nil
 }
 
-func heifReadHldr(r io.Reader, boxDataSize int64) error {
+func heifReadHldr(r io.Reader, boxDataSize uint64) error {
 	if boxDataSize < 12 {
 		return errors.New("Invalid hdlr data")
 	}
@@ -147,7 +167,7 @@ func heifReadHldr(r io.Reader, boxDataSize int64) error {
 	return nil
 }
 
-func heifReadIspe(r io.Reader, boxDataSize int64) (w, h int64, err error) {
+func heifReadIspe(r io.Reader, boxDataSize uint64) (w, h int64, err error) {
 	if boxDataSize < 12 {
 		return 0, 0, errors.New("Invalid ispe data")
 	}
@@ -166,16 +186,9 @@ func heifReadIspe(r io.Reader, boxDataSize int64) (w, h int64, err error) {
 func heifReadBoxes(d *heifData, r io.Reader) error {
 	for {
 		boxType, boxDataSize, err := heifReadBoxHeader(r)
-
 		if err != nil {
 			return err
 		}
-
-		if boxDataSize < 0 {
-			return errors.New("Invalid box data")
-		}
-
-		// log.Printf("Box type: %s; Box data size: %d", boxType, boxDataSize)
 
 		switch boxType {
 		case "ftyp":
