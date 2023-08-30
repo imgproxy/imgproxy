@@ -3,6 +3,7 @@
 ## [Unreleased]
 ### Fix
 - Fix parsing of HEIF files with large boxes.
+- Fix wrong colors when the source image has a linear colorspace.
 
 ## [3.19.0] - 2023-08-21
 ### Add
