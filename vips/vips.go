@@ -322,6 +322,14 @@ func (img *Image) Load(imgdata *imagedata.ImageData, shrink int, scale float64, 
 
 	C.swap_and_clear(&img.VipsImage, tmp)
 
+	if imgdata.Type == imagetype.TIFF {
+		if C.vips_fix_float_tiff(img.VipsImage, &tmp) == 0 {
+			C.swap_and_clear(&img.VipsImage, tmp)
+		} else {
+			log.Warnf("Can't fix TIFF: %s", Error())
+		}
+	}
+
 	return nil
 }
 

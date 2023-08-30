@@ -15,6 +15,9 @@
 #define VIPS_GIF_RESOLUTION_LIMITED \
   (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION <= 12)
 
+#define VIPS_SCRGB_ALPHA_FIXED \
+  (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 15))
+
 #ifndef VIPS_META_BITS_PER_SAMPLE
 #define VIPS_META_BITS_PER_SAMPLE "palette-bit-depth"
 #endif
@@ -137,6 +140,110 @@ vips_black_go(VipsImage **out, int width, int height, int bands) {
   clear_image(&tmp);
 
   return res;
+}
+
+/* Vips loads linear alpha in the 0.0-1.0 range but uses the 0.0-255.0 range.
+ * https://github.com/libvips/libvips/pull/3627 fixes this behavior
+ */
+int
+vips_fix_scRGB_alpha_tiff(VipsImage *in, VipsImage **out) {
+#if VIPS_SCRGB_ALPHA_FIXED
+  #warning Revise vips_fix_scRGB_tiff
+  return vips_copy(in, out, NULL);
+#else
+  VipsImage *base = vips_image_new();
+  VipsImage **t = (VipsImage **) vips_object_local_array(VIPS_OBJECT(base), 4);
+
+  int res =
+    vips_extract_band(in, &t[0], 0, "n", 3, NULL) ||
+    vips_extract_band(in, &t[1], 3, "n", in->Bands - 3, NULL) ||
+    vips_linear1(t[1], &t[2], 255.0, 0, NULL) ||
+    vips_cast(t[2], &t[3], in->BandFmt, NULL) ||
+    vips_bandjoin2(t[0], t[3], out, NULL);
+
+  clear_image(&base);
+
+  return res;
+#endif
+}
+
+/* Vips loads linear BW TIFFs as VIPS_INTERPRETATION_B_W or VIPS_INTERPRETATION_GREY16
+ * but these colourspaces are not linear. We should properly convert them to
+ * VIPS_INTERPRETATION_GREY16
+ */
+int
+vips_fix_BW_float_tiff(VipsImage *in, VipsImage **out) {
+  VipsImage *base = vips_image_new();
+  VipsImage **t = (VipsImage **) vips_object_local_array(VIPS_OBJECT(base), 8);
+
+  VipsImage *color = in;
+  VipsImage *alpha = NULL;
+
+  /* Extract and fix alpha. Float WB TIFF uses the 0.0-1.0 range but we need
+   * the 0.0-65535.0 range
+   */
+  if (in->Bands > 1) {
+    if (
+      vips_extract_band(in, &t[0], 0, NULL) ||
+      vips_extract_band(in, &t[1], 1, "n", in->Bands - 1, NULL) ||
+      vips_linear1(t[1], &t[2], 65535.0, 0, NULL) ||
+      vips_cast_ushort(t[2], &t[3], NULL) ||
+      vips_copy(t[3], &t[4], "interpretation", VIPS_INTERPRETATION_GREY16, NULL)
+    ) {
+      clear_image(&base);
+      return 1;
+    }
+
+    color = t[0];
+    alpha = t[4];
+  }
+
+  /* Craft an scRGB image and convert it back to GREY16 to apply a gamma
+   * correction
+   */
+  VipsImage *rgb[3] = { color, color, color };
+  if (
+    vips_bandjoin(rgb, &t[5], 3, NULL) ||
+    vips_colourspace(t[5], &t[6], VIPS_INTERPRETATION_GREY16,
+      "source_space", VIPS_INTERPRETATION_scRGB, NULL)
+  ) {
+    clear_image(&base);
+    return 1;
+  }
+
+  int res;
+
+  if (alpha)
+    res =
+      vips_bandjoin2(t[6], alpha, &t[7], NULL) ||
+      vips_icc_remove(t[7], out);
+  else
+    res = vips_icc_remove(t[6], out);
+
+  clear_image(&base);
+
+  return res;
+}
+
+int
+vips_fix_float_tiff(VipsImage *in, VipsImage **out) {
+  /* Vips loads linear alpha in the 0.0-1.0 range but uses the 0.0-255.0 range.
+  * https://github.com/libvips/libvips/pull/3627 fixes this behavior
+  */
+  if (in->Type == VIPS_INTERPRETATION_scRGB && in->Bands > 3)
+    return vips_fix_scRGB_alpha_tiff(in, out);
+
+  /* Vips loads linear BW TIFFs as VIPS_INTERPRETATION_B_W or VIPS_INTERPRETATION_GREY16
+  * but these colourspaces are not linear. We should properly convert them to
+  * VIPS_INTERPRETATION_GREY16
+  */
+  if (
+    (in->Type == VIPS_INTERPRETATION_B_W || in->Type == VIPS_INTERPRETATION_GREY16) &&
+    (in->BandFmt == VIPS_FORMAT_FLOAT || in->BandFmt == VIPS_FORMAT_DOUBLE)
+  )
+    return vips_fix_BW_float_tiff(in, out);
+
+  return vips_copy(in, out);
 }
 
 int

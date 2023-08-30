@@ -25,6 +25,8 @@ int vips_tiffload_go(void *buf, size_t len, VipsImage **out);
 
 int vips_black_go(VipsImage **out, int width, int height, int bands);
 
+int vips_fix_float_tiff(VipsImage *in, VipsImage **out);
+
 int vips_get_orientation(VipsImage *image);
 void vips_strip_meta(VipsImage *image);
 
