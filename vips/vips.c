@@ -662,6 +662,17 @@ vips_embed_go(VipsImage *in, VipsImage **out, int x, int y, int width, int heigh
 }
 
 int
+vips_embed_image_go(VipsImage *in, VipsImage *sub, VipsImage **out, int x, int y, gboolean expand) {
+  int ret = vips_insert(in, sub, out, x, y, "expand", expand, NULL);
+  return ret;
+}
+
+int
+vips_color_adjust(VipsImage *in, VipsImage **out, double scale) {
+  return vips_linear1(in, out, scale, 0, NULL);
+}
+
+int
 vips_apply_watermark(VipsImage *in, VipsImage *watermark, VipsImage **out, int left, int top, double opacity) {
   VipsImage *base = vips_image_new();
   VipsImage **t = (VipsImage **) vips_object_local_array(VIPS_OBJECT(base), 7);

@@ -561,6 +561,17 @@ func (img *Image) Rad2Float() error {
 	return nil
 }
 
+func (img *Image) ColorAdjust(scale float64) error {
+	var tmp *C.VipsImage
+	if C.vips_color_adjust(img.VipsImage, &tmp, C.double(scale)) != 0 {
+		return Error()
+	}
+
+	C.swap_and_clear(&img.VipsImage, tmp)
+
+	return nil
+}
+
 func (img *Image) Resize(wscale, hscale float64) error {
 	var tmp *C.VipsImage
 
@@ -625,6 +636,17 @@ func (img *Image) SmartCrop(width, height int) error {
 	var tmp *C.VipsImage
 
 	if C.vips_smartcrop_go(img.VipsImage, &tmp, C.int(width), C.int(height)) != 0 {
+		return Error()
+	}
+
+	C.swap_and_clear(&img.VipsImage, tmp)
+	return nil
+}
+
+func (img *Image) CenterFill(width, height int) error {
+	var tmp *C.VipsImage
+
+	if C.vips_smartcrop_center_go(img.VipsImage, &tmp, C.int(width), C.int(height)) != 0 {
 		return Error()
 	}
 
@@ -815,6 +837,21 @@ func (img *Image) Embed(width, height int, offX, offY int) error {
 	var tmp *C.VipsImage
 
 	if C.vips_embed_go(img.VipsImage, &tmp, C.int(offX), C.int(offY), C.int(width), C.int(height)) != 0 {
+		return Error()
+	}
+	C.swap_and_clear(&img.VipsImage, tmp)
+
+	return nil
+}
+
+func (img *Image) EmbedImage(offX, offY int, sub *Image) error {
+	var tmp *C.VipsImage
+
+	if err := img.RgbColourspace(); err != nil {
+		return err
+	}
+
+	if C.vips_embed_image_go(img.VipsImage, sub.VipsImage, &tmp, C.int(offX), C.int(offY), gbool(true)) != 0 {
 		return Error()
 	}
 	C.swap_and_clear(&img.VipsImage, tmp)
