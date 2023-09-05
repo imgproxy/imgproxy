@@ -168,5 +168,16 @@ func prepare(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptio
 
 	pctx.wscale, pctx.hscale, pctx.dprScale = calcScale(widthToScale, heightToScale, po, pctx.imgtype)
 
+	// The size of a vector image are not checked during download, yet it can be very large.
+	// So we should scale it down to the maximum allowed resolution
+	if !pctx.trimmed && imgdata != nil && imgdata.Type.IsVector() && !po.Enlarge {
+		resolution := imath.Round((float64(img.Width()*img.Height()) * pctx.wscale * pctx.hscale))
+		if resolution > po.SecurityOptions.MaxSrcResolution {
+			scale := math.Sqrt(float64(po.SecurityOptions.MaxSrcResolution) / float64(resolution))
+			pctx.wscale *= scale
+			pctx.hscale *= scale
+		}
+	}
+
 	return nil
 }

@@ -18,7 +18,7 @@ func canScaleOnLoad(pctx *pipelineContext, imgdata *imagedata.ImageData, scale f
 		return false
 	}
 
-	if imgdata.Type == imagetype.SVG {
+	if imgdata.Type.IsVector() {
 		return true
 	}
 

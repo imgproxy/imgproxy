@@ -1,6 +1,9 @@
 # Changelog
 
 ## [Unreleased]
+### Change
+- Limit vector image sizes to `IMGPROXY_MAX_SRC_RESOLUTION`.
+
 ### Fix
 - Fix parsing of HEIF files with large boxes.
 - Fix wrong colors when the source image has a linear colorspace.
