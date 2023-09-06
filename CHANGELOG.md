@@ -8,6 +8,7 @@
 - Fix parsing of HEIF files with large boxes.
 - Fix wrong colors when the source image has a linear colorspace.
 - Fix wrong colors or opacity when the source image is a TIFF with a float sample format.
+- (pro) Fix generating thumbnails for WebM videos with transparency.
 
 ## [3.19.0] - 2023-08-21
 ### Add
