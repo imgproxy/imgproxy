@@ -244,7 +244,7 @@ vips_fix_float_tiff(VipsImage *in, VipsImage **out) {
   )
     return vips_fix_BW_float_tiff(in, out);
 
-  return vips_copy(in, out);
+  return vips_copy(in, out, NULL);
 }
 
 int
