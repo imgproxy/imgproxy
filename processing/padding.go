@@ -2,15 +2,16 @@ package processing
 
 import (
 	"context"
+	"math"
+
+	log "github.com/sirupsen/logrus"
+
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imath"
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/utils"
 	"github.com/imgproxy/imgproxy/v3/vips"
 	"github.com/mitchellh/copystructure"
-	"math"
-
-	log "github.com/sirupsen/logrus"
 )
 
 var blurPaddingPipeline = pipeline{
@@ -76,8 +77,8 @@ func padding(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptio
 
 		scale := utils.OldCalcScale(widthToScale, heightToScale, po, imgdata.Type)
 		// Note: original version did two crops, this is more difficult with the new pipeline, was it needed?
-		//dprWidth := utils.ScaleInt(po.Width, po.Dpr)
-		//dprHeight := utils.ScaleInt(po.Height, po.Dpr)
+		// dprWidth := utils.ScaleInt(po.Width, po.Dpr)
+		// dprHeight := utils.ScaleInt(po.Height, po.Dpr)
 
 		if cropWidth > 0 {
 			cropWidth = utils.MaxInt(1, utils.ScaleInt(cropWidth, scale))

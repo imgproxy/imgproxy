@@ -24,10 +24,10 @@ var pushdPath = "/pushd"
 var s3ImagesBucket = os.Getenv("PUSH_S3_IMAGES_BUCKET")
 var s3RenderBucket = os.Getenv("PUSH_S3_RENDER_BUCKET")
 
-func fileNameToParams(requestUri string, needsSig bool) string {
+func fileNameToParams(requestURI string, needsSig bool) string {
 	imgParams := make(map[string]string)
 
-	splitFilename := strings.Split(path.Base(requestUri), "__")
+	splitFilename := strings.Split(path.Base(requestURI), "__")
 	for _, param := range splitFilename {
 		splitParam := strings.Split(param, "_")
 		if len(splitParam) < 2 {
@@ -36,14 +36,14 @@ func fileNameToParams(requestUri string, needsSig bool) string {
 		imgParams[splitParam[0]] = splitParam[1]
 	}
 
-	s3Path := getS3SourcePath(requestUri)
+	s3Path := getS3SourcePath(requestURI)
 
 	urlParam := fmt.Sprintf("/plain/s3://%s/%s@jpg", s3Path, splitFilename[len(splitFilename)-1])
 
 	var pathStr string
 	for param, value := range imgParams {
 		paramString := fmt.Sprintf("/%s:%s", param, value)
-		pathStr = pathStr + paramString
+		pathStr += paramString
 	}
 	// if no signature required, add a filler signature
 	var paramPath string
@@ -59,8 +59,8 @@ func fileNameToParams(requestUri string, needsSig bool) string {
 
 // Gets s3 path of source file
 // removes pushdPath and uuid from path if they exist
-func getS3SourcePath(requestUri string) string {
-	pathDirs := strings.Split(path.Dir(requestUri), "/")
+func getS3SourcePath(requestURI string) string {
+	pathDirs := strings.Split(path.Dir(requestURI), "/")
 	s3PathDirs := []string{s3ImagesBucket}
 	for _, pathDir := range pathDirs {
 		if len(pathDir) < 1 || isValidUUID(pathDir) || pathDir == pushdPath[1:] {
@@ -123,10 +123,7 @@ func uploadToS3(data []byte, s3Key string, uploaded chan bool) {
 	_, err = svc.PutObject(input)
 	if err != nil {
 		if aerr, ok := err.(awserr.Error); ok {
-			switch aerr.Code() {
-			default:
-				log.Error(aerr.Error())
-			}
+			log.Error(aerr.Error())
 		} else {
 			log.Error(err.Error())
 		}

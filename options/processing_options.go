@@ -139,7 +139,7 @@ func NewProcessingOptions() *ProcessingOptions {
 		Quality:           0,
 		MaxBytes:          0,
 		Format:            imagetype.Unknown,
-		Background:        backgroundOptions{Color: vips.Color{255, 255, 255}},
+		Background:        backgroundOptions{Color: vips.Color{R: 255, G: 255, B: 255}},
 		Blur:              0,
 		Sharpen:           0,
 		Dpr:               1,
@@ -625,7 +625,7 @@ func applyBackgroundOption(po *ProcessingOptions, args []string) error {
 			po.Flatten = true
 			po.Background.Effect = "blur"
 			// Test hack
-			po.Background.Color = vips.Color{255, 0, 0}
+			po.Background.Color = vips.Color{R: 255, G: 0, B: 0}
 		} else {
 			return fmt.Errorf("Invalid background argument: %s", err)
 		}

@@ -3,9 +3,10 @@
 package utils
 
 import (
+	"math"
+
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/options"
-	"math"
 )
 
 func MaxInt(a, b int) int {
@@ -46,6 +47,7 @@ func ScaleInt(a int, scale float64) int {
 }
 
 // OldCalcScale calcScale version from before the large refactor, used in padding.padding until that is refactored as well
+//nolint:golint
 func OldCalcScale(width, height int, po *options.ProcessingOptions, imgtype imagetype.Type) float64 {
 	var shrink float64
 
