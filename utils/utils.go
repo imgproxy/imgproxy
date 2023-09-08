@@ -47,7 +47,7 @@ func ScaleInt(a int, scale float64) int {
 }
 
 // OldCalcScale calcScale version from before the large refactor, used in padding.padding until that is refactored as well
-//nolint:golint
+//nolint:all
 func OldCalcScale(width, height int, po *options.ProcessingOptions, imgtype imagetype.Type) float64 {
 	var shrink float64
 
