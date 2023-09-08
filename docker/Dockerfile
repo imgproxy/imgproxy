@@ -1,7 +1,9 @@
 ARG BASE_IMAGE_VERSION="v3.7.1"
 
 FROM darthsim/imgproxy-base:${BASE_IMAGE_VERSION} as build
-LABEL maintainer="Sergey Alexandrovich <darthsim@gmail.com>"
+
+ARG BUILDPLATFORM
+ARG TARGETPLATFORM
 
 COPY . .
 RUN docker/build.sh

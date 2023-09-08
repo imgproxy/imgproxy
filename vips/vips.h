@@ -47,6 +47,8 @@ int vips_cast_go(VipsImage *in, VipsImage **out, VipsBandFormat format);
 int vips_rad2float_go(VipsImage *in, VipsImage **out);
 
 int vips_resize_go(VipsImage *in, VipsImage **out, double wscale, double hscale);
+int vips_resize_go_old(VipsImage *in, VipsImage **out, double scale);
+int vips_resize_with_premultiply(VipsImage *in, VipsImage **out, double scale);
 
 int vips_icc_is_srgb_iec61966(VipsImage *in);
 int vips_has_embedded_icc(VipsImage *in);
@@ -67,24 +69,27 @@ int vips_trim(VipsImage *in, VipsImage **out, double threshold,
               gboolean smart, double r, double g, double b,
               gboolean equal_hor, gboolean equal_ver);
 
+int vips_gaussblur_go(VipsImage *in, VipsImage **out, double sigma);
+
 int vips_apply_filters(VipsImage *in, VipsImage **out, double blur_sigma, double sharp_sigma,
     int pixelate_pixels);
 
 int vips_flatten_go(VipsImage *in, VipsImage **out, double r, double g, double b);
 
 int vips_replicate_go(VipsImage *in, VipsImage **out, int across, int down);
-int vips_embed_go(VipsImage *in, VipsImage **out, int x, int y, int width, int height, double *bg, int bgn);
+int vips_embed_go(VipsImage *in, VipsImage **out, int x, int y, int width, int height);
 
 int vips_embed_image_go(VipsImage *in, VipsImage *sub, VipsImage **out, int x, int y, gboolean expand);
 int vips_ensure_alpha(VipsImage *in, VipsImage **out);
 
-int vips_apply_watermark(VipsImage *in, VipsImage *watermark, VipsImage **out, double opacity);
+int vips_apply_watermark(VipsImage *in, VipsImage *watermark, VipsImage **out, int left, int top,
+    double opacity);
 
 int vips_arrayjoin_go(VipsImage **in, VipsImage **out, int n);
 
 int vips_color_adjust(VipsImage *in, VipsImage **out, double scale);
 
-int vips_strip(VipsImage *in, VipsImage **out);
+int vips_strip(VipsImage *in, VipsImage **out, int keep_exif_copyright);
 
 int vips_jpegsave_go(VipsImage *in, void **buf, size_t *len, int quality, int interlace);
 int vips_pngsave_go(VipsImage *in, void **buf, size_t *len, int interlace, int quantize,

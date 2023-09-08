@@ -52,6 +52,11 @@ type TrimOptions struct {
 	EqualVer  bool
 }
 
+type backgroundOptions struct {
+	Color  vips.Color
+	Effect string
+}
+
 type WatermarkOptions struct {
 	Enabled   bool
 	Opacity   float64
@@ -82,7 +87,7 @@ type ProcessingOptions struct {
 	FormatQuality     map[imagetype.Type]int
 	MaxBytes          int
 	Flatten           bool
-	Background        vips.Color
+	Background        backgroundOptions
 	Blur              float32
 	Sharpen           float32
 	Pixelate          int
@@ -134,7 +139,7 @@ func NewProcessingOptions() *ProcessingOptions {
 		Quality:           0,
 		MaxBytes:          0,
 		Format:            imagetype.Unknown,
-		Background:        vips.Color{R: 255, G: 255, B: 255},
+		Background:        backgroundOptions{Color: vips.Color{255, 255, 255}},
 		Blur:              0,
 		Sharpen:           0,
 		Dpr:               1,
@@ -608,13 +613,19 @@ func applyMaxBytesOption(po *ProcessingOptions, args []string) error {
 }
 
 func applyBackgroundOption(po *ProcessingOptions, args []string) error {
+	log.Infof("proccessing background options: %s: args: %s", po, args)
 	switch len(args) {
 	case 1:
 		if len(args[0]) == 0 {
 			po.Flatten = false
 		} else if c, err := vips.ColorFromHex(args[0]); err == nil {
 			po.Flatten = true
-			po.Background = c
+			po.Background.Color = c
+		} else if args[0] == "blur" {
+			po.Flatten = true
+			po.Background.Effect = "blur"
+			// Test hack
+			po.Background.Color = vips.Color{255, 0, 0}
 		} else {
 			return fmt.Errorf("Invalid background argument: %s", err)
 		}
@@ -623,19 +634,19 @@ func applyBackgroundOption(po *ProcessingOptions, args []string) error {
 		po.Flatten = true
 
 		if r, err := strconv.ParseUint(args[0], 10, 8); err == nil && r <= 255 {
-			po.Background.R = uint8(r)
+			po.Background.Color.R = uint8(r)
 		} else {
 			return fmt.Errorf("Invalid background red channel: %s", args[0])
 		}
 
 		if g, err := strconv.ParseUint(args[1], 10, 8); err == nil && g <= 255 {
-			po.Background.G = uint8(g)
+			po.Background.Color.G = uint8(g)
 		} else {
 			return fmt.Errorf("Invalid background green channel: %s", args[1])
 		}
 
 		if b, err := strconv.ParseUint(args[2], 10, 8); err == nil && b <= 255 {
-			po.Background.B = uint8(b)
+			po.Background.Color.B = uint8(b)
 		} else {
 			return fmt.Errorf("Invalid background blue channel: %s", args[2])
 		}

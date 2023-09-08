@@ -5,29 +5,32 @@ import (
 	"crypto/md5"
 	"encoding/base64"
 	"fmt"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/google/uuid"
 	"io"
 	"net/http"
 	"os"
 	"path"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/google/uuid"
 )
 
 var pushdPath = "/pushd"
 var s3ImagesBucket = os.Getenv("PUSH_S3_IMAGES_BUCKET")
 var s3RenderBucket = os.Getenv("PUSH_S3_RENDER_BUCKET")
 
-func fileNameToParams(requestUri string) string {
+func fileNameToParams(requestUri string, needsSig bool) string {
 	imgParams := make(map[string]string)
 
 	splitFilename := strings.Split(path.Base(requestUri), "__")
 	for _, param := range splitFilename {
 		splitParam := strings.Split(param, "_")
-		if len(splitParam) < 2{
+		if len(splitParam) < 2 {
 			continue
 		}
 		imgParams[splitParam[0]] = splitParam[1]
@@ -44,12 +47,12 @@ func fileNameToParams(requestUri string) string {
 	}
 	// if no signature required, add a filler signature
 	var paramPath string
-	if conf.AllowInsecure{
-		paramPath = "/nosig" + pathStr + urlParam
-	} else {
+	if needsSig {
 		paramPath = pathStr + urlParam
+	} else {
+		paramPath = "/nosig" + pathStr + urlParam
 	}
-	logNotice("parsed pushd file name to: %s", paramPath)
+	log.Info("parsed pushd file name to: %s", paramPath)
 	return paramPath
 
 }
@@ -58,7 +61,7 @@ func fileNameToParams(requestUri string) string {
 // removes pushdPath and uuid from path if they exist
 func getS3SourcePath(requestUri string) string {
 	pathDirs := strings.Split(path.Dir(requestUri), "/")
-	s3PathDirs := []string{ s3ImagesBucket }
+	s3PathDirs := []string{s3ImagesBucket}
 	for _, pathDir := range pathDirs {
 		if len(pathDir) < 1 || isValidUUID(pathDir) || pathDir == pushdPath[1:] {
 			continue
@@ -81,40 +84,40 @@ func getS3CachePath(requestUri string) string {
 	}
 }
 
-func beforeProcessing(r *http.Request) (*http.Request, string){
+func beforeProcessing(r *http.Request, needsSig bool) (*http.Request, string) {
 	// process pushd filename if path starts with pushdPath
 	var cachePath string
 	if strings.HasPrefix(r.RequestURI, pushdPath) {
 		cachePath = getS3CachePath(r.RequestURI)
-		r.RequestURI = fileNameToParams(r.RequestURI)
+		r.RequestURI = fileNameToParams(r.RequestURI, needsSig)
 	}
 	return r, cachePath
 }
 
-func createMD5Hash(data []byte) string{
+func createMD5Hash(data []byte) string {
 	hash := md5.New()
 	reader := bytes.NewReader(data)
 	if _, err := io.Copy(hash, reader); err != nil {
-		logError(err.Error())
+		log.Error(err.Error())
 	}
 	return base64.StdEncoding.EncodeToString(hash.Sum(nil))
 }
 
 func uploadToS3(data []byte, s3Key string, uploaded chan bool) {
 	md5Hash := createMD5Hash(data)
-	logNotice("Uploading rendered image to: %s with md5 hash: %s", s3Key, md5Hash)
+	log.Info("Uploading rendered image to: %s with md5 hash: %s", s3Key, md5Hash)
 	awsSession, err := session.NewSession()
 	if err != nil {
-		logError(err.Error())
+		log.Error(err.Error())
 		return
 	}
 	svc := s3.New(awsSession)
 	input := &s3.PutObjectInput{
-		Body:    aws.ReadSeekCloser(bytes.NewReader(data)),
-		Bucket:  aws.String(s3RenderBucket),
-		Key:     aws.String(s3Key),
+		Body:        aws.ReadSeekCloser(bytes.NewReader(data)),
+		Bucket:      aws.String(s3RenderBucket),
+		Key:         aws.String(s3Key),
 		ContentType: aws.String("image/jpeg"),
-		ContentMD5: aws.String(md5Hash),
+		ContentMD5:  aws.String(md5Hash),
 	}
 
 	_, err = svc.PutObject(input)
@@ -122,14 +125,14 @@ func uploadToS3(data []byte, s3Key string, uploaded chan bool) {
 		if aerr, ok := err.(awserr.Error); ok {
 			switch aerr.Code() {
 			default:
-				logError(aerr.Error())
+				log.Error(aerr.Error())
 			}
 		} else {
-			logError(err.Error())
+			log.Error(err.Error())
 		}
 		return
 	}
-	logNotice("Upload complete for: %s", s3Key)
+	log.Info("Upload complete for: %s", s3Key)
 	uploaded <- true
 }
 

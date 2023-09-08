@@ -1,6 +1,7 @@
 package options
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"net/http"
@@ -273,9 +274,9 @@ func (s *ProcessingOptionsTestSuite) TestParsePathBackground() {
 	require.Nil(s.T(), err)
 
 	require.True(s.T(), po.Flatten)
-	require.Equal(s.T(), uint8(128), po.Background.R)
-	require.Equal(s.T(), uint8(129), po.Background.G)
-	require.Equal(s.T(), uint8(130), po.Background.B)
+	assert.Equal(s.T(), uint8(128), po.Background.Color.R)
+	assert.Equal(s.T(), uint8(129), po.Background.Color.G)
+	assert.Equal(s.T(), uint8(130), po.Background.Color.B)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathBackgroundHex() {
@@ -285,9 +286,20 @@ func (s *ProcessingOptionsTestSuite) TestParsePathBackgroundHex() {
 	require.Nil(s.T(), err)
 
 	require.True(s.T(), po.Flatten)
-	require.Equal(s.T(), uint8(0xff), po.Background.R)
-	require.Equal(s.T(), uint8(0xdd), po.Background.G)
-	require.Equal(s.T(), uint8(0xee), po.Background.B)
+	assert.Equal(s.T(), uint8(128), po.Background.Color.R)
+	assert.Equal(s.T(), uint8(129), po.Background.Color.G)
+	assert.Equal(s.T(), uint8(130), po.Background.Color.B)
+}
+
+func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedBackgroundEffect() {
+	req := s.getRequest("/unsafe/background:blur/plain/http://images.dev/lorem/ipsum.jpg")
+	ctx, err := parsePath(context.Background(), req)
+
+	require.Nil(s.T(), err)
+
+	po := getProcessingOptions(ctx)
+	assert.True(s.T(), po.Flatten)
+	assert.Equal(s.T(), "blur", po.Background.Effect)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathBackgroundDisable() {
