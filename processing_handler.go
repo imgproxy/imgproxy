@@ -433,6 +433,8 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	checkErr(ctx, "processing", err)
 	checkErr(ctx, "timeout", router.CheckTimeout(ctx))
 
+	// TODO: only run this is pushd_handler used?
+
 	// copy imgData for thread safety
 	imgDataForS3 := make([]byte, len(resultData.Data))
 	copy(imgDataForS3, resultData.Data)
@@ -443,5 +445,8 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	respondWithImage(reqID, r, rw, statusCode, resultData, po, imageURL, originData)
 
 	// Waiting for S3 Upload to finish.
-	<-uploaded
+	// TODO: make this more elegant?
+	if cachePath != "" {
+		<-uploaded
+	}
 }
