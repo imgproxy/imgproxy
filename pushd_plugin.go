@@ -73,9 +73,9 @@ func getS3SourcePath(requestURI string) string {
 }
 
 // creates s3 path for cached generated file
-func getS3CachePath(requestUri string) string {
-	pathBase := path.Base(requestUri)
-	pathDirs := strings.Split(path.Dir(requestUri), "/")
+func getS3CachePath(requestURI string) string {
+	pathBase := path.Base(requestURI)
+	pathDirs := strings.Split(path.Dir(requestURI), "/")
 	// only add last pathDir if length > 2, we expect at least /pushd in the path
 	if len(pathDirs) <= 2 {
 		return pathBase
