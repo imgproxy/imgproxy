@@ -1,9 +1,7 @@
 ARG BASE_IMAGE_VERSION="v3.7.1"
 
-FROM darthsim/imgproxy-base:${BASE_IMAGE_VERSION}
-
-ARG BUILDPLATFORM
-ARG TARGETPLATFORM
+FROM darthsim/imgproxy-base:${BASE_IMAGE_VERSION} as build
+LABEL maintainer="Sergey Alexandrovich <darthsim@gmail.com>"
 
 COPY . .
 RUN docker/build.sh
@@ -33,8 +31,6 @@ RUN apt-get update \
 
 COPY --from=build /usr/local/bin/imgproxy /usr/local/bin/
 COPY --from=build /usr/local/lib /usr/local/lib
-
-COPY docker/entrypoint.sh /usr/local/bin/
 
 COPY NOTICE /usr/local/share/doc/imgproxy/
 
