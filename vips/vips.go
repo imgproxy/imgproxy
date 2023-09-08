@@ -406,6 +406,17 @@ func (img *Image) Clear() {
 	}
 }
 
+func (img *Image) LineCache(lines int) error {
+	var tmp *C.VipsImage
+
+	if C.vips_linecache_seq(img.VipsImage, &tmp, C.int(lines)) != 0 {
+		return Error()
+	}
+
+	C.swap_and_clear(&img.VipsImage, tmp)
+	return nil
+}
+
 func (img *Image) Arrayjoin(in []*Image) error {
 	var tmp *C.VipsImage
 

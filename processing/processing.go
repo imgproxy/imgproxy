@@ -155,6 +155,12 @@ func transformAnimated(ctx context.Context, img *vips.Image, po *options.Process
 		}
 	}()
 
+	// Splitting and joining back large WebPs may cause segfault.
+	// Caching page region cures this
+	if err = img.LineCache(frameHeight); err != nil {
+		return err
+	}
+
 	for i := 0; i < framesCount; i++ {
 		frame := new(vips.Image)
 

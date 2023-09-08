@@ -715,6 +715,13 @@ vips_apply_watermark(VipsImage *in, VipsImage *watermark, VipsImage **out, int l
 }
 
 int
+vips_linecache_seq(VipsImage *in, VipsImage **out, int tile_height)
+{
+  return vips_linecache(in, out, "tile_height", tile_height, "access", VIPS_ACCESS_SEQUENTIAL,
+      NULL);
+}
+
+int
 vips_arrayjoin_go(VipsImage **in, VipsImage **out, int n) {
   return vips_arrayjoin(in, out, n, "across", 1, NULL);
 }

@@ -76,6 +76,8 @@ int vips_embed_go(VipsImage *in, VipsImage **out, int x, int y, int width, int h
 int vips_apply_watermark(VipsImage *in, VipsImage *watermark, VipsImage **out, int left, int top,
     double opacity);
 
+int vips_linecache_seq(VipsImage *in, VipsImage **out, int tile_height);
+
 int vips_arrayjoin_go(VipsImage **in, VipsImage **out, int n);
 
 int vips_strip(VipsImage *in, VipsImage **out, int keep_exif_copyright);
