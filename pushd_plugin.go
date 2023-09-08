@@ -52,7 +52,7 @@ func fileNameToParams(requestUri string, needsSig bool) string {
 	} else {
 		paramPath = "/nosig" + pathStr + urlParam
 	}
-	log.Info("parsed pushd file name to: %s", paramPath)
+	log.Infof("parsed pushd file name to: %s", paramPath)
 	return paramPath
 
 }
@@ -105,7 +105,7 @@ func createMD5Hash(data []byte) string {
 
 func uploadToS3(data []byte, s3Key string, uploaded chan bool) {
 	md5Hash := createMD5Hash(data)
-	log.Info("Uploading rendered image to: %s with md5 hash: %s", s3Key, md5Hash)
+	log.Infof("Uploading rendered image to: %s with md5 hash: %s", s3Key, md5Hash)
 	awsSession, err := session.NewSession()
 	if err != nil {
 		log.Error(err.Error())
@@ -132,7 +132,7 @@ func uploadToS3(data []byte, s3Key string, uploaded chan bool) {
 		}
 		return
 	}
-	log.Info("Upload complete for: %s", s3Key)
+	log.Infof("Upload complete for: %s", s3Key)
 	uploaded <- true
 }
 

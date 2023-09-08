@@ -1,4 +1,4 @@
-//NOTE: This was deleted from upstream, but we still use it in processing.loadAndTransform
+//NOTE: This was deleted from upstream, but we still use it in padding.padding
 
 package utils
 
@@ -45,7 +45,7 @@ func ScaleInt(a int, scale float64) int {
 	return roundToInt(float64(a) * scale)
 }
 
-// OldCalcScale calcScale version from before the large refactor, used in loadAndTransform until that is refactored as well
+// OldCalcScale calcScale version from before the large refactor, used in padding.padding until that is refactored as well
 func OldCalcScale(width, height int, po *options.ProcessingOptions, imgtype imagetype.Type) float64 {
 	var shrink float64
 
