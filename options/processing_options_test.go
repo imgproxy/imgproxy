@@ -285,13 +285,13 @@ func (s *ProcessingOptionsTestSuite) TestParsePathBackgroundHex() {
 	require.Nil(s.T(), err)
 
 	require.True(s.T(), po.Flatten)
-	require.Equal(s.T(), uint8(128), po.Background.Color.R)
-	require.Equal(s.T(), uint8(129), po.Background.Color.G)
-	require.Equal(s.T(), uint8(130), po.Background.Color.B)
+	require.Equal(s.T(), uint8(0xff), po.Background.Color.R)
+	require.Equal(s.T(), uint8(0xdd), po.Background.Color.G)
+	require.Equal(s.T(), uint8(0xee), po.Background.Color.B)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathAdvancedBackgroundEffect() {
-	path := "/unsafe/background:blur/plain/http://images.dev/lorem/ipsum.jpg"
+	path := "/background:blur/plain/http://images.dev/lorem/ipsum.jpg"
 	po, _, err := ParsePath(path, make(http.Header))
 
 	require.Nil(s.T(), err)
