@@ -619,7 +619,6 @@ func applyBackgroundOption(po *ProcessingOptions, args []string) error {
 		if len(args[0]) == 0 {
 			po.Flatten = false
 		} else if c, err := vips.ColorFromHex(args[0]); err == nil {
-			fmt.Printf("I'm setting by hex to: %v\n\n", c)
 			po.Flatten = true
 			po.Background.Color = c
 		} else if args[0] == "blur" {
