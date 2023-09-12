@@ -1,4 +1,4 @@
-FROM debian:bullseye-slim
+FROM debian:stable-slim
 
 RUN apt-get -qq update \
   && apt-get install -y --no-install-recommends \
@@ -7,8 +7,8 @@ RUN apt-get -qq update \
     git \
     ca-certificates \
     build-essential \
-    ninja-build \
     python3-pip \
+    python3-venv \
     libglib2.0-dev \
     libxml2-dev \
     libjpeg-dev \
@@ -25,8 +25,11 @@ RUN apt-get -qq update \
     libopencv-imgproc-dev \
     libopencv-objdetect-dev \
     libopencv-dnn-dev \
-  && pip install --force meson \
+  && python3 -m venv /root/.python \
+  && /root/.python/bin/pip install meson ninja \
   && rm -rf /var/lib/apt/lists/*
+
+ENV PATH="/root/.python/bin:$PATH"
 
 RUN \
   mkdir /root/vips \
