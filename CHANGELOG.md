@@ -1,6 +1,9 @@
 # Changelog
 
 ## [Unreleased]
+### Add
+- Add video streams info to the `/info` response.
+
 ### Change
 - Limit vector image sizes to `IMGPROXY_MAX_SRC_RESOLUTION`.
 

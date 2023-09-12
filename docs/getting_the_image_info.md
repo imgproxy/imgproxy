@@ -56,6 +56,7 @@ imgproxy responses with a JSON body and returns the following info:
 * `iptc`: IPTC data
 * `xmp`: XMP data
 * `photoshop`: Photoshop metadata (currently, only the resolution data)
+* `video_streams`: info about the video streams (maximum 20 streams)
 * `video_meta`: metadata from the video
 
 **📝 Note:** There are lots of IPTC tags in the spec, but imgproxy supports only a few of them. If you need some tags to be supported, just contact us.
@@ -122,6 +123,28 @@ imgproxy responses with a JSON body and returns the following info:
   "height": 730,
   "size": 984963,
   "exif": {},
+  "video_streams": [
+    {
+      "type": "video",
+      "codec": "h264",
+      "bps": 16910024,
+      "fps": 24,
+      "language": "eng"
+    },
+    {
+      "type": "audio",
+      "codec": "eac3",
+      "bps": 768000,
+      "frequency": 48000,
+      "layout": "5.1(side)",
+      "language": "eng"
+    },
+    {
+      "type": "subtitle",
+      "codec": "subrip",
+      "language": "eng"
+    }
+  ],
   "video_meta": {
     "com.android.version": "9",
     "compatible_brands": "isommp42",
