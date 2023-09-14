@@ -11,6 +11,7 @@ import (
 	"errors"
 	"math"
 	"os"
+	"regexp"
 	"runtime"
 	"strings"
 	"sync"
@@ -47,6 +48,13 @@ var vipsConf struct {
 	PngQuantize           C.int
 	PngQuantizationColors C.int
 	AvifSpeed             C.int
+}
+
+var badImageErrRe = []*regexp.Regexp{
+	regexp.MustCompile(`^(\S+)load_buffer: `),
+	regexp.MustCompile(`^VipsJpeg: `),
+	regexp.MustCompile(`^tiff2vips: `),
+	regexp.MustCompile(`^webp2vips: `),
 }
 
 func Init() error {
@@ -188,9 +196,12 @@ func Error() error {
 	errstr := strings.TrimSpace(C.GoString(C.vips_error_buffer()))
 	err := ierrors.NewUnexpected(errstr, 1)
 
-	if strings.Contains(errstr, "load_buffer: ") {
-		err.StatusCode = 422
-		err.PublicMessage = "Broken or unsupported image"
+	for _, re := range badImageErrRe {
+		if re.MatchString(errstr) {
+			err.StatusCode = 422
+			err.PublicMessage = "Broken or unsupported image"
+			break
+		}
 	}
 
 	return err
