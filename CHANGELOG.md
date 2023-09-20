@@ -13,6 +13,7 @@
 - Fix wrong colors or opacity when the source image is a TIFF with a float sample format.
 - Fix crashes during processing of large animated WebPs.
 - (pro) Fix generating thumbnails for WebM videos with transparency.
+- (pro) Fix style injection into some SVGs.
 
 ## [3.19.0] - 2023-08-21
 ### Add
