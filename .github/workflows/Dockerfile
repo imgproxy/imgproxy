@@ -40,6 +40,7 @@ RUN curl https://sh.rustup.rs -sSf | sh -s -- -y \
   && rm -rf /root/.rustup /root/.cargo
 
 ENV PATH="/root/.python/bin:$PATH"
+ENV LD_LIBRARY_PATH="/usr/local/lib"
 
 RUN \
   mkdir /root/vips \
