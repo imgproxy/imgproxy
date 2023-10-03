@@ -34,5 +34,5 @@ jobs:
       - name: Test
         run: go test ./...
         env:
-          LD_LIBRARY_PATH: "${{ env.LD_LIBRARY_PATH }}:/root/vips/${{ matrix.vips-version }}/lib"
-          PKG_CONFIG_PATH: "${{ env.PKG_CONFIG_PATH }}:/root/vips/${{ matrix.vips-version }}/lib/pkgconfig"
+          LD_LIBRARY_PATH: "/usr/local/lib:/root/vips/${{ matrix.vips-version }}/lib"
+          PKG_CONFIG_PATH: "/usr/local/lib/pkgconfig:/root/vips/${{ matrix.vips-version }}/lib/pkgconfig"

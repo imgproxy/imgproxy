@@ -38,5 +38,5 @@ jobs:
           args: --timeout 5m0s
           skip-cache: true
         env:
-          LD_LIBRARY_PATH: "${{ env.LD_LIBRARY_PATH }}:/root/vips/${{ matrix.vips-version }}/lib"
-          PKG_CONFIG_PATH: "${{ env.PKG_CONFIG_PATH }}:/root/vips/${{ matrix.vips-version }}/lib/pkgconfig"
+          LD_LIBRARY_PATH: "/usr/local/lib:/root/vips/${{ matrix.vips-version }}/lib"
+          PKG_CONFIG_PATH: "/usr/local/lib/pkgconfig:/root/vips/${{ matrix.vips-version }}/lib/pkgconfig"
