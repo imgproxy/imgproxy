@@ -9,6 +9,7 @@ RUN apt-get -qq update \
     build-essential \
     python3-pip \
     python3-venv \
+    libssl-dev \
     libglib2.0-dev \
     libxml2-dev \
     libjpeg-dev \
@@ -28,6 +29,15 @@ RUN apt-get -qq update \
   && python3 -m venv /root/.python \
   && /root/.python/bin/pip install meson ninja \
   && rm -rf /var/lib/apt/lists/*
+
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y \
+  && export PATH="/root/.cargo/bin:$PATH" \
+  && cargo install cargo-c \
+  && cd /root \
+  && git clone --depth 1 https://github.com/DarthSim/quantizr.git \
+  && cd quantizr \
+  && cargo cinstall --release --library-type=cdylib \
+  && rm -rf /root/.rustup /root/.cargo
 
 ENV PATH="/root/.python/bin:$PATH"
 
