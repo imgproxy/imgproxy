@@ -233,6 +233,9 @@ i.icon-check::after {
 i.icon-cross::after {
   background-image: url(/assets/cross.svg);
 }
+i.icon-hourglass::after {
+  background-image: url(/assets/hourglass.svg);
+}
 
 .github-edit-btn {
   display: block;

@@ -2,10 +2,14 @@
 
 ## [Unreleased]
 ### Add
-- Add video streams info to the `/info` response.
+- (pro) Add [info options](https://docs.imgproxy.net/latest/getting_the_image_info?id=info-options) support to the `/info` endpoint.
+- (pro) Add video streams info to the `/info` endpoint response.
 
 ### Change
 - Limit vector image sizes to `IMGPROXY_MAX_SRC_RESOLUTION`.
+- (pro) Respect image orientation when extracting image dimensions for the `/info` endpoint response.
+- (pro) Respect `IMGPROXY_WORKERS` and `IMGPROXY_REQUESTS_QUEUE_SIZE` configs in the `/info` endpoint.
+- (pro) Collect detailed metrics for the `/info` endpoint.
 
 ### Fix
 - Fix parsing of HEIF files with large boxes.

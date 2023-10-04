@@ -1,6 +1,6 @@
 # Object detection![pro](./assets/pro.svg)
 
-imgproxy can detect objects on the image and use them for smart cropping, bluring the detections, or drawing the detections.
+imgproxy can detect objects on the image and use them for smart cropping, bluring the detections, or drawing the detections. You can also [fetch the detected objects info](getting_the_image_info.md#detect-objects).
 
 For object detection purposes, imgproxy uses the [Darknet YOLO](https://github.com/AlexeyAB/darknet) model. We provide Docker images with a model trained for face detection, but you can use any Darknet YOLO model found in the [zoo](https://github.com/AlexeyAB/darknet/wiki/YOLOv4-model-zoo) or you can train your own model by following this [guide](https://github.com/AlexeyAB/darknet#how-to-train-to-detect-your-custom-objects).
 
@@ -38,4 +38,12 @@ You can make imgproxy [draw bounding boxes](https://docs.imgproxy.net/generating
 
 ```
 .../draw_detections:1:face/...
+```
+
+### Fetch the detected objects info
+
+You can [fetch the detected objects info](getting_the_image_info.md#detect-objects) using the `/info` endpoint:
+
+```
+.../info/detect_objects:1/...
 ```

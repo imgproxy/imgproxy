@@ -325,12 +325,13 @@ There are two ways to define presets:
 
 #### Using an environment variable
 
-* `IMGPROXY_PRESETS`: a set of preset definitions, comma divided. Example: `default=resizing_type:fill/enlarge:1,sharp=sharpen:0.7,blurry=blur:2`. Default: blank
+* `IMGPROXY_PRESETS`: a set of processing preset definitions, comma divided. Example: `default=resizing_type:fill/enlarge:1,sharp=sharpen:0.7,blurry=blur:2`. Default: blank
+* `IMGPROXY_INFO_PRESETS`: ![pro](./assets/pro.svg) a set of info preset definitions, comma divided. Example: `default=xmp:0/blurhash:4:3`. Default: blank
 
 #### Using a command line argument
 
 ```bash
-imgproxy -presets /path/to/file/with/presets
+imgproxy -presets /path/to/file/with/presets -info-presets /path/to/file/with/info-presets
 ```
 
 This file should contain preset definitions, one per line. Lines starting with `#` are treated as comments. Example:
@@ -349,7 +350,8 @@ blurry=blur:2
 
 imgproxy can be switched into "presets-only mode". In this mode, imgproxy accepts only `preset` option arguments as processing options. Example: `http://imgproxy.example.com/unsafe/thumbnail:blurry:watermarked/plain/http://example.com/images/curiosity.jpg@png`
 
-* `IMGPROXY_ONLY_PRESETS`: disables all URL formats and enables presets-only mode.
+* `IMGPROXY_ONLY_PRESETS`: when `true`, enables presets-only mode. Default: `false`
+* `IMGPROXY_INFO_ONLY_PRESETS`: when `true`, enables presets-only mode for the [info](getting_the_image_info.md) endpoint. Default: `IMGPROXY_ONLY_PRESETS` value
 
 ## Image sources
 

@@ -135,7 +135,8 @@ const configureDocsify = (additionalVersions, latestVersion, latestTag) => {
             .replaceAll("📝", '<i class="icon icon-note"></i>')
             .replaceAll("⚠️", '<i class="icon icon-warn"></i>')
             .replaceAll("✅", '<i class="icon icon-check"></i>')
-            .replaceAll("❌", '<i class="icon icon-cross"></i>');
+            .replaceAll("❌", '<i class="icon icon-cross"></i>')
+            .replaceAll("⏳", '<i class="icon icon-hourglass"></i>');
 
           if (vm.route.path.endsWith('/configuration'))
             content = content.replaceAll(configRegex, '* <code id="$1">$1</code>:');
