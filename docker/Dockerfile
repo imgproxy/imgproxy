@@ -1,4 +1,4 @@
-ARG BASE_IMAGE_VERSION="v3.7.2"
+ARG BASE_IMAGE_VERSION="v3.7.3"
 
 FROM darthsim/imgproxy-base:${BASE_IMAGE_VERSION}
 
@@ -19,10 +19,9 @@ RUN apt-get update \
   && apt-get install -y --no-install-recommends \
     bash \
     ca-certificates \
-    libsm6 \
+    libstdc++6 \
     liblzma5 \
     libzstd1 \
-    libpcre3 \
     fontconfig-config \
     media-types \
     libjemalloc2 \
