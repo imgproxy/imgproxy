@@ -130,7 +130,7 @@ func Init() error {
 	otel.AddGaugeFunc(
 		"vips_allocs",
 		"A gauge of the number of active vips allocations.",
-		"By",
+		"1",
 		GetAllocs,
 	)
 

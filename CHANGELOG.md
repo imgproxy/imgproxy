@@ -19,6 +19,7 @@
 - Fix wrong colors when the source image has a linear colorspace.
 - Fix wrong colors or opacity when the source image is a TIFF with a float sample format.
 - Fix crashes during processing of large animated WebPs.
+- Fix `vips_allocs` OTel metric unit (was `By`, fixed to `1`).
 - (pro) Fix generating thumbnails for WebM videos with transparency.
 - (pro) Fix style injection into some SVGs.
 
