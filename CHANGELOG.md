@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+
+## [3.20.0] - 2023-10-09
 ### Add
 - (pro) Add [info options](https://docs.imgproxy.net/latest/getting_the_image_info?id=info-options) support to the `/info` endpoint.
 - (pro) Add video streams info to the `/info` endpoint response.
