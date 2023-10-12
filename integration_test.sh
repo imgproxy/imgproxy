@@ -1,8 +1,30 @@
 #!/usr/bin/env bash
 
+wget_file() {
+  # Counter for the number of attempts
+  attempts=0
+  # Maximum number of attempts
+  max_attempts=3
+  while [ "$attempts" -lt "$max_attempts" ]; do
+      if wget "http://localhost:8080/pushd/${test_user}/${1}" --directory-prefix="${2}";
+      then
+          echo "Downloaded successfully."
+          break
+      else
+          echo "Download failed. Retrying..."
+          attempts=$((attempts + 1))
+      fi
+  done
+  if [ "$attempts" -ge "$max_attempts" ]; then
+      echo "Maximum number of attempts reached. Command still failed."
+      exit 1
+  fi
+}
+
 test_user="00000000-0000-0000-0000-000000000000"
 
-echo "run docker with\ndocker run -e PUSH_S3_IMAGES_BUCKET=pushd-nonprod-images -e PUSH_S3_RENDER_BUCKET=pushd-nonprod-image-renders -e IMGPROXY_LOG_FORMAT=json -e IMGPROXY_USE_S3=true -e AWS_REGION=us-east-1 -e AWS_ACCESS_KEY_ID=<access key id> -e AWS_SECRET_ACCESS_KEY=<secret access key id>  -p 8080:8080 -it  <docker image name>"
+echo "run docker with:"
+echo "docker run -e PUSH_S3_IMAGES_BUCKET=pushd-nonprod-images -e PUSH_S3_RENDER_BUCKET=pushd-nonprod-image-renders -e IMGPROXY_LOG_FORMAT=json -e IMGPROXY_USE_S3=true -e AWS_REGION=us-east-1 -e AWS_ACCESS_KEY_ID=<access key id> -e AWS_SECRET_ACCESS_KEY=<secret access key id>  -e IMGPROXY_WRITE_TIMEOUT=60 -p 8080:8080 -it  <docker image name>"
 
 mkdir -p downloads/known_good
 mkdir -p downloads/new_version
@@ -31,21 +53,20 @@ for test_file in "${test_files[@]}"; do
 done
 
 echo "Start up the known good imgproxy version with docker and then press enter"
-read
+read -r
 
-
-download test assets from known good imgproxy version
+# download test assets from known good imgproxy version
 for test_file in "${test_files[@]}"; do
-    wget "http://localhost:8080/pushd/${test_user}/${test_file}" --directory-prefix=downloads/known_good/
+    wget_file "${test_file}" "downloads/known_good/"
 done
 
 echo "Finished downloading test files from known good imgproxy version"
 echo "Start up the new imgproxy version with docker and then press enter"
-read
+read -r
 
-download test assets from new imgproxy version
+# download test assets from new imgproxy version
 for test_file in "${test_files[@]}"; do
-    wget "http://localhost:8080/pushd/${test_user}/${test_file}" --directory-prefix=downloads/new_version/
+  wget_file "${test_file}" "downloads/new_version/"
 done
 
 echo "Now we will phash the known_good and new_version files to see if they match"
