@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"math"
 	"os"
-	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
@@ -35,6 +34,22 @@ func strEnvConfig(s *string, name string) {
 	if env := os.Getenv(name); len(env) > 0 {
 		*s = env
 	}
+}
+
+func strSliceEnvConfig(s *[]string, name string) {
+	if env := os.Getenv(name); len(env) > 0 {
+		parts := strings.Split(env, ",")
+
+		for i, p := range parts {
+			parts[i] = strings.TrimSpace(p)
+		}
+
+		*s = parts
+
+		return
+	}
+
+	*s = []string{}
 }
 
 func boolEnvConfig(b *bool, name string) {
@@ -182,38 +197,6 @@ func presetFileConfig(p presets, filepath string) error {
 	return nil
 }
 
-func patternsEnvConfig(s *[]*regexp.Regexp, name string) {
-	if env := os.Getenv(name); len(env) > 0 {
-		parts := strings.Split(env, ",")
-		result := make([]*regexp.Regexp, len(parts))
-
-		for i, p := range parts {
-			result[i] = regexpFromPattern(strings.TrimSpace(p))
-		}
-
-		*s = result
-	} else {
-		*s = []*regexp.Regexp{}
-	}
-}
-
-func regexpFromPattern(pattern string) *regexp.Regexp {
-	var result strings.Builder
-	// Perform prefix matching
-	result.WriteString("^")
-	for i, part := range strings.Split(pattern, "*") {
-		// Add a regexp match all without slashes for each wildcard character
-		if i > 0 {
-			result.WriteString("[^/]*")
-		}
-
-		// Quote other parts of the pattern
-		result.WriteString(regexp.QuoteMeta(part))
-	}
-	// It is safe to use regexp.MustCompile since the expression is always valid
-	return regexp.MustCompile(result.String())
-}
-
 type config struct {
 	Network          string
 	Bind             string
@@ -226,7 +209,6 @@ type config struct {
 
 	TTL                     int
 	CacheControlPassthrough bool
-	SetCanonicalHeader      bool
 
 	SoReuseport bool
 
@@ -242,7 +224,6 @@ type config struct {
 	PngInterlaced         bool
 	PngQuantize           bool
 	PngQuantizationColors int
-	AvifSpeed             int
 	Quality               int
 	FormatQuality         map[imageType]int
 	GZipCompression       int
@@ -275,7 +256,7 @@ type config struct {
 	IgnoreSslVerification bool
 	DevelopmentErrorsMode bool
 
-	AllowedSources      []*regexp.Regexp
+	AllowedSources      []string
 	LocalFileSystemRoot string
 	S3Enabled           bool
 	S3Region            string
@@ -345,7 +326,6 @@ var conf = config{
 	SignatureSize:                  32,
 	PngQuantizationColors:          256,
 	Quality:                        80,
-	AvifSpeed:                      5,
 	FormatQuality:                  map[imageType]int{imageTypeAVIF: 50},
 	StripMetadata:                  true,
 	StripColorProfile:              true,
@@ -384,7 +364,6 @@ func configure() error {
 
 	intEnvConfig(&conf.TTL, "IMGPROXY_TTL")
 	boolEnvConfig(&conf.CacheControlPassthrough, "IMGPROXY_CACHE_CONTROL_PASSTHROUGH")
-	boolEnvConfig(&conf.SetCanonicalHeader, "IMGPROXY_SET_CANONICAL_HEADER")
 
 	boolEnvConfig(&conf.SoReuseport, "IMGPROXY_SO_REUSEPORT")
 
@@ -401,9 +380,8 @@ func configure() error {
 	}
 	intEnvConfig(&conf.MaxAnimationFrames, "IMGPROXY_MAX_ANIMATION_FRAMES")
 
-	patternsEnvConfig(&conf.AllowedSources, "IMGPROXY_ALLOWED_SOURCES")
+	strSliceEnvConfig(&conf.AllowedSources, "IMGPROXY_ALLOWED_SOURCES")
 
-	intEnvConfig(&conf.AvifSpeed, "IMGPROXY_AVIF_SPEED")
 	boolEnvConfig(&conf.JpegProgressive, "IMGPROXY_JPEG_PROGRESSIVE")
 	boolEnvConfig(&conf.PngInterlaced, "IMGPROXY_PNG_INTERLACED")
 	boolEnvConfig(&conf.PngQuantize, "IMGPROXY_PNG_QUANTIZE")
@@ -584,12 +562,6 @@ func configure() error {
 		return fmt.Errorf("Quality should be greater than 0, now - %d\n", conf.Quality)
 	} else if conf.Quality > 100 {
 		return fmt.Errorf("Quality can't be greater than 100, now - %d\n", conf.Quality)
-	}
-
-	if conf.AvifSpeed <= 0 {
-		return fmt.Errorf("Avif speed should be greater than 0, now - %d\n", conf.AvifSpeed)
-	} else if conf.AvifSpeed > 8 {
-		return fmt.Errorf("Avif speed can't be greater than 8, now - %d\n", conf.AvifSpeed)
 	}
 
 	if conf.GZipCompression < 0 {

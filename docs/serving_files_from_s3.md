@@ -2,25 +2,35 @@
 
 imgproxy can process images from S3 buckets. To use this feature, do the following:
 
-1. Set `IMGPROXY_USE_S3` environment variable as `true`;
-2. [Setup credentials](#setup-credentials) to grant access to your bucket;
-3. _(optional)_ Specify AWS region with `IMGPROXY_S3_REGION` or `AWS_REGION`. Default: `us-west-1`;
-4. _(optional)_ Specify S3 endpoint with `IMGPROXY_S3_ENDPOINT`;
-5. Use `s3://%bucket_name/%file_key` as the source image URL.
+1. Set the `IMGPROXY_USE_S3` environment variable to be `true`.
+2. [Set up the necessary credentials](#set-up-credentials) to grant access to your bucket.
+3. _(optional)_ Specify the AWS region with `IMGPROXY_S3_REGION` or `AWS_REGION`. Default: `us-west-1`
+4. _(optional)_ Specify the S3 endpoint with `IMGPROXY_S3_ENDPOINT`.
+5. _(optional)_ Set the `IMGPROXY_S3_MULTI_REGION` environment variable to be `true`.
+6. _(optional)_ Specify the AWS IAM Role to Assume with `IMGPROXY_S3_ASSUME_ROLE_ARN`
+7. Use `s3://%bucket_name/%file_key` as the source image URL.
 
-If you need to specify version of the source object, you can use query string of the source URL:
+If you need to specify the version of the source object, you can use the query string of the source URL:
 
 ```
 s3://%bucket_name/%file_key?%version_id
 ```
 
-### Setup credentials
+### Set up credentials
 
-There are three ways to specify your AWS credentials. The credentials need to have read rights for all of the buckets given in the source URLs.
+There are three ways to specify your AWS credentials. The credentials need to have read rights for all of the buckets given in the source URLs:
+
+#### IAM Roles
+
+If you're running imgproxy on an Amazon Web Services platform, you can use IAM roles to to get the security credentials to make calls to AWS S3.
+
+* **Elastic Container Service (ECS):** Assign an [IAM role to a task](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html).
+* **Elastic Kubernetes Service (EKS):** Assign a [service account to a pod](https://docs.aws.amazon.com/eks/latest/userguide/pod-configuration.html).
+* **Elastic Beanstalk:** Assign an [IAM role to an instance](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/iam-instanceprofile.html).
 
 #### Environment variables
 
-You can specify AWS Acces Key ID and Secret Access Key by setting the standard `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` environment variables.
+You can specify an AWS Access Key ID and a Secret Access Key by setting the standard `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` environment variables.
 
 ``` bash
 AWS_ACCESS_KEY_ID=my_access_key AWS_SECRET_ACCESS_KEY=my_secret_key imgproxy
@@ -29,11 +39,9 @@ AWS_ACCESS_KEY_ID=my_access_key AWS_SECRET_ACCESS_KEY=my_secret_key imgproxy
 docker run -e AWS_ACCESS_KEY_ID=my_access_key -e AWS_SECRET_ACCESS_KEY=my_secret_key -it darthsim/imgproxy
 ```
 
-It is the recommended way to use with dockerized imgproxy.
-
 #### Shared credentials file
 
-Otherwise, you can create the `.aws/credentials` file in your home directory with the following content:
+Alternatively, you can create the `.aws/credentials` file in your home directory with the following content:
 
 ```ini
 [default]
@@ -41,17 +49,21 @@ aws_access_key_id = %access_key_id
 aws_secret_access_key = %secret_access_key
 ```
 
-#### IAM Roles for Amazon EC2 Instances
+#### Cross-Account Access
 
-If you are running imgproxy on an Amazon EC2 instance, you can use the instance's [IAM role](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html) to get security credentials to make calls to AWS S3.
+S3 access credentials may be acquired by assuming a role using STS. To do so specify the IAM Role arn with the `IMGPROXY_S3_ASSUME_ROLE_ARN` environment variable. This approach still requires you to provide initial AWS credentials by using one of the ways described above. The provided credentials role should allow assuming the role with provided ARN.
 
-You can learn about credentials in the [Configuring the AWS SDK for Go](https://docs.aws.amazon.com/sdk-for-go/v1/developer-guide/configuring-sdk.html) guide.
+## Multi-Region mode
 
-## Minio
+By default, imgproxy allows using S3 buckets located in a single region specified with `IMGPROXY_S3_REGION` or `AWS_REGION`. If your buckets are located in different regions, set `IMGPROXY_S3_MULTI_REGION` environment variable to be `true` to enable multi-region mode. In this mode, imgproxy will make an additional request to determine the bucket's region when the bucket is accessed for the first time.
 
-[Minio](https://github.com/minio/minio) is an object storage server released under Apache License v2.0. It is compatible with Amazon S3, so it can be used with imgproxy.
+In this mode, imgroxy uses a region specified with  `IMGPROXY_S3_REGION` or `AWS_REGION` to determine the endpoint to which it should send the bucket's region determination request. Thus, it's a good idea to use one of these variables to specify a region closest to the imgproxy instance.
 
-To use Minio as source images provider, do the following:
+## MinIO
 
-* Setup Amazon S3 support as usual using environment variables or shared config file;
-* Specify endpoint with `IMGPROXY_S3_ENDPOINT`. Use `http://...` endpoint to disable SSL.
+[MinIO](https://github.com/minio/minio) is an object storage server released under Apache License v2.0. It is compatible with Amazon S3, so it can be used with imgproxy.
+
+To use MinIO as source images provider, do the following:
+
+* Set up Amazon S3 support as usual using environment variables or a shared config file.
+* Specify an endpoint with `IMGPROXY_S3_ENDPOINT`. Use the `http://...` endpoint to disable SSL.

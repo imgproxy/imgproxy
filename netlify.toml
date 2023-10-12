@@ -1,7 +1,7 @@
 [build]
-  base="docs"
-  publish="/"
-  command=""
+  base="/"
+  publish="docs/"
+  command="./build-docs-sitemap.sh"
 
 [[redirects]]
   from = "/*"

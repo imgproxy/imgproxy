@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/airbrake/gobrake/v5"
-	"github.com/bugsnag/bugsnag-go/v2"
+	"github.com/bugsnag/bugsnag-go"
 	"github.com/getsentry/sentry-go"
 	"github.com/honeybadger-io/honeybadger-go"
 )

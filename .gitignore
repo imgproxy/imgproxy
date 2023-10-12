@@ -6,3 +6,7 @@ tmp/
 
 .gitmodules
 docker-base
+docs/sitemap.txt
+.env
+.devcontainer/*
+k6/*.json

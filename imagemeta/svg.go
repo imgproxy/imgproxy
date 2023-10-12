@@ -1,66 +1,29 @@
 package imagemeta
 
 import (
-	"bytes"
-	"encoding/xml"
-	"fmt"
 	"io"
 	"strings"
-	"sync/atomic"
 
-	"golang.org/x/text/encoding/charmap"
+	"github.com/imgproxy/imgproxy/v3/config"
+
+	"github.com/tdewolff/parse/v2"
+	"github.com/tdewolff/parse/v2/xml"
 )
 
-var maxSvgBytes int64 = 32 * 1024
+func IsSVG(r io.Reader) bool {
+	maxBytes := config.MaxSvgCheckBytes
 
-type svgHeader struct {
-	XMLName xml.Name
-}
-
-func xmlCharsetReader(charset string, input io.Reader) (io.Reader, error) {
-	if strings.EqualFold(charset, "iso-8859-1") {
-		return charmap.ISO8859_1.NewDecoder().Reader(input), nil
-	}
-	return nil, fmt.Errorf("Unknown SVG charset: %s", charset)
-}
-
-func SetMaxSvgCheckRead(n int) {
-	atomic.StoreInt64(&maxSvgBytes, int64(n))
-}
-
-func IsSVG(r io.Reader) (bool, error) {
-	maxBytes := int(atomic.LoadInt64(&maxSvgBytes))
-
-	var h svgHeader
-
-	buf := make([]byte, 0, maxBytes)
-	b := make([]byte, 1024)
-
-	rr := bytes.NewReader(buf)
+	l := xml.NewLexer(parse.NewInput(io.LimitReader(r, int64(maxBytes))))
 
 	for {
-		n, err := r.Read(b)
-		if err != nil && err != io.EOF {
-			return false, err
-		}
-		if n <= 0 {
-			return false, nil
-		}
+		tt, _ := l.Next()
 
-		buf = append(buf, b[:n]...)
-		rr.Reset(buf)
+		switch tt {
+		case xml.ErrorToken:
+			return false
 
-		dec := xml.NewDecoder(rr)
-		dec.Strict = false
-		dec.CharsetReader = xmlCharsetReader
-		if dec.Decode(&h); h.XMLName.Local == "svg" {
-			return true, nil
-		}
-
-		if len(buf) >= maxBytes {
-			break
+		case xml.StartTagToken:
+			return strings.ToLower(string(l.Text())) == "svg"
 		}
 	}
-
-	return false, nil
 }

@@ -1,0 +1,16 @@
+[
+  {
+    "url": "/rs:fit:500:500/crop:1000:1000/sh:2/rot:90/wm:1/pd:10/plain/local:///test.jpg",
+    "weight": 5,
+    "group": "jpg"
+  },
+  {
+    "url": "/rs:fit:500:0/plain/local:///test.png",
+    "weight": 2,
+    "group": "png"
+  },
+  {
+    "url": "/rs:fill:300:0/wm:0.5:re:::0.2/plain/local:///test.gif",
+    "group": "gif"
+  }
+]

@@ -94,6 +94,10 @@ func Diff(a, b interface{}) Entries {
 		fieldA := valA.Field(i)
 		fieldB := valB.Field(i)
 
+		if !fieldA.CanInterface() || !fieldB.CanInterface() {
+			continue
+		}
+
 		intA := fieldA.Interface()
 		intB := fieldB.Interface()
 

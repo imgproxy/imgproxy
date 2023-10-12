@@ -1,0 +1,56 @@
+steps:
+- id: 'docker_amd64'
+  name: 'docker'
+  entrypoint: 'sh'
+  args:
+    - '-c'
+    - |
+      docker build \
+        -t darthsim/imgproxy:$TAG_NAME-amd64 \
+        -f docker/Dockerfile \
+        --platform=linux/amd64 \
+        .
+  env:
+    - DOCKER_BUILDKIT=1
+  waitFor: ["-"]
+
+- id: 'docker_arm64'
+  name: 'docker'
+  entrypoint: 'sh'
+  args:
+    - '-c'
+    - |
+      docker run --rm --privileged multiarch/qemu-user-static --reset -p yes \
+      && docker build \
+        -t darthsim/imgproxy:$TAG_NAME-arm64 \
+        -f docker/Dockerfile \
+        --platform=linux/arm64/v8 \
+        .
+  env:
+    - DOCKER_BUILDKIT=1
+  waitFor: ["-"]
+
+- id: 'push'
+  name: 'docker'
+  entrypoint: 'sh'
+  args:
+    - '-c'
+    - |
+      apk add --no-cache bash \
+      && docker login -u darthsim -p $$DOCKER_HUB_TOKEN \
+      && docker/push-images.sh ${TAG_NAME}
+  secretEnv: ['DOCKER_HUB_TOKEN']
+  waitFor: ['docker_amd64', 'docker_arm64']
+
+
+availableSecrets:
+  secretManager:
+    - versionName: projects/${PROJECT_ID}/secrets/DOCKER_HUB_TOKEN/versions/latest
+      env: DOCKER_HUB_TOKEN
+
+options:
+  machineType: 'N1_HIGHCPU_8'
+  logging: CLOUD_LOGGING_ONLY
+  dynamic_substitutions: true
+
+timeout: 1200s

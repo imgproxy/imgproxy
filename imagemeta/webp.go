@@ -10,6 +10,7 @@ import (
 	"errors"
 	"io"
 
+	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"golang.org/x/image/riff"
 	"golang.org/x/image/vp8"
 	"golang.org/x/image/vp8l"
@@ -59,7 +60,7 @@ func DecodeWebpMeta(r io.Reader) (Meta, error) {
 			fh, err := d.DecodeFrameHeader()
 
 			return &meta{
-				format: "webp",
+				format: imagetype.WEBP,
 				width:  fh.Width,
 				height: fh.Height,
 			}, err
@@ -71,7 +72,7 @@ func DecodeWebpMeta(r io.Reader) (Meta, error) {
 			}
 
 			return &meta{
-				format: "webp",
+				format: imagetype.WEBP,
 				width:  conf.Width,
 				height: conf.Height,
 			}, nil
@@ -89,7 +90,7 @@ func DecodeWebpMeta(r io.Reader) (Meta, error) {
 			heightMinusOne := uint32(buf[7]) | uint32(buf[8])<<8 | uint32(buf[9])<<16
 
 			return &meta{
-				format: "webp",
+				format: imagetype.WEBP,
 				width:  int(widthMinusOne) + 1,
 				height: int(heightMinusOne) + 1,
 			}, nil

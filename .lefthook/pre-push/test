@@ -7,4 +7,4 @@ fi
 export CGO_LDFLAGS_ALLOW="-s|-w"
 export CGO_CFLAGS_ALLOW="-Xpreprocessor"
 
-go test
+go test ./...

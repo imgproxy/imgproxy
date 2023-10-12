@@ -1,0 +1,42 @@
+name: Lint
+
+on:
+  - push
+  - pull_request
+
+env:
+  CGO_LDFLAGS_ALLOW: "-s|-w"
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    container:
+      image: darthsim/imgproxy-ci:202302212110
+    strategy:
+      matrix:
+        go-version: ["1.20.x"]
+        vips-version: ["8.14"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version: ${{ matrix.go-version }}
+      - name: Cache mods
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ matrix.go-version }}-${{ hashFiles('**/go.sum') }}
+      - name: Download mods
+        run: go mod download
+      - name: Lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: v1.51.2
+          args: --timeout 5m0s
+          skip-cache: true
+        env:
+          LD_LIBRARY_PATH: "${{ env.LD_LIBRARY_PATH }}:/root/vips/${{ matrix.vips-version }}/lib"
+          PKG_CONFIG_PATH: "${{ env.PKG_CONFIG_PATH }}:/root/vips/${{ matrix.vips-version }}/lib/pkgconfig"

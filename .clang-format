@@ -1,0 +1,16 @@
+BasedOnStyle: GNU
+AccessModifierOffset: -2
+AlignAfterOpenBracket: DontAlign
+AlignEscapedNewlines: DontAlign
+AlignOperands: DontAlign
+AllowAllArgumentsOnNextLine: false
+AllowAllParametersOfDeclarationOnNextLine: false
+BreakBeforeBinaryOperators: None
+BreakBeforeBraces: Stroustrup
+IndentWidth: 2
+SortIncludes: Never
+SpaceAfterCStyleCast: true
+SpaceBeforeParens: ControlStatements
+TabWidth: 2
+UseTab: Never
+ColumnLimit: 0

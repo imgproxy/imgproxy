@@ -2,52 +2,86 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
-	"runtime"
 	"syscall"
 	"time"
+
+	log "github.com/sirupsen/logrus"
+	"go.uber.org/automaxprocs/maxprocs"
+
+	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/config/loadenv"
+	"github.com/imgproxy/imgproxy/v3/errorreport"
+	"github.com/imgproxy/imgproxy/v3/gliblog"
+	"github.com/imgproxy/imgproxy/v3/imagedata"
+	"github.com/imgproxy/imgproxy/v3/logger"
+	"github.com/imgproxy/imgproxy/v3/memory"
+	"github.com/imgproxy/imgproxy/v3/metrics"
+	"github.com/imgproxy/imgproxy/v3/metrics/prometheus"
+	"github.com/imgproxy/imgproxy/v3/options"
+	"github.com/imgproxy/imgproxy/v3/processing"
+	"github.com/imgproxy/imgproxy/v3/version"
+	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
-const version = "2.16.7"
-
-type ctxKey string
-
 func initialize() error {
-	log.SetOutput(os.Stdout)
-
-	if err := initLog(); err != nil {
+	if err := logger.Init(); err != nil {
 		return err
 	}
 
-	if err := configure(); err != nil {
+	gliblog.Init()
+
+	maxprocs.Set(maxprocs.Logger(log.Debugf))
+
+	if err := loadenv.Load(); err != nil {
 		return err
 	}
 
-	if err := initNewrelic(); err != nil {
+	if err := config.Configure(); err != nil {
 		return err
 	}
 
-	initPrometheus()
-
-	if err := initDownloading(); err != nil {
+	if err := metrics.Init(); err != nil {
 		return err
 	}
 
-	initErrorsReporting()
-
-	if err := initVips(); err != nil {
+	if err := imagedata.Init(); err != nil {
 		return err
 	}
 
-	if err := checkPresets(conf.Presets); err != nil {
-		shutdownVips()
+	initProcessingHandler()
+
+	errorreport.Init()
+
+	if err := vips.Init(); err != nil {
+		return err
+	}
+
+	if err := processing.ValidatePreferredFormats(); err != nil {
+		vips.Shutdown()
+		return err
+	}
+
+	if err := options.ParsePresets(config.Presets); err != nil {
+		vips.Shutdown()
+		return err
+	}
+
+	if err := options.ValidatePresets(); err != nil {
+		vips.Shutdown()
 		return err
 	}
 
 	return nil
+}
+
+func shutdown() {
+	vips.Shutdown()
+	metrics.Stop()
+	errorreport.Close()
 }
 
 func run() error {
@@ -55,29 +89,24 @@ func run() error {
 		return err
 	}
 
-	defer shutdownVips()
-	defer closeErrorsReporting()
+	defer shutdown()
 
 	go func() {
 		var logMemStats = len(os.Getenv("IMGPROXY_LOG_MEM_STATS")) > 0
 
-		for range time.Tick(time.Duration(conf.FreeMemoryInterval) * time.Second) {
-			freeMemory()
+		for range time.Tick(time.Duration(config.FreeMemoryInterval) * time.Second) {
+			memory.Free()
 
 			if logMemStats {
-				var m runtime.MemStats
-				runtime.ReadMemStats(&m)
-				logDebug("MEMORY USAGE: Sys=%d HeapIdle=%d HeapInuse=%d", m.Sys/1024/1024, m.HeapIdle/1024/1024, m.HeapInuse/1024/1024)
+				memory.LogStats()
 			}
 		}
 	}()
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	if prometheusEnabled {
-		if err := startPrometheusServer(cancel); err != nil {
-			return err
-		}
+	if err := prometheus.StartServer(cancel); err != nil {
+		return err
 	}
 
 	s, err := startServer(cancel)
@@ -98,17 +127,17 @@ func run() error {
 }
 
 func main() {
-	if len(os.Args) > 1 {
-		switch os.Args[1] {
-		case "health":
-			os.Exit(healthcheck())
-		case "version":
-			fmt.Println(version)
-			os.Exit(0)
-		}
+	flag.Parse()
+
+	switch flag.Arg(0) {
+	case "health":
+		os.Exit(healthcheck())
+	case "version":
+		fmt.Println(version.Version())
+		os.Exit(0)
 	}
 
 	if err := run(); err != nil {
-		logFatal(err.Error())
+		log.Fatal(err)
 	}
 }
