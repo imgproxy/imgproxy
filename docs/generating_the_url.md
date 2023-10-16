@@ -722,6 +722,37 @@ vts:%second
 
 Allows redefining `IMGPROXY_VIDEO_THUMBNAIL_SECOND` config.
 
+### Video thumbnail keyframes![pro](./assets/pro.svg) :id=video-thumbnail-keyframes
+
+```
+video_thumbnail_keyframes:%keyframes
+vts:%keyframes
+```
+
+Allows redefining `IMGPROXY_VIDEO_THUMBNAIL_KEYFRAMES` config.
+
+### Video thumbnail tile![pro](./assets/pro.svg) :id=video-thumbnail-tile
+
+```
+video_thumbnail_tile:%step:%columns:%rows:%tile_width:%tile_height:%extend_tile:%trim
+vtt:%step:%columns:%rows:%tile_width:%tile_height:%extend_tile:%trim
+```
+
+When `step` is larger than `0`, imgproxy will generate a tiled sprite using the source video frames.
+
+* `step`: the step of timestamp (in seconds) between video frames that should be used for the sprite generation
+* `columns`: the number of columns in the sprite
+* `rows`: the number of rows in the sprite
+* `tile_width`, `tile_height`: the width and height of each tile in the sprite. imgproxy will resize each used frame to fit the provided size
+* `extend_tile`: _(optional)_ when set to `1`, `t` or `true`, imgproxy will extend each tile to the requested size using a black background
+* `trim`: _(optional)_ when set to `1`, `t` or `true`, imgproxy will trim the unused space from the sprite
+
+The timestamp of the first frame can be set using the `IMGPROXY_VIDEO_THUMBNAIL_SECOND` config or the [video_thumbnail_second](#video-thumbnail-keyframes) option.
+
+You can make imgproxy use only keyframes with the `IMGPROXY_VIDEO_THUMBNAIL_KEYFRAMES` config or the [video_thumbnail_keyframes](#video-thumbnail-keyframes) option.
+
+Default: `0:0:0:0:0`
+
 ### Fallback image URL![pro](./assets/pro.svg) :id=fallback-image-url
 
 You can use a custom fallback image by specifying its URL with the `fallback_image_url` processing option:

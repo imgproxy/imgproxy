@@ -263,9 +263,10 @@ imgproxy can use the `Width` and `DPR` HTTP headers to determine default width a
 imgproxy Pro can extract specific video frames to create thumbnails. This feature is disabled by default, but can be enabled with `IMGPROXY_ENABLE_VIDEO_THUMBNAILS`.
 
 * `IMGPROXY_ENABLE_VIDEO_THUMBNAILS`: ![pro](./assets/pro.svg) when `true`, enables video thumbnail generation. Default: `false`
-* `IMGPROXY_VIDEO_THUMBNAIL_SECOND`: ![pro](./assets/pro.svg) the timestamp of the frame (in seconds) that will be used for a thumbnail. Default: 1
+* `IMGPROXY_VIDEO_THUMBNAIL_SECOND`: ![pro](./assets/pro.svg) the timestamp of the frame (in seconds) that will be used for a thumbnail. Default: `1`
+* `IMGPROXY_VIDEO_THUMBNAIL_KEYFRAMES`: ![pro](./assets/pro.svg) when `true`, imgproxy will use the latest keyframe before `IMGPROXY_VIDEO_THUMBNAIL_SECOND` for video thumbnail generation. This makes video thumbnail generation faster yet the used frame timestamp will not be exactly equal to the requested one. Default: `false`
 * `IMGPROXY_VIDEO_THUMBNAIL_PROBE_SIZE`: ![pro](./assets/pro.svg) the maximum amount of bytes used to determine the format. Lower values can decrease memory usage but can produce inaccurate data, or even lead to errors. Default: 5000000
-* `IMGPROXY_VIDEO_THUMBNAIL_MAX_ANALYZE_DURATION`: ![pro](./assets/pro.svg) the maximum number of milliseconds used to get the stream info. Lower values can decrease memory usage but can produce inaccurate data, or even lead to errors. When set to 0, the heuristic is used. Default: 0
+* `IMGPROXY_VIDEO_THUMBNAIL_MAX_ANALYZE_DURATION`: ![pro](./assets/pro.svg) the maximum number of milliseconds used to get the stream info. Lower values can decrease memory usage but can produce inaccurate data, or even lead to errors. When set to `0`, the heuristic is used. Default: `0`
 
 **⚠️ Warning:** Though using `IMGPROXY_VIDEO_THUMBNAIL_PROBE_SIZE` and `IMGPROXY_VIDEO_THUMBNAIL_MAX_ANALYZE_DURATION` can lower the memory footprint of video thumbnail generation, they should be used in production only when you know what you're doing.
 

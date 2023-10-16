@@ -417,6 +417,15 @@ vts:%second
 
 Allows redefining `IMGPROXY_VIDEO_THUMBNAIL_SECOND` config.
 
+### Video thumbnail keyframes![pro](./assets/pro.svg) :id=video-thumbnail-keyframes
+
+```
+video_thumbnail_keyframes:%keyframes
+vts:%keyframes
+```
+
+Allows redefining `IMGPROXY_VIDEO_THUMBNAIL_KEYFRAMES` config.
+
 ### Cache buster
 
 ```

@@ -1,6 +1,12 @@
 # Changelog
 
 ## [Unreleased]
+### Add
+- (pro) Add the `IMGPROXY_VIDEO_THUMBNAIL_KEYFRAMES` config and the [video_thumbnail_keyframes](https://docs.imgproxy.net/latest/generating_the_url?id=video-thumbnail-keyframes) processing option.
+- (pro) Add the [video_thumbnail_tile](https://docs.imgproxy.net/latest/generating_the_url?id=video-thumbnail-tile) processing option.
+
+### Fix
+- (pro) Fix detection of some videos.
 
 ## [3.20.0] - 2023-10-09
 ### Add
