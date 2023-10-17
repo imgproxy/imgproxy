@@ -50,15 +50,18 @@ func (s *S3TestSuite) SetupSuite() {
 	svc, err := s.transport.(*transport).getClient(context.Background(), "test")
 	require.Nil(s.T(), err)
 	require.NotNil(s.T(), svc)
+	require.IsType(s.T(), &s3.S3{}, svc)
 
-	_, err = svc.PutObject(&s3.PutObjectInput{
+	client := svc.(*s3.S3)
+
+	_, err = client.PutObject(&s3.PutObjectInput{
 		Body:   bytes.NewReader(make([]byte, 32)),
 		Bucket: aws.String("test"),
 		Key:    aws.String("foo/test.png"),
 	})
 	require.Nil(s.T(), err)
 
-	obj, err := svc.GetObject(&s3.GetObjectInput{
+	obj, err := client.GetObject(&s3.GetObjectInput{
 		Bucket: aws.String("test"),
 		Key:    aws.String("foo/test.png"),
 	})
