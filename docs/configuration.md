@@ -371,6 +371,7 @@ imgproxy can process files from Amazon S3 buckets, but this feature is disabled 
 * `IMGPROXY_S3_REGION`: an S3 buckets region
 * `IMGPROXY_S3_ENDPOINT`: a custom S3 endpoint to being used by imgproxy
 * `IMGPROXY_S3_MULTI_REGION`: when `true`, allows using S3 buckets from different regions
+* `IMGPROXY_S3_USE_DECRYPTION_CLIENT`: when `true`, toggles client-side encryption
 
 Check out the [Serving files from S3](serving_files_from_s3.md) guide to learn more.
 

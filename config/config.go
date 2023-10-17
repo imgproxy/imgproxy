@@ -99,11 +99,12 @@ var (
 
 	LocalFileSystemRoot string
 
-	S3Enabled       bool
-	S3Region        string
-	S3Endpoint      string
-	S3AssumeRoleArn string
-	S3MultiRegion   bool
+	S3Enabled                 bool
+	S3Region                  string
+	S3Endpoint                string
+	S3AssumeRoleArn           string
+	S3MultiRegion             bool
+	S3DecryptionClientEnabled bool
 
 	GCSEnabled  bool
 	GCSKey      string
@@ -300,6 +301,7 @@ func Reset() {
 	S3Endpoint = ""
 	S3AssumeRoleArn = ""
 	S3MultiRegion = false
+	S3DecryptionClientEnabled = false
 	GCSEnabled = false
 	GCSKey = ""
 	ABSEnabled = false
@@ -501,6 +503,7 @@ func Configure() error {
 	configurators.String(&S3Endpoint, "IMGPROXY_S3_ENDPOINT")
 	configurators.String(&S3AssumeRoleArn, "IMGPROXY_S3_ASSUME_ROLE_ARN")
 	configurators.Bool(&S3MultiRegion, "IMGPROXY_S3_MULTI_REGION")
+	configurators.Bool(&S3DecryptionClientEnabled, "IMGPROXY_S3_USE_DECRYPTION_CLIENT")
 
 	configurators.Bool(&GCSEnabled, "IMGPROXY_USE_GCS")
 	configurators.String(&GCSKey, "IMGPROXY_GCS_KEY")
