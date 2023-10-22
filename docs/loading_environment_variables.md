@@ -11,7 +11,7 @@ imgproxy can load environment variables from various sources such as:
 
 You can create an [environment file](#environment-file-syntax) and configure imgproxy to read environment variables from it.
 
-* `IMGPROXY_ENV_LOCAL_FILE_PATH`: the path of the environmebt file to load
+* `IMGPROXY_ENV_LOCAL_FILE_PATH`: the path of the environment file to load
 
 ## AWS Secrets Manager
 
