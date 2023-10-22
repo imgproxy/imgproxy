@@ -11,6 +11,8 @@ Check out the [example](#example) at the end of this guide.
 
 ## Signature
 
+**⚠️ Warning:** The signature part should always be present in a URL. If the signature check is disabled (no key/salt pairs are provided), the signature part may contain anything (for example, `unsafe` or `_`).
+
 A signature protects your URL from being altered by an attacker. It is highly recommended to sign imgproxy URLs when imgproxy is being used in production.
 
 Once you set up your [URL signature](configuration.md#url-signature), check out the [Signing the URL](signing_the_url.md) guide to find out how to sign your URLs. Otherwise, since the signature still needs to be present, feel free to use any string here.
