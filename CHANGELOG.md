@@ -7,6 +7,9 @@
 
 ### Fix
 - (pro) Fix detection of some videos.
+- (docker) Fix saving EXIF strings containing invalid UTF-8 characters.
+- (docker) Fix possible segfaults while processing HEIC/AVIF images.
+- (docker) Fix rendering GIFs embedded in SVGs.
 
 ## [3.20.0] - 2023-10-09
 ### Add
