@@ -79,6 +79,12 @@ In terms of security, the massive processing of remote images is a potentially d
 
 Check out our 📑 [Documentation](https://docs.imgproxy.net).
 
+## Deploy
+
+Deploy imgproxy to Dome in [one-click](https://app.trydome.io/signup?package=imgproxy):
+
+[![Deploy to Dome](https://trydome.io/button.svg)](https://app.trydome.io/signup?package=imgproxy)
+
 ## Author
 
 Sergey "[DarthSim](https://github.com/DarthSim)" Alexandrovich
