@@ -15,6 +15,10 @@ If you don't have docker, you can use Heroku for a quick start.
 
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/DarthSim/imgproxy)
 
+For quick self-hosted option, you can [one-click deploy](https://app.trydome.io/signup?package=imgproxy) with Dome:
+
+[![Deploy to Dome](https://trydome.io/button.svg)](https://app.trydome.io/signup?package=imgproxy)
+
 Check out our [installation guide](installation.md) for more details and instructions.
 
 In both cases, that's it! No further configuration is needed, but if you want to unleash the full power of imgproxy, read our [configuration guide](configuration.md).

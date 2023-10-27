@@ -34,6 +34,12 @@ helm upgrade -i --name imgproxy imgproxy/imgproxy
 
 Check out the [chart's README](https://github.com/imgproxy/imgproxy-helm) for more info.
 
+## Dome
+
+Deploy imgproxy to Dome in [one-click](https://app.trydome.io/signup?package=imgproxy):
+
+[![Deploy to Dome](https://trydome.io/button.svg)](https://app.trydome.io/signup?package=imgproxy)
+
 ## Heroku
 
 imgproxy can be deployed to Heroku with the click of a button:
