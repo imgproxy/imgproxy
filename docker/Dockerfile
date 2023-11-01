@@ -1,7 +1,9 @@
 ARG BASE_IMAGE_VERSION="v3.7.1"
 
 FROM darthsim/imgproxy-base:${BASE_IMAGE_VERSION} as build
-LABEL maintainer="Sergey Alexandrovich <darthsim@gmail.com>"
+
+ARG BUILDPLATFORM
+ARG TARGETPLATFORM
 
 COPY . .
 RUN docker/build.sh
@@ -29,6 +31,7 @@ RUN apt-get update \
   && ln -s /usr/lib/$(uname -m)-linux-gnu/libtcmalloc_minimal.so.4 /usr/local/lib/libtcmalloc_minimal.so \
   && rm -rf /var/lib/apt/lists/*
 
+COPY docker/entrypoint.sh /usr/local/bin/
 COPY --from=build /usr/local/bin/imgproxy /usr/local/bin/
 COPY --from=build /usr/local/lib /usr/local/lib
 

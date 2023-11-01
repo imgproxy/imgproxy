@@ -207,10 +207,8 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 
-	r = beforeProcessing(r)
-
 	var cachePath string
-	r, cachePath = beforeProcessing(r)
+	r, cachePath = beforeProcessing(r, len(config.Salts) > 0)
 
 	if queueSem != nil {
 		token, aquired := queueSem.TryAquire()
@@ -428,17 +426,27 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// copy imgData for thread safety
-	imgDataForS3 := make([]byte, len(imgData))
-	copy(imgDataForS3, imgData)
-	uploaded := beforeResponse(imgDataForS3, cachePath))
+	resultData, err := func() (*imagedata.ImageData, error) {
+		defer metrics.StartProcessingSegment(ctx)()
+		return processing.ProcessImage(ctx, originData, po)
+	}()
+	checkErr(ctx, "processing", err)
+	checkErr(ctx, "timeout", router.CheckTimeout(ctx))
+
+	var uploaded chan bool
+	if cachePath != "" {
+		// copy imgData for thread safety
+		imgDataForS3 := make([]byte, len(resultData.Data))
+		copy(imgDataForS3, resultData.Data)
+		uploaded = beforeResponse(imgDataForS3, cachePath)
+	}
 
 	defer resultData.Close()
-        uploaded := beforeResponse(imageData)
 
-	respondWithImage(ctx, reqID, r, rw, imgData)
+	respondWithImage(reqID, r, rw, statusCode, resultData, po, imageURL, originData)
 
-
-	// Waiting for S3 Upload to finish.
-	<-uploaded
+	if cachePath != "" {
+		// Waiting for S3 Upload to finish.
+		<-uploaded
+	}
 }

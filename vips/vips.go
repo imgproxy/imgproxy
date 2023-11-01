@@ -584,6 +584,25 @@ func (img *Image) Resize(wscale, hscale float64) error {
 	return nil
 }
 
+// OldResize Resize version from before the large refactor, used in loadAndTransform until that is refactored as well
+func (img *Image) OldResize(scale float64, hasAlpa bool) error {
+	var tmp *C.VipsImage
+
+	if hasAlpa {
+		if C.vips_resize_with_premultiply(img.VipsImage, &tmp, C.double(scale)) != 0 {
+			return Error()
+		}
+	} else {
+		if C.vips_resize_go_old(img.VipsImage, &tmp, C.double(scale)) != 0 {
+			return Error()
+		}
+	}
+
+	C.swap_and_clear(&img.VipsImage, tmp)
+
+	return nil
+}
+
 func (img *Image) Orientation() C.int {
 	return C.vips_get_orientation(img.VipsImage)
 }
@@ -679,6 +698,17 @@ func (img *Image) Flatten(bg Color) error {
 	}
 	C.swap_and_clear(&img.VipsImage, tmp)
 
+	return nil
+}
+
+func (img *Image) Blur(sigma float32) error {
+	var tmp *C.VipsImage
+
+	if C.vips_gaussblur_go(img.VipsImage, &tmp, C.double(sigma)) != 0 {
+		return Error()
+	}
+
+	C.swap_and_clear(&img.VipsImage, tmp)
 	return nil
 }
 

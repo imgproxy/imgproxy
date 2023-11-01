@@ -1,6 +1,9 @@
 #include "vips.h"
 #include <string.h>
 
+#define VIPS_SUPPORT_SMARTCROP \
+  (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 5))
+
 #define VIPS_SUPPORT_AVIF_SPEED \
   (VIPS_MAJOR_VERSION > 8 || \
     (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION > 10) || \
@@ -346,6 +349,43 @@ vips_resize_go(VipsImage *in, VipsImage **out, double wscale, double hscale) {
 }
 
 int
+vips_resize_go_old(VipsImage *in, VipsImage **out, double scale) {
+  return vips_resize(in, out, scale, NULL);
+}
+
+int
+vips_resize_with_premultiply(VipsImage *in, VipsImage **out, double scale) {
+	VipsBandFormat format;
+  VipsImage *tmp1, *tmp2;
+
+  format = vips_band_format(in);
+
+  if (vips_premultiply(in, &tmp1, NULL))
+    return 1;
+
+	if (vips_resize(tmp1, &tmp2, scale, NULL)) {
+    clear_image(&tmp1);
+		return 1;
+  }
+  swap_and_clear(&tmp1, tmp2);
+
+  if (vips_unpremultiply(tmp1, &tmp2, NULL)) {
+    clear_image(&tmp1);
+		return 1;
+  }
+  swap_and_clear(&tmp1, tmp2);
+
+  if (vips_cast(tmp1, out, format, NULL)) {
+    clear_image(&tmp1);
+		return 1;
+  }
+
+  clear_image(&tmp1);
+
+  return 0;
+}
+
+int
 vips_icc_is_srgb_iec61966(VipsImage *in) {
   const void *data;
   size_t data_len;
@@ -427,6 +467,20 @@ vips_flip_horizontal_go(VipsImage *in, VipsImage **out) {
 int
 vips_smartcrop_go(VipsImage *in, VipsImage **out, int width, int height) {
   return vips_smartcrop(in, out, width, height, NULL);
+}
+
+vips_smartcrop_center_go(VipsImage *in, VipsImage **out, int width, int height) {
+#if VIPS_SUPPORT_SMARTCROP
+  return vips_smartcrop(in, out, width, height, "interesting", VIPS_INTERESTING_CENTRE, NULL);
+#else
+  vips_error("vips_smartcrop_center_go", "Smart crop is not supported (libvips 8.5+ reuired)");
+  return 1;
+#endif
+}
+
+int
+vips_gaussblur_go(VipsImage *in, VipsImage **out, double sigma) {
+  return vips_gaussblur(in, out, sigma, NULL);
 }
 
 int

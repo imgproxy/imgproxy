@@ -11,5 +11,5 @@ func flatten(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptio
 		return nil
 	}
 
-	return img.Flatten(po.Background)
+	return img.Flatten(po.Background.Color)
 }
