@@ -32,21 +32,6 @@ imgproxy is able to quickly and easily resize images on the fly, and it's well-e
 
 To get an even better introduction, and to dive deeper into the nitty gritty details, check out this article: [imgproxy: Resize your images instantly and securely](https://evilmartians.com/chronicles/introducing-imgproxy)
 
-<a href="https://evilmartians.com/?utm_source=opensource">
-  <picture>
-    <source
-      media="(prefers-color-scheme: dark)"
-      srcset="https://evilmartians.com/badges/sponsored-by-evil-martians_v2.0_for-dark-bg@2x.png"
-    >
-    <img
-      src="https://evilmartians.com/badges/sponsored-by-evil-martians_v2.0@2x.png"
-      alt="Sponsored by Evil Martians"
-      width="236"
-      height="54"
-    >
-  </picture>
-</a>
-
 #### Simplicity
 
 > "No code is better than no code."
@@ -87,11 +72,12 @@ Sergey "[DarthSim](https://github.com/DarthSim)" Alexandrovich
 
 Many thanks to:
 
-* [Roman Shamin](https://github.com/romashamin) for the awesome logo.
-* [Alena Kirdina](https://github.com/egodyston) and [Alexander Madyankin](https://github.com/madyankin) for the great website.
-* [John Cupitt](https://github.com/jcupitt) for developing [libvips](https://github.com/libvips/libvips) and for helping me optimize its usage with imgproxy.
-* [Kirill Kuznetsov](https://github.com/dragonsmith) for the [Helm chart](https://github.com/imgproxy/imgproxy-helm).
-* [Travis Turner](https://github.com/Travis-Turner) for keeping the documentation in good shape.
+* [Evil Martians](https://evilmartians.com) for providing a steady launch pad for imgproxy
+* [Roman Shamin](https://github.com/romashamin) for the awesome logo
+* [Alena Kirdina](https://github.com/egodyston), [Alexander Madyankin](https://github.com/madyankin), and [Aleksandr Slepchenkov](https://github.com/AleksandrSl) for the great website
+* [John Cupitt](https://github.com/jcupitt) and [Kleis Auke Wolthuizen](https://github.com/kleisauke) for developing [libvips](https://github.com/libvips/libvips) and for helping me optimize its usage with imgproxy
+* [Kirill Kuznetsov](https://github.com/dragonsmith) and [Andrew Kozin](https://github.com/nepalez) for the [Helm chart](https://github.com/imgproxy/imgproxy-helm)
+* [Travis Turner](https://github.com/Travis-Turner) and [Andy Baranov](https://github.com/progapandist) for keeping the documentation in good shape
 
 ## License
 
