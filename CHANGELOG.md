@@ -382,7 +382,7 @@
 - (pro) [fallback_image_url](https://docs.imgproxy.net/generating_the_url?id=fallback-image-url) processing option.
 - [expires](https://docs.imgproxy.net/generating_the_url?id=expires) processing option.
 - [skip processing](https://docs.imgproxy.net/generating_the_url?id=skip-processing) processing option.
-- [Datadog](./docs/datadog.md) metrics.
+- [Datadog](https://docs.imgproxy.net/datadog) metrics.
 - `force` and `fill-down` resizing types.
 - [min-width](https://docs.imgproxy.net/generating_the_url?id=min-width) and [min-height](https://docs.imgproxy.net/generating_the_url?id=min-height) processing options.
 - [format_quality](https://docs.imgproxy.net/generating_the_url?id=format-quality) processing option.
@@ -407,11 +407,11 @@
 - Escape double quotes in content disposition.
 
 ### Removed
-- Removed basic URL format, use [advanced one](./docs/generating_the_url.md) instead.
+- Removed basic URL format, use [advanced one](https://docs.imgproxy.net/generating_the_url) instead.
 - Removed `IMGPROXY_MAX_SRC_DIMENSION` config, use `IMGPROXY_MAX_SRC_RESOLUTION` instead.
 - Removed `IMGPROXY_GZIP_COMPRESSION` config.
 - Removed `IMGPROXY_MAX_GIF_FRAMES` config, use `IMGPROXY_MAX_ANIMATION_FRAMES` instead.
-- Removed `crop` resizing type, use [crop](./docs/generating_the_url.md#crop) processing option instead.
+- Removed `crop` resizing type, use [crop](https://docs.imgproxy.net/generating_the_url#crop) processing option instead.
 - Dropped old libvips (<8.10) support.
 - (pro) Removed advanced GIF optimizations. All optimizations are applied by default ib both OSS and Pro versions.
 
@@ -441,7 +441,7 @@
 - (pro) [fallback_image_url](https://docs.imgproxy.net/generating_the_url?id=fallback-image-url) processing option.
 - [expires](https://docs.imgproxy.net/generating_the_url?id=expires) processing option.
 - [skip processing](https://docs.imgproxy.net/generating_the_url?id=skip-processing) processing option.
-- [Datadog](./docs/datadog.md) metrics.
+- [Datadog](https://docs.imgproxy.net/datadog) metrics.
 - `force` and `fill-down` resizing types.
 - [min-width](https://docs.imgproxy.net/generating_the_url?id=min-width) and [min-height](https://docs.imgproxy.net/generating_the_url?id=min-height) processing options.
 - [format_quality](https://docs.imgproxy.net/generating_the_url?id=format-quality) processing option.
@@ -450,11 +450,11 @@
 - ETag generator & checker uses source image ETag when possible.
 
 ### Removed
-- Removed basic URL format, use [advanced one](./docs/generating_the_url.md) instead.
+- Removed basic URL format, use [advanced one](https://docs.imgproxy.net/generating_the_url) instead.
 - Removed `IMGPROXY_MAX_SRC_DIMENSION` config, use `IMGPROXY_MAX_SRC_RESOLUTION` instead.
 - Removed `IMGPROXY_GZIP_COMPRESSION` config.
 - Removed `IMGPROXY_MAX_GIF_FRAMES` config, use `IMGPROXY_MAX_ANIMATION_FRAMES` instead.
-- Removed `crop` resizing type, use [crop](./docs/generating_the_url.md#crop) processing option instead.
+- Removed `crop` resizing type, use [crop](https://docs.imgproxy.net/generating_the_url#crop) processing option instead.
 - Dropped old libvips (<8.8) support.
 
 ## [2.17.0] - 2021-09-07
@@ -710,7 +710,7 @@
 ## [2.4.0] - 2019-08-20
 ### Added
 - `SO_REUSEPORT` socker option support. Can be enabled with `IMGPROXY_SO_REUSEPORT`.
-- [filename](./docs/generating_the_url.md#filename) option.
+- [filename](https://docs.imgproxy.net/generating_the_url#filename) option.
 
 ### Changed
 - Better handling if non-sRGB images.
@@ -726,9 +726,9 @@
 ### Added
 - `libvips` v8.8 support: better processing of animated GIFs, built-in CMYK profile, better WebP scale-on-load, etc;
 - Animated WebP support. `IMGPROXY_MAX_GIF_FRAMES` is deprecated, use `IMGPROXY_MAX_ANIMATION_FRAMES`;
-- [HEIC support](./docs/image_formats_support.md#heic-support);
-- [crop](./docs/generating_the_url.md#crop) processing option. `resizing_type:crop` is deprecated;
-- Offsets for [gravity](./docs/generating_the_url.md#gravity);
+- [HEIC support](https://docs.imgproxy.net/image_formats_support#heic-support);
+- [crop](https://docs.imgproxy.net/generating_the_url#crop) processing option. `resizing_type:crop` is deprecated;
+- Offsets for [gravity](https://docs.imgproxy.net/generating_the_url#gravity);
 - Resizing type `auto`. If both source and resulting dimensions have the same orientation (portrait or landscape), imgproxy will use `fill`. Otherwise, it will use `fit`;
 - Development errors mode. When `IMGPROXY_DEVELOPMENT_ERRORS_MODE` is true, imgproxy will respond with detailed error messages. Not recommended for production because some errors may contain stack trace;
 - `IMGPROXY_KEEP_ALIVE_TIMEOUT` config.
@@ -786,7 +786,7 @@ Fixed processing of images with embedded profiles that was broken in v2.2.8.
 
 ## [2.2.5] - 2019-02-21
 ### Added
-- [extend](./docs/generating_the_url.md#extend) processing option.
+- [extend](https://docs.imgproxy.net/generating_the_url#extend) processing option.
 - `vips_memory_bytes`, `vips_max_memory_bytes` and `vips_allocs` metrics for Prometheus.
 
 ### Fixed
@@ -816,14 +816,14 @@ Fixed processing of images with embedded profiles that was broken in v2.2.8.
 
 ## [2.2.0] - 2019-01-19
 ### Changed
-- Optimized memory usage. [Memory usage tweaks](./docs/memory_usage_tweaks.md).
+- Optimized memory usage. [Memory usage tweaks](https://docs.imgproxy.net/memory_usage_tweaks).
 - `Vary` header is set when WebP detection, client hints or GZip compression are enabled.
 - Health check doesn't require `Authorization` header anymore.
 
 ## [2.1.5] - 2019-01-14
 ### Added
-- [Sentry support](./docs/configuration.md#error-reporting) (thanks to [@koenpunt](https://github.com/koenpunt)).
-- [Syslog support](./docs/configuration.md#syslog).
+- [Sentry support](https://docs.imgproxy.net/configuration#error-reporting) (thanks to [@koenpunt](https://github.com/koenpunt)).
+- [Syslog support](https://docs.imgproxy.net/configuration#syslog).
 
 ### Fixed
 - Fix detection of some kind of WebP images;
@@ -841,7 +841,7 @@ Fixed processing of images with embedded profiles that was broken in v2.2.8.
 
 ## [2.1.3] - 2018-12-10
 ### Added
-- [Minio support](./docs/serving_files_from_s3.md#minio)
+- [Minio support](https://docs.imgproxy.net/serving_files_from_s3#minio)
 
 ## [2.1.2] - 2018-12-02
 ### Added
@@ -856,18 +856,18 @@ Fixed processing of images with embedded profiles that was broken in v2.2.8.
 
 ## [2.1.0] - 2018-11-16
 ### Added
-- [Plain source URLs](./docs/generating_the_url.md#plain) support.
-- [Serving images from Google Cloud Storage](./docs/serving_files_from_google_cloud_storage.md).
-- [Full support of GIFs](./docs/image_formats_support.md#gif-support) including animated ones.
-- [Watermarks](./docs/watermark.md).
-- [New Relic](./docs/new_relic.md) metrics.
-- [Prometheus](./docs/prometheus.md) metrics.
-- [DPR](./docs/generating_the_url.md#dpr) option (thanks to [selul](https://github.com/selul)).
-- [Cache buster](./docs/generating_the_url.md#cache-buster) option.
-- [Quality](./docs/generating_the_url.md#quality) option.
-- Support for custom [Amazon S3](./docs/serving_files_from_s3.md) endpoints.
-- Support for [Amazon S3](./docs/serving_files_from_s3.md) versioning.
-- [Client hints](./docs/configuration.md#client-hints-support) support (thanks to [selul](https://github.com/selul)).
+- [Plain source URLs](https://docs.imgproxy.net/generating_the_url#plain) support.
+- [Serving images from Google Cloud Storage](https://docs.imgproxy.net/serving_files_from_google_cloud_storage).
+- [Full support of GIFs](https://docs.imgproxy.net/image_formats_support#gif-support) including animated ones.
+- [Watermarks](https://docs.imgproxy.net/watermark).
+- [New Relic](https://docs.imgproxy.net/new_relic) metrics.
+- [Prometheus](https://docs.imgproxy.net/prometheus) metrics.
+- [DPR](https://docs.imgproxy.net/generating_the_url#dpr) option (thanks to [selul](https://github.com/selul)).
+- [Cache buster](https://docs.imgproxy.net/generating_the_url#cache-buster) option.
+- [Quality](https://docs.imgproxy.net/generating_the_url#quality) option.
+- Support for custom [Amazon S3](https://docs.imgproxy.net/serving_files_from_s3) endpoints.
+- Support for [Amazon S3](https://docs.imgproxy.net/serving_files_from_s3) versioning.
+- [Client hints](https://docs.imgproxy.net/configuration#client-hints-support) support (thanks to [selul](https://github.com/selul)).
 - Truncated signature support (thanks to [printercu](https://github.com/printercu)).
 
 ### Changed
@@ -893,13 +893,13 @@ Fixed processing of images with embedded profiles that was broken in v2.2.8.
 ## [2.0.0] - 2018-10-08
 All-You-Ever-Wanted release! :tada:
 ### Added
-- [New advanced URL format](./docs/generating_the_url.md). Unleash the full power of imgproxy v2.0.
-- [Presets](./docs/presets.md). Shorten your urls by reusing processing options.
-- [Serving images from Amazon S3](./docs/serving_files_from_s3.md). Thanks to [@crohr](https://github.com/crohr), now we have a way to serve files from private S3 buckets.
-- [Autoconverting to WebP when supported by browser](./docs/configuration.md#avifwebp-support-detection) (disabled by default). Use WebP as resulting format when browser supports it.
-- [Gaussian blur](./docs/generating_the_url.md#blur) and [sharpen](./docs/generating_the_url.md#sharpen) filters. Make your images look better than before.
-- [Focus point gravity](./docs/generating_the_url.md#gravity). Tell imgproxy what point will be the center of the image.
-- [Background color](./docs/generating_the_url.md#background). Control the color of background when converting PNG with alpha-channel to JPEG.
+- [New advanced URL format](https://docs.imgproxy.net/generating_the_url). Unleash the full power of imgproxy v2.0.
+- [Presets](https://docs.imgproxy.net/presets). Shorten your urls by reusing processing options.
+- [Serving images from Amazon S3](https://docs.imgproxy.net/serving_files_from_s3). Thanks to [@crohr](https://github.com/crohr), now we have a way to serve files from private S3 buckets.
+- [Autoconverting to WebP when supported by browser](https://docs.imgproxy.net/configuration#avifwebp-support-detection) (disabled by default). Use WebP as resulting format when browser supports it.
+- [Gaussian blur](https://docs.imgproxy.net/generating_the_url#blur) and [sharpen](https://docs.imgproxy.net/generating_the_url#sharpen) filters. Make your images look better than before.
+- [Focus point gravity](https://docs.imgproxy.net/generating_the_url#gravity). Tell imgproxy what point will be the center of the image.
+- [Background color](https://docs.imgproxy.net/generating_the_url#background). Control the color of background when converting PNG with alpha-channel to JPEG.
 
 ### Changed
 - Key and salt are not required anymore. When key or salt is not specified, signature checking is disabled.
