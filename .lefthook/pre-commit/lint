@@ -1,6 +1,6 @@
 #!/bin/sh
 
-if ! git diff --staged --name-only | grep -qe ".*\.go$"; then
+if ! git diff --staged --name-only | grep -qE ".*\.go$|\.golangci\.yml$"; then
   echo "Nothing to lint"
   exit 0;
 fi
