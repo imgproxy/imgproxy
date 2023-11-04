@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
+	"github.com/felixge/httpsnoop"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
@@ -18,8 +20,9 @@ import (
 var (
 	enabled = false
 
-	requestsTotal prometheus.Counter
-	errorsTotal   *prometheus.CounterVec
+	requestsTotal    prometheus.Counter
+	statusCodesTotal *prometheus.CounterVec
+	errorsTotal      *prometheus.CounterVec
 
 	requestDuration     prometheus.Histogram
 	requestSpanDuration *prometheus.HistogramVec
@@ -44,6 +47,12 @@ func Init() {
 		Name:      "requests_total",
 		Help:      "A counter of the total number of HTTP requests imgproxy processed.",
 	})
+
+	statusCodesTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: config.PrometheusNamespace,
+		Name:      "status_codes_total",
+		Help:      "A counter of the response status codes.",
+	}, []string{"status"})
 
 	errorsTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: config.PrometheusNamespace,
@@ -108,6 +117,7 @@ func Init() {
 
 	prometheus.MustRegister(
 		requestsTotal,
+		statusCodesTotal,
 		errorsTotal,
 		requestDuration,
 		requestSpanDuration,
@@ -150,13 +160,23 @@ func StartServer(cancel context.CancelFunc) error {
 	return nil
 }
 
-func StartRequest() context.CancelFunc {
+func StartRequest(rw http.ResponseWriter) (context.CancelFunc, http.ResponseWriter) {
 	if !enabled {
-		return func() {}
+		return func() {}, rw
 	}
 
 	requestsTotal.Inc()
-	return startDuration(requestDuration)
+
+	newRw := httpsnoop.Wrap(rw, httpsnoop.Hooks{
+		WriteHeader: func(next httpsnoop.WriteHeaderFunc) httpsnoop.WriteHeaderFunc {
+			return func(statusCode int) {
+				statusCodesTotal.With(prometheus.Labels{"status": strconv.Itoa(statusCode)}).Inc()
+				next(statusCode)
+			}
+		},
+	})
+
+	return startDuration(requestDuration), newRw
 }
 
 func StartQueueSegment() context.CancelFunc {

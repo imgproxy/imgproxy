@@ -47,7 +47,7 @@ func Enabled() bool {
 }
 
 func StartRequest(ctx context.Context, rw http.ResponseWriter, r *http.Request) (context.Context, context.CancelFunc, http.ResponseWriter) {
-	promCancel := prometheus.StartRequest()
+	promCancel, rw := prometheus.StartRequest(rw)
 	ctx, nrCancel, rw := newrelic.StartTransaction(ctx, rw, r)
 	ctx, ddCancel, rw := datadog.StartRootSpan(ctx, rw, r)
 	ctx, otelCancel, rw := otel.StartRootSpan(ctx, rw, r)
