@@ -6,6 +6,7 @@
 - Add client-side decryprion support for S3 integration.
 - (pro) Add the `IMGPROXY_VIDEO_THUMBNAIL_KEYFRAMES` config and the [video_thumbnail_keyframes](https://docs.imgproxy.net/latest/generating_the_url?id=video-thumbnail-keyframes) processing option.
 - (pro) Add the [video_thumbnail_tile](https://docs.imgproxy.net/latest/generating_the_url?id=video-thumbnail-tile) processing option.
+- (pro) Add the `duration` field to the video streams information in the `/info` endpoint response.
 
 ### Fix
 - (pro) Fix detection of some videos.
