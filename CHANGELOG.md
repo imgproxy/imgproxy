@@ -10,6 +10,8 @@
 
 ### Fix
 - (pro) Fix detection of some videos.
+- (pro) Fix headers and cookies passthrough when the source is a video.
+- (pro) Fix wrong behavior of the `background_alpha` option when the `best` format is used.
 - (docker) Fix saving EXIF strings containing invalid UTF-8 characters.
 - (docker) Fix possible segfaults while processing HEIC/AVIF images.
 - (docker) Fix rendering GIFs embedded in SVGs.
