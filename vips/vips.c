@@ -690,7 +690,7 @@ vips_embed_go(VipsImage *in, VipsImage **out, int x, int y, int width, int heigh
   VipsImage *tmp = NULL;
 
   if (!vips_image_hasalpha(in)) {
-    if (vips_bandjoin_const1(in, &tmp, 255, NULL))
+    if (vips_addalpha(in, &tmp, NULL))
       return 1;
 
     in = tmp;
@@ -712,7 +712,7 @@ vips_apply_watermark(VipsImage *in, VipsImage *watermark, VipsImage **out, int l
   VipsImage **t = (VipsImage **) vips_object_local_array(VIPS_OBJECT(base), 7);
 
   if (!vips_image_hasalpha(watermark)) {
-    if (vips_bandjoin_const1(watermark, &t[0], 255, NULL))
+    if (vips_addalpha(watermark, &t[0], NULL))
       return 1;
 
     watermark = t[0];
