@@ -208,8 +208,8 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	if queueSem != nil {
-		token, aquired := queueSem.TryAcquire()
-		if !aquired {
+		token, acquired := queueSem.TryAcquire()
+		if !acquired {
 			panic(ierrors.New(429, "Too many requests", "Too many requests"))
 		}
 		defer token.Release()
