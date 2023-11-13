@@ -69,7 +69,7 @@ func prepareWatermark(wm *vips.Image, wmData *imagedata.ImageData, opts *options
 		}
 	}
 
-	wm.RemoveBitsPerSampleHeader()
+	wm.RemovePaletteBitDepth()
 
 	return nil
 }

@@ -32,7 +32,7 @@ void vips_strip_meta(VipsImage *image);
 
 VipsBandFormat vips_band_format(VipsImage *in);
 
-void vips_remove_bits_per_sample(VipsImage *image);
+void vips_remove_palette_bit_depth(VipsImage *image);
 
 gboolean vips_is_animated(VipsImage *in);
 

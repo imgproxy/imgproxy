@@ -18,9 +18,7 @@
 #define VIPS_SCRGB_ALPHA_FIXED \
   (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 15))
 
-#ifndef VIPS_META_BITS_PER_SAMPLE
-#define VIPS_META_BITS_PER_SAMPLE "palette-bit-depth"
-#endif
+#define VIPS_META_PALETTE_BITS_DEPTH "palette-bit-depth"
 
 int
 vips_initialize()
@@ -273,22 +271,22 @@ vips_get_orientation(VipsImage *image)
 }
 
 int
-vips_get_bits_per_sample(VipsImage *image)
+vips_get_palette_bit_depth(VipsImage *image)
 {
-  int bits_per_sample;
+  int palette_bit_depth;
 
   if (
-      vips_image_get_typeof(image, VIPS_META_BITS_PER_SAMPLE) == G_TYPE_INT &&
-      vips_image_get_int(image, VIPS_META_BITS_PER_SAMPLE, &bits_per_sample) == 0)
-    return bits_per_sample;
+      vips_image_get_typeof(image, VIPS_META_PALETTE_BITS_DEPTH) == G_TYPE_INT &&
+      vips_image_get_int(image, VIPS_META_PALETTE_BITS_DEPTH, &palette_bit_depth) == 0)
+    return palette_bit_depth;
 
   return 0;
 }
 
 void
-vips_remove_bits_per_sample(VipsImage *image)
+vips_remove_palette_bit_depth(VipsImage *image)
 {
-  vips_image_remove(image, VIPS_META_BITS_PER_SAMPLE);
+  vips_image_remove(image, VIPS_META_PALETTE_BITS_DEPTH);
 }
 
 VipsBandFormat
@@ -790,6 +788,7 @@ vips_strip(VipsImage *in, VipsImage **out, int keep_exif_copyright)
     if (
         (strcmp(name, VIPS_META_ICC_NAME) == 0) ||
         (strcmp(name, VIPS_META_BITS_PER_SAMPLE) == 0) ||
+        (strcmp(name, VIPS_META_PALETTE_BITS_DEPTH) == 0) ||
         (strcmp(name, "width") == 0) ||
         (strcmp(name, "height") == 0) ||
         (strcmp(name, "bands") == 0) ||
@@ -848,7 +847,7 @@ vips_pngsave_go(VipsImage *in, void **buf, size_t *len, int interlace, int quant
       bitdepth = 2;
   }
   else {
-    bitdepth = vips_get_bits_per_sample(in);
+    bitdepth = vips_get_palette_bit_depth(in);
     if (bitdepth && bitdepth <= 8) {
       if (bitdepth > 4)
         bitdepth = 8;
@@ -888,7 +887,7 @@ int
 vips_gifsave_go(VipsImage *in, void **buf, size_t *len)
 {
 #if VIPS_SUPPORT_GIFSAVE
-  int bitdepth = vips_get_bits_per_sample(in);
+  int bitdepth = vips_get_palette_bit_depth(in);
   if (bitdepth <= 0 || bitdepth > 8)
     bitdepth = 8;
   return vips_gifsave_buffer(in, buf, len, "bitdepth", bitdepth, NULL);
