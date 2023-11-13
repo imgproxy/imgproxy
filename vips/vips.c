@@ -787,7 +787,9 @@ vips_strip(VipsImage *in, VipsImage **out, int keep_exif_copyright)
 
     if (
         (strcmp(name, VIPS_META_ICC_NAME) == 0) ||
+#ifdef VIPS_META_BITS_PER_SAMPLE
         (strcmp(name, VIPS_META_BITS_PER_SAMPLE) == 0) ||
+#endif
         (strcmp(name, VIPS_META_PALETTE_BITS_DEPTH) == 0) ||
         (strcmp(name, "width") == 0) ||
         (strcmp(name, "height") == 0) ||
