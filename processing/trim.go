@@ -13,7 +13,7 @@ func trim(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions,
 		return nil
 	}
 
-	// The size of a vector image are not checked during download, yet it can be very large.
+	// The size of a vector image is not checked during download, yet it can be very large.
 	// So we should scale it down to the maximum allowed resolution
 	if imgdata != nil && imgdata.Type.IsVector() {
 		if resolution := img.Width() * img.Height(); resolution > po.SecurityOptions.MaxSrcResolution {
