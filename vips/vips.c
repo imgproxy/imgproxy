@@ -1,20 +1,6 @@
 #include "vips.h"
 #include <string.h>
 
-#define VIPS_SUPPORT_AVIF_SPEED \
-  (VIPS_MAJOR_VERSION > 8 || \
-      (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION > 10) || \
-      (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 10 && VIPS_MICRO_VERSION >= 2))
-
-#define VIPS_SUPPORT_AVIF_EFFORT \
-  (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 12))
-
-#define VIPS_SUPPORT_GIFSAVE \
-  (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 12))
-
-#define VIPS_GIF_RESOLUTION_LIMITED \
-  (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION <= 12)
-
 #define VIPS_SCRGB_ALPHA_FIXED \
   (VIPS_MAJOR_VERSION > 8 || (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 15))
 
@@ -49,12 +35,7 @@ swap_and_clear(VipsImage **in, VipsImage *out)
 int
 gif_resolution_limit()
 {
-#if VIPS_GIF_RESOLUTION_LIMITED
-  // https://github.com/libvips/libvips/blob/v8.12.2/libvips/foreign/cgifsave.c#L437-L442
-  return 2000 * 2000;
-#else
   return INT_MAX / 4;
-#endif
 }
 
 // Just create and destroy a tiny image to ensure vips is operational
@@ -888,15 +869,10 @@ vips_webpsave_go(VipsImage *in, void **buf, size_t *len, int quality)
 int
 vips_gifsave_go(VipsImage *in, void **buf, size_t *len)
 {
-#if VIPS_SUPPORT_GIFSAVE
   int bitdepth = vips_get_palette_bit_depth(in);
   if (bitdepth <= 0 || bitdepth > 8)
     bitdepth = 8;
   return vips_gifsave_buffer(in, buf, len, "bitdepth", bitdepth, NULL);
-#else
-  vips_error("vips_gifsave_go", "Saving GIF is not supported (libvips 8.12+ reuired)");
-  return 1;
-#endif
 }
 
 int
@@ -922,11 +898,7 @@ vips_avifsave_go(VipsImage *in, void **buf, size_t *len, int quality, int speed)
       in, buf, len,
       "Q", quality,
       "compression", VIPS_FOREIGN_HEIF_COMPRESSION_AV1,
-#if VIPS_SUPPORT_AVIF_EFFORT
       "effort", 9 - speed,
-#elif VIPS_SUPPORT_AVIF_SPEED
-      "speed", speed,
-#endif
       NULL);
 }
 
