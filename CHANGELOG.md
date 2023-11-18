@@ -4,6 +4,7 @@
 ### Add
 - Add `status_codes_total` counter to Prometheus metrics.
 - Add client-side decryprion support for S3 integration.
+- Add HEIC saving support.
 - (pro) Add the `IMGPROXY_VIDEO_THUMBNAIL_KEYFRAMES` config and the [video_thumbnail_keyframes](https://docs.imgproxy.net/latest/generating_the_url?id=video-thumbnail-keyframes) processing option.
 - (pro) Add the [video_thumbnail_tile](https://docs.imgproxy.net/latest/generating_the_url?id=video-thumbnail-tile) processing option.
 - (pro) Add the `duration` field to the video streams information in the `/info` endpoint response.

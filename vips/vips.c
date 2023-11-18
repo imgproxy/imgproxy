@@ -906,6 +906,16 @@ vips_tiffsave_go(VipsImage *in, void **buf, size_t *len, int quality)
 }
 
 int
+vips_heifsave_go(VipsImage *in, void **buf, size_t *len, int quality)
+{
+  return vips_heifsave_buffer(
+      in, buf, len,
+      "Q", quality,
+      "compression", VIPS_FOREIGN_HEIF_COMPRESSION_HEVC,
+      NULL);
+}
+
+int
 vips_avifsave_go(VipsImage *in, void **buf, size_t *len, int quality, int speed)
 {
   return vips_heifsave_buffer(

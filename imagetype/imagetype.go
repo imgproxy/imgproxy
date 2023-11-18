@@ -151,7 +151,16 @@ func (it Type) SupportsColourProfile() bool {
 	return it == JPEG ||
 		it == PNG ||
 		it == WEBP ||
+		it == HEIC ||
 		it == AVIF
+}
+
+func (it Type) SupportsQuality() bool {
+	return it == JPEG ||
+		it == WEBP ||
+		it == HEIC ||
+		it == AVIF ||
+		it == TIFF
 }
 
 func (it Type) SupportsThumbnail() bool {

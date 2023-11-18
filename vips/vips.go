@@ -258,7 +258,7 @@ func SupportsSave(it imagetype.Type) bool {
 		sup = hasOperation("webpsave_buffer")
 	case imagetype.GIF:
 		sup = hasOperation("gifsave_buffer")
-	case imagetype.AVIF:
+	case imagetype.HEIC, imagetype.AVIF:
 		sup = hasOperation("heifsave_buffer")
 	case imagetype.BMP:
 		sup = true
@@ -389,6 +389,8 @@ func (img *Image) Save(imgtype imagetype.Type, quality int) (*imagedata.ImageDat
 		err = C.vips_webpsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality))
 	case imagetype.GIF:
 		err = C.vips_gifsave_go(img.VipsImage, &ptr, &imgsize)
+	case imagetype.HEIC:
+		err = C.vips_heifsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality))
 	case imagetype.AVIF:
 		err = C.vips_avifsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality), vipsConf.AvifSpeed)
 	case imagetype.TIFF:
