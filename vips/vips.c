@@ -153,16 +153,16 @@ vips_black_go(VipsImage **out, int width, int height, int bands)
   return res;
 }
 
-/* Vips loads linear alpha in the 0.0-1.0 range but uses the 0.0-255.0 range.
- * https://github.com/libvips/libvips/pull/3627 fixes this behavior
- */
 int
 vips_fix_scRGB_alpha_tiff(VipsImage *in, VipsImage **out)
 {
 #if VIPS_SCRGB_ALPHA_FIXED
-#warning Revise vips_fix_scRGB_tiff
+  /* Vips 8.15+ uses 0.0-1.0 range for linear alpha, so we don't need a fix.
+   */
   return vips_copy(in, out, NULL);
 #else
+  /* Vips prior to 8.14 loads linear alpha in the 0.0-1.0 range but uses the 0.0-255.0 range.
+   */
   VipsImage *base = vips_image_new();
   VipsImage **t = (VipsImage **) vips_object_local_array(VIPS_OBJECT(base), 4);
 
