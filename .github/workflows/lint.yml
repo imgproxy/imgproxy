@@ -11,7 +11,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     container:
-      image: darthsim/imgproxy-ci:202310031902
+      image: darthsim/imgproxy-ci:202311211816
     strategy:
       matrix:
         go-version: ["1.21.x"]
