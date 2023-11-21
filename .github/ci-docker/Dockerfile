@@ -7,6 +7,7 @@ RUN apt-get -qq update \
     git \
     ca-certificates \
     build-essential \
+    gobject-introspection \
     python3-pip \
     python3-venv \
     libssl-dev \
@@ -59,7 +60,6 @@ RUN \
         --prefix=/root/vips/$VIPS_VERSION \
         --libdir=lib \
         -Dgtk_doc=false \
-        -Dintrospection=$(if [[ "$VIPS_VERSION" > "8.14" ]]; then echo "disabled"; else echo "false"; fi) \
       && ninja -C _build \
       && ninja -C _build install \
       && cd .. \
