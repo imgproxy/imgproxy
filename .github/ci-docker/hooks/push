@@ -1,0 +1,4 @@
+#!/bin/bash
+DATETAG=$(date +%Y%m%d%H%M)
+docker tag $IMAGE_NAME $DOCKER_REPO:$DATETAG
+docker push $DOCKER_REPO:$DATETAG
