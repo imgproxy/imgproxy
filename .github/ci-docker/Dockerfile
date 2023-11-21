@@ -59,6 +59,7 @@ RUN \
         --prefix=/root/vips/$VIPS_VERSION \
         --libdir=lib \
         -Dgtk_doc=false \
+        -Dintrospection=$([[ "$VIPS_VERSION" > "8.14" ]] && echo "disabled" || echo "false") \
       && ninja -C _build \
       && ninja -C _build install \
       && cd .. \
