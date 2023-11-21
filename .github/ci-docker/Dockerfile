@@ -8,6 +8,7 @@ RUN apt-get -qq update \
     ca-certificates \
     build-essential \
     gobject-introspection \
+    libgirepository1.0-dev \
     python3-pip \
     python3-venv \
     libssl-dev \
