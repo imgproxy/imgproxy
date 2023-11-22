@@ -254,12 +254,28 @@ vips_get_orientation(VipsImage *image)
 int
 vips_get_palette_bit_depth(VipsImage *image)
 {
-  int palette_bit_depth;
+  int palette, palette_bit_depth;
 
-  if (
-      vips_image_get_typeof(image, VIPS_META_PALETTE_BITS_DEPTH) == G_TYPE_INT &&
+#ifdef VIPS_META_PALETTE
+  if (vips_image_get_typeof(image, VIPS_META_PALETTE) == G_TYPE_INT &&
+      vips_image_get_int(image, VIPS_META_PALETTE, &palette) == 0 &&
+      palette) {
+
+    if (vips_image_get_typeof(image, VIPS_META_BITS_PER_SAMPLE) == G_TYPE_INT &&
+        vips_image_get_int(image, VIPS_META_BITS_PER_SAMPLE, &palette_bit_depth) == 0)
+      return palette_bit_depth;
+
+    else
+      /* Image has palette but VIPS_META_BITS_PER_SAMPLE is not set.
+       * It's very unlikely but we should handle this
+       */
+      return 8;
+  }
+#else
+  if (vips_image_get_typeof(image, VIPS_META_PALETTE_BITS_DEPTH) == G_TYPE_INT &&
       vips_image_get_int(image, VIPS_META_PALETTE_BITS_DEPTH, &palette_bit_depth) == 0)
     return palette_bit_depth;
+#endif
 
   return 0;
 }
@@ -268,6 +284,9 @@ void
 vips_remove_palette_bit_depth(VipsImage *image)
 {
   vips_image_remove(image, VIPS_META_PALETTE_BITS_DEPTH);
+#ifdef VIPS_META_PALETTE
+  vips_image_remove(image, VIPS_META_PALETTE);
+#endif
 }
 
 VipsBandFormat
