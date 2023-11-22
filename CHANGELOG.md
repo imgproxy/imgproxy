@@ -8,7 +8,7 @@
 - (pro) Add the `IMGPROXY_VIDEO_THUMBNAIL_KEYFRAMES` config and the [video_thumbnail_keyframes](https://docs.imgproxy.net/latest/usage/processing#video-thumbnail-keyframes) processing option.
 - (pro) Add the [video_thumbnail_tile](https://docs.imgproxy.net/latest/usage/processing#video-thumbnail-tile) processing option.
 - (pro) Add the `duration` field to the video streams information in the `/info` endpoint response.
-- (pro) Add the [colorspace](https://docs.imgproxy.net/latest/usage/getting_info#colorspace), [bands](https://docs.imgproxy.net/latest/usage/getting_info#bands), [sample_format](https://docs.imgproxy.net/latest/usage/getting_info#sample-format), and [alpha](https://docs.imgproxy.net/latest/usage/getting_info#alpha) info options.
+- (pro) Add the [colorspace](https://docs.imgproxy.net/latest/usage/getting_info#colorspace), [bands](https://docs.imgproxy.net/latest/usage/getting_info#bands), [sample_format](https://docs.imgproxy.net/latest/usage/getting_info#sample-format), [pages_number](https://docs.imgproxy.net/latest/usage/getting_info#pages-number), and [alpha](https://docs.imgproxy.net/latest/usage/getting_info#alpha) info options.
 
 ### Fix
 - (pro) Fix detection of some videos.
