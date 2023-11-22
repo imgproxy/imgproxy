@@ -73,8 +73,6 @@ func Init() error {
 
 	C.vips_concurrency_set(1)
 
-	C.vips_vector_set_enabled(1)
-
 	if len(os.Getenv("IMGPROXY_VIPS_LEAK_CHECK")) > 0 {
 		C.vips_leak_set(C.gboolean(1))
 	}
