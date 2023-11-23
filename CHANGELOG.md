@@ -3,7 +3,7 @@
 ## [Unreleased]
 ### Add
 - Add `status_codes_total` counter to Prometheus metrics.
-- Add client-side decryprion support for S3 integration.
+- Add client-side decryption support for S3 integration.
 - Add HEIC saving support.
 - (pro) Add the `IMGPROXY_VIDEO_THUMBNAIL_KEYFRAMES` config and the [video_thumbnail_keyframes](https://docs.imgproxy.net/latest/usage/processing#video-thumbnail-keyframes) processing option.
 - (pro) Add the [video_thumbnail_tile](https://docs.imgproxy.net/latest/usage/processing#video-thumbnail-tile) processing option.
