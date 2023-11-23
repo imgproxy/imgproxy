@@ -217,9 +217,6 @@ func createCryptoRegistry(sess *session.Session) (*s3crypto.CryptoRegistry, erro
 	kmsClient := kms.New(sess)
 
 	cr := s3crypto.NewCryptoRegistry()
-	if err := s3crypto.RegisterKMSWrapWithAnyCMK(cr, kmsClient); err != nil {
-		return nil, err
-	}
 	if err := s3crypto.RegisterKMSContextWrapWithAnyCMK(cr, kmsClient); err != nil {
 		return nil, err
 	}
