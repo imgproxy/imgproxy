@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+
+## [3.21.0] - 2023-11-23
 ### Add
 - Add `status_codes_total` counter to Prometheus metrics.
 - Add client-side decryption support for S3 integration.
