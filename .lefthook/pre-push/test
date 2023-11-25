@@ -2,6 +2,7 @@
 
 if [ -x "$(which brew)" ]; then
   export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:$(brew --prefix libffi)/lib/pkgconfig"
+  export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:$(brew --prefix libarchive)/lib/pkgconfig"
 fi
 
 export CGO_LDFLAGS_ALLOW="-s|-w"
