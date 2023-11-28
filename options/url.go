@@ -100,6 +100,7 @@ func decodeEncURL(parts []string) (string, string, error) {
 	mode.CryptBlocks(decrypted, encrypted)
 
 	decrypted = bytes.ReplaceAll(decrypted, []byte{3}, []byte{})
+	decrypted = bytes.ReplaceAll(decrypted, []byte{6}, []byte{})
 
 	return string(decrypted), format, nil
 }
