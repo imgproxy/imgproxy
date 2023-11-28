@@ -78,7 +78,8 @@ var (
 	Salts         [][]byte
 	SignatureSize int
 
-	Secret string
+	Secret        string
+	EncryptionKey string
 
 	AllowOrigin string
 
@@ -277,6 +278,7 @@ func Reset() {
 	SignatureSize = 32
 
 	Secret = ""
+	EncryptionKey = ""
 
 	AllowOrigin = ""
 
@@ -485,6 +487,7 @@ func Configure() error {
 	}
 
 	configurators.String(&Secret, "IMGPROXY_SECRET")
+	configurators.String(&EncryptionKey, "IMGPROXY_SOURCE_URL_ENCRYPTION_KEY")
 
 	configurators.String(&AllowOrigin, "IMGPROXY_ALLOW_ORIGIN")
 

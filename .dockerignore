@@ -12,3 +12,5 @@ CHANGELOG.md
 
 Dockerfile
 .dockerignore
+
+.idea/
