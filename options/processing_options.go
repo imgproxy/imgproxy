@@ -733,16 +733,16 @@ func applyWatermarkOption(po *ProcessingOptions, args []string) error {
 	}
 
 	if len(args) > 2 && len(args[2]) > 0 {
-		if x, err := strconv.Atoi(args[2]); err == nil {
-			po.Watermark.Gravity.X = float64(x)
+		if x, err := strconv.ParseFloat(args[2], 64); err == nil {
+			po.Watermark.Gravity.X = x
 		} else {
 			return fmt.Errorf("Invalid watermark X offset: %s", args[2])
 		}
 	}
 
 	if len(args) > 3 && len(args[3]) > 0 {
-		if y, err := strconv.Atoi(args[3]); err == nil {
-			po.Watermark.Gravity.Y = float64(y)
+		if y, err := strconv.ParseFloat(args[3], 64); err == nil {
+			po.Watermark.Gravity.Y = y
 		} else {
 			return fmt.Errorf("Invalid watermark Y offset: %s", args[3])
 		}

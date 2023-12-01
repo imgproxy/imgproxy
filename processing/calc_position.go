@@ -15,7 +15,19 @@ func calcPosition(width, height, innerWidth, innerHeight int, gravity *options.G
 		left = pointX - innerWidth/2
 		top = pointY - innerHeight/2
 	} else {
-		offX, offY := int(math.RoundToEven(gravity.X*dpr)), int(math.RoundToEven(gravity.Y*dpr))
+		var offX, offY int
+
+		if math.Abs(gravity.X) >= 1.0 {
+			offX = imath.RoundToEven(gravity.X * dpr)
+		} else {
+			offX = imath.ScaleToEven(width, gravity.X)
+		}
+
+		if math.Abs(gravity.Y) >= 1.0 {
+			offY = imath.RoundToEven(gravity.Y * dpr)
+		} else {
+			offY = imath.ScaleToEven(height, gravity.Y)
+		}
 
 		left = imath.ShrinkToEven(width-innerWidth+1, 2) + offX
 		top = imath.ShrinkToEven(height-innerHeight+1, 2) + offY

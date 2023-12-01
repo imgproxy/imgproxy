@@ -103,6 +103,8 @@ func scaleOnLoad(pctx *pipelineContext, img *vips.Image, po *options.ProcessingO
 		pctx.hscale = 1.0
 	}
 
+	// We should crop before scaling, but we scaled the image on load,
+	// so we need to adjust crop options
 	if pctx.cropWidth > 0 {
 		pctx.cropWidth = imath.Max(1, imath.Shrink(pctx.cropWidth, wpreshrink))
 	}
@@ -110,8 +112,14 @@ func scaleOnLoad(pctx *pipelineContext, img *vips.Image, po *options.ProcessingO
 		pctx.cropHeight = imath.Max(1, imath.Shrink(pctx.cropHeight, hpreshrink))
 	}
 	if pctx.cropGravity.Type != options.GravityFocusPoint {
-		pctx.cropGravity.X /= wpreshrink
-		pctx.cropGravity.Y /= hpreshrink
+		// Adjust only when crop gravity offsets are absolute
+		if math.Abs(pctx.cropGravity.X) >= 1.0 {
+			// Round offsets to prevent turning absolute offsets to relative (ex: 1.0 => 0.5)
+			pctx.cropGravity.X = math.RoundToEven(pctx.cropGravity.X / wpreshrink)
+		}
+		if math.Abs(pctx.cropGravity.Y) >= 1.0 {
+			pctx.cropGravity.Y = math.RoundToEven(pctx.cropGravity.Y / hpreshrink)
+		}
 	}
 
 	return nil
