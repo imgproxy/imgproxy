@@ -40,8 +40,19 @@ func prepareWatermark(wm *vips.Image, wmData *imagedata.ImageData, opts *options
 	}
 
 	if opts.Replicate {
-		offX := int(math.RoundToEven(opts.Gravity.X * offsetScale))
-		offY := int(math.RoundToEven(opts.Gravity.Y * offsetScale))
+		var offX, offY int
+
+		if math.Abs(opts.Gravity.X) >= 1.0 {
+			offX = imath.RoundToEven(opts.Gravity.X * offsetScale)
+		} else {
+			offX = imath.ScaleToEven(imgWidth, opts.Gravity.X)
+		}
+
+		if math.Abs(opts.Gravity.Y) >= 1.0 {
+			offY = imath.RoundToEven(opts.Gravity.Y * offsetScale)
+		} else {
+			offY = imath.ScaleToEven(imgHeight, opts.Gravity.Y)
+		}
 
 		po.Padding.Enabled = true
 		po.Padding.Left = offX / 2
