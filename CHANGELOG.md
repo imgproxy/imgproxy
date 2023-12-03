@@ -3,6 +3,7 @@
 ## [Unreleased]
 ### Change
 - Allow relative values for `gravity` and `watermark` offsets.
+- Revised downloading errors reporting.
 
 ## [3.21.0] - 2023-11-23
 ### Add

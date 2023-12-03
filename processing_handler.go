@@ -328,23 +328,31 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		respondWithNotModified(reqID, r, rw, po, imageURL, nmErr.Headers)
 		return
 	} else {
-		ierr, ierrok := err.(*ierrors.Error)
-		if ierrok {
-			statusCode = ierr.StatusCode
-		}
-		if config.ReportDownloadingErrors && (!ierrok || ierr.Unexpected) {
-			errorreport.Report(err, r)
-		}
+		// This may be a request timeout error or a request cancelled error.
+		// Check it before moving further
+		checkErr(ctx, "timeout", router.CheckTimeout(ctx))
 
-		sendErr(ctx, "download", err)
+		ierr := ierrors.Wrap(err, 0)
+		ierr.Unexpected = ierr.Unexpected || config.ReportDownloadingErrors
+
+		sendErr(ctx, "download", ierr)
 
 		if imagedata.FallbackImage == nil {
-			panic(err)
+			panic(ierr)
 		}
 
-		log.Warningf("Could not load image %s. Using fallback image. %s", imageURL, err.Error())
+		// We didn't panic, so the error is not reported.
+		// Report it now
+		if ierr.Unexpected {
+			errorreport.Report(ierr, r)
+		}
+
+		log.WithField("request_id", reqID).Warningf("Could not load image %s. Using fallback image. %s", imageURL, ierr.Error())
+
 		if config.FallbackImageHTTPCode > 0 {
 			statusCode = config.FallbackImageHTTPCode
+		} else {
+			statusCode = ierr.StatusCode
 		}
 
 		originData = imagedata.FallbackImage
