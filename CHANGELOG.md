@@ -4,6 +4,7 @@
 ### Change
 - Allow relative values for `gravity` and `watermark` offsets.
 - Revised downloading errors reporting.
+- Allow `IMGPROXY_TTL` to be zero.
 
 ## [3.21.0] - 2023-11-23
 ### Add

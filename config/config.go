@@ -641,8 +641,8 @@ func Configure() error {
 		return fmt.Errorf("Max clients number should be greater than or equal 0, now - %d\n", MaxClients)
 	}
 
-	if TTL <= 0 {
-		return fmt.Errorf("TTL should be greater than 0, now - %d\n", TTL)
+	if TTL < 0 {
+		return fmt.Errorf("TTL should be greater than or equal to 0, now - %d\n", TTL)
 	}
 
 	if MaxSrcResolution <= 0 {
@@ -708,6 +708,10 @@ func Configure() error {
 		return errors.New("Watermark opacity should be greater than 0")
 	} else if WatermarkOpacity > 1 {
 		return errors.New("Watermark opacity should be less than or equal to 1")
+	}
+
+	if FallbackImageTTL < 0 {
+		return fmt.Errorf("Fallback image TTL should be greater than or equal to 0, now - %d\n", TTL)
 	}
 
 	if FallbackImageHTTPCode < 100 || FallbackImageHTTPCode > 599 {

@@ -17,6 +17,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
+	"github.com/imgproxy/imgproxy/v3/imath"
 	"github.com/imgproxy/imgproxy/v3/metrics"
 	"github.com/imgproxy/imgproxy/v3/metrics/stats"
 	"github.com/imgproxy/imgproxy/v3/options"
@@ -65,9 +66,7 @@ func setCacheControl(rw http.ResponseWriter, force *time.Time, originHeaders map
 	}
 
 	if force != nil && (ttl < 0 || force.Before(time.Now().Add(time.Duration(ttl)*time.Second))) {
-		rw.Header().Set("Cache-Control", fmt.Sprintf("max-age=%d, public", int(time.Until(*force).Seconds())))
-		rw.Header().Set("Expires", force.Format(http.TimeFormat))
-		return
+		ttl = imath.Min(config.TTL, imath.Max(0, int(time.Until(*force).Seconds())))
 	}
 
 	if config.CacheControlPassthrough && ttl < 0 && originHeaders != nil {
@@ -83,7 +82,11 @@ func setCacheControl(rw http.ResponseWriter, force *time.Time, originHeaders map
 		if ttl < 0 {
 			ttl = config.TTL
 		}
-		cacheControl = fmt.Sprintf("max-age=%d, public", ttl)
+		if ttl > 0 {
+			cacheControl = fmt.Sprintf("max-age=%d, public", ttl)
+		} else {
+			cacheControl = "no-cache"
+		}
 		expires = time.Now().Add(time.Second * time.Duration(ttl)).Format(http.TimeFormat)
 	}
 
