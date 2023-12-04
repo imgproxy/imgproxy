@@ -57,8 +57,6 @@ func initProcessingHandler() {
 }
 
 func setCacheControl(rw http.ResponseWriter, force *time.Time, originHeaders map[string]string) {
-	var cacheControl, expires string
-
 	ttl := -1
 
 	if _, ok := originHeaders["Fallback-Image"]; ok && config.FallbackImageTTL > 0 {
@@ -71,30 +69,25 @@ func setCacheControl(rw http.ResponseWriter, force *time.Time, originHeaders map
 
 	if config.CacheControlPassthrough && ttl < 0 && originHeaders != nil {
 		if val, ok := originHeaders["Cache-Control"]; ok && len(val) > 0 {
-			cacheControl = val
+			rw.Header().Set("Cache-Control", val)
+			return
 		}
+
 		if val, ok := originHeaders["Expires"]; ok && len(val) > 0 {
-			expires = val
+			if t, err := time.Parse(http.TimeFormat, val); err == nil {
+				ttl = imath.Max(0, int(time.Until(t).Seconds()))
+			}
 		}
 	}
 
-	if len(cacheControl) == 0 && len(expires) == 0 {
-		if ttl < 0 {
-			ttl = config.TTL
-		}
-		if ttl > 0 {
-			cacheControl = fmt.Sprintf("max-age=%d, public", ttl)
-		} else {
-			cacheControl = "no-cache"
-		}
-		expires = time.Now().Add(time.Second * time.Duration(ttl)).Format(http.TimeFormat)
+	if ttl < 0 {
+		ttl = config.TTL
 	}
 
-	if len(cacheControl) > 0 {
-		rw.Header().Set("Cache-Control", cacheControl)
-	}
-	if len(expires) > 0 {
-		rw.Header().Set("Expires", expires)
+	if ttl > 0 {
+		rw.Header().Set("Cache-Control", fmt.Sprintf("max-age=%d, public", ttl))
+	} else {
+		rw.Header().Set("Cache-Control", "no-cache")
 	}
 }
 

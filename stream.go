@@ -30,8 +30,6 @@ var (
 	}
 
 	streamRespHeaders = []string{
-		"Cache-Control",
-		"Expires",
 		"ETag",
 		"Content-Type",
 		"Content-Encoding",
@@ -117,8 +115,8 @@ func streamOriginImage(ctx context.Context, reqID string, r *http.Request, rw ht
 	}
 
 	setCacheControl(rw, po.Expires, map[string]string{
-		"Cache-Control": rw.Header().Get("Cache-Control"),
-		"Expires":       rw.Header().Get("Expires"),
+		"Cache-Control": res.Header.Get("Cache-Control"),
+		"Expires":       res.Header.Get("Expires"),
 	})
 	setCanonical(rw, imageURL)
 	rw.Header().Set("Content-Security-Policy", "script-src 'none'")

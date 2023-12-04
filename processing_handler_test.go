@@ -343,12 +343,12 @@ func (s *ProcessingHandlerTestSuite) TestErrorSavingToSVG() {
 	require.Equal(s.T(), 422, res.StatusCode)
 }
 
-func (s *ProcessingHandlerTestSuite) TestCacheControlPassthrough() {
+func (s *ProcessingHandlerTestSuite) TestCacheControlPassthroughCacheControl() {
 	config.CacheControlPassthrough = true
 
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		rw.Header().Set("Cache-Control", "fake-cache-control")
-		rw.Header().Set("Expires", "fake-expires")
+		rw.Header().Set("Cache-Control", "max-age=1234, public")
+		rw.Header().Set("Expires", time.Now().Add(time.Hour).UTC().Format(http.TimeFormat))
 		rw.WriteHeader(200)
 		rw.Write(s.readTestFile("test1.png"))
 	}))
@@ -357,16 +357,34 @@ func (s *ProcessingHandlerTestSuite) TestCacheControlPassthrough() {
 	rw := s.send("/unsafe/rs:fill:4:4/plain/" + ts.URL)
 	res := rw.Result()
 
-	require.Equal(s.T(), "fake-cache-control", res.Header.Get("Cache-Control"))
-	require.Equal(s.T(), "fake-expires", res.Header.Get("Expires"))
+	require.Equal(s.T(), "max-age=1234, public", res.Header.Get("Cache-Control"))
+	require.Empty(s.T(), res.Header.Get("Expires"))
+}
+
+func (s *ProcessingHandlerTestSuite) TestCacheControlPassthroughExpires() {
+	config.CacheControlPassthrough = true
+
+	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		rw.Header().Set("Expires", time.Now().Add(1239*time.Second).UTC().Format(http.TimeFormat))
+		rw.WriteHeader(200)
+		rw.Write(s.readTestFile("test1.png"))
+	}))
+	defer ts.Close()
+
+	rw := s.send("/unsafe/rs:fill:4:4/plain/" + ts.URL)
+	res := rw.Result()
+
+	// Use regex to allow some delay
+	require.Regexp(s.T(), regexp.MustCompile("max-age=123[0-9], public"), res.Header.Get("Cache-Control"))
+	require.Empty(s.T(), res.Header.Get("Expires"))
 }
 
 func (s *ProcessingHandlerTestSuite) TestCacheControlPassthroughDisabled() {
 	config.CacheControlPassthrough = false
 
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		rw.Header().Set("Cache-Control", "fake-cache-control")
-		rw.Header().Set("Expires", "fake-expires")
+		rw.Header().Set("Cache-Control", "max-age=1234, public")
+		rw.Header().Set("Expires", time.Now().Add(time.Hour).UTC().Format(http.TimeFormat))
 		rw.WriteHeader(200)
 		rw.Write(s.readTestFile("test1.png"))
 	}))
@@ -375,8 +393,8 @@ func (s *ProcessingHandlerTestSuite) TestCacheControlPassthroughDisabled() {
 	rw := s.send("/unsafe/rs:fill:4:4/plain/" + ts.URL)
 	res := rw.Result()
 
-	require.NotEqual(s.T(), "fake-cache-control", res.Header.Get("Cache-Control"))
-	require.NotEqual(s.T(), "fake-expires", res.Header.Get("Expires"))
+	require.NotEqual(s.T(), "max-age=1234, public", res.Header.Get("Cache-Control"))
+	require.Empty(s.T(), res.Header.Get("Expires"))
 }
 
 func (s *ProcessingHandlerTestSuite) TestETagDisabled() {
