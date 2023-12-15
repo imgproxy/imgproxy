@@ -1,11 +1,23 @@
 # Changelog
 
 ## [Unreleased]
+### Add
+- (pro) Add the [hashsum](https://docs.imgproxy.net/latest/usage/processing#hashsum) processing and info options.
+- (pro) Add the [calc_hashsums](https://docs.imgproxy.net/latest/usage/getting_info#calc-hashsums) info option.
+- (pro) Add the [IMGPROXY_VIDEO_THUMBNAIL_TILE_AUTO_KEYFRAMES](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_VIDEO_THUMBNAIL_TILE_AUTO_KEYFRAMES) config.
+
 ### Change
 - Allow relative values for `gravity` and `watermark` offsets.
 - Revised downloading errors reporting.
 - Allow `IMGPROXY_TTL` to be zero.
 - Don't set `Expires` HTTP header as it is ignored if the `Cache-Control` header is set.
+- (pro) If the `step` argument of the `video_thumbnail_tile` is negative, calculate `step` automatically.
+
+### Fix
+- (pro) Fix `video_thumbnail_tile` option behavior when the video has a single keyframe.
+- (pro) Fix the `trim` argument of the `video_thumbnail_tile` processing option.
+- (pro) Fix `video_thumbnail_tile` behavior when the `step` argument value is less than frame duration.
+- (pro) Fix VPx video stream duration detection.
 
 ## [3.21.0] - 2023-11-23
 ### Add
