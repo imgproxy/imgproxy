@@ -102,21 +102,19 @@ func transformAnimated(ctx context.Context, img *vips.Image, po *options.Process
 	}
 
 	imgWidth := img.Width()
+	framesCount := imath.Min(img.Pages(), po.SecurityOptions.MaxAnimationFrames)
 
 	frameHeight, err := img.GetInt("page-height")
 	if err != nil {
 		return err
 	}
 
-	framesCount := imath.Min(img.Height()/frameHeight, po.SecurityOptions.MaxAnimationFrames)
-
 	// Double check dimensions because animated image has many frames
 	if err = security.CheckDimensions(imgWidth, frameHeight, framesCount, po.SecurityOptions); err != nil {
 		return err
 	}
 
-	// Vips 8.8+ supports n-pages and doesn't load the whole animated image on header access
-	if nPages, _ := img.GetIntDefault("n-pages", 1); nPages > framesCount {
+	if img.Pages() > framesCount {
 		// Load only the needed frames
 		if err = img.Load(imgdata, 1, 1.0, framesCount); err != nil {
 			return err
@@ -197,7 +195,7 @@ func transformAnimated(ctx context.Context, img *vips.Image, po *options.Process
 	img.SetInt("page-height", frames[0].Height())
 	img.SetIntSlice("delay", delay)
 	img.SetInt("loop", loop)
-	img.SetInt("n-pages", framesCount)
+	img.SetInt("n-pages", img.Height()/frames[0].Height())
 
 	return nil
 }

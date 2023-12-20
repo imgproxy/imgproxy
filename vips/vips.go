@@ -292,6 +292,14 @@ func (img *Image) Height() int {
 	return int(img.VipsImage.Ysize)
 }
 
+func (img *Image) Pages() int {
+	p, err := img.GetIntDefault("n-pages", 1)
+	if err != nil {
+		return 1
+	}
+	return p
+}
+
 func (img *Image) Load(imgdata *imagedata.ImageData, shrink int, scale float64, pages int) error {
 	if imgdata.Type == imagetype.ICO {
 		return img.loadIco(imgdata.Data, shrink, scale, pages)

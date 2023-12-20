@@ -14,6 +14,7 @@
 - (pro) If the `step` argument of the `video_thumbnail_tile` is negative, calculate `step` automatically.
 
 ### Fix
+- Fix loading animated images with a huge number of frames.
 - (pro) Fix `video_thumbnail_tile` option behavior when the video has a single keyframe.
 - (pro) Fix the `trim` argument of the `video_thumbnail_tile` processing option.
 - (pro) Fix `video_thumbnail_tile` behavior when the `step` argument value is less than frame duration.
