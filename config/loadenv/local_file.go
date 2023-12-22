@@ -16,7 +16,7 @@ func loadLocalFile() error {
 
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return fmt.Errorf("Can't read loacal environment file: %s", err)
+		return fmt.Errorf("Can't read local environment file: %s", err)
 	}
 
 	if len(data) == 0 {
