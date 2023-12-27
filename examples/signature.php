@@ -13,17 +13,7 @@ if(empty($saltBin)) {
 	die('Salt expected to be hex-encoded string');
 }
 
-$resize = 'fill';
-$width = 300;
-$height = 300;
-$gravity = 'no';
-$enlarge = 1;
-$extension = 'png';
-
-$url = 'http://img.example.com/pretty/image.jpg';
-$encodedUrl = rtrim(strtr(base64_encode($url), '+/', '-_'), '=');
-
-$path = "/rs:{$resize}:{$width}:{$height}:{$enlarge}/g:{$gravity}/{$encodedUrl}.{$extension}";
+$path = "/rs:fit:300:300/plain/http://img.example.com/pretty/image.jpg";
 
 $signature = rtrim(strtr(base64_encode(hash_hmac('sha256', $saltBin.$path, $keyBin, true)), '+/', '-_'), '=');
 

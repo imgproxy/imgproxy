@@ -7,7 +7,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
-func cropImage(img *vips.Image, cropWidth, cropHeight int, gravity *options.GravityOptions) error {
+func cropImage(img *vips.Image, cropWidth, cropHeight int, gravity *options.GravityOptions, offsetScale float64) error {
 	if cropWidth == 0 && cropHeight == 0 {
 		return nil
 	}
@@ -25,15 +25,10 @@ func cropImage(img *vips.Image, cropWidth, cropHeight int, gravity *options.Grav
 		if err := img.CopyMemory(); err != nil {
 			return err
 		}
-		if err := img.SmartCrop(cropWidth, cropHeight); err != nil {
-			return err
-		}
-		// Applying additional modifications after smart crop causes SIGSEGV on Alpine
-		// so we have to copy memory after it
-		return img.CopyMemory()
+		return img.SmartCrop(cropWidth, cropHeight)
 	}
 
-	left, top := calcPosition(imgWidth, imgHeight, cropWidth, cropHeight, gravity, false)
+	left, top := calcPosition(imgWidth, imgHeight, cropWidth, cropHeight, gravity, offsetScale, false)
 	return img.Crop(left, top, cropWidth, cropHeight)
 }
 
@@ -48,24 +43,28 @@ func crop(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions,
 		width, height = height, width
 	}
 
-	return cropImage(img, width, height, &opts)
+	// Since we crop before scaling, we shouldn't consider DPR
+	return cropImage(img, width, height, &opts, 1.0)
 }
 
 func cropToResult(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata *imagedata.ImageData) error {
 	// Crop image to the result size
-	resultWidth, resultHeight := resultSize(po)
+	resultWidth, resultHeight := resultSize(po, pctx.dprScale)
 
 	if po.ResizingType == options.ResizeFillDown {
-		if resultWidth > img.Width() {
-			resultHeight = imath.Scale(resultHeight, float64(img.Width())/float64(resultWidth))
-			resultWidth = img.Width()
-		}
+		diffW := float64(resultWidth) / float64(img.Width())
+		diffH := float64(resultHeight) / float64(img.Height())
 
-		if resultHeight > img.Height() {
-			resultWidth = imath.Scale(resultWidth, float64(img.Height())/float64(resultHeight))
+		switch {
+		case diffW > diffH && diffW > 1.0:
+			resultHeight = imath.Scale(img.Width(), float64(resultHeight)/float64(resultWidth))
+			resultWidth = img.Width()
+
+		case diffH > diffW && diffH > 1.0:
+			resultWidth = imath.Scale(img.Height(), float64(resultWidth)/float64(resultHeight))
 			resultHeight = img.Height()
 		}
 	}
 
-	return cropImage(img, resultWidth, resultHeight, &po.Gravity)
+	return cropImage(img, resultWidth, resultHeight, &po.Gravity, pctx.dprScale)
 }

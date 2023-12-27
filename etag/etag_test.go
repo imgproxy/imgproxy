@@ -1,7 +1,7 @@
 package etag
 
 import (
-	"io/ioutil"
+	"io"
 	"os"
 	"strings"
 	"testing"
@@ -36,7 +36,7 @@ type EtagTestSuite struct {
 }
 
 func (s *EtagTestSuite) SetupSuite() {
-	logrus.SetOutput(ioutil.Discard)
+	logrus.SetOutput(io.Discard)
 }
 
 func (s *EtagTestSuite) TeardownSuite() {

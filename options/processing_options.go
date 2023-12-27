@@ -15,6 +15,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/imath"
+	"github.com/imgproxy/imgproxy/v3/security"
 	"github.com/imgproxy/imgproxy/v3/structdiff"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
@@ -73,6 +74,7 @@ type ProcessingOptions struct {
 	Gravity           GravityOptions
 	Enlarge           bool
 	Extend            ExtendOptions
+	ExtendAspectRatio ExtendOptions
 	Crop              CropOptions
 	Padding           PaddingOptions
 	Trim              TrimOptions
@@ -91,11 +93,12 @@ type ProcessingOptions struct {
 	StripColorProfile bool
 	AutoRotate        bool
 	EnforceThumbnail  bool
-	ReturnAttachment  bool
 
 	SkipProcessingFormats []imagetype.Type
 
 	CacheBuster string
+
+	Expires *time.Time
 
 	Watermark WatermarkOptions
 
@@ -104,9 +107,14 @@ type ProcessingOptions struct {
 	PreferAvif  bool
 	EnforceAvif bool
 
-	Filename string
+	Filename         string
+	ReturnAttachment bool
+
+	Raw bool
 
 	UsedPresets []string
+
+	SecurityOptions security.Options
 
 	defaultQuality int
 }
@@ -122,6 +130,7 @@ func NewProcessingOptions() *ProcessingOptions {
 		Gravity:           GravityOptions{Type: GravityCenter},
 		Enlarge:           false,
 		Extend:            ExtendOptions{Enabled: false, Gravity: GravityOptions{Type: GravityCenter}},
+		ExtendAspectRatio: ExtendOptions{Enabled: false, Gravity: GravityOptions{Type: GravityCenter}},
 		Padding:           PaddingOptions{Enabled: false},
 		Trim:              TrimOptions{Enabled: false, Threshold: 10, Smart: true},
 		Rotate:            0,
@@ -142,6 +151,8 @@ func NewProcessingOptions() *ProcessingOptions {
 
 		SkipProcessingFormats: append([]imagetype.Type(nil), config.SkipProcessingFormats...),
 		UsedPresets:           make([]string, 0, len(config.Presets)),
+
+		SecurityOptions: security.DefaultOptions(),
 
 		// Basically, we need this to update ETag when `IMGPROXY_QUALITY` is changed
 		defaultQuality: config.Quality,
@@ -252,6 +263,26 @@ func parseGravity(g *GravityOptions, args []string) error {
 	return nil
 }
 
+func parseExtend(opts *ExtendOptions, name string, args []string) error {
+	if len(args) > 4 {
+		return fmt.Errorf("Invalid %s arguments: %v", name, args)
+	}
+
+	opts.Enabled = parseBoolOption(args[0])
+
+	if len(args) > 1 {
+		if err := parseGravity(&opts.Gravity, args[1:]); err != nil {
+			return err
+		}
+
+		if opts.Gravity.Type == GravitySmart {
+			return fmt.Errorf("%s doesn't support smart gravity", name)
+		}
+	}
+
+	return nil
+}
+
 func applyWidthOption(po *ProcessingOptions, args []string) error {
 	if len(args) > 1 {
 		return fmt.Errorf("Invalid width arguments: %v", args)
@@ -309,23 +340,11 @@ func applyEnlargeOption(po *ProcessingOptions, args []string) error {
 }
 
 func applyExtendOption(po *ProcessingOptions, args []string) error {
-	if len(args) > 4 {
-		return fmt.Errorf("Invalid extend arguments: %v", args)
-	}
+	return parseExtend(&po.Extend, "extend", args)
+}
 
-	po.Extend.Enabled = parseBoolOption(args[0])
-
-	if len(args) > 1 {
-		if err := parseGravity(&po.Extend.Gravity, args[1:]); err != nil {
-			return err
-		}
-
-		if po.Extend.Gravity.Type == GravitySmart {
-			return errors.New("extend doesn't support smart gravity")
-		}
-	}
-
-	return nil
+func applyExtendAspectRatioOption(po *ProcessingOptions, args []string) error {
+	return parseExtend(&po.ExtendAspectRatio, "extend_aspect_ratio", args)
 }
 
 func applySizeOption(po *ProcessingOptions, args []string) (err error) {
@@ -853,12 +872,31 @@ func applySkipProcessingFormatsOption(po *ProcessingOptions, args []string) erro
 	return nil
 }
 
-func applyFilenameOption(po *ProcessingOptions, args []string) error {
+func applyRawOption(po *ProcessingOptions, args []string) error {
 	if len(args) > 1 {
+		return fmt.Errorf("Invalid return_attachment arguments: %v", args)
+	}
+
+	po.Raw = parseBoolOption(args[0])
+
+	return nil
+}
+
+func applyFilenameOption(po *ProcessingOptions, args []string) error {
+	if len(args) > 2 {
 		return fmt.Errorf("Invalid filename arguments: %v", args)
 	}
 
 	po.Filename = args[0]
+
+	if len(args) > 1 && parseBoolOption(args[1]) {
+		decoded, err := base64.RawURLEncoding.DecodeString(po.Filename)
+		if err != nil {
+			return fmt.Errorf("Invalid filename encoding: %s", err)
+		}
+
+		po.Filename = string(decoded)
+	}
 
 	return nil
 }
@@ -876,6 +914,9 @@ func applyExpiresOption(po *ProcessingOptions, args []string) error {
 	if timestamp > 0 && timestamp < time.Now().Unix() {
 		return errExpiredURL
 	}
+
+	expires := time.Unix(timestamp, 0)
+	po.Expires = &expires
 
 	return nil
 }
@@ -940,6 +981,78 @@ func applyReturnAttachmentOption(po *ProcessingOptions, args []string) error {
 	return nil
 }
 
+func applyMaxSrcResolutionOption(po *ProcessingOptions, args []string) error {
+	if err := security.IsSecurityOptionsAllowed(); err != nil {
+		return err
+	}
+
+	if len(args) > 1 {
+		return fmt.Errorf("Invalid max_src_resolution arguments: %v", args)
+	}
+
+	if x, err := strconv.ParseFloat(args[0], 64); err == nil && x > 0 {
+		po.SecurityOptions.MaxSrcResolution = int(x * 1000000)
+	} else {
+		return fmt.Errorf("Invalid max_src_resolution: %s", args[0])
+	}
+
+	return nil
+}
+
+func applyMaxSrcFileSizeOption(po *ProcessingOptions, args []string) error {
+	if err := security.IsSecurityOptionsAllowed(); err != nil {
+		return err
+	}
+
+	if len(args) > 1 {
+		return fmt.Errorf("Invalid max_src_file_size arguments: %v", args)
+	}
+
+	if x, err := strconv.Atoi(args[0]); err == nil {
+		po.SecurityOptions.MaxSrcFileSize = x
+	} else {
+		return fmt.Errorf("Invalid max_src_file_size: %s", args[0])
+	}
+
+	return nil
+}
+
+func applyMaxAnimationFramesOption(po *ProcessingOptions, args []string) error {
+	if err := security.IsSecurityOptionsAllowed(); err != nil {
+		return err
+	}
+
+	if len(args) > 1 {
+		return fmt.Errorf("Invalid max_animation_frames arguments: %v", args)
+	}
+
+	if x, err := strconv.Atoi(args[0]); err == nil && x > 0 {
+		po.SecurityOptions.MaxAnimationFrames = x
+	} else {
+		return fmt.Errorf("Invalid max_animation_frames: %s", args[0])
+	}
+
+	return nil
+}
+
+func applyMaxAnimationFrameResolutionOption(po *ProcessingOptions, args []string) error {
+	if err := security.IsSecurityOptionsAllowed(); err != nil {
+		return err
+	}
+
+	if len(args) > 1 {
+		return fmt.Errorf("Invalid max_animation_frame_resolution arguments: %v", args)
+	}
+
+	if x, err := strconv.ParseFloat(args[0], 64); err == nil {
+		po.SecurityOptions.MaxAnimationFrameResolution = int(x * 1000000)
+	} else {
+		return fmt.Errorf("Invalid max_animation_frame_resolution: %s", args[0])
+	}
+
+	return nil
+}
+
 func applyURLOption(po *ProcessingOptions, name string, args []string) error {
 	switch name {
 	case "resize", "rs":
@@ -966,6 +1079,8 @@ func applyURLOption(po *ProcessingOptions, name string, args []string) error {
 		return applyEnlargeOption(po, args)
 	case "extend", "ex":
 		return applyExtendOption(po, args)
+	case "extend_aspect_ratio", "extend_ar", "exar":
+		return applyExtendAspectRatioOption(po, args)
 	case "gravity", "g":
 		return applyGravityOption(po, args)
 	case "crop", "c":
@@ -998,8 +1113,6 @@ func applyURLOption(po *ProcessingOptions, name string, args []string) error {
 		return applyStripColorProfileOption(po, args)
 	case "enforce_thumbnail", "eth":
 		return applyEnforceThumbnailOption(po, args)
-	case "return_attachment", "att":
-		return applyReturnAttachmentOption(po, args)
 	// Saving options
 	case "quality", "q":
 		return applyQualityOption(po, args)
@@ -1012,15 +1125,28 @@ func applyURLOption(po *ProcessingOptions, name string, args []string) error {
 	// Handling options
 	case "skip_processing", "skp":
 		return applySkipProcessingFormatsOption(po, args)
+	case "raw":
+		return applyRawOption(po, args)
 	case "cachebuster", "cb":
 		return applyCacheBusterOption(po, args)
 	case "expires", "exp":
 		return applyExpiresOption(po, args)
 	case "filename", "fn":
 		return applyFilenameOption(po, args)
+	case "return_attachment", "att":
+		return applyReturnAttachmentOption(po, args)
 	// Presets
 	case "preset", "pr":
 		return applyPresetOption(po, args)
+	// Security
+	case "max_src_resolution", "msr":
+		return applyMaxSrcResolutionOption(po, args)
+	case "max_src_file_size", "msfs":
+		return applyMaxSrcFileSizeOption(po, args)
+	case "max_animation_frames", "maf":
+		return applyMaxAnimationFramesOption(po, args)
+	case "max_animation_frame_resolution", "mafr":
+		return applyMaxAnimationFrameResolutionOption(po, args)
 	}
 
 	return fmt.Errorf("Unknown processing option: %s", name)
@@ -1052,19 +1178,23 @@ func defaultProcessingOptions(headers http.Header) (*ProcessingOptions, error) {
 	}
 
 	if config.EnableClientHints {
-		if headerDPR := headers.Get("DPR"); len(headerDPR) > 0 {
+		headerDPR := headers.Get("Sec-CH-DPR")
+		if len(headerDPR) == 0 {
+			headerDPR = headers.Get("DPR")
+		}
+		if len(headerDPR) > 0 {
 			if dpr, err := strconv.ParseFloat(headerDPR, 64); err == nil && (dpr > 0 && dpr <= maxClientHintDPR) {
 				po.Dpr = dpr
 			}
 		}
-		if headerViewportWidth := headers.Get("Viewport-Width"); len(headerViewportWidth) > 0 {
-			if vw, err := strconv.Atoi(headerViewportWidth); err == nil {
-				po.Width = vw
-			}
+
+		headerWidth := headers.Get("Sec-CH-Width")
+		if len(headerWidth) == 0 {
+			headerWidth = headers.Get("Width")
 		}
-		if headerWidth := headers.Get("Width"); len(headerWidth) > 0 {
+		if len(headerWidth) > 0 {
 			if w, err := strconv.Atoi(headerWidth); err == nil {
-				po.Width = imath.Scale(w, 1/po.Dpr)
+				po.Width = imath.Shrink(w, po.Dpr)
 			}
 		}
 	}
@@ -1103,7 +1233,7 @@ func parsePathOptions(parts []string, headers http.Header) (*ProcessingOptions, 
 		return nil, "", err
 	}
 
-	if len(extension) > 0 {
+	if !po.Raw && len(extension) > 0 {
 		if err = applyFormatOption(po, []string{extension}); err != nil {
 			return nil, "", err
 		}
@@ -1130,7 +1260,7 @@ func parsePathPresets(parts []string, headers http.Header) (*ProcessingOptions, 
 		return nil, "", err
 	}
 
-	if len(extension) > 0 {
+	if !po.Raw && len(extension) > 0 {
 		if err = applyFormatOption(po, []string{extension}); err != nil {
 			return nil, "", err
 		}

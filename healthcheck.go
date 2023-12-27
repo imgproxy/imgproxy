@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net"
 	"net/http"
 	"os"
@@ -19,7 +19,7 @@ func healthcheck() int {
 
 	configurators.String(&network, "IMGPROXY_NETWORK")
 	configurators.String(&bind, "IMGPROXY_BIND")
-	configurators.String(&pathprefix, "IMGPROXY_PATH_PREFIX")
+	configurators.URLPath(&pathprefix, "IMGPROXY_PATH_PREFIX")
 
 	httpc := http.Client{
 		Transport: &http.Transport{
@@ -36,7 +36,7 @@ func healthcheck() int {
 	}
 	defer res.Body.Close()
 
-	msg, _ := ioutil.ReadAll(res.Body)
+	msg, _ := io.ReadAll(res.Body)
 	fmt.Fprintln(os.Stderr, string(msg))
 
 	if res.StatusCode != 200 {

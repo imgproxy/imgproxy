@@ -7,12 +7,15 @@ package vips
 */
 import "C"
 import (
+	"context"
 	"errors"
-	"fmt"
 	"math"
 	"os"
+	"regexp"
 	"runtime"
+	"strings"
 	"sync"
+	"time"
 	"unsafe"
 
 	log "github.com/sirupsen/logrus"
@@ -21,8 +24,10 @@ import (
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
+	"github.com/imgproxy/imgproxy/v3/metrics/cloudwatch"
 	"github.com/imgproxy/imgproxy/v3/metrics/datadog"
 	"github.com/imgproxy/imgproxy/v3/metrics/newrelic"
+	"github.com/imgproxy/imgproxy/v3/metrics/otel"
 	"github.com/imgproxy/imgproxy/v3/metrics/prometheus"
 )
 
@@ -45,13 +50,20 @@ var vipsConf struct {
 	AvifSpeed             C.int
 }
 
+var badImageErrRe = []*regexp.Regexp{
+	regexp.MustCompile(`^(\S+)load_buffer: `),
+	regexp.MustCompile(`^VipsJpeg: `),
+	regexp.MustCompile(`^tiff2vips: `),
+	regexp.MustCompile(`^webp2vips: `),
+}
+
 func Init() error {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 
 	if err := C.vips_initialize(); err != 0 {
 		C.vips_shutdown()
-		return fmt.Errorf("unable to start vips!")
+		return errors.New("unable to start vips!")
 	}
 
 	// Disable libvips cache. Since processing pipeline is fine tuned, we won't get much profit from it.
@@ -60,10 +72,6 @@ func Init() error {
 	C.vips_cache_set_max(0)
 
 	C.vips_concurrency_set(1)
-
-	// Vector calculations cause SIGSEGV sometimes when working with JPEG.
-	// It's better to disable it since profit it quite small
-	C.vips_vector_set_enabled(0)
 
 	if len(os.Getenv("IMGPROXY_VIPS_LEAK_CHECK")) > 0 {
 		C.vips_leak_set(C.gboolean(1))
@@ -105,6 +113,29 @@ func Init() error {
 	newrelic.AddGaugeFunc("vips.max_memory", GetMemHighwater)
 	newrelic.AddGaugeFunc("vips.allocs", GetAllocs)
 
+	otel.AddGaugeFunc(
+		"vips_memory_bytes",
+		"A gauge of the vips tracked memory usage in bytes.",
+		"By",
+		GetMem,
+	)
+	otel.AddGaugeFunc(
+		"vips_max_memory_bytes",
+		"A gauge of the max vips tracked memory usage in bytes.",
+		"By",
+		GetMemHighwater,
+	)
+	otel.AddGaugeFunc(
+		"vips_allocs",
+		"A gauge of the number of active vips allocations.",
+		"1",
+		GetAllocs,
+	)
+
+	cloudwatch.AddGaugeFunc("VipsMemory", "Bytes", GetMem)
+	cloudwatch.AddGaugeFunc("VipsMaxMemory", "Bytes", GetMemHighwater)
+	cloudwatch.AddGaugeFunc("VipsAllocs", "Count", GetAllocs)
+
 	return nil
 }
 
@@ -124,13 +155,54 @@ func GetAllocs() float64 {
 	return float64(C.vips_tracked_get_allocs())
 }
 
+func Health() error {
+	timer := time.NewTimer(5 * time.Second)
+	defer timer.Stop()
+
+	done := make(chan struct{})
+
+	var err error
+
+	go func(done chan struct{}) {
+		runtime.LockOSThread()
+		defer runtime.UnlockOSThread()
+
+		defer Cleanup()
+
+		if C.vips_health() != 0 {
+			err = Error()
+		}
+
+		close(done)
+	}(done)
+
+	select {
+	case <-done:
+		return err
+	case <-timer.C:
+		return context.DeadlineExceeded
+	}
+}
+
 func Cleanup() {
 	C.vips_cleanup()
 }
 
 func Error() error {
 	defer C.vips_error_clear()
-	return ierrors.NewUnexpected(C.GoString(C.vips_error_buffer()), 1)
+
+	errstr := strings.TrimSpace(C.GoString(C.vips_error_buffer()))
+	err := ierrors.NewUnexpected(errstr, 1)
+
+	for _, re := range badImageErrRe {
+		if re.MatchString(errstr) {
+			err.StatusCode = 422
+			err.PublicMessage = "Broken or unsupported image"
+			break
+		}
+	}
+
+	return err
 }
 
 func hasOperation(name string) bool {
@@ -184,7 +256,7 @@ func SupportsSave(it imagetype.Type) bool {
 		sup = hasOperation("webpsave_buffer")
 	case imagetype.GIF:
 		sup = hasOperation("gifsave_buffer")
-	case imagetype.AVIF:
+	case imagetype.HEIC, imagetype.AVIF:
 		sup = hasOperation("heifsave_buffer")
 	case imagetype.BMP:
 		sup = true
@@ -259,6 +331,14 @@ func (img *Image) Load(imgdata *imagedata.ImageData, shrink int, scale float64, 
 
 	C.swap_and_clear(&img.VipsImage, tmp)
 
+	if imgdata.Type == imagetype.TIFF {
+		if C.vips_fix_float_tiff(img.VipsImage, &tmp) == 0 {
+			C.swap_and_clear(&img.VipsImage, tmp)
+		} else {
+			log.Warnf("Can't fix TIFF: %s", Error())
+		}
+	}
+
 	return nil
 }
 
@@ -307,6 +387,8 @@ func (img *Image) Save(imgtype imagetype.Type, quality int) (*imagedata.ImageDat
 		err = C.vips_webpsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality))
 	case imagetype.GIF:
 		err = C.vips_gifsave_go(img.VipsImage, &ptr, &imgsize)
+	case imagetype.HEIC:
+		err = C.vips_heifsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality))
 	case imagetype.AVIF:
 		err = C.vips_avifsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality), vipsConf.AvifSpeed)
 	case imagetype.TIFF:
@@ -333,6 +415,17 @@ func (img *Image) Clear() {
 	if img.VipsImage != nil {
 		C.clear_image(&img.VipsImage)
 	}
+}
+
+func (img *Image) LineCache(lines int) error {
+	var tmp *C.VipsImage
+
+	if C.vips_linecache_seq(img.VipsImage, &tmp, C.int(lines)) != 0 {
+		return Error()
+	}
+
+	C.swap_and_clear(&img.VipsImage, tmp)
+	return nil
 }
 
 func (img *Image) Arrayjoin(in []*Image) error {
@@ -410,6 +503,23 @@ func (img *Image) GetIntSliceDefault(name string, def []int) ([]int, error) {
 	return img.GetIntSlice(name)
 }
 
+func (img *Image) GetDouble(name string) (float64, error) {
+	var d C.double
+
+	if C.vips_image_get_double(img.VipsImage, cachedCString(name), &d) != 0 {
+		return 0, Error()
+	}
+	return float64(d), nil
+}
+
+func (img *Image) GetDoubleDefault(name string, def float64) (float64, error) {
+	if C.vips_image_get_typeof(img.VipsImage, cachedCString(name)) == 0 {
+		return def, nil
+	}
+
+	return img.GetDouble(name)
+}
+
 func (img *Image) GetBlob(name string) ([]byte, error) {
 	var (
 		tmp  unsafe.Pointer
@@ -434,9 +544,17 @@ func (img *Image) SetIntSlice(name string, value []int) {
 	C.vips_image_set_array_int_go(img.VipsImage, cachedCString(name), &in[0], C.int(len(value)))
 }
 
+func (img *Image) SetDouble(name string, value float64) {
+	C.vips_image_set_double(img.VipsImage, cachedCString(name), C.double(value))
+}
+
 func (img *Image) SetBlob(name string, value []byte) {
 	defer runtime.KeepAlive(value)
 	C.vips_image_set_blob_copy(img.VipsImage, cachedCString(name), unsafe.Pointer(&value[0]), C.size_t(len(value)))
+}
+
+func (img *Image) RemovePaletteBitDepth() {
+	C.vips_remove_palette_bit_depth(img.VipsImage)
 }
 
 func (img *Image) CastUchar() error {
@@ -553,17 +671,6 @@ func (img *Image) Trim(threshold float64, smart bool, color Color, equalHor bool
 	return nil
 }
 
-func (img *Image) EnsureAlpha() error {
-	var tmp *C.VipsImage
-
-	if C.vips_ensure_alpha(img.VipsImage, &tmp) != 0 {
-		return Error()
-	}
-
-	C.swap_and_clear(&img.VipsImage, tmp)
-	return nil
-}
-
 func (img *Image) Flatten(bg Color) error {
 	var tmp *C.VipsImage
 
@@ -587,8 +694,15 @@ func (img *Image) ApplyFilters(blurSigma, sharpSigma float32, pixelatePixels int
 	return nil
 }
 
-func (img *Image) IsCMYK() bool {
-	return C.vips_image_guess_interpretation(img.VipsImage) == C.VIPS_INTERPRETATION_CMYK
+func (img *Image) IsRGB() bool {
+	format := C.vips_image_guess_interpretation(img.VipsImage)
+	return format == C.VIPS_INTERPRETATION_sRGB ||
+		format == C.VIPS_INTERPRETATION_scRGB ||
+		format == C.VIPS_INTERPRETATION_RGB16
+}
+
+func (img *Image) IsLinear() bool {
+	return C.vips_image_guess_interpretation(img.VipsImage) == C.VIPS_INTERPRETATION_scRGB
 }
 
 func (img *Image) ImportColourProfile() error {
@@ -730,10 +844,10 @@ func (img *Image) Embed(width, height int, offX, offY int) error {
 	return nil
 }
 
-func (img *Image) ApplyWatermark(wm *Image, opacity float64) error {
+func (img *Image) ApplyWatermark(wm *Image, left, top int, opacity float64) error {
 	var tmp *C.VipsImage
 
-	if C.vips_apply_watermark(img.VipsImage, wm.VipsImage, &tmp, C.double(opacity)) != 0 {
+	if C.vips_apply_watermark(img.VipsImage, wm.VipsImage, &tmp, C.int(left), C.int(top), C.double(opacity)) != 0 {
 		return Error()
 	}
 	C.swap_and_clear(&img.VipsImage, tmp)

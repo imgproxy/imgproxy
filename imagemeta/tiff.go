@@ -90,7 +90,7 @@ func DecodeTiffMeta(rr io.Reader) (Meta, error) {
 
 		switch datatype {
 		case tiffDtByte:
-			value = int(tmp[9])
+			value = int(tmp[8])
 		case tiffDtShort:
 			value = int(byteOrder.Uint16(tmp[8:10]))
 		case tiffDtLong:

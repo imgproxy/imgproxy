@@ -1,22 +1,24 @@
 package processing
 
 import (
+	"math"
+
 	"github.com/imgproxy/imgproxy/v3/imath"
 	"github.com/imgproxy/imgproxy/v3/options"
 )
 
-func calcPosition(width, height, innerWidth, innerHeight int, gravity *options.GravityOptions, allowOverflow bool) (left, top int) {
+func calcPosition(width, height, innerWidth, innerHeight int, gravity *options.GravityOptions, dpr float64, allowOverflow bool) (left, top int) {
 	if gravity.Type == options.GravityFocusPoint {
-		pointX := imath.Scale(width, gravity.X)
-		pointY := imath.Scale(height, gravity.Y)
+		pointX := imath.ScaleToEven(width, gravity.X)
+		pointY := imath.ScaleToEven(height, gravity.Y)
 
 		left = pointX - innerWidth/2
 		top = pointY - innerHeight/2
 	} else {
-		offX, offY := int(gravity.X), int(gravity.Y)
+		offX, offY := int(math.RoundToEven(gravity.X*dpr)), int(math.RoundToEven(gravity.Y*dpr))
 
-		left = (width-innerWidth+1)/2 + offX
-		top = (height-innerHeight+1)/2 + offY
+		left = imath.ShrinkToEven(width-innerWidth+1, 2) + offX
+		top = imath.ShrinkToEven(height-innerHeight+1, 2) + offY
 
 		if gravity.Type == options.GravityNorth || gravity.Type == options.GravityNorthEast || gravity.Type == options.GravityNorthWest {
 			top = 0 + offY

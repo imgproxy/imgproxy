@@ -11,32 +11,32 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     container:
-      image: darthsim/imgproxy-ci:latest
+      image: darthsim/imgproxy-ci:202311211816
     strategy:
       matrix:
-        go-version: ["1.18.x"]
-        vips-version: ["8.12"]
+        go-version: ["1.21.x"]
+        vips-version: ["8.15"]
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
-      - uses: actions/setup-go@v2
+        uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
         with:
           go-version: ${{ matrix.go-version }}
       - name: Cache mods
         uses: actions/cache@v3
         with:
-          path:  |
+          path: |
             ~/.cache/go-build
             ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          key: ${{ runner.os }}-go-${{ matrix.go-version }}-${{ hashFiles('**/go.sum') }}
       - name: Download mods
         run: go mod download
       - name: Lint
         uses: golangci/golangci-lint-action@v3
         with:
-          version: v1.45.2
-          args: --timeout 2m0s
+          version: v1.51.2
+          args: --timeout 5m0s
           skip-cache: true
         env:
-          LD_LIBRARY_PATH: "${{ env.LD_LIBRARY_PATH }}:/root/vips/${{ matrix.vips-version }}/lib"
-          PKG_CONFIG_PATH: "${{ env.PKG_CONFIG_PATH }}:/root/vips/${{ matrix.vips-version }}/lib/pkgconfig"
+          LD_LIBRARY_PATH: "/usr/local/lib:/root/vips/${{ matrix.vips-version }}/lib"
+          PKG_CONFIG_PATH: "/usr/local/lib/pkgconfig:/root/vips/${{ matrix.vips-version }}/lib/pkgconfig"

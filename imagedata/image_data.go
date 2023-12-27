@@ -14,6 +14,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
+	"github.com/imgproxy/imgproxy/v3/security"
 )
 
 var (
@@ -69,17 +70,17 @@ func Init() error {
 
 func loadWatermark() (err error) {
 	if len(config.WatermarkData) > 0 {
-		Watermark, err = FromBase64(config.WatermarkData, "watermark")
+		Watermark, err = FromBase64(config.WatermarkData, "watermark", security.DefaultOptions())
 		return
 	}
 
 	if len(config.WatermarkPath) > 0 {
-		Watermark, err = FromFile(config.WatermarkPath, "watermark")
+		Watermark, err = FromFile(config.WatermarkPath, "watermark", security.DefaultOptions())
 		return
 	}
 
 	if len(config.WatermarkURL) > 0 {
-		Watermark, err = Download(config.WatermarkURL, "watermark", nil, nil)
+		Watermark, err = Download(context.Background(), config.WatermarkURL, "watermark", DownloadOptions{Header: nil, CookieJar: nil}, security.DefaultOptions())
 		return
 	}
 
@@ -89,11 +90,11 @@ func loadWatermark() (err error) {
 func loadFallbackImage() (err error) {
 	switch {
 	case len(config.FallbackImageData) > 0:
-		FallbackImage, err = FromBase64(config.FallbackImageData, "fallback image")
+		FallbackImage, err = FromBase64(config.FallbackImageData, "fallback image", security.DefaultOptions())
 	case len(config.FallbackImagePath) > 0:
-		FallbackImage, err = FromFile(config.FallbackImagePath, "fallback image")
+		FallbackImage, err = FromFile(config.FallbackImagePath, "fallback image", security.DefaultOptions())
 	case len(config.FallbackImageURL) > 0:
-		FallbackImage, err = Download(config.FallbackImageURL, "fallback image", nil, nil)
+		FallbackImage, err = Download(context.Background(), config.FallbackImageURL, "fallback image", DownloadOptions{Header: nil, CookieJar: nil}, security.DefaultOptions())
 	default:
 		FallbackImage, err = nil, nil
 	}
@@ -108,11 +109,11 @@ func loadFallbackImage() (err error) {
 	return err
 }
 
-func FromBase64(encoded, desc string) (*ImageData, error) {
+func FromBase64(encoded, desc string, secopts security.Options) (*ImageData, error) {
 	dec := base64.NewDecoder(base64.StdEncoding, strings.NewReader(encoded))
 	size := 4 * (len(encoded)/3 + 1)
 
-	imgdata, err := readAndCheckImage(dec, size)
+	imgdata, err := readAndCheckImage(dec, size, secopts)
 	if err != nil {
 		return nil, fmt.Errorf("Can't decode %s: %s", desc, err)
 	}
@@ -120,7 +121,7 @@ func FromBase64(encoded, desc string) (*ImageData, error) {
 	return imgdata, nil
 }
 
-func FromFile(path, desc string) (*ImageData, error) {
+func FromFile(path, desc string, secopts security.Options) (*ImageData, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("Can't read %s: %s", desc, err)
@@ -131,7 +132,7 @@ func FromFile(path, desc string) (*ImageData, error) {
 		return nil, fmt.Errorf("Can't read %s: %s", desc, err)
 	}
 
-	imgdata, err := readAndCheckImage(f, int(fi.Size()))
+	imgdata, err := readAndCheckImage(f, int(fi.Size()), secopts)
 	if err != nil {
 		return nil, fmt.Errorf("Can't read %s: %s", desc, err)
 	}
@@ -139,8 +140,8 @@ func FromFile(path, desc string) (*ImageData, error) {
 	return imgdata, nil
 }
 
-func Download(imageURL, desc string, header http.Header, jar *cookiejar.Jar) (*ImageData, error) {
-	imgdata, err := download(imageURL, header, jar)
+func Download(ctx context.Context, imageURL, desc string, opts DownloadOptions, secopts security.Options) (*ImageData, error) {
+	imgdata, err := download(ctx, imageURL, opts, secopts)
 	if err != nil {
 		if nmErr, ok := err.(*ErrorNotModified); ok {
 			nmErr.Message = fmt.Sprintf("Can't download %s: %s", desc, nmErr.Message)

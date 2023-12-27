@@ -12,6 +12,8 @@ import (
 	"github.com/ncw/swift/v2"
 
 	"github.com/imgproxy/imgproxy/v3/config"
+	defaultTransport "github.com/imgproxy/imgproxy/v3/transport"
+	"github.com/imgproxy/imgproxy/v3/transport/notmodified"
 )
 
 type transport struct {
@@ -19,6 +21,11 @@ type transport struct {
 }
 
 func New() (http.RoundTripper, error) {
+	trans, err := defaultTransport.New(false)
+	if err != nil {
+		return nil, err
+	}
+
 	c := &swift.Connection{
 		UserName:       config.SwiftUsername,
 		ApiKey:         config.SwiftAPIKey,
@@ -28,11 +35,12 @@ func New() (http.RoundTripper, error) {
 		Tenant:         config.SwiftTenant, // v2 auth only
 		Timeout:        time.Duration(config.SwiftTimeoutSeconds) * time.Second,
 		ConnectTimeout: time.Duration(config.SwiftConnectTimeoutSeconds) * time.Second,
+		Transport:      trans,
 	}
 
 	ctx := context.Background()
 
-	err := c.Authenticate(ctx)
+	err = c.Authenticate(ctx)
 
 	if err != nil {
 		return nil, fmt.Errorf("swift authentication error: %s", err)
@@ -46,7 +54,12 @@ func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error)
 	container := req.URL.Host
 	objectName := strings.TrimPrefix(req.URL.Path, "/")
 
-	object, objectHeaders, err := t.con.ObjectOpen(req.Context(), container, objectName, false, make(swift.Headers))
+	reqHeaders := make(swift.Headers)
+	if r := req.Header.Get("Range"); len(r) > 0 {
+		reqHeaders["Range"] = r
+	}
+
+	object, objectHeaders, err := t.con.ObjectOpen(req.Context(), container, objectName, false, reqHeaders)
 
 	header := make(http.Header)
 
@@ -70,23 +83,18 @@ func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error)
 	if config.ETagEnabled {
 		if etag, ok := objectHeaders["Etag"]; ok {
 			header.Set("ETag", etag)
-
-			if len(etag) > 0 && etag == req.Header.Get("If-None-Match") {
-				object.Close()
-
-				return &http.Response{
-					StatusCode:    http.StatusNotModified,
-					Proto:         "HTTP/1.0",
-					ProtoMajor:    1,
-					ProtoMinor:    0,
-					Header:        header,
-					ContentLength: 0,
-					Body:          nil,
-					Close:         false,
-					Request:       req,
-				}, nil
-			}
 		}
+	}
+
+	if config.LastModifiedEnabled {
+		if lastModified, ok := objectHeaders["Last-Modified"]; ok {
+			header.Set("Last-Modified", lastModified)
+		}
+	}
+
+	if resp := notmodified.Response(req, header); resp != nil {
+		object.Close()
+		return resp, nil
 	}
 
 	for k, v := range objectHeaders {

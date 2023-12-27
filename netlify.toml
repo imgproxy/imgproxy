@@ -1,9 +1,0 @@
-[build]
-  base="/"
-  publish="docs/"
-  command="./build-docs-sitemap.sh"
-
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200

@@ -15,7 +15,7 @@ func New(n int) *Semaphore {
 	}
 }
 
-func (s *Semaphore) Aquire(ctx context.Context) (*Token, bool) {
+func (s *Semaphore) Acquire(ctx context.Context) (*Token, bool) {
 	select {
 	case s.sem <- struct{}{}:
 		return &Token{release: s.release}, true
@@ -24,7 +24,7 @@ func (s *Semaphore) Aquire(ctx context.Context) (*Token, bool) {
 	}
 }
 
-func (s *Semaphore) TryAquire() (*Token, bool) {
+func (s *Semaphore) TryAcquire() (*Token, bool) {
 	select {
 	case s.sem <- struct{}{}:
 		return &Token{release: s.release}, true

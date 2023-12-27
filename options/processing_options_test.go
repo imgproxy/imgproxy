@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"regexp"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -54,6 +55,21 @@ func (s *ProcessingOptionsTestSuite) TestParseBase64URLWithBase() {
 	require.Equal(s.T(), imagetype.PNG, po.Format)
 }
 
+func (s *ProcessingOptionsTestSuite) TestParseBase64URLWithReplacement() {
+	config.URLReplacements = []config.URLReplacement{
+		{Regexp: regexp.MustCompile("^test://([^/]*)/"), Replacement: "test2://images.dev/${1}/dolor/"},
+		{Regexp: regexp.MustCompile("^test2://"), Replacement: "http://"},
+	}
+
+	originURL := "test://lorem/ipsum.jpg?param=value"
+	path := fmt.Sprintf("/size:100:100/%s.png", base64.RawURLEncoding.EncodeToString([]byte(originURL)))
+	po, imageURL, err := ParsePath(path, make(http.Header))
+
+	require.Nil(s.T(), err)
+	require.Equal(s.T(), "http://images.dev/lorem/dolor/ipsum.jpg?param=value", imageURL)
+	require.Equal(s.T(), imagetype.PNG, po.Format)
+}
+
 func (s *ProcessingOptionsTestSuite) TestParsePlainURL() {
 	originURL := "http://images.dev/lorem/ipsum.jpg"
 	path := fmt.Sprintf("/size:100:100/plain/%s@png", originURL)
@@ -93,6 +109,21 @@ func (s *ProcessingOptionsTestSuite) TestParsePlainURLWithBase() {
 
 	require.Nil(s.T(), err)
 	require.Equal(s.T(), fmt.Sprintf("%s%s", config.BaseURL, originURL), imageURL)
+	require.Equal(s.T(), imagetype.PNG, po.Format)
+}
+
+func (s *ProcessingOptionsTestSuite) TestParsePlainURLWithReplacement() {
+	config.URLReplacements = []config.URLReplacement{
+		{Regexp: regexp.MustCompile("^test://([^/]*)/"), Replacement: "test2://images.dev/${1}/dolor/"},
+		{Regexp: regexp.MustCompile("^test2://"), Replacement: "http://"},
+	}
+
+	originURL := "test://lorem/ipsum.jpg"
+	path := fmt.Sprintf("/size:100:100/plain/%s@png", originURL)
+	po, imageURL, err := ParsePath(path, make(http.Header))
+
+	require.Nil(s.T(), err)
+	require.Equal(s.T(), "http://images.dev/lorem/dolor/ipsum.jpg", imageURL)
 	require.Equal(s.T(), imagetype.PNG, po.Format)
 }
 
@@ -432,40 +463,6 @@ func (s *ProcessingOptionsTestSuite) TestParsePathWidthHeaderRedefine() {
 
 	path := "/width:150/plain/http://images.dev/lorem/ipsum.jpg@png"
 	headers := http.Header{"Width": []string{"100"}}
-	po, _, err := ParsePath(path, headers)
-
-	require.Nil(s.T(), err)
-
-	require.Equal(s.T(), 150, po.Width)
-}
-
-func (s *ProcessingOptionsTestSuite) TestParsePathViewportWidthHeader() {
-	config.EnableClientHints = true
-
-	path := "/plain/http://images.dev/lorem/ipsum.jpg@png"
-	headers := http.Header{"Viewport-Width": []string{"100"}}
-	po, _, err := ParsePath(path, headers)
-
-	require.Nil(s.T(), err)
-
-	require.Equal(s.T(), 100, po.Width)
-}
-
-func (s *ProcessingOptionsTestSuite) TestParsePathViewportWidthHeaderDisabled() {
-	path := "/plain/http://images.dev/lorem/ipsum.jpg@png"
-	headers := http.Header{"Viewport-Width": []string{"100"}}
-	po, _, err := ParsePath(path, headers)
-
-	require.Nil(s.T(), err)
-
-	require.Equal(s.T(), 0, po.Width)
-}
-
-func (s *ProcessingOptionsTestSuite) TestParsePathViewportWidthHeaderRedefine() {
-	config.EnableClientHints = true
-
-	path := "/width:150/plain/http://images.dev/lorem/ipsum.jpg@png"
-	headers := http.Header{"Viewport-Width": []string{"100"}}
 	po, _, err := ParsePath(path, headers)
 
 	require.Nil(s.T(), err)

@@ -1,6 +1,8 @@
 package imagedata
 
 import (
+	"bytes"
+	"context"
 	"io"
 
 	"github.com/imgproxy/imgproxy/v3/bufpool"
@@ -11,45 +13,23 @@ import (
 	"github.com/imgproxy/imgproxy/v3/security"
 )
 
-var (
-	ErrSourceFileTooBig            = ierrors.New(422, "Source image file is too big", "Invalid source image")
-	ErrSourceImageTypeNotSupported = ierrors.New(422, "Source image type not supported", "Invalid source image")
-)
+var ErrSourceImageTypeNotSupported = ierrors.New(422, "Source image type not supported", "Invalid source image")
 
 var downloadBufPool *bufpool.Pool
 
 func initRead() {
-	downloadBufPool = bufpool.New("download", config.Concurrency, config.DownloadBufferSize)
+	downloadBufPool = bufpool.New("download", config.Workers, config.DownloadBufferSize)
 }
 
-type hardLimitReader struct {
-	r    io.Reader
-	left int
-}
-
-func (lr *hardLimitReader) Read(p []byte) (n int, err error) {
-	if lr.left <= 0 {
-		return 0, ErrSourceFileTooBig
-	}
-	if len(p) > lr.left {
-		p = p[0:lr.left]
-	}
-	n, err = lr.r.Read(p)
-	lr.left -= n
-	return
-}
-
-func readAndCheckImage(r io.Reader, contentLength int) (*ImageData, error) {
-	if config.MaxSrcFileSize > 0 && contentLength > config.MaxSrcFileSize {
-		return nil, ErrSourceFileTooBig
+func readAndCheckImage(r io.Reader, contentLength int, secopts security.Options) (*ImageData, error) {
+	if err := security.CheckFileSize(contentLength, secopts); err != nil {
+		return nil, err
 	}
 
 	buf := downloadBufPool.Get(contentLength, false)
 	cancel := func() { downloadBufPool.Put(buf) }
 
-	if config.MaxSrcFileSize > 0 {
-		r = &hardLimitReader{r: r, left: config.MaxSrcFileSize}
-	}
+	r = security.LimitFileSize(r, secopts)
 
 	br := bufreader.New(r, buf)
 
@@ -62,22 +42,23 @@ func readAndCheckImage(r io.Reader, contentLength int) (*ImageData, error) {
 			return nil, ErrSourceImageTypeNotSupported
 		}
 
-		return nil, checkTimeoutErr(err)
+		return nil, wrapError(err)
 	}
 
-	if err = security.CheckDimensions(meta.Width(), meta.Height()); err != nil {
+	if err = security.CheckDimensions(meta.Width(), meta.Height(), 1, secopts); err != nil {
 		buf.Reset()
 		cancel()
-		return nil, err
+
+		return nil, wrapError(err)
 	}
 
-	if contentLength > buf.Cap() {
-		buf.Grow(contentLength - buf.Len())
-	}
+	downloadBufPool.GrowBuffer(buf, contentLength)
 
 	if err = br.Flush(); err != nil {
+		buf.Reset()
 		cancel()
-		return nil, checkTimeoutErr(err)
+
+		return nil, wrapError(err)
 	}
 
 	return &ImageData{
@@ -85,4 +66,11 @@ func readAndCheckImage(r io.Reader, contentLength int) (*ImageData, error) {
 		Type:   meta.Format(),
 		cancel: cancel,
 	}, nil
+}
+
+func BorrowBuffer() (*bytes.Buffer, context.CancelFunc) {
+	buf := downloadBufPool.Get(0, false)
+	cancel := func() { downloadBufPool.Put(buf) }
+
+	return buf, cancel
 }

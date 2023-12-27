@@ -84,15 +84,16 @@ func DecodeMeta(r io.Reader) (Meta, error) {
 	formats, _ := atomicFormats.Load().([]format)
 
 	for _, f := range formats {
-		b, err := rr.Peek(len(f.magic))
-		if err == nil && matchMagic(f.magic, b) {
-			return f.decodeMeta(rr)
+		if b, err := rr.Peek(len(f.magic)); err == nil || err == io.EOF {
+			if matchMagic(f.magic, b) {
+				return f.decodeMeta(rr)
+			}
+		} else {
+			return nil, err
 		}
 	}
 
-	if ok, err := IsSVG(rr); err != nil {
-		return nil, err
-	} else if ok {
+	if IsSVG(rr) {
 		return &meta{format: imagetype.SVG, width: 1, height: 1}, nil
 	}
 

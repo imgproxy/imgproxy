@@ -13,6 +13,8 @@ void swap_and_clear(VipsImage **in, VipsImage *out);
 
 int gif_resolution_limit();
 
+int vips_health();
+
 int vips_jpegload_go(void *buf, size_t len, int shrink, VipsImage **out);
 int vips_pngload_go(void *buf, size_t len, VipsImage **out);
 int vips_webpload_go(void *buf, size_t len, double scale, int pages, VipsImage **out);
@@ -23,12 +25,16 @@ int vips_tiffload_go(void *buf, size_t len, VipsImage **out);
 
 int vips_black_go(VipsImage **out, int width, int height, int bands);
 
+int vips_fix_float_tiff(VipsImage *in, VipsImage **out);
+
 int vips_get_orientation(VipsImage *image);
 void vips_strip_meta(VipsImage *image);
 
 VipsBandFormat vips_band_format(VipsImage *in);
 
-gboolean vips_is_animated(VipsImage * in);
+void vips_remove_palette_bit_depth(VipsImage *image);
+
+gboolean vips_is_animated(VipsImage *in);
 
 int vips_image_get_array_int_go(VipsImage *image, const char *name, int **out, int *n);
 void vips_image_set_array_int_go(VipsImage *image, const char *name, const int *array, int n);
@@ -56,29 +62,32 @@ int vips_flip_horizontal_go(VipsImage *in, VipsImage **out);
 
 int vips_extract_area_go(VipsImage *in, VipsImage **out, int left, int top, int width, int height);
 int vips_smartcrop_go(VipsImage *in, VipsImage **out, int width, int height);
-int vips_trim(VipsImage *in, VipsImage **out, double threshold,
-              gboolean smart, double r, double g, double b,
-              gboolean equal_hor, gboolean equal_ver);
+int vips_trim(VipsImage *in, VipsImage **out, double threshold, gboolean smart, double r, double g,
+    double b, gboolean equal_hor, gboolean equal_ver);
 
-int vips_apply_filters(VipsImage *in, VipsImage **out, double blur_sigma, double sharp_sigma, int pixelate_pixels);
+int vips_apply_filters(VipsImage *in, VipsImage **out, double blur_sigma, double sharp_sigma,
+    int pixelate_pixels);
 
 int vips_flatten_go(VipsImage *in, VipsImage **out, double r, double g, double b);
 
 int vips_replicate_go(VipsImage *in, VipsImage **out, int across, int down);
 int vips_embed_go(VipsImage *in, VipsImage **out, int x, int y, int width, int height);
 
-int vips_ensure_alpha(VipsImage *in, VipsImage **out);
+int vips_apply_watermark(VipsImage *in, VipsImage *watermark, VipsImage **out, int left, int top,
+    double opacity);
 
-int vips_apply_watermark(VipsImage *in, VipsImage *watermark, VipsImage **out, double opacity);
+int vips_linecache_seq(VipsImage *in, VipsImage **out, int tile_height);
 
 int vips_arrayjoin_go(VipsImage **in, VipsImage **out, int n);
 
 int vips_strip(VipsImage *in, VipsImage **out, int keep_exif_copyright);
 
 int vips_jpegsave_go(VipsImage *in, void **buf, size_t *len, int quality, int interlace);
-int vips_pngsave_go(VipsImage *in, void **buf, size_t *len, int interlace, int quantize, int colors);
+int vips_pngsave_go(VipsImage *in, void **buf, size_t *len, int interlace, int quantize,
+    int colors);
 int vips_webpsave_go(VipsImage *in, void **buf, size_t *len, int quality);
 int vips_gifsave_go(VipsImage *in, void **buf, size_t *len);
+int vips_heifsave_go(VipsImage *in, void **buf, size_t *len, int quality);
 int vips_avifsave_go(VipsImage *in, void **buf, size_t *len, int quality, int speed);
 int vips_tiffsave_go(VipsImage *in, void **buf, size_t *len, int quality);
 

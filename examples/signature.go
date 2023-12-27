@@ -1,4 +1,4 @@
-package main
+package examples
 
 import (
 	"crypto/hmac"
@@ -9,32 +9,24 @@ import (
 	"log"
 )
 
-func main() {
-	key := "943b421c9eb07c830af81030552c86009268de4e532ba2ee2eab8247c6da0881"
-	salt := "520f986b998545b4785e0defbc4f3c1203f22de2374a3d53cb7a7fe9fea309c5"
+const (
+	key  = "943b421c9eb07c830af81030552c86009268de4e532ba2ee2eab8247c6da0881"
+	salt = "520f986b998545b4785e0defbc4f3c1203f22de2374a3d53cb7a7fe9fea309c5"
+)
 
+func SignURL() {
 	var keyBin, saltBin []byte
 	var err error
 
 	if keyBin, err = hex.DecodeString(key); err != nil {
-		log.Fatal("Key expected to be hex-encoded string")
+		log.Fatal(err)
 	}
 
 	if saltBin, err = hex.DecodeString(salt); err != nil {
-		log.Fatal("Salt expected to be hex-encoded string")
+		log.Fatal(err)
 	}
 
-	resize := "fill"
-	width := 300
-	height := 300
-	gravity := "no"
-	enlarge := 1
-	extension := "png"
-
-	url := "http://img.example.com/pretty/image.jpg"
-	encodedURL := base64.RawURLEncoding.EncodeToString([]byte(url))
-
-	path := fmt.Sprintf("/rs:%s:%d:%d:%d/g:%s/%s.%s", resize, width, height, enlarge, gravity, encodedURL, extension)
+	path := "/rs:fit:300:300/plain/http://img.example.com/pretty/image.jpg"
 
 	mac := hmac.New(sha256.New, keyBin)
 	mac.Write(saltBin)

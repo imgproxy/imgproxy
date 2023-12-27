@@ -1,3 +1,8 @@
-<svg width="200" height="100">
-  <rect width="190" height="90" style="fill:rgb(0,0,0);stroke-width:5;stroke:rgb(255,255,255)" />
+<svg width="200" height="100" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" onload="alert(3)">
+  <rect onclick="alert(4)" width="190" height="90" style="fill:rgb(0,0,0);stroke-width:5;stroke:rgb(255,255,255)" />
+  <script>
+    <![CDATA[
+    alert(2);
+    ]]>
+  </script><use xlink:href="data:application/xml;base64,PHN2ZyBpZD0ndGVzdCcgeG1sbnM9J2h0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnJyB4bWxuczp4bGluaz0naHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluaycgd2lkdGg9JzEwMCcgaGVpZ2h0PScxMDAnPgo8aW1hZ2UgaHJlZj0iMSIgb25lcnJvcj0iYWxlcnQoMSkiIC8+Cjwvc3ZnPg==#test"/>
 </svg>

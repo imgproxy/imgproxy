@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"math"
@@ -15,16 +16,19 @@ import (
 	"github.com/imgproxy/imgproxy/v3/version"
 )
 
+type URLReplacement = configurators.URLReplacement
+
 var (
-	Network           string
-	Bind              string
-	ReadTimeout       int
-	WriteTimeout      int
-	KeepAliveTimeout  int
-	DownloadTimeout   int
-	Concurrency       int
-	RequestsQueueSize int
-	MaxClients        int
+	Network                string
+	Bind                   string
+	ReadTimeout            int
+	WriteTimeout           int
+	KeepAliveTimeout       int
+	ClientKeepAliveTimeout int
+	DownloadTimeout        int
+	Workers                int
+	RequestsQueueSize      int
+	MaxClients             int
 
 	TTL                     int
 	CacheControlPassthrough bool
@@ -34,11 +38,13 @@ var (
 
 	PathPrefix string
 
-	MaxSrcResolution   int
-	MaxSrcFileSize     int
-	MaxAnimationFrames int
-	MaxSvgCheckBytes   int
-	MaxRedirects       int
+	MaxSrcResolution            int
+	MaxSrcFileSize              int
+	MaxAnimationFrames          int
+	MaxAnimationFrameResolution int
+	MaxSvgCheckBytes            int
+	MaxRedirects                int
+	AllowSecurityOptions        bool
 
 	JpegProgressive       bool
 	PngInterlaced         bool
@@ -53,6 +59,7 @@ var (
 	AutoRotate            bool
 	EnforceThumbnail      bool
 	ReturnAttachment      bool
+	SvgFixUnsupported     bool
 
 	EnableWebpDetection bool
 	EnforceWebp         bool
@@ -80,7 +87,10 @@ var (
 	IgnoreSslVerification bool
 	DevelopmentErrorsMode bool
 
-	AllowedSources []*regexp.Regexp
+	AllowedSources                []*regexp.Regexp
+	AllowLoopbackSourceAddresses  bool
+	AllowLinkLocalSourceAddresses bool
+	AllowPrivateSourceAddresses   bool
 
 	SanitizeSvg bool
 
@@ -89,9 +99,12 @@ var (
 
 	LocalFileSystemRoot string
 
-	S3Enabled  bool
-	S3Region   string
-	S3Endpoint string
+	S3Enabled                 bool
+	S3Region                  string
+	S3Endpoint                string
+	S3AssumeRoleArn           string
+	S3MultiRegion             bool
+	S3DecryptionClientEnabled bool
 
 	GCSEnabled  bool
 	GCSKey      string
@@ -115,7 +128,10 @@ var (
 	ETagEnabled bool
 	ETagBuster  string
 
-	BaseURL string
+	LastModifiedEnabled bool
+
+	BaseURL         string
+	URLReplacements []URLReplacement
 
 	Presets     []string
 	OnlyPresets bool
@@ -141,6 +157,22 @@ var (
 
 	PrometheusBind      string
 	PrometheusNamespace string
+
+	OpenTelemetryEndpoint          string
+	OpenTelemetryProtocol          string
+	OpenTelemetryServiceName       string
+	OpenTelemetryEnableMetrics     bool
+	OpenTelemetryServerCert        string
+	OpenTelemetryClientCert        string
+	OpenTelemetryClientKey         string
+	OpenTelemetryGRPCInsecure      bool
+	OpenTelemetryPropagators       []string
+	OpenTelemetryTraceIDGenerator  string
+	OpenTelemetryConnectionTimeout int
+
+	CloudWatchServiceName string
+	CloudWatchNamespace   string
+	CloudWatchRegion      string
 
 	BugsnagKey   string
 	BugsnagStage string
@@ -187,8 +219,9 @@ func Reset() {
 	ReadTimeout = 10
 	WriteTimeout = 10
 	KeepAliveTimeout = 10
+	ClientKeepAliveTimeout = 90
 	DownloadTimeout = 5
-	Concurrency = runtime.NumCPU() * 2
+	Workers = runtime.GOMAXPROCS(0) * 2
 	RequestsQueueSize = 0
 	MaxClients = 2048
 
@@ -203,22 +236,25 @@ func Reset() {
 	MaxSrcResolution = 16800000
 	MaxSrcFileSize = 0
 	MaxAnimationFrames = 1
+	MaxAnimationFrameResolution = 0
 	MaxSvgCheckBytes = 32 * 1024
 	MaxRedirects = 10
+	AllowSecurityOptions = false
 
 	JpegProgressive = false
 	PngInterlaced = false
 	PngQuantize = false
 	PngQuantizationColors = 256
-	AvifSpeed = 5
+	AvifSpeed = 9
 	Quality = 80
-	FormatQuality = map[imagetype.Type]int{imagetype.AVIF: 50}
+	FormatQuality = map[imagetype.Type]int{imagetype.AVIF: 65}
 	StripMetadata = true
 	KeepCopyright = true
 	StripColorProfile = true
 	AutoRotate = true
 	EnforceThumbnail = false
 	ReturnAttachment = false
+	SvgFixUnsupported = false
 
 	EnableWebpDetection = false
 	EnforceWebp = false
@@ -230,9 +266,6 @@ func Reset() {
 		imagetype.JPEG,
 		imagetype.PNG,
 		imagetype.GIF,
-		imagetype.WEBP,
-		imagetype.AVIF,
-		imagetype.ICO,
 	}
 
 	SkipProcessingFormats = make([]imagetype.Type, 0)
@@ -254,6 +287,9 @@ func Reset() {
 	DevelopmentErrorsMode = false
 
 	AllowedSources = make([]*regexp.Regexp, 0)
+	AllowLoopbackSourceAddresses = false
+	AllowLinkLocalSourceAddresses = false
+	AllowPrivateSourceAddresses = true
 
 	SanitizeSvg = true
 
@@ -264,6 +300,9 @@ func Reset() {
 	S3Enabled = false
 	S3Region = ""
 	S3Endpoint = ""
+	S3AssumeRoleArn = ""
+	S3MultiRegion = false
+	S3DecryptionClientEnabled = false
 	GCSEnabled = false
 	GCSKey = ""
 	ABSEnabled = false
@@ -283,7 +322,10 @@ func Reset() {
 	ETagEnabled = false
 	ETagBuster = ""
 
+	LastModifiedEnabled = false
+
 	BaseURL = ""
+	URLReplacements = make([]URLReplacement, 0)
 
 	Presets = make([]string, 0)
 	OnlyPresets = false
@@ -308,6 +350,22 @@ func Reset() {
 
 	PrometheusBind = ""
 	PrometheusNamespace = ""
+
+	OpenTelemetryEndpoint = ""
+	OpenTelemetryProtocol = "grpc"
+	OpenTelemetryServiceName = "imgproxy"
+	OpenTelemetryEnableMetrics = false
+	OpenTelemetryServerCert = ""
+	OpenTelemetryClientCert = ""
+	OpenTelemetryClientKey = ""
+	OpenTelemetryGRPCInsecure = true
+	OpenTelemetryPropagators = make([]string, 0)
+	OpenTelemetryTraceIDGenerator = "xray"
+	OpenTelemetryConnectionTimeout = 5
+
+	CloudWatchServiceName = ""
+	CloudWatchNamespace = "imgproxy"
+	CloudWatchRegion = ""
 
 	BugsnagKey = ""
 	BugsnagStage = "production"
@@ -344,8 +402,10 @@ func Configure() error {
 	configurators.Int(&ReadTimeout, "IMGPROXY_READ_TIMEOUT")
 	configurators.Int(&WriteTimeout, "IMGPROXY_WRITE_TIMEOUT")
 	configurators.Int(&KeepAliveTimeout, "IMGPROXY_KEEP_ALIVE_TIMEOUT")
+	configurators.Int(&ClientKeepAliveTimeout, "IMGPROXY_CLIENT_KEEP_ALIVE_TIMEOUT")
 	configurators.Int(&DownloadTimeout, "IMGPROXY_DOWNLOAD_TIMEOUT")
-	configurators.Int(&Concurrency, "IMGPROXY_CONCURRENCY")
+	configurators.Int(&Workers, "IMGPROXY_CONCURRENCY")
+	configurators.Int(&Workers, "IMGPROXY_WORKERS")
 	configurators.Int(&RequestsQueueSize, "IMGPROXY_REQUESTS_QUEUE_SIZE")
 	configurators.Int(&MaxClients, "IMGPROXY_MAX_CLIENTS")
 
@@ -355,19 +415,25 @@ func Configure() error {
 
 	configurators.Bool(&SoReuseport, "IMGPROXY_SO_REUSEPORT")
 
-	configurators.String(&PathPrefix, "IMGPROXY_PATH_PREFIX")
+	configurators.URLPath(&PathPrefix, "IMGPROXY_PATH_PREFIX")
 
 	configurators.MegaInt(&MaxSrcResolution, "IMGPROXY_MAX_SRC_RESOLUTION")
 	configurators.Int(&MaxSrcFileSize, "IMGPROXY_MAX_SRC_FILE_SIZE")
 	configurators.Int(&MaxSvgCheckBytes, "IMGPROXY_MAX_SVG_CHECK_BYTES")
 
 	configurators.Int(&MaxAnimationFrames, "IMGPROXY_MAX_ANIMATION_FRAMES")
+	configurators.MegaInt(&MaxAnimationFrameResolution, "IMGPROXY_MAX_ANIMATION_FRAME_RESOLUTION")
 
 	configurators.Int(&MaxRedirects, "IMGPROXY_MAX_REDIRECTS")
 
 	configurators.Patterns(&AllowedSources, "IMGPROXY_ALLOWED_SOURCES")
+	configurators.Bool(&AllowLoopbackSourceAddresses, "IMGPROXY_ALLOW_LOOPBACK_SOURCE_ADDRESSES")
+	configurators.Bool(&AllowLinkLocalSourceAddresses, "IMGPROXY_ALLOW_LINK_LOCAL_SOURCE_ADDRESSES")
+	configurators.Bool(&AllowPrivateSourceAddresses, "IMGPROXY_ALLOW_PRIVATE_SOURCE_ADDRESSES")
 
 	configurators.Bool(&SanitizeSvg, "IMGPROXY_SANITIZE_SVG")
+
+	configurators.Bool(&AllowSecurityOptions, "IMGPROXY_ALLOW_SECURITY_OPTIONS")
 
 	configurators.Bool(&JpegProgressive, "IMGPROXY_JPEG_PROGRESSIVE")
 	configurators.Bool(&PngInterlaced, "IMGPROXY_PNG_INTERLACED")
@@ -384,6 +450,7 @@ func Configure() error {
 	configurators.Bool(&AutoRotate, "IMGPROXY_AUTO_ROTATE")
 	configurators.Bool(&EnforceThumbnail, "IMGPROXY_ENFORCE_THUMBNAIL")
 	configurators.Bool(&ReturnAttachment, "IMGPROXY_RETURN_ATTACHMENT")
+	configurators.Bool(&SvgFixUnsupported, "IMGPROXY_SVG_FIX_UNSUPPORTED")
 
 	configurators.Bool(&EnableWebpDetection, "IMGPROXY_ENABLE_WEBP_DETECTION")
 	configurators.Bool(&EnforceWebp, "IMGPROXY_ENFORCE_WEBP")
@@ -391,7 +458,7 @@ func Configure() error {
 	configurators.Bool(&EnforceAvif, "IMGPROXY_ENFORCE_AVIF")
 	configurators.Bool(&EnableClientHints, "IMGPROXY_ENABLE_CLIENT_HINTS")
 
-	configurators.String(&HealthCheckPath, "IMGPROXY_HEALTH_CHECK_PATH")
+	configurators.URLPath(&HealthCheckPath, "IMGPROXY_HEALTH_CHECK_PATH")
 
 	if err := configurators.ImageTypes(&PreferredFormats, "IMGPROXY_PREFERRED_FORMATS"); err != nil {
 		return err
@@ -404,18 +471,18 @@ func Configure() error {
 	configurators.Bool(&UseLinearColorspace, "IMGPROXY_USE_LINEAR_COLORSPACE")
 	configurators.Bool(&DisableShrinkOnLoad, "IMGPROXY_DISABLE_SHRINK_ON_LOAD")
 
-	if err := configurators.Hex(&Keys, "IMGPROXY_KEY"); err != nil {
+	if err := configurators.HexSlice(&Keys, "IMGPROXY_KEY"); err != nil {
 		return err
 	}
-	if err := configurators.Hex(&Salts, "IMGPROXY_SALT"); err != nil {
+	if err := configurators.HexSlice(&Salts, "IMGPROXY_SALT"); err != nil {
 		return err
 	}
 	configurators.Int(&SignatureSize, "IMGPROXY_SIGNATURE_SIZE")
 
-	if err := configurators.HexFile(&Keys, keyPath); err != nil {
+	if err := configurators.HexSliceFile(&Keys, keyPath); err != nil {
 		return err
 	}
-	if err := configurators.HexFile(&Salts, saltPath); err != nil {
+	if err := configurators.HexSliceFile(&Salts, saltPath); err != nil {
 		return err
 	}
 
@@ -436,6 +503,9 @@ func Configure() error {
 	configurators.Bool(&S3Enabled, "IMGPROXY_USE_S3")
 	configurators.String(&S3Region, "IMGPROXY_S3_REGION")
 	configurators.String(&S3Endpoint, "IMGPROXY_S3_ENDPOINT")
+	configurators.String(&S3AssumeRoleArn, "IMGPROXY_S3_ASSUME_ROLE_ARN")
+	configurators.Bool(&S3MultiRegion, "IMGPROXY_S3_MULTI_REGION")
+	configurators.Bool(&S3DecryptionClientEnabled, "IMGPROXY_S3_USE_DECRYPTION_CLIENT")
 
 	configurators.Bool(&GCSEnabled, "IMGPROXY_USE_GCS")
 	configurators.String(&GCSKey, "IMGPROXY_GCS_KEY")
@@ -458,7 +528,12 @@ func Configure() error {
 	configurators.Bool(&ETagEnabled, "IMGPROXY_USE_ETAG")
 	configurators.String(&ETagBuster, "IMGPROXY_ETAG_BUSTER")
 
+	configurators.Bool(&LastModifiedEnabled, "IMGPROXY_USE_LAST_MODIFIED")
+
 	configurators.String(&BaseURL, "IMGPROXY_BASE_URL")
+	if err := configurators.Replacements(&URLReplacements, "IMGPROXY_URL_REPLACEMENTS"); err != nil {
+		return err
+	}
 
 	configurators.StringSlice(&Presets, "IMGPROXY_PRESETS")
 	if err := configurators.StringSliceFile(&Presets, presetsPath); err != nil {
@@ -486,6 +561,22 @@ func Configure() error {
 
 	configurators.String(&PrometheusBind, "IMGPROXY_PROMETHEUS_BIND")
 	configurators.String(&PrometheusNamespace, "IMGPROXY_PROMETHEUS_NAMESPACE")
+
+	configurators.String(&OpenTelemetryEndpoint, "IMGPROXY_OPEN_TELEMETRY_ENDPOINT")
+	configurators.String(&OpenTelemetryProtocol, "IMGPROXY_OPEN_TELEMETRY_PROTOCOL")
+	configurators.String(&OpenTelemetryServiceName, "IMGPROXY_OPEN_TELEMETRY_SERVICE_NAME")
+	configurators.Bool(&OpenTelemetryEnableMetrics, "IMGPROXY_OPEN_TELEMETRY_ENABLE_METRICS")
+	configurators.String(&OpenTelemetryServerCert, "IMGPROXY_OPEN_TELEMETRY_SERVER_CERT")
+	configurators.String(&OpenTelemetryClientCert, "IMGPROXY_OPEN_TELEMETRY_CLIENT_CERT")
+	configurators.String(&OpenTelemetryClientKey, "IMGPROXY_OPEN_TELEMETRY_CLIENT_KEY")
+	configurators.Bool(&OpenTelemetryGRPCInsecure, "IMGPROXY_OPEN_TELEMETRY_GRPC_INSECURE")
+	configurators.StringSlice(&OpenTelemetryPropagators, "IMGPROXY_OPEN_TELEMETRY_PROPAGATORS")
+	configurators.String(&OpenTelemetryTraceIDGenerator, "IMGPROXY_OPEN_TELEMETRY_TRACE_ID_GENERATOR")
+	configurators.Int(&OpenTelemetryConnectionTimeout, "IMGPROXY_OPEN_TELEMETRY_CONNECTION_TIMEOUT")
+
+	configurators.String(&CloudWatchServiceName, "IMGPROXY_CLOUD_WATCH_SERVICE_NAME")
+	configurators.String(&CloudWatchNamespace, "IMGPROXY_CLOUD_WATCH_NAMESPACE")
+	configurators.String(&CloudWatchRegion, "IMGPROXY_CLOUD_WATCH_REGION")
 
 	configurators.String(&BugsnagKey, "IMGPROXY_BUGSNAG_KEY")
 	configurators.String(&BugsnagStage, "IMGPROXY_BUGSNAG_STAGE")
@@ -519,7 +610,7 @@ func Configure() error {
 	}
 
 	if len(Bind) == 0 {
-		return fmt.Errorf("Bind address is not defined")
+		return errors.New("Bind address is not defined")
 	}
 
 	if ReadTimeout <= 0 {
@@ -532,13 +623,16 @@ func Configure() error {
 	if KeepAliveTimeout < 0 {
 		return fmt.Errorf("KeepAlive timeout should be greater than or equal to 0, now - %d\n", KeepAliveTimeout)
 	}
+	if ClientKeepAliveTimeout < 0 {
+		return fmt.Errorf("Client KeepAlive timeout should be greater than or equal to 0, now - %d\n", ClientKeepAliveTimeout)
+	}
 
 	if DownloadTimeout <= 0 {
 		return fmt.Errorf("Download timeout should be greater than 0, now - %d\n", DownloadTimeout)
 	}
 
-	if Concurrency <= 0 {
-		return fmt.Errorf("Concurrency should be greater than 0, now - %d\n", Concurrency)
+	if Workers <= 0 {
+		return fmt.Errorf("Workers number should be greater than 0, now - %d\n", Workers)
 	}
 
 	if RequestsQueueSize < 0 {
@@ -546,7 +640,7 @@ func Configure() error {
 	}
 
 	if MaxClients < 0 {
-		return fmt.Errorf("Concurrency should be greater than or equal 0, now - %d\n", MaxClients)
+		return fmt.Errorf("Max clients number should be greater than or equal 0, now - %d\n", MaxClients)
 	}
 
 	if TTL <= 0 {
@@ -573,8 +667,8 @@ func Configure() error {
 
 	if AvifSpeed < 0 {
 		return fmt.Errorf("Avif speed should be greater than 0, now - %d\n", AvifSpeed)
-	} else if AvifSpeed > 8 {
-		return fmt.Errorf("Avif speed can't be greater than 8, now - %d\n", AvifSpeed)
+	} else if AvifSpeed > 9 {
+		return fmt.Errorf("Avif speed can't be greater than 9, now - %d\n", AvifSpeed)
 	}
 
 	if Quality <= 0 {
@@ -584,7 +678,7 @@ func Configure() error {
 	}
 
 	if len(PreferredFormats) == 0 {
-		return fmt.Errorf("At least one preferred format should be specified")
+		return errors.New("At least one preferred format should be specified")
 	}
 
 	if IgnoreSslVerification {
@@ -599,7 +693,7 @@ func Configure() error {
 		}
 
 		if !stat.IsDir() {
-			return fmt.Errorf("Cannot use local directory: not a directory")
+			return errors.New("Cannot use local directory: not a directory")
 		}
 
 		if LocalFileSystemRoot == "/" {
@@ -613,31 +707,35 @@ func Configure() error {
 	}
 
 	if WatermarkOpacity <= 0 {
-		return fmt.Errorf("Watermark opacity should be greater than 0")
+		return errors.New("Watermark opacity should be greater than 0")
 	} else if WatermarkOpacity > 1 {
-		return fmt.Errorf("Watermark opacity should be less than or equal to 1")
+		return errors.New("Watermark opacity should be less than or equal to 1")
 	}
 
 	if FallbackImageHTTPCode < 100 || FallbackImageHTTPCode > 599 {
-		return fmt.Errorf("Fallback image HTTP code should be between 100 and 599")
+		return errors.New("Fallback image HTTP code should be between 100 and 599")
 	}
 
 	if len(PrometheusBind) > 0 && PrometheusBind == Bind {
-		return fmt.Errorf("Can't use the same binding for the main server and Prometheus")
+		return errors.New("Can't use the same binding for the main server and Prometheus")
+	}
+
+	if OpenTelemetryConnectionTimeout < 1 {
+		return errors.New("OpenTelemetry connection timeout should be greater than zero")
 	}
 
 	if FreeMemoryInterval <= 0 {
-		return fmt.Errorf("Free memory interval should be greater than zero")
+		return errors.New("Free memory interval should be greater than zero")
 	}
 
 	if DownloadBufferSize < 0 {
-		return fmt.Errorf("Download buffer size should be greater than or equal to 0")
+		return errors.New("Download buffer size should be greater than or equal to 0")
 	} else if DownloadBufferSize > math.MaxInt32 {
 		return fmt.Errorf("Download buffer size can't be greater than %d", math.MaxInt32)
 	}
 
 	if BufferPoolCalibrationThreshold < 64 {
-		return fmt.Errorf("Buffer pool calibration threshold should be greater than or equal to 64")
+		return errors.New("Buffer pool calibration threshold should be greater than or equal to 64")
 	}
 
 	return nil
