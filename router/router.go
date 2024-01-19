@@ -8,6 +8,8 @@ import (
 
 	nanoid "github.com/matoous/go-nanoid/v2"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/imgproxy/imgproxy/v3/config"
 )
 
 const (
@@ -28,8 +30,12 @@ type route struct {
 }
 
 type Router struct {
-	prefix string
-	Routes []*route
+	prefix       string
+	healthRoutes []string
+	faviconRoute string
+
+	Routes        []*route
+	HealthHandler RouteHandler
 }
 
 func (r *route) isMatch(req *http.Request) bool {
@@ -45,9 +51,16 @@ func (r *route) isMatch(req *http.Request) bool {
 }
 
 func New(prefix string) *Router {
+	healthRoutes := []string{prefix + "/health"}
+	if len(config.HealthCheckPath) > 0 {
+		healthRoutes = append(healthRoutes, prefix+config.HealthCheckPath)
+	}
+
 	return &Router{
-		prefix: prefix,
-		Routes: make([]*route, 0),
+		prefix:       prefix,
+		healthRoutes: healthRoutes,
+		faviconRoute: prefix + "/favicon.ico",
+		Routes:       make([]*route, 0),
 	}
 }
 
@@ -82,6 +95,23 @@ func (r *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	rw.Header().Set("Server", "imgproxy")
 	rw.Header().Set(xRequestIDHeader, reqID)
+
+	if req.Method == http.MethodGet {
+		if r.HealthHandler != nil {
+			for _, healthRoute := range r.healthRoutes {
+				if req.URL.Path == healthRoute {
+					r.HealthHandler(reqID, rw, req)
+					return
+				}
+			}
+		}
+
+		if req.URL.Path == r.faviconRoute {
+			// TODO: Add a real favicon maybe?
+			rw.WriteHeader(200)
+			return
+		}
+	}
 
 	if ip := req.Header.Get("CF-Connecting-IP"); len(ip) != 0 {
 		replaceRemoteAddr(req, ip)

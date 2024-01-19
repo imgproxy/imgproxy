@@ -30,14 +30,11 @@ func buildRouter() *router.Router {
 	r := router.New(config.PathPrefix)
 
 	r.GET("/", handleLanding, true)
-	r.GET("/health", handleHealth, true)
-	if len(config.HealthCheckPath) > 0 {
-		r.GET(config.HealthCheckPath, handleHealth, true)
-	}
-	r.GET("/favicon.ico", handleFavicon, true)
 	r.GET("/", withMetrics(withPanicHandler(withCORS(withSecret(handleProcessing)))), false)
 	r.HEAD("/", withCORS(handleHead), false)
 	r.OPTIONS("/", withCORS(handleHead), false)
+
+	r.HealthHandler = handleHealth
 
 	return r
 }
@@ -181,7 +178,10 @@ func handleHealth(reqID string, rw http.ResponseWriter, r *http.Request) {
 		ierr = ierrors.Wrap(err, 1)
 	}
 
-	router.LogResponse(reqID, r, status, ierr)
+	// Log response only if something went wrong
+	if ierr != nil {
+		router.LogResponse(reqID, r, status, ierr)
+	}
 
 	rw.Header().Set("Cache-Control", "no-cache")
 	rw.WriteHeader(status)
@@ -190,11 +190,5 @@ func handleHealth(reqID string, rw http.ResponseWriter, r *http.Request) {
 
 func handleHead(reqID string, rw http.ResponseWriter, r *http.Request) {
 	router.LogResponse(reqID, r, 200, nil)
-	rw.WriteHeader(200)
-}
-
-func handleFavicon(reqID string, rw http.ResponseWriter, r *http.Request) {
-	router.LogResponse(reqID, r, 200, nil)
-	// TODO: Add a real favicon maybe?
 	rw.WriteHeader(200)
 }
