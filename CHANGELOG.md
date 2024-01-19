@@ -11,6 +11,7 @@
 - Revised downloading errors reporting.
 - Allow `IMGPROXY_TTL` to be zero.
 - Don't set `Expires` HTTP header as it is ignored if the `Cache-Control` header is set.
+- Don't log health-check requests and responses.
 - (pro) If the `step` argument of the `video_thumbnail_tile` is negative, calculate `step` automatically.
 
 ### Fix
@@ -19,6 +20,7 @@
 - (pro) Fix the `trim` argument of the `video_thumbnail_tile` processing option.
 - (pro) Fix `video_thumbnail_tile` behavior when the `step` argument value is less than frame duration.
 - (pro) Fix VPx video stream duration detection.
+- (pro) Fix thumbnal generation for VP9 videos.
 
 ## [3.21.0] - 2023-11-23
 ### Add
