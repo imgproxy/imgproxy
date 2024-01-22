@@ -5,6 +5,7 @@
 - (pro) Add the [hashsum](https://docs.imgproxy.net/latest/usage/processing#hashsum) processing and info options.
 - (pro) Add the [calc_hashsums](https://docs.imgproxy.net/latest/usage/getting_info#calc-hashsums) info option.
 - (pro) Add the [IMGPROXY_VIDEO_THUMBNAIL_TILE_AUTO_KEYFRAMES](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_VIDEO_THUMBNAIL_TILE_AUTO_KEYFRAMES) config.
+- (docker) Add lambda adapter to the Docker image.
 
 ### Change
 - Allow relative values for `gravity` and `watermark` offsets.
@@ -12,6 +13,7 @@
 - Allow `IMGPROXY_TTL` to be zero.
 - Don't set `Expires` HTTP header as it is ignored if the `Cache-Control` header is set.
 - Don't log health-check requests and responses.
+- Enforce `IMGPROXY_WORKERS=1` when running in AWS Lambda.
 - (pro) If the `step` argument of the `video_thumbnail_tile` is negative, calculate `step` automatically.
 
 ### Fix

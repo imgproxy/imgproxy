@@ -35,6 +35,9 @@ COPY --from=0 /usr/local/lib /usr/local/lib
 
 COPY docker/entrypoint.sh /usr/local/bin/
 
+# AWS Lambda adapter
+COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.7.2 /lambda-adapter /opt/extensions/lambda-adapter
+
 COPY NOTICE /usr/local/share/doc/imgproxy/
 
 ENV VIPS_WARNING=0

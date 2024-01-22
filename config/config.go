@@ -402,8 +402,15 @@ func Configure() error {
 	configurators.Int(&KeepAliveTimeout, "IMGPROXY_KEEP_ALIVE_TIMEOUT")
 	configurators.Int(&ClientKeepAliveTimeout, "IMGPROXY_CLIENT_KEEP_ALIVE_TIMEOUT")
 	configurators.Int(&DownloadTimeout, "IMGPROXY_DOWNLOAD_TIMEOUT")
-	configurators.Int(&Workers, "IMGPROXY_CONCURRENCY")
-	configurators.Int(&Workers, "IMGPROXY_WORKERS")
+
+	if lambdaFn := os.Getenv("AWS_LAMBDA_FUNCTION_NAME"); len(lambdaFn) > 0 {
+		Workers = 1
+		log.Info("AWS Lambda environment detected, setting workers to 1")
+	} else {
+		configurators.Int(&Workers, "IMGPROXY_CONCURRENCY")
+		configurators.Int(&Workers, "IMGPROXY_WORKERS")
+	}
+
 	configurators.Int(&RequestsQueueSize, "IMGPROXY_REQUESTS_QUEUE_SIZE")
 	configurators.Int(&MaxClients, "IMGPROXY_MAX_CLIENTS")
 
