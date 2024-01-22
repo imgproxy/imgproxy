@@ -44,6 +44,8 @@ ENV VIPS_WARNING=0
 ENV MALLOC_ARENA_MAX=2
 ENV LD_LIBRARY_PATH /usr/local/lib
 ENV IMGPROXY_MALLOC malloc
+ENV AWS_LWA_READINESS_CHECK_PATH /health
+ENV AWS_LWA_INVOKE_MODE response_stream
 
 RUN groupadd -r imgproxy \
   && useradd -r -u 999 -g imgproxy imgproxy \
