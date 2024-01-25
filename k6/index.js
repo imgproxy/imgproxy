@@ -68,5 +68,5 @@ export default function() {
   group_durations[url.group].add(res.timings.duration);
 
   const body_size = Math.round(parseInt(res.headers["Content-Length"]) / 10.24) / 100;
-  group_sizes[url.group].add(body_size);
+  if (!isNaN(body_size)) group_sizes[url.group].add(body_size);
 }
