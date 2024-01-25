@@ -65,6 +65,11 @@ func New(prefix string) *Router {
 }
 
 func (r *Router) Add(method, prefix string, handler RouteHandler, exact bool) {
+	// Don't add routes with empty prefix
+	if len(r.prefix+prefix) == 0 {
+		return
+	}
+
 	r.Routes = append(
 		r.Routes,
 		&route{Method: method, Prefix: r.prefix + prefix, Handler: handler, Exact: exact},

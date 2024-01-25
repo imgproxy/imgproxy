@@ -30,7 +30,10 @@ func buildRouter() *router.Router {
 	r := router.New(config.PathPrefix)
 
 	r.GET("/", handleLanding, true)
+	r.GET("", handleLanding, true)
+
 	r.GET("/", withMetrics(withPanicHandler(withCORS(withSecret(handleProcessing)))), false)
+
 	r.HEAD("/", withCORS(handleHead), false)
 	r.OPTIONS("/", withCORS(handleHead), false)
 
