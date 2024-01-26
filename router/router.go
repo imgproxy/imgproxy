@@ -1,6 +1,7 @@
 package router
 
 import (
+	"encoding/json"
 	"net"
 	"net/http"
 	"regexp"
@@ -13,7 +14,8 @@ import (
 )
 
 const (
-	xRequestIDHeader = "X-Request-ID"
+	xRequestIDHeader          = "X-Request-ID"
+	xAmznRequestContextHeader = "x-amzn-request-context"
 )
 
 var (
@@ -93,6 +95,19 @@ func (r *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	defer timeoutCancel()
 
 	reqID := req.Header.Get(xRequestIDHeader)
+
+	if len(reqID) == 0 || !requestIDRe.MatchString(reqID) {
+		if lambdaContextVal := req.Header.Get(xAmznRequestContextHeader); len(lambdaContextVal) > 0 {
+			var lambdaContext struct {
+				RequestID string `json:"requestId"`
+			}
+
+			err := json.Unmarshal([]byte(lambdaContextVal), &lambdaContext)
+			if err == nil && len(lambdaContext.RequestID) > 0 {
+				reqID = lambdaContext.RequestID
+			}
+		}
+	}
 
 	if len(reqID) == 0 || !requestIDRe.MatchString(reqID) {
 		reqID, _ = nanoid.New()
