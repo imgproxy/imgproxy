@@ -606,6 +606,10 @@ func (img *Image) Resize(wscale, hscale float64) error {
 		return Error()
 	}
 
+	if wscale < 1.0 || hscale < 1.0 {
+		C.vips_image_set_int(tmp, cachedCString("imgproxy-scaled-down"), 1)
+	}
+
 	C.swap_and_clear(&img.VipsImage, tmp)
 
 	return nil

@@ -14,6 +14,7 @@
 - Don't set `Expires` HTTP header as it is ignored if the `Cache-Control` header is set.
 - Don't log health-check requests and responses.
 - Enforce `IMGPROXY_WORKERS=1` when running in AWS Lambda.
+- Reduce memory usage when scaling down animated images.
 - (pro) If the `step` argument of the `video_thumbnail_tile` is negative, calculate `step` automatically.
 
 ### Fix

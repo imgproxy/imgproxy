@@ -162,6 +162,16 @@ func transformAnimated(ctx context.Context, img *vips.Image, po *options.Process
 		if err = mainPipeline.Run(ctx, frame, po, nil); err != nil {
 			return err
 		}
+
+		if r, _ := frame.GetIntDefault("imgproxy-scaled-down", 0); r == 1 {
+			if err = frame.CopyMemory(); err != nil {
+				return err
+			}
+
+			if err = router.CheckTimeout(ctx); err != nil {
+				return err
+			}
+		}
 	}
 
 	if err = img.Arrayjoin(frames); err != nil {

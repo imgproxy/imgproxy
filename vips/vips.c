@@ -804,7 +804,7 @@ vips_strip(VipsImage *in, VipsImage **out, int keep_exif_copyright)
         (strcmp(name, "vips-loader") == 0) ||
         (strcmp(name, "background") == 0) ||
         (strcmp(name, "vips-sequential") == 0) ||
-        (strcmp(name, "imgproxy-dpr-scale") == 0))
+        (vips_isprefix("imgproxy-", name)))
       continue;
 
     if (keep_exif_copyright) {
