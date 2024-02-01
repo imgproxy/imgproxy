@@ -52,10 +52,17 @@ type TrimOptions struct {
 	EqualVer  bool
 }
 
-type backgroundOptions struct {
+type BackgroundOptions struct {
 	Color  vips.Color
 	Effect string
 }
+
+type DitherType string
+
+const (
+	DitherNone DitherType = "none"
+	DitherBNFS DitherType = "bnfs" // Blue noise, Floyd-Steinberg
+)
 
 type WatermarkOptions struct {
 	Enabled   bool
@@ -87,10 +94,11 @@ type ProcessingOptions struct {
 	FormatQuality     map[imagetype.Type]int
 	MaxBytes          int
 	Flatten           bool
-	Background        backgroundOptions
+	Background        BackgroundOptions
 	Blur              float32
 	Sharpen           float32
 	Pixelate          int
+	Dither            DitherType
 	StripMetadata     bool
 	KeepCopyright     bool
 	StripColorProfile bool
@@ -139,10 +147,11 @@ func NewProcessingOptions() *ProcessingOptions {
 		Quality:           0,
 		MaxBytes:          0,
 		Format:            imagetype.Unknown,
-		Background:        backgroundOptions{Color: vips.Color{R: 255, G: 255, B: 255}},
+		Background:        BackgroundOptions{Color: vips.Color{R: 255, G: 255, B: 255}},
 		Blur:              0,
 		Sharpen:           0,
 		Dpr:               1,
+		Dither:            DitherNone,
 		Watermark:         WatermarkOptions{Opacity: 1, Replicate: false, Gravity: GravityOptions{Type: GravityCenter}},
 		StripMetadata:     config.StripMetadata,
 		KeepCopyright:     config.KeepCopyright,
@@ -700,6 +709,22 @@ func applyPixelateOption(po *ProcessingOptions, args []string) error {
 	return nil
 }
 
+func applyDitherOption(po *ProcessingOptions, args []string) error {
+	if len(args) > 1 {
+		return fmt.Errorf("Invalid dither arguments: %v", args)
+	}
+
+	switch args[0] {
+	case "bnfs":
+		po.Dither = DitherBNFS
+	case "none":
+		po.Dither = DitherNone
+	default:
+		return fmt.Errorf("Invalid dither: %s", args[0])
+	}
+	return nil
+}
+
 func applyPresetOption(po *ProcessingOptions, args []string) error {
 	for _, preset := range args {
 		if p, ok := presets[preset]; ok {
@@ -1033,6 +1058,8 @@ func applyURLOption(po *ProcessingOptions, name string, args []string) error {
 		return applySharpenOption(po, args)
 	case "pixelate", "pix":
 		return applyPixelateOption(po, args)
+	case "dither", "dit":
+		return applyDitherOption(po, args)
 	case "watermark", "wm":
 		return applyWatermarkOption(po, args)
 	case "strip_metadata", "sm":

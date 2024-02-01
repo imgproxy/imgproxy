@@ -31,6 +31,27 @@ RUN apt-get update \
   && ln -s /usr/lib/$(uname -m)-linux-gnu/libtcmalloc_minimal.so.4 /usr/local/lib/libtcmalloc_minimal.so \
   && rm -rf /var/lib/apt/lists/*
 
+# ====== PUSHD DITHER ========
+# This is a temporary solution to install pushd-dither
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+      python3 \
+      python3-pip \
+      python3-dev \
+      gfortran \
+      libopencv-dev \
+      curl
+
+RUN pip3 install scikit-image opencv-python numpy Pillow --break-system-packages
+
+COPY plugins/pushd-dither /opt/pushd-dither/
+
+RUN cd /opt/pushd-dither \
+    && python3 -m pip install -e . --break-system-packages --target=/usr/local/lib/python3.11/
+
+# ====== END PUSHD DITHER ========
+
+
 COPY docker/entrypoint.sh /usr/local/bin/
 COPY --from=build /usr/local/bin/imgproxy /usr/local/bin/
 COPY --from=build /usr/local/lib /usr/local/lib
