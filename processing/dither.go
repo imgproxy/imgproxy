@@ -31,7 +31,7 @@ func dither(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOption
 
 	// clean up temp file with error logging
 	defer func(name string) {
-		if err := os.Remove(name); err != nil {
+		if err = os.Remove(name); err != nil {
 			log.Errorf("failed to remove temp file: %s", err)
 		}
 	}(f.Name())
@@ -42,12 +42,12 @@ func dither(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOption
 	}
 	defer pngData.Close()
 
-	if err := os.WriteFile(f.Name(), pngData.Data, 0644); err != nil {
+	if err = os.WriteFile(f.Name(), pngData.Data, 0644); err != nil {
 		return err
 	}
 
 	// the dirty business - will clobber the file
-	if err := shellOutDither(f.Name()); err != nil {
+	if err = shellOutDither(f.Name()); err != nil {
 		return err
 	}
 
@@ -58,7 +58,7 @@ func dither(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOption
 	}
 
 	ditheredImg := new(vips.Image)
-	if err := ditheredImg.Load(ditheredData, 1, 1.0, 1); err != nil {
+	if err = ditheredImg.Load(ditheredData, 1, 1.0, 1); err != nil {
 		return err
 	}
 
