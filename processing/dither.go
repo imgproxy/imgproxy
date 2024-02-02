@@ -14,7 +14,7 @@ import (
 )
 
 func dither(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata *imagedata.ImageData) error {
-	if po.Dither != options.DitherBNFS {
+	if po.Dither.Type == options.DitherNone {
 		return nil
 	}
 
@@ -47,7 +47,7 @@ func dither(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOption
 	}
 
 	// the dirty business - will clobber the file
-	if err = shellOutDither(f.Name()); err != nil {
+	if err = shellOutDither(f.Name(), po); err != nil {
 		return err
 	}
 
@@ -72,14 +72,25 @@ func dither(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOption
 	return img.EmbedImage(0, 0, ditheredImg)
 }
 
-func shellOutDither(inFile string) error {
+func shellOutDither(inFile string, po *options.ProcessingOptions) error {
 	// installed via Dockerfile in /opt/pushd-dither
 	outFile := fmt.Sprintf("%s-dithered-tmp.png", inFile)
-	cmd := exec.Command("python3",
-		"test.py",
+	cmdArgs := []string{"test.py",
 		"--pal-meter-13",
 		"--image-in", inFile,
-		"--image-out", outFile)
+		"--image-out", outFile}
+
+	if po.Dither.Type == options.DitherBNSF {
+		cmdArgs = append(cmdArgs, "--shiau-fan")
+	}
+	if po.Dither.Contrast {
+		cmdArgs = append(cmdArgs, "--contrast")
+	}
+	if po.Dither.Native {
+		cmdArgs = append(cmdArgs, "--native")
+	}
+
+	cmd := exec.Command("python3", cmdArgs...)
 	cmd.Dir = "/opt/pushd-dither"
 	output, err := cmd.CombinedOutput()
 	if err != nil {

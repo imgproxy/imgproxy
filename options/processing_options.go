@@ -57,12 +57,19 @@ type BackgroundOptions struct {
 	Effect string
 }
 
-type DitherType string
+type DitherType int
 
 const (
-	DitherNone DitherType = "none"
-	DitherBNFS DitherType = "bnfs" // Blue noise, Floyd-Steinberg
+	DitherNone DitherType = 0
+	DitherBNFS DitherType = 1 // Blue noise, Floyd-Steinberg
+	DitherBNSF DitherType = 2 // Blue noise, Shiau-Fan
 )
+
+type DitherOptions struct {
+	Type     DitherType
+	Contrast bool
+	Native   bool
+}
 
 type WatermarkOptions struct {
 	Enabled   bool
@@ -98,7 +105,7 @@ type ProcessingOptions struct {
 	Blur              float32
 	Sharpen           float32
 	Pixelate          int
-	Dither            DitherType
+	Dither            DitherOptions
 	StripMetadata     bool
 	KeepCopyright     bool
 	StripColorProfile bool
@@ -151,7 +158,7 @@ func NewProcessingOptions() *ProcessingOptions {
 		Blur:              0,
 		Sharpen:           0,
 		Dpr:               1,
-		Dither:            DitherNone,
+		Dither:            DitherOptions{Type: DitherNone, Contrast: false, Native: false},
 		Watermark:         WatermarkOptions{Opacity: 1, Replicate: false, Gravity: GravityOptions{Type: GravityCenter}},
 		StripMetadata:     config.StripMetadata,
 		KeepCopyright:     config.KeepCopyright,
@@ -710,17 +717,30 @@ func applyPixelateOption(po *ProcessingOptions, args []string) error {
 }
 
 func applyDitherOption(po *ProcessingOptions, args []string) error {
-	if len(args) > 1 {
+	if len(args) > 3 {
 		return fmt.Errorf("Invalid dither arguments: %v", args)
 	}
 
 	switch args[0] {
-	case "bnfs":
-		po.Dither = DitherBNFS
-	case "none":
-		po.Dither = DitherNone
+	case "fs":
+		po.Dither.Type = DitherBNFS
+	case "sf":
+		po.Dither.Type = DitherBNSF
 	default:
-		return fmt.Errorf("Invalid dither: %s", args[0])
+		return fmt.Errorf("Invalid dither type: %s", args[0])
+	}
+
+	if len(args) > 1 { // next two arguments are optional
+		for _, arg := range args[1:] {
+			switch arg {
+			case "co":
+				po.Dither.Contrast = true
+			case "na":
+				po.Dither.Native = true
+			default:
+				return fmt.Errorf("Invalid dither argument: %s", arg)
+			}
+		}
 	}
 	return nil
 }
