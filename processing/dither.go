@@ -56,16 +56,15 @@ func dither(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOption
 	if err != nil {
 		return err
 	}
+	defer ditheredData.Close()
 
 	ditheredImg := new(vips.Image)
 	if err = ditheredImg.Load(ditheredData, 1, 1.0, 1); err != nil {
 		return err
 	}
-
 	defer ditheredImg.Clear()
-	defer ditheredData.Close()
 
-	// always use png for output
+	// force lossless output
 	po.Format = imagetype.PNG
 
 	// replace original image
