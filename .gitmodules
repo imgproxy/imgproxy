@@ -1,0 +1,3 @@
+[submodule "plugins/pushd-dither"]
+	path = plugins/pushd-dither
+	url = git@github.com:pushd/pushd-dither.git
