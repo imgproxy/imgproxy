@@ -151,6 +151,7 @@ func withPanicHandler(h router.RouteHandler) router.RouteHandler {
 
 				router.LogResponse(reqID, r, ierr.StatusCode, ierr)
 
+				rw.Header().Set("Content-Type", "text/plain")
 				rw.WriteHeader(ierr.StatusCode)
 
 				if config.DevelopmentErrorsMode {
@@ -181,11 +182,16 @@ func handleHealth(reqID string, rw http.ResponseWriter, r *http.Request) {
 		ierr = ierrors.Wrap(err, 1)
 	}
 
+	if len(msg) == 0 {
+		msg = []byte{' '}
+	}
+
 	// Log response only if something went wrong
 	if ierr != nil {
 		router.LogResponse(reqID, r, status, ierr)
 	}
 
+	rw.Header().Set("Content-Type", "text/plain")
 	rw.Header().Set("Cache-Control", "no-cache")
 	rw.WriteHeader(status)
 	rw.Write(msg)

@@ -2,15 +2,16 @@ package router
 
 import (
 	"encoding/json"
+	"fmt"
 	"net"
 	"net/http"
 	"regexp"
 	"strings"
 
 	nanoid "github.com/matoous/go-nanoid/v2"
-	log "github.com/sirupsen/logrus"
 
 	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/ierrors"
 )
 
 const (
@@ -156,9 +157,11 @@ func (r *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	log.Warningf("Route for %s is not defined", req.URL.Path)
+	LogResponse(reqID, req, 404, ierrors.New(404, fmt.Sprintf("Route for %s is not defined", req.URL.Path), "Not found"))
 
+	rw.Header().Set("Content-Type", "text/plain")
 	rw.WriteHeader(404)
+	rw.Write([]byte{' '})
 }
 
 func replaceRemoteAddr(req *http.Request, ip string) {
