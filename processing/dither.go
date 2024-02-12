@@ -23,7 +23,7 @@ func dither(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOption
 		return err
 	}
 
-	// write to temp file
+	// create empty temp file
 	f, err := os.CreateTemp("", "dither*.png")
 	if err != nil {
 		return err
@@ -35,6 +35,11 @@ func dither(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOption
 			log.Errorf("failed to remove temp file: %s", err)
 		}
 	}(f.Name())
+
+	// close immediately, we will replace its contents below
+	if err = f.Close(); err != nil {
+		return err
+	}
 
 	pngData, err := img.Save(imagetype.PNG, 0)
 	if err != nil {
