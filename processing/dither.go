@@ -69,12 +69,17 @@ func dither(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOption
 	}
 	defer ditheredImg.Clear()
 
+	// replace original image
+	// FIXME: use copy? embed image is a bit of a hack on a hack to not have to manage the png data lifecycle
+	if err = img.EmbedImage(0, 0, ditheredImg); err != nil {
+		return err
+	}
+
 	// force lossless output
 	po.Format = imagetype.PNG
 
-	// replace original image
-	// FIXME: use copy? embed image is a bit of a hack on a hack to not have to manage the png data lifecycle
-	return img.EmbedImage(0, 0, ditheredImg)
+	// the resulting images are occasionally corrupted if we don't invoke CopyMemory once we're done
+	return img.CopyMemory()
 }
 
 func shellOutDither(inFile string, po *options.ProcessingOptions) error {
