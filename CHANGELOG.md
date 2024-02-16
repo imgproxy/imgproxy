@@ -20,6 +20,7 @@
 
 ### Fix
 - Fix loading animated images with a huge number of frames.
+- Fix recursive presets detection.
 - (pro) Fix `video_thumbnail_tile` option behavior when the video has a single keyframe.
 - (pro) Fix the `trim` argument of the `video_thumbnail_tile` processing option.
 - (pro) Fix `video_thumbnail_tile` behavior when the `step` argument value is less than frame duration.

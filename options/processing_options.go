@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -175,15 +176,6 @@ func (po *ProcessingOptions) GetQuality() int {
 	}
 
 	return q
-}
-
-func (po *ProcessingOptions) isPresetUsed(name string) bool {
-	for _, usedName := range po.UsedPresets {
-		if usedName == name {
-			return true
-		}
-	}
-	return false
 }
 
 func (po *ProcessingOptions) Diff() structdiff.Entries {
@@ -689,17 +681,17 @@ func applyPixelateOption(po *ProcessingOptions, args []string) error {
 	return nil
 }
 
-func applyPresetOption(po *ProcessingOptions, args []string) error {
+func applyPresetOption(po *ProcessingOptions, args []string, usedPresets ...string) error {
 	for _, preset := range args {
 		if p, ok := presets[preset]; ok {
-			if po.isPresetUsed(preset) {
+			if slices.Contains(usedPresets, preset) {
 				log.Warningf("Recursive preset usage is detected: %s", preset)
 				continue
 			}
 
 			po.UsedPresets = append(po.UsedPresets, preset)
 
-			if err := applyURLOptions(po, p); err != nil {
+			if err := applyURLOptions(po, p, append(usedPresets, preset)...); err != nil {
 				return err
 			}
 		} else {
@@ -976,7 +968,7 @@ func applyMaxAnimationFrameResolutionOption(po *ProcessingOptions, args []string
 	return nil
 }
 
-func applyURLOption(po *ProcessingOptions, name string, args []string) error {
+func applyURLOption(po *ProcessingOptions, name string, args []string, usedPresets ...string) error {
 	switch name {
 	case "resize", "rs":
 		return applyResizeOption(po, args)
@@ -1056,7 +1048,7 @@ func applyURLOption(po *ProcessingOptions, name string, args []string) error {
 		return applyReturnAttachmentOption(po, args)
 	// Presets
 	case "preset", "pr":
-		return applyPresetOption(po, args)
+		return applyPresetOption(po, args, usedPresets...)
 	// Security
 	case "max_src_resolution", "msr":
 		return applyMaxSrcResolutionOption(po, args)
@@ -1071,9 +1063,9 @@ func applyURLOption(po *ProcessingOptions, name string, args []string) error {
 	return fmt.Errorf("Unknown processing option: %s", name)
 }
 
-func applyURLOptions(po *ProcessingOptions, options urlOptions) error {
+func applyURLOptions(po *ProcessingOptions, options urlOptions, usedPresets ...string) error {
 	for _, opt := range options {
-		if err := applyURLOption(po, opt.Name, opt.Args); err != nil {
+		if err := applyURLOption(po, opt.Name, opt.Args, usedPresets...); err != nil {
 			return err
 		}
 	}

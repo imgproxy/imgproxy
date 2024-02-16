@@ -377,14 +377,15 @@ func (s *ProcessingOptionsTestSuite) TestParsePathPresetDefault() {
 func (s *ProcessingOptionsTestSuite) TestParsePathPresetLoopDetection() {
 	presets["test1"] = urlOptions{
 		urlOption{Name: "resizing_type", Args: []string{"fill"}},
+		urlOption{Name: "preset", Args: []string{"test2"}},
 	}
 
 	presets["test2"] = urlOptions{
 		urlOption{Name: "blur", Args: []string{"0.2"}},
-		urlOption{Name: "quality", Args: []string{"50"}},
+		urlOption{Name: "preset", Args: []string{"test1"}},
 	}
 
-	path := "/preset:test1:test2:test1/plain/http://images.dev/lorem/ipsum.jpg"
+	path := "/preset:test1/plain/http://images.dev/lorem/ipsum.jpg"
 	po, _, err := ParsePath(path, make(http.Header))
 
 	require.Nil(s.T(), err)

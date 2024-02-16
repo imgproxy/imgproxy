@@ -59,7 +59,7 @@ func parsePreset(presetStr string) error {
 func ValidatePresets() error {
 	for name, opts := range presets {
 		po := NewProcessingOptions()
-		if err := applyURLOptions(po, opts); err != nil {
+		if err := applyURLOptions(po, opts, name); err != nil {
 			return fmt.Errorf("Error in preset `%s`: %s", name, err)
 		}
 	}

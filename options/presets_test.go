@@ -76,7 +76,7 @@ func (s *PresetsTestSuite) TestParsePresetComment() {
 
 func (s *PresetsTestSuite) TestValidatePresets() {
 	presets = map[string]urlOptions{
-		"test": urlOptions{
+		"test": {
 			urlOption{Name: "resize", Args: []string{"fit", "100", "200"}},
 			urlOption{Name: "sharpen", Args: []string{"2"}},
 		},
@@ -89,7 +89,7 @@ func (s *PresetsTestSuite) TestValidatePresets() {
 
 func (s *PresetsTestSuite) TestValidatePresetsInvalid() {
 	presets = map[string]urlOptions{
-		"test": urlOptions{
+		"test": {
 			urlOption{Name: "resize", Args: []string{"fit", "-1", "-2"}},
 			urlOption{Name: "sharpen", Args: []string{"2"}},
 		},
