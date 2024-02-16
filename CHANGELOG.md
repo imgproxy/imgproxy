@@ -37,6 +37,9 @@
 - (pro) Add the `duration` field to the video streams information in the `/info` endpoint response.
 - (pro) Add the [colorspace](https://docs.imgproxy.net/latest/usage/getting_info#colorspace), [bands](https://docs.imgproxy.net/latest/usage/getting_info#bands), [sample_format](https://docs.imgproxy.net/latest/usage/getting_info#sample-format), [pages_number](https://docs.imgproxy.net/latest/usage/getting_info#pages-number), and [alpha](https://docs.imgproxy.net/latest/usage/getting_info#alpha) info options.
 
+### Change
+- (pro) Improve video detection.
+
 ### Fix
 - (pro) Fix detection of some videos.
 - (pro) Fix headers and cookies passthrough when the source is a video.
