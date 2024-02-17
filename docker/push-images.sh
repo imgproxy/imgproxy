@@ -27,8 +27,16 @@ re="^v([0-9]+)\.([0-9]+)\.([0-9]+)$"
 
 if [[ $TAG_NAME =~ $re ]]; then
   MINOR_IMAGE_NAME="$REPO_NAME:v${BASH_REMATCH[1]}.${BASH_REMATCH[2]}"
+  docker tag $IMAGE_NAME-amd64 $MINOR_IMAGE_NAME-amd64
+  docker push $MINOR_IMAGE_NAME-amd64
+  docker tag $IMAGE_NAME-arm64 $MINOR_IMAGE_NAME-arm64
+  docker push $MINOR_IMAGE_NAME-arm64
   push_manifest $MINOR_IMAGE_NAME $IMAGE_NAME
 
   MAJOR_IMAGE_NAME="$REPO_NAME:v${BASH_REMATCH[1]}"
+  docker tag $IMAGE_NAME-amd64 $MAJOR_IMAGE_NAME-amd64
+  docker push $MAJOR_IMAGE_NAME-amd64
+  docker tag $IMAGE_NAME-arm64 $MAJOR_IMAGE_NAME-arm64
+  docker push $MAJOR_IMAGE_NAME-arm64
   push_manifest $MAJOR_IMAGE_NAME $IMAGE_NAME
 fi
