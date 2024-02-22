@@ -4,7 +4,6 @@ import (
 	"math/rand"
 	"sync"
 	"testing"
-	"time"
 
 	"github.com/imgproxy/imgproxy/v3/config"
 )
@@ -21,7 +20,6 @@ func initTestData() {
 		testData[i] = make([]byte, i*1271)
 	}
 
-	rand.Seed(time.Now().UnixNano())
 	rand.Shuffle(len(testData), func(i, j int) { testData[i], testData[j] = testData[j], testData[i] })
 }
 
