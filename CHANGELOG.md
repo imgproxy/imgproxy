@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [3.22.0] - 2024-02-22
 ### Add
 - Add the [IMGPROXY_TRUSTED_SIGNATURES](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_TRUSTED_SIGNATURES) config.
 - (pro) Add the [hashsum](https://docs.imgproxy.net/latest/usage/processing#hashsum) processing and info options.
