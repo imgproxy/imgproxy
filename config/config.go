@@ -74,9 +74,10 @@ var (
 	UseLinearColorspace bool
 	DisableShrinkOnLoad bool
 
-	Keys          [][]byte
-	Salts         [][]byte
-	SignatureSize int
+	Keys              [][]byte
+	Salts             [][]byte
+	SignatureSize     int
+	TrustedSignatures []string
 
 	Secret string
 
@@ -275,6 +276,7 @@ func Reset() {
 	Keys = make([][]byte, 0)
 	Salts = make([][]byte, 0)
 	SignatureSize = 32
+	TrustedSignatures = make([]string, 0)
 
 	Secret = ""
 
@@ -483,6 +485,7 @@ func Configure() error {
 		return err
 	}
 	configurators.Int(&SignatureSize, "IMGPROXY_SIGNATURE_SIZE")
+	configurators.StringSlice(&TrustedSignatures, "IMGPROXY_TRUSTED_SIGNATURES")
 
 	if err := configurators.HexSliceFile(&Keys, keyPath); err != nil {
 		return err

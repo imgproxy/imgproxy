@@ -19,6 +19,12 @@ func VerifySignature(signature, path string) error {
 		return nil
 	}
 
+	for _, s := range config.TrustedSignatures {
+		if s == signature {
+			return nil
+		}
+	}
+
 	messageMAC, err := base64.RawURLEncoding.DecodeString(signature)
 	if err != nil {
 		return ErrInvalidSignatureEncoding

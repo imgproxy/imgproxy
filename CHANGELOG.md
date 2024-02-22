@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 ### Add
+- Add the [IMGPROXY_TRUSTED_SIGNATURES](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_TRUSTED_SIGNATURES) config.
 - (pro) Add the [hashsum](https://docs.imgproxy.net/latest/usage/processing#hashsum) processing and info options.
 - (pro) Add the [calc_hashsums](https://docs.imgproxy.net/latest/usage/getting_info#calc-hashsums) info option.
 - (pro) Add the [IMGPROXY_VIDEO_THUMBNAIL_TILE_AUTO_KEYFRAMES](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_VIDEO_THUMBNAIL_TILE_AUTO_KEYFRAMES) config.

@@ -51,6 +51,19 @@ func (s *SignatureTestSuite) TestVerifySignatureMultiplePairs() {
 	require.Error(s.T(), err)
 }
 
+func (s *SignatureTestSuite) TestVerifySignatureTrusted() {
+	config.TrustedSignatures = []string{"truested"}
+	defer func() {
+		config.TrustedSignatures = []string{}
+	}()
+
+	err := VerifySignature("truested", "asd")
+	require.Nil(s.T(), err)
+
+	err = VerifySignature("untrusted", "asd")
+	require.Error(s.T(), err)
+}
+
 func TestSignature(t *testing.T) {
 	suite.Run(t, new(SignatureTestSuite))
 }
