@@ -28,10 +28,12 @@ func (s *AzureTestSuite) SetupSuite() {
 
 	logrus.SetOutput(os.Stdout)
 
+	config.IgnoreSslVerification = true
+
 	s.etag = "testetag"
 	s.lastModified, _ = time.Parse(http.TimeFormat, "Wed, 21 Oct 2015 07:28:00 GMT")
 
-	s.server = httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+	s.server = httptest.NewTLSServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		require.Equal(s.T(), "/test/foo/test.png", r.URL.Path)
 
 		rw.Header().Set("Etag", s.etag)
@@ -52,6 +54,7 @@ func (s *AzureTestSuite) SetupSuite() {
 
 func (s *AzureTestSuite) TearDownSuite() {
 	s.server.Close()
+	config.IgnoreSslVerification = false
 }
 
 func (s *AzureTestSuite) TestRoundTripWithETagDisabledReturns200() {

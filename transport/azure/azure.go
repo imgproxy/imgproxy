@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/blob"
@@ -17,6 +18,7 @@ import (
 
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/httprange"
+	defaultTransport "github.com/imgproxy/imgproxy/v3/transport"
 	"github.com/imgproxy/imgproxy/v3/transport/notmodified"
 )
 
@@ -46,20 +48,31 @@ func New() (http.RoundTripper, error) {
 		return nil, err
 	}
 
+	trans, err := defaultTransport.New(false)
+	if err != nil {
+		return nil, err
+	}
+
+	opts := azblob.ClientOptions{
+		ClientOptions: policy.ClientOptions{
+			Transport: &http.Client{Transport: trans},
+		},
+	}
+
 	if len(config.ABSKey) > 0 {
 		sharedKeyCredential, err = azblob.NewSharedKeyCredential(config.ABSName, config.ABSKey)
 		if err != nil {
 			return nil, err
 		}
 
-		client, err = azblob.NewClientWithSharedKeyCredential(endpointURL.String(), sharedKeyCredential, nil)
+		client, err = azblob.NewClientWithSharedKeyCredential(endpointURL.String(), sharedKeyCredential, &opts)
 	} else {
 		defaultAzureCredential, err = azidentity.NewDefaultAzureCredential(nil)
 		if err != nil {
 			return nil, err
 		}
 
-		client, err = azblob.NewClient(endpointURL.String(), defaultAzureCredential, nil)
+		client, err = azblob.NewClient(endpointURL.String(), defaultAzureCredential, &opts)
 	}
 
 	if err != nil {
