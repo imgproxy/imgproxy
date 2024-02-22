@@ -66,9 +66,10 @@ const (
 )
 
 type DitherOptions struct {
-	Type     DitherType
-	Contrast bool
-	Native   bool
+	Type       DitherType
+	Contrast   bool
+	Native     bool
+	Desaturate bool
 }
 
 type WatermarkOptions struct {
@@ -158,7 +159,7 @@ func NewProcessingOptions() *ProcessingOptions {
 		Blur:              0,
 		Sharpen:           0,
 		Dpr:               1,
-		Dither:            DitherOptions{Type: DitherNone, Contrast: false, Native: false},
+		Dither:            DitherOptions{Type: DitherNone, Contrast: false, Native: false, Desaturate: false},
 		Watermark:         WatermarkOptions{Opacity: 1, Replicate: false, Gravity: GravityOptions{Type: GravityCenter}},
 		StripMetadata:     config.StripMetadata,
 		KeepCopyright:     config.KeepCopyright,
@@ -717,7 +718,7 @@ func applyPixelateOption(po *ProcessingOptions, args []string) error {
 }
 
 func applyDitherOption(po *ProcessingOptions, args []string) error {
-	if len(args) > 3 {
+	if len(args) > 4 {
 		return fmt.Errorf("Invalid dither arguments: %v", args)
 	}
 
@@ -737,6 +738,8 @@ func applyDitherOption(po *ProcessingOptions, args []string) error {
 				po.Dither.Contrast = true
 			case "na":
 				po.Dither.Native = true
+			case "de":
+				po.Dither.Desaturate = true
 			default:
 				return fmt.Errorf("Invalid dither argument: %s", arg)
 			}
