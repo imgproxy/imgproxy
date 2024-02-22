@@ -18,6 +18,15 @@ func dither(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOption
 		return nil
 	}
 
+	// Resize to desired dimensions in case of crop
+	// usually the smaller cropped images are returned to the frame for upscaling, but in this case we want to
+	// dither image after it's been resized to its final dimensions
+	widthScale := float64(po.Width) / float64(img.Width())
+	heightScale := float64(po.Height) / float64(img.Height())
+	if err := img.Resize(widthScale, heightScale); err != nil {
+		return err
+	}
+
 	// Get a snapshot of current image
 	if err := img.CopyMemory(); err != nil {
 		return err
