@@ -108,6 +108,9 @@ func shellOutDither(inFile string, po *options.ProcessingOptions) error {
 	if po.Dither.Native {
 		cmdArgs = append(cmdArgs, "--native")
 	}
+	if po.Dither.Desaturate {
+		cmdArgs = append(cmdArgs, "--desaturate")
+	}
 
 	cmd := exec.Command("python3", cmdArgs...)
 	cmd.Dir = "/opt/pushd-dither"
