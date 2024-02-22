@@ -27,6 +27,7 @@
 - (pro) Fix `video_thumbnail_tile` behavior when the `step` argument value is less than frame duration.
 - (pro) Fix VPx video stream duration detection.
 - (pro) Fix thumbnal generation for VP9 videos.
+- (pro) Fix thumbnal generation for videos with a large time base denumenator.
 
 ## [3.21.0] - 2023-11-23
 ### Add
