@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -40,6 +41,7 @@ import (
 	"google.golang.org/grpc/credentials"
 
 	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/config/configurators"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/metrics/errformat"
 	"github.com/imgproxy/imgproxy/v3/metrics/stats"
@@ -69,7 +71,9 @@ var (
 )
 
 func Init() error {
-	if len(config.OpenTelemetryEndpoint) == 0 {
+	mapDeprecatedConfig()
+
+	if !config.OpenTelemetryEnable {
 		return nil
 	}
 
@@ -81,25 +85,29 @@ func Init() error {
 		err            error
 	)
 
-	switch config.OpenTelemetryProtocol {
+	protocol := "grpc"
+	configurators.String(&protocol, "OTEL_EXPORTER_OTLP_PROTOCOL")
+
+	switch protocol {
 	case "grpc":
 		traceExporter, metricExporter, err = buildGRPCExporters()
-	case "https":
-		traceExporter, metricExporter, err = buildHTTPExporters(false)
-	case "http":
-		traceExporter, metricExporter, err = buildHTTPExporters(true)
+	case "http/protobuf", "http", "https":
+		traceExporter, metricExporter, err = buildHTTPExporters()
 	default:
-		return fmt.Errorf("Unknown OpenTelemetry protocol: %s", config.OpenTelemetryProtocol)
+		return fmt.Errorf("Unsupported OpenTelemetry protocol: %s", protocol)
 	}
 
 	if err != nil {
 		return err
 	}
 
+	if len(os.Getenv("OTEL_SERVICE_NAME")) == 0 {
+		os.Setenv("OTEL_SERVICE_NAME", "imgproxy")
+	}
+
 	res, _ := resource.Merge(
 		resource.Default(),
 		resource.NewSchemaless(
-			semconv.ServiceNameKey.String(config.OpenTelemetryServiceName),
 			semconv.ServiceVersionKey.String(version.Version()),
 		),
 	)
@@ -140,8 +148,11 @@ func Init() error {
 
 	tracer = tracerProvider.Tracer("imgproxy")
 
-	if len(config.OpenTelemetryPropagators) > 0 {
-		propagator, err = autoprop.TextMapPropagator(config.OpenTelemetryPropagators...)
+	var propagatorNames []string
+	configurators.StringSlice(&propagatorNames, "OTEL_PROPAGATORS")
+
+	if len(propagatorNames) > 0 {
+		propagator, err = autoprop.TextMapPropagator(propagatorNames...)
 		if err != nil {
 			return err
 		}
@@ -174,35 +185,83 @@ func Init() error {
 	return nil
 }
 
+func mapDeprecatedConfig() {
+	endpoint := os.Getenv("IMGPROXY_OPEN_TELEMETRY_ENDPOINT")
+	if len(endpoint) > 0 {
+		logrus.Warn("The IMGPROXY_OPEN_TELEMETRY_ENDPOINT config is deprecated. Use IMGPROXY_OPEN_TELEMETRY_ENABLE and OTEL_EXPORTER_OTLP_ENDPOINT instead. See https://docs.imgproxy.net/latest/monitoring/open_telemetry#deprecated-environment-variables")
+		config.OpenTelemetryEnable = true
+	}
+
+	if !config.OpenTelemetryEnable {
+		return
+	}
+
+	protocol := "grpc"
+
+	if prot := os.Getenv("IMGPROXY_OPEN_TELEMETRY_PROTOCOL"); len(prot) > 0 {
+		logrus.Warn("The IMGPROXY_OPEN_TELEMETRY_PROTOCOL config is deprecated. Use OTEL_EXPORTER_OTLP_PROTOCOL instead. See https://docs.imgproxy.net/latest/monitoring/open_telemetry#deprecated-environment-variables")
+		protocol = prot
+		os.Setenv("OTEL_EXPORTER_OTLP_PROTOCOL", protocol)
+	}
+
+	if len(endpoint) > 0 {
+		schema := "https"
+
+		switch protocol {
+		case "grpc":
+			if insecure, _ := strconv.ParseBool(os.Getenv("IMGPROXY_OPEN_TELEMETRY_GRPC_INSECURE")); insecure {
+				logrus.Warn("The IMGPROXY_OPEN_TELEMETRY_GRPC_INSECURE config is deprecated. Use OTEL_EXPORTER_OTLP_ENDPOINT with the `http://` schema instead. See https://docs.imgproxy.net/latest/monitoring/open_telemetry#deprecated-environment-variables")
+				schema = "http"
+			}
+		case "http":
+			schema = "http"
+		}
+
+		os.Setenv("OTEL_EXPORTER_OTLP_ENDPOINT", fmt.Sprintf("%s://%s", schema, endpoint))
+	}
+
+	if serviceName := os.Getenv("IMGPROXY_OPEN_TELEMETRY_SERVICE_NAME"); len(serviceName) > 0 {
+		logrus.Warn("The IMGPROXY_OPEN_TELEMETRY_SERVICE_NAME config is deprecated. Use OTEL_SERVICE_NAME instead. See https://docs.imgproxy.net/latest/monitoring/open_telemetry#deprecated-environment-variables")
+		os.Setenv("OTEL_SERVICE_NAME", serviceName)
+	}
+
+	if propagators := os.Getenv("IMGPROXY_OPEN_TELEMETRY_PROPAGATORS"); len(propagators) > 0 {
+		logrus.Warn("The IMGPROXY_OPEN_TELEMETRY_PROPAGATORS config is deprecated. Use OTEL_PROPAGATORS instead. See https://docs.imgproxy.net/latest/monitoring/open_telemetry#deprecated-environment-variables")
+		os.Setenv("OTEL_PROPAGATORS", propagators)
+	}
+
+	if timeout := os.Getenv("IMGPROXY_OPEN_TELEMETRY_CONNECTION_TIMEOUT"); len(timeout) > 0 {
+		logrus.Warn("The IMGPROXY_OPEN_TELEMETRY_CONNECTION_TIMEOUT config is deprecated. Use OTEL_EXPORTER_OTLP_TIMEOUT instead. See https://docs.imgproxy.net/latest/monitoring/open_telemetry#deprecated-environment-variables")
+
+		if to, _ := strconv.Atoi(timeout); to > 0 {
+			os.Setenv("OTEL_EXPORTER_OTLP_TIMEOUT", strconv.Itoa(to*1000))
+		}
+	}
+}
+
 func buildGRPCExporters() (*otlptrace.Exporter, sdkmetric.Exporter, error) {
 	tracerOpts := []otlptracegrpc.Option{
-		otlptracegrpc.WithEndpoint(config.OpenTelemetryEndpoint),
 		otlptracegrpc.WithDialOption(grpc.WithBlock()),
 	}
 
 	meterOpts := []otlpmetricgrpc.Option{
-		otlpmetricgrpc.WithEndpoint(config.OpenTelemetryEndpoint),
 		otlpmetricgrpc.WithDialOption(grpc.WithBlock()),
 	}
 
-	tlsConf, err := buildTLSConfig()
+	if tlsConf, err := buildTLSConfig(); tlsConf != nil && err == nil {
+		creds := credentials.NewTLS(tlsConf)
+		tracerOpts = append(tracerOpts, otlptracegrpc.WithTLSCredentials(creds))
+		meterOpts = append(meterOpts, otlpmetricgrpc.WithTLSCredentials(creds))
+	} else if err != nil {
+		return nil, nil, err
+	}
+
+	tracesConnTimeout, metricsConnTimeout, err := getConnectionTimeouts()
 	if err != nil {
 		return nil, nil, err
 	}
 
-	if tlsConf != nil {
-		creds := credentials.NewTLS(tlsConf)
-		tracerOpts = append(tracerOpts, otlptracegrpc.WithTLSCredentials(creds))
-		meterOpts = append(meterOpts, otlpmetricgrpc.WithTLSCredentials(creds))
-	} else if config.OpenTelemetryGRPCInsecure {
-		tracerOpts = append(tracerOpts, otlptracegrpc.WithInsecure())
-		meterOpts = append(meterOpts, otlpmetricgrpc.WithInsecure())
-	}
-
-	trctx, trcancel := context.WithTimeout(
-		context.Background(),
-		time.Duration(config.OpenTelemetryConnectionTimeout)*time.Second,
-	)
+	trctx, trcancel := context.WithTimeout(context.Background(), tracesConnTimeout)
 	defer trcancel()
 
 	traceExporter, err := otlptracegrpc.New(trctx, tracerOpts...)
@@ -214,10 +273,7 @@ func buildGRPCExporters() (*otlptrace.Exporter, sdkmetric.Exporter, error) {
 		return traceExporter, nil, err
 	}
 
-	mtctx, mtcancel := context.WithTimeout(
-		context.Background(),
-		time.Duration(config.OpenTelemetryConnectionTimeout)*time.Second,
-	)
+	mtctx, mtcancel := context.WithTimeout(context.Background(), metricsConnTimeout)
 	defer mtcancel()
 
 	metricExporter, err := otlpmetricgrpc.New(mtctx, meterOpts...)
@@ -228,34 +284,23 @@ func buildGRPCExporters() (*otlptrace.Exporter, sdkmetric.Exporter, error) {
 	return traceExporter, metricExporter, err
 }
 
-func buildHTTPExporters(insecure bool) (*otlptrace.Exporter, sdkmetric.Exporter, error) {
-	tracerOpts := []otlptracehttp.Option{
-		otlptracehttp.WithEndpoint(config.OpenTelemetryEndpoint),
+func buildHTTPExporters() (*otlptrace.Exporter, sdkmetric.Exporter, error) {
+	tracerOpts := []otlptracehttp.Option{}
+	meterOpts := []otlpmetrichttp.Option{}
+
+	if tlsConf, err := buildTLSConfig(); tlsConf != nil && err == nil {
+		tracerOpts = append(tracerOpts, otlptracehttp.WithTLSClientConfig(tlsConf))
+		meterOpts = append(meterOpts, otlpmetrichttp.WithTLSClientConfig(tlsConf))
+	} else if err != nil {
+		return nil, nil, err
 	}
 
-	meterOpts := []otlpmetrichttp.Option{
-		otlpmetrichttp.WithEndpoint(config.OpenTelemetryEndpoint),
+	tracesConnTimeout, metricsConnTimeout, err := getConnectionTimeouts()
+	if err != nil {
+		return nil, nil, err
 	}
 
-	if insecure {
-		tracerOpts = append(tracerOpts, otlptracehttp.WithInsecure())
-		meterOpts = append(meterOpts, otlpmetrichttp.WithInsecure())
-	} else {
-		tlsConf, err := buildTLSConfig()
-		if err != nil {
-			return nil, nil, err
-		}
-
-		if tlsConf != nil {
-			tracerOpts = append(tracerOpts, otlptracehttp.WithTLSClientConfig(tlsConf))
-			meterOpts = append(meterOpts, otlpmetrichttp.WithTLSClientConfig(tlsConf))
-		}
-	}
-
-	trctx, trcancel := context.WithTimeout(
-		context.Background(),
-		time.Duration(config.OpenTelemetryConnectionTimeout)*time.Second,
-	)
+	trctx, trcancel := context.WithTimeout(context.Background(), tracesConnTimeout)
 	defer trcancel()
 
 	traceExporter, err := otlptracehttp.New(trctx, tracerOpts...)
@@ -267,10 +312,7 @@ func buildHTTPExporters(insecure bool) (*otlptrace.Exporter, sdkmetric.Exporter,
 		return traceExporter, nil, err
 	}
 
-	mtctx, mtcancel := context.WithTimeout(
-		context.Background(),
-		time.Duration(config.OpenTelemetryConnectionTimeout)*time.Second,
-	)
+	mtctx, mtcancel := context.WithTimeout(context.Background(), metricsConnTimeout)
 	defer mtcancel()
 
 	metricExporter, err := otlpmetrichttp.New(mtctx, meterOpts...)
@@ -279,6 +321,29 @@ func buildHTTPExporters(insecure bool) (*otlptrace.Exporter, sdkmetric.Exporter,
 	}
 
 	return traceExporter, metricExporter, err
+}
+
+func getConnectionTimeouts() (time.Duration, time.Duration, error) {
+	connTimeout := 10000
+	configurators.Int(&connTimeout, "OTEL_EXPORTER_OTLP_TIMEOUT")
+
+	tracesConnTimeout := connTimeout
+	configurators.Int(&tracesConnTimeout, "OTEL_EXPORTER_OTLP_TRACES_TIMEOUT")
+
+	metricsConnTimeout := connTimeout
+	configurators.Int(&metricsConnTimeout, "OTEL_EXPORTER_OTLP_METRICS_TIMEOUT")
+
+	if tracesConnTimeout <= 0 {
+		return 0, 0, errors.New("Opentelemetry traces timeout should be greater than 0")
+	}
+
+	if metricsConnTimeout <= 0 {
+		return 0, 0, errors.New("Opentelemetry metrics timeout should be greater than 0")
+	}
+
+	return time.Duration(tracesConnTimeout) * time.Millisecond,
+		time.Duration(metricsConnTimeout) * time.Millisecond,
+		nil
 }
 
 func buildTLSConfig() (*tls.Config, error) {

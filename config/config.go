@@ -158,17 +158,12 @@ var (
 	PrometheusBind      string
 	PrometheusNamespace string
 
-	OpenTelemetryEndpoint          string
-	OpenTelemetryProtocol          string
-	OpenTelemetryServiceName       string
-	OpenTelemetryEnableMetrics     bool
-	OpenTelemetryServerCert        string
-	OpenTelemetryClientCert        string
-	OpenTelemetryClientKey         string
-	OpenTelemetryGRPCInsecure      bool
-	OpenTelemetryPropagators       []string
-	OpenTelemetryTraceIDGenerator  string
-	OpenTelemetryConnectionTimeout int
+	OpenTelemetryEnable           bool
+	OpenTelemetryEnableMetrics    bool
+	OpenTelemetryServerCert       string
+	OpenTelemetryClientCert       string
+	OpenTelemetryClientKey        string
+	OpenTelemetryTraceIDGenerator string
 
 	CloudWatchServiceName string
 	CloudWatchNamespace   string
@@ -351,17 +346,12 @@ func Reset() {
 	PrometheusBind = ""
 	PrometheusNamespace = ""
 
-	OpenTelemetryEndpoint = ""
-	OpenTelemetryProtocol = "grpc"
-	OpenTelemetryServiceName = "imgproxy"
+	OpenTelemetryEnable = false
 	OpenTelemetryEnableMetrics = false
 	OpenTelemetryServerCert = ""
 	OpenTelemetryClientCert = ""
 	OpenTelemetryClientKey = ""
-	OpenTelemetryGRPCInsecure = true
-	OpenTelemetryPropagators = make([]string, 0)
 	OpenTelemetryTraceIDGenerator = "xray"
-	OpenTelemetryConnectionTimeout = 5
 
 	CloudWatchServiceName = ""
 	CloudWatchNamespace = "imgproxy"
@@ -570,17 +560,12 @@ func Configure() error {
 	configurators.String(&PrometheusBind, "IMGPROXY_PROMETHEUS_BIND")
 	configurators.String(&PrometheusNamespace, "IMGPROXY_PROMETHEUS_NAMESPACE")
 
-	configurators.String(&OpenTelemetryEndpoint, "IMGPROXY_OPEN_TELEMETRY_ENDPOINT")
-	configurators.String(&OpenTelemetryProtocol, "IMGPROXY_OPEN_TELEMETRY_PROTOCOL")
-	configurators.String(&OpenTelemetryServiceName, "IMGPROXY_OPEN_TELEMETRY_SERVICE_NAME")
+	configurators.Bool(&OpenTelemetryEnable, "IMGPROXY_OPEN_TELEMETRY_ENABLE")
 	configurators.Bool(&OpenTelemetryEnableMetrics, "IMGPROXY_OPEN_TELEMETRY_ENABLE_METRICS")
 	configurators.String(&OpenTelemetryServerCert, "IMGPROXY_OPEN_TELEMETRY_SERVER_CERT")
 	configurators.String(&OpenTelemetryClientCert, "IMGPROXY_OPEN_TELEMETRY_CLIENT_CERT")
 	configurators.String(&OpenTelemetryClientKey, "IMGPROXY_OPEN_TELEMETRY_CLIENT_KEY")
-	configurators.Bool(&OpenTelemetryGRPCInsecure, "IMGPROXY_OPEN_TELEMETRY_GRPC_INSECURE")
-	configurators.StringSlice(&OpenTelemetryPropagators, "IMGPROXY_OPEN_TELEMETRY_PROPAGATORS")
 	configurators.String(&OpenTelemetryTraceIDGenerator, "IMGPROXY_OPEN_TELEMETRY_TRACE_ID_GENERATOR")
-	configurators.Int(&OpenTelemetryConnectionTimeout, "IMGPROXY_OPEN_TELEMETRY_CONNECTION_TIMEOUT")
 
 	configurators.String(&CloudWatchServiceName, "IMGPROXY_CLOUD_WATCH_SERVICE_NAME")
 	configurators.String(&CloudWatchNamespace, "IMGPROXY_CLOUD_WATCH_NAMESPACE")
@@ -730,10 +715,6 @@ func Configure() error {
 
 	if len(PrometheusBind) > 0 && PrometheusBind == Bind {
 		return errors.New("Can't use the same binding for the main server and Prometheus")
-	}
-
-	if OpenTelemetryConnectionTimeout < 1 {
-		return errors.New("OpenTelemetry connection timeout should be greater than zero")
 	}
 
 	if FreeMemoryInterval <= 0 {

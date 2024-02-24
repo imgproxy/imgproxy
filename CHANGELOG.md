@@ -1,5 +1,12 @@
 # Changelog
 
+## [Unreleased]
+### Change
+- Support configuring OpenTelemetry with standart [general](https://opentelemetry.io/docs/languages/sdk-configuration/general/) and [OTLP Exporter](https://opentelemetry.io/docs/languages/sdk-configuration/otlp-exporter/) environment variables.
+
+### Deprecated
+- `IMGPROXY_OPEN_TELEMETRY_ENDPOINT`, `IMGPROXY_OPEN_TELEMETRY_PROTOCOL`, `IMGPROXY_OPEN_TELEMETRY_GRPC_INSECURE`, `IMGPROXY_OPEN_TELEMETRY_SERVICE_NAME`, `IMGPROXY_OPEN_TELEMETRY_PROPAGATORS`, and `IMGPROXY_OPEN_TELEMETRY_CONNECTION_TIMEOUT` config options are deprecated. Use standart OpenTelemetry environment variables instead.
+
 ## [3.22.0] - 2024-02-22
 ### Add
 - Add the [IMGPROXY_TRUSTED_SIGNATURES](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_TRUSTED_SIGNATURES) config.
