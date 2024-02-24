@@ -130,10 +130,6 @@ func Init() error {
 		sdktrace.WithBatcher(traceExporter),
 	}
 
-	if opts, err = addTraceIDRatioSampler(opts); err != nil {
-		return err
-	}
-
 	switch g := config.OpenTelemetryTraceIDGenerator; g {
 	case "xray":
 		idg := xray.NewIDGenerator()
