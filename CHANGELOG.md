@@ -5,6 +5,7 @@
 - Support configuring OpenTelemetry with standard [general](https://opentelemetry.io/docs/languages/sdk-configuration/general/) and [OTLP Exporter](https://opentelemetry.io/docs/languages/sdk-configuration/otlp-exporter/) environment variables.
 
 ### Fix
+- Fix loading environment variables from the AWS System Manager Parameter Store when there are more than 10 parameters.
 - (pro) Fixed thumbnail generation for MKV/WebM files containing blocks invalidly marked as keyframes.
 
 ### Deprecated

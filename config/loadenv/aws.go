@@ -86,34 +86,43 @@ func loadAWSSystemManagerParams() error {
 
 	svc := ssm.New(sess, conf)
 
-	input := ssm.GetParametersByPathInput{
-		Path:           aws.String(paramsPath),
-		WithDecryption: aws.Bool(true),
-	}
+	var nextToken *string
 
-	output, err := svc.GetParametersByPath(&input)
-	if err != nil {
-		return fmt.Errorf("Can't retrieve parameters from AWS SSM: %s", err)
-	}
-
-	for _, p := range output.Parameters {
-		if p == nil || p.Name == nil || p.Value == nil {
-			continue
+	for {
+		input := ssm.GetParametersByPathInput{
+			Path:           aws.String(paramsPath),
+			WithDecryption: aws.Bool(true),
+			NextToken:      nextToken,
 		}
 
-		if p.DataType == nil || *p.DataType != "text" {
-			continue
+		output, err := svc.GetParametersByPath(&input)
+		if err != nil {
+			return fmt.Errorf("Can't retrieve parameters from AWS SSM: %s", err)
 		}
 
-		name := *p.Name
+		for _, p := range output.Parameters {
+			if p == nil || p.Name == nil || p.Value == nil {
+				continue
+			}
 
-		env := strings.ReplaceAll(
-			strings.TrimPrefix(strings.TrimPrefix(name, paramsPath), "/"),
-			"/", "_",
-		)
+			if p.DataType == nil || *p.DataType != "text" {
+				continue
+			}
 
-		if err = os.Setenv(env, *p.Value); err != nil {
-			return fmt.Errorf("Can't set %s env variable from AWS SSM: %s", env, err)
+			name := *p.Name
+
+			env := strings.ReplaceAll(
+				strings.TrimPrefix(strings.TrimPrefix(name, paramsPath), "/"),
+				"/", "_",
+			)
+
+			if err = os.Setenv(env, *p.Value); err != nil {
+				return fmt.Errorf("Can't set %s env variable from AWS SSM: %s", env, err)
+			}
+		}
+
+		if nextToken = output.NextToken; nextToken == nil {
+			break
 		}
 	}
 
