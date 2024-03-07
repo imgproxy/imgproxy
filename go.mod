@@ -13,14 +13,24 @@ require (
 	github.com/DarthSim/godotenv v1.3.1
 	github.com/DataDog/datadog-go/v5 v5.5.0
 	github.com/airbrake/gobrake/v5 v5.6.1
-	github.com/aws/aws-sdk-go v1.50.23
+	github.com/aws/amazon-s3-encryption-client-go/v3 v3.0.0
+	github.com/aws/aws-sdk-go-v2 v1.25.2
+	github.com/aws/aws-sdk-go-v2/config v1.27.6
+	github.com/aws/aws-sdk-go-v2/credentials v1.17.6
+	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.16.8
+	github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.36.1
+	github.com/aws/aws-sdk-go-v2/service/kms v1.29.1
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.51.3
+	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.28.1
+	github.com/aws/aws-sdk-go-v2/service/ssm v1.49.1
+	github.com/aws/aws-sdk-go-v2/service/sts v1.28.3
 	github.com/benesch/cgosymbolizer v0.0.0-20190515212042-bec6fe6e597b
 	github.com/bugsnag/bugsnag-go/v2 v2.2.1
 	github.com/felixge/httpsnoop v1.0.4
 	github.com/fsouza/fake-gcs-server v1.42.2
 	github.com/getsentry/sentry-go v0.27.0
 	github.com/honeybadger-io/honeybadger-go v0.6.0
-	github.com/johannesboyne/gofakes3 v0.0.0-20221128113635-c2f5cc6b5294
+	github.com/johannesboyne/gofakes3 v0.0.0-20240217095638-c55a48f17be6
 	github.com/matoous/go-nanoid/v2 v2.0.0
 	github.com/ncw/swift/v2 v2.0.2
 	github.com/newrelic/go-agent/v3 v3.30.0
@@ -72,6 +82,20 @@ require (
 	github.com/DataDog/go-tuf v1.0.4-0.5.2-debug // indirect
 	github.com/DataDog/sketches-go v1.4.4 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
+	github.com/aws/aws-sdk-go v1.50.10 // indirect
+	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.1 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.15.2 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.3.2 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.6.2 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/ini v1.8.0 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/v4a v1.3.2 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.11.1 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.3.4 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.11.4 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.17.2 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.20.1 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.23.1 // indirect
+	github.com/aws/smithy-go v1.20.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/brunoscheufler/aws-ecs-metadata-go v0.0.0-20221221133751-67e37ae746cd // indirect
 	github.com/bugsnag/panicwrap v1.3.4 // indirect
@@ -167,5 +191,3 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.1 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
-
-replace github.com/johannesboyne/gofakes3 => github.com/DarthSim/gofakes3 v0.0.0-20230502153341-3fc66d2bc272

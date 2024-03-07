@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/johannesboyne/gofakes3"
 	"github.com/johannesboyne/gofakes3/backend/s3mem"
 	"github.com/stretchr/testify/require"
@@ -50,18 +50,18 @@ func (s *S3TestSuite) SetupSuite() {
 	svc, err := s.transport.(*transport).getClient(context.Background(), "test")
 	require.Nil(s.T(), err)
 	require.NotNil(s.T(), svc)
-	require.IsType(s.T(), &s3.S3{}, svc)
+	require.IsType(s.T(), &s3.Client{}, svc)
 
-	client := svc.(*s3.S3)
+	client := svc.(*s3.Client)
 
-	_, err = client.PutObject(&s3.PutObjectInput{
+	_, err = client.PutObject(context.Background(), &s3.PutObjectInput{
 		Body:   bytes.NewReader(make([]byte, 32)),
 		Bucket: aws.String("test"),
 		Key:    aws.String("foo/test.png"),
 	})
 	require.Nil(s.T(), err)
 
-	obj, err := client.GetObject(&s3.GetObjectInput{
+	obj, err := client.GetObject(context.Background(), &s3.GetObjectInput{
 		Bucket: aws.String("test"),
 		Key:    aws.String("foo/test.png"),
 	})
@@ -128,7 +128,7 @@ func (s *S3TestSuite) TestRoundTripWithLastModifiedDisabledReturns200() {
 }
 
 func (s *S3TestSuite) TestRoundTripWithLastModifiedEnabled() {
-	config.ETagEnabled = true
+	config.LastModifiedEnabled = true
 	request, _ := http.NewRequest("GET", "s3://test/foo/test.png", nil)
 
 	response, err := s.transport.RoundTrip(request)
@@ -137,7 +137,6 @@ func (s *S3TestSuite) TestRoundTripWithLastModifiedEnabled() {
 	require.Equal(s.T(), s.lastModified.Format(http.TimeFormat), response.Header.Get("Last-Modified"))
 }
 
-// gofakes3 doesn't support If-Modified-Since (yet?)
 func (s *S3TestSuite) TestRoundTripWithIfModifiedSinceReturns304() {
 	config.LastModifiedEnabled = true
 

@@ -3,22 +3,25 @@ package cloudwatch
 import (
 	"context"
 	"fmt"
+	"slices"
 	"sync"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/cloudwatch"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	awsConfig "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/cloudwatch"
+	cloudwatchTypes "github.com/aws/aws-sdk-go-v2/service/cloudwatch/types"
+	"github.com/sirupsen/logrus"
+
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/imath"
 	"github.com/imgproxy/imgproxy/v3/metrics/stats"
-	"github.com/sirupsen/logrus"
 )
 
 type GaugeFunc func() float64
 
 type gauge struct {
-	unit string
+	unit cloudwatchTypes.StandardUnit
 	f    GaugeFunc
 }
 
@@ -30,7 +33,7 @@ type bufferStats struct {
 var (
 	enabled bool
 
-	client *cloudwatch.CloudWatch
+	client *cloudwatch.Client
 
 	gauges      = make(map[string]gauge)
 	gaugesMutex sync.RWMutex
@@ -49,22 +52,20 @@ func Init() error {
 		return nil
 	}
 
-	conf := aws.NewConfig()
-
-	if len(config.CloudWatchRegion) > 0 {
-		conf = conf.WithRegion(config.CloudWatchRegion)
-	}
-
-	sess, err := session.NewSession()
+	conf, err := awsConfig.LoadDefaultConfig(context.Background())
 	if err != nil {
-		return fmt.Errorf("Can't create CloudWatch session: %s", err)
+		return fmt.Errorf("can't load CloudWatch config: %s", err)
 	}
 
-	if sess.Config.Region == nil || len(*sess.Config.Region) == 0 {
-		sess.Config.Region = aws.String("us-west-1")
+	if len(config.CloudWatchRegion) != 0 {
+		conf.Region = config.CloudWatchRegion
 	}
 
-	client = cloudwatch.New(sess, conf)
+	if len(conf.Region) == 0 {
+		conf.Region = "us-west-1"
+	}
+
+	client = cloudwatch.NewFromConfig(conf)
 
 	collectorCtx, collectorCtxCancel = context.WithCancel(context.Background())
 
@@ -89,7 +90,13 @@ func AddGaugeFunc(name, unit string, f GaugeFunc) {
 	gaugesMutex.Lock()
 	defer gaugesMutex.Unlock()
 
-	gauges[name] = gauge{unit: unit, f: f}
+	standardUnit := cloudwatchTypes.StandardUnit(unit)
+
+	if !slices.Contains(cloudwatchTypes.StandardUnitNone.Values(), standardUnit) {
+		panic(fmt.Errorf("Unknown CloudWatch unit: %s", unit))
+	}
+
+	gauges[name] = gauge{unit: standardUnit, f: f}
 }
 
 func ObserveBufferSize(t string, size int) {
@@ -135,18 +142,18 @@ func runMetricsCollector() {
 	tick := time.NewTicker(10 * time.Second)
 	defer tick.Stop()
 
-	dimension := &cloudwatch.Dimension{
+	dimension := cloudwatchTypes.Dimension{
 		Name:  aws.String("ServiceName"),
 		Value: aws.String(config.CloudWatchServiceName),
 	}
 
-	bufferDimensions := make(map[string]*cloudwatch.Dimension)
-	bufferDimension := func(t string) *cloudwatch.Dimension {
+	bufferDimensions := make(map[string]cloudwatchTypes.Dimension)
+	bufferDimension := func(t string) cloudwatchTypes.Dimension {
 		if d, ok := bufferDimensions[t]; ok {
 			return d
 		}
 
-		d := &cloudwatch.Dimension{
+		d := cloudwatchTypes.Dimension{
 			Name:  aws.String("BufferType"),
 			Value: aws.String(t),
 		}
@@ -160,17 +167,17 @@ func runMetricsCollector() {
 		select {
 		case <-tick.C:
 			metricsCount := len(gauges) + len(bufferDefaultSizes) + len(bufferMaxSizes) + len(bufferSizeStats) + 3
-			metrics := make([]*cloudwatch.MetricDatum, 0, metricsCount)
+			metrics := make([]cloudwatchTypes.MetricDatum, 0, metricsCount)
 
 			func() {
 				gaugesMutex.RLock()
 				defer gaugesMutex.RUnlock()
 
 				for name, g := range gauges {
-					metrics = append(metrics, &cloudwatch.MetricDatum{
-						Dimensions: []*cloudwatch.Dimension{dimension},
+					metrics = append(metrics, cloudwatchTypes.MetricDatum{
+						Dimensions: []cloudwatchTypes.Dimension{dimension},
 						MetricName: aws.String(name),
-						Unit:       aws.String(g.unit),
+						Unit:       g.unit,
 						Value:      aws.Float64(g.f()),
 					})
 				}
@@ -181,29 +188,29 @@ func runMetricsCollector() {
 				defer bufferStatsMutex.Unlock()
 
 				for t, size := range bufferDefaultSizes {
-					metrics = append(metrics, &cloudwatch.MetricDatum{
-						Dimensions: []*cloudwatch.Dimension{dimension, bufferDimension(t)},
+					metrics = append(metrics, cloudwatchTypes.MetricDatum{
+						Dimensions: []cloudwatchTypes.Dimension{dimension, bufferDimension(t)},
 						MetricName: aws.String("BufferDefaultSize"),
-						Unit:       aws.String("Bytes"),
+						Unit:       cloudwatchTypes.StandardUnitBytes,
 						Value:      aws.Float64(float64(size)),
 					})
 				}
 
 				for t, size := range bufferMaxSizes {
-					metrics = append(metrics, &cloudwatch.MetricDatum{
-						Dimensions: []*cloudwatch.Dimension{dimension, bufferDimension(t)},
+					metrics = append(metrics, cloudwatchTypes.MetricDatum{
+						Dimensions: []cloudwatchTypes.Dimension{dimension, bufferDimension(t)},
 						MetricName: aws.String("BufferMaximumSize"),
-						Unit:       aws.String("Bytes"),
+						Unit:       cloudwatchTypes.StandardUnitBytes,
 						Value:      aws.Float64(float64(size)),
 					})
 				}
 
 				for t, stats := range bufferSizeStats {
-					metrics = append(metrics, &cloudwatch.MetricDatum{
-						Dimensions: []*cloudwatch.Dimension{dimension, bufferDimension(t)},
+					metrics = append(metrics, cloudwatchTypes.MetricDatum{
+						Dimensions: []cloudwatchTypes.Dimension{dimension, bufferDimension(t)},
 						MetricName: aws.String("BufferSize"),
-						Unit:       aws.String("Bytes"),
-						StatisticValues: &cloudwatch.StatisticSet{
+						Unit:       cloudwatchTypes.StandardUnitBytes,
+						StatisticValues: &cloudwatchTypes.StatisticSet{
 							SampleCount: aws.Float64(float64(stats.count)),
 							Sum:         aws.Float64(float64(stats.sum)),
 							Minimum:     aws.Float64(float64(stats.min)),
@@ -213,45 +220,51 @@ func runMetricsCollector() {
 				}
 			}()
 
-			metrics = append(metrics, &cloudwatch.MetricDatum{
-				Dimensions: []*cloudwatch.Dimension{dimension},
+			metrics = append(metrics, cloudwatchTypes.MetricDatum{
+				Dimensions: []cloudwatchTypes.Dimension{dimension},
 				MetricName: aws.String("RequestsInProgress"),
-				Unit:       aws.String("Count"),
+				Unit:       cloudwatchTypes.StandardUnitCount,
 				Value:      aws.Float64(stats.RequestsInProgress()),
 			})
 
-			metrics = append(metrics, &cloudwatch.MetricDatum{
-				Dimensions: []*cloudwatch.Dimension{dimension},
+			metrics = append(metrics, cloudwatchTypes.MetricDatum{
+				Dimensions: []cloudwatchTypes.Dimension{dimension},
 				MetricName: aws.String("ImagesInProgress"),
-				Unit:       aws.String("Count"),
+				Unit:       cloudwatchTypes.StandardUnitCount,
 				Value:      aws.Float64(stats.ImagesInProgress()),
 			})
 
-			metrics = append(metrics, &cloudwatch.MetricDatum{
-				Dimensions: []*cloudwatch.Dimension{dimension},
+			metrics = append(metrics, cloudwatchTypes.MetricDatum{
+				Dimensions: []cloudwatchTypes.Dimension{dimension},
 				MetricName: aws.String("ConcurrencyUtilization"),
-				Unit:       aws.String("Percent"),
+				Unit:       cloudwatchTypes.StandardUnitPercent,
 				Value: aws.Float64(
 					stats.RequestsInProgress() / float64(config.Workers) * 100.0,
 				),
 			})
 
-			metrics = append(metrics, &cloudwatch.MetricDatum{
-				Dimensions: []*cloudwatch.Dimension{dimension},
+			metrics = append(metrics, cloudwatchTypes.MetricDatum{
+				Dimensions: []cloudwatchTypes.Dimension{dimension},
 				MetricName: aws.String("WorkersUtilization"),
-				Unit:       aws.String("Percent"),
+				Unit:       cloudwatchTypes.StandardUnitPercent,
 				Value: aws.Float64(
 					stats.RequestsInProgress() / float64(config.Workers) * 100.0,
 				),
 			})
 
-			_, err := client.PutMetricData(&cloudwatch.PutMetricDataInput{
+			input := cloudwatch.PutMetricDataInput{
 				Namespace:  aws.String(config.CloudWatchNamespace),
 				MetricData: metrics,
-			})
-			if err != nil {
-				logrus.Warnf("Can't send CloudWatch metrics: %s", err)
 			}
+
+			func() {
+				ctx, cancel := context.WithTimeout(collectorCtx, 30*time.Second)
+				defer cancel()
+
+				if _, err := client.PutMetricData(ctx, &input); err != nil {
+					logrus.Warnf("Can't send CloudWatch metrics: %s", err)
+				}
+			}()
 		case <-collectorCtx.Done():
 			return
 		}

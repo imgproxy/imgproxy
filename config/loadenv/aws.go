@@ -1,15 +1,17 @@
 package loadenv
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/DarthSim/godotenv"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/secretsmanager"
-	"github.com/aws/aws-sdk-go/service/ssm"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	awsConfig "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
+	"github.com/aws/aws-sdk-go-v2/service/ssm"
 )
 
 func loadAWSSecret() error {
@@ -22,18 +24,20 @@ func loadAWSSecret() error {
 		return nil
 	}
 
-	sess, err := session.NewSession()
+	conf, err := awsConfig.LoadDefaultConfig(context.Background())
 	if err != nil {
-		return fmt.Errorf("Can't create AWS Secrets Manager session: %s", err)
+		return fmt.Errorf("can't load AWS Secrets Manager config: %s", err)
 	}
-
-	conf := aws.NewConfig()
 
 	if len(secretRegion) != 0 {
-		conf.Region = aws.String(secretRegion)
+		conf.Region = secretRegion
 	}
 
-	svc := secretsmanager.New(sess, conf)
+	if len(conf.Region) == 0 {
+		conf.Region = "us-west-1"
+	}
+
+	client := secretsmanager.NewFromConfig(conf)
 
 	input := secretsmanager.GetSecretValueInput{SecretId: aws.String(secretID)}
 	if len(secretVersionID) > 0 {
@@ -42,7 +46,10 @@ func loadAWSSecret() error {
 		input.VersionStage = aws.String(secretVersionStage)
 	}
 
-	output, err := svc.GetSecretValue(&input)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	output, err := client.GetSecretValue(ctx, &input)
 	if err != nil {
 		return fmt.Errorf("Can't retrieve config from AWS Secrets Manager: %s", err)
 	}
@@ -73,18 +80,23 @@ func loadAWSSystemManagerParams() error {
 		return nil
 	}
 
-	sess, err := session.NewSession()
+	conf, err := awsConfig.LoadDefaultConfig(context.Background())
 	if err != nil {
-		return fmt.Errorf("Can't create AWS SSM session: %s", err)
+		return fmt.Errorf("can't load AWS SSM config: %s", err)
 	}
-
-	conf := aws.NewConfig()
 
 	if len(paramsRegion) != 0 {
-		conf.Region = aws.String(paramsRegion)
+		conf.Region = paramsRegion
 	}
 
-	svc := ssm.New(sess, conf)
+	if len(conf.Region) == 0 {
+		conf.Region = "us-west-1"
+	}
+
+	client := ssm.NewFromConfig(conf)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
 	var nextToken *string
 
@@ -95,13 +107,13 @@ func loadAWSSystemManagerParams() error {
 			NextToken:      nextToken,
 		}
 
-		output, err := svc.GetParametersByPath(&input)
+		output, err := client.GetParametersByPath(ctx, &input)
 		if err != nil {
 			return fmt.Errorf("Can't retrieve parameters from AWS SSM: %s", err)
 		}
 
 		for _, p := range output.Parameters {
-			if p == nil || p.Name == nil || p.Value == nil {
+			if p.Name == nil || p.Value == nil {
 				continue
 			}
 
