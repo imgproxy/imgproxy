@@ -3,6 +3,7 @@
 ## [Unreleased]
 ### Change
 - Support configuring OpenTelemetry with standard [general](https://opentelemetry.io/docs/languages/sdk-configuration/general/) and [OTLP Exporter](https://opentelemetry.io/docs/languages/sdk-configuration/otlp-exporter/) environment variables.
+- `IMGPROXY_MAX_SRC_RESOLUTION` default value is increased to 50.
 
 ### Fix
 - Fix loading environment variables from the AWS System Manager Parameter Store when there are more than 10 parameters.
