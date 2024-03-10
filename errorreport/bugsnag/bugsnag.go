@@ -15,6 +15,7 @@ func Init() {
 		bugsnag.Configure(bugsnag.Configuration{
 			APIKey:       config.BugsnagKey,
 			ReleaseStage: config.BugsnagStage,
+			PanicHandler: func() {}, // Disable forking the process
 		})
 		enabled = true
 	}
