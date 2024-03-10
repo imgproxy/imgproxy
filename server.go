@@ -135,6 +135,8 @@ func withPanicHandler(h router.RouteHandler) router.RouteHandler {
 		ctx := errorreport.StartRequest(r)
 		r = r.WithContext(ctx)
 
+		errorreport.SetMetadata(r, "Request ID", reqID)
+
 		defer func() {
 			if rerr := recover(); rerr != nil {
 				if rerr == http.ErrAbortHandler {

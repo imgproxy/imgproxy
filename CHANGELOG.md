@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 ### Add
-- Add processing/info options and source image URL to error reports.
+- Add request ID, processing/info options, and source image URL to error reports.
 
 ### Change
 - Support configuring OpenTelemetry with standard [general](https://opentelemetry.io/docs/languages/sdk-configuration/general/) and [OTLP Exporter](https://opentelemetry.io/docs/languages/sdk-configuration/otlp-exporter/) environment variables.
