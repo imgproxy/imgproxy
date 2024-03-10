@@ -241,6 +241,9 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	po, imageURL, err := options.ParsePath(path, r.Header)
 	checkErr(ctx, "path_parsing", err)
 
+	errorreport.SetMetadata(r, "Source Image URL", imageURL)
+	errorreport.SetMetadata(r, "Processing Options", po)
+
 	err = security.VerifySourceURL(imageURL)
 	checkErr(ctx, "security", err)
 

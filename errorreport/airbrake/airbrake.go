@@ -2,12 +2,18 @@ package airbrake
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/airbrake/gobrake/v5"
+
 	"github.com/imgproxy/imgproxy/v3/config"
 )
 
-var notifier *gobrake.Notifier
+var (
+	notifier *gobrake.Notifier
+
+	metaReplacer = strings.NewReplacer(" ", "-")
+)
 
 func Init() {
 	if len(config.AirbrakeProjecKey) > 0 {
@@ -19,10 +25,19 @@ func Init() {
 	}
 }
 
-func Report(err error, req *http.Request) {
-	if notifier != nil {
-		notifier.Notify(err, req)
+func Report(err error, req *http.Request, meta map[string]any) {
+	if notifier == nil {
+		return
 	}
+
+	notice := notifier.Notice(err, req, 2)
+
+	for k, v := range meta {
+		key := metaReplacer.Replace(strings.ToLower(k))
+		notice.Context[key] = v
+	}
+
+	notifier.SendNoticeAsync(notice)
 }
 
 func Close() {

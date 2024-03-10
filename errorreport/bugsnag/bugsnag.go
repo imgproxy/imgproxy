@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/bugsnag/bugsnag-go/v2"
+
 	"github.com/imgproxy/imgproxy/v3/config"
 )
 
@@ -19,8 +20,15 @@ func Init() {
 	}
 }
 
-func Report(err error, req *http.Request) {
-	if enabled {
-		bugsnag.Notify(err, req)
+func Report(err error, req *http.Request, meta map[string]any) {
+	if !enabled {
+		return
 	}
+
+	extra := make(bugsnag.MetaData)
+	for k, v := range meta {
+		extra.Add("Processing Context", k, v)
+	}
+
+	bugsnag.Notify(err, req, extra)
 }

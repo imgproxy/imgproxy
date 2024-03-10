@@ -5,13 +5,14 @@ import (
 	"strings"
 
 	"github.com/honeybadger-io/honeybadger-go"
+
 	"github.com/imgproxy/imgproxy/v3/config"
 )
 
 var (
 	enabled bool
 
-	headersReplacer = strings.NewReplacer("-", "_")
+	metaReplacer = strings.NewReplacer("-", "_", " ", "_")
 )
 
 func Init() {
@@ -24,15 +25,22 @@ func Init() {
 	}
 }
 
-func Report(err error, req *http.Request) {
-	if enabled {
-		headers := make(honeybadger.CGIData)
-
-		for k, v := range req.Header {
-			key := "HTTP_" + headersReplacer.Replace(strings.ToUpper(k))
-			headers[key] = v[0]
-		}
-
-		honeybadger.Notify(err, req.URL, headers)
+func Report(err error, req *http.Request, meta map[string]any) {
+	if !enabled {
+		return
 	}
+
+	extra := make(honeybadger.CGIData, len(req.Header)+len(meta))
+
+	for k, v := range req.Header {
+		key := "HTTP_" + metaReplacer.Replace(strings.ToUpper(k))
+		extra[key] = v[0]
+	}
+
+	for k, v := range meta {
+		key := metaReplacer.Replace(strings.ToUpper(k))
+		extra[key] = v
+	}
+
+	honeybadger.Notify(err, req.URL, extra)
 }

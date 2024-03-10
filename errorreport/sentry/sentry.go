@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/getsentry/sentry-go"
+
 	"github.com/imgproxy/imgproxy/v3/config"
 )
 
@@ -26,14 +27,21 @@ func Init() {
 	}
 }
 
-func Report(err error, req *http.Request) {
-	if enabled {
-		hub := sentry.CurrentHub().Clone()
-		hub.Scope().SetRequest(req)
-		hub.Scope().SetLevel(sentry.LevelError)
-		eventID := hub.CaptureException(err)
-		if eventID != nil {
-			hub.Flush(timeout)
-		}
+func Report(err error, req *http.Request, meta map[string]any) {
+	if !enabled {
+		return
+	}
+
+	hub := sentry.CurrentHub().Clone()
+	hub.Scope().SetRequest(req)
+	hub.Scope().SetLevel(sentry.LevelError)
+
+	if meta != nil {
+		hub.Scope().SetContext("Processing context", meta)
+	}
+
+	eventID := hub.CaptureException(err)
+	if eventID != nil {
+		hub.Flush(timeout)
 	}
 }

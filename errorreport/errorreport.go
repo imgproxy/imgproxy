@@ -1,6 +1,7 @@
 package errorreport
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/imgproxy/imgproxy/v3/errorreport/airbrake"
@@ -9,6 +10,8 @@ import (
 	"github.com/imgproxy/imgproxy/v3/errorreport/sentry"
 )
 
+type metaCtxKey struct{}
+
 func Init() {
 	bugsnag.Init()
 	honeybadger.Init()
@@ -16,11 +19,30 @@ func Init() {
 	airbrake.Init()
 }
 
+func StartRequest(req *http.Request) context.Context {
+	meta := make(map[string]any)
+	return context.WithValue(req.Context(), metaCtxKey{}, meta)
+}
+
+func SetMetadata(req *http.Request, key string, value any) {
+	meta, ok := req.Context().Value(metaCtxKey{}).(map[string]any)
+	if !ok || meta == nil {
+		return
+	}
+
+	meta[key] = value
+}
+
 func Report(err error, req *http.Request) {
-	bugsnag.Report(err, req)
-	honeybadger.Report(err, req)
-	sentry.Report(err, req)
-	airbrake.Report(err, req)
+	meta, ok := req.Context().Value(metaCtxKey{}).(map[string]any)
+	if !ok {
+		meta = nil
+	}
+
+	bugsnag.Report(err, req, meta)
+	honeybadger.Report(err, req, meta)
+	sentry.Report(err, req, meta)
+	airbrake.Report(err, req, meta)
 }
 
 func Close() {

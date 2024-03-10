@@ -132,6 +132,9 @@ func withSecret(h router.RouteHandler) router.RouteHandler {
 
 func withPanicHandler(h router.RouteHandler) router.RouteHandler {
 	return func(reqID string, rw http.ResponseWriter, r *http.Request) {
+		ctx := errorreport.StartRequest(r)
+		r = r.WithContext(ctx)
+
 		defer func() {
 			if rerr := recover(); rerr != nil {
 				if rerr == http.ErrAbortHandler {
