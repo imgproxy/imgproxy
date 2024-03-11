@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [3.23.0] - 2024-03-11
 ### Add
 - Add request ID, processing/info options, and source image URL to error reports.
 
