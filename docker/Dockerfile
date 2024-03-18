@@ -47,6 +47,9 @@ ENV IMGPROXY_MALLOC malloc
 ENV AWS_LWA_READINESS_CHECK_PATH /health
 ENV AWS_LWA_INVOKE_MODE response_stream
 
+# Disable SVE on ARM64. SVE is slower than NEON on Amazon Graviton 3
+ENV VIPS_VECTOR=167772160
+
 RUN groupadd -r imgproxy \
   && useradd -r -u 999 -g imgproxy imgproxy \
   && mkdir -p /var/cache/fontconfig \
