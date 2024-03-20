@@ -118,6 +118,9 @@ func shellOutDither(inFile string, po *options.ProcessingOptions) error {
 	if po.Dither.SoftProof {
 		cmdArgs = append(cmdArgs, "--image-raw", proofFile)
 	}
+	if po.Dither.Clamp {
+		cmdArgs = append(cmdArgs, "--clamp")
+	}
 
 	cmd := exec.Command("python3", cmdArgs...)
 	cmd.Dir = "/opt/pushd-dither"
