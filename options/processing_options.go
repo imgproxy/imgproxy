@@ -721,7 +721,7 @@ func applyPixelateOption(po *ProcessingOptions, args []string) error {
 }
 
 func applyDitherOption(po *ProcessingOptions, args []string) error {
-	if len(args) > 4 {
+	if len(args) > 7 {
 		return fmt.Errorf("Invalid dither arguments: %v", args)
 	}
 
