@@ -92,10 +92,11 @@ func dither(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOption
 }
 
 func shellOutDither(inFile string, po *options.ProcessingOptions) error {
-	// installed via Dockerfile in /opt/pushd-dither
 	outFile := fmt.Sprintf("%s-dithered-tmp.png", inFile)
+	proofFile := fmt.Sprintf("%s-dithered-proof-tmp.png", inFile)
+
+	// installed via Dockerfile in /opt/pushd-dither
 	cmdArgs := []string{"test.py",
-		"--pal-meter-13",
 		"--image-in", inFile,
 		"--image-out", outFile}
 
@@ -111,6 +112,15 @@ func shellOutDither(inFile string, po *options.ProcessingOptions) error {
 	if po.Dither.Desaturate {
 		cmdArgs = append(cmdArgs, "--desaturate")
 	}
+	if po.Dither.Meter13 {
+		cmdArgs = append(cmdArgs, "--pal-meter-13")
+	}
+	if po.Dither.SoftProof {
+		cmdArgs = append(cmdArgs, "--image-raw", proofFile)
+	}
+	if po.Dither.Clamp {
+		cmdArgs = append(cmdArgs, "--clamp")
+	}
 
 	cmd := exec.Command("python3", cmdArgs...)
 	cmd.Dir = "/opt/pushd-dither"
@@ -119,6 +129,14 @@ func shellOutDither(inFile string, po *options.ProcessingOptions) error {
 		return fmt.Errorf("dither failed: %s: %s", err, output)
 	}
 
+	if po.Dither.SoftProof {
+		// cleanup unused outfile, replace with proof file
+		err := os.Remove(outFile)
+		if err != nil {
+			log.Errorf("failed to remove unused out file: %s", err)
+		}
+		outFile = proofFile
+	}
 	// clobber the original file
 	return os.Rename(outFile, inFile)
 }

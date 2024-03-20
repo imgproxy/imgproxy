@@ -70,6 +70,9 @@ type DitherOptions struct {
 	Contrast   bool
 	Native     bool
 	Desaturate bool
+	Meter13    bool
+	SoftProof  bool
+	Clamp      bool
 }
 
 type WatermarkOptions struct {
@@ -159,7 +162,7 @@ func NewProcessingOptions() *ProcessingOptions {
 		Blur:              0,
 		Sharpen:           0,
 		Dpr:               1,
-		Dither:            DitherOptions{Type: DitherNone, Contrast: false, Native: false, Desaturate: false},
+		Dither:            DitherOptions{Type: DitherNone, Contrast: false, Native: false, Desaturate: false, Meter13: false, SoftProof: false, Clamp: false},
 		Watermark:         WatermarkOptions{Opacity: 1, Replicate: false, Gravity: GravityOptions{Type: GravityCenter}},
 		StripMetadata:     config.StripMetadata,
 		KeepCopyright:     config.KeepCopyright,
@@ -731,7 +734,7 @@ func applyDitherOption(po *ProcessingOptions, args []string) error {
 		return fmt.Errorf("Invalid dither type: %s", args[0])
 	}
 
-	if len(args) > 1 { // next two arguments are optional
+	if len(args) > 1 { // additional arguments are optional
 		for _, arg := range args[1:] {
 			switch arg {
 			case "co":
@@ -740,6 +743,12 @@ func applyDitherOption(po *ProcessingOptions, args []string) error {
 				po.Dither.Native = true
 			case "de":
 				po.Dither.Desaturate = true
+			case "m13":
+				po.Dither.Meter13 = true
+			case "sp":
+				po.Dither.SoftProof = true
+			case "cl":
+				po.Dither.Clamp = true
 			default:
 				return fmt.Errorf("Invalid dither argument: %s", arg)
 			}
