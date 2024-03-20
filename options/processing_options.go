@@ -162,7 +162,7 @@ func NewProcessingOptions() *ProcessingOptions {
 		Blur:              0,
 		Sharpen:           0,
 		Dpr:               1,
-		Dither:            DitherOptions{Type: DitherNone, Contrast: false, Native: false, Desaturate: false, Meter13: false, Clamp: false},
+		Dither:            DitherOptions{Type: DitherNone, Contrast: false, Native: false, Desaturate: false, Meter13: false, SoftProof: false, Clamp: false},
 		Watermark:         WatermarkOptions{Opacity: 1, Replicate: false, Gravity: GravityOptions{Type: GravityCenter}},
 		StripMetadata:     config.StripMetadata,
 		KeepCopyright:     config.KeepCopyright,
