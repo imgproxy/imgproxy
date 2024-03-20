@@ -469,6 +469,7 @@ vips_smartcrop_go(VipsImage *in, VipsImage **out, int width, int height) {
   return vips_smartcrop(in, out, width, height, NULL);
 }
 
+int
 vips_smartcrop_center_go(VipsImage *in, VipsImage **out, int width, int height) {
 #if VIPS_SUPPORT_SMARTCROP
   return vips_smartcrop(in, out, width, height, "interesting", VIPS_INTERESTING_CENTRE, NULL);
