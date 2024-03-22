@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -369,32 +370,28 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 
 	checkErr(ctx, "timeout", router.CheckTimeout(ctx))
 
-	if originData.Type == po.Format || po.Format == imagetype.Unknown {
-		// Don't process SVG
-		if originData.Type == imagetype.SVG {
-			if config.SanitizeSvg {
-				sanitized, svgErr := svg.Sanitize(originData)
-				checkErr(ctx, "svg_processing", svgErr)
+	// Skip processing svg with unknown or the same destination imageType
+	// if it's not forced by AlwaysRasterizeSvg option
+	// Also skip processing if the format is in SkipProcessingFormats
+	shouldSkipProcessing := (originData.Type == po.Format || po.Format == imagetype.Unknown) &&
+		(slices.Contains(po.SkipProcessingFormats, originData.Type) ||
+			originData.Type == imagetype.SVG && !config.AlwaysRasterizeSvg)
 
-				// Since we'll replace origin data, it's better to close it to return
-				// it's buffer to the pool
-				originData.Close()
+	if shouldSkipProcessing {
+		if originData.Type == imagetype.SVG && config.SanitizeSvg {
+			sanitized, svgErr := svg.Sanitize(originData)
+			checkErr(ctx, "svg_processing", svgErr)
 
-				originData = sanitized
-			}
+			// Since we'll replace origin data, it's better to close it to return
+			// it's buffer to the pool
+			originData.Close()
 
-			respondWithImage(reqID, r, rw, statusCode, originData, po, imageURL, originData)
-			return
+			originData = sanitized
+
 		}
 
-		if len(po.SkipProcessingFormats) > 0 {
-			for _, f := range po.SkipProcessingFormats {
-				if f == originData.Type {
-					respondWithImage(reqID, r, rw, statusCode, originData, po, imageURL, originData)
-					return
-				}
-			}
-		}
+		respondWithImage(reqID, r, rw, statusCode, originData, po, imageURL, originData)
+		return
 	}
 
 	if !vips.SupportsLoad(originData.Type) {

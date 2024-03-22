@@ -93,7 +93,8 @@ var (
 	AllowLinkLocalSourceAddresses bool
 	AllowPrivateSourceAddresses   bool
 
-	SanitizeSvg bool
+	SanitizeSvg        bool
+	AlwaysRasterizeSvg bool
 
 	CookiePassthrough bool
 	CookieBaseURL     string
@@ -288,6 +289,7 @@ func Reset() {
 	AllowPrivateSourceAddresses = true
 
 	SanitizeSvg = true
+	AlwaysRasterizeSvg = false
 
 	CookiePassthrough = false
 	CookieBaseURL = ""
@@ -429,6 +431,7 @@ func Configure() error {
 	configurators.Bool(&AllowPrivateSourceAddresses, "IMGPROXY_ALLOW_PRIVATE_SOURCE_ADDRESSES")
 
 	configurators.Bool(&SanitizeSvg, "IMGPROXY_SANITIZE_SVG")
+	configurators.Bool(&AlwaysRasterizeSvg, "IMGPROXY_ALWAYS_RASTERIZE_SVG")
 
 	configurators.Bool(&AllowSecurityOptions, "IMGPROXY_ALLOW_SECURITY_OPTIONS")
 
@@ -680,7 +683,6 @@ func Configure() error {
 
 	if LocalFileSystemRoot != "" {
 		stat, err := os.Stat(LocalFileSystemRoot)
-
 		if err != nil {
 			return fmt.Errorf("Cannot use local directory: %s", err)
 		}
