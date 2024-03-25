@@ -1,5 +1,9 @@
 # Changelog
 
+## [Unreleased]
+### Add
+- Add [IMGPROXY_ALWAYS_RASTERIZE_SVG](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_ALWAYS_RASTERIZE_SVG) config.
+
 ## [3.23.0] - 2024-03-11
 ### Add
 - Add request ID, processing/info options, and source image URL to error reports.
