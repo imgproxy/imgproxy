@@ -608,7 +608,6 @@ func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqExactMatchLastModifiedD
 		require.Equal(s.T(), "", modifiedSince)
 		rw.WriteHeader(200)
 		rw.Write(data)
-
 	}))
 	defer ts.Close()
 
@@ -619,6 +618,7 @@ func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqExactMatchLastModifiedD
 
 	require.Equal(s.T(), 200, res.StatusCode)
 }
+
 func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqExactMatchLastModifiedEnabled() {
 	config.LastModifiedEnabled = true
 	lastModified := "Wed, 21 Oct 2015 07:28:00 GMT"
@@ -657,6 +657,7 @@ func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqCompareMoreRecentLastMo
 
 	require.Equal(s.T(), 200, res.StatusCode)
 }
+
 func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqCompareMoreRecentLastModifiedEnabled() {
 	config.LastModifiedEnabled = true
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
@@ -678,6 +679,7 @@ func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqCompareMoreRecentLastMo
 
 	require.Equal(s.T(), 304, res.StatusCode)
 }
+
 func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqCompareTooOldLastModifiedDisabled() {
 	config.LastModifiedEnabled = false
 	data := s.readTestFile("test1.png")
@@ -698,6 +700,7 @@ func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqCompareTooOldLastModifi
 
 	require.Equal(s.T(), 200, res.StatusCode)
 }
+
 func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqCompareTooOldLastModifiedEnabled() {
 	config.LastModifiedEnabled = true
 	data := s.readTestFile("test1.png")
@@ -721,6 +724,49 @@ func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqCompareTooOldLastModifi
 
 	require.Equal(s.T(), 200, res.StatusCode)
 }
+
+func (s *ProcessingHandlerTestSuite) TestAlwaysRasterizeSvg() {
+	config.AlwaysRasterizeSvg = true
+
+	rw := s.send("/unsafe/rs:fill:40:40/plain/local:///test1.svg")
+	res := rw.Result()
+
+	require.Equal(s.T(), 200, res.StatusCode)
+	require.Equal(s.T(), "image/png", res.Header.Get("Content-Type"))
+}
+
+func (s *ProcessingHandlerTestSuite) TestAlwaysRasterizeSvgWithEnforceAvif() {
+	config.AlwaysRasterizeSvg = true
+	config.EnforceWebp = true
+
+	rw := s.send("/unsafe/plain/local:///test1.svg", http.Header{"Accept": []string{"image/webp"}})
+	res := rw.Result()
+
+	require.Equal(s.T(), 200, res.StatusCode)
+	require.Equal(s.T(), "image/webp", res.Header.Get("Content-Type"))
+}
+
+func (s *ProcessingHandlerTestSuite) TestAlwaysRasterizeSvgDisabled() {
+	config.AlwaysRasterizeSvg = false
+	config.EnforceWebp = true
+
+	rw := s.send("/unsafe/plain/local:///test1.svg")
+	res := rw.Result()
+
+	require.Equal(s.T(), 200, res.StatusCode)
+	require.Equal(s.T(), "image/svg+xml", res.Header.Get("Content-Type"))
+}
+
+func (s *ProcessingHandlerTestSuite) TestAlwaysRasterizeSvgWithFormat() {
+	config.AlwaysRasterizeSvg = true
+	config.SkipProcessingFormats = []imagetype.Type{imagetype.SVG}
+	rw := s.send("/unsafe/plain/local:///test1.svg@svg")
+	res := rw.Result()
+
+	require.Equal(s.T(), 200, res.StatusCode)
+	require.Equal(s.T(), "image/svg+xml", res.Header.Get("Content-Type"))
+}
+
 func TestProcessingHandler(t *testing.T) {
 	suite.Run(t, new(ProcessingHandlerTestSuite))
 }
