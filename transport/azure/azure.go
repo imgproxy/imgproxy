@@ -84,7 +84,22 @@ func New() (http.RoundTripper, error) {
 
 func (t transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	container := req.URL.Host
-	key := req.URL.Path
+	key := strings.TrimPrefix(req.URL.Path, "/")
+
+	if len(container) == 0 || len(key) == 0 {
+		body := strings.NewReader("Invalid ABS URL: container name or object key is empty")
+		return &http.Response{
+			StatusCode:    http.StatusNotFound,
+			Proto:         "HTTP/1.0",
+			ProtoMajor:    1,
+			ProtoMinor:    0,
+			Header:        http.Header{},
+			ContentLength: int64(body.Len()),
+			Body:          io.NopCloser(body),
+			Close:         false,
+			Request:       req,
+		}, nil
+	}
 
 	statusCode := http.StatusOK
 
@@ -112,7 +127,7 @@ func (t transport) RoundTrip(req *http.Request) (*http.Response, error) {
 		statusCode = http.StatusPartialContent
 	}
 
-	result, err := t.client.DownloadStream(req.Context(), container, strings.TrimPrefix(key, "/"), opts)
+	result, err := t.client.DownloadStream(req.Context(), container, key, opts)
 	if err != nil {
 		if azError, ok := err.(*azcore.ResponseError); !ok || azError.StatusCode < 100 || azError.StatusCode == 301 {
 			return nil, err

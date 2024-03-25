@@ -54,6 +54,21 @@ func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error)
 	container := req.URL.Host
 	objectName := strings.TrimPrefix(req.URL.Path, "/")
 
+	if len(container) == 0 || len(objectName) == 0 {
+		body := strings.NewReader("Invalid Swift URL: container name or object name is empty")
+		return &http.Response{
+			StatusCode:    http.StatusNotFound,
+			Proto:         "HTTP/1.0",
+			ProtoMajor:    1,
+			ProtoMinor:    0,
+			Header:        http.Header{},
+			ContentLength: int64(body.Len()),
+			Body:          io.NopCloser(body),
+			Close:         false,
+			Request:       req,
+		}, nil
+	}
+
 	reqHeaders := make(swift.Headers)
 	if r := req.Header.Get("Range"); len(r) > 0 {
 		reqHeaders["Range"] = r

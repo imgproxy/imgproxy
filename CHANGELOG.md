@@ -4,6 +4,9 @@
 ### Add
 - Add [IMGPROXY_ALWAYS_RASTERIZE_SVG](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_ALWAYS_RASTERIZE_SVG) config.
 
+### Change
+- Respond with 404 when the bucket/container name or object key is empty in an S3, Google Cloud Storage, Azure Blob Storage, or OpenStack Object Storage (Swift) URL.
+
 ## [3.23.0] - 2024-03-11
 ### Add
 - Add request ID, processing/info options, and source image URL to error reports.

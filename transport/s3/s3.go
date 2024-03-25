@@ -94,9 +94,27 @@ func New() (http.RoundTripper, error) {
 }
 
 func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
+	bucket := req.URL.Host
+	key := strings.TrimPrefix(req.URL.Path, "/")
+
+	if len(bucket) == 0 || len(key) == 0 {
+		body := strings.NewReader("Invalid S3 URL: bucket name or object key is empty")
+		return &http.Response{
+			StatusCode:    http.StatusNotFound,
+			Proto:         "HTTP/1.0",
+			ProtoMajor:    1,
+			ProtoMinor:    0,
+			Header:        http.Header{},
+			ContentLength: int64(body.Len()),
+			Body:          io.NopCloser(body),
+			Close:         false,
+			Request:       req,
+		}, nil
+	}
+
 	input := &s3.GetObjectInput{
-		Bucket: aws.String(req.URL.Host),
-		Key:    aws.String(strings.TrimPrefix(req.URL.Path, "/")),
+		Bucket: aws.String(bucket),
+		Key:    aws.String(key),
 	}
 
 	if len(req.URL.RawQuery) > 0 {
