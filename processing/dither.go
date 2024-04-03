@@ -2,6 +2,7 @@ package processing
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"os/exec"
 
@@ -18,12 +19,15 @@ func dither(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOption
 		return nil
 	}
 
-	// Resize to desired dimensions in case of crop
-	// usually the smaller cropped images are returned to the frame for upscaling, but in this case we want to
-	// dither image after it's been resized to its final dimensions
+	// Resize to desired dimensions in case of the image being smaller than the target size
+	// usually smaller sized images are returned to the frame for upscaling, but in this case we want to
+	// dither image after it's been resized to be bounded within the [po.Width X po.Height] box
+	// we trust that anything rendering to the frame itself will have the proper aspect defined
+
 	widthScale := float64(po.Width) / float64(img.Width())
 	heightScale := float64(po.Height) / float64(img.Height())
-	if err := img.Resize(widthScale, heightScale); err != nil {
+	minScale := math.Min(widthScale, heightScale)
+	if err := img.Resize(minScale, minScale); err != nil {
 		return err
 	}
 
