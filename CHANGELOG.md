@@ -7,6 +7,9 @@
 ### Change
 - Respond with 404 when the bucket/container name or object key is empty in an S3, Google Cloud Storage, Azure Blob Storage, or OpenStack Object Storage (Swift) URL.
 
+### Fix
+- (pro) Fixed false-positive video detections.
+
 ## [3.23.0] - 2024-03-11
 ### Add
 - Add request ID, processing/info options, and source image URL to error reports.
