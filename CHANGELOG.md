@@ -9,6 +9,7 @@
 
 ### Fix
 - (pro) Fixed false-positive video detections.
+- Fix parsing some TIFFs.
 
 ## [3.23.0] - 2024-03-11
 ### Add
