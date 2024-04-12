@@ -32,7 +32,7 @@ func Parse(s string) (int64, int64, error) {
 		start, end := textproto.TrimString(ra[:i]), textproto.TrimString(ra[i+1:])
 
 		if start == "" {
-			// Don't support ranges without start since it looks like FFmpeg doen't use ones
+			// Don't support ranges without start since it looks like FFmpeg doesn't use ones
 			return 0, 0, errors.New("invalid range")
 		}
 
