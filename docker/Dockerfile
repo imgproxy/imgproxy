@@ -23,6 +23,7 @@ RUN apt-get update \
     liblzma5 \
     libzstd1 \
     fontconfig-config \
+    fonts-dejavu-core \
     media-types \
     libjemalloc2 \
     libtcmalloc-minimal4 \
