@@ -6,6 +6,7 @@
 
 ### Change
 - Respond with 404 when the bucket/container name or object key is empty in an S3, Google Cloud Storage, Azure Blob Storage, or OpenStack Object Storage (Swift) URL.
+- (docker) Update AWS Lambda adapter to 0.8.2.
 
 ### Fix
 - (pro) Fixed false-positive video detections.
