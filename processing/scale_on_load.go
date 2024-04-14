@@ -32,9 +32,7 @@ func canScaleOnLoad(pctx *pipelineContext, imgdata *imagedata.ImageData, scale f
 		imgdata.Type == imagetype.AVIF
 }
 
-func calcJpegShink(scale float64, imgtype imagetype.Type) int {
-	shrink := int(1.0 / scale)
-
+func calcJpegShink(shrink float64) int {
 	switch {
 	case shrink >= 8:
 		return 8
@@ -48,7 +46,10 @@ func calcJpegShink(scale float64, imgtype imagetype.Type) int {
 }
 
 func scaleOnLoad(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata *imagedata.ImageData) error {
-	prescale := math.Max(pctx.wscale, pctx.hscale)
+	wshrink := float64(pctx.srcWidth) / float64(imath.Scale(pctx.srcWidth, pctx.wscale))
+	hshrink := float64(pctx.srcHeight) / float64(imath.Scale(pctx.srcHeight, pctx.hscale))
+	preshrink := math.Min(wshrink, hshrink)
+	prescale := 1.0 / preshrink
 
 	if !canScaleOnLoad(pctx, imgdata, prescale) {
 		return nil
@@ -76,7 +77,7 @@ func scaleOnLoad(pctx *pipelineContext, img *vips.Image, po *options.ProcessingO
 		pctx.angle = angle
 		pctx.flip = flip
 	} else {
-		jpegShrink := calcJpegShink(prescale, pctx.imgtype)
+		jpegShrink := calcJpegShink(preshrink)
 
 		if pctx.imgtype == imagetype.JPEG && jpegShrink == 1 {
 			return nil

@@ -11,6 +11,7 @@
 ### Fix
 - (pro) Fixed false-positive video detections.
 - Fix parsing some TIFFs.
+- Fix over-shrinking during scale-on-load.
 
 ## [3.23.0] - 2024-03-11
 ### Add
