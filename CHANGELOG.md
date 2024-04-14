@@ -6,12 +6,13 @@
 
 ### Change
 - Respond with 404 when the bucket/container name or object key is empty in an S3, Google Cloud Storage, Azure Blob Storage, or OpenStack Object Storage (Swift) URL.
+- (pro) Improve unsharp masking.
 - (docker) Update AWS Lambda adapter to 0.8.2.
 
 ### Fix
-- (pro) Fixed false-positive video detections.
 - Fix parsing some TIFFs.
 - Fix over-shrinking during scale-on-load.
+- (pro) Fix false-positive video detections.
 
 ## [3.23.0] - 2024-03-11
 ### Add
