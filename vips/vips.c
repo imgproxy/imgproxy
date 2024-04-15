@@ -64,9 +64,13 @@ vips_jpegload_go(void *buf, size_t len, int shrink, VipsImage **out)
 }
 
 int
-vips_pngload_go(void *buf, size_t len, VipsImage **out)
+vips_pngload_go(void *buf, size_t len, VipsImage **out, int unlimited)
 {
-  return vips_pngload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, NULL);
+  return vips_pngload_buffer(
+      buf, len, out,
+      "access", VIPS_ACCESS_SEQUENTIAL,
+      "unlimited", unlimited,
+      NULL);
 }
 
 int
@@ -87,7 +91,7 @@ vips_gifload_go(void *buf, size_t len, int pages, VipsImage **out)
 }
 
 int
-vips_svgload_go(void *buf, size_t len, double scale, VipsImage **out)
+vips_svgload_go(void *buf, size_t len, double scale, VipsImage **out, int unlimited)
 {
   // libvips limits the minimal scale to 0.001, so we have to scale down dpi
   // for lower scale values
@@ -102,6 +106,7 @@ vips_svgload_go(void *buf, size_t len, double scale, VipsImage **out)
       "access", VIPS_ACCESS_SEQUENTIAL,
       "scale", scale,
       "dpi", dpi,
+      "unlimited", unlimited,
       NULL);
 }
 

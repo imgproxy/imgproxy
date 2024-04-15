@@ -49,6 +49,8 @@ var vipsConf struct {
 	PngQuantize           C.int
 	PngQuantizationColors C.int
 	AvifSpeed             C.int
+	PngUnlimited          C.int
+	SvgUnlimited          C.int
 }
 
 var badImageErrRe = []*regexp.Regexp{
@@ -96,6 +98,8 @@ func Init() error {
 	vipsConf.PngQuantize = gbool(config.PngQuantize)
 	vipsConf.PngQuantizationColors = C.int(config.PngQuantizationColors)
 	vipsConf.AvifSpeed = C.int(config.AvifSpeed)
+	vipsConf.PngUnlimited = gbool(config.PngUnlimited)
+	vipsConf.SvgUnlimited = gbool(config.SvgUnlimited)
 
 	prometheus.AddGaugeFunc(
 		"vips_memory_bytes",
@@ -327,13 +331,13 @@ func (img *Image) Load(imgdata *imagedata.ImageData, shrink int, scale float64, 
 	case imagetype.JPEG:
 		err = C.vips_jpegload_go(data, dataSize, C.int(shrink), &tmp)
 	case imagetype.PNG:
-		err = C.vips_pngload_go(data, dataSize, &tmp)
+		err = C.vips_pngload_go(data, dataSize, &tmp, vipsConf.PngUnlimited)
 	case imagetype.WEBP:
 		err = C.vips_webpload_go(data, dataSize, C.double(scale), C.int(pages), &tmp)
 	case imagetype.GIF:
 		err = C.vips_gifload_go(data, dataSize, C.int(pages), &tmp)
 	case imagetype.SVG:
-		err = C.vips_svgload_go(data, dataSize, C.double(scale), &tmp)
+		err = C.vips_svgload_go(data, dataSize, C.double(scale), &tmp, vipsConf.SvgUnlimited)
 	case imagetype.HEIC, imagetype.AVIF:
 		err = C.vips_heifload_go(data, dataSize, &tmp, C.int(0))
 	case imagetype.TIFF:
