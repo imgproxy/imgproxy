@@ -40,7 +40,8 @@ RUN apt-get update \
       python3-dev \
       gfortran \
       libopencv-dev \
-      curl
+      curl \
+      zstd
 
 RUN pip3 install scikit-image opencv-python numpy Pillow --break-system-packages
 
