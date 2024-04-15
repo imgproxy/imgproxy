@@ -11,7 +11,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     container:
-      image: darthsim/imgproxy-ci:202311211816
+      image: darthsim/imgproxy-ci:202404152040
     strategy:
       matrix:
         go-version: ["1.22.x", "1.21.x"]
