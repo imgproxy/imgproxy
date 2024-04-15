@@ -66,13 +66,19 @@ const (
 )
 
 type DitherOptions struct {
-	Type       DitherType
-	Contrast   bool
-	Native     bool
-	Desaturate bool
-	Meter13    bool
-	SoftProof  bool
-	Clamp      bool
+	Type              DitherType
+	Contrast          bool
+	Native            bool
+	Desaturate        bool
+	Meter13           bool
+	SoftProof         bool
+	Clamp             bool
+	HullProject       bool
+	LUTFile           string
+	LUTBlue           bool
+	SaturationScale   float64
+	NormalizeContrast bool
+	CLAHESize         int
 }
 
 type WatermarkOptions struct {
@@ -162,7 +168,7 @@ func NewProcessingOptions() *ProcessingOptions {
 		Blur:              0,
 		Sharpen:           0,
 		Dpr:               1,
-		Dither:            DitherOptions{Type: DitherNone, Contrast: false, Native: false, Desaturate: false, Meter13: false, SoftProof: false, Clamp: false},
+		Dither:            DitherOptions{},
 		Watermark:         WatermarkOptions{Opacity: 1, Replicate: false, Gravity: GravityOptions{Type: GravityCenter}},
 		StripMetadata:     config.StripMetadata,
 		KeepCopyright:     config.KeepCopyright,
@@ -721,10 +727,6 @@ func applyPixelateOption(po *ProcessingOptions, args []string) error {
 }
 
 func applyDitherOption(po *ProcessingOptions, args []string) error {
-	if len(args) > 7 {
-		return fmt.Errorf("Invalid dither arguments: %v", args)
-	}
-
 	switch args[0] {
 	case "fs":
 		po.Dither.Type = DitherBNFS
@@ -749,10 +751,44 @@ func applyDitherOption(po *ProcessingOptions, args []string) error {
 				po.Dither.SoftProof = true
 			case "cl":
 				po.Dither.Clamp = true
+			case "hp":
+				po.Dither.HullProject = true
+			case "lb":
+				po.Dither.LUTBlue = true
+			case "nc":
+				po.Dither.NormalizeContrast = true
+			case "llab13":
+				po.Dither.LUTFile = "lab_13_hack.interpol_clarabel.npy"
+			case "lrgb13":
+				po.Dither.LUTFile = "rgb_13.interpol_clarabel.npy"
 			default:
-				return fmt.Errorf("Invalid dither argument: %s", arg)
+				if err := maybeParseNumericDitherOptions(po, arg); err != nil {
+					return err
+				}
 			}
 		}
+	}
+	return nil
+}
+
+func maybeParseNumericDitherOptions(po *ProcessingOptions, arg string) error {
+	var err error
+	var i int
+	var f float64
+	if i, err = strconv.Atoi(arg); err == nil && i > 0 {
+		// any integer is considered the CLAHE size argument
+		if po.Dither.CLAHESize > 0 {
+			return fmt.Errorf("Dither CLAHE size is already set: %d, arg: %s", po.Dither.CLAHESize, arg)
+		}
+		po.Dither.CLAHESize = i
+	} else if f, err = strconv.ParseFloat(arg, 64); err == nil && f >= 0 {
+		// any float is considered the saturation scale argument
+		if po.Dither.SaturationScale > 0 {
+			return fmt.Errorf("Dither saturation scale is already set: %f, arg: %s", po.Dither.SaturationScale, arg)
+		}
+		po.Dither.SaturationScale = f
+	} else {
+		return fmt.Errorf("Invalid dither argument: %s", arg)
 	}
 	return nil
 }

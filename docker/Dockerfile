@@ -49,6 +49,11 @@ COPY plugins/pushd-dither /opt/pushd-dither/
 RUN cd /opt/pushd-dither \
     && python3 -m pip install -e . --break-system-packages --target=/usr/local/lib/python3.11/
 
+# decompress LUTs
+RUN cd /opt/pushd-dither/lut-dither \
+    && zstd -fd --rm lab_13_hack.interpol_clarabel.npy.zst \
+    && zstd -fd --rm rgb_13.interpol_clarabel.npy.zst
+
 # ====== END PUSHD DITHER ========
 
 
