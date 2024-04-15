@@ -134,11 +134,11 @@ func shellOutDither(inFile string, po *options.ProcessingOptions) error {
 	if po.Dither.HullProject {
 		cmdArgs = append(cmdArgs, "--hull-project")
 	}
+	if len(po.Dither.LUTFile) > 0 {
+		cmdArgs = append(cmdArgs, "--lut", fmt.Sprintf("lut_dither/%s", po.Dither.LUTFile))
+	}
 	if po.Dither.LUTBlue {
 		cmdArgs = append(cmdArgs, "--lut-blue")
-	}
-	if len(po.Dither.LUTFile) > 0 {
-		cmdArgs = append(cmdArgs, "--lut-file", fmt.Sprintf("lut_dither/%s", po.Dither.LUTFile))
 	}
 	if po.Dither.NormalizeContrast {
 		cmdArgs = append(cmdArgs, "--normalize-contrast")
