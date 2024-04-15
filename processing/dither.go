@@ -117,13 +117,31 @@ func shellOutDither(inFile string, po *options.ProcessingOptions) error {
 		cmdArgs = append(cmdArgs, "--desaturate")
 	}
 	if po.Dither.Meter13 {
-		cmdArgs = append(cmdArgs, "--pal-meter-13")
+		cmdArgs = append(cmdArgs, "--pal-meter-13-hack")
 	}
 	if po.Dither.SoftProof {
 		cmdArgs = append(cmdArgs, "--image-raw", proofFile)
 	}
 	if po.Dither.Clamp {
 		cmdArgs = append(cmdArgs, "--clamp")
+	}
+	if po.Dither.CLAHESize > 0 {
+		cmdArgs = append(cmdArgs, "--clahe-size", fmt.Sprintf("%d", po.Dither.CLAHESize))
+	}
+	if po.Dither.SaturationScale > 0 {
+		cmdArgs = append(cmdArgs, "--saturation-scale", fmt.Sprintf("%f", po.Dither.SaturationScale))
+	}
+	if po.Dither.HullProject {
+		cmdArgs = append(cmdArgs, "--hull-project")
+	}
+	if len(po.Dither.LUTFile) > 0 {
+		cmdArgs = append(cmdArgs, "--lut", fmt.Sprintf("lut_dither/%s", po.Dither.LUTFile))
+	}
+	if po.Dither.LUTBlue {
+		cmdArgs = append(cmdArgs, "--lut-blue")
+	}
+	if po.Dither.NormalizeContrast {
+		cmdArgs = append(cmdArgs, "--normalize-contrast")
 	}
 
 	cmd := exec.Command("python3", cmdArgs...)
