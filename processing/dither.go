@@ -135,7 +135,9 @@ func shellOutDither(inFile string, po *options.ProcessingOptions) error {
 		cmdArgs = append(cmdArgs, "--hull-project")
 	}
 	if len(po.Dither.LUTFile) > 0 {
-		cmdArgs = append(cmdArgs, "--lut", fmt.Sprintf("lut_dither/%s", po.Dither.LUTFile))
+		cmdArgs = append(cmdArgs, "--lut", fmt.Sprintf("lut_dither/%s.npy", po.Dither.LUTFile))
+		// the precomputed hue-sat, a speed optimization, is in the base dir
+		cmdArgs = append(cmdArgs, "--lut-hue-sat", fmt.Sprintf("%s.hue_sat", po.Dither.LUTFile))
 	}
 	if po.Dither.LUTBlue {
 		cmdArgs = append(cmdArgs, "--lut-blue")
