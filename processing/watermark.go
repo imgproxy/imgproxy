@@ -18,7 +18,6 @@ var watermarkPipeline = pipeline{
 	scale,
 	rotateAndFlip,
 	padding,
-	stripMetadata,
 }
 
 func prepareWatermark(wm *vips.Image, wmData *imagedata.ImageData, opts *options.WatermarkOptions, imgWidth, imgHeight int, offsetScale float64, framesCount int) error {
@@ -31,8 +30,6 @@ func prepareWatermark(wm *vips.Image, wmData *imagedata.ImageData, opts *options
 	po.Dpr = 1
 	po.Enlarge = true
 	po.Format = wmData.Type
-	po.StripMetadata = true
-	po.KeepCopyright = false
 
 	if opts.Scale > 0 {
 		po.Width = imath.Max(imath.ScaleToEven(imgWidth, opts.Scale), 1)
@@ -80,16 +77,15 @@ func prepareWatermark(wm *vips.Image, wmData *imagedata.ImageData, opts *options
 		}
 	}
 
-	wm.RemovePaletteBitDepth()
+	// We don't want any headers to be copied from the watermark to the image
+	if err := wm.StripAll(); err != nil {
+		return err
+	}
 
 	return nil
 }
 
 func applyWatermark(img *vips.Image, wmData *imagedata.ImageData, opts *options.WatermarkOptions, offsetScale float64, framesCount int) error {
-	if err := img.RgbColourspace(); err != nil {
-		return err
-	}
-
 	wm := new(vips.Image)
 	defer wm.Clear()
 
@@ -98,6 +94,16 @@ func applyWatermark(img *vips.Image, wmData *imagedata.ImageData, opts *options.
 	frameHeight := height / framesCount
 
 	if err := prepareWatermark(wm, wmData, opts, width, frameHeight, offsetScale, framesCount); err != nil {
+		return err
+	}
+
+	if !img.ColourProfileImported() {
+		if err := img.ImportColourProfile(); err != nil {
+			return err
+		}
+	}
+
+	if err := img.RgbColourspace(); err != nil {
 		return err
 	}
 

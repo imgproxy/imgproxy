@@ -28,11 +28,8 @@ int vips_black_go(VipsImage **out, int width, int height, int bands);
 int vips_fix_float_tiff(VipsImage *in, VipsImage **out);
 
 int vips_get_orientation(VipsImage *image);
-void vips_strip_meta(VipsImage *image);
 
 VipsBandFormat vips_band_format(VipsImage *in);
-
-void vips_remove_palette_bit_depth(VipsImage *image);
 
 gboolean vips_is_animated(VipsImage *in);
 
@@ -81,6 +78,7 @@ int vips_linecache_seq(VipsImage *in, VipsImage **out, int tile_height);
 int vips_arrayjoin_go(VipsImage **in, VipsImage **out, int n);
 
 int vips_strip(VipsImage *in, VipsImage **out, int keep_exif_copyright);
+int vips_strip_all(VipsImage *in, VipsImage **out);
 
 int vips_jpegsave_go(VipsImage *in, void **buf, size_t *len, int quality, int interlace);
 int vips_pngsave_go(VipsImage *in, void **buf, size_t *len, int interlace, int quantize,

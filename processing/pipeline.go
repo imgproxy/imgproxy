@@ -30,8 +30,6 @@ type pipelineContext struct {
 	hscale float64
 
 	dprScale float64
-
-	iccImported bool
 }
 
 type pipelineStep func(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata *imagedata.ImageData) error

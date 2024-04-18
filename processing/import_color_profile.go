@@ -8,7 +8,7 @@ import (
 )
 
 func importColorProfile(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata *imagedata.ImageData) error {
-	if pctx.iccImported {
+	if img.ColourProfileImported() {
 		return nil
 	}
 
@@ -26,7 +26,6 @@ func importColorProfile(pctx *pipelineContext, img *vips.Image, po *options.Proc
 		if err := img.ImportColourProfile(); err != nil {
 			return err
 		}
-		pctx.iccImported = true
 	}
 
 	if convertToLinear {

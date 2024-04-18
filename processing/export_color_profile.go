@@ -15,7 +15,7 @@ func exportColorProfile(pctx *pipelineContext, img *vips.Image, po *options.Proc
 		}
 	}
 
-	if pctx.iccImported {
+	if img.ColourProfileImported() {
 		if keepProfile {
 			// We imported ICC profile and want to keep it,
 			// so we need to export it

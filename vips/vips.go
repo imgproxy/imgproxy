@@ -573,10 +573,6 @@ func (img *Image) SetBlob(name string, value []byte) {
 	C.vips_image_set_blob_copy(img.VipsImage, cachedCString(name), unsafe.Pointer(&value[0]), C.size_t(len(value)))
 }
 
-func (img *Image) RemovePaletteBitDepth() {
-	C.vips_remove_palette_bit_depth(img.VipsImage)
-}
-
 func (img *Image) CastUchar() error {
 	var tmp *C.VipsImage
 
@@ -740,7 +736,10 @@ func (img *Image) ImportColourProfile() error {
 		return nil
 	}
 
-	if C.vips_has_embedded_icc(img.VipsImage) == 0 {
+	// Don't import is there's no embedded profile or embedded profile is sRGB
+	if C.vips_has_embedded_icc(img.VipsImage) == 0 ||
+		(C.vips_image_guess_interpretation(img.VipsImage) == C.VIPS_INTERPRETATION_sRGB &&
+			C.vips_icc_is_srgb_iec61966(img.VipsImage) == 1) {
 		return nil
 	}
 
@@ -751,6 +750,11 @@ func (img *Image) ImportColourProfile() error {
 	}
 
 	return nil
+}
+
+func (img *Image) ColourProfileImported() bool {
+	imported, err := img.GetIntDefault("imgproxy-icc-imported", 0)
+	return imported > 0 && err == nil
 }
 
 func (img *Image) ExportColourProfile() error {
@@ -791,7 +795,9 @@ func (img *Image) TransformColourProfile() error {
 	var tmp *C.VipsImage
 
 	// Don't transform is there's no embedded profile or embedded profile is sRGB
-	if C.vips_has_embedded_icc(img.VipsImage) == 0 || C.vips_icc_is_srgb_iec61966(img.VipsImage) == 1 {
+	if C.vips_has_embedded_icc(img.VipsImage) == 0 ||
+		(C.vips_image_guess_interpretation(img.VipsImage) == C.VIPS_INTERPRETATION_sRGB &&
+			C.vips_icc_is_srgb_iec61966(img.VipsImage) == 1) {
 		return nil
 	}
 
@@ -883,6 +889,17 @@ func (img *Image) Strip(keepExifCopyright bool) error {
 	var tmp *C.VipsImage
 
 	if C.vips_strip(img.VipsImage, &tmp, gbool(keepExifCopyright)) != 0 {
+		return Error()
+	}
+	C.swap_and_clear(&img.VipsImage, tmp)
+
+	return nil
+}
+
+func (img *Image) StripAll() error {
+	var tmp *C.VipsImage
+
+	if C.vips_strip_all(img.VipsImage, &tmp) != 0 {
 		return Error()
 	}
 	C.swap_and_clear(&img.VipsImage, tmp)

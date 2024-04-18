@@ -35,6 +35,9 @@ var mainPipeline = pipeline{
 	fixSize,
 	flatten,
 	watermark,
+}
+
+var finalizePipeline = pipeline{
 	exportColorProfile,
 	stripMetadata,
 }
@@ -196,6 +199,7 @@ func transformAnimated(ctx context.Context, img *vips.Image, po *options.Process
 		delay = delay[:framesCount]
 	}
 
+	img.SetInt("imgproxy-is-animated", 1)
 	img.SetInt("page-height", frames[0].Height())
 	img.SetIntSlice("delay", delay)
 	img.SetInt("loop", loop)
@@ -312,6 +316,10 @@ func ProcessImage(ctx context.Context, imgdata *imagedata.ImageData, po *options
 		if err := mainPipeline.Run(ctx, img, po, imgdata); err != nil {
 			return nil, err
 		}
+	}
+
+	if err := finalizePipeline.Run(ctx, img, po, imgdata); err != nil {
+		return nil, err
 	}
 
 	if po.Format == imagetype.AVIF && (img.Width() < 16 || img.Height() < 16) {

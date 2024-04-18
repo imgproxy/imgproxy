@@ -285,15 +285,6 @@ vips_get_palette_bit_depth(VipsImage *image)
   return 0;
 }
 
-void
-vips_remove_palette_bit_depth(VipsImage *image)
-{
-  vips_image_remove(image, VIPS_META_PALETTE_BITS_DEPTH);
-#ifdef VIPS_META_PALETTE
-  vips_image_remove(image, VIPS_META_PALETTE);
-#endif
-}
-
 VipsBandFormat
 vips_band_format(VipsImage *in)
 {
@@ -372,23 +363,37 @@ vips_resize_go(VipsImage *in, VipsImage **out, double wscale, double hscale)
   return res;
 }
 
+/* We don't really need to return the size since we check if the buffer is at least
+ * the size of ICC header, and all we need is a header
+ */
+static const void *
+vips_icc_get_header(VipsImage *in)
+{
+  const void *data = NULL;
+  size_t data_len = 0;
+
+  if (!vips_image_get_typeof(in, VIPS_META_ICC_NAME) ||
+      vips_image_get_blob(in, VIPS_META_ICC_NAME, &data, &data_len))
+    return NULL;
+
+  /* Less than header size
+   */
+  if (!data || data_len < 128)
+    return NULL;
+
+  return data;
+}
+
 int
 vips_icc_is_srgb_iec61966(VipsImage *in)
 {
-  const void *data;
-  size_t data_len;
-
   // 1998-12-01
   static char date[] = { 7, 206, 0, 2, 0, 9 };
   // 2.1
   static char version[] = { 2, 16, 0, 0 };
 
-  if (vips_image_get_blob(in, VIPS_META_ICC_NAME, &data, &data_len))
-    return FALSE;
-
-  /* Less than header size
-   */
-  if (data_len < 128)
+  const void *data = vips_icc_get_header(in);
+  if (!data)
     return FALSE;
 
   /* Predict it is sRGB IEC61966 2.1 by checking some header fields
@@ -400,6 +405,19 @@ vips_icc_is_srgb_iec61966(VipsImage *in)
       (memcmp(data + 8, version, 4) == 0));      // Version
 }
 
+static VipsPCS
+vips_icc_get_pcs(VipsImage *in)
+{
+  const void *data = vips_icc_get_header(in);
+  if (!data)
+    return VIPS_PCS_LAB;
+
+  if (memcmp(data + 20, "XYZ ", 4) == 0)
+    return VIPS_PCS_XYZ;
+
+  return VIPS_PCS_LAB;
+}
+
 int
 vips_has_embedded_icc(VipsImage *in)
 {
@@ -409,25 +427,28 @@ vips_has_embedded_icc(VipsImage *in)
 int
 vips_icc_import_go(VipsImage *in, VipsImage **out)
 {
-  return vips_icc_import(in, out, "embedded", TRUE, "pcs", VIPS_PCS_LAB, NULL);
+  const int res = vips_icc_import(in, out, "embedded", TRUE, "pcs", vips_icc_get_pcs(in), NULL);
+  if (!res && *out)
+    vips_image_set_int(*out, "imgproxy-icc-imported", 1);
+  return res;
 }
 
 int
 vips_icc_export_go(VipsImage *in, VipsImage **out)
 {
-  return vips_icc_export(in, out, "pcs", VIPS_PCS_LAB, NULL);
+  return vips_icc_export(in, out, "pcs", vips_icc_get_pcs(in), NULL);
 }
 
 int
 vips_icc_export_srgb(VipsImage *in, VipsImage **out)
 {
-  return vips_icc_export(in, out, "output_profile", "sRGB", "pcs", VIPS_PCS_LAB, NULL);
+  return vips_icc_export(in, out, "output_profile", "sRGB", "pcs", vips_icc_get_pcs(in), NULL);
 }
 
 int
 vips_icc_transform_go(VipsImage *in, VipsImage **out)
 {
-  return vips_icc_transform(in, out, "sRGB", "embedded", TRUE, "pcs", VIPS_PCS_LAB, NULL);
+  return vips_icc_transform(in, out, "sRGB", "embedded", TRUE, "pcs", vips_icc_get_pcs(in), NULL);
 }
 
 int
@@ -773,10 +794,67 @@ vips_arrayjoin_go(VipsImage **in, VipsImage **out, int n)
   return vips_arrayjoin(in, out, n, "across", 1, NULL);
 }
 
+typedef struct {
+  int strip_all;
+  int keep_exif_copyright;
+  int keep_animation;
+} VipsStripOptions;
+
+void *
+vips_strip_fn(VipsImage *in, const char *name, GValue *value, void *a)
+{
+  VipsStripOptions *opts = (VipsStripOptions *) a;
+
+  if (strcmp(name, "vips-sequential") == 0)
+    return NULL;
+
+  if (!opts->strip_all) {
+    if ((strcmp(name, VIPS_META_ICC_NAME) == 0) ||
+#ifdef VIPS_META_BITS_PER_SAMPLE
+        (strcmp(name, VIPS_META_BITS_PER_SAMPLE) == 0) ||
+#endif
+#ifdef VIPS_META_PALETTE
+        (strcmp(name, VIPS_META_PALETTE) == 0) ||
+#endif
+        (strcmp(name, VIPS_META_PALETTE_BITS_DEPTH) == 0) ||
+        (strcmp(name, "background") == 0) ||
+        (strcmp(name, "vips-loader") == 0) ||
+        (vips_isprefix("imgproxy-", name)))
+      return NULL;
+
+    if (opts->keep_exif_copyright)
+      if ((strcmp(name, VIPS_META_EXIF_NAME) == 0) ||
+          (strcmp(name, "exif-ifd0-Copyright") == 0) ||
+          (strcmp(name, "exif-ifd0-Artist") == 0))
+        return NULL;
+
+    if (opts->keep_animation)
+      if ((strcmp(name, "page-height") == 0) ||
+          (strcmp(name, "delay") == 0) ||
+          (strcmp(name, "loop") == 0) ||
+          (strcmp(name, "n-pages") == 0))
+        return NULL;
+  }
+
+  vips_image_remove(in, name);
+
+  return NULL;
+}
+
 int
 vips_strip(VipsImage *in, VipsImage **out, int keep_exif_copyright)
 {
   static double default_resolution = 72.0 / 25.4;
+
+  VipsStripOptions opts = {
+    .strip_all = 0,
+    .keep_exif_copyright = FALSE,
+    .keep_animation = FALSE,
+  };
+
+  if (vips_image_get_typeof(in, "imgproxy-is-animated") &&
+      vips_image_get_int(in, "imgproxy-is-animated", &opts.keep_animation))
+    opts.keep_animation = FALSE;
 
   if (vips_copy(
           in, out,
@@ -785,45 +863,28 @@ vips_strip(VipsImage *in, VipsImage **out, int keep_exif_copyright)
           NULL))
     return 1;
 
-  gchar **fields = vips_image_get_fields(in);
+  vips_image_map(*out, vips_strip_fn, &opts);
 
-  for (int i = 0; fields[i] != NULL; i++) {
-    gchar *name = fields[i];
+  return 0;
+}
 
-    if (
-        (strcmp(name, VIPS_META_ICC_NAME) == 0) ||
-#ifdef VIPS_META_BITS_PER_SAMPLE
-        (strcmp(name, VIPS_META_BITS_PER_SAMPLE) == 0) ||
-#endif
-        (strcmp(name, VIPS_META_PALETTE_BITS_DEPTH) == 0) ||
-        (strcmp(name, "width") == 0) ||
-        (strcmp(name, "height") == 0) ||
-        (strcmp(name, "bands") == 0) ||
-        (strcmp(name, "format") == 0) ||
-        (strcmp(name, "coding") == 0) ||
-        (strcmp(name, "interpretation") == 0) ||
-        (strcmp(name, "xoffset") == 0) ||
-        (strcmp(name, "yoffset") == 0) ||
-        (strcmp(name, "xres") == 0) ||
-        (strcmp(name, "yres") == 0) ||
-        (strcmp(name, "vips-loader") == 0) ||
-        (strcmp(name, "background") == 0) ||
-        (strcmp(name, "vips-sequential") == 0) ||
-        (vips_isprefix("imgproxy-", name)))
-      continue;
+int
+vips_strip_all(VipsImage *in, VipsImage **out)
+{
+  VipsStripOptions opts = {
+    .strip_all = TRUE,
+    .keep_exif_copyright = FALSE,
+    .keep_animation = FALSE,
+  };
 
-    if (keep_exif_copyright) {
-      if (
-          (strcmp(name, VIPS_META_EXIF_NAME) == 0) ||
-          (strcmp(name, "exif-ifd0-Copyright") == 0) ||
-          (strcmp(name, "exif-ifd0-Artist") == 0))
-        continue;
-    }
+  if (vips_copy(in, out, NULL))
+    return 1;
 
-    vips_image_remove(*out, name);
-  }
+  vips_image_map(*out, vips_strip_fn, &opts);
 
-  g_strfreev(fields);
+  /* vips doesn't include "palette-bit-depth" to the map of fields
+   */
+  vips_image_remove(*out, VIPS_META_PALETTE_BITS_DEPTH);
 
   return 0;
 }
