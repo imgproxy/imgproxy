@@ -5,9 +5,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/imgproxy/imgproxy/v3/imagetype"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/imgproxy/imgproxy/v3/imagetype"
 )
 
 type JpegTestSuite struct {
@@ -16,10 +16,10 @@ type JpegTestSuite struct {
 
 func (s *JpegTestSuite) openFile(name string) *os.File {
 	wd, err := os.Getwd()
-	require.Nil(s.T(), err)
+	s.Require().NoError(err)
 	path := filepath.Join(wd, "..", "testdata", name)
 	f, err := os.Open(path)
-	require.Nil(s.T(), err)
+	s.Require().NoError(err)
 	return f
 }
 
@@ -41,8 +41,8 @@ func (s *JpegTestSuite) TestDecodeJpegMeta() {
 			defer f.Close()
 
 			metadata, err := DecodeJpegMeta(f)
-			require.Nil(s.T(), err)
-			require.Equal(s.T(), expectedMeta, metadata)
+			s.Require().NoError(err)
+			s.Require().Equal(expectedMeta, metadata)
 		}()
 	}
 }

@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/imgproxy/imgproxy/v3/config"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/imgproxy/imgproxy/v3/config"
 )
 
 type PresetsTestSuite struct{ suite.Suite }
@@ -20,9 +20,9 @@ func (s *PresetsTestSuite) SetupTest() {
 func (s *PresetsTestSuite) TestParsePreset() {
 	err := parsePreset("test=resize:fit:100:200/sharpen:2")
 
-	require.Nil(s.T(), err)
+	s.Require().NoError(err)
 
-	require.Equal(s.T(), urlOptions{
+	s.Require().Equal(urlOptions{
 		urlOption{Name: "resize", Args: []string{"fit", "100", "200"}},
 		urlOption{Name: "sharpen", Args: []string{"2"}},
 	}, presets["test"])
@@ -32,46 +32,46 @@ func (s *PresetsTestSuite) TestParsePresetInvalidString() {
 	presetStr := "resize:fit:100:200/sharpen:2"
 	err := parsePreset(presetStr)
 
-	require.Equal(s.T(), fmt.Errorf("Invalid preset string: %s", presetStr), err)
-	require.Empty(s.T(), presets)
+	s.Require().Equal(fmt.Errorf("Invalid preset string: %s", presetStr), err)
+	s.Require().Empty(presets)
 }
 
 func (s *PresetsTestSuite) TestParsePresetEmptyName() {
 	presetStr := "=resize:fit:100:200/sharpen:2"
 	err := parsePreset(presetStr)
 
-	require.Equal(s.T(), fmt.Errorf("Empty preset name: %s", presetStr), err)
-	require.Empty(s.T(), presets)
+	s.Require().Equal(fmt.Errorf("Empty preset name: %s", presetStr), err)
+	s.Require().Empty(presets)
 }
 
 func (s *PresetsTestSuite) TestParsePresetEmptyValue() {
 	presetStr := "test="
 	err := parsePreset(presetStr)
 
-	require.Equal(s.T(), fmt.Errorf("Empty preset value: %s", presetStr), err)
-	require.Empty(s.T(), presets)
+	s.Require().Equal(fmt.Errorf("Empty preset value: %s", presetStr), err)
+	s.Require().Empty(presets)
 }
 
 func (s *PresetsTestSuite) TestParsePresetInvalidValue() {
 	presetStr := "test=resize:fit:100:200/sharpen:2/blur"
 	err := parsePreset(presetStr)
 
-	require.Equal(s.T(), fmt.Errorf("Invalid preset value: %s", presetStr), err)
-	require.Empty(s.T(), presets)
+	s.Require().Equal(fmt.Errorf("Invalid preset value: %s", presetStr), err)
+	s.Require().Empty(presets)
 }
 
 func (s *PresetsTestSuite) TestParsePresetEmptyString() {
 	err := parsePreset("  ")
 
-	require.Nil(s.T(), err)
-	require.Empty(s.T(), presets)
+	s.Require().NoError(err)
+	s.Require().Empty(presets)
 }
 
 func (s *PresetsTestSuite) TestParsePresetComment() {
 	err := parsePreset("#  test=resize:fit:100:200/sharpen:2")
 
-	require.Nil(s.T(), err)
-	require.Empty(s.T(), presets)
+	s.Require().NoError(err)
+	s.Require().Empty(presets)
 }
 
 func (s *PresetsTestSuite) TestValidatePresets() {
@@ -84,7 +84,7 @@ func (s *PresetsTestSuite) TestValidatePresets() {
 
 	err := ValidatePresets()
 
-	require.Nil(s.T(), err)
+	s.Require().NoError(err)
 }
 
 func (s *PresetsTestSuite) TestValidatePresetsInvalid() {
@@ -97,7 +97,7 @@ func (s *PresetsTestSuite) TestValidatePresetsInvalid() {
 
 	err := ValidatePresets()
 
-	require.Error(s.T(), err)
+	s.Require().Error(err)
 }
 
 func TestPresets(t *testing.T) {

@@ -8,7 +8,6 @@ import (
 
 	"github.com/ncw/swift/v2"
 	"github.com/ncw/swift/v2/swifttest"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/imgproxy/imgproxy/v3/config"
@@ -41,11 +40,10 @@ func (s *SwiftTestSuite) SetupSuite() {
 
 	var err error
 	s.transport, err = New()
-	require.Nil(s.T(), err, "failed to initialize swift transport")
+	s.Require().NoError(err, "failed to initialize swift transport")
 }
 
 func (s *SwiftTestSuite) setupTestFile() {
-	t := s.T()
 	c := &swift.Connection{
 		UserName:    config.SwiftUsername,
 		ApiKey:      config.SwiftAPIKey,
@@ -56,29 +54,29 @@ func (s *SwiftTestSuite) setupTestFile() {
 	ctx := context.Background()
 
 	err := c.Authenticate(ctx)
-	require.Nil(t, err, "failed to authenticate with test server")
+	s.Require().NoError(err, "failed to authenticate with test server")
 
 	err = c.ContainerCreate(ctx, testContainer, nil)
-	require.Nil(t, err, "failed to create container")
+	s.Require().NoError(err, "failed to create container")
 
 	f, err := c.ObjectCreate(ctx, testContainer, testObject, true, "", "image/png", nil)
-	require.Nil(t, err, "failed to create object")
+	s.Require().NoError(err, "failed to create object")
 
 	defer f.Close()
 
 	data := make([]byte, 32)
 
 	n, err := f.Write(data)
-	require.Equal(t, n, len(data))
-	require.Nil(t, err)
+	s.Require().Len(data, n)
+	s.Require().NoError(err)
 
 	f.Close()
 	// The Etag is written on file close; but Last-Modified is only available when we get the object again.
 	_, h, err := c.Object(ctx, testContainer, testObject)
-	require.Nil(t, err)
+	s.Require().NoError(err)
 	s.etag = h["Etag"]
 	s.lastModified, err = time.Parse(http.TimeFormat, h["Date"])
-	require.Nil(t, err)
+	s.Require().NoError(err)
 }
 
 func (s *SwiftTestSuite) TearDownSuite() {
@@ -90,8 +88,8 @@ func (s *SwiftTestSuite) TestRoundTripWithETagDisabledReturns200() {
 	request, _ := http.NewRequest("GET", "swift://test/foo/test.png", nil)
 
 	response, err := s.transport.RoundTrip(request)
-	require.Nil(s.T(), err)
-	require.Equal(s.T(), 200, response.StatusCode)
+	s.Require().NoError(err)
+	s.Require().Equal(200, response.StatusCode)
 }
 
 func (s *SwiftTestSuite) TestRoundTripReturns404WhenObjectNotFound() {
@@ -99,8 +97,8 @@ func (s *SwiftTestSuite) TestRoundTripReturns404WhenObjectNotFound() {
 	request, _ := http.NewRequest("GET", "swift://test/foo/not-here.png", nil)
 
 	response, err := s.transport.RoundTrip(request)
-	require.Nil(s.T(), err)
-	require.Equal(s.T(), 404, response.StatusCode)
+	s.Require().NoError(err)
+	s.Require().Equal(404, response.StatusCode)
 }
 
 func (s *SwiftTestSuite) TestRoundTripReturns404WhenContainerNotFound() {
@@ -108,8 +106,8 @@ func (s *SwiftTestSuite) TestRoundTripReturns404WhenContainerNotFound() {
 	request, _ := http.NewRequest("GET", "swift://invalid/foo/test.png", nil)
 
 	response, err := s.transport.RoundTrip(request)
-	require.Nil(s.T(), err)
-	require.Equal(s.T(), 404, response.StatusCode)
+	s.Require().NoError(err)
+	s.Require().Equal(404, response.StatusCode)
 }
 
 func (s *SwiftTestSuite) TestRoundTripWithETagEnabled() {
@@ -117,9 +115,9 @@ func (s *SwiftTestSuite) TestRoundTripWithETagEnabled() {
 	request, _ := http.NewRequest("GET", "swift://test/foo/test.png", nil)
 
 	response, err := s.transport.RoundTrip(request)
-	require.Nil(s.T(), err)
-	require.Equal(s.T(), 200, response.StatusCode)
-	require.Equal(s.T(), s.etag, response.Header.Get("ETag"))
+	s.Require().NoError(err)
+	s.Require().Equal(200, response.StatusCode)
+	s.Require().Equal(s.etag, response.Header.Get("ETag"))
 }
 
 func (s *SwiftTestSuite) TestRoundTripWithIfNoneMatchReturns304() {
@@ -129,8 +127,8 @@ func (s *SwiftTestSuite) TestRoundTripWithIfNoneMatchReturns304() {
 	request.Header.Set("If-None-Match", s.etag)
 
 	response, err := s.transport.RoundTrip(request)
-	require.Nil(s.T(), err)
-	require.Equal(s.T(), http.StatusNotModified, response.StatusCode)
+	s.Require().NoError(err)
+	s.Require().Equal(http.StatusNotModified, response.StatusCode)
 }
 
 func (s *SwiftTestSuite) TestRoundTripWithUpdatedETagReturns200() {
@@ -140,8 +138,8 @@ func (s *SwiftTestSuite) TestRoundTripWithUpdatedETagReturns200() {
 	request.Header.Set("If-None-Match", s.etag+"_wrong")
 
 	response, err := s.transport.RoundTrip(request)
-	require.Nil(s.T(), err)
-	require.Equal(s.T(), http.StatusOK, response.StatusCode)
+	s.Require().NoError(err)
+	s.Require().Equal(http.StatusOK, response.StatusCode)
 }
 
 func (s *SwiftTestSuite) TestRoundTripWithLastModifiedDisabledReturns200() {
@@ -149,8 +147,8 @@ func (s *SwiftTestSuite) TestRoundTripWithLastModifiedDisabledReturns200() {
 	request, _ := http.NewRequest("GET", "swift://test/foo/test.png", nil)
 
 	response, err := s.transport.RoundTrip(request)
-	require.Nil(s.T(), err)
-	require.Equal(s.T(), 200, response.StatusCode)
+	s.Require().NoError(err)
+	s.Require().Equal(200, response.StatusCode)
 }
 
 func (s *SwiftTestSuite) TestRoundTripWithLastModifiedEnabled() {
@@ -158,9 +156,9 @@ func (s *SwiftTestSuite) TestRoundTripWithLastModifiedEnabled() {
 	request, _ := http.NewRequest("GET", "swift://test/foo/test.png", nil)
 
 	response, err := s.transport.RoundTrip(request)
-	require.Nil(s.T(), err)
-	require.Equal(s.T(), 200, response.StatusCode)
-	require.Equal(s.T(), s.lastModified.Format(http.TimeFormat), response.Header.Get("Last-Modified"))
+	s.Require().NoError(err)
+	s.Require().Equal(200, response.StatusCode)
+	s.Require().Equal(s.lastModified.Format(http.TimeFormat), response.Header.Get("Last-Modified"))
 }
 
 func (s *SwiftTestSuite) TestRoundTripWithIfModifiedSinceReturns304() {
@@ -170,8 +168,8 @@ func (s *SwiftTestSuite) TestRoundTripWithIfModifiedSinceReturns304() {
 	request.Header.Set("If-Modified-Since", s.lastModified.Format(http.TimeFormat))
 
 	response, err := s.transport.RoundTrip(request)
-	require.Nil(s.T(), err)
-	require.Equal(s.T(), http.StatusNotModified, response.StatusCode)
+	s.Require().NoError(err)
+	s.Require().Equal(http.StatusNotModified, response.StatusCode)
 }
 
 func (s *SwiftTestSuite) TestRoundTripWithUpdatedLastModifiedReturns200() {
@@ -181,8 +179,8 @@ func (s *SwiftTestSuite) TestRoundTripWithUpdatedLastModifiedReturns200() {
 	request.Header.Set("If-Modified-Since", s.lastModified.Add(-24*time.Hour).Format(http.TimeFormat))
 
 	response, err := s.transport.RoundTrip(request)
-	require.Nil(s.T(), err)
-	require.Equal(s.T(), http.StatusOK, response.StatusCode)
+	s.Require().NoError(err)
+	s.Require().Equal(http.StatusOK, response.StatusCode)
 }
 
 func TestSwiftTransport(t *testing.T) {

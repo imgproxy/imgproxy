@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/imgproxy/imgproxy/v3/config"
@@ -35,9 +34,9 @@ func (s *OtelTestSuite) TestMapDeprecatedConfigEndpointNoProtocol() {
 
 	mapDeprecatedConfig()
 
-	require.True(s.T(), config.OpenTelemetryEnable)
-	require.Equal(s.T(), "https://otel_endpoint:1234", os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT"))
-	require.Equal(s.T(), "", os.Getenv("OTEL_EXPORTER_OTLP_PROTOCOL"))
+	s.Require().True(config.OpenTelemetryEnable)
+	s.Require().Equal("https://otel_endpoint:1234", os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT"))
+	s.Require().Equal("", os.Getenv("OTEL_EXPORTER_OTLP_PROTOCOL"))
 }
 
 func (s *OtelTestSuite) TestMapDeprecatedConfigEndpointGrpcProtocol() {
@@ -46,9 +45,9 @@ func (s *OtelTestSuite) TestMapDeprecatedConfigEndpointGrpcProtocol() {
 
 	mapDeprecatedConfig()
 
-	require.True(s.T(), config.OpenTelemetryEnable)
-	require.Equal(s.T(), "https://otel_endpoint:1234", os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT"))
-	require.Equal(s.T(), "grpc", os.Getenv("OTEL_EXPORTER_OTLP_PROTOCOL"))
+	s.Require().True(config.OpenTelemetryEnable)
+	s.Require().Equal("https://otel_endpoint:1234", os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT"))
+	s.Require().Equal("grpc", os.Getenv("OTEL_EXPORTER_OTLP_PROTOCOL"))
 }
 
 func (s *OtelTestSuite) TestMapDeprecatedConfigEndpointGrpcProtocolInsecure() {
@@ -58,9 +57,9 @@ func (s *OtelTestSuite) TestMapDeprecatedConfigEndpointGrpcProtocolInsecure() {
 
 	mapDeprecatedConfig()
 
-	require.True(s.T(), config.OpenTelemetryEnable)
-	require.Equal(s.T(), "http://otel_endpoint:1234", os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT"))
-	require.Equal(s.T(), "grpc", os.Getenv("OTEL_EXPORTER_OTLP_PROTOCOL"))
+	s.Require().True(config.OpenTelemetryEnable)
+	s.Require().Equal("http://otel_endpoint:1234", os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT"))
+	s.Require().Equal("grpc", os.Getenv("OTEL_EXPORTER_OTLP_PROTOCOL"))
 }
 
 func (s *OtelTestSuite) TestMapDeprecatedConfigEndpointHttpsProtocol() {
@@ -69,9 +68,9 @@ func (s *OtelTestSuite) TestMapDeprecatedConfigEndpointHttpsProtocol() {
 
 	mapDeprecatedConfig()
 
-	require.True(s.T(), config.OpenTelemetryEnable)
-	require.Equal(s.T(), "https://otel_endpoint:1234", os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT"))
-	require.Equal(s.T(), "https", os.Getenv("OTEL_EXPORTER_OTLP_PROTOCOL"))
+	s.Require().True(config.OpenTelemetryEnable)
+	s.Require().Equal("https://otel_endpoint:1234", os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT"))
+	s.Require().Equal("https", os.Getenv("OTEL_EXPORTER_OTLP_PROTOCOL"))
 }
 
 func (s *OtelTestSuite) TestMapDeprecatedConfigEndpointHttpProtocol() {
@@ -80,9 +79,9 @@ func (s *OtelTestSuite) TestMapDeprecatedConfigEndpointHttpProtocol() {
 
 	mapDeprecatedConfig()
 
-	require.True(s.T(), config.OpenTelemetryEnable)
-	require.Equal(s.T(), "http://otel_endpoint:1234", os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT"))
-	require.Equal(s.T(), "http", os.Getenv("OTEL_EXPORTER_OTLP_PROTOCOL"))
+	s.Require().True(config.OpenTelemetryEnable)
+	s.Require().Equal("http://otel_endpoint:1234", os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT"))
+	s.Require().Equal("http", os.Getenv("OTEL_EXPORTER_OTLP_PROTOCOL"))
 }
 
 func (s *OtelTestSuite) TestMapDeprecatedConfigServiceName() {
@@ -91,7 +90,7 @@ func (s *OtelTestSuite) TestMapDeprecatedConfigServiceName() {
 	config.OpenTelemetryEnable = true
 	mapDeprecatedConfig()
 
-	require.Equal(s.T(), "testtest", os.Getenv("OTEL_SERVICE_NAME"))
+	s.Require().Equal("testtest", os.Getenv("OTEL_SERVICE_NAME"))
 }
 
 func (s *OtelTestSuite) TestMapDeprecatedConfigPropagators() {
@@ -100,7 +99,7 @@ func (s *OtelTestSuite) TestMapDeprecatedConfigPropagators() {
 	config.OpenTelemetryEnable = true
 	mapDeprecatedConfig()
 
-	require.Equal(s.T(), "testtest", os.Getenv("OTEL_PROPAGATORS"))
+	s.Require().Equal("testtest", os.Getenv("OTEL_PROPAGATORS"))
 }
 
 func (s *OtelTestSuite) TestMapDeprecatedConfigConnectionTimeout() {
@@ -109,7 +108,7 @@ func (s *OtelTestSuite) TestMapDeprecatedConfigConnectionTimeout() {
 	config.OpenTelemetryEnable = true
 	mapDeprecatedConfig()
 
-	require.Equal(s.T(), "15000", os.Getenv("OTEL_EXPORTER_OTLP_TIMEOUT"))
+	s.Require().Equal("15000", os.Getenv("OTEL_EXPORTER_OTLP_TIMEOUT"))
 }
 
 func TestPresets(t *testing.T) {

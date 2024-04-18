@@ -1,8 +1,3 @@
-run:
-  skip-dirs:
-    - .tmp
-    - vendor
-
 linters:
   disable-all: true
   enable:
@@ -17,27 +12,36 @@ linters:
     - stylecheck
     - typecheck
     - unused
+    - bodyclose
+    - testifylint
 
 linters-settings:
   govet:
-    # report about shadowed variables
-    check-shadowing: true
+    enable-all: true
+    disable:
+      - fieldalignment
 
 issues:
+  exclude-dirs:
+    - .tmp
+    - vendor
   exclude-rules:
     # - path: _test\.go
     #   linters:
     #     - goconst
 
+    - linters: [bodyclose]
+      path: ".*_test.go"
+
     # False positives on CGO generated code
     - linters: [staticcheck]
       text: "SA4000:"
-      path: vips/*
+      path: vips/.*
 
     # False positives on CGO generated code
     - linters: [gocritic]
       text: "dupSubExpr"
-      path: vips/*
+      path: vips/.*
 
     - linters: [stylecheck]
       text: "ST1005:"
