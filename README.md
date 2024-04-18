@@ -48,7 +48,7 @@ imgproxy takes advantage of probably the most efficient image processing library
 
 imgproxy uses Go’s raw (no wrappers) native `net/http` package to omit any overhead while processing requests and provides the best possible HTTP support.
 
-You can take a look at some benchmarking results and compare imgproxy with some well-known alternatives in our [benchmark report](https://github.com/imgproxy/imgproxy/blob/master/BENCHMARK.md).
+You can take a look at some benchmarking results and compare imgproxy with some well-known alternatives in our [benchmark report](https://imgproxy.net/blog/image-processing-servers-benchmark/).
 
 #### Security
 
