@@ -195,6 +195,8 @@ var (
 	BufferPoolCalibrationThreshold int
 
 	HealthCheckPath string
+
+	ShowSourceImageOnFailure bool
 )
 
 var (
@@ -386,6 +388,8 @@ func Reset() {
 	BufferPoolCalibrationThreshold = 1024
 
 	HealthCheckPath = ""
+
+	ShowSourceImageOnFailure = false
 }
 
 func Configure() error {
@@ -599,6 +603,8 @@ func Configure() error {
 	configurators.Int(&FreeMemoryInterval, "IMGPROXY_FREE_MEMORY_INTERVAL")
 	configurators.Int(&DownloadBufferSize, "IMGPROXY_DOWNLOAD_BUFFER_SIZE")
 	configurators.Int(&BufferPoolCalibrationThreshold, "IMGPROXY_BUFFER_POOL_CALIBRATION_THRESHOLD")
+
+	configurators.Bool(&ShowSourceImageOnFailure, "IMGPROXY_SHOW_SOURCE_IMAGE_ON_FAILURE")
 
 	if len(Keys) != len(Salts) {
 		return fmt.Errorf("Number of keys and number of salts should be equal. Keys: %d, salts: %d", len(Keys), len(Salts))

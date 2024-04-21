@@ -13,15 +13,13 @@ import (
 	"github.com/imgproxy/imgproxy/v3/security"
 )
 
-var ErrSourceImageTypeNotSupported = ierrors.New(422, "Source image type not supported", "Invalid source image")
-
 var downloadBufPool *bufpool.Pool
 
 func initRead() {
 	downloadBufPool = bufpool.New("download", config.Workers, config.DownloadBufferSize)
 }
 
-func readAndCheckImage(r io.Reader, contentLength int, secopts security.Options) (*ImageData, error) {
+func readAndCheckImage(r io.Reader, contentLength int, secopts security.Options, imageUrl string) (*ImageData, error) {
 	if err := security.CheckFileSize(contentLength, secopts); err != nil {
 		return nil, err
 	}
@@ -39,7 +37,11 @@ func readAndCheckImage(r io.Reader, contentLength int, secopts security.Options)
 		cancel()
 
 		if err == imagemeta.ErrFormat {
-			return nil, ErrSourceImageTypeNotSupported
+			if len(imageUrl) > 0 {
+				return nil, ierrors.New(422, "Source image type not supported", "Invalid source image").WithSourceImageField(imageUrl)
+			}
+
+			return nil, ierrors.New(422, "Source image type not supported", "Invalid source image")
 		}
 
 		return nil, wrapError(err)

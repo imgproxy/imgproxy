@@ -156,8 +156,31 @@ func withPanicHandler(h router.RouteHandler) router.RouteHandler {
 
 				router.LogResponse(reqID, r, ierr.StatusCode, ierr)
 
-				rw.Header().Set("Content-Type", "text/plain")
 				rw.WriteHeader(ierr.StatusCode)
+
+				if config.ShowSourceImageOnFailure && len(ierr.SourceImage) > 0 {
+					imageURL := ierr.SourceImage
+					image, err := getOriginalImage(imageURL)
+
+					if err != nil {
+						rw.Write([]byte(err.Error()))
+
+						return
+					}
+
+					rw.Header().Set("Content-Type", "application/octet-stream")
+					rw.Write(image)
+
+					if config.DevelopmentErrorsMode {
+						log.Errorf(ierr.Message)
+					} else {
+						log.Errorf(ierr.PublicMessage)
+					}
+
+					return
+				}
+
+				rw.Header().Set("Content-Type", "text/plain")
 
 				if config.DevelopmentErrorsMode {
 					rw.Write([]byte(ierr.Message))
@@ -183,7 +206,7 @@ func handleHealth(reqID string, rw http.ResponseWriter, r *http.Request) {
 		msg = imgproxyIsRunningMsg
 	} else {
 		status = http.StatusInternalServerError
-		msg = []byte("Error")
+		msg = []byte("DefaultError")
 		ierr = ierrors.Wrap(err, 1)
 	}
 

@@ -103,7 +103,7 @@ func FromBase64(encoded, desc string, secopts security.Options) (*ImageData, err
 	dec := base64.NewDecoder(base64.StdEncoding, strings.NewReader(encoded))
 	size := 4 * (len(encoded)/3 + 1)
 
-	imgdata, err := readAndCheckImage(dec, size, secopts)
+	imgdata, err := readAndCheckImage(dec, size, secopts, "")
 	if err != nil {
 		return nil, fmt.Errorf("Can't decode %s: %s", desc, err)
 	}
@@ -122,7 +122,7 @@ func FromFile(path, desc string, secopts security.Options) (*ImageData, error) {
 		return nil, fmt.Errorf("Can't read %s: %s", desc, err)
 	}
 
-	imgdata, err := readAndCheckImage(f, int(fi.Size()), secopts)
+	imgdata, err := readAndCheckImage(f, int(fi.Size()), secopts, path)
 	if err != nil {
 		return nil, fmt.Errorf("Can't read %s: %s", desc, err)
 	}

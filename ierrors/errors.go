@@ -12,6 +12,8 @@ type Error struct {
 	PublicMessage string
 	Unexpected    bool
 
+	SourceImage string
+
 	stack []uintptr
 }
 
@@ -25,6 +27,12 @@ func (e *Error) FormatStack() string {
 	}
 
 	return formatStack(e.stack)
+}
+
+func (e *Error) WithSourceImageField(sourceImage string) *Error {
+	e.SourceImage = sourceImage
+
+	return e
 }
 
 func (e *Error) StackTrace() []uintptr {
