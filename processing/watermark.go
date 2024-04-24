@@ -36,7 +36,7 @@ func prepareWatermark(wm *vips.Image, wmData *imagedata.ImageData, opts *options
 		po.Height = imath.Max(imath.ScaleToEven(imgHeight, opts.Scale), 1)
 	}
 
-	if opts.Replicate {
+	if opts.ShouldReplicate() {
 		var offX, offY int
 
 		if math.Abs(opts.Gravity.X) >= 1.0 {
@@ -62,7 +62,7 @@ func prepareWatermark(wm *vips.Image, wmData *imagedata.ImageData, opts *options
 		return err
 	}
 
-	if opts.Replicate || framesCount > 1 {
+	if opts.ShouldReplicate() || framesCount > 1 {
 		// We need to copy image if we're going to replicate.
 		// Replication requires image to be read several times, and this requires
 		// random access to pixels
@@ -71,7 +71,7 @@ func prepareWatermark(wm *vips.Image, wmData *imagedata.ImageData, opts *options
 		}
 	}
 
-	if opts.Replicate {
+	if opts.ShouldReplicate() {
 		if err := wm.Replicate(imgWidth, imgHeight); err != nil {
 			return err
 		}
@@ -111,7 +111,7 @@ func applyWatermark(img *vips.Image, wmData *imagedata.ImageData, opts *options.
 
 	// If we replicated the watermark and need to apply it to an animated image,
 	// it is faster to replicate the watermark to all the image and apply it single-pass
-	if opts.Replicate && framesCount > 1 {
+	if opts.ShouldReplicate() && framesCount > 1 {
 		if err := wm.Replicate(width, height); err != nil {
 			return err
 		}
@@ -121,7 +121,7 @@ func applyWatermark(img *vips.Image, wmData *imagedata.ImageData, opts *options.
 
 	left, top := 0, 0
 
-	if !opts.Replicate {
+	if !opts.ShouldReplicate() {
 		left, top = calcPosition(width, frameHeight, wm.Width(), wm.Height(), &opts.Gravity, offsetScale, true)
 	}
 

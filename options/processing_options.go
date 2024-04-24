@@ -54,11 +54,14 @@ type TrimOptions struct {
 }
 
 type WatermarkOptions struct {
-	Enabled   bool
-	Opacity   float64
-	Replicate bool
-	Gravity   GravityOptions
-	Scale     float64
+	Enabled bool
+	Opacity float64
+	Gravity GravityOptions
+	Scale   float64
+}
+
+func (wo WatermarkOptions) ShouldReplicate() bool {
+	return wo.Gravity.Type == GravityReplicate
 }
 
 type ProcessingOptions struct {
@@ -139,7 +142,7 @@ func NewProcessingOptions() *ProcessingOptions {
 		Blur:              0,
 		Sharpen:           0,
 		Dpr:               1,
-		Watermark:         WatermarkOptions{Opacity: 1, Replicate: false, Gravity: GravityOptions{Type: GravityCenter}},
+		Watermark:         WatermarkOptions{Opacity: 1, Gravity: GravityOptions{Type: GravityCenter}},
 		StripMetadata:     config.StripMetadata,
 		KeepCopyright:     config.KeepCopyright,
 		StripColorProfile: config.StripColorProfile,
@@ -264,8 +267,8 @@ func parseExtend(opts *ExtendOptions, name string, args []string) error {
 			return err
 		}
 
-		if opts.Gravity.Type == GravitySmart {
-			return fmt.Errorf("%s doesn't support smart gravity", name)
+		if !opts.Gravity.Type.OkForExtend() {
+			return fmt.Errorf("%s doesn't support %s gravity", name, opts.Gravity.Type)
 		}
 	}
 
@@ -428,7 +431,15 @@ func applyDprOption(po *ProcessingOptions, args []string) error {
 }
 
 func applyGravityOption(po *ProcessingOptions, args []string) error {
-	return parseGravity(&po.Gravity, args)
+	if err := parseGravity(&po.Gravity, args); err != nil {
+		return err
+	}
+
+	if !po.Gravity.Type.OkForCrop() {
+		return fmt.Errorf("%s gravity type is not applicable to gravity", po.Gravity.Type)
+	}
+
+	return nil
 }
 
 func applyCropOption(po *ProcessingOptions, args []string) error {
@@ -451,7 +462,12 @@ func applyCropOption(po *ProcessingOptions, args []string) error {
 	}
 
 	if len(args) > 2 {
-		return parseGravity(&po.Crop.Gravity, args[2:])
+		if err := parseGravity(&po.Crop.Gravity, args[2:]); err != nil {
+			return err
+		}
+		if !po.Crop.Gravity.Type.OkForCrop() {
+			return fmt.Errorf("%s gravity type is not applicable to crop", po.Crop.Gravity.Type)
+		}
 	}
 
 	return nil
@@ -715,9 +731,7 @@ func applyWatermarkOption(po *ProcessingOptions, args []string) error {
 	}
 
 	if len(args) > 1 && len(args[1]) > 0 {
-		if args[1] == "re" {
-			po.Watermark.Replicate = true
-		} else if g, ok := gravityTypes[args[1]]; ok && g != GravityFocusPoint && g != GravitySmart {
+		if g, ok := gravityTypes[args[1]]; ok && g.OkForWatermark() {
 			po.Watermark.Gravity.Type = g
 		} else {
 			return fmt.Errorf("Invalid watermark position: %s", args[1])

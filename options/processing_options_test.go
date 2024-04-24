@@ -236,6 +236,20 @@ func (s *ProcessingOptionsTestSuite) TestParsePathExtend() {
 	s.Require().InDelta(20.0, po.Extend.Gravity.Y, 0.0001)
 }
 
+func (s *ProcessingOptionsTestSuite) TestParsePathExtendSmartGravity() {
+	path := "/extend:1:sm/plain/http://images.dev/lorem/ipsum.jpg"
+	_, _, err := ParsePath(path, make(http.Header))
+
+	s.Require().Error(err)
+}
+
+func (s *ProcessingOptionsTestSuite) TestParsePathExtendReplicateGravity() {
+	path := "/extend:1:re/plain/http://images.dev/lorem/ipsum.jpg"
+	_, _, err := ParsePath(path, make(http.Header))
+
+	s.Require().Error(err)
+}
+
 func (s *ProcessingOptionsTestSuite) TestParsePathGravity() {
 	path := "/gravity:soea/plain/http://images.dev/lorem/ipsum.jpg"
 	po, _, err := ParsePath(path, make(http.Header))
@@ -245,7 +259,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathGravity() {
 	s.Require().Equal(GravitySouthEast, po.Gravity.Type)
 }
 
-func (s *ProcessingOptionsTestSuite) TestParsePathGravityFocuspoint() {
+func (s *ProcessingOptionsTestSuite) TestParsePathGravityFocusPoint() {
 	path := "/gravity:fp:0.5:0.75/plain/http://images.dev/lorem/ipsum.jpg"
 	po, _, err := ParsePath(path, make(http.Header))
 
@@ -254,6 +268,46 @@ func (s *ProcessingOptionsTestSuite) TestParsePathGravityFocuspoint() {
 	s.Require().Equal(GravityFocusPoint, po.Gravity.Type)
 	s.Require().InDelta(0.5, po.Gravity.X, 0.0001)
 	s.Require().InDelta(0.75, po.Gravity.Y, 0.0001)
+}
+
+func (s *ProcessingOptionsTestSuite) TestParsePathGravityReplicate() {
+	path := "/gravity:re/plain/http://images.dev/lorem/ipsum.jpg"
+	_, _, err := ParsePath(path, make(http.Header))
+
+	s.Require().Error(err)
+}
+
+func (s *ProcessingOptionsTestSuite) TestParsePathCrop() {
+	path := "/crop:100:200/plain/http://images.dev/lorem/ipsum.jpg"
+	po, _, err := ParsePath(path, make(http.Header))
+
+	s.Require().NoError(err)
+
+	s.Require().InDelta(100.0, po.Crop.Width, 0.0001)
+	s.Require().InDelta(200.0, po.Crop.Height, 0.0001)
+	s.Require().Equal(GravityUnknown, po.Crop.Gravity.Type)
+	s.Require().InDelta(0.0, po.Crop.Gravity.X, 0.0001)
+	s.Require().InDelta(0.0, po.Crop.Gravity.Y, 0.0001)
+}
+
+func (s *ProcessingOptionsTestSuite) TestParsePathCropGravity() {
+	path := "/crop:100:200:nowe:10:20/plain/http://images.dev/lorem/ipsum.jpg"
+	po, _, err := ParsePath(path, make(http.Header))
+
+	s.Require().NoError(err)
+
+	s.Require().InDelta(100.0, po.Crop.Width, 0.0001)
+	s.Require().InDelta(200.0, po.Crop.Height, 0.0001)
+	s.Require().Equal(GravityNorthWest, po.Crop.Gravity.Type)
+	s.Require().InDelta(10.0, po.Crop.Gravity.X, 0.0001)
+	s.Require().InDelta(20.0, po.Crop.Gravity.Y, 0.0001)
+}
+
+func (s *ProcessingOptionsTestSuite) TestParsePathCropGravityReplicate() {
+	path := "/crop:100:200:re/plain/http://images.dev/lorem/ipsum.jpg"
+	_, _, err := ParsePath(path, make(http.Header))
+
+	s.Require().Error(err)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathQuality() {
