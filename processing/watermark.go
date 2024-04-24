@@ -120,9 +120,40 @@ func applyWatermark(img *vips.Image, wmData *imagedata.ImageData, opts *options.
 	}
 
 	left, top := 0, 0
+	wmWidth := wm.Width()
+	wmHeight := wm.Height()
 
 	if !opts.ShouldReplicate() {
-		left, top = calcPosition(width, frameHeight, wm.Width(), wm.Height(), &opts.Gravity, offsetScale, true)
+		left, top = calcPosition(width, frameHeight, wmWidth, wmHeight, &opts.Gravity, offsetScale, true)
+	}
+
+	if left >= width || top >= height || -left >= wmWidth || -top >= wmHeight {
+		// Watermark is completely outside the image
+		return nil
+	}
+
+	// if watermark is partially outside the image, it may partially be visible
+	// on the next frame. We need to crop it vertically.
+	// We don't care about horizontal overlap, as frames are stacked vertically
+	if framesCount > 1 {
+		cropTop := 0
+		cropHeight := wmHeight
+
+		if top < 0 {
+			cropTop = -top
+			cropHeight -= cropTop
+			top = 0
+		}
+
+		if top+cropHeight > frameHeight {
+			cropHeight = frameHeight - top
+		}
+
+		if cropTop > 0 || cropHeight < wmHeight {
+			if err := wm.Crop(0, cropTop, wmWidth, cropHeight); err != nil {
+				return err
+			}
+		}
 	}
 
 	for i := 0; i < framesCount; i++ {

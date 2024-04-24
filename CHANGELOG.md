@@ -15,6 +15,7 @@
 ### Fix
 - Fix parsing some TIFFs.
 - Fix over-shrinking during scale-on-load.
+- Fix watermarks overlapping animation frames in some cases.
 - (pro) Fix false-positive video detections.
 
 ## [3.23.0] - 2024-03-11
