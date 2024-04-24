@@ -695,10 +695,22 @@ vips_replicate_go(VipsImage *in, VipsImage **out, int width, int height)
 {
   VipsImage *tmp;
 
-  if (vips_replicate(in, &tmp, 1 + width / in->Xsize, 1 + height / in->Ysize, NULL))
+  int across = VIPS_CEIL((double) width / in->Xsize);
+  int down = VIPS_CEIL((double) height / in->Ysize);
+
+  if (across % 2 == 0)
+    across++;
+  if (down % 2 == 0)
+    down++;
+
+  if (vips_replicate(in, &tmp, across, down, NULL))
     return 1;
 
-  if (vips_extract_area(tmp, out, 0, 0, width, height, NULL)) {
+  if (vips_extract_area(tmp, out,
+          (tmp->Xsize - width) / 2,
+          (tmp->Ysize - height) / 2,
+          width, height,
+          NULL)) {
     clear_image(&tmp);
     return 1;
   }
