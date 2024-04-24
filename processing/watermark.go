@@ -72,7 +72,7 @@ func prepareWatermark(wm *vips.Image, wmData *imagedata.ImageData, opts *options
 	}
 
 	if opts.ShouldReplicate() {
-		if err := wm.Replicate(imgWidth, imgHeight); err != nil {
+		if err := wm.Replicate(imgWidth, imgHeight, true); err != nil {
 			return err
 		}
 	}
@@ -112,7 +112,7 @@ func applyWatermark(img *vips.Image, wmData *imagedata.ImageData, opts *options.
 	// If we replicated the watermark and need to apply it to an animated image,
 	// it is faster to replicate the watermark to all the image and apply it single-pass
 	if opts.ShouldReplicate() && framesCount > 1 {
-		if err := wm.Replicate(width, height); err != nil {
+		if err := wm.Replicate(width, height, false); err != nil {
 			return err
 		}
 

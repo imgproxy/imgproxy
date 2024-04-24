@@ -691,26 +691,27 @@ vips_trim(VipsImage *in, VipsImage **out, double threshold,
 }
 
 int
-vips_replicate_go(VipsImage *in, VipsImage **out, int width, int height)
+vips_replicate_go(VipsImage *in, VipsImage **out, int width, int height, int centered)
 {
   VipsImage *tmp;
 
   int across = VIPS_CEIL((double) width / in->Xsize);
   int down = VIPS_CEIL((double) height / in->Ysize);
 
-  if (across % 2 == 0)
-    across++;
-  if (down % 2 == 0)
-    down++;
+  if (centered) {
+    if (across % 2 == 0)
+      across++;
+    if (down % 2 == 0)
+      down++;
+  }
 
   if (vips_replicate(in, &tmp, across, down, NULL))
     return 1;
 
-  if (vips_extract_area(tmp, out,
-          (tmp->Xsize - width) / 2,
-          (tmp->Ysize - height) / 2,
-          width, height,
-          NULL)) {
+  const int left = centered ? (tmp->Xsize - width) / 2 : 0;
+  const int top = centered ? (tmp->Ysize - height) / 2 : 0;
+
+  if (vips_extract_area(tmp, out, left, top, width, height, NULL)) {
     clear_image(&tmp);
     return 1;
   }

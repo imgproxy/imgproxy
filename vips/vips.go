@@ -852,10 +852,10 @@ func (img *Image) CopyMemory() error {
 	return nil
 }
 
-func (img *Image) Replicate(width, height int) error {
+func (img *Image) Replicate(width, height int, centered bool) error {
 	var tmp *C.VipsImage
 
-	if C.vips_replicate_go(img.VipsImage, &tmp, C.int(width), C.int(height)) != 0 {
+	if C.vips_replicate_go(img.VipsImage, &tmp, C.int(width), C.int(height), gbool(centered)) != 0 {
 		return Error()
 	}
 	C.swap_and_clear(&img.VipsImage, tmp)
