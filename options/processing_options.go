@@ -761,6 +761,8 @@ func applyDitherOption(po *ProcessingOptions, args []string) error {
 				po.Dither.LUTFile = "lab_13_hack.interpol_clarabel"
 			case "lrgb13":
 				po.Dither.LUTFile = "rgb_13.interpol_clarabel"
+			case "hpmrgb":
+				po.Dither.LUTFile = "hpminde_rgb"
 			default:
 				if err := maybeParseNumericDitherOptions(po, arg); err != nil {
 					return err

@@ -53,7 +53,8 @@ RUN cd /opt/pushd-dither \
 # decompress LUTs
 RUN cd /opt/pushd-dither/lut_dither \
     && zstd -fd --rm lab_13_hack.interpol_clarabel.npy.zst \
-    && zstd -fd --rm rgb_13.interpol_clarabel.npy.zst
+    && zstd -fd --rm rgb_13.interpol_clarabel.npy.zst \
+    && zstd -fd --rm hpminde_rgb.npy.zst
 
 # ====== END PUSHD DITHER ========
 
