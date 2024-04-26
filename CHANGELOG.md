@@ -4,6 +4,7 @@
 ### Add
 - Add [IMGPROXY_ALWAYS_RASTERIZE_SVG](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_ALWAYS_RASTERIZE_SVG) config.
 - Add [IMGPROXY_PNG_UNLIMITED](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_PNG_UNLIMITED) and [IMGPROXY_SVG_UNLIMITED](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_SVG_UNLIMITED) configs.
+- (pro) Add `fill`, `foxus_x`, and `focus_y` arguments to the [video_thumbnail_tile](https://docs.imgproxy.net/latest/usage/processing#video-thumbnail-tile) processing option.
 
 ### Change
 - Respond with 404 when the bucket/container name or object key is empty in an S3, Google Cloud Storage, Azure Blob Storage, or OpenStack Object Storage (Swift) URL.
