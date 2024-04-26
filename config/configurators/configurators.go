@@ -66,6 +66,7 @@ func StringSliceFile(s *[]string, filepath string) error {
 	if err != nil {
 		return fmt.Errorf("Can't open file %s\n", filepath)
 	}
+	defer f.Close()
 
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
