@@ -12,7 +12,7 @@
 - Respond with 404 when the bucket/container name or object key is empty in an S3, Google Cloud Storage, Azure Blob Storage, or OpenStack Object Storage (Swift) URL.
 - Ensure that the watermark is always centered when replicated.
 - (pro) Improve unsharp masking.
-- (docker) Update AWS Lambda adapter to 0.8.2.
+- (docker) Update AWS Lambda adapter to 0.8.3.
 - (docker) Increase EXIF size limit to 8MB.
 
 ### Fix
