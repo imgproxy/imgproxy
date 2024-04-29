@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [3.24.0] - 2024-04-29
 ### Add
 - Add [IMGPROXY_ALWAYS_RASTERIZE_SVG](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_ALWAYS_RASTERIZE_SVG) config.
 - Add [IMGPROXY_PNG_UNLIMITED](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_PNG_UNLIMITED) and [IMGPROXY_SVG_UNLIMITED](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_SVG_UNLIMITED) configs.

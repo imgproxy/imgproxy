@@ -133,7 +133,7 @@ func main() {
 	case "health":
 		os.Exit(healthcheck())
 	case "version":
-		fmt.Println(version.Version())
+		fmt.Println(version.Version)
 		os.Exit(0)
 	}
 

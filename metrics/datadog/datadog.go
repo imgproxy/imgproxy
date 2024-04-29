@@ -47,7 +47,7 @@ func Init() {
 
 	tracer.Start(
 		tracer.WithService(name),
-		tracer.WithServiceVersion(version.Version()),
+		tracer.WithServiceVersion(version.Version),
 		tracer.WithLogger(dataDogLogger{}),
 	)
 
@@ -70,7 +70,7 @@ func Init() {
 		net.JoinHostPort(statsdHost, statsdPort),
 		statsd.WithTags([]string{
 			"service:" + name,
-			"version:" + version.Version(),
+			"version:" + version.Version,
 		}),
 	)
 	if err == nil {

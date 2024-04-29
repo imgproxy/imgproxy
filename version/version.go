@@ -1,7 +1,3 @@
 package version
 
-const version = "3.23.0"
-
-func Version() string {
-	return version
-}
+const Version = "3.24.0"

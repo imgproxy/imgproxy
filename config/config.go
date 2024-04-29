@@ -282,7 +282,7 @@ func Reset() {
 
 	AllowOrigin = ""
 
-	UserAgent = fmt.Sprintf("imgproxy/%s", version.Version())
+	UserAgent = fmt.Sprintf("imgproxy/%s", version.Version)
 
 	IgnoreSslVerification = false
 	DevelopmentErrorsMode = false
@@ -371,7 +371,7 @@ func Reset() {
 
 	SentryDSN = ""
 	SentryEnvironment = "production"
-	SentryRelease = fmt.Sprintf("imgproxy@%s", version.Version())
+	SentryRelease = fmt.Sprintf("imgproxy@%s", version.Version)
 
 	AirbrakeProjecID = 0
 	AirbrakeProjecKey = ""

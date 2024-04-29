@@ -108,7 +108,7 @@ func Init() error {
 	res, _ := resource.Merge(
 		resource.Default(),
 		resource.NewSchemaless(
-			semconv.ServiceVersionKey.String(version.Version()),
+			semconv.ServiceVersionKey.String(version.Version),
 		),
 	)
 
