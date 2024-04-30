@@ -1,5 +1,9 @@
 # Changelog
 
+## [3.24.1] - 2024-04-30
+## Fix
+- Fix the default `IMGPROXY_WORKERS` value when cgroup limits are applied.
+
 ## [3.24.0] - 2024-04-29
 ### Add
 - Add [IMGPROXY_ALWAYS_RASTERIZE_SVG](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_ALWAYS_RASTERIZE_SVG) config.
