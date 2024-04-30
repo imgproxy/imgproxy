@@ -389,6 +389,8 @@ func Reset() {
 }
 
 func Configure() error {
+	Reset()
+
 	if port := os.Getenv("PORT"); len(port) > 0 {
 		Bind = fmt.Sprintf(":%s", port)
 	}

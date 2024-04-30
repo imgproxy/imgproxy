@@ -40,9 +40,8 @@ func (s *ProcessingHandlerTestSuite) SetupSuite() {
 	wd, err := os.Getwd()
 	s.Require().NoError(err)
 
-	config.LocalFileSystemRoot = filepath.Join(wd, "/testdata")
-	// Disable keep-alive to test connection restrictions
-	config.ClientKeepAliveTimeout = 0
+	s.T().Setenv("IMGPROXY_LOCAL_FILESYSTEM_ROOT", filepath.Join(wd, "/testdata"))
+	s.T().Setenv("IMGPROXY_CLIENT_KEEP_ALIVE_TIMEOUT", "0")
 
 	err = initialize()
 	s.Require().NoError(err)
