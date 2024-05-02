@@ -14,6 +14,7 @@ import (
 const (
 	// https://chromium.googlesource.com/webm/libwebp/+/refs/heads/master/src/webp/encode.h#529
 	webpMaxDimension = 16383.0
+	heifMaxDimension = 16384.0
 	gifMaxDimension  = 65535.0
 	icoMaxDimension  = 256.0
 )
@@ -31,6 +32,23 @@ func fixWebpSize(img *vips.Image) error {
 	}
 
 	log.Warningf("WebP dimension size is limited to %d. The image is rescaled to %dx%d", int(webpMaxDimension), img.Width(), img.Height())
+
+	return nil
+}
+
+func fixHeifSize(img *vips.Image) error {
+	heifLimitShrink := float64(imath.Max(img.Width(), img.Height())) / heifMaxDimension
+
+	if heifLimitShrink <= 1.0 {
+		return nil
+	}
+
+	scale := 1.0 / heifLimitShrink
+	if err := img.Resize(scale, scale); err != nil {
+		return err
+	}
+
+	log.Warningf("AVIF/HEIC dimension size is limited to %d. The image is rescaled to %dx%d", int(heifMaxDimension), img.Width(), img.Height())
 
 	return nil
 }
@@ -77,6 +95,8 @@ func fixSize(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptio
 	switch po.Format {
 	case imagetype.WEBP:
 		return fixWebpSize(img)
+	case imagetype.AVIF, imagetype.HEIC:
+		return fixHeifSize(img)
 	case imagetype.GIF:
 		return fixGifSize(img)
 	case imagetype.ICO:

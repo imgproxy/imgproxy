@@ -1,7 +1,11 @@
 # Changelog
 
+## [Unreleased]
+### Fix
+- Fix HEIC/AVIF dimension limit handling.
+
 ## [3.24.1] - 2024-04-30
-## Fix
+### Fix
 - Fix the default `IMGPROXY_WORKERS` value when cgroup limits are applied.
 
 ## [3.24.0] - 2024-04-29
