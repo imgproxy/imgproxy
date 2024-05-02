@@ -206,7 +206,7 @@ func handleHealth(reqID string, rw http.ResponseWriter, r *http.Request) {
 		msg = imgproxyIsRunningMsg
 	} else {
 		status = http.StatusInternalServerError
-		msg = []byte("DefaultError")
+		msg = []byte("Error")
 		ierr = ierrors.Wrap(err, 1)
 	}
 

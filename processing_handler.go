@@ -214,7 +214,9 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		defer token.Release()
 	}
 
-	signature, path, err := getPathAndSignature(r.RequestURI)
+	cleanedPath := cleanPath(r.URL.Path)
+
+	signature, path, err := trimSignature(cleanedPath)
 
 	checkErr(ctx, "path_parsing", err)
 
@@ -321,6 +323,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 
 		ierr := ierrors.Wrap(err, 0)
 		ierr.Unexpected = ierr.Unexpected || config.ReportDownloadingErrors
+		ierr.SourceImage = imageURL
 
 		sendErr(ctx, "download", ierr)
 
@@ -419,7 +422,11 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		return processing.ProcessImage(ctx, originData, po)
 	}()
 
-	checkErr(ctx, "processing", err)
+	if err != nil {
+		sendErrAndPanic(ctx, "processing", ierrors.New(
+			422, err.Error(), "Cannot process image",
+		).WithSourceImageField(imageURL))
+	}
 
 	defer resultData.Close()
 
@@ -428,21 +435,13 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	respondWithImage(reqID, r, rw, statusCode, resultData, po, imageURL, originData)
 }
 
-func getPathAndSignature(path string) (string, string, error) {
-	result := ""
+func cleanPath(path string) string {
+	return strings.TrimPrefix(path, config.PathPrefix+"/")
+}
 
-	if queryStart := strings.IndexByte(path, '?'); queryStart >= 0 {
-		result = path[:queryStart]
-	}
-
-	if len(config.PathPrefix) > 0 {
-		result = strings.TrimPrefix(path, config.PathPrefix)
-	}
-
-	result = strings.TrimPrefix(path, "/")
-
-	if signatureEnd := strings.IndexByte(result, '/'); signatureEnd > 0 {
-		return result[:signatureEnd], result[signatureEnd:], nil
+func trimSignature(path string) (string, string, error) {
+	if signatureEnd := strings.IndexByte(path, '/'); signatureEnd > 0 {
+		return path[:signatureEnd], path[signatureEnd:], nil
 	}
 
 	return "", "", ierrors.New(
