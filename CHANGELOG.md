@@ -1,8 +1,12 @@
 # Changelog
 
 ## [Unreleased]
+### Changed
+- (pro) Allow specifying [gradient](https://docs.imgproxy.net/latest/usage/processing#gradient) direction as an angle in degrees.
+
 ### Fix
 - Fix HEIC/AVIF dimension limit handling.
+- (pro) Fix style injection to SVG.
 
 ## [3.24.1] - 2024-04-30
 ### Fix
