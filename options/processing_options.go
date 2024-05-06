@@ -79,6 +79,7 @@ type DitherOptions struct {
 	SaturationScale   float64
 	NormalizeContrast bool
 	CLAHESize         int
+	OptionsSet01      bool // shorthand for a set of options starting with the 20240506 release
 }
 
 type WatermarkOptions struct {
@@ -763,6 +764,8 @@ func applyDitherOption(po *ProcessingOptions, args []string) error {
 				po.Dither.LUTFile = "rgb_13.interpol_clarabel"
 			case "hpmrgb":
 				po.Dither.LUTFile = "hpminde_rgb"
+			case "opts01":
+				po.Dither.OptionsSet01 = true // shorthand for a set of options starting with the 20240506 release
 			default:
 				if err := maybeParseNumericDitherOptions(po, arg); err != nil {
 					return err
