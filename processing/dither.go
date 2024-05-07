@@ -153,7 +153,7 @@ func shellOutDither(inFile string, po *options.ProcessingOptions) error {
 		cmdArgs = append(cmdArgs, "--hull-project")
 		cmdArgs = append(cmdArgs, "--pal-meter-13-hack")
 		cmdArgs = append(cmdArgs, "--contrast")
-		cmdArgs = append(cmdArgs, "--shrink-gamut", "2.0")
+		cmdArgs = append(cmdArgs, "--shrink-gamut", "1.5")
 	}
 
 	cmd := exec.Command("python3", cmdArgs...)
