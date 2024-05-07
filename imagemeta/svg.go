@@ -23,7 +23,8 @@ func IsSVG(r io.Reader) bool {
 			return false
 
 		case xml.StartTagToken:
-			return strings.ToLower(string(l.Text())) == "svg"
+			tag := strings.ToLower(string(l.Text()))
+			return tag == "svg" || tag == "svg:svg"
 		}
 	}
 }
