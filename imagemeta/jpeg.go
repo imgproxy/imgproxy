@@ -92,6 +92,10 @@ func DecodeJpegMeta(rr io.Reader) (Meta, error) {
 			return nil, JpegFormatError("missing SOF marker")
 		}
 
+		if marker == jpegSoiMarker {
+			return nil, JpegFormatError("two SOI markers")
+		}
+
 		if jpegRst0Marker <= marker && marker <= jpegRst7Marker {
 			continue
 		}
