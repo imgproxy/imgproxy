@@ -73,8 +73,12 @@ func New() (http.RoundTripper, error) {
 	clientOptions := []func(*s3.Options){}
 
 	if len(config.S3Endpoint) != 0 {
+		endpoint := config.S3Endpoint
+		if !strings.HasPrefix(endpoint, "http://") && !strings.HasPrefix(endpoint, "https://") {
+			endpoint = "http://" + endpoint
+		}
 		clientOptions = append(clientOptions, func(o *s3.Options) {
-			o.BaseEndpoint = aws.String(config.S3Endpoint)
+			o.BaseEndpoint = aws.String(endpoint)
 			o.UsePathStyle = true
 		})
 	}
@@ -95,7 +99,7 @@ func New() (http.RoundTripper, error) {
 
 func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	bucket := req.URL.Host
-	key := strings.TrimPrefix(req.URL.Path, "/")
+	key := strings.TrimLeft(req.URL.Path, "/")
 
 	if len(bucket) == 0 || len(key) == 0 {
 		body := strings.NewReader("Invalid S3 URL: bucket name or object key is empty")

@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 ### Changed
+- Automatically add `http://` scheme to the `IMGPROXY_S3_ENDPOINT` value if it has no scheme.
+- Trim redundant slashes in the S3 object key.
 - (pro) Allow specifying [gradient](https://docs.imgproxy.net/latest/usage/processing#gradient) direction as an angle in degrees.
 
 ### Fix
