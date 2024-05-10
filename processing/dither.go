@@ -156,6 +156,17 @@ func shellOutDither(inFile string, po *options.ProcessingOptions) error {
 		cmdArgs = append(cmdArgs, "--shrink-gamut", "1.5")
 	}
 
+	if po.Dither.OptionsSet02 {
+		cmdArgs = append(cmdArgs, "--cam16")
+		cmdArgs = append(cmdArgs, "--chroma-lightness")
+		cmdArgs = append(cmdArgs, "--saturation-scale", "1.0")
+		cmdArgs = append(cmdArgs, "--hull-project")
+		cmdArgs = append(cmdArgs, "--pal-meter-13-hack")
+		cmdArgs = append(cmdArgs, "--contrast")
+		cmdArgs = append(cmdArgs, "--shrink-gamut", "1.5")
+		cmdArgs = append(cmdArgs, "--clip-error")
+	}
+
 	cmd := exec.Command("python3", cmdArgs...)
 	cmd.Dir = "/opt/pushd-dither"
 	output, err := cmd.CombinedOutput()
