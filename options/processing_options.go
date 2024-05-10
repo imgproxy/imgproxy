@@ -80,6 +80,7 @@ type DitherOptions struct {
 	NormalizeContrast bool
 	CLAHESize         int
 	OptionsSet01      bool // shorthand for a set of options starting with the 20240506 release
+	OptionsSet02      bool
 }
 
 type WatermarkOptions struct {
@@ -766,6 +767,8 @@ func applyDitherOption(po *ProcessingOptions, args []string) error {
 				po.Dither.LUTFile = "hpminde_rgb"
 			case "opts01":
 				po.Dither.OptionsSet01 = true // shorthand for a set of options starting with the 20240506 release
+			case "opts02":
+				po.Dither.OptionsSet02 = true // shorthand for a set of options starting with the 20240510 release
 			default:
 				if err := maybeParseNumericDitherOptions(po, arg); err != nil {
 					return err
