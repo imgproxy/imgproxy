@@ -107,6 +107,7 @@ var (
 	S3Region                  string
 	S3Endpoint                string
 	S3AssumeRoleArn           string
+	S3AssumeRoleExternalID    string
 	S3MultiRegion             bool
 	S3DecryptionClientEnabled bool
 
@@ -303,6 +304,7 @@ func Reset() {
 	S3Region = ""
 	S3Endpoint = ""
 	S3AssumeRoleArn = ""
+	S3AssumeRoleExternalID = ""
 	S3MultiRegion = false
 	S3DecryptionClientEnabled = false
 	GCSEnabled = false
@@ -514,6 +516,7 @@ func Configure() error {
 	configurators.String(&S3Region, "IMGPROXY_S3_REGION")
 	configurators.String(&S3Endpoint, "IMGPROXY_S3_ENDPOINT")
 	configurators.String(&S3AssumeRoleArn, "IMGPROXY_S3_ASSUME_ROLE_ARN")
+	configurators.String(&S3AssumeRoleExternalID, "IMGPROXY_S3_ASSUME_ROLE_EXTERNAL_ID")
 	configurators.Bool(&S3MultiRegion, "IMGPROXY_S3_MULTI_REGION")
 	configurators.Bool(&S3DecryptionClientEnabled, "IMGPROXY_S3_USE_DECRYPTION_CLIENT")
 

@@ -66,7 +66,11 @@ func New() (http.RoundTripper, error) {
 	}
 
 	if len(config.S3AssumeRoleArn) != 0 {
-		creds := stscreds.NewAssumeRoleProvider(sts.NewFromConfig(conf), config.S3AssumeRoleArn)
+		creds := stscreds.NewAssumeRoleProvider(sts.NewFromConfig(conf), config.S3AssumeRoleArn, func(o *stscreds.AssumeRoleOptions) {
+			if len(config.S3AssumeRoleExternalID) != 0 {
+				o.ExternalID = aws.String(config.S3AssumeRoleExternalID)
+			}
+		})
 		conf.Credentials = creds
 	}
 
