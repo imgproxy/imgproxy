@@ -16,10 +16,10 @@ var (
 )
 
 func Init() {
-	if len(config.AirbrakeProjecKey) > 0 {
+	if len(config.AirbrakeProjectKey) > 0 {
 		notifier = gobrake.NewNotifierWithOptions(&gobrake.NotifierOptions{
-			ProjectId:   int64(config.AirbrakeProjecID),
-			ProjectKey:  config.AirbrakeProjecKey,
+			ProjectId:   int64(config.AirbrakeProjectID),
+			ProjectKey:  config.AirbrakeProjectKey,
 			Environment: config.AirbrakeEnv,
 		})
 	}
