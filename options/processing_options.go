@@ -480,9 +480,7 @@ func applyPaddingOption(po *ProcessingOptions, args []string) error {
 		return fmt.Errorf("Invalid padding arguments: %v", args)
 	}
 
-	po.Padding.Enabled = true
-
-	if nArgs > 0 && len(args[0]) > 0 {
+	if nArgs > 0 {
 		if err := parseDimension(&po.Padding.Top, "padding top (+all)", args[0]); err != nil {
 			return err
 		}
@@ -491,28 +489,26 @@ func applyPaddingOption(po *ProcessingOptions, args []string) error {
 		po.Padding.Left = po.Padding.Top
 	}
 
-	if nArgs > 1 && len(args[1]) > 0 {
+	if nArgs > 1 {
 		if err := parseDimension(&po.Padding.Right, "padding right (+left)", args[1]); err != nil {
 			return err
 		}
 		po.Padding.Left = po.Padding.Right
 	}
 
-	if nArgs > 2 && len(args[2]) > 0 {
+	if nArgs > 2 {
 		if err := parseDimension(&po.Padding.Bottom, "padding bottom", args[2]); err != nil {
 			return err
 		}
 	}
 
-	if nArgs > 3 && len(args[3]) > 0 {
+	if nArgs > 3 {
 		if err := parseDimension(&po.Padding.Left, "padding left", args[3]); err != nil {
 			return err
 		}
 	}
 
-	if po.Padding.Top == 0 && po.Padding.Right == 0 && po.Padding.Bottom == 0 && po.Padding.Left == 0 {
-		po.Padding.Enabled = false
-	}
+	po.Padding.Enabled = po.Padding.Top > 0 || po.Padding.Right > 0 || po.Padding.Bottom > 0 || po.Padding.Left > 0
 
 	return nil
 }
