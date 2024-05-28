@@ -13,6 +13,7 @@
 - Fix HEIC/AVIF dimension limit handling.
 - Fix SVG detection when the root element has a namespace.
 - (pro) Fix style injection to SVG.
+- (pro) Fix video tiles generation when the video's SAR is not `1`.
 
 ## [3.24.1] - 2024-04-30
 ### Fix
