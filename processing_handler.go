@@ -10,6 +10,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	"golang.org/x/sync/semaphore"
 
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/cookies"
@@ -25,24 +26,23 @@ import (
 	"github.com/imgproxy/imgproxy/v3/processing"
 	"github.com/imgproxy/imgproxy/v3/router"
 	"github.com/imgproxy/imgproxy/v3/security"
-	"github.com/imgproxy/imgproxy/v3/semaphore"
 	"github.com/imgproxy/imgproxy/v3/svg"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
 var (
-	queueSem      *semaphore.Semaphore
-	processingSem *semaphore.Semaphore
+	queueSem      *semaphore.Weighted
+	processingSem *semaphore.Weighted
 
 	headerVaryValue string
 )
 
 func initProcessingHandler() {
 	if config.RequestsQueueSize > 0 {
-		queueSem = semaphore.New(config.RequestsQueueSize + config.Workers)
+		queueSem = semaphore.NewWeighted(int64(config.RequestsQueueSize + config.Workers))
 	}
 
-	processingSem = semaphore.New(config.Workers)
+	processingSem = semaphore.NewWeighted(int64(config.Workers))
 
 	vary := make([]string, 0)
 
@@ -205,11 +205,11 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	if queueSem != nil {
-		token, acquired := queueSem.TryAcquire()
+		acquired := queueSem.TryAcquire(1)
 		if !acquired {
 			panic(ierrors.New(429, "Too many requests", "Too many requests"))
 		}
-		defer token.Release()
+		defer queueSem.Release(1)
 	}
 
 	path := r.RequestURI
@@ -282,21 +282,22 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// The heavy part start here, so we need to restrict worker number
-	var processingSemToken *semaphore.Token
+	// The heavy part starts here, so we need to restrict worker number
 	func() {
 		defer metrics.StartQueueSegment(ctx)()
 
-		var acquired bool
-		processingSemToken, acquired = processingSem.Acquire(ctx)
-		if !acquired {
+		err = processingSem.Acquire(ctx, 1)
+		if err != nil {
 			// We don't actually need to check timeout here,
 			// but it's an easy way to check if this is an actual timeout
 			// or the request was canceled
 			checkErr(ctx, "queue", router.CheckTimeout(ctx))
+			// We should never reach this line as err could be only ctx.Err()
+			// and we've already checked for it. But beter safe than sorry
+			sendErrAndPanic(ctx, "queue", err)
 		}
 	}()
-	defer processingSemToken.Release()
+	defer processingSem.Release(1)
 
 	stats.IncImagesInProgress()
 	defer stats.DecImagesInProgress()
