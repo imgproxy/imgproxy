@@ -10,6 +10,8 @@
 ### Changed
 - Automatically add `http://` scheme to the `IMGPROXY_S3_ENDPOINT` value if it has no scheme.
 - Trim redundant slashes in the S3 object key.
+- Rename `IMGPROXY_WRITE_TIMEOUT` to `IMGPROXY_TIMEOUT`. The old name is deprecated but still supported.
+- Rename `IMGPROXY_READ_TIMEOUT` to `IMGPROXY_READ_REQUEST_TIMEOUT`. The old name is deprecated but still supported.
 - (pro) Allow specifying [gradient](https://docs.imgproxy.net/latest/usage/processing#gradient) direction as an angle in degrees.
 
 ### Fix
@@ -17,6 +19,10 @@
 - Fix SVG detection when the root element has a namespace.
 - (pro) Fix style injection to SVG.
 - (pro) Fix video tiles generation when the video's SAR is not `1`.
+
+### Deprecated
+- `IMGPROXY_WRITE_TIMEOUT` config is deprecated. Use `IMGPROXY_TIMEOUT` instead.
+- `IMGPROXY_READ_TIMEOUT` config is deprecated. Use `IMGPROXY_READ_REQUEST_TIMEOUT` instead.
 
 ## [3.24.1] - 2024-04-30
 ### Fix

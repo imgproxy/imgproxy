@@ -21,8 +21,8 @@ type URLReplacement = configurators.URLReplacement
 var (
 	Network                string
 	Bind                   string
-	ReadTimeout            int
-	WriteTimeout           int
+	Timeout                int
+	ReadRequestTimeout     int
 	WriteResponseTimeout   int
 	KeepAliveTimeout       int
 	ClientKeepAliveTimeout int
@@ -217,8 +217,8 @@ func init() {
 func Reset() {
 	Network = "tcp"
 	Bind = ":8080"
-	ReadTimeout = 10
-	WriteTimeout = 10
+	Timeout = 10
+	ReadRequestTimeout = 10
 	WriteResponseTimeout = 10
 	KeepAliveTimeout = 10
 	ClientKeepAliveTimeout = 90
@@ -403,11 +403,24 @@ func Configure() error {
 
 	configurators.String(&Network, "IMGPROXY_NETWORK")
 	configurators.String(&Bind, "IMGPROXY_BIND")
-	configurators.Int(&ReadTimeout, "IMGPROXY_READ_TIMEOUT")
-	configurators.Int(&WriteTimeout, "IMGPROXY_WRITE_TIMEOUT")
+
+	if _, ok := os.LookupEnv("IMGPROXY_WRITE_TIMEOUT"); ok {
+		log.Warning("IMGPROXY_WRITE_TIMEOUT is deprecated, use IMGPROXY_TIMEOUT instead")
+		configurators.Int(&Timeout, "IMGPROXY_WRITE_TIMEOUT")
+	}
+	configurators.Int(&Timeout, "IMGPROXY_TIMEOUT")
+
+	if _, ok := os.LookupEnv("IMGPROXY_READ_TIMEOUT"); ok {
+		log.Warning("IMGPROXY_READ_TIMEOUT is deprecated, use IMGPROXY_READ_REQUEST_TIMEOUT instead")
+		configurators.Int(&ReadRequestTimeout, "IMGPROXY_READ_TIMEOUT")
+	}
+	configurators.Int(&ReadRequestTimeout, "IMGPROXY_READ_REQUEST_TIMEOUT")
+
 	configurators.Int(&WriteResponseTimeout, "IMGPROXY_WRITE_RESPONSE_TIMEOUT")
+
 	configurators.Int(&KeepAliveTimeout, "IMGPROXY_KEEP_ALIVE_TIMEOUT")
 	configurators.Int(&ClientKeepAliveTimeout, "IMGPROXY_CLIENT_KEEP_ALIVE_TIMEOUT")
+
 	configurators.Int(&DownloadTimeout, "IMGPROXY_DOWNLOAD_TIMEOUT")
 
 	if lambdaFn := os.Getenv("AWS_LAMBDA_FUNCTION_NAME"); len(lambdaFn) > 0 {
@@ -627,12 +640,14 @@ func Configure() error {
 		return errors.New("Bind address is not defined")
 	}
 
-	if ReadTimeout <= 0 {
-		return fmt.Errorf("Read timeout should be greater than 0, now - %d\n", ReadTimeout)
+	if Timeout <= 0 {
+		return fmt.Errorf("Timeout should be greater than 0, now - %d\n", Timeout)
 	}
-
-	if WriteTimeout <= 0 {
-		return fmt.Errorf("Write timeout should be greater than 0, now - %d\n", WriteTimeout)
+	if ReadRequestTimeout <= 0 {
+		return fmt.Errorf("Read request timeout should be greater than 0, now - %d\n", ReadRequestTimeout)
+	}
+	if WriteResponseTimeout <= 0 {
+		return fmt.Errorf("Write response timeout should be greater than 0, now - %d\n", WriteResponseTimeout)
 	}
 	if KeepAliveTimeout < 0 {
 		return fmt.Errorf("KeepAlive timeout should be greater than or equal to 0, now - %d\n", KeepAliveTimeout)

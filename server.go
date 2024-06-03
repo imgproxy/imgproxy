@@ -59,7 +59,7 @@ func startServer(cancel context.CancelFunc) (*http.Server, error) {
 
 	s := &http.Server{
 		Handler:        buildRouter(),
-		ReadTimeout:    time.Duration(config.ReadTimeout) * time.Second,
+		ReadTimeout:    time.Duration(config.ReadRequestTimeout) * time.Second,
 		MaxHeaderBytes: 1 << 20,
 		ErrorLog:       errLogger,
 	}
