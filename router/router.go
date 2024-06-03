@@ -95,6 +95,8 @@ func (r *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	req, timeoutCancel := startRequestTimer(req)
 	defer timeoutCancel()
 
+	rw = newTimeoutResponse(rw)
+
 	reqID := req.Header.Get(xRequestIDHeader)
 
 	if len(reqID) == 0 || !requestIDRe.MatchString(reqID) {

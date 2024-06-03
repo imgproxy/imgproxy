@@ -143,10 +143,21 @@ func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, sta
 
 	rw.Header().Set("Content-Length", strconv.Itoa(len(resultData.Data)))
 	rw.WriteHeader(statusCode)
-	rw.Write(resultData.Data)
+	_, err := rw.Write(resultData.Data)
+
+	var ierr *ierrors.Error
+	if err != nil {
+		ierr = ierrors.New(statusCode, fmt.Sprintf("Failed to write response: %s", err), "Failed to write response")
+		ierr.Unexpected = true
+
+		if config.ReportIOErrors {
+			sendErr(r.Context(), "IO", ierr)
+			errorreport.Report(ierr, r)
+		}
+	}
 
 	router.LogResponse(
-		reqID, r, statusCode, nil,
+		reqID, r, statusCode, ierr,
 		log.Fields{
 			"image_url":          originURL,
 			"processing_options": po,
@@ -203,14 +214,6 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	defer stats.DecRequestsInProgress()
 
 	ctx := r.Context()
-
-	if queueSem != nil {
-		acquired := queueSem.TryAcquire(1)
-		if !acquired {
-			panic(ierrors.New(429, "Too many requests", "Too many requests"))
-		}
-		defer queueSem.Release(1)
-	}
 
 	path := r.RequestURI
 	if queryStart := strings.IndexByte(path, '?'); queryStart >= 0 {
@@ -280,6 +283,14 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		if modifiedSince := r.Header.Get("If-Modified-Since"); len(modifiedSince) != 0 {
 			imgRequestHeader.Set("If-Modified-Since", modifiedSince)
 		}
+	}
+
+	if queueSem != nil {
+		acquired := queueSem.TryAcquire(1)
+		if !acquired {
+			panic(ierrors.New(429, "Too many requests", "Too many requests"))
+		}
+		defer queueSem.Release(1)
 	}
 
 	// The heavy part starts here, so we need to restrict worker number

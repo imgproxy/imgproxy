@@ -33,6 +33,9 @@ issues:
     - linters: [bodyclose]
       path: ".*_test.go"
 
+    - linters: [bodyclose]
+      path: "router/timeout_response.go"
+
     # False positives on CGO generated code
     - linters: [staticcheck]
       text: "SA4000:"

@@ -23,6 +23,7 @@ var (
 	Bind                   string
 	ReadTimeout            int
 	WriteTimeout           int
+	WriteResponseTimeout   int
 	KeepAliveTimeout       int
 	ClientKeepAliveTimeout int
 	DownloadTimeout        int
@@ -188,6 +189,7 @@ var (
 	AirbrakeEnv       string
 
 	ReportDownloadingErrors bool
+	ReportIOErrors          bool
 
 	EnableDebugHeaders bool
 
@@ -217,6 +219,7 @@ func Reset() {
 	Bind = ":8080"
 	ReadTimeout = 10
 	WriteTimeout = 10
+	WriteResponseTimeout = 10
 	KeepAliveTimeout = 10
 	ClientKeepAliveTimeout = 90
 	DownloadTimeout = 5
@@ -380,6 +383,7 @@ func Reset() {
 	AirbrakeEnv = "production"
 
 	ReportDownloadingErrors = true
+	ReportIOErrors = false
 
 	EnableDebugHeaders = false
 
@@ -401,6 +405,7 @@ func Configure() error {
 	configurators.String(&Bind, "IMGPROXY_BIND")
 	configurators.Int(&ReadTimeout, "IMGPROXY_READ_TIMEOUT")
 	configurators.Int(&WriteTimeout, "IMGPROXY_WRITE_TIMEOUT")
+	configurators.Int(&WriteResponseTimeout, "IMGPROXY_WRITE_RESPONSE_TIMEOUT")
 	configurators.Int(&KeepAliveTimeout, "IMGPROXY_KEEP_ALIVE_TIMEOUT")
 	configurators.Int(&ClientKeepAliveTimeout, "IMGPROXY_CLIENT_KEEP_ALIVE_TIMEOUT")
 	configurators.Int(&DownloadTimeout, "IMGPROXY_DOWNLOAD_TIMEOUT")
@@ -597,6 +602,7 @@ func Configure() error {
 	configurators.String(&AirbrakeProjecKey, "IMGPROXY_AIRBRAKE_PROJECT_KEY")
 	configurators.String(&AirbrakeEnv, "IMGPROXY_AIRBRAKE_ENVIRONMENT")
 	configurators.Bool(&ReportDownloadingErrors, "IMGPROXY_REPORT_DOWNLOADING_ERRORS")
+	configurators.Bool(&ReportIOErrors, "IMGPROXY_REPORT_IO_ERRORS")
 	configurators.Bool(&EnableDebugHeaders, "IMGPROXY_ENABLE_DEBUG_HEADERS")
 
 	configurators.Int(&FreeMemoryInterval, "IMGPROXY_FREE_MEMORY_INTERVAL")

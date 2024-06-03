@@ -3,8 +3,9 @@
 ## [Unreleased]
 ### Add
 - Add [IMGPROXY_S3_ASSUME_ROLE_EXTERNAL_ID](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_S3_ASSUME_ROLE_EXTERNAL_ID) config.
+- Add [IMGPROXY_WRITE_RESPONSE_TIMEOUT](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_WRITE_RESPONSE_TIMEOUT) config.
+- Add [IMGPROXY_REPORT_IO_ERRORS](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_REPORT_IO_ERRORS) config.
 - (pro) Add [colorize](https://docs.imgproxy.net/latest/usage/processing#colorize) processing option.
-
 
 ### Changed
 - Automatically add `http://` scheme to the `IMGPROXY_S3_ENDPOINT` value if it has no scheme.
