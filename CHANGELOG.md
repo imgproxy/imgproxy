@@ -3,6 +3,8 @@
 ## [Unreleased]
 ### Add
 - Add [IMGPROXY_S3_ASSUME_ROLE_EXTERNAL_ID](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_S3_ASSUME_ROLE_EXTERNAL_ID) config.
+- (pro) Add [colorize](https://docs.imgproxy.net/latest/usage/processing#colorize) processing option.
+
 
 ### Changed
 - Automatically add `http://` scheme to the `IMGPROXY_S3_ENDPOINT` value if it has no scheme.
