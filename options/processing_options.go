@@ -1143,24 +1143,26 @@ func parsePathOptions(parts []string, headers http.Header) (*ProcessingOptions, 
 	}
 
 	po, err := defaultProcessingOptions(headers)
+
 	if err != nil {
 		return nil, "", err
 	}
 
 	options, urlParts := parseURLOptions(parts)
 
-	if err = applyURLOptions(po, options); err != nil {
-		return nil, "", err
-	}
-
 	url, extension, err := DecodeURL(urlParts)
+
 	if err != nil {
 		return nil, "", err
 	}
 
+	if err = applyURLOptions(po, options); err != nil {
+		return nil, url, err
+	}
+
 	if !po.Raw && len(extension) > 0 {
 		if err = applyFormatOption(po, []string{extension}); err != nil {
-			return nil, "", err
+			return nil, url, err
 		}
 	}
 
@@ -1176,18 +1178,18 @@ func parsePathPresets(parts []string, headers http.Header) (*ProcessingOptions, 
 	presets := strings.Split(parts[0], ":")
 	urlParts := parts[1:]
 
-	if err = applyPresetOption(po, presets); err != nil {
-		return nil, "", err
-	}
-
 	url, extension, err := DecodeURL(urlParts)
 	if err != nil {
 		return nil, "", err
 	}
 
+	if err = applyPresetOption(po, presets); err != nil {
+		return po, url, err
+	}
+
 	if !po.Raw && len(extension) > 0 {
 		if err = applyFormatOption(po, []string{extension}); err != nil {
-			return nil, "", err
+			return nil, url, err
 		}
 	}
 
@@ -1214,7 +1216,7 @@ func ParsePath(path string, headers http.Header) (*ProcessingOptions, string, er
 	}
 
 	if err != nil {
-		return nil, "", ierrors.New(404, err.Error(), "Invalid URL")
+		return nil, "", ierrors.New(404, err.Error(), "Invalid URL").WithSourceImageField(imageURL)
 	}
 
 	return po, imageURL, nil

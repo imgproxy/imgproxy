@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"slices"
 	"strconv"
@@ -38,6 +39,7 @@ var (
 )
 
 func initProcessingHandler() {
+
 	if config.RequestsQueueSize > 0 {
 		queueSem = semaphore.NewWeighted(int64(config.RequestsQueueSize + config.Workers))
 	}
@@ -212,34 +214,20 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		defer queueSem.Release(1)
 	}
 
-	path := r.RequestURI
-	if queryStart := strings.IndexByte(path, '?'); queryStart >= 0 {
-		path = path[:queryStart]
-	}
+	cleanedPath := cleanPath(r.URL.Path)
 
-	if len(config.PathPrefix) > 0 {
-		path = strings.TrimPrefix(path, config.PathPrefix)
-	}
+	signature, path, err := trimSignature(cleanedPath)
 
-	path = strings.TrimPrefix(path, "/")
-	signature := ""
+	checkErr(ctx, "path_parsing", err)
 
-	if signatureEnd := strings.IndexByte(path, '/'); signatureEnd > 0 {
-		signature = path[:signatureEnd]
-		path = path[signatureEnd:]
-	} else {
-		sendErrAndPanic(ctx, "path_parsing", ierrors.New(
-			404, fmt.Sprintf("Invalid path: %s", path), "Invalid URL",
-		))
-	}
-
-	path = fixPath(path)
+	path = fixSlashesInPath(path)
 
 	if err := security.VerifySignature(signature, path); err != nil {
 		sendErrAndPanic(ctx, "security", ierrors.New(403, err.Error(), "Forbidden"))
 	}
 
 	po, imageURL, err := options.ParsePath(path, r.Header)
+
 	checkErr(ctx, "path_parsing", err)
 
 	errorreport.SetMetadata(r, "Source Image URL", imageURL)
@@ -259,7 +247,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 			422,
 			fmt.Sprintf("Resulting image format is not supported: %s", po.Format),
 			"Invalid URL",
-		))
+		).WithSourceImageField(imageURL))
 	}
 
 	imgRequestHeader := make(http.Header)
@@ -326,6 +314,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		if config.ETagEnabled && len(etagHandler.ImageEtagExpected()) != 0 {
 			rw.Header().Set("ETag", etagHandler.GenerateExpectedETag())
 		}
+
 		respondWithNotModified(reqID, r, rw, po, imageURL, nmErr.Headers)
 		return
 	} else {
@@ -335,6 +324,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 
 		ierr := ierrors.Wrap(err, 0)
 		ierr.Unexpected = ierr.Unexpected || config.ReportDownloadingErrors
+		ierr.SourceImage = imageURL
 
 		sendErr(ctx, "download", ierr)
 
@@ -403,14 +393,14 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 			422,
 			fmt.Sprintf("Source image format is not supported: %s", originData.Type),
 			"Invalid URL",
-		))
+		).WithSourceImageField(imageURL))
 	}
 
 	// At this point we can't allow requested format to be SVG as we can't save SVGs
 	if po.Format == imagetype.SVG {
 		sendErrAndPanic(ctx, "processing", ierrors.New(
 			422, "Resulting image format is not supported: svg", "Invalid URL",
-		))
+		).WithSourceImageField(imageURL))
 	}
 
 	// We're going to rasterize SVG. Since librsvg lacks the support of some SVG
@@ -432,11 +422,48 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		defer metrics.StartProcessingSegment(ctx)()
 		return processing.ProcessImage(ctx, originData, po)
 	}()
-	checkErr(ctx, "processing", err)
+
+	if err != nil {
+		sendErrAndPanic(ctx, "processing", ierrors.New(
+			422, err.Error(), "Cannot process image",
+		).WithSourceImageField(imageURL))
+	}
 
 	defer resultData.Close()
 
 	checkErr(ctx, "timeout", router.CheckTimeout(ctx))
 
 	respondWithImage(reqID, r, rw, statusCode, resultData, po, imageURL, originData)
+}
+
+func cleanPath(path string) string {
+	return strings.TrimPrefix(path, config.PathPrefix+"/")
+}
+
+func trimSignature(path string) (string, string, error) {
+	if signatureEnd := strings.IndexByte(path, '/'); signatureEnd > 0 {
+		return path[:signatureEnd], path[signatureEnd:], nil
+	}
+
+	return "", "", ierrors.New(
+		404, fmt.Sprintf("Invalid path: %s", path), "Invalid URL",
+	)
+}
+
+func getOriginalImage(imagePath string) ([]byte, error) {
+	response, err := http.Get(imagePath)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer response.Body.Close()
+
+	data, err := io.ReadAll(response.Body)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
 }

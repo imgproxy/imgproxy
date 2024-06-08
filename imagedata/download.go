@@ -256,7 +256,7 @@ func download(ctx context.Context, imageURL string, opts DownloadOptions, secopt
 		contentLength = 0
 	}
 
-	imgdata, err := readAndCheckImage(body, contentLength, secopts)
+	imgdata, err := readAndCheckImage(body, contentLength, secopts, imageURL)
 	if err != nil {
 		return nil, ierrors.Wrap(err, 0)
 	}

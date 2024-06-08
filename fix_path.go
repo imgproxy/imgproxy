@@ -8,7 +8,7 @@ import (
 
 var fixPathRe = regexp.MustCompile(`/plain/(\S+)\:/([^/])`)
 
-func fixPath(path string) string {
+func fixSlashesInPath(path string) string {
 	for _, match := range fixPathRe.FindAllStringSubmatch(path, -1) {
 		repl := fmt.Sprintf("/plain/%s://", match[1])
 		if match[1] == "local" {
