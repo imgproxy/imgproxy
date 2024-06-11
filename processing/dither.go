@@ -154,9 +154,7 @@ func shellOutDither(inFile string, po *options.ProcessingOptions) error {
 		cmdArgs = append(cmdArgs, "--pal-meter-13-hack")
 		cmdArgs = append(cmdArgs, "--contrast")
 		cmdArgs = append(cmdArgs, "--shrink-gamut", "1.5")
-	}
-
-	if po.Dither.OptionsSet02 {
+	} else if po.Dither.OptionsSet02 {
 		cmdArgs = append(cmdArgs, "--cam16")
 		cmdArgs = append(cmdArgs, "--chroma-lightness")
 		cmdArgs = append(cmdArgs, "--saturation-scale", "1.0")
@@ -165,6 +163,33 @@ func shellOutDither(inFile string, po *options.ProcessingOptions) error {
 		cmdArgs = append(cmdArgs, "--contrast")
 		cmdArgs = append(cmdArgs, "--shrink-gamut", "1.5")
 		cmdArgs = append(cmdArgs, "--clip-error")
+	} else if po.Dither.OptionsSetCam16 {
+		cmdArgs = append(cmdArgs, "--cam16")
+		cmdArgs = append(cmdArgs, "--chroma-lightness")
+		cmdArgs = append(cmdArgs, "--saturation-scale", "1.0")
+		cmdArgs = append(cmdArgs, "--hull-project")
+		cmdArgs = append(cmdArgs, "--pal-meter-13")
+		cmdArgs = append(cmdArgs, "--contrast")
+		cmdArgs = append(cmdArgs, "--shrink-gamut", "1.5")
+		cmdArgs = append(cmdArgs, "--clip-error")
+	} else if po.Dither.OptionsSetHpminde {
+		cmdArgs = append(cmdArgs, "--contrast")
+		cmdArgs = append(cmdArgs, "--hull-project")
+		cmdArgs = append(cmdArgs, "--lut-blue")
+		cmdArgs = append(cmdArgs, "--lut", "lut_dither/hpminde_rgb.npy")
+		cmdArgs = append(cmdArgs, "--lut-hue-sat", "lut_dither/hpminde_rgb.hue_sat")
+		cmdArgs = append(cmdArgs, "--saturation-scale", "1.0")
+		cmdArgs = append(cmdArgs, "--pal-meter-13")
+	} else if po.Dither.OptionsSetScam {
+		cmdArgs = append(cmdArgs, "--scam")
+		cmdArgs = append(cmdArgs, "--chroma-lightness")
+		cmdArgs = append(cmdArgs, "--saturation-scale", "1.0")
+		cmdArgs = append(cmdArgs, "--hull-project")
+		cmdArgs = append(cmdArgs, "--pal-meter-13")
+		cmdArgs = append(cmdArgs, "--contrast")
+		cmdArgs = append(cmdArgs, "--shrink-gamut", "1.5")
+		cmdArgs = append(cmdArgs, "--clip-error")
+		cmdArgs = append(cmdArgs, "--project-3d")
 	}
 
 	cmd := exec.Command("python3", cmdArgs...)
