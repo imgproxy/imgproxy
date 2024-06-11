@@ -24,6 +24,7 @@ import (
 
 	"github.com/imgproxy/imgproxy/v3/config"
 	defaultTransport "github.com/imgproxy/imgproxy/v3/transport"
+	"github.com/imgproxy/imgproxy/v3/transport/common"
 )
 
 type s3Client interface {
@@ -102,8 +103,7 @@ func New() (http.RoundTripper, error) {
 }
 
 func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
-	bucket := req.URL.Host
-	key := strings.TrimLeft(req.URL.Path, "/")
+	bucket, key := common.GetBucketAndKey(req.URL)
 
 	if len(bucket) == 0 || len(key) == 0 {
 		body := strings.NewReader("Invalid S3 URL: bucket name or object key is empty")

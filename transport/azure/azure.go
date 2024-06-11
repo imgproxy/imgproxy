@@ -19,6 +19,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/httprange"
 	defaultTransport "github.com/imgproxy/imgproxy/v3/transport"
+	"github.com/imgproxy/imgproxy/v3/transport/common"
 	"github.com/imgproxy/imgproxy/v3/transport/notmodified"
 )
 
@@ -83,8 +84,7 @@ func New() (http.RoundTripper, error) {
 }
 
 func (t transport) RoundTrip(req *http.Request) (*http.Response, error) {
-	container := req.URL.Host
-	key := strings.TrimPrefix(req.URL.Path, "/")
+	container, key := common.GetBucketAndKey(req.URL)
 
 	if len(container) == 0 || len(key) == 0 {
 		body := strings.NewReader("Invalid ABS URL: container name or object key is empty")

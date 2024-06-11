@@ -13,6 +13,7 @@ import (
 
 	"github.com/imgproxy/imgproxy/v3/config"
 	defaultTransport "github.com/imgproxy/imgproxy/v3/transport"
+	"github.com/imgproxy/imgproxy/v3/transport/common"
 	"github.com/imgproxy/imgproxy/v3/transport/notmodified"
 )
 
@@ -50,9 +51,7 @@ func New() (http.RoundTripper, error) {
 }
 
 func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
-	// Users should have converted the object storage URL in the format of swift://{container}/{object}
-	container := req.URL.Host
-	objectName := strings.TrimPrefix(req.URL.Path, "/")
+	container, objectName := common.GetBucketAndKey(req.URL)
 
 	if len(container) == 0 || len(objectName) == 0 {
 		body := strings.NewReader("Invalid Swift URL: container name or object name is empty")
