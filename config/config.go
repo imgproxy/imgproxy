@@ -184,9 +184,9 @@ var (
 	SentryEnvironment string
 	SentryRelease     string
 
-	AirbrakeProjecID  int
-	AirbrakeProjecKey string
-	AirbrakeEnv       string
+	AirbrakeProjectID  int
+	AirbrakeProjectKey string
+	AirbrakeEnv        string
 
 	ReportDownloadingErrors bool
 	ReportIOErrors          bool
@@ -378,8 +378,8 @@ func Reset() {
 	SentryEnvironment = "production"
 	SentryRelease = fmt.Sprintf("imgproxy@%s", version.Version)
 
-	AirbrakeProjecID = 0
-	AirbrakeProjecKey = ""
+	AirbrakeProjectID = 0
+	AirbrakeProjectKey = ""
 	AirbrakeEnv = "production"
 
 	ReportDownloadingErrors = true
@@ -611,8 +611,8 @@ func Configure() error {
 	configurators.String(&SentryDSN, "IMGPROXY_SENTRY_DSN")
 	configurators.String(&SentryEnvironment, "IMGPROXY_SENTRY_ENVIRONMENT")
 	configurators.String(&SentryRelease, "IMGPROXY_SENTRY_RELEASE")
-	configurators.Int(&AirbrakeProjecID, "IMGPROXY_AIRBRAKE_PROJECT_ID")
-	configurators.String(&AirbrakeProjecKey, "IMGPROXY_AIRBRAKE_PROJECT_KEY")
+	configurators.Int(&AirbrakeProjectID, "IMGPROXY_AIRBRAKE_PROJECT_ID")
+	configurators.String(&AirbrakeProjectKey, "IMGPROXY_AIRBRAKE_PROJECT_KEY")
 	configurators.String(&AirbrakeEnv, "IMGPROXY_AIRBRAKE_ENVIRONMENT")
 	configurators.Bool(&ReportDownloadingErrors, "IMGPROXY_REPORT_DOWNLOADING_ERRORS")
 	configurators.Bool(&ReportIOErrors, "IMGPROXY_REPORT_IO_ERRORS")
