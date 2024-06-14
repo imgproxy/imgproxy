@@ -64,19 +64,15 @@ func dither(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOption
 		return err
 	}
 
+	// the dirty business - will clobber the file
 	if po.Dither.OptionsSetVendor {
-		if err = shellOutVendor(f.Name()); err != nil {
+		if err = shellOutVendor(f.Name(), po); err != nil {
 			return err
 		}
 	} else {
 		if err = shellOutDither(f.Name(), po); err != nil {
 			return err
 		}
-	}
-
-	// the dirty business - will clobber the file
-	if err = shellOutDither(f.Name(), po); err != nil {
-		return err
 	}
 
 	// read from dithered file
@@ -105,32 +101,50 @@ func dither(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOption
 	return img.CopyMemory()
 }
 
-func shellOutVendor(inFile string) error {
-	_ = os.MkdirAll("/tmp/input", 0777)
+func shellOutVendor(inFile string, po *options.ProcessingOptions) error {
+	// create new temp dir so we don't clobber other running instances
+	tmpDir, err := os.MkdirTemp("", "dither-vendor")
+	if err != nil {
+		return err
+	}
+
+	// clean up temp dir when done
+	defer func() {
+		if err = os.RemoveAll(tmpDir); err != nil {
+			log.Errorf("failed to remove vendor temp directory: %s", err)
+		}
+	}()
+
+	// vendor tool requires file to reside in input directory
+	err = os.Mkdir(tmpDir+"/input", 0755)
+	if err != nil {
+		return fmt.Errorf("failed to create vendor input directory: %s", err)
+	}
 
 	// move the infile to the input directory
-	err := os.Rename(inFile, "/tmp/input/vendor_file.png")
+	tmpInputFile := tmpDir + "/input/vendor_file.png"
+	err = os.Rename(inFile, tmpInputFile)
 	if err != nil {
 		return err
 	}
 
 	// installed via Dockerfile in /opt/pushd-dither
-	cmd := exec.Command("/opt/pushd-dither/vendor/run_vendored.sh")
-	cmd.Dir = "/tmp"
+	cmd := exec.Command("/opt/pushd-dither/vendor/run-vendored.sh")
+	cmd.Dir = tmpDir
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("vendor dither failed: %s: %s", err, output)
 	}
 
-	// remove input director
-	err = os.RemoveAll("/tmp/input")
-	if err != nil {
-		log.Errorf("failed to remove input directory: %s", err)
+	// move the desired outfile back to the original location
+
+	if po.Dither.SoftProof {
+		return os.Rename(tmpDir+"/output/vendor_file_proof.png", inFile)
 	}
 
-	// move the outfile back to the original location
-	// FIXME - needs to be a png?
-	return os.Rename("/tmp/output/vendor_file_hulk.bmp", inFile)
+	// FIXME here we're renaming a bmp to a png and just letting the caller load it (without issue) but kind of messy
+
+	return os.Rename(tmpDir+"/output/vendor_file_hulk.bmp", inFile)
 }
 
 func shellOutDither(inFile string, po *options.ProcessingOptions) error {
