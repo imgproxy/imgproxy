@@ -128,23 +128,37 @@ func shellOutVendor(inFile string, po *options.ProcessingOptions) error {
 		return err
 	}
 
-	// installed via Dockerfile in /opt/pushd-dither
-	cmd := exec.Command("/opt/pushd-dither/vendor/run-vendored.sh")
+	var cmdArgs []string
+	if po.Width < po.Height {
+		cmdArgs = append(cmdArgs, "1200x1600")
+	} else {
+		cmdArgs = append(cmdArgs, "1600x1200")
+	}
+
+	// installed via Dockerfile
+	cmd := exec.Command("/opt/pushd-dither/vendor/run-vendored.sh", cmdArgs...)
 	cmd.Dir = tmpDir
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("vendor dither failed: %s: %s", err, output)
 	}
+	// we don't get an exit code from the vendor tool, so we have to check for the output file
 
 	// move the desired outfile back to the original location
 
 	if po.Dither.SoftProof {
-		return os.Rename(tmpDir+"/output/vendor_file_proof.png", inFile)
+		if err := os.Rename(tmpDir+"/output/vendor_file_proof.png", inFile); err != nil {
+			return fmt.Errorf("vendor dither failed to produce proof file, tool output: %s", output)
+		}
+		return nil
 	}
 
-	// FIXME here we're renaming a bmp to a png and just letting the caller load it (without issue) but kind of messy
+	// FIXME here we're renaming a bmp to a png and just letting the caller load it (without issue but messy)
+	if err := os.Rename(tmpDir+"/output/vendor_file_hulk.bmp", inFile); err != nil {
+		return fmt.Errorf("vendor dither failed to produce output file, tool output: %s", output)
+	}
 
-	return os.Rename(tmpDir+"/output/vendor_file_hulk.bmp", inFile)
+	return nil
 }
 
 func shellOutDither(inFile string, po *options.ProcessingOptions) error {
