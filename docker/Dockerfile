@@ -56,6 +56,9 @@ RUN cd /opt/pushd-dither/lut_dither \
     && zstd -fd --rm rgb_13.interpol_clarabel.npy.zst \
     && zstd -fd --rm hpminde_rgb.npy.zst
 
+# provision vendored tools
+RUN /opt/pushd-dither/vendor/provision-vendored.sh
+
 # ====== END PUSHD DITHER ========
 
 
@@ -74,7 +77,9 @@ RUN groupadd -r imgproxy \
   && useradd -r -u 999 -g imgproxy imgproxy \
   && mkdir -p /var/cache/fontconfig \
   && chmod 777 /var/cache/fontconfig
-USER 999
+
+# run as root to allow vendored tools to run
+#USER 999
 
 ENTRYPOINT [ "entrypoint.sh" ]
 CMD ["imgproxy"]

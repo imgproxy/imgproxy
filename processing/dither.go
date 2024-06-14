@@ -65,8 +65,14 @@ func dither(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOption
 	}
 
 	// the dirty business - will clobber the file
-	if err = shellOutDither(f.Name(), po); err != nil {
-		return err
+	if po.Dither.OptionsSetVendor {
+		if err = shellOutVendor(f.Name(), po); err != nil {
+			return err
+		}
+	} else {
+		if err = shellOutDither(f.Name(), po); err != nil {
+			return err
+		}
 	}
 
 	// read from dithered file
@@ -93,6 +99,52 @@ func dither(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOption
 
 	// the resulting images are occasionally corrupted if we don't invoke CopyMemory once we're done
 	return img.CopyMemory()
+}
+
+func shellOutVendor(inFile string, po *options.ProcessingOptions) error {
+	// create new temp dir so we don't clobber other running instances
+	tmpDir, err := os.MkdirTemp("", "dither-vendor")
+	if err != nil {
+		return err
+	}
+
+	// clean up temp dir when done
+	defer func() {
+		if err = os.RemoveAll(tmpDir); err != nil {
+			log.Errorf("failed to remove vendor temp directory: %s", err)
+		}
+	}()
+
+	// vendor tool requires file to reside in input directory
+	err = os.Mkdir(tmpDir+"/input", 0755)
+	if err != nil {
+		return fmt.Errorf("failed to create vendor input directory: %s", err)
+	}
+
+	// move the infile to the input directory
+	tmpInputFile := tmpDir + "/input/vendor_file.png"
+	err = os.Rename(inFile, tmpInputFile)
+	if err != nil {
+		return err
+	}
+
+	// installed via Dockerfile in /opt/pushd-dither
+	cmd := exec.Command("/opt/pushd-dither/vendor/run-vendored.sh")
+	cmd.Dir = tmpDir
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("vendor dither failed: %s: %s", err, output)
+	}
+
+	// move the desired outfile back to the original location
+
+	if po.Dither.SoftProof {
+		return os.Rename(tmpDir+"/output/vendor_file_proof.png", inFile)
+	}
+
+	// FIXME here we're renaming a bmp to a png and just letting the caller load it (without issue) but kind of messy
+
+	return os.Rename(tmpDir+"/output/vendor_file_hulk.bmp", inFile)
 }
 
 func shellOutDither(inFile string, po *options.ProcessingOptions) error {
@@ -146,7 +198,8 @@ func shellOutDither(inFile string, po *options.ProcessingOptions) error {
 		cmdArgs = append(cmdArgs, "--normalize-contrast")
 	}
 
-	if po.Dither.OptionsSet01 {
+	switch {
+	case po.Dither.OptionsSet01:
 		cmdArgs = append(cmdArgs, "--cam16")
 		cmdArgs = append(cmdArgs, "--chroma-lightness")
 		cmdArgs = append(cmdArgs, "--saturation-scale", "1.0")
@@ -154,9 +207,7 @@ func shellOutDither(inFile string, po *options.ProcessingOptions) error {
 		cmdArgs = append(cmdArgs, "--pal-meter-13-hack")
 		cmdArgs = append(cmdArgs, "--contrast")
 		cmdArgs = append(cmdArgs, "--shrink-gamut", "1.5")
-	}
-
-	if po.Dither.OptionsSet02 {
+	case po.Dither.OptionsSet02:
 		cmdArgs = append(cmdArgs, "--cam16")
 		cmdArgs = append(cmdArgs, "--chroma-lightness")
 		cmdArgs = append(cmdArgs, "--saturation-scale", "1.0")
@@ -165,6 +216,33 @@ func shellOutDither(inFile string, po *options.ProcessingOptions) error {
 		cmdArgs = append(cmdArgs, "--contrast")
 		cmdArgs = append(cmdArgs, "--shrink-gamut", "1.5")
 		cmdArgs = append(cmdArgs, "--clip-error")
+	case po.Dither.OptionsSetCam16:
+		cmdArgs = append(cmdArgs, "--cam16")
+		cmdArgs = append(cmdArgs, "--chroma-lightness")
+		cmdArgs = append(cmdArgs, "--saturation-scale", "1.0")
+		cmdArgs = append(cmdArgs, "--hull-project")
+		cmdArgs = append(cmdArgs, "--pal-meter-13")
+		cmdArgs = append(cmdArgs, "--contrast")
+		cmdArgs = append(cmdArgs, "--shrink-gamut", "1.5")
+		cmdArgs = append(cmdArgs, "--clip-error")
+	case po.Dither.OptionsSetHpminde:
+		cmdArgs = append(cmdArgs, "--contrast")
+		cmdArgs = append(cmdArgs, "--hull-project")
+		cmdArgs = append(cmdArgs, "--lut-blue")
+		cmdArgs = append(cmdArgs, "--lut", "lut_dither/hpminde_rgb.npy")
+		cmdArgs = append(cmdArgs, "--lut-hue-sat", "lut_dither/hpminde_rgb.hue_sat")
+		cmdArgs = append(cmdArgs, "--saturation-scale", "1.0")
+		cmdArgs = append(cmdArgs, "--pal-meter-13")
+	case po.Dither.OptionsSetScam:
+		cmdArgs = append(cmdArgs, "--scam")
+		cmdArgs = append(cmdArgs, "--chroma-lightness")
+		cmdArgs = append(cmdArgs, "--saturation-scale", "1.0")
+		cmdArgs = append(cmdArgs, "--hull-project")
+		cmdArgs = append(cmdArgs, "--pal-meter-13")
+		cmdArgs = append(cmdArgs, "--contrast")
+		cmdArgs = append(cmdArgs, "--shrink-gamut", "1.5")
+		cmdArgs = append(cmdArgs, "--clip-error")
+		cmdArgs = append(cmdArgs, "--project-3d")
 	}
 
 	cmd := exec.Command("python3", cmdArgs...)

@@ -79,8 +79,12 @@ type DitherOptions struct {
 	SaturationScale   float64
 	NormalizeContrast bool
 	CLAHESize         int
-	OptionsSet01      bool // shorthand for a set of options starting with the 20240506 release
+	OptionsSet01      bool // shorthand sets
 	OptionsSet02      bool
+	OptionsSetCam16   bool
+	OptionsSetHpminde bool
+	OptionsSetScam    bool
+	OptionsSetVendor  bool
 }
 
 type WatermarkOptions struct {
@@ -769,6 +773,14 @@ func applyDitherOption(po *ProcessingOptions, args []string) error {
 				po.Dither.OptionsSet01 = true // shorthand for a set of options starting with the 20240506 release
 			case "opts02":
 				po.Dither.OptionsSet02 = true // shorthand for a set of options starting with the 20240510 release
+			case "optscam16":
+				po.Dither.OptionsSetCam16 = true
+			case "optshpminde":
+				po.Dither.OptionsSetHpminde = true
+			case "optsscam":
+				po.Dither.OptionsSetScam = true
+			case "vendor":
+				po.Dither.OptionsSetVendor = true
 			default:
 				if err := maybeParseNumericDitherOptions(po, arg); err != nil {
 					return err
