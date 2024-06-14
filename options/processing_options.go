@@ -84,6 +84,7 @@ type DitherOptions struct {
 	OptionsSetCam16   bool
 	OptionsSetHpminde bool
 	OptionsSetScam    bool
+	OptionsSetVendor  bool
 }
 
 type WatermarkOptions struct {
@@ -778,6 +779,8 @@ func applyDitherOption(po *ProcessingOptions, args []string) error {
 				po.Dither.OptionsSetHpminde = true
 			case "optsscam":
 				po.Dither.OptionsSetScam = true
+			case "vendor":
+				po.Dither.OptionsSetVendor = true
 			default:
 				if err := maybeParseNumericDitherOptions(po, arg); err != nil {
 					return err

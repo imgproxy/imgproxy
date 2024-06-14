@@ -64,6 +64,16 @@ func dither(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOption
 		return err
 	}
 
+	if po.Dither.OptionsSetVendor {
+		if err = shellOutVendor(f.Name()); err != nil {
+			return err
+		}
+	} else {
+		if err = shellOutDither(f.Name(), po); err != nil {
+			return err
+		}
+	}
+
 	// the dirty business - will clobber the file
 	if err = shellOutDither(f.Name(), po); err != nil {
 		return err
@@ -93,6 +103,34 @@ func dither(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOption
 
 	// the resulting images are occasionally corrupted if we don't invoke CopyMemory once we're done
 	return img.CopyMemory()
+}
+
+func shellOutVendor(inFile string) error {
+	_ = os.MkdirAll("/tmp/input", 0777)
+
+	// move the infile to the input directory
+	err := os.Rename(inFile, "/tmp/input/vendor_file.png")
+	if err != nil {
+		return err
+	}
+
+	// installed via Dockerfile in /opt/pushd-dither
+	cmd := exec.Command("/opt/pushd-dither/vendor/run_vendored.sh")
+	cmd.Dir = "/tmp"
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("vendor dither failed: %s: %s", err, output)
+	}
+
+	// remove input director
+	err = os.RemoveAll("/tmp/input")
+	if err != nil {
+		log.Errorf("failed to remove input directory: %s", err)
+	}
+
+	// move the outfile back to the original location
+	// FIXME - needs to be a png?
+	return os.Rename("/tmp/output/vendor_file_hulk.bmp", inFile)
 }
 
 func shellOutDither(inFile string, po *options.ProcessingOptions) error {
