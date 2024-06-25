@@ -1,4 +1,4 @@
-ARG BASE_IMAGE_VERSION="v3.9.1"
+ARG BASE_IMAGE_VERSION="v3.10.0"
 
 FROM darthsim/imgproxy-base:${BASE_IMAGE_VERSION}
 
@@ -11,12 +11,12 @@ RUN docker/build.sh
 # ==================================================================================================
 # Final image
 
-FROM ubuntu:mantic
+FROM ubuntu:noble
 LABEL maintainer="Sergey Alexandrovich <darthsim@gmail.com>"
 
 RUN apt-get update \
   && apt-get upgrade -y \
-  && apt-get install -y --no-install-recommends \
+  && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     bash \
     ca-certificates \
     libstdc++6 \
