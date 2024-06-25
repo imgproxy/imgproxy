@@ -9,6 +9,7 @@ if [[ $BUILDARCH != $TARGETARCH ]]; then
 
   rm -rf /usr/local/go
 
+  dpkg --add-architecture ${BUILDARCH}
   apt-get update
   apt-get install -y --no-install-recommends libstdc++6:${BUILDARCH}
 
