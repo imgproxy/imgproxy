@@ -1173,7 +1173,7 @@ func parsePathPresets(parts []string, headers http.Header) (*ProcessingOptions, 
 		return nil, "", err
 	}
 
-	presets := strings.Split(parts[0], ":")
+	presets := strings.Split(parts[0], config.ArgumentsSeparator)
 	urlParts := parts[1:]
 
 	if err = applyPresetOption(po, presets); err != nil {

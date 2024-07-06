@@ -198,6 +198,8 @@ var (
 	BufferPoolCalibrationThreshold int
 
 	HealthCheckPath string
+
+	ArgumentsSeparator string
 )
 
 var (
@@ -392,6 +394,8 @@ func Reset() {
 	BufferPoolCalibrationThreshold = 1024
 
 	HealthCheckPath = ""
+
+	ArgumentsSeparator = ":"
 }
 
 func Configure() error {
@@ -489,6 +493,8 @@ func Configure() error {
 
 	configurators.URLPath(&HealthCheckPath, "IMGPROXY_HEALTH_CHECK_PATH")
 
+	configurators.String(&ArgumentsSeparator, "IMGPROXY_ARGUMENTS_SEPARATOR")
+
 	if err := configurators.ImageTypes(&PreferredFormats, "IMGPROXY_PREFERRED_FORMATS"); err != nil {
 		return err
 	}
@@ -566,7 +572,9 @@ func Configure() error {
 		return err
 	}
 
-	configurators.StringSlice(&Presets, "IMGPROXY_PRESETS")
+	presetsSep := ","
+	configurators.String(&presetsSep, "IMGPROXY_PRESETS_SEPARATOR")
+	configurators.StringSliceSep(&Presets, "IMGPROXY_PRESETS", presetsSep)
 	if err := configurators.StringSliceFile(&Presets, presetsPath); err != nil {
 		return err
 	}

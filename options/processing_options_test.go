@@ -138,6 +138,19 @@ func (s *ProcessingOptionsTestSuite) TestParsePlainURLEscapedWithBase() {
 	s.Require().Equal(imagetype.PNG, po.Format)
 }
 
+func (s *ProcessingOptionsTestSuite) TestParseWithArgumentsSeparator() {
+	config.ArgumentsSeparator = ","
+
+	path := "/size,100,100,1/plain/http://images.dev/lorem/ipsum.jpg"
+	po, _, err := ParsePath(path, make(http.Header))
+
+	s.Require().NoError(err)
+
+	s.Require().Equal(100, po.Width)
+	s.Require().Equal(100, po.Height)
+	s.Require().True(po.Enlarge)
+}
+
 // func (s *ProcessingOptionsTestSuite) TestParseURLAllowedSource() {
 // 	config.AllowedSources = []string{"local://", "http://images.dev/"}
 
@@ -546,25 +559,6 @@ func (s *ProcessingOptionsTestSuite) TestParsePathDprHeaderDisabled() {
 	s.Require().InDelta(1.0, po.Dpr, 0.0001)
 }
 
-func (s *ProcessingOptionsTestSuite) TestParsePathOnlyPresets() {
-	config.OnlyPresets = true
-	presets["test1"] = urlOptions{
-		urlOption{Name: "blur", Args: []string{"0.2"}},
-	}
-	presets["test2"] = urlOptions{
-		urlOption{Name: "quality", Args: []string{"50"}},
-	}
-
-	path := "/test1:test2/plain/http://images.dev/lorem/ipsum.jpg"
-
-	po, _, err := ParsePath(path, make(http.Header))
-
-	s.Require().NoError(err)
-
-	s.Require().InDelta(float32(0.2), po.Blur, 0.0001)
-	s.Require().Equal(50, po.Quality)
-}
-
 func (s *ProcessingOptionsTestSuite) TestParseSkipProcessing() {
 	path := "/skp:jpg:png/plain/http://images.dev/lorem/ipsum.jpg"
 
@@ -597,6 +591,25 @@ func (s *ProcessingOptionsTestSuite) TestParseExpiresExpired() {
 
 	s.Require().Error(err)
 	s.Require().Equal(errExpiredURL.Error(), err.Error())
+}
+
+func (s *ProcessingOptionsTestSuite) TestParsePathOnlyPresets() {
+	config.OnlyPresets = true
+	presets["test1"] = urlOptions{
+		urlOption{Name: "blur", Args: []string{"0.2"}},
+	}
+	presets["test2"] = urlOptions{
+		urlOption{Name: "quality", Args: []string{"50"}},
+	}
+
+	path := "/test1:test2/plain/http://images.dev/lorem/ipsum.jpg"
+
+	po, _, err := ParsePath(path, make(http.Header))
+
+	s.Require().NoError(err)
+
+	s.Require().InDelta(float32(0.2), po.Blur, 0.0001)
+	s.Require().Equal(50, po.Quality)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParseBase64URLOnlyPresets() {

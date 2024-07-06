@@ -5,6 +5,8 @@
 - Add [IMGPROXY_S3_ASSUME_ROLE_EXTERNAL_ID](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_S3_ASSUME_ROLE_EXTERNAL_ID) config.
 - Add [IMGPROXY_WRITE_RESPONSE_TIMEOUT](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_WRITE_RESPONSE_TIMEOUT) config.
 - Add [IMGPROXY_REPORT_IO_ERRORS](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_REPORT_IO_ERRORS) config.
+- Add [IMGPROXY_ARGUMENTS_SEPARATOR](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_ARGUMENTS_SEPARATOR) config.
+- Add [IMGPROXY_PRESETS_SEPARATOR](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_PRESETS_SEPARATOR) config.
 - (pro) Add [colorize](https://docs.imgproxy.net/latest/usage/processing#colorize) processing option.
 
 ### Changed

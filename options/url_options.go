@@ -1,6 +1,10 @@
 package options
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/imgproxy/imgproxy/v3/config"
+)
 
 type urlOption struct {
 	Name string
@@ -14,7 +18,7 @@ func parseURLOptions(opts []string) (urlOptions, []string) {
 	urlStart := len(opts) + 1
 
 	for i, opt := range opts {
-		args := strings.Split(opt, ":")
+		args := strings.Split(opt, config.ArgumentsSeparator)
 
 		if len(args) == 1 {
 			urlStart = i
