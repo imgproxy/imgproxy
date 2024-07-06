@@ -8,6 +8,8 @@
 - Add [IMGPROXY_ARGUMENTS_SEPARATOR](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_ARGUMENTS_SEPARATOR) config.
 - Add [IMGPROXY_PRESETS_SEPARATOR](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_PRESETS_SEPARATOR) config.
 - (pro) Add [colorize](https://docs.imgproxy.net/latest/usage/processing#colorize) processing option.
+- (pro) Add [IMGPROXY_WATERMARK_PREPROCESS_URL](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_WATERMARK_PREPROCESS_URL) config.
+- (pro) Add [IMGPROXY_FALLBACK_IMAGE_PREPROCESS_URL](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_FALLBACK_IMAGE_PREPROCESS_URL) config.
 
 ### Changed
 - Automatically add `http://` scheme to the `IMGPROXY_S3_ENDPOINT` value if it has no scheme.
@@ -15,6 +17,8 @@
 - Rename `IMGPROXY_WRITE_TIMEOUT` to `IMGPROXY_TIMEOUT`. The old name is deprecated but still supported.
 - Rename `IMGPROXY_READ_TIMEOUT` to `IMGPROXY_READ_REQUEST_TIMEOUT`. The old name is deprecated but still supported.
 - (pro) Allow specifying [gradient](https://docs.imgproxy.net/latest/usage/processing#gradient) direction as an angle in degrees.
+- (pro) Speed up ML features.
+- (pro) Update the face detection model.
 
 ### Fix
 - Fix HEIC/AVIF dimension limit handling.
