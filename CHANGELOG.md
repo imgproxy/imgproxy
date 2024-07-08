@@ -7,6 +7,7 @@
 - Add [IMGPROXY_REPORT_IO_ERRORS](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_REPORT_IO_ERRORS) config.
 - Add [IMGPROXY_ARGUMENTS_SEPARATOR](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_ARGUMENTS_SEPARATOR) config.
 - Add [IMGPROXY_PRESETS_SEPARATOR](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_PRESETS_SEPARATOR) config.
+- (pro) Add support for object detection models in ONNX format.
 - (pro) Add [colorize](https://docs.imgproxy.net/latest/usage/processing#colorize) processing option.
 - (pro) Add [IMGPROXY_WATERMARK_PREPROCESS_URL](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_WATERMARK_PREPROCESS_URL) config.
 - (pro) Add [IMGPROXY_FALLBACK_IMAGE_PREPROCESS_URL](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_FALLBACK_IMAGE_PREPROCESS_URL) config.
