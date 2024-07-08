@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [3.25.0] - 2024-07-08
 ### Add
 - Add [IMGPROXY_S3_ASSUME_ROLE_EXTERNAL_ID](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_S3_ASSUME_ROLE_EXTERNAL_ID) config.
 - Add [IMGPROXY_WRITE_RESPONSE_TIMEOUT](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_WRITE_RESPONSE_TIMEOUT) config.
