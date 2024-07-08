@@ -191,8 +191,8 @@ func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	if output.CacheControl != nil {
 		header.Set("Cache-Control", *output.CacheControl)
 	}
-	if output.Expires != nil {
-		header.Set("Expires", output.Expires.Format(http.TimeFormat))
+	if output.ExpiresString != nil {
+		header.Set("Expires", *output.ExpiresString)
 	}
 	if output.ETag != nil {
 		header.Set("ETag", *output.ETag)

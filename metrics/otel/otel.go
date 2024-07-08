@@ -37,7 +37,6 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 	"go.opentelemetry.io/otel/semconv/v1.17.0/httpconv"
 	"go.opentelemetry.io/otel/trace"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
 	"github.com/imgproxy/imgproxy/v3/config"
@@ -236,13 +235,8 @@ func mapDeprecatedConfig() {
 }
 
 func buildGRPCExporters() (*otlptrace.Exporter, sdkmetric.Exporter, error) {
-	tracerOpts := []otlptracegrpc.Option{
-		otlptracegrpc.WithDialOption(grpc.WithBlock()),
-	}
-
-	meterOpts := []otlpmetricgrpc.Option{
-		otlpmetricgrpc.WithDialOption(grpc.WithBlock()),
-	}
+	tracerOpts := []otlptracegrpc.Option{}
+	meterOpts := []otlpmetricgrpc.Option{}
 
 	if tlsConf, err := buildTLSConfig(); tlsConf != nil && err == nil {
 		creds := credentials.NewTLS(tlsConf)
