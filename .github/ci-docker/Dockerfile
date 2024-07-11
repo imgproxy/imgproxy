@@ -1,4 +1,4 @@
-FROM ubuntu:mantic
+FROM ubuntu:noble
 
 RUN apt-get -qq update \
   && apt-get install -y --no-install-recommends \
@@ -20,14 +20,6 @@ RUN apt-get -qq update \
     librsvg2-dev \
     libexif-dev \
     liblcms2-dev \
-    libavcodec-dev \
-    libavformat-dev \
-    libavutil-dev \
-    libswscale-dev \
-    libopencv-core-dev \
-    libopencv-imgproc-dev \
-    libopencv-objdetect-dev \
-    libopencv-dnn-dev \
   && python3 -m venv /root/.python \
   && /root/.python/bin/pip install meson ninja \
   && rm -rf /var/lib/apt/lists/*
@@ -66,14 +58,6 @@ RUN \
       && cd .. \
       && rm -rf libvips-$VIPS_RELEASE.tar.gz libvips-$VIPS_RELEASE; \
     done
-
-RUN echo "Name: OpenCV\n" \
-  "Description: Open Source Computer Vision Library\n" \
-  "Version: 4.5.1\n" \
-  "Libs: -L/usr/lib/x86_64-linux-gnu -lopencv_dnn -lopencv_objdetect -lopencv_imgproc -lopencv_core\n" \
-  "Libs.private: -ldl -lm -lpthread -lrt\n" \
-  "Cflags: -I/usr/include/opencv4\n" \
-  > /usr/lib/x86_64-linux-gnu/pkgconfig/opencv4.pc
 
 WORKDIR /go/src
 
