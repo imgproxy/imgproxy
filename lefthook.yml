@@ -2,6 +2,10 @@ pre-commit:
   scripts:
     lint:
       tags: lint
+  commands:
+    lint-clang:
+      tags: lint
+      run: command -v clang-format && find . -not -path "./.tmp/*" -not -path "./.git/*" \( -iname "*.h" -o -iname "*.c" -o -iname "*.cpp" \) | xargs clang-format --dry-run --Werror
 
 pre-push:
   scripts:
