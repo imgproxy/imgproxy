@@ -1,5 +1,9 @@
 # Changelog
 
+## [Unreleased]
+- (pro) Add [monochrome](https://docs.imgproxy.net/latest/usage/processing#monochrome) processing option.
+- (pro) Add [duotone](https://docs.imgproxy.net/latest/usage/processing#duotone) processing option.
+
 ## [3.25.0] - 2024-07-08
 ### Add
 - Add [IMGPROXY_S3_ASSUME_ROLE_EXTERNAL_ID](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_S3_ASSUME_ROLE_EXTERNAL_ID) config.
