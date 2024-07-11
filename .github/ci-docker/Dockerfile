@@ -30,7 +30,7 @@ RUN curl https://sh.rustup.rs -sSf | sh -s -- -y \
   && cd /root \
   && git clone --depth 1 https://github.com/DarthSim/quantizr.git \
   && cd quantizr \
-  && cargo cinstall --release --library-type=cdylib \
+  && cargo cinstall --release --library-type=cdylib --prefix=/usr/local --libdir=/usr/local/lib \
   && rm -rf /root/.rustup /root/.cargo
 
 ENV PATH="/root/.python/bin:$PATH"

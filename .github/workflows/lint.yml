@@ -33,9 +33,19 @@ jobs:
         env:
           LD_LIBRARY_PATH: "/usr/local/lib:/root/vips/${{ matrix.vips-version }}/lib"
           PKG_CONFIG_PATH: "/usr/local/lib/pkgconfig:/root/vips/${{ matrix.vips-version }}/lib/pkgconfig"
-      - name: Clang lint
-        uses: cpp-linter/cpp-linter-action@v2
+
+  c-lint:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cpp-linter/cpp-linter-action@v2
+        id: linter
         with:
           style: file
-          version: 18
-          tidy-checks: '-*'
+          version: 18 # Ubuntu 24.04 provides clang-format-18
+          tidy-checks: '-*' # disable clang-tidy
+
+      - name: Fail fast
+        continue-on-error: true # TODO: remove this line in the future
+        if: steps.linter.outputs.checks-failed > 0
+        run: exit 1
