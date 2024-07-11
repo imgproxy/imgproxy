@@ -33,3 +33,9 @@ jobs:
         env:
           LD_LIBRARY_PATH: "/usr/local/lib:/root/vips/${{ matrix.vips-version }}/lib"
           PKG_CONFIG_PATH: "/usr/local/lib/pkgconfig:/root/vips/${{ matrix.vips-version }}/lib/pkgconfig"
+      - name: Clang lint
+        uses: cpp-linter/cpp-linter-action@v2
+        with:
+          style: file
+          version: 18
+          tidy-checks: '-*'
