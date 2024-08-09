@@ -200,6 +200,9 @@ func shellOutDither(inFile string, po *options.ProcessingOptions) error {
 	if po.Dither.HullProject {
 		cmdArgs = append(cmdArgs, "--hull-project")
 	}
+	if po.Dither.AutoEnhance {
+		cmdArgs = append(cmdArgs, "--auto-enhance")
+	}
 	if len(po.Dither.LUTFile) > 0 {
 		cmdArgs = append(cmdArgs, "--lut", fmt.Sprintf("lut_dither/%s.npy", po.Dither.LUTFile))
 		// specifying the precomputed hue-sat file is a speed optimization
@@ -238,6 +241,15 @@ func shellOutDither(inFile string, po *options.ProcessingOptions) error {
 		cmdArgs = append(cmdArgs, "--shrink-gamut", "1.1")
 		cmdArgs = append(cmdArgs, "--saturation-scale", "1.0")
 		cmdArgs = append(cmdArgs, "--clip-error")
+	case po.Dither.OptionsSet04:
+		cmdArgs = append(cmdArgs, "--jzazbz")
+		cmdArgs = append(cmdArgs, "--map-palette", "pal_inflate_extra")
+		cmdArgs = append(cmdArgs, "--pal-inflate")
+		cmdArgs = append(cmdArgs, "--chroma-lightness")
+		cmdArgs = append(cmdArgs, "--shrink-gamut", "1.1")
+		cmdArgs = append(cmdArgs, "--saturation-scale", "1.0")
+		cmdArgs = append(cmdArgs, "--clip-error")
+		cmdArgs = append(cmdArgs, "--auto-enhance")
 	case po.Dither.OptionsSetCam16:
 		cmdArgs = append(cmdArgs, "--cam16")
 		cmdArgs = append(cmdArgs, "--chroma-lightness")

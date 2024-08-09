@@ -41,9 +41,11 @@ RUN apt-get update \
       gfortran \
       libopencv-dev \
       curl \
-      zstd
+      zstd \
+      build-essential \
+      cmake
 
-RUN pip3 install scikit-image opencv-python numpy Pillow --break-system-packages
+RUN pip3 install scikit-image==0.22.0 scipy==1.11.4 opencv-python numpy Pillow dlib==19.24.4 pyamg --break-system-packages
 
 COPY plugins/pushd-dither /opt/pushd-dither/
 
