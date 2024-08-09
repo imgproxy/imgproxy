@@ -200,6 +200,9 @@ func shellOutDither(inFile string, po *options.ProcessingOptions) error {
 	if po.Dither.HullProject {
 		cmdArgs = append(cmdArgs, "--hull-project")
 	}
+	if po.Dither.AutoEnhance {
+		cmdArgs = append(cmdArgs, "--auto-enhance")
+	}
 	if len(po.Dither.LUTFile) > 0 {
 		cmdArgs = append(cmdArgs, "--lut", fmt.Sprintf("lut_dither/%s.npy", po.Dither.LUTFile))
 		// specifying the precomputed hue-sat file is a speed optimization

@@ -74,6 +74,7 @@ type DitherOptions struct {
 	SoftProof         bool
 	Clamp             bool
 	HullProject       bool
+	AutoEnhance       bool
 	LUTFile           string
 	LUTBlue           bool
 	SaturationScale   float64
@@ -760,6 +761,8 @@ func applyDitherOption(po *ProcessingOptions, args []string) error {
 				po.Dither.Clamp = true
 			case "hp":
 				po.Dither.HullProject = true
+			case "ae":
+				po.Dither.AutoEnhance = true
 			case "lb":
 				po.Dither.LUTBlue = true
 			case "nc":
