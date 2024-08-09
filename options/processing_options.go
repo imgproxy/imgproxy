@@ -83,6 +83,7 @@ type DitherOptions struct {
 	OptionsSet01      bool // shorthand sets
 	OptionsSet02      bool
 	OptionsSet03      bool
+	OptionsSet04      bool
 	OptionsSetCam16   bool
 	OptionsSetHpminde bool
 	OptionsSetScam    bool
@@ -779,6 +780,8 @@ func applyDitherOption(po *ProcessingOptions, args []string) error {
 				po.Dither.OptionsSet02 = true // shorthand for a set of options starting with the 20240510 release
 			case "opts03":
 				po.Dither.OptionsSet03 = true // shorthand for a set of options starting with the 20240702 release
+			case "opts04":
+				po.Dither.OptionsSet04 = true // shorthand for a set of options starting with the 20240809 release
 			case "optscam16":
 				po.Dither.OptionsSetCam16 = true
 			case "optshpminde":
