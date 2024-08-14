@@ -1,4 +1,4 @@
-ARG BASE_IMAGE_VERSION="v3.10.0"
+ARG BASE_IMAGE_VERSION="v3.11.0"
 
 FROM --platform=${BUILDPLATFORM} darthsim/imgproxy-base:${BASE_IMAGE_VERSION} as base-native
 
@@ -21,7 +21,10 @@ ENV GOOS=linux
 ENV GOARCH=$TARGETARCH
 
 COPY . .
-RUN bash -c 'go build -v -ldflags "-s -w" -o /usr/local/bin/imgproxy'
+RUN bash -c 'go build -v -ldflags "-s -w" -o /opt/imgproxy/bin/imgproxy'
+
+# Remove unnecessary files
+RUN rm -rf /opt/imgproxy/lib/pkgconfig /opt/imgproxy/lib/cmake
 
 # ==================================================================================================
 # Final image
@@ -35,8 +38,6 @@ RUN apt-get update \
     bash \
     ca-certificates \
     libstdc++6 \
-    liblzma5 \
-    libzstd1 \
     fontconfig-config \
     fonts-dejavu-core \
     media-types \
@@ -46,19 +47,19 @@ RUN apt-get update \
   && ln -s /usr/lib/$(uname -m)-linux-gnu/libtcmalloc_minimal.so.4 /usr/local/lib/libtcmalloc_minimal.so \
   && rm -rf /var/lib/apt/lists/*
 
-COPY --from=build /usr/local/bin/imgproxy /usr/local/bin/
-COPY --from=build /usr/local/lib /usr/local/lib
+COPY --from=build /opt/imgproxy/bin/imgproxy /opt/imgproxy/bin/
+COPY --from=build /opt/imgproxy/lib /opt/imgproxy/lib
+RUN ln -s /opt/imgproxy/bin/imgproxy /usr/local/bin/imgproxy
 
 COPY docker/entrypoint.sh /usr/local/bin/
 
 # AWS Lambda adapter
 COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.8.3 /lambda-adapter /opt/extensions/lambda-adapter
 
-COPY NOTICE /usr/local/share/doc/imgproxy/
+COPY NOTICE /opt/imgproxy/share/doc/
 
 ENV VIPS_WARNING=0
 ENV MALLOC_ARENA_MAX=2
-ENV LD_LIBRARY_PATH /usr/local/lib
 ENV IMGPROXY_MALLOC malloc
 ENV AWS_LWA_READINESS_CHECK_PATH /health
 ENV AWS_LWA_INVOKE_MODE response_stream
