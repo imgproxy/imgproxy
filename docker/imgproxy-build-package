@@ -212,7 +212,7 @@ Version: $VERSION
 Section: base
 Priority: optional
 Architecture: $DEB_ARCH
-Depends: bash, libc6, libstdc++6, fontconfig-config
+Depends: bash, libc6, libstdc++6, fontconfig-config, ca-certificates
 Maintainer: Foxes With Matches <info@imgproxy.net>
 Homepage: https://imgproxy.net
 Description: imgproxy
@@ -284,6 +284,7 @@ Requires: bash
 Requires: glibc
 Requires: libstdc++
 Requires: fontconfig
+Requires: ca-certificates
 Requires(interp): /bin/bash
 Requires(post): /bin/bash
 Requires(preun): /bin/bash
