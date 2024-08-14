@@ -53,6 +53,8 @@ RUN ln -s /opt/imgproxy/bin/imgproxy /usr/local/bin/imgproxy
 
 COPY docker/entrypoint.sh /usr/local/bin/
 
+COPY docker/imgproxy-build-package /usr/local/bin/
+
 # AWS Lambda adapter
 COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.8.3 /lambda-adapter /opt/extensions/lambda-adapter
 
