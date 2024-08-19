@@ -1,8 +1,12 @@
 # Changelog
 
 ## [Unreleased]
+# Add
 - (pro) Add [monochrome](https://docs.imgproxy.net/latest/usage/processing#monochrome) processing option.
 - (pro) Add [duotone](https://docs.imgproxy.net/latest/usage/processing#duotone) processing option.
+
+# Fix
+- Fix handling `#` symbols in `local://`, `s3://`, `gcs://`, `abs://`, and `swift://` URLs.
 
 ## [3.25.0] - 2024-07-08
 ### Add
@@ -28,7 +32,7 @@
 ### Fix
 - Fix HEIC/AVIF dimension limit handling.
 - Fix SVG detection when the root element has a namespace.
-- Fix treating percent-encoded symbols in `s3://`, `gcs://`, `abs://`, and `swift://` URLs.
+- Fix treating percent-encoded symbols in `local://`, `s3://`, `gcs://`, `abs://`, and `swift://` URLs.
 - (pro) Fix style injection to SVG.
 - (pro) Fix video tiles generation when the video's SAR is not `1`.
 

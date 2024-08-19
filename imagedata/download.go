@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/cookiejar"
+	"net/url"
 	"strings"
 	"time"
 
@@ -137,6 +138,17 @@ func BuildImageRequest(ctx context.Context, imageURL string, header http.Header,
 	if err != nil {
 		reqCancel()
 		return nil, func() {}, ierrors.New(404, err.Error(), msgSourceImageIsUnreachable)
+	}
+
+	// S3, GCS, etc object keys may contain `#` symbol.
+	// `url.ParseRequestURI` unlike `url.Parse` does not cut-off the fragment part from the URL path.
+	if req.URL.Scheme != "http" && req.URL.Scheme != "https" {
+		u, err := url.ParseRequestURI(imageURL)
+		if err != nil {
+			reqCancel()
+			return nil, func() {}, ierrors.New(404, err.Error(), msgSourceImageIsUnreachable)
+		}
+		req.URL = u
 	}
 
 	if _, ok := enabledSchemes[req.URL.Scheme]; !ok {
