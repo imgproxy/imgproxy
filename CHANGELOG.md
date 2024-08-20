@@ -7,6 +7,7 @@
 
 # Fix
 - Fix handling `#` symbols in `local://`, `s3://`, `gcs://`, `abs://`, and `swift://` URLs.
+- Fix `IMGPROXY_FALLBACK_IMAGE_HTTP_CODE` value check. Allow `0` value.
 
 ## [3.25.0] - 2024-07-08
 ### Add

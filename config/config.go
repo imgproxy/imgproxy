@@ -752,7 +752,7 @@ func Configure() error {
 		return fmt.Errorf("Fallback image TTL should be greater than or equal to 0, now - %d\n", TTL)
 	}
 
-	if FallbackImageHTTPCode < 100 || FallbackImageHTTPCode > 599 {
+	if FallbackImageHTTPCode != 0 && (FallbackImageHTTPCode < 100 || FallbackImageHTTPCode > 599) {
 		return errors.New("Fallback image HTTP code should be between 100 and 599")
 	}
 
