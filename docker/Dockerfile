@@ -45,7 +45,8 @@ RUN apt-get update \
     libtcmalloc-minimal4 \
   && ln -s /usr/lib/$(uname -m)-linux-gnu/libjemalloc.so.2 /usr/local/lib/libjemalloc.so \
   && ln -s /usr/lib/$(uname -m)-linux-gnu/libtcmalloc_minimal.so.4 /usr/local/lib/libtcmalloc_minimal.so \
-  && rm -rf /var/lib/apt/lists/*
+  && rm -rf /var/lib/apt/lists/* \
+  && rm -rf /etc/fonts/conf.d/10-sub-pixel-rgb.conf /etc/fonts/conf.d/11-lcdfilter-default.conf
 
 COPY --from=build /opt/imgproxy/bin/imgproxy /opt/imgproxy/bin/
 COPY --from=build /opt/imgproxy/lib /opt/imgproxy/lib
@@ -62,6 +63,7 @@ COPY NOTICE /opt/imgproxy/share/doc/
 
 ENV VIPS_WARNING=0
 ENV MALLOC_ARENA_MAX=2
+ENV FONTCONFIG_PATH /etc/fonts
 ENV IMGPROXY_MALLOC malloc
 ENV AWS_LWA_READINESS_CHECK_PATH /health
 ENV AWS_LWA_INVOKE_MODE response_stream
