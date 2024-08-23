@@ -6,6 +6,9 @@
 - (pro) Add [monochrome](https://docs.imgproxy.net/latest/usage/processing#monochrome) processing option.
 - (pro) Add [duotone](https://docs.imgproxy.net/latest/usage/processing#duotone) processing option.
 
+# Change
+- Properly set the `net.host.name` and `http.url` tags in OpenTelemetry traces.
+
 # Fix
 - Fix handling `#` symbols in `local://`, `s3://`, `gcs://`, `abs://`, and `swift://` URLs.
 - Fix `IMGPROXY_FALLBACK_IMAGE_HTTP_CODE` value check. Allow `0` value.

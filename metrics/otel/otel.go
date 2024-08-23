@@ -35,8 +35,8 @@ import (
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
-	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
-	"go.opentelemetry.io/otel/semconv/v1.17.0/httpconv"
+	semconv "go.opentelemetry.io/otel/semconv/v1.20.0"
+	"go.opentelemetry.io/otel/semconv/v1.20.0/httpconv"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc/credentials"
 
@@ -397,10 +397,16 @@ func StartRootSpan(ctx context.Context, rw http.ResponseWriter, r *http.Request)
 		ctx = propagator.Extract(ctx, propagation.HeaderCarrier(r.Header))
 	}
 
+	server := r.Host
+	if len(server) == 0 {
+		server = "imgproxy"
+	}
+
 	ctx, span := tracer.Start(
 		ctx, "/request",
 		trace.WithSpanKind(trace.SpanKindServer),
-		trace.WithAttributes(httpconv.ServerRequest("imgproxy", r)...),
+		trace.WithAttributes(httpconv.ServerRequest(server, r)...),
+		trace.WithAttributes(semconv.HTTPURL(r.RequestURI)),
 	)
 	ctx = context.WithValue(ctx, hasSpanCtxKey{}, struct{}{})
 
