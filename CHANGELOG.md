@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 # Add
+- Add `imgproxy.source_image_url` and `imgproxy.processing_options` attributes to New Relic, DataDog, and OpenTelemetry traces.
 - (pro) Add [monochrome](https://docs.imgproxy.net/latest/usage/processing#monochrome) processing option.
 - (pro) Add [duotone](https://docs.imgproxy.net/latest/usage/processing#duotone) processing option.
 

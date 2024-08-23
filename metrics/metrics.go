@@ -2,6 +2,7 @@ package metrics
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/imgproxy/imgproxy/v3/metrics/cloudwatch"
@@ -9,6 +10,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/metrics/newrelic"
 	"github.com/imgproxy/imgproxy/v3/metrics/otel"
 	"github.com/imgproxy/imgproxy/v3/metrics/prometheus"
+	"github.com/imgproxy/imgproxy/v3/structdiff"
 )
 
 func Init() error {
@@ -60,6 +62,28 @@ func StartRequest(ctx context.Context, rw http.ResponseWriter, r *http.Request) 
 	}
 
 	return ctx, cancel, rw
+}
+
+func setMetadata(ctx context.Context, key string, value any) {
+	newrelic.SetMetadata(ctx, key, value)
+	datadog.SetMetadata(ctx, key, value)
+	otel.SetMetadata(ctx, key, value)
+}
+
+func SetMetadata(ctx context.Context, key string, value any) {
+	type diffable interface {
+		Diff() structdiff.Entries
+	}
+
+	if diff, ok := value.(diffable); ok {
+		m := diff.Diff().Flatten()
+		for k, v := range m {
+			setMetadata(ctx, fmt.Sprintf("%s.%s", key, k), v)
+		}
+		return
+	}
+
+	setMetadata(ctx, key, value)
 }
 
 func StartQueueSegment(ctx context.Context) context.CancelFunc {

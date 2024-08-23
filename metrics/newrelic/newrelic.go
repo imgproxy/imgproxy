@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"net/http"
+	"reflect"
 	"regexp"
 	"sync"
 	"time"
@@ -129,6 +130,28 @@ func StartTransaction(ctx context.Context, rw http.ResponseWriter, r *http.Reque
 	newRw := txn.SetWebResponse(rw)
 	cancel := func() { txn.End() }
 	return context.WithValue(ctx, transactionCtxKey{}, txn), cancel, newRw
+}
+
+func SetMetadata(ctx context.Context, key string, value interface{}) {
+	if !enabled {
+		return
+	}
+
+	if txn, ok := ctx.Value(transactionCtxKey{}).(*newrelic.Transaction); ok {
+		rv := reflect.ValueOf(value)
+		switch {
+		case rv.Kind() == reflect.String || rv.Kind() == reflect.Bool:
+			txn.AddAttribute(key, value)
+		case rv.CanInt():
+			txn.AddAttribute(key, rv.Int())
+		case rv.CanUint():
+			txn.AddAttribute(key, rv.Uint())
+		case rv.CanFloat():
+			txn.AddAttribute(key, rv.Float())
+		default:
+			txn.AddAttribute(key, fmt.Sprintf("%v", value))
+		}
+	}
 }
 
 func StartSegment(ctx context.Context, name string) context.CancelFunc {

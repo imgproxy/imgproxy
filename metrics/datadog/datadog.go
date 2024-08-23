@@ -123,6 +123,16 @@ func StartRootSpan(ctx context.Context, rw http.ResponseWriter, r *http.Request)
 	return context.WithValue(ctx, spanCtxKey{}, span), cancel, newRw
 }
 
+func SetMetadata(ctx context.Context, key string, value any) {
+	if !enabled {
+		return
+	}
+
+	if rootSpan, ok := ctx.Value(spanCtxKey{}).(tracer.Span); ok {
+		rootSpan.SetTag(key, value)
+	}
+}
+
 func StartSpan(ctx context.Context, name string) context.CancelFunc {
 	if !enabled {
 		return func() {}

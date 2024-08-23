@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"reflect"
 	"runtime"
 	"strconv"
 	"strings"
@@ -416,6 +417,33 @@ func StartRootSpan(ctx context.Context, rw http.ResponseWriter, r *http.Request)
 
 	cancel := func() { span.End() }
 	return ctx, cancel, newRw
+}
+
+func SetMetadata(ctx context.Context, key string, value interface{}) {
+	if !enabled {
+		return
+	}
+
+	span := trace.SpanFromContext(ctx)
+
+	rv := reflect.ValueOf(value)
+
+	switch {
+	case rv.Kind() == reflect.String:
+		span.SetAttributes(attribute.String(key, value.(string)))
+	case rv.Kind() == reflect.Bool:
+		span.SetAttributes(attribute.Bool(key, value.(bool)))
+	case rv.CanInt():
+		span.SetAttributes(attribute.Int64(key, rv.Int()))
+	case rv.CanUint():
+		span.SetAttributes(attribute.Int64(key, int64(rv.Uint())))
+	case rv.CanFloat():
+		span.SetAttributes(attribute.Float64(key, rv.Float()))
+	default:
+		// Theoretically, we can also cover slices and arrays here,
+		// but it's pretty complex and not really needed for now
+		span.SetAttributes(attribute.String(key, fmt.Sprintf("%v", value)))
+	}
 }
 
 func StartSpan(ctx context.Context, name string) context.CancelFunc {

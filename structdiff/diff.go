@@ -80,6 +80,27 @@ func (d Entries) MarshalJSON() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+func (d Entries) flatten(m map[string]interface{}, prefix string) {
+	for _, e := range d {
+		key := e.Name
+		if len(prefix) > 0 {
+			key = prefix + "." + key
+		}
+
+		if dd, ok := e.Value.(Entries); ok {
+			dd.flatten(m, key)
+		} else {
+			m[key] = e.Value
+		}
+	}
+}
+
+func (d Entries) Flatten() map[string]interface{} {
+	m := make(map[string]interface{})
+	d.flatten(m, "")
+	return m
+}
+
 func Diff(a, b interface{}) Entries {
 	valA := reflect.Indirect(reflect.ValueOf(a))
 	valB := reflect.Indirect(reflect.ValueOf(b))
