@@ -3,11 +3,16 @@
 ## [Unreleased]
 # Add
 - Add `imgproxy.source_image_url` and `imgproxy.processing_options` attributes to New Relic, DataDog, and OpenTelemetry traces.
+- Add [IMGPROXY_S3_ENDPOINT_USE_PATH_STYLE](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_S3_ENDPOINT_USE_PATH_STYLE) config.
 - (pro) Add [monochrome](https://docs.imgproxy.net/latest/usage/processing#monochrome) processing option.
 - (pro) Add [duotone](https://docs.imgproxy.net/latest/usage/processing#duotone) processing option.
+- (pro) Add `objw` [gravity](https://docs.imgproxy.net/latest/usage/processing#gravity) type.
+- (pro) Add an object pseudo-class `all` that can be used with the `obj` and `objw` [gravity](https://docs.imgproxy.net/latest/usage/processing#gravity) types to match all detected objects.
+- (docker) Add a script for [building Linux packages](https://docs.imgproxy.net/latest/installation#building-linux-packages).
 
 # Change
 - Properly set the `net.host.name` and `http.url` tags in OpenTelemetry traces.
+- (pro) Object detection: [class names file](https://docs.imgproxy.net/latest/object_detection#class-names-file) can contain object classes' weights.
 
 # Fix
 - Fix handling `#` symbols in `local://`, `s3://`, `gcs://`, `abs://`, and `swift://` URLs.
