@@ -84,7 +84,7 @@ func New() (http.RoundTripper, error) {
 		}
 		clientOptions = append(clientOptions, func(o *s3.Options) {
 			o.BaseEndpoint = aws.String(endpoint)
-			o.UsePathStyle = true
+			o.UsePathStyle = config.S3EndpointUsePathStyle
 		})
 	}
 

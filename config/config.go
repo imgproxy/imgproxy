@@ -107,6 +107,7 @@ var (
 	S3Enabled                 bool
 	S3Region                  string
 	S3Endpoint                string
+	S3EndpointUsePathStyle    bool
 	S3AssumeRoleArn           string
 	S3AssumeRoleExternalID    string
 	S3MultiRegion             bool
@@ -308,6 +309,7 @@ func Reset() {
 	S3Enabled = false
 	S3Region = ""
 	S3Endpoint = ""
+	S3EndpointUsePathStyle = true
 	S3AssumeRoleArn = ""
 	S3AssumeRoleExternalID = ""
 	S3MultiRegion = false
@@ -539,6 +541,7 @@ func Configure() error {
 	configurators.Bool(&S3Enabled, "IMGPROXY_USE_S3")
 	configurators.String(&S3Region, "IMGPROXY_S3_REGION")
 	configurators.String(&S3Endpoint, "IMGPROXY_S3_ENDPOINT")
+	configurators.Bool(&S3EndpointUsePathStyle, "IMGPROXY_S3_ENDPOINT_USE_PATH_STYLE")
 	configurators.String(&S3AssumeRoleArn, "IMGPROXY_S3_ASSUME_ROLE_ARN")
 	configurators.String(&S3AssumeRoleExternalID, "IMGPROXY_S3_ASSUME_ROLE_EXTERNAL_ID")
 	configurators.Bool(&S3MultiRegion, "IMGPROXY_S3_MULTI_REGION")
