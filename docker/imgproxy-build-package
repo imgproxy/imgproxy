@@ -183,11 +183,12 @@ echo
 echo "Packaging..."
 
 VERSION=$(imgproxy version)
+RELEASE=$(printf '%(%y%m%d%H%M)T\n' -1)
 
 case $PACKAGE_TYPE in
   # TAR package ----------------------------------------------------------------
   tar)
-    RESULT_FILE=imgproxy-$VERSION.$(dpkg --print-architecture).tar.gz
+    RESULT_FILE=imgproxy-$VERSION-$RELEASE.$(dpkg --print-architecture).tar.gz
 
     tar -czf $RESULT_FILE -C opt imgproxy
     cp $RESULT_FILE $TARGET_DIR
@@ -196,7 +197,7 @@ case $PACKAGE_TYPE in
   # DEB package ----------------------------------------------------------------
   deb)
     DEB_ARCH=$(dpkg --print-architecture)
-    RESULT_FILE=imgproxy-$VERSION.$DEB_ARCH.deb
+    RESULT_FILE=imgproxy-$VERSION-$RELEASE.$DEB_ARCH.deb
 
     mkdir -p imgproxy
     mv opt imgproxy/
@@ -208,11 +209,11 @@ case $PACKAGE_TYPE in
 
     cat << EOF > imgproxy/DEBIAN/control
 Package: imgproxy
-Version: $VERSION
+Version: $VERSION-$RELEASE
 Section: base
 Priority: optional
 Architecture: $DEB_ARCH
-Depends: bash, libc6, libstdc++6, fontconfig-config, ca-certificates
+Depends: bash, libc6, libstdc++6, fontconfig-config, ca-certificates, media-types
 Maintainer: Foxes With Matches <info@imgproxy.net>
 Homepage: https://imgproxy.net
 Description: imgproxy
@@ -261,7 +262,7 @@ EOF
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends rpm
 
     RPM_ARCH=$(rpm --eval '%{_arch}')
-    RESULT_FILE=imgproxy-$VERSION-1.$RPM_ARCH.rpm
+    RESULT_FILE=imgproxy-$VERSION-$RELEASE.$RPM_ARCH.rpm
 
     mkdir -p rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
     mkdir -p rpmbuild/SOURCES/imgproxy
@@ -273,7 +274,7 @@ EOF
     cat << 'EOF' > rpmbuild/SPECS/imgproxy.spec
 Name: imgproxy
 Version: %{version}
-Release: 1
+Release: %{release}
 Summary: imgproxy
 License: MIT
 URL: https://imgproxy.net
@@ -285,6 +286,7 @@ Requires: glibc
 Requires: libstdc++
 Requires: fontconfig
 Requires: ca-certificates
+Requires: shared-mime-info
 Requires(interp): /bin/bash
 Requires(post): /bin/bash
 Requires(preun): /bin/bash
@@ -326,6 +328,7 @@ EOF
     rpmbuild \
       --define "_topdir $(pwd)/rpmbuild" \
       --define "version $VERSION" \
+      --define "release $RELEASE" \
       -bb rpmbuild/SPECS/imgproxy.spec
 
     cp rpmbuild/RPMS/$RPM_ARCH/$RESULT_FILE $TARGET_DIR
