@@ -8,6 +8,7 @@
 - (pro) Add [duotone](https://docs.imgproxy.net/latest/usage/processing#duotone) processing option.
 - (pro) Add `objw` [gravity](https://docs.imgproxy.net/latest/usage/processing#gravity) type.
 - (pro) Add an object pseudo-class `all` that can be used with the `obj` and `objw` [gravity](https://docs.imgproxy.net/latest/usage/processing#gravity) types to match all detected objects.
+- (pro) Add [IMGPROXY_SMART_CROP_ADVANCED_MODE](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_SMART_CROP_ADVANCED_MODE) config.
 - (pro) Add [IMGPROXY_OBJECT_DETECTION_FALLBACK_TO_SMART_CROP](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_OBJECT_DETECTION_FALLBACK_TO_SMART_CROP) config.
 - (docker) Add a script for [building Linux packages](https://docs.imgproxy.net/latest/installation#building-linux-packages).
 
