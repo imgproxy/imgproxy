@@ -1,5 +1,9 @@
 # Changelog
 
+## [Unreleased]
+### Fix
+- Fix loading log configs from local files and secret managers.
+
 ## [3.26.0] - 2024-09-16
 # Add
 - Add `imgproxy.source_image_url` and `imgproxy.processing_options` attributes to New Relic, DataDog, and OpenTelemetry traces.

@@ -9,6 +9,13 @@ import (
 	"github.com/imgproxy/imgproxy/v3/config/configurators"
 )
 
+func init() {
+	// Configure logrus so it can be used before Init().
+	// Structured formatter is a compromise between JSON and pretty formatters.
+	logrus.SetOutput(os.Stdout)
+	logrus.SetFormatter(&structuredFormatter{})
+}
+
 func Init() error {
 	logrus.SetOutput(os.Stdout)
 

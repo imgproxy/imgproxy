@@ -28,6 +28,10 @@ import (
 )
 
 func initialize() error {
+	if err := loadenv.Load(); err != nil {
+		return err
+	}
+
 	if err := logger.Init(); err != nil {
 		return err
 	}
@@ -35,10 +39,6 @@ func initialize() error {
 	gliblog.Init()
 
 	maxprocs.Set(maxprocs.Logger(log.Debugf))
-
-	if err := loadenv.Load(); err != nil {
-		return err
-	}
 
 	if err := config.Configure(); err != nil {
 		return err
