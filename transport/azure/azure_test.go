@@ -33,7 +33,7 @@ func (s *AzureTestSuite) SetupSuite() {
 	s.lastModified, _ = time.Parse(http.TimeFormat, "Wed, 21 Oct 2015 07:28:00 GMT")
 
 	s.server = httptest.NewTLSServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		s.Require().Equal("/test/foo/test.png", r.URL.Path)
+		s.Equal("/test/foo/test.png", r.URL.Path)
 
 		rw.Header().Set("Etag", s.etag)
 		rw.Header().Set("Last-Modified", s.lastModified.Format(http.TimeFormat))

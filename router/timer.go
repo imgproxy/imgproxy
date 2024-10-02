@@ -10,7 +10,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 )
 
-type timerSinceCtxKey = struct{}
+type timerSinceCtxKey struct{}
 
 func startRequestTimer(r *http.Request) (*http.Request, context.CancelFunc) {
 	ctx := r.Context()
