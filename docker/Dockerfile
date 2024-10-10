@@ -63,22 +63,24 @@ RUN /opt/pushd-dither/vendor/provision-vendored.sh
 
 # ====== END PUSHD DITHER ========
 
-
+COPY --from=build /opt/imgproxy/ /opt/imgproxy/
+COPY --from=build /usr/local/bin/imgproxy /usr/local/bin/imgproxy
 COPY docker/entrypoint.sh /usr/local/bin/
-COPY --from=build /usr/local/bin/imgproxy /usr/local/bin/
-COPY --from=build /usr/local/lib /usr/local/lib
 
 COPY NOTICE /usr/local/share/doc/imgproxy/
 
 ENV VIPS_WARNING=0
 ENV MALLOC_ARENA_MAX=2
-ENV LD_LIBRARY_PATH /usr/local/lib
+ENV FONTCONFIG_PATH /etc/fonts
 ENV IMGPROXY_MALLOC malloc
 
 RUN groupadd -r imgproxy \
   && useradd -r -u 999 -g imgproxy imgproxy \
   && mkdir -p /var/cache/fontconfig \
   && chmod 777 /var/cache/fontconfig
+
+# Disable SVE on ARM64. SVE is slower than NEON on Amazon Graviton 3
+ENV VIPS_VECTOR=167772160
 
 # run as root to allow vendored tools to run
 #USER 999
