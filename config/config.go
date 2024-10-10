@@ -231,7 +231,7 @@ func Reset() {
 
 	PathPrefix = ""
 
-	MaxSrcResolution = 16800000
+	MaxSrcResolution = 50000000
 	MaxSrcFileSize = 0
 	MaxAnimationFrames = 1
 	MaxAnimationFrameResolution = 0
