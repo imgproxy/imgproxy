@@ -108,6 +108,13 @@ func padding(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptio
 		// looks bad.
 		outputScale *= 1.1
 
+		if img.HasAlpha() {
+			// images need to have the same number of channels before EmbedImage below
+			if err := img.Flatten(vips.Color{}); err != nil {
+				return err
+			}
+		}
+
 		if err := img.OldResize(outputScale, false); err != nil {
 			return err
 		}
