@@ -89,3 +89,4 @@ ENTRYPOINT [ "entrypoint.sh" ]
 CMD ["imgproxy"]
 
 EXPOSE 8080
+EXPOSE 8081
