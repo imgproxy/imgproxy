@@ -14,6 +14,7 @@ import (
 const heifBoxHeaderSize = uint64(8)
 
 var heicBrand = []byte("heic")
+var heixBrand = []byte("heix")
 var avifBrand = []byte("avif")
 var heifPict = []byte("pict")
 
@@ -93,7 +94,7 @@ func heifReadBoxHeader(r io.Reader) (boxType string, boxDataSize uint64, err err
 }
 
 func heifAssignFormat(d *heifData, brand []byte) bool {
-	if bytes.Equal(brand, heicBrand) {
+	if bytes.Equal(brand, heicBrand) || bytes.Equal(brand, heixBrand) {
 		d.Format = imagetype.HEIC
 		return true
 	}
