@@ -137,6 +137,8 @@ func main() {
 		os.Exit(0)
 	}
 
+	panicIfConfigMissing()
+
 	if err := run(); err != nil {
 		log.Fatal(err)
 	}
