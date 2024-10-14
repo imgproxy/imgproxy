@@ -7,14 +7,14 @@ import (
 	"fmt"
 	"io"
 	"math"
-	"slices"
 
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 )
 
 const heifBoxHeaderSize = uint64(8)
 
-var heicBrands = []string{"heic", "heix"}
+var heicBrand = []byte("heic")
+var heixBrand = []byte("heix")
 var avifBrand = []byte("avif")
 var heifPict = []byte("pict")
 
@@ -94,7 +94,7 @@ func heifReadBoxHeader(r io.Reader) (boxType string, boxDataSize uint64, err err
 }
 
 func heifAssignFormat(d *heifData, brand []byte) bool {
-	if slices.Contains(heicBrands, string(brand)) {
+	if bytes.Equal(brand, heicBrand) || bytes.Equal(brand, heixBrand) {
 		d.Format = imagetype.HEIC
 		return true
 	}
