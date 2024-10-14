@@ -24,6 +24,16 @@ var pushdPath = "/pushd"
 var s3ImagesBucket = os.Getenv("PUSH_S3_IMAGES_BUCKET")
 var s3RenderBucket = os.Getenv("PUSH_S3_RENDER_BUCKET")
 
+// called in main.go
+func panicIfConfigMissing() {
+	if s3ImagesBucket == "" {
+		panic("PUSH_S3_IMAGES_BUCKET environment variable not set")
+	}
+	if s3RenderBucket == "" {
+		panic("PUSH_S3_RENDER_BUCKET environment variable not set")
+	}
+}
+
 func fileNameToParams(requestURI string, needsSig bool) string {
 	imgParams := make(map[string]string)
 
