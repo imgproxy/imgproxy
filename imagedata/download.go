@@ -105,20 +105,8 @@ func initDownloading() error {
 		}
 	}
 
-	var jar http.CookieJar
-	// If CookiePassthrough is enabled in the config, initialize a CookieJar to manage cookies
-	// and allow the client to handle cookies during redirects.
-	if config.CookiePassthrough {
-		var err error
-		jar, err = cookiejar.New(nil)
-		if err != nil {
-			return err
-		}
-	}
-
 	downloadClient = &http.Client{
 		Transport: transport,
-		Jar: jar,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			redirects := len(via)
 			if redirects >= config.MaxRedirects {
@@ -190,8 +178,22 @@ func BuildImageRequest(ctx context.Context, imageURL string, header http.Header,
 }
 
 func SendRequest(req *http.Request) (*http.Response, error) {
+	var client *http.Client
+	if req.URL.Scheme == "http" || req.URL.Scheme == "https" {
+		clientCopy := *downloadClient
+
+		jar, err := cookiejar.New(nil)
+		if err != nil {
+			return nil, err
+		}
+		clientCopy.Jar = jar
+		client = &clientCopy
+	} else {
+		client = downloadClient
+	}
+
 	for {
-		res, err := downloadClient.Do(req)
+		res, err := client.Do(req)
 		if err == nil {
 			return res, nil
 		}
