@@ -33,7 +33,7 @@ require (
 	github.com/johannesboyne/gofakes3 v0.0.0-20240217095638-c55a48f17be6
 	github.com/matoous/go-nanoid/v2 v2.1.0
 	github.com/ncw/swift/v2 v2.0.3
-	github.com/newrelic/go-agent/v3 v3.34.0
+	github.com/newrelic/go-agent/v3 v3.35.0
 	github.com/newrelic/newrelic-telemetry-sdk-go v0.8.1
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.20.3
