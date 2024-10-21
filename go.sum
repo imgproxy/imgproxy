@@ -289,8 +289,8 @@ github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 h1:C3w9PqII01/Oq
 github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822/go.mod h1:+n7T8mK8HuQTcFwEeznm/DIxMOiR9yIdICNftLE1DvQ=
 github.com/ncw/swift/v2 v2.0.3 h1:8R9dmgFIWs+RiVlisCEfiQiik1hjuR0JnOkLxaP9ihg=
 github.com/ncw/swift/v2 v2.0.3/go.mod h1:cbAO76/ZwcFrFlHdXPjaqWZ9R7Hdar7HpjRXBfbjigk=
-github.com/newrelic/go-agent/v3 v3.34.0 h1:jhtX+YUrAh2ddgPGIixMYq4+nCBrEN4ETGyi2h/zWJw=
-github.com/newrelic/go-agent/v3 v3.34.0/go.mod h1:VNsi+XA7YsgF4fHES8l/U6OhAHhU3IdLDFkB/wpevvA=
+github.com/newrelic/go-agent/v3 v3.35.0 h1:YIG6mhwzIEBaaG3YmxPHgBfBFmHNoChxbKYH5SiwGKQ=
+github.com/newrelic/go-agent/v3 v3.35.0/go.mod h1:GNTda53CohAhkgsc7/gqSsJhDZjj8vaky5u+vKz7wqM=
 github.com/newrelic/newrelic-telemetry-sdk-go v0.8.1 h1:6OX5VXMuj2salqNBc41eXKz6K+nV6OB/hhlGnAKCbwU=
 github.com/newrelic/newrelic-telemetry-sdk-go v0.8.1/go.mod h1:2kY6OeOxrJ+RIQlVjWDc/pZlT3MIf30prs6drzMfJ6E=
 github.com/onsi/ginkgo/v2 v2.19.0 h1:9Cnnf7UHo57Hy3k6/m5k3dRfGTMXGvxhHFvkDTCTpvA=
