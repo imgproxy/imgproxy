@@ -64,7 +64,7 @@ require (
 	golang.org/x/sys v0.25.0
 	google.golang.org/api v0.197.0
 	google.golang.org/grpc v1.66.2
-	gopkg.in/DataDog/dd-trace-go.v1 v1.67.1
+	gopkg.in/DataDog/dd-trace-go.v1 v1.69.0
 )
 
 require (
@@ -76,7 +76,7 @@ require (
 	cloud.google.com/go/pubsub v1.42.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.10.0 // indirect
 	github.com/AzureAD/microsoft-authentication-library-for-go v1.2.2 // indirect
-	github.com/DataDog/appsec-internal-go v1.7.0 // indirect
+	github.com/DataDog/appsec-internal-go v1.8.0 // indirect
 	github.com/DataDog/datadog-agent/pkg/obfuscate v0.57.0 // indirect
 	github.com/DataDog/datadog-agent/pkg/remoteconfig/state v0.57.0 // indirect
 	github.com/DataDog/go-libddwaf/v3 v3.4.0 // indirect
@@ -106,6 +106,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
+	github.com/eapache/queue/v2 v2.0.0-20230407133247-75960ed334e4 // indirect
 	github.com/ebitengine/purego v0.7.1 // indirect
 	github.com/emicklei/go-restful/v3 v3.12.1 // indirect
 	github.com/fxamacker/cbor/v2 v2.7.0 // indirect
@@ -130,6 +131,9 @@ require (
 	github.com/gorilla/handlers v1.5.1 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.22.0 // indirect
+	github.com/hashicorp/go-secure-stdlib/parseutil v0.1.7 // indirect
+	github.com/hashicorp/go-secure-stdlib/strutil v0.1.2 // indirect
+	github.com/hashicorp/go-sockaddr v1.0.2 // indirect
 	github.com/ianlancetaylor/cgosymbolizer v0.0.0-20240805235558-330cf6901bf7 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/jonboulle/clockwork v0.4.0 // indirect
@@ -139,6 +143,7 @@ require (
 	github.com/klauspost/compress v1.17.9 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
+	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
@@ -151,6 +156,7 @@ require (
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.59.1 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
+	github.com/ryanuber/go-glob v1.0.0 // indirect
 	github.com/ryszard/goskiplist v0.0.0-20150312221310-2dfbae5fcf46 // indirect
 	github.com/secure-systems-lab/go-securesystemslib v0.8.0 // indirect
 	github.com/shabbyrobe/gocovmerge v0.0.0-20190829150210-3e036491d500 // indirect
