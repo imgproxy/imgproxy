@@ -42,26 +42,26 @@ require (
 	github.com/stretchr/testify v1.9.0
 	github.com/tdewolff/parse/v2 v2.7.15
 	github.com/trimmer-io/go-xmp v1.0.0
-	go.opentelemetry.io/contrib/detectors/aws/ec2 v1.30.0
+	go.opentelemetry.io/contrib/detectors/aws/ec2 v1.31.0
 	go.opentelemetry.io/contrib/detectors/aws/ecs v1.30.0
 	go.opentelemetry.io/contrib/detectors/aws/eks v1.30.0
 	go.opentelemetry.io/contrib/propagators/autoprop v0.55.0
 	go.opentelemetry.io/contrib/propagators/aws v1.30.0
-	go.opentelemetry.io/otel v1.30.0
+	go.opentelemetry.io/otel v1.31.0
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc v1.30.0
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp v1.30.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.30.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.30.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.30.0
-	go.opentelemetry.io/otel/metric v1.30.0
-	go.opentelemetry.io/otel/sdk v1.30.0
+	go.opentelemetry.io/otel/metric v1.31.0
+	go.opentelemetry.io/otel/sdk v1.31.0
 	go.opentelemetry.io/otel/sdk/metric v1.30.0
-	go.opentelemetry.io/otel/trace v1.30.0
+	go.opentelemetry.io/otel/trace v1.31.0
 	go.uber.org/automaxprocs v1.5.3
 	golang.org/x/image v0.20.0
 	golang.org/x/net v0.29.0
 	golang.org/x/sync v0.8.0
-	golang.org/x/sys v0.25.0
+	golang.org/x/sys v0.26.0
 	google.golang.org/api v0.197.0
 	google.golang.org/grpc v1.66.2
 	gopkg.in/DataDog/dd-trace-go.v1 v1.67.1
