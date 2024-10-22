@@ -1,7 +1,16 @@
 steps:
 - id: docker_buildx
   name: 'docker'
-  args: ['buildx', 'create', '--driver', 'docker-container', '--name', 'container', '--use']
+  args:
+    - 'buildx'
+    - 'create'
+    - '--driver'
+    - 'docker-container'
+    - '--name'
+    - 'container'
+    - '--platform'
+    - 'linux/amd64,linux/arm64/v8'
+    - '--use'
   waitFor: ["-"]
 
 - id: 'docker_amd64'
