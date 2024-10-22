@@ -6,7 +6,9 @@
 
 ### Fixed
 - Fix loading log configs from local files and secret managers.
+- Fix detecting HEIF images with the `heix` brand.
 - (pro) Fix playback of videos created from animations in Google Chrome.
+- (pro) Fix detecting of width and height of HEIF images that have orientation specified in EXIF.
 
 ## [3.26.0] - 2024-09-16
 ### Added
