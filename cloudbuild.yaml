@@ -1,34 +1,38 @@
 steps:
+- id: docker_buildx
+  name: 'docker'
+  args: ['buildx', 'create', '--driver', 'docker-container', '--name', 'container', '--use']
+  waitFor: ["-"]
+
 - id: 'docker_amd64'
   name: 'docker'
-  entrypoint: 'sh'
   args:
-    - '-c'
-    - |
-      docker build \
-        -t darthsim/imgproxy:$TAG_NAME-amd64 \
-        -f docker/Dockerfile \
-        --platform=linux/amd64 \
-        .
+    - 'buildx'
+    - 'build'
+    - '-t'
+    - 'darthsim/imgproxy:$TAG_NAME-amd64'
+    - '-f'
+    - 'docker/Dockerfile'
+    - '--platform=linux/amd64'
+    - '.'
   env:
     - DOCKER_BUILDKIT=1
-  waitFor: ["-"]
+  waitFor: ["docker_buildx"]
 
 - id: 'docker_arm64'
   name: 'docker'
-  entrypoint: 'sh'
   args:
-    - '-c'
-    - |
-      docker run --rm --privileged multiarch/qemu-user-static --reset -p yes \
-      && docker build \
-        -t darthsim/imgproxy:$TAG_NAME-arm64 \
-        -f docker/Dockerfile \
-        --platform=linux/arm64/v8 \
-        .
+    - 'buildx'
+    - 'build'
+    - '-t'
+    - 'darthsim/imgproxy:$TAG_NAME-amd64'
+    - '-f'
+    - 'docker/Dockerfile'
+    - '--platform=linux/arm64/v8'
+    - '.'
   env:
     - DOCKER_BUILDKIT=1
-  waitFor: ["-"]
+  waitFor: ["docker_buildx"]
 
 - id: 'push'
   name: 'docker'
