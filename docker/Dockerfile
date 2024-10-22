@@ -2,12 +2,7 @@ ARG BASE_IMAGE_VERSION="v3.11.0"
 
 FROM darthsim/imgproxy-base:${BASE_IMAGE_VERSION} as build
 
-ARG BUILDARCH
 ARG TARGETARCH
-
-RUN dpkg --add-architecture ${BUILDARCH} \
-  && apt-get update \
-  && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends libstdc++6:${BUILDARCH}
 
 ENV CGO_ENABLED=1
 ENV GOOS=linux

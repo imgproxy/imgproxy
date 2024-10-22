@@ -23,7 +23,8 @@ steps:
     - 'darthsim/imgproxy:$TAG_NAME-amd64'
     - '-f'
     - 'docker/Dockerfile'
-    - '--platform=linux/amd64'
+    - '--platform'
+    - 'linux/amd64'
     - '.'
   env:
     - DOCKER_BUILDKIT=1
@@ -36,10 +37,11 @@ steps:
     - 'build'
     - '--load'
     - '-t'
-    - 'darthsim/imgproxy:$TAG_NAME-amd64'
+    - 'darthsim/imgproxy:$TAG_NAME-arm64'
     - '-f'
     - 'docker/Dockerfile'
-    - '--platform=linux/arm64/v8'
+    - '--platform'
+    - 'linux/arm64/v8'
     - '.'
   env:
     - DOCKER_BUILDKIT=1
