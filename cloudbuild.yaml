@@ -18,6 +18,7 @@ steps:
   args:
     - 'buildx'
     - 'build'
+    - '--load'
     - '-t'
     - 'darthsim/imgproxy:$TAG_NAME-amd64'
     - '-f'
@@ -33,6 +34,7 @@ steps:
   args:
     - 'buildx'
     - 'build'
+    - '--load'
     - '-t'
     - 'darthsim/imgproxy:$TAG_NAME-amd64'
     - '-f'

@@ -1,7 +1,5 @@
 ARG BASE_IMAGE_VERSION="v3.11.0"
 
-FROM --platform=${BUILDPLATFORM} darthsim/imgproxy-base:${BASE_IMAGE_VERSION} as base-native
-
 FROM darthsim/imgproxy-base:${BASE_IMAGE_VERSION} as build
 
 ARG BUILDARCH
@@ -10,11 +8,6 @@ ARG TARGETARCH
 RUN dpkg --add-architecture ${BUILDARCH} \
   && apt-get update \
   && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends libstdc++6:${BUILDARCH}
-
-# This is pretty dirty hack. Building imgproxy under Qemu is pretty slow.
-# So we install Go binary native for the BUILDARCH.
-RUN rm -rf /usr/local/go
-COPY --from=base-native /usr/local/go /usr/local/go
 
 ENV CGO_ENABLED=1
 ENV GOOS=linux
