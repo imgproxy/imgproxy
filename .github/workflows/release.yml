@@ -6,13 +6,23 @@ on:
       - 'v[0-9]+.[0-9]+.[0-9]+*'
 
 jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  build:
+    needs: [ci]
+    uses: ./.github/workflows/build.yml
+    secrets: inherit
+
   release:
+    needs: [build]
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+
       - name: Prepare notes
         run: |
           # Extract changelog entries between this and previous version headers
@@ -26,6 +36,7 @@ jobs:
           else
             echo 'PRERELEASE="false"' >> $GITHUB_ENV
           fi
+
       - name: Release
         uses: softprops/action-gh-release@v1
         with:

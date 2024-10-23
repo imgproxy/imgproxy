@@ -1,0 +1,17 @@
+name: OnPush
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  build:
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/test/'))
+    needs: [ci]
+    uses: ./.github/workflows/build.yml
+    secrets: inherit
+
