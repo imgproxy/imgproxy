@@ -178,8 +178,22 @@ func BuildImageRequest(ctx context.Context, imageURL string, header http.Header,
 }
 
 func SendRequest(req *http.Request) (*http.Response, error) {
+	var client *http.Client
+	if req.URL.Scheme == "http" || req.URL.Scheme == "https" {
+		clientCopy := *downloadClient
+
+		jar, err := cookiejar.New(nil)
+		if err != nil {
+			return nil, err
+		}
+		clientCopy.Jar = jar
+		client = &clientCopy
+	} else {
+		client = downloadClient
+	}
+
 	for {
-		res, err := downloadClient.Do(req)
+		res, err := client.Do(req)
 		if err == nil {
 			return res, nil
 		}
