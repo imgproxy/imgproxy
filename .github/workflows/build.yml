@@ -58,6 +58,7 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: ${{ matrix.build.dockerPlatform }}
+          provenance: false
           push: true
 
   push_manifests:
