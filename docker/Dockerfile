@@ -13,7 +13,7 @@ RUN rm -rf /opt/imgproxy/lib/pkgconfig /opt/imgproxy/lib/cmake
 # ==================================================================================================
 # AWS Lambda adapter
 
-FROM public.ecr.aws/awsguru/aws-lambda-adapter:0.8.3 AS lambda-adapter
+FROM public.ecr.aws/awsguru/aws-lambda-adapter:0.8.4 AS lambda-adapter
 
 # ==================================================================================================
 # Final image
@@ -56,6 +56,7 @@ ENV FONTCONFIG_PATH="/etc/fonts"
 ENV IMGPROXY_MALLOC="malloc"
 ENV AWS_LWA_READINESS_CHECK_PATH="/health"
 ENV AWS_LWA_INVOKE_MODE="response_stream"
+ENV AWS_LWA_ASYNC_INIT="true"
 
 # Disable SVE on ARM64. SVE is slower than NEON on Amazon Graviton 3
 ENV VIPS_VECTOR=167772160
