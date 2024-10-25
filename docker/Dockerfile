@@ -1,12 +1,8 @@
 ARG BASE_IMAGE_VERSION="v3.11.0"
 
-FROM darthsim/imgproxy-base:${BASE_IMAGE_VERSION} as build
-
-ARG TARGETARCH
+FROM darthsim/imgproxy-base:${BASE_IMAGE_VERSION} AS build
 
 ENV CGO_ENABLED=1
-ENV GOOS=linux
-ENV GOARCH=$TARGETARCH
 
 COPY . .
 RUN bash -c 'go build -v -ldflags "-s -w" -o /opt/imgproxy/bin/imgproxy'
@@ -15,9 +11,14 @@ RUN bash -c 'go build -v -ldflags "-s -w" -o /opt/imgproxy/bin/imgproxy'
 RUN rm -rf /opt/imgproxy/lib/pkgconfig /opt/imgproxy/lib/cmake
 
 # ==================================================================================================
+# AWS Lambda adapter
+
+FROM public.ecr.aws/awsguru/aws-lambda-adapter:0.8.3 AS lambda-adapter
+
+# ==================================================================================================
 # Final image
 
-FROM ubuntu:noble
+FROM public.ecr.aws/ubuntu/ubuntu:noble
 LABEL maintainer="Sergey Alexandrovich <darthsim@gmail.com>"
 
 RUN apt-get update \
@@ -45,16 +46,16 @@ COPY docker/entrypoint.sh /usr/local/bin/
 COPY docker/imgproxy-build-package /usr/local/bin/
 
 # AWS Lambda adapter
-COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.8.3 /lambda-adapter /opt/extensions/lambda-adapter
+COPY --from=lambda-adapter /lambda-adapter /opt/extensions/lambda-adapter
 
 COPY NOTICE /opt/imgproxy/share/doc/
 
 ENV VIPS_WARNING=0
 ENV MALLOC_ARENA_MAX=2
-ENV FONTCONFIG_PATH /etc/fonts
-ENV IMGPROXY_MALLOC malloc
-ENV AWS_LWA_READINESS_CHECK_PATH /health
-ENV AWS_LWA_INVOKE_MODE response_stream
+ENV FONTCONFIG_PATH="/etc/fonts"
+ENV IMGPROXY_MALLOC="malloc"
+ENV AWS_LWA_READINESS_CHECK_PATH="/health"
+ENV AWS_LWA_INVOKE_MODE="response_stream"
 
 # Disable SVE on ARM64. SVE is slower than NEON on Amazon Graviton 3
 ENV VIPS_VECTOR=167772160
