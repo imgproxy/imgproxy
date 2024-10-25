@@ -8,6 +8,7 @@ on:
 jobs:
   ci:
     uses: ./.github/workflows/ci.yml
+    secrets: inherit
 
   build:
     needs: [ci]
