@@ -9,7 +9,7 @@ env:
   DOCKER_META_TAGS: |
     type=raw,value=latest,enable=${{ github.ref == 'refs/heads/master' }}
     type=ref,event=branch,enable=${{ startsWith(github.ref, 'refs/heads/test/') }}
-    type=semver,pattern=v{{version}}
+    type=ref,event=tag
     type=semver,pattern=v{{major}}.{{minor}}
     type=semver,pattern=v{{major}}
 
