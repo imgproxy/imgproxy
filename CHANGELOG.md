@@ -1,12 +1,13 @@
 # Changelog
 
-## [Unreleased]
+## [3.26.1] - 2024-10-28
 ### Changed
 - (pro) Improve `monochrome` and `duotone` processing options.
 
 ### Fixed
 - Fix loading log configs from local files and secret managers.
 - Fix detecting HEIF images with the `heix` brand.
+- Fix downloading source images when the image source requires a cookie challenge.
 - (pro) Fix playback of videos created from animations in Google Chrome.
 - (pro) Fix detecting of width and height of HEIF images that have orientation specified in EXIF.
 
