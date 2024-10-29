@@ -111,6 +111,6 @@ jobs:
 
           for tag in ${{ join(fromJSON(steps.meta.outputs.json).tags, ' ') }}
           do
-            docker buildx imagetools create -t $tag ${tag}-amd64 ${tag}-arm64 ${ANNOTATIONS}
+            sh -c "docker buildx imagetools create ${ANNOTATIONS} -t $tag ${tag}-amd64 ${tag}-arm64"
           done
 
