@@ -103,8 +103,14 @@ jobs:
 
       - name: Push manifests
         run: |
+          ANNOTATIONS=""
+          for annotation in "${{ join(fromJSON(steps.meta.outputs.json).annotations, '" "') }}"
+          do
+            ANNOTATIONS="$ANNOTATIONS --annotation '$annotation'";
+          done
+
           for tag in ${{ join(fromJSON(steps.meta.outputs.json).tags, ' ') }}
           do
-            docker buildx imagetools create -t $tag ${tag}-amd64 ${tag}-arm64
+            docker buildx imagetools create -t $tag ${tag}-amd64 ${tag}-arm64 ${ANNOTATIONS}
           done
 
