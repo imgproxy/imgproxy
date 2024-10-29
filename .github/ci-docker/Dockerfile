@@ -1,4 +1,6 @@
-FROM ubuntu:noble
+FROM public.ecr.aws/ubuntu/ubuntu:noble
+
+ARG VIPS_VERSIONS="8.14 8.15 8.16"
 
 RUN apt-get -qq update \
   && apt-get install -y --no-install-recommends \
@@ -40,7 +42,7 @@ RUN \
   mkdir /root/vips \
     && cd /root/vips \
     && curl -s -S -L -o vips_releases.json "https://api.github.com/repos/libvips/libvips/releases" \
-    && for VIPS_VERSION in "8.13" "8.14" "8.15"; do \
+    && for VIPS_VERSION in $VIPS_VERSIONS; do \
       mkdir $VIPS_VERSION \
       && export VIPS_RELEASE=$(grep -m 1 "\"tag_name\": \"v$VIPS_VERSION." vips_releases.json | sed -E 's/.*"v([^"]+)".*/\1/') \
       && echo "Building Vips $VIPS_RELEASE as $VIPS_VERSION" \
