@@ -13,6 +13,9 @@ jobs:
   build:
     needs: [ci]
     uses: ./.github/workflows/build.yml
+    permissions:
+      contents: read
+      packages: write
     secrets: inherit
 
   release:

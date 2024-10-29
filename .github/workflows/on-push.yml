@@ -13,5 +13,8 @@ jobs:
     if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/test/'))
     needs: [ci]
     uses: ./.github/workflows/build.yml
+    permissions:
+      contents: read
+      packages: write
     secrets: inherit
 
