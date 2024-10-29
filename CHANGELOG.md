@@ -1,5 +1,9 @@
 # Changelog
 
+## [Unreleased]
+### Fixed
+- Fix detecting of width and height of HEIF images that include `irot` boxes.
+
 ## [3.26.1] - 2024-10-28
 ### Changed
 - (pro) Improve `monochrome` and `duotone` processing options.
