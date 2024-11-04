@@ -62,7 +62,7 @@ require (
 	golang.org/x/net v0.30.0
 	golang.org/x/sync v0.8.0
 	golang.org/x/sys v0.26.0
-	google.golang.org/api v0.203.0
+	google.golang.org/api v0.204.0
 	google.golang.org/grpc v1.67.1
 	gopkg.in/DataDog/dd-trace-go.v1 v1.69.0
 )
@@ -70,8 +70,8 @@ require (
 require (
 	cel.dev/expr v0.18.0 // indirect
 	cloud.google.com/go v0.116.0 // indirect
-	cloud.google.com/go/auth v0.9.9 // indirect
-	cloud.google.com/go/auth/oauth2adapt v0.2.4 // indirect
+	cloud.google.com/go/auth v0.10.0 // indirect
+	cloud.google.com/go/auth/oauth2adapt v0.2.5 // indirect
 	cloud.google.com/go/compute/metadata v0.5.2 // indirect
 	cloud.google.com/go/iam v1.2.2 // indirect
 	cloud.google.com/go/monitoring v1.21.2 // indirect
