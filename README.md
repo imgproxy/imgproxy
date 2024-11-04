@@ -20,6 +20,7 @@
 
 <p align="center">
 <a href="https://github.com/imgproxy/imgproxy/actions"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/imgproxy/imgproxy/on-push.yml?branch=master&label=CI&style=for-the-badge" /></a>
+<a href="https://gurubase.io/g/imgproxy"><img alt="Gurubase" src="https://img.shields.io/badge/Gurubase-Ask%20imgproxy%20Guru-006BFF?style=for-the-badge" /></a>
 </p>
 
 ---
