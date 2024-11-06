@@ -1,8 +1,12 @@
 # Changelog
 
 ## [Unreleased]
+### Add
+- (pro) Add [IMGPROXY_OBJECT_DETECTION_SWAP_RB](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_OBJECT_DETECTION_SWAP_RB) config.
+
 ### Fixed
 - Fix detecting of width and height of HEIF images that include `irot` boxes.
+- (pro) Fix opject detection accuracy when using YOLOv8 or YOLOv10 models.
 
 ## [3.26.1] - 2024-10-28
 ### Changed
