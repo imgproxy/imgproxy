@@ -25,6 +25,7 @@ import (
 	"go.opentelemetry.io/contrib/propagators/aws/xray"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
@@ -483,7 +484,7 @@ func SendError(ctx context.Context, errType string, err error) {
 			attributes = append(attributes, semconv.ExceptionStacktraceKey.String(stack))
 		}
 	}
-
+	span.SetStatus(codes.Error, err.Error())
 	span.AddEvent(semconv.ExceptionEventName, trace.WithAttributes(attributes...))
 }
 
