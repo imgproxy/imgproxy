@@ -6,6 +6,7 @@
 
 ### Fixed
 - Fix detecting of width and height of HEIF images that include `irot` boxes.
+- Set `Error` status for errorred traces in OpenTelemetry.
 - (pro) Fix opject detection accuracy when using YOLOv8 or YOLOv10 models.
 
 ## [3.26.1] - 2024-10-28
