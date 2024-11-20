@@ -39,6 +39,40 @@ var gravityTypes = map[string]GravityType{
 	"re":   GravityReplicate,
 }
 
+var commonGravityTypes = []GravityType{
+	GravityCenter,
+	GravityNorth,
+	GravityEast,
+	GravitySouth,
+	GravityWest,
+	GravityNorthWest,
+	GravityNorthEast,
+	GravitySouthWest,
+	GravitySouthEast,
+}
+
+var cropGravityTypes = append(
+	[]GravityType{
+		GravitySmart,
+		GravityFocusPoint,
+	},
+	commonGravityTypes...,
+)
+
+var extendGravityTypes = append(
+	[]GravityType{
+		GravityFocusPoint,
+	},
+	commonGravityTypes...,
+)
+
+var watermarkGravityTypes = append(
+	[]GravityType{
+		GravityReplicate,
+	},
+	commonGravityTypes...,
+)
+
 var gravityTypesRotationMap = map[int]map[GravityType]GravityType{
 	90: {
 		GravityNorth:     GravityWest,
@@ -97,19 +131,6 @@ func (gt GravityType) MarshalJSON() ([]byte, error) {
 		}
 	}
 	return []byte("null"), nil
-}
-
-func (gt GravityType) OkForCrop() bool {
-	return gt != GravityUnknown && gt != GravityReplicate
-}
-
-func (gt GravityType) OkForExtend() bool {
-	return gt.OkForCrop() && gt != GravitySmart
-}
-
-func (gt GravityType) OkForWatermark() bool {
-	return gt == GravityReplicate ||
-		(gt.OkForExtend() && gt != GravityFocusPoint)
 }
 
 type GravityOptions struct {

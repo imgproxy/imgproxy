@@ -397,9 +397,9 @@ func (s *ProcessingOptionsTestSuite) TestParsePathWatermark() {
 	s.Require().NoError(err)
 
 	s.Require().True(po.Watermark.Enabled)
-	s.Require().Equal(GravitySouthEast, po.Watermark.Gravity.Type)
-	s.Require().InDelta(10.0, po.Watermark.Gravity.X, 0.0001)
-	s.Require().InDelta(20.0, po.Watermark.Gravity.Y, 0.0001)
+	s.Require().Equal(GravitySouthEast, po.Watermark.Position.Type)
+	s.Require().InDelta(10.0, po.Watermark.Position.X, 0.0001)
+	s.Require().InDelta(20.0, po.Watermark.Position.Y, 0.0001)
 	s.Require().InDelta(0.6, po.Watermark.Scale, 0.0001)
 }
 
