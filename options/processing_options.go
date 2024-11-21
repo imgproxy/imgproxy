@@ -217,38 +217,38 @@ func isGravityOffcetValid(gravity GravityType, offset float64) bool {
 	return gravity != GravityFocusPoint || (offset >= 0 && offset <= 1)
 }
 
-func parseGravity(g *GravityOptions, args []string, allowedTypes []GravityType) error {
+func parseGravity(g *GravityOptions, name string, args []string, allowedTypes []GravityType) error {
 	nArgs := len(args)
 
 	if t, ok := gravityTypes[args[0]]; ok && slices.Contains(allowedTypes, t) {
 		g.Type = t
 	} else {
-		return fmt.Errorf("Invalid gravity: %s", args[0])
+		return fmt.Errorf("Invalid %s: %s", name, args[0])
 	}
 
 	switch g.Type {
 	case GravitySmart:
 		if nArgs > 1 {
-			return fmt.Errorf("Invalid gravity arguments: %v", args)
+			return fmt.Errorf("Invalid %s arguments: %v", name, args)
 		}
 		g.X, g.Y = 0.0, 0.0
 
 	case GravityFocusPoint:
 		if nArgs != 3 {
-			return fmt.Errorf("Invalid gravity arguments: %v", args)
+			return fmt.Errorf("Invalid %s arguments: %v", name, args)
 		}
 		fallthrough
 
 	default:
 		if nArgs > 3 {
-			return fmt.Errorf("Invalid gravity arguments: %v", args)
+			return fmt.Errorf("Invalid %s arguments: %v", name, args)
 		}
 
 		if nArgs > 1 {
 			if x, err := strconv.ParseFloat(args[1], 64); err == nil && isGravityOffcetValid(g.Type, x) {
 				g.X = x
 			} else {
-				return fmt.Errorf("Invalid gravity X: %s", args[1])
+				return fmt.Errorf("Invalid %s X: %s", name, args[1])
 			}
 		}
 
@@ -256,7 +256,7 @@ func parseGravity(g *GravityOptions, args []string, allowedTypes []GravityType) 
 			if y, err := strconv.ParseFloat(args[2], 64); err == nil && isGravityOffcetValid(g.Type, y) {
 				g.Y = y
 			} else {
-				return fmt.Errorf("Invalid gravity Y: %s", args[2])
+				return fmt.Errorf("Invalid %s Y: %s", name, args[2])
 			}
 		}
 	}
@@ -272,7 +272,7 @@ func parseExtend(opts *ExtendOptions, name string, args []string) error {
 	opts.Enabled = parseBoolOption(args[0])
 
 	if len(args) > 1 {
-		if err := parseGravity(&opts.Gravity, args[1:], extendGravityTypes); err != nil {
+		if err := parseGravity(&opts.Gravity, name+" gravity", args[1:], extendGravityTypes); err != nil {
 			return err
 		}
 	}
@@ -436,7 +436,7 @@ func applyDprOption(po *ProcessingOptions, args []string) error {
 }
 
 func applyGravityOption(po *ProcessingOptions, args []string) error {
-	if err := parseGravity(&po.Gravity, args, cropGravityTypes); err != nil {
+	if err := parseGravity(&po.Gravity, "gravity", args, cropGravityTypes); err != nil {
 		return err
 	}
 
@@ -459,7 +459,7 @@ func applyCropOption(po *ProcessingOptions, args []string) error {
 	}
 
 	if len(args) > 2 {
-		if err := parseGravity(&po.Crop.Gravity, args[2:], cropGravityTypes); err != nil {
+		if err := parseGravity(&po.Crop.Gravity, "crop gravity", args[2:], cropGravityTypes); err != nil {
 			return err
 		}
 	}
