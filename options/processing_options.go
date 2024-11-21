@@ -444,10 +444,6 @@ func applyGravityOption(po *ProcessingOptions, args []string) error {
 }
 
 func applyCropOption(po *ProcessingOptions, args []string) error {
-	if len(args) > 5 {
-		return fmt.Errorf("Invalid crop arguments: %v", args)
-	}
-
 	if w, err := strconv.ParseFloat(args[0], 64); err == nil && w >= 0 {
 		po.Crop.Width = w
 	} else {
