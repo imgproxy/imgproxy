@@ -78,11 +78,7 @@ func prepareWatermark(wm *vips.Image, wmData *imagedata.ImageData, opts *options
 	}
 
 	// We don't want any headers to be copied from the watermark to the image
-	if err := wm.StripAll(); err != nil {
-		return err
-	}
-
-	return nil
+	return wm.StripAll()
 }
 
 func applyWatermark(img *vips.Image, wmData *imagedata.ImageData, opts *options.WatermarkOptions, offsetScale float64, framesCount int) error {

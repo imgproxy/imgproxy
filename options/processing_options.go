@@ -272,9 +272,7 @@ func parseExtend(opts *ExtendOptions, name string, args []string) error {
 	opts.Enabled = parseBoolOption(args[0])
 
 	if len(args) > 1 {
-		if err := parseGravity(&opts.Gravity, name+" gravity", args[1:], extendGravityTypes); err != nil {
-			return err
-		}
+		return parseGravity(&opts.Gravity, name+" gravity", args[1:], extendGravityTypes)
 	}
 
 	return nil
@@ -436,11 +434,7 @@ func applyDprOption(po *ProcessingOptions, args []string) error {
 }
 
 func applyGravityOption(po *ProcessingOptions, args []string) error {
-	if err := parseGravity(&po.Gravity, "gravity", args, cropGravityTypes); err != nil {
-		return err
-	}
-
-	return nil
+	return parseGravity(&po.Gravity, "gravity", args, cropGravityTypes)
 }
 
 func applyCropOption(po *ProcessingOptions, args []string) error {
@@ -459,9 +453,7 @@ func applyCropOption(po *ProcessingOptions, args []string) error {
 	}
 
 	if len(args) > 2 {
-		if err := parseGravity(&po.Crop.Gravity, "crop gravity", args[2:], cropGravityTypes); err != nil {
-			return err
-		}
+		return parseGravity(&po.Crop.Gravity, "crop gravity", args[2:], cropGravityTypes)
 	}
 
 	return nil

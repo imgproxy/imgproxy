@@ -219,13 +219,10 @@ func heifReadBoxes(d *heifData, r io.Reader) error {
 				return err
 			}
 		case "meta":
-			if err := heifReadMeta(d, r, boxDataSize); err != nil {
-				return err
-			}
-			return nil
+			return heifReadMeta(d, r, boxDataSize)
 		case "hdlr":
 			if err := heifReadHldr(r, boxDataSize); err != nil {
-				return nil
+				return err
 			}
 		case "iprp", "ipco":
 			data, err := heifReadN(r, boxDataSize)
