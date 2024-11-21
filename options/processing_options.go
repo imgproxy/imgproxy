@@ -220,35 +220,44 @@ func isGravityOffcetValid(gravity GravityType, offset float64) bool {
 func parseGravity(g *GravityOptions, args []string, allowedTypes []GravityType) error {
 	nArgs := len(args)
 
-	if nArgs > 3 {
-		return fmt.Errorf("Invalid gravity arguments: %v", args)
-	}
-
 	if t, ok := gravityTypes[args[0]]; ok && slices.Contains(allowedTypes, t) {
 		g.Type = t
 	} else {
 		return fmt.Errorf("Invalid gravity: %s", args[0])
 	}
 
-	if g.Type == GravitySmart && nArgs > 1 {
-		return fmt.Errorf("Invalid gravity arguments: %v", args)
-	} else if g.Type == GravityFocusPoint && nArgs != 3 {
-		return fmt.Errorf("Invalid gravity arguments: %v", args)
-	}
-
-	if nArgs > 1 {
-		if x, err := strconv.ParseFloat(args[1], 64); err == nil && isGravityOffcetValid(g.Type, x) {
-			g.X = x
-		} else {
-			return fmt.Errorf("Invalid gravity X: %s", args[1])
+	switch g.Type {
+	case GravitySmart:
+		if nArgs > 1 {
+			return fmt.Errorf("Invalid gravity arguments: %v", args)
 		}
-	}
+		g.X, g.Y = 0.0, 0.0
 
-	if nArgs > 2 {
-		if y, err := strconv.ParseFloat(args[2], 64); err == nil && isGravityOffcetValid(g.Type, y) {
-			g.Y = y
-		} else {
-			return fmt.Errorf("Invalid gravity Y: %s", args[2])
+	case GravityFocusPoint:
+		if nArgs != 3 {
+			return fmt.Errorf("Invalid gravity arguments: %v", args)
+		}
+		fallthrough
+
+	default:
+		if nArgs > 3 {
+			return fmt.Errorf("Invalid gravity arguments: %v", args)
+		}
+
+		if nArgs > 1 {
+			if x, err := strconv.ParseFloat(args[1], 64); err == nil && isGravityOffcetValid(g.Type, x) {
+				g.X = x
+			} else {
+				return fmt.Errorf("Invalid gravity X: %s", args[1])
+			}
+		}
+
+		if nArgs > 2 {
+			if y, err := strconv.ParseFloat(args[2], 64); err == nil && isGravityOffcetValid(g.Type, y) {
+				g.Y = y
+			} else {
+				return fmt.Errorf("Invalid gravity Y: %s", args[2])
+			}
 		}
 	}
 
