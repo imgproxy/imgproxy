@@ -8,6 +8,7 @@
 ### Fixed
 - Fix detecting of width and height of HEIF images that include `irot` boxes.
 - Set `Error` status for errorred traces in OpenTelemetry.
+- Fix URL parsing error when a non-http(s) URL contains a `%` symbol outside of the percent-encoded sequence.
 - (pro) Fix opject detection accuracy when using YOLOv8 or YOLOv10 models.
 - (pro) Fix usage of the `obj` and `objw` gravity types inside the `crop` processing option.
 - (pro) Fix detecting of width and height when orientation is specified in EXIF but EXIF info is not requested.

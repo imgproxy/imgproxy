@@ -7,7 +7,6 @@ import (
 	"io"
 	"net/http"
 	"net/http/cookiejar"
-	"net/url"
 	"strings"
 	"time"
 
@@ -134,21 +133,25 @@ func headersToStore(res *http.Response) map[string]string {
 func BuildImageRequest(ctx context.Context, imageURL string, header http.Header, jar *cookiejar.Jar) (*http.Request, context.CancelFunc, error) {
 	reqCtx, reqCancel := context.WithTimeout(ctx, time.Duration(config.DownloadTimeout)*time.Second)
 
+	// Non-http(s) URLs may contain percent symbol outside of the percent-encoded sequences.
+	// Parsing such URLs will fail with an error.
+	// To prevent this, we replace all percent symbols with %25.
+	//
+	// Also, such URLs may contain a hash symbol, which is a fragment identifier.
+	// We replace them with %23 to prevent cutting off the fragment part.
+	// Since we already replaced all percent symbols, we won't mix up %23 that were in the original URL
+	// and %23 that appeared after the replacement.
+	//
+	// We will revert these replacements in `transport/common.GetBucketAndKey`.
+	if !strings.HasPrefix(imageURL, "http://") && !strings.HasPrefix(imageURL, "https://") {
+		imageURL = strings.ReplaceAll(imageURL, "%", "%25")
+		imageURL = strings.ReplaceAll(imageURL, "#", "%23")
+	}
+
 	req, err := http.NewRequestWithContext(reqCtx, "GET", imageURL, nil)
 	if err != nil {
 		reqCancel()
 		return nil, func() {}, ierrors.New(404, err.Error(), msgSourceImageIsUnreachable)
-	}
-
-	// S3, GCS, etc object keys may contain `#` symbol.
-	// `url.ParseRequestURI` unlike `url.Parse` does not cut-off the fragment part from the URL path.
-	if req.URL.Scheme != "http" && req.URL.Scheme != "https" {
-		u, err := url.ParseRequestURI(imageURL)
-		if err != nil {
-			reqCancel()
-			return nil, func() {}, ierrors.New(404, err.Error(), msgSourceImageIsUnreachable)
-		}
-		req.URL = u
 	}
 
 	if _, ok := enabledSchemes[req.URL.Scheme]; !ok {
