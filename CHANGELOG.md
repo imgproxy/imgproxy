@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 ### Add
+- (pro) Add [objects_position](https://docs.imgproxy.net/latest/usage/processing#objects-position) processing and info options.
 - (pro) Add [IMGPROXY_OBJECT_DETECTION_SWAP_RB](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_OBJECT_DETECTION_SWAP_RB) config.
 
 ### Fixed
@@ -9,6 +10,7 @@
 - Set `Error` status for errorred traces in OpenTelemetry.
 - (pro) Fix opject detection accuracy when using YOLOv8 or YOLOv10 models.
 - (pro) Fix usage of the `obj` and `objw` gravity types inside the `crop` processing option.
+- (pro) Fix detecting of width and height when orientation is specified in EXIF but EXIF info is not requested.
 
 ## [3.26.1] - 2024-10-28
 ### Changed
