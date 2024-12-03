@@ -12,14 +12,28 @@
   <a href="https://imgproxy.net">Website</a> |
   <a href="https://imgproxy.net/blog/">Blog</a> |
   <a href="https://docs.imgproxy.net">Documentation</a> |
-  <a href="https://imgproxy.net/#pro">imgproxy Pro</a> |
-  <a href="https://github.com/imgproxy/imgproxy/pkgs/container/imgproxy">Docker</a> |
-  <a href="https://twitter.com/imgproxy_net">Twitter</a> |
-  <a href="https://discord.gg/5GgpXgtC9u">Discord</a>
+  <a href="https://imgproxy.net/#pro">imgproxy Pro</a>
 </h4>
 
 <p align="center">
-<a href="https://github.com/imgproxy/imgproxy/actions"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/imgproxy/imgproxy/on-push.yml?branch=master&label=CI&style=for-the-badge" /></a>
+  <a href="https://github.com/imgproxy/imgproxy/pkgs/container/imgproxy">
+    <img alt="Docker" src="https://img.shields.io/badge/Docker-177bd3?style=for-the-badge&logo=docker&logoColor=fff" />
+  </a>
+  <a href="https://bsky.app/profile/imgproxy.net">
+    <img alt="Bluesky" src="https://img.shields.io/badge/Bluesky-177bd3?style=for-the-badge&logo=bluesky&logoColor=fff" />
+  </a>
+  <a href="https://x.com/imgproxy_net">
+    <img alt="X" src="https://img.shields.io/badge/X.com-177bd3?style=for-the-badge&logo=x&logoColor=fff" />
+  </a>
+  <a href="https://discord.gg/5GgpXgtC9u">
+    <img alt="Discord" src="https://img.shields.io/badge/Discord-177bd3?style=for-the-badge&logo=discord&logoColor=fff" />
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/imgproxy/imgproxy/actions">
+    <img alt="CI" src="https://img.shields.io/github/actions/workflow/status/imgproxy/imgproxy/on-push.yml?branch=master&label=CI&style=for-the-badge" />
+  </a>
 </p>
 
 ---
