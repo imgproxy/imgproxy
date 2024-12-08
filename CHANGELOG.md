@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 ### Add
+- Add JPEL XL (JXL) support.
+- Add [IMGPROXY_ENABLE_JXL_DETECTION](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_ENABLE_JXL_DETECTION), [IMGPROXY_ENFORCE_JXL](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_ENFORCE_JXL), and [IMGPROXY_JXL_EFFORT](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_JXL_EFFORT) configs.
 - (pro) Add [objects_position](https://docs.imgproxy.net/latest/usage/processing#objects-position) processing and info options.
 - (pro) Add [IMGPROXY_OBJECT_DETECTION_SWAP_RB](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_OBJECT_DETECTION_SWAP_RB) config.
 

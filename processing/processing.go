@@ -281,6 +281,8 @@ func ProcessImage(ctx context.Context, imgdata *imagedata.ImageData, po *options
 	switch {
 	case po.Format == imagetype.Unknown:
 		switch {
+		case po.PreferJxl && !animated:
+			po.Format = imagetype.JXL
 		case po.PreferAvif && !animated:
 			po.Format = imagetype.AVIF
 		case po.PreferWebP:
@@ -290,6 +292,8 @@ func ProcessImage(ctx context.Context, imgdata *imagedata.ImageData, po *options
 		default:
 			po.Format = findBestFormat(imgdata.Type, animated, expectAlpha)
 		}
+	case po.EnforceJxl && !animated:
+		po.Format = imagetype.JXL
 	case po.EnforceAvif && !animated:
 		po.Format = imagetype.AVIF
 	case po.EnforceWebP:

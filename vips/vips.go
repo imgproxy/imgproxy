@@ -49,6 +49,7 @@ var vipsConf struct {
 	PngQuantize           C.int
 	PngQuantizationColors C.int
 	AvifSpeed             C.int
+	JxlEffort             C.int
 	PngUnlimited          C.int
 	SvgUnlimited          C.int
 }
@@ -98,6 +99,7 @@ func Init() error {
 	vipsConf.PngQuantize = gbool(config.PngQuantize)
 	vipsConf.PngQuantizationColors = C.int(config.PngQuantizationColors)
 	vipsConf.AvifSpeed = C.int(config.AvifSpeed)
+	vipsConf.JxlEffort = C.int(config.JxlEffort)
 	vipsConf.PngUnlimited = gbool(config.PngUnlimited)
 	vipsConf.SvgUnlimited = gbool(config.SvgUnlimited)
 
@@ -231,6 +233,8 @@ func SupportsLoad(it imagetype.Type) bool {
 	switch it {
 	case imagetype.JPEG:
 		sup = hasOperation("jpegload_buffer")
+	case imagetype.JXL:
+		sup = hasOperation("jxlload_buffer")
 	case imagetype.PNG:
 		sup = hasOperation("pngload_buffer")
 	case imagetype.WEBP:
@@ -262,6 +266,8 @@ func SupportsSave(it imagetype.Type) bool {
 	switch it {
 	case imagetype.JPEG:
 		sup = hasOperation("jpegsave_buffer")
+	case imagetype.JXL:
+		sup = hasOperation("jxlsave_buffer")
 	case imagetype.PNG, imagetype.ICO:
 		sup = hasOperation("pngsave_buffer")
 	case imagetype.WEBP:
@@ -330,6 +336,8 @@ func (img *Image) Load(imgdata *imagedata.ImageData, shrink int, scale float64, 
 	switch imgdata.Type {
 	case imagetype.JPEG:
 		err = C.vips_jpegload_go(data, dataSize, C.int(shrink), &tmp)
+	case imagetype.JXL:
+		err = C.vips_jxlload_go(data, dataSize, &tmp)
 	case imagetype.PNG:
 		err = C.vips_pngload_go(data, dataSize, &tmp, vipsConf.PngUnlimited)
 	case imagetype.WEBP:
@@ -401,6 +409,8 @@ func (img *Image) Save(imgtype imagetype.Type, quality int) (*imagedata.ImageDat
 	switch imgtype {
 	case imagetype.JPEG:
 		err = C.vips_jpegsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality), vipsConf.JpegProgressive)
+	case imagetype.JXL:
+		err = C.vips_jxlsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality), vipsConf.JxlEffort)
 	case imagetype.PNG:
 		err = C.vips_pngsave_go(img.VipsImage, &ptr, &imgsize, vipsConf.PngInterlaced, vipsConf.PngQuantize, vipsConf.PngQuantizationColors)
 	case imagetype.WEBP:

@@ -108,6 +108,8 @@ type ProcessingOptions struct {
 	EnforceWebP bool
 	PreferAvif  bool
 	EnforceAvif bool
+	PreferJxl   bool
+	EnforceJxl  bool
 
 	Filename         string
 	ReturnAttachment bool
@@ -1086,6 +1088,11 @@ func defaultProcessingOptions(headers http.Header) (*ProcessingOptions, error) {
 	if strings.Contains(headerAccept, "image/avif") {
 		po.PreferAvif = config.EnableAvifDetection || config.EnforceAvif
 		po.EnforceAvif = config.EnforceAvif
+	}
+
+	if strings.Contains(headerAccept, "image/jxl") {
+		po.PreferJxl = config.EnableJxlDetection || config.EnforceJxl
+		po.EnforceJxl = config.EnforceJxl
 	}
 
 	if config.EnableClientHints {

@@ -12,6 +12,7 @@ type Type int
 const (
 	Unknown Type = iota
 	JPEG
+	JXL
 	PNG
 	WEBP
 	GIF
@@ -32,6 +33,7 @@ var (
 	Types = map[string]Type{
 		"jpeg": JPEG,
 		"jpg":  JPEG,
+		"jxl":  JXL,
 		"png":  PNG,
 		"webp": WEBP,
 		"gif":  GIF,
@@ -45,6 +47,7 @@ var (
 
 	mimes = map[Type]string{
 		JPEG: "image/jpeg",
+		JXL:  "image/jxl",
 		PNG:  "image/png",
 		WEBP: "image/webp",
 		GIF:  "image/gif",
@@ -58,6 +61,7 @@ var (
 
 	extensions = map[Type]string{
 		JPEG: ".jpg",
+		JXL:  ".jxl",
 		PNG:  ".png",
 		WEBP: ".webp",
 		GIF:  ".gif",
@@ -149,6 +153,7 @@ func (it Type) SupportsAnimation() bool {
 
 func (it Type) SupportsColourProfile() bool {
 	return it == JPEG ||
+		it == JXL ||
 		it == PNG ||
 		it == WEBP ||
 		it == HEIC ||

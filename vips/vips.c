@@ -64,6 +64,12 @@ vips_jpegload_go(void *buf, size_t len, int shrink, VipsImage **out)
 }
 
 int
+vips_jxlload_go(void *buf, size_t len, VipsImage **out)
+{
+  return vips_jxlload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, NULL);
+}
+
+int
 vips_pngload_go(void *buf, size_t len, VipsImage **out, int unlimited)
 {
   return vips_pngload_buffer(
@@ -910,6 +916,16 @@ vips_jpegsave_go(VipsImage *in, void **buf, size_t *len, int quality, int interl
       "Q", quality,
       "optimize_coding", TRUE,
       "interlace", interlace,
+      NULL);
+}
+
+int
+vips_jxlsave_go(VipsImage *in, void **buf, size_t *len, int quality, int effort)
+{
+  return vips_jxlsave_buffer(
+      in, buf, len,
+      "Q", quality,
+      "effort", effort,
       NULL);
 }
 
