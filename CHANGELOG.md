@@ -15,6 +15,7 @@
 - Rename `IMGPROXY_ENABLE_AVIF_DETECTION` to `IMGPROXY_AUTO_AVIF`. The old name is deprecated but still supported.
 - (pro) Change `IMGPROXY_AUTOQUALITY_FORMAT_MIN` default value to `avif=60`.
 - (pro) Change `IMGPROXY_AUTOQUALITY_FORMAT_MAX` default value to `avif=65`.
+- (pro) Use the last page/frame of the source image when the `page` processing option value is greater than or equal to the number of pages/frames in the source image.
 
 ### Fixed
 - Fix detecting of width and height of HEIF images that include `irot` boxes.
