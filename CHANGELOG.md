@@ -4,6 +4,7 @@
 ### Add
 - Add JPEL XL (JXL) support.
 - Add [IMGPROXY_AUTO_JXL](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_AUTO_JXL), [IMGPROXY_ENFORCE_JXL](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_ENFORCE_JXL), and [IMGPROXY_JXL_EFFORT](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_JXL_EFFORT) configs.
+- (pro) Add [IMGPROXY_AUTOQUALITY_JXL_NET](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_AUTOQUALITY_JXL_NET) config.
 - (pro) Add [objects_position](https://docs.imgproxy.net/latest/usage/processing#objects-position) processing and info options.
 - (pro) Add [IMGPROXY_OBJECT_DETECTION_SWAP_RB](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_OBJECT_DETECTION_SWAP_RB) config.
 
@@ -12,6 +13,8 @@
 - Change `IMGPROXY_FORMAT_QUALITY` default value to `webp=79,avif=63,jxl=77`.
 - Rename `IMGPROXY_ENABLE_WEBP_DETECTION` to `IMGPROXY_AUTO_WEBP`. The old name is deprecated but still supported.
 - Rename `IMGPROXY_ENABLE_AVIF_DETECTION` to `IMGPROXY_AUTO_AVIF`. The old name is deprecated but still supported.
+- (pro) Change `IMGPROXY_AUTOQUALITY_FORMAT_MIN` default value to `avif=60`.
+- (pro) Change `IMGPROXY_AUTOQUALITY_FORMAT_MAX` default value to `avif=65`.
 
 ### Fixed
 - Fix detecting of width and height of HEIF images that include `irot` boxes.
