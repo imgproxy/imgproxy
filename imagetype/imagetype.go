@@ -147,7 +147,11 @@ func (it Type) SupportsAlpha() bool {
 	return it != JPEG && it != BMP
 }
 
-func (it Type) SupportsAnimation() bool {
+func (it Type) SupportsAnimationLoad() bool {
+	return it == GIF || it == WEBP || it == JXL
+}
+
+func (it Type) SupportsAnimationSave() bool {
 	return it == GIF || it == WEBP
 }
 

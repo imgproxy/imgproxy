@@ -64,9 +64,9 @@ vips_jpegload_go(void *buf, size_t len, int shrink, VipsImage **out)
 }
 
 int
-vips_jxlload_go(void *buf, size_t len, VipsImage **out)
+vips_jxlload_go(void *buf, size_t len, int pages, VipsImage **out)
 {
-  return vips_jxlload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, NULL);
+  return vips_jxlload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, "n", pages, NULL);
 }
 
 int

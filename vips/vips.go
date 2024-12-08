@@ -337,7 +337,7 @@ func (img *Image) Load(imgdata *imagedata.ImageData, shrink int, scale float64, 
 	case imagetype.JPEG:
 		err = C.vips_jpegload_go(data, dataSize, C.int(shrink), &tmp)
 	case imagetype.JXL:
-		err = C.vips_jxlload_go(data, dataSize, &tmp)
+		err = C.vips_jxlload_go(data, dataSize, C.int(pages), &tmp)
 	case imagetype.PNG:
 		err = C.vips_pngload_go(data, dataSize, &tmp, vipsConf.PngUnlimited)
 	case imagetype.WEBP:
