@@ -65,13 +65,13 @@ var (
 	ReturnAttachment      bool
 	SvgFixUnsupported     bool
 
-	EnableWebpDetection bool
-	EnforceWebp         bool
-	EnableAvifDetection bool
-	EnforceAvif         bool
-	EnableJxlDetection  bool
-	EnforceJxl          bool
-	EnableClientHints   bool
+	AutoWebp          bool
+	EnforceWebp       bool
+	AutoAvif          bool
+	EnforceAvif       bool
+	AutoJxl           bool
+	EnforceJxl        bool
+	EnableClientHints bool
 
 	PreferredFormats []imagetype.Type
 
@@ -267,11 +267,11 @@ func Reset() {
 	ReturnAttachment = false
 	SvgFixUnsupported = false
 
-	EnableWebpDetection = false
+	AutoWebp = false
 	EnforceWebp = false
-	EnableAvifDetection = false
+	AutoAvif = false
 	EnforceAvif = false
-	EnableJxlDetection = false
+	AutoJxl = false
 	EnforceJxl = false
 	EnableClientHints = false
 
@@ -494,11 +494,20 @@ func Configure() error {
 	configurators.Bool(&ReturnAttachment, "IMGPROXY_RETURN_ATTACHMENT")
 	configurators.Bool(&SvgFixUnsupported, "IMGPROXY_SVG_FIX_UNSUPPORTED")
 
-	configurators.Bool(&EnableWebpDetection, "IMGPROXY_ENABLE_WEBP_DETECTION")
+	if _, ok := os.LookupEnv("IMGPROXY_ENABLE_WEBP_DETECTION"); ok {
+		log.Warning("IMGPROXY_ENABLE_WEBP_DETECTION is deprecated, use IMGPROXY_AUTO_WEBP instead")
+		configurators.Bool(&AutoWebp, "IMGPROXY_ENABLE_WEBP_DETECTION")
+	}
+	if _, ok := os.LookupEnv("IMGPROXY_ENABLE_AVIF_DETECTION"); ok {
+		log.Warning("IMGPROXY_ENABLE_AVIF_DETECTION is deprecated, use IMGPROXY_AUTO_AVIF instead")
+		configurators.Bool(&AutoAvif, "IMGPROXY_ENABLE_AVIF_DETECTION")
+	}
+
+	configurators.Bool(&AutoWebp, "IMGPROXY_AUTO_WEBP")
 	configurators.Bool(&EnforceWebp, "IMGPROXY_ENFORCE_WEBP")
-	configurators.Bool(&EnableAvifDetection, "IMGPROXY_ENABLE_AVIF_DETECTION")
+	configurators.Bool(&AutoAvif, "IMGPROXY_AUTO_AVIF")
 	configurators.Bool(&EnforceAvif, "IMGPROXY_ENFORCE_AVIF")
-	configurators.Bool(&EnableJxlDetection, "IMGPROXY_ENABLE_JXL_DETECTION")
+	configurators.Bool(&AutoJxl, "IMGPROXY_AUTO_JXL")
 	configurators.Bool(&EnforceJxl, "IMGPROXY_ENFORCE_JXL")
 	configurators.Bool(&EnableClientHints, "IMGPROXY_ENABLE_CLIENT_HINTS")
 

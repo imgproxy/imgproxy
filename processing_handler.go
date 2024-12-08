@@ -46,7 +46,7 @@ func initProcessingHandler() {
 
 	vary := make([]string, 0)
 
-	if config.EnableWebpDetection || config.EnforceWebp || config.EnableAvifDetection || config.EnforceAvif {
+	if config.AutoWebp || config.EnforceWebp || config.AutoAvif || config.EnforceAvif {
 		vary = append(vary, "Accept")
 	}
 

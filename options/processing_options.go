@@ -1081,17 +1081,17 @@ func defaultProcessingOptions(headers http.Header) (*ProcessingOptions, error) {
 	headerAccept := headers.Get("Accept")
 
 	if strings.Contains(headerAccept, "image/webp") {
-		po.PreferWebP = config.EnableWebpDetection || config.EnforceWebp
+		po.PreferWebP = config.AutoWebp || config.EnforceWebp
 		po.EnforceWebP = config.EnforceWebp
 	}
 
 	if strings.Contains(headerAccept, "image/avif") {
-		po.PreferAvif = config.EnableAvifDetection || config.EnforceAvif
+		po.PreferAvif = config.AutoAvif || config.EnforceAvif
 		po.EnforceAvif = config.EnforceAvif
 	}
 
 	if strings.Contains(headerAccept, "image/jxl") {
-		po.PreferJxl = config.EnableJxlDetection || config.EnforceJxl
+		po.PreferJxl = config.AutoJxl || config.EnforceJxl
 		po.EnforceJxl = config.EnforceJxl
 	}
 

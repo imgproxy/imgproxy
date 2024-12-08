@@ -478,7 +478,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathStripMetadata() {
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathWebpDetection() {
-	config.EnableWebpDetection = true
+	config.AutoWebp = true
 
 	path := "/plain/http://images.dev/lorem/ipsum.jpg"
 	headers := http.Header{"Accept": []string{"image/webp"}}

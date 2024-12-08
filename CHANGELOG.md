@@ -3,9 +3,13 @@
 ## [Unreleased]
 ### Add
 - Add JPEL XL (JXL) support.
-- Add [IMGPROXY_ENABLE_JXL_DETECTION](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_ENABLE_JXL_DETECTION), [IMGPROXY_ENFORCE_JXL](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_ENFORCE_JXL), and [IMGPROXY_JXL_EFFORT](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_JXL_EFFORT) configs.
+- Add [IMGPROXY_AUTO_JXL](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_AUTO_JXL), [IMGPROXY_ENFORCE_JXL](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_ENFORCE_JXL), and [IMGPROXY_JXL_EFFORT](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_JXL_EFFORT) configs.
 - (pro) Add [objects_position](https://docs.imgproxy.net/latest/usage/processing#objects-position) processing and info options.
 - (pro) Add [IMGPROXY_OBJECT_DETECTION_SWAP_RB](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_OBJECT_DETECTION_SWAP_RB) config.
+
+### Changed
+- Rename `IMGPROXY_ENABLE_WEBP_DETECTION` to `IMGPROXY_AUTO_WEBP`. The old name is deprecated but still supported.
+- Rename `IMGPROXY_ENABLE_AVIF_DETECTION` to `IMGPROXY_AUTO_AVIF`. The old name is deprecated but still supported.
 
 ### Fixed
 - Fix detecting of width and height of HEIF images that include `irot` boxes.
@@ -15,6 +19,10 @@
 - (pro) Fix usage of the `obj` and `objw` gravity types inside the `crop` processing option.
 - (pro) Fix detecting of width and height when orientation is specified in EXIF but EXIF info is not requested.
 - (pro) Fix watermark shadow clipping.
+
+### Deprecated
+- `IMGPROXY_ENABLE_WEBP_DETECTION` config is deprecated. Use `IMGPROXY_AUTO_WEBP` instead.
+- `IMGPROXY_ENABLE_AVIF_DETECTION` config is deprecated. Use `IMGPROXY_AUTO_AVIF` instead.
 
 ## [3.26.1] - 2024-10-28
 ### Changed
