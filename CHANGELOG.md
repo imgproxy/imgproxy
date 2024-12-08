@@ -8,6 +8,8 @@
 - (pro) Add [IMGPROXY_OBJECT_DETECTION_SWAP_RB](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_OBJECT_DETECTION_SWAP_RB) config.
 
 ### Changed
+- Change `IMGPROXY_AVIF_SPEED` default value to `8`.
+- Change `IMGPROXY_FORMAT_QUALITY` default value to `webp=79,avif=63,jxl=77`.
 - Rename `IMGPROXY_ENABLE_WEBP_DETECTION` to `IMGPROXY_AUTO_WEBP`. The old name is deprecated but still supported.
 - Rename `IMGPROXY_ENABLE_AVIF_DETECTION` to `IMGPROXY_AUTO_AVIF`. The old name is deprecated but still supported.
 

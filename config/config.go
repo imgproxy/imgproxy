@@ -255,10 +255,14 @@ func Reset() {
 	PngInterlaced = false
 	PngQuantize = false
 	PngQuantizationColors = 256
-	AvifSpeed = 9
+	AvifSpeed = 8
 	JxlEffort = 4
 	Quality = 80
-	FormatQuality = map[imagetype.Type]int{imagetype.AVIF: 65, imagetype.JXL: 77}
+	FormatQuality = map[imagetype.Type]int{
+		imagetype.WEBP: 79,
+		imagetype.AVIF: 63,
+		imagetype.JXL:  77,
+	}
 	StripMetadata = true
 	KeepCopyright = true
 	StripColorProfile = true
