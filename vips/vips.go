@@ -3,6 +3,7 @@ package vips
 /*
 #cgo pkg-config: vips
 #cgo CFLAGS: -O3
+#cgo LDFLAGS: -lm
 #include "vips.h"
 */
 import "C"
