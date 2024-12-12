@@ -374,7 +374,7 @@ func (s *ProcessingHandlerTestSuite) TestCacheControlPassthroughExpires() {
 	res := rw.Result()
 
 	// Use regex to allow some delay
-	s.Require().Regexp(regexp.MustCompile("max-age=123[0-9], public"), res.Header.Get("Cache-Control"))
+	s.Require().Regexp("max-age=123[0-9], public", res.Header.Get("Cache-Control"))
 	s.Require().Empty(res.Header.Get("Expires"))
 }
 
