@@ -7,6 +7,7 @@
 - (pro) Add [IMGPROXY_AUTOQUALITY_JXL_NET](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_AUTOQUALITY_JXL_NET) config.
 - (pro) Add [objects_position](https://docs.imgproxy.net/latest/usage/processing#objects-position) processing and info options.
 - (pro) Add [IMGPROXY_OBJECT_DETECTION_SWAP_RB](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_OBJECT_DETECTION_SWAP_RB) config.
+- (pro) Add [IMGPROXY_OBJECT_DETECTION_GRAVITY_MODE](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_OBJECT_DETECTION_GRAVITY_MODE) config.
 
 ### Changed
 - Change `IMGPROXY_AVIF_SPEED` default value to `8`.
