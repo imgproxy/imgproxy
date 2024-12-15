@@ -433,10 +433,52 @@ vips_has_embedded_icc(VipsImage *in)
 int
 vips_icc_import_go(VipsImage *in, VipsImage **out)
 {
-  const int res = vips_icc_import(in, out, "embedded", TRUE, "pcs", vips_icc_get_pcs(in), NULL);
-  if (!res && *out)
-    vips_image_set_int(*out, "imgproxy-icc-imported", 1);
-  return res;
+  VipsImage *base = vips_image_new();
+  VipsImage **t = (VipsImage **) vips_object_local_array(VIPS_OBJECT(base), 5);
+
+  int has_alpha_16 = FALSE;
+
+  /* RGB16 and GREY16 images have max alpha 65535, but this is not handled by
+   * vips_icc_import. We need to extract the alpha channel and convert it to 0-255
+   */
+  if ((in->Type == VIPS_INTERPRETATION_RGB16 && in->Bands > 3) ||
+      (in->Type == VIPS_INTERPRETATION_GREY16 && in->Bands > 1)) {
+    int bands = in->Type == VIPS_INTERPRETATION_RGB16 ? 3 : 1;
+
+    if (vips_extract_band(in, &t[0], 0, "n", bands, NULL) ||
+        vips_extract_band(in, &t[1], bands, "n", 1, NULL)) {
+      clear_image(&base);
+      return 1;
+    }
+
+    in = t[0];
+    has_alpha_16 = TRUE;
+  }
+
+  if (vips_icc_import(in, out, "embedded", TRUE, "pcs", vips_icc_get_pcs(in), NULL)) {
+    clear_image(&base);
+    return 1;
+  }
+
+  /* Convert 16-bit alpha channel to 0-255 range and join it back to the image
+   */
+  if (has_alpha_16) {
+    t[2] = *out;
+    *out = NULL;
+
+    if (vips_cast(t[1], &t[3], t[2]->BandFmt, NULL) ||
+        vips_linear1(t[3], &t[4], 1.0 / 255.0, 0, NULL) ||
+        vips_bandjoin2(t[2], t[4], out, NULL)) {
+      clear_image(&base);
+      return 1;
+    }
+  }
+
+  vips_image_set_int(*out, "imgproxy-icc-imported", 1);
+
+  clear_image(&base);
+
+  return 0;
 }
 
 int
