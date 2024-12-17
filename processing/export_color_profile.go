@@ -15,6 +15,10 @@ func exportColorProfile(pctx *pipelineContext, img *vips.Image, po *options.Proc
 		}
 	}
 
+	// vips 8.15+ tends to lose the colour profile during some color conversions.
+	// We probably have a backup of the colour profile, so we need to restore it.
+	img.RestoreColourProfile()
+
 	if img.ColourProfileImported() {
 		if keepProfile {
 			// We imported ICC profile and want to keep it,

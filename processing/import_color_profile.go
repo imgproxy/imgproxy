@@ -22,9 +22,15 @@ func importColorProfile(pctx *pipelineContext, img *vips.Image, po *options.Proc
 		// The image is linear. If we keep its ICC, we'll get wrong colors after
 		// converting it to sRGB
 		img.RemoveColourProfile()
-	} else if convertToLinear || !img.IsRGB() {
-		if err := img.ImportColourProfile(); err != nil {
-			return err
+	} else {
+		// vips 8.15+ tends to lose the colour profile during some color conversions.
+		// We need to backup the colour profile before the conversion and restore it later.
+		img.BackupColourProfile()
+
+		if convertToLinear || !img.IsRGB() {
+			if err := img.ImportColourProfile(); err != nil {
+				return err
+			}
 		}
 	}
 

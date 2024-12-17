@@ -6,6 +6,8 @@
 
 #define VIPS_META_PALETTE_BITS_DEPTH "palette-bit-depth"
 
+#define IMGPROXY_META_ICC_NAME "imgproxy-icc-profile"
+
 int
 vips_initialize()
 {
@@ -431,6 +433,55 @@ vips_has_embedded_icc(VipsImage *in)
 }
 
 int
+vips_icc_backup(VipsImage *in, VipsImage **out)
+{
+  if (vips_copy(in, out, NULL))
+    return 1;
+
+  if (!vips_image_get_typeof(in, VIPS_META_ICC_NAME))
+    return 0;
+
+  const void *data = NULL;
+  size_t data_len = 0;
+
+  if (vips_image_get_blob(in, VIPS_META_ICC_NAME, &data, &data_len))
+    return 0;
+
+  if (!data || data_len < 128)
+    return 0;
+
+  vips_image_remove(*out, IMGPROXY_META_ICC_NAME);
+  vips_image_set_blob_copy(*out, IMGPROXY_META_ICC_NAME, data, data_len);
+
+  return 0;
+}
+
+int
+vips_icc_restore(VipsImage *in, VipsImage **out)
+{
+  if (vips_copy(in, out, NULL))
+    return 1;
+
+  if (vips_image_get_typeof(in, VIPS_META_ICC_NAME) ||
+      !vips_image_get_typeof(in, IMGPROXY_META_ICC_NAME))
+    return 0;
+
+  const void *data = NULL;
+  size_t data_len = 0;
+
+  if (vips_image_get_blob(in, IMGPROXY_META_ICC_NAME, &data, &data_len))
+    return 0;
+
+  if (!data || data_len < 128)
+    return 0;
+
+  vips_image_remove(*out, VIPS_META_ICC_NAME);
+  vips_image_set_blob_copy(*out, VIPS_META_ICC_NAME, data, data_len);
+
+  return 0;
+}
+
+int
 vips_icc_import_go(VipsImage *in, VipsImage **out)
 {
   VipsImage *base = vips_image_new();
@@ -506,6 +557,7 @@ vips_icc_remove(VipsImage *in, VipsImage **out)
     return 1;
 
   vips_image_remove(*out, VIPS_META_ICC_NAME);
+  vips_image_remove(*out, IMGPROXY_META_ICC_NAME);
   vips_image_remove(*out, "exif-ifd0-WhitePoint");
   vips_image_remove(*out, "exif-ifd0-PrimaryChromaticities");
   vips_image_remove(*out, "exif-ifd2-ColorSpace");

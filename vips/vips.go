@@ -736,6 +736,26 @@ func (img *Image) IsLinear() bool {
 	return C.vips_image_guess_interpretation(img.VipsImage) == C.VIPS_INTERPRETATION_scRGB
 }
 
+func (img *Image) BackupColourProfile() {
+	var tmp *C.VipsImage
+
+	if C.vips_icc_backup(img.VipsImage, &tmp) == 0 {
+		C.swap_and_clear(&img.VipsImage, tmp)
+	} else {
+		log.Warningf("Can't backup ICC profile: %s", Error())
+	}
+}
+
+func (img *Image) RestoreColourProfile() {
+	var tmp *C.VipsImage
+
+	if C.vips_icc_restore(img.VipsImage, &tmp) == 0 {
+		C.swap_and_clear(&img.VipsImage, tmp)
+	} else {
+		log.Warningf("Can't restore ICC profile: %s", Error())
+	}
+}
+
 func (img *Image) ImportColourProfile() error {
 	var tmp *C.VipsImage
 
