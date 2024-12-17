@@ -2,7 +2,8 @@
 
 ## [Unreleased]
 ### Add
-- Add JPEL XL (JXL) support.
+- Add JPEG XL (JXL) support.
+- Add PSD (Photoshop Document) and PSB (Photoshop Big) images support.
 - Add [IMGPROXY_AUTO_JXL](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_AUTO_JXL), [IMGPROXY_ENFORCE_JXL](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_ENFORCE_JXL), and [IMGPROXY_JXL_EFFORT](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_JXL_EFFORT) configs.
 - (pro) Add [IMGPROXY_AUTOQUALITY_JXL_NET](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_AUTOQUALITY_JXL_NET) config.
 - (pro) Add [objects_position](https://docs.imgproxy.net/latest/usage/processing#objects-position) processing and info options.
