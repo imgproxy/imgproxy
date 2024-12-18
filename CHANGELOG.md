@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [3.27.0] - 2024-12-18
 ### Add
 - Add JPEG XL (JXL) support.
 - Add PSD (Photoshop Document) and PSB (Photoshop Big) images support.
