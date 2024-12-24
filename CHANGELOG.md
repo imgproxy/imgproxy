@@ -1,5 +1,9 @@
 # Changelog
 
+## [Unreleased]
+### Fixed
+- (pro) Fix object detecttion accuracy.
+
 ## [3.27.0] - 2024-12-18
 ### Add
 - Add JPEG XL (JXL) support.
