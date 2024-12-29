@@ -28,8 +28,10 @@ func GetBucketAndKey(u *url.URL) (bucket, key string) {
 	// It's important to revert %23 first because the original URL may also contain %23,
 	// and we don't want to mix them up.
 	bucket = strings.ReplaceAll(bucket, "%23", "#")
+	bucket = strings.ReplaceAll(bucket, "%3F", "?")
 	bucket = strings.ReplaceAll(bucket, "%25", "%")
 	key = strings.ReplaceAll(key, "%23", "#")
+	key = strings.ReplaceAll(key, "%3F", "?")
 	key = strings.ReplaceAll(key, "%25", "%")
 
 	return

@@ -146,6 +146,7 @@ func BuildImageRequest(ctx context.Context, imageURL string, header http.Header,
 	if !strings.HasPrefix(imageURL, "http://") && !strings.HasPrefix(imageURL, "https://") {
 		imageURL = strings.ReplaceAll(imageURL, "%", "%25")
 		imageURL = strings.ReplaceAll(imageURL, "#", "%23")
+		imageURL = strings.ReplaceAll(imageURL, "?", "%3F")
 	}
 
 	req, err := http.NewRequestWithContext(reqCtx, "GET", imageURL, nil)
