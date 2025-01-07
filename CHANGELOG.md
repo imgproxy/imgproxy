@@ -4,6 +4,10 @@
 ### Added
 - Add [IMGPROXY_SOURCE_URL_QUERY_SEPARATOR](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_SOURCE_URL_QUERY_SEPARATOR) config.
 
+### Changed
+- (pro) Improve image complexity calculation for best format selection.
+- (pro) Use PNG quantization for very low-complexity images when the `best` format is used.
+
 ### Fixed
 - (pro) Fix object detecttion accuracy.
 
