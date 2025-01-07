@@ -16,6 +16,7 @@ import (
 
 	defaultTransport "github.com/imgproxy/imgproxy/v3/transport"
 	azureTransport "github.com/imgproxy/imgproxy/v3/transport/azure"
+	transportCommon "github.com/imgproxy/imgproxy/v3/transport/common"
 	fsTransport "github.com/imgproxy/imgproxy/v3/transport/fs"
 	gcsTransport "github.com/imgproxy/imgproxy/v3/transport/gcs"
 	s3Transport "github.com/imgproxy/imgproxy/v3/transport/s3"
@@ -133,20 +134,7 @@ func headersToStore(res *http.Response) map[string]string {
 func BuildImageRequest(ctx context.Context, imageURL string, header http.Header, jar *cookiejar.Jar) (*http.Request, context.CancelFunc, error) {
 	reqCtx, reqCancel := context.WithTimeout(ctx, time.Duration(config.DownloadTimeout)*time.Second)
 
-	// Non-http(s) URLs may contain percent symbol outside of the percent-encoded sequences.
-	// Parsing such URLs will fail with an error.
-	// To prevent this, we replace all percent symbols with %25.
-	//
-	// Also, such URLs may contain a hash symbol, which is a fragment identifier.
-	// We replace them with %23 to prevent cutting off the fragment part.
-	// Since we already replaced all percent symbols, we won't mix up %23 that were in the original URL
-	// and %23 that appeared after the replacement.
-	//
-	// We will revert these replacements in `transport/common.GetBucketAndKey`.
-	if !strings.HasPrefix(imageURL, "http://") && !strings.HasPrefix(imageURL, "https://") {
-		imageURL = strings.ReplaceAll(imageURL, "%", "%25")
-		imageURL = strings.ReplaceAll(imageURL, "#", "%23")
-	}
+	imageURL = transportCommon.EscapeURL(imageURL)
 
 	req, err := http.NewRequestWithContext(reqCtx, "GET", imageURL, nil)
 	if err != nil {

@@ -105,6 +105,8 @@ var (
 	CookiePassthrough bool
 	CookieBaseURL     string
 
+	SourceURLQuerySeparator string
+
 	LocalFileSystemRoot string
 
 	S3Enabled                 bool
@@ -315,6 +317,7 @@ func Reset() {
 	CookiePassthrough = false
 	CookieBaseURL = ""
 
+	SourceURLQuerySeparator = "?"
 	LocalFileSystemRoot = ""
 	S3Enabled = false
 	S3Region = ""
@@ -557,6 +560,11 @@ func Configure() error {
 
 	configurators.Bool(&CookiePassthrough, "IMGPROXY_COOKIE_PASSTHROUGH")
 	configurators.String(&CookieBaseURL, "IMGPROXY_COOKIE_BASE_URL")
+
+	// Can't rely on configurators.String here because it ignores empty values
+	if s, ok := os.LookupEnv("IMGPROXY_SOURCE_URL_QUERY_SEPARATOR"); ok {
+		SourceURLQuerySeparator = s
+	}
 
 	configurators.String(&LocalFileSystemRoot, "IMGPROXY_LOCAL_FILESYSTEM_ROOT")
 

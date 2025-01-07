@@ -30,7 +30,7 @@ func New() transport {
 func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
 	header := make(http.Header)
 
-	_, path := common.GetBucketAndKey(req.URL)
+	_, path, _ := common.GetBucketAndKey(req.URL)
 	path = "/" + path
 
 	f, err := t.fs.Open(path)

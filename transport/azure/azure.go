@@ -84,7 +84,7 @@ func New() (http.RoundTripper, error) {
 }
 
 func (t transport) RoundTrip(req *http.Request) (*http.Response, error) {
-	container, key := common.GetBucketAndKey(req.URL)
+	container, key, _ := common.GetBucketAndKey(req.URL)
 
 	if len(container) == 0 || len(key) == 0 {
 		body := strings.NewReader("Invalid ABS URL: container name or object key is empty")

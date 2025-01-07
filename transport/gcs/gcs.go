@@ -78,7 +78,7 @@ func New() (http.RoundTripper, error) {
 }
 
 func (t transport) RoundTrip(req *http.Request) (*http.Response, error) {
-	bucket, key := common.GetBucketAndKey(req.URL)
+	bucket, key, query := common.GetBucketAndKey(req.URL)
 
 	if len(bucket) == 0 || len(key) == 0 {
 		body := strings.NewReader("Invalid GCS URL: bucket name or object key is empty")
@@ -98,7 +98,7 @@ func (t transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	bkt := t.client.Bucket(bucket)
 	obj := bkt.Object(key)
 
-	if g, err := strconv.ParseInt(req.URL.RawQuery, 10, 64); err == nil && g > 0 {
+	if g, err := strconv.ParseInt(query, 10, 64); err == nil && g > 0 {
 		obj = obj.Generation(g)
 	}
 

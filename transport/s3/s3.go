@@ -103,7 +103,7 @@ func New() (http.RoundTripper, error) {
 }
 
 func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
-	bucket, key := common.GetBucketAndKey(req.URL)
+	bucket, key, query := common.GetBucketAndKey(req.URL)
 
 	if len(bucket) == 0 || len(key) == 0 {
 		body := strings.NewReader("Invalid S3 URL: bucket name or object key is empty")
@@ -125,8 +125,8 @@ func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
 		Key:    aws.String(key),
 	}
 
-	if len(req.URL.RawQuery) > 0 {
-		input.VersionId = aws.String(req.URL.RawQuery)
+	if len(query) > 0 {
+		input.VersionId = aws.String(query)
 	}
 
 	statusCode := http.StatusOK

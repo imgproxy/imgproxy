@@ -3,9 +3,32 @@ package common
 import (
 	"net/url"
 	"strings"
+
+	"github.com/imgproxy/imgproxy/v3/config"
 )
 
-func GetBucketAndKey(u *url.URL) (bucket, key string) {
+func EscapeURL(u string) string {
+	// Non-http(s) URLs may contain percent symbol outside of the percent-encoded sequences.
+	// Parsing such URLs will fail with an error.
+	// To prevent this, we replace all percent symbols with %25.
+	//
+	// Also, such URLs may contain a hash symbol (a fragment identifier) or a question mark
+	// (a query string).
+	// We replace them with %23 and %3F to make `url.Parse` treat them as a part of the path.
+	// Since we already replaced all percent symbols, we won't mix up %23/%3F that were in the
+	// original URL and %23/%3F that appeared after the replacement.
+	//
+	// We will revert these replacements in `GetBucketAndKey`.
+	if !strings.HasPrefix(u, "http://") && !strings.HasPrefix(u, "https://") {
+		u = strings.ReplaceAll(u, "%", "%25")
+		u = strings.ReplaceAll(u, "?", "%3F")
+		u = strings.ReplaceAll(u, "#", "%23")
+	}
+
+	return u
+}
+
+func GetBucketAndKey(u *url.URL) (bucket, key, query string) {
 	bucket = u.Host
 
 	// We can't use u.Path here because `url.Parse` unescapes the original URL's path.
@@ -21,16 +44,25 @@ func GetBucketAndKey(u *url.URL) (bucket, key string) {
 
 	key = strings.TrimLeft(key, "/")
 
-	// We replaced all `%` with `%25` in `imagedata.BuildImageRequest` to prevent parsing errors.
-	// Also, we replaced all `#` with `%23` to prevent cutting off the fragment part.
-	// We need to revert these replacements.
+	// We percent-encoded `%`, `#`, and `?` in `EscapeURL` to prevent parsing errors.
+	// Now we need to revert these replacements.
 	//
-	// It's important to revert %23 first because the original URL may also contain %23,
-	// and we don't want to mix them up.
+	// It's important to revert %25 last because %23/%3F may appear in the original URL and
+	// we don't want to mix them up.
 	bucket = strings.ReplaceAll(bucket, "%23", "#")
+	bucket = strings.ReplaceAll(bucket, "%3F", "?")
 	bucket = strings.ReplaceAll(bucket, "%25", "%")
 	key = strings.ReplaceAll(key, "%23", "#")
+	key = strings.ReplaceAll(key, "%3F", "?")
 	key = strings.ReplaceAll(key, "%25", "%")
+
+	// Cut the query string if it's present.
+	// Since we replaced `?` with `%3F` in `EscapeURL`, `url.Parse` will treat query
+	// string as a part of the path.
+	// Also, query string separator may be different from `?`, so we can't rely on `url.URL.RawQuery`.
+	if len(config.SourceURLQuerySeparator) > 0 {
+		key, query, _ = strings.Cut(key, config.SourceURLQuerySeparator)
+	}
 
 	return
 }

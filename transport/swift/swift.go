@@ -51,7 +51,7 @@ func New() (http.RoundTripper, error) {
 }
 
 func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
-	container, objectName := common.GetBucketAndKey(req.URL)
+	container, objectName, _ := common.GetBucketAndKey(req.URL)
 
 	if len(container) == 0 || len(objectName) == 0 {
 		body := strings.NewReader("Invalid Swift URL: container name or object name is empty")
