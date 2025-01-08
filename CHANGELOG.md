@@ -3,6 +3,7 @@
 ## [Unreleased]
 ### Added
 - Add [IMGPROXY_SOURCE_URL_QUERY_SEPARATOR](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_SOURCE_URL_QUERY_SEPARATOR) config.
+- (pro) Add YOLOv11 object detection model support.
 
 ### Changed
 - (pro) Improve image complexity calculation for best format selection.
