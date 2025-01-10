@@ -10,6 +10,7 @@
 - (pro) Use PNG quantization for very low-complexity images when the `best` format is used.
 
 ### Fixed
+- Fix blur and sharpen performance for images with alpha channel.
 - (pro) Fix object detecttion accuracy.
 
 ## [3.27.0] - 2024-12-18

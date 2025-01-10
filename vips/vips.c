@@ -609,7 +609,7 @@ vips_apply_filters(VipsImage *in, VipsImage **out, double blur_sigma,
       return 1;
     }
 
-    in = t[0];
+    in = t[1];
     premultiplied = TRUE;
   }
 
