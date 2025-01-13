@@ -8,6 +8,7 @@
 ### Changed
 - (pro) Improve image complexity calculation for best format selection.
 - (pro) Use PNG quantization for very low-complexity images when the `best` format is used.
+- (docker) Update AWS Lambda adapter to 0.9.0.
 
 ### Fixed
 - Fix blur and sharpen performance for images with alpha channel.
