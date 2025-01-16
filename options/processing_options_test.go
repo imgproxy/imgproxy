@@ -32,6 +32,18 @@ func (s *ProcessingOptionsTestSuite) TestParseBase64URL() {
 	s.Require().Equal(imagetype.PNG, po.Format)
 }
 
+func (s *ProcessingOptionsTestSuite) TestParseBase64URLWithFilename() {
+	config.Base64URLIncludesFilename = true
+
+	originURL := "http://images.dev/lorem/ipsum.jpg?param=value"
+	path := fmt.Sprintf("/size:100:100/%s.png/puppy.jpg", base64.RawURLEncoding.EncodeToString([]byte(originURL)))
+	po, imageURL, err := ParsePath(path, make(http.Header))
+
+	s.Require().NoError(err)
+	s.Require().Equal(originURL, imageURL)
+	s.Require().Equal(imagetype.PNG, po.Format)
+}
+
 func (s *ProcessingOptionsTestSuite) TestParseBase64URLWithoutExtension() {
 	originURL := "http://images.dev/lorem/ipsum.jpg?param=value"
 	path := fmt.Sprintf("/size:100:100/%s", base64.RawURLEncoding.EncodeToString([]byte(originURL)))

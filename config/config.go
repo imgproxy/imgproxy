@@ -142,8 +142,9 @@ var (
 
 	LastModifiedEnabled bool
 
-	BaseURL         string
-	URLReplacements []URLReplacement
+	BaseURL                   string
+	URLReplacements           []URLReplacement
+	Base64URLIncludesFilename bool
 
 	Presets     []string
 	OnlyPresets bool
@@ -350,6 +351,7 @@ func Reset() {
 
 	BaseURL = ""
 	URLReplacements = make([]URLReplacement, 0)
+	Base64URLIncludesFilename = false
 
 	Presets = make([]string, 0)
 	OnlyPresets = false
@@ -604,6 +606,7 @@ func Configure() error {
 	if err := configurators.Replacements(&URLReplacements, "IMGPROXY_URL_REPLACEMENTS"); err != nil {
 		return err
 	}
+	configurators.Bool(&Base64URLIncludesFilename, "IMGPROXY_BASE64_URL_INCLUDES_FILENAME")
 
 	presetsSep := ","
 	configurators.String(&presetsSep, "IMGPROXY_PRESETS_SEPARATOR")

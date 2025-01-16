@@ -27,6 +27,10 @@ func preprocessURL(u string) string {
 func decodeBase64URL(parts []string) (string, string, error) {
 	var format string
 
+	if len(parts) > 1 && config.Base64URLIncludesFilename {
+		parts = parts[:len(parts)-1]
+	}
+
 	encoded := strings.Join(parts, "")
 	urlParts := strings.Split(encoded, ".")
 
