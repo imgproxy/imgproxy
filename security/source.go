@@ -41,7 +41,7 @@ func VerifySourceNetwork(addr string) error {
 		return ErrInvalidSourceAddress
 	}
 
-	if !config.AllowLoopbackSourceAddresses && ip.IsLoopback() {
+	if !config.AllowLoopbackSourceAddresses && (ip.IsLoopback() || ip.IsUnspecified()) {
 		return ErrSourceAddressNotAllowed
 	}
 
