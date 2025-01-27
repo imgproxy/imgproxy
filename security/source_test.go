@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/imgproxy/imgproxy/v3/config"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestVerifySourceNetwork(t *testing.T) {
@@ -120,10 +120,10 @@ func TestVerifySourceNetwork(t *testing.T) {
 			err := VerifySourceNetwork(tc.addr)
 
 			if tc.expectedErr != nil {
-				assert.Error(t, err)
-				assert.Equal(t, tc.expectedErr, err)
+				require.Error(t, err)
+				require.Equal(t, tc.expectedErr, err)
 			} else {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 			}
 		})
 	}
