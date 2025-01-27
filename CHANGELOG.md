@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [3.27.2] - 2025-01-27
 ### Fixed
 - Fix preventing requests to `0.0.0.0` when imgproxy is configured to deny loopback addresses.
 - (pro) Fix timeouts in AWS Lambda when running in development mode.
