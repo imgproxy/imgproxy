@@ -1,5 +1,10 @@
 # Changelog
 
+## [Unreleased]
+### Fixed
+- Fix preventing requests to `0.0.0.0` when imgproxy is configured to deny loopback addresses.
+- (pro) Fix timeouts in AWS Lambda when running in development mode.
+
 ## [3.27.1] - 2025-01-13
 ### Added
 - Add [IMGPROXY_SOURCE_URL_QUERY_SEPARATOR](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_SOURCE_URL_QUERY_SEPARATOR) config.
