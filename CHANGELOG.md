@@ -4,6 +4,9 @@
 ### Added
 - Add [IMGPROXY_BASE64_URL_INCLUDES_FILENAME](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_BASE64_URL_INCLUDES_FILENAME) config.
 
+### Changed
+- Treat 206 (Partial Content) responses from a source server as 200 (OK) when they contain a full content range.
+
 ## [3.27.2] - 2025-01-27
 ### Fixed
 - Fix preventing requests to `0.0.0.0` when imgproxy is configured to deny loopback addresses.

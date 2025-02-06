@@ -7,6 +7,8 @@ import (
 	"io"
 	"net/http"
 	"net/http/cookiejar"
+	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -37,6 +39,8 @@ var (
 		"ETag",
 		"Last-Modified",
 	}
+
+	contentRangeRe = regexp.MustCompile(`^bytes ((\d+)-(\d+)|\*)/(\d+|\*)$`)
 
 	// For tests
 	redirectAllRequestsTo string
@@ -225,8 +229,46 @@ func requestImage(ctx context.Context, imageURL string, opts DownloadOptions) (*
 		return nil, func() {}, &ErrorNotModified{Message: "Not Modified", Headers: headersToStore(res)}
 	}
 
-	if res.StatusCode != 200 {
-		body, _ := io.ReadAll(res.Body)
+	// If the source responds with 206, check if the response contains entire image.
+	// If not, return an error.
+	if res.StatusCode == http.StatusPartialContent {
+		contentRange := res.Header.Get("Content-Range")
+		rangeParts := contentRangeRe.FindStringSubmatch(contentRange)
+		if len(rangeParts) == 0 {
+			res.Body.Close()
+			reqCancel()
+			return nil, func() {}, ierrors.New(404, "Partial response with invalid Content-Range header", msgSourceImageIsUnreachable)
+		}
+
+		if rangeParts[1] == "*" || rangeParts[2] != "0" {
+			res.Body.Close()
+			reqCancel()
+			return nil, func() {}, ierrors.New(404, "Partial response with incomplete content", msgSourceImageIsUnreachable)
+		}
+
+		contentLengthStr := rangeParts[4]
+		if contentLengthStr == "*" {
+			contentLengthStr = res.Header.Get("Content-Length")
+		}
+
+		contentLength, _ := strconv.Atoi(contentLengthStr)
+		rangeEnd, _ := strconv.Atoi(rangeParts[3])
+
+		if contentLength <= 0 || rangeEnd != contentLength-1 {
+			res.Body.Close()
+			reqCancel()
+			return nil, func() {}, ierrors.New(404, "Partial response with incomplete content", msgSourceImageIsUnreachable)
+		}
+	} else if res.StatusCode != http.StatusOK {
+		var msg string
+
+		if strings.HasPrefix(res.Header.Get("Content-Type"), "text/") {
+			body, _ := io.ReadAll(io.LimitReader(res.Body, 1024))
+			msg = fmt.Sprintf("Status: %d; %s", res.StatusCode, string(body))
+		} else {
+			msg = fmt.Sprintf("Status: %d", res.StatusCode)
+		}
+
 		res.Body.Close()
 		reqCancel()
 
@@ -235,7 +277,6 @@ func requestImage(ctx context.Context, imageURL string, opts DownloadOptions) (*
 			status = 500
 		}
 
-		msg := fmt.Sprintf("Status: %d; %s", res.StatusCode, string(body))
 		return nil, func() {}, ierrors.New(status, msg, msgSourceImageIsUnreachable)
 	}
 
