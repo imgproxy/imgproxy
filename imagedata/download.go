@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/cookies"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/security"
 
@@ -50,7 +51,7 @@ const msgSourceImageIsUnreachable = "Source image is unreachable"
 
 type DownloadOptions struct {
 	Header    http.Header
-	CookieJar *cookiejar.Jar
+	CookieJar *cookies.PassthroughCookieJar
 }
 
 type ErrorNotModified struct {
@@ -135,7 +136,7 @@ func headersToStore(res *http.Response) map[string]string {
 	return m
 }
 
-func BuildImageRequest(ctx context.Context, imageURL string, header http.Header, jar *cookiejar.Jar) (*http.Request, context.CancelFunc, error) {
+func BuildImageRequest(ctx context.Context, imageURL string, header http.Header, jar *cookies.PassthroughCookieJar) (*http.Request, context.CancelFunc, error) {
 	reqCtx, reqCancel := context.WithTimeout(ctx, time.Duration(config.DownloadTimeout)*time.Second)
 
 	imageURL = transportCommon.EscapeURL(imageURL)

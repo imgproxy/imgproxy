@@ -216,8 +216,11 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	path := r.RequestURI
-	if queryStart := strings.IndexByte(path, '?'); queryStart >= 0 {
-		path = path[:queryStart]
+
+	if !config.SourceURLQueryPassthrough {
+		if queryStart := strings.IndexByte(path, '?'); queryStart >= 0 {
+			path = path[:queryStart]
+		}
 	}
 
 	if len(config.PathPrefix) > 0 {

@@ -102,10 +102,12 @@ var (
 	SanitizeSvg        bool
 	AlwaysRasterizeSvg bool
 
-	CookiePassthrough bool
-	CookieBaseURL     string
+	CookiePassthrough   bool
+	CookieDisableChecks bool
+	CookieBaseURL       string
 
-	SourceURLQuerySeparator string
+	SourceURLQuerySeparator   string
+	SourceURLQueryPassthrough bool
 
 	LocalFileSystemRoot string
 
@@ -561,7 +563,10 @@ func Configure() error {
 	configurators.Bool(&DevelopmentErrorsMode, "IMGPROXY_DEVELOPMENT_ERRORS_MODE")
 
 	configurators.Bool(&CookiePassthrough, "IMGPROXY_COOKIE_PASSTHROUGH")
+	configurators.Bool(&CookieDisableChecks, "IMGPROXY_COOKIE_DISABLE_RFC_CHECKS")
 	configurators.String(&CookieBaseURL, "IMGPROXY_COOKIE_BASE_URL")
+
+	configurators.Bool(&SourceURLQueryPassthrough, "IMGPROXY_SOURCE_URL_QUERY_PASSTHROUGH")
 
 	// Can't rely on configurators.String here because it ignores empty values
 	if s, ok := os.LookupEnv("IMGPROXY_SOURCE_URL_QUERY_SEPARATOR"); ok {
