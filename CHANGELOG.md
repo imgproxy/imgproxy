@@ -7,6 +7,7 @@
 
 ### Changed
 - Treat 206 (Partial Content) responses from a source server as 200 (OK) when they contain a full content range.
+- (pro) Change saturation adjustment algorithm to be more CIE-correct.
 
 ## [3.27.2] - 2025-01-27
 ### Fixed
