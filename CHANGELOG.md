@@ -9,6 +9,9 @@
 - Treat 206 (Partial Content) responses from a source server as 200 (OK) when they contain a full content range.
 - (pro) Change saturation adjustment algorithm to be more CIE-correct.
 
+### Fixed
+- Fix setting the `Host` header via the `IMGPROXY_CUSTOM_REQUEST_HEADERS` config.
+
 ## [3.27.2] - 2025-01-27
 ### Fixed
 - Fix preventing requests to `0.0.0.0` when imgproxy is configured to deny loopback addresses.
