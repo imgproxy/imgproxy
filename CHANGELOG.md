@@ -10,7 +10,8 @@
 - (pro) Change saturation adjustment algorithm to be more CIE-correct.
 
 ### Fixed
-- Fix setting the `Host` header via the `IMGPROXY_CUSTOM_REQUEST_HEADERS` config.
+- Fix determinimg the default hostname for cookies passthrough.
+- (pro) Fix setting the `Host` header via the `IMGPROXY_CUSTOM_REQUEST_HEADERS` config.
 
 ## [3.27.2] - 2025-01-27
 ### Fixed

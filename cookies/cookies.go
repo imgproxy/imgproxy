@@ -39,6 +39,9 @@ func JarFromRequest(r *http.Request) (*cookiejar.Jar, error) {
 		if len(host) == 0 {
 			host = r.Header.Get("Host")
 		}
+		if len(host) == 0 {
+			host = r.Host
+		}
 
 		if len(host) == 0 {
 			return jar, nil
