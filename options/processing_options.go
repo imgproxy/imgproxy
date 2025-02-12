@@ -1142,8 +1142,10 @@ func parsePathOptions(parts []string, headers http.Header) (*ProcessingOptions, 
 
 	options, urlParts := parseURLOptions(parts)
 
-	if err = applyURLOptions(po, options); err != nil {
-		return nil, "", err
+	if !config.SourceURLQueryPassthrough {
+		if err = applyURLOptions(po, options); err != nil {
+			return nil, "", err
+		}
 	}
 
 	url, extension, err := DecodeURL(urlParts)
