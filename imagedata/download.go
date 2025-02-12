@@ -50,7 +50,7 @@ const msgSourceImageIsUnreachable = "Source image is unreachable"
 
 type DownloadOptions struct {
 	Header    http.Header
-	CookieJar *cookiejar.Jar
+	CookieJar http.CookieJar
 }
 
 type ErrorNotModified struct {
@@ -135,7 +135,7 @@ func headersToStore(res *http.Response) map[string]string {
 	return m
 }
 
-func BuildImageRequest(ctx context.Context, imageURL string, header http.Header, jar *cookiejar.Jar) (*http.Request, context.CancelFunc, error) {
+func BuildImageRequest(ctx context.Context, imageURL string, header http.Header, jar http.CookieJar) (*http.Request, context.CancelFunc, error) {
 	reqCtx, reqCancel := context.WithTimeout(ctx, time.Duration(config.DownloadTimeout)*time.Second)
 
 	imageURL = transportCommon.EscapeURL(imageURL)

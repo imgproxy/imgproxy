@@ -5,7 +5,6 @@ import (
 	"io"
 	"mime"
 	"net/http"
-	"net/http/cookiejar"
 	"path/filepath"
 	"strconv"
 	"sync"
@@ -53,7 +52,7 @@ func streamOriginImage(ctx context.Context, reqID string, r *http.Request, rw ht
 	defer metrics.StartStreamingSegment(ctx)()
 
 	var (
-		cookieJar *cookiejar.Jar
+		cookieJar http.CookieJar
 		err       error
 	)
 

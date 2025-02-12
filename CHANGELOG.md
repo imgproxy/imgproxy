@@ -3,6 +3,7 @@
 ## [Unreleased]
 ### Added
 - Add [IMGPROXY_BASE64_URL_INCLUDES_FILENAME](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_BASE64_URL_INCLUDES_FILENAME) config.
+- Add [IMGPROXY_COOKIE_PASSTHROUGH_ALL](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_COOKIE_PASSTHROUGH_ALL) config.
 - (pro) Add PNG EXIF and XMP data to the `/info` endpoint response.
 
 ### Changed
