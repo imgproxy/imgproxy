@@ -11,7 +11,9 @@
 
 ### Fixed
 - Fix determinimg the default hostname for cookies passthrough.
-- (pro) Fix setting the `Host` header via the `IMGPROXY_CUSTOM_REQUEST_HEADERS` config.
+- (pro) Fix setting the `Host` header with the `IMGPROXY_CUSTOM_REQUEST_HEADERS` config.
+- (pro) Fix passing through the `Host` header with the `IMGPROXY_REQUEST_HEADERS_PASSTHROUGH` config.
+- (pro) Fix passing through request headers with the `IMGPROXY_REQUEST_HEADERS_PASSTHROUGH` when the `raw` option is used.
 
 ## [3.27.2] - 2025-01-27
 ### Fixed
