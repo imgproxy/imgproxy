@@ -5,16 +5,63 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
+	"sync"
 
 	"golang.org/x/net/publicsuffix"
 
 	"github.com/imgproxy/imgproxy/v3/config"
 )
 
-func JarFromRequest(r *http.Request) (*cookiejar.Jar, error) {
-	jar, err := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
+// PassthroughCookieJar is a custom CookieJar that can return either all cookies
+// or only those according to the RFC6265 rules.
+type PassthroughCookieJar struct {
+	jar             http.CookieJar // underlying default jar (RFC6265 compliant)
+	alwaysReturnAll bool           // when true, Cookies() returns all stored cookies
+	mu              sync.Mutex     // protects allCookies and alwaysReturnAll
+	allCookies      []*http.Cookie // holds every cookie added via SetCookies
+}
+
+// Default implementation doesn't expose cookies, so we need to keep track of them in our slice
+func (ocj *PassthroughCookieJar) SetCookies(u *url.URL, cookies []*http.Cookie) {
+	ocj.jar.SetCookies(u, cookies)
+	ocj.mu.Lock()
+	// Simply append the new cookies.
+	ocj.allCookies = append(ocj.allCookies, cookies...)
+	ocj.mu.Unlock()
+}
+
+// Cookies returns cookies according to the runtime flag.
+// If alwaysReturnAll is true, it returns all stored cookies.
+// Otherwise, it returns the cookies for the given URL as computed by the underlying jar.
+func (ocj *PassthroughCookieJar) Cookies(u *url.URL) []*http.Cookie {
+	ocj.mu.Lock()
+	defer ocj.mu.Unlock()
+	if ocj.alwaysReturnAll {
+		// Return a copy of all cookies.
+		copied := make([]*http.Cookie, len(ocj.allCookies))
+		copy(copied, ocj.allCookies)
+		return copied
+	}
+	return ocj.jar.Cookies(u)
+}
+
+// SetAlwaysReturnAll lets you toggle the behavior at runtime.
+func (ocj *PassthroughCookieJar) SetAlwaysReturnAll(always bool) {
+	ocj.mu.Lock()
+	ocj.alwaysReturnAll = always
+	ocj.mu.Unlock()
+}
+
+func JarFromRequest(r *http.Request) (*PassthroughCookieJar, error) {
+	orig_jar, err := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
 	if err != nil {
 		return nil, err
+	}
+
+	jar := &PassthroughCookieJar{
+		jar:             orig_jar,
+		alwaysReturnAll: config.CookieDisableChecks,
+		allCookies:      make([]*http.Cookie, 0),
 	}
 
 	if r == nil {
