@@ -215,12 +215,11 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 
+	queryString := ""
 	path := r.RequestURI
-
-	if !config.SourceURLQueryPassthrough {
-		if queryStart := strings.IndexByte(path, '?'); queryStart >= 0 {
-			path = path[:queryStart]
-		}
+	if queryStart := strings.IndexByte(path, '?'); queryStart >= 0 {
+		queryString = path[queryStart:]
+		path = path[:queryStart]
 	}
 
 	if len(config.PathPrefix) > 0 {
@@ -245,7 +244,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		sendErrAndPanic(ctx, "security", ierrors.New(403, err.Error(), "Forbidden"))
 	}
 
-	po, imageURL, err := options.ParsePath(path, r.Header)
+	po, imageURL, err := options.ParsePath(path, r.Header, queryString)
 	checkErr(ctx, "path_parsing", err)
 
 	errorreport.SetMetadata(r, "Source Image URL", imageURL)

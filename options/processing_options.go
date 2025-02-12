@@ -1142,10 +1142,8 @@ func parsePathOptions(parts []string, headers http.Header) (*ProcessingOptions, 
 
 	options, urlParts := parseURLOptions(parts)
 
-	if !config.SourceURLQueryPassthrough {
-		if err = applyURLOptions(po, options); err != nil {
-			return nil, "", err
-		}
+	if err = applyURLOptions(po, options); err != nil {
+		return nil, "", err
 	}
 
 	url, extension, err := DecodeURL(urlParts)
@@ -1189,7 +1187,7 @@ func parsePathPresets(parts []string, headers http.Header) (*ProcessingOptions, 
 	return po, url, nil
 }
 
-func ParsePath(path string, headers http.Header) (*ProcessingOptions, string, error) {
+func ParsePath(path string, headers http.Header, queryString string) (*ProcessingOptions, string, error) {
 	if path == "" || path == "/" {
 		return nil, "", ierrors.New(404, fmt.Sprintf("Invalid path: %s", path), "Invalid URL")
 	}
@@ -1210,6 +1208,10 @@ func ParsePath(path string, headers http.Header) (*ProcessingOptions, string, er
 
 	if err != nil {
 		return nil, "", ierrors.New(404, err.Error(), "Invalid URL")
+	}
+
+	if config.SourceURLQueryPassthrough && len(queryString) > 0 {
+		imageURL += queryString
 	}
 
 	return po, imageURL, nil

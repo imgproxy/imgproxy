@@ -139,9 +139,7 @@ func headersToStore(res *http.Response) map[string]string {
 func BuildImageRequest(ctx context.Context, imageURL string, header http.Header, jar *cookies.PassthroughCookieJar) (*http.Request, context.CancelFunc, error) {
 	reqCtx, reqCancel := context.WithTimeout(ctx, time.Duration(config.DownloadTimeout)*time.Second)
 
-	if !config.SourceURLQueryPassthrough {
-		imageURL = transportCommon.EscapeURL(imageURL)
-	}
+	imageURL = transportCommon.EscapeURL(imageURL)
 
 	req, err := http.NewRequestWithContext(reqCtx, "GET", imageURL, nil)
 	if err != nil {

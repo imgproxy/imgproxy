@@ -56,7 +56,6 @@ func decodeBase64URL(parts []string) (string, string, error) {
 
 func decodePlainURL(parts []string) (string, string, error) {
 	var format string
-	var unescaped string
 
 	encoded := strings.Join(parts, "/")
 	urlParts := strings.Split(encoded, "@")
@@ -73,15 +72,9 @@ func decodePlainURL(parts []string) (string, string, error) {
 		format = urlParts[1]
 	}
 
-	if !config.SourceURLQueryPassthrough {
-		unescapedUrl, err := url.PathUnescape(urlParts[0])
-		if err != nil {
-			return "", "", fmt.Errorf("Invalid url encoding: %s", encoded)
-		}
-
-		unescaped = unescapedUrl
-	} else {
-		unescaped = urlParts[0]
+	unescaped, err := url.PathUnescape(urlParts[0])
+	if err != nil {
+		return "", "", fmt.Errorf("Invalid url encoding: %s", encoded)
 	}
 
 	return preprocessURL(unescaped), format, nil
