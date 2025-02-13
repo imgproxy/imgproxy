@@ -3,6 +3,7 @@ package router
 import (
 	"net"
 	"net/http"
+	"strconv"
 
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 	log "github.com/sirupsen/logrus"
@@ -33,12 +34,15 @@ func LogResponse(reqID string, r *http.Request, status int, err *ierrors.Error, 
 	}
 
 	clientIP, _, _ := net.SplitHostPort(r.RemoteAddr)
+	ctxDuration := ctxTime(r.Context())
+	latency := strconv.FormatInt(int64(ctxDuration), 10)
 
 	fields := log.Fields{
 		"request_id": reqID,
 		"method":     r.Method,
 		"status":     status,
 		"client_ip":  clientIP,
+		"latency":    latency,
 	}
 
 	if err != nil {
@@ -57,6 +61,6 @@ func LogResponse(reqID string, r *http.Request, status int, err *ierrors.Error, 
 
 	log.WithFields(fields).Logf(
 		level,
-		"Completed in %s %s", ctxTime(r.Context()), r.RequestURI,
+		"Completed in %s %s", ctxDuration, r.RequestURI,
 	)
 }
