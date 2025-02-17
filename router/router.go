@@ -2,7 +2,6 @@ package router
 
 import (
 	"encoding/json"
-	"fmt"
 	"net"
 	"net/http"
 	"regexp"
@@ -11,7 +10,6 @@ import (
 	nanoid "github.com/matoous/go-nanoid/v2"
 
 	"github.com/imgproxy/imgproxy/v3/config"
-	"github.com/imgproxy/imgproxy/v3/ierrors"
 )
 
 const (
@@ -159,7 +157,7 @@ func (r *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	LogResponse(reqID, req, 404, ierrors.New(404, fmt.Sprintf("Route for %s is not defined", req.URL.Path), "Not found"))
+	LogResponse(reqID, req, 404, newRouteNotDefinedError(req.URL.Path))
 
 	rw.Header().Set("Content-Type", "text/plain")
 	rw.WriteHeader(404)

@@ -8,12 +8,9 @@ import (
 	"github.com/imgproxy/imgproxy/v3/bufpool"
 	"github.com/imgproxy/imgproxy/v3/bufreader"
 	"github.com/imgproxy/imgproxy/v3/config"
-	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imagemeta"
 	"github.com/imgproxy/imgproxy/v3/security"
 )
-
-var ErrSourceImageTypeNotSupported = ierrors.New(422, "Source image type not supported", "Invalid source image")
 
 var downloadBufPool *bufpool.Pool
 
@@ -37,10 +34,6 @@ func readAndCheckImage(r io.Reader, contentLength int, secopts security.Options)
 	if err != nil {
 		buf.Reset()
 		cancel()
-
-		if err == imagemeta.ErrFormat {
-			return nil, ErrSourceImageTypeNotSupported
-		}
 
 		return nil, wrapError(err)
 	}

@@ -2,10 +2,7 @@ package security
 
 import (
 	"github.com/imgproxy/imgproxy/v3/config"
-	"github.com/imgproxy/imgproxy/v3/ierrors"
 )
-
-var ErrSecurityOptionsNotAllowed = ierrors.New(403, "Security processing options are not allowed", "Invalid URL")
 
 type Options struct {
 	MaxSrcResolution            int
@@ -28,5 +25,5 @@ func IsSecurityOptionsAllowed() error {
 		return nil
 	}
 
-	return ErrSecurityOptionsNotAllowed
+	return newSecurityOptionsError()
 }

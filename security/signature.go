@@ -4,14 +4,8 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
-	"errors"
 
 	"github.com/imgproxy/imgproxy/v3/config"
-)
-
-var (
-	ErrInvalidSignature         = errors.New("Invalid signature")
-	ErrInvalidSignatureEncoding = errors.New("Invalid signature encoding")
 )
 
 func VerifySignature(signature, path string) error {
@@ -27,7 +21,7 @@ func VerifySignature(signature, path string) error {
 
 	messageMAC, err := base64.RawURLEncoding.DecodeString(signature)
 	if err != nil {
-		return ErrInvalidSignatureEncoding
+		return newSignatureError("Invalid signature encoding")
 	}
 
 	for i := 0; i < len(config.Keys); i++ {
@@ -36,7 +30,7 @@ func VerifySignature(signature, path string) error {
 		}
 	}
 
-	return ErrInvalidSignature
+	return newSignatureError("Invalid signature")
 }
 
 func signatureFor(str string, key, salt []byte, signatureSize int) []byte {

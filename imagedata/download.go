@@ -53,15 +53,6 @@ type DownloadOptions struct {
 	CookieJar http.CookieJar
 }
 
-type ErrorNotModified struct {
-	Message string
-	Headers map[string]string
-}
-
-func (e *ErrorNotModified) Error() string {
-	return e.Message
-}
-
 func initDownloading() error {
 	transport, err := defaultTransport.New(true)
 	if err != nil {
@@ -143,16 +134,12 @@ func BuildImageRequest(ctx context.Context, imageURL string, header http.Header,
 	req, err := http.NewRequestWithContext(reqCtx, "GET", imageURL, nil)
 	if err != nil {
 		reqCancel()
-		return nil, func() {}, ierrors.New(404, err.Error(), msgSourceImageIsUnreachable)
+		return nil, func() {}, newImageRequestError(err)
 	}
 
 	if _, ok := enabledSchemes[req.URL.Scheme]; !ok {
 		reqCancel()
-		return nil, func() {}, ierrors.New(
-			404,
-			fmt.Sprintf("Unknown scheme: %s", req.URL.Scheme),
-			msgSourceImageIsUnreachable,
-		)
+		return nil, func() {}, newImageRequstSchemeError(req.URL.Scheme)
 	}
 
 	if jar != nil {
@@ -226,7 +213,7 @@ func requestImage(ctx context.Context, imageURL string, opts DownloadOptions) (*
 	if res.StatusCode == http.StatusNotModified {
 		res.Body.Close()
 		reqCancel()
-		return nil, func() {}, &ErrorNotModified{Message: "Not Modified", Headers: headersToStore(res)}
+		return nil, func() {}, newNotModifiedError(headersToStore(res))
 	}
 
 	// If the source responds with 206, check if the response contains entire image.
@@ -237,13 +224,13 @@ func requestImage(ctx context.Context, imageURL string, opts DownloadOptions) (*
 		if len(rangeParts) == 0 {
 			res.Body.Close()
 			reqCancel()
-			return nil, func() {}, ierrors.New(404, "Partial response with invalid Content-Range header", msgSourceImageIsUnreachable)
+			return nil, func() {}, newImagePartialResponseError("Partial response with invalid Content-Range header")
 		}
 
 		if rangeParts[1] == "*" || rangeParts[2] != "0" {
 			res.Body.Close()
 			reqCancel()
-			return nil, func() {}, ierrors.New(404, "Partial response with incomplete content", msgSourceImageIsUnreachable)
+			return nil, func() {}, newImagePartialResponseError("Partial response with incomplete content")
 		}
 
 		contentLengthStr := rangeParts[4]
@@ -257,27 +244,20 @@ func requestImage(ctx context.Context, imageURL string, opts DownloadOptions) (*
 		if contentLength <= 0 || rangeEnd != contentLength-1 {
 			res.Body.Close()
 			reqCancel()
-			return nil, func() {}, ierrors.New(404, "Partial response with incomplete content", msgSourceImageIsUnreachable)
+			return nil, func() {}, newImagePartialResponseError("Partial response with incomplete content")
 		}
 	} else if res.StatusCode != http.StatusOK {
-		var msg string
+		var body string
 
 		if strings.HasPrefix(res.Header.Get("Content-Type"), "text/") {
-			body, _ := io.ReadAll(io.LimitReader(res.Body, 1024))
-			msg = fmt.Sprintf("Status: %d; %s", res.StatusCode, string(body))
-		} else {
-			msg = fmt.Sprintf("Status: %d", res.StatusCode)
+			bbody, _ := io.ReadAll(io.LimitReader(res.Body, 1024))
+			body = string(bbody)
 		}
 
 		res.Body.Close()
 		reqCancel()
 
-		status := 404
-		if res.StatusCode >= 500 {
-			status = 500
-		}
-
-		return nil, func() {}, ierrors.New(status, msg, msgSourceImageIsUnreachable)
+		return nil, func() {}, newImageResponseStatusError(res.StatusCode, body)
 	}
 
 	return res, reqCancel, nil

@@ -10,10 +10,6 @@ import (
 
 var bmpMagick = []byte("BM")
 
-type BmpFormatError string
-
-func (e BmpFormatError) Error() string { return "invalid BMP format: " + string(e) }
-
 func DecodeBmpMeta(r io.Reader) (Meta, error) {
 	var tmp [26]byte
 
@@ -22,7 +18,7 @@ func DecodeBmpMeta(r io.Reader) (Meta, error) {
 	}
 
 	if !bytes.Equal(tmp[:2], bmpMagick) {
-		return nil, BmpFormatError("malformed header")
+		return nil, newFormatError("BMP", "malformed header")
 	}
 
 	infoSize := binary.LittleEndian.Uint32(tmp[14:18])

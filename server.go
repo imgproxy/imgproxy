@@ -20,11 +20,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
-var (
-	imgproxyIsRunningMsg = []byte("imgproxy is running")
-
-	errInvalidSecret = ierrors.New(403, "Invalid secret", "Forbidden")
-)
+var imgproxyIsRunningMsg = []byte("imgproxy is running")
 
 func buildRouter() *router.Router {
 	r := router.New(config.PathPrefix)
@@ -125,7 +121,7 @@ func withSecret(h router.RouteHandler) router.RouteHandler {
 		if subtle.ConstantTimeCompare([]byte(r.Header.Get("Authorization")), authHeader) == 1 {
 			h(reqID, rw, r)
 		} else {
-			panic(errInvalidSecret)
+			panic(newInvalidSecretError())
 		}
 	}
 }
@@ -148,21 +144,21 @@ func withPanicHandler(h router.RouteHandler) router.RouteHandler {
 					panic(rerr)
 				}
 
-				ierr := ierrors.Wrap(err, 2)
+				ierr := ierrors.Wrap(err, 0)
 
-				if ierr.Unexpected {
+				if ierr.ShouldReport() {
 					errorreport.Report(err, r)
 				}
 
-				router.LogResponse(reqID, r, ierr.StatusCode, ierr)
+				router.LogResponse(reqID, r, ierr.StatusCode(), ierr)
 
 				rw.Header().Set("Content-Type", "text/plain")
-				rw.WriteHeader(ierr.StatusCode)
+				rw.WriteHeader(ierr.StatusCode())
 
 				if config.DevelopmentErrorsMode {
-					rw.Write([]byte(ierr.Message))
+					rw.Write([]byte(ierr.Error()))
 				} else {
-					rw.Write([]byte(ierr.PublicMessage))
+					rw.Write([]byte(ierr.PublicMessage()))
 				}
 			}
 		}()

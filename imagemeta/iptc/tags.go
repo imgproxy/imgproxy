@@ -3,7 +3,6 @@ package iptc
 import (
 	"encoding/binary"
 	"encoding/json"
-	"fmt"
 	"math"
 )
 
@@ -425,7 +424,7 @@ var tagInfoMap = map[TagKey]TagInfo{
 func GetTagInfo(key TagKey) (TagInfo, error) {
 	info, infoFound := tagInfoMap[key]
 	if !infoFound {
-		return TagInfo{}, fmt.Errorf("unknown tag %d:%d", key.RecordID, key.TagID)
+		return TagInfo{}, newIptcError("unknown tag %d:%d", key.RecordID, key.TagID)
 	}
 	return info, nil
 }

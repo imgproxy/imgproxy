@@ -7,7 +7,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
-	"log"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -162,7 +161,7 @@ func (s *ImageDataTestSuite) TestDownloadStatusPartialContent() {
 
 			if tc.expectErr {
 				s.Require().Error(err)
-				s.Require().Equal(404, ierrors.Wrap(err, 0).StatusCode)
+				s.Require().Equal(404, ierrors.Wrap(err, 0).StatusCode())
 			} else {
 				s.Require().NoError(err)
 				s.Require().NotNil(imgdata)
@@ -181,7 +180,7 @@ func (s *ImageDataTestSuite) TestDownloadStatusNotFound() {
 	imgdata, err := Download(context.Background(), s.server.URL, "Test image", DownloadOptions{}, security.DefaultOptions())
 
 	s.Require().Error(err)
-	s.Require().Equal(404, ierrors.Wrap(err, 0).StatusCode)
+	s.Require().Equal(404, ierrors.Wrap(err, 0).StatusCode())
 	s.Require().Nil(imgdata)
 }
 
@@ -193,7 +192,7 @@ func (s *ImageDataTestSuite) TestDownloadStatusForbidden() {
 	imgdata, err := Download(context.Background(), s.server.URL, "Test image", DownloadOptions{}, security.DefaultOptions())
 
 	s.Require().Error(err)
-	s.Require().Equal(404, ierrors.Wrap(err, 0).StatusCode)
+	s.Require().Equal(404, ierrors.Wrap(err, 0).StatusCode())
 	s.Require().Nil(imgdata)
 }
 
@@ -205,7 +204,7 @@ func (s *ImageDataTestSuite) TestDownloadStatusInternalServerError() {
 	imgdata, err := Download(context.Background(), s.server.URL, "Test image", DownloadOptions{}, security.DefaultOptions())
 
 	s.Require().Error(err)
-	s.Require().Equal(500, ierrors.Wrap(err, 0).StatusCode)
+	s.Require().Equal(500, ierrors.Wrap(err, 0).StatusCode())
 	s.Require().Nil(imgdata)
 }
 
@@ -219,7 +218,7 @@ func (s *ImageDataTestSuite) TestDownloadUnreachable() {
 	imgdata, err := Download(context.Background(), serverURL, "Test image", DownloadOptions{}, security.DefaultOptions())
 
 	s.Require().Error(err)
-	s.Require().Equal(500, ierrors.Wrap(err, 0).StatusCode)
+	s.Require().Equal(500, ierrors.Wrap(err, 0).StatusCode())
 	s.Require().Nil(imgdata)
 }
 
@@ -229,18 +228,17 @@ func (s *ImageDataTestSuite) TestDownloadInvalidImage() {
 	imgdata, err := Download(context.Background(), s.server.URL, "Test image", DownloadOptions{}, security.DefaultOptions())
 
 	s.Require().Error(err)
-	s.Require().Equal(422, ierrors.Wrap(err, 0).StatusCode)
+	s.Require().Equal(422, ierrors.Wrap(err, 0).StatusCode())
 	s.Require().Nil(imgdata)
 }
 
 func (s *ImageDataTestSuite) TestDownloadSourceAddressNotAllowed() {
-	log.Printf("Server URL: %s", s.server.URL)
 	config.AllowLoopbackSourceAddresses = false
 
 	imgdata, err := Download(context.Background(), s.server.URL, "Test image", DownloadOptions{}, security.DefaultOptions())
 
 	s.Require().Error(err)
-	s.Require().Equal(404, ierrors.Wrap(err, 0).StatusCode)
+	s.Require().Equal(404, ierrors.Wrap(err, 0).StatusCode())
 	s.Require().Nil(imgdata)
 }
 
@@ -250,7 +248,7 @@ func (s *ImageDataTestSuite) TestDownloadImageTooLarge() {
 	imgdata, err := Download(context.Background(), s.server.URL, "Test image", DownloadOptions{}, security.DefaultOptions())
 
 	s.Require().Error(err)
-	s.Require().Equal(422, ierrors.Wrap(err, 0).StatusCode)
+	s.Require().Equal(422, ierrors.Wrap(err, 0).StatusCode())
 	s.Require().Nil(imgdata)
 }
 
@@ -260,7 +258,7 @@ func (s *ImageDataTestSuite) TestDownloadImageFileTooLarge() {
 	imgdata, err := Download(context.Background(), s.server.URL, "Test image", DownloadOptions{}, security.DefaultOptions())
 
 	s.Require().Error(err)
-	s.Require().Equal(422, ierrors.Wrap(err, 0).StatusCode)
+	s.Require().Equal(422, ierrors.Wrap(err, 0).StatusCode())
 	s.Require().Nil(imgdata)
 }
 

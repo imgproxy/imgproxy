@@ -2,11 +2,7 @@ package security
 
 import (
 	"io"
-
-	"github.com/imgproxy/imgproxy/v3/ierrors"
 )
-
-var ErrSourceFileTooBig = ierrors.New(422, "Source image file is too big", "Invalid source image")
 
 type hardLimitReader struct {
 	r    io.Reader
@@ -15,7 +11,7 @@ type hardLimitReader struct {
 
 func (lr *hardLimitReader) Read(p []byte) (n int, err error) {
 	if lr.left <= 0 {
-		return 0, ErrSourceFileTooBig
+		return 0, newFileSizeError()
 	}
 	if len(p) > lr.left {
 		p = p[0:lr.left]
@@ -27,7 +23,7 @@ func (lr *hardLimitReader) Read(p []byte) (n int, err error) {
 
 func CheckFileSize(size int, opts Options) error {
 	if opts.MaxSrcFileSize > 0 && size > opts.MaxSrcFileSize {
-		return ErrSourceFileTooBig
+		return newFileSizeError()
 	}
 
 	return nil

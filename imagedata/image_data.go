@@ -133,11 +133,10 @@ func FromFile(path, desc string, secopts security.Options) (*ImageData, error) {
 func Download(ctx context.Context, imageURL, desc string, opts DownloadOptions, secopts security.Options) (*ImageData, error) {
 	imgdata, err := download(ctx, imageURL, opts, secopts)
 	if err != nil {
-		if nmErr, ok := err.(*ErrorNotModified); ok {
-			nmErr.Message = fmt.Sprintf("Can't download %s: %s", desc, nmErr.Message)
-			return nil, nmErr
-		}
-		return nil, ierrors.WrapWithPrefix(err, 1, fmt.Sprintf("Can't download %s", desc))
+		return nil, ierrors.Wrap(
+			err, 0,
+			ierrors.WithPrefix(fmt.Sprintf("Can't download %s", desc)),
+		)
 	}
 
 	return imgdata, nil

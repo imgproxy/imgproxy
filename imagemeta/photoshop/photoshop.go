@@ -3,14 +3,11 @@ package photoshop
 import (
 	"bytes"
 	"encoding/binary"
-	"errors"
 )
 
 var (
 	ps3Header      = []byte("Photoshop 3.0\x00")
 	ps3BlockHeader = []byte("8BIM")
-
-	errInvalidPS3Header = errors.New("invalid Photoshop 3.0 header")
 )
 
 const (
@@ -20,11 +17,11 @@ const (
 
 type PhotoshopMap map[string][]byte
 
-func Parse(data []byte, m PhotoshopMap) error {
+func Parse(data []byte, m PhotoshopMap) {
 	buf := bytes.NewBuffer(data)
 
 	if !bytes.Equal(buf.Next(14), ps3Header) {
-		return errInvalidPS3Header
+		return
 	}
 
 	// Read blocks
@@ -58,8 +55,6 @@ func Parse(data []byte, m PhotoshopMap) error {
 
 		m[string(resoureceID)] = blockData
 	}
-
-	return nil
 }
 
 func (m PhotoshopMap) Dump() []byte {

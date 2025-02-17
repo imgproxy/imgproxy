@@ -54,13 +54,9 @@ func (br *jxlBitReader) Read(n uint64) (uint64, error) {
 	return res, nil
 }
 
-type JxlFormatError string
-
-func (e JxlFormatError) Error() string { return "invalid JPEG XL format: " + string(e) }
-
 func jxlReadJxlc(r io.Reader, boxDataSize uint64) ([]byte, error) {
 	if boxDataSize < jxlCodestreamHeaderMinSize {
-		return nil, JxlFormatError("invalid codestream box")
+		return nil, newFormatError("JPEG XL", "invalid codestream box")
 	}
 
 	toRead := boxDataSize
@@ -73,7 +69,7 @@ func jxlReadJxlc(r io.Reader, boxDataSize uint64) ([]byte, error) {
 
 func jxlReadJxlp(r io.Reader, boxDataSize uint64, codestream []byte) ([]byte, bool, error) {
 	if boxDataSize < 4 {
-		return nil, false, JxlFormatError("invalid jxlp box")
+		return nil, false, newFormatError("JPEG XL", "invalid jxlp box")
 	}
 
 	jxlpInd, err := heifReadN(r, 4)
@@ -139,7 +135,7 @@ func jxlFindCodestream(r io.Reader) ([]byte, error) {
 			}
 
 			if last {
-				return nil, JxlFormatError("invalid codestream box")
+				return nil, newFormatError("JPEG XL", "invalid codestream box")
 			}
 
 		// Skip other boxes
@@ -170,11 +166,11 @@ func jxlParseSize(br *jxlBitReader, small bool) (uint64, error) {
 
 func jxlDecodeCodestreamHeader(buf []byte) (width, height uint64, err error) {
 	if len(buf) < jxlCodestreamHeaderMinSize {
-		return 0, 0, JxlFormatError("invalid codestream header")
+		return 0, 0, newFormatError("JPEG XL", "invalid codestream header")
 	}
 
 	if !bytes.Equal(buf[0:2], jxlCodestreamMarker) {
-		return 0, 0, JxlFormatError("missing codestream marker")
+		return 0, 0, newFormatError("JPEG XL", "missing codestream marker")
 	}
 
 	br := NewJxlBitReader(buf[2:])
@@ -230,7 +226,7 @@ func DecodeJxlMeta(r io.Reader) (Meta, error) {
 		}
 
 		if !bytes.Equal(tmp[0:12], jxlISOBMFFMarker) {
-			return nil, JxlFormatError("invalid header")
+			return nil, newFormatError("JPEG XL", "invalid header")
 		}
 
 		codestream, err = jxlFindCodestream(r)

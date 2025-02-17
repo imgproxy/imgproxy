@@ -601,8 +601,7 @@ func (s *ProcessingOptionsTestSuite) TestParseExpiresExpired() {
 	path := "/exp:1609448400/plain/http://images.dev/lorem/ipsum.jpg"
 	_, _, err := ParsePath(path, make(http.Header))
 
-	s.Require().Error(err)
-	s.Require().Equal(errExpiredURL.Error(), err.Error())
+	s.Require().Error(err, "Expired URL")
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathOnlyPresets() {

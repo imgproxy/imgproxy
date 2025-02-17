@@ -35,10 +35,6 @@ func asTiffReader(r io.Reader) tiffReader {
 	return bufio.NewReader(r)
 }
 
-type TiffFormatError string
-
-func (e TiffFormatError) Error() string { return "invalid TIFF format: " + string(e) }
-
 func DecodeTiffMeta(rr io.Reader) (Meta, error) {
 	var (
 		tmp       [12]byte
@@ -57,7 +53,7 @@ func DecodeTiffMeta(rr io.Reader) (Meta, error) {
 	case bytes.Equal(tiffBeHeader, tmp[0:4]):
 		byteOrder = binary.BigEndian
 	default:
-		return nil, TiffFormatError("malformed header")
+		return nil, newFormatError("TIFF", "malformed header")
 	}
 
 	ifdOffset := int(byteOrder.Uint32(tmp[4:8]))
@@ -96,7 +92,7 @@ func DecodeTiffMeta(rr io.Reader) (Meta, error) {
 		case tiffDtLong:
 			value = int(byteOrder.Uint32(tmp[8:12]))
 		default:
-			return nil, TiffFormatError("unsupported IFD entry datatype")
+			return nil, newFormatError("TIFF", "unsupported IFD entry datatype")
 		}
 
 		if tag == tiffImageWidth {
@@ -114,7 +110,7 @@ func DecodeTiffMeta(rr io.Reader) (Meta, error) {
 		}
 	}
 
-	return nil, TiffFormatError("image dimensions are not specified")
+	return nil, newFormatError("TIFF", "image dimensions are not specified")
 }
 
 func init() {

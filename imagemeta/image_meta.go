@@ -48,8 +48,6 @@ type reader interface {
 var (
 	formatsMu     sync.Mutex
 	atomicFormats atomic.Value
-
-	ErrFormat = errors.New("unknown image format")
 )
 
 func asReader(r io.Reader) reader {
@@ -84,7 +82,7 @@ func DecodeMeta(r io.Reader) (Meta, error) {
 	formats, _ := atomicFormats.Load().([]format)
 
 	for _, f := range formats {
-		if b, err := rr.Peek(len(f.magic)); err == nil || err == io.EOF {
+		if b, err := rr.Peek(len(f.magic)); err == nil || errors.Is(err, io.EOF) {
 			if matchMagic(f.magic, b) {
 				return f.decodeMeta(rr)
 			}
@@ -97,5 +95,5 @@ func DecodeMeta(r io.Reader) (Meta, error) {
 		return &meta{format: imagetype.SVG, width: 1, height: 1}, nil
 	}
 
-	return nil, ErrFormat
+	return nil, newUnknownFormatError()
 }

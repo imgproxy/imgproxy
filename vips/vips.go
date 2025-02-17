@@ -11,6 +11,7 @@ import (
 	"context"
 	"errors"
 	"math"
+	"net/http"
 	"os"
 	"regexp"
 	"runtime"
@@ -207,13 +208,15 @@ func Error() error {
 	defer C.vips_error_clear()
 
 	errstr := strings.TrimSpace(C.GoString(C.vips_error_buffer()))
-	err := ierrors.NewUnexpected(errstr, 1)
+	err := newVipsError(errstr)
 
 	for _, re := range badImageErrRe {
 		if re.MatchString(errstr) {
-			err.StatusCode = 422
-			err.PublicMessage = "Broken or unsupported image"
-			break
+			return ierrors.Wrap(
+				err, 0,
+				ierrors.WithStatusCode(http.StatusUnprocessableEntity),
+				ierrors.WithPublicMessage("Broken or unsupported image"),
+			)
 		}
 	}
 

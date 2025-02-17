@@ -42,10 +42,6 @@ func asJpegReader(r io.Reader) jpegReader {
 	return bufio.NewReader(r)
 }
 
-type JpegFormatError string
-
-func (e JpegFormatError) Error() string { return "invalid JPEG format: " + string(e) }
-
 func DecodeJpegMeta(rr io.Reader) (Meta, error) {
 	var tmp [512]byte
 
@@ -55,7 +51,7 @@ func DecodeJpegMeta(rr io.Reader) (Meta, error) {
 		return nil, err
 	}
 	if tmp[0] != 0xff || tmp[1] != jpegSoiMarker {
-		return nil, JpegFormatError("missing SOI marker")
+		return nil, newFormatError("JPEG", "missing SOI marker")
 	}
 
 	for {
@@ -89,11 +85,11 @@ func DecodeJpegMeta(rr io.Reader) (Meta, error) {
 		}
 
 		if marker == jpegEoiMarker { // End Of Image.
-			return nil, JpegFormatError("missing SOF marker")
+			return nil, newFormatError("JPEG", "missing SOF marker")
 		}
 
 		if marker == jpegSoiMarker {
-			return nil, JpegFormatError("two SOI markers")
+			return nil, newFormatError("JPEG", "two SOI markers")
 		}
 
 		if jpegRst0Marker <= marker && marker <= jpegRst7Marker {
@@ -118,7 +114,7 @@ func DecodeJpegMeta(rr io.Reader) (Meta, error) {
 			}
 			// We only support 8-bit precision.
 			if tmp[0] != 8 {
-				return nil, JpegFormatError("unsupported precision")
+				return nil, newFormatError("JPEG", "unsupported precision")
 			}
 
 			return &meta{
@@ -128,7 +124,7 @@ func DecodeJpegMeta(rr io.Reader) (Meta, error) {
 			}, nil
 
 		case jpegSosMarker:
-			return nil, JpegFormatError("missing SOF marker")
+			return nil, newFormatError("JPEG", "missing SOF marker")
 		}
 
 		// Skip any other uninteresting segments

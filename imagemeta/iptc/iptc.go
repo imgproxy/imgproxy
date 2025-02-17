@@ -4,28 +4,22 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
-	"errors"
-	"fmt"
 	"math"
 )
 
-var (
-	iptcTagHeader = byte(0x1c)
-
-	errInvalidDataSize = errors.New("invalid IPTC data size")
-)
+var iptcTagHeader = byte(0x1c)
 
 type IptcMap map[TagKey][]TagValue
 
 func (m IptcMap) AddTag(key TagKey, data []byte) error {
 	info, infoFound := tagInfoMap[key]
 	if !infoFound {
-		return fmt.Errorf("unknown tag %d:%d", key.RecordID, key.TagID)
+		return newIptcError("unknown tag %d:%d", key.RecordID, key.TagID)
 	}
 
 	dataSize := len(data)
 	if dataSize < info.MinSize || dataSize > info.MaxSize {
-		return fmt.Errorf("invalid tag data size. Min: %d, Max: %d, Has: %d", info.MinSize, info.MaxSize, dataSize)
+		return newIptcError("invalid tag data size. Min: %d, Max: %d, Has: %d", info.MinSize, info.MaxSize, dataSize)
 	}
 
 	value := TagValue{info.Format, data}
@@ -89,17 +83,17 @@ func Parse(data []byte, m IptcMap) error {
 			case 4:
 				dataSize32 := uint32(0)
 				if err := binary.Read(buf, binary.BigEndian, &dataSize32); err != nil {
-					return fmt.Errorf("%s: %s", errInvalidDataSize, err)
+					return newIptcError("invalid IPTC data size: %s", err)
 				}
 				dataSize = int(dataSize32)
 			case 8:
 				dataSize64 := uint64(0)
 				if err := binary.Read(buf, binary.BigEndian, &dataSize64); err != nil {
-					return fmt.Errorf("%s: %s", errInvalidDataSize, err)
+					return newIptcError("invalid IPTC data size: %s", err)
 				}
 				dataSize = int(dataSize64)
 			default:
-				return errInvalidDataSize
+				return newIptcError("invalid IPTC data size")
 			}
 		}
 

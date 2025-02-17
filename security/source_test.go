@@ -14,7 +14,7 @@ func TestVerifySourceNetwork(t *testing.T) {
 		allowLoopback  bool
 		allowLinkLocal bool
 		allowPrivate   bool
-		expectedErr    error
+		expectErr      bool
 	}{
 		{
 			name:           "Invalid IP address",
@@ -22,7 +22,7 @@ func TestVerifySourceNetwork(t *testing.T) {
 			allowLoopback:  true,
 			allowLinkLocal: true,
 			allowPrivate:   true,
-			expectedErr:    ErrInvalidSourceAddress,
+			expectErr:      true,
 		},
 		{
 			name:           "Loopback local not allowed",
@@ -30,7 +30,7 @@ func TestVerifySourceNetwork(t *testing.T) {
 			allowLoopback:  false,
 			allowLinkLocal: true,
 			allowPrivate:   true,
-			expectedErr:    ErrSourceAddressNotAllowed,
+			expectErr:      true,
 		},
 		{
 			name:           "Loopback local allowed",
@@ -38,7 +38,7 @@ func TestVerifySourceNetwork(t *testing.T) {
 			allowLoopback:  true,
 			allowLinkLocal: true,
 			allowPrivate:   true,
-			expectedErr:    nil,
+			expectErr:      false,
 		},
 		{
 			name:           "Unspecified (0.0.0.0) not allowed",
@@ -46,7 +46,7 @@ func TestVerifySourceNetwork(t *testing.T) {
 			allowLoopback:  false,
 			allowLinkLocal: true,
 			allowPrivate:   true,
-			expectedErr:    ErrSourceAddressNotAllowed,
+			expectErr:      true,
 		},
 		{
 			name:           "Link local unicast not allowed",
@@ -54,7 +54,7 @@ func TestVerifySourceNetwork(t *testing.T) {
 			allowLoopback:  true,
 			allowLinkLocal: false,
 			allowPrivate:   true,
-			expectedErr:    ErrSourceAddressNotAllowed,
+			expectErr:      true,
 		},
 		{
 			name:           "Link local unicast allowed",
@@ -62,7 +62,7 @@ func TestVerifySourceNetwork(t *testing.T) {
 			allowLoopback:  true,
 			allowLinkLocal: true,
 			allowPrivate:   true,
-			expectedErr:    nil,
+			expectErr:      false,
 		},
 		{
 			name:           "Private address not allowed",
@@ -70,7 +70,7 @@ func TestVerifySourceNetwork(t *testing.T) {
 			allowLoopback:  true,
 			allowLinkLocal: true,
 			allowPrivate:   false,
-			expectedErr:    ErrSourceAddressNotAllowed,
+			expectErr:      true,
 		},
 		{
 			name:           "Private address allowed",
@@ -78,7 +78,7 @@ func TestVerifySourceNetwork(t *testing.T) {
 			allowLoopback:  true,
 			allowLinkLocal: true,
 			allowPrivate:   true,
-			expectedErr:    nil,
+			expectErr:      false,
 		},
 		{
 			name:           "Global unicast should be allowed",
@@ -86,7 +86,7 @@ func TestVerifySourceNetwork(t *testing.T) {
 			allowLoopback:  false,
 			allowLinkLocal: false,
 			allowPrivate:   false,
-			expectedErr:    nil,
+			expectErr:      false,
 		},
 		{
 			name:           "Port in address with global IP",
@@ -94,7 +94,7 @@ func TestVerifySourceNetwork(t *testing.T) {
 			allowLoopback:  false,
 			allowLinkLocal: false,
 			allowPrivate:   false,
-			expectedErr:    nil,
+			expectErr:      false,
 		},
 	}
 
@@ -119,9 +119,8 @@ func TestVerifySourceNetwork(t *testing.T) {
 
 			err := VerifySourceNetwork(tc.addr)
 
-			if tc.expectedErr != nil {
+			if tc.expectErr {
 				require.Error(t, err)
-				require.Equal(t, tc.expectedErr, err)
 			} else {
 				require.NoError(t, err)
 			}

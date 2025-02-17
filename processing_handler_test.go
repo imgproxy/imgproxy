@@ -225,7 +225,6 @@ func (s *ProcessingHandlerTestSuite) TestSourceNetworkValidation() {
 	var rw *httptest.ResponseRecorder
 
 	u := fmt.Sprintf("/unsafe/rs:fill:4:4/plain/%s/test1.png", server.URL)
-	fmt.Println(u)
 
 	rw = s.send(u)
 	s.Require().Equal(200, rw.Result().StatusCode)
