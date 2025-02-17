@@ -2,11 +2,13 @@ package honeybadger
 
 import (
 	"net/http"
+	"reflect"
 	"strings"
 
 	"github.com/honeybadger-io/honeybadger-go"
 
 	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/ierrors"
 )
 
 var (
@@ -42,5 +44,11 @@ func Report(err error, req *http.Request, meta map[string]any) {
 		extra[key] = v
 	}
 
-	honeybadger.Notify(err, req.URL, extra)
+	hbErr := honeybadger.NewError(err)
+
+	if e, ok := err.(*ierrors.Error); ok {
+		hbErr.Class = reflect.TypeOf(e.Unwrap()).String()
+	}
+
+	honeybadger.Notify(hbErr, req.URL, extra)
 }

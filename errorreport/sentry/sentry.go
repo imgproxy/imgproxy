@@ -40,8 +40,22 @@ func Report(err error, req *http.Request, meta map[string]any) {
 		hub.Scope().SetContext("Processing context", meta)
 	}
 
-	eventID := hub.CaptureException(err)
-	if eventID != nil {
-		hub.Flush(timeout)
+	// imgproxy wraps almost all errors into *ierrors.Error, so Sentry will show
+	// the same error type for all errors. We need to fix it.
+	//
+	// Instead of using hub.CaptureException(err), we need to create an event
+	// manually and replace `*ierrors.Error` with the wrapped error type
+	// (which is the previous exception type in the exception chain).
+	if event := hub.Client().EventFromException(err, sentry.LevelError); event != nil {
+		for i := 1; i < len(event.Exception); i++ {
+			if event.Exception[i].Type == "*ierrors.Error" {
+				event.Exception[i].Type = event.Exception[i-1].Type
+			}
+		}
+
+		eventID := hub.CaptureEvent(event)
+		if eventID != nil {
+			hub.Flush(timeout)
+		}
 	}
 }
