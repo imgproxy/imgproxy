@@ -410,7 +410,7 @@ func applyZoomOption(po *ProcessingOptions, args []string) error {
 		if z, err := strconv.ParseFloat(args[1], 64); err == nil && z > 0 {
 			po.ZoomHeight = z
 		} else {
-			return newOptionArgumentError("Invalid zoom value: %s", args[0])
+			return newOptionArgumentError("Invalid zoom value: %s", args[1])
 		}
 	}
 
