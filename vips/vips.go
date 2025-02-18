@@ -9,7 +9,6 @@ package vips
 import "C"
 import (
 	"context"
-	"errors"
 	"math"
 	"net/http"
 	"os"
@@ -69,7 +68,7 @@ func Init() error {
 
 	if err := C.vips_initialize(); err != 0 {
 		C.vips_shutdown()
-		return errors.New("unable to start vips!")
+		return newVipsError("unable to start vips!")
 	}
 
 	// Disable libvips cache. Since processing pipeline is fine tuned, we won't get much profit from it.
@@ -355,7 +354,7 @@ func (img *Image) Load(imgdata *imagedata.ImageData, shrink int, scale float64, 
 	case imagetype.TIFF:
 		err = C.vips_tiffload_go(data, dataSize, &tmp)
 	default:
-		return errors.New("Usupported image type to load")
+		return newVipsError("Usupported image type to load")
 	}
 	if err != 0 {
 		return Error()
@@ -376,7 +375,7 @@ func (img *Image) Load(imgdata *imagedata.ImageData, shrink int, scale float64, 
 
 func (img *Image) LoadThumbnail(imgdata *imagedata.ImageData) error {
 	if imgdata.Type != imagetype.HEIC && imgdata.Type != imagetype.AVIF {
-		return errors.New("Usupported image type to load thumbnail")
+		return newVipsError("Usupported image type to load thumbnail")
 	}
 
 	var tmp *C.VipsImage
@@ -428,7 +427,7 @@ func (img *Image) Save(imgtype imagetype.Type, quality int) (*imagedata.ImageDat
 	case imagetype.TIFF:
 		err = C.vips_tiffsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality))
 	default:
-		return nil, errors.New("Usupported image type to save")
+		return nil, newVipsError("Usupported image type to save")
 	}
 	if err != 0 {
 		cancel()

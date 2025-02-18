@@ -185,7 +185,7 @@ func heifReadHldr(r io.Reader, boxDataSize uint64) error {
 	}
 
 	if !bytes.Equal(data[8:12], heifPict) {
-		return fmt.Errorf("Invalid handler. Expected: pict, actual: %s", data[8:12])
+		return newFormatError("HEIF", fmt.Sprintf("Invalid handler. Expected: pict, actual: %s", data[8:12]))
 	}
 
 	return nil

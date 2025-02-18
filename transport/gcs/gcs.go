@@ -16,6 +16,7 @@ import (
 
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/httprange"
+	"github.com/imgproxy/imgproxy/v3/ierrors"
 	defaultTransport "github.com/imgproxy/imgproxy/v3/transport"
 	"github.com/imgproxy/imgproxy/v3/transport/common"
 	"github.com/imgproxy/imgproxy/v3/transport/notmodified"
@@ -71,7 +72,7 @@ func New() (http.RoundTripper, error) {
 	client, err = storage.NewClient(context.Background(), opts...)
 
 	if err != nil {
-		return nil, fmt.Errorf("Can't create GCS client: %s", err)
+		return nil, ierrors.Wrap(err, 0, ierrors.WithPrefix("Can't create GCS client"))
 	}
 
 	return transport{client}, nil

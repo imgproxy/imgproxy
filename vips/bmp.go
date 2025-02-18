@@ -9,7 +9,6 @@ import "C"
 import (
 	"bytes"
 	"encoding/binary"
-	"errors"
 	"io"
 	"unsafe"
 
@@ -35,10 +34,6 @@ type bmpHeader struct {
 	colorUse        uint32
 	colorImportant  uint32
 }
-
-// errBmpUnsupported means that the input BMP image uses a valid but unsupported
-// feature.
-var errBmpUnsupported = errors.New("unsupported BMP image")
 
 func readUint16(b []byte) uint16 {
 	return uint16(b[0]) | uint16(b[1])<<8
@@ -264,7 +259,7 @@ Loop:
 // If topDown is false, the image rows will be read bottom-up.
 func (img *Image) decodeBmpRGB(r io.Reader, width, height, bands int, topDown, noAlpha bool) error {
 	if bands != 3 && bands != 4 {
-		return errBmpUnsupported
+		return newVipsError("unsupported BMP image")
 	}
 
 	imgBands := 3
@@ -381,13 +376,13 @@ func (img *Image) loadBmp(data []byte, noAlpha bool) error {
 	}
 
 	if string(b[:2]) != "BM" {
-		return errors.New("not a BMP image")
+		return newVipsError("not a BMP image")
 	}
 
 	offset := readUint32(b[10:14])
 	infoLen := readUint32(b[14:18])
 	if infoLen != infoHeaderLen && infoLen != v4InfoHeaderLen && infoLen != v5InfoHeaderLen {
-		return errBmpUnsupported
+		return newVipsError("unsupported BMP image")
 	}
 
 	if _, err := io.ReadFull(r, b[fileHeaderLen+4:fileHeaderLen+infoLen]); err != nil {
@@ -405,14 +400,14 @@ func (img *Image) loadBmp(data []byte, noAlpha bool) error {
 		height, topDown = -height, true
 	}
 	if width <= 0 || height <= 0 {
-		return errBmpUnsupported
+		return newVipsError("unsupported BMP image")
 	}
 
 	// We only support 1 plane and 8, 24 or 32 bits per pixel
 	planes, bpp, compression := readUint16(b[26:28]), readUint16(b[28:30]), readUint32(b[30:34])
 
 	if planes != 1 {
-		return errBmpUnsupported
+		return newVipsError("unsupported BMP image")
 	}
 
 	rle := false
@@ -447,10 +442,10 @@ func (img *Image) loadBmp(data []byte, noAlpha bool) error {
 		case bpp == 32 && rmask == 0xff0000 && gmask == 0xff00 && bmask == 0xff && amask == 0xff000000:
 			// Go ahead, it's a regular 32-bit image
 		default:
-			return errBmpUnsupported
+			return newVipsError("unsupported BMP image")
 		}
 	default:
-		return errBmpUnsupported
+		return newVipsError("unsupported BMP image")
 	}
 
 	var palette []Color
@@ -497,7 +492,7 @@ func (img *Image) loadBmp(data []byte, noAlpha bool) error {
 		return img.decodeBmpRGB(r, width, height, 4, topDown, noAlpha)
 	}
 
-	return errBmpUnsupported
+	return newVipsError("unsupported BMP image")
 }
 
 func (img *Image) saveAsBmp() (*imagedata.ImageData, error) {

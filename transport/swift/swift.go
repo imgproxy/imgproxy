@@ -3,7 +3,6 @@ package swift
 import (
 	"context"
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -12,6 +11,7 @@ import (
 	"github.com/ncw/swift/v2"
 
 	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/ierrors"
 	defaultTransport "github.com/imgproxy/imgproxy/v3/transport"
 	"github.com/imgproxy/imgproxy/v3/transport/common"
 	"github.com/imgproxy/imgproxy/v3/transport/notmodified"
@@ -44,7 +44,7 @@ func New() (http.RoundTripper, error) {
 	err = c.Authenticate(ctx)
 
 	if err != nil {
-		return nil, fmt.Errorf("swift authentication error: %s", err)
+		return nil, ierrors.Wrap(err, 0, ierrors.WithPrefix("swift authentication error"))
 	}
 
 	return transport{con: c}, nil
@@ -91,7 +91,7 @@ func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error)
 			}, nil
 		}
 
-		return nil, fmt.Errorf("error opening object: %v", err)
+		return nil, ierrors.Wrap(err, 0, ierrors.WithPrefix("error opening object"))
 	}
 
 	if config.ETagEnabled {

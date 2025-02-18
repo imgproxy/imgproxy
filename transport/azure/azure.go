@@ -109,7 +109,7 @@ func (t transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	if r := req.Header.Get("Range"); len(r) != 0 {
 		start, end, err := httprange.Parse(r)
 		if err != nil {
-			return httprange.InvalidHTTPRangeResponse(req), err
+			return httprange.InvalidHTTPRangeResponse(req), nil
 		}
 
 		if end != 0 {

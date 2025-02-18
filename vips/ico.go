@@ -7,8 +7,6 @@ import "C"
 import (
 	"bytes"
 	"encoding/binary"
-	"errors"
-	"fmt"
 	"unsafe"
 
 	"github.com/imgproxy/imgproxy/v3/imagedata"
@@ -43,7 +41,7 @@ func (img *Image) loadIco(data []byte, shrink int, scale float64, pages int) err
 	internalType = meta.Format()
 
 	if internalType == imagetype.ICO || !SupportsLoad(internalType) {
-		return fmt.Errorf("Can't load %s from ICO", internalType)
+		return newVipsErrorf("Can't load %s from ICO", internalType)
 	}
 
 	imgdata := imagedata.ImageData{
@@ -56,7 +54,7 @@ func (img *Image) loadIco(data []byte, shrink int, scale float64, pages int) err
 
 func (img *Image) saveAsIco() (*imagedata.ImageData, error) {
 	if img.Width() > 256 || img.Height() > 256 {
-		return nil, errors.New("Image dimensions is too big. Max dimension size for ICO is 256")
+		return nil, newVipsError("Image dimensions is too big. Max dimension size for ICO is 256")
 	}
 
 	var ptr unsafe.Pointer

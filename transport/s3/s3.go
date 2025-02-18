@@ -3,7 +3,6 @@ package s3
 import (
 	"context"
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
 	"strconv"
@@ -23,6 +22,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 
 	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/ierrors"
 	defaultTransport "github.com/imgproxy/imgproxy/v3/transport"
 	"github.com/imgproxy/imgproxy/v3/transport/common"
 )
@@ -48,7 +48,7 @@ type transport struct {
 func New() (http.RoundTripper, error) {
 	conf, err := awsConfig.LoadDefaultConfig(context.Background())
 	if err != nil {
-		return nil, fmt.Errorf("can't load AWS S3 config: %s", err)
+		return nil, ierrors.Wrap(err, 0, ierrors.WithPrefix("can't load AWS S3 config"))
 	}
 
 	trans, err := defaultTransport.New(false)
@@ -90,7 +90,7 @@ func New() (http.RoundTripper, error) {
 
 	client, err := createClient(conf, clientOptions)
 	if err != nil {
-		return nil, fmt.Errorf("can't create S3 client: %s", err)
+		return nil, ierrors.Wrap(err, 0, ierrors.WithPrefix("can't create S3 client"))
 	}
 
 	return &transport{
@@ -248,7 +248,7 @@ func (t *transport) getClient(ctx context.Context, bucket string) (s3Client, err
 
 	region, err := s3Manager.GetBucketRegion(ctx, t.defaultClient, bucket)
 	if err != nil {
-		return nil, fmt.Errorf("can't get bucket region: %s", err)
+		return nil, ierrors.Wrap(err, 0, ierrors.WithPrefix("can't get bucket region"))
 	}
 
 	if len(region) == 0 {
@@ -265,7 +265,7 @@ func (t *transport) getClient(ctx context.Context, bucket string) (s3Client, err
 
 	client, err = createClient(conf, t.clientOptions)
 	if err != nil {
-		return nil, fmt.Errorf("can't create regional S3 client: %s", err)
+		return nil, ierrors.Wrap(err, 0, ierrors.WithPrefix("can't create regional S3 client"))
 	}
 
 	t.clientsByRegion[region] = client
@@ -295,11 +295,11 @@ func createClient(conf aws.Config, opts []func(*s3.Options)) (s3Client, error) {
 func handleError(req *http.Request, err error) (*http.Response, error) {
 	var rerr *awsHttp.ResponseError
 	if !errors.As(err, &rerr) {
-		return nil, err
+		return nil, ierrors.Wrap(err, 0)
 	}
 
 	if rerr.Response == nil || rerr.Response.StatusCode < 100 || rerr.Response.StatusCode == 301 {
-		return nil, err
+		return nil, ierrors.Wrap(err, 0)
 	}
 
 	body := strings.NewReader(err.Error())

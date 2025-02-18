@@ -3,7 +3,6 @@ package imagedata
 import (
 	"compress/gzip"
 	"context"
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/cookiejar"
@@ -105,7 +104,7 @@ func initDownloading() error {
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			redirects := len(via)
 			if redirects >= config.MaxRedirects {
-				return fmt.Errorf("stopped after %d redirects", redirects)
+				return newImageTooManyRedirectsError(redirects)
 			}
 			return nil
 		},

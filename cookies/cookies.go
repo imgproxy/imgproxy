@@ -10,7 +10,12 @@ import (
 	"golang.org/x/net/publicsuffix"
 
 	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/ierrors"
 )
+
+type cookieError string
+
+func (e cookieError) Error() string { return string(e) }
 
 type anyCookieJarEntry struct {
 	Name   string
@@ -75,7 +80,7 @@ func JarFromRequest(r *http.Request) (jar http.CookieJar, err error) {
 	if !config.CookiePassthroughAll {
 		if len(config.CookieBaseURL) > 0 {
 			if cookieBase, err = url.Parse(config.CookieBaseURL); err != nil {
-				return nil, fmt.Errorf("can't parse cookie base URL: %s", err)
+				return nil, ierrors.Wrap(cookieError(fmt.Sprintf("can't parse cookie base URL: %s", err)), 0)
 			}
 		}
 

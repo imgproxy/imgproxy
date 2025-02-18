@@ -11,12 +11,13 @@ import (
 )
 
 type (
-	ImageRequestError         struct{ error }
-	ImageRequstSchemeError    string
-	ImagePartialResponseError string
-	ImageResponseStatusError  string
-	ImageRequestCanceledError struct{ error }
-	ImageRequestTimeoutError  struct{ error }
+	ImageRequestError          struct{ error }
+	ImageRequstSchemeError     string
+	ImagePartialResponseError  string
+	ImageResponseStatusError   string
+	ImageTooManyRedirectsError string
+	ImageRequestCanceledError  struct{ error }
+	ImageRequestTimeoutError   struct{ error }
 
 	NotModifiedError struct {
 		headers map[string]string
@@ -89,6 +90,18 @@ func newImageResponseStatusError(status int, body string) error {
 }
 
 func (e ImageResponseStatusError) Error() string { return string(e) }
+
+func newImageTooManyRedirectsError(n int) error {
+	return ierrors.Wrap(
+		ImageTooManyRedirectsError(fmt.Sprintf("Stopped after %d redirects", n)),
+		1,
+		ierrors.WithStatusCode(http.StatusNotFound),
+		ierrors.WithPublicMessage(msgSourceImageIsUnreachable),
+		ierrors.WithShouldReport(false),
+	)
+}
+
+func (e ImageTooManyRedirectsError) Error() string { return string(e) }
 
 func newImageRequestCanceledError(err error) error {
 	return ierrors.Wrap(

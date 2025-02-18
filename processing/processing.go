@@ -3,7 +3,6 @@ package processing
 import (
 	"context"
 	"errors"
-	"fmt"
 	"runtime"
 	"strconv"
 
@@ -301,7 +300,7 @@ func ProcessImage(ctx context.Context, imgdata *imagedata.ImageData, po *options
 	}
 
 	if !vips.SupportsSave(po.Format) {
-		return nil, fmt.Errorf("Can't save %s, probably not supported by your libvips", po.Format)
+		return nil, newSaveFormatError(po.Format)
 	}
 
 	if po.Format.SupportsAnimationSave() && animated {

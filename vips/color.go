@@ -18,7 +18,7 @@ func ColorFromHex(hexcolor string) (Color, error) {
 	c := Color{}
 
 	if !hexColorRegex.MatchString(hexcolor) {
-		return c, fmt.Errorf("Invalid hex color: %s", hexcolor)
+		return c, newColorError("Invalid hex color: %s", hexcolor)
 	}
 
 	if len(hexcolor) == 3 {
