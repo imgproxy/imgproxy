@@ -81,9 +81,10 @@ func Init() error {
 	otel.SetErrorHandler(&errorHandler{entry: logrus.WithField("from", "opentelemetry")})
 
 	var (
-		traceExporter  *otlptrace.Exporter
-		metricExporter sdkmetric.Exporter
-		err            error
+		traceExporter       *otlptrace.Exporter
+		traceProvierSampler sdktrace.Sampler
+		metricExporter      sdkmetric.Exporter
+		err                 error
 	)
 
 	protocol := "grpc"
@@ -126,7 +127,28 @@ func Init() error {
 		logrus.Warnf("Can't add AWS attributes to OpenTelemetry: %s", merr)
 	}
 
+	sampleStrategy := "parentbased_always_on"
+	configurators.String(&sampleStrategy, "OTEL_TRACES_SAMPLER")
+
+	switch sampleStrategy {
+	case "traceidratio":
+		ratio := 1.0
+		configurators.Float(&ratio, "OTEL_TRACES_SAMPLER_ARG")
+		traceProvierSampler = sdktrace.TraceIDRatioBased(ratio)
+	case "parentbased_traceidratio":
+		ratio := 1.0
+		configurators.Float(&ratio, "OTEL_TRACES_SAMPLER_ARG")
+		traceProvierSampler = sdktrace.ParentBased(sdktrace.TraceIDRatioBased(ratio))
+	case "alwayson":
+		traceProvierSampler = sdktrace.AlwaysSample()
+	case "parentbased_always_on":
+		fallthrough
+	default:
+		traceProvierSampler = sdktrace.ParentBased(sdktrace.AlwaysSample())
+	}
+
 	opts := []sdktrace.TracerProviderOption{
+		sdktrace.WithSampler(traceProvierSampler),
 		sdktrace.WithResource(res),
 		sdktrace.WithBatcher(traceExporter),
 	}
