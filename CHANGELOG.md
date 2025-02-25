@@ -10,12 +10,14 @@
 - Treat 206 (Partial Content) responses from a source server as 200 (OK) when they contain a full content range.
 - Improved error reporting.
 - (pro) Change saturation adjustment algorithm to be more CIE-correct.
+- (pro) Don't check image complexity during best format selection when `IMGPROXY_BEST_FORMAT_COMPLEXITY_THRESHOLD` is set to `0`.
 
 ### Fixed
 - Fix determinimg the default hostname for cookies passthrough.
 - (pro) Fix setting the `Host` header with the `IMGPROXY_CUSTOM_REQUEST_HEADERS` config.
 - (pro) Fix passing through the `Host` header with the `IMGPROXY_REQUEST_HEADERS_PASSTHROUGH` config.
 - (pro) Fix passing through request headers with the `IMGPROXY_REQUEST_HEADERS_PASSTHROUGH` when the `raw` option is used.
+- (pro) Fix `IMGPROXY_BEST_FORMAT_ALLOW_SKIPS` config behavior.
 
 ## [3.27.2] - 2025-01-27
 ### Fixed
