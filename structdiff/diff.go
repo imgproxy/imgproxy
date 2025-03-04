@@ -6,19 +6,10 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
-	"sync"
 )
 
-var bufPool = sync.Pool{
-	New: func() interface{} {
-		return new(bytes.Buffer)
-	},
-}
-
-var builderPool = sync.Pool{
-	New: func() interface{} {
-		return new(strings.Builder)
-	},
+type Diffable interface {
+	Diff() Entries
 }
 
 type Entry struct {
@@ -29,10 +20,8 @@ type Entry struct {
 type Entries []Entry
 
 func (d Entries) String() string {
-	buf := builderPool.Get().(*strings.Builder)
+	buf := new(strings.Builder)
 	last := len(d) - 1
-
-	buf.Reset()
 
 	for i, e := range d {
 		buf.WriteString(e.Name)
@@ -43,7 +32,7 @@ func (d Entries) String() string {
 			buf.WriteString(dd.String())
 			buf.WriteByte('}')
 		} else {
-			fmt.Fprint(buf, e.Value)
+			fmt.Fprintf(buf, "%+v", e.Value)
 		}
 
 		if i != last {
@@ -55,10 +44,8 @@ func (d Entries) String() string {
 }
 
 func (d Entries) MarshalJSON() ([]byte, error) {
-	buf := bufPool.Get().(*bytes.Buffer)
+	buf := new(bytes.Buffer)
 	last := len(d) - 1
-
-	buf.Reset()
 
 	buf.WriteByte('{')
 
@@ -101,6 +88,45 @@ func (d Entries) Flatten() map[string]interface{} {
 	return m
 }
 
+func valDiff(a, b reflect.Value) (any, bool) {
+	if !a.CanInterface() || !b.CanInterface() {
+		return nil, false
+	}
+
+	typeB := b.Type()
+
+	if a.Type() != typeB {
+		return b.Interface(), true
+	}
+
+	intA := a.Interface()
+	intB := b.Interface()
+
+	if reflect.DeepEqual(intA, intB) {
+		return nil, false
+	}
+
+	if typeB.Kind() == reflect.Struct {
+		return Diff(intA, intB), true
+	}
+
+	if typeB.Kind() == reflect.Ptr && typeB.Elem().Kind() == reflect.Struct {
+		if !a.IsNil() && !b.IsNil() {
+			return Diff(intA, intB), true
+		}
+
+		if !b.IsNil() {
+			if diffable, ok := intB.(Diffable); ok {
+				return diffable.Diff(), true
+			}
+		}
+
+		return nil, true
+	}
+
+	return intB, true
+}
+
 func Diff(a, b interface{}) Entries {
 	valA := reflect.Indirect(reflect.ValueOf(a))
 	valB := reflect.Indirect(reflect.ValueOf(b))
@@ -115,22 +141,9 @@ func Diff(a, b interface{}) Entries {
 		fieldA := valA.Field(i)
 		fieldB := valB.Field(i)
 
-		if !fieldA.CanInterface() || !fieldB.CanInterface() {
-			continue
-		}
-
-		intA := fieldA.Interface()
-		intB := fieldB.Interface()
-
-		if !reflect.DeepEqual(intA, intB) {
+		if v, ok := valDiff(fieldA, fieldB); ok {
 			name := valB.Type().Field(i).Name
-			value := intB
-
-			if fieldB.Kind() == reflect.Struct {
-				value = Diff(intA, intB)
-			}
-
-			d = append(d, Entry{name, value})
+			d = append(d, Entry{name, v})
 		}
 	}
 

@@ -71,11 +71,7 @@ func setMetadata(ctx context.Context, key string, value any) {
 }
 
 func SetMetadata(ctx context.Context, key string, value any) {
-	type diffable interface {
-		Diff() structdiff.Entries
-	}
-
-	if diff, ok := value.(diffable); ok {
+	if diff, ok := value.(structdiff.Diffable); ok {
 		m := diff.Diff().Flatten()
 		for k, v := range m {
 			setMetadata(ctx, fmt.Sprintf("%s.%s", key, k), v)
