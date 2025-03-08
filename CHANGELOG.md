@@ -5,6 +5,7 @@
 - Add [IMGPROXY_BASE64_URL_INCLUDES_FILENAME](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_BASE64_URL_INCLUDES_FILENAME) config.
 - Add [IMGPROXY_COOKIE_PASSTHROUGH_ALL](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_COOKIE_PASSTHROUGH_ALL) config.
 - (pro) Add PNG EXIF and XMP data to the `/info` endpoint response.
+- (pro) Add the `mime_type` field to the `/info` endpoint response.
 
 ### Changed
 - Treat 206 (Partial Content) responses from a source server as 200 (OK) when they contain a full content range.
