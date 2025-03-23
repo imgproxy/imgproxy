@@ -10,4 +10,8 @@ fi
 export CGO_LDFLAGS_ALLOW="-s|-w"
 export CGO_CFLAGS_ALLOW="-Xpreprocessor"
 
-go test ./...
+if [ -x "$(which gotestsum)" ]; then
+  gotestsum ./...
+else
+  go test -v ./...
+fi
