@@ -28,7 +28,6 @@ import (
 
 type s3Client interface {
 	GetObject(ctx context.Context, input *s3.GetObjectInput, opts ...func(*s3.Options)) (*s3.GetObjectOutput, error)
-	HeadBucket(ctx context.Context, input *s3.HeadBucketInput, optFns ...func(*s3.Options)) (*s3.HeadBucketOutput, error)
 }
 
 // transport implements RoundTripper for the 's3' protocol.
@@ -162,7 +161,7 @@ func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
 		// Check if the error is the region mismatch error.
 		// If so, create a new client with the correct region and retry the request.
 		if region := regionFromError(err); len(region) != 0 {
-			client, err = t.createBucketClient(req.Context(), bucket, region)
+			client, err = t.createBucketClient(bucket, region)
 			if err != nil {
 				return handleError(req, err)
 			}
@@ -249,7 +248,7 @@ func (t *transport) getBucketClient(bucket string) s3Client {
 	return t.defaultClient
 }
 
-func (t *transport) createBucketClient(ctx context.Context, bucket, region string) (s3Client, error) {
+func (t *transport) createBucketClient(bucket, region string) (s3Client, error) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
