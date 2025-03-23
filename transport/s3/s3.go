@@ -111,7 +111,7 @@ func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
 			Proto:         "HTTP/1.0",
 			ProtoMajor:    1,
 			ProtoMinor:    0,
-			Header:        http.Header{},
+			Header:        http.Header{"Content-Type": {"text/plain"}},
 			ContentLength: int64(body.Len()),
 			Body:          io.NopCloser(body),
 			Close:         false,
@@ -318,16 +318,14 @@ func handleError(req *http.Request, err error) (*http.Response, error) {
 		return nil, ierrors.Wrap(err, 0)
 	}
 
-	body := strings.NewReader(err.Error())
-
 	return &http.Response{
 		StatusCode:    rerr.Response.StatusCode,
 		Proto:         "HTTP/1.0",
 		ProtoMajor:    1,
 		ProtoMinor:    0,
-		Header:        http.Header{},
-		ContentLength: int64(body.Len()),
-		Body:          io.NopCloser(body),
+		Header:        http.Header{"Content-Type": {"text/plain"}},
+		ContentLength: int64(len(err.Error())),
+		Body:          io.NopCloser(strings.NewReader(err.Error())),
 		Close:         false,
 		Request:       req,
 	}, nil

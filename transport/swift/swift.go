@@ -60,7 +60,7 @@ func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error)
 			Proto:         "HTTP/1.0",
 			ProtoMajor:    1,
 			ProtoMinor:    0,
-			Header:        http.Header{},
+			Header:        http.Header{"Content-Type": {"text/plain"}},
 			ContentLength: int64(body.Len()),
 			Body:          io.NopCloser(body),
 			Close:         false,
@@ -80,14 +80,15 @@ func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error)
 	if err != nil {
 		if errors.Is(err, swift.ObjectNotFound) || errors.Is(err, swift.ContainerNotFound) {
 			return &http.Response{
-				StatusCode: http.StatusNotFound,
-				Proto:      "HTTP/1.0",
-				ProtoMajor: 1,
-				ProtoMinor: 0,
-				Header:     header,
-				Body:       io.NopCloser(strings.NewReader(err.Error())),
-				Close:      false,
-				Request:    req,
+				StatusCode:    http.StatusNotFound,
+				Proto:         "HTTP/1.0",
+				ProtoMajor:    1,
+				ProtoMinor:    0,
+				Header:        http.Header{"Content-Type": {"text/plain"}},
+				ContentLength: int64(len(err.Error())),
+				Body:          io.NopCloser(strings.NewReader(err.Error())),
+				Close:         false,
+				Request:       req,
 			}, nil
 		}
 
