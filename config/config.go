@@ -116,7 +116,6 @@ var (
 	S3EndpointUsePathStyle    bool
 	S3AssumeRoleArn           string
 	S3AssumeRoleExternalID    string
-	S3MultiRegion             bool
 	S3DecryptionClientEnabled bool
 
 	GCSEnabled  bool
@@ -328,7 +327,6 @@ func Reset() {
 	S3EndpointUsePathStyle = true
 	S3AssumeRoleArn = ""
 	S3AssumeRoleExternalID = ""
-	S3MultiRegion = false
 	S3DecryptionClientEnabled = false
 	GCSEnabled = false
 	GCSKey = ""
@@ -579,7 +577,6 @@ func Configure() error {
 	configurators.Bool(&S3EndpointUsePathStyle, "IMGPROXY_S3_ENDPOINT_USE_PATH_STYLE")
 	configurators.String(&S3AssumeRoleArn, "IMGPROXY_S3_ASSUME_ROLE_ARN")
 	configurators.String(&S3AssumeRoleExternalID, "IMGPROXY_S3_ASSUME_ROLE_EXTERNAL_ID")
-	configurators.Bool(&S3MultiRegion, "IMGPROXY_S3_MULTI_REGION")
 	configurators.Bool(&S3DecryptionClientEnabled, "IMGPROXY_S3_USE_DECRYPTION_CLIENT")
 
 	configurators.Bool(&GCSEnabled, "IMGPROXY_USE_GCS")

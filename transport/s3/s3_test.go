@@ -46,8 +46,7 @@ func (s *S3TestSuite) SetupSuite() {
 	err = backend.CreateBucket("test")
 	s.Require().NoError(err)
 
-	svc, err := s.transport.(*transport).getClient(context.Background(), "test")
-	s.Require().NoError(err)
+	svc := s.transport.(*transport).defaultClient
 	s.Require().NotNil(svc)
 	s.Require().IsType(&s3.Client{}, svc)
 
@@ -156,15 +155,6 @@ func (s *S3TestSuite) TestRoundTripWithUpdatedLastModifiedReturns200() {
 	response, err := s.transport.RoundTrip(request)
 	s.Require().NoError(err)
 	s.Require().Equal(http.StatusOK, response.StatusCode)
-}
-
-func (s *S3TestSuite) TestRoundTripWithMultiregionEnabledReturns200() {
-	config.S3MultiRegion = true
-	request, _ := http.NewRequest("GET", "s3://test/foo/test.png", nil)
-
-	response, err := s.transport.RoundTrip(request)
-	s.Require().NoError(err)
-	s.Require().Equal(200, response.StatusCode)
 }
 
 func TestS3Transport(t *testing.T) {

@@ -22,6 +22,9 @@
 - (pro) Fix flattening behavior when chained pipelines are used and the resulting format doesn't support transparency.
 - (pro) Fix advanced smart crop when the most feature points are located close to the right or the bottom edge.
 
+### Removed
+- Remove the `IMGPROXY_S3_MULTI_REGION` config. imgproxy now always work in multi-regional S3 mode.
+
 ## [3.27.2] - 2025-01-27
 ### Fixed
 - Fix preventing requests to `0.0.0.0` when imgproxy is configured to deny loopback addresses.
