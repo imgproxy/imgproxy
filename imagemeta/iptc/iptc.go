@@ -49,9 +49,10 @@ func (m IptcMap) MarshalJSON() ([]byte, error) {
 
 		// Add some additional fields for backward compatibility
 		if key.RecordID == 2 {
-			if key.TagID == 5 {
+			switch key.TagID {
+			case 5:
 				mm["Name"] = values[0]
-			} else if key.TagID == 120 {
+			case 120:
 				mm["Caption"] = values[0]
 			}
 		}

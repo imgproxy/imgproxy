@@ -36,7 +36,7 @@ func (s *OtelTestSuite) TestMapDeprecatedConfigEndpointNoProtocol() {
 
 	s.Require().True(config.OpenTelemetryEnable)
 	s.Require().Equal("https://otel_endpoint:1234", os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT"))
-	s.Require().Equal("", os.Getenv("OTEL_EXPORTER_OTLP_PROTOCOL"))
+	s.Require().Empty(os.Getenv("OTEL_EXPORTER_OTLP_PROTOCOL"))
 }
 
 func (s *OtelTestSuite) TestMapDeprecatedConfigEndpointGrpcProtocol() {

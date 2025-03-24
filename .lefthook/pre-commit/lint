@@ -12,6 +12,6 @@ if [ -x "$(which brew)" ]; then
 fi
 
 export CGO_LDFLAGS_ALLOW="-s|-w"
-export CGO_CFLAGS_ALLOW="-Xpreprocessor"
+export CGO_CFLAGS_ALLOW="-I|-Xpreprocessor"
 
 golangci-lint run

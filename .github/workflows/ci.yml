@@ -46,9 +46,9 @@ jobs:
       - name: Download mods
         run: go mod download
       - name: Lint
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v7
         with:
-          version: v1.61.0
+          version: v2.0.0
           args: --timeout 5m0s
         env:
           LD_LIBRARY_PATH: "/usr/local/lib:/root/vips/${{ matrix.vips-version }}/lib"

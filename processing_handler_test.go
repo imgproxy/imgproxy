@@ -594,7 +594,7 @@ func (s *ProcessingHandlerTestSuite) TestLastModifiedDisabled() {
 	rw := s.send("/unsafe/rs:fill:4:4/plain/" + ts.URL)
 	res := rw.Result()
 
-	s.Require().Equal("", res.Header.Get("Last-Modified"))
+	s.Require().Empty(res.Header.Get("Last-Modified"))
 }
 
 func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqExactMatchLastModifiedDisabled() {

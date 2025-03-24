@@ -1,50 +1,61 @@
+version: "2"
 linters:
-  disable-all: true
+  default: none
   enable:
-    # - errcheck
+    - bodyclose
     - gocritic
-    # - goconst
-    - goimports
-    - gosimple
     - govet
     - ineffassign
     - staticcheck
-    - stylecheck
-    - typecheck
-    - unused
-    - bodyclose
     - testifylint
-
-linters-settings:
-  govet:
-    enable-all: true
-    disable:
-      - fieldalignment
-
-issues:
-  exclude-dirs:
-    - .tmp
-    - vendor
-  exclude-rules:
-    # - path: _test\.go
-    #   linters:
-    #     - goconst
-
-    - linters: [bodyclose]
-      path: ".*_test.go"
-
-    - linters: [bodyclose]
-      path: "router/timeout_response.go"
-
-    # False positives on CGO generated code
-    - linters: [staticcheck]
-      text: "SA4000:"
-      path: vips/.*
-
-    # False positives on CGO generated code
-    - linters: [gocritic]
-      text: "dupSubExpr"
-      path: vips/.*
-
-    - linters: [stylecheck]
-      text: "ST1005:"
+    - unused
+  settings:
+    govet:
+      disable:
+        - fieldalignment
+      enable-all: true
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - bodyclose
+        path: .*_test.go
+      - linters:
+          - bodyclose
+        path: router/timeout_response.go
+      # False positives on CGO generated code
+      - linters:
+          - staticcheck
+        path: vips/.*
+        text: 'SA4000:'
+      # False positives on CGO generated code
+      - linters:
+          - gocritic
+        path: vips/.*
+        text: dupSubExpr
+      # False positives on CGO generated code
+      - linters:
+          - staticcheck
+        text: 'ST1005:'
+    paths:
+      - .tmp
+      - vendor
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - .tmp
+      - vendor
+      - third_party$
+      - builtin$
+      - examples$
