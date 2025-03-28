@@ -373,7 +373,7 @@ func Reset() {
 	NewRelicKey = ""
 	NewRelicLabels = make(map[string]string)
 
-	PrometheusBind = ""
+	PrometheusBind = "127.0.0.1:9421"
 	PrometheusNamespace = ""
 
 	OpenTelemetryEnable = false
