@@ -231,7 +231,7 @@ func Reset() {
 	WriteResponseTimeout = 10
 	KeepAliveTimeout = 10
 	ClientKeepAliveTimeout = 90
-	DownloadTimeout = 5
+	DownloadTimeout = 20
 	Workers = runtime.GOMAXPROCS(0) * 2
 	RequestsQueueSize = 0
 	MaxClients = 2048
@@ -244,7 +244,7 @@ func Reset() {
 
 	PathPrefix = ""
 
-	MaxSrcResolution = 50000000
+	MaxSrcResolution = 5000000000
 	MaxSrcFileSize = 0
 	MaxAnimationFrames = 1
 	MaxAnimationFrameResolution = 0
@@ -275,8 +275,8 @@ func Reset() {
 	SvgFixUnsupported = false
 
 	AutoWebp = false
-	EnforceWebp = false
-	AutoAvif = false
+	EnforceWebp = true
+	AutoAvif = true
 	EnforceAvif = false
 	AutoJxl = false
 	EnforceJxl = false
@@ -321,8 +321,8 @@ func Reset() {
 
 	SourceURLQuerySeparator = "?"
 	LocalFileSystemRoot = ""
-	S3Enabled = false
-	S3Region = ""
+	S3Enabled = true
+	S3Region = "ap-south-1"
 	S3Endpoint = ""
 	S3EndpointUsePathStyle = true
 	S3AssumeRoleArn = ""

@@ -1,7 +1,6 @@
 package logger
 
 import (
-	"fmt"
 	"os"
 
 	logrus "github.com/sirupsen/logrus"
@@ -47,15 +46,6 @@ func Init() error {
 	}
 
 	logrus.SetLevel(levelLogLevel)
-
-	if isSyslogEnabled() {
-		slHook, err := newSyslogHook()
-		if err != nil {
-			return fmt.Errorf("Unable to connect to syslog daemon: %s", err)
-		}
-
-		logrus.AddHook(slHook)
-	}
 
 	return nil
 }

@@ -117,18 +117,12 @@ func setCanonical(rw http.ResponseWriter, originURL string) {
 }
 
 func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, statusCode int, resultData *imagedata.ImageData, po *options.ProcessingOptions, originURL string, originData *imagedata.ImageData) {
-	var contentDisposition string
-	if len(po.Filename) > 0 {
-		contentDisposition = resultData.Type.ContentDisposition(po.Filename, po.ReturnAttachment)
-	} else {
-		contentDisposition = resultData.Type.ContentDispositionFromURL(originURL, po.ReturnAttachment)
-	}
-
 	rw.Header().Set("Content-Type", resultData.Type.Mime())
-	rw.Header().Set("Content-Disposition", contentDisposition)
 
-	setCacheControl(rw, po.Expires, originData.Headers)
-	setLastModified(rw, originData.Headers)
+	rw.Header().Set("Cache-Control", "max-age: 31536000, public")
+	rw.Header().Set("Last-Modified", time.Now().Format(http.TimeFormat))
+	rw.Header().Set("Expires", time.Now().AddDate(1, 0, 0).Format(http.TimeFormat))
+
 	setVary(rw)
 	setCanonical(rw, originURL)
 
@@ -140,9 +134,6 @@ func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, sta
 		rw.Header().Set("X-Result-Height", resultData.Headers["X-Result-Height"])
 	}
 
-	rw.Header().Set("Content-Security-Policy", "script-src 'none'")
-
-	rw.Header().Set("Content-Length", strconv.Itoa(len(resultData.Data)))
 	rw.WriteHeader(statusCode)
 	_, err := rw.Write(resultData.Data)
 
@@ -215,34 +206,12 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 
-	path := r.RequestURI
-	if queryStart := strings.IndexByte(path, '?'); queryStart >= 0 {
-		path = path[:queryStart]
-	}
 
-	if len(config.PathPrefix) > 0 {
-		path = strings.TrimPrefix(path, config.PathPrefix)
-	}
+	qs := r.URL.Query()
 
-	path = strings.TrimPrefix(path, "/")
-	signature := ""
 
-	if signatureEnd := strings.IndexByte(path, '/'); signatureEnd > 0 {
-		signature = path[:signatureEnd]
-		path = path[signatureEnd:]
-	} else {
-		sendErrAndPanic(ctx, "path_parsing", newInvalidURLErrorf(
-			http.StatusNotFound, "Invalid path: %s", path),
-		)
-	}
+	po, imageURL, err := options.ParsePathIPC(r.URL.Path[1:], qs, r.Header)
 
-	path = fixPath(path)
-
-	if err := security.VerifySignature(signature, path); err != nil {
-		sendErrAndPanic(ctx, "security", err)
-	}
-
-	po, imageURL, err := options.ParsePath(path, r.Header)
 	checkErr(ctx, "path_parsing", err)
 
 	errorreport.SetMetadata(r, "Source Image URL", imageURL)

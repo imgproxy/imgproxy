@@ -34,6 +34,7 @@ var mainPipeline = pipeline{
 	fixSize,
 	flatten,
 	watermark,
+	artifact,
 }
 
 var finalizePipeline = pipeline{
@@ -280,23 +281,23 @@ func ProcessImage(ctx context.Context, imgdata *imagedata.ImageData, po *options
 	switch {
 	case po.Format == imagetype.Unknown:
 		switch {
-		case po.PreferJxl && !animated:
-			po.Format = imagetype.JXL
-		case po.PreferAvif && !animated:
-			po.Format = imagetype.AVIF
 		case po.PreferWebP:
 			po.Format = imagetype.WEBP
+		case po.PreferAvif && !animated:
+			po.Format = imagetype.AVIF
+		case po.PreferJxl && !animated:
+			po.Format = imagetype.JXL
 		case isImageTypePreferred(imgdata.Type):
 			po.Format = imgdata.Type
 		default:
 			po.Format = findBestFormat(imgdata.Type, animated, expectAlpha)
 		}
-	case po.EnforceJxl && !animated:
-		po.Format = imagetype.JXL
-	case po.EnforceAvif && !animated:
-		po.Format = imagetype.AVIF
 	case po.EnforceWebP:
 		po.Format = imagetype.WEBP
+	case po.EnforceAvif && !animated:
+		po.Format = imagetype.AVIF
+	case po.EnforceJxl && !animated:
+		po.Format = imagetype.JXL
 	}
 
 	if !vips.SupportsSave(po.Format) {
