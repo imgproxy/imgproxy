@@ -23,7 +23,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.35.2
 	github.com/aws/aws-sdk-go-v2/service/ssm v1.58.0
 	github.com/aws/aws-sdk-go-v2/service/sts v1.33.17
-	github.com/benesch/cgosymbolizer v0.0.0-20190515212042-bec6fe6e597b
 	github.com/bugsnag/bugsnag-go/v2 v2.5.1
 	github.com/felixge/httpsnoop v1.0.4
 	github.com/fsouza/fake-gcs-server v1.42.2
@@ -150,7 +149,6 @@ require (
 	github.com/hashicorp/go-secure-stdlib/parseutil v0.2.0 // indirect
 	github.com/hashicorp/go-secure-stdlib/strutil v0.1.2 // indirect
 	github.com/hashicorp/go-sockaddr v1.0.7 // indirect
-	github.com/ianlancetaylor/cgosymbolizer v0.0.0-20250210230444-5fae499d98fc // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/jonboulle/clockwork v0.5.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
