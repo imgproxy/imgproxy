@@ -244,7 +244,7 @@ func Reset() {
 
 	PathPrefix = ""
 
-	MaxSrcResolution = 5000000000
+	MaxSrcResolution = 50000000
 	MaxSrcFileSize = 0
 	MaxAnimationFrames = 1
 	MaxAnimationFrameResolution = 0
@@ -274,11 +274,11 @@ func Reset() {
 	ReturnAttachment = false
 	SvgFixUnsupported = false
 
-	AutoWebp = false
+	AutoWebp = true
 	EnforceWebp = true
 	AutoAvif = true
 	EnforceAvif = false
-	AutoJxl = false
+	AutoJxl = true
 	EnforceJxl = false
 	EnableClientHints = false
 
