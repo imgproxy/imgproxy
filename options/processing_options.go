@@ -745,38 +745,6 @@ func applyArtifactOption(po *ProcessingOptions, args []string) error {
 	po.Artifact.Opacity = 1
 	po.Artifact.Type = artifactKey
 
-	// if len(args) > 1 && len(args[1]) > 0 {
-	// 	if g, ok := gravityTypes[args[1]]; ok && slices.Contains(watermarkGravityTypes, g) {
-	// 		po.Watermark.Position.Type = g
-	// 	} else {
-	// 		return fmt.Errorf("Invalid watermark position: %s", args[1])
-	// 	}
-	// }
-
-	// if len(args) > 2 && len(args[2]) > 0 {
-	// 	if x, err := strconv.ParseFloat(args[2], 64); err == nil {
-	// 		po.Watermark.Position.X = x
-	// 	} else {
-	// 		return fmt.Errorf("Invalid watermark X offset: %s", args[2])
-	// 	}
-	// }
-
-	// if len(args) > 3 && len(args[3]) > 0 {
-	// 	if y, err := strconv.ParseFloat(args[3], 64); err == nil {
-	// 		po.Watermark.Position.Y = y
-	// 	} else {
-	// 		return fmt.Errorf("Invalid watermark Y offset: %s", args[3])
-	// 	}
-	// }
-
-	// if len(args) > 4 && len(args[4]) > 0 {
-	// 	if s, err := strconv.ParseFloat(args[4], 64); err == nil && s >= 0 {
-	// 		po.Watermark.Scale = s
-	// 	} else {
-	// 		return fmt.Errorf("Invalid watermark scale: %s", args[4])
-	// 	}
-	// }
-
 	return nil
 }
 
