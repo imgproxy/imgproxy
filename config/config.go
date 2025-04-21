@@ -226,12 +226,12 @@ func init() {
 func Reset() {
 	Network = "tcp"
 	Bind = ":8080"
-	Timeout = 10
-	ReadRequestTimeout = 10
-	WriteResponseTimeout = 10
+	Timeout = 60
+	ReadRequestTimeout = 60
+	WriteResponseTimeout = 60
 	KeepAliveTimeout = 10
 	ClientKeepAliveTimeout = 90
-	DownloadTimeout = 20
+	DownloadTimeout = 30
 	Workers = runtime.GOMAXPROCS(0) * 2
 	RequestsQueueSize = 0
 	MaxClients = 2048
@@ -244,7 +244,7 @@ func Reset() {
 
 	PathPrefix = ""
 
-	MaxSrcResolution = 50000000
+	MaxSrcResolution = 2073600 // 1920x1080
 	MaxSrcFileSize = 0
 	MaxAnimationFrames = 1
 	MaxAnimationFrameResolution = 0
