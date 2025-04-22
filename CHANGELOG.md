@@ -1,6 +1,10 @@
 # Changelog
 
 ## [Unreleased]
+### Changed
+- (docker) Optimized image quantization.
+
+## [3.28.0] - 2025-03-31
 ### Added
 - Add [IMGPROXY_BASE64_URL_INCLUDES_FILENAME](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_BASE64_URL_INCLUDES_FILENAME) config.
 - Add [IMGPROXY_COOKIE_PASSTHROUGH_ALL](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_COOKIE_PASSTHROUGH_ALL) config.
