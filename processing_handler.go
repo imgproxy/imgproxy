@@ -206,9 +206,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 
-
 	qs := r.URL.Query()
-
 
 	po, imageURL, err := options.ParsePathIPC(r.URL.Path[1:], qs, r.Header)
 
@@ -299,8 +297,12 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 			checkErr(ctx, "download", err)
 		}
 
-		return imagedata.Download(ctx, imageURL, "source image", downloadOpts, po.SecurityOptions)
+		return imagedata.Download(ctx, fmt.Sprintf("s3://m-aeplimagesmaster-v2/%s", imageURL), "source image", downloadOpts, po.SecurityOptions)
 	}()
+
+	if err == nil {
+		originData, err = getAndCreateMasterImageData(ctx, imageURL, r.Header, imgRequestHeader)
+	}
 
 	var nmErr imagedata.NotModifiedError
 
@@ -428,4 +430,38 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	checkErr(ctx, "timeout", router.CheckTimeout(ctx))
 
 	respondWithImage(reqID, r, rw, statusCode, resultData, po, imageURL, originData)
+}
+
+func getAndCreateMasterImageData(ctx context.Context, imageURL string, header http.Header, imgRequestHeader http.Header) (*imagedata.ImageData, error) {
+
+	po, err := options.DefaultProcessingOptions(header)
+
+	checkErr(ctx, "path_parsing", err)
+
+	originData, err := func() (*imagedata.ImageData, error) {
+		defer metrics.StartDownloadingSegment(ctx)()
+
+		downloadOpts := imagedata.DownloadOptions{
+			Header:    imgRequestHeader,
+			CookieJar: nil,
+		}
+
+		return imagedata.Download(ctx, fmt.Sprintf("s3://m-aeplimages/%s", imageURL), "source image", downloadOpts, po.SecurityOptions)
+	}()
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer originData.Close()
+
+	resultData, err := func() (*imagedata.ImageData, error) {
+		defer metrics.StartProcessingSegment(ctx)()
+		return processing.ProcessImage(ctx, originData, po)
+	}()
+
+	err = imagedata.Upload(ctx, fmt.Sprintf("s3://m-aeplimagesmaster-v2/%s", imageURL), "master image", resultData)
+
+	return resultData, err
+
 }

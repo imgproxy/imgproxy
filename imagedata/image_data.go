@@ -194,3 +194,14 @@ func Download(ctx context.Context, imageURL, desc string, opts DownloadOptions, 
 
 	return imgdata, nil
 }
+
+func Upload(ctx context.Context, imageURL, desc string, data *ImageData) (error) {
+	err := upload(ctx, imageURL, data.Data)
+	if err != nil {
+		return ierrors.Wrap(
+			err, 0,
+			ierrors.WithPrefix(fmt.Sprintf("Can't download %s", desc)),
+		)
+	}
+	return nil
+}

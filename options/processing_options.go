@@ -53,7 +53,7 @@ type TrimOptions struct {
 }
 
 type WatermarkOptions struct {
-	Type string
+	Type     string
 	Enabled  bool
 	Opacity  float64
 	Position GravityOptions
@@ -61,7 +61,7 @@ type WatermarkOptions struct {
 }
 
 type ArtifactOptions struct {
-	Type string
+	Type     string
 	Enabled  bool
 	Opacity  float64
 	Position GravityOptions
@@ -721,7 +721,7 @@ func applyWatermarkOption(po *ProcessingOptions, args []string) error {
 	if len(args) == 0 {
 		return fmt.Errorf("Invalid watermark arguments: %v", args)
 	}
-	po.Watermark.Enabled  = true
+	po.Watermark.Enabled = true
 	po.Watermark.Opacity = 1
 	po.Watermark.Type = args[0]
 	po.Watermark.Position.Type = GravitySouthEast
@@ -741,7 +741,7 @@ func applyArtifactOption(po *ProcessingOptions, args []string) error {
 
 	_, exist := imagedata.ArtifactMap[artifactKey]
 
-	po.Artifact.Enabled  = exist
+	po.Artifact.Enabled = exist
 	po.Artifact.Opacity = 1
 	po.Artifact.Type = artifactKey
 
@@ -1072,7 +1072,7 @@ func applyURLOptions(po *ProcessingOptions, options urlOptions, usedPresets ...s
 	return nil
 }
 
-func defaultProcessingOptions(headers http.Header) (*ProcessingOptions, error) {
+func DefaultProcessingOptions(headers http.Header) (*ProcessingOptions, error) {
 	po := NewProcessingOptions()
 
 	headerAccept := headers.Get("Accept")
@@ -1128,7 +1128,7 @@ func parsePathOptions(parts []string, headers http.Header) (*ProcessingOptions, 
 		return nil, "", newInvalidURLError("It looks like you're using the deprecated basic URL format")
 	}
 
-	po, err := defaultProcessingOptions(headers)
+	po, err := DefaultProcessingOptions(headers)
 	if err != nil {
 		return nil, "", err
 	}
@@ -1154,7 +1154,7 @@ func parsePathOptions(parts []string, headers http.Header) (*ProcessingOptions, 
 }
 
 func parsePathPresets(parts []string, headers http.Header) (*ProcessingOptions, string, error) {
-	po, err := defaultProcessingOptions(headers)
+	po, err := DefaultProcessingOptions(headers)
 	if err != nil {
 		return nil, "", err
 	}
@@ -1207,7 +1207,7 @@ func ParsePathIPC(path string, qs url.Values, headers http.Header) (*ProcessingO
 		return nil, "", newInvalidURLError("Invalid path: %s", path)
 	}
 
-	po, err := defaultProcessingOptions(headers)
+	po, err := DefaultProcessingOptions(headers)
 
 	if err != nil {
 		return nil, "", err
@@ -1217,7 +1217,7 @@ func ParsePathIPC(path string, qs url.Values, headers http.Header) (*ProcessingO
 
 	parts := strings.SplitN(imageURL, "/", 2)
 	imgResize := strings.ToLower(parts[0])
-	url :=  "s3://m-aeplimages/" + strings.ToLower(parts[1])
+	url := strings.ToLower(parts[1])
 
 	path = strings.TrimPrefix(path, "/")
 
@@ -1227,11 +1227,9 @@ func ParsePathIPC(path string, qs url.Values, headers http.Header) (*ProcessingO
 		return nil, "", err
 	}
 
-
 	if err != nil {
 		return nil, "", ierrors.Wrap(err, 0)
 	}
 
 	return po, url, nil
 }
-

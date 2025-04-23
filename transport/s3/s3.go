@@ -3,6 +3,7 @@ package s3
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"strconv"
@@ -28,6 +29,7 @@ import (
 
 type s3Client interface {
 	GetObject(ctx context.Context, input *s3.GetObjectInput, opts ...func(*s3.Options)) (*s3.GetObjectOutput, error)
+	PutObject(ctx context.Context, input *s3.PutObjectInput, opts ...func(*s3.Options)) (*s3.PutObjectOutput, error)
 }
 
 // transport implements RoundTripper for the 's3' protocol.
@@ -117,6 +119,9 @@ func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
 			Request:       req,
 		}, nil
 	}
+
+	switch req.Method {
+	case http.MethodGet:
 
 	input := &s3.GetObjectInput{
 		Bucket: aws.String(bucket),
@@ -230,6 +235,39 @@ func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
 		Close:         true,
 		Request:       req,
 	}, nil
+
+	case http.MethodPut:
+		input := &s3.PutObjectInput{
+			Bucket: aws.String(bucket),
+			Key:    aws.String(key),
+			ContentLength: &req.ContentLength,
+			Body:   req.Body,
+		}
+		statusCode := http.StatusOK
+	
+		client := t.getBucketClient(bucket)
+	
+		_, err := client.PutObject(req.Context(), input)
+
+		if err != nil {
+			return handleError(req, err)
+		}
+
+		return &http.Response{
+			StatusCode:    statusCode,
+			Proto:         "HTTP/1.0",
+			ProtoMajor:    1,
+			ProtoMinor:    0,
+			Close:         true,
+			Request:       req,
+		}, nil
+
+		default:
+			return handleError(req, fmt.Errorf("unsupported method %s", req.Method))
+
+	
+	}
+		
 }
 
 func (t *transport) getBucketClient(bucket string) s3Client {
