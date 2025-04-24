@@ -300,7 +300,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		return imagedata.Download(ctx, fmt.Sprintf("s3://m-aeplimagesmaster-v2/%s", imageURL), "source image", downloadOpts, po.SecurityOptions)
 	}()
 
-	if err == nil {
+	if err != nil {
 		originData, err = getAndCreateMasterImageData(ctx, imageURL, r.Header, imgRequestHeader)
 	}
 
