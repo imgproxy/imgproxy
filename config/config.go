@@ -275,7 +275,7 @@ func Reset() {
 	SvgFixUnsupported = false
 
 	AutoWebp = true
-	EnforceWebp = true
+	EnforceWebp = false
 	AutoAvif = true
 	EnforceAvif = false
 	AutoJxl = true

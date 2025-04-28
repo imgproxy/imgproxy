@@ -753,7 +753,13 @@ func applyFormatOption(po *ProcessingOptions, args []string) error {
 		return newOptionArgumentError("Invalid format arguments: %v", args)
 	}
 
-	if f, ok := imagetype.Types[args[0]]; ok {
+	fmt, ok := strconv.ParseUint(args[0], 10, 32)
+
+	if ok != nil || fmt < 0 {
+		return newOptionArgumentError("Invalid format: %s", args[0])
+	}
+
+	if f, ok := imagetype.Formats[fmt]; ok {
 		po.Format = f
 	} else {
 		return newOptionArgumentError("Invalid image format: %s", args[0])
@@ -1030,7 +1036,7 @@ func applyURLOption(po *ProcessingOptions, name string, args []string, usedPrese
 		return applyFormatQualityOption(po, args)
 	case "max_bytes", "mb":
 		return applyMaxBytesOption(po, args)
-	case "format", "f", "ext":
+	case "format", "f", "ext", "fmt":
 		return applyFormatOption(po, args)
 	// Handling options
 	case "skip_processing", "skp":
