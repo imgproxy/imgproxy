@@ -283,6 +283,7 @@ func Reset() {
 	EnableClientHints = false
 
 	PreferredFormats = []imagetype.Type{
+		imagetype.WEBP,
 		imagetype.JPEG,
 		imagetype.PNG,
 		imagetype.GIF,
