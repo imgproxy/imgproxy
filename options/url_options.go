@@ -53,11 +53,15 @@ func parseURLOptionsIPC(size string, qs url.Values) urlOptions {
 	}
 
 	// Define allowed query parameters
-	validKeys := map[string]bool{"q": true, "wm": true, "art": true, "fmt" : true}
+	validKeys := map[string]bool{"qp": true, "wm": true, "art": true, "fmt" : true, "fit" : true}
 
 	// Append valid query parameters
 	for key, val := range qs {
 		if validKeys[key] {
+			if key == "fit" {
+				parsed[0].Args[0] = "fit"
+				continue
+			}
 			parsed = append(parsed, urlOption{Name: key, Args: val})
 		}
 	}
