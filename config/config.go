@@ -263,7 +263,7 @@ func Reset() {
 	Quality = 80
 	FormatQuality = map[imagetype.Type]int{
 		imagetype.WEBP: 79,
-		imagetype.AVIF: 63,
+		imagetype.AVIF: 65,
 		imagetype.JXL:  77,
 	}
 	StripMetadata = true
