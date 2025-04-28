@@ -1030,7 +1030,7 @@ func applyURLOption(po *ProcessingOptions, name string, args []string, usedPrese
 	case "enforce_thumbnail", "eth":
 		return applyEnforceThumbnailOption(po, args)
 	// Saving options
-	case "quality", "q":
+	case "quality", "qp":
 		return applyQualityOption(po, args)
 	case "format_quality", "fq":
 		return applyFormatQualityOption(po, args)
