@@ -243,7 +243,6 @@ func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
 			ContentLength: &req.ContentLength,
 			Body:   req.Body,
 		}
-		statusCode := http.StatusOK
 	
 		client := t.getBucketClient(bucket)
 	
@@ -254,7 +253,7 @@ func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
 		}
 
 		return &http.Response{
-			StatusCode:    statusCode,
+			StatusCode:    http.StatusOK,
 			Proto:         "HTTP/1.0",
 			ProtoMajor:    1,
 			ProtoMinor:    0,
