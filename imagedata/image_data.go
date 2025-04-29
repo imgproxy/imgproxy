@@ -19,7 +19,7 @@ var (
 	CWWatermark     *ImageData
 	BWWatermark     *ImageData
 	BWWatermarkV2     *ImageData
-	ArtifactMap map[string] *ImageData
+	ArtifactMap map[string] *ImageData = make(map[string]*ImageData)
 	FallbackImage *ImageData
 )
 
@@ -78,11 +78,6 @@ func loadWatermarkAndArtifacts() error {
 			return fmt.Errorf("failed to download watermark from %s: %w", url, err)
 		}
 		*watermarkVars[key] = download // Assign the downloaded image data to the pointer
-	}
-
-	// Ensure ArtifactMap is initialized
-	if ArtifactMap == nil {
-		ArtifactMap = make(map[string]*ImageData)
 	}
 
 	// Download artifacts
