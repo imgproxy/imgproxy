@@ -1019,7 +1019,7 @@ func applyURLOption(po *ProcessingOptions, name string, args []string, usedPrese
 		return applyPixelateOption(po, args)
 	case "watermark", "wm":
 		return applyWatermarkOption(po, args)
-	case "artifcact", "art":
+	case "artifact", "art":
 		return applyArtifactOption(po, args)
 	case "strip_metadata", "sm":
 		return applyStripMetadataOption(po, args)

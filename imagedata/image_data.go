@@ -65,43 +65,19 @@ func Init() error {
 func loadWatermarkAndArtifacts() error {
 	ctx := context.Background()
 
-	watermarks := map[string]**ImageData{
-		"s3://m-aeplimages/watermarks/cw_watermark.png": &CWWatermark,
-		"s3://m-aeplimages/watermarks/bw_watermark.png" : &BWWatermark,
-		"s3://m-aeplimages/watermarks/bw_watermark_v2.png" : &BWWatermarkV2,
-	}
-
-	artifacts := map[string]string{
-		"1": "s3://m-aeplimages/artifacts/editorial_template_*.png",
-		"2": "s3://m-aeplimages/artifacts/editorial_template_bw_*.png",
-		"3": "s3://m-aeplimages/artifacts/ios_ad_template_*.png",
-		"4": "s3://m-aeplimages/artifacts/android_ad_template_*.png",
-		"5": "s3://m-aeplimages/artifacts/bs6_*.png",
-		"6": "s3://m-aeplimages/artifacts/bs6_without_tooltip_*.png",
-		"7": "s3://m-aeplimages/artifacts/bs6_without_tooltip_v1_*.png",
-		"8": "s3://m-aeplimages/artifacts/mobility_template_*.png",
-		"9": "s3://m-aeplimages/artifacts/editorial_template_bw_v2_*.png",
-	}
-
-	artifactsSizesMap := map[string][]string{
-		"1": {"642x336"},
-		"2": {"642x336"},
-		"3": {"642x361"},
-		"4": {"559x314"},
-		"5": {"110x61", "160x89", "272x153", "393x221", "476x268", "559x314", "600x337", "642x361", "762x429"},
-		"6": {"110x61", "160x89", "272x153", "393x221", "476x268", "559x314", "600x337", "642x361", "762x429"},
-		"7": {"110x61", "160x89", "272x153", "393x221", "476x268", "559x314", "600x337", "642x361", "762x429"},
-		"8": {"642x336"},
-		"9": {"642x336"},
-	}
+	watermarkVars := map[string]**ImageData{
+        "cw_watermark":    &CWWatermark,
+        "bw_watermark":    &BWWatermark,
+        "bw_watermark_v2": &BWWatermarkV2,
+    }
 
 	// Download watermarks
-	for url, _ := range watermarks {
+	for key, url := range config.WatermarkPaths {
 		download, err := Download(ctx, url, "watermark", DownloadOptions{}, security.DefaultOptions())
 		if err != nil {
 			return fmt.Errorf("failed to download watermark from %s: %w", url, err)
 		}
-		*watermarks[url] = download // Assign the downloaded image data to the pointer
+		*watermarkVars[key] = download // Assign the downloaded image data to the pointer
 	}
 
 	// Ensure ArtifactMap is initialized
@@ -110,8 +86,8 @@ func loadWatermarkAndArtifacts() error {
 	}
 
 	// Download artifacts
-	for artifactType, artifactPath := range artifacts {
-		sizes, exists := artifactsSizesMap[artifactType]
+	for artifactType, artifactPath := range config.Artifacts {
+		sizes, exists := config.ArtifactsSizesMap[artifactType]
 		if !exists {
 			continue
 		}

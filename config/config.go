@@ -153,6 +153,9 @@ var (
 	WatermarkPath    string
 	WatermarkURL     string
 	WatermarkOpacity float64
+	WatermarkPaths  map[string]string
+	Artifacts 	 map[string]string
+	ArtifactsSizesMap map[string][]string
 
 	FallbackImageData     string
 	FallbackImagePath     string
@@ -359,6 +362,36 @@ func Reset() {
 	WatermarkPath = ""
 	WatermarkURL = ""
 	WatermarkOpacity = 1
+
+	WatermarkPaths = map[string]string{
+		"cw_watermark":    "s3://m-aeplimages/watermarks/cw_watermark.png",
+		"bw_watermark":    "s3://m-aeplimages/watermarks/bw_watermark.png",
+		"bw_watermark_v2": "s3://m-aeplimages/watermarks/bw_watermark_v2.png",
+	}
+
+	Artifacts = map[string]string{
+		"1": "s3://m-aeplimages/artifacts/editorial_template_*.png",
+		"2": "s3://m-aeplimages/artifacts/editorial_template_bw_*.png",
+		"3": "s3://m-aeplimages/artifacts/ios_ad_template_*.png",
+		"4": "s3://m-aeplimages/artifacts/android_ad_template_*.png",
+		"5": "s3://m-aeplimages/artifacts/bs6_*.png",
+		"6": "s3://m-aeplimages/artifacts/bs6_without_tooltip_*.png",
+		"7": "s3://m-aeplimages/artifacts/bs6_without_tooltip_v1_*.png",
+		"8": "s3://m-aeplimages/artifacts/mobility_template_*.png",
+		"9": "s3://m-aeplimages/artifacts/editorial_template_bw_v2_*.png",
+	}
+	
+	ArtifactsSizesMap = map[string][]string{
+		"1": {"642x336"},
+		"2": {"642x336"},
+		"3": {"642x361"},
+		"4": {"559x314"},
+		"5": {"110x61", "160x89", "272x153", "393x221", "476x268", "559x314", "600x337", "642x361", "762x429"},
+		"6": {"110x61", "160x89", "272x153", "393x221", "476x268", "559x314", "600x337", "642x361", "762x429"},
+		"7": {"110x61", "160x89", "272x153", "393x221", "476x268", "559x314", "600x337", "642x361", "762x429"},
+		"8": {"642x336"},
+		"9": {"642x336"},
+	}
 
 	FallbackImageData = ""
 	FallbackImagePath = ""
