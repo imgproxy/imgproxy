@@ -406,12 +406,10 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 			sanitized, svgErr := svg.Sanitize(originData)
 			checkErr(ctx, "svg_processing", svgErr)
 
-			// Since we'll replace origin data, it's better to close it to return
-			// it's buffer to the pool
-			originData.Close()
+			defer sanitized.Close()
 
-			originData = sanitized
-
+			respondWithImage(reqID, r, rw, statusCode, sanitized, po, imageURL, originData)
+			return
 		}
 
 		respondWithImage(reqID, r, rw, statusCode, originData, po, imageURL, originData)
