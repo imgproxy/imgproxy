@@ -301,6 +301,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	}()
 
 	if err != nil {
+		log.WithField("request_id", reqID).Warningf("Could not load master image %s. %s", imageURL, err.Error())
 		originData, err = getAndCreateMasterImageData(ctx, imageURL, r.Header, imgRequestHeader)
 	}
 
