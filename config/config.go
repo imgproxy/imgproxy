@@ -225,7 +225,7 @@ func init() {
 
 func Reset() {
 	Network = "tcp"
-	Bind = ":8080"
+	Bind = ":5000"
 	Timeout = 60
 	ReadRequestTimeout = 60
 	WriteResponseTimeout = 60
