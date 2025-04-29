@@ -119,6 +119,7 @@ func setCanonical(rw http.ResponseWriter, originURL string) {
 func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, statusCode int, resultData *imagedata.ImageData, po *options.ProcessingOptions, originURL string, originData *imagedata.ImageData) {
 	rw.Header().Set("Content-Type", resultData.Type.Mime())
 
+	// cache for 365 days
 	rw.Header().Set("Cache-Control", "max-age: 31536000, public")
 	rw.Header().Set("Last-Modified", time.Now().Format(http.TimeFormat))
 	rw.Header().Set("Expires", time.Now().AddDate(1, 0, 0).Format(http.TimeFormat))
