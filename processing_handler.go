@@ -462,7 +462,10 @@ func getAndCreateMasterImageData(ctx context.Context, imageURL string, header ht
 		return processing.ProcessImage(ctx, originData, po)
 	}()
 
+	checkErr(ctx, "processing", err)
+
 	err = imagedata.Upload(ctx, fmt.Sprintf("s3://m-aeplimagesmaster-v2/%s", imageURL), "master image", resultData)
+
 
 	return resultData, err
 
