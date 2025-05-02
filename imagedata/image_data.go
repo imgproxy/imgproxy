@@ -16,6 +16,10 @@ import (
 
 var (
 	Watermark     *ImageData
+	CWWatermark     *ImageData
+	BWWatermark     *ImageData
+	BWWatermarkV2     *ImageData
+	ArtifactMap map[string] *ImageData = make(map[string]*ImageData)
 	FallbackImage *ImageData
 )
 
@@ -47,7 +51,7 @@ func Init() error {
 		return err
 	}
 
-	if err := loadWatermark(); err != nil {
+	if err := loadWatermarkAndArtifacts(); err != nil {
 		return err
 	}
 
@@ -58,24 +62,44 @@ func Init() error {
 	return nil
 }
 
-func loadWatermark() (err error) {
-	if len(config.WatermarkData) > 0 {
-		Watermark, err = FromBase64(config.WatermarkData, "watermark", security.DefaultOptions())
-		return
+func loadWatermarkAndArtifacts() error {
+	ctx := context.Background()
+
+	watermarkVars := map[string]**ImageData{
+        "cw_watermark":    &CWWatermark,
+        "bw_watermark":    &BWWatermark,
+        "bw_watermark_v2": &BWWatermarkV2,
+    }
+
+	// Download watermarks
+	for key, url := range config.WatermarkPaths {
+		download, err := Download(ctx, url, "watermark", DownloadOptions{}, security.DefaultOptions())
+		if err != nil {
+			return fmt.Errorf("failed to download watermark from %s: %w", url, err)
+		}
+		*watermarkVars[key] = download // Assign the downloaded image data to the pointer
 	}
 
-	if len(config.WatermarkPath) > 0 {
-		Watermark, err = FromFile(config.WatermarkPath, "watermark", security.DefaultOptions())
-		return
-	}
+	// Download artifacts
+	for artifactType, artifactPath := range config.Artifacts {
+		sizes, exists := config.ArtifactsSizesMap[artifactType]
+		if !exists {
+			continue
+		}
 
-	if len(config.WatermarkURL) > 0 {
-		Watermark, err = Download(context.Background(), config.WatermarkURL, "watermark", DownloadOptions{Header: nil, CookieJar: nil}, security.DefaultOptions())
-		return
+		for _, size := range sizes {
+			artifactURL := strings.Replace(artifactPath, "*", size, 1)
+			artifact, err := Download(ctx, artifactURL, "watermark", DownloadOptions{}, security.DefaultOptions())
+			if err != nil {
+				return fmt.Errorf("failed to download artifact %s (%s): %w", artifactType, size, err)
+			}
+			ArtifactMap[fmt.Sprintf("%s_%s", artifactType, size)] = artifact
+		}
 	}
 
 	return nil
 }
+
 
 func loadFallbackImage() (err error) {
 	switch {
@@ -140,4 +164,15 @@ func Download(ctx context.Context, imageURL, desc string, opts DownloadOptions, 
 	}
 
 	return imgdata, nil
+}
+
+func Upload(ctx context.Context, imageURL, desc string, data *ImageData) (error) {
+	err := upload(ctx, imageURL, data.Data)
+	if err != nil {
+		return ierrors.Wrap(
+			err, 0,
+			ierrors.WithPrefix(fmt.Sprintf("Can't download %s", desc)),
+		)
+	}
+	return nil
 }

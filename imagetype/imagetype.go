@@ -45,6 +45,13 @@ var (
 		"tiff": TIFF,
 	}
 
+	Formats = map[uint64]Type{
+		1: JPEG,
+		2: WEBP,
+		3: PNG,
+		4: HEIC,
+	}
+
 	mimes = map[Type]string{
 		JPEG: "image/jpeg",
 		JXL:  "image/jxl",

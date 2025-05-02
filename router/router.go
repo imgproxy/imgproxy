@@ -114,8 +114,6 @@ func (r *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		reqID, _ = nanoid.New()
 	}
 
-	rw.Header().Set("Server", "imgproxy")
-	rw.Header().Set(xRequestIDHeader, reqID)
 
 	if req.Method == http.MethodGet {
 		if r.HealthHandler != nil {

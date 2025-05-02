@@ -163,9 +163,31 @@ func applyWatermark(img *vips.Image, wmData *imagedata.ImageData, opts *options.
 }
 
 func watermark(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata *imagedata.ImageData) error {
-	if !po.Watermark.Enabled || imagedata.Watermark == nil {
+	if !po.Watermark.Enabled || po.Watermark.Type == "" {
 		return nil
 	}
 
-	return applyWatermark(img, imagedata.Watermark, &po.Watermark, pctx.dprScale, 1)
+	wm  := imagedata.Watermark
+
+switch po.Watermark.Type {
+		case "1":
+			wm = imagedata.CWWatermark
+		case "2":
+			wm = imagedata.BWWatermark
+		case "3":
+			wm = imagedata.BWWatermarkV2	
+	}
+
+	return applyWatermark(img, wm, &po.Watermark, pctx.dprScale, 1)
+}
+
+func artifact(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata *imagedata.ImageData) error {
+	if !po.Artifact.Enabled || imagedata.ArtifactMap == nil {
+		return nil
+	}
+
+	wm := imagedata.ArtifactMap[po.Artifact.Type]
+	
+
+	return applyWatermark(img, wm, (*options.WatermarkOptions)(&po.Artifact), pctx.dprScale, 1)
 }

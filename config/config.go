@@ -153,6 +153,9 @@ var (
 	WatermarkPath    string
 	WatermarkURL     string
 	WatermarkOpacity float64
+	WatermarkPaths  map[string]string
+	Artifacts 	 map[string]string
+	ArtifactsSizesMap map[string][]string
 
 	FallbackImageData     string
 	FallbackImagePath     string
@@ -225,13 +228,13 @@ func init() {
 
 func Reset() {
 	Network = "tcp"
-	Bind = ":8080"
-	Timeout = 10
-	ReadRequestTimeout = 10
-	WriteResponseTimeout = 10
+	Bind = ":5000"
+	Timeout = 60
+	ReadRequestTimeout = 60
+	WriteResponseTimeout = 60
 	KeepAliveTimeout = 10
 	ClientKeepAliveTimeout = 90
-	DownloadTimeout = 5
+	DownloadTimeout = 30
 	Workers = runtime.GOMAXPROCS(0) * 2
 	RequestsQueueSize = 0
 	MaxClients = 2048
@@ -244,7 +247,7 @@ func Reset() {
 
 	PathPrefix = ""
 
-	MaxSrcResolution = 50000000
+	MaxSrcResolution = 2073600 // 1920x1080
 	MaxSrcFileSize = 0
 	MaxAnimationFrames = 1
 	MaxAnimationFrameResolution = 0
@@ -263,7 +266,7 @@ func Reset() {
 	Quality = 80
 	FormatQuality = map[imagetype.Type]int{
 		imagetype.WEBP: 79,
-		imagetype.AVIF: 63,
+		imagetype.AVIF: 65,
 		imagetype.JXL:  77,
 	}
 	StripMetadata = true
@@ -274,18 +277,17 @@ func Reset() {
 	ReturnAttachment = false
 	SvgFixUnsupported = false
 
-	AutoWebp = false
+	AutoWebp = true
 	EnforceWebp = false
-	AutoAvif = false
+	AutoAvif = true
 	EnforceAvif = false
-	AutoJxl = false
+	AutoJxl = true
 	EnforceJxl = false
 	EnableClientHints = false
 
 	PreferredFormats = []imagetype.Type{
+		imagetype.WEBP,
 		imagetype.JPEG,
-		imagetype.PNG,
-		imagetype.GIF,
 	}
 
 	SkipProcessingFormats = make([]imagetype.Type, 0)
@@ -321,8 +323,8 @@ func Reset() {
 
 	SourceURLQuerySeparator = "?"
 	LocalFileSystemRoot = ""
-	S3Enabled = false
-	S3Region = ""
+	S3Enabled = true
+	S3Region = "ap-south-1"
 	S3Endpoint = ""
 	S3EndpointUsePathStyle = true
 	S3AssumeRoleArn = ""
@@ -361,6 +363,36 @@ func Reset() {
 	WatermarkURL = ""
 	WatermarkOpacity = 1
 
+	WatermarkPaths = map[string]string{
+		"cw_watermark":    "s3://m-aeplimages/watermarks/cw_watermark.png",
+		"bw_watermark":    "s3://m-aeplimages/watermarks/bw_watermark.png",
+		"bw_watermark_v2": "s3://m-aeplimages/watermarks/bw_watermark_v2.png",
+	}
+
+	Artifacts = map[string]string{
+		"1": "s3://m-aeplimages/artifacts/editorial_template_*.png",
+		"2": "s3://m-aeplimages/artifacts/editorial_template_bw_*.png",
+		"3": "s3://m-aeplimages/artifacts/ios_ad_template_*.png",
+		"4": "s3://m-aeplimages/artifacts/android_ad_template_*.png",
+		"5": "s3://m-aeplimages/artifacts/bs6_*.png",
+		"6": "s3://m-aeplimages/artifacts/bs6_without_tooltip_*.png",
+		"7": "s3://m-aeplimages/artifacts/bs6_without_tooltip_v1_*.png",
+		"8": "s3://m-aeplimages/artifacts/mobility_template_*.png",
+		"9": "s3://m-aeplimages/artifacts/editorial_template_bw_v2_*.png",
+	}
+	
+	ArtifactsSizesMap = map[string][]string{
+		"1": {"642x336"},
+		"2": {"642x336"},
+		"3": {"642x361"},
+		"4": {"559x314"},
+		"5": {"110x61", "160x89", "272x153", "393x221", "476x268", "559x314", "600x337", "642x361", "762x429"},
+		"6": {"110x61", "160x89", "272x153", "393x221", "476x268", "559x314", "600x337", "642x361", "762x429"},
+		"7": {"110x61", "160x89", "272x153", "393x221", "476x268", "559x314", "600x337", "642x361", "762x429"},
+		"8": {"642x336"},
+		"9": {"642x336"},
+	}
+
 	FallbackImageData = ""
 	FallbackImagePath = ""
 	FallbackImageURL = ""
@@ -373,7 +405,7 @@ func Reset() {
 	NewRelicKey = ""
 	NewRelicLabels = make(map[string]string)
 
-	PrometheusBind = ""
+	PrometheusBind = "127.0.0.1:9421"
 	PrometheusNamespace = ""
 
 	OpenTelemetryEnable = false
