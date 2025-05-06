@@ -303,7 +303,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		log.WithField("request_id", reqID).Warningf("Could not load master image %s. %s", imageURL, err.Error())
-		originData, err = getAndCreateMasterImageData(ctx, imageURL, r.Header, imgRequestHeader)
+		originData, err = getAndCreateMasterImageData(ctx, r.URL.Path[1:], imgRequestHeader)
 	}
 
 	var nmErr imagedata.NotModifiedError
@@ -434,10 +434,19 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	respondWithImage(reqID, r, rw, statusCode, resultData, po, imageURL, originData)
 }
 
-func getAndCreateMasterImageData(ctx context.Context, imageURL string, header http.Header, imgRequestHeader http.Header) (*imagedata.ImageData, error) {
+func getAndCreateMasterImageData(ctx context.Context, imageURL string, imgRequestHeader http.Header) (*imagedata.ImageData, error) {
 
-	po, err := options.DefaultProcessingOptions(header)
+	masterHeaders := http.Header{
+		"Accept": []string{"image/avif"},
+	}
 
+	// Normalize the imageURL by removing the first path segment and prepending "0x0/"
+	if segments := strings.SplitN(imageURL, "/", 2); len(segments) == 2 {
+		imageURL = "0x0/" + segments[1]
+	} 
+
+	// Parse processing options
+	po, imageURL, err := options.ParsePathIPC(imageURL, nil, masterHeaders)
 	checkErr(ctx, "path_parsing", err)
 
 	originData, err := func() (*imagedata.ImageData, error) {

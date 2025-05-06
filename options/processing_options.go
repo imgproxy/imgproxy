@@ -1219,15 +1219,12 @@ func ParsePathIPC(path string, qs url.Values, headers http.Header) (*ProcessingO
 		return nil, "", err
 	}
 
-	imageURL := path
-
-	parts := strings.SplitN(imageURL, "/", 2)
-	imgResize := strings.ToLower(parts[0])
-	url := strings.ToLower(parts[1])
-
 	path = strings.TrimPrefix(path, "/")
 
-	options := parseURLOptionsIPC(imgResize, qs)
+	options, url, err := parseURLOptionsIPC(qs, path)
+	if err != nil {
+		return nil, "", err
+	}
 
 	if err = applyURLOptions(po, options); err != nil {
 		return nil, "", err

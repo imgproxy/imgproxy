@@ -6,6 +6,7 @@ import (
 
 type Options struct {
 	MaxSrcResolution            int
+	MaxMediaSrcResolution	    int
 	MaxSrcFileSize              int
 	MaxAnimationFrames          int
 	MaxAnimationFrameResolution int
@@ -14,6 +15,7 @@ type Options struct {
 func DefaultOptions() Options {
 	return Options{
 		MaxSrcResolution:            config.MaxSrcResolution,
+		MaxMediaSrcResolution:       config.MaxMediaSrcResolution,
 		MaxSrcFileSize:              config.MaxSrcFileSize,
 		MaxAnimationFrames:          config.MaxAnimationFrames,
 		MaxAnimationFrameResolution: config.MaxAnimationFrameResolution,

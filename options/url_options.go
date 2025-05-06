@@ -2,6 +2,7 @@ package options
 
 import (
 	"net/url"
+	"strconv"
 	"strings"
 
 	"github.com/imgproxy/imgproxy/v3/config"
@@ -40,11 +41,11 @@ func parseURLOptions(opts []string) (urlOptions, []string) {
 	return parsed, rest
 }
 
-func parseURLOptionsIPC(size string, qs url.Values) urlOptions {
-	// Split size only once
-	dimensions := strings.SplitN(size, "x", 2)
-	if len(dimensions) != 2 {
-		return nil // Return nil or handle error if size is invalid
+func parseURLOptionsIPC(qs url.Values, path string) (urlOptions, string, error) {
+	dimensions, path, err := parseDimensions(path)
+
+	if err != nil {
+		return nil, "", err
 	}
 
 	// Initialize parsed options with "rs"
@@ -54,6 +55,13 @@ func parseURLOptionsIPC(size string, qs url.Values) urlOptions {
 
 	// Define allowed query parameters
 	validKeys := map[string]bool{"qp": true, "wm": true, "art": true, "fmt" : true, "fit" : true}
+
+	if isMediaPath(path) {
+		parsed = append(parsed, urlOption{
+			Name: "msr",
+			Args: []string{strconv.Itoa(config.MaxMediaSrcResolution)},
+		})
+	}
 
 	// Append valid query parameters
 	for key, val := range qs {
@@ -66,7 +74,34 @@ func parseURLOptionsIPC(size string, qs url.Values) urlOptions {
 		}
 	}
 
-	return parsed
+	return parsed, path, nil
 }
 
+// Helper to detect media-related paths
+func isMediaPath(path string) bool {
+	for _, prefix := range config.MediaPathPrefixes {
+		if strings.HasPrefix(path, prefix) {
+			return true
+		}
+	}
+	return false
+}
 
+func parseDimensions(path string) ([]string, string, error) {
+	if path == "" {
+		return nil, "", newInvalidURLError("path is empty")
+	}
+
+	parts := strings.SplitN(path, "/", 2)
+	if len(parts) < 2 {
+		return nil, "", newInvalidURLError("path does not contain '/' separator")
+	}
+
+	dimParts := strings.Split(parts[0], "x")
+	if len(dimParts) != 2 {
+		return nil, "", newInvalidURLError("dimension part does not contain 2 segments separated by 'x'")
+	}
+
+	dimensions := []string{dimParts[0], dimParts[1]}
+	return dimensions, parts[1], nil
+}

@@ -38,8 +38,10 @@ var (
 	SoReuseport bool
 
 	PathPrefix string
+	MediaPathPrefixes []string
 
 	MaxSrcResolution            int
+	MaxMediaSrcResolution       int
 	MaxSrcFileSize              int
 	MaxAnimationFrames          int
 	MaxAnimationFrameResolution int
@@ -246,8 +248,10 @@ func Reset() {
 	SoReuseport = false
 
 	PathPrefix = ""
+	MediaPathPrefixes = []string{"media/", "dev/media/", "staging/media/"}
 
 	MaxSrcResolution = 2073600 // 1920x1080
+	MaxMediaSrcResolution = 8 // 8000000, we're multiplying it by 1000000 in the setter
 	MaxSrcFileSize = 0
 	MaxAnimationFrames = 1
 	MaxAnimationFrameResolution = 0
@@ -255,7 +259,7 @@ func Reset() {
 	MaxRedirects = 10
 	PngUnlimited = false
 	SvgUnlimited = false
-	AllowSecurityOptions = false
+	AllowSecurityOptions = true
 
 	JpegProgressive = false
 	PngInterlaced = false
@@ -496,6 +500,7 @@ func Configure() error {
 	configurators.URLPath(&PathPrefix, "IMGPROXY_PATH_PREFIX")
 
 	configurators.MegaInt(&MaxSrcResolution, "IMGPROXY_MAX_SRC_RESOLUTION")
+	configurators.MegaInt(&MaxMediaSrcResolution, "IMGPROXY_MAX_MEDIA_SRC_RESOLUTION")
 	configurators.Int(&MaxSrcFileSize, "IMGPROXY_MAX_SRC_FILE_SIZE")
 	configurators.Int(&MaxSvgCheckBytes, "IMGPROXY_MAX_SVG_CHECK_BYTES")
 
@@ -754,6 +759,10 @@ func Configure() error {
 
 	if MaxSrcResolution <= 0 {
 		return fmt.Errorf("Max src resolution should be greater than 0, now - %d\n", MaxSrcResolution)
+	}
+
+	if MaxMediaSrcResolution <= 0 {
+		return fmt.Errorf("Max media src resolution should be greater than 0, now - %d\n", MaxMediaSrcResolution)
 	}
 
 	if MaxSrcFileSize < 0 {
