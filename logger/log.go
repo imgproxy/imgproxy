@@ -18,8 +18,8 @@ func init() {
 func Init() error {
 	logrus.SetOutput(os.Stdout)
 
-	logFormat := "pretty"
-	logLevel := "info"
+	logFormat := "json"
+	logLevel := "warn"
 
 	configurators.String(&logFormat, "IMGPROXY_LOG_FORMAT")
 	configurators.String(&logLevel, "IMGPROXY_LOG_LEVEL")
