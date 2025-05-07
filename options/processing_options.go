@@ -1219,7 +1219,9 @@ func ParsePathIPC(path string, qs url.Values, headers http.Header) (*ProcessingO
 		return nil, "", err
 	}
 
-	path = strings.TrimPrefix(path, "/")
+	if path = strings.ToLower(strings.TrimPrefix(path, "/")); path == "" {
+		return nil, "", newInvalidURLError("invalid path")
+	}
 
 	options, url, err := parseURLOptionsIPC(qs, path)
 	if err != nil {
