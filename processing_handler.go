@@ -460,14 +460,15 @@ func getAndCreateMasterImageData(ctx context.Context, imageURL string, imgReques
 		return imagedata.Download(ctx, fmt.Sprintf("s3://m-aeplimages/%s", imageURL), "source image", downloadOpts, po.SecurityOptions)
 	}()
 
-	if originData.Type == imagetype.SVG {
-		return originData, nil
-	}
-
+	
 	if err != nil {
 		return nil, err
 	}
-
+	
+	if originData.Type == imagetype.SVG {
+		return originData, nil
+	}
+	
 	defer originData.Close()
 
 	resultData, err := func() (*imagedata.ImageData, error) {
