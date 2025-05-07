@@ -171,7 +171,7 @@ func Upload(ctx context.Context, imageURL, desc string, data *ImageData) (error)
 	if err != nil {
 		return ierrors.Wrap(
 			err, 0,
-			ierrors.WithPrefix(fmt.Sprintf("Can't download %s", desc)),
+			ierrors.WithPrefix(fmt.Sprintf("Can't upload %s", desc)),
 		)
 	}
 	return nil
