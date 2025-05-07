@@ -1,6 +1,7 @@
 package s3
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -26,6 +27,13 @@ import (
 	defaultTransport "github.com/imgproxy/imgproxy/v3/transport"
 	"github.com/imgproxy/imgproxy/v3/transport/common"
 )
+
+var s3BufPool = sync.Pool{
+    New: func() interface{} {
+        buf := make([]byte, 4096) 
+        return &buf
+    },
+}
 
 type s3Client interface {
 	GetObject(ctx context.Context, input *s3.GetObjectInput, opts ...func(*s3.Options)) (*s3.GetObjectOutput, error)
@@ -237,16 +245,35 @@ func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	}, nil
 
 	case http.MethodPut:
+		// Ensure req.Body is closed after reading
+		defer req.Body.Close()
+
+		// Get a buffer from the pool
+		buf := s3BufPool.Get().(*[]byte)
+		defer s3BufPool.Put(buf)
+	
+		// Create a bytes.Buffer to hold the copied data
+		bodyBuffer := bytes.NewBuffer(nil)
+	
+		// Copy the request body into the buffer using io.CopyBuffer
+		_, err := io.CopyBuffer(bodyBuffer, req.Body, *buf)
+		if err != nil {
+			return handleError(req, fmt.Errorf("failed to read request body: %w", err))
+		}
+	
+		// Create a seekable reader from the buffer
+		bodyReader := bytes.NewReader(bodyBuffer.Bytes())
+		
 		input := &s3.PutObjectInput{
 			Bucket: aws.String(bucket),
 			Key:    aws.String(key),
 			ContentLength: &req.ContentLength,
-			Body:   req.Body,
+			Body:   bodyReader,
 		}
 	
 		client := t.getBucketClient(bucket)
 	
-		_, err := client.PutObject(req.Context(), input)
+		_, err = client.PutObject(req.Context(), input)
 
 		if err != nil {
 			return handleError(req, err)
