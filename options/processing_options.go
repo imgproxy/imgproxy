@@ -721,7 +721,7 @@ func applyWatermarkOption(po *ProcessingOptions, args []string) error {
 	if len(args) == 0 {
 		return fmt.Errorf("Invalid watermark arguments: %v", args)
 	}
-	if watermarkType, err := strconv.Atoi(args[0]); err != nil || watermarkType < 1 || watermarkType > 4 {
+	if watermarkType, err := strconv.Atoi(args[0]); err != nil || watermarkType < 1 || watermarkType > 3 {
 		po.Watermark.Enabled = false
 		return nil
 	}
