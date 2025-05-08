@@ -169,7 +169,7 @@ func watermark(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOpt
 
 	wm  := imagedata.Watermark
 
-switch po.Watermark.Type {
+	switch po.Watermark.Type {
 		case "1":
 			wm = imagedata.CWWatermark
 		case "2":
