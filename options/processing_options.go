@@ -721,6 +721,10 @@ func applyWatermarkOption(po *ProcessingOptions, args []string) error {
 	if len(args) == 0 {
 		return fmt.Errorf("Invalid watermark arguments: %v", args)
 	}
+	if watermarkType, err := strconv.Atoi(args[0]); err != nil || watermarkType < 1 || watermarkType > 4 {
+		po.Watermark.Enabled = false
+		return nil
+	}
 	po.Watermark.Enabled = true
 	po.Watermark.Opacity = 1
 	po.Watermark.Type = args[0]
@@ -734,7 +738,12 @@ func applyWatermarkOption(po *ProcessingOptions, args []string) error {
 
 func applyArtifactOption(po *ProcessingOptions, args []string) error {
 	if len(args) == 0 {
-		return fmt.Errorf("Invalid watermark arguments: %v", args)
+		return fmt.Errorf("Invalid artifact arguments: %v", args)
+	}
+
+	if artifactType, err := strconv.Atoi(args[0]); err != nil || artifactType < 1 || artifactType > 9 {
+		po.Artifact.Enabled = false
+		return nil
 	}
 
 	artifactKey := fmt.Sprintf("%s_%dx%d", args[0], po.Width, po.Height)
