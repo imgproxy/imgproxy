@@ -3,7 +3,6 @@ package imagedata
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -22,7 +21,6 @@ func upload(ctx context.Context, imageURL string, data []byte) error {
 		reqCancel()
 		return newImageRequestError(err)
 	}
-	res, err := client.Do(req)
-	fmt.Print(res)
+	_, err = client.Do(req)
 	return err
 }
