@@ -162,7 +162,9 @@ func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
 
 	client := t.getBucketClient(bucket)
 
-	output, err := client.GetObject(req.Context(), input)
+	output, err := client.GetObject(req.Context(), input, func(o *s3.Options) {
+        o.DisableLogOutputChecksumValidationSkipped = true
+    })
 
 	defer func() {
 		if err != nil && output != nil && output.Body != nil {
