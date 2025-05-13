@@ -1,6 +1,10 @@
 # Changelog
 
 ## [Unreleased]
+### Added
+- (pro) Add [crop_aspect_ratio](https://docs.imgproxy.net/latest/usage/processing#crop-aspect-ratio) processing option.
+- (pro) Add [IMGPROXY_PDF_NO_BACKGROUND](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_PDF_NO_BACKGROUND) config.
+
 ### Changed
 - (docker) Optimized image quantization.
 
