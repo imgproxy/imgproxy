@@ -4,6 +4,12 @@
 #include <vips/vips7compat.h>
 #include <vips/vector.h>
 
+typedef struct _RGB {
+  double r;
+  double g;
+  double b;
+} RGB;
+
 int vips_initialize();
 
 void clear_image(VipsImage **in);
@@ -62,13 +68,12 @@ int vips_flip_horizontal_go(VipsImage *in, VipsImage **out);
 
 int vips_extract_area_go(VipsImage *in, VipsImage **out, int left, int top, int width, int height);
 int vips_smartcrop_go(VipsImage *in, VipsImage **out, int width, int height);
-int vips_trim(VipsImage *in, VipsImage **out, double threshold, gboolean smart, double r, double g,
-    double b, gboolean equal_hor, gboolean equal_ver);
+int vips_trim(VipsImage *in, VipsImage **out, double threshold, gboolean smart, RGB bg, gboolean equal_hor, gboolean equal_ver);
 
 int vips_apply_filters(VipsImage *in, VipsImage **out, double blur_sigma, double sharp_sigma,
     int pixelate_pixels);
 
-int vips_flatten_go(VipsImage *in, VipsImage **out, double r, double g, double b);
+int vips_flatten_go(VipsImage *in, VipsImage **out, RGB bg);
 
 int vips_replicate_go(VipsImage *in, VipsImage **out, int across, int down, int centered);
 int vips_embed_go(VipsImage *in, VipsImage **out, int x, int y, int width, int height);

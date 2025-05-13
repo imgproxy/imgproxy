@@ -301,6 +301,14 @@ func gbool(b bool) C.gboolean {
 	return C.gboolean(0)
 }
 
+func cRGB(c Color) C.RGB {
+	return C.RGB{
+		r: C.double(c.R),
+		g: C.double(c.G),
+		b: C.double(c.B),
+	}
+}
+
 func ptrToBytes(ptr unsafe.Pointer, size int) []byte {
 	return (*[math.MaxInt32]byte)(ptr)[:int(size):int(size)]
 }
@@ -695,8 +703,7 @@ func (img *Image) Trim(threshold float64, smart bool, color Color, equalHor bool
 	}
 
 	if C.vips_trim(img.VipsImage, &tmp, C.double(threshold),
-		gbool(smart), C.double(color.R), C.double(color.G), C.double(color.B),
-		gbool(equalHor), gbool(equalVer)) != 0 {
+		gbool(smart), cRGB(color), gbool(equalHor), gbool(equalVer)) != 0 {
 		return Error()
 	}
 
@@ -707,7 +714,7 @@ func (img *Image) Trim(threshold float64, smart bool, color Color, equalHor bool
 func (img *Image) Flatten(bg Color) error {
 	var tmp *C.VipsImage
 
-	if C.vips_flatten_go(img.VipsImage, &tmp, C.double(bg.R), C.double(bg.G), C.double(bg.B)) != 0 {
+	if C.vips_flatten_go(img.VipsImage, &tmp, cRGB(bg)) != 0 {
 		return Error()
 	}
 	C.swap_and_clear(&img.VipsImage, tmp)

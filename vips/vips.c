@@ -689,14 +689,14 @@ vips_apply_filters(VipsImage *in, VipsImage **out, double blur_sigma,
 }
 
 int
-vips_flatten_go(VipsImage *in, VipsImage **out, double r, double g, double b)
+vips_flatten_go(VipsImage *in, VipsImage **out, RGB bg)
 {
   if (!vips_image_hasalpha(in))
     return vips_copy(in, out, NULL);
 
-  VipsArrayDouble *bg = vips_array_double_newv(3, r, g, b);
-  int res = vips_flatten(in, out, "background", bg, NULL);
-  vips_area_unref((VipsArea *) bg);
+  VipsArrayDouble *bga = vips_array_double_newv(3, bg.r, bg.g, bg.b);
+  int res = vips_flatten(in, out, "background", bga, NULL);
+  vips_area_unref((VipsArea *) bga);
   return res;
 }
 
@@ -708,8 +708,7 @@ vips_extract_area_go(VipsImage *in, VipsImage **out, int left, int top, int widt
 
 int
 vips_trim(VipsImage *in, VipsImage **out, double threshold,
-    gboolean smart, double r, double g, double b,
-    gboolean equal_hor, gboolean equal_ver)
+    gboolean smart, RGB bg, gboolean equal_hor, gboolean equal_ver)
 {
 
   VipsImage *base = vips_image_new();
@@ -726,26 +725,27 @@ vips_trim(VipsImage *in, VipsImage **out, double threshold,
   }
 
   if (vips_image_hasalpha(tmp)) {
-    if (vips_flatten_go(tmp, &t[1], 255.0, 0, 255.0)) {
+    RGB f_bg = { 255.0, 0, 255.0 };
+    if (vips_flatten_go(tmp, &t[1], f_bg)) {
       clear_image(&base);
       return 1;
     }
     tmp = t[1];
   }
 
-  double *bg = NULL;
-  int bgn;
+  double *img_bg = NULL;
+  int img_bgn;
   VipsArrayDouble *bga;
 
   if (smart) {
-    if (vips_getpoint(tmp, &bg, &bgn, 0, 0, NULL)) {
+    if (vips_getpoint(tmp, &img_bg, &img_bgn, 0, 0, NULL)) {
       clear_image(&base);
       return 1;
     }
-    bga = vips_array_double_new(bg, bgn);
+    bga = vips_array_double_new(img_bg, img_bgn);
   }
   else {
-    bga = vips_array_double_newv(3, r, g, b);
+    bga = vips_array_double_newv(3, bg.r, bg.g, bg.b);
   }
 
   int left, right, top, bot, width, height, diff;
@@ -753,7 +753,7 @@ vips_trim(VipsImage *in, VipsImage **out, double threshold,
 
   clear_image(&base);
   vips_area_unref((VipsArea *) bga);
-  g_free(bg);
+  g_free(img_bg);
 
   if (res) {
     return 1;
