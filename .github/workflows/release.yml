@@ -47,3 +47,16 @@ jobs:
         with:
           body_path: RELEASE_NOTES.txt
           prerelease: ${{ fromJSON(steps.notes.outputs.prerelease) }}
+
+  update-helm-chart:
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Repository Dispatch
+        uses: peter-evans/repository-dispatch@v2
+        with:
+          token: ${{ secrets.WORKFLOW_DISPATCH_TOKEN }}
+          repository: imgproxy/imgproxy-helm
+          event-type: imgproxy-version-updated
+          client-payload: '{"tag": "${{ github.ref_name }}"}'
+
