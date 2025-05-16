@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"slices"
 	"strconv"
 	"strings"
@@ -250,6 +251,11 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 
 	metrics.SetMetadata(ctx, "imgproxy.source_image_url", imageURL)
 	metrics.SetMetadata(ctx, "imgproxy.processing_options", po)
+
+	parsedURL, err := url.Parse(imageURL)
+	if err == nil {
+		metrics.SetMetadata(ctx, "peer.service", parsedURL.Host)
+	}
 
 	err = security.VerifySourceURL(imageURL)
 	checkErr(ctx, "security", err)
