@@ -254,7 +254,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 
 	parsedURL, err := url.Parse(imageURL)
 	if err == nil {
-		metrics.SetMetadata(ctx, "peer.service", parsedURL.Host)
+		metrics.SetMetadata(ctx, "imgproxy.source_image_origin", parsedURL.Scheme+"://"+parsedURL.Host)
 	}
 
 	err = security.VerifySourceURL(imageURL)
