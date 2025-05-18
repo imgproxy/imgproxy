@@ -252,7 +252,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	metrics.SetMetadata(ctx, "imgproxy.source_image_url", imageURL)
 	metrics.SetMetadata(ctx, "imgproxy.processing_options", po)
 
-	if u, err := url.Parse(imageURL); err == nil {
+	if u, ue := url.Parse(imageURL); ue == nil {
 		metrics.SetMetadata(ctx, "imgproxy.source_image_origin", u.Scheme+"://"+u.Host)
 	}
 
