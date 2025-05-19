@@ -426,12 +426,10 @@ func StartRootSpan(ctx context.Context, rw http.ResponseWriter, r *http.Request)
 	return ctx, cancel, newRw
 }
 
-func SetMetadata(ctx context.Context, key string, value interface{}) {
-	if !enabled {
+func setMetadata(span trace.Span, key string, value interface{}) {
+	if len(key) == 0 || value == nil {
 		return
 	}
-
-	span := trace.SpanFromContext(ctx)
 
 	rv := reflect.ValueOf(value)
 
@@ -446,6 +444,10 @@ func SetMetadata(ctx context.Context, key string, value interface{}) {
 		span.SetAttributes(attribute.Int64(key, int64(rv.Uint())))
 	case rv.CanFloat():
 		span.SetAttributes(attribute.Float64(key, rv.Float()))
+	case rv.Kind() == reflect.Map && rv.Type().Key().Kind() == reflect.String:
+		for _, k := range rv.MapKeys() {
+			setMetadata(span, key+"."+k.String(), rv.MapIndex(k).Interface())
+		}
 	default:
 		// Theoretically, we can also cover slices and arrays here,
 		// but it's pretty complex and not really needed for now
@@ -453,13 +455,29 @@ func SetMetadata(ctx context.Context, key string, value interface{}) {
 	}
 }
 
-func StartSpan(ctx context.Context, name string) context.CancelFunc {
+func SetMetadata(ctx context.Context, key string, value interface{}) {
+	if !enabled {
+		return
+	}
+
+	if ctx.Value(hasSpanCtxKey{}) != nil {
+		if span := trace.SpanFromContext(ctx); span != nil {
+			setMetadata(span, key, value)
+		}
+	}
+}
+
+func StartSpan(ctx context.Context, name string, meta map[string]any) context.CancelFunc {
 	if !enabled {
 		return func() {}
 	}
 
 	if ctx.Value(hasSpanCtxKey{}) != nil {
 		_, span := tracer.Start(ctx, name, trace.WithSpanKind(trace.SpanKindInternal))
+
+		for k, v := range meta {
+			setMetadata(span, k, v)
+		}
 
 		return func() { span.End() }
 	}

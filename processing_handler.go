@@ -246,15 +246,21 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	po, imageURL, err := options.ParsePath(path, r.Header)
 	checkErr(ctx, "path_parsing", err)
 
+	var imageOrigin any
+	if u, uerr := url.Parse(imageURL); uerr == nil {
+		imageOrigin = u.Scheme + "://" + u.Host
+	}
+
 	errorreport.SetMetadata(r, "Source Image URL", imageURL)
 	errorreport.SetMetadata(r, "Processing Options", po)
 
-	metrics.SetMetadata(ctx, "imgproxy.source_image_url", imageURL)
-	metrics.SetMetadata(ctx, "imgproxy.processing_options", po)
-
-	if u, ue := url.Parse(imageURL); ue == nil {
-		metrics.SetMetadata(ctx, "imgproxy.source_image_origin", u.Scheme+"://"+u.Host)
+	metricsMeta := metrics.Meta{
+		metrics.MetaSourceImageURL:    imageURL,
+		metrics.MetaSourceImageOrigin: imageOrigin,
+		metrics.MetaProcessingOptions: po.Diff().Flatten(),
 	}
+
+	metrics.SetMetadata(ctx, metricsMeta)
 
 	err = security.VerifySourceURL(imageURL)
 	checkErr(ctx, "security", err)
@@ -323,7 +329,10 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	statusCode := http.StatusOK
 
 	originData, err := func() (*imagedata.ImageData, error) {
-		defer metrics.StartDownloadingSegment(ctx)()
+		defer metrics.StartDownloadingSegment(ctx, metrics.Meta{
+			metrics.MetaSourceImageURL:    metricsMeta[metrics.MetaSourceImageURL],
+			metrics.MetaSourceImageOrigin: metricsMeta[metrics.MetaSourceImageOrigin],
+		})()
 
 		downloadOpts := imagedata.DownloadOptions{
 			Header:    imgRequestHeader,
@@ -452,7 +461,9 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	}
 
 	resultData, err := func() (*imagedata.ImageData, error) {
-		defer metrics.StartProcessingSegment(ctx)()
+		defer metrics.StartProcessingSegment(ctx, metrics.Meta{
+			metrics.MetaProcessingOptions: metricsMeta[metrics.MetaProcessingOptions],
+		})()
 		return processing.ProcessImage(ctx, originData, po)
 	}()
 	checkErr(ctx, "processing", err)

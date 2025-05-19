@@ -2,7 +2,6 @@ package metrics
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"github.com/imgproxy/imgproxy/v3/metrics/cloudwatch"
@@ -10,8 +9,15 @@ import (
 	"github.com/imgproxy/imgproxy/v3/metrics/newrelic"
 	"github.com/imgproxy/imgproxy/v3/metrics/otel"
 	"github.com/imgproxy/imgproxy/v3/metrics/prometheus"
-	"github.com/imgproxy/imgproxy/v3/structdiff"
 )
+
+const (
+	MetaSourceImageURL    = "imgproxy.source_image_url"
+	MetaSourceImageOrigin = "imgproxy.source_image_origin"
+	MetaProcessingOptions = "imgproxy.processing_options"
+)
+
+type Meta map[string]any
 
 func Init() error {
 	prometheus.Init()
@@ -64,29 +70,19 @@ func StartRequest(ctx context.Context, rw http.ResponseWriter, r *http.Request) 
 	return ctx, cancel, rw
 }
 
-func setMetadata(ctx context.Context, key string, value any) {
-	newrelic.SetMetadata(ctx, key, value)
-	datadog.SetMetadata(ctx, key, value)
-	otel.SetMetadata(ctx, key, value)
-}
-
-func SetMetadata(ctx context.Context, key string, value any) {
-	if diff, ok := value.(structdiff.Diffable); ok {
-		m := diff.Diff().Flatten()
-		for k, v := range m {
-			setMetadata(ctx, fmt.Sprintf("%s.%s", key, k), v)
-		}
-		return
+func SetMetadata(ctx context.Context, meta Meta) {
+	for key, value := range meta {
+		newrelic.SetMetadata(ctx, key, value)
+		datadog.SetMetadata(ctx, key, value)
+		otel.SetMetadata(ctx, key, value)
 	}
-
-	setMetadata(ctx, key, value)
 }
 
 func StartQueueSegment(ctx context.Context) context.CancelFunc {
 	promCancel := prometheus.StartQueueSegment()
-	nrCancel := newrelic.StartSegment(ctx, "Queue")
-	ddCancel := datadog.StartSpan(ctx, "queue")
-	otelCancel := otel.StartSpan(ctx, "queue")
+	nrCancel := newrelic.StartSegment(ctx, "Queue", nil)
+	ddCancel := datadog.StartSpan(ctx, "queue", nil)
+	otelCancel := otel.StartSpan(ctx, "queue", nil)
 
 	cancel := func() {
 		promCancel()
@@ -98,11 +94,11 @@ func StartQueueSegment(ctx context.Context) context.CancelFunc {
 	return cancel
 }
 
-func StartDownloadingSegment(ctx context.Context) context.CancelFunc {
+func StartDownloadingSegment(ctx context.Context, meta Meta) context.CancelFunc {
 	promCancel := prometheus.StartDownloadingSegment()
-	nrCancel := newrelic.StartSegment(ctx, "Downloading image")
-	ddCancel := datadog.StartSpan(ctx, "downloading_image")
-	otelCancel := otel.StartSpan(ctx, "downloading_image")
+	nrCancel := newrelic.StartSegment(ctx, "Downloading image", meta)
+	ddCancel := datadog.StartSpan(ctx, "downloading_image", meta)
+	otelCancel := otel.StartSpan(ctx, "downloading_image", meta)
 
 	cancel := func() {
 		promCancel()
@@ -114,11 +110,11 @@ func StartDownloadingSegment(ctx context.Context) context.CancelFunc {
 	return cancel
 }
 
-func StartProcessingSegment(ctx context.Context) context.CancelFunc {
+func StartProcessingSegment(ctx context.Context, meta Meta) context.CancelFunc {
 	promCancel := prometheus.StartProcessingSegment()
-	nrCancel := newrelic.StartSegment(ctx, "Processing image")
-	ddCancel := datadog.StartSpan(ctx, "processing_image")
-	otelCancel := otel.StartSpan(ctx, "processing_image")
+	nrCancel := newrelic.StartSegment(ctx, "Processing image", meta)
+	ddCancel := datadog.StartSpan(ctx, "processing_image", meta)
+	otelCancel := otel.StartSpan(ctx, "processing_image", meta)
 
 	cancel := func() {
 		promCancel()
@@ -132,9 +128,9 @@ func StartProcessingSegment(ctx context.Context) context.CancelFunc {
 
 func StartStreamingSegment(ctx context.Context) context.CancelFunc {
 	promCancel := prometheus.StartStreamingSegment()
-	nrCancel := newrelic.StartSegment(ctx, "Streaming image")
-	ddCancel := datadog.StartSpan(ctx, "streaming_image")
-	otelCancel := otel.StartSpan(ctx, "streaming_image")
+	nrCancel := newrelic.StartSegment(ctx, "Streaming image", nil)
+	ddCancel := datadog.StartSpan(ctx, "streaming_image", nil)
+	otelCancel := otel.StartSpan(ctx, "streaming_image", nil)
 
 	cancel := func() {
 		promCancel()

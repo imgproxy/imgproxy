@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"reflect"
 	"sync"
 	"time"
 
@@ -123,23 +124,43 @@ func StartRootSpan(ctx context.Context, rw http.ResponseWriter, r *http.Request)
 	return context.WithValue(ctx, spanCtxKey{}, span), cancel, newRw
 }
 
+func setMetadata(span tracer.Span, key string, value any) {
+	if len(key) == 0 || value == nil {
+		return
+	}
+
+	if rv := reflect.ValueOf(value); rv.Kind() == reflect.Map && rv.Type().Key().Kind() == reflect.String {
+		for _, k := range rv.MapKeys() {
+			setMetadata(span, key+"."+k.String(), rv.MapIndex(k).Interface())
+		}
+		return
+	}
+
+	span.SetTag(key, value)
+}
+
 func SetMetadata(ctx context.Context, key string, value any) {
 	if !enabled {
 		return
 	}
 
 	if rootSpan, ok := ctx.Value(spanCtxKey{}).(tracer.Span); ok {
-		rootSpan.SetTag(key, value)
+		setMetadata(rootSpan, key, value)
 	}
 }
 
-func StartSpan(ctx context.Context, name string) context.CancelFunc {
+func StartSpan(ctx context.Context, name string, meta map[string]any) context.CancelFunc {
 	if !enabled {
 		return func() {}
 	}
 
 	if rootSpan, ok := ctx.Value(spanCtxKey{}).(tracer.Span); ok {
 		span := tracer.StartSpan(name, tracer.Measured(), tracer.ChildOf(rootSpan.Context()))
+
+		for k, v := range meta {
+			setMetadata(span, k, v)
+		}
+
 		return func() { span.Finish() }
 	}
 
