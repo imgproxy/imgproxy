@@ -252,6 +252,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	}
 
 	errorreport.SetMetadata(r, "Source Image URL", imageURL)
+	errorreport.SetMetadata(r, "Source Image Origin", imageOrigin)
 	errorreport.SetMetadata(r, "Processing Options", po)
 
 	metricsMeta := metrics.Meta{
