@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 ### Added
+- Add `imgproxy.source_image_origin` attribute to New Relic, DataDog, and OpenTelemetry traces.
+- Add `imgproxy.source_image_url` and `imgproxy.source_image_origin` attributes to `downloading_image` spans in New Relic, DataDog, and OpenTelemetry traces.
+- Add `imgproxy.processing_options` attribute to `processing_image` spans in New Relic, DataDog, and OpenTelemetry traces.
+- Add `Source Image Origin` attribute to error reports.
 - (pro) Add [crop_aspect_ratio](https://docs.imgproxy.net/latest/usage/processing#crop-aspect-ratio) processing option.
 - (pro) Add [IMGPROXY_PDF_NO_BACKGROUND](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_PDF_NO_BACKGROUND) config.
 
