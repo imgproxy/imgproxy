@@ -222,6 +222,13 @@ func runMetricsCollector() {
 
 			metrics = append(metrics, cloudwatchTypes.MetricDatum{
 				Dimensions: []cloudwatchTypes.Dimension{dimension},
+				MetricName: aws.String("Workers"),
+				Unit:       cloudwatchTypes.StandardUnitCount,
+				Value:      aws.Float64(float64(config.Workers)),
+			})
+
+			metrics = append(metrics, cloudwatchTypes.MetricDatum{
+				Dimensions: []cloudwatchTypes.Dimension{dimension},
 				MetricName: aws.String("RequestsInProgress"),
 				Unit:       cloudwatchTypes.StandardUnitCount,
 				Value:      aws.Float64(stats.RequestsInProgress()),
@@ -239,7 +246,7 @@ func runMetricsCollector() {
 				MetricName: aws.String("ConcurrencyUtilization"),
 				Unit:       cloudwatchTypes.StandardUnitPercent,
 				Value: aws.Float64(
-					stats.RequestsInProgress() / float64(config.Workers) * 100.0,
+					stats.WorkersUtilization(),
 				),
 			})
 
@@ -248,7 +255,7 @@ func runMetricsCollector() {
 				MetricName: aws.String("WorkersUtilization"),
 				Unit:       cloudwatchTypes.StandardUnitPercent,
 				Value: aws.Float64(
-					stats.RequestsInProgress() / float64(config.Workers) * 100.0,
+					stats.WorkersUtilization(),
 				),
 			})
 

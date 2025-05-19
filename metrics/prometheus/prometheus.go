@@ -33,8 +33,10 @@ var (
 	bufferDefaultSize *prometheus.GaugeVec
 	bufferMaxSize     *prometheus.GaugeVec
 
+	workers            prometheus.Gauge
 	requestsInProgress prometheus.GaugeFunc
 	imagesInProgress   prometheus.GaugeFunc
+	workersUtilization prometheus.GaugeFunc
 )
 
 func Init() {
@@ -103,6 +105,13 @@ func Init() {
 		Help:      "A gauge of the buffer max size in bytes.",
 	}, []string{"type"})
 
+	workers = prometheus.NewGauge(prometheus.GaugeOpts{
+		Namespace: config.PrometheusNamespace,
+		Name:      "workers",
+		Help:      "A gauge of the number of running workers.",
+	})
+	workers.Set(float64(config.Workers))
+
 	requestsInProgress = prometheus.NewGaugeFunc(prometheus.GaugeOpts{
 		Namespace: config.PrometheusNamespace,
 		Name:      "requests_in_progress",
@@ -115,6 +124,12 @@ func Init() {
 		Help:      "A gauge of the number of images currently being in progress.",
 	}, stats.ImagesInProgress)
 
+	workersUtilization = prometheus.NewGaugeFunc(prometheus.GaugeOpts{
+		Namespace: config.PrometheusNamespace,
+		Name:      "workers_utilization",
+		Help:      "A gauge of the workers utilization in percents.",
+	}, stats.WorkersUtilization)
+
 	prometheus.MustRegister(
 		requestsTotal,
 		statusCodesTotal,
@@ -126,8 +141,10 @@ func Init() {
 		bufferSize,
 		bufferDefaultSize,
 		bufferMaxSize,
+		workers,
 		requestsInProgress,
 		imagesInProgress,
+		workersUtilization,
 	)
 
 	enabled = true

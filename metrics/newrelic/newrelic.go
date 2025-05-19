@@ -292,6 +292,12 @@ func runMetricsCollector() {
 			}()
 
 			harvester.RecordMetric(telemetry.Gauge{
+				Name:      "imgproxy.workers",
+				Value:     float64(config.Workers),
+				Timestamp: time.Now(),
+			})
+
+			harvester.RecordMetric(telemetry.Gauge{
 				Name:      "imgproxy.requests_in_progress",
 				Value:     stats.RequestsInProgress(),
 				Timestamp: time.Now(),
@@ -300,6 +306,12 @@ func runMetricsCollector() {
 			harvester.RecordMetric(telemetry.Gauge{
 				Name:      "imgproxy.images_in_progress",
 				Value:     stats.ImagesInProgress(),
+				Timestamp: time.Now(),
+			})
+
+			harvester.RecordMetric(telemetry.Gauge{
+				Name:      "imgproxy.workers_utilization",
+				Value:     stats.WorkersUtilization(),
 				Timestamp: time.Now(),
 			})
 

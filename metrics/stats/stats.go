@@ -1,6 +1,10 @@
 package stats
 
-import "sync/atomic"
+import (
+	"sync/atomic"
+
+	"github.com/imgproxy/imgproxy/v3/config"
+)
 
 var (
 	requestsInProgress int64
@@ -29,4 +33,8 @@ func IncImagesInProgress() {
 
 func DecImagesInProgress() {
 	atomic.AddInt64(&imagesInProgress, -1)
+}
+
+func WorkersUtilization() float64 {
+	return RequestsInProgress() / float64(config.Workers) * 100.0
 }

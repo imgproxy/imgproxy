@@ -575,6 +575,15 @@ func addDefaultMetrics() error {
 		return fmt.Errorf("Can't add go_threads gauge to OpenTelemetry: %s", err)
 	}
 
+	workersGauge, err := meter.Int64ObservableGauge(
+		"workers",
+		metric.WithUnit("1"),
+		metric.WithDescription("A gauge of the number of running workers."),
+	)
+	if err != nil {
+		return fmt.Errorf("Can't add workets gauge to OpenTelemetry: %s", err)
+	}
+
 	requestsInProgressGauge, err := meter.Float64ObservableGauge(
 		"requests_in_progress",
 		metric.WithUnit("1"),
@@ -591,6 +600,15 @@ func addDefaultMetrics() error {
 	)
 	if err != nil {
 		return fmt.Errorf("Can't add images_in_progress gauge to OpenTelemetry: %s", err)
+	}
+
+	workersUtilizationGauge, err := meter.Float64ObservableGauge(
+		"workers_utilization",
+		metric.WithUnit("%"),
+		metric.WithDescription("A gauge of the workers utilization in percents."),
+	)
+	if err != nil {
+		return fmt.Errorf("Can't add workers_utilization gauge to OpenTelemetry: %s", err)
 	}
 
 	bufferDefaultSizeGauge, err := meter.Int64ObservableGauge(
@@ -632,8 +650,10 @@ func addDefaultMetrics() error {
 			o.ObserveInt64(goGoroutines, int64(runtime.NumGoroutine()))
 			o.ObserveInt64(goThreads, int64(threadsNum))
 
+			o.ObserveInt64(workersGauge, int64(config.Workers))
 			o.ObserveFloat64(requestsInProgressGauge, stats.RequestsInProgress())
 			o.ObserveFloat64(imagesInProgressGauge, stats.ImagesInProgress())
+			o.ObserveFloat64(workersUtilizationGauge, stats.WorkersUtilization())
 
 			bufferStatsMutex.Lock()
 			defer bufferStatsMutex.Unlock()
@@ -653,8 +673,10 @@ func addDefaultMetrics() error {
 		goMemstatsHeapInuse,
 		goGoroutines,
 		goThreads,
+		workersGauge,
 		requestsInProgressGauge,
 		imagesInProgressGauge,
+		workersUtilizationGauge,
 		bufferDefaultSizeGauge,
 		bufferMaxSizeGauge,
 	)

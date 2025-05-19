@@ -218,8 +218,10 @@ func runMetricsCollector() {
 				}
 			}()
 
+			statsdClient.Gauge("imgproxy.workers", float64(config.Workers), nil, 1)
 			statsdClient.Gauge("imgproxy.requests_in_progress", stats.RequestsInProgress(), nil, 1)
 			statsdClient.Gauge("imgproxy.images_in_progress", stats.ImagesInProgress(), nil, 1)
+			statsdClient.Gauge("imgproxy.workers_utilization", stats.WorkersUtilization(), nil, 1)
 		case <-statsdClientStop:
 			return
 		}
