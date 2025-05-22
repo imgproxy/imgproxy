@@ -169,6 +169,7 @@ func (it Type) SupportsQuality() bool {
 		it == WEBP ||
 		it == HEIC ||
 		it == AVIF ||
+		it == JXL ||
 		it == TIFF
 }
 

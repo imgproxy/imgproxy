@@ -15,6 +15,7 @@
 
 ### Fixed
 - Fix `X-Origin-Content-Length` header value when SVG is sanitized or minified.
+- Mark JPEG XL format as supporting quality. Fixes autoquality for JPEG XL.
 
 ## [3.28.0] - 2025-03-31
 ### Added
