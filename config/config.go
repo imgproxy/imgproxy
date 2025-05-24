@@ -55,6 +55,8 @@ var (
 	PngQuantizationColors int
 	AvifSpeed             int
 	JxlEffort             int
+	WebpEffort            int
+	WebpPreset            string
 	Quality               int
 	FormatQuality         map[imagetype.Type]int
 	StripMetadata         bool
@@ -260,6 +262,8 @@ func Reset() {
 	PngQuantizationColors = 256
 	AvifSpeed = 8
 	JxlEffort = 4
+	WebpEffort = 4
+	WebpPreset = "default"
 	Quality = 80
 	FormatQuality = map[imagetype.Type]int{
 		imagetype.WEBP: 79,
@@ -491,6 +495,8 @@ func Configure() error {
 	configurators.Int(&PngQuantizationColors, "IMGPROXY_PNG_QUANTIZATION_COLORS")
 	configurators.Int(&AvifSpeed, "IMGPROXY_AVIF_SPEED")
 	configurators.Int(&JxlEffort, "IMGPROXY_JXL_EFFORT")
+	configurators.Int(&WebpEffort, "IMGPROXY_WEBP_EFFORT")
+	configurators.String(&WebpPreset, "IMGPROXY_WEBP_PRESET")
 	configurators.Int(&Quality, "IMGPROXY_QUALITY")
 	if err := configurators.ImageTypesQuality(FormatQuality, "IMGPROXY_FORMAT_QUALITY"); err != nil {
 		return err
@@ -748,6 +754,12 @@ func Configure() error {
 		return fmt.Errorf("JXL effort should be greater than 0, now - %d\n", JxlEffort)
 	} else if JxlEffort > 9 {
 		return fmt.Errorf("JXL effort can't be greater than 9, now - %d\n", JxlEffort)
+	}
+
+	if WebpEffort < 1 {
+		return fmt.Errorf("Webp effort should be greater than 0, now - %d\n", WebpEffort)
+	} else if WebpEffort > 6 {
+		return fmt.Errorf("Webp effort can't be greater than 9, now - %d\n", WebpEffort)
 	}
 
 	if Quality <= 0 {
