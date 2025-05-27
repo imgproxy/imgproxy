@@ -253,7 +253,7 @@ func Reset() {
 	MaxSrcResolution = 2073600 // 1920x1080
 	MaxMediaSrcResolution = 39 // 39000000, we're multiplying it by 1000000 in the setter
 	MaxSrcFileSize = 0
-	MaxAnimationFrames = 1
+	MaxAnimationFrames = 100
 	MaxAnimationFrameResolution = 0
 	MaxSvgCheckBytes = 32 * 1024
 	MaxRedirects = 10
@@ -294,7 +294,7 @@ func Reset() {
 		imagetype.JPEG,
 	}
 
-	SkipProcessingFormats = make([]imagetype.Type, 0)
+	SkipProcessingFormats =  make([]imagetype.Type, 0)
 
 	UseLinearColorspace = false
 	DisableShrinkOnLoad = false
