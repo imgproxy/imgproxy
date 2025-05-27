@@ -465,7 +465,7 @@ func getAndCreateMasterImageData(ctx context.Context, imageURL string, imgReques
 		return nil, err
 	}
 	
-	if originData.Type == imagetype.SVG ||  originData.Type == imagetype.GIF {
+	if originData.Type == imagetype.SVG  {
 		return originData, nil
 	}
 	
