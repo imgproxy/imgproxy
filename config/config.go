@@ -294,7 +294,9 @@ func Reset() {
 		imagetype.JPEG,
 	}
 
-	SkipProcessingFormats = make([]imagetype.Type, 0)
+	SkipProcessingFormats = []imagetype.Type{
+		imagetype.GIF,
+	}
 
 	UseLinearColorspace = false
 	DisableShrinkOnLoad = false
