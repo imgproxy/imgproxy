@@ -12,10 +12,13 @@
 
 ### Changed
 - (docker) Optimized image quantization.
+- (pro) Improved BlurHash generation performance.
 
 ### Fixed
 - Fix `X-Origin-Content-Length` header value when SVG is sanitized or minified.
 - Mark JPEG XL format as supporting quality. Fixes autoquality for JPEG XL.
+- (pro) Fix object detection when the `IMGPROXY_USE_LINEAR_COLORSPACE` config is set to `true`.
+- (pro) Fix BlurHash generation when the `IMGPROXY_USE_LINEAR_COLORSPACE` config is set to `true`.
 
 ## [3.28.0] - 2025-03-31
 ### Added
