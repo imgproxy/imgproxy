@@ -19,6 +19,7 @@
 - Mark JPEG XL format as supporting quality. Fixes autoquality for JPEG XL.
 - (pro) Fix object detection when the `IMGPROXY_USE_LINEAR_COLORSPACE` config is set to `true`.
 - (pro) Fix BlurHash generation when the `IMGPROXY_USE_LINEAR_COLORSPACE` config is set to `true`.
+- (pro) Fix detection of PDF files with a header offset.
 
 ## [3.28.0] - 2025-03-31
 ### Added
