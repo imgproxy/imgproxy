@@ -1066,11 +1066,11 @@ vips_pngsave_go(VipsImage *in, void **buf, size_t *len, int interlace, int quant
 }
 
 int
-vips_webpsave_go(VipsImage *in, void **buf, size_t *len, int quality)
+vips_webpsave_go(VipsImage *in, void **buf, size_t *len, int quality, int effort, const char *preset)
 {
   return vips_webpsave_buffer(
       in, buf, len,
-      "Q", quality,
+      "Q", quality, "effort", effort, "preset", preset,
       NULL);
 }
 
