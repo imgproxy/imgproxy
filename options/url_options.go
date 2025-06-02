@@ -54,7 +54,7 @@ func parseURLOptionsIPC(qs url.Values, path string) (urlOptions, string, error) 
 	}
 
 	// Define allowed query parameters
-	validKeys := map[string]bool{"qp": true, "wm": true, "art": true, "fmt" : true, "fit" : true}
+	validKeys := map[string]bool{"qp": true, "wm": true, "art": true, "fmt" : true, "fit" : true, "sh" : true}
 
 	if isMediaPath(path) {
 		parsed = append(parsed, urlOption{
