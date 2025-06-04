@@ -73,7 +73,11 @@ func New() (http.RoundTripper, error) {
 		conf.Credentials = creds
 	}
 
-	clientOptions := []func(*s3.Options){}
+	clientOptions := []func(*s3.Options){
+		func(o *s3.Options) {
+			o.DisableLogOutputChecksumValidationSkipped = true
+		},
+	}
 
 	if len(config.S3Endpoint) != 0 {
 		endpoint := config.S3Endpoint
