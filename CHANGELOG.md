@@ -18,6 +18,7 @@
 ### Fixed
 - Fix `X-Origin-Content-Length` header value when SVG is sanitized or minified.
 - Mark JPEG XL format as supporting quality. Fixes autoquality for JPEG XL.
+- Fix the `extend` processing option when only one dimension is set.
 - (pro) Fix object detection when the `IMGPROXY_USE_LINEAR_COLORSPACE` config is set to `true`.
 - (pro) Fix BlurHash generation when the `IMGPROXY_USE_LINEAR_COLORSPACE` config is set to `true`.
 - (pro) Fix detection of PDF files with a header offset.

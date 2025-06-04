@@ -8,22 +8,38 @@ import (
 )
 
 func extendImage(img *vips.Image, resultWidth, resultHeight int, opts *options.ExtendOptions, offsetScale float64, extendAr bool) error {
-	if !opts.Enabled || (resultWidth <= img.Width() && resultHeight <= img.Height()) || resultWidth == 0 || resultHeight == 0 {
+	imgWidth := img.Width()
+	imgHeight := img.Height()
+
+	if !opts.Enabled || (resultWidth <= imgWidth && resultHeight <= imgHeight) {
 		return nil
 	}
 
-	if extendAr && resultWidth > img.Width() && resultHeight > img.Height() {
-		diffW := float64(resultWidth) / float64(img.Width())
-		diffH := float64(resultHeight) / float64(img.Height())
+	if resultWidth <= 0 {
+		if extendAr {
+			return nil
+		}
+		resultWidth = imgWidth
+	}
+	if resultHeight <= 0 {
+		if extendAr {
+			return nil
+		}
+		resultHeight = imgHeight
+	}
+
+	if extendAr && resultWidth > imgWidth && resultHeight > imgHeight {
+		diffW := float64(resultWidth) / float64(imgWidth)
+		diffH := float64(resultHeight) / float64(imgHeight)
 
 		switch {
 		case diffH > diffW:
-			resultHeight = imath.Scale(img.Width(), float64(resultHeight)/float64(resultWidth))
-			resultWidth = img.Width()
+			resultHeight = imath.Scale(imgWidth, float64(resultHeight)/float64(resultWidth))
+			resultWidth = imgWidth
 
 		case diffW > diffH:
-			resultWidth = imath.Scale(img.Height(), float64(resultWidth)/float64(resultHeight))
-			resultHeight = img.Height()
+			resultWidth = imath.Scale(imgHeight, float64(resultWidth)/float64(resultHeight))
+			resultHeight = imgHeight
 
 		default:
 			// The image has the requested arpect ratio
@@ -31,7 +47,7 @@ func extendImage(img *vips.Image, resultWidth, resultHeight int, opts *options.E
 		}
 	}
 
-	offX, offY := calcPosition(resultWidth, resultHeight, img.Width(), img.Height(), &opts.Gravity, offsetScale, false)
+	offX, offY := calcPosition(resultWidth, resultHeight, imgWidth, imgHeight, &opts.Gravity, offsetScale, false)
 	return img.Embed(resultWidth, resultHeight, offX, offY)
 }
 
