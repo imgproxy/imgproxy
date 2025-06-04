@@ -110,6 +110,9 @@ func calcScale(width, height int, po *options.ProcessingOptions, imgtype imagety
 				dprScale /= minShrink
 			}
 		}
+
+		// The minimum of wshrink and hshrink is the maximum dprScale value
+		// that can be used without enlarging the image.
 		dprScale = math.Min(dprScale, math.Min(wshrink, hshrink))
 	}
 
