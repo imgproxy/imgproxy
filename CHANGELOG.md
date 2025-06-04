@@ -11,6 +11,7 @@
 - (pro) Add [IMGPROXY_PDF_NO_BACKGROUND](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_PDF_NO_BACKGROUND) config.
 
 ### Changed
+- Suppress "Response has no supported checksum" warnings from S3 SDK.
 - (docker) Optimized image quantization.
 - (pro) Improved BlurHash generation performance.
 
