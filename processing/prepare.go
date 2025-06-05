@@ -41,7 +41,18 @@ func extractMeta(img *vips.Image, baseAngle int, useOrientation bool) (int, int,
 	return width, height, angle, flip
 }
 
-func calcScale(width, height int, po *options.ProcessingOptions, imgtype imagetype.Type) (float64, float64, float64) {
+func calcCropSize(orig int, crop float64) int {
+	switch {
+	case crop == 0.0:
+		return 0
+	case crop >= 1.0:
+		return int(crop)
+	default:
+		return imath.Max(1, imath.Scale(orig, crop))
+	}
+}
+
+func (pctx *pipelineContext) calcScale(width, height int, po *options.ProcessingOptions) {
 	var wshrink, hshrink float64
 
 	srcW, srcH := float64(width), float64(height)
@@ -98,22 +109,22 @@ func calcScale(width, height int, po *options.ProcessingOptions, imgtype imagety
 	wshrink /= po.ZoomWidth
 	hshrink /= po.ZoomHeight
 
-	dprScale := po.Dpr
+	pctx.dprScale = po.Dpr
 
-	if !po.Enlarge && imgtype != imagetype.SVG {
+	if !po.Enlarge && !pctx.imgtype.IsVector() {
 		minShrink := math.Min(wshrink, hshrink)
 		if minShrink < 1 {
 			wshrink /= minShrink
 			hshrink /= minShrink
 
 			if !po.Extend.Enabled {
-				dprScale /= minShrink
+				pctx.dprScale /= minShrink
 			}
 		}
 
 		// The minimum of wshrink and hshrink is the maximum dprScale value
 		// that can be used without enlarging the image.
-		dprScale = math.Min(dprScale, math.Min(wshrink, hshrink))
+		pctx.dprScale = math.Min(pctx.dprScale, math.Min(wshrink, hshrink))
 	}
 
 	if po.MinWidth > 0 {
@@ -130,8 +141,8 @@ func calcScale(width, height int, po *options.ProcessingOptions, imgtype imagety
 		}
 	}
 
-	wshrink /= dprScale
-	hshrink /= dprScale
+	wshrink /= pctx.dprScale
+	hshrink /= pctx.dprScale
 
 	if wshrink > srcW {
 		wshrink = srcW
@@ -141,17 +152,55 @@ func calcScale(width, height int, po *options.ProcessingOptions, imgtype imagety
 		hshrink = srcH
 	}
 
-	return 1.0 / wshrink, 1.0 / hshrink, dprScale
+	pctx.wscale = 1.0 / wshrink
+	pctx.hscale = 1.0 / hshrink
 }
 
-func calcCropSize(orig int, crop float64) int {
-	switch {
-	case crop == 0.0:
-		return 0
-	case crop >= 1.0:
-		return int(crop)
-	default:
-		return imath.Max(1, imath.Scale(orig, crop))
+func (pctx *pipelineContext) calcSizes(widthToScale, heightToScale int, po *options.ProcessingOptions) {
+	pctx.targetWidth = imath.Scale(po.Width, pctx.dprScale*po.ZoomWidth)
+	pctx.targetHeight = imath.Scale(po.Height, pctx.dprScale*po.ZoomHeight)
+
+	pctx.scaledWidth = imath.Scale(widthToScale, pctx.wscale)
+	pctx.scaledHeight = imath.Scale(heightToScale, pctx.hscale)
+
+	if po.ResizingType == options.ResizeFillDown && !po.Enlarge {
+		diffW := float64(pctx.targetWidth) / float64(pctx.scaledWidth)
+		diffH := float64(pctx.targetHeight) / float64(pctx.scaledHeight)
+
+		switch {
+		case diffW > diffH && diffW > 1.0:
+			pctx.resultCropHeight = imath.Scale(pctx.scaledWidth, float64(pctx.targetHeight)/float64(pctx.targetWidth))
+			pctx.resultCropWidth = pctx.scaledWidth
+
+		case diffH > diffW && diffH > 1.0:
+			pctx.resultCropWidth = imath.Scale(pctx.scaledHeight, float64(pctx.targetWidth)/float64(pctx.targetHeight))
+			pctx.resultCropHeight = pctx.scaledHeight
+
+		default:
+			pctx.resultCropWidth = pctx.targetWidth
+			pctx.resultCropHeight = pctx.targetHeight
+		}
+	} else {
+		pctx.resultCropWidth = pctx.targetWidth
+		pctx.resultCropHeight = pctx.targetHeight
+	}
+
+	if po.ExtendAspectRatio.Enabled && pctx.targetWidth > 0 && pctx.targetHeight > 0 {
+		outWidth := imath.MinNonZero(pctx.scaledWidth, pctx.resultCropWidth)
+		outHeight := imath.MinNonZero(pctx.scaledHeight, pctx.resultCropHeight)
+
+		diffW := float64(pctx.targetWidth) / float64(outWidth)
+		diffH := float64(pctx.targetHeight) / float64(outHeight)
+
+		switch {
+		case diffH > diffW:
+			pctx.extendAspectRatioHeight = imath.Scale(outWidth, float64(pctx.targetHeight)/float64(pctx.targetWidth))
+			pctx.extendAspectRatioWidth = outWidth
+
+		case diffW > diffH:
+			pctx.extendAspectRatioWidth = imath.Scale(outHeight, float64(pctx.targetWidth)/float64(pctx.targetHeight))
+			pctx.extendAspectRatioHeight = outHeight
+		}
 	}
 }
 
@@ -169,7 +218,7 @@ func prepare(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptio
 	widthToScale := imath.MinNonZero(pctx.cropWidth, pctx.srcWidth)
 	heightToScale := imath.MinNonZero(pctx.cropHeight, pctx.srcHeight)
 
-	pctx.wscale, pctx.hscale, pctx.dprScale = calcScale(widthToScale, heightToScale, po, pctx.imgtype)
+	pctx.calcScale(widthToScale, heightToScale, po)
 
 	// The size of a vector image is not checked during download, yet it can be very large.
 	// So we should scale it down to the maximum allowed resolution
@@ -181,6 +230,8 @@ func prepare(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptio
 			pctx.hscale *= scale
 		}
 	}
+
+	pctx.calcSizes(widthToScale, heightToScale, po)
 
 	return nil
 }

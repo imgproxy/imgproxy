@@ -48,23 +48,5 @@ func crop(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions,
 }
 
 func cropToResult(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata *imagedata.ImageData) error {
-	// Crop image to the result size
-	resultWidth, resultHeight := resultSize(po, pctx.dprScale)
-
-	if po.ResizingType == options.ResizeFillDown {
-		diffW := float64(resultWidth) / float64(img.Width())
-		diffH := float64(resultHeight) / float64(img.Height())
-
-		switch {
-		case diffW > diffH && diffW > 1.0:
-			resultHeight = imath.Scale(img.Width(), float64(resultHeight)/float64(resultWidth))
-			resultWidth = img.Width()
-
-		case diffH > diffW && diffH > 1.0:
-			resultWidth = imath.Scale(img.Height(), float64(resultWidth)/float64(resultHeight))
-			resultHeight = img.Height()
-		}
-	}
-
-	return cropImage(img, resultWidth, resultHeight, &po.Gravity, pctx.dprScale)
+	return cropImage(img, pctx.resultCropWidth, pctx.resultCropHeight, &po.Gravity, pctx.dprScale)
 }
