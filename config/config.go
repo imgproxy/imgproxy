@@ -47,6 +47,7 @@ var (
 	MaxRedirects                int
 	PngUnlimited                bool
 	SvgUnlimited                bool
+	MaxResultDimension          int
 	AllowSecurityOptions        bool
 
 	JpegProgressive       bool
@@ -252,6 +253,7 @@ func Reset() {
 	MaxRedirects = 10
 	PngUnlimited = false
 	SvgUnlimited = false
+	MaxResultDimension = 0
 	AllowSecurityOptions = false
 
 	JpegProgressive = false
@@ -482,6 +484,8 @@ func Configure() error {
 
 	configurators.Bool(&PngUnlimited, "IMGPROXY_PNG_UNLIMITED")
 	configurators.Bool(&SvgUnlimited, "IMGPROXY_SVG_UNLIMITED")
+
+	configurators.Int(&MaxResultDimension, "IMGPROXY_MAX_RESULT_DIMENSION")
 
 	configurators.Bool(&AllowSecurityOptions, "IMGPROXY_ALLOW_SECURITY_OPTIONS")
 

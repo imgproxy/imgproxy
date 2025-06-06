@@ -560,6 +560,435 @@ func (s *ProcessingTestSuite) TestResizeToFillDownExtendAR() {
 	}
 }
 
+func (s *ProcessingTestSuite) TestResultSizeLimit() {
+	imgdata := s.openFile("test2.jpg")
+
+	po := options.NewProcessingOptions()
+
+	testCases := []struct {
+		limit        int
+		width        int
+		height       int
+		resizingType options.ResizeType
+		enlarge      bool
+		extend       bool
+		extendAR     bool
+		padding      options.PaddingOptions
+		rotate       int
+		outWidth     int
+		outHeight    int
+	}{
+		{
+			limit:        1000,
+			width:        100,
+			height:       100,
+			resizingType: options.ResizeFit,
+			outWidth:     100,
+			outHeight:    50,
+		},
+		{
+			limit:        50,
+			width:        100,
+			height:       100,
+			resizingType: options.ResizeFit,
+			outWidth:     50,
+			outHeight:    25,
+		},
+		{
+			limit:        50,
+			width:        0,
+			height:       0,
+			resizingType: options.ResizeFit,
+			outWidth:     50,
+			outHeight:    25,
+		},
+		{
+			limit:        100,
+			width:        0,
+			height:       100,
+			resizingType: options.ResizeFit,
+			outWidth:     100,
+			outHeight:    50,
+		},
+		{
+			limit:        50,
+			width:        150,
+			height:       0,
+			resizingType: options.ResizeFit,
+			outWidth:     50,
+			outHeight:    25,
+		},
+		{
+			limit:        100,
+			width:        1000,
+			height:       1000,
+			resizingType: options.ResizeFit,
+			outWidth:     100,
+			outHeight:    50,
+		},
+		{
+			limit:        100,
+			width:        1000,
+			height:       1000,
+			resizingType: options.ResizeFit,
+			enlarge:      true,
+			outWidth:     100,
+			outHeight:    50,
+		},
+		{
+			limit:        100,
+			width:        1000,
+			height:       2000,
+			resizingType: options.ResizeFit,
+			extend:       true,
+			outWidth:     50,
+			outHeight:    100,
+		},
+		{
+			limit:        100,
+			width:        1000,
+			height:       2000,
+			resizingType: options.ResizeFit,
+			extendAR:     true,
+			outWidth:     50,
+			outHeight:    100,
+		},
+		{
+			limit:        100,
+			width:        100,
+			height:       150,
+			resizingType: options.ResizeFit,
+			rotate:       90,
+			outWidth:     50,
+			outHeight:    100,
+		},
+		{
+			limit:        100,
+			width:        0,
+			height:       0,
+			resizingType: options.ResizeFit,
+			rotate:       90,
+			outWidth:     50,
+			outHeight:    100,
+		},
+		{
+			limit:        200,
+			width:        100,
+			height:       100,
+			resizingType: options.ResizeFit,
+			padding: options.PaddingOptions{
+				Enabled: true,
+				Top:     100,
+				Right:   200,
+				Bottom:  300,
+				Left:    400,
+			},
+			outWidth:  200,
+			outHeight: 129,
+		},
+		{
+			limit:        1000,
+			width:        100,
+			height:       100,
+			resizingType: options.ResizeFill,
+			outWidth:     100,
+			outHeight:    100,
+		},
+		{
+			limit:        50,
+			width:        100,
+			height:       100,
+			resizingType: options.ResizeFill,
+			outWidth:     50,
+			outHeight:    50,
+		},
+		{
+			limit:        50,
+			width:        1000,
+			height:       50,
+			resizingType: options.ResizeFill,
+			outWidth:     50,
+			outHeight:    13,
+		},
+		{
+			limit:        50,
+			width:        100,
+			height:       1000,
+			resizingType: options.ResizeFill,
+			outWidth:     50,
+			outHeight:    50,
+		},
+		{
+			limit:        50,
+			width:        0,
+			height:       0,
+			resizingType: options.ResizeFill,
+			outWidth:     50,
+			outHeight:    25,
+		},
+		{
+			limit:        100,
+			width:        0,
+			height:       100,
+			resizingType: options.ResizeFill,
+			outWidth:     100,
+			outHeight:    50,
+		},
+		{
+			limit:        50,
+			width:        150,
+			height:       0,
+			resizingType: options.ResizeFill,
+			outWidth:     50,
+			outHeight:    25,
+		},
+		{
+			limit:        100,
+			width:        1000,
+			height:       1000,
+			resizingType: options.ResizeFill,
+			outWidth:     100,
+			outHeight:    50,
+		},
+		{
+			limit:        100,
+			width:        1000,
+			height:       1000,
+			resizingType: options.ResizeFill,
+			enlarge:      true,
+			outWidth:     100,
+			outHeight:    100,
+		},
+		{
+			limit:        100,
+			width:        1000,
+			height:       2000,
+			resizingType: options.ResizeFill,
+			extend:       true,
+			outWidth:     50,
+			outHeight:    100,
+		},
+		{
+			limit:        100,
+			width:        1000,
+			height:       2000,
+			resizingType: options.ResizeFill,
+			extendAR:     true,
+			outWidth:     50,
+			outHeight:    100,
+		},
+		{
+			limit:        100,
+			width:        100,
+			height:       150,
+			resizingType: options.ResizeFill,
+			rotate:       90,
+			outWidth:     67,
+			outHeight:    100,
+		},
+		{
+			limit:        100,
+			width:        0,
+			height:       0,
+			resizingType: options.ResizeFill,
+			rotate:       90,
+			outWidth:     50,
+			outHeight:    100,
+		},
+		{
+			limit:        200,
+			width:        100,
+			height:       100,
+			resizingType: options.ResizeFill,
+			padding: options.PaddingOptions{
+				Enabled: true,
+				Top:     100,
+				Right:   200,
+				Bottom:  300,
+				Left:    400,
+			},
+			outWidth:  200,
+			outHeight: 144,
+		},
+		{
+			limit:        1000,
+			width:        100,
+			height:       100,
+			resizingType: options.ResizeFillDown,
+			outWidth:     100,
+			outHeight:    100,
+		},
+		{
+			limit:        50,
+			width:        100,
+			height:       100,
+			resizingType: options.ResizeFillDown,
+			outWidth:     50,
+			outHeight:    50,
+		},
+		{
+			limit:        50,
+			width:        1000,
+			height:       50,
+			resizingType: options.ResizeFillDown,
+			outWidth:     50,
+			outHeight:    3,
+		},
+		{
+			limit:        50,
+			width:        100,
+			height:       1000,
+			resizingType: options.ResizeFillDown,
+			outWidth:     5,
+			outHeight:    50,
+		},
+		{
+			limit:        50,
+			width:        0,
+			height:       0,
+			resizingType: options.ResizeFillDown,
+			outWidth:     50,
+			outHeight:    25,
+		},
+		{
+			limit:        100,
+			width:        0,
+			height:       100,
+			resizingType: options.ResizeFillDown,
+			outWidth:     100,
+			outHeight:    50,
+		},
+		{
+			limit:        50,
+			width:        150,
+			height:       0,
+			resizingType: options.ResizeFillDown,
+			outWidth:     50,
+			outHeight:    25,
+		},
+		{
+			limit:        100,
+			width:        1000,
+			height:       1000,
+			resizingType: options.ResizeFillDown,
+			outWidth:     100,
+			outHeight:    100,
+		},
+		{
+			limit:        100,
+			width:        1000,
+			height:       1000,
+			resizingType: options.ResizeFillDown,
+			enlarge:      true,
+			outWidth:     100,
+			outHeight:    100,
+		},
+		{
+			limit:        100,
+			width:        1000,
+			height:       2000,
+			resizingType: options.ResizeFillDown,
+			extend:       true,
+			outWidth:     50,
+			outHeight:    100,
+		},
+		{
+			limit:        100,
+			width:        1000,
+			height:       2000,
+			resizingType: options.ResizeFillDown,
+			extendAR:     true,
+			outWidth:     50,
+			outHeight:    100,
+		},
+		{
+			limit:        100,
+			width:        1000,
+			height:       1500,
+			resizingType: options.ResizeFillDown,
+			rotate:       90,
+			outWidth:     67,
+			outHeight:    100,
+		},
+		{
+			limit:        100,
+			width:        0,
+			height:       0,
+			resizingType: options.ResizeFillDown,
+			rotate:       90,
+			outWidth:     50,
+			outHeight:    100,
+		},
+		{
+			limit:        200,
+			width:        100,
+			height:       100,
+			resizingType: options.ResizeFillDown,
+			padding: options.PaddingOptions{
+				Enabled: true,
+				Top:     100,
+				Right:   200,
+				Bottom:  300,
+				Left:    400,
+			},
+			outWidth:  200,
+			outHeight: 144,
+		},
+		{
+			limit:        200,
+			width:        1000,
+			height:       1000,
+			resizingType: options.ResizeFillDown,
+			padding: options.PaddingOptions{
+				Enabled: true,
+				Top:     100,
+				Right:   200,
+				Bottom:  300,
+				Left:    400,
+			},
+			outWidth:  200,
+			outHeight: 144,
+		},
+	}
+
+	for _, tc := range testCases {
+		name := fmt.Sprintf("%s_%dx%d_limit_%d", tc.resizingType, tc.width, tc.height, tc.limit)
+		if tc.enlarge {
+			name += "_enlarge"
+		}
+		if tc.extend {
+			name += "_extend"
+		}
+		if tc.extendAR {
+			name += "_extendAR"
+		}
+		if tc.rotate != 0 {
+			name += fmt.Sprintf("_rot_%d", tc.rotate)
+		}
+		if tc.padding.Enabled {
+			name += fmt.Sprintf("_padding_%dx%dx%dx%d", tc.padding.Top, tc.padding.Right, tc.padding.Bottom, tc.padding.Left)
+		}
+
+		s.Run(name, func() {
+			po.SecurityOptions.MaxResultDimension = tc.limit
+			po.Width = tc.width
+			po.Height = tc.height
+			po.ResizingType = tc.resizingType
+			po.Enlarge = tc.enlarge
+			po.Extend.Enabled = tc.extend
+			po.ExtendAspectRatio.Enabled = tc.extendAR
+			po.Rotate = tc.rotate
+			po.Padding = tc.padding
+
+			outImgdata, err := ProcessImage(context.Background(), imgdata, po)
+			s.Require().NoError(err)
+			s.Require().NotNil(outImgdata)
+
+			s.checkSize(outImgdata, tc.outWidth, tc.outHeight)
+		})
+	}
+}
+
 func TestProcessing(t *testing.T) {
 	suite.Run(t, new(ProcessingTestSuite))
 }

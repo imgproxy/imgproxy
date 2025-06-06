@@ -204,6 +204,50 @@ func (pctx *pipelineContext) calcSizes(widthToScale, heightToScale int, po *opti
 	}
 }
 
+func (pctx *pipelineContext) limitScale(widthToScale, heightToScale int, po *options.ProcessingOptions) {
+	maxresultDim := po.SecurityOptions.MaxResultDimension
+
+	if maxresultDim <= 0 {
+		return
+	}
+
+	outWidth := imath.MinNonZero(pctx.scaledWidth, pctx.resultCropWidth)
+	outHeight := imath.MinNonZero(pctx.scaledHeight, pctx.resultCropHeight)
+
+	if po.Extend.Enabled {
+		outWidth = imath.Max(outWidth, pctx.targetWidth)
+		outHeight = imath.Max(outHeight, pctx.targetHeight)
+	} else if po.ExtendAspectRatio.Enabled {
+		outWidth = imath.Max(outWidth, pctx.extendAspectRatioWidth)
+		outHeight = imath.Max(outHeight, pctx.extendAspectRatioHeight)
+	}
+
+	if po.Padding.Enabled {
+		outWidth += imath.ScaleToEven(po.Padding.Left, pctx.dprScale) + imath.ScaleToEven(po.Padding.Right, pctx.dprScale)
+		outHeight += imath.ScaleToEven(po.Padding.Top, pctx.dprScale) + imath.ScaleToEven(po.Padding.Bottom, pctx.dprScale)
+	}
+
+	if maxresultDim > 0 && (outWidth > maxresultDim || outHeight > maxresultDim) {
+		downScale := float64(maxresultDim) / float64(imath.Max(outWidth, outHeight))
+
+		pctx.wscale *= downScale
+		pctx.hscale *= downScale
+
+		// Prevent scaling below 1px
+		if minWScale := 1.0 / float64(widthToScale); pctx.wscale < minWScale {
+			pctx.wscale = minWScale
+		}
+		if minHScale := 1.0 / float64(heightToScale); pctx.hscale < minHScale {
+			pctx.hscale = minHScale
+		}
+
+		pctx.dprScale *= downScale
+
+		// Recalculate the sizes after changing the scales
+		pctx.calcSizes(widthToScale, heightToScale, po)
+	}
+}
+
 func prepare(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata *imagedata.ImageData) error {
 	pctx.imgtype = imagetype.Unknown
 	if imgdata != nil {
@@ -232,6 +276,8 @@ func prepare(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptio
 	}
 
 	pctx.calcSizes(widthToScale, heightToScale, po)
+
+	pctx.limitScale(widthToScale, heightToScale, po)
 
 	return nil
 }

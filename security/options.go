@@ -9,6 +9,7 @@ type Options struct {
 	MaxSrcFileSize              int
 	MaxAnimationFrames          int
 	MaxAnimationFrameResolution int
+	MaxResultDimension          int
 }
 
 func DefaultOptions() Options {
@@ -17,6 +18,7 @@ func DefaultOptions() Options {
 		MaxSrcFileSize:              config.MaxSrcFileSize,
 		MaxAnimationFrames:          config.MaxAnimationFrames,
 		MaxAnimationFrameResolution: config.MaxAnimationFrameResolution,
+		MaxResultDimension:          config.MaxResultDimension,
 	}
 }
 
