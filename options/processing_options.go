@@ -691,7 +691,7 @@ func applyPresetOption(po *ProcessingOptions, args []string, usedPresets ...stri
 
 			po.UsedPresets = append(po.UsedPresets, preset)
 
-			if err := applyURLOptions(po, p, append(usedPresets, preset)...); err != nil {
+			if err := applyURLOptions(po, p, true, append(usedPresets, preset)...); err != nil {
 				return err
 			}
 		} else {
@@ -1081,8 +1081,14 @@ func applyURLOption(po *ProcessingOptions, name string, args []string, usedPrese
 	return newUnknownOptionError("processing", name)
 }
 
-func applyURLOptions(po *ProcessingOptions, options urlOptions, usedPresets ...string) error {
+func applyURLOptions(po *ProcessingOptions, options urlOptions, allowAll bool, usedPresets ...string) error {
+	allowAll = allowAll || len(config.AllowedProcessiongOptions) == 0
+
 	for _, opt := range options {
+		if !allowAll && !slices.Contains(config.AllowedProcessiongOptions, opt.Name) {
+			return newForbiddenOptionError("processing", opt.Name)
+		}
+
 		if err := applyURLOption(po, opt.Name, opt.Args, usedPresets...); err != nil {
 			return err
 		}
@@ -1154,7 +1160,7 @@ func parsePathOptions(parts []string, headers http.Header) (*ProcessingOptions, 
 
 	options, urlParts := parseURLOptions(parts)
 
-	if err = applyURLOptions(po, options); err != nil {
+	if err = applyURLOptions(po, options, false); err != nil {
 		return nil, "", err
 	}
 

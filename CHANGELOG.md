@@ -3,6 +3,7 @@
 ## [Unreleased]
 ### Added
 - Add [IMGPROXY_MAX_RESULT_DIMENSION](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_MAX_RESULT_DIMENSION) config and [max_result_dimension](https://docs.imgproxy.net/latest/usage/processing#max-result-dimension) processing option.
+- Add [IMGPROXY_ALLOWED_PROCESSING_OPTIONS](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_ALLOWED_PROCESSING_OPTIONS) config.
 - Add `imgproxy.source_image_origin` attribute to New Relic, DataDog, and OpenTelemetry traces.
 - Add `imgproxy.source_image_url` and `imgproxy.source_image_origin` attributes to `downloading_image` spans in New Relic, DataDog, and OpenTelemetry traces.
 - Add `imgproxy.processing_options` attribute to `processing_image` spans in New Relic, DataDog, and OpenTelemetry traces.

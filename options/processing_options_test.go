@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -642,6 +643,40 @@ func (s *ProcessingOptionsTestSuite) TestParseBase64URLOnlyPresets() {
 	s.Require().InDelta(float32(0.2), po.Blur, 0.0001)
 	s.Require().Equal(50, po.Quality)
 	s.Require().Equal(originURL, imageURL)
+}
+
+func (s *ProcessingOptionsTestSuite) TestParseAllowedOptions() {
+	config.AllowedProcessiongOptions = []string{"w", "h", "pr"}
+
+	presets["test1"] = urlOptions{
+		urlOption{Name: "blur", Args: []string{"0.2"}},
+	}
+
+	originURL := "http://images.dev/lorem/ipsum.jpg?param=value"
+
+	testCases := []struct {
+		options       string
+		expectedError string
+	}{
+		{options: "w:100/h:200", expectedError: ""},
+		{options: "w:100/h:200/blur:10", expectedError: "Forbidden processing option blur"},
+		{options: "w:100/h:200/pr:test1", expectedError: ""},
+		{options: "w:100/h:200/pr:test1/blur:10", expectedError: "Forbidden processing option blur"},
+	}
+
+	for _, tc := range testCases {
+		s.Run(strings.ReplaceAll(tc.options, "/", "_"), func() {
+			path := fmt.Sprintf("/%s/%s.png", tc.options, base64.RawURLEncoding.EncodeToString([]byte(originURL)))
+			_, _, err := ParsePath(path, make(http.Header))
+
+			if len(tc.expectedError) > 0 {
+				s.Require().Error(err)
+				s.Require().Equal(tc.expectedError, err.Error())
+			} else {
+				s.Require().NoError(err)
+			}
+		})
+	}
 }
 
 func TestProcessingOptions(t *testing.T) {

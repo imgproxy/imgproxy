@@ -35,6 +35,16 @@ func newUnknownOptionError(kind, opt string) error {
 	)
 }
 
+func newForbiddenOptionError(kind, opt string) error {
+	return ierrors.Wrap(
+		UnknownOptionError(fmt.Sprintf("Forbidden %s option %s", kind, opt)),
+		1,
+		ierrors.WithStatusCode(http.StatusNotFound),
+		ierrors.WithPublicMessage("Invalid URL"),
+		ierrors.WithShouldReport(false),
+	)
+}
+
 func (e UnknownOptionError) Error() string { return string(e) }
 
 func newOptionArgumentError(format string, args ...interface{}) error {
