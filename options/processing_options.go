@@ -84,10 +84,12 @@ type DitherOptions struct {
 	OptionsSet02      bool
 	OptionsSet03      bool
 	OptionsSet04      bool
+	OptionsSet05      bool
 	OptionsSetCam16   bool
 	OptionsSetHpminde bool
 	OptionsSetScam    bool
 	OptionsSetVendor  bool
+	MeasuredPalette   string
 }
 
 type WatermarkOptions struct {
@@ -745,8 +747,13 @@ func applyDitherOption(po *ProcessingOptions, args []string) error {
 		return fmt.Errorf("Invalid dither type: %s", args[0])
 	}
 
+	fmt.Println("args list ", args)
+
 	if len(args) > 1 { // additional arguments are optional
-		for _, arg := range args[1:] {
+		for idx := 1; idx < len(args)-1; idx++ {
+			//for idx, arg := range args[1:] {
+			var arg = args[idx]
+			fmt.Println("arg parse ", arg)
 			switch arg {
 			case "co":
 				po.Dither.Contrast = true
@@ -782,6 +789,17 @@ func applyDitherOption(po *ProcessingOptions, args []string) error {
 				po.Dither.OptionsSet03 = true // shorthand for a set of options starting with the 20240702 release
 			case "opts04":
 				po.Dither.OptionsSet04 = true // shorthand for a set of options starting with the 20240809 release
+			case "opts05":
+				po.Dither.OptionsSet05 = true // shorthand for a set of options starting with the 20250514 release
+				if len(args) < 25 {
+					return fmt.Errorf("Invalid num of parameters for OptionSet05 args: %s", args)
+				}
+				// parse the display's measured palette e.x.
+				// opts05:r:ff0000:g:00ff00:bl:0000ff:y:ffff00:bk:000000:w:ffffff TODO change e.g.
+				var PaletteStr = strings.Join(args[idx+1:][0:24], ":")
+				fmt.Println("opts5 args ", PaletteStr)
+				po.Dither.MeasuredPalette = PaletteStr
+				idx += 24
 			case "optscam16":
 				po.Dither.OptionsSetCam16 = true
 			case "optshpminde":

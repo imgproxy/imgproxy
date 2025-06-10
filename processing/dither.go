@@ -250,6 +250,19 @@ func shellOutDither(inFile string, po *options.ProcessingOptions) error {
 		cmdArgs = append(cmdArgs, "--saturation-scale", "1.0")
 		cmdArgs = append(cmdArgs, "--clip-error")
 		cmdArgs = append(cmdArgs, "--auto-enhance")
+	case po.Dither.OptionsSet05:
+		cmdArgs = append(cmdArgs, "--jzazbz")
+		cmdArgs = append(cmdArgs, "--hull-project")
+		cmdArgs = append(cmdArgs, "--map-palette", "pal_inflate_extra")
+		cmdArgs = append(cmdArgs, "--chroma-lightness")
+		cmdArgs = append(cmdArgs, "--shrink-gamut", "1.1")
+		cmdArgs = append(cmdArgs, "--saturation-scale", "1.0")
+		cmdArgs = append(cmdArgs, "--clip-error")
+		cmdArgs = append(cmdArgs, "--auto-enhance")
+		cmdArgs = append(cmdArgs, "--dea-weight", "0.95")
+		cmdArgs = append(cmdArgs, "--pal-auto-expand", "pal_meter_13_extra") // TODO is this correct?
+		//cmdArgs = append(cmdArgs, "--inflate-color-space", "jzazbz")
+		cmdArgs = append(cmdArgs, "--measured-palette", fmt.Sprintf("%s", po.Dither.MeasuredPalette))
 	case po.Dither.OptionsSetCam16:
 		cmdArgs = append(cmdArgs, "--cam16")
 		cmdArgs = append(cmdArgs, "--chroma-lightness")
@@ -282,6 +295,7 @@ func shellOutDither(inFile string, po *options.ProcessingOptions) error {
 	cmd := exec.Command("python3", cmdArgs...)
 	cmd.Dir = "/opt/pushd-dither"
 	output, err := cmd.CombinedOutput()
+	fmt.Println(output)
 	if err != nil {
 		return fmt.Errorf("dither failed: %s: %s", err, output)
 	}
