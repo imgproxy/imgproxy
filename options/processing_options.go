@@ -795,8 +795,8 @@ func applyDitherOption(po *ProcessingOptions, args []string) error {
 					return fmt.Errorf("Invalid num of parameters for OptionSet05 args: %s", args)
 				}
 				// parse the display's measured palette e.x.
-				// opts05:r:ff0000:g:00ff00:bl:0000ff:y:ffff00:bk:000000:w:ffffff TODO change e.g.
-				var PaletteStr = strings.Join(args[idx+1:][0:24], ":")
+				// opts05:r:24.06:38.15:28.96:g:29.89:-19.31:3.64:bl:25.77:4.94:-35.35:y:56.25:-9.12:59.80:bk:8.58:8.66:-14.49:w:57.0:-2.97:-4.71
+				var PaletteStr = strings.Join(args[2:26], ":")
 				fmt.Println("opts5 args ", PaletteStr)
 				po.Dither.MeasuredPalette = PaletteStr
 				idx += 24
