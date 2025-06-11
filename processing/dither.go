@@ -260,8 +260,8 @@ func shellOutDither(inFile string, po *options.ProcessingOptions) error {
 		cmdArgs = append(cmdArgs, "--clip-error")
 		cmdArgs = append(cmdArgs, "--auto-enhance")
 		cmdArgs = append(cmdArgs, "--dea-weight", "0.95")
-		//cmdArgs = append(cmdArgs, "--pal-auto-expand", "pal_meter_13_extra") // TODO is this correct?
-		//cmdArgs = append(cmdArgs, "--inflate-color-space", "jzazbz")
+		// cmdArgs = append(cmdArgs, "--pal-auto-expand", "pal_meter_13_extra") // TODO is this correct?
+		// cmdArgs = append(cmdArgs, "--inflate-color-space", "jzazbz")
 		cmdArgs = append(cmdArgs, "--measured-palette", fmt.Sprintf("%s", po.Dither.MeasuredPalette))
 	case po.Dither.OptionsSetCam16:
 		cmdArgs = append(cmdArgs, "--cam16")

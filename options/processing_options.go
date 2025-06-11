@@ -751,7 +751,6 @@ func applyDitherOption(po *ProcessingOptions, args []string) error {
 
 	if len(args) > 1 { // additional arguments are optional
 		for idx := 1; idx < len(args)-1; idx++ {
-			//for idx, arg := range args[1:] {
 			var arg = args[idx]
 			fmt.Println("arg parse ", arg)
 			switch arg {
