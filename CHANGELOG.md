@@ -27,6 +27,9 @@
 - (pro) Fix BlurHash generation when the `IMGPROXY_USE_LINEAR_COLORSPACE` config is set to `true`.
 - (pro) Fix detection of PDF files with a header offset.
 
+### Removed
+- Remove the `IMGPROXY_SVG_FIX_UNSUPPORTED` config. The problem it was solving is now fixed in librsvg.
+
 ## [3.28.0] - 2025-03-31
 ### Added
 - Add [IMGPROXY_BASE64_URL_INCLUDES_FILENAME](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_BASE64_URL_INCLUDES_FILENAME) config.

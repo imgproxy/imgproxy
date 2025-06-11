@@ -446,21 +446,6 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		))
 	}
 
-	// We're going to rasterize SVG. Since librsvg lacks the support of some SVG
-	// features, we're going to replace them to minimize rendering error
-	if originData.Type == imagetype.SVG && config.SvgFixUnsupported {
-		fixed, changed, svgErr := svg.FixUnsupported(originData)
-		checkErr(ctx, "svg_processing", svgErr)
-
-		if changed {
-			// Since we'll replace origin data, it's better to close it to return
-			// it's buffer to the pool
-			originData.Close()
-
-			originData = fixed
-		}
-	}
-
 	resultData, err := func() (*imagedata.ImageData, error) {
 		defer metrics.StartProcessingSegment(ctx, metrics.Meta{
 			metrics.MetaProcessingOptions: metricsMeta[metrics.MetaProcessingOptions],

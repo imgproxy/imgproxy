@@ -3,7 +3,6 @@ package svg
 import (
 	"os"
 	"path/filepath"
-	"regexp"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -50,32 +49,6 @@ func (s *SvgTestSuite) TestSanitize() {
 	s.Require().NoError(err)
 	s.Require().Equal(string(expected.Data), string(actual.Data))
 	s.Require().Equal(origin.Headers, actual.Headers)
-}
-
-func (s *SvgTestSuite) TestFixUnsupportedDropShadow() {
-	origin := s.readTestFile("test1.drop-shadow.svg")
-	expected := s.readTestFile("test1.drop-shadow.fixed.svg")
-
-	actual, changed, err := FixUnsupported(origin)
-
-	// `FixUnsupported` generates random IDs, we need to replace them for the test
-	re := regexp.MustCompile(`"ds(in|of)-.+?"`)
-	actualData := re.ReplaceAllString(string(actual.Data), `"ds$1-test"`)
-
-	s.Require().NoError(err)
-	s.Require().True(changed)
-	s.Require().Equal(string(expected.Data), actualData)
-	s.Require().Equal(origin.Headers, actual.Headers)
-}
-
-func (s *SvgTestSuite) TestFixUnsupportedNothingChanged() {
-	origin := s.readTestFile("test1.svg")
-
-	actual, changed, err := FixUnsupported(origin)
-
-	s.Require().NoError(err)
-	s.Require().False(changed)
-	s.Require().Equal(origin, actual)
 }
 
 func TestSvg(t *testing.T) {
