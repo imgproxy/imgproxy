@@ -48,8 +48,8 @@ jobs:
       - name: Lint
         uses: golangci/golangci-lint-action@v7
         with:
-          version: v2.0.0
-          args: --timeout 5m0s
+          version: v2.1.6
+          args: --timeout 10m0s
         env:
           LD_LIBRARY_PATH: "/usr/local/lib:/root/vips/${{ matrix.vips-version }}/lib"
           PKG_CONFIG_PATH: "/usr/local/lib/pkgconfig:/root/vips/${{ matrix.vips-version }}/lib/pkgconfig"
