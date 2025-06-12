@@ -295,7 +295,6 @@ func shellOutDither(inFile string, po *options.ProcessingOptions) error {
 	cmd := exec.Command("python3", cmdArgs...)
 	cmd.Dir = "/opt/pushd-dither"
 	output, err := cmd.CombinedOutput()
-	fmt.Println(output)
 	if err != nil {
 		return fmt.Errorf("dither failed: %s: %s", err, output)
 	}

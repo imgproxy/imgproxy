@@ -747,12 +747,9 @@ func applyDitherOption(po *ProcessingOptions, args []string) error {
 		return fmt.Errorf("Invalid dither type: %s", args[0])
 	}
 
-	fmt.Println("args list ", args)
-
 	if len(args) > 1 { // additional arguments are optional
 		for idx := 1; idx < len(args)-1; idx++ {
 			var arg = args[idx]
-			fmt.Println("arg parse ", arg)
 			switch arg {
 			case "co":
 				po.Dither.Contrast = true
@@ -796,7 +793,6 @@ func applyDitherOption(po *ProcessingOptions, args []string) error {
 				// parse the display's measured palette e.x.
 				// opts05:r:24.06:38.15:28.96:g:29.89:-19.31:3.64:bl:25.77:4.94:-35.35:y:56.25:-9.12:59.80:bk:8.58:8.66:-14.49:w:57.0:-2.97:-4.71
 				var PaletteStr = strings.Join(args[idx+1:idx+25], ":")
-				fmt.Println("opts5 args ", PaletteStr)
 				po.Dither.MeasuredPalette = PaletteStr
 				idx += 24
 			case "optscam16":
