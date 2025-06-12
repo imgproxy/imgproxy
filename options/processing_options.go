@@ -786,10 +786,12 @@ func applyDitherOption(po *ProcessingOptions, args []string) error {
 			case "opts04":
 				po.Dither.OptionsSet04 = true // shorthand for a set of options starting with the 20240809 release
 			case "opts05":
-				po.Dither.OptionsSet05 = true // shorthand for a set of options starting with the 20250514 release
 				if len(args) < 25 {
-					return fmt.Errorf("Invalid num of parameters for OptionSet05 args: %s", args)
+					fmt.Errorf("Invalid num of parameters for OptionSet05 args: %s", args)
+					po.Dither.OptionsSet04 = true // use option set 4 if we don't have the required params for option set 5
+					continue
 				}
+				po.Dither.OptionsSet05 = true // shorthand for a set of options starting with the 20250514 release
 				// parse the display's measured palette e.x.
 				// opts05:r:24.06:38.15:28.96:g:29.89:-19.31:3.64:bl:25.77:4.94:-35.35:y:56.25:-9.12:59.80:bk:8.58:8.66:-14.49:w:57.0:-2.97:-4.71
 				var PaletteStr = strings.Join(args[idx+1:idx+25], ":")
