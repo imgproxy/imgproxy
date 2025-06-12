@@ -250,6 +250,18 @@ func shellOutDither(inFile string, po *options.ProcessingOptions) error {
 		cmdArgs = append(cmdArgs, "--saturation-scale", "1.0")
 		cmdArgs = append(cmdArgs, "--clip-error")
 		cmdArgs = append(cmdArgs, "--auto-enhance")
+	case po.Dither.OptionsSet05:
+		cmdArgs = append(cmdArgs, "--jzazbz")
+		cmdArgs = append(cmdArgs, "--hull-project")
+		cmdArgs = append(cmdArgs, "--chroma-lightness")
+		cmdArgs = append(cmdArgs, "--shrink-gamut", "1.1")
+		cmdArgs = append(cmdArgs, "--saturation-scale", "1.0")
+		cmdArgs = append(cmdArgs, "--clip-error")
+		cmdArgs = append(cmdArgs, "--auto-enhance")
+		cmdArgs = append(cmdArgs, "--dea-weight", "0.95")
+		cmdArgs = append(cmdArgs, "--pal-auto-expand", "2.0")
+		cmdArgs = append(cmdArgs, "--inflate-color-space", "jzazbz")
+		cmdArgs = append(cmdArgs, "--measured-palette", po.Dither.MeasuredPalette)
 	case po.Dither.OptionsSetCam16:
 		cmdArgs = append(cmdArgs, "--cam16")
 		cmdArgs = append(cmdArgs, "--chroma-lightness")

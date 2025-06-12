@@ -84,10 +84,12 @@ type DitherOptions struct {
 	OptionsSet02      bool
 	OptionsSet03      bool
 	OptionsSet04      bool
+	OptionsSet05      bool
 	OptionsSetCam16   bool
 	OptionsSetHpminde bool
 	OptionsSetScam    bool
 	OptionsSetVendor  bool
+	MeasuredPalette   string
 }
 
 type WatermarkOptions struct {
@@ -746,7 +748,8 @@ func applyDitherOption(po *ProcessingOptions, args []string) error {
 	}
 
 	if len(args) > 1 { // additional arguments are optional
-		for _, arg := range args[1:] {
+		for idx := 1; idx < len(args)-1; idx++ {
+			var arg = args[idx]
 			switch arg {
 			case "co":
 				po.Dither.Contrast = true
@@ -782,6 +785,18 @@ func applyDitherOption(po *ProcessingOptions, args []string) error {
 				po.Dither.OptionsSet03 = true // shorthand for a set of options starting with the 20240702 release
 			case "opts04":
 				po.Dither.OptionsSet04 = true // shorthand for a set of options starting with the 20240809 release
+			case "opts05":
+				if len(args) < 25 {
+					log.Warningf("Invalid num of parameters for OptionSet05, using OptionSet04 instead args: %s", args)
+					po.Dither.OptionsSet04 = true // use option set 4 if we don't have the required params for option set 5
+					continue
+				}
+				po.Dither.OptionsSet05 = true // shorthand for a set of options starting with the 20250514 release
+				// parse the display's measured palette e.x.
+				// opts05:r:24.06:38.15:28.96:g:29.89:-19.31:3.64:bl:25.77:4.94:-35.35:y:56.25:-9.12:59.80:bk:8.58:8.66:-14.49:w:57.0:-2.97:-4.71
+				var PaletteStr = strings.Join(args[idx+1:idx+25], ":")
+				po.Dither.MeasuredPalette = PaletteStr
+				idx += 24
 			case "optscam16":
 				po.Dither.OptionsSetCam16 = true
 			case "optshpminde":
