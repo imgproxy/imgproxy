@@ -787,7 +787,7 @@ func applyDitherOption(po *ProcessingOptions, args []string) error {
 				po.Dither.OptionsSet04 = true // shorthand for a set of options starting with the 20240809 release
 			case "opts05":
 				if len(args) < 25 {
-					fmt.Errorf("Invalid num of parameters for OptionSet05 args: %s", args)
+					log.Warningf("Invalid num of parameters for OptionSet05, using OptionSet04 instead args: %s", args)
 					po.Dither.OptionsSet04 = true // use option set 4 if we don't have the required params for option set 5
 					continue
 				}
