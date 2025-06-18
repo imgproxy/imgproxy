@@ -261,7 +261,7 @@ func shellOutDither(inFile string, po *options.ProcessingOptions) error {
 		cmdArgs = append(cmdArgs, "--dea-weight", "0.95")
 		cmdArgs = append(cmdArgs, "--pal-auto-expand", "2.0")
 		cmdArgs = append(cmdArgs, "--inflate-color-space", "jzazbz")
-		cmdArgs = append(cmdArgs, "--measured-palette", po.Dither.MeasuredPalette)
+		cmdArgs = append(cmdArgs, "--pal-str", po.Dither.MeasuredPalette)
 	case po.Dither.OptionsSetCam16:
 		cmdArgs = append(cmdArgs, "--cam16")
 		cmdArgs = append(cmdArgs, "--chroma-lightness")
@@ -297,6 +297,7 @@ func shellOutDither(inFile string, po *options.ProcessingOptions) error {
 	if err != nil {
 		return fmt.Errorf("dither failed: %s: %s", err, output)
 	}
+	print(output)
 
 	if po.Dither.SoftProof {
 		// cleanup unused outfile, replace with proof file
