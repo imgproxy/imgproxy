@@ -297,7 +297,6 @@ func shellOutDither(inFile string, po *options.ProcessingOptions) error {
 	if err != nil {
 		return fmt.Errorf("dither failed: %s: %s", err, output)
 	}
-	print(output)
 
 	if po.Dither.SoftProof {
 		// cleanup unused outfile, replace with proof file
