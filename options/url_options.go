@@ -61,6 +61,11 @@ func parseURLOptionsIPC(qs url.Values, path string) (urlOptions, string, error) 
 			Name: "msr",
 			Args: []string{strconv.Itoa(config.MaxMediaSrcResolution)},
 		})
+
+        parsed = append(parsed, urlOption{
+            Name: "sh",
+            Args: []string{"0"},
+        })
 	}
 
 	// Append valid query parameters
