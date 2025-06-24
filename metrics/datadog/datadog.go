@@ -6,14 +6,15 @@ import (
 	"net/http"
 	"os"
 	"reflect"
+	"strconv"
 	"sync"
 	"time"
 
 	"github.com/DataDog/datadog-go/v5/statsd"
+	"github.com/DataDog/dd-trace-go/v2/ddtrace/ext"
+	"github.com/DataDog/dd-trace-go/v2/ddtrace/tracer"
 	"github.com/felixge/httpsnoop"
 	log "github.com/sirupsen/logrus"
-	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/ext"
-	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/metrics/errformat"
@@ -46,10 +47,16 @@ func Init() {
 		name = "imgproxy"
 	}
 
+	logStartup := false
+	if b, err := strconv.ParseBool(os.Getenv("DD_TRACE_STARTUP_LOGS")); err == nil {
+		logStartup = b
+	}
+
 	tracer.Start(
 		tracer.WithService(name),
 		tracer.WithServiceVersion(version.Version),
 		tracer.WithLogger(dataDogLogger{}),
+		tracer.WithLogStartup(logStartup),
 	)
 
 	enabled = true
@@ -124,7 +131,7 @@ func StartRootSpan(ctx context.Context, rw http.ResponseWriter, r *http.Request)
 	return context.WithValue(ctx, spanCtxKey{}, span), cancel, newRw
 }
 
-func setMetadata(span tracer.Span, key string, value any) {
+func setMetadata(span *tracer.Span, key string, value any) {
 	if len(key) == 0 || value == nil {
 		return
 	}
@@ -144,7 +151,7 @@ func SetMetadata(ctx context.Context, key string, value any) {
 		return
 	}
 
-	if rootSpan, ok := ctx.Value(spanCtxKey{}).(tracer.Span); ok {
+	if rootSpan, ok := ctx.Value(spanCtxKey{}).(*tracer.Span); ok {
 		setMetadata(rootSpan, key, value)
 	}
 }
@@ -154,8 +161,8 @@ func StartSpan(ctx context.Context, name string, meta map[string]any) context.Ca
 		return func() {}
 	}
 
-	if rootSpan, ok := ctx.Value(spanCtxKey{}).(tracer.Span); ok {
-		span := tracer.StartSpan(name, tracer.Measured(), tracer.ChildOf(rootSpan.Context()))
+	if rootSpan, ok := ctx.Value(spanCtxKey{}).(*tracer.Span); ok {
+		span := rootSpan.StartChild(name, tracer.Measured())
 
 		for k, v := range meta {
 			setMetadata(span, k, v)
@@ -172,7 +179,7 @@ func SendError(ctx context.Context, errType string, err error) {
 		return
 	}
 
-	if rootSpan, ok := ctx.Value(spanCtxKey{}).(tracer.Span); ok {
+	if rootSpan, ok := ctx.Value(spanCtxKey{}).(*tracer.Span); ok {
 		rootSpan.SetTag(ext.Error, err)
 		rootSpan.SetTag(ext.ErrorType, errformat.FormatErrType(errType, err))
 	}
