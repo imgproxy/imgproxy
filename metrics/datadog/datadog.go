@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"reflect"
+	"strconv"
 	"sync"
 	"time"
 
@@ -46,10 +47,16 @@ func Init() {
 		name = "imgproxy"
 	}
 
+	logStartup := false
+	if b, err := strconv.ParseBool(os.Getenv("DD_TRACE_STARTUP_LOGS")); err == nil {
+		logStartup = b
+	}
+
 	tracer.Start(
 		tracer.WithService(name),
 		tracer.WithServiceVersion(version.Version),
 		tracer.WithLogger(dataDogLogger{}),
+		tracer.WithLogStartup(logStartup),
 	)
 
 	enabled = true
