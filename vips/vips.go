@@ -33,9 +33,29 @@ import (
 	"github.com/imgproxy/imgproxy/v3/metrics/prometheus"
 )
 
+const (
+	webpPresetDefault = "default"
+	webpPresetPhoto   = "photo"
+	webpPresetPicture = "picture"
+	webpPresetDrawing = "drawing"
+	webpPresetIcon    = "icon"
+	webpPresetText    = "text"
+)
+
 type Image struct {
 	VipsImage *C.VipsImage
 }
+
+var (
+	cWebpPreset = map[string]C.VipsForeignWebpPreset{
+		webpPresetDefault: C.VIPS_FOREIGN_WEBP_PRESET_DEFAULT,
+		webpPresetPhoto:   C.VIPS_FOREIGN_WEBP_PRESET_PHOTO,
+		webpPresetPicture: C.VIPS_FOREIGN_WEBP_PRESET_PICTURE,
+		webpPresetDrawing: C.VIPS_FOREIGN_WEBP_PRESET_DRAWING,
+		webpPresetIcon:    C.VIPS_FOREIGN_WEBP_PRESET_ICON,
+		webpPresetText:    C.VIPS_FOREIGN_WEBP_PRESET_TEXT,
+	}
+)
 
 var (
 	typeSupportLoad sync.Map
@@ -51,6 +71,8 @@ var vipsConf struct {
 	PngQuantizationColors C.int
 	AvifSpeed             C.int
 	JxlEffort             C.int
+	WebpEffort            C.int
+	WebpPreset            C.VipsForeignWebpPreset
 	PngUnlimited          C.int
 	SvgUnlimited          C.int
 }
@@ -101,8 +123,15 @@ func Init() error {
 	vipsConf.PngQuantizationColors = C.int(config.PngQuantizationColors)
 	vipsConf.AvifSpeed = C.int(config.AvifSpeed)
 	vipsConf.JxlEffort = C.int(config.JxlEffort)
+	vipsConf.WebpEffort = C.int(config.WebpEffort)
 	vipsConf.PngUnlimited = gbool(config.PngUnlimited)
 	vipsConf.SvgUnlimited = gbool(config.SvgUnlimited)
+
+	if p, ok := cWebpPreset[config.WebpPreset]; ok {
+		vipsConf.WebpPreset = p
+	} else {
+		return newVipsErrorf("invalid libwebp preset: %s", config.WebpPreset)
+	}
 
 	prometheus.AddGaugeFunc(
 		"vips_memory_bytes",
@@ -425,7 +454,7 @@ func (img *Image) Save(imgtype imagetype.Type, quality int) (*imagedata.ImageDat
 	case imagetype.PNG:
 		err = C.vips_pngsave_go(img.VipsImage, &ptr, &imgsize, vipsConf.PngInterlaced, vipsConf.PngQuantize, vipsConf.PngQuantizationColors)
 	case imagetype.WEBP:
-		err = C.vips_webpsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality))
+		err = C.vips_webpsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality), vipsConf.WebpEffort, vipsConf.WebpPreset)
 	case imagetype.GIF:
 		err = C.vips_gifsave_go(img.VipsImage, &ptr, &imgsize)
 	case imagetype.HEIC:
