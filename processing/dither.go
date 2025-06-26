@@ -2,6 +2,7 @@ package processing
 
 import (
 	"fmt"
+	"github.com/imgproxy/imgproxy/v3/security"
 	"math"
 	"os"
 	"os/exec"
@@ -9,7 +10,6 @@ import (
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/options"
-	"github.com/imgproxy/imgproxy/v3/security"
 	"github.com/imgproxy/imgproxy/v3/vips"
 	log "github.com/sirupsen/logrus"
 )
@@ -54,7 +54,8 @@ func dither(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOption
 		return err
 	}
 
-	pngData, err := img.Save(imagetype.PNG, 0)
+	// standard img.Save(imagetype.PNG ...) is lossy and colors are not preserved
+	pngData, err := img.SaveHighQualityPNG()
 	if err != nil {
 		return err
 	}
