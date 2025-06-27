@@ -1116,3 +1116,87 @@ vips_cleanup()
   vips_error_clear();
   vips_thread_shutdown();
 }
+
+// --- async source ----------------------------------------------------------------------
+
+// define glib subtype for vips async source
+#define VIPS_TYPE_ASYNC_SOURCE (vips_async_source_get_type())
+G_DEFINE_FINAL_TYPE(VipsAsyncSource, vips_async_source, VIPS_TYPE_SOURCE)
+
+extern void closeAsyncReader(uintptr_t handle);
+extern gint64 asyncReaderSeek(uintptr_t handle, gint64 offset, int whence);
+extern gint64 asyncReaderRead(uintptr_t handle, gpointer buffer, gint64 size);
+
+// loads jpeg from a source
+int
+vips_jpegloadsource_go(VipsAsyncSource *source, int shrink, VipsImage **out)
+{
+  if (shrink > 1)
+    return vips_jpegload_source(VIPS_SOURCE(source), out, "shrink", shrink,
+        NULL);
+
+  return vips_jpegload_source(VIPS_SOURCE(source), out, NULL);
+}
+
+// dereferences source
+void
+close_source(VipsImage **in, VipsAsyncSource *source)
+{
+  uintptr_t readerHandle = source->readerHandle;
+  VIPS_UNREF(source);
+  closeAsyncReader(readerHandle);
+}
+
+// attaches close signals to the image. first signal closes it's source, second closes the reader.
+void
+vips_attach_image_close_signals(VipsImage **in, uintptr_t handle, VipsAsyncSource *source)
+{
+  g_signal_connect(*in, "close", G_CALLBACK(close_source), (void *) source);
+}
+
+// read function for vips async source
+static gint64
+vips_async_source_read(VipsSource *source, void *buffer, size_t length)
+{
+  VipsAsyncSource *self = (VipsAsyncSource *) source;
+
+  return asyncReaderRead(self->readerHandle, buffer, length);
+}
+
+// seek function for vips async source. whence can be SEEK_SET (0), SEEK_CUR (1), or SEEK_END (2).
+static gint64
+vips_async_source_seek(VipsSource *source, gint64 offset, int whence)
+{
+  VipsAsyncSource *self = (VipsAsyncSource *) source;
+
+  return asyncReaderSeek(self->readerHandle, offset, whence);
+}
+
+// attaches seek/read handlers to the async source class
+static void
+vips_async_source_class_init(VipsAsyncSourceClass *klass)
+{
+  VipsObjectClass *object_class = VIPS_OBJECT_CLASS(klass);
+  VipsSourceClass *source_class = VIPS_SOURCE_CLASS(klass);
+
+  object_class->nickname = "async_source";
+  object_class->description = "async input source";
+
+  source_class->read = vips_async_source_read;
+  source_class->seek = vips_async_source_seek;
+}
+
+// initializes the async source (nothing to do here yet)
+static void
+vips_async_source_init(VipsAsyncSource *source)
+{
+}
+
+// creates a new async source with the given reader handle
+VipsAsyncSource *
+vips_new_async_source(uintptr_t readerHandle)
+{
+  VipsAsyncSource *source = g_object_new(vips_async_source_get_type(), NULL);
+  source->readerHandle = readerHandle;
+  return source;
+}

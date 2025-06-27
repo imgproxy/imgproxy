@@ -1,6 +1,8 @@
 #include <stdlib.h>
+#include <stdint.h> // uintptr_t
 
 #include <vips/vips.h>
+#include <vips/connection.h>
 #include <vips/vips7compat.h>
 #include <vips/vector.h>
 
@@ -9,6 +11,17 @@ typedef struct _RGB {
   double g;
   double b;
 } RGB;
+
+// vips async source
+typedef struct _VipsAsyncSource {
+  VipsSourceCustom source; // class designator
+  uintptr_t readerHandle;  // async reader handler
+} VipsAsyncSource;
+
+// glib class for vips async source
+typedef struct _VipsAsyncSourceClass {
+  VipsSourceCustomClass parent_class;
+} VipsAsyncSourceClass;
 
 int vips_initialize();
 
@@ -99,3 +112,15 @@ int vips_avifsave_go(VipsImage *in, void **buf, size_t *len, int quality, int sp
 int vips_tiffsave_go(VipsImage *in, void **buf, size_t *len, int quality);
 
 void vips_cleanup();
+
+// vips async source read function
+int vips_jpegloadsource_go(VipsAsyncSource *source, int shrink, VipsImage **out);
+
+// creates new vips async source from a reader handle
+VipsAsyncSource *vips_new_async_source(uintptr_t readerHandle);
+
+// attaches "close" signal to the vips image: closes reader and unrefs vips source
+void vips_attach_image_close_signals(VipsImage **in, uintptr_t handle, VipsAsyncSource *source);
+
+// closes source and corresponding reader
+void close_source(VipsImage **in, VipsAsyncSource *source);
