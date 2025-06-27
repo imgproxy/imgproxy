@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdint.h> // uintptr_t
 
 #include <vips/vips.h>
 #include <vips/vips7compat.h>

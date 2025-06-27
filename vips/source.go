@@ -1,0 +1,65 @@
+package vips
+
+/*
+#cgo pkg-config: vips
+#cgo CFLAGS: -O3
+#cgo LDFLAGS: -lm
+#include "source.h"
+*/
+import "C"
+import (
+	"io"
+	"runtime/cgo"
+	"unsafe"
+)
+
+//export closeAsyncReader
+func closeAsyncReader(handle C.uintptr_t) {
+	h := cgo.Handle(handle)
+	h.Delete()
+}
+
+// calls seek() on the async reader via it's handle from the C side
+//
+//export asyncReaderSeek
+func asyncReaderSeek(handle C.uintptr_t, offset C.int64_t, whence int) C.int64_t {
+	h := cgo.Handle(handle)
+	reader, ok := h.Value().(io.ReadSeeker)
+	if !ok {
+		return -1
+	}
+
+	pos, err := reader.Seek(int64(offset), whence)
+	if err != nil {
+		return -1
+	}
+
+	return C.int64_t(pos)
+}
+
+// calls read() on the async reader via it's handle from the C side
+//
+//export asyncReaderRead
+func asyncReaderRead(handle C.uintptr_t, pointer unsafe.Pointer, size C.int64_t) C.int64_t {
+	h := cgo.Handle(handle)
+	reader, ok := h.Value().(io.ReadSeeker)
+	if !ok {
+		return -1
+	}
+
+	buf := unsafe.Slice((*byte)(pointer), size)
+	n, err := reader.Read(buf)
+	if err == io.EOF {
+		return 0
+	} else if err != nil {
+		return -1
+	}
+
+	return C.int64_t(n)
+}
+
+// newVipsSource creates a new VipsAsyncSource from an io.ReadSeeker.
+func newVipsAsyncSource(r io.ReadSeeker) *C.VipsAsyncSource {
+	handler := cgo.NewHandle(r)
+	return C.vips_new_async_source(C.uintptr_t(handler))
+}
