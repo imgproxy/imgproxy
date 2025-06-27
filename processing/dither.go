@@ -54,7 +54,8 @@ func dither(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOption
 		return err
 	}
 
-	pngData, err := img.Save(imagetype.PNG, 0)
+	// standard img.Save(imagetype.PNG ...) is lossy and colors are not preserved
+	pngData, err := img.SaveHighQualityPNG()
 	if err != nil {
 		return err
 	}

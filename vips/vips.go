@@ -352,6 +352,32 @@ func (img *Image) LoadThumbnail(imgdata *imagedata.ImageData) error {
 	return nil
 }
 
+// Image.Save(imagetype.PNG) is lossy and colors are not preserved
+func (img *Image) SaveHighQualityPNG() (*imagedata.ImageData, error) {
+	var ptr unsafe.Pointer
+	cancel := func() {
+		C.g_free_go(&ptr)
+	}
+
+	err := C.int(0)
+	imgsize := C.size_t(0)
+
+	err = C.vips_pngsave_hq_go(img.VipsImage, &ptr, &imgsize)
+	if err != 0 {
+		cancel()
+		return nil, Error()
+	}
+
+	imgdata := imagedata.ImageData{
+		Type: imagetype.PNG,
+		Data: ptrToBytes(ptr, int(imgsize)),
+	}
+
+	imgdata.SetCancel(cancel)
+
+	return &imgdata, nil
+}
+
 func (img *Image) Save(imgtype imagetype.Type, quality int) (*imagedata.ImageData, error) {
 	if imgtype == imagetype.ICO {
 		return img.saveAsIco()
