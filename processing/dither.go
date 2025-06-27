@@ -2,7 +2,6 @@ package processing
 
 import (
 	"fmt"
-	"github.com/imgproxy/imgproxy/v3/security"
 	"math"
 	"os"
 	"os/exec"
@@ -10,6 +9,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/options"
+	"github.com/imgproxy/imgproxy/v3/security"
 	"github.com/imgproxy/imgproxy/v3/vips"
 	log "github.com/sirupsen/logrus"
 )
