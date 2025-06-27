@@ -5,6 +5,7 @@ package vips
 #cgo CFLAGS: -O3
 #cgo LDFLAGS: -lm
 #include "vips.h"
+#include "source.h"
 */
 import "C"
 import (
@@ -15,7 +16,6 @@ import (
 	"os"
 	"regexp"
 	"runtime"
-	"runtime/cgo"
 	"strings"
 	"sync"
 	"time"
@@ -331,49 +331,6 @@ func (img *Image) Pages() int {
 	return p
 }
 
-//export closeAsyncReader
-func closeAsyncReader(handle C.uintptr_t) {
-	h := cgo.Handle(handle)
-	h.Delete()
-}
-
-// calls seek() on the async reader via it's handle from the C side
-//
-//export asyncReaderSeek
-func asyncReaderSeek(handle C.uintptr_t, offset C.int64_t, whence int) C.int64_t {
-	h := cgo.Handle(handle)
-	reader, ok := h.Value().(*bytes.Reader)
-	if !ok {
-		return -1
-	}
-
-	pos, err := reader.Seek(int64(offset), whence)
-	if err != nil {
-		return -1
-	}
-
-	return C.int64_t(pos)
-}
-
-// calls read() on the async reader via it's handle from the C side
-//
-//export asyncReaderRead
-func asyncReaderRead(handle C.uintptr_t, pointer unsafe.Pointer, size C.int64_t) C.int64_t {
-	h := cgo.Handle(handle)
-	reader, ok := h.Value().(*bytes.Reader)
-	if !ok {
-		return -1
-	}
-
-	buf := unsafe.Slice((*byte)(pointer), size)
-	n, err := reader.Read(buf)
-	if err != nil {
-		return -1
-	}
-
-	return C.int64_t(n)
-}
-
 func (img *Image) Load(imgdata *imagedata.ImageData, shrink int, scale float64, pages int) error {
 	if imgdata.Type == imagetype.ICO {
 		return img.loadIco(imgdata.Data, shrink, scale, pages)
@@ -390,8 +347,7 @@ func (img *Image) Load(imgdata *imagedata.ImageData, shrink int, scale float64, 
 	err := C.int(0)
 
 	reader := bytes.NewReader(imgdata.Data)
-	handler := cgo.NewHandle(reader)
-	source := C.vips_new_async_source(C.uintptr_t(handler))
+	source := newVipsAsyncSource(reader)
 
 	switch imgdata.Type {
 	case imagetype.JPEG:
@@ -411,15 +367,14 @@ func (img *Image) Load(imgdata *imagedata.ImageData, shrink int, scale float64, 
 	case imagetype.TIFF:
 		err = C.vips_tiffload_go(data, dataSize, &tmp)
 	default:
-		C.close_source(nil, source)
+		C.unref_source(source)
 		return newVipsError("Usupported image type to load")
 	}
 	if err != 0 {
-		C.close_source(nil, source)
+		C.unref_source(source)
 		return Error()
 	}
 
-	C.vips_attach_image_close_signals(&tmp, C.uintptr_t(handler), source)
 	C.swap_and_clear(&img.VipsImage, tmp)
 
 	if imgdata.Type == imagetype.TIFF {
