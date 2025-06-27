@@ -12,13 +12,80 @@ extern gint64 asyncReaderRead(uintptr_t handle, gpointer buffer, gint64 size);
 
 // loads jpeg from a source
 int
-vips_jpegloadsource_go(VipsAsyncSource *source, int shrink, VipsImage **out)
+vips_jpegload_source_go(VipsAsyncSource *source, int shrink, VipsImage **out)
 {
   if (shrink > 1)
     return vips_jpegload_source(VIPS_SOURCE(source), out, "shrink", shrink,
         NULL);
 
   return vips_jpegload_source(VIPS_SOURCE(source), out, NULL);
+}
+
+// loads xjl from source
+int
+vips_jxlload_source_go(VipsAsyncSource *source, int pages, VipsImage **out)
+{
+  return vips_jxlload_source(VIPS_SOURCE(source), out, "n", pages, NULL);
+}
+
+int
+vips_pngload_source_go(VipsAsyncSource *source, VipsImage **out, int unlimited)
+{
+  return vips_pngload_source(
+      VIPS_SOURCE(source), out,
+      "unlimited", unlimited,
+      NULL);
+}
+
+int
+vips_webpload_source_go(VipsAsyncSource *source, double scale, int pages, VipsImage **out)
+{
+  return vips_webpload_source(
+      VIPS_SOURCE(source), out,
+      "scale", scale,
+      "n", pages,
+      NULL);
+}
+
+int
+vips_gifload_source_go(VipsAsyncSource *source, int pages, VipsImage **out)
+{
+  return vips_gifload_source(VIPS_SOURCE(source), out, "access", VIPS_ACCESS_SEQUENTIAL, "n", pages, NULL);
+}
+
+int
+vips_svgload_source_go(VipsAsyncSource *source, double scale, VipsImage **out, int unlimited)
+{
+  // libvips limits the minimal scale to 0.001, so we have to scale down dpi
+  // for lower scale values
+  double dpi = 72.0;
+  if (scale < 0.001) {
+    dpi *= VIPS_MAX(scale / 0.001, 0.001);
+    scale = 0.001;
+  }
+
+  return vips_svgload_source(
+      VIPS_SOURCE(source), out,
+      "scale", scale,
+      "dpi", dpi,
+      "unlimited", unlimited,
+      NULL);
+}
+
+int
+vips_heifload_source_go(VipsAsyncSource *source, VipsImage **out, int thumbnail)
+{
+  return vips_heifload_source(
+      VIPS_SOURCE(source), out,
+      "access", VIPS_ACCESS_SEQUENTIAL,
+      "thumbnail", thumbnail,
+      NULL);
+}
+
+int
+vips_tiffload_source_go(VipsAsyncSource *source, VipsImage **out)
+{
+  return vips_tiffload_source(VIPS_SOURCE(source), out, "access", VIPS_ACCESS_SEQUENTIAL, NULL);
 }
 
 // dereferences source

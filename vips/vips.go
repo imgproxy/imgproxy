@@ -342,8 +342,6 @@ func (img *Image) Load(imgdata *imagedata.ImageData, shrink int, scale float64, 
 
 	var tmp *C.VipsImage
 
-	data := unsafe.Pointer(&imgdata.Data[0])
-	dataSize := C.size_t(len(imgdata.Data))
 	err := C.int(0)
 
 	reader := bytes.NewReader(imgdata.Data)
@@ -351,21 +349,21 @@ func (img *Image) Load(imgdata *imagedata.ImageData, shrink int, scale float64, 
 
 	switch imgdata.Type {
 	case imagetype.JPEG:
-		err = C.vips_jpegloadsource_go(source, C.int(shrink), &tmp)
+		err = C.vips_jpegload_source_go(source, C.int(shrink), &tmp)
 	case imagetype.JXL:
-		err = C.vips_jxlload_go(data, dataSize, C.int(pages), &tmp)
+		err = C.vips_jxlload_source_go(source, C.int(pages), &tmp)
 	case imagetype.PNG:
-		err = C.vips_pngload_go(data, dataSize, &tmp, vipsConf.PngUnlimited)
+		err = C.vips_pngload_source_go(source, &tmp, vipsConf.PngUnlimited)
 	case imagetype.WEBP:
-		err = C.vips_webpload_go(data, dataSize, C.double(scale), C.int(pages), &tmp)
+		err = C.vips_webpload_source_go(source, C.double(scale), C.int(pages), &tmp)
 	case imagetype.GIF:
-		err = C.vips_gifload_go(data, dataSize, C.int(pages), &tmp)
+		err = C.vips_gifload_source_go(source, C.int(pages), &tmp)
 	case imagetype.SVG:
-		err = C.vips_svgload_go(data, dataSize, C.double(scale), &tmp, vipsConf.SvgUnlimited)
+		err = C.vips_svgload_source_go(source, C.double(scale), &tmp, vipsConf.SvgUnlimited)
 	case imagetype.HEIC, imagetype.AVIF:
-		err = C.vips_heifload_go(data, dataSize, &tmp, C.int(0))
+		err = C.vips_heifload_source_go(source, &tmp, C.int(0))
 	case imagetype.TIFF:
-		err = C.vips_tiffload_go(data, dataSize, &tmp)
+		err = C.vips_tiffload_source_go(source, &tmp)
 	default:
 		C.unref_source(source)
 		return newVipsError("Usupported image type to load")
