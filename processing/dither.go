@@ -54,7 +54,7 @@ func dither(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOption
 		return err
 	}
 
-	jpgData, err := img.Save(imagetype.JPEG, 0)
+	jpgData, err := img.Save(imagetype.JPEG, 95)
 	if err != nil {
 		return err
 	}
