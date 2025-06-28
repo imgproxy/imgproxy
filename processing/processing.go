@@ -35,8 +35,8 @@ var mainPipeline = pipeline{
 	fixSize,
 	flatten,
 	watermark,
-	dither,
 	exportColorProfile,
+	dither,
 	stripMetadata,
 }
 
