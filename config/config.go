@@ -56,7 +56,7 @@ var (
 	AvifSpeed             int
 	JxlEffort             int
 	WebpEffort            int
-	WebpPreset            string
+	WebpPreset            WebpPresetKind
 	Quality               int
 	FormatQuality         map[imagetype.Type]int
 	StripMetadata         bool
@@ -263,7 +263,7 @@ func Reset() {
 	AvifSpeed = 8
 	JxlEffort = 4
 	WebpEffort = 4
-	WebpPreset = "default"
+	WebpPreset = WebpPresetDefault
 	Quality = 80
 	FormatQuality = map[imagetype.Type]int{
 		imagetype.WEBP: 79,
@@ -496,7 +496,9 @@ func Configure() error {
 	configurators.Int(&AvifSpeed, "IMGPROXY_AVIF_SPEED")
 	configurators.Int(&JxlEffort, "IMGPROXY_JXL_EFFORT")
 	configurators.Int(&WebpEffort, "IMGPROXY_WEBP_EFFORT")
-	configurators.String(&WebpPreset, "IMGPROXY_WEBP_PRESET")
+	if err := configurators.FromMap(&WebpPreset, "IMGPROXY_WEBP_PRESET", WebpPresets); err != nil {
+		return err
+	}
 	configurators.Int(&Quality, "IMGPROXY_QUALITY")
 	if err := configurators.ImageTypesQuality(FormatQuality, "IMGPROXY_FORMAT_QUALITY"); err != nil {
 		return err

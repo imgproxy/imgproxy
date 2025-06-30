@@ -33,29 +33,9 @@ import (
 	"github.com/imgproxy/imgproxy/v3/metrics/prometheus"
 )
 
-const (
-	webpPresetDefault = "default"
-	webpPresetPhoto   = "photo"
-	webpPresetPicture = "picture"
-	webpPresetDrawing = "drawing"
-	webpPresetIcon    = "icon"
-	webpPresetText    = "text"
-)
-
 type Image struct {
 	VipsImage *C.VipsImage
 }
-
-var (
-	cWebpPreset = map[string]C.VipsForeignWebpPreset{
-		webpPresetDefault: C.VIPS_FOREIGN_WEBP_PRESET_DEFAULT,
-		webpPresetPhoto:   C.VIPS_FOREIGN_WEBP_PRESET_PHOTO,
-		webpPresetPicture: C.VIPS_FOREIGN_WEBP_PRESET_PICTURE,
-		webpPresetDrawing: C.VIPS_FOREIGN_WEBP_PRESET_DRAWING,
-		webpPresetIcon:    C.VIPS_FOREIGN_WEBP_PRESET_ICON,
-		webpPresetText:    C.VIPS_FOREIGN_WEBP_PRESET_TEXT,
-	}
-)
 
 var (
 	typeSupportLoad sync.Map
@@ -127,10 +107,19 @@ func Init() error {
 	vipsConf.PngUnlimited = gbool(config.PngUnlimited)
 	vipsConf.SvgUnlimited = gbool(config.SvgUnlimited)
 
-	if p, ok := cWebpPreset[config.WebpPreset]; ok {
-		vipsConf.WebpPreset = p
-	} else {
-		return newVipsErrorf("invalid libwebp preset: %s", config.WebpPreset)
+	switch config.WebpPreset {
+	case config.WebpPresetPhoto:
+		vipsConf.WebpPreset = C.VIPS_FOREIGN_WEBP_PRESET_PHOTO
+	case config.WebpPresetPicture:
+		vipsConf.WebpPreset = C.VIPS_FOREIGN_WEBP_PRESET_PICTURE
+	case config.WebpPresetDrawing:
+		vipsConf.WebpPreset = C.VIPS_FOREIGN_WEBP_PRESET_DRAWING
+	case config.WebpPresetIcon:
+		vipsConf.WebpPreset = C.VIPS_FOREIGN_WEBP_PRESET_ICON
+	case config.WebpPresetText:
+		vipsConf.WebpPreset = C.VIPS_FOREIGN_WEBP_PRESET_TEXT
+	default:
+		vipsConf.WebpPreset = C.VIPS_FOREIGN_WEBP_PRESET_DEFAULT
 	}
 
 	prometheus.AddGaugeFunc(
