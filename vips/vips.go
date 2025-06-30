@@ -345,7 +345,8 @@ func (img *Image) Load(imgdata *imagedata.ImageData, shrink int, scale float64, 
 	err := C.int(0)
 
 	reader := bytes.NewReader(imgdata.Data)
-	source := newVipsAsyncSource(reader)
+	source := newVipsImgproxySource(reader)
+	defer C.unref_imgproxy_source(source)
 
 	switch imgdata.Type {
 	case imagetype.JPEG:
@@ -365,11 +366,9 @@ func (img *Image) Load(imgdata *imagedata.ImageData, shrink int, scale float64, 
 	case imagetype.TIFF:
 		err = C.vips_tiffload_source_go(source, &tmp)
 	default:
-		C.unref_source(source)
 		return newVipsError("Usupported image type to load")
 	}
 	if err != 0 {
-		C.unref_source(source)
 		return Error()
 	}
 
@@ -393,10 +392,11 @@ func (img *Image) LoadThumbnail(imgdata *imagedata.ImageData) error {
 
 	var tmp *C.VipsImage
 
-	data := unsafe.Pointer(&imgdata.Data[0])
-	dataSize := C.size_t(len(imgdata.Data))
+	reader := bytes.NewReader(imgdata.Data)
+	source := newVipsImgproxySource(reader)
+	defer C.unref_imgproxy_source(source)
 
-	if err := C.vips_heifload_go(data, dataSize, &tmp, C.int(1)); err != 0 {
+	if err := C.vips_heifload_source_go(source, &tmp, C.int(1)); err != 0 {
 		return Error()
 	}
 

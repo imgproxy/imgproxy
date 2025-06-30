@@ -13,16 +13,16 @@ import (
 	"unsafe"
 )
 
-//export closeAsyncReader
-func closeAsyncReader(handle C.uintptr_t) {
+//export closeImgproxyReader
+func closeImgproxyReader(handle C.uintptr_t) {
 	h := cgo.Handle(handle)
 	h.Delete()
 }
 
 // calls seek() on the async reader via it's handle from the C side
 //
-//export asyncReaderSeek
-func asyncReaderSeek(handle C.uintptr_t, offset C.int64_t, whence int) C.int64_t {
+//export imgproxyReaderSeek
+func imgproxyReaderSeek(handle C.uintptr_t, offset C.int64_t, whence int) C.int64_t {
 	h := cgo.Handle(handle)
 	reader, ok := h.Value().(io.ReadSeeker)
 	if !ok {
@@ -39,8 +39,8 @@ func asyncReaderSeek(handle C.uintptr_t, offset C.int64_t, whence int) C.int64_t
 
 // calls read() on the async reader via it's handle from the C side
 //
-//export asyncReaderRead
-func asyncReaderRead(handle C.uintptr_t, pointer unsafe.Pointer, size C.int64_t) C.int64_t {
+//export imgproxyReaderRead
+func imgproxyReaderRead(handle C.uintptr_t, pointer unsafe.Pointer, size C.int64_t) C.int64_t {
 	h := cgo.Handle(handle)
 	reader, ok := h.Value().(io.ReadSeeker)
 	if !ok {
@@ -59,7 +59,7 @@ func asyncReaderRead(handle C.uintptr_t, pointer unsafe.Pointer, size C.int64_t)
 }
 
 // newVipsSource creates a new VipsAsyncSource from an io.ReadSeeker.
-func newVipsAsyncSource(r io.ReadSeeker) *C.VipsAsyncSource {
+func newVipsImgproxySource(r io.ReadSeeker) *C.VipsImgproxySource {
 	handler := cgo.NewHandle(r)
-	return C.vips_new_async_source(C.uintptr_t(handler))
+	return C.vips_new_imgproxy_source(C.uintptr_t(handler))
 }
