@@ -765,7 +765,7 @@ func Configure() error {
 	if WebpEffort < 1 {
 		return fmt.Errorf("Webp effort should be greater than 0, now - %d\n", WebpEffort)
 	} else if WebpEffort > 6 {
-		return fmt.Errorf("Webp effort can't be greater than 9, now - %d\n", WebpEffort)
+		return fmt.Errorf("Webp effort can't be greater than 6, now - %d\n", WebpEffort)
 	}
 
 	if Quality <= 0 {
