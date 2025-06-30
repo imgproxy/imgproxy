@@ -51,6 +51,8 @@ var vipsConf struct {
 	PngQuantizationColors C.int
 	AvifSpeed             C.int
 	JxlEffort             C.int
+	WebpEffort            C.int
+	WebpPreset            C.VipsForeignWebpPreset
 	PngUnlimited          C.int
 	SvgUnlimited          C.int
 }
@@ -101,8 +103,24 @@ func Init() error {
 	vipsConf.PngQuantizationColors = C.int(config.PngQuantizationColors)
 	vipsConf.AvifSpeed = C.int(config.AvifSpeed)
 	vipsConf.JxlEffort = C.int(config.JxlEffort)
+	vipsConf.WebpEffort = C.int(config.WebpEffort)
 	vipsConf.PngUnlimited = gbool(config.PngUnlimited)
 	vipsConf.SvgUnlimited = gbool(config.SvgUnlimited)
+
+	switch config.WebpPreset {
+	case config.WebpPresetPhoto:
+		vipsConf.WebpPreset = C.VIPS_FOREIGN_WEBP_PRESET_PHOTO
+	case config.WebpPresetPicture:
+		vipsConf.WebpPreset = C.VIPS_FOREIGN_WEBP_PRESET_PICTURE
+	case config.WebpPresetDrawing:
+		vipsConf.WebpPreset = C.VIPS_FOREIGN_WEBP_PRESET_DRAWING
+	case config.WebpPresetIcon:
+		vipsConf.WebpPreset = C.VIPS_FOREIGN_WEBP_PRESET_ICON
+	case config.WebpPresetText:
+		vipsConf.WebpPreset = C.VIPS_FOREIGN_WEBP_PRESET_TEXT
+	default:
+		vipsConf.WebpPreset = C.VIPS_FOREIGN_WEBP_PRESET_DEFAULT
+	}
 
 	prometheus.AddGaugeFunc(
 		"vips_memory_bytes",
@@ -425,7 +443,7 @@ func (img *Image) Save(imgtype imagetype.Type, quality int) (*imagedata.ImageDat
 	case imagetype.PNG:
 		err = C.vips_pngsave_go(img.VipsImage, &ptr, &imgsize, vipsConf.PngInterlaced, vipsConf.PngQuantize, vipsConf.PngQuantizationColors)
 	case imagetype.WEBP:
-		err = C.vips_webpsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality))
+		err = C.vips_webpsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality), vipsConf.WebpEffort, vipsConf.WebpPreset)
 	case imagetype.GIF:
 		err = C.vips_gifsave_go(img.VipsImage, &ptr, &imgsize)
 	case imagetype.HEIC:

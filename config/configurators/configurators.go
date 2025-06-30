@@ -289,3 +289,15 @@ func RegexpFromPattern(pattern string) *regexp.Regexp {
 	// It is safe to use regexp.MustCompile since the expression is always valid
 	return regexp.MustCompile(result.String())
 }
+
+func FromMap[T any](v *T, name string, m map[string]T) error {
+	if env := os.Getenv(name); len(env) > 0 {
+		if val, ok := m[env]; ok {
+			*v = val
+		} else {
+			return fmt.Errorf("Invalid %s value: %s", name, env)
+		}
+	}
+
+	return nil
+}
