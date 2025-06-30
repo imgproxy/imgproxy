@@ -13,6 +13,9 @@
 - Add `workers` and `workers_utilization` metrics to all metrics services.
 - (pro) Add [crop_aspect_ratio](https://docs.imgproxy.net/latest/usage/processing#crop-aspect-ratio) processing option.
 - (pro) Add [IMGPROXY_PDF_NO_BACKGROUND](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_PDF_NO_BACKGROUND) config.
+- Add [IMGPROXY_WEBP_EFFORT](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_WEBP_EFFORT) config.
+- Add [IMGPROXY_WEBP_PRESET](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_WEBP_PRESET) config.
+- (pro) Add support for saving images as PDF.
 
 ### Changed
 - Suppress "Response has no supported checksum" warnings from S3 SDK.
