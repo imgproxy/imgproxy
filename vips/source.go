@@ -27,13 +27,13 @@ func imgproxyReaderSeek(handle C.uintptr_t, offset C.int64_t, whence int) C.int6
 	h := cgo.Handle(handle)
 	reader, ok := h.Value().(io.ReadSeeker)
 	if !ok {
-		vipsError("imgproxyReaderSeek", "failed to cast handle to io.ReadSeeker", nil)
+		vipsError("imgproxyReaderSeek", "failed to cast handle to io.ReadSeeker")
 		return -1
 	}
 
 	pos, err := reader.Seek(int64(offset), whence)
 	if err != nil {
-		vipsError("imgproxyReaderSeek", "failed to seek", err)
+		vipsError("imgproxyReaderSeek", "failed to seek: %w", err)
 		return -1
 	}
 
@@ -47,7 +47,7 @@ func imgproxyReaderRead(handle C.uintptr_t, pointer unsafe.Pointer, size C.int64
 	h := cgo.Handle(handle)
 	reader, ok := h.Value().(io.ReadSeeker)
 	if !ok {
-		vipsError("imgproxyReaderRead", "invalid reader handle", nil)
+		vipsError("imgproxyReaderRead", "invalid reader handle")
 		return -1
 	}
 
@@ -56,7 +56,7 @@ func imgproxyReaderRead(handle C.uintptr_t, pointer unsafe.Pointer, size C.int64
 	if err == io.EOF {
 		return 0
 	} else if err != nil {
-		vipsError("imgproxyReaderRead", "error reading from imgproxy source", err)
+		vipsError("imgproxyReaderRead", "error reading from imgproxy source: %w", err)
 		return -1
 	}
 

@@ -953,13 +953,11 @@ func (img *Image) StripAll() error {
 	return nil
 }
 
-func vipsError(fn string, msg string, err error) {
+func vipsError(fn string, msg string, args ...any) {
 	fnStr := C.CString(fn)
 	defer C.free(unsafe.Pointer(fnStr))
 
-	if err != nil {
-		msg = fmt.Sprintf("%s: %s", msg, err.Error())
-	}
+	msg = fmt.Sprintf(msg, args...)
 
 	msgStr := C.CString(msg)
 	defer C.free(unsafe.Pointer(msgStr))
