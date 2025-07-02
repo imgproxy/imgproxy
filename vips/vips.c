@@ -55,37 +55,39 @@ vips_health()
   return res;
 }
 
+// loads jpeg from a source
 int
-vips_jpegload_go(void *buf, size_t len, int shrink, VipsImage **out)
+vips_jpegload_source_go(VipsImgproxySource *source, int shrink, VipsImage **out)
 {
   if (shrink > 1)
-    return vips_jpegload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, "shrink", shrink,
+    return vips_jpegload_source(VIPS_SOURCE(source), out, "access", VIPS_ACCESS_SEQUENTIAL, "shrink", shrink,
         NULL);
 
-  return vips_jpegload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, NULL);
+  return vips_jpegload_source(VIPS_SOURCE(source), out, "access", VIPS_ACCESS_SEQUENTIAL, NULL);
+}
+
+// loads xjl from source
+int
+vips_jxlload_source_go(VipsImgproxySource *source, int pages, VipsImage **out)
+{
+  return vips_jxlload_source(VIPS_SOURCE(source), out, "access", VIPS_ACCESS_SEQUENTIAL, "n", pages, NULL);
 }
 
 int
-vips_jxlload_go(void *buf, size_t len, int pages, VipsImage **out)
+vips_pngload_source_go(VipsImgproxySource *source, VipsImage **out, int unlimited)
 {
-  return vips_jxlload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, "n", pages, NULL);
-}
-
-int
-vips_pngload_go(void *buf, size_t len, VipsImage **out, int unlimited)
-{
-  return vips_pngload_buffer(
-      buf, len, out,
+  return vips_pngload_source(
+      VIPS_SOURCE(source), out,
       "access", VIPS_ACCESS_SEQUENTIAL,
       "unlimited", unlimited,
       NULL);
 }
 
 int
-vips_webpload_go(void *buf, size_t len, double scale, int pages, VipsImage **out)
+vips_webpload_source_go(VipsImgproxySource *source, double scale, int pages, VipsImage **out)
 {
-  return vips_webpload_buffer(
-      buf, len, out,
+  return vips_webpload_source(
+      VIPS_SOURCE(source), out,
       "access", VIPS_ACCESS_SEQUENTIAL,
       "scale", scale,
       "n", pages,
@@ -93,13 +95,13 @@ vips_webpload_go(void *buf, size_t len, double scale, int pages, VipsImage **out
 }
 
 int
-vips_gifload_go(void *buf, size_t len, int pages, VipsImage **out)
+vips_gifload_source_go(VipsImgproxySource *source, int pages, VipsImage **out)
 {
-  return vips_gifload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, "n", pages, NULL);
+  return vips_gifload_source(VIPS_SOURCE(source), out, "access", VIPS_ACCESS_SEQUENTIAL, "n", pages, NULL);
 }
 
 int
-vips_svgload_go(void *buf, size_t len, double scale, VipsImage **out, int unlimited)
+vips_svgload_source_go(VipsImgproxySource *source, double scale, VipsImage **out, int unlimited)
 {
   // libvips limits the minimal scale to 0.001, so we have to scale down dpi
   // for lower scale values
@@ -109,8 +111,8 @@ vips_svgload_go(void *buf, size_t len, double scale, VipsImage **out, int unlimi
     scale = 0.001;
   }
 
-  return vips_svgload_buffer(
-      buf, len, out,
+  return vips_svgload_source(
+      VIPS_SOURCE(source), out,
       "access", VIPS_ACCESS_SEQUENTIAL,
       "scale", scale,
       "dpi", dpi,
@@ -119,19 +121,19 @@ vips_svgload_go(void *buf, size_t len, double scale, VipsImage **out, int unlimi
 }
 
 int
-vips_heifload_go(void *buf, size_t len, VipsImage **out, int thumbnail)
+vips_heifload_source_go(VipsImgproxySource *source, VipsImage **out, int thumbnail)
 {
-  return vips_heifload_buffer(
-      buf, len, out,
+  return vips_heifload_source(
+      VIPS_SOURCE(source), out,
       "access", VIPS_ACCESS_SEQUENTIAL,
       "thumbnail", thumbnail,
       NULL);
 }
 
 int
-vips_tiffload_go(void *buf, size_t len, VipsImage **out)
+vips_tiffload_source_go(VipsImgproxySource *source, VipsImage **out)
 {
-  return vips_tiffload_buffer(buf, len, out, "access", VIPS_ACCESS_SEQUENTIAL, NULL);
+  return vips_tiffload_source(VIPS_SOURCE(source), out, "access", VIPS_ACCESS_SEQUENTIAL, NULL);
 }
 
 int
@@ -1117,4 +1119,10 @@ vips_cleanup()
 {
   vips_error_clear();
   vips_thread_shutdown();
+}
+
+void
+vips_error_go(const char *function, const char *message)
+{
+  vips_error(function, "%s", message);
 }
