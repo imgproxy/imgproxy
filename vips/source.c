@@ -21,11 +21,7 @@ vips_imgproxy_source_read(VipsSource *source, void *buffer, size_t length)
 {
   VipsImgproxySource *self = (VipsImgproxySource *) source;
 
-  gint64 read_length = imgproxyReaderRead(self->readerHandle, buffer, length);
-  if (read_length < 0) {
-    vips_error("vips_imgproxy_source_read", "failed to read from imgproxy source");
-  }
-  return read_length;
+  return imgproxyReaderRead(self->readerHandle, buffer, length);
 }
 
 // seek function for vips imgproxy source. whence can be SEEK_SET (0), SEEK_CUR (1), or SEEK_END (2).
@@ -34,13 +30,7 @@ vips_imgproxy_source_seek(VipsSource *source, gint64 offset, int whence)
 {
   VipsImgproxySource *self = (VipsImgproxySource *) source;
 
-  gint64 actual_offset = imgproxyReaderSeek(self->readerHandle, offset, whence);
-
-  if (actual_offset < 0) {
-    vips_error("vips_imgproxy_source_seek", "failed to seek in imgproxy source");
-  }
-
-  return actual_offset;
+  return imgproxyReaderSeek(self->readerHandle, offset, whence);
 }
 
 static void

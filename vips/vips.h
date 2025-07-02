@@ -101,3 +101,5 @@ int vips_avifsave_go(VipsImage *in, void **buf, size_t *len, int quality, int sp
 int vips_tiffsave_go(VipsImage *in, void **buf, size_t *len, int quality);
 
 void vips_cleanup();
+
+void vips_error_go(const char *function, const char *message);

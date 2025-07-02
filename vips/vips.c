@@ -1118,3 +1118,9 @@ vips_cleanup()
   vips_error_clear();
   vips_thread_shutdown();
 }
+
+void
+vips_error_go(const char *function, const char *message)
+{
+  vips_error(function, "%s", message);
+}
