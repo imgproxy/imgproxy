@@ -639,8 +639,8 @@ vips_apply_filters(VipsImage *in, VipsImage **out, double blur_sigma,
     w = in->Xsize;
     h = in->Ysize;
 
-    tw = (int) (VIPS_CEIL((double) w / pixelate_pixels)) * pixelate_pixels;
-    th = (int) (VIPS_CEIL((double) h / pixelate_pixels)) * pixelate_pixels;
+    tw = (int) ceil((double) w / pixelate_pixels) * pixelate_pixels;
+    th = (int) ceil((double) h / pixelate_pixels) * pixelate_pixels;
 
     if (tw > w || th > h) {
       if (vips_embed(in, &t[4], 0, 0, tw, th, "extend", VIPS_EXTEND_MIRROR, NULL)) {
@@ -795,8 +795,8 @@ vips_replicate_go(VipsImage *in, VipsImage **out, int width, int height, int cen
 {
   VipsImage *tmp;
 
-  int across = VIPS_CEIL((double) width / in->Xsize);
-  int down = VIPS_CEIL((double) height / in->Ysize);
+  int across = ceil((double) width / in->Xsize);
+  int down = ceil((double) height / in->Ysize);
 
   if (centered) {
     if (across % 2 == 0)
