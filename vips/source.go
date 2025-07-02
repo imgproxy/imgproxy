@@ -9,7 +9,6 @@ package vips
 */
 import "C"
 import (
-	"fmt"
 	"io"
 	"runtime/cgo"
 	"unsafe"
@@ -28,13 +27,13 @@ func imgproxyReaderSeek(handle C.uintptr_t, offset C.int64_t, whence int) C.int6
 	h := cgo.Handle(handle)
 	reader, ok := h.Value().(io.ReadSeeker)
 	if !ok {
-		C.vips_error_go(cachedCString("imgproxyReaderSeek"), cachedCString("failed to cast handle to io.ReadSeeker"))
+		vipsError("imgproxyReaderSeek", "failed to cast handle to io.ReadSeeker", nil)
 		return -1
 	}
 
 	pos, err := reader.Seek(int64(offset), whence)
 	if err != nil {
-		C.vips_error_go(cachedCString("imgproxyReaderSeek"), cachedCString("failed to seek"))
+		vipsError("imgproxyReaderSeek", "failed to seek", err)
 		return -1
 	}
 
@@ -48,7 +47,7 @@ func imgproxyReaderRead(handle C.uintptr_t, pointer unsafe.Pointer, size C.int64
 	h := cgo.Handle(handle)
 	reader, ok := h.Value().(io.ReadSeeker)
 	if !ok {
-		C.vips_error_go(cachedCString("imgproxyReaderRead"), cachedCString("invalid reader handle"))
+		vipsError("imgproxyReaderRead", "invalid reader handle", nil)
 		return -1
 	}
 
@@ -57,8 +56,7 @@ func imgproxyReaderRead(handle C.uintptr_t, pointer unsafe.Pointer, size C.int64
 	if err == io.EOF {
 		return 0
 	} else if err != nil {
-		msg := fmt.Sprintf("error reading from imgproxy source: %v", err)
-		C.vips_error_go(cachedCString("imgproxyReaderRead"), cachedCString(msg))
+		vipsError("imgproxyReaderRead", "error reading from imgproxy source", err)
 		return -1
 	}
 

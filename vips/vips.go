@@ -11,6 +11,7 @@ import "C"
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"math"
 	"net/http"
 	"os"
@@ -950,4 +951,18 @@ func (img *Image) StripAll() error {
 	C.swap_and_clear(&img.VipsImage, tmp)
 
 	return nil
+}
+
+func vipsError(fn string, msg string, err error) {
+	fnStr := C.CString(fn)
+	defer C.free(unsafe.Pointer(fnStr))
+
+	if err != nil {
+		msg = fmt.Sprintf("%s: %s", msg, err.Error())
+	}
+
+	msgStr := C.CString(msg)
+	defer C.free(unsafe.Pointer(msgStr))
+
+	C.vips_error_go(fnStr, msgStr)
 }
