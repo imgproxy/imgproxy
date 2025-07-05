@@ -570,7 +570,6 @@ func Configure() error {
 
 	configurators.String(&UserAgent, "IMGPROXY_USER_AGENT")
 	UserAgent = strings.ReplaceAll(UserAgent, "%current_version", version.Version)
-	fmt.Println("User-Agent:", UserAgent)
 
 	configurators.Bool(&IgnoreSslVerification, "IMGPROXY_IGNORE_SSL_VERIFICATION")
 	configurators.Bool(&DevelopmentErrorsMode, "IMGPROXY_DEVELOPMENT_ERRORS_MODE")
