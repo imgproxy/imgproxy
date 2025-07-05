@@ -19,6 +19,7 @@
 
 ### Changed
 - Suppress "Response has no supported checksum" warnings from S3 SDK.
+- The [IMGPROXY_USER_AGENT](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_USER_AGENT) config now supports the `%current_version` variable that is replaced with the current imgproxy version.
 - (docker) Optimized image quantization.
 - (pro) Improved BlurHash generation performance.
 
