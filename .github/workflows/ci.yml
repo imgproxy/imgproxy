@@ -53,6 +53,7 @@ jobs:
         env:
           LD_LIBRARY_PATH: "/usr/local/lib:/root/vips/${{ matrix.vips-version }}/lib"
           PKG_CONFIG_PATH: "/usr/local/lib/pkgconfig:/root/vips/${{ matrix.vips-version }}/lib/pkgconfig"
+          GOFLAGS: -buildvcs=false
 
   c-lint:
     runs-on: ubuntu-24.04
