@@ -1,8 +1,10 @@
 #include <stdlib.h>
+#include <stdint.h> // uintptr_t
 
 #include <vips/vips.h>
 #include <vips/vips7compat.h>
 #include <vips/vector.h>
+#include "source.h"
 
 typedef struct _RGB {
   double r;
@@ -21,14 +23,14 @@ int gif_resolution_limit();
 
 int vips_health();
 
-int vips_jpegload_go(void *buf, size_t len, int shrink, VipsImage **out);
-int vips_jxlload_go(void *buf, size_t len, int pages, VipsImage **out);
-int vips_pngload_go(void *buf, size_t len, VipsImage **out, int unlimited);
-int vips_webpload_go(void *buf, size_t len, double scale, int pages, VipsImage **out);
-int vips_gifload_go(void *buf, size_t len, int pages, VipsImage **out);
-int vips_svgload_go(void *buf, size_t len, double scale, VipsImage **out, int unlimited);
-int vips_heifload_go(void *buf, size_t len, VipsImage **out, int thumbnail);
-int vips_tiffload_go(void *buf, size_t len, VipsImage **out);
+int vips_jpegload_source_go(VipsImgproxySource *source, int shrink, VipsImage **out);
+int vips_jxlload_source_go(VipsImgproxySource *source, int pages, VipsImage **out);
+int vips_pngload_source_go(VipsImgproxySource *source, VipsImage **out, int unlimited);
+int vips_webpload_source_go(VipsImgproxySource *source, double scale, int pages, VipsImage **out);
+int vips_gifload_source_go(VipsImgproxySource *source, int pages, VipsImage **out);
+int vips_svgload_source_go(VipsImgproxySource *source, double scale, VipsImage **out, int unlimited);
+int vips_heifload_source_go(VipsImgproxySource *source, VipsImage **out, int thumbnail);
+int vips_tiffload_source_go(VipsImgproxySource *source, VipsImage **out);
 
 int vips_black_go(VipsImage **out, int width, int height, int bands);
 
@@ -99,3 +101,5 @@ int vips_avifsave_go(VipsImage *in, void **buf, size_t *len, int quality, int sp
 int vips_tiffsave_go(VipsImage *in, void **buf, size_t *len, int quality);
 
 void vips_cleanup();
+
+void vips_error_go(const char *function, const char *message);
