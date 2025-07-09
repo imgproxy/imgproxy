@@ -118,8 +118,12 @@ vips_foreign_load_bmp_set_image_header(VipsForeignLoadBmp *bmp, VipsImage *out)
       bd = 1; // 1-bit palette
     }
 
+    vips_image_set_int(out, "palette-bit-depth", bd);
+
+#ifdef VIPS_META_PALETTE
     vips_image_set_int(out, VIPS_META_BITS_PER_SAMPLE, bd);
     vips_image_set_int(out, VIPS_META_PALETTE, TRUE);
+#endif
   }
 
   if (vips_image_pipelinev(out, VIPS_DEMAND_STYLE_THINSTRIP, NULL))
