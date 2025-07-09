@@ -591,8 +591,8 @@ vips_foreign_load_bmp_rle_generate_strip(VipsRect *r, VipsRegion *out_region, Vi
 
           // We treat movement by Y as EOL
           if (dy > 0) {
-            bmp->dx = MIN(dx, r->width); // New X position must not exceed the width of the image
-            bmp->dy = dy;                // We do not care if Y pos is outside of the impage, it's a separate check
+            bmp->dx = MIN(x + dx, r->width); // New X position must not exceed the width of the image
+            bmp->dy = dy;                    // We do not care if Y pos is outside of the impage, it's a separate check
 
             break; // we need to skip lines, so we exit the loop
           } // Movement by X might not lead to EOL, so we continue
