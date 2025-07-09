@@ -393,9 +393,6 @@ vips_foreign_load_bmp_24_32_generate_strip(VipsRect *r, VipsRegion *out_region, 
     }
 
     for (int x = 0; x < r->width; x++) {
-      dest += bmp->bands;
-      src += bmp->bands;
-
       dest[0] = src[2]; // B
       dest[1] = src[1]; // G
       dest[2] = src[0]; // R
@@ -404,6 +401,9 @@ vips_foreign_load_bmp_24_32_generate_strip(VipsRect *r, VipsRegion *out_region, 
       if (bmp->bands == 4) {
         dest[3] = src[3]; // A
       }
+
+      dest += bmp->bands;
+      src += bmp->bands;
     }
 
     bmp->y_pos += 1;
@@ -434,15 +434,15 @@ vips_foreign_load_bmp_16_generate_strip(VipsRect *r, VipsRegion *out_region, Vip
     }
 
     for (int x = 0; x < r->width; x++) {
-      dest += bmp->bands;
-      src += 2; // 2 bytes per pixel for 16 bpp
-
       uint16_t pixel = GUINT16_FROM_LE(*(uint16_t *) src);
 
       // 565 and non-565 formats both are handled here: they differ by the masks
       dest[0] = (uint8_t) ((pixel & bmp->rmask) >> 11) << 3;
       dest[1] = (uint8_t) ((pixel & bmp->gmask) >> 5) << 2;
       dest[2] = (uint8_t) (pixel & bmp->bmask) << 3;
+
+      dest += bmp->bands;
+      src += 2; // 2 bytes per pixel for 16 bpp
     }
 
     bmp->y_pos += 1;
