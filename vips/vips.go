@@ -436,6 +436,8 @@ func (img *Image) Save(imgtype imagetype.Type, quality int) (*imagedata.ImageDat
 	err := C.int(0)
 	imgsize := C.size_t(0)
 
+	target := C.vips_target_new_to_memory()
+
 	switch imgtype {
 	case imagetype.JPEG:
 		err = C.vips_jpegsave_go(img.VipsImage, target, C.int(quality), vipsConf.JpegProgressive)
