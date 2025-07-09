@@ -94,8 +94,11 @@ vips_foreign_save_bmp_block(VipsRegion *region, VipsRect *area, void *a)
       if (bmp->bands == 4) {
         dst[3] = src[3]; // A
       }
+      else {
+        dst[3] = 0; // No alpha channel, set to 0
+      }
 
-      dst += bmp->bands;
+      dst += BMP_24_32_BANDS;
       src += bmp->bands;
     }
 
@@ -136,8 +139,9 @@ vips_foreign_save_bmp_build(VipsObject *object)
     return -1;
   }
 
-  // Target image line size trimmed to 4 bytes
-  uint32_t line_size = (in->Xsize * bands + 3) & (~3);
+  // Target image line size trimmed to 4 bytes.
+  // 24/32 bpp BMP pixel is always DWORD (hence, BMP_24_32_BANDS)
+  uint32_t line_size = (in->Xsize * BMP_24_32_BANDS + 3) & (~3);
   uint32_t image_size = in->Ysize * line_size;
 
   // pix_offset = header size + size of 3 or 4 color masks
