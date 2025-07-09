@@ -120,8 +120,11 @@ vips_foreign_load_bmp_set_image_header(VipsForeignLoadBmp *bmp, VipsImage *out)
 
     vips_image_set_int(out, "palette-bit-depth", bd);
 
-#ifdef VIPS_META_PALETTE
+#ifdef VIPS_META_BITS_PER_SAMPLE
     vips_image_set_int(out, VIPS_META_BITS_PER_SAMPLE, bd);
+#endif
+
+#ifdef VIPS_META_PALETTE
     vips_image_set_int(out, VIPS_META_PALETTE, TRUE);
 #endif
   }
