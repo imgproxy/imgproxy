@@ -373,31 +373,29 @@ vips_foreign_load_bmp_24_32_generate_strip(VipsRect *r, VipsRegion *out_region, 
   // Align the row size to 4 bytes, as BMP rows are 4-byte aligned.
   int row_size = (bmp->bands * r->width + 3) & (~3);
 
-  VipsPel *src = bmp->row_buffer; // just a shortcut
+  VipsPel *src;
   VipsPel *dest;
 
   for (int y = 0; y < r->height; y++) {
+    src = bmp->row_buffer;
+    dest = VIPS_REGION_ADDR(out_region, 0, r->top + y);
+
     if (vips_foreign_load_read_full(bmp->source, src, row_size) <= 0) {
       vips_error("vips_foreign_load_bmp_24_32_generate_strip", "failed to read raw data");
       return -1;
     }
 
-    dest = VIPS_REGION_ADDR(out_region, 0, r->top + y);
-
-    int dest_offset = 0;
-    int src_offset = 0;
-
     for (int x = 0; x < r->width; x++) {
-      dest_offset += bmp->bands;
-      src_offset += bmp->bands;
+      dest += bmp->bands;
+      src += bmp->bands;
 
-      dest[dest_offset + 0] = src[src_offset + 2]; // B
-      dest[dest_offset + 1] = src[src_offset + 1]; // G
-      dest[dest_offset + 2] = src[src_offset + 0]; // R
+      dest[0] = src[2]; // B
+      dest[1] = src[1]; // G
+      dest[2] = src[0]; // R
 
       // if the image has alpha channel, copy it too
       if (bmp->bands == 4) {
-        dest[dest_offset + 3] = src[src_offset + 3]; // A
+        dest[3] = src[3]; // A
       }
     }
 
@@ -416,27 +414,28 @@ vips_foreign_load_bmp_16_generate_strip(VipsRect *r, VipsRegion *out_region, Vip
   // Align the row size to 4 bytes, as BMP rows are 4-byte aligned, 16 bpp = 2 bytes per pixel
   int row_size = (2 * r->width + 3) & (~3);
 
-  VipsPel *src = bmp->row_buffer; // just a shortcut
+  VipsPel *src;
   VipsPel *dest;
 
   for (int y = 0; y < r->height; y++) {
+    src = bmp->row_buffer;
+    dest = VIPS_REGION_ADDR(out_region, 0, r->top + y);
+
     if (vips_foreign_load_read_full(bmp->source, src, row_size) <= 0) {
       vips_error("vips_foreign_load_bmp_16_generate_strip", "failed to read raw data");
       return -1;
     }
 
-    dest = VIPS_REGION_ADDR(out_region, 0, r->top + y);
-
     for (int x = 0; x < r->width; x++) {
-      int dest_offset = x * bmp->bands;
-      int src_offset = x * 2; // 2 bytes per pixel for 16 bpp
+      dest += bmp->bands;
+      src += 2; // 2 bytes per pixel for 16 bpp
 
-      uint16_t pixel = GUINT16_FROM_LE(*(uint16_t *) (src + src_offset));
+      uint16_t pixel = GUINT16_FROM_LE(*(uint16_t *) src);
 
       // 565 and non-565 formats both are handled here: they differ by the masks
-      dest[dest_offset + 0] = (uint8_t) ((pixel & bmp->rmask) >> 11) << 3;
-      dest[dest_offset + 1] = (uint8_t) ((pixel & bmp->gmask) >> 5) << 2;
-      dest[dest_offset + 2] = (uint8_t) (pixel & bmp->bmask) << 3;
+      dest[0] = (uint8_t) ((pixel & bmp->rmask) >> 11) << 3;
+      dest[1] = (uint8_t) ((pixel & bmp->gmask) >> 5) << 2;
+      dest[2] = (uint8_t) (pixel & bmp->bmask) << 3;
     }
 
     bmp->y_pos += 1;
@@ -536,9 +535,11 @@ vips_foreign_load_bmp_rle_generate_strip(VipsRect *r, VipsRegion *out_region, Vi
   for (int y = 0; y < r->height; y++) {
     dest = VIPS_REGION_ADDR(out_region, 0, r->top + y);
 
+    // fill the line with zeros (move to skips)
+    memset(dest, 0, r->width * bmp->bands);
+
     // Skip lines if needed, this might be the whole region
     if (bmp->dy > 0) {
-      memset(dest, 0, bmp->bands * r->width); // fill the line with zeros, just in case
       bmp->dy--;
       bmp->y_pos += 1;
       continue;
@@ -548,7 +549,6 @@ vips_foreign_load_bmp_rle_generate_strip(VipsRect *r, VipsRegion *out_region, Vi
 
     if (bmp->dx > 0) {
       x = bmp->dx;
-      memset(dest, 0, bmp->dx); // fill the beginning of the line with zeros
       bmp->dx = 0;
     }
 
@@ -563,7 +563,7 @@ vips_foreign_load_bmp_rle_generate_strip(VipsRect *r, VipsRegion *out_region, Vi
 
       // Check control byte
       if (cmd[0] == 0) {
-        if (cmd[1] == BMP_RLE_LE) {
+        if (cmd[1] == BMP_RLE_EOL) {
           break;
         }
 
@@ -571,13 +571,7 @@ vips_foreign_load_bmp_rle_generate_strip(VipsRect *r, VipsRegion *out_region, Vi
           bmp->dy = G_MAXUINT32; // set dy to max, so all the leftover lines will be skipped
           bmp->dx = 0;
 
-          int pixels_left = r->width - x;
-          if (pixels_left > 0) {
-            memset(dest + x, 0, bmp->bands * pixels_left); // fill the rest of the line with zeros
-          }
-
-          eof = TRUE; // EOF: exit completely
-          break;
+          break; // exit the loop, we reached EOF
         }
         else if (cmd[1] == BMP_RLE_MOVE_TO) {
           if (vips_foreign_load_read_full(bmp->source, &dxdy, 2) <= 0) {
@@ -585,27 +579,26 @@ vips_foreign_load_bmp_rle_generate_strip(VipsRect *r, VipsRegion *out_region, Vi
             return -1;
           }
 
-          int dx = MIN(x + dxdy[0], r->width);
-          bmp->dy = dxdy[1];
+          int dx = dxdy[0]; // relative X offset
+          int dy = dxdy[1]; // relative Y offset
 
-          if (bmp->dy > 0) {
-            bmp->dx = dx;
+          // We treat movement by Y as EOL
+          if (dy > 0) {
+            bmp->dx = MIN(dx, r->width); // New X position must not exceed the width of the image
+            bmp->dy = dy;                // We do not care if Y pos is outside of the impage, it's a separate check
+
             break; // we need to skip lines, so we exit the loop
-          }
+          } // Movement by X might not lead to EOL, so we continue
           else {
-            memset(dest + x, 0, dx); // fill the line with zeros
-            x = dx;                  // move to the desired pixel
+            bmp->dy = dy;              // 0
+            x = MIN(x + dx, r->width); // Move to the desired pixel
           }
         }
-        else { // Directly read next n pixels
+        else { // Directly read next n bytes
           int pixels_count = cmd[1];
-          if (pixels_count == 0) {
-            break;
-          }
+          int bytes_count = ((pixels_count + cap - 1) / cap + 1) & ~1;
 
           pixels_count = MIN(pixels_count, r->width - x);
-
-          int bytes_count = ((pixels_count + cap - 1) / cap + 1) & ~1;
 
           if (vips_foreign_load_read_full(bmp->source, src, bytes_count) <= 0) {
             vips_error("vips_foreign_load_bmp_rle_generate_strip", "failed to read RLE data");
@@ -621,10 +614,6 @@ vips_foreign_load_bmp_rle_generate_strip(VipsRect *r, VipsRegion *out_region, Vi
         VipsPel pixels_count = cmd[0];
         VipsPel pixel = cmd[1];
 
-        if (pixels_count == 0) {
-          break;
-        }
-
         pixels_count = MIN(pixels_count, r->width - x);
 
         vips_foreign_load_bpp_1_8_write_pixels_palette(bmp, dest + (x * bmp->bands), NULL, pixels_count, pixel);
@@ -632,10 +621,6 @@ vips_foreign_load_bmp_rle_generate_strip(VipsRect *r, VipsRegion *out_region, Vi
         x += pixels_count;
       }
     } while (1);
-
-    if (eof) {
-      return 0; // EOF, nothing to do
-    }
 
     bmp->y_pos += 1; // Move to the next line
   }

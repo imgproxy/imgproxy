@@ -17,7 +17,7 @@
 
 #define BMP_PALETTE_ITEM_SIZE 4 // 4 bytes per palette item (BGR + padding)
 
-#define BMP_RLE_LE 0      // end of line
+#define BMP_RLE_EOL 0     // end of line
 #define BMP_RLE_EOF 1     // end of file
 #define BMP_RLE_MOVE_TO 2 // move to position
 
