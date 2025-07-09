@@ -21,6 +21,8 @@
 #define BMP_RLE_EOF 1     // end of file
 #define BMP_RLE_MOVE_TO 2 // move to position
 
+#define BMP_24_32_BANDS 4 // 24/32 bpp BMP always has 4 bands (BGR[A])
+
 // defined in bmpload.c
 VIPS_API
 int vips_bmpload_source(VipsSource *source, VipsImage **out, ...)
