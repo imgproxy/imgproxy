@@ -344,9 +344,16 @@ vips_foreign_load_bmp_header(VipsForeignLoad *load)
   bmp->dx = 0; // In sequential access this indicates that we need to skip n lines
   bmp->dy = 0; // n pixels
 
+  // For a case when we encounter buggy BMP image which has RLE command to read next
+  // 255 bytes, and our buffer is smaller than that, we need it to be at least 255 bytes.
+  int row_buffer_length = (bmp->width * 4) + 4;
+  if (row_buffer_length < 255) {
+    row_buffer_length = 255;
+  }
+
   // Allocate a row buffer for the current row in all generate* functions.
   // 4 * width + 4 is guaranteed to be enough for the longest (32-bit per pixel) row + padding.
-  bmp->row_buffer = VIPS_ARRAY(load, (bmp->width * 4) + 4, VipsPel);
+  bmp->row_buffer = VIPS_ARRAY(load, row_buffer_length, VipsPel);
 
   // set the image header of the out image
   if (vips_foreign_load_bmp_set_image_header(bmp, load->out)) {
