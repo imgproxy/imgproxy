@@ -256,23 +256,25 @@ func SupportsLoad(it imagetype.Type) bool {
 
 	switch it {
 	case imagetype.JPEG:
-		sup = hasOperation("jpegload_buffer")
+		sup = hasOperation("jpegload_source")
 	case imagetype.JXL:
-		sup = hasOperation("jxlload_buffer")
+		sup = hasOperation("jxlload_source")
 	case imagetype.PNG:
-		sup = hasOperation("pngload_buffer")
+		sup = hasOperation("pngload_source")
 	case imagetype.WEBP:
-		sup = hasOperation("webpload_buffer")
+		sup = hasOperation("webpload_source")
 	case imagetype.GIF:
-		sup = hasOperation("gifload_buffer")
-	case imagetype.ICO, imagetype.BMP:
+		sup = hasOperation("gifload_source")
+	case imagetype.BMP:
+		sup = hasOperation("bmpload_source")
+	case imagetype.ICO:
 		sup = true
 	case imagetype.SVG:
-		sup = hasOperation("svgload_buffer")
+		sup = hasOperation("svgload_source")
 	case imagetype.HEIC, imagetype.AVIF:
-		sup = hasOperation("heifload_buffer")
+		sup = hasOperation("heifload_source")
 	case imagetype.TIFF:
-		sup = hasOperation("tiffload_buffer")
+		sup = hasOperation("tiffload_source")
 	}
 
 	typeSupportLoad.Store(it, sup)
@@ -355,10 +357,6 @@ func (img *Image) Load(imgdata *imagedata.ImageData, shrink int, scale float64, 
 		return img.loadIco(imgdata.Data, shrink, scale, pages)
 	}
 
-	if imgdata.Type == imagetype.BMP {
-		return img.loadBmp(imgdata.Data, true)
-	}
-
 	var tmp *C.VipsImage
 
 	err := C.int(0)
@@ -384,6 +382,8 @@ func (img *Image) Load(imgdata *imagedata.ImageData, shrink int, scale float64, 
 		err = C.vips_heifload_source_go(source, &tmp, C.int(0))
 	case imagetype.TIFF:
 		err = C.vips_tiffload_source_go(source, &tmp)
+	case imagetype.BMP:
+		err = C.vips_bmpload_source_go(source, &tmp)
 	default:
 		return newVipsError("Usupported image type to load")
 	}
