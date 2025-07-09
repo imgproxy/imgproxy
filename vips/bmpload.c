@@ -15,8 +15,8 @@ typedef struct _VipsForeignLoadBmp {
   VipsForeignLoad parent_object;
   VipsSource *source;
 
-  uint32_t width;
-  uint32_t height;
+  int32_t width;
+  int32_t height;
   uint16_t planes;
   uint16_t bpp;
   uint16_t compression;
