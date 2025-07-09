@@ -429,9 +429,9 @@ func (img *Image) Save(imgtype imagetype.Type, quality int) (*imagedata.ImageDat
 		return img.saveAsIco()
 	}
 
-	if imgtype == imagetype.BMP {
-		return img.saveAsBmp()
-	}
+	// if imgtype == imagetype.BMP {
+	// 	return img.saveAsBmp()
+	// }
 
 	var ptr unsafe.Pointer
 	cancel := func() {
@@ -440,6 +440,8 @@ func (img *Image) Save(imgtype imagetype.Type, quality int) (*imagedata.ImageDat
 
 	err := C.int(0)
 	imgsize := C.size_t(0)
+
+	target := C.vips_target_new_to_memory()
 
 	switch imgtype {
 	case imagetype.JPEG:
@@ -458,6 +460,15 @@ func (img *Image) Save(imgtype imagetype.Type, quality int) (*imagedata.ImageDat
 		err = C.vips_avifsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality), vipsConf.AvifSpeed)
 	case imagetype.TIFF:
 		err = C.vips_tiffsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality))
+	case imagetype.BMP:
+		err = C.vips_bmpsave_target_go(img.VipsImage, target)
+		if err == 0 {
+			// !!!!! THIS IS TEMPORARY WORKAROUND !!!!!
+			// NOTE: we need to unref taget in imagedata, update cancel callback
+			// This will be changed along with all other savers ^
+			var void_ptr = C.vips_blob_get(target.blob, &imgsize)
+			ptr = unsafe.Pointer(void_ptr)
+		}
 	default:
 		return nil, newVipsError("Usupported image type to save")
 	}
