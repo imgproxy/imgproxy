@@ -27,4 +27,7 @@ int vips_bmpload_source(VipsSource *source, VipsImage **out, ...)
     G_GNUC_NULL_TERMINATED;
 int vips_bmpload_source_go(VipsImgproxySource *source, VipsImage **out);
 
+// defined in bmpsave.c
+int vips_bmpsave_target_go(VipsImage *in, VipsTarget *target);
+
 #endif
