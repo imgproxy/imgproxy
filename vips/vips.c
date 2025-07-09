@@ -11,6 +11,9 @@
 int
 vips_initialize()
 {
+  extern GType vips_foreign_load_bmp_source_get_type(void);
+  vips_foreign_load_bmp_source_get_type();
+
   return vips_init("imgproxy");
 }
 
@@ -1125,4 +1128,19 @@ void
 vips_error_go(const char *function, const char *message)
 {
   vips_error(function, "%s", message);
+}
+
+int
+vips_foreign_load_read_full(VipsSource *source, void *buf, size_t len)
+{
+  while (len > 0) {
+    ssize_t n = vips_source_read(source, buf, len);
+    if (n <= 0)
+      return n;
+
+    buf = (uint8_t *) buf + n;
+    len -= n;
+  }
+
+  return 1;
 }

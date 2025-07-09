@@ -4,7 +4,10 @@
 #include <vips/vips.h>
 #include <vips/vips7compat.h>
 #include <vips/vector.h>
+#include <vips/foreign.h>
+
 #include "source.h"
+#include "bmp.h"
 
 typedef struct _RGB {
   double r;
@@ -103,3 +106,5 @@ int vips_tiffsave_go(VipsImage *in, void **buf, size_t *len, int quality);
 void vips_cleanup();
 
 void vips_error_go(const char *function, const char *message);
+
+int vips_foreign_load_read_full(VipsSource *source, void *buf, size_t len);
