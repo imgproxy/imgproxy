@@ -8,6 +8,7 @@
 
 #include "source.h"
 #include "bmp.h"
+#include "ico.h"
 
 typedef struct _RGB {
   double r;
