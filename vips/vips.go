@@ -458,6 +458,8 @@ func (img *Image) Save(imgtype imagetype.Type, quality int) (*imagedata.ImageDat
 	case imagetype.BMP:
 		err = C.vips_bmpsave_target_go(img.VipsImage, target)
 	default:
+		// NOTE: probably, it would be better to use defer unref + additionally ref the target
+		// before passing it to the imagedata.ImageData
 		cancel()
 		return nil, newVipsError("Usupported image type to save")
 	}
