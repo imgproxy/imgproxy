@@ -291,21 +291,21 @@ func SupportsSave(it imagetype.Type) bool {
 
 	switch it {
 	case imagetype.JPEG:
-		sup = hasOperation("jpegsave_buffer")
+		sup = hasOperation("jpegsave_target")
 	case imagetype.JXL:
-		sup = hasOperation("jxlsave_buffer")
+		sup = hasOperation("jxlsave_target")
 	case imagetype.PNG, imagetype.ICO:
-		sup = hasOperation("pngsave_buffer")
+		sup = hasOperation("pngsave_target")
 	case imagetype.WEBP:
-		sup = hasOperation("webpsave_buffer")
+		sup = hasOperation("webpsave_target")
 	case imagetype.GIF:
-		sup = hasOperation("gifsave_buffer")
+		sup = hasOperation("gifsave_target")
 	case imagetype.HEIC, imagetype.AVIF:
-		sup = hasOperation("heifsave_buffer")
+		sup = hasOperation("heifsave_target")
 	case imagetype.BMP:
-		sup = true
+		sup = hasOperation("bmpsave_target")
 	case imagetype.TIFF:
-		sup = hasOperation("tiffsave_buffer")
+		sup = hasOperation("tiffsave_target")
 	}
 
 	typeSupportSave.Store(it, sup)
@@ -425,9 +425,9 @@ func (img *Image) LoadThumbnail(imgdata *imagedata.ImageData) error {
 }
 
 func (img *Image) Save(imgtype imagetype.Type, quality int) (*imagedata.ImageData, error) {
-	// if imgtype == imagetype.ICO {
-	// 	return img.saveAsIco()
-	// }
+	if imgtype == imagetype.ICO {
+		return img.saveAsIco()
+	}
 
 	target := C.vips_target_new_to_memory()
 
@@ -458,6 +458,7 @@ func (img *Image) Save(imgtype imagetype.Type, quality int) (*imagedata.ImageDat
 	case imagetype.BMP:
 		err = C.vips_bmpsave_target_go(img.VipsImage, target)
 	default:
+		cancel()
 		return nil, newVipsError("Usupported image type to save")
 	}
 	if err != 0 {
