@@ -166,7 +166,7 @@ vips_foreign_load_bmp_header(VipsForeignLoad *load)
   VipsPel file_header_buf[BMP_FILE_HEADER_LEN + 4];
 
   // Read the header + the next uint32 after
-  if (vips_source_read(bmp->source, &file_header_buf, BMP_FILE_HEADER_LEN + 4) <= 0) {
+  if (vips_foreign_load_read_full(bmp->source, &file_header_buf, BMP_FILE_HEADER_LEN + 4) <= 0) {
     vips_error("vips_foreign_load_bmp_header", "unable to read file header from the source");
     return -1;
   }
@@ -187,7 +187,7 @@ vips_foreign_load_bmp_header(VipsForeignLoad *load)
   // the header (info_header_len) at the previous step. Constants include those 4 bytes.
   VipsPel *info_header = VIPS_ARRAY(load, info_header_len - 4, VipsPel);
 
-  if (vips_source_read(bmp->source, info_header, info_header_len - 4) <= 0) {
+  if (vips_foreign_load_read_full(bmp->source, info_header, info_header_len - 4) <= 0) {
     vips_error("vips_foreign_load_bmp_header", "unable to read BMP info header");
     return -1;
   }
@@ -263,7 +263,7 @@ vips_foreign_load_bmp_header(VipsForeignLoad *load)
     // it is not included in the header
     if (info_header_len == BMP_BITMAP_INFO_HEADER_LEN) {
       // let's attach it to load itself so we won't care about conditionally freeing it
-      if (vips_source_read(bmp->source, color_mask_buf, color_mask_len * sizeof(uint32_t)) <= 0) {
+      if (vips_foreign_load_read_full(bmp->source, color_mask_buf, color_mask_len * sizeof(uint32_t)) <= 0) {
         vips_error("vips_foreign_load_bmp_header", "unable to read BMP color mask");
         return -1;
       }
@@ -316,7 +316,7 @@ vips_foreign_load_bmp_header(VipsForeignLoad *load)
     // Every 4th byte is padding.
     bmp->palette = VIPS_MALLOC(load, num_colors * BMP_PALETTE_ITEM_SIZE);
 
-    if (vips_source_read(bmp->source, bmp->palette, num_colors * BMP_PALETTE_ITEM_SIZE) <= 0) {
+    if (vips_foreign_load_read_full(bmp->source, bmp->palette, num_colors * BMP_PALETTE_ITEM_SIZE) <= 0) {
       vips_error("vips_foreign_load_bmp_header", "unable to read BMP palette");
       return -1;
     }
