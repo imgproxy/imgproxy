@@ -8,6 +8,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#define BMP_ROW_ADDR(BMP, OR, R, Y) \
+  VIPS_REGION_ADDR(OR, 0, R->top + (BMP->top_down ? Y : R->height - 1 - Y))
+
 /**
  * BMP ForeignLoad VIPS class implementation (generic)
  */
@@ -91,16 +94,6 @@ vips_foreign_load_bmp_set_image_header(VipsForeignLoadBmp *bmp, VipsImage *out)
       VIPS_INTERPRETATION_sRGB,
       1.0,
       1.0);
-
-// BMP files are mirrored vertically, so we need to set the orientation in reverse
-#ifdef VIPS_META_ORIENTATION
-  if (bmp->top_down) {
-    vips_image_set_int(out, VIPS_META_ORIENTATION, 1); // file stays top-down
-  }
-  else {
-    vips_image_set_int(out, VIPS_META_ORIENTATION, 4); // top-down file is mirrored vertically
-  }
-#endif
 
   if (bmp->palette != NULL) {
     int bd;
@@ -374,7 +367,7 @@ vips_foreign_load_bmp_24_32_generate_strip(VipsRect *r, VipsRegion *out_region, 
 
   for (int y = 0; y < r->height; y++) {
     src = bmp->row_buffer;
-    dest = VIPS_REGION_ADDR(out_region, 0, r->top + y);
+    dest = BMP_ROW_ADDR(bmp, out_region, r, y);
 
     if (vips_foreign_load_read_full(bmp->source, src, row_size) <= 0) {
       vips_error("vips_foreign_load_bmp_24_32_generate_strip", "failed to read raw data");
@@ -415,7 +408,7 @@ vips_foreign_load_bmp_16_generate_strip(VipsRect *r, VipsRegion *out_region, Vip
 
   for (int y = 0; y < r->height; y++) {
     src = bmp->row_buffer;
-    dest = VIPS_REGION_ADDR(out_region, 0, r->top + y);
+    dest = BMP_ROW_ADDR(bmp, out_region, r, y);
 
     if (vips_foreign_load_read_full(bmp->source, src, row_size) <= 0) {
       vips_error("vips_foreign_load_bmp_16_generate_strip", "failed to read raw data");
@@ -500,7 +493,7 @@ vips_foreign_load_bmp_1_8_generate_strip(VipsRect *r, VipsRegion *out_region, Vi
       return -1;
     }
 
-    dest = VIPS_REGION_ADDR(out_region, 0, r->top + y);
+    dest = BMP_ROW_ADDR(bmp, out_region, r, y);
 
     vips_foreign_load_bpp_1_8_write_pixels_palette(bmp, dest, src, r->width, -1);
 
@@ -526,10 +519,8 @@ vips_foreign_load_bmp_rle_generate_strip(VipsRect *r, VipsRegion *out_region, Vi
   VipsPel cmd[2];
   VipsPel dxdy[2];
 
-  bool eof = FALSE;
-
   for (int y = 0; y < r->height; y++) {
-    dest = VIPS_REGION_ADDR(out_region, 0, r->top + y);
+    dest = BMP_ROW_ADDR(bmp, out_region, r, y);
 
     // fill the line with zeros (move to skips)
     memset(dest, 0, r->width * bmp->bands);
@@ -646,8 +637,11 @@ vips_foreign_load_bmp_rgb_generate(VipsRegion *out_region,
   g_assert(VIPS_RECT_BOTTOM(r) <= out_region->im->Ysize); // Equals or less of image height
 
   // Equals to the maximum height of the strip or less (last strip)
-  g_assert(r->height ==
-      VIPS_MIN(VIPS__FATSTRIP_HEIGHT, out_region->im->Ysize - r->top));
+  if (bmp->top_down)
+    g_assert(r->height ==
+        VIPS_MIN(VIPS__FATSTRIP_HEIGHT, out_region->im->Ysize - r->top));
+  else
+    g_assert(r->height == out_region->im->Ysize);
 
   // Check if the requested strip is in order
   if (r->top != bmp->y_pos) {
@@ -697,7 +691,12 @@ vips_foreign_load_bmp_load(VipsForeignLoad *load)
       vips_image_generate(t[0],
           NULL, vips_foreign_load_bmp_rgb_generate, NULL,
           bmp, NULL) ||
-      vips_sequential(t[0], &t[1], "tile_height", VIPS__FATSTRIP_HEIGHT, NULL) ||
+      // For bottom-up BMP images we need to flip the image vertically.
+      // We do this in vips_image_generate callback, so we need to be sure that
+      // we generate regions size of the whole image.
+      vips_sequential(t[0], &t[1],
+          "tile_height", bmp->top_down ? VIPS__FATSTRIP_HEIGHT : t[0]->Ysize,
+          NULL) ||
       vips_image_write(t[1], load->real) ||
       vips_source_decode(bmp->source)) {
     return -1;
@@ -818,5 +817,8 @@ vips_bmpload_source(VipsSource *source, VipsImage **out, ...)
 int
 vips_bmpload_source_go(VipsImgproxySource *source, VipsImage **out)
 {
-  return vips_bmpload_source(VIPS_SOURCE(source), out, NULL);
+  return vips_bmpload_source(
+      VIPS_SOURCE(source), out,
+      "access", VIPS_ACCESS_SEQUENTIAL,
+      NULL);
 }
