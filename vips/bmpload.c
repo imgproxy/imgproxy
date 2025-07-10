@@ -818,5 +818,5 @@ vips_bmpload_source(VipsSource *source, VipsImage **out, ...)
 int
 vips_bmpload_source_go(VipsImgproxySource *source, VipsImage **out)
 {
-  return vips_bmpload_source(VIPS_SOURCE(source), out, NULL);
+  return vips_bmpload_source(VIPS_SOURCE(source), out, "access", VIPS_ACCESS_SEQUENTIAL, NULL);
 }
