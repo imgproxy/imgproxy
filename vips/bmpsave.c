@@ -144,8 +144,8 @@ vips_foreign_save_bmp_build(VipsObject *object)
   uint32_t line_size = (in->Xsize * BMP_24_32_BANDS + 3) & (~3);
   uint32_t image_size = in->Ysize * line_size;
 
-  // pix_offset = header size + size of 3 or 4 color masks
-  uint32_t pix_offset = BMP_FILE_HEADER_LEN + BMP_V5_INFO_HEADER_LEN; // + sizeof(uint32_t)*(bpp > 24 ? 4 : 3);
+  // pix_offset = header size + file size
+  uint32_t pix_offset = BMP_FILE_HEADER_LEN + BMP_V5_INFO_HEADER_LEN;
 
   // Format BMP file header. We write 24/32 bpp BMP files only with no compression.
   BmpHeader header;
@@ -157,7 +157,7 @@ vips_foreign_save_bmp_build(VipsObject *object)
   header.reserved[1] = 0;
   header.pix_offset = GUINT32_TO_LE(pix_offset);
   header.dib_header_size = GUINT32_TO_LE(BMP_V5_INFO_HEADER_LEN);
-  header.width = GUINT32_TO_LE(in->Xsize);
+  header.width = GINT32_TO_LE(in->Xsize);
   header.color_plane = GUINT16_TO_LE(1);
   header.bpp = GUINT16_TO_LE(bpp);
   header.compression = COMPRESSION_BI_BITFIELDS;
@@ -192,7 +192,7 @@ vips_foreign_save_bmp_build(VipsObject *object)
     height = in->Ysize; // top-down BMP
   }
 
-  header.height = GUINT32_TO_LE(height);
+  header.height = GINT32_TO_LE(height);
 
   if (vips_target_write(bmp->target, &header, sizeof(header)) < 0) {
     vips_error("vips_foreign_save_bmp_build", "unable to write BMP header to target");

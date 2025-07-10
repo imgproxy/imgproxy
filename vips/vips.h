@@ -93,18 +93,19 @@ int vips_arrayjoin_go(VipsImage **in, VipsImage **out, int n);
 int vips_strip(VipsImage *in, VipsImage **out, int keep_exif_copyright);
 int vips_strip_all(VipsImage *in, VipsImage **out);
 
-int vips_jpegsave_go(VipsImage *in, void **buf, size_t *len, int quality, int interlace);
-int vips_jxlsave_go(VipsImage *in, void **buf, size_t *len, int quality, int effort);
-int vips_pngsave_go(VipsImage *in, void **buf, size_t *len, int interlace, int quantize,
+int vips_jpegsave_go(VipsImage *in, VipsTarget *target, int quality, int interlace);
+int vips_jxlsave_go(VipsImage *in, VipsTarget *target, int quality, int effort);
+int vips_pngsave_go(VipsImage *in, VipsTarget *target, int interlace, int quantize,
     int colors);
-int vips_webpsave_go(VipsImage *in, void **buf, size_t *len, int quality, int effort, VipsForeignWebpPreset preset);
-int vips_gifsave_go(VipsImage *in, void **buf, size_t *len);
-int vips_heifsave_go(VipsImage *in, void **buf, size_t *len, int quality);
-int vips_avifsave_go(VipsImage *in, void **buf, size_t *len, int quality, int speed);
-int vips_tiffsave_go(VipsImage *in, void **buf, size_t *len, int quality);
+int vips_webpsave_go(VipsImage *in, VipsTarget *target, int quality, int effort, VipsForeignWebpPreset preset);
+int vips_gifsave_go(VipsImage *in, VipsTarget *target);
+int vips_heifsave_go(VipsImage *in, VipsTarget *target, int quality);
+int vips_avifsave_go(VipsImage *in, VipsTarget *target, int quality, int speed);
+int vips_tiffsave_go(VipsImage *in, VipsTarget *target, int quality);
 
 void vips_cleanup();
 
 void vips_error_go(const char *function, const char *message);
 
 int vips_foreign_load_read_full(VipsSource *source, void *buf, size_t len);
+void vips_unref_target(VipsTarget *target);

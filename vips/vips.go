@@ -425,50 +425,38 @@ func (img *Image) LoadThumbnail(imgdata *imagedata.ImageData) error {
 }
 
 func (img *Image) Save(imgtype imagetype.Type, quality int) (*imagedata.ImageData, error) {
-	if imgtype == imagetype.ICO {
-		return img.saveAsIco()
-	}
-
-	// if imgtype == imagetype.BMP {
-	// 	return img.saveAsBmp()
+	// if imgtype == imagetype.ICO {
+	// 	return img.saveAsIco()
 	// }
 
-	var ptr unsafe.Pointer
+	target := C.vips_target_new_to_memory()
+
 	cancel := func() {
-		C.g_free_go(&ptr)
+		C.vips_unref_target(target)
 	}
 
 	err := C.int(0)
 	imgsize := C.size_t(0)
 
-	target := C.vips_target_new_to_memory()
-
 	switch imgtype {
 	case imagetype.JPEG:
-		err = C.vips_jpegsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality), vipsConf.JpegProgressive)
+		err = C.vips_jpegsave_go(img.VipsImage, target, C.int(quality), vipsConf.JpegProgressive)
 	case imagetype.JXL:
-		err = C.vips_jxlsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality), vipsConf.JxlEffort)
+		err = C.vips_jxlsave_go(img.VipsImage, target, C.int(quality), vipsConf.JxlEffort)
 	case imagetype.PNG:
-		err = C.vips_pngsave_go(img.VipsImage, &ptr, &imgsize, vipsConf.PngInterlaced, vipsConf.PngQuantize, vipsConf.PngQuantizationColors)
+		err = C.vips_pngsave_go(img.VipsImage, target, vipsConf.PngInterlaced, vipsConf.PngQuantize, vipsConf.PngQuantizationColors)
 	case imagetype.WEBP:
-		err = C.vips_webpsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality), vipsConf.WebpEffort, vipsConf.WebpPreset)
+		err = C.vips_webpsave_go(img.VipsImage, target, C.int(quality), vipsConf.WebpEffort, vipsConf.WebpPreset)
 	case imagetype.GIF:
-		err = C.vips_gifsave_go(img.VipsImage, &ptr, &imgsize)
+		err = C.vips_gifsave_go(img.VipsImage, target)
 	case imagetype.HEIC:
-		err = C.vips_heifsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality))
+		err = C.vips_heifsave_go(img.VipsImage, target, C.int(quality))
 	case imagetype.AVIF:
-		err = C.vips_avifsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality), vipsConf.AvifSpeed)
+		err = C.vips_avifsave_go(img.VipsImage, target, C.int(quality), vipsConf.AvifSpeed)
 	case imagetype.TIFF:
-		err = C.vips_tiffsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality))
+		err = C.vips_tiffsave_go(img.VipsImage, target, C.int(quality))
 	case imagetype.BMP:
 		err = C.vips_bmpsave_target_go(img.VipsImage, target)
-		if err == 0 {
-			// !!!!! THIS IS TEMPORARY WORKAROUND !!!!!
-			// NOTE: we need to unref taget in imagedata, update cancel callback
-			// This will be changed along with all other savers ^
-			var void_ptr = C.vips_blob_get(target.blob, &imgsize)
-			ptr = unsafe.Pointer(void_ptr)
-		}
 	default:
 		return nil, newVipsError("Usupported image type to save")
 	}
@@ -476,6 +464,9 @@ func (img *Image) Save(imgtype imagetype.Type, quality int) (*imagedata.ImageDat
 		cancel()
 		return nil, Error()
 	}
+
+	var blob_ptr = C.vips_blob_get(target.blob, &imgsize)
+	var ptr unsafe.Pointer = unsafe.Pointer(blob_ptr)
 
 	imgdata := imagedata.ImageData{
 		Type: imgtype,
