@@ -53,9 +53,10 @@ func (img *Image) loadIco(data []byte, shrink int, scale float64, pages int) err
 }
 
 func (img *Image) saveAsIco() (*imagedata.ImageData, error) {
-	if img.Width() > 256 || img.Height() > 256 {
-		return nil, newVipsError("Image dimensions is too big. Max dimension size for ICO is 256")
-	}
+	return nil, nil
+	// if img.Width() > 256 || img.Height() > 256 {
+	// 	return nil, newVipsError("Image dimensions is too big. Max dimension size for ICO is 256")
+	// }
 
 	target := C.vips_target_new_to_memory()
 
@@ -74,62 +75,62 @@ func (img *Image) saveAsIco() (*imagedata.ImageData, error) {
 
 	b := ptrToBytes(ptr, int(imgsize))
 
-	buf := new(bytes.Buffer)
-	buf.Grow(22 + int(imgsize))
+	// buf := new(bytes.Buffer)
+	// buf.Grow(22 + int(imgsize))
 
-	// ICONDIR header
-	if _, err := buf.Write([]byte{0, 0, 1, 0, 1, 0}); err != nil {
-		return nil, err
-	}
+	// // ICONDIR header
+	// if _, err := buf.Write([]byte{0, 0, 1, 0, 1, 0}); err != nil {
+	// 	return nil, err
+	// }
 
-	// ICONDIRENTRY
-	if _, err := buf.Write([]byte{
-		byte(img.Width() % 256),
-		byte(img.Height() % 256),
-	}); err != nil {
-		return nil, err
-	}
-	// Number of colors. Not supported in our case
-	if err := buf.WriteByte(0); err != nil {
-		return nil, err
-	}
-	// Reserved
-	if err := buf.WriteByte(0); err != nil {
-		return nil, err
-	}
-	// Color planes. Always 1 in our case
-	if _, err := buf.Write([]byte{1, 0}); err != nil {
-		return nil, err
-	}
-	// Bits per pixel
-	if img.HasAlpha() {
-		if _, err := buf.Write([]byte{32, 0}); err != nil {
-			return nil, err
-		}
-	} else {
-		if _, err := buf.Write([]byte{24, 0}); err != nil {
-			return nil, err
-		}
-	}
-	// Image data size
-	if err := binary.Write(buf, binary.LittleEndian, uint32(imgsize)); err != nil {
-		return nil, err
-	}
-	// Image data offset. Always 22 in our case
-	if _, err := buf.Write([]byte{22, 0, 0, 0}); err != nil {
-		return nil, err
-	}
+	// // ICONDIRENTRY
+	// if _, err := buf.Write([]byte{
+	// 	byte(img.Width() % 256),
+	// 	byte(img.Height() % 256),
+	// }); err != nil {
+	// 	return nil, err
+	// }
+	// // Number of colors. Not supported in our case
+	// if err := buf.WriteByte(0); err != nil {
+	// 	return nil, err
+	// }
+	// // Reserved
+	// if err := buf.WriteByte(0); err != nil {
+	// 	return nil, err
+	// }
+	// // Color planes. Always 1 in our case
+	// if _, err := buf.Write([]byte{1, 0}); err != nil {
+	// 	return nil, err
+	// }
+	// // Bits per pixel
+	// if img.HasAlpha() {
+	// 	if _, err := buf.Write([]byte{32, 0}); err != nil {
+	// 		return nil, err
+	// 	}
+	// } else {
+	// 	if _, err := buf.Write([]byte{24, 0}); err != nil {
+	// 		return nil, err
+	// 	}
+	// }
+	// // Image data size
+	// if err := binary.Write(buf, binary.LittleEndian, uint32(imgsize)); err != nil {
+	// 	return nil, err
+	// }
+	// // Image data offset. Always 22 in our case
+	// if _, err := buf.Write([]byte{22, 0, 0, 0}); err != nil {
+	// 	return nil, err
+	// }
 
-	if _, err := buf.Write(b); err != nil {
-		return nil, err
-	}
+	// if _, err := buf.Write(b); err != nil {
+	// 	return nil, err
+	// }
 
-	imgdata := imagedata.ImageData{
-		Type: imagetype.ICO,
-		Data: buf.Bytes(),
-	}
+	// imgdata := imagedata.ImageData{
+	// 	Type: imagetype.ICO,
+	// 	Data: buf.Bytes(),
+	// }
 
-	return &imgdata, nil
+	// return &imgdata, nil
 }
 
 func icoFixBmpHeader(b []byte) ([]byte, error) {
