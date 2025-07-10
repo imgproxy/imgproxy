@@ -15,21 +15,6 @@ static VipsBandFormat bandfmt_ico[10] = {
   /* Promotion: */ UC, UC, UC, UC, UC, UC, UC, UC, UC, UC
 };
 
-static uint8_t icon_dir[6] = { 0, 0, 1, 0, 1, 0 }; // ICONDIR header
-
-// ICO file header
-typedef struct __attribute__((packed)) _IcoHeader {
-  uint8_t dir[6];           // ICONDIR
-  uint8_t width;            // Width of the icon in pixels (0 for 256)
-  uint8_t height;           // Height of the icon in pixels (0 for 256
-  uint8_t number_of_colors; // Number of colors, not used in our case
-  uint8_t reserved;         // Reserved, always 0
-  uint16_t color_planes;    // Color planes, always 1
-  uint16_t bpp;             // Bits per pixel
-  uint32_t data_size;       // Image data size
-  uint32_t data_offset;     // Image data offset, always 22
-} IcoHeader;
-
 typedef struct _VipsForeignSaveIco {
   VipsForeignSave parent_object;
 
@@ -92,9 +77,15 @@ vips_foreign_save_ico_build(VipsObject *object)
   uint32_t data_size = in->Xsize * in->Ysize * bands;
   uint32_t data_offset = 22; // ICO header size + ICONDIRENTRY size
 
-  IcoHeader header;
+  // ICO file header
+  ICONDIR_IcoHeader file_header;
 
-  memcpy(header.dir, icon_dir, sizeof(icon_dir));
+  file_header.reserved = 0;                       // Reserved, always 0
+  file_header.type = GUINT16_TO_LE(ICO_TYPE_ICO); // 1 for ICO, 2 for
+  file_header.image_count = GUINT16_TO_LE(1);     // Number of images in the file
+
+  ICONDIRENTRY_IcoHeader header;
+
   header.width = width;                            // Width of the icon in pixels (0 for 256)
   header.height = height;                          // Height of the icon in pixels (0 for 256)
   header.number_of_colors = 0;                     // Number of colors, not used in our case
@@ -104,8 +95,13 @@ vips_foreign_save_ico_build(VipsObject *object)
   header.data_size = GUINT32_TO_LE(data_size);     // Image data size
   header.data_offset = GUINT32_TO_LE(data_offset); // Image data offset, always 22
 
+  if (vips_target_write(ico->target, &file_header, sizeof(file_header)) < 0) {
+    vips_error("vips_foreign_save_ico_build", "unable to write ICO file header to target");
+    return -1;
+  }
+
   if (vips_target_write(ico->target, &header, sizeof(header)) < 0) {
-    vips_error("vips_foreign_save_ico_build", "unable to write ICO header to target");
+    vips_error("vips_foreign_save_ico_build", "unable to write ICO image header to target");
     return -1;
   }
 
