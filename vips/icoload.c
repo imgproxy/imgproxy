@@ -15,30 +15,8 @@ typedef struct _VipsForeignLoadIco {
   VipsForeignLoad parent_object;
   VipsSource *source;
 
-  int32_t width;
-  int32_t height;
-  uint16_t planes;
-  uint16_t bpp;
-  uint16_t compression;
-  uint16_t offset;
-
-  uint32_t rmask;
-  uint32_t gmask;
-  uint32_t bmask;
-  uint32_t amask;
-
-  uint32_t num_colors;
-
-  int bands;
-
-  bool top_down; // true if image is vertically reversed
-  bool rle;      // true if image is compressed with RLE
-  bool ico565;   // 16-bit
-
-  int y_pos; // current position in the image, used when sequential access is possible
-
-  int dy; // in RLE mode this indicates how many lines to skip
-  int dx; // in RLE mode this indicates start pixel X
+  void *data;         // pointer to the ICO image data in memory
+  uint32_t data_size; // size of the desired picture in bytes
 
   VipsPel *row_buffer; // buffer for the current row, long enough to hold the whole 32-bit row+padding
 } VipsForeignLoadIco;
@@ -190,65 +168,32 @@ vips_foreign_load_ico_header(VipsForeignLoad *load)
     }
   }
 
-  // This indicates that ICO file contains palette-based images only.
+  // We failed to find any image which fits
   if (largest_image_header.data_offset == 0) {
     vips_error("vips_foreign_load_ico_header", "ICO file has no image which fits");
     return -1;
   }
 
-  // Let's move to the ico image data offset. Offsets for some reason point to the pos-1.
-  if (vips_source_seek(ico->source, GUINT32_FROM_LE(largest_image_header.data_offset) + 1, SEEK_SET) < 1) {
+  // Let's move to the ico image data offset.
+  if (vips_source_seek(ico->source, GUINT32_FROM_LE(largest_image_header.data_offset), SEEK_SET) < 1) {
     vips_error("vips_foreign_load_ico_header", "unable to seek to ICO image data");
     return -1;
   }
 
+  // Read the image into memory (otherwise, it would be too complex to handle)
+  ico->data_size = GUINT32_FROM_LE(largest_image_header.data_size);
+  ico->data = VIPS_MALLOC(load, ico->data_size);
+
+  if (vips_foreign_load_read_full(ico->source, ico->data, ico->data_size) <= 0) {
+    vips_error("vips_foreign_load_ico_header", "unable to read ICO image data from the source");
+    return -1;
+  }
+  // Determine the underlying format
+  // Read underlying image header alone
+  // Set output image parameters
+  // Proceed to load the image data
+
   vips_source_minimise(ico->source);
-
-  return 0;
-}
-
-/**
- * Loads a strip of non-rle ico image, access must be sequential, demand
- * style must be thinstrip + strip height set to max.
- */
-static int
-vips_foreign_load_ico_rgb_generate(VipsRegion *out_region,
-    void *seq, void *a, void *b, gboolean *stop)
-{
-  //   VipsForeignLoadIco *ico = (VipsForeignLoadIco *) a;
-  //   VipsRect *r = &out_region->valid;
-
-  //   /**
-  //    * Sanity checks which assure that the requested region has the correct shape.
-  //    *
-  //    * We use sequential access + thinstrip demand style which means that image would
-  //    * be read in strips, where each strip represents image-wide set of rows.
-  //    */
-  //   g_assert(r->left == 0);                                 // Strip starts at the left edge of the image
-  //   g_assert(r->width == out_region->im->Xsize);            // Has width of the image
-  //   g_assert(VIPS_RECT_BOTTOM(r) <= out_region->im->Ysize); // Equals or less of image height
-
-  //   // Equals to the maximum height of the strip or less (last strip)
-  //   g_assert(r->height ==
-  //       VIPS_MIN(VIPS__FATSTRIP_HEIGHT, out_region->im->Ysize - r->top));
-
-  //   // Check if the requested strip is in order
-  //   if (r->top != ico->y_pos) {
-  //     vips_error("vips_foreign_load_ico_generate", "out of order read at line %d", ico->y_pos);
-  //     return -1;
-  //   }
-
-  //   if (ico->rle) {
-  //     return vips_foreign_load_ico_rle_generate_strip(r, out_region, ico);
-  //   }
-  //   else if (ico->bpp >= 24) {
-  //     return vips_foreign_load_ico_24_32_generate_strip(r, out_region, ico);
-  //   }
-  //   else if (ico->bpp == 16) {
-  //     return vips_foreign_load_ico_16_generate_strip(r, out_region, ico);
-  //   }
-
-  //   return vips_foreign_load_ico_1_8_generate_strip(r, out_region, ico);
 
   return 0;
 }
@@ -283,10 +228,20 @@ vips_foreign_load_ico_load(VipsForeignLoad *load)
     return -1;
   }
 
-  if ((magic_buf[0] == 'P') && (magic_buf[1] == 'N') && (magic_buf[2] == 'G')) {
+  VipsPel *buffer = VIPS_MALLOC(load, ico->data_size);
+  if (vips_foreign_load_read_full(ico->source, buffer, ico->data_size) <= 0) {
+    vips_error("vips_foreign_load_ico_header", "unable to read ICO image data from the source");
+    return -1;
+  }
+
+  // Now, let's check the magic bytes to determine the file type
+  // https://www.libpng.org/pub/png/spec/1.2/PNG-Structure.html - PNG signature here
+  if ((buffer[0] == 137) && (buffer[1] == 80) && (buffer[2] == 78) && (buffer[3] == 71) && (buffer[4] == 13) && (buffer[5] == 10) && (buffer[6] == 26) && (buffer[7] == 10)) {
+    VipsSource *source = vips_source_new_from_memory((void *) buffer, ico->data_size);
+
     if (
         vips_pngload_source(
-            VIPS_SOURCE(ico->source),
+            VIPS_SOURCE(source),
             &load->real,
             "access", VIPS_ACCESS_SEQUENTIAL,
             "unlimited", 0,
