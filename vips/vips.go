@@ -294,7 +294,7 @@ func SupportsSave(it imagetype.Type) bool {
 		sup = hasOperation("jpegsave_target")
 	case imagetype.JXL:
 		sup = hasOperation("jxlsave_target")
-	case imagetype.PNG, imagetype.ICO:
+	case imagetype.PNG:
 		sup = hasOperation("pngsave_target")
 	case imagetype.WEBP:
 		sup = hasOperation("webpsave_target")
@@ -306,6 +306,8 @@ func SupportsSave(it imagetype.Type) bool {
 		sup = hasOperation("bmpsave_target")
 	case imagetype.TIFF:
 		sup = hasOperation("tiffsave_target")
+	case imagetype.ICO:
+		sup = hasOperation("icosave_target")
 	}
 
 	typeSupportSave.Store(it, sup)
@@ -425,10 +427,6 @@ func (img *Image) LoadThumbnail(imgdata *imagedata.ImageData) error {
 }
 
 func (img *Image) Save(imgtype imagetype.Type, quality int) (*imagedata.ImageData, error) {
-	if imgtype == imagetype.ICO {
-		return img.saveAsIco()
-	}
-
 	target := C.vips_target_new_to_memory()
 
 	cancel := func() {
@@ -457,6 +455,8 @@ func (img *Image) Save(imgtype imagetype.Type, quality int) (*imagedata.ImageDat
 		err = C.vips_tiffsave_go(img.VipsImage, target, C.int(quality))
 	case imagetype.BMP:
 		err = C.vips_bmpsave_target_go(img.VipsImage, target)
+	case imagetype.ICO:
+		err = C.vips_icosave_target_go(img.VipsImage, target)
 	default:
 		// NOTE: probably, it would be better to use defer unref + additionally ref the target
 		// before passing it to the imagedata.ImageData
