@@ -209,17 +209,17 @@ vips_foreign_load_bmp_header(VipsForeignLoad *load)
   int bands = 3; // 3 bands by default (RGB)
 
   // Let's determine if the image has an alpha channel
-  bool has_alpha = FALSE;
+  bool has_alpha = bpp == 32;
 
   // If the info header is V4 or V5, check for alpha channel mask explicitly.
   // If it's non-zero, then the target image should have an alpha channel.
-  if (info_header_len > BMP_BITMAP_INFO_HEADER_LEN) {
+  if ((has_alpha) && (info_header_len > BMP_BITMAP_INFO_HEADER_LEN)) {
     has_alpha = GUINT32_FROM_LE(*(uint32_t *) (info_header + 48)) != 0;
   }
 
   // Target image should have alpha channel only in case source image has alpha channel
   // AND source image alpha mask is not zero
-  if ((bpp == 32) && (has_alpha)) {
+  if (has_alpha) {
     bands = 4;
   }
 
