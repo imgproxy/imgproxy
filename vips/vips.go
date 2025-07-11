@@ -427,10 +427,6 @@ func (img *Image) LoadThumbnail(imgdata *imagedata.ImageData) error {
 }
 
 func (img *Image) Save(imgtype imagetype.Type, quality int) (*imagedata.ImageData, error) {
-	// if imgtype == imagetype.ICO {
-	// 	return img.saveAsIco()
-	// }
-
 	target := C.vips_target_new_to_memory()
 
 	cancel := func() {
