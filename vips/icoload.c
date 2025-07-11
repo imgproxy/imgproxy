@@ -230,9 +230,6 @@ vips_foreign_load_ico_header(VipsForeignLoad *load)
       ico->internal[0], "postclose",
       G_CALLBACK(vips_foreign_load_ico_free_buffer), data);
 
-  printf("largest_image_header.width: %d, largest_image_header.height: %d\n",
-      largest_image_header.width, largest_image_header.height);
-
   // Check that target dimensions match the source dimensions.
   int lhw = largest_image_header.width == 0 ? 256 : largest_image_header.width;
   int lhh = largest_image_header.height == 0 ? 256 : largest_image_header.height;
