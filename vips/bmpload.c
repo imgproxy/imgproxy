@@ -216,11 +216,10 @@ vips_foreign_load_bmp_header(VipsForeignLoad *load)
   if (info_header_len > BMP_BITMAP_INFO_HEADER_LEN) {
     has_alpha = GUINT32_FROM_LE(*(uint32_t *) (info_header + 48)) != 0;
   }
-  else {
-    has_alpha = (bpp == 32); // otherwise, rely on the bpp value
-  }
 
-  if (has_alpha) {
+  // Target image should have alpha channel only in case source image has alpha channel
+  // AND source image alpha mask is not zero
+  if ((bpp == 32) && (has_alpha)) {
     bands = 4;
   }
 
