@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [3.29.1] - 2025-07-11
 ### Fixed
 - Fix parsing and minifying some SVGs.
 
