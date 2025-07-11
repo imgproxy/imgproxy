@@ -85,11 +85,10 @@ vips_foreign_save_ico_build(VipsObject *object)
   uint8_t height = in->Ysize % 256; // 0 means 256
   uint16_t bpp = 24;
 
-  if (vips_image_hasalpha(in) > 0) {
+  if (bands > 3) {
     bpp = 32;
   }
 
-  uint32_t data_size = in->Xsize * in->Ysize * bands;
   uint32_t data_offset = 22; // ICO header size + ICONDIRENTRY size
 
   IcoHeader header;
@@ -101,22 +100,34 @@ vips_foreign_save_ico_build(VipsObject *object)
   header.reserved = 0;                             // Reserved, always 0
   header.color_planes = 1;                         // Color planes, always 1
   header.bpp = GUINT16_TO_LE(bpp);                 // Bits per pixel
-  header.data_size = GUINT32_TO_LE(data_size);     // Image data size
   header.data_offset = GUINT32_TO_LE(data_offset); // Image data offset, always 22
 
-  if (vips_target_write(ico->target, &header, sizeof(header)) < 0) {
+  void *buffer;
+  size_t data_size;
+
+  // Save PNG image to a buffer
+  if (vips_pngsave_buffer(in, &buffer, &data_size, NULL)) {
+    vips_error("vips_foreign_save_ico_build", "unable to save ICO image as PNG");
+    return -1;
+  }
+
+  header.data_size = GUINT32_TO_LE(data_size); // Image data size
+
+  // Write header
+  if (vips_target_write(ico->target, &header, sizeof(header))) {
+    g_free(buffer);
     vips_error("vips_foreign_save_ico_build", "unable to write ICO header to target");
     return -1;
   }
 
-  // forward to vips_pngsave_go which sets PNG flags
-  if (vips_pngsave_go(in, ico->target,
-          0,
-          0,
-          255) < 0) {
-    vips_error("vips_foreign_save_ico_build", "unable to save ICO image as PNG");
+  // Write data
+  if (vips_target_write(ico->target, &buffer, sizeof(header))) {
+    g_free(buffer);
+    vips_error("vips_foreign_save_ico_build", "unable to write ICO header to target");
     return -1;
   }
+
+  g_free(buffer);
 
   return 0;
 }
