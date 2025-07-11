@@ -15,8 +15,7 @@ typedef struct _VipsForeignLoadIco {
   VipsForeignLoad parent_object;
   VipsSource *source;
 
-  void *data;         // pointer to the ICO image data in memory
-  uint32_t data_size; // size of the desired picture in bytes
+  VipsImage **internal; // internal image
 
   VipsPel *row_buffer; // buffer for the current row, long enough to hold the whole 32-bit row+padding
 } VipsForeignLoadIco;
@@ -52,66 +51,6 @@ vips_foreign_load_ico_get_flags(VipsForeignLoad *load)
 }
 
 /**
- * Sets the image header for the output image
- */
-static int
-vips_foreign_load_ico_set_image_header(VipsForeignLoadIco *ico, VipsImage *out)
-{
-  //   vips_image_init_fields(
-  //       out,
-  //       ico->width,
-  //       ico->height,
-  //       ico->bands,
-  //       VIPS_FORMAT_UCHAR,
-  //       VIPS_CODING_NONE,
-  //       VIPS_INTERPRETATION_sRGB,
-  //       1.0,
-  //       1.0);
-
-  // // ICO files are mirrored vertically, so we need to set the orientation in reverse
-  // #ifdef VIPS_META_ORIENTATION
-  //   if (ico->top_down) {
-  //     vips_image_set_int(out, VIPS_META_ORIENTATION, 1); // file stays top-down
-  //   }
-  //   else {
-  //     vips_image_set_int(out, VIPS_META_ORIENTATION, 4); // top-down file is mirrored vertically
-  //   }
-  // #endif
-
-  //   if (ico->palette != NULL) {
-  //     int bd;
-
-  //     if (ico->num_colors > 16) {
-  //       bd = 8; // 8-bit palette
-  //     }
-  //     else if (ico->num_colors > 4) {
-  //       bd = 4; // 4-bit palette
-  //     }
-  //     else if (ico->num_colors > 2) {
-  //       bd = 2; // 2-bit palette
-  //     }
-  //     else {
-  //       bd = 1; // 1-bit palette
-  //     }
-
-  //     vips_image_set_int(out, "palette-bit-depth", bd);
-
-  // #ifdef VIPS_META_BITS_PER_SAMPLE
-  //     vips_image_set_int(out, VIPS_META_BITS_PER_SAMPLE, bd);
-  // #endif
-
-  // #ifdef VIPS_META_PALETTE
-  //     vips_image_set_int(out, VIPS_META_PALETTE, TRUE);
-  // #endif
-  //   }
-
-  //   if (vips_image_pipelinev(out, VIPS_DEMAND_STYLE_THINSTRIP, NULL))
-  //     return -1;
-
-  return 0;
-}
-
-/**
  * Checks if the source is a ICO image
  */
 static gboolean
@@ -120,6 +59,24 @@ vips_foreign_load_ico_source_is_a_source(VipsSource *source)
   // There is no way of detecting ICO files (it has no signature).
   // However, vips requires this method to be present.
   return FALSE;
+}
+
+/**
+ * Checks if the ICO image is a PNG image.
+ */
+static bool
+vips_foreign_load_ico_is_png(VipsForeignLoadIco *ico, VipsPel *data, uint32_t data_size)
+{
+  // Check if the ICO data is PNG
+  // ICO files can contain PNG images, so we need to check the magic bytes
+  if (data_size < 8) {
+    return false; // Not enough data to be a PNG
+  }
+
+  // Check the PNG signature
+  return (data[0] == 137 && data[1] == 'P' && data[2] == 'N' &&
+      data[3] == 'G' && data[4] == '\r' && data[5] == '\n' &&
+      data[6] == 26 && data[7] == '\n');
 }
 
 /**
@@ -180,18 +137,95 @@ vips_foreign_load_ico_header(VipsForeignLoad *load)
     return -1;
   }
 
-  // Read the image into memory (otherwise, it would be too complex to handle)
-  ico->data_size = GUINT32_FROM_LE(largest_image_header.data_size);
-  ico->data = VIPS_MALLOC(load, ico->data_size);
+  // Read the image into memory (otherwise, it would be too complex to handle). It's fine for ICO:
+  // ICO files are usually small, and we can read them into memory without any issues.
+  uint32_t data_size = GUINT32_FROM_LE(largest_image_header.data_size);
 
-  if (vips_foreign_load_read_full(ico->source, ico->data, ico->data_size) <= 0) {
+  // BMP file explicitly excludes BITMAPFILEHEADER, so we need to add it manually. We reserve
+  // space for it at the beginning of the data buffer.
+  VipsPel *data = (VipsPel *) VIPS_MALLOC(load, data_size + BMP_FILE_HEADER_LEN);
+  void *actual_data = data + BMP_FILE_HEADER_LEN;
+
+  if (vips_foreign_load_read_full(ico->source, actual_data, data_size) <= 0) {
     vips_error("vips_foreign_load_ico_header", "unable to read ICO image data from the source");
     return -1;
   }
-  // Determine the underlying format
-  // Read underlying image header alone
-  // Set output image parameters
-  // Proceed to load the image data
+
+  // Now, let's load the internal image
+  ico->internal = (VipsImage **) vips_object_local_array(VIPS_OBJECT(load), 1);
+
+  if (vips_foreign_load_ico_is_png(ico, actual_data, data_size)) {
+    if (
+        vips_pngload_buffer(
+            actual_data, data_size,
+            &ico->internal[0],
+            "access", VIPS_ACCESS_RANDOM,
+            NULL) < 0) {
+      vips_error("vips_foreign_load_ico_header", "unable to load ICO image as PNG");
+      return -1;
+    }
+  }
+  else {
+    // Otherwise, we assume it's a BMP image.
+    // According to ICO file format, it explicitly excludes BITMAPFILEHEADER (why???),
+    // hence, we need to restore it to make bmp loader work.
+
+    // Read num_colors and bpp from the BITMAPINFOHEADER
+    uint32_t num_colors = GUINT32_FROM_LE(*(uint32_t *) (actual_data + 32));
+    uint16_t bpp = GUINT16_FROM_LE(*(uint16_t *) (actual_data + 14));
+    uint32_t pix_offset;
+
+    if ((num_colors == 0) && (bpp <= 8)) {
+      // If there are no colors and bpp is <= 8, we assume it's a palette image
+      pix_offset = BMP_FILE_HEADER_LEN + BMP_BITMAP_INFO_HEADER_LEN + 4 * (1 << bpp);
+    }
+    else {
+      // Otherwise, we use the number of colors
+      pix_offset = BMP_FILE_HEADER_LEN + BMP_BITMAP_INFO_HEADER_LEN + 4 * num_colors;
+    }
+
+    // ICO file used to store alpha mask. By historical reasons, height of the ICO bmp
+    // is still stored doubled to cover the alpha mask data even if they're zero
+    // or not present.
+    int32_t height = GINT32_FROM_LE(*(int32_t *) (actual_data + 8));
+    height = height / 2;
+
+    // Magic bytes
+    data[0] = 'B';
+    data[1] = 'M';
+
+    // Size of the BMP file (data size + BMP file header length)
+    (*(uint32_t *) (data + 2)) = GUINT32_TO_LE(data_size + BMP_FILE_HEADER_LEN);
+    (*(uint32_t *) (data + 6)) = 0;                          // reserved
+    (*(uint32_t *) (data + 10)) = GUINT32_TO_LE(pix_offset); // offset to the pixel data
+    (*(int32_t *) (actual_data + 8)) = GINT32_TO_LE(height); // height
+
+    // NOTE: Temporary, _buffer must be reviwed
+    VipsSource *src = vips_source_new_from_memory(data, data_size + BMP_FILE_HEADER_LEN);
+    if (
+        vips_bmpload_source(
+            src,
+            &ico->internal[0],
+            "access", VIPS_ACCESS_RANDOM,
+            NULL) < 0) {
+      vips_error("vips_foreign_load_ico_header", "unable to load ICO image as BMP");
+      return -1;
+    }
+  }
+
+  // Copy the image metadata parameters to the load->out image.
+  // This should be sufficient, as we do not care much about the rest of the
+  // metadata inside .ICO files. At least, at this stage.
+  vips_image_init_fields(
+      load->out,
+      vips_image_get_width(ico->internal[0]),
+      vips_image_get_height(ico->internal[0]),
+      vips_image_get_bands(ico->internal[0]),
+      vips_image_get_format(ico->internal[0]),
+      vips_image_get_coding(ico->internal[0]),
+      vips_image_get_interpretation(ico->internal[0]),
+      vips_image_get_xres(ico->internal[0]),
+      vips_image_get_yres(ico->internal[0]));
 
   vips_source_minimise(ico->source);
 
@@ -205,81 +239,13 @@ static int
 vips_foreign_load_ico_load(VipsForeignLoad *load)
 {
   VipsForeignLoadIco *ico = (VipsForeignLoadIco *) load;
+  VipsImage *image = ico->internal[0];
 
-  // Now, let's get the underlying file type. Unfortunately, we can not use vips_source_sniff
-  // and all the methods which try to guess file type from the source since they all rewind source
-  // to the beginning first.
-  gint64 current_pos = vips_source_seek(ico->source, 0, SEEK_CUR);
-  if (current_pos < 1) {
-    vips_error("vips_foreign_load_ico_header", "unable to get current position in ICO source");
+  // Just copy the internal image to the output image
+  if (vips_copy(image, &load->real, NULL)) {
+    vips_error("vips_foreign_load_ico_load", "unable to copy ICO image to output");
     return -1;
   }
-
-  // Read the header which contains the file type
-  VipsPel magic_buf[8];
-  if (vips_foreign_load_read_full(ico->source, &magic_buf, sizeof(magic_buf)) <= 0) {
-    vips_error("vips_foreign_load_ico_header", "unable to read file magic bytes from the source");
-    return -1;
-  }
-
-  // Rewind back to the data beginning
-  if (vips_source_seek(ico->source, current_pos, SEEK_SET) <= 0) {
-    vips_error("vips_foreign_load_ico_header", "unable to seek to the original position in ICO source");
-    return -1;
-  }
-
-  VipsPel *buffer = VIPS_MALLOC(load, ico->data_size);
-  if (vips_foreign_load_read_full(ico->source, buffer, ico->data_size) <= 0) {
-    vips_error("vips_foreign_load_ico_header", "unable to read ICO image data from the source");
-    return -1;
-  }
-
-  // Now, let's check the magic bytes to determine the file type
-  // https://www.libpng.org/pub/png/spec/1.2/PNG-Structure.html - PNG signature here
-  if ((buffer[0] == 137) && (buffer[1] == 80) && (buffer[2] == 78) && (buffer[3] == 71) && (buffer[4] == 13) && (buffer[5] == 10) && (buffer[6] == 26) && (buffer[7] == 10)) {
-    VipsSource *source = vips_source_new_from_memory((void *) buffer, ico->data_size);
-
-    if (
-        vips_pngload_source(
-            VIPS_SOURCE(source),
-            &load->real,
-            "access", VIPS_ACCESS_SEQUENTIAL,
-            "unlimited", 0,
-            NULL) ||
-        vips_source_decode(ico->source) < 0) {
-      vips_error("vips_foreign_load_ico_header", "unable to load ICO image as PNG");
-      return -1;
-    }
-  }
-  else { // should be BMP otherwise
-  }
-
-  //   // For a case when we encounter buggy ICO image which has RLE command to read next
-  //   // 255 bytes, and our buffer is smaller than that, we need it to be at least 255 bytes.
-  //   int row_buffer_length = (ico->width * 4) + 4;
-  //   if (row_buffer_length < 255) {
-  //     row_buffer_length = 255;
-  //   }
-
-  //   // Allocate a row buffer for the current row in all generate* functions.
-  //   // 4 * width + 4 is guaranteed to be enough for the longest (32-bit per pixel) row + padding.
-  //   ico->row_buffer = VIPS_ARRAY(load, row_buffer_length, VipsPel);
-
-  //   VipsImage **t = (VipsImage **)
-  //       vips_object_local_array(VIPS_OBJECT(load), 2);
-
-  //   t[0] = vips_image_new();
-
-  //   if (
-  //       vips_foreign_load_ico_set_image_header(ico, t[0]) ||
-  //       vips_image_generate(t[0],
-  //           NULL, vips_foreign_load_ico_rgb_generate, NULL,
-  //           ico, NULL) ||
-  //       vips_sequential(t[0], &t[1], "tile_height", VIPS__FATSTRIP_HEIGHT, NULL) ||
-  //       vips_image_write(t[1], load->real) ||
-  //       vips_source_decode(ico->source)) {
-  //     return -1;
-  //   }
 
   return 0;
 }
