@@ -121,13 +121,16 @@ vips_foreign_save_ico_build(VipsObject *object)
   }
 
   // Write data
-  if (vips_target_write(ico->target, &buffer, sizeof(header))) {
+  if (vips_target_write(ico->target, buffer, data_size)) {
     g_free(buffer);
     vips_error("vips_foreign_save_ico_build", "unable to write ICO header to target");
     return -1;
   }
 
   g_free(buffer);
+
+  if (vips_target_end(ico->target))
+    return -1;
 
   return 0;
 }
