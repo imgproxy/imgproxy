@@ -57,16 +57,20 @@ func (img *Image) saveAsIco() (*imagedata.ImageData, error) {
 		return nil, newVipsError("Image dimensions is too big. Max dimension size for ICO is 256")
 	}
 
-	var ptr unsafe.Pointer
+	target := C.vips_target_new_to_memory()
+
 	imgsize := C.size_t(0)
 
 	defer func() {
-		C.g_free_go(&ptr)
+		C.vips_unref_target(target)
 	}()
 
-	if C.vips_pngsave_go(img.VipsImage, &ptr, &imgsize, 0, 0, 256) != 0 {
+	if C.vips_pngsave_go(img.VipsImage, target, 0, 0, 256) != 0 {
 		return nil, Error()
 	}
+
+	var blob_ptr = C.vips_blob_get(target.blob, &imgsize)
+	var ptr unsafe.Pointer = unsafe.Pointer(blob_ptr)
 
 	b := ptrToBytes(ptr, int(imgsize))
 

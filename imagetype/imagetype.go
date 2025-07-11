@@ -144,7 +144,7 @@ func (it Type) IsVector() bool {
 }
 
 func (it Type) SupportsAlpha() bool {
-	return it != JPEG && it != BMP
+	return it != JPEG
 }
 
 func (it Type) SupportsAnimationLoad() bool {

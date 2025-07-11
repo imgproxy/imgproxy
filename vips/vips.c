@@ -14,6 +14,9 @@ vips_initialize()
   extern GType vips_foreign_load_bmp_source_get_type(void);
   vips_foreign_load_bmp_source_get_type();
 
+  extern GType vips_foreign_save_bmp_target_get_type(void);
+  vips_foreign_save_bmp_target_get_type();
+
   return vips_init("imgproxy");
 }
 
@@ -1008,10 +1011,10 @@ vips_strip_all(VipsImage *in, VipsImage **out)
 }
 
 int
-vips_jpegsave_go(VipsImage *in, void **buf, size_t *len, int quality, int interlace)
+vips_jpegsave_go(VipsImage *in, VipsTarget *target, int quality, int interlace)
 {
-  return vips_jpegsave_buffer(
-      in, buf, len,
+  return vips_jpegsave_target(
+      in, target,
       "Q", quality,
       "optimize_coding", TRUE,
       "interlace", interlace,
@@ -1019,17 +1022,17 @@ vips_jpegsave_go(VipsImage *in, void **buf, size_t *len, int quality, int interl
 }
 
 int
-vips_jxlsave_go(VipsImage *in, void **buf, size_t *len, int quality, int effort)
+vips_jxlsave_go(VipsImage *in, VipsTarget *target, int quality, int effort)
 {
-  return vips_jxlsave_buffer(
-      in, buf, len,
+  return vips_jxlsave_target(
+      in, target,
       "Q", quality,
       "effort", effort,
       NULL);
 }
 
 int
-vips_pngsave_go(VipsImage *in, void **buf, size_t *len, int interlace, int quantize, int colors)
+vips_pngsave_go(VipsImage *in, VipsTarget *target, int interlace, int quantize, int colors)
 {
   int bitdepth;
 
@@ -1055,14 +1058,14 @@ vips_pngsave_go(VipsImage *in, void **buf, size_t *len, int interlace, int quant
   }
 
   if (!quantize)
-    return vips_pngsave_buffer(
-        in, buf, len,
+    return vips_pngsave_target(
+        in, target,
         "filter", VIPS_FOREIGN_PNG_FILTER_ALL,
         "interlace", interlace,
         NULL);
 
-  return vips_pngsave_buffer(
-      in, buf, len,
+  return vips_pngsave_target(
+      in, target,
       "filter", VIPS_FOREIGN_PNG_FILTER_NONE,
       "interlace", interlace,
       "palette", quantize,
@@ -1071,10 +1074,10 @@ vips_pngsave_go(VipsImage *in, void **buf, size_t *len, int interlace, int quant
 }
 
 int
-vips_webpsave_go(VipsImage *in, void **buf, size_t *len, int quality, int effort, VipsForeignWebpPreset preset)
+vips_webpsave_go(VipsImage *in, VipsTarget *target, int quality, int effort, VipsForeignWebpPreset preset)
 {
-  return vips_webpsave_buffer(
-      in, buf, len,
+  return vips_webpsave_target(
+      in, target,
       "Q", quality,
       "effort", effort,
       "preset", preset,
@@ -1082,35 +1085,35 @@ vips_webpsave_go(VipsImage *in, void **buf, size_t *len, int quality, int effort
 }
 
 int
-vips_gifsave_go(VipsImage *in, void **buf, size_t *len)
+vips_gifsave_go(VipsImage *in, VipsTarget *target)
 {
   int bitdepth = vips_get_palette_bit_depth(in);
   if (bitdepth <= 0 || bitdepth > 8)
     bitdepth = 8;
-  return vips_gifsave_buffer(in, buf, len, "bitdepth", bitdepth, NULL);
+  return vips_gifsave_target(in, target, "bitdepth", bitdepth, NULL);
 }
 
 int
-vips_tiffsave_go(VipsImage *in, void **buf, size_t *len, int quality)
+vips_tiffsave_go(VipsImage *in, VipsTarget *target, int quality)
 {
-  return vips_tiffsave_buffer(in, buf, len, "Q", quality, NULL);
+  return vips_tiffsave_target(in, target, "Q", quality, NULL);
 }
 
 int
-vips_heifsave_go(VipsImage *in, void **buf, size_t *len, int quality)
+vips_heifsave_go(VipsImage *in, VipsTarget *target, int quality)
 {
-  return vips_heifsave_buffer(
-      in, buf, len,
+  return vips_heifsave_target(
+      in, target,
       "Q", quality,
       "compression", VIPS_FOREIGN_HEIF_COMPRESSION_HEVC,
       NULL);
 }
 
 int
-vips_avifsave_go(VipsImage *in, void **buf, size_t *len, int quality, int speed)
+vips_avifsave_go(VipsImage *in, VipsTarget *target, int quality, int speed)
 {
-  return vips_heifsave_buffer(
-      in, buf, len,
+  return vips_heifsave_target(
+      in, target,
       "Q", quality,
       "compression", VIPS_FOREIGN_HEIF_COMPRESSION_AV1,
       "effort", 9 - speed,
@@ -1143,4 +1146,10 @@ vips_foreign_load_read_full(VipsSource *source, void *buf, size_t len)
   }
 
   return 1;
+}
+
+void
+vips_unref_target(VipsTarget *target)
+{
+  VIPS_UNREF(target);
 }

@@ -291,21 +291,21 @@ func SupportsSave(it imagetype.Type) bool {
 
 	switch it {
 	case imagetype.JPEG:
-		sup = hasOperation("jpegsave_buffer")
+		sup = hasOperation("jpegsave_target")
 	case imagetype.JXL:
-		sup = hasOperation("jxlsave_buffer")
+		sup = hasOperation("jxlsave_target")
 	case imagetype.PNG, imagetype.ICO:
-		sup = hasOperation("pngsave_buffer")
+		sup = hasOperation("pngsave_target")
 	case imagetype.WEBP:
-		sup = hasOperation("webpsave_buffer")
+		sup = hasOperation("webpsave_target")
 	case imagetype.GIF:
-		sup = hasOperation("gifsave_buffer")
+		sup = hasOperation("gifsave_target")
 	case imagetype.HEIC, imagetype.AVIF:
-		sup = hasOperation("heifsave_buffer")
+		sup = hasOperation("heifsave_target")
 	case imagetype.BMP:
-		sup = true
+		sup = hasOperation("bmpsave_target")
 	case imagetype.TIFF:
-		sup = hasOperation("tiffsave_buffer")
+		sup = hasOperation("tiffsave_target")
 	}
 
 	typeSupportSave.Store(it, sup)
@@ -429,13 +429,10 @@ func (img *Image) Save(imgtype imagetype.Type, quality int) (*imagedata.ImageDat
 		return img.saveAsIco()
 	}
 
-	if imgtype == imagetype.BMP {
-		return img.saveAsBmp()
-	}
+	target := C.vips_target_new_to_memory()
 
-	var ptr unsafe.Pointer
 	cancel := func() {
-		C.g_free_go(&ptr)
+		C.vips_unref_target(target)
 	}
 
 	err := C.int(0)
@@ -443,28 +440,36 @@ func (img *Image) Save(imgtype imagetype.Type, quality int) (*imagedata.ImageDat
 
 	switch imgtype {
 	case imagetype.JPEG:
-		err = C.vips_jpegsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality), vipsConf.JpegProgressive)
+		err = C.vips_jpegsave_go(img.VipsImage, target, C.int(quality), vipsConf.JpegProgressive)
 	case imagetype.JXL:
-		err = C.vips_jxlsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality), vipsConf.JxlEffort)
+		err = C.vips_jxlsave_go(img.VipsImage, target, C.int(quality), vipsConf.JxlEffort)
 	case imagetype.PNG:
-		err = C.vips_pngsave_go(img.VipsImage, &ptr, &imgsize, vipsConf.PngInterlaced, vipsConf.PngQuantize, vipsConf.PngQuantizationColors)
+		err = C.vips_pngsave_go(img.VipsImage, target, vipsConf.PngInterlaced, vipsConf.PngQuantize, vipsConf.PngQuantizationColors)
 	case imagetype.WEBP:
-		err = C.vips_webpsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality), vipsConf.WebpEffort, vipsConf.WebpPreset)
+		err = C.vips_webpsave_go(img.VipsImage, target, C.int(quality), vipsConf.WebpEffort, vipsConf.WebpPreset)
 	case imagetype.GIF:
-		err = C.vips_gifsave_go(img.VipsImage, &ptr, &imgsize)
+		err = C.vips_gifsave_go(img.VipsImage, target)
 	case imagetype.HEIC:
-		err = C.vips_heifsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality))
+		err = C.vips_heifsave_go(img.VipsImage, target, C.int(quality))
 	case imagetype.AVIF:
-		err = C.vips_avifsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality), vipsConf.AvifSpeed)
+		err = C.vips_avifsave_go(img.VipsImage, target, C.int(quality), vipsConf.AvifSpeed)
 	case imagetype.TIFF:
-		err = C.vips_tiffsave_go(img.VipsImage, &ptr, &imgsize, C.int(quality))
+		err = C.vips_tiffsave_go(img.VipsImage, target, C.int(quality))
+	case imagetype.BMP:
+		err = C.vips_bmpsave_target_go(img.VipsImage, target)
 	default:
+		// NOTE: probably, it would be better to use defer unref + additionally ref the target
+		// before passing it to the imagedata.ImageData
+		cancel()
 		return nil, newVipsError("Usupported image type to save")
 	}
 	if err != 0 {
 		cancel()
 		return nil, Error()
 	}
+
+	var blob_ptr = C.vips_blob_get(target.blob, &imgsize)
+	var ptr unsafe.Pointer = unsafe.Pointer(blob_ptr)
 
 	imgdata := imagedata.ImageData{
 		Type: imgtype,
