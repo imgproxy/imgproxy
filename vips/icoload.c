@@ -56,7 +56,13 @@ vips_foreign_load_ico_source_is_a_source(VipsSource *source)
 {
   // There is no way of detecting ICO files (it has no signature).
   // However, vips requires this method to be present.
-  return FALSE;
+  unsigned char *buf = vips_source_sniff(source, 4);
+  if (!buf) {
+    vips_error("vips_foreign_load_bmp_source_is_a_source", "unable to sniff source");
+    return 0;
+  }
+
+  return buf[0] == 0 && buf[1] == 0 && buf[2] == 1 && buf[3] == 0;
 }
 
 /**
@@ -165,17 +171,12 @@ vips_foreign_load_ico_header(VipsForeignLoad *load)
         vips_pngload_buffer(
             actual_data, data_size,
             &ico->internal[0],
-            "access", VIPS_ACCESS_RANDOM,
+            "access", VIPS_ACCESS_SEQUENTIAL,
             NULL) < 0) {
       VIPS_FREE(data);
       vips_error("vips_foreign_load_ico_header", "unable to load ICO image as PNG");
       return -1;
     }
-
-    // It is recommended that we free the buffer in postclose callback
-    g_signal_connect(
-        ico->internal[0], "postclose",
-        G_CALLBACK(vips_foreign_load_ico_free_buffer), data);
   }
   else {
     // Otherwise, we assume it's a BMP image.
@@ -216,18 +217,18 @@ vips_foreign_load_ico_header(VipsForeignLoad *load)
         vips_bmpload_buffer(
             data, data_size + BMP_FILE_HEADER_LEN,
             &ico->internal[0],
-            "access", VIPS_ACCESS_RANDOM,
+            "access", VIPS_ACCESS_SEQUENTIAL,
             NULL) < 0) {
       VIPS_FREE(data);
       vips_error("vips_foreign_load_ico_header", "unable to load ICO image as BMP");
       return -1;
     }
-
-    // It is recommended that we free the buffer in postclose callback
-    g_signal_connect(
-        ico->internal[0], "postclose",
-        G_CALLBACK(vips_foreign_load_ico_free_buffer), data);
   }
+
+  // It is recommended that we free the buffer in postclose callback
+  g_signal_connect(
+      ico->internal[0], "postclose",
+      G_CALLBACK(vips_foreign_load_ico_free_buffer), data);
 
   // Copy the image metadata parameters to the load->out image.
   // This should be sufficient, as we do not care much about the rest of the
