@@ -230,6 +230,19 @@ vips_foreign_load_ico_header(VipsForeignLoad *load)
       ico->internal[0], "postclose",
       G_CALLBACK(vips_foreign_load_ico_free_buffer), data);
 
+  printf("largest_image_header.width: %d, largest_image_header.height: %d\n",
+      largest_image_header.width, largest_image_header.height);
+
+  // Check that target dimensions match the source dimensions.
+  int lhw = largest_image_header.width == 0 ? 256 : largest_image_header.width;
+  int lhh = largest_image_header.height == 0 ? 256 : largest_image_header.height;
+
+  if (vips_image_get_width(ico->internal[0]) != lhw ||
+      vips_image_get_height(ico->internal[0]) != lhh) {
+    vips_error("vips_foreign_load_ico_header", "ICO image has unexpected dimensions");
+    return -1;
+  }
+
   // Copy the image metadata parameters to the load->out image.
   // This should be sufficient, as we do not care much about the rest of the
   // metadata inside .ICO files. At least, at this stage.
