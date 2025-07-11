@@ -1,5 +1,9 @@
 # Changelog
 
+## [Unreleased]
+### Fixed
+- Fix parsing and minifying some SVGs.
+
 ## [3.29.0] - 2025-07-08
 ### Added
 - Add [IMGPROXY_MAX_RESULT_DIMENSION](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_MAX_RESULT_DIMENSION) config and [max_result_dimension](https://docs.imgproxy.net/latest/usage/processing#max-result-dimension) processing option.
