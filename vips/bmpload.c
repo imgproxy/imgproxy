@@ -32,7 +32,8 @@ typedef struct _VipsForeignLoadBmp {
 
   uint32_t num_colors;
 
-  int bands;
+  int bands;           // target image bands
+  int bytes_per_pixel; // source image bytes per pixel (not used when bpp<8)
 
   bool top_down; // true if image is vertically reversed
   bool rle;      // true if image is compressed with RLE
@@ -201,19 +202,22 @@ vips_foreign_load_bmp_header(VipsForeignLoad *load)
   int bands = 3; // 3 bands by default (RGB)
 
   // Let's determine if the image has an alpha channel
-  bool has_alpha = FALSE;
+  bool has_alpha = bpp == 32;
 
-  // If the info header is V4 or V5, check for alpha channel explicitly
-  if (info_header_len > BMP_BITMAP_INFO_HEADER_LEN) {
+  // If the info header is V4 or V5, check for alpha channel mask explicitly.
+  // If it's non-zero, then the target image should have an alpha channel.
+  if ((has_alpha) && (info_header_len > BMP_BITMAP_INFO_HEADER_LEN)) {
     has_alpha = GUINT32_FROM_LE(*(uint32_t *) (info_header + 48)) != 0;
   }
-  else {
-    has_alpha = (bpp == 32); // otherwise, rely on the bpp value
-  }
 
+  // Target image should have alpha channel only in case source image has alpha channel
+  // AND source image alpha mask is not zero
   if (has_alpha) {
     bands = 4;
   }
+
+  // Source image bytes per pixel. It does not depend on the alpha mask, just on the bpp.
+  int bytes_per_pixel = bpp >= 8 ? bpp / 8 : 1; // bytes per pixel in the source image
 
   if (height < 0) {
     height = -height;
@@ -332,6 +336,7 @@ vips_foreign_load_bmp_header(VipsForeignLoad *load)
   bmp->bmask = bmask;
   bmp->amask = amask;
 
+  bmp->bytes_per_pixel = bytes_per_pixel;
   bmp->y_pos = 0;
 
   bmp->dx = 0; // In sequential access this indicates that we need to skip n lines
@@ -360,7 +365,7 @@ static int
 vips_foreign_load_bmp_24_32_generate_strip(VipsRect *r, VipsRegion *out_region, VipsForeignLoadBmp *bmp)
 {
   // Align the row size to 4 bytes, as BMP rows are 4-byte aligned.
-  int row_size = (bmp->bands * r->width + 3) & (~3);
+  int row_size = (bmp->bytes_per_pixel * r->width + 3) & (~3);
 
   VipsPel *src;
   VipsPel *dest;
@@ -385,7 +390,7 @@ vips_foreign_load_bmp_24_32_generate_strip(VipsRect *r, VipsRegion *out_region, 
       }
 
       dest += bmp->bands;
-      src += bmp->bands;
+      src += bmp->bytes_per_pixel;
     }
 
     bmp->y_pos += 1;
@@ -401,7 +406,7 @@ static int
 vips_foreign_load_bmp_16_generate_strip(VipsRect *r, VipsRegion *out_region, VipsForeignLoadBmp *bmp)
 {
   // Align the row size to 4 bytes, as BMP rows are 4-byte aligned, 16 bpp = 2 bytes per pixel
-  int row_size = (2 * r->width + 3) & (~3);
+  int row_size = (bmp->bytes_per_pixel * r->width + 3) & (~3);
 
   VipsPel *src;
   VipsPel *dest;
@@ -424,7 +429,7 @@ vips_foreign_load_bmp_16_generate_strip(VipsRect *r, VipsRegion *out_region, Vip
       dest[2] = (uint8_t) (pixel & bmp->bmask) << 3;
 
       dest += bmp->bands;
-      src += 2; // 2 bytes per pixel for 16 bpp
+      src += bmp->bytes_per_pixel; // 2 bytes per pixel for 16 bpp
     }
 
     bmp->y_pos += 1;
