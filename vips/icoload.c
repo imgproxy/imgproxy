@@ -109,7 +109,7 @@ vips_foreign_load_ico_header(VipsForeignLoad *load)
   for (int i = 0; i < count; i++) {
     ICONDIRENTRY_IcoHeader image_header;
 
-    // Read the header
+    // Read the next header
     if (vips_foreign_load_read_full(ico->source, &image_header, sizeof(image_header)) <= 0) {
       vips_error("vips_foreign_load_ico_header", "unable to read file header from the source");
       return -1;
@@ -200,7 +200,7 @@ vips_foreign_load_ico_header(VipsForeignLoad *load)
     (*(uint32_t *) (data + 10)) = GUINT32_TO_LE(pix_offset); // offset to the pixel data
     (*(int32_t *) (actual_data + 8)) = GINT32_TO_LE(height); // height
 
-    // NOTE: Temporary, _buffer must be reviwed
+    // NOTE: TEMPORARY HACK, REVIWE _BUFFER
     VipsSource *src = vips_source_new_from_memory(data, data_size + BMP_FILE_HEADER_LEN);
     if (
         vips_bmpload_source(
