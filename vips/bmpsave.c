@@ -183,15 +183,6 @@ vips_foreign_save_bmp_build(VipsObject *object)
   header.profile_size = 0;
   header.reserved_5 = 0;
 
-  int height;
-  int orientation = vips_image_get_orientation(in);
-  if (orientation == 1) {
-    height = -in->Ysize; // regular-down BMP
-  }
-  else {
-    height = in->Ysize; // top-down BMP
-  }
-
   header.height = GINT32_TO_LE(height);
 
   if (vips_target_write(bmp->target, &header, sizeof(header)) < 0) {
