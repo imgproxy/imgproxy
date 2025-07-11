@@ -268,7 +268,7 @@ func SupportsLoad(it imagetype.Type) bool {
 	case imagetype.BMP:
 		sup = hasOperation("bmpload_source")
 	case imagetype.ICO:
-		sup = true
+		sup = hasOperation("icoload_source")
 	case imagetype.SVG:
 		sup = hasOperation("svgload_source")
 	case imagetype.HEIC, imagetype.AVIF:
