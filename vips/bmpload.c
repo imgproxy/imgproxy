@@ -395,9 +395,6 @@ vips_foreign_load_bmp_24_32_generate_strip(VipsRect *r, VipsRegion *out_region, 
       if (bmp->bands == 4) {
         dest[3] = src[3]; // A
       }
-      else {
-        dest[3] = 0xFF;
-      }
 
       dest += bmp->bands;
       src += bmp->bytes_per_pixel;
