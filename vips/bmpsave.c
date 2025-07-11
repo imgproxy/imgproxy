@@ -124,17 +124,12 @@ vips_foreign_save_bmp_build(VipsObject *object)
   // bands (3 or 4) * 8 bits
   int bands = vips_image_get_bands(in);
 
-  if (bands > 4) {
+  if ((bands > 3) || (bands > 4)) {
     vips_error("vips_foreign_save_bmp_build", "BMP source file must have 3 or 4 bands (RGB or RGBA)");
     return -1;
   }
 
   int bpp = bands * 8;
-
-  if (bpp < 24) {
-    vips_error("vips_foreign_save_bmp_build", "BMP source file must be RGB or RGBA");
-    return -1;
-  }
 
   // Target image line size trimmed to 4 bytes.
   uint32_t line_size = (in->Xsize * bands + 3) & (~3);
@@ -154,6 +149,7 @@ vips_foreign_save_bmp_build(VipsObject *object)
   header.pix_offset = GUINT32_TO_LE(pix_offset);
   header.dib_header_size = GUINT32_TO_LE(BMP_V5_INFO_HEADER_LEN);
   header.width = GINT32_TO_LE(in->Xsize);
+  header.height = GINT32_TO_LE(-in->Ysize);
   header.color_plane = GUINT16_TO_LE(1);
   header.bpp = GUINT16_TO_LE(bpp);
   header.compression = COMPRESSION_BI_RGB;
@@ -178,8 +174,6 @@ vips_foreign_save_bmp_build(VipsObject *object)
   header.profile_data = 0;
   header.profile_size = 0;
   header.reserved_5 = 0;
-
-  header.height = GINT32_TO_LE(-in->Ysize);
 
   if (vips_target_write(bmp->target, &header, sizeof(header)) < 0) {
     vips_error("vips_foreign_save_bmp_build", "unable to write BMP header to target");
