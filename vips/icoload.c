@@ -259,7 +259,7 @@ vips_foreign_load_ico_load(VipsForeignLoad *load)
   VipsImage *image = ico->internal[0];
 
   // Just copy the internal image to the output image
-  if (vips_copy(image, &load->real, NULL)) {
+  if (vips_image_write(image, &load->real)) {
     vips_error("vips_foreign_load_ico_load", "unable to copy ICO image to output");
     return -1;
   }
