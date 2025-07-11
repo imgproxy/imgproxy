@@ -80,7 +80,7 @@ vips_foreign_save_bmp_block(VipsRegion *region, VipsRect *area, void *a)
   VipsImage *image = region->im;
 
   // This is the position in the source image
-  uint32_t source_row_size = region->im->Xsize * VIPS_IMAGE_SIZEOF_PEL(region->im);
+  uint32_t source_row_size = region->im->Xsize * bmp->bands;
 
   for (int y = 0; y < area->height; y++) {
     VipsPel *src = VIPS_REGION_ADDR(region, 0, area->top + y);
@@ -94,11 +94,8 @@ vips_foreign_save_bmp_block(VipsRegion *region, VipsRect *area, void *a)
       if (bmp->bands == 4) {
         dst[3] = src[3]; // A
       }
-      else {
-        dst[3] = 0; // No alpha channel, set to 0
-      }
 
-      dst += BMP_24_32_BANDS;
+      dst += bmp->bands;
       src += bmp->bands;
     }
 
@@ -140,8 +137,7 @@ vips_foreign_save_bmp_build(VipsObject *object)
   }
 
   // Target image line size trimmed to 4 bytes.
-  // 24/32 bpp BMP pixel is always DWORD (hence, BMP_24_32_BANDS)
-  uint32_t line_size = (in->Xsize * BMP_24_32_BANDS + 3) & (~3);
+  uint32_t line_size = (in->Xsize * bands + 3) & (~3);
   uint32_t image_size = in->Ysize * line_size;
 
   // pix_offset = header size + file size
@@ -160,7 +156,7 @@ vips_foreign_save_bmp_build(VipsObject *object)
   header.width = GINT32_TO_LE(in->Xsize);
   header.color_plane = GUINT16_TO_LE(1);
   header.bpp = GUINT16_TO_LE(bpp);
-  header.compression = COMPRESSION_BI_BITFIELDS;
+  header.compression = COMPRESSION_BI_RGB;
   header.image_size = GUINT32_TO_LE(image_size);
   header.x_pixels_per_meter = 0; // GUINT32_TO_LE(2835);
   header.y_pixels_per_meter = 0; // GUINT32_TO_LE(2835);
@@ -183,16 +179,7 @@ vips_foreign_save_bmp_build(VipsObject *object)
   header.profile_size = 0;
   header.reserved_5 = 0;
 
-  int height;
-  int orientation = vips_image_get_orientation(in);
-  if (orientation == 1) {
-    height = -in->Ysize; // regular-down BMP
-  }
-  else {
-    height = in->Ysize; // top-down BMP
-  }
-
-  header.height = GINT32_TO_LE(height);
+  header.height = GINT32_TO_LE(-in->Ysize);
 
   if (vips_target_write(bmp->target, &header, sizeof(header)) < 0) {
     vips_error("vips_foreign_save_bmp_build", "unable to write BMP header to target");
@@ -200,7 +187,7 @@ vips_foreign_save_bmp_build(VipsObject *object)
   }
 
   // Allocate a line buffer for the target image
-  bmp->line_buffer = VIPS_ARRAY(save, line_size, VipsPel);
+  bmp->line_buffer = VIPS_MALLOC(save, line_size);
   bmp->bands = bands;
   bmp->line_size = line_size;
 
