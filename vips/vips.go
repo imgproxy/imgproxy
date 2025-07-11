@@ -355,10 +355,6 @@ func (img *Image) Pages() int {
 }
 
 func (img *Image) Load(imgdata *imagedata.ImageData, shrink int, scale float64, pages int) error {
-	if imgdata.Type == imagetype.ICO {
-		return img.loadIco(imgdata.Data, shrink, scale, pages)
-	}
-
 	var tmp *C.VipsImage
 
 	err := C.int(0)
@@ -386,6 +382,8 @@ func (img *Image) Load(imgdata *imagedata.ImageData, shrink int, scale float64, 
 		err = C.vips_tiffload_source_go(source, &tmp)
 	case imagetype.BMP:
 		err = C.vips_bmpload_source_go(source, &tmp)
+	case imagetype.ICO:
+		err = C.vips_icoload_source_go(source, &tmp)
 	default:
 		return newVipsError("Usupported image type to load")
 	}
