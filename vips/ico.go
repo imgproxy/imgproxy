@@ -74,11 +74,6 @@ func (img *Image) saveAsIco() (*imagedata.ImageData, error) {
 
 	b := ptrToBytes(ptr, int(imgsize))
 
-	var blob_ptr = C.vips_blob_get(target.blob, &imgsize)
-	var ptr unsafe.Pointer = unsafe.Pointer(blob_ptr)
-
-	b := ptrToBytes(ptr, int(imgsize))
-
 	buf := new(bytes.Buffer)
 	buf.Grow(22 + int(imgsize))
 
