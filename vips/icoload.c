@@ -79,6 +79,14 @@ vips_foreign_load_ico_is_png(VipsForeignLoadIco *ico, VipsPel *data, uint32_t da
       data[6] == 26 && data[7] == '\n');
 }
 
+void
+vips_foreign_load_ico_free_buffer(
+    VipsObject *self,
+    gpointer user_data)
+{
+  VIPS_FREE(user_data);
+}
+
 /**
  * Loads the header of the ICO image from the source.
  */
@@ -143,7 +151,7 @@ vips_foreign_load_ico_header(VipsForeignLoad *load)
 
   // BMP file explicitly excludes BITMAPFILEHEADER, so we need to add it manually. We reserve
   // space for it at the beginning of the data buffer.
-  VipsPel *data = (VipsPel *) VIPS_MALLOC(load, data_size + BMP_FILE_HEADER_LEN);
+  VipsPel *data = (VipsPel *) VIPS_MALLOC(NULL, data_size + BMP_FILE_HEADER_LEN);
   void *actual_data = data + BMP_FILE_HEADER_LEN;
 
   if (vips_foreign_load_read_full(ico->source, actual_data, data_size) <= 0) {
@@ -161,9 +169,15 @@ vips_foreign_load_ico_header(VipsForeignLoad *load)
             &ico->internal[0],
             "access", VIPS_ACCESS_RANDOM,
             NULL) < 0) {
+      VIPS_FREE(data);
       vips_error("vips_foreign_load_ico_header", "unable to load ICO image as PNG");
       return -1;
     }
+
+    // It is recommended that we free the buffer in postclose callback
+    g_signal_connect(
+        ico->internal[0], "postclose",
+        G_CALLBACK(vips_foreign_load_ico_free_buffer), data);
   }
   else {
     // Otherwise, we assume it's a BMP image.
@@ -206,9 +220,15 @@ vips_foreign_load_ico_header(VipsForeignLoad *load)
             &ico->internal[0],
             "access", VIPS_ACCESS_RANDOM,
             NULL) < 0) {
+      VIPS_FREE(data);
       vips_error("vips_foreign_load_ico_header", "unable to load ICO image as BMP");
       return -1;
     }
+
+    // It is recommended that we free the buffer in postclose callback
+    g_signal_connect(
+        ico->internal[0], "postclose",
+        G_CALLBACK(vips_foreign_load_ico_free_buffer), data);
   }
 
   // Copy the image metadata parameters to the load->out image.
