@@ -16,8 +16,6 @@ typedef struct _VipsForeignLoadIco {
   VipsSource *source;
 
   VipsImage **internal; // internal image
-
-  VipsPel *row_buffer; // buffer for the current row, long enough to hold the whole 32-bit row+padding
 } VipsForeignLoadIco;
 
 typedef VipsForeignLoadClass VipsForeignLoadIcoClass;
