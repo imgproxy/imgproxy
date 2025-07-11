@@ -393,12 +393,10 @@ vips_foreign_load_bmp_24_32_generate_strip(VipsRect *r, VipsRegion *out_region, 
 
       // if the image has alpha channel, copy it too
       if (bmp->bands == 4) {
-        if (bmp->bytes_per_pixel == 4) {
-          dest[3] = src[3]; // A
-        }
-        else {
-          dest[3] = 0xFF;
-        }
+        dest[3] = src[3]; // A
+      }
+      else {
+        dest[3] = 0xFF;
       }
 
       dest += bmp->bands;
