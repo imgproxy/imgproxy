@@ -14,6 +14,9 @@ vips_initialize()
   extern GType vips_foreign_load_bmp_source_get_type(void);
   vips_foreign_load_bmp_source_get_type();
 
+  extern GType vips_foreign_load_bmp_buffer_get_type(void);
+  vips_foreign_load_bmp_buffer_get_type();
+
   extern GType vips_foreign_save_bmp_target_get_type(void);
   vips_foreign_save_bmp_target_get_type();
 

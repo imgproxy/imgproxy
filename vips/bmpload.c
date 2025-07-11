@@ -791,6 +791,117 @@ vips_foreign_load_bmp_source_init(VipsForeignLoadBmpSource *source)
 {
 }
 
+typedef struct _VipsForeignLoadBmpBuffer {
+  VipsForeignLoadBmp parent_object;
+
+  /* Load from a buffer.
+   */
+  VipsBlob *blob;
+
+} VipsForeignLoadBmpBuffer;
+
+typedef VipsForeignLoadBmpClass VipsForeignLoadBmpBufferClass;
+
+G_DEFINE_TYPE(VipsForeignLoadBmpBuffer, vips_foreign_load_bmp_buffer,
+    vips_foreign_load_bmp_get_type());
+
+static int
+vips_foreign_load_bmp_buffer_build(VipsObject *object)
+{
+  VipsForeignLoadBmp *bmp = (VipsForeignLoadBmp *) object;
+  VipsForeignLoadBmpBuffer *buffer = (VipsForeignLoadBmpBuffer *) object;
+
+  if (buffer->blob &&
+      !(bmp->source = vips_source_new_from_memory(
+            VIPS_AREA(buffer->blob)->data,
+            VIPS_AREA(buffer->blob)->length)))
+    return -1;
+
+  return VIPS_OBJECT_CLASS(vips_foreign_load_bmp_buffer_parent_class)
+      ->build(object);
+}
+
+/**
+ * Checks if the source is a BMP image
+ */
+static gboolean
+vips_foreign_load_bmp_buffer_is_a_buffer(const void *buf, size_t len)
+{
+  if (len < 2) {
+    vips_error("vips_foreign_load_bmp_buffer_is_a_buffer", "unable to sniff source");
+    return 0;
+  }
+
+  return ((VipsPel *) buf)[0] == 'B' &&
+      ((VipsPel *) buf)[1] == 'M';
+}
+
+static void
+vips_foreign_load_bmp_buffer_class_init(VipsForeignLoadBmpBufferClass *class)
+{
+  GObjectClass *gobject_class = G_OBJECT_CLASS(class);
+  VipsObjectClass *object_class = (VipsObjectClass *) class;
+  VipsForeignLoadClass *load_class = (VipsForeignLoadClass *) class;
+
+  gobject_class->set_property = vips_object_set_property;
+  gobject_class->get_property = vips_object_get_property;
+
+  object_class->nickname = "bmpload_buffer";
+  object_class->description = "load bmp from buffer";
+  object_class->build = vips_foreign_load_bmp_buffer_build;
+
+  load_class->is_a_buffer = vips_foreign_load_bmp_buffer_is_a_buffer;
+
+  VIPS_ARG_BOXED(class, "buffer", 1,
+      "Buffer",
+      "Buffer to load from",
+      VIPS_ARGUMENT_REQUIRED_INPUT,
+      G_STRUCT_OFFSET(VipsForeignLoadBmpBuffer, blob),
+      VIPS_TYPE_BLOB);
+}
+
+static void
+vips_foreign_load_bmp_buffer_init(VipsForeignLoadBmpBuffer *buffer)
+{
+}
+
+/**
+ * vips_pngload_buffer:
+ * @buf: (array length=len) (element-type guint8): memory area to load
+ * @len: (type gsize): size of memory area
+ * @out: (out): image to write
+ * @...: `NULL`-terminated list of optional named arguments
+ *
+ * Exactly as [ctor@Image.pngload], but read from a PNG-formatted memory block.
+ *
+ * You must not free the buffer while @out is active. The
+ * [signal@Object::postclose] signal on @out is a good place to free.
+ *
+ * ::: seealso
+ *     [ctor@Image.pngload].
+ *
+ * Returns: 0 on success, -1 on error.
+ */
+int
+vips_bmpload_buffer(void *buf, size_t len, VipsImage **out, ...)
+{
+  va_list ap;
+  VipsBlob *blob;
+  int result;
+
+  /* We don't take a copy of the data or free it.
+   */
+  blob = vips_blob_new(NULL, buf, len);
+
+  va_start(ap, out);
+  result = vips_call_split("bmpload_buffer", ap, blob, out);
+  va_end(ap);
+
+  vips_area_unref(VIPS_AREA(blob));
+
+  return result;
+}
+
 /**
  * vips_bmpload_source:
  * @source: source to load

@@ -200,11 +200,9 @@ vips_foreign_load_ico_header(VipsForeignLoad *load)
     (*(uint32_t *) (data + 10)) = GUINT32_TO_LE(pix_offset); // offset to the pixel data
     (*(int32_t *) (actual_data + 8)) = GINT32_TO_LE(height); // height
 
-    // NOTE: TEMPORARY HACK, REVIWE _BUFFER
-    VipsSource *src = vips_source_new_from_memory(data, data_size + BMP_FILE_HEADER_LEN);
     if (
-        vips_bmpload_source(
-            src,
+        vips_bmpload_buffer(
+            data, data_size + BMP_FILE_HEADER_LEN,
             &ico->internal[0],
             "access", VIPS_ACCESS_RANDOM,
             NULL) < 0) {
