@@ -530,9 +530,6 @@ vips_foreign_load_bmp_rle_generate_strip(VipsRect *r, VipsRegion *out_region, Vi
     // fill the line with zeros (move to skips)
     memset(dest, 0, r->width * bmp->bands);
 
-    // fill the line with zeros (move to skips)
-    memset(dest, 0, r->width * bmp->bands);
-
     // Skip lines if needed, this might be the whole region
     if (bmp->dy > 0) {
       bmp->dy--;
