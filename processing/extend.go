@@ -46,3 +46,22 @@ func extendAspectRatio(pctx *pipelineContext, img *vips.Image, po *options.Proce
 
 	return extendImage(img, width, height, &po.ExtendAspectRatio.Gravity, pctx.dprScale)
 }
+
+func extendContain(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata *imagedata.ImageData) error {
+	if po.ResizingType != options.ResizeContain {
+		return nil
+	}
+
+	if pctx.targetWidth == 0 || pctx.targetHeight == 0 {
+		return nil
+	}
+
+	imgWidth := img.Width()
+	imgHeight := img.Height()
+
+	if imgWidth >= pctx.targetWidth && imgHeight >= pctx.targetHeight {
+		return nil
+	}
+
+	return extendImage(img, pctx.targetWidth, pctx.targetHeight, &po.Gravity, pctx.dprScale)
+}

@@ -30,6 +30,7 @@ var mainPipeline = pipeline{
 	applyFilters,
 	extend,
 	extendAspectRatio,
+	extendContain,
 	padding,
 	fixSize,
 	flatten,

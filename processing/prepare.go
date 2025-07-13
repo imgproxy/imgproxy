@@ -97,7 +97,7 @@ func (pctx *pipelineContext) calcScale(width, height int, po *options.Processing
 			wshrink = hshrink
 		case po.Height == 0 && rt != options.ResizeForce:
 			hshrink = wshrink
-		case rt == options.ResizeFit:
+		case rt == options.ResizeFit || rt == options.ResizeContain:
 			wshrink = math.Max(wshrink, hshrink)
 			hshrink = wshrink
 		case rt == options.ResizeFill || rt == options.ResizeFillDown:
@@ -180,6 +180,11 @@ func (pctx *pipelineContext) calcSizes(widthToScale, heightToScale int, po *opti
 			pctx.resultCropWidth = pctx.targetWidth
 			pctx.resultCropHeight = pctx.targetHeight
 		}
+	} else if po.ResizingType == options.ResizeContain {
+		// For contains mode, we don't crop but extend later
+		// The result size should be the scaled size, not the target size
+		pctx.resultCropWidth = pctx.scaledWidth
+		pctx.resultCropHeight = pctx.scaledHeight
 	} else {
 		pctx.resultCropWidth = pctx.targetWidth
 		pctx.resultCropHeight = pctx.targetHeight

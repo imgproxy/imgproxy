@@ -10,6 +10,7 @@ const (
 	ResizeFillDown
 	ResizeForce
 	ResizeAuto
+	ResizeContain
 )
 
 var resizeTypes = map[string]ResizeType{
@@ -18,6 +19,7 @@ var resizeTypes = map[string]ResizeType{
 	"fill-down": ResizeFillDown,
 	"force":     ResizeForce,
 	"auto":      ResizeAuto,
+	"contain":   ResizeContain,
 }
 
 func (rt ResizeType) String() string {
