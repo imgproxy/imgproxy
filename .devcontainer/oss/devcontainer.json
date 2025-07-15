@@ -1,0 +1,33 @@
+{
+    "build": {
+        "dockerfile": "Dockerfile"
+    },
+    "name": "imgproxy OSS",
+    "forwardPorts": [
+        8080
+    ],
+    "containerEnv": {
+        "IMGPROXY_LOCAL_FILESYSTEM_ROOT": "/images",
+        "IMGPROXY_ENABLE_VIDEO_THUMBNAILS": "true",
+        "IMGPROXY_MAX_ANIMATION_FRAMES": "999",
+        "IMGPROXY_VIPS_LEAK_CHECK": "true",
+        "IMGPROXY_LOG_MEM_STATS": "true",
+        "IMGPROXY_DEVELOPMENT_ERRORS_MODE": "true"
+    },
+    "mounts": [
+        {
+            "source": "${localWorkspaceFolder}/.devcontainer/images",
+            "target": "/images",
+            "type": "bind"
+        }
+    ],
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "golang.go"
+            ]
+        }
+    },
+    "initializeCommand": "[ -d \"${localWorkspaceFolder}/.devcontainer/images/.git\" ] && git -C \"${localWorkspaceFolder}/.devcontainer/images\" pull || git clone https://github.com/imgproxy/test-images.git \"${localWorkspaceFolder}/.devcontainer/images\"",
+    "postCreateCommand": "lefthook install"
+}
