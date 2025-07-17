@@ -14,4 +14,4 @@ fi
 export CGO_LDFLAGS_ALLOW="-s|-w"
 export CGO_CFLAGS_ALLOW="-I|-Xpreprocessor"
 
-golangci-lint run
+golangci-lint --build-tags integration run
