@@ -1,5 +1,9 @@
 # Changelog
 
+## [Unreleased]
+### Fixed
+- (pro) Fix generating thumbnails for VP9 videos with high bit depth.
+
 ## [3.29.1] - 2025-07-11
 ### Fixed
 - Fix parsing and minifying some SVGs.
