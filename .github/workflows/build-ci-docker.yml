@@ -6,7 +6,7 @@ on:
       vips_versions:
         description: 'Whitespace separated list of libvips versions to build'
         required: true
-        default: "8.14 8.15 8.16"
+        default: "8.14 8.15 8.16 8.17"
 
 jobs:
   build:

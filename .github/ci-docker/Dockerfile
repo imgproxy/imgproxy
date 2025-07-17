@@ -7,6 +7,7 @@ RUN apt-get -qq update \
     bash \
     curl \
     git \
+    unzip \
     ca-certificates \
     build-essential \
     gobject-introspection \
@@ -49,12 +50,21 @@ RUN \
       && curl -s -S -L -o libvips-$VIPS_RELEASE.tar.gz https://github.com/libvips/libvips/archive/refs/tags/v$VIPS_RELEASE.tar.gz \
       && tar -xzf libvips-$VIPS_RELEASE.tar.gz \
       && cd libvips-$VIPS_RELEASE \
-      && meson setup _build \
-        --buildtype=release \
-        --strip \
-        --prefix=/root/vips/$VIPS_VERSION \
-        --libdir=lib \
-        -Dgtk_doc=false \
+      && if echo "$VIPS_RELEASE" | grep -q '^8\.17'; then \
+           meson setup _build \
+             --buildtype=release \
+             --strip \
+             --prefix=/root/vips/$VIPS_VERSION \
+             --libdir=lib \
+             -Ddocs=false; \
+         else \
+           meson setup _build \
+             --buildtype=release \
+             --strip \
+             --prefix=/root/vips/$VIPS_VERSION \
+             --libdir=lib \
+             -Dgtk_doc=false; \
+         fi \
       && ninja -C _build \
       && ninja -C _build install \
       && cd .. \
