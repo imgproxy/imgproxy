@@ -8,7 +8,6 @@
     ],
     "containerEnv": {
         "IMGPROXY_LOCAL_FILESYSTEM_ROOT": "/images",
-        "IMGPROXY_ENABLE_VIDEO_THUMBNAILS": "true",
         "IMGPROXY_MAX_ANIMATION_FRAMES": "999",
         "IMGPROXY_VIPS_LEAK_CHECK": "true",
         "IMGPROXY_LOG_MEM_STATS": "true",
