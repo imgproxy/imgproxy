@@ -15,10 +15,6 @@ func newVipsError(msg string) error {
 	return ierrors.Wrap(VipsError(msg), 1)
 }
 
-func newVipsErrorf(format string, args ...interface{}) error {
-	return ierrors.Wrap(VipsError(fmt.Sprintf(format, args...)), 1)
-}
-
 func (e VipsError) Error() string { return string(e) }
 
 func newColorError(format string, args ...interface{}) error {
