@@ -265,8 +265,11 @@ func (ar *AsyncBuffer) readChunkAt(p []byte, off, rem int64) int {
 	}
 
 	ar.mu.Lock()
+	// Guarantee that the chunk won't be returned to the pool until we have copied it
+	// to the target slice
+	defer ar.mu.Unlock()
+
 	chunk := ar.chunks[ind]
-	ar.mu.Unlock()
 
 	startOffset := off % ChunkSize // starting offset in the chunk
 

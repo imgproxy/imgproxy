@@ -5,6 +5,8 @@ import (
 	"crypto/rand"
 	"errors"
 	"io"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -17,18 +19,52 @@ const (
 	quaterChunkSize = ChunkSize / 4
 )
 
+// slowReader is a test reader that simulates a slow read and can fail after reading a certain number of bytes
 type slowReader struct {
 	reader bytes.Reader
 	failAt int64 // if set, will return an error after reading this many bytes
 }
 
-func (sr *slowReader) Read(p []byte) (n int, err error) {
-	cur, _ := sr.reader.Seek(0, io.SeekCurrent)
-	if sr.failAt > 0 && sr.failAt < cur+int64(len(p)) {
+// Read reads data from the testReader, simulating a slow read and a potential failure
+func (r *slowReader) Read(p []byte) (n int, err error) {
+	cur, _ := r.reader.Seek(0, io.SeekCurrent)
+	if r.failAt > 0 && r.failAt < cur+int64(len(p)) {
 		return 0, errors.New("simulated read failure")
 	}
 	time.Sleep(500 * time.Millisecond) // artificially delay reading
-	return sr.reader.Read(p)
+	return r.reader.Read(p)
+}
+
+// blockingReader is a test reader which flushes data in chunks
+type blockingReader struct {
+	reader    bytes.Reader
+	mu        sync.Mutex  // locked reader does not return anything
+	unlocking atomic.Bool // if true, will proceed without locking each chunk
+}
+
+// newPartialReader creates a new partialReader in locked state
+func newPartialReader(reader bytes.Reader) *blockingReader {
+	r := &blockingReader{
+		reader: reader,
+	}
+	r.mu.Lock()
+	return r
+}
+
+// flush unlocks the reader, allowing it to return all data as usual
+func (r *blockingReader) flush() {
+	r.unlocking.Store(true) // allow reading data without blocking
+	r.mu.Unlock()           // and continue
+}
+
+// Read reads data from the testReader, simulating a slow read and a potential failure
+func (r *blockingReader) Read(p []byte) (n int, err error) {
+	if !r.unlocking.Load() {
+		r.mu.Lock()
+	}
+
+	n, err = r.reader.Read(p)
+	return n, err
 }
 
 // generateSourceData generates a byte slice with 4.5 chunks of data
@@ -292,6 +328,11 @@ func TestAsyncBufferReadAtErrAtSomePoint(t *testing.T) {
 	target = make([]byte, halfChunkSize)
 	_, err = asyncReader.readAt(target, ChunkSize*3, true)
 	require.Error(t, err, "simulated read failure")
+
+	// Let's read something, but when error occurs (async mode)
+	target = make([]byte, halfChunkSize)
+	_, err = asyncReader.readAt(target, ChunkSize*3, false)
+	require.Error(t, err, "simulated read failure")
 }
 
 // TestAsyncBufferReadAsync tests reading from AsyncBuffer using readAt method
@@ -299,16 +340,26 @@ func TestAsyncBufferReadAtErrAtSomePoint(t *testing.T) {
 func TestAsyncBufferReadAsync(t *testing.T) {
 	// Let's use source buffer which is 4.5 chunks long
 	source, bytesReader := generateSourceData(t, int64(ChunkSize))
-	asyncReader := NewAsyncBuffer(bytesReader)
+	evenReader := newPartialReader(*bytesReader)
+	asyncReader := NewAsyncBuffer(evenReader)
 	defer asyncReader.Close()
 
-	// Wait till all the chunks are read
-	err := asyncReader.Wait()
-	require.NoError(t, err, "AsyncBuffer failed to wait for all chunks")
-
-	// Let's read something, but before error occurs
+	// Let's read first chunk (we know no data is available yet)
 	target := make([]byte, ChunkSize)
 	n, err := asyncReader.readAt(target, 0, false)
+	require.NoError(t, err)
+	assert.Equal(t, 0, n)
+
+	evenReader.mu.Unlock() // unlock reader to allow read first chunk
+	err = asyncReader.WaitFor(0)
+	require.NoError(t, err)
+
+	// Now, let's read till the end of the source
+	evenReader.flush()
+	asyncReader.Wait()
+
+	// Read first chunk
+	n, err = asyncReader.readAt(target, 0, false)
 	require.NoError(t, err)
 	assert.Equal(t, len(target), n)
 	assert.Equal(t, target, source[:ChunkSize])
@@ -316,7 +367,7 @@ func TestAsyncBufferReadAsync(t *testing.T) {
 	// Try to read near end of the stream, EOF
 	target = make([]byte, ChunkSize)
 	n, err = asyncReader.readAt(target, ChunkSize-1, false)
-	require.ErrorIs(t, io.EOF, err)
+	require.ErrorIs(t, err, io.EOF)
 	assert.Equal(t, 1, n)
 	assert.Equal(t, target[0], source[ChunkSize-1])
 
