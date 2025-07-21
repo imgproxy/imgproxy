@@ -1,4 +1,4 @@
-package asyncreader
+package asyncbuffer
 
 import (
 	"errors"
@@ -30,9 +30,9 @@ var chunkPool = sync.Pool{
 	},
 }
 
-// AsyncReader is a wrapper around io.Reader that reads data in chunks
+// AsyncBuffer is a wrapper around io.Reader that reads data in chunks
 // in background and allows reading from synchronously.
-type AsyncReader struct {
+type AsyncBuffer struct {
 	r io.Reader // Upstream reader
 
 	chunks      []*byteChunk // References to the chunks read from the upstream reader
@@ -52,13 +52,13 @@ type AsyncReader struct {
 type Reader struct {
 	io.ReadSeeker
 	io.ReaderAt
-	ar  *AsyncReader
+	ar  *AsyncBuffer
 	pos int64
 }
 
-// NewAsyncReader creates a new AsyncReader that reads from the given io.Reader in background
-func NewAsyncReader(r io.Reader) *AsyncReader {
-	ar := &AsyncReader{
+// NewAsyncBuffer creates a new AsyncBuffer that reads from the given io.Reader in background
+func NewAsyncBuffer(r io.Reader) *AsyncBuffer {
+	ar := &AsyncBuffer{
 		r:              r,
 		newChunkSignal: make(chan struct{}),
 	}
@@ -70,15 +70,15 @@ func NewAsyncReader(r io.Reader) *AsyncReader {
 
 // getNewChunkSignal returns the channel that signals when a new chunk is ready
 // Lock is required to read the channel, so it is not closed while reading
-func (ar *AsyncReader) getNewChunkSignal() chan struct{} {
+func (ar *AsyncBuffer) getNewChunkSignal() chan struct{} {
 	ar.mu.RLock()
 	defer ar.mu.RUnlock()
 
 	return ar.newChunkSignal
 }
 
-// addChunk adds a new chunk to the AsyncReader, increments len and signals that a chunk is ready
-func (ar *AsyncReader) addChunk(chunk *byteChunk) {
+// addChunk adds a new chunk to the AsyncBuffer, increments len and signals that a chunk is ready
+func (ar *AsyncBuffer) addChunk(chunk *byteChunk) {
 	ar.mu.Lock()
 	defer ar.mu.Unlock()
 
@@ -94,7 +94,7 @@ func (ar *AsyncReader) addChunk(chunk *byteChunk) {
 }
 
 // finish marks the reader as finished
-func (ar *AsyncReader) finish() {
+func (ar *AsyncBuffer) finish() {
 	// Indicate that the reader has finished reading
 	ar.finished.Store(true)
 
@@ -106,7 +106,7 @@ func (ar *AsyncReader) finish() {
 }
 
 // readChunks reads data from the upstream reader in background and stores them in the pool
-func (ar *AsyncReader) readChunks() {
+func (ar *AsyncBuffer) readChunks() {
 	defer ar.finish()
 
 	// Stop reading if the reader is finished
@@ -115,7 +115,7 @@ func (ar *AsyncReader) readChunks() {
 		// If the pool is empty, it will create a new byteChunk with ChunkSize
 		chunk, ok := chunkPool.Get().(*byteChunk)
 		if !ok {
-			ar.err.Store(errors.New("asyncreader.AsyncReader.readChunks: failed to get chunk from pool"))
+			ar.err.Store(errors.New("asyncbuffer.AsyncBuffer.readChunks: failed to get chunk from pool"))
 			return
 		}
 
@@ -137,7 +137,7 @@ func (ar *AsyncReader) readChunks() {
 		// Resize the chunk's data slice to the number of bytes read
 		chunk.data = chunk.buf[:n]
 
-		// Store the reference to the chunk in the AsyncReader
+		// Store the reference to the chunk in the AsyncBuffer
 		ar.addChunk(chunk)
 
 		// We got ErrUnexpectedEOF meaning that some bytes were read, but this is the
@@ -150,22 +150,27 @@ func (ar *AsyncReader) readChunks() {
 
 // WaitFor waits for the data to be ready at the given offset. nil means ok.
 // It guarantees that the chunk at the given offset is ready to be read.
-func (ar *AsyncReader) WaitFor(off int64) error {
+func (ar *AsyncBuffer) WaitFor(off int64) error {
 	for {
+		// We can not read data from the closed reader even if there were no errors
+		if ar.closed.Load() {
+			return ar.error()
+		}
+
 		// In case the offset falls within the already read chunks, we can return immediately
 		if off < ar.chunksReady.Load()*ChunkSize {
 			return nil
 		}
 
-		// In case, error has occurred, we need to return it
-		err := ar.error()
-		if err != nil {
-			return err
-		}
-
 		// In case the reader is finished reading, and we have not read enough
-		// data yet, return EOF
+		// data yet, return either error or EOF
 		if ar.finished.Load() {
+			// In case, error has occurred, we need to return it
+			err := ar.error()
+			if err != nil {
+				return err
+			}
+
 			return io.EOF
 		}
 
@@ -174,14 +179,22 @@ func (ar *AsyncReader) WaitFor(off int64) error {
 }
 
 // Wait waits for the reader to finish reading all data
-func (ar *AsyncReader) Wait() error {
+func (ar *AsyncBuffer) Wait() error {
 	for {
+		// We can not read data from the closed reader even if there were no errors
+		if ar.closed.Load() {
+			return ar.error()
+		}
+
+		// In case the reader is finished reading, we can return immediately
 		if ar.finished.Load() {
+			// If there was an error during reading, we need to return it no matter what position
+			// had the error happened
 			err := ar.err.Load()
 			if err != nil {
 				err, ok := err.(error)
 				if !ok {
-					return errors.New("asyncreader.AsyncReader.Wait: failed to get error")
+					return errors.New("asyncbuffer.AsyncBuffer.Wait: failed to get error")
 				}
 
 				return err
@@ -197,7 +210,7 @@ func (ar *AsyncReader) Wait() error {
 
 // size returns the total size of the data read. In case of an error happened during reading or
 // the reader has not finished yet, it returns -1
-func (ar *AsyncReader) size() (int64, error) {
+func (ar *AsyncBuffer) size() (int64, error) {
 	err := ar.error()
 	if err != nil {
 		return -1, err
@@ -211,7 +224,7 @@ func (ar *AsyncReader) size() (int64, error) {
 }
 
 // error returns the error that occurred during reading
-func (ar *AsyncReader) error() error {
+func (ar *AsyncBuffer) error() error {
 	err := ar.err.Load()
 	if err == nil {
 		return nil
@@ -219,21 +232,21 @@ func (ar *AsyncReader) error() error {
 
 	errCast, ok := err.(error)
 	if !ok {
-		return errors.New("asyncreader.AsyncReader.Error: failed to get error")
+		return errors.New("asyncbuffer.AsyncBuffer.Error: failed to get error")
 	}
 
 	return errCast
 }
 
-// readAt reads data from the AsyncReader at the given offset.
+// readAt reads data from the AsyncBuffer at the given offset.
 // Check io.ReaderAt interface.
 //
 // It has exactly the same behaviour as ReadFull:
 // 1. It blocks if the data is not yet available at the given offset.
 // 2. It returns io.UnexpectedEOF if n < len(p) and the end of the stream is reached.
-func (ar *AsyncReader) readAt(p []byte, off int64) (int, error) {
+func (ar *AsyncBuffer) readAt(p []byte, off int64) (int, error) {
 	if off < 0 {
-		return 0, errors.New("asyncreader.AsyncReader.ReadAt: negative offset")
+		return 0, errors.New("asyncbuffer.AsyncBuffer.ReadAt: negative offset")
 	}
 
 	// Wait for the chunk to be ready.
@@ -312,8 +325,8 @@ func (ar *AsyncReader) readAt(p []byte, off int64) (int, error) {
 	return n, nil
 }
 
-// Close closes the AsyncReader and releases all resources
-func (ar *AsyncReader) Close() {
+// Close closes the AsyncBuffer and releases all resources
+func (ar *AsyncBuffer) Close() {
 	ar.mu.Lock()
 	defer ar.mu.Unlock()
 
@@ -322,8 +335,8 @@ func (ar *AsyncReader) Close() {
 		return
 	}
 
-	// All the methods that can be called on the AsyncReader should return an error
-	ar.err.Store(errors.New("asyncreader.AsyncReader.ReadAt: attempt to read on closed reader"))
+	// All the methods that can be called on the AsyncBuffer should return an error
+	ar.err.Store(errors.New("asyncbuffer.AsyncBuffer.ReadAt: attempt to read on closed reader"))
 	ar.closed.Store(true)
 
 	// If the reader is still running, we need to signal that it should stop and close the channel
@@ -338,23 +351,23 @@ func (ar *AsyncReader) Close() {
 	}
 }
 
-// Reader returns an io.ReadSeeker+io.ReaderAt that can be used to read actual data from the AsyncReader
-func (ar *AsyncReader) Reader() *Reader {
+// Reader returns an io.ReadSeeker+io.ReaderAt that can be used to read actual data from the AsyncBuffer
+func (ar *AsyncBuffer) Reader() *Reader {
 	return &Reader{ar: ar, pos: 0}
 }
 
-// ReadAt reads data from the AsyncReader at the given offset
+// ReadAt reads data from the AsyncBuffer at the given offset
 func (r Reader) ReadAt(p []byte, off int64) (int, error) {
 	return r.ar.readAt(p, off)
 }
 
-// Size returns the total size of the data read by the AsyncReader or error,
+// Size returns the total size of the data read by the AsyncBuffer or error,
 // -1 if the reader has not finished yet
 func (r Reader) Size() (int64, error) {
 	return r.ar.size()
 }
 
-// Read reads data from the AsyncReader
+// Read reads data from the AsyncBuffer
 func (r *Reader) Read(p []byte) (int, error) {
 	if err := r.ar.WaitFor(r.pos); err != nil {
 		return 0, err
@@ -399,11 +412,11 @@ func (r *Reader) Seek(offset int64, whence int) (int64, error) {
 		r.pos = size + offset
 
 	default:
-		return 0, errors.New("asyncreader.AsyncReader.ReadAt: invalid whence")
+		return 0, errors.New("asyncbuffer.AsyncBuffer.ReadAt: invalid whence")
 	}
 
 	if r.pos < 0 {
-		return 0, errors.New("asyncreader.AsyncReader.ReadAt: negative position")
+		return 0, errors.New("asyncbuffer.AsyncBuffer.ReadAt: negative position")
 	}
 
 	size, err := r.ar.size()
