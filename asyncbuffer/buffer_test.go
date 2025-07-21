@@ -55,28 +55,43 @@ func TestAsyncBufferReadAt(t *testing.T) {
 	// Let's read all the data
 	target := make([]byte, len(source))
 
-	n, err := asyncReader.readAt(target, 0)
+	n, err := asyncReader.readAt(target, 0, true)
 	require.NoError(t, err)
 	assert.Equal(t, len(source), n)
 	assert.Equal(t, target, source)
 
+	// Let's read all the data + a bit more
+	target = make([]byte, len(source)+1)
+
+	n, err = asyncReader.readAt(target, 0, true)
+	require.ErrorIs(t, err, io.ErrUnexpectedEOF) // We read all the data, but we expected more
+	assert.Equal(t, len(source), n)
+	assert.Equal(t, target[:n], source)
+
 	// Let's read > 1 chunk, but with offset from the beginning and the end
 	target = make([]byte, len(source)-halfChunkSize)
-	n, err = asyncReader.readAt(target, quaterChunkSize)
+	n, err = asyncReader.readAt(target, quaterChunkSize, true)
 	require.NoError(t, err)
 	assert.Equal(t, len(target), n)
 	assert.Equal(t, target, source[quaterChunkSize:len(source)-quaterChunkSize])
 
 	// Let's read some data from the middle of the stream < chunk size
 	target = make([]byte, ChunkSize/4)
-	n, err = asyncReader.readAt(target, ChunkSize+ChunkSize/4)
+	n, err = asyncReader.readAt(target, ChunkSize+ChunkSize/4, true)
 	require.NoError(t, err)
 	assert.Equal(t, quaterChunkSize, n)
 	assert.Equal(t, target, source[ChunkSize+quaterChunkSize:ChunkSize+quaterChunkSize*2])
 
+	// Let's read some data from the latest half chunk
+	target = make([]byte, quaterChunkSize)
+	n, err = asyncReader.readAt(target, ChunkSize*4+quaterChunkSize, true)
+	require.NoError(t, err)
+	assert.Equal(t, quaterChunkSize, n)
+	assert.Equal(t, target, source[ChunkSize*4+quaterChunkSize:ChunkSize*4+halfChunkSize])
+
 	// Let's try to read more data then available in the stream
 	target = make([]byte, ChunkSize*2)
-	n, err = asyncReader.readAt(target, ChunkSize*4)
+	n, err = asyncReader.readAt(target, ChunkSize*4, true)
 	require.Error(t, err)
 	assert.Equal(t, err, io.ErrUnexpectedEOF)
 	assert.Equal(t, ChunkSize, n)
@@ -84,7 +99,7 @@ func TestAsyncBufferReadAt(t *testing.T) {
 
 	// Let's try to read data beyond the end of the stream
 	target = make([]byte, ChunkSize*2)
-	n, err = asyncReader.readAt(target, ChunkSize*5)
+	n, err = asyncReader.readAt(target, ChunkSize*5, true)
 	require.Error(t, err)
 	assert.Equal(t, err, io.EOF)
 	assert.Equal(t, 0, n)
@@ -99,21 +114,21 @@ func TestAsyncBufferReadAtSmallBuffer(t *testing.T) {
 	// First, let's read all the data
 	target := make([]byte, len(source))
 
-	n, err := asyncReader.readAt(target, 0)
+	n, err := asyncReader.readAt(target, 0, true)
 	require.NoError(t, err)
 	assert.Equal(t, len(source), n)
 	assert.Equal(t, target, source)
 
 	// Let's read some data
 	target = make([]byte, 2)
-	n, err = asyncReader.readAt(target, 1)
+	n, err = asyncReader.readAt(target, 1, true)
 	require.NoError(t, err)
 	assert.Equal(t, len(target), n)
 	assert.Equal(t, target, source[1:3])
 
 	// Let's read some data beyond the end of the stream
 	target = make([]byte, 2)
-	n, err = asyncReader.readAt(target, 50)
+	n, err = asyncReader.readAt(target, 50, true)
 	require.Error(t, err)
 	assert.Equal(t, err, io.EOF)
 	assert.Equal(t, 0, n)
@@ -139,7 +154,7 @@ func TestAsyncBufferReader(t *testing.T) {
 
 	// Read the first two chunks
 	twoChunks := make([]byte, ChunkSize*2)
-	n, err := reader.Read(twoChunks)
+	n, err := reader.ReadFull(twoChunks)
 	require.NoError(t, err)
 	assert.Equal(t, ChunkSize*2, n)
 	assert.Equal(t, source[:ChunkSize*2], twoChunks)
@@ -151,7 +166,7 @@ func TestAsyncBufferReader(t *testing.T) {
 
 	// Read the next 10 bytes
 	smallSlice := make([]byte, 10)
-	n, err = reader.Read(smallSlice)
+	n, err = reader.ReadFull(smallSlice)
 	require.NoError(t, err)
 	assert.Equal(t, 10, n)
 	assert.Equal(t, source[ChunkSize*3+5:ChunkSize*3+5+10], smallSlice)
@@ -162,7 +177,7 @@ func TestAsyncBufferReader(t *testing.T) {
 	assert.Equal(t, int64(ChunkSize*3+5), pos)
 
 	// Read data again
-	n, err = reader.Read(smallSlice)
+	n, err = reader.ReadFull(smallSlice)
 	require.NoError(t, err)
 	assert.Equal(t, 10, n)
 	assert.Equal(t, source[ChunkSize*3+5:ChunkSize*3+5+10], smallSlice)
@@ -173,7 +188,7 @@ func TestAsyncBufferReader(t *testing.T) {
 	assert.Equal(t, size-10, pos)
 
 	// Read last 10 bytes
-	n, err = reader.Read(smallSlice)
+	n, err = reader.ReadFull(smallSlice)
 	require.NoError(t, err)
 	assert.Equal(t, 10, n)
 	assert.Equal(t, source[size-10:], smallSlice)
@@ -192,16 +207,16 @@ func TestAsyncBufferClose(t *testing.T) {
 	asyncReader.Close()
 
 	b := make([]byte, 10)
-	_, err := reader1.Read(b)
+	_, err := reader1.ReadFull(b)
 	require.Error(t, err, "asyncbuffer.AsyncBuffer.ReadAt: attempt to read on closed reader")
 
-	_, err = reader2.Read(b)
+	_, err = reader2.ReadFull(b)
 	require.Error(t, err, "asyncbuffer.AsyncBuffer.ReadAt: attempt to read on closed reader")
 
 	// After closing the closed reader, it should not panic
 	asyncReader.Close()
 
-	_, err = reader2.Read(b)
+	_, err = reader2.ReadFull(b)
 	require.Error(t, err, "asyncbuffer.AsyncBuffer.ReadAt: attempt to read on closed reader")
 }
 
@@ -215,28 +230,28 @@ func TestAsyncBufferReadAtSlow(t *testing.T) {
 
 	// Let's read > 1 chunk, but with offset from the beginning and the end
 	target := make([]byte, len(source)-halfChunkSize)
-	n, err := asyncReader.readAt(target, quaterChunkSize)
+	n, err := asyncReader.readAt(target, quaterChunkSize, true)
 	require.NoError(t, err)
 	assert.Equal(t, len(target), n)
 	assert.Equal(t, target, source[quaterChunkSize:len(source)-quaterChunkSize])
 
 	// Let's read some data from the middle of the stream < chunk size
 	target = make([]byte, ChunkSize/4)
-	n, err = asyncReader.readAt(target, ChunkSize+ChunkSize/4)
+	n, err = asyncReader.readAt(target, ChunkSize+ChunkSize/4, true)
 	require.NoError(t, err)
 	assert.Equal(t, quaterChunkSize, n)
 	assert.Equal(t, target, source[ChunkSize+quaterChunkSize:ChunkSize+quaterChunkSize*2])
 
 	// Let's read all the data
 	target = make([]byte, len(source))
-	n, err = asyncReader.readAt(target, 0)
+	n, err = asyncReader.readAt(target, 0, true)
 	require.NoError(t, err)
 	assert.Equal(t, len(source), n)
 	assert.Equal(t, target, source)
 
 	// Let's try to read more data then available in the stream
 	target = make([]byte, ChunkSize*2)
-	n, err = asyncReader.readAt(target, ChunkSize*4)
+	n, err = asyncReader.readAt(target, ChunkSize*4, true)
 	require.Error(t, err)
 	assert.Equal(t, err, io.ErrUnexpectedEOF)
 	assert.Equal(t, ChunkSize, n)
@@ -244,7 +259,7 @@ func TestAsyncBufferReadAtSlow(t *testing.T) {
 
 	// Let's try to read data beyond the end of the stream
 	target = make([]byte, ChunkSize*2)
-	n, err = asyncReader.readAt(target, ChunkSize*5)
+	n, err = asyncReader.readAt(target, ChunkSize*5, true)
 	require.Error(t, err)
 	assert.Equal(t, err, io.EOF)
 	assert.Equal(t, 0, n)
@@ -261,20 +276,53 @@ func TestAsyncBufferReadAtErrAtSomePoint(t *testing.T) {
 
 	// Let's read something, but before error occurs
 	target := make([]byte, halfChunkSize)
-	n, err := asyncReader.readAt(target, 0)
+	n, err := asyncReader.readAt(target, 0, true)
 	require.NoError(t, err)
 	assert.Equal(t, len(target), n)
 	assert.Equal(t, target, source[:halfChunkSize])
 
 	// And again
 	target = make([]byte, halfChunkSize)
-	n, err = asyncReader.readAt(target, halfChunkSize)
+	n, err = asyncReader.readAt(target, halfChunkSize, true)
 	require.NoError(t, err)
 	assert.Equal(t, len(target), n)
 	assert.Equal(t, target, source[halfChunkSize:halfChunkSize*2])
 
 	// Let's read something, but when error occurs
 	target = make([]byte, halfChunkSize)
-	_, err = asyncReader.readAt(target, ChunkSize*3)
+	_, err = asyncReader.readAt(target, ChunkSize*3, true)
 	require.Error(t, err, "simulated read failure")
+}
+
+// TestAsyncBufferReadAsync tests reading from AsyncBuffer using readAt method
+// with full = false
+func TestAsyncBufferReadAsync(t *testing.T) {
+	// Let's use source buffer which is 4.5 chunks long
+	source, bytesReader := generateSourceData(t, int64(ChunkSize))
+	asyncReader := NewAsyncBuffer(bytesReader)
+	defer asyncReader.Close()
+
+	// Wait till all the chunks are read
+	err := asyncReader.Wait()
+	require.NoError(t, err, "AsyncBuffer failed to wait for all chunks")
+
+	// Let's read something, but before error occurs
+	target := make([]byte, ChunkSize)
+	n, err := asyncReader.readAt(target, 0, false)
+	require.NoError(t, err)
+	assert.Equal(t, len(target), n)
+	assert.Equal(t, target, source[:ChunkSize])
+
+	// Try to read near end of the stream, EOF
+	target = make([]byte, ChunkSize)
+	n, err = asyncReader.readAt(target, ChunkSize-1, false)
+	require.ErrorIs(t, io.EOF, err)
+	assert.Equal(t, 1, n)
+	assert.Equal(t, target[0], source[ChunkSize-1])
+
+	// Try to read beyond the end of the stream == eof
+	target = make([]byte, ChunkSize)
+	n, err = asyncReader.readAt(target, ChunkSize, false)
+	require.ErrorIs(t, io.EOF, err)
+	assert.Equal(t, 0, n)
 }
