@@ -252,18 +252,57 @@ func (ar *AsyncBuffer) error() error {
 	return errCast
 }
 
+// readChunkAt copies data from the chunk at the given absolute offset to the provided slice.
+// Chunk must be available when this method is called.
+// Returns the number of bytes copied to the slice or 0 if chunk has no data
+// (eg. offset is beyond the end of the stream).
+func (ar *AsyncBuffer) readChunkAt(p []byte, off, rem int64) int {
+	ind := off / ChunkSize // chunk index
+
+	// If the chunk is not available, we return 0
+	if ind >= ar.chunksReady.Load() {
+		return 0
+	}
+
+	ar.mu.Lock()
+	chunk := ar.chunks[ind]
+	ar.mu.Unlock()
+
+	startOffset := off % ChunkSize // starting offset in the chunk
+
+	// If the offset in current chunk is greater than the data
+	// it has, we return 0
+	if startOffset >= int64(len(chunk.data)) {
+		return 0
+	}
+
+	// How many bytes we could read from the chunk. No more than:
+	// - left to read totally
+	// - chunk size minus the start offset
+	// - chunk has
+	size := min(rem, ChunkSize-startOffset, int64(len(chunk.data)))
+
+	if size == 0 {
+		return 0
+	}
+
+	return copy(p, chunk.data[startOffset:startOffset+size])
+}
+
 // readAt reads data from the AsyncBuffer at the given offset.
 //
 // If full is true:
 //
 // The behaviour is similar to io.ReaderAt.ReadAt. It blocks until the maxumum amount of data possible
-// is read from the buffer. It may return io.UnexpectedEOF if the requested amount of
-// data is not available in the buffer.
+// is read from the buffer. It may return io.UnexpectedEOF in case we tried to read more data than was
+// available in the buffer.
 //
 // If full is false:
 //
-// It behaves like a regular Read.
+// It behaves like a regular non-blocking Read.
 func (ar *AsyncBuffer) readAt(p []byte, off int64, full bool) (int, error) {
+	size := int64(len(p)) // total size of the data to read
+
 	if off < 0 {
 		return 0, errors.New("asyncbuffer.AsyncBuffer.readAt: negative offset")
 	}
@@ -282,84 +321,52 @@ func (ar *AsyncBuffer) readAt(p []byte, off int64, full bool) (int, error) {
 		}
 	}
 
-	size := int64(len(p))       // total size of the data to read
-	chunkInd := off / ChunkSize // number of full chunks of starting offset
-	chunkOff := off % ChunkSize // starting offset in the first chunk
-
-	// If the chunk index is out of bounds, we return EOF
-	if chunkInd >= ar.chunksReady.Load() {
-		return 0, io.EOF
-	}
-
-	// We read the actual chunk data, so we need to prevent ar.chunks from being modified
-	ar.mu.RLock()
-	chunk := ar.chunks[chunkInd]
-	ar.mu.RUnlock()
-
-	// If the offset in current chunk is greater that the data
-	// it has (that is the last chunk), we return EOF
-	if chunkOff >= int64(len(chunk.data)) {
-		return 0, io.EOF
-	}
-
-	// how many bytes we need to read from the first chunk (can be less than ChunkSize)
-	shouldReadLen := ChunkSize - chunkOff
-	shouldReadLen = min(shouldReadLen, size)
-
-	// Copy the data from the chunk to the slice
-	n := copy(p, chunk.data[chunkOff:shouldReadLen+chunkOff])
+	// Read data from the first chunk
+	n := ar.readChunkAt(p, off, size)
 	if n == 0 {
-		return 0, io.EOF
+		return 0, io.EOF // Failed to read any data: means we tried to read beyond the end of the stream
 	}
 
-	chunkInd += 1
-	size -= shouldReadLen
+	size -= int64(n)
+	off += int64(n) // Here and beyond off always points to the last read byte + 1
 
-	// Now, let's try to read the rest of the data from next chunks until they are available
+	// Now, let's try to read the rest of the data from next chunks while they are available
 	for size > 0 {
 		// Let's wait for the next chunk to be ready or check if it is available
 		// This method may return io.EOF if the reader is finished reading and the offset is beyond the end of the stream.
 		if full {
-			err := ar.WaitFor(chunkInd * ChunkSize)
+			err := ar.WaitFor(off)
 
 			if err != nil {
 				if err == io.EOF {
 					return n, io.ErrUnexpectedEOF // Means that we expected more data, but it is not available
 				} else {
-					return n, err
+					return n, err // Error happened at this offset
 				}
 			}
 		} else {
-			// For blocking version, we need to return this EOF and the data read so far
-			ok, err := ar.offsetAvailable(chunkInd * ChunkSize)
+			// For non-blocking version, we need to return this EOF and the data we read so far
+			ok, err := ar.offsetAvailable(off)
 			if !ok || err != nil {
 				return n, err
 			}
 		}
 
-		// Read the actual chunk data
-		ar.mu.RLock()
-		chunk := ar.chunks[chunkInd]
-		ar.mu.RUnlock()
+		// Read data from the next chunk
+		nX := ar.readChunkAt(p[n:], off, size)
+		n += nX
+		size -= int64(nX)
+		off += int64(nX)
 
-		shouldReadLen = min(ChunkSize, size)
-		shouldReadLen = min(shouldReadLen, int64(len(chunk.data)))
-
-		// Append next chunk data to the slice
-		nAvailable := copy(p[n:], chunk.data[0:shouldReadLen])
-
-		// In case we failed to read enough data from the next chunk, we return EOF
-		if nAvailable < int(shouldReadLen) {
+		// If we read data shorter than ChunkSize or, in case that was the last chunk, less than
+		// the size of the tail, return kind of EOF
+		if int64(nX) < min(size, int64(ChunkSize)) {
 			if full {
-				return n, io.ErrUnexpectedEOF // It is unexpected EOF, we expected more data, but it is not available
+				return n, io.ErrUnexpectedEOF
 			} else {
-				return n, io.EOF // We reached the end of the stream, but we read all the data that was available at this moment
+				return n, io.EOF
 			}
 		}
-
-		n += nAvailable
-		size -= int64(shouldReadLen)
-		chunkInd += 1
 	}
 
 	return n, nil

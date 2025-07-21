@@ -94,7 +94,7 @@ func TestAsyncBufferReadAt(t *testing.T) {
 	n, err = asyncReader.readAt(target, ChunkSize*4, true)
 	require.Error(t, err)
 	assert.Equal(t, err, io.ErrUnexpectedEOF)
-	assert.Equal(t, ChunkSize, n)
+	assert.Equal(t, ChunkSize/2, n)
 	assert.Equal(t, target[:ChunkSize/2], source[ChunkSize*4:]) // We read only last half chunk
 
 	// Let's try to read data beyond the end of the stream
@@ -254,7 +254,7 @@ func TestAsyncBufferReadAtSlow(t *testing.T) {
 	n, err = asyncReader.readAt(target, ChunkSize*4, true)
 	require.Error(t, err)
 	assert.Equal(t, err, io.ErrUnexpectedEOF)
-	assert.Equal(t, ChunkSize, n)
+	assert.Equal(t, ChunkSize/2, n)
 	assert.Equal(t, target[:ChunkSize/2], source[ChunkSize*4:]) // We read only last half chunk
 
 	// Let's try to read data beyond the end of the stream
