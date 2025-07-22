@@ -27,7 +27,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
       - name: Install unzip
-        run: apt-get install -y unzip
+        run: apt-get install -y unzip # Possibly, this needs to move to the base image
       - name: Download mods
         run: go mod download
       - name: Mark git workspace as safe
