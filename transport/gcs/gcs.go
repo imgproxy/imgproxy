@@ -17,8 +17,8 @@ import (
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/httprange"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
-	defaultTransport "github.com/imgproxy/imgproxy/v3/transport"
 	"github.com/imgproxy/imgproxy/v3/transport/common"
+	"github.com/imgproxy/imgproxy/v3/transport/generichttp"
 	"github.com/imgproxy/imgproxy/v3/transport/notmodified"
 )
 
@@ -30,7 +30,7 @@ type transport struct {
 }
 
 func buildHTTPClient(opts ...option.ClientOption) (*http.Client, error) {
-	trans, err := defaultTransport.New(false)
+	trans, err := generichttp.New(false)
 	if err != nil {
 		return nil, err
 	}

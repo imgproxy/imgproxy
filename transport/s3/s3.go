@@ -22,8 +22,8 @@ import (
 
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
-	defaultTransport "github.com/imgproxy/imgproxy/v3/transport"
 	"github.com/imgproxy/imgproxy/v3/transport/common"
+	"github.com/imgproxy/imgproxy/v3/transport/generichttp"
 )
 
 type s3Client interface {
@@ -49,7 +49,7 @@ func New() (http.RoundTripper, error) {
 		return nil, ierrors.Wrap(err, 0, ierrors.WithPrefix("can't load AWS S3 config"))
 	}
 
-	trans, err := defaultTransport.New(false)
+	trans, err := generichttp.New(false)
 	if err != nil {
 		return nil, err
 	}

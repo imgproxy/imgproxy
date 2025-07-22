@@ -18,8 +18,8 @@ import (
 
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/httprange"
-	defaultTransport "github.com/imgproxy/imgproxy/v3/transport"
 	"github.com/imgproxy/imgproxy/v3/transport/common"
+	"github.com/imgproxy/imgproxy/v3/transport/generichttp"
 	"github.com/imgproxy/imgproxy/v3/transport/notmodified"
 )
 
@@ -49,7 +49,7 @@ func New() (http.RoundTripper, error) {
 		return nil, err
 	}
 
-	trans, err := defaultTransport.New(false)
+	trans, err := generichttp.New(false)
 	if err != nil {
 		return nil, err
 	}

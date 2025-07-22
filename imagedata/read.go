@@ -8,6 +8,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/bufpool"
 	"github.com/imgproxy/imgproxy/v3/bufreader"
 	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/imagefetcher"
 	"github.com/imgproxy/imgproxy/v3/imagemeta"
 	"github.com/imgproxy/imgproxy/v3/security"
 )
@@ -19,14 +20,8 @@ func initRead() {
 }
 
 func readAndCheckImage(r io.Reader, contentLength int, secopts security.Options) (*ImageData, error) {
-	if err := security.CheckFileSize(contentLength, secopts); err != nil {
-		return nil, err
-	}
-
 	buf := downloadBufPool.Get(contentLength, false)
 	cancel := func() { downloadBufPool.Put(buf) }
-
-	r = security.LimitFileSize(r, secopts)
 
 	br := bufreader.New(r, buf)
 
@@ -35,14 +30,14 @@ func readAndCheckImage(r io.Reader, contentLength int, secopts security.Options)
 		buf.Reset()
 		cancel()
 
-		return nil, wrapError(err)
+		return nil, imagefetcher.WrapError(err)
 	}
 
 	if err = security.CheckDimensions(meta.Width(), meta.Height(), 1, secopts); err != nil {
 		buf.Reset()
 		cancel()
 
-		return nil, wrapError(err)
+		return nil, imagefetcher.WrapError(err)
 	}
 
 	downloadBufPool.GrowBuffer(buf, contentLength)
@@ -51,7 +46,7 @@ func readAndCheckImage(r io.Reader, contentLength int, secopts security.Options)
 		buf.Reset()
 		cancel()
 
-		return nil, wrapError(err)
+		return nil, imagefetcher.WrapError(err)
 	}
 
 	return &ImageData{

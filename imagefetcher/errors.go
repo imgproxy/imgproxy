@@ -1,4 +1,4 @@
-package imagedata
+package imagefetcher
 
 import (
 	"context"
@@ -10,6 +10,8 @@ import (
 	"github.com/imgproxy/imgproxy/v3/security"
 )
 
+const msgSourceImageIsUnreachable = "Source image is unreachable"
+
 type (
 	ImageRequestError          struct{ error }
 	ImageRequstSchemeError     string
@@ -20,7 +22,7 @@ type (
 	ImageRequestTimeoutError   struct{ error }
 
 	NotModifiedError struct {
-		headers map[string]string
+		headers http.Header
 	}
 
 	httpError interface {
@@ -135,7 +137,7 @@ func (e ImageRequestTimeoutError) Error() string {
 
 func (e ImageRequestTimeoutError) Unwrap() error { return e.error }
 
-func newNotModifiedError(headers map[string]string) error {
+func newNotModifiedError(headers http.Header) error {
 	return ierrors.Wrap(
 		NotModifiedError{headers},
 		1,
@@ -147,11 +149,12 @@ func newNotModifiedError(headers map[string]string) error {
 
 func (e NotModifiedError) Error() string { return "Not modified" }
 
-func (e NotModifiedError) Headers() map[string]string {
+func (e NotModifiedError) Headers() http.Header {
 	return e.headers
 }
 
-func wrapError(err error) error {
+// NOTE: make private when we remove download functions from imagedata package
+func WrapError(err error) error {
 	isTimeout := false
 
 	var secArrdErr security.SourceAddressError
