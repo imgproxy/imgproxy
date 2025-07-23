@@ -1,0 +1,3 @@
+[submodule "testdata/test-images"]
+	path = testdata/test-images
+	url = git@github.com:imgproxy/test-images.git

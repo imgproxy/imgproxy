@@ -5,44 +5,54 @@ on:
 
 env:
   CGO_LDFLAGS_ALLOW: "-s|-w"
+  PKG_CONFIG_LIBDIR: /opt/imgproxy/lib/pkgconfig
+  LD_LIBRARY_PATH: /opt/imgproxy/lib
+  GOFLAGS: -buildvcs=false
 
 jobs:
   test:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/imgproxy/imgproxy-ci:202410292002
-    strategy:
-      matrix:
-        go-version: ["1.23.x", "1.22.x", "1.21.x"]
-        vips-version: ["8.16", "8.15", "8.14"]
+      image: ghcr.io/imgproxy/imgproxy-base:latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
         with:
-          go-version: ${{ matrix.go-version }}
+          submodules: true
+      - name: Setup cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
       - name: Download mods
         run: go mod download
+      - name: Mark git workspace as safe
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - name: Test
-        run: go test ./...
-        env:
-          LD_LIBRARY_PATH: "/usr/local/lib:/root/vips/${{ matrix.vips-version }}/lib"
-          PKG_CONFIG_PATH: "/usr/local/lib/pkgconfig:/root/vips/${{ matrix.vips-version }}/lib/pkgconfig"
+        run: go test -tags integration ./...
 
   lint:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/imgproxy/imgproxy-ci:202410292002
-    strategy:
-      matrix:
-        go-version: ["1.23.x"]
-        vips-version: ["8.16"]
+      image: ghcr.io/imgproxy/imgproxy-base:latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
         with:
-          go-version: ${{ matrix.go-version }}
+          submodules: true
+      - name: Setup cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
       - name: Download mods
         run: go mod download
       - name: Lint
@@ -51,20 +61,25 @@ jobs:
           version: v2.1.6
           args: --timeout 10m0s
         env:
-          LD_LIBRARY_PATH: "/usr/local/lib:/root/vips/${{ matrix.vips-version }}/lib"
-          PKG_CONFIG_PATH: "/usr/local/lib/pkgconfig:/root/vips/${{ matrix.vips-version }}/lib/pkgconfig"
+          PKG_CONFIG_LIBDIR: /opt/imgproxy/lib/pkgconfig
           GOFLAGS: -buildvcs=false
 
   c-lint:
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: true
       - uses: cpp-linter/cpp-linter-action@v2
         id: linter
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           style: file
           version: 18 # Ubuntu 24.04 provides clang-format-18
-          tidy-checks: '-*' # disable clang-tidy
+          tidy-checks: "-*" # disable clang-tidy
 
       - name: Fail fast
         continue-on-error: true # TODO: remove this line in the future

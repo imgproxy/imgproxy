@@ -84,7 +84,7 @@ func shutdown() {
 	errorreport.Close()
 }
 
-func run() error {
+func run(ctx context.Context) error {
 	if err := initialize(); err != nil {
 		return err
 	}
@@ -103,7 +103,7 @@ func run() error {
 		}
 	}()
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(ctx)
 
 	if err := prometheus.StartServer(cancel); err != nil {
 		return err
@@ -137,7 +137,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	if err := run(); err != nil {
+	if err := run(context.Background()); err != nil {
 		log.Fatal(err)
 	}
 }
