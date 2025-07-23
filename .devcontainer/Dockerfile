@@ -1,5 +1,7 @@
+ARG BASE_IMAGE=ghcr.io/imgproxy/imgproxy-base:latest
+
 # Git build stage
-FROM ghcr.io/imgproxy/imgproxy-base:latest AS build
+FROM ${BASE_IMAGE} AS build
 
 ARG LYCHEE_VERSION="0.19.1"
 ARG GIT_VERSION="2.49.1"
@@ -22,9 +24,8 @@ RUN curl -O https://www.kernel.org/pub/software/scm/git/git-${GIT_VERSION}.tar.g
 RUN curl -L "https://github.com/lycheeverse/lychee/releases/download/lychee-v${LYCHEE_VERSION}/lychee-$(uname -m)-unknown-linux-gnu.tar.gz" | \
   tar -zxf -
 
-
 # Development container
-FROM ghcr.io/imgproxy/imgproxy-base:latest
+FROM ${BASE_IMAGE}
 
 ENV GOPATH=$HOME/go
 ENV PATH=$PATH:$GOROOT/bin:$GOPATH/bin

@@ -1,6 +1,6 @@
 {
     "build": {
-        "dockerfile": "Dockerfile"
+        "dockerfile": "../Dockerfile"
     },
     "name": "imgproxy OSS",
     "forwardPorts": [
