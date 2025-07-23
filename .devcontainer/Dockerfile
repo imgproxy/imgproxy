@@ -48,7 +48,7 @@ COPY --from=build /usr/git /usr
 # Add the LLVM GPG key
 RUN curl https://apt.llvm.org/llvm-snapshot.gpg.key | gpg --dearmor -o /usr/share/keyrings/llvm.gpg
 
-# Add the LLVM 20 APT repo (replace jammy with your distro if needed)
+# Add the LLVM 20 APT repo
 RUN echo "deb [signed-by=/usr/share/keyrings/llvm.gpg] https://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_release -cs)-20 main" \
   | tee /etc/apt/sources.list.d/llvm.list
 
