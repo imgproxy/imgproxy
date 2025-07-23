@@ -8,5 +8,5 @@ tmp/
 docker-base
 docs/sitemap.txt
 .env
-.devcontainer/*
+.devcontainer/images/*
 k6/*.json
