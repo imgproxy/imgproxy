@@ -98,7 +98,9 @@ func TestLoadSaveToPng(t *testing.T) {
 	err := vips.Init()
 	require.NoError(t, err, "Failed to initialize vips")
 
-	path := downloadTestImages(t)
+	path, err := testImagesPath(t)
+	require.NoError(t, err)
+
 	cs := startImgproxy(t, ctx, path)
 
 	if vips.SupportsLoad(imagetype.GIF) {

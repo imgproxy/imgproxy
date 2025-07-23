@@ -17,6 +17,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"testing"
 	"time"
@@ -122,57 +123,15 @@ func fetchImage(t *testing.T, cs string, path string) []byte {
 	return bytes
 }
 
-// downloadTestImages fetches test images .zip from github, unpacks it to the temp
-// folder and returns the path.
-func downloadTestImages(t *testing.T) string {
-	// Create temporary directory
-	tempDir, err := os.MkdirTemp("", "imgproxy-test-images-*")
-	require.NoError(t, err, "Failed to create temp directory for test images")
+// testImagesPath returns the absolute path to the test images directory
+func testImagesPath(t *testing.T) (string, error) {
+	// Get current working directory
+	dir, err := os.Getwd()
+	require.NoError(t, err)
 
-	// Download the zip file
-	url := "https://github.com/imgproxy/test-images/archive/refs/heads/main.zip"
-	resp, err := http.Get(url)
-	if err != nil {
-		os.RemoveAll(tempDir)
-		require.NoError(t, err, "Failed to fetch test images from %s", url)
-	}
-	defer resp.Body.Close()
+	// Convert to absolute path (if it's not already)
+	absPath, err := filepath.Abs(dir)
+	require.NoError(t, err)
 
-	if resp.StatusCode != http.StatusOK {
-		os.RemoveAll(tempDir)
-		require.NoError(t, err, "failed to fetch test images: HTTP %d", resp.StatusCode)
-	}
-
-	// Create zip file in temp directory
-	zipPath := filepath.Join(tempDir, "test-images.zip")
-	zipFile, err := os.Create(zipPath)
-	require.NoError(t, err, "Failed to create zip file for test images")
-
-	// Copy response body to zip file
-	_, err = io.Copy(zipFile, resp.Body)
-	zipFile.Close()
-	if err != nil {
-		os.RemoveAll(tempDir)
-		require.NoError(t, err, "Failed to write test images zip file")
-	}
-
-	// Unzip using command line (works on both Linux and macOS)
-	cmd := exec.Command("unzip", "-q", zipPath, "-d", tempDir)
-	if err := cmd.Run(); err != nil {
-		os.RemoveAll(tempDir)
-		require.NoError(t, err, "Failed to unzip test images")
-	}
-
-	// Remove the zip file to save space
-	os.Remove(zipPath)
-
-	// Return the path to the extracted directory
-	extractedDir := filepath.Join(tempDir, "test-images-main")
-
-	// Do not forget to clean up the temp directory after the test
-	t.Cleanup(func() {
-		os.RemoveAll(tempDir)
-	})
-
-	return extractedDir
+	return path.Join(absPath, "../testdata/test-images"), nil
 }

@@ -28,6 +28,5 @@
             ]
         }
     },
-    "initializeCommand": "mkdir -p ${localWorkspaceFolder}/.devcontainer/images/ && curl -O -L https://github.com/imgproxy/test-images/archive/refs/heads/main.zip && unzip main.zip -d ${localWorkspaceFolder}/.devcontainer/images/ && rm main.zip && mv ${localWorkspaceFolder}/.devcontainer/images/test-images-main/* ${localWorkspaceFolder}/.devcontainer/images/ && rmdir ${localWorkspaceFolder}/.devcontainer/images/test-images-main",
     "postCreateCommand": "lefthook install"
 }
