@@ -31,7 +31,7 @@ ENV GOPATH=$HOME/go
 ENV PATH=$PATH:$GOROOT/bin:$GOPATH/bin
 
 # gnupg is requiered for clang-format
-RUN apt-get install -y gnupg lsb-release ssh
+RUN apt-get install -y gnupg lsb-release ssh unzip
 
 # Install air
 RUN go install github.com/air-verse/air@latest
