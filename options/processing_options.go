@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"math"
 	"net/http"
 	"strconv"
 	"strings"
@@ -85,11 +86,13 @@ type DitherOptions struct {
 	OptionsSet03      bool
 	OptionsSet04      bool
 	OptionsSet05      bool
+	OptionsSet06      bool
 	OptionsSetCam16   bool
 	OptionsSetHpminde bool
 	OptionsSetScam    bool
 	OptionsSetVendor  bool
 	MeasuredPalette   string
+	SwapYellowProb    float64
 }
 
 type WatermarkOptions struct {
@@ -797,6 +800,22 @@ func applyDitherOption(po *ProcessingOptions, args []string) error {
 				var PaletteStr = strings.Join(args[idx+1:idx+25], ":")
 				po.Dither.MeasuredPalette = PaletteStr
 				idx += 24
+			case "opts06":
+				if len(args) < 26 {
+					return fmt.Errorf("opts06 requires 26 params got %d: %s", len(args), args[0])
+				}
+				// ex:
+				// opts06:0.9:r:24.06:38.15:28.96:g:29.89:-19.31:3.64:bl:25.77:4.94:-35.35:y:56.25:-9.12:59.80:bk:8.58:8.66:-14.49:w:57.0:-2.97:-4.71
+				swapYellowProbStr := args[idx+1]
+				floatSwapYellowProb, err := strconv.ParseFloat(swapYellowProbStr, 64)
+				if err != nil || math.IsNaN(floatSwapYellowProb) || math.IsInf(floatSwapYellowProb, 0) {
+					return fmt.Errorf("Invalid swap yellow probability: %s", swapYellowProbStr)
+				}
+
+				po.Dither.SwapYellowProb = floatSwapYellowProb
+				po.Dither.MeasuredPalette = strings.Join(args[idx+2:idx+26], ":")
+				po.Dither.OptionsSet06 = true
+				idx += 25
 			case "optscam16":
 				po.Dither.OptionsSetCam16 = true
 			case "optshpminde":
