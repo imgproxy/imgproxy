@@ -78,7 +78,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           style: file
-          version: 18 # Ubuntu 24.04 provides clang-format-18
+          version: 20
           tidy-checks: "-*" # disable clang-tidy
 
       - name: Fail fast
