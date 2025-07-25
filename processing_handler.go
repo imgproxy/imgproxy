@@ -20,6 +20,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/etag"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
+	"github.com/imgproxy/imgproxy/v3/imagefetcher"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/imath"
 	"github.com/imgproxy/imgproxy/v3/metrics"
@@ -348,7 +349,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		return imagedata.Download(ctx, imageURL, "source image", downloadOpts, po.SecurityOptions)
 	}()
 
-	var nmErr imagedata.NotModifiedError
+	var nmErr imagefetcher.NotModifiedError
 
 	switch {
 	case err == nil:
@@ -358,7 +359,13 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		if config.ETagEnabled && len(etagHandler.ImageEtagExpected()) != 0 {
 			rw.Header().Set("ETag", etagHandler.GenerateExpectedETag())
 		}
-		respondWithNotModified(reqID, r, rw, po, imageURL, nmErr.Headers())
+
+		h := make(map[string]string)
+		for k := range nmErr.Headers() {
+			h[k] = nmErr.Headers().Get(k)
+		}
+
+		respondWithNotModified(reqID, r, rw, po, imageURL, h)
 		return
 
 	default:

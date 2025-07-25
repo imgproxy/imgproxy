@@ -69,11 +69,11 @@ func streamOriginImage(ctx context.Context, reqID string, r *http.Request, rw ht
 		checkErr(ctx, "streaming", err)
 	}
 
-	req, reqCancel, err := imagedata.BuildImageRequest(r.Context(), imageURL, imgRequestHeader, cookieJar)
-	defer reqCancel()
+	req, err := imagedata.Fetcher.BuildRequest(r.Context(), imageURL, imgRequestHeader, cookieJar)
+	defer req.Cancel()
 	checkErr(ctx, "streaming", err)
 
-	res, err := imagedata.SendRequest(req)
+	res, err := req.Send()
 	if res != nil {
 		defer res.Body.Close()
 	}
@@ -93,7 +93,7 @@ func streamOriginImage(ctx context.Context, reqID string, r *http.Request, rw ht
 	if res.StatusCode < 300 {
 		var filename, ext, mimetype string
 
-		_, filename = filepath.Split(req.URL.Path)
+		_, filename = filepath.Split(req.URL().Path)
 		ext = filepath.Ext(filename)
 
 		if len(po.Filename) > 0 {
