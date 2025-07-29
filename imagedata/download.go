@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"slices"
 
-	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imagefetcher"
 	"github.com/imgproxy/imgproxy/v3/security"
@@ -43,7 +42,7 @@ func initDownloading() error {
 		return err
 	}
 
-	Fetcher, err = imagefetcher.NewFetcher(ts, config.MaxRedirects)
+	Fetcher, err = imagefetcher.NewFetcher(ts, imagefetcher.NewConfigFromEnv())
 	if err != nil {
 		return ierrors.Wrap(err, 0, ierrors.WithPrefix("can't create image fetcher"))
 	}
@@ -51,7 +50,7 @@ func initDownloading() error {
 	return nil
 }
 
-func download(ctx context.Context, imageURL string, opts DownloadOptions, secopts security.Options) (*ImageData, error) {
+func download(ctx context.Context, imageURL string, opts DownloadOptions, secopts security.Options) (*ImageData, http.Header, error) {
 	// We use this for testing
 	if len(redirectAllRequestsTo) > 0 {
 		imageURL = redirectAllRequestsTo
@@ -59,7 +58,7 @@ func download(ctx context.Context, imageURL string, opts DownloadOptions, secopt
 
 	req, err := Fetcher.BuildRequest(ctx, imageURL, opts.Header, opts.CookieJar)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	defer req.Cancel()
 
@@ -68,7 +67,7 @@ func download(ctx context.Context, imageURL string, opts DownloadOptions, secopt
 		if res != nil {
 			res.Body.Close()
 		}
-		return nil, err
+		return nil, nil, err
 	}
 
 	res, err = security.LimitResponseSize(res, secopts)
@@ -76,12 +75,12 @@ func download(ctx context.Context, imageURL string, opts DownloadOptions, secopt
 		defer res.Body.Close()
 	}
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	imgdata, err := readAndCheckImage(res.Body, int(res.ContentLength), secopts)
 	if err != nil {
-		return nil, ierrors.Wrap(err, 0)
+		return nil, nil, ierrors.Wrap(err, 0)
 	}
 
 	h := make(map[string]string)
@@ -100,7 +99,7 @@ func download(ctx context.Context, imageURL string, opts DownloadOptions, secopt
 
 	imgdata.Headers = h
 
-	return imgdata, nil
+	return imgdata, res.Header, nil
 }
 
 func RedirectAllRequestsTo(u string) {

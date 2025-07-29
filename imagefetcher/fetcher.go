@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/transport"
 	"github.com/imgproxy/imgproxy/v3/transport/common"
 	"go.withmatt.com/httpheaders"
@@ -20,19 +19,19 @@ const (
 
 // Fetcher is a struct that holds the HTTP client and transport for fetching images
 type Fetcher struct {
-	transport    *transport.Transport // Transport used for making HTTP requests
-	maxRedirects int                  // Maximum number of redirects allowed
+	transport *transport.Transport // Transport used for making HTTP requests
+	config    *Config              // Configuration for the fetcher
 }
 
 // NewFetcher creates a new ImageFetcher with the provided transport
-func NewFetcher(transport *transport.Transport, maxRedirects int) (*Fetcher, error) {
-	return &Fetcher{transport, maxRedirects}, nil
+func NewFetcher(transport *transport.Transport, config *Config) (*Fetcher, error) {
+	return &Fetcher{transport, config}, nil
 }
 
 // checkRedirect is a method that checks if the number of redirects exceeds the maximum allowed
 func (f *Fetcher) checkRedirect(req *http.Request, via []*http.Request) error {
 	redirects := len(via)
-	if redirects >= f.maxRedirects {
+	if redirects >= f.config.MaxRedirects {
 		return newImageTooManyRedirectsError(redirects)
 	}
 	return nil
@@ -51,7 +50,7 @@ func (f *Fetcher) BuildRequest(ctx context.Context, url string, header http.Head
 	url = common.EscapeURL(url)
 
 	// Set request timeout and get cancel function
-	ctx, cancel := context.WithTimeout(ctx, time.Duration(config.DownloadTimeout)*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, time.Duration(f.config.DownloadTimeout)*time.Second)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
@@ -73,7 +72,7 @@ func (f *Fetcher) BuildRequest(ctx context.Context, url string, header http.Head
 	}
 
 	// Set user agent header
-	req.Header.Set(httpheaders.UserAgent, config.UserAgent)
+	req.Header.Set(httpheaders.UserAgent, f.config.UserAgent)
 
 	// Set headers
 	for k, v := range header {
