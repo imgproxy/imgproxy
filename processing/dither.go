@@ -97,6 +97,15 @@ func dither(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOption
 	// force lossless output
 	po.Format = imagetype.PNG
 
+	// if the image is smaller than the requested size, we need to extend it with black background
+	if err := extendImage(img, po.Width, po.Height, &options.ExtendOptions{Enabled: true}, pctx.dprScale, false); err != nil {
+		return err
+	}
+
+	if err := img.Flatten(vips.Color{R: 0, G: 0, B: 0}); err != nil {
+		return err
+	}
+
 	// the resulting images are occasionally corrupted if we don't invoke CopyMemory once we're done
 	return img.CopyMemory()
 }

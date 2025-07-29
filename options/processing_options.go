@@ -1247,6 +1247,14 @@ func applyURLOptions(po *ProcessingOptions, options urlOptions) error {
 		}
 	}
 
+	// If dithering is enabled, we need to disable extending and padding
+	// so we don't end up with dithered black bars.  The
+	// extension of the image will happen at the end of the dithering step.
+	if po.Dither.Type != DitherNone {
+		po.Extend.Enabled = false
+		po.Padding.Enabled = false
+	}
+
 	return nil
 }
 
