@@ -20,6 +20,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/config/configurators"
 	"github.com/imgproxy/imgproxy/v3/etag"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
+	"github.com/imgproxy/imgproxy/v3/imagedownloader"
 	"github.com/imgproxy/imgproxy/v3/imagemeta"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/options"
@@ -106,7 +107,7 @@ func (s *ProcessingHandlerTestSuite) sampleETagData(imgETag string) (string, *im
 	}
 
 	if len(imgETag) != 0 {
-		imgdata.Headers = map[string]string{"ETag": imgETag}
+		imgdata.Headers = map[string]string{"Etag": imgETag}
 	}
 
 	var h etag.Handler
@@ -152,8 +153,8 @@ func (s *ProcessingHandlerTestSuite) TestSignatureValidationSuccess() {
 }
 
 func (s *ProcessingHandlerTestSuite) TestSourceValidation() {
-	imagedata.RedirectAllRequestsTo("local:///test1.png")
-	defer imagedata.StopRedirectingRequests()
+	imagedownloader.RedirectAllRequestsTo("local:///test1.png")
+	defer imagedownloader.StopRedirectingRequests()
 
 	tt := []struct {
 		name           string
@@ -402,7 +403,7 @@ func (s *ProcessingHandlerTestSuite) TestETagDisabled() {
 	res := rw.Result()
 
 	s.Require().Equal(200, res.StatusCode)
-	s.Require().Empty(res.Header.Get("ETag"))
+	s.Require().Empty(res.Header.Get("Etag"))
 }
 
 func (s *ProcessingHandlerTestSuite) TestETagReqNoIfNotModified() {
@@ -413,7 +414,7 @@ func (s *ProcessingHandlerTestSuite) TestETagReqNoIfNotModified() {
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		s.Empty(r.Header.Get("If-None-Match"))
 
-		rw.Header().Set("ETag", imgdata.Headers["ETag"])
+		rw.Header().Set("Etag", imgdata.Headers["Etag"])
 		rw.WriteHeader(200)
 		rw.Write(s.readTestFile("test1.png"))
 	}))
@@ -423,7 +424,7 @@ func (s *ProcessingHandlerTestSuite) TestETagReqNoIfNotModified() {
 	res := rw.Result()
 
 	s.Require().Equal(200, res.StatusCode)
-	s.Require().Equal(etag, res.Header.Get("ETag"))
+	s.Require().Equal(etag, res.Header.Get("Etag"))
 }
 
 func (s *ProcessingHandlerTestSuite) TestETagDataNoIfNotModified() {
@@ -443,7 +444,7 @@ func (s *ProcessingHandlerTestSuite) TestETagDataNoIfNotModified() {
 	res := rw.Result()
 
 	s.Require().Equal(200, res.StatusCode)
-	s.Require().Equal(etag, res.Header.Get("ETag"))
+	s.Require().Equal(etag, res.Header.Get("Etag"))
 }
 
 func (s *ProcessingHandlerTestSuite) TestETagReqMatch() {
@@ -452,7 +453,7 @@ func (s *ProcessingHandlerTestSuite) TestETagReqMatch() {
 	poStr, imgdata, etag := s.sampleETagData(`"loremipsumdolor"`)
 
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		s.Equal(imgdata.Headers["ETag"], r.Header.Get("If-None-Match"))
+		s.Equal(imgdata.Headers["Etag"], r.Header.Get("If-None-Match"))
 
 		rw.WriteHeader(304)
 	}))
@@ -465,7 +466,7 @@ func (s *ProcessingHandlerTestSuite) TestETagReqMatch() {
 	res := rw.Result()
 
 	s.Require().Equal(304, res.StatusCode)
-	s.Require().Equal(etag, res.Header.Get("ETag"))
+	s.Require().Equal(etag, res.Header.Get("Etag"))
 }
 
 func (s *ProcessingHandlerTestSuite) TestETagDataMatch() {
@@ -488,7 +489,7 @@ func (s *ProcessingHandlerTestSuite) TestETagDataMatch() {
 	res := rw.Result()
 
 	s.Require().Equal(304, res.StatusCode)
-	s.Require().Equal(etag, res.Header.Get("ETag"))
+	s.Require().Equal(etag, res.Header.Get("Etag"))
 }
 
 func (s *ProcessingHandlerTestSuite) TestETagReqNotMatch() {
@@ -500,7 +501,7 @@ func (s *ProcessingHandlerTestSuite) TestETagReqNotMatch() {
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		s.Equal(`"loremipsum"`, r.Header.Get("If-None-Match"))
 
-		rw.Header().Set("ETag", imgdata.Headers["ETag"])
+		rw.Header().Set("Etag", imgdata.Headers["Etag"])
 		rw.WriteHeader(200)
 		rw.Write(imgdata.Data)
 	}))
@@ -513,7 +514,7 @@ func (s *ProcessingHandlerTestSuite) TestETagReqNotMatch() {
 	res := rw.Result()
 
 	s.Require().Equal(200, res.StatusCode)
-	s.Require().Equal(actualETag, res.Header.Get("ETag"))
+	s.Require().Equal(actualETag, res.Header.Get("Etag"))
 }
 
 func (s *ProcessingHandlerTestSuite) TestETagDataNotMatch() {
@@ -538,7 +539,7 @@ func (s *ProcessingHandlerTestSuite) TestETagDataNotMatch() {
 	res := rw.Result()
 
 	s.Require().Equal(200, res.StatusCode)
-	s.Require().Equal(actualETag, res.Header.Get("ETag"))
+	s.Require().Equal(actualETag, res.Header.Get("Etag"))
 }
 
 func (s *ProcessingHandlerTestSuite) TestETagProcessingOptionsNotMatch() {
@@ -551,7 +552,7 @@ func (s *ProcessingHandlerTestSuite) TestETagProcessingOptionsNotMatch() {
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		s.Empty(r.Header.Get("If-None-Match"))
 
-		rw.Header().Set("ETag", imgdata.Headers["ETag"])
+		rw.Header().Set("Etag", imgdata.Headers["Etag"])
 		rw.WriteHeader(200)
 		rw.Write(imgdata.Data)
 	}))
@@ -564,7 +565,7 @@ func (s *ProcessingHandlerTestSuite) TestETagProcessingOptionsNotMatch() {
 	res := rw.Result()
 
 	s.Require().Equal(200, res.StatusCode)
-	s.Require().Equal(actualETag, res.Header.Get("ETag"))
+	s.Require().Equal(actualETag, res.Header.Get("Etag"))
 }
 
 func (s *ProcessingHandlerTestSuite) TestLastModifiedEnabled() {

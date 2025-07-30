@@ -8,8 +8,11 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"github.com/imgproxy/imgproxy/v3/auximageprovider"
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
+	"github.com/imgproxy/imgproxy/v3/imagedatanew"
+	"github.com/imgproxy/imgproxy/v3/imagedownloader"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/imath"
 	"github.com/imgproxy/imgproxy/v3/options"
@@ -17,6 +20,33 @@ import (
 	"github.com/imgproxy/imgproxy/v3/security"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
+
+var (
+	FallbackImage auximageprovider.AuxImageProvider
+	Watermark     auximageprovider.AuxImageProvider
+)
+
+func Init() (err error) {
+	FallbackImage, err = auximageprovider.NewFactory(imagedownloader.D).NewMemoryTriple(
+		config.FallbackImageData,
+		config.FallbackImagePath,
+		config.FallbackImageURL,
+	)
+	if err != nil {
+		return err
+	}
+
+	Watermark, err = auximageprovider.NewFactory(imagedownloader.D).NewMemoryTriple(
+		config.WatermarkData,
+		config.WatermarkPath,
+		config.WatermarkURL,
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
 
 var mainPipeline = pipeline{
 	trim,
@@ -174,13 +204,18 @@ func transformAnimated(ctx context.Context, img *vips.Image, po *options.Process
 		return err
 	}
 
-	if watermarkEnabled && imagedata.Watermark != nil {
+	if watermarkEnabled && Watermark != nil {
 		dprScale, derr := img.GetDoubleDefault("imgproxy-dpr-scale", 1.0)
 		if derr != nil {
 			dprScale = 1.0
 		}
 
-		if err = applyWatermark(img, imagedata.Watermark, &po.Watermark, dprScale, framesCount); err != nil {
+		wm, _, werr := Watermark.Get(ctx, po)
+		if werr != nil {
+			return werr
+		}
+
+		if err = applyWatermark(img, wm, &po.Watermark, dprScale, framesCount); err != nil {
 			return err
 		}
 	}
@@ -239,7 +274,7 @@ func saveImageToFitBytes(ctx context.Context, po *options.ProcessingOptions, img
 	}
 }
 
-func ProcessImage(ctx context.Context, imgdata *imagedata.ImageData, po *options.ProcessingOptions) (*imagedata.ImageData, error) {
+func ProcessImage(ctx context.Context, imgdata imagedatanew.ImageData, po *options.ProcessingOptions) (*imagedata.ImageData, error) {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 
@@ -247,7 +282,7 @@ func ProcessImage(ctx context.Context, imgdata *imagedata.ImageData, po *options
 
 	animationSupport :=
 		po.SecurityOptions.MaxAnimationFrames > 1 &&
-			imgdata.Type.SupportsAnimationLoad() &&
+			imgdata.Format().SupportsAnimationLoad() &&
 			(po.Format == imagetype.Unknown || po.Format.SupportsAnimationSave())
 
 	pages := 1
@@ -258,16 +293,16 @@ func ProcessImage(ctx context.Context, imgdata *imagedata.ImageData, po *options
 	img := new(vips.Image)
 	defer img.Clear()
 
-	if po.EnforceThumbnail && imgdata.Type.SupportsThumbnail() {
-		if err := img.LoadThumbnail(imgdata); err != nil {
+	if po.EnforceThumbnail && imgdata.Format().SupportsThumbnail() {
+		if err := img.LoadThumbnail(imagedata.From(imgdata)); err != nil {
 			log.Debugf("Can't load thumbnail: %s", err)
 			// Failed to load thumbnail, rollback to the full image
-			if err := img.Load(imgdata, 1, 1.0, pages); err != nil {
+			if err := img.Load(imagedata.From(imgdata), 1, 1.0, pages); err != nil {
 				return nil, err
 			}
 		}
 	} else {
-		if err := img.Load(imgdata, 1, 1.0, pages); err != nil {
+		if err := img.Load(imagedata.From(imgdata), 1, 1.0, pages); err != nil {
 			return nil, err
 		}
 	}
@@ -286,10 +321,10 @@ func ProcessImage(ctx context.Context, imgdata *imagedata.ImageData, po *options
 			po.Format = imagetype.AVIF
 		case po.PreferWebP:
 			po.Format = imagetype.WEBP
-		case isImageTypePreferred(imgdata.Type):
-			po.Format = imgdata.Type
+		case isImageTypePreferred(imgdata.Format()):
+			po.Format = imgdata.Format()
 		default:
-			po.Format = findBestFormat(imgdata.Type, animated, expectAlpha)
+			po.Format = findBestFormat(imgdata.Format(), animated, expectAlpha)
 		}
 	case po.EnforceJxl && !animated:
 		po.Format = imagetype.JXL
@@ -304,14 +339,14 @@ func ProcessImage(ctx context.Context, imgdata *imagedata.ImageData, po *options
 	}
 
 	if po.Format.SupportsAnimationSave() && animated {
-		if err := transformAnimated(ctx, img, po, imgdata); err != nil {
+		if err := transformAnimated(ctx, img, po, imagedata.From(imgdata)); err != nil {
 			return nil, err
 		}
 	} else {
 		if animated {
 			// We loaded animated image but the resulting format doesn't support
 			// animations, so we need to reload image as not animated
-			if err := img.Load(imgdata, 1, 1.0, 1); err != nil {
+			if err := img.Load(imagedata.From(imgdata), 1, 1.0, 1); err != nil {
 				return nil, err
 			}
 		}

@@ -6,6 +6,7 @@ import (
 
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
+	"github.com/imgproxy/imgproxy/v3/imagedatanew"
 	"github.com/imgproxy/imgproxy/v3/imath"
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/vips"
@@ -20,8 +21,8 @@ var watermarkPipeline = pipeline{
 	padding,
 }
 
-func prepareWatermark(wm *vips.Image, wmData *imagedata.ImageData, opts *options.WatermarkOptions, imgWidth, imgHeight int, offsetScale float64, framesCount int) error {
-	if err := wm.Load(wmData, 1, 1.0, 1); err != nil {
+func prepareWatermark(wm *vips.Image, wmData imagedatanew.ImageData, opts *options.WatermarkOptions, imgWidth, imgHeight int, offsetScale float64, framesCount int) error {
+	if err := wm.Load(imagedata.From(wmData), 1, 1.0, 1); err != nil {
 		return err
 	}
 
@@ -29,7 +30,7 @@ func prepareWatermark(wm *vips.Image, wmData *imagedata.ImageData, opts *options
 	po.ResizingType = options.ResizeFit
 	po.Dpr = 1
 	po.Enlarge = true
-	po.Format = wmData.Type
+	po.Format = wmData.Format()
 
 	if opts.Scale > 0 {
 		po.Width = imath.Max(imath.ScaleToEven(imgWidth, opts.Scale), 1)
@@ -81,7 +82,7 @@ func prepareWatermark(wm *vips.Image, wmData *imagedata.ImageData, opts *options
 	return wm.StripAll()
 }
 
-func applyWatermark(img *vips.Image, wmData *imagedata.ImageData, opts *options.WatermarkOptions, offsetScale float64, framesCount int) error {
+func applyWatermark(img *vips.Image, wmData imagedatanew.ImageData, opts *options.WatermarkOptions, offsetScale float64, framesCount int) error {
 	wm := new(vips.Image)
 	defer wm.Clear()
 
@@ -162,10 +163,15 @@ func applyWatermark(img *vips.Image, wmData *imagedata.ImageData, opts *options.
 	return nil
 }
 
-func watermark(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata *imagedata.ImageData) error {
-	if !po.Watermark.Enabled || imagedata.Watermark == nil {
+func watermark(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata imagedatanew.ImageData) error {
+	if !po.Watermark.Enabled || Watermark == nil {
 		return nil
 	}
 
-	return applyWatermark(img, imagedata.Watermark, &po.Watermark, pctx.dprScale, 1)
+	wm, _, err := Watermark.Get(pctx.ctx, po)
+	if err != nil {
+		return err
+	}
+
+	return applyWatermark(img, wm, &po.Watermark, pctx.dprScale, 1)
 }

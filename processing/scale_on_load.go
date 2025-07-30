@@ -7,18 +7,19 @@ import (
 
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
+	"github.com/imgproxy/imgproxy/v3/imagedatanew"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/imath"
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
-func canScaleOnLoad(pctx *pipelineContext, imgdata *imagedata.ImageData, scale float64) bool {
+func canScaleOnLoad(pctx *pipelineContext, imgdata imagedatanew.ImageData, scale float64) bool {
 	if imgdata == nil || pctx.trimmed || scale == 1 {
 		return false
 	}
 
-	if imgdata.Type.IsVector() {
+	if imgdata.Format().IsVector() {
 		return true
 	}
 
@@ -26,10 +27,10 @@ func canScaleOnLoad(pctx *pipelineContext, imgdata *imagedata.ImageData, scale f
 		return false
 	}
 
-	return imgdata.Type == imagetype.JPEG ||
-		imgdata.Type == imagetype.WEBP ||
-		imgdata.Type == imagetype.HEIC ||
-		imgdata.Type == imagetype.AVIF
+	return imgdata.Format() == imagetype.JPEG ||
+		imgdata.Format() == imagetype.WEBP ||
+		imgdata.Format() == imagetype.HEIC ||
+		imgdata.Format() == imagetype.AVIF
 }
 
 func calcJpegShink(shrink float64) int {
@@ -45,7 +46,7 @@ func calcJpegShink(shrink float64) int {
 	return 1
 }
 
-func scaleOnLoad(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata *imagedata.ImageData) error {
+func scaleOnLoad(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata imagedatanew.ImageData) error {
 	wshrink := float64(pctx.srcWidth) / float64(imath.Scale(pctx.srcWidth, pctx.wscale))
 	hshrink := float64(pctx.srcHeight) / float64(imath.Scale(pctx.srcHeight, pctx.hscale))
 	preshrink := math.Min(wshrink, hshrink)
@@ -57,11 +58,11 @@ func scaleOnLoad(pctx *pipelineContext, img *vips.Image, po *options.ProcessingO
 
 	var newWidth, newHeight int
 
-	if imgdata.Type.SupportsThumbnail() {
+	if imgdata.Format().SupportsThumbnail() {
 		thumbnail := new(vips.Image)
 		defer thumbnail.Clear()
 
-		if err := thumbnail.LoadThumbnail(imgdata); err != nil {
+		if err := thumbnail.LoadThumbnail(imagedata.From(imgdata)); err != nil {
 			log.Debugf("Can't load thumbnail: %s", err)
 			return nil
 		}
@@ -83,7 +84,7 @@ func scaleOnLoad(pctx *pipelineContext, img *vips.Image, po *options.ProcessingO
 			return nil
 		}
 
-		if err := img.Load(imgdata, jpegShrink, prescale, 1); err != nil {
+		if err := img.Load(imagedata.From(imgdata), jpegShrink, prescale, 1); err != nil {
 			return err
 		}
 

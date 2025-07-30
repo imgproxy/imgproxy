@@ -1,7 +1,7 @@
 package processing
 
 import (
-	"github.com/imgproxy/imgproxy/v3/imagedata"
+	"github.com/imgproxy/imgproxy/v3/imagedatanew"
 	"github.com/imgproxy/imgproxy/v3/imath"
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/vips"
@@ -32,7 +32,7 @@ func cropImage(img *vips.Image, cropWidth, cropHeight int, gravity *options.Grav
 	return img.Crop(left, top, cropWidth, cropHeight)
 }
 
-func crop(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata *imagedata.ImageData) error {
+func crop(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata imagedatanew.ImageData) error {
 	width, height := pctx.cropWidth, pctx.cropHeight
 
 	opts := pctx.cropGravity
@@ -47,6 +47,6 @@ func crop(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions,
 	return cropImage(img, width, height, &opts, 1.0)
 }
 
-func cropToResult(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata *imagedata.ImageData) error {
+func cropToResult(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata imagedatanew.ImageData) error {
 	return cropImage(img, pctx.resultCropWidth, pctx.resultCropHeight, &po.Gravity, pctx.dprScale)
 }

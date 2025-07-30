@@ -107,7 +107,7 @@ func (h *Handler) ImageEtagExpected() string {
 
 func (h *Handler) SetActualImageData(imgdata *imagedata.ImageData) bool {
 	var haveActualImgETag bool
-	h.imgEtagActual, haveActualImgETag = imgdata.Headers["ETag"]
+	h.imgEtagActual, haveActualImgETag = imgdata.Headers["Etag"]
 	haveActualImgETag = haveActualImgETag && len(h.imgEtagActual) > 0
 
 	// Just in case server didn't check ETag properly and returned the same one
