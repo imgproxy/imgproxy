@@ -56,10 +56,10 @@ func respondWithImage(hw *headerwriter.Writer, reqID string, r *http.Request, rw
 		StemExtWithFallback()
 
 	hw.SetMaxAgeFromExpires(po.Expires)
-	hw.WriteContentDisposition(stem, ext, po.ReturnAttachment)
-	hw.WriteContentType(resultData.Type.Mime())
-	hw.WriteLastModified()
-	hw.WriteVary()
+	hw.SetContentDisposition(stem, ext, po.ReturnAttachment)
+	hw.SetContentType(resultData.Type.Mime())
+	hw.SetLastModified()
+	hw.SetVary()
 
 	// TODO: think about moving this to the headerwriter
 	if config.EnableDebugHeaders {
@@ -70,8 +70,8 @@ func respondWithImage(hw *headerwriter.Writer, reqID string, r *http.Request, rw
 		rw.Header().Set("X-Result-Height", resultData.Headers["X-Result-Height"])
 	}
 
-	hw.WriteContentLength(len(resultData.Data))
-	hw.WriteCanonical()
+	hw.SetContentLength(len(resultData.Data))
+	hw.SetCanonical()
 	hw.Write(rw)
 
 	rw.WriteHeader(statusCode)
@@ -99,7 +99,7 @@ func respondWithImage(hw *headerwriter.Writer, reqID string, r *http.Request, rw
 
 func respondWithNotModified(hw *headerwriter.Writer, reqID string, r *http.Request, rw http.ResponseWriter, po *options.ProcessingOptions, originURL string, originHeaders map[string]string) {
 	hw.SetMaxAgeFromExpires(po.Expires)
-	hw.WriteVary()
+	hw.SetVary()
 	hw.Write(rw)
 
 	rw.WriteHeader(304)
@@ -180,10 +180,9 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 			ImageURL:          imageURL,
 			ReqID:             reqID,
 			ProcessingOptions: po,
-			Rw:                rw,
 		}
 
-		sf.Stream(ctx, &p)
+		sf.Stream(ctx, &p, rw)
 		return
 	}
 
@@ -209,6 +208,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// ???
 	if config.LastModifiedEnabled {
 		if modifiedSince := r.Header.Get("If-Modified-Since"); len(modifiedSince) != 0 {
 			imgRequestHeader.Set("If-Modified-Since", modifiedSince)
@@ -319,7 +319,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		hw.SetMaxAge(config.FallbackImageTTL)
 
 		if config.FallbackImageTTL > 0 {
-			hw.WriteIsFallbackImage()
+			hw.SetIsFallbackImage()
 		}
 
 		originData = imagedata.FallbackImage

@@ -80,10 +80,9 @@ func (s *StreamerTestSuite) TestStreamer() {
 		ImageURL:          s.ts.URL + testFilePath,
 		ReqID:             "test-req-id",
 		ProcessingOptions: po,
-		Rw:                rr,
 	}
 
-	s.service.Stream(context.Background(), &p)
+	s.service.Stream(context.Background(), &p, rr)
 
 	// Check response body
 	respBody := rr.Body.Bytes()

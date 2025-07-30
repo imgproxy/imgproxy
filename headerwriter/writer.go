@@ -44,9 +44,9 @@ func (w *Writer) SetMaxAge(maxAge int) {
 	}
 }
 
-// WriteIsFallbackImage sets the Fallback-Image header to
+// SetIsFallbackImage sets the Fallback-Image header to
 // indicate that the fallback image was used.
-func (w *Writer) WriteIsFallbackImage() {
+func (w *Writer) SetIsFallbackImage() {
 	w.res.Set("Fallback-Image", "1")
 }
 
@@ -73,8 +73,8 @@ func (w *Writer) SetMaxAgeFromExpires(expires *time.Time) {
 	}
 }
 
-// WriteLastModified sets the Last-Modified header from request
-func (w *Writer) WriteLastModified() {
+// SetLastModified sets the Last-Modified header from request
+func (w *Writer) SetLastModified() {
 	if !w.config.LastModifiedEnabled {
 		return
 	}
@@ -87,8 +87,8 @@ func (w *Writer) WriteLastModified() {
 	w.res.Set(httpheaders.LastModified, val)
 }
 
-// WriteVary sets the Vary header
-func (w *Writer) WriteVary() {
+// SetVary sets the Vary header
+func (w *Writer) SetVary() {
 	vary := make([]string, 0)
 
 	if w.config.SetVaryAccept {
@@ -129,15 +129,15 @@ func (w *Writer) CopyFrom(headers http.Header, only []string) {
 	}
 }
 
-// WriteContentLength sets the Content-Length header
-func (w *Writer) WriteContentLength(contentLength int) {
+// SetContentLength sets the Content-Length header
+func (w *Writer) SetContentLength(contentLength int) {
 	if contentLength > 0 {
 		w.res.Set(httpheaders.ContentLength, strconv.Itoa(contentLength))
 	}
 }
 
-// WriteContentDisposition sets the Content-Disposition header
-func (w *Writer) WriteContentDisposition(filename, ext string, returnAttachment bool) {
+// SetContentDisposition sets the Content-Disposition header
+func (w *Writer) SetContentDisposition(filename, ext string, returnAttachment bool) {
 	disposition := "inline"
 
 	if returnAttachment {
@@ -149,13 +149,13 @@ func (w *Writer) WriteContentDisposition(filename, ext string, returnAttachment 
 	w.res.Set(httpheaders.ContentDisposition, value)
 }
 
-func (w *Writer) WriteContentType(mime string) {
+func (w *Writer) SetContentType(mime string) {
 	w.res.Set(httpheaders.ContentType, mime)
 }
 
 // writeCanonical sets the Link header with the canonical URL.
 // It is mandatory for any response if enabled in the configuration.
-func (b *Writer) WriteCanonical() {
+func (b *Writer) SetCanonical() {
 	if !b.config.SetCanonicalHeader {
 		return
 	}
@@ -166,13 +166,13 @@ func (b *Writer) WriteCanonical() {
 	}
 }
 
-// writeCacheControlNoCache sets the Cache-Control header to no-cache (default).
-func (w *Writer) writeCacheControlNoCache() {
+// setCacheControlNoCache sets the Cache-Control header to no-cache (default).
+func (w *Writer) setCacheControlNoCache() {
 	w.res.Set(httpheaders.CacheControl, "no-cache")
 }
 
-// writeCacheControlMaxAge sets the Cache-Control header with max-age.
-func (w *Writer) writeCacheControlMaxAge() {
+// setCacheControlMaxAge sets the Cache-Control header with max-age.
+func (w *Writer) setCacheControlMaxAge() {
 	maxAge := w.maxAge
 
 	if maxAge <= 0 {
@@ -184,9 +184,9 @@ func (w *Writer) writeCacheControlMaxAge() {
 	}
 }
 
-// writeCacheControlPassthrough sets the Cache-Control header from the request
+// setCacheControlPassthrough sets the Cache-Control header from the request
 // if passthrough is enabled in the configuration.
-func (w *Writer) writeCacheControlPassthrough() bool {
+func (w *Writer) setCacheControlPassthrough() bool {
 	if !w.config.CacheControlPassthrough || w.maxAge > 0 {
 		return false
 	}
@@ -205,20 +205,20 @@ func (w *Writer) writeCacheControlPassthrough() bool {
 	return false
 }
 
-// writeCSP sets the Content-Security-Policy header to prevent script execution.
-func (w *Writer) writeCSP() {
+// setCSP sets the Content-Security-Policy header to prevent script execution.
+func (w *Writer) setCSP() {
 	w.res.Set("Content-Security-Policy", "script-src 'none'")
 }
 
 // Write writes the headers to the response writer
 func (w *Writer) Write(rw http.ResponseWriter) {
-	w.writeCacheControlNoCache()
+	w.setCacheControlNoCache()
 
-	if !w.writeCacheControlPassthrough() {
-		w.writeCacheControlMaxAge()
+	if !w.setCacheControlPassthrough() {
+		w.setCacheControlMaxAge()
 	}
 
-	w.writeCSP()
+	w.setCSP()
 
 	for key, values := range w.res {
 		for _, value := range values {

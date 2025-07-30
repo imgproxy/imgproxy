@@ -13,6 +13,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/imagefetcher"
 	"github.com/imgproxy/imgproxy/v3/metrics"
 	"github.com/imgproxy/imgproxy/v3/metrics/stats"
+	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/router"
 	"github.com/imgproxy/imgproxy/v3/stemext"
 	log "github.com/sirupsen/logrus"
@@ -25,12 +26,22 @@ const (
 var (
 	// streamBufPool is a sync.Pool for reusing byte slices used for streaming
 	streamBufPool = sync.Pool{
-		New: func() interface{} {
+		New: func() any {
 			buf := make([]byte, streamBufferSize)
 			return &buf
 		},
 	}
 )
+
+// Request represents an image request that will be processed by the image streamer
+// NOTE: This struct will be used as a base for the image request in the processing handler.
+// Here it's temporary.
+type Request struct {
+	UserRequest       *http.Request              // Original user request to imgproxy
+	ImageURL          string                     // URL of the image to be streamed
+	ReqID             string                     // Unique identifier for the request
+	ProcessingOptions *options.ProcessingOptions // Processing options for the image
+}
 
 // streamer handles image passthrough requests, allowing images to be streamed directly
 type streamer struct {
@@ -38,6 +49,7 @@ type streamer struct {
 	headerWriterFactory *headerwriter.Factory // Factory for creating header writers
 	config              *Config               // Configuration for the streamer
 	p                   *Request              // Streaming request
+	rw                  http.ResponseWriter   // Response writer to write the streamed image
 }
 
 // Stream handles the image passthrough request, streaming the image directly to the response writer
@@ -96,13 +108,13 @@ func (s *streamer) getPassthroughRequestHeaders() http.Header {
 
 // writeHeaders writes the headers to the response writer
 func (s *streamer) writeHeaders(r *imagefetcher.Request, res *http.Response) {
-	hw := s.headerWriterFactory.NewHeaderWriter(s.p.Rw.Header(), r.URL().String())
+	hw := s.headerWriterFactory.NewHeaderWriter(s.rw.Header(), r.URL().String())
 
 	// Copy the response headers to the header writer
 	hw.Copy(s.config.KeepResponseHeaders)
 
 	// Set the Content-Length header
-	hw.WriteContentLength(int(res.ContentLength))
+	hw.SetContentLength(int(res.ContentLength))
 
 	// Try to set correct Content-Disposition file name and extension
 	if res.StatusCode >= 200 && res.StatusCode < 300 {
@@ -115,10 +127,10 @@ func (s *streamer) writeHeaders(r *imagefetcher.Request, res *http.Response) {
 			StemExt()
 
 		// Write the Content-Disposition header
-		hw.WriteContentDisposition(stem, ext, s.p.ProcessingOptions.ReturnAttachment)
+		hw.SetContentDisposition(stem, ext, s.p.ProcessingOptions.ReturnAttachment)
 	}
 
-	hw.Write(s.p.Rw)
+	hw.Write(s.rw)
 }
 
 // sendData copies the image data from the response body to the response writer
@@ -126,7 +138,7 @@ func (s *streamer) sendData(res *http.Response) {
 	buf := streamBufPool.Get().(*[]byte)
 	defer streamBufPool.Put(buf)
 
-	_, copyerr := io.CopyBuffer(s.p.Rw, res.Body, *buf)
+	_, copyerr := io.CopyBuffer(s.rw, res.Body, *buf)
 
 	router.LogResponse(
 		s.p.ReqID, s.p.UserRequest, res.StatusCode, nil,

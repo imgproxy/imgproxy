@@ -89,7 +89,7 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 				DefaultTTL:         3600,
 			},
 			fn: func(w *Writer) {
-				w.WriteCanonical()
+				w.SetCanonical()
 			},
 		},
 		{
@@ -118,7 +118,7 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 				DefaultTTL:         3600,
 			},
 			fn: func(w *Writer) {
-				w.WriteCanonical()
+				w.SetCanonical()
 			},
 		},
 		{
@@ -136,7 +136,7 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 				DefaultTTL:          3600,
 			},
 			fn: func(w *Writer) {
-				w.WriteLastModified()
+				w.SetLastModified()
 			},
 		},
 		{
@@ -180,7 +180,7 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 				SetVaryAccept:     true,
 			},
 			fn: func(w *Writer) {
-				w.WriteVary()
+				w.SetVary()
 			},
 		},
 		{
@@ -223,7 +223,7 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 			},
 			config: Config{},
 			fn: func(w *Writer) {
-				w.WriteContentLength(123)
+				w.SetContentLength(123)
 			},
 		},
 		{
@@ -236,7 +236,7 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 			},
 			config: Config{},
 			fn: func(w *Writer) {
-				w.WriteContentDisposition("file", ".txt", false)
+				w.SetContentDisposition("file", ".txt", false)
 			},
 		},
 		{
@@ -249,7 +249,7 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 			},
 			config: Config{},
 			fn: func(w *Writer) {
-				w.WriteContentDisposition("file", ".txt", true)
+				w.SetContentDisposition("file", ".txt", true)
 			},
 		},
 		{
@@ -262,7 +262,7 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 			},
 			config: Config{},
 			fn: func(w *Writer) {
-				w.WriteContentType("image/png")
+				w.SetContentType("image/png")
 			},
 		},
 		{
@@ -275,7 +275,7 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 			},
 			config: Config{},
 			fn: func(w *Writer) {
-				w.WriteIsFallbackImage()
+				w.SetIsFallbackImage()
 			},
 		},
 		{
@@ -319,7 +319,7 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 				SetVaryAccept: true,
 			},
 			fn: func(w *Writer) {
-				w.WriteVary()
+				w.SetVary()
 			},
 		},
 		{
@@ -334,7 +334,7 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 				EnableClientHints: true,
 			},
 			fn: func(w *Writer) {
-				w.WriteVary()
+				w.SetVary()
 			},
 		},
 	}
