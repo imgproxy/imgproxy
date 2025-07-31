@@ -12,7 +12,6 @@ import (
 
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
-	"github.com/imgproxy/imgproxy/v3/imagemeta"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/security"
 )
@@ -23,7 +22,7 @@ var (
 )
 
 type ImageData struct {
-	meta    imagemeta.Meta
+	format  imagetype.Type
 	data    []byte
 	Headers map[string]string
 
@@ -41,14 +40,9 @@ func (d *ImageData) Close() error {
 	return nil
 }
 
-// Meta returns the image metadata
-func (d *ImageData) Meta() imagemeta.Meta {
-	return d.meta
-}
-
 // Format returns the image format based on the metadata
 func (d *ImageData) Format() imagetype.Type {
-	return d.meta.Format()
+	return d.format
 }
 
 // Reader returns an io.ReadSeeker for the image data

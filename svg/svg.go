@@ -9,6 +9,7 @@ import (
 	"github.com/tdewolff/parse/v2/xml"
 
 	"github.com/imgproxy/imgproxy/v3/imagedata"
+	"github.com/imgproxy/imgproxy/v3/imagetype"
 )
 
 func cloneHeaders(src map[string]string) http.Header {
@@ -54,7 +55,11 @@ func Sanitize(data *imagedata.ImageData) (*imagedata.ImageData, error) {
 				return nil, l.Err()
 			}
 
-			newData, err := imagedata.NewFromBytes(buf.Bytes(), cloneHeaders(data.Headers))
+			newData, err := imagedata.NewFromBytesWithFormat(
+				imagetype.SVG,
+				buf.Bytes(),
+				cloneHeaders(data.Headers),
+			)
 			if err != nil {
 				return nil, err
 			}

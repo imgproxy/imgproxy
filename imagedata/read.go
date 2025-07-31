@@ -51,7 +51,7 @@ func readAndCheckImage(r io.Reader, contentLength int, secopts security.Options)
 
 	return &ImageData{
 		data:   buf.Bytes(),
-		meta:   meta,
+		format: meta.Format(),
 		cancel: cancel,
 	}, nil
 }

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/imgproxy/imgproxy/v3/imagemeta"
+	"github.com/imgproxy/imgproxy/v3/imagetype"
 )
 
 // NewFromBytes creates a new ImageData instance from the provided byte slice.
@@ -17,6 +18,11 @@ func NewFromBytes(b []byte, headers http.Header) (*ImageData, error) {
 		return nil, err
 	}
 
+	return NewFromBytesWithFormat(meta.Format(), b, headers)
+}
+
+// NewFromBytesWithFormat creates a new ImageData instance from the provided format and byte slice.
+func NewFromBytesWithFormat(format imagetype.Type, b []byte, headers http.Header) (*ImageData, error) {
 	// Temporary workaround for the old ImageData interface
 	h := make(map[string]string, len(headers))
 	for k, v := range headers {
@@ -25,7 +31,7 @@ func NewFromBytes(b []byte, headers http.Header) (*ImageData, error) {
 
 	return &ImageData{
 		data:    b,
-		meta:    meta,
+		format:  format,
 		Headers: h,
 	}, nil
 }
