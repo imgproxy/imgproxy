@@ -3,6 +3,7 @@
 ## [Unreleased]
 ### Fixed
 - (pro) Fix generating thumbnails for VP9 videos with high bit depth.
+- (pro) Fix `IMGPROXY_CUSTOM_RESPONSE_HEADERS` and `IMGPROXY_RESPONSE_HEADERS_PASSTHROUGH` configs behavior when the `raw` processing option is used.
 
 ## [3.29.1] - 2025-07-11
 ### Fixed
