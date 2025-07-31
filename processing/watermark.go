@@ -29,7 +29,7 @@ func prepareWatermark(wm *vips.Image, wmData *imagedata.ImageData, opts *options
 	po.ResizingType = options.ResizeFit
 	po.Dpr = 1
 	po.Enlarge = true
-	po.Format = wmData.Type
+	po.Format = wmData.Format()
 
 	if opts.Scale > 0 {
 		po.Width = imath.Max(imath.ScaleToEven(imgWidth, opts.Scale), 1)

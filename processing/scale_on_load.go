@@ -18,7 +18,7 @@ func canScaleOnLoad(pctx *pipelineContext, imgdata *imagedata.ImageData, scale f
 		return false
 	}
 
-	if imgdata.Type.IsVector() {
+	if imgdata.Format().IsVector() {
 		return true
 	}
 
@@ -26,10 +26,10 @@ func canScaleOnLoad(pctx *pipelineContext, imgdata *imagedata.ImageData, scale f
 		return false
 	}
 
-	return imgdata.Type == imagetype.JPEG ||
-		imgdata.Type == imagetype.WEBP ||
-		imgdata.Type == imagetype.HEIC ||
-		imgdata.Type == imagetype.AVIF
+	return imgdata.Format() == imagetype.JPEG ||
+		imgdata.Format() == imagetype.WEBP ||
+		imgdata.Format() == imagetype.HEIC ||
+		imgdata.Format() == imagetype.AVIF
 }
 
 func calcJpegShink(shrink float64) int {
@@ -57,7 +57,7 @@ func scaleOnLoad(pctx *pipelineContext, img *vips.Image, po *options.ProcessingO
 
 	var newWidth, newHeight int
 
-	if imgdata.Type.SupportsThumbnail() {
+	if imgdata.Format().SupportsThumbnail() {
 		thumbnail := new(vips.Image)
 		defer thumbnail.Clear()
 

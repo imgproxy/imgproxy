@@ -217,7 +217,16 @@ func saveImageToFitBytes(ctx context.Context, po *options.ProcessingOptions, img
 
 	for {
 		imgdata, err := img.Save(po.Format, quality)
-		if err != nil || len(imgdata.Data) <= po.MaxBytes || quality <= 10 {
+		if err != nil {
+			return nil, err
+		}
+
+		size, err := imgdata.Size()
+		if err != nil {
+			return nil, err
+		}
+
+		if size <= po.MaxBytes || quality <= 10 {
 			return imgdata, err
 		}
 		imgdata.Close()
@@ -226,7 +235,7 @@ func saveImageToFitBytes(ctx context.Context, po *options.ProcessingOptions, img
 			return nil, err
 		}
 
-		delta := float64(len(imgdata.Data)) / float64(po.MaxBytes)
+		delta := float64(size) / float64(po.MaxBytes)
 		switch {
 		case delta > 3:
 			diff = 0.25
@@ -247,7 +256,7 @@ func ProcessImage(ctx context.Context, imgdata *imagedata.ImageData, po *options
 
 	animationSupport :=
 		po.SecurityOptions.MaxAnimationFrames > 1 &&
-			imgdata.Type.SupportsAnimationLoad() &&
+			imgdata.Format().SupportsAnimationLoad() &&
 			(po.Format == imagetype.Unknown || po.Format.SupportsAnimationSave())
 
 	pages := 1
@@ -258,7 +267,7 @@ func ProcessImage(ctx context.Context, imgdata *imagedata.ImageData, po *options
 	img := new(vips.Image)
 	defer img.Clear()
 
-	if po.EnforceThumbnail && imgdata.Type.SupportsThumbnail() {
+	if po.EnforceThumbnail && imgdata.Format().SupportsThumbnail() {
 		if err := img.LoadThumbnail(imgdata); err != nil {
 			log.Debugf("Can't load thumbnail: %s", err)
 			// Failed to load thumbnail, rollback to the full image
@@ -286,10 +295,10 @@ func ProcessImage(ctx context.Context, imgdata *imagedata.ImageData, po *options
 			po.Format = imagetype.AVIF
 		case po.PreferWebP:
 			po.Format = imagetype.WEBP
-		case isImageTypePreferred(imgdata.Type):
-			po.Format = imgdata.Type
+		case isImageTypePreferred(imgdata.Format()):
+			po.Format = imgdata.Format()
 		default:
-			po.Format = findBestFormat(imgdata.Type, animated, expectAlpha)
+			po.Format = findBestFormat(imgdata.Format(), animated, expectAlpha)
 		}
 	case po.EnforceJxl && !animated:
 		po.Format = imagetype.JXL

@@ -94,8 +94,8 @@ func (s *ImageDataTestSuite) TestDownloadStatusOK() {
 
 	s.Require().NoError(err)
 	s.Require().NotNil(imgdata)
-	s.Require().Equal(s.defaultData, imgdata.Data)
-	s.Require().Equal(imagetype.JPEG, imgdata.Type)
+	s.Require().Equal(s.defaultData, imgdata.data)
+	s.Require().Equal(imagetype.JPEG, imgdata.Format())
 }
 
 func (s *ImageDataTestSuite) TestDownloadStatusPartialContent() {
@@ -165,8 +165,8 @@ func (s *ImageDataTestSuite) TestDownloadStatusPartialContent() {
 			} else {
 				s.Require().NoError(err)
 				s.Require().NotNil(imgdata)
-				s.Require().Equal(s.defaultData, imgdata.Data)
-				s.Require().Equal(imagetype.JPEG, imgdata.Type)
+				s.Require().Equal(s.defaultData, imgdata.data)
+				s.Require().Equal(imagetype.JPEG, imgdata.Format())
 			}
 		})
 	}
@@ -278,8 +278,8 @@ func (s *ImageDataTestSuite) TestDownloadGzip() {
 
 	s.Require().NoError(err)
 	s.Require().NotNil(imgdata)
-	s.Require().Equal(s.defaultData, imgdata.Data)
-	s.Require().Equal(imagetype.JPEG, imgdata.Type)
+	s.Require().Equal(s.defaultData, imgdata.data)
+	s.Require().Equal(imagetype.JPEG, imgdata.Format())
 }
 
 func (s *ImageDataTestSuite) TestFromFile() {
@@ -287,8 +287,8 @@ func (s *ImageDataTestSuite) TestFromFile() {
 
 	s.Require().NoError(err)
 	s.Require().NotNil(imgdata)
-	s.Require().Equal(s.defaultData, imgdata.Data)
-	s.Require().Equal(imagetype.JPEG, imgdata.Type)
+	s.Require().Equal(s.defaultData, imgdata.data)
+	s.Require().Equal(imagetype.JPEG, imgdata.Format())
 }
 
 func (s *ImageDataTestSuite) TestFromBase64() {
@@ -298,8 +298,8 @@ func (s *ImageDataTestSuite) TestFromBase64() {
 
 	s.Require().NoError(err)
 	s.Require().NotNil(imgdata)
-	s.Require().Equal(s.defaultData, imgdata.Data)
-	s.Require().Equal(imagetype.JPEG, imgdata.Type)
+	s.Require().Equal(s.defaultData, imgdata.data)
+	s.Require().Equal(imagetype.JPEG, imgdata.Format())
 }
 
 func TestImageData(t *testing.T) {
