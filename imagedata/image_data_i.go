@@ -1,4 +1,4 @@
-package imagedatanew
+package imagedata
 
 import (
 	"io"
@@ -8,8 +8,9 @@ import (
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 )
 
-// ImageData is an interface that defines methods for reading image data and metadata
-type ImageData interface {
+// NOTE: This is temporary naming, will be fixed in the subsequent PR
+// ImageDataI is an interface that defines methods for reading image data and metadata
+type ImageDataI interface {
 	io.Closer               // Close closes the image data and releases any resources held by it
 	Reader() io.ReadSeeker  // Reader returns a new ReadSeeker for the image data
 	Meta() imagemeta.Meta   // Meta returns the metadata of the image data
