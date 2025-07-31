@@ -16,7 +16,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/config/loadenv"
 	"github.com/imgproxy/imgproxy/v3/errorreport"
 	"github.com/imgproxy/imgproxy/v3/gliblog"
-	"github.com/imgproxy/imgproxy/v3/imagedata"
+	"github.com/imgproxy/imgproxy/v3/imagedownloader"
 	"github.com/imgproxy/imgproxy/v3/logger"
 	"github.com/imgproxy/imgproxy/v3/memory"
 	"github.com/imgproxy/imgproxy/v3/metrics"
@@ -48,7 +48,7 @@ func initialize() error {
 		return err
 	}
 
-	if err := imagedata.Init(); err != nil {
+	if err := imagedownloader.InitGlobalDownloader(); err != nil {
 		return err
 	}
 

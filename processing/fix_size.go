@@ -3,7 +3,7 @@ package processing
 import (
 	"math"
 
-	"github.com/imgproxy/imgproxy/v3/imagedata"
+	"github.com/imgproxy/imgproxy/v3/imagedatanew"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/imath"
 	"github.com/imgproxy/imgproxy/v3/options"
@@ -91,7 +91,7 @@ func fixIcoSize(img *vips.Image) error {
 	return nil
 }
 
-func fixSize(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata *imagedata.ImageData) error {
+func fixSize(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata imagedatanew.ImageData) error {
 	switch po.Format {
 	case imagetype.WEBP:
 		return fixWebpSize(img)

@@ -1,9 +1,8 @@
-package imagedata
+package imagedatanew
 
 import (
 	"bytes"
 	"compress/gzip"
-	"context"
 	"encoding/base64"
 	"fmt"
 	"io"
@@ -18,14 +17,17 @@ import (
 
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
+	"github.com/imgproxy/imgproxy/v3/imagefetcher"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/security"
+	"github.com/imgproxy/imgproxy/v3/transport"
 )
 
 type ImageDataTestSuite struct {
 	suite.Suite
 
-	server *httptest.Server
+	server  *httptest.Server
+	fetcher *imagefetcher.Fetcher
 
 	status int
 	data   []byte
@@ -39,8 +41,6 @@ func (s *ImageDataTestSuite) SetupSuite() {
 	config.Reset()
 	config.ClientKeepAliveTimeout = 0
 
-	Init()
-
 	f, err := os.Open("../testdata/test1.jpg")
 	s.Require().NoError(err)
 	defer f.Close()
@@ -49,6 +49,12 @@ func (s *ImageDataTestSuite) SetupSuite() {
 	s.Require().NoError(err)
 
 	s.defaultData = data
+
+	tr, err := transport.NewTransport()
+	s.Require().NoError(err)
+
+	s.fetcher, err = imagefetcher.NewFetcher(tr, imagefetcher.NewConfigFromEnv())
+	s.Require().NoError(err)
 
 	s.server = httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		if s.check != nil {
@@ -89,13 +95,47 @@ func (s *ImageDataTestSuite) SetupTest() {
 	s.header.Set("Content-Type", "image/jpeg")
 }
 
-func (s *ImageDataTestSuite) TestDownloadStatusOK() {
-	imgdata, err := Download(context.Background(), s.server.URL, "Test image", DownloadOptions{}, security.DefaultOptions())
-
+func (s *ImageDataTestSuite) readData(i ImageData) []byte {
+	d, err := io.ReadAll(i.Reader())
 	s.Require().NoError(err)
+	return d
+}
+
+// download simulates downloading an image from the given URL and returns ImageData.
+func (s *ImageDataTestSuite) download(url string, secopts security.Options) (ImageData, error) {
+	req, err := s.fetcher.BuildRequest(s.T().Context(), url, make(http.Header), nil)
+	if err != nil {
+		defer req.Cancel()
+		return nil, err
+	}
+
+	res, err := req.FetchImage()
+	if err != nil {
+		if res != nil {
+			res.Body.Close()
+		}
+		return nil, err
+	}
+
+	imgdata, err := NewFromResponse(res, secopts)
+	if err != nil {
+		if res != nil {
+			res.Body.Close()
+		}
+		return nil, err
+	}
+
+	return imgdata, nil
+}
+
+func (s *ImageDataTestSuite) TestDownloadStatusOK() {
+	imgdata, err := s.download(s.server.URL, security.DefaultOptions()) // Ensure the server is running
+	s.Require().NoError(err)
+	defer imgdata.Close()
+
 	s.Require().NotNil(imgdata)
-	s.Require().Equal(s.defaultData, imgdata.Data)
-	s.Require().Equal(imagetype.JPEG, imgdata.Type)
+	s.Require().Equal(s.defaultData, s.readData(imgdata))
+	s.Require().Equal(imagetype.JPEG, imgdata.Format())
 }
 
 func (s *ImageDataTestSuite) TestDownloadStatusPartialContent() {
@@ -157,16 +197,17 @@ func (s *ImageDataTestSuite) TestDownloadStatusPartialContent() {
 		s.Run(tc.name, func() {
 			s.header.Set("Content-Range", tc.contentRange)
 
-			imgdata, err := Download(context.Background(), s.server.URL, "Test image", DownloadOptions{}, security.DefaultOptions())
+			imgdata, err := s.download(s.server.URL, security.DefaultOptions())
 
 			if tc.expectErr {
 				s.Require().Error(err)
 				s.Require().Equal(404, ierrors.Wrap(err, 0).StatusCode())
 			} else {
 				s.Require().NoError(err)
+				defer imgdata.Close()
 				s.Require().NotNil(imgdata)
-				s.Require().Equal(s.defaultData, imgdata.Data)
-				s.Require().Equal(imagetype.JPEG, imgdata.Type)
+				s.Require().Equal(s.defaultData, s.readData(imgdata))
+				s.Require().Equal(imagetype.JPEG, imgdata.Format())
 			}
 		})
 	}
@@ -177,7 +218,7 @@ func (s *ImageDataTestSuite) TestDownloadStatusNotFound() {
 	s.data = []byte("Not Found")
 	s.header.Set("Content-Type", "text/plain")
 
-	imgdata, err := Download(context.Background(), s.server.URL, "Test image", DownloadOptions{}, security.DefaultOptions())
+	imgdata, err := s.download(s.server.URL, security.DefaultOptions())
 
 	s.Require().Error(err)
 	s.Require().Equal(404, ierrors.Wrap(err, 0).StatusCode())
@@ -189,7 +230,7 @@ func (s *ImageDataTestSuite) TestDownloadStatusForbidden() {
 	s.data = []byte("Forbidden")
 	s.header.Set("Content-Type", "text/plain")
 
-	imgdata, err := Download(context.Background(), s.server.URL, "Test image", DownloadOptions{}, security.DefaultOptions())
+	imgdata, err := s.download(s.server.URL, security.DefaultOptions())
 
 	s.Require().Error(err)
 	s.Require().Equal(404, ierrors.Wrap(err, 0).StatusCode())
@@ -201,7 +242,7 @@ func (s *ImageDataTestSuite) TestDownloadStatusInternalServerError() {
 	s.data = []byte("Internal Server Error")
 	s.header.Set("Content-Type", "text/plain")
 
-	imgdata, err := Download(context.Background(), s.server.URL, "Test image", DownloadOptions{}, security.DefaultOptions())
+	imgdata, err := s.download(s.server.URL, security.DefaultOptions())
 
 	s.Require().Error(err)
 	s.Require().Equal(500, ierrors.Wrap(err, 0).StatusCode())
@@ -215,7 +256,7 @@ func (s *ImageDataTestSuite) TestDownloadUnreachable() {
 
 	serverURL := fmt.Sprintf("http://%s", l.Addr().String())
 
-	imgdata, err := Download(context.Background(), serverURL, "Test image", DownloadOptions{}, security.DefaultOptions())
+	imgdata, err := s.download(serverURL, security.DefaultOptions())
 
 	s.Require().Error(err)
 	s.Require().Equal(500, ierrors.Wrap(err, 0).StatusCode())
@@ -225,7 +266,7 @@ func (s *ImageDataTestSuite) TestDownloadUnreachable() {
 func (s *ImageDataTestSuite) TestDownloadInvalidImage() {
 	s.data = []byte("invalid")
 
-	imgdata, err := Download(context.Background(), s.server.URL, "Test image", DownloadOptions{}, security.DefaultOptions())
+	imgdata, err := s.download(s.server.URL, security.DefaultOptions())
 
 	s.Require().Error(err)
 	s.Require().Equal(422, ierrors.Wrap(err, 0).StatusCode())
@@ -235,7 +276,7 @@ func (s *ImageDataTestSuite) TestDownloadInvalidImage() {
 func (s *ImageDataTestSuite) TestDownloadSourceAddressNotAllowed() {
 	config.AllowLoopbackSourceAddresses = false
 
-	imgdata, err := Download(context.Background(), s.server.URL, "Test image", DownloadOptions{}, security.DefaultOptions())
+	imgdata, err := s.download(s.server.URL, security.DefaultOptions())
 
 	s.Require().Error(err)
 	s.Require().Equal(404, ierrors.Wrap(err, 0).StatusCode())
@@ -245,7 +286,7 @@ func (s *ImageDataTestSuite) TestDownloadSourceAddressNotAllowed() {
 func (s *ImageDataTestSuite) TestDownloadImageTooLarge() {
 	config.MaxSrcResolution = 1
 
-	imgdata, err := Download(context.Background(), s.server.URL, "Test image", DownloadOptions{}, security.DefaultOptions())
+	imgdata, err := s.download(s.server.URL, security.DefaultOptions())
 
 	s.Require().Error(err)
 	s.Require().Equal(422, ierrors.Wrap(err, 0).StatusCode())
@@ -255,7 +296,7 @@ func (s *ImageDataTestSuite) TestDownloadImageTooLarge() {
 func (s *ImageDataTestSuite) TestDownloadImageFileTooLarge() {
 	config.MaxSrcFileSize = 1
 
-	imgdata, err := Download(context.Background(), s.server.URL, "Test image", DownloadOptions{}, security.DefaultOptions())
+	imgdata, err := s.download(s.server.URL, security.DefaultOptions())
 
 	s.Require().Error(err)
 	s.Require().Equal(422, ierrors.Wrap(err, 0).StatusCode())
@@ -274,32 +315,33 @@ func (s *ImageDataTestSuite) TestDownloadGzip() {
 	s.data = buf.Bytes()
 	s.header.Set("Content-Encoding", "gzip")
 
-	imgdata, err := Download(context.Background(), s.server.URL, "Test image", DownloadOptions{}, security.DefaultOptions())
+	imgdata, err := s.download(s.server.URL, security.DefaultOptions())
 
 	s.Require().NoError(err)
+	defer imgdata.Close()
 	s.Require().NotNil(imgdata)
-	s.Require().Equal(s.defaultData, imgdata.Data)
-	s.Require().Equal(imagetype.JPEG, imgdata.Type)
+	s.Require().Equal(s.defaultData, s.readData(imgdata))
+	s.Require().Equal(imagetype.JPEG, imgdata.Format())
 }
 
 func (s *ImageDataTestSuite) TestFromFile() {
-	imgdata, err := FromFile("../testdata/test1.jpg", "Test image", security.DefaultOptions())
+	imgdata, err := NewFromFile("../testdata/test1.jpg", http.Header{}, security.DefaultOptions())
 
 	s.Require().NoError(err)
 	s.Require().NotNil(imgdata)
-	s.Require().Equal(s.defaultData, imgdata.Data)
-	s.Require().Equal(imagetype.JPEG, imgdata.Type)
+	s.Require().Equal(s.defaultData, s.readData(imgdata))
+	s.Require().Equal(imagetype.JPEG, imgdata.Format())
 }
 
 func (s *ImageDataTestSuite) TestFromBase64() {
 	b64 := base64.StdEncoding.EncodeToString(s.defaultData)
 
-	imgdata, err := FromBase64(b64, "Test image", security.DefaultOptions())
+	imgdata, err := NewFromBase64(b64, http.Header{}, security.DefaultOptions())
 
 	s.Require().NoError(err)
 	s.Require().NotNil(imgdata)
-	s.Require().Equal(s.defaultData, imgdata.Data)
-	s.Require().Equal(imagetype.JPEG, imgdata.Type)
+	s.Require().Equal(s.defaultData, s.readData(imgdata))
+	s.Require().Equal(imagetype.JPEG, imgdata.Format())
 }
 
 func TestImageData(t *testing.T) {

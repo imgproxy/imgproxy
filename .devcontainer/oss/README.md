@@ -23,6 +23,6 @@ Port `8080` is forwared to the host.
 
 # Test images
 
-[test images repo](https://github.com/imgproxy/test-images.git) will be automatically cloned or pulled to `.devcontainer/images` folder before the container starts.
+[test images repo](https://github.com/imgproxy/test-images.git) is cloned as a submodule in `testdata/test-images`
 
 [Try it](http://localhost:8080/insecure/rs:fit:300:200/plain/local:///kitten.jpg@png). -->

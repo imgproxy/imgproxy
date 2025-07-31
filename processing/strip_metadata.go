@@ -5,7 +5,7 @@ import (
 
 	"github.com/trimmer-io/go-xmp/xmp"
 
-	"github.com/imgproxy/imgproxy/v3/imagedata"
+	"github.com/imgproxy/imgproxy/v3/imagedatanew"
 	"github.com/imgproxy/imgproxy/v3/imagemeta/iptc"
 	"github.com/imgproxy/imgproxy/v3/imagemeta/photoshop"
 	"github.com/imgproxy/imgproxy/v3/options"
@@ -105,7 +105,7 @@ func stripXMP(img *vips.Image) []byte {
 	return xmpData
 }
 
-func stripMetadata(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata *imagedata.ImageData) error {
+func stripMetadata(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata imagedatanew.ImageData) error {
 	if !po.StripMetadata {
 		return nil
 	}

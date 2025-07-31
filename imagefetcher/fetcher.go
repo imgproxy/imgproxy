@@ -20,19 +20,19 @@ const (
 
 // Fetcher is a struct that holds the HTTP client and transport for fetching images
 type Fetcher struct {
-	transport    *transport.Transport // Transport used for making HTTP requests
-	maxRedirects int                  // Maximum number of redirects allowed
+	transport *transport.Transport // Transport used for making HTTP requests
+	config    *Config              // Fetcher configuration
 }
 
 // NewFetcher creates a new ImageFetcher with the provided transport
-func NewFetcher(transport *transport.Transport, maxRedirects int) (*Fetcher, error) {
-	return &Fetcher{transport, maxRedirects}, nil
+func NewFetcher(transport *transport.Transport, config *Config) (*Fetcher, error) {
+	return &Fetcher{transport, config}, nil
 }
 
 // checkRedirect is a method that checks if the number of redirects exceeds the maximum allowed
 func (f *Fetcher) checkRedirect(req *http.Request, via []*http.Request) error {
 	redirects := len(via)
-	if redirects >= f.maxRedirects {
+	if redirects >= f.config.MaxRedirects {
 		return newImageTooManyRedirectsError(redirects)
 	}
 	return nil

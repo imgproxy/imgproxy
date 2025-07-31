@@ -2,14 +2,26 @@ package svg
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"strings"
 
 	"github.com/tdewolff/parse/v2"
 	"github.com/tdewolff/parse/v2/xml"
 
+	"github.com/imgproxy/imgproxy/v3/bufpool"
+	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 )
+
+var svgBufPool = bufpool.New("svg", config.Workers, config.DownloadBufferSize)
+
+func BorrowBuffer() (*bytes.Buffer, context.CancelFunc) {
+	buf := svgBufPool.Get(0, false)
+	cancel := func() { svgBufPool.Put(buf) }
+
+	return buf, cancel
+}
 
 func cloneHeaders(src map[string]string) map[string]string {
 	if src == nil {
@@ -28,7 +40,7 @@ func Sanitize(data *imagedata.ImageData) (*imagedata.ImageData, error) {
 	r := bytes.NewReader(data.Data)
 	l := xml.NewLexer(parse.NewInput(r))
 
-	buf, cancel := imagedata.BorrowBuffer()
+	buf, cancel := BorrowBuffer()
 
 	ignoreTag := 0
 

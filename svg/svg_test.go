@@ -19,8 +19,8 @@ type SvgTestSuite struct {
 func (s *SvgTestSuite) SetupSuite() {
 	config.Reset()
 
-	err := imagedata.Init()
-	s.Require().NoError(err)
+	// err := imagedata.Init()
+	// s.Require().NoError(err)
 }
 
 func (s *SvgTestSuite) readTestFile(name string) *imagedata.ImageData {

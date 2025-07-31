@@ -269,7 +269,7 @@ func (ab *AsyncBuffer) Error() error {
 // Chunk must be available when this method is called.
 // Returns the number of bytes copied to the slice or 0 if chunk has no data
 // (eg. offset is beyond the end of the stream).
-func (ab *AsyncBuffer) readChunkAt(p []byte, off, rem int64) int {
+func (ab *AsyncBuffer) readChunkAt(p []byte, off int64) int {
 	// If the chunk is not available, we return 0
 	if off >= ab.len.Load() {
 		return 0
@@ -286,17 +286,9 @@ func (ab *AsyncBuffer) readChunkAt(p []byte, off, rem int64) int {
 		return 0
 	}
 
-	// How many bytes we could read from the chunk. No more than:
-	// - left to read totally
-	// - chunk size minus the start offset
-	// - chunk has
-	size := min(rem, ChunkSize-startOffset, int64(len(chunk.data)))
-
-	if size == 0 {
-		return 0
-	}
-
-	return copy(p, chunk.data[startOffset:startOffset+size])
+	// Copy data to the target slice. The number of bytes to copy is limited by the
+	// size of the target slice and the size of the data in the chunk.
+	return copy(p, chunk.data[startOffset:])
 }
 
 // readAt reads data from the AsyncBuffer at the given offset.
@@ -333,7 +325,7 @@ func (ab *AsyncBuffer) readAt(p []byte, off int64) (int, error) {
 	}
 
 	// Read data from the first chunk
-	n := ab.readChunkAt(p, off, size)
+	n := ab.readChunkAt(p, off)
 	if n == 0 {
 		return 0, io.EOF // Failed to read any data: means we tried to read beyond the end of the stream
 	}
@@ -350,7 +342,7 @@ func (ab *AsyncBuffer) readAt(p []byte, off int64) (int, error) {
 		}
 
 		// Read data from the next chunk
-		nX := ab.readChunkAt(p[n:], off, size)
+		nX := ab.readChunkAt(p[n:], off)
 		n += nX
 		size -= int64(nX)
 		off += int64(nX)
@@ -402,13 +394,11 @@ func (ab *AsyncBuffer) Reader() *Reader {
 // Read reads data from the AsyncBuffer.
 func (r *Reader) Read(p []byte) (int, error) {
 	n, err := r.ab.readAt(p, r.pos)
-	if err != nil {
-		return n, err
+	if err == nil {
+		r.pos += int64(n)
 	}
 
-	r.pos += int64(n)
-
-	return n, nil
+	return n, err
 }
 
 // Seek sets the position of the reader to the given offset and returns the new position

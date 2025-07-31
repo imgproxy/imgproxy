@@ -10,10 +10,11 @@ import (
 	"sync"
 
 	log "github.com/sirupsen/logrus"
+	"go.withmatt.com/httpheaders"
 
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/cookies"
-	"github.com/imgproxy/imgproxy/v3/imagedata"
+	"github.com/imgproxy/imgproxy/v3/imagedownloader"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/metrics"
 	"github.com/imgproxy/imgproxy/v3/metrics/stats"
@@ -69,7 +70,7 @@ func streamOriginImage(ctx context.Context, reqID string, r *http.Request, rw ht
 		checkErr(ctx, "streaming", err)
 	}
 
-	req, err := imagedata.Fetcher.BuildRequest(r.Context(), imageURL, imgRequestHeader, cookieJar)
+	req, err := imagedownloader.Fetcher.BuildRequest(r.Context(), imageURL, imgRequestHeader, cookieJar)
 	defer req.Cancel()
 	checkErr(ctx, "streaming", err)
 
@@ -113,10 +114,11 @@ func streamOriginImage(ctx context.Context, reqID string, r *http.Request, rw ht
 		rw.Header().Set("Content-Disposition", imagetype.ContentDisposition(filename, ext, po.ReturnAttachment))
 	}
 
-	setCacheControl(rw, po.Expires, map[string]string{
-		"Cache-Control": res.Header.Get("Cache-Control"),
-		"Expires":       res.Header.Get("Expires"),
-	})
+	h := make(http.Header)
+	h.Set(httpheaders.ContentType, res.Header.Get(httpheaders.ContentType))
+	h.Set(httpheaders.Expires, res.Header.Get(httpheaders.Expires))
+
+	setCacheControl(rw, po.Expires, h)
 	setCanonical(rw, imageURL)
 	rw.Header().Set("Content-Security-Policy", "script-src 'none'")
 

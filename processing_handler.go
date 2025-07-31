@@ -12,6 +12,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	"go.withmatt.com/httpheaders"
 	"golang.org/x/sync/semaphore"
 
 	"github.com/imgproxy/imgproxy/v3/config"
@@ -20,6 +21,8 @@ import (
 	"github.com/imgproxy/imgproxy/v3/etag"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
+	"github.com/imgproxy/imgproxy/v3/imagedatanew"
+	"github.com/imgproxy/imgproxy/v3/imagedownloader"
 	"github.com/imgproxy/imgproxy/v3/imagefetcher"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/imath"
@@ -58,9 +61,10 @@ func initProcessingHandler() {
 	}
 
 	headerVaryValue = strings.Join(vary, ", ")
+
 }
 
-func setCacheControl(rw http.ResponseWriter, force *time.Time, originHeaders map[string]string) {
+func setCacheControl(rw http.ResponseWriter, force *time.Time, originHeaders http.Header) {
 	ttl := -1
 
 	if _, ok := originHeaders["Fallback-Image"]; ok && config.FallbackImageTTL > 0 {
@@ -72,12 +76,12 @@ func setCacheControl(rw http.ResponseWriter, force *time.Time, originHeaders map
 	}
 
 	if config.CacheControlPassthrough && ttl < 0 && originHeaders != nil {
-		if val, ok := originHeaders["Cache-Control"]; ok && len(val) > 0 {
+		if val := originHeaders.Get(httpheaders.CacheControl); len(val) > 0 {
 			rw.Header().Set("Cache-Control", val)
 			return
 		}
 
-		if val, ok := originHeaders["Expires"]; ok && len(val) > 0 {
+		if val := originHeaders.Get("Expires"); len(val) > 0 {
 			if t, err := time.Parse(http.TimeFormat, val); err == nil {
 				ttl = imath.Max(0, int(time.Until(t).Seconds()))
 			}
@@ -95,9 +99,9 @@ func setCacheControl(rw http.ResponseWriter, force *time.Time, originHeaders map
 	}
 }
 
-func setLastModified(rw http.ResponseWriter, originHeaders map[string]string) {
+func setLastModified(rw http.ResponseWriter, originHeaders http.Header) {
 	if config.LastModifiedEnabled {
-		if val, ok := originHeaders["Last-Modified"]; ok && len(val) != 0 {
+		if val := originHeaders.Get("Last-Modified"); len(val) != 0 {
 			rw.Header().Set("Last-Modified", val)
 		}
 	}
@@ -118,7 +122,7 @@ func setCanonical(rw http.ResponseWriter, originURL string) {
 	}
 }
 
-func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, statusCode int, resultData *imagedata.ImageData, po *options.ProcessingOptions, originURL string, originData *imagedata.ImageData) {
+func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, statusCode int, resultData *imagedata.ImageData, po *options.ProcessingOptions, originURL string, originData imagedatanew.ImageData) {
 	var contentDisposition string
 	if len(po.Filename) > 0 {
 		contentDisposition = resultData.Type.ContentDisposition(po.Filename, po.ReturnAttachment)
@@ -129,13 +133,14 @@ func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, sta
 	rw.Header().Set("Content-Type", resultData.Type.Mime())
 	rw.Header().Set("Content-Disposition", contentDisposition)
 
-	setCacheControl(rw, po.Expires, originData.Headers)
-	setLastModified(rw, originData.Headers)
+	setCacheControl(rw, po.Expires, originData.Headers())
+	setLastModified(rw, originData.Headers())
 	setVary(rw)
 	setCanonical(rw, originURL)
 
 	if config.EnableDebugHeaders {
-		rw.Header().Set("X-Origin-Content-Length", strconv.Itoa(len(originData.Data)))
+		// TODO: RESTORE
+		// rw.Header().Set("X-Origin-Content-Length", strconv.Itoa(len(originData.Data)))
 		rw.Header().Set("X-Origin-Width", resultData.Headers["X-Origin-Width"])
 		rw.Header().Set("X-Origin-Height", resultData.Headers["X-Origin-Height"])
 		rw.Header().Set("X-Result-Width", resultData.Headers["X-Result-Width"])
@@ -167,7 +172,7 @@ func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, sta
 	)
 }
 
-func respondWithNotModified(reqID string, r *http.Request, rw http.ResponseWriter, po *options.ProcessingOptions, originURL string, originHeaders map[string]string) {
+func respondWithNotModified(reqID string, r *http.Request, rw http.ResponseWriter, po *options.ProcessingOptions, originURL string, originHeaders http.Header) {
 	setCacheControl(rw, po.Expires, originHeaders)
 	setVary(rw)
 
@@ -330,13 +335,13 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 
 	statusCode := http.StatusOK
 
-	originData, err := func() (*imagedata.ImageData, error) {
+	originData, err := func() (imagedatanew.ImageData, error) {
 		defer metrics.StartDownloadingSegment(ctx, metrics.Meta{
 			metrics.MetaSourceImageURL:    metricsMeta[metrics.MetaSourceImageURL],
 			metrics.MetaSourceImageOrigin: metricsMeta[metrics.MetaSourceImageOrigin],
 		})()
 
-		downloadOpts := imagedata.DownloadOptions{
+		downloadOpts := imagedownloader.DownloadOptions{
 			Header:    imgRequestHeader,
 			CookieJar: nil,
 		}
@@ -346,7 +351,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 			checkErr(ctx, "download", err)
 		}
 
-		return imagedata.Download(ctx, imageURL, "source image", downloadOpts, po.SecurityOptions)
+		return imagedownloader.D.DownloadWithDesc(ctx, imageURL, "source image", downloadOpts, po.SecurityOptions)
 	}()
 
 	var nmErr imagefetcher.NotModifiedError
@@ -357,12 +362,12 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 
 	case errors.As(err, &nmErr):
 		if config.ETagEnabled && len(etagHandler.ImageEtagExpected()) != 0 {
-			rw.Header().Set("ETag", etagHandler.GenerateExpectedETag())
+			rw.Header().Set("Etag", etagHandler.GenerateExpectedETag())
 		}
 
-		h := make(map[string]string)
+		h := make(http.Header)
 		for k := range nmErr.Headers() {
-			h[k] = nmErr.Headers().Get(k)
+			h.Set(k, nmErr.Headers().Get(k))
 		}
 
 		respondWithNotModified(reqID, r, rw, po, imageURL, h)
@@ -380,7 +385,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 
 		sendErr(ctx, "download", ierr)
 
-		if imagedata.FallbackImage == nil {
+		if processing.FallbackImage == nil {
 			panic(ierr)
 		}
 
@@ -398,18 +403,29 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 			statusCode = ierr.StatusCode()
 		}
 
-		originData = imagedata.FallbackImage
+		fi, _, ferr := processing.FallbackImage.Get(ctx, po)
+		if ferr != nil {
+			sendErrAndPanic(ctx, "fallback_image", err)
+		}
+
+		originData = fi
+
+		if config.FallbackImageTTL > 0 {
+			// Will be removed along with the headers
+			//nolint:staticcheck
+			originData.Headers().Set("Fallback-Image", "1")
+		}
 	}
 
 	checkErr(ctx, "timeout", router.CheckTimeout(ctx))
 
 	if config.ETagEnabled && statusCode == http.StatusOK {
-		imgDataMatch := etagHandler.SetActualImageData(originData)
+		imgDataMatch := etagHandler.SetActualImageData(imagedata.From(originData))
 
-		rw.Header().Set("ETag", etagHandler.GenerateActualETag())
+		rw.Header().Set("Etag", etagHandler.GenerateActualETag())
 
 		if imgDataMatch && etagHandler.ProcessingOptionsMatch() {
-			respondWithNotModified(reqID, r, rw, po, imageURL, originData.Headers)
+			respondWithNotModified(reqID, r, rw, po, imageURL, originData.Headers())
 			return
 		}
 	}
@@ -419,13 +435,13 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	// Skip processing svg with unknown or the same destination imageType
 	// if it's not forced by AlwaysRasterizeSvg option
 	// Also skip processing if the format is in SkipProcessingFormats
-	shouldSkipProcessing := (originData.Type == po.Format || po.Format == imagetype.Unknown) &&
-		(slices.Contains(po.SkipProcessingFormats, originData.Type) ||
-			originData.Type == imagetype.SVG && !config.AlwaysRasterizeSvg)
+	shouldSkipProcessing := (originData.Format() == po.Format || po.Format == imagetype.Unknown) &&
+		(slices.Contains(po.SkipProcessingFormats, originData.Format()) ||
+			originData.Format() == imagetype.SVG && !config.AlwaysRasterizeSvg)
 
 	if shouldSkipProcessing {
-		if originData.Type == imagetype.SVG && config.SanitizeSvg {
-			sanitized, svgErr := svg.Sanitize(originData)
+		if originData.Format() == imagetype.SVG && config.SanitizeSvg {
+			sanitized, svgErr := svg.Sanitize(imagedata.From(originData))
 			checkErr(ctx, "svg_processing", svgErr)
 
 			defer sanitized.Close()
@@ -434,14 +450,14 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		respondWithImage(reqID, r, rw, statusCode, originData, po, imageURL, originData)
+		respondWithImage(reqID, r, rw, statusCode, imagedata.From(originData), po, imageURL, originData)
 		return
 	}
 
-	if !vips.SupportsLoad(originData.Type) {
+	if !vips.SupportsLoad(originData.Format()) {
 		sendErrAndPanic(ctx, "processing", newInvalidURLErrorf(
 			http.StatusUnprocessableEntity,
-			"Source image format is not supported: %s", originData.Type,
+			"Source image format is not supported: %s", originData.Format(),
 		))
 	}
 

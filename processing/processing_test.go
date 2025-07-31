@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"testing"
@@ -13,6 +14,7 @@ import (
 
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
+	"github.com/imgproxy/imgproxy/v3/imagedatanew"
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/security"
 	"github.com/imgproxy/imgproxy/v3/vips"
@@ -25,13 +27,13 @@ type ProcessingTestSuite struct {
 func (s *ProcessingTestSuite) SetupSuite() {
 	config.Reset()
 
-	s.Require().NoError(imagedata.Init())
+	// s.Require().NoError(imagedata.Init())
 	s.Require().NoError(vips.Init())
 
 	logrus.SetOutput(io.Discard)
 }
 
-func (s *ProcessingTestSuite) openFile(name string) *imagedata.ImageData {
+func (s *ProcessingTestSuite) openFile(name string) imagedatanew.ImageData {
 	secopts := security.Options{
 		MaxSrcResolution:            10 * 1024 * 1024,
 		MaxSrcFileSize:              10 * 1024 * 1024,
@@ -43,7 +45,7 @@ func (s *ProcessingTestSuite) openFile(name string) *imagedata.ImageData {
 	s.Require().NoError(err)
 	path := filepath.Join(wd, "..", "testdata", name)
 
-	imagedata, err := imagedata.FromFile(path, "test image", secopts)
+	imagedata, err := imagedatanew.NewFromFile(path, make(http.Header), secopts)
 	s.Require().NoError(err)
 
 	return imagedata

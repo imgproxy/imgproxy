@@ -3,7 +3,7 @@ package processing
 import (
 	"context"
 
-	"github.com/imgproxy/imgproxy/v3/imagedata"
+	"github.com/imgproxy/imgproxy/v3/imagedatanew"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/router"
@@ -60,10 +60,10 @@ type pipelineContext struct {
 	extendAspectRatioHeight int
 }
 
-type pipelineStep func(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata *imagedata.ImageData) error
+type pipelineStep func(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata imagedatanew.ImageData) error
 type pipeline []pipelineStep
 
-func (p pipeline) Run(ctx context.Context, img *vips.Image, po *options.ProcessingOptions, imgdata *imagedata.ImageData) error {
+func (p pipeline) Run(ctx context.Context, img *vips.Image, po *options.ProcessingOptions, imgdata imagedatanew.ImageData) error {
 	pctx := pipelineContext{
 		ctx: ctx,
 

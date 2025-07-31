@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"errors"
 	"io"
+	"os"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -345,4 +346,16 @@ func TestAsyncBufferReadAsync(t *testing.T) {
 	n, err = asyncBuffer.readAt(target, ChunkSize*3)
 	require.ErrorIs(t, io.EOF, err)
 	assert.Equal(t, 0, n)
+}
+
+// TestAsyncBufferReadAllCompability tests that ReadAll methods works as expected
+func TestAsyncBufferReadAllCompability(t *testing.T) {
+	source, err := os.ReadFile("../testdata/test1.jpg")
+	require.NoError(t, err)
+	asyncBuffer := FromReader(bytes.NewReader(source))
+	defer asyncBuffer.Close()
+
+	b, err := io.ReadAll(asyncBuffer.Reader())
+	require.NoError(t, err)
+	require.Len(t, b, len(source))
 }

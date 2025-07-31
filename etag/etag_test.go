@@ -19,7 +19,7 @@ var (
 
 	imgWithETag = imagedata.ImageData{
 		Data:    []byte("Hello Test"),
-		Headers: map[string]string{"ETag": `"loremipsumdolor"`},
+		Headers: map[string]string{"Etag": `"loremipsumdolor"`},
 	}
 	imgWithoutETag = imagedata.ImageData{
 		Data: []byte("Hello Test"),
@@ -93,7 +93,7 @@ func (s *EtagTestSuite) TestImageETagExpectedPresent() {
 	s.h.ParseExpectedETag(etagReq)
 
 	//nolint:testifylint // False-positive expected-actual
-	s.Require().Equal(imgWithETag.Headers["ETag"], s.h.ImageEtagExpected())
+	s.Require().Equal(imgWithETag.Headers["Etag"], s.h.ImageEtagExpected())
 }
 
 func (s *EtagTestSuite) TestImageETagExpectedBlank() {

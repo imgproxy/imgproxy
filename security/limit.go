@@ -3,6 +3,7 @@ package security
 import (
 	"io"
 	"net/http"
+	"os"
 )
 
 // hardLimitReadCloser is a wrapper around io.ReadCloser
@@ -12,6 +13,7 @@ type hardLimitReadCloser struct {
 	left int
 }
 
+// Read reads data from the underlying reader, limiting the number of bytes read
 func (lr *hardLimitReadCloser) Read(p []byte) (n int, err error) {
 	if lr.left <= 0 {
 		return 0, newFileSizeError()
@@ -24,8 +26,29 @@ func (lr *hardLimitReadCloser) Read(p []byte) (n int, err error) {
 	return
 }
 
+// Close closes the underlying reader
 func (lr *hardLimitReadCloser) Close() error {
 	return lr.r.Close()
+}
+
+// LimitFileSize limits the size of the file to MaxSrcFileSize (if set).
+// It calls f.Stat() to get the file to get its size and returns an error
+// if the size exceeds MaxSrcFileSize.
+func LimitFileSize(f *os.File, opts Options) (*os.File, error) {
+	if opts.MaxSrcFileSize == 0 {
+		return f, nil
+	}
+
+	s, err := f.Stat()
+	if err != nil {
+		return nil, err
+	}
+
+	if int(s.Size()) > opts.MaxSrcFileSize {
+		return nil, newFileSizeError()
+	}
+
+	return f, nil
 }
 
 // LimitResponseSize limits the size of the response body to MaxSrcFileSize (if set).
