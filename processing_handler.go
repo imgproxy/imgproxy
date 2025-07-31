@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"slices"
@@ -121,12 +122,12 @@ func setCanonical(rw http.ResponseWriter, originURL string) {
 func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, statusCode int, resultData *imagedata.ImageData, po *options.ProcessingOptions, originURL string, originData *imagedata.ImageData) {
 	var contentDisposition string
 	if len(po.Filename) > 0 {
-		contentDisposition = resultData.Type.ContentDisposition(po.Filename, po.ReturnAttachment)
+		contentDisposition = resultData.Format().ContentDisposition(po.Filename, po.ReturnAttachment)
 	} else {
-		contentDisposition = resultData.Type.ContentDispositionFromURL(originURL, po.ReturnAttachment)
+		contentDisposition = resultData.Format().ContentDispositionFromURL(originURL, po.ReturnAttachment)
 	}
 
-	rw.Header().Set("Content-Type", resultData.Type.Mime())
+	rw.Header().Set("Content-Type", resultData.Format().Mime())
 	rw.Header().Set("Content-Disposition", contentDisposition)
 
 	setCacheControl(rw, po.Expires, originData.Headers)
@@ -135,7 +136,12 @@ func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, sta
 	setCanonical(rw, originURL)
 
 	if config.EnableDebugHeaders {
-		rw.Header().Set("X-Origin-Content-Length", strconv.Itoa(len(originData.Data)))
+		originSize, err := originData.Size()
+		if err != nil {
+			checkErr(r.Context(), "image_data_size", err)
+		}
+
+		rw.Header().Set("X-Origin-Content-Length", strconv.Itoa(originSize))
 		rw.Header().Set("X-Origin-Width", resultData.Headers["X-Origin-Width"])
 		rw.Header().Set("X-Origin-Height", resultData.Headers["X-Origin-Height"])
 		rw.Header().Set("X-Result-Width", resultData.Headers["X-Result-Width"])
@@ -144,9 +150,15 @@ func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, sta
 
 	rw.Header().Set("Content-Security-Policy", "script-src 'none'")
 
-	rw.Header().Set("Content-Length", strconv.Itoa(len(resultData.Data)))
+	resultSize, err := resultData.Size()
+	if err != nil {
+		checkErr(r.Context(), "image_data_size", err)
+	}
+
+	rw.Header().Set("Content-Length", strconv.Itoa(resultSize))
 	rw.WriteHeader(statusCode)
-	_, err := rw.Write(resultData.Data)
+
+	_, err = io.Copy(rw, resultData.Reader())
 
 	var ierr *ierrors.Error
 	if err != nil {
@@ -404,13 +416,14 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	checkErr(ctx, "timeout", router.CheckTimeout(ctx))
 
 	if config.ETagEnabled && statusCode == http.StatusOK {
-		imgDataMatch := etagHandler.SetActualImageData(originData)
+		imgDataMatch, terr := etagHandler.SetActualImageData(originData)
+		if terr == nil {
+			rw.Header().Set("ETag", etagHandler.GenerateActualETag())
 
-		rw.Header().Set("ETag", etagHandler.GenerateActualETag())
-
-		if imgDataMatch && etagHandler.ProcessingOptionsMatch() {
-			respondWithNotModified(reqID, r, rw, po, imageURL, originData.Headers)
-			return
+			if imgDataMatch && etagHandler.ProcessingOptionsMatch() {
+				respondWithNotModified(reqID, r, rw, po, imageURL, originData.Headers)
+				return
+			}
 		}
 	}
 
@@ -419,12 +432,12 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	// Skip processing svg with unknown or the same destination imageType
 	// if it's not forced by AlwaysRasterizeSvg option
 	// Also skip processing if the format is in SkipProcessingFormats
-	shouldSkipProcessing := (originData.Type == po.Format || po.Format == imagetype.Unknown) &&
-		(slices.Contains(po.SkipProcessingFormats, originData.Type) ||
-			originData.Type == imagetype.SVG && !config.AlwaysRasterizeSvg)
+	shouldSkipProcessing := (originData.Format() == po.Format || po.Format == imagetype.Unknown) &&
+		(slices.Contains(po.SkipProcessingFormats, originData.Format()) ||
+			originData.Format() == imagetype.SVG && !config.AlwaysRasterizeSvg)
 
 	if shouldSkipProcessing {
-		if originData.Type == imagetype.SVG && config.SanitizeSvg {
+		if originData.Format() == imagetype.SVG && config.SanitizeSvg {
 			sanitized, svgErr := svg.Sanitize(originData)
 			checkErr(ctx, "svg_processing", svgErr)
 
@@ -438,10 +451,10 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !vips.SupportsLoad(originData.Type) {
+	if !vips.SupportsLoad(originData.Format()) {
 		sendErrAndPanic(ctx, "processing", newInvalidURLErrorf(
 			http.StatusUnprocessableEntity,
-			"Source image format is not supported: %s", originData.Type,
+			"Source image format is not supported: %s", originData.Format(),
 		))
 	}
 

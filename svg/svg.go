@@ -1,8 +1,8 @@
 package svg
 
 import (
-	"bytes"
 	"io"
+	"net/http"
 	"strings"
 
 	"github.com/tdewolff/parse/v2"
@@ -11,21 +11,17 @@ import (
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 )
 
-func cloneHeaders(src map[string]string) map[string]string {
-	if src == nil {
-		return nil
-	}
-
-	dst := make(map[string]string, len(src))
+func cloneHeaders(src map[string]string) http.Header {
+	h := make(http.Header, len(src))
 	for k, v := range src {
-		dst[k] = v
+		h.Set(k, v)
 	}
 
-	return dst
+	return h
 }
 
 func Sanitize(data *imagedata.ImageData) (*imagedata.ImageData, error) {
-	r := bytes.NewReader(data.Data)
+	r := data.Reader()
 	l := xml.NewLexer(parse.NewInput(r))
 
 	buf, cancel := imagedata.BorrowBuffer()
@@ -58,14 +54,13 @@ func Sanitize(data *imagedata.ImageData) (*imagedata.ImageData, error) {
 				return nil, l.Err()
 			}
 
-			newData := imagedata.ImageData{
-				Data:    buf.Bytes(),
-				Type:    data.Type,
-				Headers: cloneHeaders(data.Headers),
+			newData, err := imagedata.NewFromBytes(buf.Bytes(), cloneHeaders(data.Headers))
+			if err != nil {
+				return nil, err
 			}
 			newData.SetCancel(cancel)
 
-			return &newData, nil
+			return newData, nil
 		case xml.StartTagToken:
 			curTagName = strings.ToLower(string(l.Text()))
 

@@ -9,7 +9,6 @@ package vips
 */
 import "C"
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"math"
@@ -359,11 +358,11 @@ func (img *Image) Load(imgdata *imagedata.ImageData, shrink int, scale float64, 
 
 	err := C.int(0)
 
-	reader := bytes.NewReader(imgdata.Data)
+	reader := imgdata.Reader()
 	source := newVipsImgproxySource(reader)
 	defer C.unref_imgproxy_source(source)
 
-	switch imgdata.Type {
+	switch imgdata.Format() {
 	case imagetype.JPEG:
 		err = C.vips_jpegload_source_go(source, C.int(shrink), &tmp)
 	case imagetype.JXL:
@@ -393,7 +392,7 @@ func (img *Image) Load(imgdata *imagedata.ImageData, shrink int, scale float64, 
 
 	C.swap_and_clear(&img.VipsImage, tmp)
 
-	if imgdata.Type == imagetype.TIFF {
+	if imgdata.Format() == imagetype.TIFF {
 		if C.vips_fix_float_tiff(img.VipsImage, &tmp) == 0 {
 			C.swap_and_clear(&img.VipsImage, tmp)
 		} else {
@@ -405,13 +404,13 @@ func (img *Image) Load(imgdata *imagedata.ImageData, shrink int, scale float64, 
 }
 
 func (img *Image) LoadThumbnail(imgdata *imagedata.ImageData) error {
-	if imgdata.Type != imagetype.HEIC && imgdata.Type != imagetype.AVIF {
+	if imgdata.Format() != imagetype.HEIC && imgdata.Format() != imagetype.AVIF {
 		return newVipsError("Usupported image type to load thumbnail")
 	}
 
 	var tmp *C.VipsImage
 
-	reader := bytes.NewReader(imgdata.Data)
+	reader := imgdata.Reader()
 	source := newVipsImgproxySource(reader)
 	defer C.unref_imgproxy_source(source)
 
@@ -469,14 +468,17 @@ func (img *Image) Save(imgtype imagetype.Type, quality int) (*imagedata.ImageDat
 	var blob_ptr = C.vips_blob_get(target.blob, &imgsize)
 	var ptr unsafe.Pointer = unsafe.Pointer(blob_ptr)
 
-	imgdata := imagedata.ImageData{
-		Type: imgtype,
-		Data: ptrToBytes(ptr, int(imgsize)),
+	b := ptrToBytes(ptr, int(imgsize))
+
+	imgdata, ierr := imagedata.NewFromBytes(b, make(http.Header))
+	if ierr != nil {
+		cancel()
+		return nil, ierr
 	}
 
 	imgdata.SetCancel(cancel)
 
-	return &imgdata, nil
+	return imgdata, nil
 }
 
 func (img *Image) Clear() {

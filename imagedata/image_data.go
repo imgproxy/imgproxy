@@ -1,15 +1,18 @@
 package imagedata
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 	"sync"
 
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
+	"github.com/imgproxy/imgproxy/v3/imagemeta"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/security"
 )
@@ -20,20 +23,43 @@ var (
 )
 
 type ImageData struct {
-	Type    imagetype.Type
-	Data    []byte
+	meta    imagemeta.Meta
+	data    []byte
 	Headers map[string]string
 
 	cancel     context.CancelFunc
 	cancelOnce sync.Once
 }
 
-func (d *ImageData) Close() {
+func (d *ImageData) Close() error {
 	d.cancelOnce.Do(func() {
 		if d.cancel != nil {
 			d.cancel()
 		}
 	})
+
+	return nil
+}
+
+// Meta returns the image metadata
+func (d *ImageData) Meta() imagemeta.Meta {
+	return d.meta
+}
+
+// Format returns the image format based on the metadata
+func (d *ImageData) Format() imagetype.Type {
+	return d.meta.Format()
+}
+
+// Reader returns an io.ReadSeeker for the image data
+func (d *ImageData) Reader() io.ReadSeeker {
+	return bytes.NewReader(d.data)
+}
+
+// Size returns the size of the image data in bytes.
+// NOTE: asyncbuffer implementation will .Wait() for the data to be fully read
+func (d *ImageData) Size() (int, error) {
+	return len(d.data), nil
 }
 
 func (d *ImageData) SetCancel(cancel context.CancelFunc) {

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"hash"
+	"io"
 	"net/textproto"
 	"strings"
 	"sync"
@@ -105,7 +106,7 @@ func (h *Handler) ImageEtagExpected() string {
 	return h.imgEtagExpected
 }
 
-func (h *Handler) SetActualImageData(imgdata *imagedata.ImageData) bool {
+func (h *Handler) SetActualImageData(imgdata *imagedata.ImageData) (bool, error) {
 	var haveActualImgETag bool
 	h.imgEtagActual, haveActualImgETag = imgdata.Headers["ETag"]
 	haveActualImgETag = haveActualImgETag && len(h.imgEtagActual) > 0
@@ -113,7 +114,7 @@ func (h *Handler) SetActualImageData(imgdata *imagedata.ImageData) bool {
 	// Just in case server didn't check ETag properly and returned the same one
 	// as we expected
 	if haveActualImgETag && h.imgEtagExpected == h.imgEtagActual {
-		return true
+		return true, nil
 	}
 
 	haveExpectedImgHash := len(h.imgHashExpected) != 0
@@ -123,14 +124,18 @@ func (h *Handler) SetActualImageData(imgdata *imagedata.ImageData) bool {
 		defer eTagCalcPool.Put(c)
 
 		c.hash.Reset()
-		c.hash.Write(imgdata.Data)
+
+		_, err := io.Copy(c.hash, imgdata.Reader())
+		if err != nil {
+			return false, err
+		}
 
 		h.imgHashActual = base64.RawURLEncoding.EncodeToString(c.hash.Sum(nil))
 
-		return haveExpectedImgHash && h.imgHashActual == h.imgHashExpected
+		return haveExpectedImgHash && h.imgHashActual == h.imgHashExpected, nil
 	}
 
-	return false
+	return false, nil
 }
 
 func (h *Handler) GenerateActualETag() string {

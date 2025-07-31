@@ -251,7 +251,7 @@ func (pctx *pipelineContext) limitScale(widthToScale, heightToScale int, po *opt
 func prepare(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata *imagedata.ImageData) error {
 	pctx.imgtype = imagetype.Unknown
 	if imgdata != nil {
-		pctx.imgtype = imgdata.Type
+		pctx.imgtype = imgdata.Format()
 	}
 
 	pctx.srcWidth, pctx.srcHeight, pctx.angle, pctx.flip = extractMeta(img, po.Rotate, po.AutoRotate)
@@ -266,7 +266,7 @@ func prepare(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptio
 
 	// The size of a vector image is not checked during download, yet it can be very large.
 	// So we should scale it down to the maximum allowed resolution
-	if !pctx.trimmed && imgdata != nil && imgdata.Type.IsVector() && !po.Enlarge {
+	if !pctx.trimmed && imgdata != nil && imgdata.Format().IsVector() && !po.Enlarge {
 		resolution := imath.Round((float64(img.Width()*img.Height()) * pctx.wscale * pctx.hscale))
 		if resolution > po.SecurityOptions.MaxSrcResolution {
 			scale := math.Sqrt(float64(po.SecurityOptions.MaxSrcResolution) / float64(resolution))

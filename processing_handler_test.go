@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"net/http"
@@ -25,6 +24,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/router"
 	"github.com/imgproxy/imgproxy/v3/svg"
+	"github.com/imgproxy/imgproxy/v3/testutil"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
@@ -86,8 +86,21 @@ func (s *ProcessingHandlerTestSuite) readTestFile(name string) []byte {
 	return data
 }
 
-func (s *ProcessingHandlerTestSuite) readBody(res *http.Response) []byte {
-	data, err := io.ReadAll(res.Body)
+func (s *ProcessingHandlerTestSuite) readTestImageData(name string) *imagedata.ImageData {
+	wd, err := os.Getwd()
+	s.Require().NoError(err)
+
+	data, err := os.ReadFile(filepath.Join(wd, "testdata", name))
+	s.Require().NoError(err)
+
+	imgdata, err := imagedata.NewFromBytes(data, make(http.Header))
+	s.Require().NoError(err)
+
+	return imgdata
+}
+
+func (s *ProcessingHandlerTestSuite) readImageData(imgdata *imagedata.ImageData) []byte {
+	data, err := io.ReadAll(imgdata.Reader())
 	s.Require().NoError(err)
 	return data
 }
@@ -100,10 +113,7 @@ func (s *ProcessingHandlerTestSuite) sampleETagData(imgETag string) (string, *im
 	po.Width = 4
 	po.Height = 4
 
-	imgdata := imagedata.ImageData{
-		Type: imagetype.PNG,
-		Data: s.readTestFile("test1.png"),
-	}
+	imgdata := s.readTestImageData("test1.png")
 
 	if len(imgETag) != 0 {
 		imgdata.Headers = map[string]string{"ETag": imgETag}
@@ -112,8 +122,8 @@ func (s *ProcessingHandlerTestSuite) sampleETagData(imgETag string) (string, *im
 	var h etag.Handler
 
 	h.SetActualProcessingOptions(po)
-	h.SetActualImageData(&imgdata)
-	return poStr, &imgdata, h.GenerateActualETag()
+	h.SetActualImageData(imgdata)
+	return poStr, imgdata, h.GenerateActualETag()
 }
 
 func (s *ProcessingHandlerTestSuite) TestRequest() {
@@ -262,10 +272,9 @@ func (s *ProcessingHandlerTestSuite) TestSkipProcessingConfig() {
 
 	s.Require().Equal(200, res.StatusCode)
 
-	actual := s.readBody(res)
-	expected := s.readTestFile("test1.png")
+	expected := s.readTestImageData("test1.png")
 
-	s.Require().True(bytes.Equal(expected, actual))
+	s.Require().True(testutil.ReadersEqual(s.T(), expected.Reader(), res.Body))
 }
 
 func (s *ProcessingHandlerTestSuite) TestSkipProcessingPO() {
@@ -274,10 +283,9 @@ func (s *ProcessingHandlerTestSuite) TestSkipProcessingPO() {
 
 	s.Require().Equal(200, res.StatusCode)
 
-	actual := s.readBody(res)
-	expected := s.readTestFile("test1.png")
+	expected := s.readTestImageData("test1.png")
 
-	s.Require().True(bytes.Equal(expected, actual))
+	s.Require().True(testutil.ReadersEqual(s.T(), expected.Reader(), res.Body))
 }
 
 func (s *ProcessingHandlerTestSuite) TestSkipProcessingSameFormat() {
@@ -288,10 +296,9 @@ func (s *ProcessingHandlerTestSuite) TestSkipProcessingSameFormat() {
 
 	s.Require().Equal(200, res.StatusCode)
 
-	actual := s.readBody(res)
-	expected := s.readTestFile("test1.png")
+	expected := s.readTestImageData("test1.png")
 
-	s.Require().True(bytes.Equal(expected, actual))
+	s.Require().True(testutil.ReadersEqual(s.T(), expected.Reader(), res.Body))
 }
 
 func (s *ProcessingHandlerTestSuite) TestSkipProcessingDifferentFormat() {
@@ -302,10 +309,9 @@ func (s *ProcessingHandlerTestSuite) TestSkipProcessingDifferentFormat() {
 
 	s.Require().Equal(200, res.StatusCode)
 
-	actual := s.readBody(res)
-	expected := s.readTestFile("test1.png")
+	expected := s.readTestImageData("test1.png")
 
-	s.Require().False(bytes.Equal(expected, actual))
+	s.Require().False(testutil.ReadersEqual(s.T(), expected.Reader(), res.Body))
 }
 
 func (s *ProcessingHandlerTestSuite) TestSkipProcessingSVG() {
@@ -314,12 +320,10 @@ func (s *ProcessingHandlerTestSuite) TestSkipProcessingSVG() {
 
 	s.Require().Equal(200, res.StatusCode)
 
-	actual := s.readBody(res)
-	expected, err := svg.Sanitize(&imagedata.ImageData{Data: s.readTestFile("test1.svg")})
-
+	expected, err := svg.Sanitize(s.readTestImageData("test1.svg"))
 	s.Require().NoError(err)
 
-	s.Require().True(bytes.Equal(expected.Data, actual))
+	s.Require().True(testutil.ReadersEqual(s.T(), expected.Reader(), res.Body))
 }
 
 func (s *ProcessingHandlerTestSuite) TestNotSkipProcessingSVGToJPG() {
@@ -328,10 +332,9 @@ func (s *ProcessingHandlerTestSuite) TestNotSkipProcessingSVGToJPG() {
 
 	s.Require().Equal(200, res.StatusCode)
 
-	actual := s.readBody(res)
-	expected := s.readTestFile("test1.svg")
+	expected := s.readTestImageData("test1.svg")
 
-	s.Require().False(bytes.Equal(expected, actual))
+	s.Require().False(testutil.ReadersEqual(s.T(), expected.Reader(), res.Body))
 }
 
 func (s *ProcessingHandlerTestSuite) TestErrorSavingToSVG() {
@@ -435,7 +438,7 @@ func (s *ProcessingHandlerTestSuite) TestETagDataNoIfNotModified() {
 		s.Empty(r.Header.Get("If-None-Match"))
 
 		rw.WriteHeader(200)
-		rw.Write(imgdata.Data)
+		rw.Write(s.readImageData(imgdata))
 	}))
 	defer ts.Close()
 
@@ -477,7 +480,7 @@ func (s *ProcessingHandlerTestSuite) TestETagDataMatch() {
 		s.Empty(r.Header.Get("If-None-Match"))
 
 		rw.WriteHeader(200)
-		rw.Write(imgdata.Data)
+		rw.Write(s.readImageData(imgdata))
 	}))
 	defer ts.Close()
 
@@ -502,7 +505,7 @@ func (s *ProcessingHandlerTestSuite) TestETagReqNotMatch() {
 
 		rw.Header().Set("ETag", imgdata.Headers["ETag"])
 		rw.WriteHeader(200)
-		rw.Write(imgdata.Data)
+		rw.Write(s.readImageData(imgdata))
 	}))
 	defer ts.Close()
 
@@ -527,7 +530,7 @@ func (s *ProcessingHandlerTestSuite) TestETagDataNotMatch() {
 		s.Empty(r.Header.Get("If-None-Match"))
 
 		rw.WriteHeader(200)
-		rw.Write(imgdata.Data)
+		rw.Write(s.readImageData(imgdata))
 	}))
 	defer ts.Close()
 
@@ -553,7 +556,7 @@ func (s *ProcessingHandlerTestSuite) TestETagProcessingOptionsNotMatch() {
 
 		rw.Header().Set("ETag", imgdata.Headers["ETag"])
 		rw.WriteHeader(200)
-		rw.Write(imgdata.Data)
+		rw.Write(s.readImageData(imgdata))
 	}))
 	defer ts.Close()
 
