@@ -48,7 +48,12 @@ func initProcessingHandler() {
 
 	vary := make([]string, 0)
 
-	if config.AutoWebp || config.EnforceWebp || config.AutoAvif || config.EnforceAvif {
+	if config.AutoWebp ||
+		config.EnforceWebp ||
+		config.AutoAvif ||
+		config.EnforceAvif ||
+		config.AutoJxl ||
+		config.EnforceJxl {
 		vary = append(vary, "Accept")
 	}
 
