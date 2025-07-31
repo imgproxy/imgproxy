@@ -1,4 +1,4 @@
-ARG BASE_IMAGE_VERSION="v3.13.2"
+ARG BASE_IMAGE_VERSION="v3.13.3"
 
 FROM ghcr.io/imgproxy/imgproxy-base:${BASE_IMAGE_VERSION} AS build
 

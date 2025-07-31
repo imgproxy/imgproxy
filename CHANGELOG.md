@@ -1,5 +1,15 @@
 # Changelog
 
+## [Unreleased]
+### Fixed
+- Fix the `Vary` header value when `IMGPROXY_AUTO_JXL` or `IMGPROXY_ENFORCE_JXL` configs are set to `true`.
+- (pro) Fix generating thumbnails for VP9 videos with high bit depth.
+- (pro) Fix `IMGPROXY_CUSTOM_RESPONSE_HEADERS` and `IMGPROXY_RESPONSE_HEADERS_PASSTHROUGH` configs behavior when the `raw` processing option is used.
+
+## [3.29.1] - 2025-07-11
+### Fixed
+- Fix parsing and minifying some SVGs.
+
 ## [3.29.0] - 2025-07-08
 ### Added
 - Add [IMGPROXY_MAX_RESULT_DIMENSION](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_MAX_RESULT_DIMENSION) config and [max_result_dimension](https://docs.imgproxy.net/latest/usage/processing#max-result-dimension) processing option.
