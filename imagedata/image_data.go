@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"strings"
 	"sync"
@@ -24,7 +25,7 @@ var (
 type ImageData struct {
 	format  imagetype.Type
 	data    []byte
-	Headers map[string]string
+	headers http.Header
 
 	cancel     context.CancelFunc
 	cancelOnce sync.Once
@@ -54,6 +55,10 @@ func (d *ImageData) Reader() io.ReadSeeker {
 // NOTE: asyncbuffer implementation will .Wait() for the data to be fully read
 func (d *ImageData) Size() (int, error) {
 	return len(d.data), nil
+}
+
+func (d *ImageData) Headers() http.Header {
+	return d.headers
 }
 
 func (d *ImageData) SetCancel(cancel context.CancelFunc) {
@@ -110,10 +115,7 @@ func loadFallbackImage() (err error) {
 	}
 
 	if FallbackImage != nil && err == nil && config.FallbackImageTTL > 0 {
-		if FallbackImage.Headers == nil {
-			FallbackImage.Headers = make(map[string]string)
-		}
-		FallbackImage.Headers["Fallback-Image"] = "1"
+		FallbackImage.headers.Set("Fallback-Image", "1")
 	}
 
 	return err

@@ -14,6 +14,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/options"
+	"go.withmatt.com/httpheaders"
 )
 
 type eTagCalc struct {
@@ -108,8 +109,8 @@ func (h *Handler) ImageEtagExpected() string {
 
 func (h *Handler) SetActualImageData(imgdata *imagedata.ImageData) (bool, error) {
 	var haveActualImgETag bool
-	h.imgEtagActual, haveActualImgETag = imgdata.Headers["ETag"]
-	haveActualImgETag = haveActualImgETag && len(h.imgEtagActual) > 0
+	h.imgEtagActual = imgdata.Headers().Get(httpheaders.Etag)
+	haveActualImgETag = len(h.imgEtagActual) > 0
 
 	// Just in case server didn't check ETag properly and returned the same one
 	// as we expected

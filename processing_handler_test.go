@@ -14,6 +14,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
+	"go.withmatt.com/httpheaders"
 
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/config/configurators"
@@ -116,7 +117,7 @@ func (s *ProcessingHandlerTestSuite) sampleETagData(imgETag string) (string, *im
 	imgdata := s.readTestImageData("test1.png")
 
 	if len(imgETag) != 0 {
-		imgdata.Headers = map[string]string{"ETag": imgETag}
+		imgdata.Headers().Set(httpheaders.Etag, imgETag)
 	}
 
 	var h etag.Handler
@@ -416,7 +417,7 @@ func (s *ProcessingHandlerTestSuite) TestETagReqNoIfNotModified() {
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		s.Empty(r.Header.Get("If-None-Match"))
 
-		rw.Header().Set("ETag", imgdata.Headers["ETag"])
+		rw.Header().Set("ETag", imgdata.Headers().Get(httpheaders.Etag))
 		rw.WriteHeader(200)
 		rw.Write(s.readTestFile("test1.png"))
 	}))
@@ -455,7 +456,7 @@ func (s *ProcessingHandlerTestSuite) TestETagReqMatch() {
 	poStr, imgdata, etag := s.sampleETagData(`"loremipsumdolor"`)
 
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		s.Equal(imgdata.Headers["ETag"], r.Header.Get("If-None-Match"))
+		s.Equal(imgdata.Headers().Get(httpheaders.Etag), r.Header.Get(httpheaders.IfNoneMatch))
 
 		rw.WriteHeader(304)
 	}))
@@ -503,7 +504,7 @@ func (s *ProcessingHandlerTestSuite) TestETagReqNotMatch() {
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		s.Equal(`"loremipsum"`, r.Header.Get("If-None-Match"))
 
-		rw.Header().Set("ETag", imgdata.Headers["ETag"])
+		rw.Header().Set("ETag", imgdata.Headers().Get(httpheaders.Etag))
 		rw.WriteHeader(200)
 		rw.Write(s.readImageData(imgdata))
 	}))
@@ -554,7 +555,7 @@ func (s *ProcessingHandlerTestSuite) TestETagProcessingOptionsNotMatch() {
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		s.Empty(r.Header.Get("If-None-Match"))
 
-		rw.Header().Set("ETag", imgdata.Headers["ETag"])
+		rw.Header().Set("ETag", imgdata.Headers().Get(httpheaders.Etag))
 		rw.WriteHeader(200)
 		rw.Write(s.readImageData(imgdata))
 	}))

@@ -13,6 +13,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	"go.withmatt.com/httpheaders"
 	"golang.org/x/sync/semaphore"
 
 	"github.com/imgproxy/imgproxy/v3/config"
@@ -61,7 +62,7 @@ func initProcessingHandler() {
 	headerVaryValue = strings.Join(vary, ", ")
 }
 
-func setCacheControl(rw http.ResponseWriter, force *time.Time, originHeaders map[string]string) {
+func setCacheControl(rw http.ResponseWriter, force *time.Time, originHeaders http.Header) {
 	ttl := -1
 
 	if _, ok := originHeaders["Fallback-Image"]; ok && config.FallbackImageTTL > 0 {
@@ -73,12 +74,12 @@ func setCacheControl(rw http.ResponseWriter, force *time.Time, originHeaders map
 	}
 
 	if config.CacheControlPassthrough && ttl < 0 && originHeaders != nil {
-		if val, ok := originHeaders["Cache-Control"]; ok && len(val) > 0 {
-			rw.Header().Set("Cache-Control", val)
+		if val := originHeaders.Get(httpheaders.CacheControl); len(val) > 0 {
+			rw.Header().Set(httpheaders.CacheControl, val)
 			return
 		}
 
-		if val, ok := originHeaders["Expires"]; ok && len(val) > 0 {
+		if val := originHeaders.Get(httpheaders.Expires); len(val) > 0 {
 			if t, err := time.Parse(http.TimeFormat, val); err == nil {
 				ttl = imath.Max(0, int(time.Until(t).Seconds()))
 			}
@@ -90,23 +91,23 @@ func setCacheControl(rw http.ResponseWriter, force *time.Time, originHeaders map
 	}
 
 	if ttl > 0 {
-		rw.Header().Set("Cache-Control", fmt.Sprintf("max-age=%d, public", ttl))
+		rw.Header().Set(httpheaders.CacheControl, fmt.Sprintf("max-age=%d, public", ttl))
 	} else {
-		rw.Header().Set("Cache-Control", "no-cache")
+		rw.Header().Set(httpheaders.CacheControl, "no-cache")
 	}
 }
 
-func setLastModified(rw http.ResponseWriter, originHeaders map[string]string) {
+func setLastModified(rw http.ResponseWriter, originHeaders http.Header) {
 	if config.LastModifiedEnabled {
-		if val, ok := originHeaders["Last-Modified"]; ok && len(val) != 0 {
-			rw.Header().Set("Last-Modified", val)
+		if val := originHeaders.Get(httpheaders.LastModified); len(val) != 0 {
+			rw.Header().Set(httpheaders.LastModified, val)
 		}
 	}
 }
 
 func setVary(rw http.ResponseWriter) {
 	if len(headerVaryValue) > 0 {
-		rw.Header().Set("Vary", headerVaryValue)
+		rw.Header().Set(httpheaders.Vary, headerVaryValue)
 	}
 }
 
@@ -130,8 +131,8 @@ func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, sta
 	rw.Header().Set("Content-Type", resultData.Format().Mime())
 	rw.Header().Set("Content-Disposition", contentDisposition)
 
-	setCacheControl(rw, po.Expires, originData.Headers)
-	setLastModified(rw, originData.Headers)
+	setCacheControl(rw, po.Expires, originData.Headers())
+	setLastModified(rw, originData.Headers())
 	setVary(rw)
 	setCanonical(rw, originURL)
 
@@ -142,10 +143,10 @@ func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, sta
 		}
 
 		rw.Header().Set("X-Origin-Content-Length", strconv.Itoa(originSize))
-		rw.Header().Set("X-Origin-Width", resultData.Headers["X-Origin-Width"])
-		rw.Header().Set("X-Origin-Height", resultData.Headers["X-Origin-Height"])
-		rw.Header().Set("X-Result-Width", resultData.Headers["X-Result-Width"])
-		rw.Header().Set("X-Result-Height", resultData.Headers["X-Result-Height"])
+		rw.Header().Set("X-Origin-Width", resultData.Headers().Get("X-Origin-Width"))
+		rw.Header().Set("X-Origin-Height", resultData.Headers().Get("X-Origin-Height"))
+		rw.Header().Set("X-Result-Width", resultData.Headers().Get("X-Result-Width"))
+		rw.Header().Set("X-Result-Height", resultData.Headers().Get("X-Result-Height"))
 	}
 
 	rw.Header().Set("Content-Security-Policy", "script-src 'none'")
@@ -179,7 +180,7 @@ func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, sta
 	)
 }
 
-func respondWithNotModified(reqID string, r *http.Request, rw http.ResponseWriter, po *options.ProcessingOptions, originURL string, originHeaders map[string]string) {
+func respondWithNotModified(reqID string, r *http.Request, rw http.ResponseWriter, po *options.ProcessingOptions, originURL string, originHeaders http.Header) {
 	setCacheControl(rw, po.Expires, originHeaders)
 	setVary(rw)
 
@@ -369,15 +370,10 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 
 	case errors.As(err, &nmErr):
 		if config.ETagEnabled && len(etagHandler.ImageEtagExpected()) != 0 {
-			rw.Header().Set("ETag", etagHandler.GenerateExpectedETag())
+			rw.Header().Set(httpheaders.Etag, etagHandler.GenerateExpectedETag())
 		}
 
-		h := make(map[string]string)
-		for k := range nmErr.Headers() {
-			h[k] = nmErr.Headers().Get(k)
-		}
-
-		respondWithNotModified(reqID, r, rw, po, imageURL, h)
+		respondWithNotModified(reqID, r, rw, po, imageURL, nmErr.Headers())
 		return
 
 	default:
@@ -421,7 +417,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 			rw.Header().Set("ETag", etagHandler.GenerateActualETag())
 
 			if imgDataMatch && etagHandler.ProcessingOptionsMatch() {
-				respondWithNotModified(reqID, r, rw, po, imageURL, originData.Headers)
+				respondWithNotModified(reqID, r, rw, po, imageURL, originData.Headers())
 				return
 			}
 		}

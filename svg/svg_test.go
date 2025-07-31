@@ -49,7 +49,7 @@ func (s *SvgTestSuite) TestSanitize() {
 
 	s.Require().NoError(err)
 	s.Require().True(testutil.ReadersEqual(s.T(), expected.Reader(), actual.Reader()))
-	s.Require().Equal(origin.Headers, actual.Headers)
+	s.Require().Equal(origin.Headers(), actual.Headers())
 }
 
 func TestSvg(t *testing.T) {

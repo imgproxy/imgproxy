@@ -3,7 +3,6 @@ package imagedata
 import (
 	"bytes"
 	"net/http"
-	"strings"
 
 	"github.com/imgproxy/imgproxy/v3/imagemeta"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
@@ -18,20 +17,14 @@ func NewFromBytes(b []byte, headers http.Header) (*ImageData, error) {
 		return nil, err
 	}
 
-	return NewFromBytesWithFormat(meta.Format(), b, headers)
+	return NewFromBytesWithFormat(meta.Format(), b, headers), nil
 }
 
 // NewFromBytesWithFormat creates a new ImageData instance from the provided format and byte slice.
-func NewFromBytesWithFormat(format imagetype.Type, b []byte, headers http.Header) (*ImageData, error) {
-	// Temporary workaround for the old ImageData interface
-	h := make(map[string]string, len(headers))
-	for k, v := range headers {
-		h[k] = strings.Join(v, ", ")
-	}
-
+func NewFromBytesWithFormat(format imagetype.Type, b []byte, headers http.Header) *ImageData {
 	return &ImageData{
 		data:    b,
 		format:  format,
-		Headers: h,
-	}, nil
+		headers: headers,
+	}
 }
