@@ -3,14 +3,12 @@ package imagedata
 import (
 	"context"
 	"net/http"
-	"slices"
 
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imagefetcher"
 	"github.com/imgproxy/imgproxy/v3/security"
 	"github.com/imgproxy/imgproxy/v3/transport"
-	"go.withmatt.com/httpheaders"
 )
 
 var (
@@ -18,18 +16,6 @@ var (
 
 	// For tests
 	redirectAllRequestsTo string
-
-	// keepResponseHeaders is a list of HTTP headers that should be preserved in the response
-	keepResponseHeaders = []string{
-		httpheaders.CacheControl,
-		httpheaders.Expires,
-		httpheaders.LastModified,
-		// NOTE:
-		// httpheaders.Etag == "Etag".
-		// Http header names are case-insensitive, but we rely on the case in most cases.
-		// We must migrate to http.Headers and the subsequent methods everywhere.
-		httpheaders.Etag,
-	}
 )
 
 type DownloadOptions struct {
@@ -86,15 +72,16 @@ func download(ctx context.Context, imageURL string, opts DownloadOptions, secopt
 
 	h := make(map[string]string)
 	for k := range res.Header {
-		if !slices.Contains(keepResponseHeaders, k) {
-			continue
+		value := res.Header.Get(k)
+		h[k] = value
+
+		// This is temporary workaround, will be addressed in the subsequent PR
+		if k == "Etag" {
+			h["ETag"] = value
 		}
 
-		// TODO: Fix Etag/ETag inconsistency
-		if k == "Etag" {
-			h["ETag"] = res.Header.Get(k)
-		} else {
-			h[k] = res.Header.Get(k)
+		if k == "ETag" {
+			h["Etag"] = value
 		}
 	}
 
