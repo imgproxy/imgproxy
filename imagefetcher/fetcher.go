@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/transport"
 	"github.com/imgproxy/imgproxy/v3/transport/common"
-	"go.withmatt.com/httpheaders"
 )
 
 const (

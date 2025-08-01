@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"go.withmatt.com/httpheaders"
+	"github.com/imgproxy/imgproxy/v3/httpheaders"
 )
 
 var (
