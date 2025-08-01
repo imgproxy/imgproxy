@@ -20,11 +20,11 @@ var (
 )
 
 type ImageData interface {
-	io.Closer                                // Close closes the image data and releases any resources held by it
-	Reader() io.ReadSeeker                   // Reader returns a new ReadSeeker for the image data
-	Format() imagetype.Type                  // Format returns the image format from the metadata (shortcut)
-	Size() (int, error)                      // Size returns the size of the image data in bytes
-	WithCancel(context.CancelFunc) ImageData // WithCancel attaches a cancel function to the image data
+	io.Closer                     // Close closes the image data and releases any resources held by it
+	Reader() io.ReadSeeker        // Reader returns a new ReadSeeker for the image data
+	Format() imagetype.Type       // Format returns the image format from the metadata (shortcut)
+	Size() (int, error)           // Size returns the size of the image data in bytes
+	AddCancel(context.CancelFunc) // AddCancel attaches a cancel function to the image data
 
 	// This will be removed in the future
 	Headers() http.Header // Headers returns the HTTP headers of the image data, will be removed in the future
@@ -70,9 +70,8 @@ func (d *imageDataBytes) Headers() http.Header {
 	return d.headers
 }
 
-func (d *imageDataBytes) WithCancel(cancel context.CancelFunc) ImageData {
+func (d *imageDataBytes) AddCancel(cancel context.CancelFunc) {
 	d.cancel = append(d.cancel, cancel)
-	return d
 }
 
 func Init() error {

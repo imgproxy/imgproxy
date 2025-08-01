@@ -50,7 +50,9 @@ func readAndCheckImage(r io.Reader, contentLength int, secopts security.Options)
 		return nil, imagefetcher.WrapError(err)
 	}
 
-	return NewFromBytesWithFormat(meta.Format(), buf.Bytes(), make(http.Header)).WithCancel(cancel), nil
+	i := NewFromBytesWithFormat(meta.Format(), buf.Bytes(), make(http.Header))
+	i.AddCancel(cancel)
+	return i, nil
 }
 
 func BorrowBuffer() (*bytes.Buffer, context.CancelFunc) {

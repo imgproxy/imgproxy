@@ -49,7 +49,8 @@ func Sanitize(data imagedata.ImageData) (imagedata.ImageData, error) {
 				imagetype.SVG,
 				buf.Bytes(),
 				data.Headers().Clone(),
-			).WithCancel(cancel)
+			)
+			newData.AddCancel(cancel)
 
 			return newData, nil
 		case xml.StartTagToken:

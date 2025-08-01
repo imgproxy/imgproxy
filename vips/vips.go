@@ -470,7 +470,10 @@ func (img *Image) Save(imgtype imagetype.Type, quality int) (imagedata.ImageData
 
 	b := ptrToBytes(ptr, int(imgsize))
 
-	return imagedata.NewFromBytesWithFormat(imgtype, b, make(http.Header)).WithCancel(cancel), nil
+	i := imagedata.NewFromBytesWithFormat(imgtype, b, make(http.Header))
+	i.AddCancel(cancel)
+
+	return i, nil
 }
 
 func (img *Image) Clear() {

@@ -2,7 +2,6 @@ package imagedata
 
 import (
 	"bytes"
-	"context"
 	"encoding/base64"
 	"io"
 	"net/http"
@@ -16,11 +15,19 @@ import (
 // NewFromBytesWithFormat creates a new ImageData instance from the provided format,
 // http headers and byte slice.
 func NewFromBytesWithFormat(format imagetype.Type, b []byte, headers http.Header) ImageData {
+	var h http.Header
+
+	if headers == nil {
+		h = make(http.Header)
+	} else {
+		h = headers.Clone()
+	}
+
 	return &imageDataBytes{
 		data:    b,
 		format:  format,
-		headers: headers,
-		cancel:  make([]context.CancelFunc, 0),
+		headers: h,
+		cancel:  nil,
 	}
 }
 
@@ -33,7 +40,7 @@ func NewFromBytes(b []byte) (ImageData, error) {
 		return nil, err
 	}
 
-	return NewFromBytesWithFormat(meta.Format(), b, make(http.Header)), nil
+	return NewFromBytesWithFormat(meta.Format(), b, nil), nil
 }
 
 // NewFromPath creates a new ImageData from an os.File
