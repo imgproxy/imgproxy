@@ -13,7 +13,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
-func canScaleOnLoad(pctx *pipelineContext, imgdata *imagedata.ImageData, scale float64) bool {
+func canScaleOnLoad(pctx *pipelineContext, imgdata imagedata.ImageData, scale float64) bool {
 	if imgdata == nil || pctx.trimmed || scale == 1 {
 		return false
 	}
@@ -45,7 +45,7 @@ func calcJpegShink(shrink float64) int {
 	return 1
 }
 
-func scaleOnLoad(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata *imagedata.ImageData) error {
+func scaleOnLoad(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata imagedata.ImageData) error {
 	wshrink := float64(pctx.srcWidth) / float64(imath.Scale(pctx.srcWidth, pctx.wscale))
 	hshrink := float64(pctx.srcHeight) / float64(imath.Scale(pctx.srcHeight, pctx.hscale))
 	preshrink := math.Min(wshrink, hshrink)

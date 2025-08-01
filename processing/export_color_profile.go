@@ -6,7 +6,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
-func exportColorProfile(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata *imagedata.ImageData) error {
+func exportColorProfile(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata imagedata.ImageData) error {
 	keepProfile := !po.StripColorProfile && po.Format.SupportsColourProfile()
 
 	if img.IsLinear() {

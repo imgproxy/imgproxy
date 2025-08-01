@@ -20,7 +20,7 @@ var watermarkPipeline = pipeline{
 	padding,
 }
 
-func prepareWatermark(wm *vips.Image, wmData *imagedata.ImageData, opts *options.WatermarkOptions, imgWidth, imgHeight int, offsetScale float64, framesCount int) error {
+func prepareWatermark(wm *vips.Image, wmData imagedata.ImageData, opts *options.WatermarkOptions, imgWidth, imgHeight int, offsetScale float64, framesCount int) error {
 	if err := wm.Load(wmData, 1, 1.0, 1); err != nil {
 		return err
 	}
@@ -81,7 +81,7 @@ func prepareWatermark(wm *vips.Image, wmData *imagedata.ImageData, opts *options
 	return wm.StripAll()
 }
 
-func applyWatermark(img *vips.Image, wmData *imagedata.ImageData, opts *options.WatermarkOptions, offsetScale float64, framesCount int) error {
+func applyWatermark(img *vips.Image, wmData imagedata.ImageData, opts *options.WatermarkOptions, offsetScale float64, framesCount int) error {
 	wm := new(vips.Image)
 	defer wm.Clear()
 
@@ -162,7 +162,7 @@ func applyWatermark(img *vips.Image, wmData *imagedata.ImageData, opts *options.
 	return nil
 }
 
-func watermark(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata *imagedata.ImageData) error {
+func watermark(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata imagedata.ImageData) error {
 	if !po.Watermark.Enabled || imagedata.Watermark == nil {
 		return nil
 	}

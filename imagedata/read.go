@@ -19,7 +19,7 @@ func initRead() {
 	downloadBufPool = bufpool.New("download", config.Workers, config.DownloadBufferSize)
 }
 
-func readAndCheckImage(r io.Reader, contentLength int, secopts security.Options) (*ImageData, error) {
+func readAndCheckImage(r io.Reader, contentLength int, secopts security.Options) (ImageData, error) {
 	buf := downloadBufPool.Get(contentLength, false)
 	cancel := func() { downloadBufPool.Put(buf) }
 
@@ -49,11 +49,9 @@ func readAndCheckImage(r io.Reader, contentLength int, secopts security.Options)
 		return nil, imagefetcher.WrapError(err)
 	}
 
-	return &ImageData{
-		data:   buf.Bytes(),
-		format: meta.Format(),
-		cancel: cancel,
-	}, nil
+	i := NewFromBytesWithFormat(meta.Format(), buf.Bytes(), nil)
+	i.AddCancel(cancel)
+	return i, nil
 }
 
 func BorrowBuffer() (*bytes.Buffer, context.CancelFunc) {

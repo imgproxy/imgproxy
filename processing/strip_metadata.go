@@ -105,7 +105,7 @@ func stripXMP(img *vips.Image) []byte {
 	return xmpData
 }
 
-func stripMetadata(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata *imagedata.ImageData) error {
+func stripMetadata(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata imagedata.ImageData) error {
 	if !po.StripMetadata {
 		return nil
 	}

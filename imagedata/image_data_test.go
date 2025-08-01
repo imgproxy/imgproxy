@@ -20,6 +20,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/security"
+	"github.com/imgproxy/imgproxy/v3/testutil"
 )
 
 type ImageDataTestSuite struct {
@@ -94,7 +95,7 @@ func (s *ImageDataTestSuite) TestDownloadStatusOK() {
 
 	s.Require().NoError(err)
 	s.Require().NotNil(imgdata)
-	s.Require().Equal(s.defaultData, imgdata.data)
+	s.Require().True(testutil.ReadersEqual(s.T(), bytes.NewReader(s.defaultData), imgdata.Reader()))
 	s.Require().Equal(imagetype.JPEG, imgdata.Format())
 }
 
@@ -165,7 +166,7 @@ func (s *ImageDataTestSuite) TestDownloadStatusPartialContent() {
 			} else {
 				s.Require().NoError(err)
 				s.Require().NotNil(imgdata)
-				s.Require().Equal(s.defaultData, imgdata.data)
+				s.Require().True(testutil.ReadersEqual(s.T(), bytes.NewReader(s.defaultData), imgdata.Reader()))
 				s.Require().Equal(imagetype.JPEG, imgdata.Format())
 			}
 		})
@@ -278,27 +279,27 @@ func (s *ImageDataTestSuite) TestDownloadGzip() {
 
 	s.Require().NoError(err)
 	s.Require().NotNil(imgdata)
-	s.Require().Equal(s.defaultData, imgdata.data)
+	s.Require().True(testutil.ReadersEqual(s.T(), bytes.NewReader(s.defaultData), imgdata.Reader()))
 	s.Require().Equal(imagetype.JPEG, imgdata.Format())
 }
 
 func (s *ImageDataTestSuite) TestFromFile() {
-	imgdata, err := FromFile("../testdata/test1.jpg", "Test image", security.DefaultOptions())
+	imgdata, err := NewFromPath("../testdata/test1.jpg", security.DefaultOptions())
 
 	s.Require().NoError(err)
 	s.Require().NotNil(imgdata)
-	s.Require().Equal(s.defaultData, imgdata.data)
+	s.Require().True(testutil.ReadersEqual(s.T(), bytes.NewReader(s.defaultData), imgdata.Reader()))
 	s.Require().Equal(imagetype.JPEG, imgdata.Format())
 }
 
 func (s *ImageDataTestSuite) TestFromBase64() {
 	b64 := base64.StdEncoding.EncodeToString(s.defaultData)
 
-	imgdata, err := FromBase64(b64, "Test image", security.DefaultOptions())
+	imgdata, err := NewFromBase64(b64, security.DefaultOptions())
 
 	s.Require().NoError(err)
 	s.Require().NotNil(imgdata)
-	s.Require().Equal(s.defaultData, imgdata.data)
+	s.Require().True(testutil.ReadersEqual(s.T(), bytes.NewReader(s.defaultData), imgdata.Reader()))
 	s.Require().Equal(imagetype.JPEG, imgdata.Format())
 }
 

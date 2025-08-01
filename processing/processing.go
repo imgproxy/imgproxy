@@ -97,7 +97,7 @@ func getImageSize(img *vips.Image) (int, int) {
 	return width, height
 }
 
-func transformAnimated(ctx context.Context, img *vips.Image, po *options.ProcessingOptions, imgdata *imagedata.ImageData) error {
+func transformAnimated(ctx context.Context, img *vips.Image, po *options.ProcessingOptions, imgdata imagedata.ImageData) error {
 	if po.Trim.Enabled {
 		log.Warning("Trim is not supported for animated images")
 		po.Trim.Enabled = false
@@ -207,7 +207,7 @@ func transformAnimated(ctx context.Context, img *vips.Image, po *options.Process
 	return nil
 }
 
-func saveImageToFitBytes(ctx context.Context, po *options.ProcessingOptions, img *vips.Image) (*imagedata.ImageData, error) {
+func saveImageToFitBytes(ctx context.Context, po *options.ProcessingOptions, img *vips.Image) (imagedata.ImageData, error) {
 	var diff float64
 	quality := po.GetQuality()
 
@@ -248,7 +248,7 @@ func saveImageToFitBytes(ctx context.Context, po *options.ProcessingOptions, img
 	}
 }
 
-func ProcessImage(ctx context.Context, imgdata *imagedata.ImageData, po *options.ProcessingOptions) (*imagedata.ImageData, error) {
+func ProcessImage(ctx context.Context, imgdata imagedata.ImageData, po *options.ProcessingOptions) (imagedata.ImageData, error) {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 
@@ -348,7 +348,7 @@ func ProcessImage(ctx context.Context, imgdata *imagedata.ImageData, po *options
 	}
 
 	var (
-		outData *imagedata.ImageData
+		outData imagedata.ImageData
 		err     error
 	)
 
@@ -359,13 +359,10 @@ func ProcessImage(ctx context.Context, imgdata *imagedata.ImageData, po *options
 	}
 
 	if err == nil {
-		if outData.Headers == nil {
-			outData.Headers = make(map[string]string)
-		}
-		outData.Headers["X-Origin-Width"] = strconv.Itoa(originWidth)
-		outData.Headers["X-Origin-Height"] = strconv.Itoa(originHeight)
-		outData.Headers["X-Result-Width"] = strconv.Itoa(img.Width())
-		outData.Headers["X-Result-Height"] = strconv.Itoa(img.Height())
+		outData.Headers().Set("X-Origin-Width", strconv.Itoa(originWidth))
+		outData.Headers().Set("X-Origin-Height", strconv.Itoa(originHeight))
+		outData.Headers().Set("X-Result-Width", strconv.Itoa(img.Width()))
+		outData.Headers().Set("X-Result-Height", strconv.Itoa(img.Height()))
 	}
 
 	return outData, err

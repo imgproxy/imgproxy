@@ -2,7 +2,6 @@ package etag
 
 import (
 	"io"
-	"net/http"
 	"os"
 	"strings"
 	"testing"
@@ -11,6 +10,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/options"
 )
@@ -24,8 +24,8 @@ type EtagTestSuite struct {
 	suite.Suite
 
 	po             *options.ProcessingOptions
-	imgWithETag    *imagedata.ImageData
-	imgWithoutETag *imagedata.ImageData
+	imgWithETag    imagedata.ImageData
+	imgWithoutETag imagedata.ImageData
 
 	h Handler
 }
@@ -37,10 +37,11 @@ func (s *EtagTestSuite) SetupSuite() {
 	d, err := os.ReadFile("../testdata/test1.jpg")
 	s.Require().NoError(err)
 
-	imgWithETag, err := imagedata.NewFromBytes(d, http.Header{"ETag": []string{`"loremipsumdolor"`}})
+	imgWithETag, err := imagedata.NewFromBytes(d)
 	s.Require().NoError(err)
+	imgWithETag.Headers().Add(httpheaders.Etag, `"loremipsumdolor"`)
 
-	imgWithoutETag, err := imagedata.NewFromBytes(d, make(http.Header))
+	imgWithoutETag, err := imagedata.NewFromBytes(d)
 	s.Require().NoError(err)
 
 	s.imgWithETag = imgWithETag
@@ -101,7 +102,7 @@ func (s *EtagTestSuite) TestImageETagExpectedPresent() {
 	s.h.ParseExpectedETag(etagReq)
 
 	//nolint:testifylint // False-positive expected-actual
-	s.Require().Equal(s.imgWithETag.Headers["ETag"], s.h.ImageEtagExpected())
+	s.Require().Equal(s.imgWithETag.Headers().Get(httpheaders.Etag), s.h.ImageEtagExpected())
 }
 
 func (s *EtagTestSuite) TestImageETagExpectedBlank() {

@@ -1,15 +1,14 @@
 package svg
 
 import (
-	"net/http"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
-	"go.withmatt.com/httpheaders"
 
 	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/testutil"
 )
@@ -25,18 +24,16 @@ func (s *SvgTestSuite) SetupSuite() {
 	s.Require().NoError(err)
 }
 
-func (s *SvgTestSuite) readTestFile(name string) *imagedata.ImageData {
+func (s *SvgTestSuite) readTestFile(name string) imagedata.ImageData {
 	wd, err := os.Getwd()
 	s.Require().NoError(err)
 
 	data, err := os.ReadFile(filepath.Join(wd, "..", "testdata", name))
 	s.Require().NoError(err)
 
-	h := make(http.Header)
-	h.Set(httpheaders.ContentType, "image/svg+xml")
-	h.Set(httpheaders.CacheControl, "public, max-age=12345")
-
-	d, err := imagedata.NewFromBytes(data, h)
+	d, err := imagedata.NewFromBytes(data)
+	d.Headers().Set(httpheaders.ContentType, "image/svg+xml")
+	d.Headers().Set(httpheaders.CacheControl, "public, max-age=12345")
 	s.Require().NoError(err)
 
 	return d
@@ -49,7 +46,7 @@ func (s *SvgTestSuite) TestSanitize() {
 
 	s.Require().NoError(err)
 	s.Require().True(testutil.ReadersEqual(s.T(), expected.Reader(), actual.Reader()))
-	s.Require().Equal(origin.Headers, actual.Headers)
+	s.Require().Equal(origin.Headers(), actual.Headers())
 }
 
 func TestSvg(t *testing.T) {

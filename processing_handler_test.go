@@ -18,6 +18,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/config/configurators"
 	"github.com/imgproxy/imgproxy/v3/etag"
+	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagemeta"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
@@ -86,26 +87,26 @@ func (s *ProcessingHandlerTestSuite) readTestFile(name string) []byte {
 	return data
 }
 
-func (s *ProcessingHandlerTestSuite) readTestImageData(name string) *imagedata.ImageData {
+func (s *ProcessingHandlerTestSuite) readTestImageData(name string) imagedata.ImageData {
 	wd, err := os.Getwd()
 	s.Require().NoError(err)
 
 	data, err := os.ReadFile(filepath.Join(wd, "testdata", name))
 	s.Require().NoError(err)
 
-	imgdata, err := imagedata.NewFromBytes(data, make(http.Header))
+	imgdata, err := imagedata.NewFromBytes(data)
 	s.Require().NoError(err)
 
 	return imgdata
 }
 
-func (s *ProcessingHandlerTestSuite) readImageData(imgdata *imagedata.ImageData) []byte {
+func (s *ProcessingHandlerTestSuite) readImageData(imgdata imagedata.ImageData) []byte {
 	data, err := io.ReadAll(imgdata.Reader())
 	s.Require().NoError(err)
 	return data
 }
 
-func (s *ProcessingHandlerTestSuite) sampleETagData(imgETag string) (string, *imagedata.ImageData, string) {
+func (s *ProcessingHandlerTestSuite) sampleETagData(imgETag string) (string, imagedata.ImageData, string) {
 	poStr := "rs:fill:4:4"
 
 	po := options.NewProcessingOptions()
@@ -116,7 +117,7 @@ func (s *ProcessingHandlerTestSuite) sampleETagData(imgETag string) (string, *im
 	imgdata := s.readTestImageData("test1.png")
 
 	if len(imgETag) != 0 {
-		imgdata.Headers = map[string]string{"ETag": imgETag}
+		imgdata.Headers().Set(httpheaders.Etag, imgETag)
 	}
 
 	var h etag.Handler
@@ -416,7 +417,7 @@ func (s *ProcessingHandlerTestSuite) TestETagReqNoIfNotModified() {
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		s.Empty(r.Header.Get("If-None-Match"))
 
-		rw.Header().Set("ETag", imgdata.Headers["ETag"])
+		rw.Header().Set("ETag", imgdata.Headers().Get(httpheaders.Etag))
 		rw.WriteHeader(200)
 		rw.Write(s.readTestFile("test1.png"))
 	}))
@@ -455,7 +456,7 @@ func (s *ProcessingHandlerTestSuite) TestETagReqMatch() {
 	poStr, imgdata, etag := s.sampleETagData(`"loremipsumdolor"`)
 
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		s.Equal(imgdata.Headers["ETag"], r.Header.Get("If-None-Match"))
+		s.Equal(imgdata.Headers().Get(httpheaders.Etag), r.Header.Get(httpheaders.IfNoneMatch))
 
 		rw.WriteHeader(304)
 	}))
@@ -503,7 +504,7 @@ func (s *ProcessingHandlerTestSuite) TestETagReqNotMatch() {
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		s.Equal(`"loremipsum"`, r.Header.Get("If-None-Match"))
 
-		rw.Header().Set("ETag", imgdata.Headers["ETag"])
+		rw.Header().Set("ETag", imgdata.Headers().Get(httpheaders.Etag))
 		rw.WriteHeader(200)
 		rw.Write(s.readImageData(imgdata))
 	}))
@@ -554,7 +555,7 @@ func (s *ProcessingHandlerTestSuite) TestETagProcessingOptionsNotMatch() {
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		s.Empty(r.Header.Get("If-None-Match"))
 
-		rw.Header().Set("ETag", imgdata.Headers["ETag"])
+		rw.Header().Set("ETag", imgdata.Headers().Get(httpheaders.Etag))
 		rw.WriteHeader(200)
 		rw.Write(s.readImageData(imgdata))
 	}))

@@ -1,6 +1,7 @@
 package security
 
 import (
+	"github.com/imgproxy/imgproxy/v3/imagemeta"
 	"github.com/imgproxy/imgproxy/v3/imath"
 )
 
@@ -18,4 +19,8 @@ func CheckDimensions(width, height, frames int, opts Options) error {
 	}
 
 	return nil
+}
+
+func CheckMeta(meta imagemeta.Meta, opts Options) error {
+	return CheckDimensions(meta.Width(), meta.Height(), 1, opts)
 }

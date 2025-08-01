@@ -248,7 +248,7 @@ func (pctx *pipelineContext) limitScale(widthToScale, heightToScale int, po *opt
 	}
 }
 
-func prepare(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata *imagedata.ImageData) error {
+func prepare(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata imagedata.ImageData) error {
 	pctx.imgtype = imagetype.Unknown
 	if imgdata != nil {
 		pctx.imgtype = imgdata.Format()
