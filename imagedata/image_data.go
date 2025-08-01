@@ -95,7 +95,8 @@ func Init() error {
 func loadWatermark() error {
 	var err error
 
-	if len(config.WatermarkData) > 0 {
+	switch {
+	case len(config.WatermarkData) > 0:
 		Watermark, err = NewFromBase64(config.WatermarkData, security.DefaultOptions())
 
 		// NOTE: this should be something like err = ierrors.Wrap(err).WithStackDeep(0).WithPrefix("watermark")
@@ -104,20 +105,21 @@ func loadWatermark() error {
 		if err != nil {
 			return ierrors.Wrap(err, 0, ierrors.WithPrefix("can't load watermark from Base64"))
 		}
-	}
 
-	if len(config.WatermarkPath) > 0 {
+	case len(config.WatermarkPath) > 0:
 		Watermark, err = NewFromPath(config.WatermarkPath, security.DefaultOptions())
 		if err != nil {
 			return ierrors.Wrap(err, 0, ierrors.WithPrefix("can't read watermark from file"))
 		}
-	}
 
-	if len(config.WatermarkURL) > 0 {
+	case len(config.WatermarkURL) > 0:
 		Watermark, err = Download(context.Background(), config.WatermarkURL, "watermark", DownloadOptions{Header: nil, CookieJar: nil}, security.DefaultOptions())
 		if err != nil {
 			return ierrors.Wrap(err, 0, ierrors.WithPrefix("can't download from URL"))
 		}
+
+	default:
+		Watermark = nil
 	}
 
 	return nil
@@ -139,8 +141,12 @@ func loadFallbackImage() (err error) {
 
 	case len(config.FallbackImageURL) > 0:
 		FallbackImage, err = Download(context.Background(), config.FallbackImageURL, "fallback image", DownloadOptions{Header: nil, CookieJar: nil}, security.DefaultOptions())
+		if err != nil {
+			return ierrors.Wrap(err, 0, ierrors.WithPrefix("can't download from URL"))
+		}
+
 	default:
-		FallbackImage, err = nil, nil
+		FallbackImage = nil
 	}
 
 	if FallbackImage != nil && err == nil && config.FallbackImageTTL > 0 {

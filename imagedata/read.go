@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"io"
-	"net/http"
 
 	"github.com/imgproxy/imgproxy/v3/bufpool"
 	"github.com/imgproxy/imgproxy/v3/bufreader"
@@ -50,7 +49,7 @@ func readAndCheckImage(r io.Reader, contentLength int, secopts security.Options)
 		return nil, imagefetcher.WrapError(err)
 	}
 
-	i := NewFromBytesWithFormat(meta.Format(), buf.Bytes(), make(http.Header))
+	i := NewFromBytesWithFormat(meta.Format(), buf.Bytes(), nil)
 	i.AddCancel(cancel)
 	return i, nil
 }
