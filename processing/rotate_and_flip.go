@@ -6,7 +6,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
-func rotateAndFlip(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata *imagedata.ImageData) error {
+func rotateAndFlip(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata imagedata.ImageData) error {
 	if pctx.angle%360 == 0 && po.Rotate%360 == 0 && !pctx.flip {
 		return nil
 	}

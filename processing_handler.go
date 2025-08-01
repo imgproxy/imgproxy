@@ -120,7 +120,7 @@ func setCanonical(rw http.ResponseWriter, originURL string) {
 	}
 }
 
-func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, statusCode int, resultData *imagedata.ImageData, po *options.ProcessingOptions, originURL string, originData *imagedata.ImageData) {
+func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, statusCode int, resultData imagedata.ImageData, po *options.ProcessingOptions, originURL string, originData imagedata.ImageData) {
 	var contentDisposition string
 	if len(po.Filename) > 0 {
 		contentDisposition = resultData.Format().ContentDisposition(po.Filename, po.ReturnAttachment)
@@ -343,7 +343,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 
 	statusCode := http.StatusOK
 
-	originData, err := func() (*imagedata.ImageData, error) {
+	originData, err := func() (imagedata.ImageData, error) {
 		defer metrics.StartDownloadingSegment(ctx, metrics.Meta{
 			metrics.MetaSourceImageURL:    metricsMeta[metrics.MetaSourceImageURL],
 			metrics.MetaSourceImageOrigin: metricsMeta[metrics.MetaSourceImageOrigin],
@@ -462,7 +462,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		))
 	}
 
-	resultData, err := func() (*imagedata.ImageData, error) {
+	resultData, err := func() (imagedata.ImageData, error) {
 		defer metrics.StartProcessingSegment(ctx, metrics.Meta{
 			metrics.MetaProcessingOptions: metricsMeta[metrics.MetaProcessingOptions],
 		})()

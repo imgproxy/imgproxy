@@ -2,7 +2,6 @@ package etag
 
 import (
 	"io"
-	"net/http"
 	"os"
 	"strings"
 	"testing"
@@ -25,8 +24,8 @@ type EtagTestSuite struct {
 	suite.Suite
 
 	po             *options.ProcessingOptions
-	imgWithETag    *imagedata.ImageData
-	imgWithoutETag *imagedata.ImageData
+	imgWithETag    imagedata.ImageData
+	imgWithoutETag imagedata.ImageData
 
 	h Handler
 }
@@ -38,10 +37,11 @@ func (s *EtagTestSuite) SetupSuite() {
 	d, err := os.ReadFile("../testdata/test1.jpg")
 	s.Require().NoError(err)
 
-	imgWithETag, err := imagedata.NewFromBytes(d, http.Header{httpheaders.Etag: []string{`"loremipsumdolor"`}})
+	imgWithETag, err := imagedata.NewFromBytes(d)
 	s.Require().NoError(err)
+	imgWithETag.Headers().Add(httpheaders.Etag, `"loremipsumdolor"`)
 
-	imgWithoutETag, err := imagedata.NewFromBytes(d, make(http.Header))
+	imgWithoutETag, err := imagedata.NewFromBytes(d)
 	s.Require().NoError(err)
 
 	s.imgWithETag = imgWithETag

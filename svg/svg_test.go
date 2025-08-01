@@ -1,7 +1,6 @@
 package svg
 
 import (
-	"net/http"
 	"os"
 	"path/filepath"
 	"testing"
@@ -25,18 +24,16 @@ func (s *SvgTestSuite) SetupSuite() {
 	s.Require().NoError(err)
 }
 
-func (s *SvgTestSuite) readTestFile(name string) *imagedata.ImageData {
+func (s *SvgTestSuite) readTestFile(name string) imagedata.ImageData {
 	wd, err := os.Getwd()
 	s.Require().NoError(err)
 
 	data, err := os.ReadFile(filepath.Join(wd, "..", "testdata", name))
 	s.Require().NoError(err)
 
-	h := make(http.Header)
-	h.Set(httpheaders.ContentType, "image/svg+xml")
-	h.Set(httpheaders.CacheControl, "public, max-age=12345")
-
-	d, err := imagedata.NewFromBytes(data, h)
+	d, err := imagedata.NewFromBytes(data)
+	d.Headers().Set(httpheaders.ContentType, "image/svg+xml")
+	d.Headers().Set(httpheaders.CacheControl, "public, max-age=12345")
 	s.Require().NoError(err)
 
 	return d

@@ -87,26 +87,26 @@ func (s *ProcessingHandlerTestSuite) readTestFile(name string) []byte {
 	return data
 }
 
-func (s *ProcessingHandlerTestSuite) readTestImageData(name string) *imagedata.ImageData {
+func (s *ProcessingHandlerTestSuite) readTestImageData(name string) imagedata.ImageData {
 	wd, err := os.Getwd()
 	s.Require().NoError(err)
 
 	data, err := os.ReadFile(filepath.Join(wd, "testdata", name))
 	s.Require().NoError(err)
 
-	imgdata, err := imagedata.NewFromBytes(data, make(http.Header))
+	imgdata, err := imagedata.NewFromBytes(data)
 	s.Require().NoError(err)
 
 	return imgdata
 }
 
-func (s *ProcessingHandlerTestSuite) readImageData(imgdata *imagedata.ImageData) []byte {
+func (s *ProcessingHandlerTestSuite) readImageData(imgdata imagedata.ImageData) []byte {
 	data, err := io.ReadAll(imgdata.Reader())
 	s.Require().NoError(err)
 	return data
 }
 
-func (s *ProcessingHandlerTestSuite) sampleETagData(imgETag string) (string, *imagedata.ImageData, string) {
+func (s *ProcessingHandlerTestSuite) sampleETagData(imgETag string) (string, imagedata.ImageData, string) {
 	poStr := "rs:fill:4:4"
 
 	po := options.NewProcessingOptions()

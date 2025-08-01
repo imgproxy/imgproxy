@@ -11,7 +11,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 )
 
-func Sanitize(data *imagedata.ImageData) (*imagedata.ImageData, error) {
+func Sanitize(data imagedata.ImageData) (imagedata.ImageData, error) {
 	r := data.Reader()
 	l := xml.NewLexer(parse.NewInput(r))
 
@@ -49,8 +49,7 @@ func Sanitize(data *imagedata.ImageData) (*imagedata.ImageData, error) {
 				imagetype.SVG,
 				buf.Bytes(),
 				data.Headers().Clone(),
-			)
-			newData.SetCancel(cancel)
+			).WithCancel(cancel)
 
 			return newData, nil
 		case xml.StartTagToken:

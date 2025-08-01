@@ -6,7 +6,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
-func applyFilters(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata *imagedata.ImageData) error {
+func applyFilters(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata imagedata.ImageData) error {
 	if po.Blur == 0 && po.Sharpen == 0 && po.Pixelate <= 1 {
 		return nil
 	}

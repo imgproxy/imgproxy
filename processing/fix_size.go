@@ -91,7 +91,7 @@ func fixIcoSize(img *vips.Image) error {
 	return nil
 }
 
-func fixSize(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata *imagedata.ImageData) error {
+func fixSize(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata imagedata.ImageData) error {
 	switch po.Format {
 	case imagetype.WEBP:
 		return fixWebpSize(img)

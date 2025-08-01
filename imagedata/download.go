@@ -37,7 +37,7 @@ func initDownloading() error {
 	return nil
 }
 
-func download(ctx context.Context, imageURL string, opts DownloadOptions, secopts security.Options) (*ImageData, error) {
+func download(ctx context.Context, imageURL string, opts DownloadOptions, secopts security.Options) (ImageData, error) {
 	// We use this for testing
 	if len(redirectAllRequestsTo) > 0 {
 		imageURL = redirectAllRequestsTo
@@ -70,7 +70,12 @@ func download(ctx context.Context, imageURL string, opts DownloadOptions, secopt
 		return nil, ierrors.Wrap(err, 0)
 	}
 
-	imgdata.headers = res.Header.Clone()
+	// NOTE: This will be removed in the future in favor of headers/image data separation
+	for k, v := range res.Header {
+		for _, v := range v {
+			imgdata.Headers().Add(k, v)
+		}
+	}
 
 	return imgdata, nil
 }

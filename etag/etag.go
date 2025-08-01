@@ -107,7 +107,7 @@ func (h *Handler) ImageEtagExpected() string {
 	return h.imgEtagExpected
 }
 
-func (h *Handler) SetActualImageData(imgdata *imagedata.ImageData) (bool, error) {
+func (h *Handler) SetActualImageData(imgdata imagedata.ImageData) (bool, error) {
 	var haveActualImgETag bool
 	h.imgEtagActual = imgdata.Headers().Get(httpheaders.Etag)
 	haveActualImgETag = len(h.imgEtagActual) > 0

@@ -353,7 +353,7 @@ func (img *Image) Pages() int {
 	return p
 }
 
-func (img *Image) Load(imgdata *imagedata.ImageData, shrink int, scale float64, pages int) error {
+func (img *Image) Load(imgdata imagedata.ImageData, shrink int, scale float64, pages int) error {
 	var tmp *C.VipsImage
 
 	err := C.int(0)
@@ -403,7 +403,7 @@ func (img *Image) Load(imgdata *imagedata.ImageData, shrink int, scale float64, 
 	return nil
 }
 
-func (img *Image) LoadThumbnail(imgdata *imagedata.ImageData) error {
+func (img *Image) LoadThumbnail(imgdata imagedata.ImageData) error {
 	if imgdata.Format() != imagetype.HEIC && imgdata.Format() != imagetype.AVIF {
 		return newVipsError("Usupported image type to load thumbnail")
 	}
@@ -423,7 +423,7 @@ func (img *Image) LoadThumbnail(imgdata *imagedata.ImageData) error {
 	return nil
 }
 
-func (img *Image) Save(imgtype imagetype.Type, quality int) (*imagedata.ImageData, error) {
+func (img *Image) Save(imgtype imagetype.Type, quality int) (imagedata.ImageData, error) {
 	target := C.vips_target_new_to_memory()
 
 	cancel := func() {
@@ -470,10 +470,7 @@ func (img *Image) Save(imgtype imagetype.Type, quality int) (*imagedata.ImageDat
 
 	b := ptrToBytes(ptr, int(imgsize))
 
-	imgdata := imagedata.NewFromBytesWithFormat(imgtype, b, make(http.Header))
-	imgdata.SetCancel(cancel)
-
-	return imgdata, nil
+	return imagedata.NewFromBytesWithFormat(imgtype, b, make(http.Header)).WithCancel(cancel), nil
 }
 
 func (img *Image) Clear() {

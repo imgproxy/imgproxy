@@ -25,7 +25,7 @@ func extendImage(img *vips.Image, width, height int, gravity *options.GravityOpt
 	return img.Embed(width, height, offX, offY)
 }
 
-func extend(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata *imagedata.ImageData) error {
+func extend(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata imagedata.ImageData) error {
 	if !po.Extend.Enabled {
 		return nil
 	}
@@ -34,7 +34,7 @@ func extend(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOption
 	return extendImage(img, width, height, &po.Extend.Gravity, pctx.dprScale)
 }
 
-func extendAspectRatio(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata *imagedata.ImageData) error {
+func extendAspectRatio(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata imagedata.ImageData) error {
 	if !po.ExtendAspectRatio.Enabled {
 		return nil
 	}

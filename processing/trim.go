@@ -8,7 +8,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
-func trim(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata *imagedata.ImageData) error {
+func trim(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata imagedata.ImageData) error {
 	if !po.Trim.Enabled {
 		return nil
 	}

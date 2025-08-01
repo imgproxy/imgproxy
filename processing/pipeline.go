@@ -60,10 +60,10 @@ type pipelineContext struct {
 	extendAspectRatioHeight int
 }
 
-type pipelineStep func(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata *imagedata.ImageData) error
+type pipelineStep func(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata imagedata.ImageData) error
 type pipeline []pipelineStep
 
-func (p pipeline) Run(ctx context.Context, img *vips.Image, po *options.ProcessingOptions, imgdata *imagedata.ImageData) error {
+func (p pipeline) Run(ctx context.Context, img *vips.Image, po *options.ProcessingOptions, imgdata imagedata.ImageData) error {
 	pctx := pipelineContext{
 		ctx: ctx,
 

@@ -31,7 +31,7 @@ func (s *ProcessingTestSuite) SetupSuite() {
 	logrus.SetOutput(io.Discard)
 }
 
-func (s *ProcessingTestSuite) openFile(name string) *imagedata.ImageData {
+func (s *ProcessingTestSuite) openFile(name string) imagedata.ImageData {
 	secopts := security.Options{
 		MaxSrcResolution:            10 * 1024 * 1024,
 		MaxSrcFileSize:              10 * 1024 * 1024,
@@ -43,13 +43,13 @@ func (s *ProcessingTestSuite) openFile(name string) *imagedata.ImageData {
 	s.Require().NoError(err)
 	path := filepath.Join(wd, "..", "testdata", name)
 
-	imagedata, err := imagedata.FromFile(path, "test image", secopts)
+	imagedata, err := imagedata.NewFromPath(path, secopts)
 	s.Require().NoError(err)
 
 	return imagedata
 }
 
-func (s *ProcessingTestSuite) checkSize(imgdata *imagedata.ImageData, width, height int) {
+func (s *ProcessingTestSuite) checkSize(imgdata imagedata.ImageData, width, height int) {
 	img := new(vips.Image)
 	err := img.Load(imgdata, 1, 1, 1)
 	s.Require().NoError(err)
