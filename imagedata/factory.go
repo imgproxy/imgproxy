@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/imgproxy/imgproxy/v3/errwrap"
 	"github.com/imgproxy/imgproxy/v3/imagemeta"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/security"
@@ -82,7 +83,7 @@ func NewFromPath(path string, secopts security.Options) (ImageData, error) {
 func NewFromBase64(encoded string, secopts security.Options) (ImageData, error) {
 	b, err := base64.StdEncoding.DecodeString(encoded)
 	if err != nil {
-		return nil, err
+		return nil, errwrap.Wrapf(err, "failed to decode base64 string")
 	}
 
 	r := bytes.NewReader(b)

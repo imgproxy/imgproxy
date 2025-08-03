@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/errwrap"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/security"
@@ -99,27 +100,18 @@ func loadWatermark() error {
 	case len(config.WatermarkData) > 0:
 		Watermark, err = NewFromBase64(config.WatermarkData, security.DefaultOptions())
 
-		// NOTE: this should be something like err = ierrors.Wrap(err).WithStackDeep(0).WithPrefix("watermark")
-		// In the NewFromBase64 all errors should be wrapped to something like
-		// .WithPrefix("load from base64")
-		if err != nil {
-			return ierrors.Wrap(err, 0, ierrors.WithPrefix("can't load watermark from Base64"))
-		}
-
 	case len(config.WatermarkPath) > 0:
 		Watermark, err = NewFromPath(config.WatermarkPath, security.DefaultOptions())
-		if err != nil {
-			return ierrors.Wrap(err, 0, ierrors.WithPrefix("can't read watermark from file"))
-		}
 
 	case len(config.WatermarkURL) > 0:
 		Watermark, err = Download(context.Background(), config.WatermarkURL, "watermark", DownloadOptions{Header: nil, CookieJar: nil}, security.DefaultOptions())
-		if err != nil {
-			return ierrors.Wrap(err, 0, ierrors.WithPrefix("can't download from URL"))
-		}
 
 	default:
 		Watermark = nil
+	}
+
+	if err != nil {
+		return errwrap.Wrapf(err, "failed to load watermark")
 	}
 
 	return nil
@@ -129,21 +121,12 @@ func loadFallbackImage() (err error) {
 	switch {
 	case len(config.FallbackImageData) > 0:
 		FallbackImage, err = NewFromBase64(config.FallbackImageData, security.DefaultOptions())
-		if err != nil {
-			return ierrors.Wrap(err, 0, ierrors.WithPrefix("can't load fallback image from Base64"))
-		}
 
 	case len(config.FallbackImagePath) > 0:
 		FallbackImage, err = NewFromPath(config.FallbackImagePath, security.DefaultOptions())
-		if err != nil {
-			return ierrors.Wrap(err, 0, ierrors.WithPrefix("can't read fallback image from file"))
-		}
 
 	case len(config.FallbackImageURL) > 0:
 		FallbackImage, err = Download(context.Background(), config.FallbackImageURL, "fallback image", DownloadOptions{Header: nil, CookieJar: nil}, security.DefaultOptions())
-		if err != nil {
-			return ierrors.Wrap(err, 0, ierrors.WithPrefix("can't download from URL"))
-		}
 
 	default:
 		FallbackImage = nil
@@ -151,6 +134,12 @@ func loadFallbackImage() (err error) {
 
 	if FallbackImage != nil && err == nil && config.FallbackImageTTL > 0 {
 		FallbackImage.Headers().Set("Fallback-Image", "1")
+	}
+
+	// Otherwise, it triggers false positive lint error in Init()
+	// TODO: fix this eventually
+	if err != nil {
+		err = errwrap.Wrapf(err, "failed to load fallback image")
 	}
 
 	return err
