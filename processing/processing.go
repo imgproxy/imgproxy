@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"runtime"
-	"strconv"
 
 	log "github.com/sirupsen/logrus"
 
@@ -79,7 +78,7 @@ func ValidatePreferredFormats() error {
 	}
 
 	if len(filtered) == 0 {
-		return errors.New("No supported preferred formats specified")
+		return errors.New("no supported preferred formats specified")
 	}
 
 	config.PreferredFormats = filtered
@@ -248,7 +247,14 @@ func saveImageToFitBytes(ctx context.Context, po *options.ProcessingOptions, img
 	}
 }
 
-func ProcessImage(ctx context.Context, imgdata imagedata.ImageData, po *options.ProcessingOptions) (imagedata.ImageData, error) {
+type Meta struct {
+	OriginWidth  int
+	OriginHeight int
+	ResultWidth  int
+	ResultHeight int
+}
+
+func ProcessImage(ctx context.Context, imgdata imagedata.ImageData, po *options.ProcessingOptions) (imagedata.ImageData, *Meta, error) {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 
@@ -272,12 +278,12 @@ func ProcessImage(ctx context.Context, imgdata imagedata.ImageData, po *options.
 			log.Debugf("Can't load thumbnail: %s", err)
 			// Failed to load thumbnail, rollback to the full image
 			if err := img.Load(imgdata, 1, 1.0, pages); err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 		}
 	} else {
 		if err := img.Load(imgdata, 1, 1.0, pages); err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 	}
 
@@ -309,29 +315,29 @@ func ProcessImage(ctx context.Context, imgdata imagedata.ImageData, po *options.
 	}
 
 	if !vips.SupportsSave(po.Format) {
-		return nil, newSaveFormatError(po.Format)
+		return nil, nil, newSaveFormatError(po.Format)
 	}
 
 	if po.Format.SupportsAnimationSave() && animated {
 		if err := transformAnimated(ctx, img, po, imgdata); err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 	} else {
 		if animated {
 			// We loaded animated image but the resulting format doesn't support
 			// animations, so we need to reload image as not animated
 			if err := img.Load(imgdata, 1, 1.0, 1); err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 		}
 
 		if err := mainPipeline.Run(ctx, img, po, imgdata); err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 	}
 
 	if err := finalizePipeline.Run(ctx, img, po, imgdata); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if po.Format == imagetype.AVIF && (img.Width() < 16 || img.Height() < 16) {
@@ -358,12 +364,16 @@ func ProcessImage(ctx context.Context, imgdata imagedata.ImageData, po *options.
 		outData, err = img.Save(po.Format, po.GetQuality())
 	}
 
+	var m *Meta
+
 	if err == nil {
-		outData.Headers().Set("X-Origin-Width", strconv.Itoa(originWidth))
-		outData.Headers().Set("X-Origin-Height", strconv.Itoa(originHeight))
-		outData.Headers().Set("X-Result-Width", strconv.Itoa(img.Width()))
-		outData.Headers().Set("X-Result-Height", strconv.Itoa(img.Height()))
+		m = &Meta{
+			OriginWidth:  originWidth,
+			OriginHeight: originHeight,
+			ResultWidth:  img.Width(),
+			ResultHeight: img.Height(),
+		}
 	}
 
-	return outData, err
+	return outData, m, err
 }

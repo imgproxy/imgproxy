@@ -470,7 +470,7 @@ func (img *Image) Save(imgtype imagetype.Type, quality int) (imagedata.ImageData
 
 	b := ptrToBytes(ptr, int(imgsize))
 
-	i := imagedata.NewFromBytesWithFormat(imgtype, b, nil)
+	i := imagedata.NewFromBytesWithFormat(imgtype, b)
 	i.AddCancel(cancel)
 
 	return i, nil

@@ -48,7 +48,6 @@ func Sanitize(data imagedata.ImageData) (imagedata.ImageData, error) {
 			newData := imagedata.NewFromBytesWithFormat(
 				imagetype.SVG,
 				buf.Bytes(),
-				data.Headers(),
 			)
 			newData.AddCancel(cancel)
 

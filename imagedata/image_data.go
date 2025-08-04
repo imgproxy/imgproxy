@@ -15,8 +15,9 @@ import (
 )
 
 var (
-	Watermark     ImageData
-	FallbackImage ImageData
+	Watermark            ImageData
+	FallbackImage        ImageData
+	FallbackImageHeaders http.Header // Headers for the fallback image
 )
 
 type ImageData interface {
@@ -25,17 +26,12 @@ type ImageData interface {
 	Format() imagetype.Type       // Format returns the image format from the metadata (shortcut)
 	Size() (int, error)           // Size returns the size of the image data in bytes
 	AddCancel(context.CancelFunc) // AddCancel attaches a cancel function to the image data
-
-	// This will be removed in the future
-	Headers() http.Header // Headers returns the HTTP headers of the image data, will be removed in the future
 }
 
 // imageDataBytes represents image data stored in a byte slice in memory
 type imageDataBytes struct {
-	format  imagetype.Type
-	data    []byte
-	headers http.Header
-
+	format     imagetype.Type
+	data       []byte
 	cancel     []context.CancelFunc
 	cancelOnce sync.Once
 }
@@ -64,10 +60,6 @@ func (d *imageDataBytes) Reader() io.ReadSeeker {
 // NOTE: asyncbuffer implementation will .Wait() for the data to be fully read
 func (d *imageDataBytes) Size() (int, error) {
 	return len(d.data), nil
-}
-
-func (d *imageDataBytes) Headers() http.Header {
-	return d.headers
 }
 
 func (d *imageDataBytes) AddCancel(cancel context.CancelFunc) {
@@ -113,7 +105,7 @@ func loadWatermark() error {
 		}
 
 	case len(config.WatermarkURL) > 0:
-		Watermark, err = Download(context.Background(), config.WatermarkURL, "watermark", DownloadOptions{Header: nil, CookieJar: nil}, security.DefaultOptions())
+		Watermark, _, err = Download(context.Background(), config.WatermarkURL, "watermark", DownloadOptions{Header: nil, CookieJar: nil}, security.DefaultOptions())
 		if err != nil {
 			return ierrors.Wrap(err, 0, ierrors.WithPrefix("can't download from URL"))
 		}
@@ -140,7 +132,7 @@ func loadFallbackImage() (err error) {
 		}
 
 	case len(config.FallbackImageURL) > 0:
-		FallbackImage, err = Download(context.Background(), config.FallbackImageURL, "fallback image", DownloadOptions{Header: nil, CookieJar: nil}, security.DefaultOptions())
+		FallbackImage, FallbackImageHeaders, err = Download(context.Background(), config.FallbackImageURL, "fallback image", DownloadOptions{Header: nil, CookieJar: nil}, security.DefaultOptions())
 		if err != nil {
 			return ierrors.Wrap(err, 0, ierrors.WithPrefix("can't download from URL"))
 		}
@@ -149,21 +141,17 @@ func loadFallbackImage() (err error) {
 		FallbackImage = nil
 	}
 
-	if FallbackImage != nil && err == nil && config.FallbackImageTTL > 0 {
-		FallbackImage.Headers().Set("Fallback-Image", "1")
-	}
-
 	return err
 }
 
-func Download(ctx context.Context, imageURL, desc string, opts DownloadOptions, secopts security.Options) (ImageData, error) {
-	imgdata, err := download(ctx, imageURL, opts, secopts)
+func Download(ctx context.Context, imageURL, desc string, opts DownloadOptions, secopts security.Options) (ImageData, http.Header, error) {
+	imgdata, h, err := download(ctx, imageURL, opts, secopts)
 	if err != nil {
-		return nil, ierrors.Wrap(
+		return nil, h, ierrors.Wrap(
 			err, 0,
 			ierrors.WithPrefix(fmt.Sprintf("Can't download %s", desc)),
 		)
 	}
 
-	return imgdata, nil
+	return imgdata, h, nil
 }

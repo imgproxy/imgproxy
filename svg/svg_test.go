@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/imgproxy/imgproxy/v3/config"
-	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/testutil"
 )
@@ -32,8 +31,6 @@ func (s *SvgTestSuite) readTestFile(name string) imagedata.ImageData {
 	s.Require().NoError(err)
 
 	d, err := imagedata.NewFromBytes(data)
-	d.Headers().Set(httpheaders.ContentType, "image/svg+xml")
-	d.Headers().Set(httpheaders.CacheControl, "public, max-age=12345")
 	s.Require().NoError(err)
 
 	return d
@@ -46,7 +43,6 @@ func (s *SvgTestSuite) TestSanitize() {
 
 	s.Require().NoError(err)
 	s.Require().True(testutil.ReadersEqual(s.T(), expected.Reader(), actual.Reader()))
-	s.Require().Equal(origin.Headers(), actual.Headers())
 }
 
 func TestSvg(t *testing.T) {

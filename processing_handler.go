@@ -125,7 +125,24 @@ func setCanonical(rw http.ResponseWriter, originURL string) {
 	}
 }
 
-func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, statusCode int, resultData imagedata.ImageData, po *options.ProcessingOptions, originURL string, originData imagedata.ImageData) {
+func writeDebugHeaders(ctx context.Context, rw http.ResponseWriter, originData imagedata.ImageData, meta *processing.Meta) {
+	if !config.EnableDebugHeaders || meta == nil {
+		return
+	}
+
+	size, err := originData.Size()
+	if err != nil {
+		checkErr(ctx, "image_data_size", err)
+	}
+
+	rw.Header().Set("X-Origin-Content-Length", strconv.Itoa(size))
+	rw.Header().Set("X-Origin-Width", strconv.Itoa(meta.OriginWidth))
+	rw.Header().Set("X-Origin-Height", strconv.Itoa(meta.OriginHeight))
+	rw.Header().Set("X-Result-Width", strconv.Itoa(meta.ResultWidth))
+	rw.Header().Set("X-Result-Height", strconv.Itoa(meta.ResultHeight))
+}
+
+func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, statusCode int, resultData imagedata.ImageData, po *options.ProcessingOptions, originURL string, originData imagedata.ImageData, originHeaders http.Header) {
 	var contentDisposition string
 	if len(po.Filename) > 0 {
 		contentDisposition = resultData.Format().ContentDisposition(po.Filename, po.ReturnAttachment)
@@ -136,23 +153,10 @@ func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, sta
 	rw.Header().Set("Content-Type", resultData.Format().Mime())
 	rw.Header().Set("Content-Disposition", contentDisposition)
 
-	setCacheControl(rw, po.Expires, originData.Headers())
-	setLastModified(rw, originData.Headers())
+	setCacheControl(rw, po.Expires, originHeaders)
+	setLastModified(rw, originHeaders)
 	setVary(rw)
 	setCanonical(rw, originURL)
-
-	if config.EnableDebugHeaders {
-		originSize, err := originData.Size()
-		if err != nil {
-			checkErr(r.Context(), "image_data_size", err)
-		}
-
-		rw.Header().Set("X-Origin-Content-Length", strconv.Itoa(originSize))
-		rw.Header().Set("X-Origin-Width", resultData.Headers().Get("X-Origin-Width"))
-		rw.Header().Set("X-Origin-Height", resultData.Headers().Get("X-Origin-Height"))
-		rw.Header().Set("X-Result-Width", resultData.Headers().Get("X-Result-Width"))
-		rw.Header().Set("X-Result-Height", resultData.Headers().Get("X-Result-Height"))
-	}
 
 	rw.Header().Set("Content-Security-Policy", "script-src 'none'")
 
@@ -348,7 +352,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 
 	statusCode := http.StatusOK
 
-	originData, err := func() (imagedata.ImageData, error) {
+	originData, originHeaders, err := func() (imagedata.ImageData, http.Header, error) {
 		defer metrics.StartDownloadingSegment(ctx, metrics.Meta{
 			metrics.MetaSourceImageURL:    metricsMeta[metrics.MetaSourceImageURL],
 			metrics.MetaSourceImageOrigin: metricsMeta[metrics.MetaSourceImageOrigin],
@@ -412,17 +416,22 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		}
 
 		originData = imagedata.FallbackImage
+		originHeaders = imagedata.FallbackImageHeaders.Clone()
+
+		if config.FallbackImageTTL > 0 {
+			originHeaders.Set("Fallback-Image", "1")
+		}
 	}
 
 	checkErr(ctx, "timeout", router.CheckTimeout(ctx))
 
 	if config.ETagEnabled && statusCode == http.StatusOK {
-		imgDataMatch, terr := etagHandler.SetActualImageData(originData)
+		imgDataMatch, terr := etagHandler.SetActualImageData(originData, originHeaders)
 		if terr == nil {
 			rw.Header().Set("ETag", etagHandler.GenerateActualETag())
 
 			if imgDataMatch && etagHandler.ProcessingOptionsMatch() {
-				respondWithNotModified(reqID, r, rw, po, imageURL, originData.Headers())
+				respondWithNotModified(reqID, r, rw, po, imageURL, originHeaders)
 				return
 			}
 		}
@@ -444,11 +453,11 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 
 			defer sanitized.Close()
 
-			respondWithImage(reqID, r, rw, statusCode, sanitized, po, imageURL, originData)
+			respondWithImage(reqID, r, rw, statusCode, sanitized, po, imageURL, originData, originHeaders)
 			return
 		}
 
-		respondWithImage(reqID, r, rw, statusCode, originData, po, imageURL, originData)
+		respondWithImage(reqID, r, rw, statusCode, originData, po, imageURL, originData, originHeaders)
 		return
 	}
 
@@ -467,7 +476,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		))
 	}
 
-	resultData, err := func() (imagedata.ImageData, error) {
+	resultData, meta, err := func() (imagedata.ImageData, *processing.Meta, error) {
 		defer metrics.StartProcessingSegment(ctx, metrics.Meta{
 			metrics.MetaProcessingOptions: metricsMeta[metrics.MetaProcessingOptions],
 		})()
@@ -479,5 +488,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 
 	checkErr(ctx, "timeout", router.CheckTimeout(ctx))
 
-	respondWithImage(reqID, r, rw, statusCode, resultData, po, imageURL, originData)
+	writeDebugHeaders(r.Context(), rw, originData, meta)
+
+	respondWithImage(reqID, r, rw, statusCode, resultData, po, imageURL, originData, originHeaders)
 }
