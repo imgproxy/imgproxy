@@ -247,14 +247,15 @@ func saveImageToFitBytes(ctx context.Context, po *options.ProcessingOptions, img
 	}
 }
 
-type Meta struct {
+type Result struct {
+	OutData      imagedata.ImageData
 	OriginWidth  int
 	OriginHeight int
 	ResultWidth  int
 	ResultHeight int
 }
 
-func ProcessImage(ctx context.Context, imgdata imagedata.ImageData, po *options.ProcessingOptions) (imagedata.ImageData, *Meta, error) {
+func ProcessImage(ctx context.Context, imgdata imagedata.ImageData, po *options.ProcessingOptions) (*Result, error) {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 
@@ -278,12 +279,12 @@ func ProcessImage(ctx context.Context, imgdata imagedata.ImageData, po *options.
 			log.Debugf("Can't load thumbnail: %s", err)
 			// Failed to load thumbnail, rollback to the full image
 			if err := img.Load(imgdata, 1, 1.0, pages); err != nil {
-				return nil, nil, err
+				return nil, err
 			}
 		}
 	} else {
 		if err := img.Load(imgdata, 1, 1.0, pages); err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 	}
 
@@ -315,29 +316,29 @@ func ProcessImage(ctx context.Context, imgdata imagedata.ImageData, po *options.
 	}
 
 	if !vips.SupportsSave(po.Format) {
-		return nil, nil, newSaveFormatError(po.Format)
+		return nil, newSaveFormatError(po.Format)
 	}
 
 	if po.Format.SupportsAnimationSave() && animated {
 		if err := transformAnimated(ctx, img, po, imgdata); err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 	} else {
 		if animated {
 			// We loaded animated image but the resulting format doesn't support
 			// animations, so we need to reload image as not animated
 			if err := img.Load(imgdata, 1, 1.0, 1); err != nil {
-				return nil, nil, err
+				return nil, err
 			}
 		}
 
 		if err := mainPipeline.Run(ctx, img, po, imgdata); err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 	}
 
 	if err := finalizePipeline.Run(ctx, img, po, imgdata); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	if po.Format == imagetype.AVIF && (img.Width() < 16 || img.Height() < 16) {
@@ -364,16 +365,15 @@ func ProcessImage(ctx context.Context, imgdata imagedata.ImageData, po *options.
 		outData, err = img.Save(po.Format, po.GetQuality())
 	}
 
-	var m *Meta
-
-	if err == nil {
-		m = &Meta{
-			OriginWidth:  originWidth,
-			OriginHeight: originHeight,
-			ResultWidth:  img.Width(),
-			ResultHeight: img.Height(),
-		}
+	if err != nil {
+		return nil, err
 	}
 
-	return outData, m, err
+	return &Result{
+		OutData:      outData,
+		OriginWidth:  originWidth,
+		OriginHeight: originHeight,
+		ResultWidth:  img.Width(),
+		ResultHeight: img.Height(),
+	}, nil
 }
