@@ -24,6 +24,7 @@ import (
 var (
 	streamReqHeaders = []string{
 		"If-None-Match",
+		"If-Modified-Since",
 		"Accept-Encoding",
 		"Range",
 	}
@@ -123,6 +124,11 @@ func streamOriginImage(ctx context.Context, reqID string, r *http.Request, rw ht
 	defer streamBufPool.Put(buf)
 
 	_, copyerr := io.CopyBuffer(rw, res.Body, *buf)
+	if copyerr == http.ErrBodyNotAllowed {
+		// We can hit this for some statuses like 304 Not Modified.
+		// We can ignore this error.
+		copyerr = nil
+	}
 
 	router.LogResponse(
 		reqID, r, res.StatusCode, nil,
