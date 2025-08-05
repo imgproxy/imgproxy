@@ -24,6 +24,7 @@ import (
 var (
 	streamReqHeaders = []string{
 		"If-None-Match",
+		"If-Modified-Since",
 		"Accept-Encoding",
 		"Range",
 	}
