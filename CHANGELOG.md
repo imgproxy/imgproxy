@@ -3,6 +3,7 @@
 ## [Unreleased]
 ### Fixed
 - Fix the `Vary` header value when `IMGPROXY_AUTO_JXL` or `IMGPROXY_ENFORCE_JXL` configs are set to `true`.
+- Fix connection break when the `raw` processing option is used and the response status code does not allow a response body (such as `304 Not Modified`).
 - Fix the `If-Modified-Since` request header handling when the `raw` processing option is used.
 - (pro) Fix generating thumbnails for VP9 videos with high bit depth.
 - (pro) Fix `IMGPROXY_CUSTOM_RESPONSE_HEADERS` and `IMGPROXY_RESPONSE_HEADERS_PASSTHROUGH` configs behavior when the `raw` processing option is used.
