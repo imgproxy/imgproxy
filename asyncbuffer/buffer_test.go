@@ -415,7 +415,6 @@ func TestAsyncBufferThreshold(t *testing.T) {
 	target = make([]byte, pauseThreshold+1)
 	n, err = asyncBuffer.readAt(target, 0)
 	require.NoError(t, err)
-	require.Equal(t, pauseThreshold, n)
 
 	// It usually returns only pauseThreshold bytes because this exact operation unpauses the reader,
 	// but the initial offset is before the threshold, data beyond the threshold may not be available.
