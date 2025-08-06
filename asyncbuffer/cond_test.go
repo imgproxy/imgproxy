@@ -8,36 +8,36 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type TickerTestSuite struct {
+type TestCondSuite struct {
 	suite.Suite
-	ticker *Ticker
+	cond *Cond
 }
 
-func (s *TickerTestSuite) SetupTest() {
-	s.ticker = NewTicker()
+func (s *TestCondSuite) SetupTest() {
+	s.cond = NewCond()
 }
 
-func (s *TickerTestSuite) TeardownTest() {
-	if s.ticker != nil {
-		s.ticker.Close()
+func (s *TestCondSuite) TeardownTest() {
+	if s.cond != nil {
+		s.cond.Close()
 	}
 }
 
-// TestBasicWaitAndTick tests the basic functionality of the Ticker
-func (s *TickerTestSuite) TestBasicWaitAndTick() {
+// TestBasicWaitAndTick tests the basic functionality of the Cond
+func (s *TestCondSuite) TestBasicWaitAndTick() {
 	done := make(chan struct{})
 
-	ch := s.ticker.ch
+	ch := s.cond.ch
 
 	// Start a goroutine that will tick after a short delay
 	go func() {
 		time.Sleep(50 * time.Millisecond)
-		s.ticker.Tick()
+		s.cond.Tick()
 	}()
 
 	// Start a goroutine that will wait for the tick
 	go func() {
-		s.ticker.Wait()
+		s.cond.Wait()
 		close(done)
 	}()
 
@@ -51,11 +51,11 @@ func (s *TickerTestSuite) TestBasicWaitAndTick() {
 	}, 100*time.Millisecond, 10*time.Millisecond)
 
 	// Means that and old channel was closed and a new one has been created
-	s.Require().NotEqual(ch, s.ticker.ch)
+	s.Require().NotEqual(ch, s.cond.ch)
 }
 
 // TestWaitMultipleWaiters tests that multiple waiters can be unblocked by a single tick
-func (s *TickerTestSuite) TestWaitMultipleWaiters() {
+func (s *TestCondSuite) TestWaitMultipleWaiters() {
 	const numWaiters = 10
 
 	var wg sync.WaitGroup
@@ -69,7 +69,7 @@ func (s *TickerTestSuite) TestWaitMultipleWaiters() {
 		go func(index int) {
 			defer wg.Done()
 			startWg.Done() // Signal that this goroutine is ready
-			s.ticker.Wait()
+			s.cond.Wait()
 			results[index] = true
 		}(i)
 	}
@@ -80,7 +80,7 @@ func (s *TickerTestSuite) TestWaitMultipleWaiters() {
 	// Wait for all waiters to complete
 	done := make(chan struct{})
 	go func() {
-		s.ticker.Tick() // Signal that execution can proceed
+		s.cond.Tick() // Signal that execution can proceed
 		wg.Wait()
 		close(done)
 	}()
@@ -100,17 +100,17 @@ func (s *TickerTestSuite) TestWaitMultipleWaiters() {
 	}
 }
 
-// TestClose tests the behavior of the Ticker when closed
-func (s *TickerTestSuite) TestClose() {
-	s.ticker.Close()
-	s.ticker.Close() // Should not panic
-	s.ticker.Wait()  // Should eventually return
-	s.ticker.Tick()  // Should not panic
+// TestClose tests the behavior of the Cond when closed
+func (s *TestCondSuite) TestClose() {
+	s.cond.Close()
+	s.cond.Close() // Should not panic
+	s.cond.Wait()  // Should eventually return
+	s.cond.Tick()  // Should not panic
 
-	s.Require().Nil(s.ticker.ch)
+	s.Require().Nil(s.cond.ch)
 }
 
-func (s *TickerTestSuite) TestRapidTicksAndWaits() {
+func (s *TestCondSuite) TestRapidTicksAndWaits() {
 	const iterations = 1000
 
 	var wg sync.WaitGroup
@@ -120,10 +120,10 @@ func (s *TickerTestSuite) TestRapidTicksAndWaits() {
 	go func() {
 		defer wg.Done()
 		for range iterations {
-			s.ticker.Tick()
+			s.cond.Tick()
 			time.Sleep(time.Microsecond)
 		}
-		s.ticker.Close() // Close after all ticks
+		s.cond.Close() // Close after all ticks
 	}()
 
 	// Start multiple waiters
@@ -132,7 +132,7 @@ func (s *TickerTestSuite) TestRapidTicksAndWaits() {
 		go func() {
 			defer wg.Done()
 			for range iterations / 10 {
-				s.ticker.Wait()
+				s.cond.Wait()
 			}
 		}()
 	}
@@ -153,6 +153,6 @@ func (s *TickerTestSuite) TestRapidTicksAndWaits() {
 	}, 100*time.Millisecond, 10*time.Millisecond)
 }
 
-func TestTicker(t *testing.T) {
-	suite.Run(t, new(TickerTestSuite))
+func TestCond(t *testing.T) {
+	suite.Run(t, new(TestCondSuite))
 }

@@ -64,8 +64,8 @@ type AsyncBuffer struct {
 	finished atomic.Bool // Indicates that the buffer has finished reading
 	closed   atomic.Bool // Indicates that the buffer was closed
 
-	paused *Latch  // Paused buffer does not read data beyond threshold
-	ticker *Ticker // Ticker that signals when a new chunk is ready
+	paused *Latch // Paused buffer does not read data beyond threshold
+	ticker *Cond  // Ticker that signals when a new chunk is ready
 }
 
 // FromReadCloser creates a new AsyncBuffer that reads from the given io.Reader in background
@@ -73,7 +73,7 @@ func FromReader(r io.ReadCloser) *AsyncBuffer {
 	ab := &AsyncBuffer{
 		r:      r,
 		paused: NewLatch(),
-		ticker: NewTicker(),
+		ticker: NewCond(),
 	}
 
 	go ab.readChunks()
