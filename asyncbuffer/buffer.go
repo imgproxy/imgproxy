@@ -110,11 +110,11 @@ func (ab *AsyncBuffer) readChunks() {
 
 		// Close the upstream reader
 		if err := ab.r.Close(); err != nil {
-			logrus.WithField("asyncBuffer", ab).Warningf("error closing upstream reader: %v", err)
+			logrus.WithField("source", "asyncbuffer.AsyncBuffer.readChunks").Warningf("error closing upstream reader: %s", err)
 		}
 	}()
 
-	// Stop reading if the reader is finished
+	// Stop reading if the reader is closed
 	for !ab.closed.Load() {
 		// In case we are trying to read data beyond threshold and we are paused,
 		// wait for pause to be released.
@@ -136,7 +136,8 @@ func (ab *AsyncBuffer) readChunks() {
 		}
 
 		// Read data into the chunk's buffer
-		// There is no way to guarantee that this would
+		// There is no way to guarantee that ReadFull will abort on context cancellation,
+		// unfortunately, this is how golang works.
 		n, err := io.ReadFull(ab.r, chunk.buf)
 
 		// If it's not the EOF, we need to store the error
@@ -342,7 +343,11 @@ func (ab *AsyncBuffer) readAt(p []byte, off int64) (int, error) {
 	for size > 0 {
 		// If data is not available at the given offset, we can return data read so far.
 		ok, err := ab.offsetAvailable(off)
-		if !ok || err != nil {
+		if !ok {
+			if err == io.EOF {
+				return n, nil
+			}
+
 			return n, err
 		}
 
@@ -355,7 +360,7 @@ func (ab *AsyncBuffer) readAt(p []byte, off int64) (int, error) {
 		// If we read data shorter than ChunkSize or, in case that was the last chunk, less than
 		// the size of the tail, return kind of EOF
 		if int64(nX) < min(size, int64(chunkSize)) {
-			return n, io.EOF
+			return n, nil
 		}
 	}
 

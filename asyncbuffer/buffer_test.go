@@ -126,7 +126,7 @@ func TestAsyncBufferReadAt(t *testing.T) {
 	target = make([]byte, len(source)+1)
 
 	n, err = asyncBuffer.readAt(target, 0)
-	require.ErrorIs(t, err, io.EOF) // We read all the data, and reached end
+	require.NoError(t, err) // We read all the data, and reached end
 	assert.Equal(t, len(source), n)
 	assert.Equal(t, target[:n], source)
 
@@ -154,8 +154,7 @@ func TestAsyncBufferReadAt(t *testing.T) {
 	// Let's try to read more data then available in the stream
 	target = make([]byte, chunkSize*2)
 	n, err = asyncBuffer.readAt(target, chunkSize*4)
-	require.Error(t, err)
-	assert.Equal(t, err, io.EOF)
+	require.NoError(t, err)
 	assert.Equal(t, chunkSize/2, n)
 	assert.Equal(t, target[:chunkSize/2], source[chunkSize*4:]) // We read only last half chunk
 
@@ -357,7 +356,7 @@ func TestAsyncBufferReadAsync(t *testing.T) {
 	// Try to read near end of the stream, EOF
 	target = make([]byte, chunkSize)
 	n, err = asyncBuffer.readAt(target, chunkSize*3-1)
-	require.ErrorIs(t, err, io.EOF)
+	require.NoError(t, err)
 	assert.Equal(t, 1, n)
 	assert.Equal(t, target[0], source[chunkSize*3-1])
 

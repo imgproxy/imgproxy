@@ -8,7 +8,6 @@ type condCh = chan struct{}
 
 // Cond signals that an event has occurred to a multiple waiters.
 type Cond struct {
-	_         noCopy
 	mu        sync.RWMutex
 	ch        condCh
 	closeOnce sync.Once

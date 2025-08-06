@@ -6,7 +6,6 @@ import (
 
 // Latch is once-releasing semaphore.
 type Latch struct {
-	_    noCopy
 	once sync.Once
 	done chan struct{}
 }
@@ -25,9 +24,3 @@ func (g *Latch) Release() {
 func (g *Latch) Wait() {
 	<-g.done
 }
-
-// checked by 'go vet
-type noCopy struct{}
-
-func (*noCopy) Lock()   {}
-func (*noCopy) Unlock() {}
