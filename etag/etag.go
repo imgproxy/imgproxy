@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"hash"
 	"io"
+	"net/http"
 	"net/textproto"
 	"strings"
 	"sync"
@@ -107,9 +108,9 @@ func (h *Handler) ImageEtagExpected() string {
 	return h.imgEtagExpected
 }
 
-func (h *Handler) SetActualImageData(imgdata imagedata.ImageData) (bool, error) {
+func (h *Handler) SetActualImageData(imgdata imagedata.ImageData, headers http.Header) (bool, error) {
 	var haveActualImgETag bool
-	h.imgEtagActual = imgdata.Headers().Get(httpheaders.Etag)
+	h.imgEtagActual = headers.Get(httpheaders.Etag)
 	haveActualImgETag = len(h.imgEtagActual) > 0
 
 	// Just in case server didn't check ETag properly and returned the same one

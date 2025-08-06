@@ -106,7 +106,7 @@ func (s *ProcessingHandlerTestSuite) readImageData(imgdata imagedata.ImageData) 
 	return data
 }
 
-func (s *ProcessingHandlerTestSuite) sampleETagData(imgETag string) (string, imagedata.ImageData, string) {
+func (s *ProcessingHandlerTestSuite) sampleETagData(imgETag string) (string, imagedata.ImageData, http.Header, string) {
 	poStr := "rs:fill:4:4"
 
 	po := options.NewProcessingOptions()
@@ -115,16 +115,17 @@ func (s *ProcessingHandlerTestSuite) sampleETagData(imgETag string) (string, ima
 	po.Height = 4
 
 	imgdata := s.readTestImageData("test1.png")
+	headers := make(http.Header)
 
 	if len(imgETag) != 0 {
-		imgdata.Headers().Set(httpheaders.Etag, imgETag)
+		headers.Set(httpheaders.Etag, imgETag)
 	}
 
 	var h etag.Handler
 
 	h.SetActualProcessingOptions(po)
-	h.SetActualImageData(imgdata)
-	return poStr, imgdata, h.GenerateActualETag()
+	h.SetActualImageData(imgdata, headers)
+	return poStr, imgdata, headers, h.GenerateActualETag()
 }
 
 func (s *ProcessingHandlerTestSuite) TestRequest() {
@@ -412,12 +413,12 @@ func (s *ProcessingHandlerTestSuite) TestETagDisabled() {
 func (s *ProcessingHandlerTestSuite) TestETagReqNoIfNotModified() {
 	config.ETagEnabled = true
 
-	poStr, imgdata, etag := s.sampleETagData("loremipsumdolor")
+	poStr, _, headers, etag := s.sampleETagData("loremipsumdolor")
 
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		s.Empty(r.Header.Get("If-None-Match"))
 
-		rw.Header().Set("ETag", imgdata.Headers().Get(httpheaders.Etag))
+		rw.Header().Set("ETag", headers.Get(httpheaders.Etag))
 		rw.WriteHeader(200)
 		rw.Write(s.readTestFile("test1.png"))
 	}))
@@ -433,7 +434,7 @@ func (s *ProcessingHandlerTestSuite) TestETagReqNoIfNotModified() {
 func (s *ProcessingHandlerTestSuite) TestETagDataNoIfNotModified() {
 	config.ETagEnabled = true
 
-	poStr, imgdata, etag := s.sampleETagData("")
+	poStr, imgdata, _, etag := s.sampleETagData("")
 
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		s.Empty(r.Header.Get("If-None-Match"))
@@ -453,10 +454,10 @@ func (s *ProcessingHandlerTestSuite) TestETagDataNoIfNotModified() {
 func (s *ProcessingHandlerTestSuite) TestETagReqMatch() {
 	config.ETagEnabled = true
 
-	poStr, imgdata, etag := s.sampleETagData(`"loremipsumdolor"`)
+	poStr, _, headers, etag := s.sampleETagData(`"loremipsumdolor"`)
 
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		s.Equal(imgdata.Headers().Get(httpheaders.Etag), r.Header.Get(httpheaders.IfNoneMatch))
+		s.Equal(headers.Get(httpheaders.Etag), r.Header.Get(httpheaders.IfNoneMatch))
 
 		rw.WriteHeader(304)
 	}))
@@ -475,7 +476,7 @@ func (s *ProcessingHandlerTestSuite) TestETagReqMatch() {
 func (s *ProcessingHandlerTestSuite) TestETagDataMatch() {
 	config.ETagEnabled = true
 
-	poStr, imgdata, etag := s.sampleETagData("")
+	poStr, imgdata, _, etag := s.sampleETagData("")
 
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		s.Empty(r.Header.Get("If-None-Match"))
@@ -498,13 +499,13 @@ func (s *ProcessingHandlerTestSuite) TestETagDataMatch() {
 func (s *ProcessingHandlerTestSuite) TestETagReqNotMatch() {
 	config.ETagEnabled = true
 
-	poStr, imgdata, actualETag := s.sampleETagData(`"loremipsumdolor"`)
-	_, _, expectedETag := s.sampleETagData(`"loremipsum"`)
+	poStr, imgdata, headers, actualETag := s.sampleETagData(`"loremipsumdolor"`)
+	_, _, _, expectedETag := s.sampleETagData(`"loremipsum"`)
 
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		s.Equal(`"loremipsum"`, r.Header.Get("If-None-Match"))
 
-		rw.Header().Set("ETag", imgdata.Headers().Get(httpheaders.Etag))
+		rw.Header().Set("ETag", headers.Get(httpheaders.Etag))
 		rw.WriteHeader(200)
 		rw.Write(s.readImageData(imgdata))
 	}))
@@ -523,7 +524,7 @@ func (s *ProcessingHandlerTestSuite) TestETagReqNotMatch() {
 func (s *ProcessingHandlerTestSuite) TestETagDataNotMatch() {
 	config.ETagEnabled = true
 
-	poStr, imgdata, actualETag := s.sampleETagData("")
+	poStr, imgdata, _, actualETag := s.sampleETagData("")
 	// Change the data hash
 	expectedETag := actualETag[:strings.IndexByte(actualETag, '/')] + "/Dasdbefj"
 
@@ -548,14 +549,14 @@ func (s *ProcessingHandlerTestSuite) TestETagDataNotMatch() {
 func (s *ProcessingHandlerTestSuite) TestETagProcessingOptionsNotMatch() {
 	config.ETagEnabled = true
 
-	poStr, imgdata, actualETag := s.sampleETagData("")
+	poStr, imgdata, headers, actualETag := s.sampleETagData("")
 	// Change the processing options hash
 	expectedETag := "abcdefj" + actualETag[strings.IndexByte(actualETag, '/'):]
 
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		s.Empty(r.Header.Get("If-None-Match"))
 
-		rw.Header().Set("ETag", imgdata.Headers().Get(httpheaders.Etag))
+		rw.Header().Set("ETag", headers.Get(httpheaders.Etag))
 		rw.WriteHeader(200)
 		rw.Write(s.readImageData(imgdata))
 	}))

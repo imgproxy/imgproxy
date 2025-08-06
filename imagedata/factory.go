@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/base64"
 	"io"
-	"net/http"
 	"os"
 
 	"github.com/imgproxy/imgproxy/v3/imagemeta"
@@ -12,22 +11,13 @@ import (
 	"github.com/imgproxy/imgproxy/v3/security"
 )
 
-// NewFromBytesWithFormat creates a new ImageData instance from the provided format,
-// http headers and byte slice.
-func NewFromBytesWithFormat(format imagetype.Type, b []byte, headers http.Header) ImageData {
-	var h http.Header
-
-	if headers == nil {
-		h = make(http.Header)
-	} else {
-		h = headers.Clone()
-	}
-
+// NewFromBytesWithFormat creates a new ImageData instance from the provided format
+// and byte slice.
+func NewFromBytesWithFormat(format imagetype.Type, b []byte) ImageData {
 	return &imageDataBytes{
-		data:    b,
-		format:  format,
-		headers: h,
-		cancel:  nil,
+		data:   b,
+		format: format,
+		cancel: nil,
 	}
 }
 
@@ -40,7 +30,7 @@ func NewFromBytes(b []byte) (ImageData, error) {
 		return nil, err
 	}
 
-	return NewFromBytesWithFormat(meta.Format(), b, nil), nil
+	return NewFromBytesWithFormat(meta.Format(), b), nil
 }
 
 // NewFromPath creates a new ImageData from an os.File

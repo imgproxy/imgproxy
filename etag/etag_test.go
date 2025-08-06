@@ -2,6 +2,7 @@ package etag
 
 import (
 	"io"
+	"net/http"
 	"os"
 	"strings"
 	"testing"
@@ -23,9 +24,11 @@ const (
 type EtagTestSuite struct {
 	suite.Suite
 
-	po             *options.ProcessingOptions
-	imgWithETag    imagedata.ImageData
-	imgWithoutETag imagedata.ImageData
+	po                    *options.ProcessingOptions
+	imgWithETag           imagedata.ImageData
+	imgWithEtagHeaders    http.Header
+	imgWithoutETag        imagedata.ImageData
+	imgWithoutEtagHeaders http.Header
 
 	h Handler
 }
@@ -39,9 +42,11 @@ func (s *EtagTestSuite) SetupSuite() {
 
 	imgWithETag, err := imagedata.NewFromBytes(d)
 	s.Require().NoError(err)
-	imgWithETag.Headers().Add(httpheaders.Etag, `"loremipsumdolor"`)
+	s.imgWithEtagHeaders = make(http.Header)
+	s.imgWithEtagHeaders.Add(httpheaders.Etag, `"loremipsumdolor"`)
 
 	imgWithoutETag, err := imagedata.NewFromBytes(d)
+	s.imgWithoutEtagHeaders = make(http.Header)
 	s.Require().NoError(err)
 
 	s.imgWithETag = imgWithETag
@@ -59,14 +64,14 @@ func (s *EtagTestSuite) SetupTest() {
 
 func (s *EtagTestSuite) TestGenerateActualReq() {
 	s.h.SetActualProcessingOptions(s.po)
-	s.h.SetActualImageData(s.imgWithETag)
+	s.h.SetActualImageData(s.imgWithETag, s.imgWithEtagHeaders)
 
 	s.Require().Equal(etagReq, s.h.GenerateActualETag())
 }
 
 func (s *EtagTestSuite) TestGenerateActualData() {
 	s.h.SetActualProcessingOptions(s.po)
-	s.h.SetActualImageData(s.imgWithoutETag)
+	s.h.SetActualImageData(s.imgWithoutETag, s.imgWithoutEtagHeaders)
 
 	s.Require().Equal(etagData, s.h.GenerateActualETag())
 }
@@ -102,7 +107,7 @@ func (s *EtagTestSuite) TestImageETagExpectedPresent() {
 	s.h.ParseExpectedETag(etagReq)
 
 	//nolint:testifylint // False-positive expected-actual
-	s.Require().Equal(s.imgWithETag.Headers().Get(httpheaders.Etag), s.h.ImageEtagExpected())
+	s.Require().Equal(s.imgWithEtagHeaders.Get(httpheaders.Etag), s.h.ImageEtagExpected())
 }
 
 func (s *EtagTestSuite) TestImageETagExpectedBlank() {
@@ -113,7 +118,7 @@ func (s *EtagTestSuite) TestImageETagExpectedBlank() {
 
 func (s *EtagTestSuite) TestImageDataCheckDataToDataSuccess() {
 	s.h.ParseExpectedETag(etagData)
-	s.Require().True(s.h.SetActualImageData(s.imgWithoutETag))
+	s.Require().True(s.h.SetActualImageData(s.imgWithoutETag, s.imgWithoutEtagHeaders))
 }
 
 func (s *EtagTestSuite) TestImageDataCheckDataToDataFailure() {
@@ -121,12 +126,12 @@ func (s *EtagTestSuite) TestImageDataCheckDataToDataFailure() {
 	wrongEtag := etagData[:i] + `/Dwrongimghash"`
 
 	s.h.ParseExpectedETag(wrongEtag)
-	s.Require().False(s.h.SetActualImageData(s.imgWithoutETag))
+	s.Require().False(s.h.SetActualImageData(s.imgWithoutETag, s.imgWithoutEtagHeaders))
 }
 
 func (s *EtagTestSuite) TestImageDataCheckDataToReqSuccess() {
 	s.h.ParseExpectedETag(etagData)
-	s.Require().True(s.h.SetActualImageData(s.imgWithETag))
+	s.Require().True(s.h.SetActualImageData(s.imgWithETag, s.imgWithEtagHeaders))
 }
 
 func (s *EtagTestSuite) TestImageDataCheckDataToReqFailure() {
@@ -134,19 +139,19 @@ func (s *EtagTestSuite) TestImageDataCheckDataToReqFailure() {
 	wrongEtag := etagData[:i] + `/Dwrongimghash"`
 
 	s.h.ParseExpectedETag(wrongEtag)
-	s.Require().False(s.h.SetActualImageData(s.imgWithETag))
+	s.Require().False(s.h.SetActualImageData(s.imgWithETag, s.imgWithEtagHeaders))
 }
 
 func (s *EtagTestSuite) TestImageDataCheckReqToDataFailure() {
 	s.h.ParseExpectedETag(etagReq)
-	s.Require().False(s.h.SetActualImageData(s.imgWithoutETag))
+	s.Require().False(s.h.SetActualImageData(s.imgWithoutETag, s.imgWithoutEtagHeaders))
 }
 
 func (s *EtagTestSuite) TestETagBusterFailure() {
 	config.ETagBuster = "busted"
 
 	s.h.ParseExpectedETag(etagReq)
-	s.Require().False(s.h.SetActualImageData(s.imgWithoutETag))
+	s.Require().False(s.h.SetActualImageData(s.imgWithoutETag, s.imgWithoutEtagHeaders))
 }
 
 func TestEtag(t *testing.T) {

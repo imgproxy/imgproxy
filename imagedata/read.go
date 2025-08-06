@@ -49,7 +49,7 @@ func readAndCheckImage(r io.Reader, contentLength int, secopts security.Options)
 		return nil, imagefetcher.WrapError(err)
 	}
 
-	i := NewFromBytesWithFormat(meta.Format(), buf.Bytes(), nil)
+	i := NewFromBytesWithFormat(meta.Format(), buf.Bytes())
 	i.AddCancel(cancel)
 	return i, nil
 }

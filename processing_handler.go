@@ -125,7 +125,31 @@ func setCanonical(rw http.ResponseWriter, originURL string) {
 	}
 }
 
-func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, statusCode int, resultData imagedata.ImageData, po *options.ProcessingOptions, originURL string, originData imagedata.ImageData) {
+func writeOriginContentLengthDebugHeader(ctx context.Context, rw http.ResponseWriter, originData imagedata.ImageData) {
+	if !config.EnableDebugHeaders {
+		return
+	}
+
+	size, err := originData.Size()
+	if err != nil {
+		checkErr(ctx, "image_data_size", err)
+	}
+
+	rw.Header().Set(httpheaders.XOriginContentLength, strconv.Itoa(size))
+}
+
+func writeDebugHeaders(rw http.ResponseWriter, result *processing.Result) {
+	if !config.EnableDebugHeaders || result == nil {
+		return
+	}
+
+	rw.Header().Set(httpheaders.XOriginWidth, strconv.Itoa(result.OriginWidth))
+	rw.Header().Set(httpheaders.XOriginHeight, strconv.Itoa(result.OriginHeight))
+	rw.Header().Set(httpheaders.XResultWidth, strconv.Itoa(result.ResultWidth))
+	rw.Header().Set(httpheaders.XResultHeight, strconv.Itoa(result.ResultHeight))
+}
+
+func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, statusCode int, resultData imagedata.ImageData, po *options.ProcessingOptions, originURL string, originData imagedata.ImageData, originHeaders http.Header) {
 	var contentDisposition string
 	if len(po.Filename) > 0 {
 		contentDisposition = resultData.Format().ContentDisposition(po.Filename, po.ReturnAttachment)
@@ -133,35 +157,22 @@ func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, sta
 		contentDisposition = resultData.Format().ContentDispositionFromURL(originURL, po.ReturnAttachment)
 	}
 
-	rw.Header().Set("Content-Type", resultData.Format().Mime())
-	rw.Header().Set("Content-Disposition", contentDisposition)
+	rw.Header().Set(httpheaders.ContentType, resultData.Format().Mime())
+	rw.Header().Set(httpheaders.ContentDisposition, contentDisposition)
 
-	setCacheControl(rw, po.Expires, originData.Headers())
-	setLastModified(rw, originData.Headers())
+	setCacheControl(rw, po.Expires, originHeaders)
+	setLastModified(rw, originHeaders)
 	setVary(rw)
 	setCanonical(rw, originURL)
 
-	if config.EnableDebugHeaders {
-		originSize, err := originData.Size()
-		if err != nil {
-			checkErr(r.Context(), "image_data_size", err)
-		}
-
-		rw.Header().Set("X-Origin-Content-Length", strconv.Itoa(originSize))
-		rw.Header().Set("X-Origin-Width", resultData.Headers().Get("X-Origin-Width"))
-		rw.Header().Set("X-Origin-Height", resultData.Headers().Get("X-Origin-Height"))
-		rw.Header().Set("X-Result-Width", resultData.Headers().Get("X-Result-Width"))
-		rw.Header().Set("X-Result-Height", resultData.Headers().Get("X-Result-Height"))
-	}
-
-	rw.Header().Set("Content-Security-Policy", "script-src 'none'")
+	rw.Header().Set(httpheaders.ContentSecurityPolicy, "script-src 'none'")
 
 	resultSize, err := resultData.Size()
 	if err != nil {
 		checkErr(r.Context(), "image_data_size", err)
 	}
 
-	rw.Header().Set("Content-Length", strconv.Itoa(resultSize))
+	rw.Header().Set(httpheaders.ContentLength, strconv.Itoa(resultSize))
 	rw.WriteHeader(statusCode)
 
 	_, err = io.Copy(rw, resultData.Reader())
@@ -348,7 +359,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 
 	statusCode := http.StatusOK
 
-	originData, err := func() (imagedata.ImageData, error) {
+	originData, originHeaders, err := func() (imagedata.ImageData, http.Header, error) {
 		defer metrics.StartDownloadingSegment(ctx, metrics.Meta{
 			metrics.MetaSourceImageURL:    metricsMeta[metrics.MetaSourceImageURL],
 			metrics.MetaSourceImageOrigin: metricsMeta[metrics.MetaSourceImageOrigin],
@@ -412,17 +423,22 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		}
 
 		originData = imagedata.FallbackImage
+		originHeaders = imagedata.FallbackImageHeaders.Clone()
+
+		if config.FallbackImageTTL > 0 {
+			originHeaders.Set("Fallback-Image", "1")
+		}
 	}
 
 	checkErr(ctx, "timeout", router.CheckTimeout(ctx))
 
 	if config.ETagEnabled && statusCode == http.StatusOK {
-		imgDataMatch, terr := etagHandler.SetActualImageData(originData)
+		imgDataMatch, terr := etagHandler.SetActualImageData(originData, originHeaders)
 		if terr == nil {
 			rw.Header().Set("ETag", etagHandler.GenerateActualETag())
 
 			if imgDataMatch && etagHandler.ProcessingOptionsMatch() {
-				respondWithNotModified(reqID, r, rw, po, imageURL, originData.Headers())
+				respondWithNotModified(reqID, r, rw, po, imageURL, originHeaders)
 				return
 			}
 		}
@@ -444,11 +460,13 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 
 			defer sanitized.Close()
 
-			respondWithImage(reqID, r, rw, statusCode, sanitized, po, imageURL, originData)
+			writeOriginContentLengthDebugHeader(ctx, rw, originData)
+			respondWithImage(reqID, r, rw, statusCode, sanitized, po, imageURL, originData, originHeaders)
 			return
 		}
 
-		respondWithImage(reqID, r, rw, statusCode, originData, po, imageURL, originData)
+		writeOriginContentLengthDebugHeader(ctx, rw, originData)
+		respondWithImage(reqID, r, rw, statusCode, originData, po, imageURL, originData, originHeaders)
 		return
 	}
 
@@ -467,7 +485,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		))
 	}
 
-	resultData, err := func() (imagedata.ImageData, error) {
+	result, err := func() (*processing.Result, error) {
 		defer metrics.StartProcessingSegment(ctx, metrics.Meta{
 			metrics.MetaProcessingOptions: metricsMeta[metrics.MetaProcessingOptions],
 		})()
@@ -475,9 +493,12 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	}()
 	checkErr(ctx, "processing", err)
 
-	defer resultData.Close()
+	defer result.OutData.Close()
 
 	checkErr(ctx, "timeout", router.CheckTimeout(ctx))
 
-	respondWithImage(reqID, r, rw, statusCode, resultData, po, imageURL, originData)
+	writeDebugHeaders(rw, result)
+	writeOriginContentLengthDebugHeader(ctx, rw, originData)
+
+	respondWithImage(reqID, r, rw, statusCode, result.OutData, po, imageURL, originData, originHeaders)
 }

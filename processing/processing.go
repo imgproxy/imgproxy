@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"runtime"
-	"strconv"
 
 	log "github.com/sirupsen/logrus"
 
@@ -79,7 +78,7 @@ func ValidatePreferredFormats() error {
 	}
 
 	if len(filtered) == 0 {
-		return errors.New("No supported preferred formats specified")
+		return errors.New("no supported preferred formats specified")
 	}
 
 	config.PreferredFormats = filtered
@@ -248,7 +247,15 @@ func saveImageToFitBytes(ctx context.Context, po *options.ProcessingOptions, img
 	}
 }
 
-func ProcessImage(ctx context.Context, imgdata imagedata.ImageData, po *options.ProcessingOptions) (imagedata.ImageData, error) {
+type Result struct {
+	OutData      imagedata.ImageData
+	OriginWidth  int
+	OriginHeight int
+	ResultWidth  int
+	ResultHeight int
+}
+
+func ProcessImage(ctx context.Context, imgdata imagedata.ImageData, po *options.ProcessingOptions) (*Result, error) {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 
@@ -358,12 +365,15 @@ func ProcessImage(ctx context.Context, imgdata imagedata.ImageData, po *options.
 		outData, err = img.Save(po.Format, po.GetQuality())
 	}
 
-	if err == nil {
-		outData.Headers().Set("X-Origin-Width", strconv.Itoa(originWidth))
-		outData.Headers().Set("X-Origin-Height", strconv.Itoa(originHeight))
-		outData.Headers().Set("X-Result-Width", strconv.Itoa(img.Width()))
-		outData.Headers().Set("X-Result-Height", strconv.Itoa(img.Height()))
+	if err != nil {
+		return nil, err
 	}
 
-	return outData, err
+	return &Result{
+		OutData:      outData,
+		OriginWidth:  originWidth,
+		OriginHeight: originHeight,
+		ResultWidth:  img.Width(),
+		ResultHeight: img.Height(),
+	}, nil
 }

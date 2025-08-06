@@ -61,4 +61,9 @@ const (
 	XForwardedHost                  = "X-Forwarded-Host"
 	XForwardedProto                 = "X-Forwarded-Proto"
 	XFrameOptions                   = "X-Frame-Options"
+	XOriginWidth                    = "X-Origin-Width"
+	XOriginHeight                   = "X-Origin-Height"
+	XResultWidth                    = "X-Result-Width"
+	XResultHeight                   = "X-Result-Height"
+	XOriginContentLength            = "X-Origin-Content-Length"
 )

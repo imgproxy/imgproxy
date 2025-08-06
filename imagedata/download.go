@@ -37,7 +37,9 @@ func initDownloading() error {
 	return nil
 }
 
-func download(ctx context.Context, imageURL string, opts DownloadOptions, secopts security.Options) (ImageData, error) {
+func download(ctx context.Context, imageURL string, opts DownloadOptions, secopts security.Options) (ImageData, http.Header, error) {
+	h := make(http.Header)
+
 	// We use this for testing
 	if len(redirectAllRequestsTo) > 0 {
 		imageURL = redirectAllRequestsTo
@@ -45,16 +47,19 @@ func download(ctx context.Context, imageURL string, opts DownloadOptions, secopt
 
 	req, err := Fetcher.BuildRequest(ctx, imageURL, opts.Header, opts.CookieJar)
 	if err != nil {
-		return nil, err
+		return nil, h, err
 	}
 	defer req.Cancel()
 
 	res, err := req.FetchImage()
+	if res != nil {
+		h = res.Header.Clone()
+	}
 	if err != nil {
 		if res != nil {
 			res.Body.Close()
 		}
-		return nil, err
+		return nil, h, err
 	}
 
 	res, err = security.LimitResponseSize(res, secopts)
@@ -62,22 +67,15 @@ func download(ctx context.Context, imageURL string, opts DownloadOptions, secopt
 		defer res.Body.Close()
 	}
 	if err != nil {
-		return nil, err
+		return nil, h, err
 	}
 
 	imgdata, err := readAndCheckImage(res.Body, int(res.ContentLength), secopts)
 	if err != nil {
-		return nil, ierrors.Wrap(err, 0)
+		return nil, h, ierrors.Wrap(err, 0)
 	}
 
-	// NOTE: This will be removed in the future in favor of headers/image data separation
-	for k, v := range res.Header {
-		for _, v := range v {
-			imgdata.Headers().Add(k, v)
-		}
-	}
-
-	return imgdata, nil
+	return imgdata, h, nil
 }
 
 func RedirectAllRequestsTo(u string) {
