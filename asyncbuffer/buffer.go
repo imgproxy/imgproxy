@@ -99,24 +99,18 @@ func (ab *AsyncBuffer) addChunk(chunk *byteChunk) {
 	ab.ticker.Tick()
 }
 
-// finishAndCloseReader marks the reader as finished
-func (ab *AsyncBuffer) finishAndCloseReader() {
-	ab.mu.Lock()
-	defer ab.mu.Unlock()
-
-	// Indicate that the reader has finished reading
-	ab.finished.Store(true)
-	ab.ticker.Close()
-
-	// Close the upstream reader
-	if err := ab.r.Close(); err != nil {
-		ab.err.Store(err) // Store the error if it occurred during closing
-	}
-}
-
 // readChunks reads data from the upstream reader in background and stores them in the pool
 func (ab *AsyncBuffer) readChunks() {
-	defer ab.finishAndCloseReader()
+	defer func() {
+		// Indicate that the reader has finished reading
+		ab.finished.Store(true)
+		ab.ticker.Close()
+
+		// Close the upstream reader
+		if err := ab.r.Close(); err != nil {
+			ab.err.Store(err) // Store the error if it occurred during closing
+		}
+	}()
 
 	// Stop reading if the reader is finished
 	for !ab.closed.Load() {
@@ -377,11 +371,9 @@ func (ab *AsyncBuffer) Close() error {
 	// If the reader is already closed, we return immediately error or nil
 	if ab.closed.Load() {
 		return ab.Error()
-	} else {
-		ab.closed.Store(true)
 	}
 
-	ab.finished.Store(true)
+	ab.closed.Store(true)
 
 	// Return all chunks to the pool
 	for _, chunk := range ab.chunks {

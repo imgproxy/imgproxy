@@ -9,7 +9,7 @@ type tickCh = chan struct{}
 // Ticker signals that an event has occurred to a multiple waiters.
 type Ticker struct {
 	_         noCopy
-	mu        sync.Mutex
+	mu        sync.RWMutex
 	ch        tickCh
 	closeOnce sync.Once
 }
@@ -34,9 +34,9 @@ func (t *Ticker) Tick() {
 
 // Wait blocks until the channel is closed, indicating that an event has occurred.
 func (t *Ticker) Wait() {
-	t.mu.Lock()
+	t.mu.RLock()
 	ch := t.ch
-	t.mu.Unlock()
+	t.mu.RUnlock()
 
 	if ch == nil {
 		return
