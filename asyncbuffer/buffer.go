@@ -18,10 +18,19 @@ import (
 	"io"
 	"sync"
 	"sync/atomic"
+
+	"github.com/sirupsen/logrus"
 )
 
-// ChunkSize is the size of each chunk in bytes
-const ChunkSize = 4096
+const (
+	// chunkSize is the size of each chunk in bytes
+	chunkSize = 4096
+
+	// pauseThreshold is the size of the file which is always read to memory. Data beyond the
+	// threshold is read only if accessed. If not a multiple of chunkSize, the last chunk it points
+	// to is read in full.
+	pauseThreshold = 32768 // 32 KiB
+)
 
 // byteChunk is a struct that holds a buffer and the data read from the upstream reader
 // data slice is required since the chunk read may be smaller than ChunkSize
@@ -34,7 +43,7 @@ type byteChunk struct {
 // all readers
 var chunkPool = sync.Pool{
 	New: func() any {
-		buf := make([]byte, ChunkSize)
+		buf := make([]byte, chunkSize)
 
 		return &byteChunk{
 			buf:  buf,
@@ -46,31 +55,27 @@ var chunkPool = sync.Pool{
 // AsyncBuffer is a wrapper around io.Reader that reads data in chunks
 // in background and allows reading from synchronously.
 type AsyncBuffer struct {
-	r io.Reader // Upstream reader
+	r io.ReadCloser // Upstream reader
 
 	chunks []*byteChunk // References to the chunks read from the upstream reader
+	mu     sync.RWMutex // Mutex on chunks slice
 
-	err      atomic.Value // Error that occurred during reading
-	finished atomic.Bool  // Indicates that the reader has finished reading
-	len      atomic.Int64 // Total length of the data read
-	closed   atomic.Bool  // Indicates that the reader was closed
+	err atomic.Value // Error that occurred during reading
+	len atomic.Int64 // Total length of the data read
 
-	mu             sync.RWMutex  // Mutex on chunks slice
-	newChunkSignal chan struct{} // Tick-tock channel that indicates that a new chunk is ready
-}
+	finished atomic.Bool // Indicates that the buffer has finished reading
+	closed   atomic.Bool // Indicates that the buffer was closed
 
-// Underlying Reader that provides io.ReadSeeker interface for the actual data reading
-// What is the purpose of this Reader?
-type Reader struct {
-	ab  *AsyncBuffer
-	pos int64
+	paused    *Latch // Paused buffer does not read data beyond threshold
+	chunkCond *Cond  // Ticker that signals when a new chunk is ready
 }
 
 // FromReadCloser creates a new AsyncBuffer that reads from the given io.Reader in background
-func FromReader(r io.Reader) *AsyncBuffer {
+func FromReader(r io.ReadCloser) *AsyncBuffer {
 	ab := &AsyncBuffer{
-		r:              r,
-		newChunkSignal: make(chan struct{}),
+		r:         r,
+		paused:    NewLatch(),
+		chunkCond: NewCond(),
 	}
 
 	go ab.readChunks()
@@ -78,48 +83,50 @@ func FromReader(r io.Reader) *AsyncBuffer {
 	return ab
 }
 
-// getNewChunkSignal returns the channel that signals when a new chunk is ready
-// Lock is required to read the channel, so it is not closed while reading
-func (ab *AsyncBuffer) getNewChunkSignal() chan struct{} {
-	ab.mu.RLock()
-	defer ab.mu.RUnlock()
-
-	return ab.newChunkSignal
-}
-
 // addChunk adds a new chunk to the AsyncBuffer, increments len and signals that a chunk is ready
 func (ab *AsyncBuffer) addChunk(chunk *byteChunk) {
 	ab.mu.Lock()
 	defer ab.mu.Unlock()
 
+	if ab.closed.Load() {
+		// If the reader is closed, we return the chunk to the pool
+		chunkPool.Put(chunk)
+		return
+	}
+
 	// Store the chunk, increase chunk size, increase length of the data read
 	ab.chunks = append(ab.chunks, chunk)
 	ab.len.Add(int64(len(chunk.data)))
 
-	// Signal that a chunk is ready
-	currSignal := ab.newChunkSignal
-	ab.newChunkSignal = make(chan struct{})
-	close(currSignal)
-}
-
-// finish marks the reader as finished
-func (ab *AsyncBuffer) finish() {
-	// Indicate that the reader has finished reading
-	ab.finished.Store(true)
-
-	// This indicates that Close() was called before all the chunks were read, we do not need to close the channel
-	// since it was closed already.
-	if !ab.closed.Load() {
-		close(ab.newChunkSignal)
-	}
+	ab.chunkCond.Tick()
 }
 
 // readChunks reads data from the upstream reader in background and stores them in the pool
 func (ab *AsyncBuffer) readChunks() {
-	defer ab.finish()
+	defer func() {
+		// Indicate that the reader has finished reading
+		ab.finished.Store(true)
+		ab.chunkCond.Close()
 
-	// Stop reading if the reader is finished
-	for !ab.finished.Load() {
+		// Close the upstream reader
+		if err := ab.r.Close(); err != nil {
+			logrus.WithField("source", "asyncbuffer.AsyncBuffer.readChunks").Warningf("error closing upstream reader: %s", err)
+		}
+	}()
+
+	// Stop reading if the reader is closed
+	for !ab.closed.Load() {
+		// In case we are trying to read data beyond threshold and we are paused,
+		// wait for pause to be released.
+		if ab.len.Load() >= pauseThreshold {
+			ab.paused.Wait()
+
+			// If the reader has been closed while waiting, we can stop reading
+			if ab.closed.Load() {
+				return // No more data to read
+			}
+		}
+
 		// Get a chunk from the pool
 		// If the pool is empty, it will create a new byteChunk with ChunkSize
 		chunk, ok := chunkPool.Get().(*byteChunk)
@@ -129,11 +136,14 @@ func (ab *AsyncBuffer) readChunks() {
 		}
 
 		// Read data into the chunk's buffer
+		// There is no way to guarantee that ReadFull will abort on context cancellation,
+		// unfortunately, this is how golang works.
 		n, err := io.ReadFull(ab.r, chunk.buf)
 
 		// If it's not the EOF, we need to store the error
 		if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
 			ab.err.Store(err)
+			chunkPool.Put(chunk)
 			return
 		}
 
@@ -161,24 +171,24 @@ func (ab *AsyncBuffer) readChunks() {
 // If the reader had an error, it returns that error instead.
 func (ab *AsyncBuffer) closedError() error {
 	// If the reader is closed, we return the error or nil
-	if ab.closed.Load() {
-		err := ab.Error()
-		if err == nil {
-			err = errors.New("asyncbuffer.AsyncBuffer.ReadAt: attempt to read on closed reader")
-		}
-
-		return err
+	if !ab.closed.Load() {
+		return nil
 	}
 
-	return nil
+	err := ab.Error()
+	if err == nil {
+		err = errors.New("asyncbuffer.AsyncBuffer.ReadAt: attempt to read on closed reader")
+	}
+
+	return err
 }
 
 // offsetAvailable checks if the data at the given offset is available for reading.
 // It may return io.EOF if the reader is finished reading and the offset is beyond the end of the stream.
 func (ab *AsyncBuffer) offsetAvailable(off int64) (bool, error) {
 	// We can not read data from the closed reader, none
-	if ab.closed.Load() {
-		return false, ab.closedError()
+	if err := ab.closedError(); err != nil {
+		return false, err
 	}
 
 	// In case the offset falls within the already read chunks, we can return immediately,
@@ -191,8 +201,7 @@ func (ab *AsyncBuffer) offsetAvailable(off int64) (bool, error) {
 	// data yet, return either error or EOF
 	if ab.finished.Load() {
 		// In case, error has occurred, we need to return it
-		err := ab.Error()
-		if err != nil {
+		if err := ab.Error(); err != nil {
 			return false, err
 		}
 
@@ -207,46 +216,41 @@ func (ab *AsyncBuffer) offsetAvailable(off int64) (bool, error) {
 // WaitFor waits for the data to be ready at the given offset. nil means ok.
 // It guarantees that the chunk at the given offset is ready to be read.
 func (ab *AsyncBuffer) WaitFor(off int64) error {
+	// In case we are trying to read data which would potentially hit the pause threshold,
+	// we need to unpause the reader ASAP.
+	if off >= pauseThreshold {
+		ab.paused.Release()
+	}
+
 	for {
 		ok, err := ab.offsetAvailable(off)
 		if ok || err != nil {
 			return err
 		}
 
-		<-ab.getNewChunkSignal()
+		ab.chunkCond.Wait()
 	}
 }
 
 // Wait waits for the reader to finish reading all data and returns
 // the total length of the data read.
 func (ab *AsyncBuffer) Wait() (int64, error) {
+	// Wait ends till the end of the stream: unpause the reader
+	ab.paused.Release()
+
 	for {
-		// We can not read data from the closed reader even if there were no errors
-		if ab.closed.Load() {
-			return 0, ab.closedError()
+		// We can not read data from the closed reader
+		if err := ab.closedError(); err != nil {
+			return 0, err
 		}
 
 		// In case the reader is finished reading, we can return immediately
 		if ab.finished.Load() {
-			size := ab.len.Load()
-
-			// If there was an error during reading, we need to return it no matter what position
-			// had the error happened
-			err := ab.err.Load()
-			if err != nil {
-				err, ok := err.(error)
-				if !ok {
-					return size, errors.New("asyncbuffer.AsyncBuffer.Wait: failed to get error")
-				}
-
-				return size, err
-			}
-
-			return size, nil
+			return ab.len.Load(), ab.Error()
 		}
 
 		// Lock until the next chunk is ready
-		<-ab.getNewChunkSignal()
+		ab.chunkCond.Wait()
 	}
 }
 
@@ -275,10 +279,10 @@ func (ab *AsyncBuffer) readChunkAt(p []byte, off int64) int {
 		return 0
 	}
 
-	ind := off / ChunkSize // chunk index
+	ind := off / chunkSize // chunk index
 	chunk := ab.chunks[ind]
 
-	startOffset := off % ChunkSize // starting offset in the chunk
+	startOffset := off % chunkSize // starting offset in the chunk
 
 	// If the offset in current chunk is greater than the data
 	// it has, we return 0
@@ -293,20 +297,21 @@ func (ab *AsyncBuffer) readChunkAt(p []byte, off int64) int {
 
 // readAt reads data from the AsyncBuffer at the given offset.
 //
-// If full is true:
+// Please note that if pause threshold is hit in the middle of the reading,
+// the data beyond the threshold may not be available.
 //
-// The behaviour is similar to io.ReaderAt.ReadAt. It blocks until the maxumum amount of data possible
-// is read from the buffer. It may return io.UnexpectedEOF in case we tried to read more data than was
-// available in the buffer.
-//
-// If full is false:
-//
-// It behaves like a regular non-blocking Read.
+// If the reader is paused and we try to read data beyond the pause threshold,
+// it will wait till something could be returned.
 func (ab *AsyncBuffer) readAt(p []byte, off int64) (int, error) {
 	size := int64(len(p)) // total size of the data to read
 
 	if off < 0 {
 		return 0, errors.New("asyncbuffer.AsyncBuffer.readAt: negative offset")
+	}
+
+	// If we plan to hit threshold while reading, release the paused reader
+	if int64(len(p))+off > pauseThreshold {
+		ab.paused.Release()
 	}
 
 	// Wait for the offset to be available.
@@ -316,12 +321,13 @@ func (ab *AsyncBuffer) readAt(p []byte, off int64) (int, error) {
 		return 0, err
 	}
 
+	// We lock the mutex until current buffer is read
 	ab.mu.RLock()
 	defer ab.mu.RUnlock()
 
 	// If the reader is closed, we return an error
-	if ab.closed.Load() {
-		return 0, ab.closedError()
+	if err := ab.closedError(); err != nil {
+		return 0, err
 	}
 
 	// Read data from the first chunk
@@ -337,7 +343,11 @@ func (ab *AsyncBuffer) readAt(p []byte, off int64) (int, error) {
 	for size > 0 {
 		// If data is not available at the given offset, we can return data read so far.
 		ok, err := ab.offsetAvailable(off)
-		if !ok || err != nil {
+		if !ok {
+			if err == io.EOF {
+				return n, nil
+			}
+
 			return n, err
 		}
 
@@ -349,8 +359,8 @@ func (ab *AsyncBuffer) readAt(p []byte, off int64) (int, error) {
 
 		// If we read data shorter than ChunkSize or, in case that was the last chunk, less than
 		// the size of the tail, return kind of EOF
-		if int64(nX) < min(size, int64(ChunkSize)) {
-			return n, io.EOF
+		if int64(nX) < min(size, int64(chunkSize)) {
+			return n, nil
 		}
 	}
 
@@ -372,16 +382,13 @@ func (ab *AsyncBuffer) Close() error {
 
 	ab.closed.Store(true)
 
-	// If the reader is still running, we need to signal that it should stop and close the channel
-	if !ab.finished.Load() {
-		ab.finished.Store(true)
-		close(ab.newChunkSignal)
-	}
-
 	// Return all chunks to the pool
 	for _, chunk := range ab.chunks {
 		chunkPool.Put(chunk)
 	}
+
+	// Release the paused latch so that no goroutines are waiting for it
+	ab.paused.Release()
 
 	return nil
 }
@@ -389,42 +396,4 @@ func (ab *AsyncBuffer) Close() error {
 // Reader returns an io.ReadSeeker+io.ReaderAt that can be used to read actual data from the AsyncBuffer
 func (ab *AsyncBuffer) Reader() *Reader {
 	return &Reader{ab: ab, pos: 0}
-}
-
-// Read reads data from the AsyncBuffer.
-func (r *Reader) Read(p []byte) (int, error) {
-	n, err := r.ab.readAt(p, r.pos)
-	if err == nil {
-		r.pos += int64(n)
-	}
-
-	return n, err
-}
-
-// Seek sets the position of the reader to the given offset and returns the new position
-func (r *Reader) Seek(offset int64, whence int) (int64, error) {
-	switch whence {
-	case io.SeekStart:
-		r.pos = offset
-
-	case io.SeekCurrent:
-		r.pos += offset
-
-	case io.SeekEnd:
-		size, err := r.ab.Wait()
-		if err != nil {
-			return 0, err
-		}
-
-		r.pos = size + offset
-
-	default:
-		return 0, errors.New("asyncbuffer.AsyncBuffer.ReadAt: invalid whence")
-	}
-
-	if r.pos < 0 {
-		return 0, errors.New("asyncbuffer.AsyncBuffer.ReadAt: negative position")
-	}
-
-	return r.pos, nil
 }
