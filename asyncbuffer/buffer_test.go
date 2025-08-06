@@ -20,9 +20,19 @@ const (
 	quaterChunkSize = chunkSize / 4
 )
 
+// nopSeekCloser is a wrapper around io.ReadSeeker that implements no-op io.Closer
+type nopSeekCloser struct {
+	io.ReadSeeker
+}
+
+// Close implements io.Closer interface, but does nothing
+func (nopSeekCloser) Close() error {
+	return nil
+}
+
 // erraticReader is a test reader that simulates a slow read and can fail after reading a certain number of bytes
 type erraticReader struct {
-	reader bytes.Reader
+	reader io.ReadSeekCloser
 	failAt int64 // if set, will return an error after reading this many bytes
 }
 
@@ -35,15 +45,20 @@ func (r *erraticReader) Read(p []byte) (n int, err error) {
 	return r.reader.Read(p)
 }
 
+// Close forwards closing to the underlying reader
+func (r *erraticReader) Close() error {
+	return r.reader.Close()
+}
+
 // blockingReader is a test reader which flushes data in chunks
 type blockingReader struct {
-	reader    bytes.Reader
+	reader    io.ReadCloser
 	mu        sync.Mutex  // locked reader does not return anything
 	unlocking atomic.Bool // if true, will proceed without locking each chunk
 }
 
 // newBlockingReader creates a new partialReader in locked state
-func newBlockingReader(reader bytes.Reader) *blockingReader {
+func newBlockingReader(reader io.ReadCloser) *blockingReader {
 	r := &blockingReader{
 		reader: reader,
 	}
@@ -72,8 +87,12 @@ func (r *blockingReader) Read(p []byte) (n int, err error) {
 	return n, err
 }
 
+func (r *blockingReader) Close() error { // Close forwards closing to the underlying reader
+	return r.reader.Close()
+}
+
 // generateSourceData generates a byte slice with 4.5 chunks of data
-func generateSourceData(t *testing.T, size int64) ([]byte, *bytes.Reader) {
+func generateSourceData(t *testing.T, size int64) ([]byte, io.ReadSeekCloser) {
 	// We use small chunks for tests, let's check the ChunkSize just in case
 	assert.GreaterOrEqual(t, chunkSize, 20, "ChunkSize required for tests must be greater than 10 bytes")
 
@@ -83,7 +102,7 @@ func generateSourceData(t *testing.T, size int64) ([]byte, *bytes.Reader) {
 	// Fill the source with random data
 	_, err := rand.Read(source)
 	require.NoError(t, err)
-	return source, bytes.NewReader(source)
+	return source, nopSeekCloser{bytes.NewReader(source)}
 }
 
 // TestAsyncBufferRead tests reading from AsyncBuffer using readAt method which is base for all other methods
@@ -275,7 +294,7 @@ func TestAsyncBufferClose(t *testing.T) {
 func TestAsyncBufferReadAtErrAtSomePoint(t *testing.T) {
 	// Let's use source buffer which is 4.5 chunks long
 	source, bytesReader := generateSourceData(t, int64(chunkSize*4)+halfChunkSize)
-	slowReader := &erraticReader{reader: *bytesReader, failAt: chunkSize*3 + 5} // fails at last chunk
+	slowReader := &erraticReader{reader: bytesReader, failAt: chunkSize*3 + 5} // fails at last chunk
 	asyncBuffer := FromReader(slowReader)
 	defer asyncBuffer.Close()
 
@@ -308,7 +327,7 @@ func TestAsyncBufferReadAtErrAtSomePoint(t *testing.T) {
 func TestAsyncBufferReadAsync(t *testing.T) {
 	// Let's use source buffer which is 4.5 chunks long
 	source, bytesReader := generateSourceData(t, int64(chunkSize)*3)
-	blockingReader := newBlockingReader(*bytesReader)
+	blockingReader := newBlockingReader(bytesReader)
 	asyncBuffer := FromReader(blockingReader)
 	defer asyncBuffer.Close()
 
@@ -353,7 +372,7 @@ func TestAsyncBufferReadAsync(t *testing.T) {
 func TestAsyncBufferReadAllCompability(t *testing.T) {
 	source, err := os.ReadFile("../testdata/test1.jpg")
 	require.NoError(t, err)
-	asyncBuffer := FromReader(bytes.NewReader(source))
+	asyncBuffer := FromReader(nopSeekCloser{bytes.NewReader(source)})
 	defer asyncBuffer.Close()
 
 	b, err := io.ReadAll(asyncBuffer.Reader())

@@ -54,7 +54,7 @@ var chunkPool = sync.Pool{
 // AsyncBuffer is a wrapper around io.Reader that reads data in chunks
 // in background and allows reading from synchronously.
 type AsyncBuffer struct {
-	r io.Reader // Upstream reader
+	r io.ReadCloser // Upstream reader
 
 	chunks []*byteChunk // References to the chunks read from the upstream reader
 
@@ -76,7 +76,7 @@ type Reader struct {
 }
 
 // FromReadCloser creates a new AsyncBuffer that reads from the given io.Reader in background
-func FromReader(r io.Reader) *AsyncBuffer {
+func FromReader(r io.ReadCloser) *AsyncBuffer {
 	ab := &AsyncBuffer{
 		r:              r,
 		newChunkSignal: make(chan struct{}),
@@ -129,6 +129,13 @@ func (ab *AsyncBuffer) finish() {
 	// since it was closed already.
 	if !ab.closed.Load() {
 		close(ab.newChunkSignal)
+	}
+
+	err := ab.r.Close() // Close the upstream reader
+	if err != nil {
+		// If there was an error while closing the upstream reader, store it
+		ab.err.Store(err)
+		return
 	}
 }
 
