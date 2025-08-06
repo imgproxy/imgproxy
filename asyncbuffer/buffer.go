@@ -18,6 +18,8 @@ import (
 	"io"
 	"sync"
 	"sync/atomic"
+
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -108,7 +110,7 @@ func (ab *AsyncBuffer) readChunks() {
 
 		// Close the upstream reader
 		if err := ab.r.Close(); err != nil {
-			ab.err.Store(err) // Store the error if it occurred during closing
+			logrus.WithField("asyncBuffer", ab).Warningf("error closing upstream reader: %v", err)
 		}
 	}()
 
