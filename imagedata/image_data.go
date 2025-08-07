@@ -3,11 +3,11 @@ package imagedata
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"io"
 	"net/http"
 	"sync"
 
+	"github.com/imgproxy/imgproxy/v3/asyncbuffer"
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
@@ -36,6 +36,14 @@ type imageDataBytes struct {
 	cancelOnce sync.Once
 }
 
+// imageDataAsyncBuffer is a struct that implements the ImageData interface backed by an AsyncBuffer
+type imageDataAsyncBuffer struct {
+	b          *asyncbuffer.AsyncBuffer
+	format     imagetype.Type
+	cancel     []context.CancelFunc
+	cancelOnce sync.Once
+}
+
 func (d *imageDataBytes) Close() error {
 	d.cancelOnce.Do(func() {
 		for _, cancel := range d.cancel {
@@ -57,18 +65,49 @@ func (d *imageDataBytes) Reader() io.ReadSeeker {
 }
 
 // Size returns the size of the image data in bytes.
-// NOTE: asyncbuffer implementation will .Wait() for the data to be fully read
 func (d *imageDataBytes) Size() (int, error) {
 	return len(d.data), nil
 }
 
+// AddCancel attaches a cancel function to the image data
 func (d *imageDataBytes) AddCancel(cancel context.CancelFunc) {
 	d.cancel = append(d.cancel, cancel)
 }
 
-func Init() error {
-	initRead()
+// Reader returns a ReadSeeker for the image data
+func (d *imageDataAsyncBuffer) Reader() io.ReadSeeker {
+	return d.b.Reader()
+}
 
+// Close closes the response body (hence, response) and the async buffer itself
+func (d *imageDataAsyncBuffer) Close() error {
+	d.cancelOnce.Do(func() {
+		for _, cancel := range d.cancel {
+			cancel()
+		}
+		d.b.Close()
+	})
+
+	return nil
+}
+
+// Format returns the image format from the metadata
+func (d *imageDataAsyncBuffer) Format() imagetype.Type {
+	return d.format
+}
+
+// Size returns the size of the image data in bytes.
+// It waits for the async buffer to finish reading.
+func (d *imageDataAsyncBuffer) Size() (int, error) {
+	return d.b.Wait()
+}
+
+// AddCancel attaches a cancel function to the image data
+func (d *imageDataAsyncBuffer) AddCancel(cancel context.CancelFunc) {
+	d.cancel = append(d.cancel, cancel)
+}
+
+func Init() error {
 	if err := initDownloading(); err != nil {
 		return err
 	}
@@ -105,7 +144,7 @@ func loadWatermark() error {
 		}
 
 	case len(config.WatermarkURL) > 0:
-		Watermark, _, err = Download(context.Background(), config.WatermarkURL, "watermark", DownloadOptions{Header: nil, CookieJar: nil}, security.DefaultOptions())
+		Watermark, _, err = DownloadSync(context.Background(), config.WatermarkURL, "watermark", DownloadOptions{Header: nil, CookieJar: nil}, security.DefaultOptions())
 		if err != nil {
 			return ierrors.Wrap(err, 0, ierrors.WithPrefix("can't download from URL"))
 		}
@@ -132,7 +171,7 @@ func loadFallbackImage() (err error) {
 		}
 
 	case len(config.FallbackImageURL) > 0:
-		FallbackImage, FallbackImageHeaders, err = Download(context.Background(), config.FallbackImageURL, "fallback image", DownloadOptions{Header: nil, CookieJar: nil}, security.DefaultOptions())
+		FallbackImage, FallbackImageHeaders, err = DownloadSync(context.Background(), config.FallbackImageURL, "fallback image", DownloadOptions{Header: nil, CookieJar: nil}, security.DefaultOptions())
 		if err != nil {
 			return ierrors.Wrap(err, 0, ierrors.WithPrefix("can't download from URL"))
 		}
@@ -142,16 +181,4 @@ func loadFallbackImage() (err error) {
 	}
 
 	return err
-}
-
-func Download(ctx context.Context, imageURL, desc string, opts DownloadOptions, secopts security.Options) (ImageData, http.Header, error) {
-	imgdata, h, err := download(ctx, imageURL, opts, secopts)
-	if err != nil {
-		return nil, h, ierrors.Wrap(
-			err, 0,
-			ierrors.WithPrefix(fmt.Sprintf("Can't download %s", desc)),
-		)
-	}
-
-	return imgdata, h, nil
 }

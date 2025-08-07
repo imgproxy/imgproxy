@@ -14,6 +14,12 @@ import (
 	"unsafe"
 )
 
+// newVipsSource creates a new VipsAsyncSource from an io.ReadSeeker.
+func newVipsImgproxySource(r io.ReadSeeker) *C.VipsImgproxySource {
+	handler := cgo.NewHandle(r)
+	return C.vips_new_imgproxy_source(C.uintptr_t(handler))
+}
+
 //export closeImgproxyReader
 func closeImgproxyReader(handle C.uintptr_t) {
 	h := cgo.Handle(handle)
@@ -25,13 +31,13 @@ func closeImgproxyReader(handle C.uintptr_t) {
 //export imgproxyReaderSeek
 func imgproxyReaderSeek(handle C.uintptr_t, offset C.int64_t, whence int) C.int64_t {
 	h := cgo.Handle(handle)
-	reader, ok := h.Value().(io.ReadSeeker)
+	r, ok := h.Value().(io.ReadSeeker)
 	if !ok {
-		vipsError("imgproxyReaderSeek", "failed to cast handle to io.ReadSeeker")
+		vipsError("imgproxyReaderSeek", "failed to cast handle to *source")
 		return -1
 	}
 
-	pos, err := reader.Seek(int64(offset), whence)
+	pos, err := r.Seek(int64(offset), whence)
 	if err != nil {
 		vipsError("imgproxyReaderSeek", "failed to seek: %v", err)
 		return -1
@@ -45,14 +51,14 @@ func imgproxyReaderSeek(handle C.uintptr_t, offset C.int64_t, whence int) C.int6
 //export imgproxyReaderRead
 func imgproxyReaderRead(handle C.uintptr_t, pointer unsafe.Pointer, size C.int64_t) C.int64_t {
 	h := cgo.Handle(handle)
-	reader, ok := h.Value().(io.ReadSeeker)
+	r, ok := h.Value().(io.ReadSeeker)
 	if !ok {
 		vipsError("imgproxyReaderRead", "invalid reader handle")
 		return -1
 	}
 
 	buf := unsafe.Slice((*byte)(pointer), size)
-	n, err := reader.Read(buf)
+	n, err := r.Read(buf)
 	if err == io.EOF {
 		return 0
 	} else if err != nil {
@@ -61,10 +67,4 @@ func imgproxyReaderRead(handle C.uintptr_t, pointer unsafe.Pointer, size C.int64
 	}
 
 	return C.int64_t(n)
-}
-
-// newVipsSource creates a new VipsAsyncSource from an io.ReadSeeker.
-func newVipsImgproxySource(r io.ReadSeeker) *C.VipsImgproxySource {
-	handler := cgo.NewHandle(r)
-	return C.vips_new_imgproxy_source(C.uintptr_t(handler))
 }
