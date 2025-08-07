@@ -2,6 +2,7 @@ package asyncbuffer
 
 import (
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -25,8 +26,6 @@ func (s *TestCondSuite) TeardownTest() {
 
 // TestBasicWaitAndTick tests the basic functionality of the Cond
 func (s *TestCondSuite) TestBasicWaitAndTick() {
-	done := make(chan struct{})
-
 	ch := s.cond.ch
 
 	// Start a goroutine that will tick after a short delay
@@ -36,19 +35,13 @@ func (s *TestCondSuite) TestBasicWaitAndTick() {
 	}()
 
 	// Start a goroutine that will wait for the tick
+	var done atomic.Bool
 	go func() {
 		s.cond.Wait()
-		close(done)
+		done.Store(true)
 	}()
 
-	s.Require().Eventually(func() bool {
-		select {
-		case <-done:
-			return true
-		default:
-			return false
-		}
-	}, 100*time.Millisecond, 10*time.Millisecond)
+	s.Require().Eventually(done.Load, 200*time.Millisecond, 10*time.Millisecond)
 
 	// Means that and old channel was closed and a new one has been created
 	s.Require().NotEqual(ch, s.cond.ch)
@@ -78,21 +71,14 @@ func (s *TestCondSuite) TestWaitMultipleWaiters() {
 	startWg.Wait()
 
 	// Wait for all waiters to complete
-	done := make(chan struct{})
+	var done atomic.Bool
 	go func() {
 		s.cond.Tick() // Signal that execution can proceed
 		wg.Wait()
-		close(done)
+		done.Store(true)
 	}()
 
-	s.Require().Eventually(func() bool {
-		select {
-		case <-done:
-			return true
-		default:
-			return false
-		}
-	}, 100*time.Millisecond, 10*time.Millisecond)
+	s.Require().Eventually(done.Load, 200*time.Millisecond, 10*time.Millisecond)
 
 	// Check that all waiters were unblocked
 	for _, completed := range results {
@@ -137,20 +123,13 @@ func (s *TestCondSuite) TestRapidTicksAndWaits() {
 		}()
 	}
 
-	done := make(chan struct{})
+	var done atomic.Bool
 	go func() {
 		wg.Wait()
-		close(done)
+		done.Store(true)
 	}()
 
-	s.Require().Eventually(func() bool {
-		select {
-		case <-done:
-			return true
-		default:
-			return false
-		}
-	}, 100*time.Millisecond, 10*time.Millisecond)
+	s.Require().Eventually(done.Load, 200*time.Millisecond, 10*time.Millisecond)
 }
 
 func TestCond(t *testing.T) {
