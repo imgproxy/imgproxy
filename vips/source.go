@@ -33,7 +33,7 @@ func imgproxyReaderSeek(handle C.uintptr_t, offset C.int64_t, whence int) C.int6
 	h := cgo.Handle(handle)
 	r, ok := h.Value().(io.ReadSeeker)
 	if !ok {
-		vipsError("imgproxyReaderSeek", "failed to cast handle to *source")
+		vipsError("imgproxyReaderSeek", "failed to cast handle to io.ReadSeeker")
 		return -1
 	}
 

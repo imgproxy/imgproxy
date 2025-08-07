@@ -2,33 +2,37 @@ package svg
 
 import (
 	"bytes"
-	"context"
+	"errors"
 	"io"
 	"strings"
+	"sync"
 
 	"github.com/tdewolff/parse/v2"
 	"github.com/tdewolff/parse/v2/xml"
 
-	"github.com/imgproxy/imgproxy/v3/bufpool"
-	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 )
 
-var downloadBufPool *bufpool.Pool = bufpool.New("download", config.Workers, config.DownloadBufferSize)
-
-func BorrowBuffer() (*bytes.Buffer, context.CancelFunc) {
-	buf := downloadBufPool.Get(0, false)
-	cancel := func() { downloadBufPool.Put(buf) }
-
-	return buf, cancel
+var pool = sync.Pool{
+	New: func() any {
+		return bytes.NewBuffer(nil)
+	},
 }
 
 func Sanitize(data imagedata.ImageData) (imagedata.ImageData, error) {
 	r := data.Reader()
 	l := xml.NewLexer(parse.NewInput(r))
 
-	buf, cancel := BorrowBuffer()
+	buf, ok := pool.Get().(*bytes.Buffer)
+	if !ok {
+		return nil, errors.New("svg.Sanitize: failed to get buffer from pool")
+	}
+	buf.Reset()
+
+	cancel := func() {
+		pool.Put(buf)
+	}
 
 	ignoreTag := 0
 

@@ -82,10 +82,10 @@ func (d *imageDataAsyncBuffer) Reader() io.ReadSeeker {
 // Close closes the response body (hence, response) and the async buffer itself
 func (d *imageDataAsyncBuffer) Close() error {
 	d.cancelOnce.Do(func() {
+		d.b.Close()
 		for _, cancel := range d.cancel {
 			cancel()
 		}
-		d.b.Close()
 	})
 
 	return nil
