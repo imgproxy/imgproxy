@@ -70,8 +70,9 @@ type AsyncBuffer struct {
 	chunkCond *Cond  // Ticker that signals when a new chunk is ready
 }
 
-// FromReadCloser creates a new AsyncBuffer that reads from the given io.Reader in background
-func FromReader(r io.ReadCloser) *AsyncBuffer {
+// New creates a new AsyncBuffer that reads from the given io.ReadCloser in background
+// and closes it when finished.
+func New(r io.ReadCloser) *AsyncBuffer {
 	ab := &AsyncBuffer{
 		r:         r,
 		paused:    NewLatch(),
@@ -234,7 +235,7 @@ func (ab *AsyncBuffer) WaitFor(off int64) error {
 
 // Wait waits for the reader to finish reading all data and returns
 // the total length of the data read.
-func (ab *AsyncBuffer) Wait() (int64, error) {
+func (ab *AsyncBuffer) Wait() (int, error) {
 	// Wait ends till the end of the stream: unpause the reader
 	ab.paused.Release()
 
@@ -246,7 +247,7 @@ func (ab *AsyncBuffer) Wait() (int64, error) {
 
 		// In case the reader is finished reading, we can return immediately
 		if ab.finished.Load() {
-			return ab.len.Load(), ab.Error()
+			return int(ab.len.Load()), ab.Error()
 		}
 
 		// Lock until the next chunk is ready

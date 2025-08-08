@@ -1,8 +1,11 @@
 package svg
 
 import (
+	"bytes"
+	"errors"
 	"io"
 	"strings"
+	"sync"
 
 	"github.com/tdewolff/parse/v2"
 	"github.com/tdewolff/parse/v2/xml"
@@ -11,11 +14,25 @@ import (
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 )
 
+var pool = sync.Pool{
+	New: func() any {
+		return bytes.NewBuffer(nil)
+	},
+}
+
 func Sanitize(data imagedata.ImageData) (imagedata.ImageData, error) {
 	r := data.Reader()
 	l := xml.NewLexer(parse.NewInput(r))
 
-	buf, cancel := imagedata.BorrowBuffer()
+	buf, ok := pool.Get().(*bytes.Buffer)
+	if !ok {
+		return nil, errors.New("svg.Sanitize: failed to get buffer from pool")
+	}
+	buf.Reset()
+
+	cancel := func() {
+		pool.Put(buf)
+	}
 
 	ignoreTag := 0
 

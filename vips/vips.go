@@ -358,8 +358,7 @@ func (img *Image) Load(imgdata imagedata.ImageData, shrink int, scale float64, p
 
 	err := C.int(0)
 
-	reader := imgdata.Reader()
-	source := newVipsImgproxySource(reader)
+	source := newVipsImgproxySource(imgdata.Reader())
 	defer C.unref_imgproxy_source(source)
 
 	switch imgdata.Format() {
@@ -410,8 +409,7 @@ func (img *Image) LoadThumbnail(imgdata imagedata.ImageData) error {
 
 	var tmp *C.VipsImage
 
-	reader := imgdata.Reader()
-	source := newVipsImgproxySource(reader)
+	source := newVipsImgproxySource(imgdata.Reader())
 	defer C.unref_imgproxy_source(source)
 
 	if err := C.vips_heifload_source_go(source, &tmp, C.int(1)); err != 0 {

@@ -16,7 +16,7 @@
     },
     "mounts": [
         {
-            "source": "${localWorkspaceFolder}/.devcontainer/images",
+            "source": "${localWorkspaceFolder}/testdata/test-images",
             "target": "/images",
             "type": "bind"
         }

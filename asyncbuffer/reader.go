@@ -37,7 +37,7 @@ func (r *Reader) Seek(offset int64, whence int) (int64, error) {
 			return 0, err
 		}
 
-		r.pos = size + offset
+		r.pos = int64(size) + offset
 
 	default:
 		return 0, errors.New("asyncbuffer.AsyncBuffer.ReadAt: invalid whence")
