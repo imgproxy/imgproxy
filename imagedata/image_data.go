@@ -26,6 +26,7 @@ type ImageData interface {
 	Format() imagetype.Type       // Format returns the image format from the metadata (shortcut)
 	Size() (int, error)           // Size returns the size of the image data in bytes
 	AddCancel(context.CancelFunc) // AddCancel attaches a cancel function to the image data
+	Error() error                 // Error returns any error that occurred during reading data from source
 }
 
 // imageDataBytes represents image data stored in a byte slice in memory
@@ -74,6 +75,11 @@ func (d *imageDataBytes) AddCancel(cancel context.CancelFunc) {
 	d.cancel = append(d.cancel, cancel)
 }
 
+func (d *imageDataBytes) Error() error {
+	// No error handling for in-memory data, return nil
+	return nil
+}
+
 // Reader returns a ReadSeeker for the image data
 func (d *imageDataAsyncBuffer) Reader() io.ReadSeeker {
 	return d.b.Reader()
@@ -105,6 +111,12 @@ func (d *imageDataAsyncBuffer) Size() (int, error) {
 // AddCancel attaches a cancel function to the image data
 func (d *imageDataAsyncBuffer) AddCancel(cancel context.CancelFunc) {
 	d.cancel = append(d.cancel, cancel)
+}
+
+// Error returns any error that occurred during reading data from
+// async buffer or the underlying source.
+func (d *imageDataAsyncBuffer) Error() error {
+	return d.b.Error()
 }
 
 func Init() error {

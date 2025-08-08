@@ -491,6 +491,11 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		})()
 		return processing.ProcessImage(ctx, originData, po)
 	}()
+
+	if originData.Error() != nil {
+		checkErr(ctx, "download", originData.Error())
+	}
+
 	checkErr(ctx, "processing", err)
 
 	defer result.OutData.Close()
