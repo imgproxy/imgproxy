@@ -150,6 +150,14 @@ func writeDebugHeaders(rw http.ResponseWriter, result *processing.Result) {
 }
 
 func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, statusCode int, resultData imagedata.ImageData, po *options.ProcessingOptions, originURL string, originData imagedata.ImageData, originHeaders http.Header) {
+	// We read the size of the image data here, so we can set Content-Length header.
+	// This indireclty ensures that the image data is fully read from the source, no
+	// errors happened.
+	resultSize, err := resultData.Size()
+	if err != nil {
+		checkErr(r.Context(), "image_data_size", err)
+	}
+
 	var contentDisposition string
 	if len(po.Filename) > 0 {
 		contentDisposition = resultData.Format().ContentDisposition(po.Filename, po.ReturnAttachment)
@@ -166,11 +174,6 @@ func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, sta
 	setCanonical(rw, originURL)
 
 	rw.Header().Set(httpheaders.ContentSecurityPolicy, "script-src 'none'")
-
-	resultSize, err := resultData.Size()
-	if err != nil {
-		checkErr(r.Context(), "image_data_size", err)
-	}
 
 	rw.Header().Set(httpheaders.ContentLength, strconv.Itoa(resultSize))
 	rw.WriteHeader(statusCode)

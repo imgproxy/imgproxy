@@ -20,6 +20,9 @@ var (
 	FallbackImageHeaders http.Header // Headers for the fallback image
 )
 
+// ImageData represents the data of an image that can be read from a source.
+// Please note that this interface can be backed by any reader, including lazy AsyncBuffer.
+// There is no other way to guarantee that the data is read without errors except reading it till EOF.
 type ImageData interface {
 	io.Closer                     // Close closes the image data and releases any resources held by it
 	Reader() io.ReadSeeker        // Reader returns a new ReadSeeker for the image data
