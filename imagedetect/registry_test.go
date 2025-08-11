@@ -3,6 +3,7 @@ package imagedetect
 import (
 	"testing"
 
+	"github.com/imgproxy/imgproxy/v3/bufreader"
 	"github.com/imgproxy/imgproxy/v3/imagetype_new"
 	"github.com/stretchr/testify/require"
 )
@@ -12,8 +13,12 @@ func TestRegisterDetector(t *testing.T) {
 	testRegistry := &Registry{}
 
 	// Create a test detector function
-	testDetector := func(data []byte) (imagetype_new.Type, error) {
-		if len(data) >= 2 && data[0] == 0xFF && data[1] == 0xD8 {
+	testDetector := func(r bufreader.ReadPeeker) (imagetype_new.Type, error) {
+		b, err := r.Peek(2)
+		if err != nil {
+			return imagetype_new.Unknown, err
+		}
+		if len(b) >= 2 && b[0] == 0xFF && b[1] == 0xD8 {
 			return imagetype_new.JPEG, nil
 		}
 		return imagetype_new.Unknown, newUnknownFormatError()
@@ -24,20 +29,19 @@ func TestRegisterDetector(t *testing.T) {
 
 	// Verify the detector is registered
 	require.Len(t, testRegistry.detectors, 1)
-	require.Equal(t, 64, testRegistry.detectors[0].BytesNeeded)
-	require.NotNil(t, testRegistry.detectors[0].Func)
+	require.NotNil(t, testRegistry.detectors[0])
 }
 
 func TestRegisterMagicBytes(t *testing.T) {
 	// Create a test registry to avoid interfering with global state
 	testRegistry := &Registry{}
 
+	require.Empty(t, testRegistry.detectors)
+
 	// Register magic bytes for JPEG using the method
 	jpegMagic := []byte{0xFF, 0xD8}
 	testRegistry.RegisterMagicBytes(jpegMagic, imagetype_new.JPEG)
 
 	// Verify the magic bytes are registered
-	require.Len(t, testRegistry.magicBytes, 1)
-	require.Equal(t, jpegMagic, testRegistry.magicBytes[0].Signature)
-	require.Equal(t, imagetype_new.JPEG, testRegistry.magicBytes[0].Type)
+	require.Len(t, testRegistry.detectors, 1)
 }
