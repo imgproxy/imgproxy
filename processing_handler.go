@@ -150,6 +150,14 @@ func writeDebugHeaders(rw http.ResponseWriter, result *processing.Result) {
 }
 
 func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, statusCode int, resultData imagedata.ImageData, po *options.ProcessingOptions, originURL string, originData imagedata.ImageData, originHeaders http.Header) {
+	// We read the size of the image data here, so we can set Content-Length header.
+	// This indireclty ensures that the image data is fully read from the source, no
+	// errors happened.
+	resultSize, err := resultData.Size()
+	if err != nil {
+		checkErr(r.Context(), "image_data_size", err)
+	}
+
 	var contentDisposition string
 	if len(po.Filename) > 0 {
 		contentDisposition = resultData.Format().ContentDisposition(po.Filename, po.ReturnAttachment)
@@ -166,11 +174,6 @@ func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, sta
 	setCanonical(rw, originURL)
 
 	rw.Header().Set(httpheaders.ContentSecurityPolicy, "script-src 'none'")
-
-	resultSize, err := resultData.Size()
-	if err != nil {
-		checkErr(r.Context(), "image_data_size", err)
-	}
 
 	rw.Header().Set(httpheaders.ContentLength, strconv.Itoa(resultSize))
 	rw.WriteHeader(statusCode)
@@ -375,7 +378,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 			checkErr(ctx, "download", err)
 		}
 
-		return imagedata.Download(ctx, imageURL, "source image", downloadOpts, po.SecurityOptions)
+		return imagedata.DownloadAsync(ctx, imageURL, "source image", downloadOpts, po.SecurityOptions)
 	}()
 
 	var nmErr imagefetcher.NotModifiedError
@@ -491,7 +494,13 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		})()
 		return processing.ProcessImage(ctx, originData, po)
 	}()
-	checkErr(ctx, "processing", err)
+
+	if err != nil {
+		// First, check if the processing error wasn't caused by an image data error
+		checkErr(ctx, "download", originData.Error())
+		// If it wasn't, than it was a processing error
+		sendErrAndPanic(ctx, "processing", err)
+	}
 
 	defer result.OutData.Close()
 
