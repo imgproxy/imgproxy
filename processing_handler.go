@@ -495,11 +495,12 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		return processing.ProcessImage(ctx, originData, po)
 	}()
 
-	if originData.Error() != nil {
+	if err != nil {
+		// First, check if the processing error wasn't caused by an image data error
 		checkErr(ctx, "download", originData.Error())
+		// If it wasn't, than it was a processing error
+		sendErrAndPanic(ctx, "processing", err)
 	}
-
-	checkErr(ctx, "processing", err)
 
 	defer result.OutData.Close()
 
