@@ -1,9 +1,9 @@
 package imagedetect
 
 import (
-	"bytes"
 	"strings"
 
+	"github.com/imgproxy/imgproxy/v3/bufreader"
 	"github.com/imgproxy/imgproxy/v3/imagetype_new"
 
 	"github.com/tdewolff/parse/v2"
@@ -15,8 +15,8 @@ func init() {
 	RegisterDetector(IsSVG, 1000)
 }
 
-func IsSVG(b []byte) (imagetype_new.Type, error) {
-	l := xml.NewLexer(parse.NewInput(bytes.NewReader(b)))
+func IsSVG(r bufreader.ReadPeeker) (imagetype_new.Type, error) {
+	l := xml.NewLexer(parse.NewInput(r))
 
 	for {
 		tt, _ := l.Next()

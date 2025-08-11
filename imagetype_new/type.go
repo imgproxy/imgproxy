@@ -11,19 +11,151 @@ type (
 )
 
 // Supported image types
-const (
-	Unknown Type = iota
-	JPEG
-	JXL
-	PNG
-	WEBP
-	GIF
-	ICO
-	SVG
-	HEIC
-	AVIF
-	BMP
-	TIFF
+var (
+	Unknown Type = -1
+
+	JPEG = RegisterType(&TypeDesc{
+		String:                "jpeg",
+		Ext:                   ".jpg",
+		Mime:                  "image/jpeg",
+		IsVector:              false,
+		SupportsAlpha:         false,
+		SupportsColourProfile: true,
+		SupportsQuality:       true,
+		SupportsAnimationLoad: false,
+		SupportsAnimationSave: false,
+		SupportsThumbnail:     false,
+	})
+
+	JXL = RegisterType(&TypeDesc{
+		String:                "jxl",
+		Ext:                   ".jxl",
+		Mime:                  "image/jxl",
+		IsVector:              false,
+		SupportsAlpha:         true,
+		SupportsColourProfile: true,
+		SupportsQuality:       true,
+		SupportsAnimationLoad: true,
+		SupportsAnimationSave: false,
+		SupportsThumbnail:     false,
+	})
+
+	PNG = RegisterType(&TypeDesc{
+		String:                "png",
+		Ext:                   ".png",
+		Mime:                  "image/png",
+		IsVector:              false,
+		SupportsAlpha:         true,
+		SupportsColourProfile: true,
+		SupportsQuality:       false,
+		SupportsAnimationLoad: false,
+		SupportsAnimationSave: false,
+		SupportsThumbnail:     false,
+	})
+
+	WEBP = RegisterType(&TypeDesc{
+		String:                "webp",
+		Ext:                   ".webp",
+		Mime:                  "image/webp",
+		IsVector:              false,
+		SupportsAlpha:         true,
+		SupportsColourProfile: true,
+		SupportsQuality:       true,
+		SupportsAnimationLoad: true,
+		SupportsAnimationSave: true,
+		SupportsThumbnail:     false,
+	})
+
+	GIF = RegisterType(&TypeDesc{
+		String:                "gif",
+		Ext:                   ".gif",
+		Mime:                  "image/gif",
+		IsVector:              false,
+		SupportsAlpha:         true,
+		SupportsColourProfile: false,
+		SupportsQuality:       false,
+		SupportsAnimationLoad: true,
+		SupportsAnimationSave: true,
+		SupportsThumbnail:     false,
+	})
+
+	ICO = RegisterType(&TypeDesc{
+		String:                "ico",
+		Ext:                   ".ico",
+		Mime:                  "image/x-icon",
+		IsVector:              false,
+		SupportsAlpha:         true,
+		SupportsColourProfile: false,
+		SupportsQuality:       false,
+		SupportsAnimationLoad: false,
+		SupportsAnimationSave: false,
+		SupportsThumbnail:     false,
+	})
+
+	SVG = RegisterType(&TypeDesc{
+		String:                "svg",
+		Ext:                   ".svg",
+		Mime:                  "image/svg+xml",
+		IsVector:              true,
+		SupportsAlpha:         true,
+		SupportsColourProfile: false,
+		SupportsQuality:       false,
+		SupportsAnimationLoad: false,
+		SupportsAnimationSave: false,
+		SupportsThumbnail:     false,
+	})
+
+	HEIC = RegisterType(&TypeDesc{
+		String:                "heic",
+		Ext:                   ".heic",
+		Mime:                  "image/heif",
+		IsVector:              false,
+		SupportsAlpha:         true,
+		SupportsColourProfile: true,
+		SupportsQuality:       true,
+		SupportsAnimationLoad: false,
+		SupportsAnimationSave: false,
+		SupportsThumbnail:     true,
+	})
+
+	AVIF = RegisterType(&TypeDesc{
+		String:                "avif",
+		Ext:                   ".avif",
+		Mime:                  "image/avif",
+		IsVector:              false,
+		SupportsAlpha:         true,
+		SupportsColourProfile: true,
+		SupportsQuality:       true,
+		SupportsAnimationLoad: false,
+		SupportsAnimationSave: false,
+		SupportsThumbnail:     true,
+	})
+
+	BMP = RegisterType(&TypeDesc{
+		String:                "bmp",
+		Ext:                   ".bmp",
+		Mime:                  "image/bmp",
+		IsVector:              false,
+		SupportsAlpha:         true,
+		SupportsColourProfile: false,
+		SupportsQuality:       false,
+		SupportsAnimationLoad: false,
+		SupportsAnimationSave: false,
+		SupportsThumbnail:     false,
+	})
+
+	TIFF = RegisterType(&TypeDesc{
+		String:                "tiff",
+		Ext:                   ".tiff",
+		Mime:                  "image/tiff",
+		IsVector:              false,
+		SupportsAlpha:         true,
+		SupportsColourProfile: false,
+		SupportsQuality:       true,
+		SupportsAnimationLoad: false,
+		SupportsAnimationSave: false,
+		SupportsThumbnail:     false,
+	})
 )
 
 // Mime returns the MIME type for the image type.
