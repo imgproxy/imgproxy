@@ -3,48 +3,23 @@ package imagedetect
 import (
 	"io"
 
+	"github.com/imgproxy/imgproxy/v3/bufreader"
 	"github.com/imgproxy/imgproxy/v3/imagetype_new"
+)
+
+const (
+	// maxDetectionLimit is maximum bytes detectors allowed to read from the source
+	maxDetectionLimit = 32768
 )
 
 // Detect attempts to detect the image type from a reader.
 // It first tries magic byte detection, then custom detectors in registration order
 func Detect(r io.Reader) (imagetype_new.Type, error) {
-	// Start with 64 bytes to cover magic bytes
-	buf := make([]byte, 64)
+	br := bufreader.New(io.LimitReader(r, maxDetectionLimit))
 
-	n, err := io.ReadFull(r, buf)
-	if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
-		return imagetype_new.Unknown, err
-	}
-
-	data := buf[:n]
-
-	// First try magic byte detection
-	for _, magic := range registry.magicBytes {
-		if hasMagicBytes(data, magic) {
-			return magic.Type, nil
-		}
-	}
-
-	// Then try custom detectors
-	for _, detector := range registry.detectors {
-		// Check if we have enough bytes for this detector
-		if len(data) < detector.BytesNeeded {
-			// Need to read more data
-			additionalBytes := detector.BytesNeeded - len(data)
-			extraBuf := make([]byte, additionalBytes)
-			extraN, err := io.ReadFull(r, extraBuf)
-
-			// It's fine if we can't read required number of bytes
-			if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
-				return imagetype_new.Unknown, err
-			}
-
-			// Extend our data buffer
-			data = append(data, extraBuf[:extraN]...)
-		}
-
-		if typ, err := detector.Func(data); err == nil && typ != imagetype_new.Unknown {
+	for _, fn := range registry.detectors {
+		br.Rewind()
+		if typ, err := fn(br); err == nil && typ != imagetype_new.Unknown {
 			return typ, nil
 		}
 	}
@@ -54,12 +29,12 @@ func Detect(r io.Reader) (imagetype_new.Type, error) {
 
 // hasMagicBytes checks if the data matches a magic byte signature
 // Supports '?' characters in signature which match any byte
-func hasMagicBytes(data []byte, magic MagicBytes) bool {
-	if len(data) < len(magic.Signature) {
+func hasMagicBytes(data []byte, magic []byte) bool {
+	if len(data) < len(magic) {
 		return false
 	}
 
-	for i, c := range magic.Signature {
+	for i, c := range magic {
 		if c != data[i] && c != '?' {
 			return false
 		}

@@ -10,13 +10,6 @@ func TestRegisterType(t *testing.T) {
 	// Create a separate registry for testing to avoid conflicts with global registry
 	testRegistry := &Registry{}
 
-	// Use a high type number to avoid conflicts with default types
-	const customType Type = 1000
-
-	// First, verify the type is not registered
-	desc := testRegistry.GetType(customType)
-	require.Nil(t, desc)
-
 	// Register a custom type
 	customDesc := &TypeDesc{
 		String:                "custom",
@@ -27,7 +20,7 @@ func TestRegisterType(t *testing.T) {
 		SupportsColourProfile: true,
 	}
 
-	testRegistry.RegisterType(customType, customDesc)
+	customType := testRegistry.RegisterType(customDesc)
 
 	// Verify the type is now registered
 	result := testRegistry.GetType(customType)
@@ -38,38 +31,6 @@ func TestRegisterType(t *testing.T) {
 	require.Equal(t, customDesc.IsVector, result.IsVector)
 	require.Equal(t, customDesc.SupportsAlpha, result.SupportsAlpha)
 	require.Equal(t, customDesc.SupportsColourProfile, result.SupportsColourProfile)
-}
-
-func TestRegisterTypeError(t *testing.T) {
-	// Create a separate registry for testing to avoid conflicts with global registry
-	testRegistry := &Registry{}
-
-	// Use a high type number to avoid conflicts
-	const testType Type = 2000
-
-	desc1 := &TypeDesc{
-		String:                "test1",
-		Ext:                   ".test1",
-		Mime:                  "image/test1",
-		IsVector:              false,
-		SupportsAlpha:         true,
-		SupportsColourProfile: true,
-	}
-
-	desc2 := &TypeDesc{
-		String:                "test2",
-		Ext:                   ".test2",
-		Mime:                  "image/test2",
-		IsVector:              true,
-		SupportsAlpha:         false,
-		SupportsColourProfile: false,
-	}
-
-	// Register the first type
-	testRegistry.RegisterType(testType, desc1)
-
-	// Attempting to register the same type again should return an error
-	require.Error(t, testRegistry.RegisterType(testType, desc2))
 }
 
 func TestTypeProperties(t *testing.T) {
@@ -161,17 +122,6 @@ func TestTypeProperties(t *testing.T) {
 			expectAnimationLoad: false,
 			expectAnimationSave: false,
 			expectThumbnail:     true,
-		},
-		{
-			name:                "Unknown",
-			typ:                 Unknown,
-			expectVector:        false,
-			expectAlpha:         false,
-			expectColourProfile: false,
-			expectQuality:       false,
-			expectAnimationLoad: false,
-			expectAnimationSave: false,
-			expectThumbnail:     false,
 		},
 	}
 
