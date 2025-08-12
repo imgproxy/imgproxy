@@ -1,4 +1,4 @@
-package imagedetect
+package imagetype_new
 
 import (
 	"net/http"
