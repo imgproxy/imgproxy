@@ -6,15 +6,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestValue(t *testing.T) {
-	// Test cases for Value function that generates content-disposition headers
+func TestContentDispositionValue(t *testing.T) {
+	// Test cases for ContentDispositionValue function that generates content-disposition headers
 	tests := []struct {
 		name             string
 		url              string
 		filename         string
 		ext              string
 		returnAttachment bool
-		fallback         bool
 		expected         string
 		contentType      string
 	}{
@@ -25,7 +24,6 @@ func TestValue(t *testing.T) {
 			ext:              "",
 			contentType:      "",
 			returnAttachment: false,
-			fallback:         false,
 			expected:         "inline; filename=\"test.jpg\"",
 		},
 		{
@@ -35,8 +33,7 @@ func TestValue(t *testing.T) {
 			ext:              "",
 			contentType:      "",
 			returnAttachment: false,
-			fallback:         false,
-			expected:         "inline; filename=\"\"",
+			expected:         "inline; filename=\"image\"",
 		},
 		{
 			name:             "EmptyFilenameWithExt",
@@ -45,8 +42,7 @@ func TestValue(t *testing.T) {
 			ext:              ".png",
 			contentType:      "",
 			returnAttachment: false,
-			fallback:         false,
-			expected:         "inline; filename=\".png\"",
+			expected:         "inline; filename=\"image.png\"",
 		},
 		{
 			name:             "EmptyFilenameWithFilenameAndExt",
@@ -55,7 +51,6 @@ func TestValue(t *testing.T) {
 			ext:              ".png",
 			contentType:      "",
 			returnAttachment: false,
-			fallback:         false,
 			expected:         "inline; filename=\"example.png\"",
 		},
 		{
@@ -65,7 +60,6 @@ func TestValue(t *testing.T) {
 			ext:              ".jpg",
 			contentType:      "",
 			returnAttachment: false,
-			fallback:         false,
 			expected:         "inline; filename=\"example.jpg\"",
 		},
 		{
@@ -75,7 +69,6 @@ func TestValue(t *testing.T) {
 			ext:              ".jpg",
 			contentType:      "",
 			returnAttachment: false,
-			fallback:         false,
 			expected:         "inline; filename=\"face.jpg\"",
 		},
 		{
@@ -85,7 +78,6 @@ func TestValue(t *testing.T) {
 			ext:              ".jpg",
 			contentType:      "",
 			returnAttachment: false,
-			fallback:         false,
 			expected:         "inline; filename=\"face.jpg\"",
 		},
 		{
@@ -95,7 +87,6 @@ func TestValue(t *testing.T) {
 			ext:              ".png",
 			contentType:      "",
 			returnAttachment: false,
-			fallback:         true,
 			expected:         "inline; filename=\"image.png\"",
 		},
 		{
@@ -105,7 +96,6 @@ func TestValue(t *testing.T) {
 			ext:              "",
 			contentType:      "",
 			returnAttachment: true,
-			fallback:         false,
 			expected:         "attachment; filename=\"test.jpg\"",
 		},
 		{
@@ -114,7 +104,6 @@ func TestValue(t *testing.T) {
 			filename:         "my\"file",
 			ext:              ".png",
 			returnAttachment: false,
-			fallback:         false,
 			contentType:      "",
 			expected:         "inline; filename=\"my%22file.png\"",
 		},
@@ -125,14 +114,13 @@ func TestValue(t *testing.T) {
 			ext:              "",
 			contentType:      "image/png",
 			returnAttachment: false,
-			fallback:         false,
 			expected:         "inline; filename=\"my%22file.png\"",
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			result := ContentDispositionValue(tc.url, tc.filename, tc.ext, tc.contentType, tc.returnAttachment, tc.fallback)
+			result := ContentDispositionValue(tc.url, tc.filename, tc.ext, tc.contentType, tc.returnAttachment)
 			require.Equal(t, tc.expected, result)
 		})
 	}

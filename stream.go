@@ -96,7 +96,6 @@ func streamOriginImage(ctx context.Context, reqID string, r *http.Request, rw ht
 			"",
 			rw.Header().Get(httpheaders.ContentType),
 			po.ReturnAttachment,
-			false, // no fallback in this case
 		)
 		rw.Header().Set("Content-Disposition", contentDisposition)
 	}

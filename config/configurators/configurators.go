@@ -147,7 +147,7 @@ func ImageTypes(it *[]imagetype.Type, name string) error {
 		// For every part passed through the environment variable,
 		// check if it matches any of the image types defined in
 		// the imagetype package or return error.
-		t, ok := imagetype.GetTypeMap()[part]
+		t, ok := imagetype.GetTypeByName(part)
 		if !ok {
 			return fmt.Errorf("unknown image format: %s", part)
 		}
@@ -180,7 +180,7 @@ func ImageTypesQuality(m map[imagetype.Type]int, name string) error {
 			return fmt.Errorf("invalid quality: %s", p)
 		}
 
-		t, ok := imagetype.GetTypeMap()[imgtypeStr]
+		t, ok := imagetype.GetTypeByName(imgtypeStr)
 		if !ok {
 			return fmt.Errorf("unknown image format: %s", imgtypeStr)
 		}

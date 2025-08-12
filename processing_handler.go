@@ -164,7 +164,6 @@ func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, sta
 		resultData.Format().Ext(),
 		originHeaders.Get(httpheaders.ContentType),
 		po.ReturnAttachment,
-		true,
 	)
 
 	rw.Header().Set(httpheaders.ContentType, resultData.Format().Mime())

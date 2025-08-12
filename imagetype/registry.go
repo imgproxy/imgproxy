@@ -61,8 +61,8 @@ func GetTypeDesc(t Type) *TypeDesc {
 }
 
 // GetTypes returns all registered image types.
-func GetTypeMap() map[string]Type {
-	return globalRegistry.typesByName
+func GetTypeByName(name string) (Type, bool) {
+	return globalRegistry.GetTypeByName(name)
 }
 
 // RegisterType registers a new image type in this registry.
@@ -96,6 +96,12 @@ func (r *registry) GetTypeDesc(t Type) *TypeDesc {
 	}
 
 	return r.types[t-1]
+}
+
+// GetTypeByName returns Type by it's name
+func (r *registry) GetTypeByName(name string) (Type, bool) {
+	typ, ok := r.typesByName[name]
+	return typ, ok
 }
 
 // RegisterDetector registers a custom detector function
