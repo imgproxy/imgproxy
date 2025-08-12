@@ -25,6 +25,11 @@ type ProcessingTestSuite struct {
 func (s *ProcessingTestSuite) SetupSuite() {
 	config.Reset()
 
+	config.MaxSrcResolution = 10 * 1024 * 1024
+	config.MaxSrcFileSize = 10 * 1024 * 1024
+	config.MaxAnimationFrames = 100
+	config.MaxAnimationFrameResolution = 10 * 1024 * 1024
+
 	s.Require().NoError(imagedata.Init())
 	s.Require().NoError(vips.Init())
 
@@ -32,13 +37,6 @@ func (s *ProcessingTestSuite) SetupSuite() {
 }
 
 func (s *ProcessingTestSuite) openFile(name string) imagedata.ImageData {
-	// secopts := security.Options{
-	// 	MaxSrcResolution:            10 * 1024 * 1024,
-	// 	MaxSrcFileSize:              10 * 1024 * 1024,
-	// 	MaxAnimationFrames:          100,
-	// 	MaxAnimationFrameResolution: 10 * 1024 * 1024,
-	// }
-
 	wd, err := os.Getwd()
 	s.Require().NoError(err)
 	path := filepath.Join(wd, "..", "testdata", name)

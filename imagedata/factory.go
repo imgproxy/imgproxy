@@ -11,7 +11,6 @@ import (
 
 	"github.com/imgproxy/imgproxy/v3/asyncbuffer"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
-	"github.com/imgproxy/imgproxy/v3/imagedetect"
 	"github.com/imgproxy/imgproxy/v3/imagefetcher"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/security"
@@ -31,7 +30,7 @@ func NewFromBytesWithFormat(format imagetype.Type, b []byte) ImageData {
 func NewFromBytes(b []byte) (ImageData, error) {
 	r := bytes.NewReader(b)
 
-	format, err := imagedetect.Detect(r)
+	format, err := imagetype.Detect(r)
 	if err != nil {
 		return nil, err
 	}
@@ -125,7 +124,7 @@ func downloadSync(ctx context.Context, imageURL string, opts DownloadOptions) (I
 		return nil, h, err
 	}
 
-	format, err := imagedetect.Detect(bytes.NewReader(b))
+	format, err := imagetype.Detect(bytes.NewReader(b))
 	if err != nil {
 		return nil, h, err
 	}
@@ -146,7 +145,7 @@ func downloadAsync(ctx context.Context, imageURL string, opts DownloadOptions) (
 
 	b := asyncbuffer.New(res.Body)
 
-	format, err := imagedetect.Detect(b.Reader())
+	format, err := imagetype.Detect(b.Reader())
 	if err != nil {
 		b.Close()
 		req.Cancel()

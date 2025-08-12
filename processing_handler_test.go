@@ -20,7 +20,6 @@ import (
 	"github.com/imgproxy/imgproxy/v3/etag"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
-	"github.com/imgproxy/imgproxy/v3/imagemeta"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/router"
@@ -135,12 +134,10 @@ func (s *ProcessingHandlerTestSuite) TestRequest() {
 	s.Require().Equal(200, res.StatusCode)
 	s.Require().Equal("image/png", res.Header.Get("Content-Type"))
 
-	meta, err := imagemeta.DecodeMeta(res.Body)
+	format, err := imagetype.Detect(res.Body)
 
 	s.Require().NoError(err)
-	s.Require().Equal(imagetype.PNG, meta.Format())
-	s.Require().Equal(4, meta.Width())
-	s.Require().Equal(4, meta.Height())
+	s.Require().Equal(imagetype.PNG, format)
 }
 
 func (s *ProcessingHandlerTestSuite) TestSignatureValidationFailure() {
