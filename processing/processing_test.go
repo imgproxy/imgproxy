@@ -12,9 +12,9 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/options"
-	"github.com/imgproxy/imgproxy/v3/security"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
@@ -32,18 +32,18 @@ func (s *ProcessingTestSuite) SetupSuite() {
 }
 
 func (s *ProcessingTestSuite) openFile(name string) imagedata.ImageData {
-	secopts := security.Options{
-		MaxSrcResolution:            10 * 1024 * 1024,
-		MaxSrcFileSize:              10 * 1024 * 1024,
-		MaxAnimationFrames:          100,
-		MaxAnimationFrameResolution: 10 * 1024 * 1024,
-	}
+	// secopts := security.Options{
+	// 	MaxSrcResolution:            10 * 1024 * 1024,
+	// 	MaxSrcFileSize:              10 * 1024 * 1024,
+	// 	MaxAnimationFrames:          100,
+	// 	MaxAnimationFrameResolution: 10 * 1024 * 1024,
+	// }
 
 	wd, err := os.Getwd()
 	s.Require().NoError(err)
 	path := filepath.Join(wd, "..", "testdata", name)
 
-	imagedata, err := imagedata.NewFromPath(path, secopts)
+	imagedata, err := imagedata.NewFromPath(path)
 	s.Require().NoError(err)
 
 	return imagedata
@@ -984,6 +984,17 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 			s.checkSize(result, tc.outWidth, tc.outHeight)
 		})
 	}
+}
+
+func (s *ProcessingTestSuite) TestImageResolutionTooLarge() {
+	po := options.NewProcessingOptions()
+	po.SecurityOptions.MaxSrcResolution = 1
+
+	imgdata := s.openFile("test2.jpg")
+	_, err := ProcessImage(context.Background(), imgdata, po)
+
+	s.Require().Error(err)
+	s.Require().Equal(422, ierrors.Wrap(err, 0).StatusCode())
 }
 
 func TestProcessing(t *testing.T) {

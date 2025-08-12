@@ -770,6 +770,21 @@ func (s *ProcessingHandlerTestSuite) TestAlwaysRasterizeSvgWithFormat() {
 	s.Require().Equal("image/svg+xml", res.Header.Get("Content-Type"))
 }
 
+func (s *ProcessingHandlerTestSuite) TestMaxSrcFileSizeGlobal() {
+	config.MaxSrcFileSize = 1
+
+	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		rw.WriteHeader(200)
+		rw.Write(s.readTestFile("test1.png"))
+	}))
+	defer ts.Close()
+
+	rw := s.send("/unsafe/rs:fill:4:4/plain/" + ts.URL)
+	res := rw.Result()
+
+	s.Require().Equal(422, res.StatusCode)
+}
+
 func TestProcessingHandler(t *testing.T) {
 	suite.Run(t, new(ProcessingHandlerTestSuite))
 }

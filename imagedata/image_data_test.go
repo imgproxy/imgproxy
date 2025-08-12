@@ -19,7 +19,6 @@ import (
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
-	"github.com/imgproxy/imgproxy/v3/security"
 	"github.com/imgproxy/imgproxy/v3/testutil"
 )
 
@@ -91,7 +90,7 @@ func (s *ImageDataTestSuite) SetupTest() {
 }
 
 func (s *ImageDataTestSuite) TestDownloadStatusOK() {
-	imgdata, _, err := DownloadSync(context.Background(), s.server.URL, "Test image", DownloadOptions{}, security.DefaultOptions())
+	imgdata, _, err := DownloadSync(context.Background(), s.server.URL, "Test image", DefaultDownloadOptions())
 
 	s.Require().NoError(err)
 	s.Require().NotNil(imgdata)
@@ -158,7 +157,7 @@ func (s *ImageDataTestSuite) TestDownloadStatusPartialContent() {
 		s.Run(tc.name, func() {
 			s.header.Set("Content-Range", tc.contentRange)
 
-			imgdata, _, err := DownloadSync(context.Background(), s.server.URL, "Test image", DownloadOptions{}, security.DefaultOptions())
+			imgdata, _, err := DownloadSync(context.Background(), s.server.URL, "Test image", DefaultDownloadOptions())
 
 			if tc.expectErr {
 				s.Require().Error(err)
@@ -178,7 +177,7 @@ func (s *ImageDataTestSuite) TestDownloadStatusNotFound() {
 	s.data = []byte("Not Found")
 	s.header.Set("Content-Type", "text/plain")
 
-	imgdata, _, err := DownloadSync(context.Background(), s.server.URL, "Test image", DownloadOptions{}, security.DefaultOptions())
+	imgdata, _, err := DownloadSync(context.Background(), s.server.URL, "Test image", DefaultDownloadOptions())
 
 	s.Require().Error(err)
 	s.Require().Equal(404, ierrors.Wrap(err, 0).StatusCode())
@@ -190,7 +189,7 @@ func (s *ImageDataTestSuite) TestDownloadStatusForbidden() {
 	s.data = []byte("Forbidden")
 	s.header.Set("Content-Type", "text/plain")
 
-	imgdata, _, err := DownloadSync(context.Background(), s.server.URL, "Test image", DownloadOptions{}, security.DefaultOptions())
+	imgdata, _, err := DownloadSync(context.Background(), s.server.URL, "Test image", DefaultDownloadOptions())
 
 	s.Require().Error(err)
 	s.Require().Equal(404, ierrors.Wrap(err, 0).StatusCode())
@@ -202,7 +201,7 @@ func (s *ImageDataTestSuite) TestDownloadStatusInternalServerError() {
 	s.data = []byte("Internal Server Error")
 	s.header.Set("Content-Type", "text/plain")
 
-	imgdata, _, err := DownloadSync(context.Background(), s.server.URL, "Test image", DownloadOptions{}, security.DefaultOptions())
+	imgdata, _, err := DownloadSync(context.Background(), s.server.URL, "Test image", DefaultDownloadOptions())
 
 	s.Require().Error(err)
 	s.Require().Equal(500, ierrors.Wrap(err, 0).StatusCode())
@@ -216,7 +215,7 @@ func (s *ImageDataTestSuite) TestDownloadUnreachable() {
 
 	serverURL := fmt.Sprintf("http://%s", l.Addr().String())
 
-	imgdata, _, err := DownloadSync(context.Background(), serverURL, "Test image", DownloadOptions{}, security.DefaultOptions())
+	imgdata, _, err := DownloadSync(context.Background(), serverURL, "Test image", DefaultDownloadOptions())
 
 	s.Require().Error(err)
 	s.Require().Equal(500, ierrors.Wrap(err, 0).StatusCode())
@@ -226,7 +225,7 @@ func (s *ImageDataTestSuite) TestDownloadUnreachable() {
 func (s *ImageDataTestSuite) TestDownloadInvalidImage() {
 	s.data = []byte("invalid")
 
-	imgdata, _, err := DownloadSync(context.Background(), s.server.URL, "Test image", DownloadOptions{}, security.DefaultOptions())
+	imgdata, _, err := DownloadSync(context.Background(), s.server.URL, "Test image", DefaultDownloadOptions())
 
 	s.Require().Error(err)
 	s.Require().Equal(422, ierrors.Wrap(err, 0).StatusCode())
@@ -236,27 +235,17 @@ func (s *ImageDataTestSuite) TestDownloadInvalidImage() {
 func (s *ImageDataTestSuite) TestDownloadSourceAddressNotAllowed() {
 	config.AllowLoopbackSourceAddresses = false
 
-	imgdata, _, err := DownloadSync(context.Background(), s.server.URL, "Test image", DownloadOptions{}, security.DefaultOptions())
+	imgdata, _, err := DownloadSync(context.Background(), s.server.URL, "Test image", DefaultDownloadOptions())
 
 	s.Require().Error(err)
 	s.Require().Equal(404, ierrors.Wrap(err, 0).StatusCode())
 	s.Require().Nil(imgdata)
 }
 
-func (s *ImageDataTestSuite) TestDownloadImageTooLarge() {
-	config.MaxSrcResolution = 1
-
-	imgdata, _, err := DownloadSync(context.Background(), s.server.URL, "Test image", DownloadOptions{}, security.DefaultOptions())
-
-	s.Require().Error(err)
-	s.Require().Equal(422, ierrors.Wrap(err, 0).StatusCode())
-	s.Require().Nil(imgdata)
-}
-
 func (s *ImageDataTestSuite) TestDownloadImageFileTooLarge() {
 	config.MaxSrcFileSize = 1
 
-	imgdata, _, err := DownloadSync(context.Background(), s.server.URL, "Test image", DownloadOptions{}, security.DefaultOptions())
+	imgdata, _, err := DownloadSync(context.Background(), s.server.URL, "Test image", DefaultDownloadOptions())
 
 	s.Require().Error(err)
 	s.Require().Equal(422, ierrors.Wrap(err, 0).StatusCode())
@@ -275,7 +264,7 @@ func (s *ImageDataTestSuite) TestDownloadGzip() {
 	s.data = buf.Bytes()
 	s.header.Set("Content-Encoding", "gzip")
 
-	imgdata, _, err := DownloadSync(context.Background(), s.server.URL, "Test image", DownloadOptions{}, security.DefaultOptions())
+	imgdata, _, err := DownloadSync(context.Background(), s.server.URL, "Test image", DefaultDownloadOptions())
 
 	s.Require().NoError(err)
 	s.Require().NotNil(imgdata)
@@ -284,7 +273,7 @@ func (s *ImageDataTestSuite) TestDownloadGzip() {
 }
 
 func (s *ImageDataTestSuite) TestFromFile() {
-	imgdata, err := NewFromPath("../testdata/test1.jpg", security.DefaultOptions())
+	imgdata, err := NewFromPath("../testdata/test1.jpg")
 
 	s.Require().NoError(err)
 	s.Require().NotNil(imgdata)
@@ -295,7 +284,7 @@ func (s *ImageDataTestSuite) TestFromFile() {
 func (s *ImageDataTestSuite) TestFromBase64() {
 	b64 := base64.StdEncoding.EncodeToString(s.defaultData)
 
-	imgdata, err := NewFromBase64(b64, security.DefaultOptions())
+	imgdata, err := NewFromBase64(b64)
 
 	s.Require().NoError(err)
 	s.Require().NotNil(imgdata)

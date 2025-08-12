@@ -11,7 +11,6 @@ import (
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
-	"github.com/imgproxy/imgproxy/v3/security"
 )
 
 var (
@@ -48,6 +47,7 @@ type imageDataAsyncBuffer struct {
 	cancelOnce sync.Once
 }
 
+// Close closes the image data and releases any resources held by it
 func (d *imageDataBytes) Close() error {
 	d.cancelOnce.Do(func() {
 		for _, cancel := range d.cancel {
@@ -143,7 +143,7 @@ func loadWatermark() error {
 
 	switch {
 	case len(config.WatermarkData) > 0:
-		Watermark, err = NewFromBase64(config.WatermarkData, security.DefaultOptions())
+		Watermark, err = NewFromBase64(config.WatermarkData)
 
 		// NOTE: this should be something like err = ierrors.Wrap(err).WithStackDeep(0).WithPrefix("watermark")
 		// In the NewFromBase64 all errors should be wrapped to something like
@@ -153,13 +153,13 @@ func loadWatermark() error {
 		}
 
 	case len(config.WatermarkPath) > 0:
-		Watermark, err = NewFromPath(config.WatermarkPath, security.DefaultOptions())
+		Watermark, err = NewFromPath(config.WatermarkPath)
 		if err != nil {
 			return ierrors.Wrap(err, 0, ierrors.WithPrefix("can't read watermark from file"))
 		}
 
 	case len(config.WatermarkURL) > 0:
-		Watermark, _, err = DownloadSync(context.Background(), config.WatermarkURL, "watermark", DownloadOptions{Header: nil, CookieJar: nil}, security.DefaultOptions())
+		Watermark, _, err = DownloadSync(context.Background(), config.WatermarkURL, "watermark", DefaultDownloadOptions())
 		if err != nil {
 			return ierrors.Wrap(err, 0, ierrors.WithPrefix("can't download from URL"))
 		}
@@ -174,19 +174,19 @@ func loadWatermark() error {
 func loadFallbackImage() (err error) {
 	switch {
 	case len(config.FallbackImageData) > 0:
-		FallbackImage, err = NewFromBase64(config.FallbackImageData, security.DefaultOptions())
+		FallbackImage, err = NewFromBase64(config.FallbackImageData)
 		if err != nil {
 			return ierrors.Wrap(err, 0, ierrors.WithPrefix("can't load fallback image from Base64"))
 		}
 
 	case len(config.FallbackImagePath) > 0:
-		FallbackImage, err = NewFromPath(config.FallbackImagePath, security.DefaultOptions())
+		FallbackImage, err = NewFromPath(config.FallbackImagePath)
 		if err != nil {
 			return ierrors.Wrap(err, 0, ierrors.WithPrefix("can't read fallback image from file"))
 		}
 
 	case len(config.FallbackImageURL) > 0:
-		FallbackImage, FallbackImageHeaders, err = DownloadSync(context.Background(), config.FallbackImageURL, "fallback image", DownloadOptions{Header: nil, CookieJar: nil}, security.DefaultOptions())
+		FallbackImage, FallbackImageHeaders, err = DownloadSync(context.Background(), config.FallbackImageURL, "fallback image", DefaultDownloadOptions())
 		if err != nil {
 			return ierrors.Wrap(err, 0, ierrors.WithPrefix("can't download from URL"))
 		}

@@ -3,6 +3,7 @@ package imagedata
 import (
 	"net/http"
 
+	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imagefetcher"
 	"github.com/imgproxy/imgproxy/v3/transport"
@@ -17,8 +18,17 @@ var (
 )
 
 type DownloadOptions struct {
-	Header    http.Header
-	CookieJar http.CookieJar
+	Header         http.Header
+	CookieJar      http.CookieJar
+	MaxSrcFileSize int
+}
+
+func DefaultDownloadOptions() DownloadOptions {
+	return DownloadOptions{
+		Header:         nil,
+		CookieJar:      nil,
+		MaxSrcFileSize: config.MaxSrcFileSize,
+	}
 }
 
 func initDownloading() error {

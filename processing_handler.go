@@ -370,8 +370,9 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		})()
 
 		downloadOpts := imagedata.DownloadOptions{
-			Header:    imgRequestHeader,
-			CookieJar: nil,
+			Header:         imgRequestHeader,
+			CookieJar:      nil,
+			MaxSrcFileSize: po.SecurityOptions.MaxSrcFileSize,
 		}
 
 		if config.CookiePassthrough {
@@ -379,7 +380,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 			checkErr(ctx, "download", err)
 		}
 
-		return imagedata.DownloadAsync(ctx, imageURL, "source image", downloadOpts, po.SecurityOptions)
+		return imagedata.DownloadAsync(ctx, imageURL, "source image", downloadOpts)
 	}()
 
 	var nmErr imagefetcher.NotModifiedError
