@@ -61,7 +61,7 @@ func (r *Registry) RegisterType(desc *TypeDesc) Type {
 // GetTypeDesc returns the TypeDesc for the given Type.
 // Returns nil if the type is not registered.
 func (r *Registry) GetTypeDesc(t Type) *TypeDesc {
-	if t <= 0 {
+	if t <= 0 { // This would be "default" type
 		return nil
 	}
 
