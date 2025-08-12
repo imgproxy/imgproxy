@@ -3,7 +3,6 @@
 package bufreader
 
 import (
-	"bytes"
 	"io"
 )
 
@@ -16,7 +15,7 @@ type ReadPeeker interface {
 // Reader is a buffered reader that reads from an io.Reader and caches the data.
 type Reader struct {
 	r   io.Reader
-	buf *bytes.Buffer
+	buf []byte
 	pos int
 }
 
@@ -24,7 +23,7 @@ type Reader struct {
 func New(r io.Reader) *Reader {
 	br := Reader{
 		r:   r,
-		buf: bytes.NewBuffer(make([]byte, 0)),
+		buf: nil,
 	}
 	return &br
 }
@@ -35,26 +34,25 @@ func (br *Reader) Read(p []byte) (int, error) {
 		return 0, err
 	}
 
-	n := copy(p, br.buf.Bytes()[br.pos:])
+	n := copy(p, br.buf[br.pos:])
 	br.pos += n
 	return n, nil
 }
 
 // Peek returns the next n bytes from the buffered reader without advancing the position.
 func (br *Reader) Peek(n int) ([]byte, error) {
-	need := br.pos + n
-	err := br.fetch(need)
+	err := br.fetch(br.pos + n)
 	if err != nil && err != io.EOF {
 		return nil, err
 	}
 
 	// Return slice of buffered data without advancing position
-	available := br.buf.Bytes()[br.pos:]
+	available := br.buf[br.pos:]
 	if len(available) == 0 && err == io.EOF {
 		return nil, io.EOF
 	}
 
-	return available[:n], nil
+	return available[:min(len(available), n)], nil
 }
 
 // Rewind seeks buffer to the beginning
@@ -64,19 +62,18 @@ func (br *Reader) Rewind() {
 
 // fetch ensures the buffer contains at least 'need' bytes
 func (br *Reader) fetch(need int) error {
-	n := need - br.buf.Len()
-	if n <= 0 {
+	if need-len(br.buf) <= 0 {
 		return nil
 	}
 
-	bytesRead, err := br.buf.ReadFrom(io.LimitReader(br.r, int64(n)))
-	if err != nil {
+	b := make([]byte, need)
+	n, err := io.ReadFull(br.r, b)
+	if err != nil && err != io.ErrUnexpectedEOF {
 		return err
 	}
 
-	if bytesRead == 0 {
-		return io.EOF
-	}
+	// append only those which we read in fact
+	br.buf = append(br.buf, b[:n]...)
 
 	return nil
 }

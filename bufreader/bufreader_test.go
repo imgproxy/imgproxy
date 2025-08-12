@@ -84,8 +84,8 @@ func (s *BufferedReaderTestSuite) TestPeek() {
 	s.Equal("hello", string(p))
 	s.Equal(5, br.pos) // Position should now be updated
 
-	// Peek at the next 6 bytes
-	peeked2, err := br.Peek(6)
+	// Peek at the next 7 bytes (which are beyond the EOF)
+	peeked2, err := br.Peek(7)
 	s.Require().NoError(err)
 	s.Equal(" world", string(peeked2))
 	s.Equal(5, br.pos) // Position should still be 5

@@ -93,7 +93,7 @@ func (t Type) SupportsAnimationSave() bool {
 	return false
 }
 
-// SupportsColourProfile checks if the image type supports metadata.
+// SupportsColourProfile checks if the image type supports colour profiles.
 func (t Type) SupportsColourProfile() bool {
 	desc := GetTypeDesc(t)
 	if desc != nil {
