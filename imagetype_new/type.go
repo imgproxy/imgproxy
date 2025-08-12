@@ -12,7 +12,9 @@ type (
 
 // Supported image types
 var (
-	Unknown Type = -1
+	// Unknown is a reserved type, it has index 0. We guarantee that index 0 won't be used
+	// for any other type. This way, Unknown is a zero value for Type.
+	Unknown Type = 0
 
 	JPEG = RegisterType(&TypeDesc{
 		String:                "jpeg",

@@ -40,14 +40,18 @@ func GetType(t Type) *TypeDesc {
 // It panics if the type already exists (i.e., if a TypeDesc is already registered for this Type).
 func (r *Registry) RegisterType(desc *TypeDesc) Type {
 	r.types = append(r.types, desc)
-	return Type(len(r.types) - 1) // -1 is unknown
+	return Type(len(r.types)) // 0 is unknown
 }
 
 // GetType returns the TypeDesc for the given Type.
 // Returns nil if the type is not registered.
 func (r *Registry) GetType(t Type) *TypeDesc {
-	if int(t) >= len(r.types) {
+	if t == Unknown {
 		return nil
 	}
-	return r.types[t]
+
+	if int(t-1) >= len(r.types) {
+		return nil
+	}
+	return r.types[t-1]
 }
