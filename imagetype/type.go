@@ -1,4 +1,4 @@
-package imagetype_new
+package imagetype
 
 import (
 	"fmt"

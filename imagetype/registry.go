@@ -1,4 +1,4 @@
-package imagetype_new
+package imagetype
 
 import (
 	"io"
@@ -31,13 +31,22 @@ type TypeDesc struct {
 type DetectFunc func(r bufreader.ReadPeeker) (Type, error)
 
 // Registry holds the type registry
-type Registry struct {
-	detectors []DetectFunc
-	types     []*TypeDesc
+type registry struct {
+	detectors   []DetectFunc
+	types       []*TypeDesc
+	typesByName map[string]Type // maps type string to Type
 }
 
 // globalRegistry is the default registry instance
-var globalRegistry = &Registry{}
+var globalRegistry = NewRegistry()
+
+// NewRegistry creates a new image type registry.
+func NewRegistry() *registry {
+	return &registry{
+		types:       nil,
+		typesByName: make(map[string]Type),
+	}
+}
 
 // RegisterType registers a new image type in the global registry.
 // It panics if the type already exists (i.e., if a TypeDesc is already registered for this Type).
@@ -51,16 +60,33 @@ func GetTypeDesc(t Type) *TypeDesc {
 	return globalRegistry.GetTypeDesc(t)
 }
 
+// GetTypes returns all registered image types.
+func GetTypeMap() map[string]Type {
+	return globalRegistry.typesByName
+}
+
 // RegisterType registers a new image type in this registry.
 // It panics if the type already exists (i.e., if a TypeDesc is already registered for this Type).
-func (r *Registry) RegisterType(desc *TypeDesc) Type {
+func (r *registry) RegisterType(desc *TypeDesc) Type {
 	r.types = append(r.types, desc)
-	return Type(len(r.types)) // 0 is unknown
+	typ := Type(len(r.types)) // 0 is unknown
+	r.typesByName[desc.String] = typ
+
+	// NOTE: this is a special case for JPEG. The problem is that JPEG is using
+	// several alternative extensions and processing_options.go is using extension to
+	// find a type by key. There might be not the only case (e.g. ".tif/.tiff").
+	// We need to handle this case in a more generic way.
+	if desc.String == "jpeg" {
+		// JPEG is a special case, we need to alias it
+		r.typesByName["jpg"] = typ
+	}
+
+	return typ
 }
 
 // GetTypeDesc returns the TypeDesc for the given Type.
 // Returns nil if the type is not registered.
-func (r *Registry) GetTypeDesc(t Type) *TypeDesc {
+func (r *registry) GetTypeDesc(t Type) *TypeDesc {
 	if t <= 0 { // This would be "default" type
 		return nil
 	}
@@ -91,12 +117,12 @@ func Detect(r io.Reader) (Type, error) {
 }
 
 // RegisterDetector registers a custom detector function on this registry instance
-func (r *Registry) RegisterDetector(detector DetectFunc) {
+func (r *registry) RegisterDetector(detector DetectFunc) {
 	r.detectors = append(r.detectors, detector)
 }
 
 // RegisterMagicBytes registers magic bytes for a specific image type on this registry instance
-func (r *Registry) RegisterMagicBytes(typ Type, signature ...[]byte) {
+func (r *registry) RegisterMagicBytes(typ Type, signature ...[]byte) {
 	r.detectors = append(r.detectors, func(r bufreader.ReadPeeker) (Type, error) {
 		for _, sig := range signature {
 			b, err := r.Peek(len(sig))
@@ -114,7 +140,7 @@ func (r *Registry) RegisterMagicBytes(typ Type, signature ...[]byte) {
 }
 
 // Detect runs image format detection
-func (r *Registry) Detect(re io.Reader) (Type, error) {
+func (r *registry) Detect(re io.Reader) (Type, error) {
 	br := bufreader.New(io.LimitReader(re, maxDetectionLimit))
 
 	for _, fn := range globalRegistry.detectors {

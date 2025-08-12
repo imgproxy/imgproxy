@@ -3,9 +3,7 @@ package main
 import (
 	"context"
 	"io"
-	"mime"
 	"net/http"
-	"path/filepath"
 	"strconv"
 	"sync"
 
@@ -13,8 +11,8 @@ import (
 
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/cookies"
+	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
-	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/metrics"
 	"github.com/imgproxy/imgproxy/v3/metrics/stats"
 	"github.com/imgproxy/imgproxy/v3/options"
@@ -92,26 +90,15 @@ func streamOriginImage(ctx context.Context, reqID string, r *http.Request, rw ht
 	}
 
 	if res.StatusCode < 300 {
-		var filename, ext, mimetype string
-
-		_, filename = filepath.Split(req.URL().Path)
-		ext = filepath.Ext(filename)
-
-		if len(po.Filename) > 0 {
-			filename = po.Filename
-		} else {
-			filename = filename[:len(filename)-len(ext)]
-		}
-
-		mimetype = rw.Header().Get("Content-Type")
-
-		if len(ext) == 0 && len(mimetype) > 0 {
-			if exts, err := mime.ExtensionsByType(mimetype); err == nil && len(exts) != 0 {
-				ext = exts[0]
-			}
-		}
-
-		rw.Header().Set("Content-Disposition", imagetype.ContentDisposition(filename, ext, po.ReturnAttachment))
+		contentDisposition := httpheaders.ContentDispositionValue(
+			req.URL().Path,
+			po.Filename,
+			"",
+			rw.Header().Get(httpheaders.ContentType),
+			po.ReturnAttachment,
+			false, // no fallback in this case
+		)
+		rw.Header().Set("Content-Disposition", contentDisposition)
 	}
 
 	setCacheControl(rw, po.Expires, res.Header)

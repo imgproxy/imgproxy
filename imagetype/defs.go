@@ -1,4 +1,4 @@
-package imagetype_new
+package imagetype
 
 var (
 	JPEG = RegisterType(&TypeDesc{
