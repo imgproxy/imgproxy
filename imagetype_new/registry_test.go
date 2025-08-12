@@ -3,6 +3,7 @@ package imagetype_new
 import (
 	"testing"
 
+	"github.com/imgproxy/imgproxy/v3/bufreader"
 	"github.com/stretchr/testify/require"
 )
 
@@ -23,7 +24,7 @@ func TestRegisterType(t *testing.T) {
 	customType := testRegistry.RegisterType(customDesc)
 
 	// Verify the type is now registered
-	result := testRegistry.GetType(customType)
+	result := testRegistry.GetTypeDesc(customType)
 	require.NotNil(t, result)
 	require.Equal(t, customDesc.String, result.String)
 	require.Equal(t, customDesc.Ext, result.Ext)
@@ -136,4 +137,42 @@ func TestTypeProperties(t *testing.T) {
 			require.Equal(t, tt.expectThumbnail, tt.typ.SupportsThumbnail())
 		})
 	}
+}
+
+func TestRegisterDetector(t *testing.T) {
+	// Create a test registry to avoid interfering with global state
+	testRegistry := &Registry{}
+
+	// Create a test detector function
+	testDetector := func(r bufreader.ReadPeeker) (Type, error) {
+		b, err := r.Peek(2)
+		if err != nil {
+			return Unknown, err
+		}
+		if len(b) >= 2 && b[0] == 0xFF && b[1] == 0xD8 {
+			return JPEG, nil
+		}
+		return Unknown, newUnknownFormatError()
+	}
+
+	// Register the detector using the method
+	testRegistry.RegisterDetector(testDetector)
+
+	// Verify the detector is registered
+	require.Len(t, testRegistry.detectors, 1)
+	require.NotNil(t, testRegistry.detectors[0])
+}
+
+func TestRegisterMagicBytes(t *testing.T) {
+	// Create a test registry to avoid interfering with global state
+	testRegistry := &Registry{}
+
+	require.Empty(t, testRegistry.detectors)
+
+	// Register magic bytes for JPEG using the method
+	jpegMagic := []byte{0xFF, 0xD8}
+	testRegistry.RegisterMagicBytes(JPEG, jpegMagic)
+
+	// Verify the magic bytes are registered
+	require.Len(t, testRegistry.detectors, 1)
 }
