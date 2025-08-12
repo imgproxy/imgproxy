@@ -289,7 +289,7 @@ func ProcessImage(ctx context.Context, imgdata imagedata.ImageData, po *options.
 	}
 
 	originWidth, originHeight := getImageSize(img)
-	if err := security.CheckDimensions(originWidth, originHeight, img.Pages(), po.SecurityOptions); err != nil {
+	if err := security.CheckDimensions(originWidth, originHeight, 1, po.SecurityOptions); err != nil {
 		return nil, err
 	}
 
