@@ -14,7 +14,6 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/imgproxy/imgproxy/v3/config"
-	"github.com/imgproxy/imgproxy/v3/imath"
 	"github.com/imgproxy/imgproxy/v3/metrics/stats"
 )
 
@@ -115,8 +114,8 @@ func ObserveBufferSize(t string, size int) {
 
 		stats.count += 1
 		stats.sum += sizef
-		stats.min = imath.Min(stats.min, sizef)
-		stats.max = imath.Max(stats.max, sizef)
+		stats.min = min(stats.min, sizef)
+		stats.max = max(stats.max, sizef)
 	}
 }
 

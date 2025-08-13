@@ -9,7 +9,6 @@ import (
 	"sync/atomic"
 
 	"github.com/imgproxy/imgproxy/v3/config"
-	"github.com/imgproxy/imgproxy/v3/imath"
 	"github.com/imgproxy/imgproxy/v3/metrics"
 )
 
@@ -219,7 +218,7 @@ func (p *Pool) Get(size int, grow bool) *bytes.Buffer {
 
 	growSize := p.defaultSize
 	if grow {
-		growSize = imath.Max(p.normalizeCap(size), growSize)
+		growSize = max(p.normalizeCap(size), growSize)
 	}
 
 	// Grow the buffer only if we know the requested size and it is smaller than
@@ -278,7 +277,7 @@ func (p *Pool) normalizeCap(cap int) int {
 	}
 
 	ind := index(cap)
-	return imath.Max(cap, minSize<<ind)
+	return max(cap, minSize<<ind)
 }
 
 func saveEntry(e *entry) {

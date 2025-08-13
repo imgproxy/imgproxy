@@ -24,7 +24,6 @@ import (
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagefetcher"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
-	"github.com/imgproxy/imgproxy/v3/imath"
 	"github.com/imgproxy/imgproxy/v3/metrics"
 	"github.com/imgproxy/imgproxy/v3/metrics/stats"
 	"github.com/imgproxy/imgproxy/v3/options"
@@ -75,7 +74,7 @@ func setCacheControl(rw http.ResponseWriter, force *time.Time, originHeaders htt
 	}
 
 	if force != nil && (ttl < 0 || force.Before(time.Now().Add(time.Duration(ttl)*time.Second))) {
-		ttl = imath.Min(config.TTL, imath.Max(0, int(time.Until(*force).Seconds())))
+		ttl = min(config.TTL, max(0, int(time.Until(*force).Seconds())))
 	}
 
 	if config.CacheControlPassthrough && ttl < 0 && originHeaders != nil {
@@ -86,7 +85,7 @@ func setCacheControl(rw http.ResponseWriter, force *time.Time, originHeaders htt
 
 		if val := originHeaders.Get(httpheaders.Expires); len(val) > 0 {
 			if t, err := time.Parse(http.TimeFormat, val); err == nil {
-				ttl = imath.Max(0, int(time.Until(t).Seconds()))
+				ttl = max(0, int(time.Until(t).Seconds()))
 			}
 		}
 	}

@@ -10,7 +10,6 @@ import (
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
-	"github.com/imgproxy/imgproxy/v3/imath"
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/router"
 	"github.com/imgproxy/imgproxy/v3/security"
@@ -103,7 +102,7 @@ func transformAnimated(ctx context.Context, img *vips.Image, po *options.Process
 	}
 
 	imgWidth := img.Width()
-	framesCount := imath.Min(img.Pages(), po.SecurityOptions.MaxAnimationFrames)
+	framesCount := min(img.Pages(), po.SecurityOptions.MaxAnimationFrames)
 
 	frameHeight, err := img.GetInt("page-height")
 	if err != nil {

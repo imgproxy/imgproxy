@@ -48,7 +48,7 @@ func calcCropSize(orig int, crop float64) int {
 	case crop >= 1.0:
 		return int(crop)
 	default:
-		return imath.Max(1, imath.Scale(orig, crop))
+		return max(1, imath.Scale(orig, crop))
 	}
 }
 
@@ -215,11 +215,11 @@ func (pctx *pipelineContext) limitScale(widthToScale, heightToScale int, po *opt
 	outHeight := imath.MinNonZero(pctx.scaledHeight, pctx.resultCropHeight)
 
 	if po.Extend.Enabled {
-		outWidth = imath.Max(outWidth, pctx.targetWidth)
-		outHeight = imath.Max(outHeight, pctx.targetHeight)
+		outWidth = max(outWidth, pctx.targetWidth)
+		outHeight = max(outHeight, pctx.targetHeight)
 	} else if po.ExtendAspectRatio.Enabled {
-		outWidth = imath.Max(outWidth, pctx.extendAspectRatioWidth)
-		outHeight = imath.Max(outHeight, pctx.extendAspectRatioHeight)
+		outWidth = max(outWidth, pctx.extendAspectRatioWidth)
+		outHeight = max(outHeight, pctx.extendAspectRatioHeight)
 	}
 
 	if po.Padding.Enabled {
@@ -228,7 +228,7 @@ func (pctx *pipelineContext) limitScale(widthToScale, heightToScale int, po *opt
 	}
 
 	if maxresultDim > 0 && (outWidth > maxresultDim || outHeight > maxresultDim) {
-		downScale := float64(maxresultDim) / float64(imath.Max(outWidth, outHeight))
+		downScale := float64(maxresultDim) / float64(max(outWidth, outHeight))
 
 		pctx.wscale *= downScale
 		pctx.hscale *= downScale
