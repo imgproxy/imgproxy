@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"runtime"
+	"slices"
 
 	log "github.com/sirupsen/logrus"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/router"
 	"github.com/imgproxy/imgproxy/v3/security"
+	"github.com/imgproxy/imgproxy/v3/svg"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
@@ -292,6 +294,40 @@ func ProcessImage(ctx context.Context, imgdata imagedata.ImageData, po *options.
 		return nil, err
 	}
 
+	// Let's check if we should skip standard processing
+	if shouldSkipStandardProcessing(imgdata.Format(), po) {
+		// Even in this case, SVG is an exception
+		if imgdata.Format() == imagetype.SVG && config.SanitizeSvg {
+			sanitized, err := svg.Sanitize(imgdata)
+			if err != nil {
+				return nil, err
+			}
+
+			return &Result{
+				OutData:      sanitized,
+				OriginWidth:  originWidth,
+				OriginHeight: originHeight,
+				ResultWidth:  0, // TODO: not sure what to put here
+				ResultHeight: 0, // TODO: not sure what to put here
+			}, nil
+
+		} else {
+			// Return the original image
+			return &Result{
+				OutData:      imgdata,
+				OriginWidth:  originWidth,
+				OriginHeight: originHeight,
+				ResultWidth:  originWidth,
+				ResultHeight: originHeight,
+			}, nil
+		}
+	}
+
+	// At this point we can't allow requested format to be SVG as we can't save SVGs
+	if po.Format == imagetype.SVG {
+		return nil, newSaveFormatError(po.Format)
+	}
+
 	animated := img.IsAnimated()
 	expectAlpha := !po.Flatten && (img.HasAlpha() || po.Padding.Enabled || po.Extend.Enabled)
 
@@ -378,4 +414,27 @@ func ProcessImage(ctx context.Context, imgdata imagedata.ImageData, po *options.
 		ResultWidth:  img.Width(),
 		ResultHeight: img.Height(),
 	}, nil
+}
+
+// Returns true if image should not be processed as usual
+func shouldSkipStandardProcessing(inFormat imagetype.Type, po *options.ProcessingOptions) bool {
+	outFormat := po.Format
+	skipProcessingInFormatEnabled := slices.Contains(po.SkipProcessingFormats, inFormat)
+
+	if inFormat == imagetype.SVG {
+		isOutUnknown := outFormat == imagetype.Unknown
+
+		switch {
+		case outFormat == imagetype.SVG:
+			return true
+		case isOutUnknown && !config.AlwaysRasterizeSvg:
+			return true
+		case isOutUnknown && config.AlwaysRasterizeSvg && skipProcessingInFormatEnabled:
+			return true
+		default:
+			return false
+		}
+	} else {
+		return skipProcessingInFormatEnabled && (inFormat == outFormat || outFormat == imagetype.Unknown)
+	}
 }

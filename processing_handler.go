@@ -7,7 +7,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -450,42 +449,10 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 
 	checkErr(ctx, "timeout", router.CheckTimeout(ctx))
 
-	// Skip processing svg with unknown or the same destination imageType
-	// if it's not forced by AlwaysRasterizeSvg option
-	// Also skip processing if the format is in SkipProcessingFormats
-	shouldSkipProcessing := (originData.Format() == po.Format || po.Format == imagetype.Unknown) &&
-		(slices.Contains(po.SkipProcessingFormats, originData.Format()) ||
-			originData.Format() == imagetype.SVG && !config.AlwaysRasterizeSvg)
-
-	if shouldSkipProcessing {
-		if originData.Format() == imagetype.SVG && config.SanitizeSvg {
-			sanitized, svgErr := svg.Sanitize(originData)
-			checkErr(ctx, "svg_processing", svgErr)
-
-			defer sanitized.Close()
-
-			writeOriginContentLengthDebugHeader(ctx, rw, originData)
-			respondWithImage(reqID, r, rw, statusCode, sanitized, po, imageURL, originData, originHeaders)
-			return
-		}
-
-		writeOriginContentLengthDebugHeader(ctx, rw, originData)
-		respondWithImage(reqID, r, rw, statusCode, originData, po, imageURL, originData, originHeaders)
-		return
-	}
-
 	if !vips.SupportsLoad(originData.Format()) {
 		sendErrAndPanic(ctx, "processing", newInvalidURLErrorf(
 			http.StatusUnprocessableEntity,
 			"Source image format is not supported: %s", originData.Format(),
-		))
-	}
-
-	// At this point we can't allow requested format to be SVG as we can't save SVGs
-	if po.Format == imagetype.SVG {
-		sendErrAndPanic(ctx, "processing", newInvalidURLErrorf(
-			http.StatusUnprocessableEntity,
-			"Resulting image format is not supported: svg",
 		))
 	}
 
@@ -496,14 +463,24 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		return processing.ProcessImage(ctx, originData, po)
 	}()
 
+	// Let's check resulting image date only if it differs from the source image data
+	if result != nil && result.OutData != nil && result.OutData != originData {
+		defer result.OutData.Close()
+	}
+
 	if err != nil {
+		// svg_processing is an exception. We use As here because Is does not work with types.
+		var e svg.SanitizeError
+		if errors.As(err, &e) {
+			checkErr(ctx, "svg_processing", e)
+		}
+
 		// First, check if the processing error wasn't caused by an image data error
 		checkErr(ctx, "download", originData.Error())
+
 		// If it wasn't, than it was a processing error
 		sendErrAndPanic(ctx, "processing", err)
 	}
-
-	defer result.OutData.Close()
 
 	checkErr(ctx, "timeout", router.CheckTimeout(ctx))
 

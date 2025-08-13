@@ -2,7 +2,6 @@ package svg
 
 import (
 	"bytes"
-	"errors"
 	"io"
 	"strings"
 	"sync"
@@ -26,7 +25,7 @@ func Sanitize(data imagedata.ImageData) (imagedata.ImageData, error) {
 
 	buf, ok := pool.Get().(*bytes.Buffer)
 	if !ok {
-		return nil, errors.New("svg.Sanitize: failed to get buffer from pool")
+		return nil, newSanitizeError("svg.Sanitize: failed to get buffer from pool")
 	}
 	buf.Reset()
 
@@ -45,7 +44,7 @@ func Sanitize(data imagedata.ImageData) (imagedata.ImageData, error) {
 			switch tt {
 			case xml.ErrorToken:
 				cancel()
-				return nil, l.Err()
+				return nil, newSanitizeError(l.Err().Error())
 			case xml.EndTagToken, xml.StartTagCloseVoidToken:
 				ignoreTag--
 			case xml.StartTagToken:
@@ -59,7 +58,7 @@ func Sanitize(data imagedata.ImageData) (imagedata.ImageData, error) {
 		case xml.ErrorToken:
 			if l.Err() != io.EOF {
 				cancel()
-				return nil, l.Err()
+				return nil, newSanitizeError(l.Err().Error())
 			}
 
 			newData := imagedata.NewFromBytesWithFormat(
