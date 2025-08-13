@@ -41,7 +41,7 @@ func buildRouter() *router.Router {
 func startServer(cancel context.CancelFunc) (*http.Server, error) {
 	l, err := reuseport.Listen(config.Network, config.Bind)
 	if err != nil {
-		return nil, fmt.Errorf("Can't start server: %s", err)
+		return nil, fmt.Errorf("can't start server: %s", err)
 	}
 
 	if config.MaxClients > 0 {
