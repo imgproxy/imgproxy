@@ -158,12 +158,13 @@ func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, sta
 		checkErr(r.Context(), "image_data_size", err)
 	}
 
-	var contentDisposition string
-	if len(po.Filename) > 0 {
-		contentDisposition = resultData.Format().ContentDisposition(po.Filename, po.ReturnAttachment)
-	} else {
-		contentDisposition = resultData.Format().ContentDispositionFromURL(originURL, po.ReturnAttachment)
-	}
+	contentDisposition := httpheaders.ContentDispositionValue(
+		originURL,
+		po.Filename,
+		resultData.Format().Ext(),
+		"",
+		po.ReturnAttachment,
+	)
 
 	rw.Header().Set(httpheaders.ContentType, resultData.Format().Mime())
 	rw.Header().Set(httpheaders.ContentDisposition, contentDisposition)

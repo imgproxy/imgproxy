@@ -570,7 +570,7 @@ func applyFormatQualityOption(po *ProcessingOptions, args []string) error {
 	}
 
 	for i := 0; i < argsLen; i += 2 {
-		f, ok := imagetype.Types[args[i]]
+		f, ok := imagetype.GetTypeByName(args[i])
 		if !ok {
 			return newOptionArgumentError("Invalid image format: %s", args[i])
 		}
@@ -754,7 +754,7 @@ func applyFormatOption(po *ProcessingOptions, args []string) error {
 		return newOptionArgumentError("Invalid format arguments: %v", args)
 	}
 
-	if f, ok := imagetype.Types[args[0]]; ok {
+	if f, ok := imagetype.GetTypeByName(args[0]); ok {
 		po.Format = f
 	} else {
 		return newOptionArgumentError("Invalid image format: %s", args[0])
@@ -775,7 +775,7 @@ func applyCacheBusterOption(po *ProcessingOptions, args []string) error {
 
 func applySkipProcessingFormatsOption(po *ProcessingOptions, args []string) error {
 	for _, format := range args {
-		if f, ok := imagetype.Types[format]; ok {
+		if f, ok := imagetype.GetTypeByName(format); ok {
 			po.SkipProcessingFormats = append(po.SkipProcessingFormats, f)
 		} else {
 			return newOptionArgumentError("Invalid image format in skip processing: %s", format)

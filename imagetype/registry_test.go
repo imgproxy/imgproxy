@@ -1,4 +1,4 @@
-package imagetype_new
+package imagetype
 
 import (
 	"testing"
@@ -9,7 +9,7 @@ import (
 
 func TestRegisterType(t *testing.T) {
 	// Create a separate registry for testing to avoid conflicts with global registry
-	testRegistry := &Registry{}
+	testRegistry := NewRegistry()
 
 	// Register a custom type
 	customDesc := &TypeDesc{
@@ -141,7 +141,7 @@ func TestTypeProperties(t *testing.T) {
 
 func TestRegisterDetector(t *testing.T) {
 	// Create a test registry to avoid interfering with global state
-	testRegistry := &Registry{}
+	testRegistry := NewRegistry()
 
 	// Create a test detector function
 	testDetector := func(r bufreader.ReadPeeker) (Type, error) {
@@ -165,7 +165,7 @@ func TestRegisterDetector(t *testing.T) {
 
 func TestRegisterMagicBytes(t *testing.T) {
 	// Create a test registry to avoid interfering with global state
-	testRegistry := &Registry{}
+	testRegistry := NewRegistry()
 
 	require.Empty(t, testRegistry.detectors)
 

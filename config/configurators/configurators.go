@@ -132,48 +132,60 @@ func URLPath(s *string, name string) {
 }
 
 func ImageTypes(it *[]imagetype.Type, name string) error {
-	if env := os.Getenv(name); len(env) > 0 {
-		parts := strings.Split(env, ",")
+	// Get image types from environment variable
+	env := os.Getenv(name)
+	if len(env) == 0 {
+		return nil
+	}
 
-		*it = make([]imagetype.Type, 0, len(parts))
+	parts := strings.Split(env, ",")
+	*it = make([]imagetype.Type, 0, len(parts))
 
-		for _, p := range parts {
-			pt := strings.TrimSpace(p)
-			if t, ok := imagetype.Types[pt]; ok {
-				*it = append(*it, t)
-			} else {
-				return fmt.Errorf("Unknown image format: %s", pt)
-			}
+	for _, p := range parts {
+		part := strings.TrimSpace(p)
+
+		// For every part passed through the environment variable,
+		// check if it matches any of the image types defined in
+		// the imagetype package or return error.
+		t, ok := imagetype.GetTypeByName(part)
+		if !ok {
+			return fmt.Errorf("unknown image format: %s", part)
 		}
+		*it = append(*it, t)
 	}
 
 	return nil
 }
 
 func ImageTypesQuality(m map[imagetype.Type]int, name string) error {
-	if env := os.Getenv(name); len(env) > 0 {
-		parts := strings.Split(env, ",")
+	env := os.Getenv(name)
+	if len(env) == 0 {
+		return nil
+	}
 
-		for _, p := range parts {
-			i := strings.Index(p, "=")
-			if i < 0 {
-				return fmt.Errorf("Invalid format quality string: %s", p)
-			}
+	parts := strings.Split(env, ",")
 
-			imgtypeStr, qStr := strings.TrimSpace(p[:i]), strings.TrimSpace(p[i+1:])
-
-			imgtype, ok := imagetype.Types[imgtypeStr]
-			if !ok {
-				return fmt.Errorf("Invalid format: %s", p)
-			}
-
-			q, err := strconv.Atoi(qStr)
-			if err != nil || q <= 0 || q > 100 {
-				return fmt.Errorf("Invalid quality: %s", p)
-			}
-
-			m[imgtype] = q
+	for _, p := range parts {
+		i := strings.Index(p, "=")
+		if i < 0 {
+			return fmt.Errorf("invalid format quality string: %s", p)
 		}
+
+		// Split the string into image type and quality
+		imgtypeStr, qStr := strings.TrimSpace(p[:i]), strings.TrimSpace(p[i+1:])
+
+		// Check if quality is a valid integer
+		q, err := strconv.Atoi(qStr)
+		if err != nil || q <= 0 || q > 100 {
+			return fmt.Errorf("invalid quality: %s", p)
+		}
+
+		t, ok := imagetype.GetTypeByName(imgtypeStr)
+		if !ok {
+			return fmt.Errorf("unknown image format: %s", imgtypeStr)
+		}
+
+		m[t] = q
 	}
 
 	return nil
