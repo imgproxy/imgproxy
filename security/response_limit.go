@@ -3,7 +3,6 @@ package security
 import (
 	"io"
 	"net/http"
-	"os"
 )
 
 // hardLimitReadCloser is a wrapper around io.ReadCloser
@@ -33,40 +32,19 @@ func (lr *hardLimitReadCloser) Close() error {
 // First, it tries to use Content-Length header to check the limit.
 // If Content-Length is not set, it limits the size of the response body by wrapping
 // body reader with hard limit reader.
-func LimitResponseSize(r *http.Response, opts Options) (*http.Response, error) {
-	if opts.MaxSrcFileSize == 0 {
+func LimitResponseSize(r *http.Response, limit int) (*http.Response, error) {
+	if limit == 0 {
 		return r, nil
 	}
 
 	// If Content-Length was set, limit the size of the response body before reading it
 	size := int(r.ContentLength)
-
-	if size > opts.MaxSrcFileSize {
+	if size > limit {
 		return nil, newFileSizeError()
 	}
 
 	// hard-limit the response body reader
-	r.Body = &hardLimitReadCloser{r: r.Body, left: opts.MaxSrcFileSize}
+	r.Body = &hardLimitReadCloser{r: r.Body, left: limit}
 
 	return r, nil
-}
-
-// LimitFileSize limits the size of the file to MaxSrcFileSize (if set).
-// It calls f.Stat() to get the file to get its size and returns an error
-// if the size exceeds MaxSrcFileSize.
-func LimitFileSize(f *os.File, opts Options) (*os.File, error) {
-	if opts.MaxSrcFileSize == 0 {
-		return f, nil
-	}
-
-	s, err := f.Stat()
-	if err != nil {
-		return nil, err
-	}
-
-	if int(s.Size()) > opts.MaxSrcFileSize {
-		return nil, newFileSizeError()
-	}
-
-	return f, nil
 }

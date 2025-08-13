@@ -289,6 +289,9 @@ func ProcessImage(ctx context.Context, imgdata imagedata.ImageData, po *options.
 	}
 
 	originWidth, originHeight := getImageSize(img)
+	if err := security.CheckDimensions(originWidth, originHeight, 1, po.SecurityOptions); err != nil {
+		return nil, err
+	}
 
 	animated := img.IsAnimated()
 	expectAlpha := !po.Flatten && (img.HasAlpha() || po.Padding.Enabled || po.Extend.Enabled)

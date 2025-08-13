@@ -20,7 +20,6 @@ import (
 	"github.com/imgproxy/imgproxy/v3/etag"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
-	"github.com/imgproxy/imgproxy/v3/imagemeta"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/router"
@@ -135,12 +134,10 @@ func (s *ProcessingHandlerTestSuite) TestRequest() {
 	s.Require().Equal(200, res.StatusCode)
 	s.Require().Equal("image/png", res.Header.Get("Content-Type"))
 
-	meta, err := imagemeta.DecodeMeta(res.Body)
+	format, err := imagetype.Detect(res.Body)
 
 	s.Require().NoError(err)
-	s.Require().Equal(imagetype.PNG, meta.Format())
-	s.Require().Equal(4, meta.Width())
-	s.Require().Equal(4, meta.Height())
+	s.Require().Equal(imagetype.PNG, format)
 }
 
 func (s *ProcessingHandlerTestSuite) TestSignatureValidationFailure() {
@@ -768,6 +765,21 @@ func (s *ProcessingHandlerTestSuite) TestAlwaysRasterizeSvgWithFormat() {
 
 	s.Require().Equal(200, res.StatusCode)
 	s.Require().Equal("image/svg+xml", res.Header.Get("Content-Type"))
+}
+
+func (s *ProcessingHandlerTestSuite) TestMaxSrcFileSizeGlobal() {
+	config.MaxSrcFileSize = 1
+
+	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		rw.WriteHeader(200)
+		rw.Write(s.readTestFile("test1.png"))
+	}))
+	defer ts.Close()
+
+	rw := s.send("/unsafe/rs:fill:4:4/plain/" + ts.URL)
+	res := rw.Result()
+
+	s.Require().Equal(422, res.StatusCode)
 }
 
 func TestProcessingHandler(t *testing.T) {

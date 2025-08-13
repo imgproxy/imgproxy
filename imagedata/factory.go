@@ -12,7 +12,6 @@ import (
 	"github.com/imgproxy/imgproxy/v3/asyncbuffer"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imagefetcher"
-	"github.com/imgproxy/imgproxy/v3/imagemeta"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/security"
 )
@@ -31,42 +30,23 @@ func NewFromBytesWithFormat(format imagetype.Type, b []byte) ImageData {
 func NewFromBytes(b []byte) (ImageData, error) {
 	r := bytes.NewReader(b)
 
-	meta, err := imagemeta.DecodeMeta(r)
+	format, err := imagetype.Detect(r)
 	if err != nil {
 		return nil, err
 	}
 
-	return NewFromBytesWithFormat(meta.Format(), b), nil
+	return NewFromBytesWithFormat(format, b), nil
 }
 
 // NewFromPath creates a new ImageData from an os.File
-func NewFromPath(path string, secopts security.Options) (ImageData, error) {
+func NewFromPath(path string) (ImageData, error) {
 	fl, err := os.Open(path)
 	if err != nil {
 		return nil, err
 	}
 	defer fl.Close()
 
-	fr, err := security.LimitFileSize(fl, secopts)
-	if err != nil {
-		return nil, err
-	}
-
-	b, err := io.ReadAll(fr)
-	if err != nil {
-		return nil, err
-	}
-
-	r := bytes.NewReader(b)
-
-	// NOTE: This will be removed in the future in favor of VIPS metadata extraction
-	// It's here temporarily to maintain compatibility with existing code
-	meta, err := imagemeta.DecodeMeta(r)
-	if err != nil {
-		return nil, err
-	}
-
-	err = security.CheckMeta(meta, secopts)
+	b, err := io.ReadAll(fl)
 	if err != nil {
 		return nil, err
 	}
@@ -75,22 +55,8 @@ func NewFromPath(path string, secopts security.Options) (ImageData, error) {
 }
 
 // NewFromBase64 creates a new ImageData from a base64 encoded byte slice
-func NewFromBase64(encoded string, secopts security.Options) (ImageData, error) {
+func NewFromBase64(encoded string) (ImageData, error) {
 	b, err := base64.StdEncoding.DecodeString(encoded)
-	if err != nil {
-		return nil, err
-	}
-
-	r := bytes.NewReader(b)
-
-	// NOTE: This will be removed in the future in favor of VIPS metadata extraction
-	// It's here temporarily to maintain compatibility with existing code
-	meta, err := imagemeta.DecodeMeta(r)
-	if err != nil {
-		return nil, err
-	}
-
-	err = security.CheckMeta(meta, secopts)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +65,7 @@ func NewFromBase64(encoded string, secopts security.Options) (ImageData, error) 
 }
 
 // sendRequest is a common logic between sync and async download.
-func sendRequest(ctx context.Context, url string, opts DownloadOptions, secopts security.Options) (*imagefetcher.Request, *http.Response, http.Header, error) {
+func sendRequest(ctx context.Context, url string, opts DownloadOptions) (*imagefetcher.Request, *http.Response, http.Header, error) {
 	h := make(http.Header)
 
 	// NOTE: This will be removed in the future when our test context gets better isolation
@@ -125,7 +91,7 @@ func sendRequest(ctx context.Context, url string, opts DownloadOptions, secopts 
 		return req, nil, h, err
 	}
 
-	res, err = security.LimitResponseSize(res, secopts)
+	res, err = security.LimitResponseSize(res, opts.MaxSrcFileSize)
 	if err != nil {
 		if res != nil {
 			res.Body.Close()
@@ -139,8 +105,8 @@ func sendRequest(ctx context.Context, url string, opts DownloadOptions, secopts 
 }
 
 // DownloadSync downloads the image synchronously and returns the ImageData and HTTP headers.
-func downloadSync(ctx context.Context, imageURL string, opts DownloadOptions, secopts security.Options) (ImageData, http.Header, error) {
-	req, res, h, err := sendRequest(ctx, imageURL, opts, secopts)
+func downloadSync(ctx context.Context, imageURL string, opts DownloadOptions) (ImageData, http.Header, error) {
+	req, res, h, err := sendRequest(ctx, imageURL, opts)
 	if res != nil {
 		defer res.Body.Close()
 	}
@@ -158,40 +124,28 @@ func downloadSync(ctx context.Context, imageURL string, opts DownloadOptions, se
 		return nil, h, err
 	}
 
-	meta, err := imagemeta.DecodeMeta(bytes.NewReader(b))
+	format, err := imagetype.Detect(bytes.NewReader(b))
 	if err != nil {
 		return nil, h, err
 	}
 
-	err = security.CheckMeta(meta, secopts)
-	if err != nil {
-		return nil, h, err
-	}
-
-	d := NewFromBytesWithFormat(meta.Format(), b)
+	d := NewFromBytesWithFormat(format, b)
 	return d, h, err
 }
 
 // downloadAsync downloads the image asynchronously and returns the ImageData
 // backed by AsyncBuffer and HTTP headers.
-func downloadAsync(ctx context.Context, imageURL string, opts DownloadOptions, secopts security.Options) (ImageData, http.Header, error) {
+func downloadAsync(ctx context.Context, imageURL string, opts DownloadOptions) (ImageData, http.Header, error) {
 	// We pass this responsibility to AsyncBuffer
 	//nolint:bodyclose
-	req, res, h, err := sendRequest(ctx, imageURL, opts, secopts)
+	req, res, h, err := sendRequest(ctx, imageURL, opts)
 	if err != nil {
 		return nil, h, err
 	}
 
 	b := asyncbuffer.New(res.Body)
 
-	meta, err := imagemeta.DecodeMeta(b.Reader())
-	if err != nil {
-		b.Close()
-		req.Cancel()
-		return nil, h, err
-	}
-
-	err = security.CheckMeta(meta, secopts)
+	format, err := imagetype.Detect(b.Reader())
 	if err != nil {
 		b.Close()
 		req.Cancel()
@@ -200,7 +154,7 @@ func downloadAsync(ctx context.Context, imageURL string, opts DownloadOptions, s
 
 	d := &imageDataAsyncBuffer{
 		b:      b,
-		format: meta.Format(),
+		format: format,
 		cancel: nil,
 	}
 	d.AddCancel(req.Cancel) // request will be closed when the image data is consumed
@@ -210,8 +164,8 @@ func downloadAsync(ctx context.Context, imageURL string, opts DownloadOptions, s
 
 // DownloadSyncWithDesc downloads the image synchronously and returns the ImageData, but
 // wraps errors with desc.
-func DownloadSync(ctx context.Context, imageURL, desc string, opts DownloadOptions, secopts security.Options) (ImageData, http.Header, error) {
-	imgdata, h, err := downloadSync(ctx, imageURL, opts, secopts)
+func DownloadSync(ctx context.Context, imageURL, desc string, opts DownloadOptions) (ImageData, http.Header, error) {
+	imgdata, h, err := downloadSync(ctx, imageURL, opts)
 	if err != nil {
 		return nil, h, ierrors.Wrap(
 			err, 0,
@@ -224,8 +178,8 @@ func DownloadSync(ctx context.Context, imageURL, desc string, opts DownloadOptio
 
 // DownloadSyncWithDesc downloads the image synchronously and returns the ImageData, but
 // wraps errors with desc.
-func DownloadAsync(ctx context.Context, imageURL, desc string, opts DownloadOptions, secopts security.Options) (ImageData, http.Header, error) {
-	imgdata, h, err := downloadAsync(ctx, imageURL, opts, secopts)
+func DownloadAsync(ctx context.Context, imageURL, desc string, opts DownloadOptions) (ImageData, http.Header, error) {
+	imgdata, h, err := downloadAsync(ctx, imageURL, opts)
 	if err != nil {
 		return nil, h, ierrors.Wrap(
 			err, 0,
