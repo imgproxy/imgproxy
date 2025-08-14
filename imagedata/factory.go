@@ -106,6 +106,10 @@ func sendRequest(ctx context.Context, url string, opts DownloadOptions) (*imagef
 
 // DownloadSync downloads the image synchronously and returns the ImageData and HTTP headers.
 func downloadSync(ctx context.Context, imageURL string, opts DownloadOptions) (ImageData, http.Header, error) {
+	if opts.DownloadFinished != nil {
+		defer opts.DownloadFinished()
+	}
+
 	req, res, h, err := sendRequest(ctx, imageURL, opts)
 	if res != nil {
 		defer res.Body.Close()
@@ -140,11 +144,13 @@ func downloadAsync(ctx context.Context, imageURL string, opts DownloadOptions) (
 	//nolint:bodyclose
 	req, res, h, err := sendRequest(ctx, imageURL, opts)
 	if err != nil {
+		if opts.DownloadFinished != nil {
+			defer opts.DownloadFinished()
+		}
 		return nil, h, err
 	}
 
-	b := asyncbuffer.New(res.Body)
-	b.SetFinishFn(opts.DownloadFinished)
+	b := asyncbuffer.New(res.Body, opts.DownloadFinished)
 
 	format, err := imagetype.Detect(b.Reader())
 	if err != nil {

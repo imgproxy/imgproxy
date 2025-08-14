@@ -71,26 +71,22 @@ type AsyncBuffer struct {
 	chunkCond *Cond  // Ticker that signals when a new chunk is ready
 
 	finishOnce sync.Once
-	finishFn   context.CancelFunc
+	finishFn   []context.CancelFunc
 }
 
 // New creates a new AsyncBuffer that reads from the given io.ReadCloser in background
 // and closes it when finished.
-func New(r io.ReadCloser) *AsyncBuffer {
+func New(r io.ReadCloser, finishFn ...context.CancelFunc) *AsyncBuffer {
 	ab := &AsyncBuffer{
 		r:         r,
 		paused:    NewLatch(),
 		chunkCond: NewCond(),
+		finishFn:  finishFn,
 	}
 
 	go ab.readChunks()
 
 	return ab
-}
-
-// SetFinishFn sets function to call when actual download is finished
-func (ab *AsyncBuffer) SetFinishFn(fn context.CancelFunc) {
-	ab.finishFn = fn
 }
 
 // addChunk adds a new chunk to the AsyncBuffer, increments len and signals that a chunk is ready
@@ -124,8 +120,8 @@ func (ab *AsyncBuffer) readChunks() {
 		}
 
 		ab.finishOnce.Do(func() {
-			if ab.finishFn != nil {
-				ab.finishFn()
+			for _, fn := range ab.finishFn {
+				fn()
 			}
 		})
 	}()
@@ -408,8 +404,8 @@ func (ab *AsyncBuffer) Close() error {
 
 	// Finish downloading
 	ab.finishOnce.Do(func() {
-		if ab.finishFn != nil {
-			ab.finishFn()
+		for _, fn := range ab.finishFn {
+			fn()
 		}
 	})
 
