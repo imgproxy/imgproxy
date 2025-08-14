@@ -29,7 +29,6 @@ import (
 	"github.com/imgproxy/imgproxy/v3/processing"
 	"github.com/imgproxy/imgproxy/v3/router"
 	"github.com/imgproxy/imgproxy/v3/security"
-	"github.com/imgproxy/imgproxy/v3/svg"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
@@ -463,18 +462,12 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		return processing.ProcessImage(ctx, originData, po)
 	}()
 
-	// Let's check resulting image date only if it differs from the source image data
+	// Let's close resulting image data only if it differs from the source image data
 	if result != nil && result.OutData != nil && result.OutData != originData {
 		defer result.OutData.Close()
 	}
 
 	if err != nil {
-		// svg_processing is an exception. We use As here because Is does not work with types.
-		var e svg.SanitizeError
-		if errors.As(err, &e) {
-			checkErr(ctx, "svg_processing", e)
-		}
-
 		// First, check if the processing error wasn't caused by an image data error
 		checkErr(ctx, "download", originData.Error())
 

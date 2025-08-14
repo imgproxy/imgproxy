@@ -307,31 +307,28 @@ func ProcessImage(ctx context.Context, imgdata imagedata.ImageData, po *options.
 				OutData:      sanitized,
 				OriginWidth:  originWidth,
 				OriginHeight: originHeight,
-				ResultWidth:  0, // TODO: not sure what to put here
-				ResultHeight: 0, // TODO: not sure what to put here
-			}, nil
-
-		} else {
-			// Return the original image
-			return &Result{
-				OutData:      imgdata,
-				OriginWidth:  originWidth,
-				OriginHeight: originHeight,
 				ResultWidth:  originWidth,
 				ResultHeight: originHeight,
 			}, nil
 		}
-	}
 
-	// At this point we can't allow requested format to be SVG as we can't save SVGs
-	if po.Format == imagetype.SVG {
-		return nil, newSaveFormatError(po.Format)
+		// Return the original image
+		return &Result{
+			OutData:      imgdata,
+			OriginWidth:  originWidth,
+			OriginHeight: originHeight,
+			ResultWidth:  originWidth,
+			ResultHeight: originHeight,
+		}, nil
 	}
 
 	animated := img.IsAnimated()
 	expectAlpha := !po.Flatten && (img.HasAlpha() || po.Padding.Enabled || po.Extend.Enabled)
 
 	switch {
+	case po.Format == imagetype.SVG:
+		// At this point we can't allow requested format to be SVG as we can't save SVGs
+		return nil, newSaveFormatError(po.Format)
 	case po.Format == imagetype.Unknown:
 		switch {
 		case po.PreferJxl && !animated:

@@ -7,17 +7,17 @@ import (
 )
 
 type (
-	SanitizeError string
+	SanitizeError struct{ error }
 )
 
-func newSanitizeError(msg string) error {
+func newSanitizeError(err error) error {
 	return ierrors.Wrap(
-		SanitizeError(msg),
+		SanitizeError{err},
 		1,
 		ierrors.WithStatusCode(http.StatusUnprocessableEntity),
-		ierrors.WithPublicMessage("Invalid URL"),
+		ierrors.WithPublicMessage("Broken or unsupported SVG image"),
 		ierrors.WithShouldReport(false),
 	)
 }
 
-func (e SanitizeError) Error() string { return string(e) }
+func (e SanitizeError) Unwrap() error { return e.error }
