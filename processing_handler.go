@@ -362,15 +362,16 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	statusCode := http.StatusOK
 
 	originData, originHeaders, err := func() (imagedata.ImageData, http.Header, error) {
-		defer metrics.StartDownloadingSegment(ctx, metrics.Meta{
+		downloadFinished := metrics.StartDownloadingSegment(ctx, metrics.Meta{
 			metrics.MetaSourceImageURL:    metricsMeta[metrics.MetaSourceImageURL],
 			metrics.MetaSourceImageOrigin: metricsMeta[metrics.MetaSourceImageOrigin],
-		})()
+		})
 
 		downloadOpts := imagedata.DownloadOptions{
-			Header:         imgRequestHeader,
-			CookieJar:      nil,
-			MaxSrcFileSize: po.SecurityOptions.MaxSrcFileSize,
+			Header:           imgRequestHeader,
+			CookieJar:        nil,
+			MaxSrcFileSize:   po.SecurityOptions.MaxSrcFileSize,
+			DownloadFinished: downloadFinished,
 		}
 
 		if config.CookiePassthrough {
