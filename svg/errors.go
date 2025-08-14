@@ -16,7 +16,7 @@ func newSanitizeError(err error) error {
 		1,
 		ierrors.WithStatusCode(http.StatusUnprocessableEntity),
 		ierrors.WithPublicMessage("Broken or unsupported SVG image"),
-		ierrors.WithShouldReport(false),
+		ierrors.WithShouldReport(true),
 	)
 }
 
