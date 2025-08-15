@@ -1,7 +1,10 @@
 package imagetype
 
 import (
+	"bytes"
 	"io"
+	"reflect"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -145,24 +148,37 @@ func TestRegisterDetector(t *testing.T) {
 	// Create a test registry to avoid interfering with global state
 	testRegistry := NewRegistry()
 
-	// Create a test detector function
-	testDetector := func(r bufreader.ReadPeeker) (Type, error) {
-		b, err := r.Peek(2)
-		if err != nil {
-			return Unknown, err
-		}
-		if len(b) >= 2 && b[0] == 0xFF && b[1] == 0xD8 {
-			return JPEG, nil
-		}
-		return Unknown, newUnknownFormatError()
+	functionsEqual := func(fn1, fn2 DetectFunc) {
+		// Compare function names to check if they are the same
+		fnName1 := runtime.FuncForPC(reflect.ValueOf(fn1).Pointer()).Name()
+		fnName2 := runtime.FuncForPC(reflect.ValueOf(fn2).Pointer()).Name()
+		require.Equal(t, fnName1, fnName2)
 	}
 
-	// Register the detector using the method
-	testRegistry.RegisterDetector(testDetector)
+	// Create a test detector functions
+	testDetector1 := func(r bufreader.ReadPeeker) (Type, error) { return JPEG, nil }
+	testDetector2 := func(r bufreader.ReadPeeker) (Type, error) { return PNG, nil }
+	testDetector3 := func(r bufreader.ReadPeeker) (Type, error) { return GIF, nil }
+	testDetector4 := func(r bufreader.ReadPeeker) (Type, error) { return SVG, nil }
 
-	// Verify the detector is registered
-	require.Len(t, testRegistry.detectors, 1)
-	require.NotNil(t, testRegistry.detectors[0])
+	// Register the detectors using the method
+	testRegistry.RegisterDetector(0, testDetector1)
+	testRegistry.RegisterDetector(0, testDetector2)
+	testRegistry.RegisterDetector(10, testDetector3)
+	testRegistry.RegisterDetector(5, testDetector4)
+
+	// Verify the detectors are registered
+	require.Len(t, testRegistry.detectors, 4)
+
+	// Verify the order of detectors based on priority
+	require.Equal(t, 0, testRegistry.detectors[0].priority)
+	functionsEqual(testDetector1, testRegistry.detectors[0].fn)
+	require.Equal(t, 0, testRegistry.detectors[1].priority)
+	functionsEqual(testDetector2, testRegistry.detectors[1].fn)
+	require.Equal(t, 5, testRegistry.detectors[2].priority)
+	functionsEqual(testDetector4, testRegistry.detectors[2].fn)
+	require.Equal(t, 10, testRegistry.detectors[3].priority)
+	functionsEqual(testDetector3, testRegistry.detectors[3].fn)
 }
 
 func TestRegisterMagicBytes(t *testing.T) {
@@ -177,6 +193,11 @@ func TestRegisterMagicBytes(t *testing.T) {
 
 	// Verify the magic bytes are registered
 	require.Len(t, testRegistry.detectors, 1)
+	require.Equal(t, -1, testRegistry.detectors[0].priority)
+
+	typ, err := testRegistry.Detect(bufreader.New(bytes.NewReader(jpegMagic)))
+	require.NoError(t, err)
+	require.Equal(t, JPEG, typ)
 }
 
 func TestDetectionErrorReturns(t *testing.T) {
@@ -186,12 +207,12 @@ func TestDetectionErrorReturns(t *testing.T) {
 	detErr := error(nil)
 
 	// The first detector will fail with detErr
-	testRegistry.RegisterDetector(func(r bufreader.ReadPeeker) (Type, error) {
+	testRegistry.RegisterDetector(0, func(r bufreader.ReadPeeker) (Type, error) {
 		return Unknown, detErr
 	})
 
 	// The second detector will succeed
-	testRegistry.RegisterDetector(func(r bufreader.ReadPeeker) (Type, error) {
+	testRegistry.RegisterDetector(1, func(r bufreader.ReadPeeker) (Type, error) {
 		return JPEG, nil
 	})
 
