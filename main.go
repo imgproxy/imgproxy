@@ -16,6 +16,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/config/loadenv"
 	"github.com/imgproxy/imgproxy/v3/errorreport"
 	"github.com/imgproxy/imgproxy/v3/gliblog"
+	"github.com/imgproxy/imgproxy/v3/handlers"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/logger"
 	"github.com/imgproxy/imgproxy/v3/memory"
@@ -23,9 +24,32 @@ import (
 	"github.com/imgproxy/imgproxy/v3/metrics/prometheus"
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/processing"
+	"github.com/imgproxy/imgproxy/v3/server"
 	"github.com/imgproxy/imgproxy/v3/version"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
+
+func buildRouter(r *server.Router) *server.Router {
+	r.GET("/", handlers.HandleLanding, true)
+	r.GET("", handlers.HandleLanding, true)
+
+	r.GET("/", r.WithMetrics(
+		r.WithCORS(
+			r.WithReportError(
+				r.WithPanic(
+					r.WithSecret(handleProcessing),
+				),
+			),
+		),
+	), false)
+
+	r.HEAD("/", r.WithCORS(handlers.HeadHandler), false)
+	r.OPTIONS("/", r.WithCORS(handlers.HeadHandler), false)
+
+	r.HealthHandler = handlers.HealthHandler
+
+	return r
+}
 
 func initialize() error {
 	if err := loadenv.Load(); err != nil {
@@ -103,25 +127,21 @@ func run(ctx context.Context) error {
 		}
 	}()
 
-	ctx, cancel := context.WithCancel(ctx)
+	ctx, cancel := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGTERM)
 
 	if err := prometheus.StartServer(cancel); err != nil {
 		return err
 	}
 
-	s, err := startServer(cancel)
+	cfg := server.NewConfigFromEnv()
+	r := server.NewRouter(cfg)
+	s, err := server.Start(cancel, buildRouter(r), cfg)
 	if err != nil {
 		return err
 	}
-	defer shutdownServer(s)
+	defer s.Shutdown(ctx)
 
-	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
-
-	select {
-	case <-ctx.Done():
-	case <-stop:
-	}
+	<-ctx.Done()
 
 	return nil
 }

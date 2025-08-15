@@ -65,5 +65,7 @@ const (
 	XOriginHeight                   = "X-Origin-Height"
 	XResultWidth                    = "X-Result-Width"
 	XResultHeight                   = "X-Result-Height"
+	XRequestID                      = "X-Request-ID"
+	XRealIP                         = "X-Real-IP"
 	XOriginContentLength            = "X-Origin-Content-Length"
 )

@@ -1,6 +1,10 @@
-package main
+package handlers
 
-import "net/http"
+import (
+	"net/http"
+
+	"github.com/imgproxy/imgproxy/v3/httpheaders"
+)
 
 var landingTmpl = []byte(`
 <!doctype html>
@@ -39,8 +43,10 @@ var landingTmpl = []byte(`
 </html>
 `)
 
-func handleLanding(reqID string, rw http.ResponseWriter, r *http.Request) {
-	rw.Header().Set("Content-Type", "text/html")
-	rw.WriteHeader(200)
+// HandleLanding handles the landing page requests
+func HandleLanding(reqID string, rw http.ResponseWriter, r *http.Request) error {
+	rw.Header().Set(httpheaders.ContentType, "text/html")
+	rw.WriteHeader(http.StatusOK)
 	rw.Write(landingTmpl)
+	return nil
 }

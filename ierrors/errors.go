@@ -7,6 +7,10 @@ import (
 	"strings"
 )
 
+const (
+	defaultCategory = "default"
+)
+
 type Option func(*Error)
 
 type Error struct {
@@ -16,6 +20,7 @@ type Error struct {
 	statusCode    int
 	publicMessage string
 	shouldReport  bool
+	category      string
 
 	stack []uintptr
 }
@@ -62,6 +67,14 @@ func (e *Error) StackTrace() []uintptr {
 
 func (e *Error) Callers() []uintptr {
 	return e.stack
+}
+
+func (e *Error) Category() string {
+	if e.category == "" {
+		return defaultCategory
+	}
+
+	return e.category
 }
 
 func (e *Error) FormatStackLines() []string {
@@ -138,6 +151,12 @@ func WithPrefix(prefix string) Option {
 func WithShouldReport(report bool) Option {
 	return func(e *Error) {
 		e.shouldReport = report
+	}
+}
+
+func WithCategory(category string) Option {
+	return func(e *Error) {
+		e.category = category
 	}
 }
 

@@ -14,6 +14,20 @@ type (
 	InvalidSecretError   struct{}
 )
 
+// Error categories which are used in metrics
+// NOTE: possibly -> metrics (?)
+const (
+	categoryTimeout       = "timeout"
+	categoryImageDataSize = "image_data_size"
+	categoryPathParsing   = "path_parsing"
+	categorySecurity      = "security"
+	categoryQueue         = "queue"
+	categoryDownload      = "download"
+	categoryProcessing    = "processing"
+	categoryIO            = "IO"
+	categoryStreaming     = "streaming"
+)
+
 func newResponseWriteError(cause error) *ierrors.Error {
 	return ierrors.Wrap(
 		ResponseWriteError{cause},
@@ -53,15 +67,3 @@ func newTooManyRequestsError() error {
 }
 
 func (e TooManyRequestsError) Error() string { return "Too many requests" }
-
-func newInvalidSecretError() error {
-	return ierrors.Wrap(
-		InvalidSecretError{},
-		1,
-		ierrors.WithStatusCode(http.StatusForbidden),
-		ierrors.WithPublicMessage("Forbidden"),
-		ierrors.WithShouldReport(false),
-	)
-}
-
-func (e InvalidSecretError) Error() string { return "Invalid secret" }
