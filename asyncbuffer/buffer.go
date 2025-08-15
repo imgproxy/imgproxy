@@ -14,6 +14,7 @@
 package asyncbuffer
 
 import (
+	"context"
 	"errors"
 	"io"
 	"sync"
@@ -68,15 +69,19 @@ type AsyncBuffer struct {
 
 	paused    *Latch // Paused buffer does not read data beyond threshold
 	chunkCond *Cond  // Ticker that signals when a new chunk is ready
+
+	finishOnce sync.Once
+	finishFn   []context.CancelFunc
 }
 
 // New creates a new AsyncBuffer that reads from the given io.ReadCloser in background
 // and closes it when finished.
-func New(r io.ReadCloser) *AsyncBuffer {
+func New(r io.ReadCloser, finishFn ...context.CancelFunc) *AsyncBuffer {
 	ab := &AsyncBuffer{
 		r:         r,
 		paused:    NewLatch(),
 		chunkCond: NewCond(),
+		finishFn:  finishFn,
 	}
 
 	go ab.readChunks()
@@ -113,6 +118,12 @@ func (ab *AsyncBuffer) readChunks() {
 		if err := ab.r.Close(); err != nil {
 			logrus.WithField("source", "asyncbuffer.AsyncBuffer.readChunks").Warningf("error closing upstream reader: %s", err)
 		}
+
+		ab.finishOnce.Do(func() {
+			for _, fn := range ab.finishFn {
+				fn()
+			}
+		})
 	}()
 
 	// Stop reading if the reader is closed
@@ -390,6 +401,13 @@ func (ab *AsyncBuffer) Close() error {
 
 	// Release the paused latch so that no goroutines are waiting for it
 	ab.paused.Release()
+
+	// Finish downloading
+	ab.finishOnce.Do(func() {
+		for _, fn := range ab.finishFn {
+			fn()
+		}
+	})
 
 	return nil
 }

@@ -341,6 +341,7 @@ func (s *ProcessingHandlerTestSuite) TestErrorSavingToSVG() {
 	res := rw.Result()
 
 	s.Require().Equal(422, res.StatusCode)
+	fmt.Println(io.ReadAll(res.Body)) // Read the body to avoid resource leak
 }
 
 func (s *ProcessingHandlerTestSuite) TestCacheControlPassthroughCacheControl() {
