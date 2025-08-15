@@ -151,7 +151,11 @@ func (r *registry) Detect(re io.Reader) (Type, error) {
 
 	for _, fn := range r.detectors {
 		br.Rewind()
-		if typ, err := fn(br); err == nil && typ != Unknown {
+		typ, err := fn(br)
+		if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
+			return Unknown, newTypeDetectionError(err)
+		}
+		if err == nil && typ != Unknown {
 			return typ, nil
 		}
 	}

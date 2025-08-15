@@ -1,6 +1,8 @@
 package imagetype
 
 import (
+	"io"
+	"strings"
 	"testing"
 
 	"github.com/imgproxy/imgproxy/v3/bufreader"
@@ -175,4 +177,44 @@ func TestRegisterMagicBytes(t *testing.T) {
 
 	// Verify the magic bytes are registered
 	require.Len(t, testRegistry.detectors, 1)
+}
+
+func TestDetectionErrorReturns(t *testing.T) {
+	// Create a test registry to avoid interfering with global state
+	testRegistry := NewRegistry()
+
+	detErr := error(nil)
+
+	// The first detector will fail with detErr
+	testRegistry.RegisterDetector(func(r bufreader.ReadPeeker) (Type, error) {
+		return Unknown, detErr
+	})
+
+	// The second detector will succeed
+	testRegistry.RegisterDetector(func(r bufreader.ReadPeeker) (Type, error) {
+		return JPEG, nil
+	})
+
+	// We don't actually need to read anything, just create a reader
+	r := strings.NewReader("")
+
+	// Should not fail with io.EOF
+	detErr = io.EOF
+	typ, err := testRegistry.Detect(r)
+	require.Equal(t, JPEG, typ)
+	require.NoError(t, err)
+
+	// Should not fail with io.ErrUnexpectedEOF
+	detErr = io.ErrUnexpectedEOF
+	typ, err = testRegistry.Detect(r)
+	require.Equal(t, JPEG, typ)
+	require.NoError(t, err)
+
+	// Should fail with other read errors
+	detErr = io.ErrClosedPipe
+	typ, err = testRegistry.Detect(r)
+	require.Equal(t, Unknown, typ)
+	require.Error(t, err)
+	require.ErrorAs(t, err, &TypeDetectionError{})
+	require.ErrorIs(t, err, io.ErrClosedPipe)
 }
