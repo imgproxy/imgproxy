@@ -64,6 +64,15 @@ func (s *BufferedReaderTestSuite) TestEOF_WhenDataExhausted() {
 	s.Require().NoError(err)
 	s.Equal(5, n)
 	s.Equal("hello", string(p[:n]))
+
+	br.Rewind() // Reset position to 0
+
+	// We shouldn't get EOF after rewinding and reading again
+	n, err = br.Read(p)
+
+	s.Require().NoError(err)
+	s.Equal(5, n)
+	s.Equal("hello", string(p[:n]))
 }
 
 func (s *BufferedReaderTestSuite) TestPeek() {

@@ -17,6 +17,8 @@ type Reader struct {
 	r   io.Reader
 	buf []byte
 	pos int
+
+	finished bool // Indicates if the reader has reached EOF
 }
 
 // New creates new buffered reader
@@ -34,6 +36,10 @@ func (br *Reader) Read(p []byte) (int, error) {
 		return 0, err
 	}
 
+	if br.pos >= len(br.buf) {
+		return 0, io.EOF // No more data to read
+	}
+
 	n := copy(p, br.buf[br.pos:])
 	br.pos += n
 	return n, nil
@@ -41,17 +47,16 @@ func (br *Reader) Read(p []byte) (int, error) {
 
 // Peek returns the next n bytes from the buffered reader without advancing the position.
 func (br *Reader) Peek(n int) ([]byte, error) {
-	err := br.fetch(br.pos + n)
-	if err != nil && err != io.EOF {
+	if err := br.fetch(br.pos + n); err != nil {
 		return nil, err
+	}
+
+	if br.pos >= len(br.buf) {
+		return nil, io.EOF // No more data to read
 	}
 
 	// Return slice of buffered data without advancing position
 	available := br.buf[br.pos:]
-	if len(available) == 0 && err == io.EOF {
-		return nil, io.EOF
-	}
-
 	return available[:min(len(available), n)], nil
 }
 
@@ -62,18 +67,25 @@ func (br *Reader) Rewind() {
 
 // fetch ensures the buffer contains at least 'need' bytes
 func (br *Reader) fetch(need int) error {
-	if need-len(br.buf) <= 0 {
+	if br.finished || need <= len(br.buf) {
 		return nil
 	}
 
-	b := make([]byte, need)
+	b := make([]byte, need-len(br.buf))
 	n, err := io.ReadFull(br.r, b)
-	if err != nil && err != io.ErrUnexpectedEOF {
+	if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
 		return err
 	}
 
-	// append only those which we read in fact
-	br.buf = append(br.buf, b[:n]...)
+	if err == io.EOF || err == io.ErrUnexpectedEOF {
+		// If we reached EOF, we mark the reader as finished
+		br.finished = true
+	}
+
+	if n > 0 {
+		// append only those which we read in fact
+		br.buf = append(br.buf, b[:n]...)
+	}
 
 	return nil
 }
