@@ -27,7 +27,6 @@ import (
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
-	"github.com/imgproxy/imgproxy/v3/imath"
 	"github.com/imgproxy/imgproxy/v3/metrics/cloudwatch"
 	"github.com/imgproxy/imgproxy/v3/metrics/datadog"
 	"github.com/imgproxy/imgproxy/v3/metrics/newrelic"
@@ -84,7 +83,7 @@ func Init() error {
 		// Set vips concurrency level to GOMAXPROCS if we are running in AWS Lambda
 		// since each function processes only one request at a time
 		// so we can use all available CPU cores
-		C.vips_concurrency_set(C.int(imath.Max(1, runtime.GOMAXPROCS(0))))
+		C.vips_concurrency_set(C.int(max(1, runtime.GOMAXPROCS(0))))
 	} else {
 		C.vips_concurrency_set(1)
 	}

@@ -23,12 +23,16 @@ var (
 // Please note that this interface can be backed by any reader, including lazy AsyncBuffer.
 // There is no other way to guarantee that the data is read without errors except reading it till EOF.
 type ImageData interface {
-	io.Closer                     // Close closes the image data and releases any resources held by it
-	Reader() io.ReadSeeker        // Reader returns a new ReadSeeker for the image data
-	Format() imagetype.Type       // Format returns the image format from the metadata (shortcut)
-	Size() (int, error)           // Size returns the size of the image data in bytes
-	AddCancel(context.CancelFunc) // AddCancel attaches a cancel function to the image data
-	Error() error                 // Error returns any error that occurred during reading data from source
+	io.Closer               // Close closes the image data and releases any resources held by it
+	Reader() io.ReadSeeker  // Reader returns a new ReadSeeker for the image data
+	Format() imagetype.Type // Format returns the image format from the metadata (shortcut)
+	Size() (int, error)     // Size returns the size of the image data in bytes
+	Error() error           // Error returns any error that occurred during reading data from source
+
+	// AddCancel attaches a cancel function to the image data.
+	// Please note that Cancel functions must be idempotent: for instance, an implementation
+	// could wrap cancel into sync.Once.
+	AddCancel(context.CancelFunc)
 }
 
 // imageDataBytes represents image data stored in a byte slice in memory

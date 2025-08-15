@@ -32,8 +32,8 @@ func prepareWatermark(wm *vips.Image, wmData imagedata.ImageData, opts *options.
 	po.Format = wmData.Format()
 
 	if opts.Scale > 0 {
-		po.Width = imath.Max(imath.ScaleToEven(imgWidth, opts.Scale), 1)
-		po.Height = imath.Max(imath.ScaleToEven(imgHeight, opts.Scale), 1)
+		po.Width = max(imath.ScaleToEven(imgWidth, opts.Scale), 1)
+		po.Height = max(imath.ScaleToEven(imgHeight, opts.Scale), 1)
 	}
 
 	if opts.ShouldReplicate() {

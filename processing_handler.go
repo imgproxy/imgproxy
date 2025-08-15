@@ -7,7 +7,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -24,14 +23,12 @@ import (
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagefetcher"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
-	"github.com/imgproxy/imgproxy/v3/imath"
 	"github.com/imgproxy/imgproxy/v3/metrics"
 	"github.com/imgproxy/imgproxy/v3/metrics/stats"
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/processing"
 	"github.com/imgproxy/imgproxy/v3/router"
 	"github.com/imgproxy/imgproxy/v3/security"
-	"github.com/imgproxy/imgproxy/v3/svg"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
@@ -75,7 +72,7 @@ func setCacheControl(rw http.ResponseWriter, force *time.Time, originHeaders htt
 	}
 
 	if force != nil && (ttl < 0 || force.Before(time.Now().Add(time.Duration(ttl)*time.Second))) {
-		ttl = imath.Min(config.TTL, imath.Max(0, int(time.Until(*force).Seconds())))
+		ttl = min(config.TTL, max(0, int(time.Until(*force).Seconds())))
 	}
 
 	if config.CacheControlPassthrough && ttl < 0 && originHeaders != nil {
@@ -86,7 +83,7 @@ func setCacheControl(rw http.ResponseWriter, force *time.Time, originHeaders htt
 
 		if val := originHeaders.Get(httpheaders.Expires); len(val) > 0 {
 			if t, err := time.Parse(http.TimeFormat, val); err == nil {
-				ttl = imath.Max(0, int(time.Until(t).Seconds()))
+				ttl = max(0, int(time.Until(t).Seconds()))
 			}
 		}
 	}
@@ -451,42 +448,10 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 
 	checkErr(ctx, "timeout", router.CheckTimeout(ctx))
 
-	// Skip processing svg with unknown or the same destination imageType
-	// if it's not forced by AlwaysRasterizeSvg option
-	// Also skip processing if the format is in SkipProcessingFormats
-	shouldSkipProcessing := (originData.Format() == po.Format || po.Format == imagetype.Unknown) &&
-		(slices.Contains(po.SkipProcessingFormats, originData.Format()) ||
-			originData.Format() == imagetype.SVG && !config.AlwaysRasterizeSvg)
-
-	if shouldSkipProcessing {
-		if originData.Format() == imagetype.SVG && config.SanitizeSvg {
-			sanitized, svgErr := svg.Sanitize(originData)
-			checkErr(ctx, "svg_processing", svgErr)
-
-			defer sanitized.Close()
-
-			writeOriginContentLengthDebugHeader(ctx, rw, originData)
-			respondWithImage(reqID, r, rw, statusCode, sanitized, po, imageURL, originData, originHeaders)
-			return
-		}
-
-		writeOriginContentLengthDebugHeader(ctx, rw, originData)
-		respondWithImage(reqID, r, rw, statusCode, originData, po, imageURL, originData, originHeaders)
-		return
-	}
-
 	if !vips.SupportsLoad(originData.Format()) {
 		sendErrAndPanic(ctx, "processing", newInvalidURLErrorf(
 			http.StatusUnprocessableEntity,
 			"Source image format is not supported: %s", originData.Format(),
-		))
-	}
-
-	// At this point we can't allow requested format to be SVG as we can't save SVGs
-	if po.Format == imagetype.SVG {
-		sendErrAndPanic(ctx, "processing", newInvalidURLErrorf(
-			http.StatusUnprocessableEntity,
-			"Resulting image format is not supported: svg",
 		))
 	}
 
@@ -497,14 +462,18 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		return processing.ProcessImage(ctx, originData, po)
 	}()
 
+	// Let's close resulting image data only if it differs from the source image data
+	if result != nil && result.OutData != nil && result.OutData != originData {
+		defer result.OutData.Close()
+	}
+
 	if err != nil {
 		// First, check if the processing error wasn't caused by an image data error
 		checkErr(ctx, "download", originData.Error())
+
 		// If it wasn't, than it was a processing error
 		sendErrAndPanic(ctx, "processing", err)
 	}
-
-	defer result.OutData.Close()
 
 	checkErr(ctx, "timeout", router.CheckTimeout(ctx))
 

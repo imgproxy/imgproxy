@@ -59,8 +59,8 @@ func calcPosition(width, height, innerWidth, innerHeight int, gravity *options.G
 		minY, maxY = 0, height-innerHeight
 	}
 
-	left = imath.Max(minX, imath.Min(left, maxX))
-	top = imath.Max(minY, imath.Min(top, maxY))
+	left = max(minX, min(left, maxX))
+	top = max(minY, min(top, maxY))
 
 	return
 }
