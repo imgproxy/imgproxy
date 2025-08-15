@@ -12,8 +12,9 @@ import (
 )
 
 func init() {
-	// Register SVG detector (needs at least 1000 bytes to reliably detect SVG)
-	RegisterDetector(IsSVG)
+	// Register SVG detector.
+	// We register it with a priority of 100 to run it after magic number detectors
+	RegisterDetector(100, IsSVG)
 }
 
 func IsSVG(r bufreader.ReadPeeker) (Type, error) {

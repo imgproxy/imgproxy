@@ -2,6 +2,7 @@ package imagetype
 
 import (
 	"io"
+	"slices"
 
 	"github.com/imgproxy/imgproxy/v3/bufreader"
 )
@@ -30,9 +31,15 @@ type TypeDesc struct {
 // DetectFunc is a function that detects the image type from byte data
 type DetectFunc func(r bufreader.ReadPeeker) (Type, error)
 
+// detector is a struct that holds a detection function and its priority
+type detector struct {
+	priority int        // priority of the detector, lower is better
+	fn       DetectFunc // function that detects the image type
+}
+
 // Registry holds the type registry
 type registry struct {
-	detectors   []DetectFunc
+	detectors   []detector
 	types       []*TypeDesc
 	typesByName map[string]Type // maps type string to Type
 }
@@ -106,8 +113,8 @@ func (r *registry) GetTypeByName(name string) (Type, bool) {
 
 // RegisterDetector registers a custom detector function
 // Detectors are tried in the order they were registered
-func RegisterDetector(detector DetectFunc) {
-	globalRegistry.RegisterDetector(detector)
+func RegisterDetector(priority int, fn DetectFunc) {
+	globalRegistry.RegisterDetector(priority, fn)
 }
 
 // RegisterMagicBytes registers magic bytes for a specific image type
@@ -123,13 +130,22 @@ func Detect(r io.Reader) (Type, error) {
 }
 
 // RegisterDetector registers a custom detector function on this registry instance
-func (r *registry) RegisterDetector(detector DetectFunc) {
-	r.detectors = append(r.detectors, detector)
+func (r *registry) RegisterDetector(priority int, fn DetectFunc) {
+	r.detectors = append(r.detectors, detector{
+		priority: priority,
+		fn:       fn,
+	})
+	// Sort detectors by priority.
+	// We don't expect a huge number of detectors, and detectors should be registered at startup,
+	// so sorting them at each registration is okay.
+	slices.SortStableFunc(r.detectors, func(a, b detector) int {
+		return a.priority - b.priority
+	})
 }
 
 // RegisterMagicBytes registers magic bytes for a specific image type on this registry instance
 func (r *registry) RegisterMagicBytes(typ Type, signature ...[]byte) {
-	r.detectors = append(r.detectors, func(r bufreader.ReadPeeker) (Type, error) {
+	r.RegisterDetector(-1, func(r bufreader.ReadPeeker) (Type, error) {
 		for _, sig := range signature {
 			b, err := r.Peek(len(sig))
 			if err != nil {
@@ -149,9 +165,9 @@ func (r *registry) RegisterMagicBytes(typ Type, signature ...[]byte) {
 func (r *registry) Detect(re io.Reader) (Type, error) {
 	br := bufreader.New(io.LimitReader(re, maxDetectionLimit))
 
-	for _, fn := range r.detectors {
+	for _, d := range r.detectors {
 		br.Rewind()
-		typ, err := fn(br)
+		typ, err := d.fn(br)
 		if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
 			return Unknown, newTypeDetectionError(err)
 		}
