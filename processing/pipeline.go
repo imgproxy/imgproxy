@@ -31,6 +31,10 @@ type pipelineContext struct {
 
 	dprScale float64
 
+	// The base scale factor for vector images.
+	// It is used to downscale the input vector image to the maximum allowed resolution
+	vectorBaseScale float64
+
 	// The width we aim to get.
 	// Based on the requested width scaled according to processing options.
 	// Can be 0 if width is not specified in the processing options.
@@ -69,6 +73,9 @@ func (p pipeline) Run(ctx context.Context, img *vips.Image, po *options.Processi
 
 		wscale: 1.0,
 		hscale: 1.0,
+
+		dprScale:        1.0,
+		vectorBaseScale: 1.0,
 
 		cropGravity: po.Crop.Gravity,
 	}

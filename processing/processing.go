@@ -19,6 +19,7 @@ import (
 )
 
 var mainPipeline = pipeline{
+	vectorGuardScale,
 	trim,
 	prepare,
 	scaleOnLoad,
@@ -298,8 +299,11 @@ func ProcessImage(ctx context.Context, imgdata imagedata.ImageData, po *options.
 	}
 
 	originWidth, originHeight := getImageSize(img)
-	if err := security.CheckDimensions(originWidth, originHeight, 1, po.SecurityOptions); err != nil {
-		return nil, err
+
+	if !imgdata.Format().IsVector() {
+		if err := security.CheckDimensions(originWidth, originHeight, 1, po.SecurityOptions); err != nil {
+			return nil, err
+		}
 	}
 
 	// Let's check if we should skip standard processing

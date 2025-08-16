@@ -12,6 +12,7 @@ import (
 )
 
 var watermarkPipeline = pipeline{
+	vectorGuardScale,
 	prepare,
 	scaleOnLoad,
 	importColorProfile,

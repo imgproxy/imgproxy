@@ -51,6 +51,11 @@ func scaleOnLoad(pctx *pipelineContext, img *vips.Image, po *options.ProcessingO
 	preshrink := math.Min(wshrink, hshrink)
 	prescale := 1.0 / preshrink
 
+	if imgdata != nil && imgdata.Format().IsVector() {
+		// For vector images, apply the vector base scale
+		prescale *= pctx.vectorBaseScale
+	}
+
 	if !canScaleOnLoad(pctx, imgdata, prescale) {
 		return nil
 	}
