@@ -344,6 +344,10 @@ func (img *Image) Height() int {
 	return int(img.VipsImage.Ysize)
 }
 
+func (img *Image) PageHeight() int {
+	return int(C.vips_image_get_page_height(img.VipsImage))
+}
+
 func (img *Image) Pages() int {
 	p, err := img.GetIntDefault("n-pages", 1)
 	if err != nil {

@@ -88,10 +88,18 @@ func ValidatePreferredFormats() error {
 }
 
 func getImageSize(img *vips.Image) (int, int) {
-	width, height, _, _ := extractMeta(img, 0, true)
+	width, height := img.Width(), img.Height()
 
-	if pages, err := img.GetIntDefault("n-pages", 1); err != nil && pages > 0 {
-		height /= pages
+	if img.IsAnimated() {
+		// Animated images contain multiple frames, and libvips loads them stacked vertically.
+		// We want to return the size of a single frame
+		height = img.PageHeight()
+	}
+
+	// If the image is rotated by 90 or 270 degrees, we need to swap width and height
+	orientation := img.Orientation()
+	if orientation == 5 || orientation == 6 || orientation == 7 || orientation == 8 {
+		width, height = height, width
 	}
 
 	return width, height
@@ -404,12 +412,14 @@ func ProcessImage(ctx context.Context, imgdata imagedata.ImageData, po *options.
 		return nil, err
 	}
 
+	resultWidth, resultHeight := getImageSize(img)
+
 	return &Result{
 		OutData:      outData,
 		OriginWidth:  originWidth,
 		OriginHeight: originHeight,
-		ResultWidth:  img.Width(),
-		ResultHeight: img.Height(),
+		ResultWidth:  resultWidth,
+		ResultHeight: resultHeight,
 	}, nil
 }
 
