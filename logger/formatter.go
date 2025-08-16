@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"regexp"
-	"sort"
+	"slices"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -12,23 +12,35 @@ import (
 	logrus "github.com/sirupsen/logrus"
 )
 
-var (
-	logKeysPriorities = map[string]int{
-		"request_id": 3,
-		"method":     2,
-		"status":     1,
-		"error":      -1,
-		"stack":      -2,
+var logQuotingRe = regexp.MustCompile(`^[a-zA-Z0-9\-._/@^+]+$`)
+
+func logKeyPriority(k string) int {
+	switch k {
+	case "request_id":
+		return 3
+	case "method":
+		return 2
+	case "status":
+		return 1
+	case "error":
+		return -1
+	case "source":
+		return -2
+	case "stack":
+		return -3
+	default:
+		return 0
 	}
+}
 
-	logQuotingRe = regexp.MustCompile(`^[a-zA-Z0-9\-._/@^+]+$`)
-)
-
-type logKeys []string
-
-func (p logKeys) Len() int           { return len(p) }
-func (p logKeys) Less(i, j int) bool { return logKeysPriorities[p[i]] > logKeysPriorities[p[j]] }
-func (p logKeys) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
+func sortKeys(keys []string) {
+	slices.SortFunc(keys, func(key1, key2 string) int {
+		if d := logKeyPriority(key2) - logKeyPriority(key1); d != 0 {
+			return d
+		}
+		return strings.Compare(key1, key2)
+	})
+}
 
 type prettyFormatter struct {
 	levelFormat string
@@ -51,14 +63,19 @@ func newPrettyFormatter() *prettyFormatter {
 }
 
 func (f *prettyFormatter) Format(entry *logrus.Entry) ([]byte, error) {
-	keys := make([]string, 0, len(entry.Data))
-	for k := range entry.Data {
-		if k != "stack" {
-			keys = append(keys, k)
-		}
-	}
+	var keys []string
 
-	sort.Sort(logKeys(keys))
+	if len(entry.Data) > 0 {
+		keys = make([]string, 0, len(entry.Data))
+
+		for k := range entry.Data {
+			if k != "stack" {
+				keys = append(keys, k)
+			}
+		}
+
+		sortKeys(keys)
+	}
 
 	levelColor := 36
 	switch entry.Level {
@@ -113,12 +130,17 @@ func (f *prettyFormatter) appendValue(b *bytes.Buffer, value interface{}) {
 type structuredFormatter struct{}
 
 func (f *structuredFormatter) Format(entry *logrus.Entry) ([]byte, error) {
-	keys := make([]string, 0, len(entry.Data))
-	for k := range entry.Data {
-		keys = append(keys, k)
-	}
+	var keys []string
 
-	sort.Sort(logKeys(keys))
+	if len(entry.Data) > 0 {
+		keys = make([]string, 0, len(entry.Data))
+
+		for k := range entry.Data {
+			keys = append(keys, k)
+		}
+
+		sortKeys(keys)
+	}
 
 	msg := strings.TrimSuffix(entry.Message, "\n")
 
