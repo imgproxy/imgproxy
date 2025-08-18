@@ -4,6 +4,8 @@ package bufreader
 
 import (
 	"io"
+
+	"github.com/imgproxy/imgproxy/v3/ioutil"
 )
 
 // ReadPeeker is an interface that combines io.Reader and a method to peek at the next n bytes
@@ -72,14 +74,13 @@ func (br *Reader) fetch(need int) error {
 	}
 
 	b := make([]byte, need-len(br.buf))
-	n, err := io.ReadFull(br.r, b)
-	if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
-		return err
-	}
+	n, err := ioutil.TryReadFull(br.r, b)
 
-	if err == io.EOF || err == io.ErrUnexpectedEOF {
+	if err == io.EOF {
 		// If we reached EOF, we mark the reader as finished
 		br.finished = true
+	} else if err != nil {
+		return err
 	}
 
 	if n > 0 {
