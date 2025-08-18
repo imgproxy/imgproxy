@@ -22,7 +22,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/options"
-	"github.com/imgproxy/imgproxy/v3/router"
+	"github.com/imgproxy/imgproxy/v3/server"
 	"github.com/imgproxy/imgproxy/v3/svg"
 	"github.com/imgproxy/imgproxy/v3/testutil"
 	"github.com/imgproxy/imgproxy/v3/vips"
@@ -31,7 +31,7 @@ import (
 type ProcessingHandlerTestSuite struct {
 	suite.Suite
 
-	router *router.Router
+	router *server.Router
 }
 
 func (s *ProcessingHandlerTestSuite) SetupSuite() {

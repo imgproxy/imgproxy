@@ -13,27 +13,34 @@ import (
 
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/errorreport"
+	"github.com/imgproxy/imgproxy/v3/handlers"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/metrics"
 	"github.com/imgproxy/imgproxy/v3/reuseport"
-	"github.com/imgproxy/imgproxy/v3/router"
-	"github.com/imgproxy/imgproxy/v3/vips"
+	"github.com/imgproxy/imgproxy/v3/server"
 )
 
-var imgproxyIsRunningMsg = []byte("imgproxy is running")
+const (
+	faviconPath = "/favicon.ico"
+	healthPath  = "/health"
+)
 
-func buildRouter() *router.Router {
-	r := router.New(config.PathPrefix)
+func buildRouter() *server.Router {
+	r := server.NewRouter(config.PathPrefix)
 
-	r.GET("/", handleLanding, true)
-	r.GET("", handleLanding, true)
+	r.GET("/", true, handlers.LandingHandler)
+	r.GET("", true, handlers.LandingHandler)
 
-	r.GET("/", withMetrics(withPanicHandler(withCORS(withSecret(handleProcessing)))), false)
+	r.GET("/", false, handleProcessing, withMetrics, withPanicHandler, withCORS, withSecret)
 
-	r.HEAD("/", withCORS(handleHead), false)
-	r.OPTIONS("/", withCORS(handleHead), false)
+	r.HEAD("/", false, r.OkHandler, withCORS)
+	r.OPTIONS("/", false, r.OkHandler, withCORS)
 
-	r.HealthHandler = handleHealth
+	r.GET(faviconPath, true, r.NotFoundHandler).Silent()
+	r.GET(healthPath, true, handlers.HealthHandler).Silent()
+	if config.HealthCheckPath != "" {
+		r.GET(config.HealthCheckPath, true, handlers.HealthHandler).Silent()
+	}
 
 	return r
 }
@@ -86,48 +93,54 @@ func shutdownServer(s *http.Server) {
 	s.Shutdown(ctx)
 }
 
-func withMetrics(h router.RouteHandler) router.RouteHandler {
+func withMetrics(h server.RouteHandler) server.RouteHandler {
 	if !metrics.Enabled() {
 		return h
 	}
 
-	return func(reqID string, rw http.ResponseWriter, r *http.Request) {
+	return func(reqID string, rw http.ResponseWriter, r *http.Request) error {
 		ctx, metricsCancel, rw := metrics.StartRequest(r.Context(), rw, r)
 		defer metricsCancel()
 
 		h(reqID, rw, r.WithContext(ctx))
+
+		return nil
 	}
 }
 
-func withCORS(h router.RouteHandler) router.RouteHandler {
-	return func(reqID string, rw http.ResponseWriter, r *http.Request) {
+func withCORS(h server.RouteHandler) server.RouteHandler {
+	return func(reqID string, rw http.ResponseWriter, r *http.Request) error {
 		if len(config.AllowOrigin) > 0 {
 			rw.Header().Set("Access-Control-Allow-Origin", config.AllowOrigin)
 			rw.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
 		}
 
 		h(reqID, rw, r)
+
+		return nil
 	}
 }
 
-func withSecret(h router.RouteHandler) router.RouteHandler {
+func withSecret(h server.RouteHandler) server.RouteHandler {
 	if len(config.Secret) == 0 {
 		return h
 	}
 
 	authHeader := []byte(fmt.Sprintf("Bearer %s", config.Secret))
 
-	return func(reqID string, rw http.ResponseWriter, r *http.Request) {
+	return func(reqID string, rw http.ResponseWriter, r *http.Request) error {
 		if subtle.ConstantTimeCompare([]byte(r.Header.Get("Authorization")), authHeader) == 1 {
 			h(reqID, rw, r)
 		} else {
 			panic(newInvalidSecretError())
 		}
+
+		return nil
 	}
 }
 
-func withPanicHandler(h router.RouteHandler) router.RouteHandler {
-	return func(reqID string, rw http.ResponseWriter, r *http.Request) {
+func withPanicHandler(h server.RouteHandler) server.RouteHandler {
+	return func(reqID string, rw http.ResponseWriter, r *http.Request) error {
 		ctx := errorreport.StartRequest(r)
 		r = r.WithContext(ctx)
 
@@ -150,7 +163,7 @@ func withPanicHandler(h router.RouteHandler) router.RouteHandler {
 					errorreport.Report(err, r)
 				}
 
-				router.LogResponse(reqID, r, ierr.StatusCode(), ierr)
+				server.LogResponse(reqID, r, ierr.StatusCode(), ierr)
 
 				rw.Header().Set("Content-Type", "text/plain")
 				rw.WriteHeader(ierr.StatusCode())
@@ -164,41 +177,7 @@ func withPanicHandler(h router.RouteHandler) router.RouteHandler {
 		}()
 
 		h(reqID, rw, r)
+
+		return nil
 	}
-}
-
-func handleHealth(reqID string, rw http.ResponseWriter, r *http.Request) {
-	var (
-		status int
-		msg    []byte
-		ierr   *ierrors.Error
-	)
-
-	if err := vips.Health(); err == nil {
-		status = http.StatusOK
-		msg = imgproxyIsRunningMsg
-	} else {
-		status = http.StatusInternalServerError
-		msg = []byte("Error")
-		ierr = ierrors.Wrap(err, 1)
-	}
-
-	if len(msg) == 0 {
-		msg = []byte{' '}
-	}
-
-	// Log response only if something went wrong
-	if ierr != nil {
-		router.LogResponse(reqID, r, status, ierr)
-	}
-
-	rw.Header().Set("Content-Type", "text/plain")
-	rw.Header().Set("Cache-Control", "no-cache")
-	rw.WriteHeader(status)
-	rw.Write(msg)
-}
-
-func handleHead(reqID string, rw http.ResponseWriter, r *http.Request) {
-	router.LogResponse(reqID, r, 200, nil)
-	rw.WriteHeader(200)
 }

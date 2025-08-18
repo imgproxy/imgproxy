@@ -16,7 +16,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/metrics"
 	"github.com/imgproxy/imgproxy/v3/metrics/stats"
 	"github.com/imgproxy/imgproxy/v3/options"
-	"github.com/imgproxy/imgproxy/v3/router"
+	"github.com/imgproxy/imgproxy/v3/server"
 )
 
 var (
@@ -116,7 +116,7 @@ func streamOriginImage(ctx context.Context, reqID string, r *http.Request, rw ht
 		copyerr = nil
 	}
 
-	router.LogResponse(
+	server.LogResponse(
 		reqID, r, res.StatusCode, nil,
 		log.Fields{
 			"image_url":          imageURL,

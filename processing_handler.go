@@ -27,8 +27,8 @@ import (
 	"github.com/imgproxy/imgproxy/v3/metrics/stats"
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/processing"
-	"github.com/imgproxy/imgproxy/v3/router"
 	"github.com/imgproxy/imgproxy/v3/security"
+	"github.com/imgproxy/imgproxy/v3/server"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
@@ -188,7 +188,7 @@ func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, sta
 		}
 	}
 
-	router.LogResponse(
+	server.LogResponse(
 		reqID, r, statusCode, ierr,
 		log.Fields{
 			"image_url":          originURL,
@@ -202,7 +202,7 @@ func respondWithNotModified(reqID string, r *http.Request, rw http.ResponseWrite
 	setVary(rw)
 
 	rw.WriteHeader(304)
-	router.LogResponse(
+	server.LogResponse(
 		reqID, r, 304, nil,
 		log.Fields{
 			"image_url":          originURL,
@@ -241,7 +241,7 @@ func checkErr(ctx context.Context, errType string, err error) {
 	sendErrAndPanic(ctx, errType, err)
 }
 
-func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
+func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) error {
 	stats.IncRequestsInProgress()
 	defer stats.DecRequestsInProgress()
 
@@ -299,7 +299,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 
 	if po.Raw {
 		streamOriginImage(ctx, reqID, r, rw, po, imageURL)
-		return
+		return nil
 	}
 
 	// SVG is a special case. Though saving to svg is not supported, SVG->SVG is.
@@ -347,7 +347,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 			// We don't actually need to check timeout here,
 			// but it's an easy way to check if this is an actual timeout
 			// or the request was canceled
-			checkErr(ctx, "queue", router.CheckTimeout(ctx))
+			checkErr(ctx, "queue", server.CheckTimeout(ctx))
 			// We should never reach this line as err could be only ctx.Err()
 			// and we've already checked for it. But beter safe than sorry
 			sendErrAndPanic(ctx, "queue", err)
@@ -393,12 +393,12 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		}
 
 		respondWithNotModified(reqID, r, rw, po, imageURL, nmErr.Headers())
-		return
+		return nil
 
 	default:
 		// This may be a request timeout error or a request cancelled error.
 		// Check it before moving further
-		checkErr(ctx, "timeout", router.CheckTimeout(ctx))
+		checkErr(ctx, "timeout", server.CheckTimeout(ctx))
 
 		ierr := ierrors.Wrap(err, 0)
 		if config.ReportDownloadingErrors {
@@ -433,7 +433,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	checkErr(ctx, "timeout", router.CheckTimeout(ctx))
+	checkErr(ctx, "timeout", server.CheckTimeout(ctx))
 
 	if config.ETagEnabled && statusCode == http.StatusOK {
 		imgDataMatch, terr := etagHandler.SetActualImageData(originData, originHeaders)
@@ -442,12 +442,12 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 
 			if imgDataMatch && etagHandler.ProcessingOptionsMatch() {
 				respondWithNotModified(reqID, r, rw, po, imageURL, originHeaders)
-				return
+				return nil
 			}
 		}
 	}
 
-	checkErr(ctx, "timeout", router.CheckTimeout(ctx))
+	checkErr(ctx, "timeout", server.CheckTimeout(ctx))
 
 	if !vips.SupportsLoad(originData.Format()) {
 		sendErrAndPanic(ctx, "processing", newInvalidURLErrorf(
@@ -476,10 +476,12 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 		sendErrAndPanic(ctx, "processing", err)
 	}
 
-	checkErr(ctx, "timeout", router.CheckTimeout(ctx))
+	checkErr(ctx, "timeout", server.CheckTimeout(ctx))
 
 	writeDebugHeaders(rw, result)
 	writeOriginContentLengthDebugHeader(ctx, rw, originData)
 
 	respondWithImage(reqID, r, rw, statusCode, result.OutData, po, imageURL, originData, originHeaders)
+
+	return nil
 }
