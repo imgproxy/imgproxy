@@ -176,7 +176,7 @@ func StartSegment(ctx context.Context, name string, meta map[string]any) context
 	}
 
 	if txn, ok := ctx.Value(transactionCtxKey{}).(*newrelic.Transaction); ok {
-		segment := txn.StartSegment(name)
+		segment := txn.NewGoroutine().StartSegment(name)
 
 		for k, v := range meta {
 			setMetadata(segment, k, v)
