@@ -21,6 +21,8 @@ import (
 	"sync/atomic"
 
 	"github.com/sirupsen/logrus"
+
+	"github.com/imgproxy/imgproxy/v3/ioutil"
 )
 
 const (
@@ -155,19 +157,19 @@ func (ab *AsyncBuffer) readChunks() {
 		}
 
 		// Read data into the chunk's buffer
-		// There is no way to guarantee that ReadFull will abort on context cancellation,
+		// There is no way to guarantee that ab.r.Read will abort on context cancellation,
 		// unfortunately, this is how golang works.
-		n, err := io.ReadFull(ab.r, chunk.buf)
+		n, err := ioutil.TryReadFull(ab.r, chunk.buf)
 
 		// If it's not the EOF, we need to store the error
-		if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
+		if err != nil && err != io.EOF {
 			ab.err.Store(err)
 			chunkPool.Put(chunk)
 			return
 		}
 
 		// No bytes were read (n == 0), we can return the chunk to the pool
-		if err == io.EOF || n == 0 {
+		if n == 0 {
 			chunkPool.Put(chunk)
 			return
 		}
@@ -178,9 +180,9 @@ func (ab *AsyncBuffer) readChunks() {
 		// Store the reference to the chunk in the AsyncBuffer
 		ab.addChunk(chunk)
 
-		// We got ErrUnexpectedEOF meaning that some bytes were read, but this is the
+		// EOF at this point means that some bytes were read, but this is the
 		// end of the stream, so we can stop reading
-		if err == io.ErrUnexpectedEOF {
+		if err == io.EOF {
 			return
 		}
 	}
