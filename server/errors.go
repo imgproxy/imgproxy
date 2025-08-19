@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"time"
@@ -34,10 +35,15 @@ func newRequestCancelledError(after time.Duration) *ierrors.Error {
 		ierrors.WithStatusCode(499),
 		ierrors.WithPublicMessage("Cancelled"),
 		ierrors.WithShouldReport(false),
+		ierrors.WithCategory(categoryTimeout),
 	)
 }
 
 func (e RequestCancelledError) Error() string { return string(e) }
+
+func (e RequestCancelledError) Unwrap() error {
+	return context.Canceled
+}
 
 func newRequestTimeoutError(after time.Duration) *ierrors.Error {
 	return ierrors.Wrap(
@@ -46,10 +52,15 @@ func newRequestTimeoutError(after time.Duration) *ierrors.Error {
 		ierrors.WithStatusCode(http.StatusServiceUnavailable),
 		ierrors.WithPublicMessage("Gateway Timeout"),
 		ierrors.WithShouldReport(false),
+		ierrors.WithCategory(categoryTimeout),
 	)
 }
 
 func (e RequestTimeoutError) Error() string { return string(e) }
+
+func (e RequestTimeoutError) Unwrap() error {
+	return context.DeadlineExceeded
+}
 
 func newInvalidSecretError() error {
 	return ierrors.Wrap(

@@ -7,6 +7,19 @@ import (
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 )
 
+// Monitoring error categories
+const (
+	categoryTimeout       = "timeout"
+	categoryImageDataSize = "image_data_size"
+	categoryPathParsing   = "path_parsing"
+	categorySecurity      = "security"
+	categoryQueue         = "queue"
+	categoryDownload      = "download"
+	categoryProcessing    = "processing"
+	categoryIO            = "IO"
+	categoryStreaming     = "streaming"
+)
+
 type (
 	ResponseWriteError   struct{ error }
 	InvalidURLError      string

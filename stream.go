@@ -12,6 +12,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/cookies"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
+	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/metrics"
 	"github.com/imgproxy/imgproxy/v3/metrics/stats"
@@ -44,7 +45,7 @@ var (
 	}
 )
 
-func streamOriginImage(ctx context.Context, reqID string, r *http.Request, rw http.ResponseWriter, po *options.ProcessingOptions, imageURL string) {
+func streamOriginImage(ctx context.Context, reqID string, r *http.Request, rw http.ResponseWriter, po *options.ProcessingOptions, imageURL string) error {
 	stats.IncImagesInProgress()
 	defer stats.DecImagesInProgress()
 
@@ -65,18 +66,24 @@ func streamOriginImage(ctx context.Context, reqID string, r *http.Request, rw ht
 
 	if config.CookiePassthrough {
 		cookieJar, err = cookies.JarFromRequest(r)
-		checkErr(ctx, "streaming", err)
+		if err != nil {
+			return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryStreaming))
+		}
 	}
 
 	req, err := imagedata.Fetcher.BuildRequest(r.Context(), imageURL, imgRequestHeader, cookieJar)
 	defer req.Cancel()
-	checkErr(ctx, "streaming", err)
+	if err != nil {
+		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryStreaming))
+	}
 
 	res, err := req.Send()
 	if res != nil {
 		defer res.Body.Close()
 	}
-	checkErr(ctx, "streaming", err)
+	if err != nil {
+		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryStreaming))
+	}
 
 	for _, k := range streamRespHeaders {
 		vv := res.Header.Values(k)
@@ -127,4 +134,6 @@ func streamOriginImage(ctx context.Context, reqID string, r *http.Request, rw ht
 	if copyerr != nil {
 		panic(http.ErrAbortHandler)
 	}
+
+	return nil
 }
