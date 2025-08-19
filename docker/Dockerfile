@@ -11,7 +11,7 @@ RUN docker/build.sh
 # ==================================================================================================
 # Final image
 
-FROM debian:stable-slim
+FROM debian:bookworm-slim
 LABEL maintainer="Sergey Alexandrovich <darthsim@gmail.com>"
 
 RUN apt-get update \
