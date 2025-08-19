@@ -10,23 +10,16 @@ import (
 type timeoutResponse struct {
 	http.ResponseWriter
 	controller *http.ResponseController
-	timeout    int
+	timeout    time.Duration
 }
 
 // newTimeoutResponse creates a new timeoutResponse
-func newTimeoutResponse(rw http.ResponseWriter, timeout int) http.ResponseWriter {
+func newTimeoutResponse(rw http.ResponseWriter, timeout time.Duration) http.ResponseWriter {
 	return &timeoutResponse{
 		ResponseWriter: rw,
 		controller:     http.NewResponseController(rw),
 		timeout:        timeout,
 	}
-}
-
-// WriteHeader implements http.ResponseWriter.WriteHeader
-func (rw *timeoutResponse) WriteHeader(statusCode int) {
-	rw.withWriteDeadline(func() {
-		rw.ResponseWriter.WriteHeader(statusCode)
-	})
 }
 
 // Write implements http.ResponseWriter.Write
@@ -48,7 +41,7 @@ func (rw *timeoutResponse) Header() http.Header {
 
 // withWriteDeadline executes a Write* function with a deadline
 func (rw *timeoutResponse) withWriteDeadline(f func()) {
-	deadline := time.Now().Add(time.Duration(rw.timeout) * time.Second)
+	deadline := time.Now().Add(rw.timeout)
 
 	// Set write deadline
 	rw.controller.SetWriteDeadline(deadline)

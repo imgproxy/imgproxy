@@ -11,7 +11,6 @@ type (
 	ResponseWriteError   struct{ error }
 	InvalidURLError      string
 	TooManyRequestsError struct{}
-	InvalidSecretError   struct{}
 )
 
 func newResponseWriteError(cause error) *ierrors.Error {
@@ -53,15 +52,3 @@ func newTooManyRequestsError() error {
 }
 
 func (e TooManyRequestsError) Error() string { return "Too many requests" }
-
-func newInvalidSecretError() error {
-	return ierrors.Wrap(
-		InvalidSecretError{},
-		1,
-		ierrors.WithStatusCode(http.StatusForbidden),
-		ierrors.WithPublicMessage("Forbidden"),
-		ierrors.WithShouldReport(false),
-	)
-}
-
-func (e InvalidSecretError) Error() string { return "Invalid secret" }

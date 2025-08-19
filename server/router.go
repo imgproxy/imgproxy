@@ -9,7 +9,6 @@ import (
 
 	nanoid "github.com/matoous/go-nanoid/v2"
 
-	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 )
 
@@ -40,25 +39,25 @@ type route struct {
 
 // Router is responsible for routing HTTP requests
 type Router struct {
-	// prefix represents global path prefix for all routes
-	prefix string
+	// config represents the server configuration
+	config *Config
 
 	// routes is the collection of all routes
 	routes []*route
 }
 
 // NewRouter creates a new Router instance
-func NewRouter(prefix string) *Router {
-	return &Router{prefix: prefix}
+func NewRouter(config *Config) *Router {
+	return &Router{config: config}
 }
 
 // add adds an abitary route to the router
 func (r *Router) add(method, prefix string, exact bool, handler RouteHandler, middlewares ...Middleware) *route {
-	for i := len(middlewares) - 1; i >= 0; i-- {
-		handler = middlewares[i](handler)
+	for _, m := range middlewares {
+		handler = m(handler)
 	}
 
-	route := &route{method: method, path: r.prefix + prefix, handler: handler, exact: exact}
+	route := &route{method: method, path: r.config.PathPrefix + prefix, handler: handler, exact: exact}
 
 	r.routes = append(
 		r.routes,
@@ -90,7 +89,7 @@ func (r *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	defer timeoutCancel()
 
 	// Create the response writer which times out on write
-	rw = newTimeoutResponse(rw, config.WriteResponseTimeout)
+	rw = newTimeoutResponse(rw, r.config.WriteResponseTimeout)
 
 	// Get/create request ID
 	reqID := r.getRequestID(req)
@@ -138,7 +137,7 @@ func (r *Router) OkHandler(reqID string, rw http.ResponseWriter, req *http.Reque
 
 // getRequestID tries to read request id from headers or from lambda
 // context or generates a new one if nothing found.
-func (rw *Router) getRequestID(req *http.Request) string {
+func (r *Router) getRequestID(req *http.Request) string {
 	// Get request ID from headers (if any)
 	reqID := req.Header.Get(httpheaders.XRequestID)
 
@@ -165,7 +164,7 @@ func (rw *Router) getRequestID(req *http.Request) string {
 }
 
 // replaceRemoteAddr rewrites the req.RemoteAddr property from request headers
-func (rw *Router) replaceRemoteAddr(req *http.Request) {
+func (r *Router) replaceRemoteAddr(req *http.Request) {
 	cfConnectingIP := req.Header.Get(httpheaders.CFConnectingIP)
 	xForwardedFor := req.Header.Get(httpheaders.XForwardedFor)
 	xRealIP := req.Header.Get(httpheaders.XRealIP)
@@ -202,7 +201,8 @@ func (r *route) isMatch(req *http.Request) bool {
 	return methodMatches && (notExactPathMathes || exactPathMatches)
 }
 
-// Silent sets Silent flag which supresses logs to true
+// Silent sets Silent flag which supresses logs to true. We do not need to log
+// requests like /health of /favicon.ico
 func (r *route) Silent() *route {
 	r.silent = true
 	return r

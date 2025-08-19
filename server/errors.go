@@ -12,6 +12,7 @@ type (
 	RouteNotDefinedError  string
 	RequestCancelledError string
 	RequestTimeoutError   string
+	InvalidSecretError    struct{}
 )
 
 func newRouteNotDefinedError(path string) *ierrors.Error {
@@ -49,3 +50,15 @@ func newRequestTimeoutError(after time.Duration) *ierrors.Error {
 }
 
 func (e RequestTimeoutError) Error() string { return string(e) }
+
+func newInvalidSecretError() error {
+	return ierrors.Wrap(
+		InvalidSecretError{},
+		1,
+		ierrors.WithStatusCode(http.StatusForbidden),
+		ierrors.WithPublicMessage("Forbidden"),
+		ierrors.WithShouldReport(false),
+	)
+}
+
+func (e InvalidSecretError) Error() string { return "Invalid secret" }
