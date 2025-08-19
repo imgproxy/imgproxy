@@ -109,7 +109,7 @@ func generateSourceData(t *testing.T, size int) ([]byte, io.ReadSeekCloser) {
 func TestAsyncBufferReadAt(t *testing.T) {
 	// Let's use source buffer which is 4.5 chunks long
 	source, bytesReader := generateSourceData(t, chunkSize*4+halfChunkSize)
-	asyncBuffer := New(bytesReader)
+	asyncBuffer := New(bytesReader, -1)
 	defer asyncBuffer.Close()
 
 	asyncBuffer.Wait() // Wait for all chunks to be read since we're going to read all data
@@ -169,7 +169,7 @@ func TestAsyncBufferReadAt(t *testing.T) {
 // TestAsyncBufferRead tests reading from AsyncBuffer using ReadAt method
 func TestAsyncBufferReadAtSmallBuffer(t *testing.T) {
 	source, bytesReader := generateSourceData(t, 20)
-	asyncBuffer := New(bytesReader)
+	asyncBuffer := New(bytesReader, -1)
 	defer asyncBuffer.Close()
 
 	// First, let's read all the data
@@ -199,7 +199,7 @@ func TestAsyncBufferReader(t *testing.T) {
 	source, bytesReader := generateSourceData(t, chunkSize*4+halfChunkSize)
 
 	// Create an AsyncBuffer with the byte slice
-	asyncBuffer := New(bytesReader)
+	asyncBuffer := New(bytesReader, -1)
 	defer asyncBuffer.Close()
 
 	// Let's wait for all chunks to be read
@@ -267,7 +267,7 @@ func TestAsyncBufferClose(t *testing.T) {
 	_, bytesReader := generateSourceData(t, chunkSize*4+halfChunkSize)
 
 	// Create an AsyncBuffer with the byte slice
-	asyncBuffer := New(bytesReader)
+	asyncBuffer := New(bytesReader, -1)
 
 	reader1 := asyncBuffer.Reader()
 	reader2 := asyncBuffer.Reader()
@@ -294,7 +294,7 @@ func TestAsyncBufferReadAtErrAtSomePoint(t *testing.T) {
 	// Let's use source buffer which is 4.5 chunks long
 	source, bytesReader := generateSourceData(t, chunkSize*4+halfChunkSize)
 	slowReader := &erraticReader{reader: bytesReader, failAt: chunkSize*3 + 5} // fails at last chunk
-	asyncBuffer := New(slowReader)
+	asyncBuffer := New(slowReader, -1)
 	defer asyncBuffer.Close()
 
 	// Let's wait for all chunks to be read
@@ -327,7 +327,7 @@ func TestAsyncBufferReadAsync(t *testing.T) {
 	// Let's use source buffer which is 4.5 chunks long
 	source, bytesReader := generateSourceData(t, chunkSize*3)
 	blockingReader := newBlockingReader(bytesReader)
-	asyncBuffer := New(blockingReader)
+	asyncBuffer := New(blockingReader, -1)
 	defer asyncBuffer.Close()
 
 	// flush the first chunk to allow reading
@@ -367,11 +367,54 @@ func TestAsyncBufferReadAsync(t *testing.T) {
 	assert.Equal(t, 0, n)
 }
 
+// TestAsyncBufferWithDataLenAndExactReaderSize tests that AsyncBuffer doesn't
+// return an error when the expected data length is set and matches the reader size
+func TestAsyncBufferWithDataLenAndExactReaderSize(t *testing.T) {
+	source, bytesReader := generateSourceData(t, chunkSize*4+halfChunkSize)
+	asyncBuffer := New(bytesReader, len(source))
+	defer asyncBuffer.Close()
+
+	// Let's wait for all chunks to be read
+	size, err := asyncBuffer.Wait()
+	require.NoError(t, err, "AsyncBuffer failed to wait for all chunks")
+	assert.Equal(t, len(source), size)
+}
+
+// TestAsyncBufferWithDataLenAndShortReaderSize tests that AsyncBuffer returns
+// io.ErrUnexpectedEOF when the expected data length is set and the reader size
+// is shorter than the expected data length
+func TestAsyncBufferWithDataLenAndShortReaderSize(t *testing.T) {
+	source, bytesReader := generateSourceData(t, chunkSize*4+halfChunkSize)
+	asyncBuffer := New(bytesReader, len(source)+100) // 100 bytes more than the source
+	defer asyncBuffer.Close()
+
+	// Let's wait for all chunks to be read
+	size, err := asyncBuffer.Wait()
+	require.Equal(t, len(source), size)
+	require.ErrorIs(t, err, io.ErrUnexpectedEOF,
+		"AsyncBuffer should return io.ErrUnexpectedEOF when data length is longer than reader size")
+}
+
+// TestAsyncBufferWithDataLenAndLongerReaderSize tests that AsyncBuffer doesn't
+// read more data than specified by the expected data length and doesn't return an error
+// when the reader size is longer than the expected data length
+func TestAsyncBufferWithDataLenAndLongerReaderSize(t *testing.T) {
+	source, bytesReader := generateSourceData(t, chunkSize*4+halfChunkSize)
+	asyncBuffer := New(bytesReader, len(source)-100) // 100 bytes less than the source
+	defer asyncBuffer.Close()
+
+	// Let's wait for all chunks to be read
+	size, err := asyncBuffer.Wait()
+	require.NoError(t, err, "AsyncBuffer failed to wait for all chunks")
+	assert.Equal(t, len(source)-100, size,
+		"AsyncBuffer should read only the specified amount of data when data length is set")
+}
+
 // TestAsyncBufferReadAllCompability tests that ReadAll methods works as expected
 func TestAsyncBufferReadAllCompability(t *testing.T) {
 	source, err := os.ReadFile("../testdata/test1.jpg")
 	require.NoError(t, err)
-	asyncBuffer := New(nopSeekCloser{bytes.NewReader(source)})
+	asyncBuffer := New(nopSeekCloser{bytes.NewReader(source)}, -1)
 	defer asyncBuffer.Close()
 
 	b, err := io.ReadAll(asyncBuffer.Reader())
@@ -381,7 +424,7 @@ func TestAsyncBufferReadAllCompability(t *testing.T) {
 
 func TestAsyncBufferThreshold(t *testing.T) {
 	_, bytesReader := generateSourceData(t, pauseThreshold*2)
-	asyncBuffer := New(bytesReader)
+	asyncBuffer := New(bytesReader, -1)
 	defer asyncBuffer.Close()
 
 	target := make([]byte, chunkSize)
@@ -391,12 +434,12 @@ func TestAsyncBufferThreshold(t *testing.T) {
 
 	// Ensure that buffer hits the pause threshold
 	require.Eventually(t, func() bool {
-		return asyncBuffer.len.Load() >= pauseThreshold
+		return asyncBuffer.bytesRead.Load() >= pauseThreshold
 	}, 300*time.Millisecond, 10*time.Millisecond)
 
 	// Ensure that buffer never reaches the end of the stream
 	require.Never(t, func() bool {
-		return asyncBuffer.len.Load() >= pauseThreshold*2-1
+		return asyncBuffer.bytesRead.Load() >= pauseThreshold*2-1
 	}, 300*time.Millisecond, 10*time.Millisecond)
 
 	// Let's hit the pause threshold
@@ -407,7 +450,7 @@ func TestAsyncBufferThreshold(t *testing.T) {
 
 	// Ensure that buffer never reaches the end of the stream
 	require.Never(t, func() bool {
-		return asyncBuffer.len.Load() >= pauseThreshold*2-1
+		return asyncBuffer.bytesRead.Load() >= pauseThreshold*2-1
 	}, 300*time.Millisecond, 10*time.Millisecond)
 
 	// Let's hit the pause threshold
@@ -421,13 +464,13 @@ func TestAsyncBufferThreshold(t *testing.T) {
 
 	// Ensure that buffer hits the end of the stream
 	require.Eventually(t, func() bool {
-		return asyncBuffer.len.Load() >= pauseThreshold*2
+		return asyncBuffer.bytesRead.Load() >= pauseThreshold*2
 	}, 300*time.Millisecond, 10*time.Millisecond)
 }
 
 func TestAsyncBufferThresholdInstantBeyondAccess(t *testing.T) {
 	_, bytesReader := generateSourceData(t, pauseThreshold*2)
-	asyncBuffer := New(bytesReader)
+	asyncBuffer := New(bytesReader, -1)
 	defer asyncBuffer.Close()
 
 	target := make([]byte, chunkSize)
@@ -437,6 +480,6 @@ func TestAsyncBufferThresholdInstantBeyondAccess(t *testing.T) {
 
 	// Ensure that buffer hits the end of the stream
 	require.Eventually(t, func() bool {
-		return asyncBuffer.len.Load() >= pauseThreshold*2
+		return asyncBuffer.bytesRead.Load() >= pauseThreshold*2
 	}, 300*time.Millisecond, 10*time.Millisecond)
 }

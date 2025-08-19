@@ -150,7 +150,7 @@ func downloadAsync(ctx context.Context, imageURL string, opts DownloadOptions) (
 		return nil, h, err
 	}
 
-	b := asyncbuffer.New(res.Body, opts.DownloadFinished)
+	b := asyncbuffer.New(res.Body, int(res.ContentLength), opts.DownloadFinished)
 
 	format, err := imagetype.Detect(b.Reader())
 	if err != nil {
