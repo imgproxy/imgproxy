@@ -32,9 +32,12 @@ func (r *Reader) Seek(offset int64, whence int) (int64, error) {
 		r.pos += offset
 
 	case io.SeekEnd:
-		size, err := r.ab.Wait()
-		if err != nil {
-			return 0, err
+		size := r.ab.dataLen
+		if size <= 0 {
+			var err error
+			if size, err = r.ab.Wait(); err != nil {
+				return 0, err
+			}
 		}
 
 		r.pos = int64(size) + offset
