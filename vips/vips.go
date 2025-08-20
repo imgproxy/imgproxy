@@ -856,7 +856,7 @@ func (img *Image) ExportColourProfileToSRGB() error {
 	return nil
 }
 
-func (img *Image) TransformColourProfile() error {
+func (img *Image) TransformColourProfileToSRGB() error {
 	var tmp *C.VipsImage
 
 	// Don't transform is there's no embedded profile or embedded profile is sRGB
@@ -866,10 +866,10 @@ func (img *Image) TransformColourProfile() error {
 		return nil
 	}
 
-	if C.vips_icc_transform_go(img.VipsImage, &tmp) == 0 {
+	if C.vips_icc_transform_srgb(img.VipsImage, &tmp) == 0 {
 		C.swap_and_clear(&img.VipsImage, tmp)
 	} else {
-		log.Warningf("Can't transform ICC profile: %s", Error())
+		log.Warningf("Can't transform ICC profile to sRGB: %s", Error())
 	}
 
 	return nil
