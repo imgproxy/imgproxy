@@ -12,7 +12,7 @@ func trim(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions,
 	}
 
 	// We need to import color profile before trim
-	if err := importColorProfile(pctx, img, po, imgdata); err != nil {
+	if err := colorspaceToProcessing(pctx, img, po, imgdata); err != nil {
 		return err
 	}
 

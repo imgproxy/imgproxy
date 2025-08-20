@@ -15,7 +15,7 @@ var watermarkPipeline = pipeline{
 	vectorGuardScale,
 	prepare,
 	scaleOnLoad,
-	importColorProfile,
+	colorspaceToProcessing,
 	scale,
 	rotateAndFlip,
 	padding,

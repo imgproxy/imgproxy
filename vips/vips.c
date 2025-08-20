@@ -424,6 +424,7 @@ vips_icc_is_srgb_iec61966(VipsImage *in)
   /* Predict it is sRGB IEC61966 2.1 by checking some header fields
    */
   return ((memcmp(data + 48, "IEC ", 4) == 0) && // Device manufacturer
+      (memcmp(data + 16, "RGB ", 4) == 0) &&     // Colorspace
       (memcmp(data + 52, "sRGB", 4) == 0) &&     // Device model
       (memcmp(data + 80, "HP  ", 4) == 0) &&     // Profile creator
       (memcmp(data + 24, date, 6) == 0) &&       // Date of creation
@@ -978,7 +979,7 @@ vips_strip(VipsImage *in, VipsImage **out, int keep_exif_copyright)
 
   VipsStripOptions opts = {
     .strip_all = 0,
-    .keep_exif_copyright = FALSE,
+    .keep_exif_copyright = keep_exif_copyright,
     .keep_animation = FALSE,
   };
 
