@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -122,17 +121,19 @@ func setCanonical(rw http.ResponseWriter, originURL string) {
 	}
 }
 
-func writeOriginContentLengthDebugHeader(ctx context.Context, rw http.ResponseWriter, originData imagedata.ImageData) {
+func writeOriginContentLengthDebugHeader(rw http.ResponseWriter, originData imagedata.ImageData) error {
 	if !config.EnableDebugHeaders {
-		return
+		return nil
 	}
 
 	size, err := originData.Size()
 	if err != nil {
-		checkErr(ctx, "image_data_size", err)
+		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryImageDataSize))
 	}
 
 	rw.Header().Set(httpheaders.XOriginContentLength, strconv.Itoa(size))
+
+	return nil
 }
 
 func writeDebugHeaders(rw http.ResponseWriter, result *processing.Result) {
@@ -146,13 +147,13 @@ func writeDebugHeaders(rw http.ResponseWriter, result *processing.Result) {
 	rw.Header().Set(httpheaders.XResultHeight, strconv.Itoa(result.ResultHeight))
 }
 
-func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, statusCode int, resultData imagedata.ImageData, po *options.ProcessingOptions, originURL string, originData imagedata.ImageData, originHeaders http.Header) {
+func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, statusCode int, resultData imagedata.ImageData, po *options.ProcessingOptions, originURL string, originData imagedata.ImageData, originHeaders http.Header) error {
 	// We read the size of the image data here, so we can set Content-Length header.
 	// This indireclty ensures that the image data is fully read from the source, no
 	// errors happened.
 	resultSize, err := resultData.Size()
 	if err != nil {
-		checkErr(r.Context(), "image_data_size", err)
+		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryImageDataSize))
 	}
 
 	contentDisposition := httpheaders.ContentDispositionValue(
@@ -183,8 +184,7 @@ func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, sta
 		ierr = newResponseWriteError(err)
 
 		if config.ReportIOErrors {
-			sendErr(r.Context(), "IO", ierr)
-			errorreport.Report(ierr, r)
+			return ierrors.Wrap(ierr, 0, ierrors.WithCategory(categoryIO), ierrors.WithShouldReport(true))
 		}
 	}
 
@@ -195,6 +195,8 @@ func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, sta
 			"processing_options": po,
 		},
 	)
+
+	return nil
 }
 
 func respondWithNotModified(reqID string, r *http.Request, rw http.ResponseWriter, po *options.ProcessingOptions, originURL string, originHeaders http.Header) {
@@ -209,36 +211,6 @@ func respondWithNotModified(reqID string, r *http.Request, rw http.ResponseWrite
 			"processing_options": po,
 		},
 	)
-}
-
-func sendErr(ctx context.Context, errType string, err error) {
-	send := true
-
-	if ierr, ok := err.(*ierrors.Error); ok {
-		switch ierr.StatusCode() {
-		case http.StatusServiceUnavailable:
-			errType = "timeout"
-		case 499:
-			// Don't need to send a "request cancelled" error
-			send = false
-		}
-	}
-
-	if send {
-		metrics.SendError(ctx, errType, err)
-	}
-}
-
-func sendErrAndPanic(ctx context.Context, errType string, err error) {
-	sendErr(ctx, errType, err)
-	panic(err)
-}
-
-func checkErr(ctx context.Context, errType string, err error) {
-	if err == nil {
-		return
-	}
-	sendErrAndPanic(ctx, errType, err)
 }
 
 func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) error {
@@ -263,19 +235,22 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) err
 		signature = path[:signatureEnd]
 		path = path[signatureEnd:]
 	} else {
-		sendErrAndPanic(ctx, "path_parsing", newInvalidURLErrorf(
-			http.StatusNotFound, "Invalid path: %s", path),
+		return ierrors.Wrap(
+			newInvalidURLErrorf(http.StatusNotFound, "Invalid path: %s", path), 0,
+			ierrors.WithCategory(categoryPathParsing),
 		)
 	}
 
 	path = fixPath(path)
 
 	if err := security.VerifySignature(signature, path); err != nil {
-		sendErrAndPanic(ctx, "security", err)
+		return ierrors.Wrap(err, 0, ierrors.WithCategory(categorySecurity))
 	}
 
 	po, imageURL, err := options.ParsePath(path, r.Header)
-	checkErr(ctx, "path_parsing", err)
+	if err != nil {
+		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryPathParsing))
+	}
 
 	var imageOrigin any
 	if u, uerr := url.Parse(imageURL); uerr == nil {
@@ -295,19 +270,20 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) err
 	metrics.SetMetadata(ctx, metricsMeta)
 
 	err = security.VerifySourceURL(imageURL)
-	checkErr(ctx, "security", err)
+	if err != nil {
+		return ierrors.Wrap(err, 0, ierrors.WithCategory(categorySecurity))
+	}
 
 	if po.Raw {
-		streamOriginImage(ctx, reqID, r, rw, po, imageURL)
-		return nil
+		return streamOriginImage(ctx, reqID, r, rw, po, imageURL)
 	}
 
 	// SVG is a special case. Though saving to svg is not supported, SVG->SVG is.
 	if !vips.SupportsSave(po.Format) && po.Format != imagetype.Unknown && po.Format != imagetype.SVG {
-		sendErrAndPanic(ctx, "path_parsing", newInvalidURLErrorf(
+		return ierrors.Wrap(newInvalidURLErrorf(
 			http.StatusUnprocessableEntity,
 			"Resulting image format is not supported: %s", po.Format,
-		))
+		), 0, ierrors.WithCategory(categoryPathParsing))
 	}
 
 	imgRequestHeader := make(http.Header)
@@ -339,7 +315,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) err
 	}
 
 	// The heavy part starts here, so we need to restrict worker number
-	func() {
+	err = func() error {
 		defer metrics.StartQueueSegment(ctx)()
 
 		err = processingSem.Acquire(ctx, 1)
@@ -347,12 +323,21 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) err
 			// We don't actually need to check timeout here,
 			// but it's an easy way to check if this is an actual timeout
 			// or the request was canceled
-			checkErr(ctx, "queue", server.CheckTimeout(ctx))
+			if terr := server.CheckTimeout(ctx); terr != nil {
+				return ierrors.Wrap(terr, 0, ierrors.WithCategory(categoryTimeout))
+			}
+
 			// We should never reach this line as err could be only ctx.Err()
 			// and we've already checked for it. But beter safe than sorry
-			sendErrAndPanic(ctx, "queue", err)
+
+			return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryQueue))
 		}
+
+		return nil
 	}()
+	if err != nil {
+		return err
+	}
 	defer processingSem.Release(1)
 
 	stats.IncImagesInProgress()
@@ -375,7 +360,9 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) err
 
 		if config.CookiePassthrough {
 			downloadOpts.CookieJar, err = cookies.JarFromRequest(r)
-			checkErr(ctx, "download", err)
+			if err != nil {
+				return nil, nil, ierrors.Wrap(err, 0, ierrors.WithCategory(categoryDownload))
+			}
 		}
 
 		return imagedata.DownloadAsync(ctx, imageURL, "source image", downloadOpts)
@@ -398,21 +385,23 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) err
 	default:
 		// This may be a request timeout error or a request cancelled error.
 		// Check it before moving further
-		checkErr(ctx, "timeout", server.CheckTimeout(ctx))
+		if terr := server.CheckTimeout(ctx); terr != nil {
+			return ierrors.Wrap(terr, 0, ierrors.WithCategory(categoryTimeout))
+		}
 
 		ierr := ierrors.Wrap(err, 0)
 		if config.ReportDownloadingErrors {
 			ierr = ierrors.Wrap(ierr, 0, ierrors.WithShouldReport(true))
 		}
 
-		sendErr(ctx, "download", ierr)
-
 		if imagedata.FallbackImage == nil {
-			panic(ierr)
+			return ierr
 		}
 
-		// We didn't panic, so the error is not reported.
-		// Report it now
+		// Just send error
+		metrics.SendError(ctx, categoryDownload, ierr)
+
+		// We didn't return, so we have to report error
 		if ierr.ShouldReport() {
 			errorreport.Report(ierr, r)
 		}
@@ -433,27 +422,33 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) err
 		}
 	}
 
-	checkErr(ctx, "timeout", server.CheckTimeout(ctx))
+	if terr := server.CheckTimeout(ctx); terr != nil {
+		return ierrors.Wrap(terr, 0, ierrors.WithCategory(categoryTimeout))
+	}
 
 	if config.ETagEnabled && statusCode == http.StatusOK {
-		imgDataMatch, terr := etagHandler.SetActualImageData(originData, originHeaders)
-		if terr == nil {
-			rw.Header().Set("ETag", etagHandler.GenerateActualETag())
+		imgDataMatch, eerr := etagHandler.SetActualImageData(originData, originHeaders)
+		if eerr != nil && config.ReportIOErrors {
+			return ierrors.Wrap(eerr, 0, ierrors.WithCategory(categoryIO))
+		}
 
-			if imgDataMatch && etagHandler.ProcessingOptionsMatch() {
-				respondWithNotModified(reqID, r, rw, po, imageURL, originHeaders)
-				return nil
-			}
+		rw.Header().Set("ETag", etagHandler.GenerateActualETag())
+
+		if imgDataMatch && etagHandler.ProcessingOptionsMatch() {
+			respondWithNotModified(reqID, r, rw, po, imageURL, originHeaders)
+			return nil
 		}
 	}
 
-	checkErr(ctx, "timeout", server.CheckTimeout(ctx))
+	if terr := server.CheckTimeout(ctx); terr != nil {
+		return ierrors.Wrap(terr, 0, ierrors.WithCategory(categoryTimeout))
+	}
 
 	if !vips.SupportsLoad(originData.Format()) {
-		sendErrAndPanic(ctx, "processing", newInvalidURLErrorf(
+		return ierrors.Wrap(newInvalidURLErrorf(
 			http.StatusUnprocessableEntity,
 			"Source image format is not supported: %s", originData.Format(),
-		))
+		), 0, ierrors.WithCategory(categoryProcessing))
 	}
 
 	result, err := func() (*processing.Result, error) {
@@ -468,20 +463,31 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) err
 		defer result.OutData.Close()
 	}
 
-	if err != nil {
-		// First, check if the processing error wasn't caused by an image data error
-		checkErr(ctx, "download", originData.Error())
-
-		// If it wasn't, than it was a processing error
-		sendErrAndPanic(ctx, "processing", err)
+	// First, check if the processing error wasn't caused by an image data error
+	if originData.Error() != nil {
+		return ierrors.Wrap(originData.Error(), 0, ierrors.WithCategory(categoryDownload))
 	}
 
-	checkErr(ctx, "timeout", server.CheckTimeout(ctx))
+	// If it wasn't, than it was a processing error
+	if err != nil {
+		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryProcessing))
+	}
+
+	if terr := server.CheckTimeout(ctx); terr != nil {
+		return ierrors.Wrap(terr, 0, ierrors.WithCategory(categoryTimeout))
+	}
 
 	writeDebugHeaders(rw, result)
-	writeOriginContentLengthDebugHeader(ctx, rw, originData)
 
-	respondWithImage(reqID, r, rw, statusCode, result.OutData, po, imageURL, originData, originHeaders)
+	err = writeOriginContentLengthDebugHeader(rw, originData)
+	if err != nil {
+		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryImageDataSize))
+	}
+
+	err = respondWithImage(reqID, r, rw, statusCode, result.OutData, po, imageURL, originData, originHeaders)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

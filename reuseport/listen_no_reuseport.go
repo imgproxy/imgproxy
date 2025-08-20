@@ -7,12 +7,10 @@ import (
 	"net"
 
 	log "github.com/sirupsen/logrus"
-
-	"github.com/imgproxy/imgproxy/v3/config"
 )
 
-func Listen(network, address string) (net.Listener, error) {
-	if config.SoReuseport {
+func Listen(network, address string, reuse bool) (net.Listener, error) {
+	if reuse {
 		log.Warning("SO_REUSEPORT support is not implemented for your OS or Go version")
 	}
 

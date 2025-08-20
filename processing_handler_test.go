@@ -48,7 +48,7 @@ func (s *ProcessingHandlerTestSuite) SetupSuite() {
 
 	logrus.SetOutput(io.Discard)
 
-	s.router = buildRouter()
+	s.router = buildRouter(server.NewRouter(server.NewConfigFromEnv()))
 }
 
 func (s *ProcessingHandlerTestSuite) TeardownSuite() {

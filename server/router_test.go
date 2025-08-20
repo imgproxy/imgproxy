@@ -16,7 +16,9 @@ type RouterTestSuite struct {
 }
 
 func (s *RouterTestSuite) SetupTest() {
-	s.router = NewRouter("/api")
+	c := NewConfigFromEnv()
+	c.PathPrefix = "/api"
+	s.router = NewRouter(c)
 }
 
 func TestRouterSuite(t *testing.T) {
@@ -131,7 +133,7 @@ func (s *RouterTestSuite) TestMiddlewareOrder() {
 		return nil
 	}
 
-	s.router.GET("/test", true, handler, middleware1, middleware2)
+	s.router.GET("/test", true, handler, middleware2, middleware1)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/test", nil)
 	rw := httptest.NewRecorder()
