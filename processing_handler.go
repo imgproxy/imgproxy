@@ -261,13 +261,13 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) err
 	errorreport.SetMetadata(r, "Source Image Origin", imageOrigin)
 	errorreport.SetMetadata(r, "Processing Options", po)
 
-	metricsMeta := monitoring.Meta{
+	monitoringMeta := monitoring.Meta{
 		monitoring.MetaSourceImageURL:    imageURL,
 		monitoring.MetaSourceImageOrigin: imageOrigin,
 		monitoring.MetaProcessingOptions: po.Diff().Flatten(),
 	}
 
-	monitoring.SetMetadata(ctx, metricsMeta)
+	monitoring.SetMetadata(ctx, monitoringMeta)
 
 	err = security.VerifySourceURL(imageURL)
 	if err != nil {
@@ -347,8 +347,8 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) err
 
 	originData, originHeaders, err := func() (imagedata.ImageData, http.Header, error) {
 		downloadFinished := monitoring.StartDownloadingSegment(ctx, monitoring.Meta{
-			monitoring.MetaSourceImageURL:    metricsMeta[monitoring.MetaSourceImageURL],
-			monitoring.MetaSourceImageOrigin: metricsMeta[monitoring.MetaSourceImageOrigin],
+			monitoring.MetaSourceImageURL:    monitoringMeta[monitoring.MetaSourceImageURL],
+			monitoring.MetaSourceImageOrigin: monitoringMeta[monitoring.MetaSourceImageOrigin],
 		})
 
 		downloadOpts := imagedata.DownloadOptions{
@@ -453,7 +453,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) err
 
 	result, err := func() (*processing.Result, error) {
 		defer monitoring.StartProcessingSegment(ctx, monitoring.Meta{
-			monitoring.MetaProcessingOptions: metricsMeta[monitoring.MetaProcessingOptions],
+			monitoring.MetaProcessingOptions: monitoringMeta[monitoring.MetaProcessingOptions],
 		})()
 		return processing.ProcessImage(ctx, originData, po)
 	}()
