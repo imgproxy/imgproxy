@@ -7,7 +7,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
-func importColorProfile(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata *imagedata.ImageData) error {
+func colorspaceToProcessing(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata *imagedata.ImageData) error {
 	if img.ColourProfileImported() {
 		return nil
 	}

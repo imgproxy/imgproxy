@@ -22,7 +22,7 @@ var mainPipeline = pipeline{
 	trim,
 	prepare,
 	scaleOnLoad,
-	importColorProfile,
+	colorspaceToProcessing,
 	crop,
 	scale,
 	rotateAndFlip,
@@ -37,7 +37,7 @@ var mainPipeline = pipeline{
 }
 
 var finalizePipeline = pipeline{
-	exportColorProfile,
+	colorspaceToResult,
 	stripMetadata,
 }
 

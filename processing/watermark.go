@@ -14,7 +14,7 @@ import (
 var watermarkPipeline = pipeline{
 	prepare,
 	scaleOnLoad,
-	importColorProfile,
+	colorspaceToProcessing,
 	scale,
 	rotateAndFlip,
 	padding,
