@@ -143,7 +143,7 @@ func run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	defer s.Shutdown(ctx)
+	defer s.Shutdown(context.Background())
 
 	<-ctx.Done()
 
