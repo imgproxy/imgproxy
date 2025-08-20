@@ -53,7 +53,7 @@ func ContentDispositionValue(url, filename, ext, contentType string, returnAttac
 	// If ext is provided explicitly, use it
 	if len(ext) > 0 {
 		rExt = ext
-	} else if len(contentType) > 0 {
+	} else if len(contentType) > 0 && rExt == "" {
 		exts, err := mime.ExtensionsByType(contentType)
 		if err == nil && len(exts) != 0 {
 			rExt = exts[0]

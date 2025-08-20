@@ -46,6 +46,7 @@ const (
 	Location                        = "Location"
 	Origin                          = "Origin"
 	Pragma                          = "Pragma"
+	Range                           = "Range"
 	Referer                         = "Referer"
 	RequestId                       = "Request-Id"
 	RetryAfter                      = "Retry-After"
