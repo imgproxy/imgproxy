@@ -346,10 +346,10 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) err
 	statusCode := http.StatusOK
 
 	originData, originHeaders, err := func() (imagedata.ImageData, http.Header, error) {
-		downloadFinished := monitoring.StartDownloadingSegment(ctx, monitoring.Meta{
-			monitoring.MetaSourceImageURL:    monitoringMeta[monitoring.MetaSourceImageURL],
-			monitoring.MetaSourceImageOrigin: monitoringMeta[monitoring.MetaSourceImageOrigin],
-		})
+		downloadFinished := monitoring.StartDownloadingSegment(ctx, monitoringMeta.Filter(
+			monitoring.MetaSourceImageURL,
+			monitoring.MetaSourceImageOrigin,
+		))
 
 		downloadOpts := imagedata.DownloadOptions{
 			Header:           imgRequestHeader,
@@ -452,9 +452,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) err
 	}
 
 	result, err := func() (*processing.Result, error) {
-		defer monitoring.StartProcessingSegment(ctx, monitoring.Meta{
-			monitoring.MetaProcessingOptions: monitoringMeta[monitoring.MetaProcessingOptions],
-		})()
+		defer monitoring.StartProcessingSegment(ctx, monitoringMeta.Filter(monitoring.MetaProcessingOptions))()
 		return processing.ProcessImage(ctx, originData, po)
 	}()
 

@@ -19,6 +19,17 @@ const (
 
 type Meta map[string]any
 
+// Filter creates a copy of Meta with only the specified keys.
+func (m Meta) Filter(only ...string) Meta {
+	filtered := make(Meta)
+	for _, key := range only {
+		if value, ok := m[key]; ok {
+			filtered[key] = value
+		}
+	}
+	return filtered
+}
+
 func Init() error {
 	prometheus.Init()
 
