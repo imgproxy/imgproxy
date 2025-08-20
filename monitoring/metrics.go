@@ -1,14 +1,14 @@
-package metrics
+package monitoring
 
 import (
 	"context"
 	"net/http"
 
-	"github.com/imgproxy/imgproxy/v3/metrics/cloudwatch"
-	"github.com/imgproxy/imgproxy/v3/metrics/datadog"
-	"github.com/imgproxy/imgproxy/v3/metrics/newrelic"
-	"github.com/imgproxy/imgproxy/v3/metrics/otel"
-	"github.com/imgproxy/imgproxy/v3/metrics/prometheus"
+	"github.com/imgproxy/imgproxy/v3/monitoring/cloudwatch"
+	"github.com/imgproxy/imgproxy/v3/monitoring/datadog"
+	"github.com/imgproxy/imgproxy/v3/monitoring/newrelic"
+	"github.com/imgproxy/imgproxy/v3/monitoring/otel"
+	"github.com/imgproxy/imgproxy/v3/monitoring/prometheus"
 )
 
 const (

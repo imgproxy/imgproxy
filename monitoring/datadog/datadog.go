@@ -17,8 +17,8 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/imgproxy/imgproxy/v3/config"
-	"github.com/imgproxy/imgproxy/v3/metrics/errformat"
-	"github.com/imgproxy/imgproxy/v3/metrics/stats"
+	"github.com/imgproxy/imgproxy/v3/monitoring/errformat"
+	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
 	"github.com/imgproxy/imgproxy/v3/version"
 )
 

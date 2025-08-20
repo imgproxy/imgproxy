@@ -14,8 +14,8 @@ import (
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
-	"github.com/imgproxy/imgproxy/v3/metrics"
-	"github.com/imgproxy/imgproxy/v3/metrics/stats"
+	"github.com/imgproxy/imgproxy/v3/monitoring"
+	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/server"
 )
@@ -48,8 +48,7 @@ var (
 func streamOriginImage(ctx context.Context, reqID string, r *http.Request, rw http.ResponseWriter, po *options.ProcessingOptions, imageURL string) error {
 	stats.IncImagesInProgress()
 	defer stats.DecImagesInProgress()
-
-	defer metrics.StartStreamingSegment(ctx)()
+	defer monitoring.StartStreamingSegment(ctx)()
 
 	var (
 		cookieJar http.CookieJar

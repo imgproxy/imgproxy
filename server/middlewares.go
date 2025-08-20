@@ -10,22 +10,22 @@ import (
 	"github.com/imgproxy/imgproxy/v3/errorreport"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
-	"github.com/imgproxy/imgproxy/v3/metrics"
+	"github.com/imgproxy/imgproxy/v3/monitoring"
 )
 
 const (
 	categoryTimeout = "timeout"
 )
 
-// WithMetrics wraps RouteHandler with metrics handling.
-func (r *Router) WithMetrics(h RouteHandler) RouteHandler {
-	if !metrics.Enabled() {
+// WithMonitoring wraps RouteHandler with monitoring handling.
+func (r *Router) WithMonitoring(h RouteHandler) RouteHandler {
+	if !monitoring.Enabled() {
 		return h
 	}
 
 	return func(reqID string, rw http.ResponseWriter, req *http.Request) error {
-		ctx, metricsCancel, rw := metrics.StartRequest(req.Context(), rw, req)
-		defer metricsCancel()
+		ctx, cancel, rw := monitoring.StartRequest(req.Context(), rw, req)
+		defer cancel()
 
 		return h(reqID, rw, req.WithContext(ctx))
 	}
@@ -92,7 +92,7 @@ func (r *Router) WithPanic(h RouteHandler) RouteHandler {
 }
 
 // WithReportError handles error reporting.
-// It should be placed after `WithMetrics`, but before `WithPanic`.
+// It should be placed after `WithMonitoring`, but before `WithPanic`.
 func (r *Router) WithReportError(h RouteHandler) RouteHandler {
 	return func(reqID string, rw http.ResponseWriter, req *http.Request) error {
 		// Open the error context
@@ -119,7 +119,7 @@ func (r *Router) WithReportError(h RouteHandler) RouteHandler {
 
 		// We do not need to send any canceled context
 		if !errors.Is(ierr, context.Canceled) {
-			metrics.SendError(ctx, errCat, err)
+			monitoring.SendError(ctx, errCat, err)
 		}
 
 		// Report error to error collectors
