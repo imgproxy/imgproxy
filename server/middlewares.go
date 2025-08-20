@@ -84,7 +84,7 @@ func (r *Router) WithPanic(h RouteHandler) RouteHandler {
 				err = fmt.Errorf("panic: %v", err)
 			}
 
-			retErr = err
+			retErr = ierrors.Wrap(err, 1)
 		}()
 
 		return h(reqID, rw, r)
