@@ -1,7 +1,9 @@
 package server
 
 import (
+	"context"
 	"crypto/subtle"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -9,6 +11,10 @@ import (
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/metrics"
+)
+
+const (
+	categoryTimeout = "timeout"
 )
 
 // WithMetrics wraps RouteHandler with metrics handling.
@@ -56,55 +62,6 @@ func (r *Router) WithSecret(h RouteHandler) RouteHandler {
 	}
 }
 
-// WithReportError handles error reporting.
-// It should be placed after `WithMetrics`, but before `WithPanic`.
-func (r *Router) WithReportError(h RouteHandler) RouteHandler {
-	return func(reqID string, rw http.ResponseWriter, req *http.Request) error {
-		// Open the error context
-		ctx := errorreport.StartRequest(req)
-		req = req.WithContext(ctx)
-		errorreport.SetMetadata(req, "Request ID", reqID)
-
-		// Call the underlying handler passing the context downwards
-		err := h(reqID, rw, req)
-		if err == nil {
-			return nil
-		}
-
-		// Wrap a resulting error into ierrors.Error
-		ierr := ierrors.Wrap(err, 0)
-
-		// Get the error category
-		errCat := ierr.Category()
-
-		// Report error to metrics (if metrics are disabled, it will be a no-op)
-		// Skip context closed error
-		if ierr.StatusCode() != 499 {
-			metrics.SendError(ctx, errCat, err)
-		}
-
-		// Report error to error collectors
-		if ierr.ShouldReport() {
-			errorreport.Report(ierr, req)
-		}
-
-		// Log response and format the error output
-		LogResponse(reqID, req, ierr.StatusCode(), ierr)
-
-		// Error message: either is public message or full development error
-		rw.Header().Set(httpheaders.ContentType, "text/plain")
-		rw.WriteHeader(ierr.StatusCode())
-
-		if r.config.DevelopmentErrorsMode {
-			rw.Write([]byte(ierr.Error()))
-		} else {
-			rw.Write([]byte(ierr.PublicMessage()))
-		}
-
-		return nil
-	}
-}
-
 // WithPanic recovers panic and converts it to normal error
 func (r *Router) WithPanic(h RouteHandler) RouteHandler {
 	return func(reqID string, rw http.ResponseWriter, r *http.Request) (retErr error) {
@@ -131,5 +88,58 @@ func (r *Router) WithPanic(h RouteHandler) RouteHandler {
 		}()
 
 		return h(reqID, rw, r)
+	}
+}
+
+// WithReportError handles error reporting.
+// It should be placed after `WithMetrics`, but before `WithPanic`.
+func (r *Router) WithReportError(h RouteHandler) RouteHandler {
+	return func(reqID string, rw http.ResponseWriter, req *http.Request) error {
+		// Open the error context
+		ctx := errorreport.StartRequest(req)
+		req = req.WithContext(ctx)
+		errorreport.SetMetadata(req, "Request ID", reqID)
+
+		// Call the underlying handler passing the context downwards
+		err := h(reqID, rw, req)
+		if err == nil {
+			return nil
+		}
+
+		// Wrap a resulting error into ierrors.Error
+		ierr := ierrors.Wrap(err, 0)
+
+		// Get the error category
+		errCat := ierr.Category()
+
+		// Exception: any context.DeadlineExceeded error is timeout
+		if errors.Is(ierr, context.DeadlineExceeded) {
+			errCat = categoryTimeout
+		}
+
+		// We do not need to send any canceled context
+		if !errors.Is(ierr, context.Canceled) {
+			metrics.SendError(ctx, errCat, err)
+		}
+
+		// Report error to error collectors
+		if ierr.ShouldReport() {
+			errorreport.Report(ierr, req)
+		}
+
+		// Log response and format the error output
+		LogResponse(reqID, req, ierr.StatusCode(), ierr)
+
+		// Error message: either is public message or full development error
+		rw.Header().Set(httpheaders.ContentType, "text/plain")
+		rw.WriteHeader(ierr.StatusCode())
+
+		if r.config.DevelopmentErrorsMode {
+			rw.Write([]byte(ierr.Error()))
+		} else {
+			rw.Write([]byte(ierr.PublicMessage()))
+		}
+
+		return nil
 	}
 }
