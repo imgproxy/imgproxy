@@ -38,6 +38,12 @@ func buildRouter(r *server.Router) *server.Router {
 	r.GET("/", true, handlers.LandingHandler)
 	r.GET("", true, handlers.LandingHandler)
 
+	r.GET(faviconPath, true, r.NotFoundHandler).Silent()
+	r.GET(healthPath, true, handlers.HealthHandler).Silent()
+	if config.HealthCheckPath != "" {
+		r.GET(config.HealthCheckPath, true, handlers.HealthHandler).Silent()
+	}
+
 	r.GET(
 		"/", false, handleProcessing,
 		r.WithSecret, r.WithCORS, r.WithPanic, r.WithReportError, r.WithMonitoring,
@@ -45,12 +51,6 @@ func buildRouter(r *server.Router) *server.Router {
 
 	r.HEAD("/", false, r.OkHandler, r.WithCORS)
 	r.OPTIONS("/", false, r.OkHandler, r.WithCORS)
-
-	r.GET(faviconPath, true, r.NotFoundHandler).Silent()
-	r.GET(healthPath, true, handlers.HealthHandler).Silent()
-	if config.HealthCheckPath != "" {
-		r.GET(config.HealthCheckPath, true, handlers.HealthHandler).Silent()
-	}
 
 	return r
 }
