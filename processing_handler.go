@@ -389,7 +389,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) err
 			return ierrors.Wrap(terr, 0, ierrors.WithCategory(categoryTimeout))
 		}
 
-		ierr := ierrors.Wrap(err, 0)
+		ierr := ierrors.Wrap(err, 0, ierrors.WithCategory(categoryDownload))
 		if config.ReportDownloadingErrors {
 			ierr = ierrors.Wrap(ierr, 0, ierrors.WithShouldReport(true))
 		}
