@@ -1,6 +1,10 @@
 # Changelog
 
 ## [Unreleased]
+### Changed
+- (pro) Improve video decoding performance.
+- (pro) Respond with `422 Unprocessable Entity` on error during video decoding.
+
 ### Fixed
 - Fix the `Vary` header value when `IMGPROXY_AUTO_JXL` or `IMGPROXY_ENFORCE_JXL` configs are set to `true`.
 - Fix connection break when the `raw` processing option is used and the response status code does not allow a response body (such as `304 Not Modified`).
