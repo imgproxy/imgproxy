@@ -137,7 +137,7 @@ var (
 		Mime:                  "image/tiff",
 		IsVector:              false,
 		SupportsAlpha:         true,
-		SupportsColourProfile: false,
+		SupportsColourProfile: true,
 		SupportsQuality:       true,
 		SupportsAnimationLoad: false,
 		SupportsAnimationSave: false,
