@@ -1,4 +1,4 @@
-package router
+package server
 
 import (
 	"net"
@@ -59,6 +59,6 @@ func LogResponse(reqID string, r *http.Request, status int, err *ierrors.Error, 
 
 	log.WithFields(fields).Logf(
 		level,
-		"Completed in %s %s", ctxTime(r.Context()), r.RequestURI,
+		"Completed in %s %s", requestStartedAt(r.Context()), r.RequestURI,
 	)
 }

@@ -16,6 +16,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/config/loadenv"
 	"github.com/imgproxy/imgproxy/v3/errorreport"
 	"github.com/imgproxy/imgproxy/v3/gliblog"
+	"github.com/imgproxy/imgproxy/v3/handlers"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/logger"
 	"github.com/imgproxy/imgproxy/v3/memory"
@@ -23,9 +24,36 @@ import (
 	"github.com/imgproxy/imgproxy/v3/metrics/prometheus"
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/processing"
+	"github.com/imgproxy/imgproxy/v3/server"
 	"github.com/imgproxy/imgproxy/v3/version"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
+
+const (
+	faviconPath = "/favicon.ico"
+	healthPath  = "/health"
+)
+
+func buildRouter(r *server.Router) *server.Router {
+	r.GET("/", true, handlers.LandingHandler)
+	r.GET("", true, handlers.LandingHandler)
+
+	r.GET(
+		"/", false, handleProcessing,
+		r.WithSecret, r.WithCORS, r.WithPanic, r.WithReportError, r.WithMetrics,
+	)
+
+	r.HEAD("/", false, r.OkHandler, r.WithCORS)
+	r.OPTIONS("/", false, r.OkHandler, r.WithCORS)
+
+	r.GET(faviconPath, true, r.NotFoundHandler).Silent()
+	r.GET(healthPath, true, handlers.HealthHandler).Silent()
+	if config.HealthCheckPath != "" {
+		r.GET(config.HealthCheckPath, true, handlers.HealthHandler).Silent()
+	}
+
+	return r
+}
 
 func initialize() error {
 	if err := loadenv.Load(); err != nil {
@@ -103,25 +131,21 @@ func run(ctx context.Context) error {
 		}
 	}()
 
-	ctx, cancel := context.WithCancel(ctx)
+	ctx, cancel := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGTERM)
 
 	if err := prometheus.StartServer(cancel); err != nil {
 		return err
 	}
 
-	s, err := startServer(cancel)
+	cfg := server.NewConfigFromEnv()
+	r := server.NewRouter(cfg)
+	s, err := server.Start(cancel, buildRouter(r))
 	if err != nil {
 		return err
 	}
-	defer shutdownServer(s)
+	defer s.Shutdown(ctx)
 
-	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
-
-	select {
-	case <-ctx.Done():
-	case <-stop:
-	}
+	<-ctx.Done()
 
 	return nil
 }

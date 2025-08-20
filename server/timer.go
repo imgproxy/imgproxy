@@ -1,4 +1,6 @@
-package router
+// timer.go contains methods for storing, retrieving and checking
+// timer in a request context.
+package server
 
 import (
 	"context"
@@ -9,8 +11,10 @@ import (
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 )
 
+// timerSinceCtxKey represents a context key for start time.
 type timerSinceCtxKey struct{}
 
+// startRequestTimer starts a new request timer.
 func startRequestTimer(r *http.Request) (*http.Request, context.CancelFunc) {
 	ctx := r.Context()
 	ctx = context.WithValue(ctx, timerSinceCtxKey{}, time.Now())
@@ -18,17 +22,20 @@ func startRequestTimer(r *http.Request) (*http.Request, context.CancelFunc) {
 	return r.WithContext(ctx), cancel
 }
 
-func ctxTime(ctx context.Context) time.Duration {
+// requestStartedAt returns the duration since the timer started in the context.
+func requestStartedAt(ctx context.Context) time.Duration {
 	if t, ok := ctx.Value(timerSinceCtxKey{}).(time.Time); ok {
 		return time.Since(t)
 	}
 	return 0
 }
 
+// CheckTimeout checks if the request context has timed out or cancelled and returns
+// wrapped error.
 func CheckTimeout(ctx context.Context) error {
 	select {
 	case <-ctx.Done():
-		d := ctxTime(ctx)
+		d := requestStartedAt(ctx)
 
 		err := ctx.Err()
 		switch err {
@@ -37,7 +44,7 @@ func CheckTimeout(ctx context.Context) error {
 		case context.DeadlineExceeded:
 			return newRequestTimeoutError(d)
 		default:
-			return ierrors.Wrap(err, 0)
+			return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryTimeout))
 		}
 	default:
 		return nil

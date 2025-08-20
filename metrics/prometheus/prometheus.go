@@ -161,7 +161,7 @@ func StartServer(cancel context.CancelFunc) error {
 
 	s := http.Server{Handler: promhttp.Handler()}
 
-	l, err := reuseport.Listen("tcp", config.PrometheusBind)
+	l, err := reuseport.Listen("tcp", config.PrometheusBind, config.SoReuseport)
 	if err != nil {
 		return fmt.Errorf("Can't start Prometheus metrics server: %s", err)
 	}

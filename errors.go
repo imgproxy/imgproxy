@@ -7,11 +7,23 @@ import (
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 )
 
+// Monitoring error categories
+const (
+	categoryTimeout       = "timeout"
+	categoryImageDataSize = "image_data_size"
+	categoryPathParsing   = "path_parsing"
+	categorySecurity      = "security"
+	categoryQueue         = "queue"
+	categoryDownload      = "download"
+	categoryProcessing    = "processing"
+	categoryIO            = "IO"
+	categoryStreaming     = "streaming"
+)
+
 type (
 	ResponseWriteError   struct{ error }
 	InvalidURLError      string
 	TooManyRequestsError struct{}
-	InvalidSecretError   struct{}
 )
 
 func newResponseWriteError(cause error) *ierrors.Error {
@@ -53,15 +65,3 @@ func newTooManyRequestsError() error {
 }
 
 func (e TooManyRequestsError) Error() string { return "Too many requests" }
-
-func newInvalidSecretError() error {
-	return ierrors.Wrap(
-		InvalidSecretError{},
-		1,
-		ierrors.WithStatusCode(http.StatusForbidden),
-		ierrors.WithPublicMessage("Forbidden"),
-		ierrors.WithShouldReport(false),
-	)
-}
-
-func (e InvalidSecretError) Error() string { return "Invalid secret" }
