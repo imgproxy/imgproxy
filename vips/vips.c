@@ -961,7 +961,7 @@ vips_strip(VipsImage *in, VipsImage **out, int keep_exif_copyright)
 
   VipsStripOptions opts = {
     .strip_all = 0,
-    .keep_exif_copyright = FALSE,
+    .keep_exif_copyright = keep_exif_copyright,
     .keep_animation = FALSE,
   };
 

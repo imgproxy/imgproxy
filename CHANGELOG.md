@@ -10,6 +10,7 @@
 - Fix connection break when the `raw` processing option is used and the response status code does not allow a response body (such as `304 Not Modified`).
 - Fix the `If-Modified-Since` request header handling when the `raw` processing option is used.
 - Fix `X-Origin-Height` and `X-Result-Height` debug header values for animated images.
+- Fix keeping copyright info in EXIF.
 - (pro) Fix generating thumbnails for VP9 videos with high bit depth.
 - (pro) Fix `IMGPROXY_CUSTOM_RESPONSE_HEADERS` and `IMGPROXY_RESPONSE_HEADERS_PASSTHROUGH` configs behavior when the `raw` processing option is used.
 
