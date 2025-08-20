@@ -161,7 +161,8 @@ func (it Type) SupportsColourProfile() bool {
 		it == PNG ||
 		it == WEBP ||
 		it == HEIC ||
-		it == AVIF
+		it == AVIF ||
+		it == TIFF
 }
 
 func (it Type) SupportsQuality() bool {
