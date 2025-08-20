@@ -20,8 +20,8 @@ import (
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/logger"
 	"github.com/imgproxy/imgproxy/v3/memory"
-	"github.com/imgproxy/imgproxy/v3/metrics"
-	"github.com/imgproxy/imgproxy/v3/metrics/prometheus"
+	"github.com/imgproxy/imgproxy/v3/monitoring"
+	"github.com/imgproxy/imgproxy/v3/monitoring/prometheus"
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/processing"
 	"github.com/imgproxy/imgproxy/v3/server"
@@ -40,7 +40,7 @@ func buildRouter(r *server.Router) *server.Router {
 
 	r.GET(
 		"/", false, handleProcessing,
-		r.WithSecret, r.WithCORS, r.WithPanic, r.WithReportError, r.WithMetrics,
+		r.WithSecret, r.WithCORS, r.WithPanic, r.WithReportError, r.WithMonitoring,
 	)
 
 	r.HEAD("/", false, r.OkHandler, r.WithCORS)
@@ -72,7 +72,7 @@ func initialize() error {
 		return err
 	}
 
-	if err := metrics.Init(); err != nil {
+	if err := monitoring.Init(); err != nil {
 		return err
 	}
 
@@ -108,7 +108,7 @@ func initialize() error {
 
 func shutdown() {
 	vips.Shutdown()
-	metrics.Stop()
+	monitoring.Stop()
 	errorreport.Close()
 }
 

@@ -22,8 +22,8 @@ import (
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagefetcher"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
-	"github.com/imgproxy/imgproxy/v3/metrics"
-	"github.com/imgproxy/imgproxy/v3/metrics/stats"
+	"github.com/imgproxy/imgproxy/v3/monitoring"
+	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/processing"
 	"github.com/imgproxy/imgproxy/v3/security"
@@ -261,13 +261,13 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) err
 	errorreport.SetMetadata(r, "Source Image Origin", imageOrigin)
 	errorreport.SetMetadata(r, "Processing Options", po)
 
-	metricsMeta := metrics.Meta{
-		metrics.MetaSourceImageURL:    imageURL,
-		metrics.MetaSourceImageOrigin: imageOrigin,
-		metrics.MetaProcessingOptions: po.Diff().Flatten(),
+	monitoringMeta := monitoring.Meta{
+		monitoring.MetaSourceImageURL:    imageURL,
+		monitoring.MetaSourceImageOrigin: imageOrigin,
+		monitoring.MetaProcessingOptions: po.Diff().Flatten(),
 	}
 
-	metrics.SetMetadata(ctx, metricsMeta)
+	monitoring.SetMetadata(ctx, monitoringMeta)
 
 	err = security.VerifySourceURL(imageURL)
 	if err != nil {
@@ -316,7 +316,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) err
 
 	// The heavy part starts here, so we need to restrict worker number
 	err = func() error {
-		defer metrics.StartQueueSegment(ctx)()
+		defer monitoring.StartQueueSegment(ctx)()
 
 		err = processingSem.Acquire(ctx, 1)
 		if err != nil {
@@ -346,10 +346,10 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) err
 	statusCode := http.StatusOK
 
 	originData, originHeaders, err := func() (imagedata.ImageData, http.Header, error) {
-		downloadFinished := metrics.StartDownloadingSegment(ctx, metrics.Meta{
-			metrics.MetaSourceImageURL:    metricsMeta[metrics.MetaSourceImageURL],
-			metrics.MetaSourceImageOrigin: metricsMeta[metrics.MetaSourceImageOrigin],
-		})
+		downloadFinished := monitoring.StartDownloadingSegment(ctx, monitoringMeta.Filter(
+			monitoring.MetaSourceImageURL,
+			monitoring.MetaSourceImageOrigin,
+		))
 
 		downloadOpts := imagedata.DownloadOptions{
 			Header:           imgRequestHeader,
@@ -399,7 +399,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) err
 		}
 
 		// Just send error
-		metrics.SendError(ctx, categoryDownload, ierr)
+		monitoring.SendError(ctx, categoryDownload, ierr)
 
 		// We didn't return, so we have to report error
 		if ierr.ShouldReport() {
@@ -452,9 +452,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) err
 	}
 
 	result, err := func() (*processing.Result, error) {
-		defer metrics.StartProcessingSegment(ctx, metrics.Meta{
-			metrics.MetaProcessingOptions: metricsMeta[metrics.MetaProcessingOptions],
-		})()
+		defer monitoring.StartProcessingSegment(ctx, monitoringMeta.Filter(monitoring.MetaProcessingOptions))()
 		return processing.ProcessImage(ctx, originData, po)
 	}()
 

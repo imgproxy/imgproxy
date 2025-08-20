@@ -14,7 +14,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/imgproxy/imgproxy/v3/config"
-	"github.com/imgproxy/imgproxy/v3/metrics/stats"
+	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
 )
 
 type GaugeFunc func() float64

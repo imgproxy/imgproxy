@@ -1,14 +1,14 @@
-package metrics
+package monitoring
 
 import (
 	"context"
 	"net/http"
 
-	"github.com/imgproxy/imgproxy/v3/metrics/cloudwatch"
-	"github.com/imgproxy/imgproxy/v3/metrics/datadog"
-	"github.com/imgproxy/imgproxy/v3/metrics/newrelic"
-	"github.com/imgproxy/imgproxy/v3/metrics/otel"
-	"github.com/imgproxy/imgproxy/v3/metrics/prometheus"
+	"github.com/imgproxy/imgproxy/v3/monitoring/cloudwatch"
+	"github.com/imgproxy/imgproxy/v3/monitoring/datadog"
+	"github.com/imgproxy/imgproxy/v3/monitoring/newrelic"
+	"github.com/imgproxy/imgproxy/v3/monitoring/otel"
+	"github.com/imgproxy/imgproxy/v3/monitoring/prometheus"
 )
 
 const (
@@ -18,6 +18,17 @@ const (
 )
 
 type Meta map[string]any
+
+// Filter creates a copy of Meta with only the specified keys.
+func (m Meta) Filter(only ...string) Meta {
+	filtered := make(Meta)
+	for _, key := range only {
+		if value, ok := m[key]; ok {
+			filtered[key] = value
+		}
+	}
+	return filtered
+}
 
 func Init() error {
 	prometheus.Init()
