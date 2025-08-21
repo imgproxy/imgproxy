@@ -47,6 +47,7 @@ type imageDataBytes struct {
 type imageDataAsyncBuffer struct {
 	b          *asyncbuffer.AsyncBuffer
 	format     imagetype.Type
+	desc       string
 	cancel     []context.CancelFunc
 	cancelOnce sync.Once
 }
@@ -123,7 +124,10 @@ func (d *imageDataAsyncBuffer) AddCancel(cancel context.CancelFunc) {
 // Error returns any error that occurred during reading data from
 // async buffer or the underlying source.
 func (d *imageDataAsyncBuffer) Error() error {
-	return d.b.Error()
+	if err := d.b.Error(); err != nil {
+		return wrapDownloadError(err, d.desc)
+	}
+	return nil
 }
 
 func Init() error {

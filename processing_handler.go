@@ -462,8 +462,8 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) err
 	}
 
 	// First, check if the processing error wasn't caused by an image data error
-	if originData.Error() != nil {
-		return ierrors.Wrap(originData.Error(), 0, ierrors.WithCategory(categoryDownload))
+	if derr := originData.Error(); derr != nil {
+		return ierrors.Wrap(derr, 0, ierrors.WithCategory(categoryDownload))
 	}
 
 	// If it wasn't, than it was a processing error
