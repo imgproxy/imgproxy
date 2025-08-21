@@ -22,6 +22,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
+	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/ioutil"
 )
 
@@ -108,6 +109,17 @@ func (ab *AsyncBuffer) callFinishFn() {
 	})
 }
 
+func (ab *AsyncBuffer) setErr(err error) {
+	if err == nil {
+		return
+	}
+
+	// If the error is already set, we do not overwrite it
+	if ab.err.Load() == nil {
+		ab.err.Store(ierrors.Wrap(err, 1))
+	}
+}
+
 // addChunk adds a new chunk to the AsyncBuffer, increments bytesRead
 // and signals that a chunk is ready
 func (ab *AsyncBuffer) addChunk(chunk *byteChunk) {
@@ -139,10 +151,10 @@ func (ab *AsyncBuffer) readChunks() {
 			logrus.WithField("source", "asyncbuffer.AsyncBuffer.readChunks").Warningf("error closing upstream reader: %s", err)
 		}
 
-		if ab.bytesRead.Load() < int64(ab.dataLen) && ab.err.Load() == nil {
+		if ab.bytesRead.Load() < int64(ab.dataLen) {
 			// If the reader has finished reading and we have not read enough data,
 			// set err to io.ErrUnexpectedEOF
-			ab.err.Store(io.ErrUnexpectedEOF)
+			ab.setErr(io.ErrUnexpectedEOF)
 		}
 
 		ab.callFinishFn()
@@ -171,7 +183,7 @@ func (ab *AsyncBuffer) readChunks() {
 		// If the pool is empty, it will create a new byteChunk with ChunkSize
 		chunk, ok := chunkPool.Get().(*byteChunk)
 		if !ok {
-			ab.err.Store(errors.New("asyncbuffer.AsyncBuffer.readChunks: failed to get chunk from pool"))
+			ab.setErr(errors.New("asyncbuffer.AsyncBuffer.readChunks: failed to get chunk from pool"))
 			return
 		}
 
@@ -182,7 +194,7 @@ func (ab *AsyncBuffer) readChunks() {
 
 		// If it's not the EOF, we need to store the error
 		if err != nil && err != io.EOF {
-			ab.err.Store(err)
+			ab.setErr(err)
 			chunkPool.Put(chunk)
 			return
 		}

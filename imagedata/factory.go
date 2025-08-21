@@ -4,13 +4,11 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
-	"fmt"
 	"io"
 	"net/http"
 	"os"
 
 	"github.com/imgproxy/imgproxy/v3/asyncbuffer"
-	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imagefetcher"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/security"
@@ -105,7 +103,7 @@ func sendRequest(ctx context.Context, url string, opts DownloadOptions) (*imagef
 }
 
 // DownloadSync downloads the image synchronously and returns the ImageData and HTTP headers.
-func downloadSync(ctx context.Context, imageURL string, opts DownloadOptions) (ImageData, http.Header, error) {
+func DownloadSync(ctx context.Context, imageURL, desc string, opts DownloadOptions) (ImageData, http.Header, error) {
 	if opts.DownloadFinished != nil {
 		defer opts.DownloadFinished()
 	}
@@ -120,26 +118,26 @@ func downloadSync(ctx context.Context, imageURL string, opts DownloadOptions) (I
 	}
 
 	if err != nil {
-		return nil, h, err
+		return nil, h, wrapDownloadError(err, desc)
 	}
 
 	b, err := io.ReadAll(res.Body)
 	if err != nil {
-		return nil, h, err
+		return nil, h, wrapDownloadError(err, desc)
 	}
 
 	format, err := imagetype.Detect(bytes.NewReader(b))
 	if err != nil {
-		return nil, h, err
+		return nil, h, wrapDownloadError(err, desc)
 	}
 
 	d := NewFromBytesWithFormat(format, b)
-	return d, h, err
+	return d, h, nil
 }
 
-// downloadAsync downloads the image asynchronously and returns the ImageData
+// DownloadAsync downloads the image asynchronously and returns the ImageData
 // backed by AsyncBuffer and HTTP headers.
-func downloadAsync(ctx context.Context, imageURL string, opts DownloadOptions) (ImageData, http.Header, error) {
+func DownloadAsync(ctx context.Context, imageURL, desc string, opts DownloadOptions) (ImageData, http.Header, error) {
 	// We pass this responsibility to AsyncBuffer
 	//nolint:bodyclose
 	req, res, h, err := sendRequest(ctx, imageURL, opts)
@@ -147,7 +145,7 @@ func downloadAsync(ctx context.Context, imageURL string, opts DownloadOptions) (
 		if opts.DownloadFinished != nil {
 			defer opts.DownloadFinished()
 		}
-		return nil, h, err
+		return nil, h, wrapDownloadError(err, desc)
 	}
 
 	b := asyncbuffer.New(res.Body, int(res.ContentLength), opts.DownloadFinished)
@@ -156,43 +154,16 @@ func downloadAsync(ctx context.Context, imageURL string, opts DownloadOptions) (
 	if err != nil {
 		b.Close()
 		req.Cancel()
-		return nil, h, err
+		return nil, h, wrapDownloadError(err, desc)
 	}
 
 	d := &imageDataAsyncBuffer{
 		b:      b,
 		format: format,
+		desc:   desc,
 		cancel: nil,
 	}
 	d.AddCancel(req.Cancel) // request will be closed when the image data is consumed
 
-	return d, h, err
-}
-
-// DownloadSyncWithDesc downloads the image synchronously and returns the ImageData, but
-// wraps errors with desc.
-func DownloadSync(ctx context.Context, imageURL, desc string, opts DownloadOptions) (ImageData, http.Header, error) {
-	imgdata, h, err := downloadSync(ctx, imageURL, opts)
-	if err != nil {
-		return nil, h, ierrors.Wrap(
-			err, 0,
-			ierrors.WithPrefix(fmt.Sprintf("can't download %s", desc)),
-		)
-	}
-
-	return imgdata, h, nil
-}
-
-// DownloadSyncWithDesc downloads the image synchronously and returns the ImageData, but
-// wraps errors with desc.
-func DownloadAsync(ctx context.Context, imageURL, desc string, opts DownloadOptions) (ImageData, http.Header, error) {
-	imgdata, h, err := downloadAsync(ctx, imageURL, opts)
-	if err != nil {
-		return nil, h, ierrors.Wrap(
-			err, 0,
-			ierrors.WithPrefix(fmt.Sprintf("can't download %s", desc)),
-		)
-	}
-
-	return imgdata, h, nil
+	return d, h, nil
 }
