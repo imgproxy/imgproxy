@@ -54,17 +54,16 @@ func New(config *Config, originalResponseHeaders http.Header, url string) *Write
 // }
 
 // SetMaxAge sets the max-age for the Cache-Control header.
-//
-// It accepts two values:
-// - force: usually comes from ProcessingOptions.
-// - ttl which is the time-to-live value.
-//
-// force is used if ttl is blank. ttl can't outlive force.
-func (w *Writer) SetMaxAge(force *time.Time, ttl int) {
-	if ttl > 0 {
+func (w *Writer) SetMaxAge(ttl int) {
+	// We set maxAge to ttl if it's explicitly passed
+	if ttl >= 0 {
 		w.maxAge = ttl
 	}
+}
 
+// SetForceExpires sets the TTL from time
+func (w *Writer) SetForceExpires(force *time.Time) {
+	// Now, if force is passed as well
 	if force == nil {
 		return
 	}
@@ -74,8 +73,7 @@ func (w *Writer) SetMaxAge(force *time.Time, ttl int) {
 
 	// If maxAge outlives expires or was not set, we'll use expires as maxAge.
 	if w.maxAge < 0 || force.Before(currentMaxAgeTime) {
-		// Get the TTL from the expires time (must not be in the past)
-		expiresTTL := max(0, int(time.Until(*force).Seconds()))
+		expiresTTL := min(w.config.DefaultTTL, max(0, int(time.Until(*force).Seconds())))
 
 		if expiresTTL > 0 {
 			w.maxAge = expiresTTL

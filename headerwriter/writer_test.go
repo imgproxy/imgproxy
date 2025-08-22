@@ -167,7 +167,7 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 				DefaultTTL: 3600,
 			},
 			fn: func(w *Writer) {
-				w.SetMaxAge(nil, 1)
+				w.SetMaxAge(1)
 			},
 		},
 		{
@@ -181,7 +181,7 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 				DefaultTTL: math.MaxInt32,
 			},
 			fn: func(w *Writer) {
-				w.SetMaxAge(&expires, 0)
+				w.SetForceExpires(&expires)
 			},
 		},
 		{
@@ -195,7 +195,8 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 				DefaultTTL: math.MaxInt32,
 			},
 			fn: func(w *Writer) {
-				w.SetMaxAge(&shortExpires, 600)
+				w.SetMaxAge(600)
+				w.SetForceExpires(&shortExpires)
 			},
 		},
 		{
@@ -296,8 +297,8 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 				DefaultTTL: 3600,
 			},
 			fn: func(w *Writer) {
-				w.SetMaxAge(nil, 0)
-				w.SetMaxAge(nil, -10)
+				w.SetMaxAge(0)
+				w.SetMaxAge(-10)
 			},
 		},
 		{
@@ -311,7 +312,7 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 				DefaultTTL: 3600,
 			},
 			fn: func(w *Writer) {
-				w.SetMaxAge(nil, 0)
+				w.SetForceExpires(nil)
 			},
 		},
 		{
