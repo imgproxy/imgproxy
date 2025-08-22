@@ -33,25 +33,55 @@ var (
 	}
 )
 
-// StreamingParams represents an image request params that will be processed by the image streamer
-type StreamingParams struct {
-	UserRequest       *http.Request              // Original user request to imgproxy
-	ImageURL          string                     // URL of the image to be streamed
-	ReqID             string                     // Unique identifier for the request
-	ProcessingOptions *options.ProcessingOptions // Processing options for the image
-}
-
 // Handler handles image passthrough requests, allowing images to be streamed directly
 type Handler struct {
 	fetcher  *imagefetcher.Fetcher // Fetcher instance to handle image fetching
 	config   *Config               // Configuration for the streamer
 	hwConfig *headerwriter.Config  // Configuration for header writing
-	params   *StreamingParams      // Streaming request
-	res      http.ResponseWriter   // Response writer to write the streamed image
+}
+
+// request holds the parameters and state for a single streaming request
+type request struct {
+	handler     *Handler
+	userRequest *http.Request
+	imageURL    string
+	reqID       string
+	po          *options.ProcessingOptions
+	rw          http.ResponseWriter
+}
+
+// New creates new handler object
+func New(config *Config, hwConfig *headerwriter.Config, fetcher *imagefetcher.Fetcher) *Handler {
+	return &Handler{
+		fetcher:  fetcher,
+		config:   config,
+		hwConfig: hwConfig,
+	}
 }
 
 // Stream handles the image passthrough request, streaming the image directly to the response writer
-func (s *Handler) Execute(ctx context.Context) error {
+func (s *Handler) Execute(
+	ctx context.Context,
+	userRequest *http.Request,
+	imageURL string,
+	reqID string,
+	po *options.ProcessingOptions,
+	rw http.ResponseWriter,
+) error {
+	stream := &request{
+		handler:     s,
+		userRequest: userRequest,
+		imageURL:    imageURL,
+		reqID:       reqID,
+		po:          po,
+		rw:          rw,
+	}
+
+	return stream.execute(ctx)
+}
+
+// execute handles the actual streaming logic
+func (s *request) execute(ctx context.Context) error {
 	stats.IncImagesInProgress()
 	defer stats.DecImagesInProgress()
 	defer monitoring.StartStreamingSegment(ctx)()
@@ -64,7 +94,7 @@ func (s *Handler) Execute(ctx context.Context) error {
 	}
 
 	// Build the request to fetch the image
-	r, err := s.fetcher.BuildRequest(ctx, s.params.ImageURL, requestHeaders, cookieJar)
+	r, err := s.handler.fetcher.BuildRequest(ctx, s.imageURL, requestHeaders, cookieJar)
 	defer r.Cancel()
 	if err != nil {
 		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryStreaming))
@@ -80,18 +110,18 @@ func (s *Handler) Execute(ctx context.Context) error {
 	}
 
 	// Output streaming response headers
-	hw := headerwriter.New(s.hwConfig, res.Header, s.params.ImageURL)
-	hw.Passthrough(s.config.KeepResponseHeaders) // NOTE: priority? This is lowest as it was
+	hw := headerwriter.New(s.handler.hwConfig, res.Header, s.imageURL)
+	hw.Passthrough(s.handler.config.KeepResponseHeaders) // NOTE: priority? This is lowest as it was
 	hw.SetContentLength(int(res.ContentLength))
 	hw.SetCanonical()
-	hw.SetMaxAge(s.params.ProcessingOptions.Expires, 0)
-	hw.Write(s.res)
+	hw.SetMaxAge(s.po.Expires, 0)
+	hw.Write(s.rw)
 
 	// Write Content-Disposition header
-	s.writeContentDisposition(s.params.ImageURL, res)
+	s.writeContentDisposition(r.URL().Path, res)
 
 	// Copy the status code from the original response
-	s.res.WriteHeader(res.StatusCode)
+	s.rw.WriteHeader(res.StatusCode)
 
 	// Write the actual data
 	s.streamData(res)
@@ -100,21 +130,21 @@ func (s *Handler) Execute(ctx context.Context) error {
 }
 
 // getCookieJar returns non-empty cookie jar if cookie passthrough is enabled
-func (s *Handler) getCookieJar() (http.CookieJar, error) {
-	if !s.config.CookiePassthrough {
+func (s *request) getCookieJar() (http.CookieJar, error) {
+	if !s.handler.config.CookiePassthrough {
 		return nil, nil
 	}
 
-	return cookies.JarFromRequest(s.params.UserRequest)
+	return cookies.JarFromRequest(s.userRequest)
 }
 
 // getPassthroughRequestHeaders returns a new http.Header containing only
 // the headers that should be passed through from the user request
-func (s *Handler) getPassthroughRequestHeaders() http.Header {
+func (s *request) getPassthroughRequestHeaders() http.Header {
 	h := make(http.Header)
 
-	for _, key := range s.config.PassthroughRequestHeaders {
-		values := s.params.UserRequest.Header.Values(key)
+	for _, key := range s.handler.config.PassthroughRequestHeaders {
+		values := s.userRequest.Header.Values(key)
 
 		for _, value := range values {
 			h.Add(key, value)
@@ -125,38 +155,37 @@ func (s *Handler) getPassthroughRequestHeaders() http.Header {
 }
 
 // writeContentDisposition writes the headers to the response writer
-func (s *Handler) writeContentDisposition(imagePath string, serverResponse *http.Response) {
+func (s *request) writeContentDisposition(imagePath string, serverResponse *http.Response) {
 	// Try to set correct Content-Disposition file name and extension
 	if serverResponse.StatusCode >= 200 && serverResponse.StatusCode < 300 {
 		ct := serverResponse.Header.Get(httpheaders.ContentType)
-		po := s.params.ProcessingOptions
 
 		// Try to best guess the file name and extension
 		cd := httpheaders.ContentDispositionValue(
 			imagePath,
-			po.Filename,
+			s.po.Filename,
 			"",
 			ct,
-			po.ReturnAttachment,
+			s.po.ReturnAttachment,
 		)
 
 		// Write the Content-Disposition header
-		s.res.Header().Set(httpheaders.ContentDisposition, cd)
+		s.rw.Header().Set(httpheaders.ContentDisposition, cd)
 	}
 }
 
 // streamData copies the image data from the response body to the response writer
-func (s *Handler) streamData(res *http.Response) {
+func (s *request) streamData(res *http.Response) {
 	buf := streamBufPool.Get().(*[]byte)
 	defer streamBufPool.Put(buf)
 
-	_, copyerr := io.CopyBuffer(s.res, res.Body, *buf)
+	_, copyerr := io.CopyBuffer(s.rw, res.Body, *buf)
 
 	server.LogResponse(
-		s.params.ReqID, s.params.UserRequest, res.StatusCode, nil,
+		s.reqID, s.userRequest, res.StatusCode, nil,
 		log.Fields{
-			"image_url":          s.params.ImageURL,
-			"processing_options": s.params.ProcessingOptions,
+			"image_url":          s.imageURL,
+			"processing_options": s.po,
 		},
 	)
 

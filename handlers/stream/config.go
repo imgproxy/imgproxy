@@ -23,6 +23,7 @@ func NewConfigFromEnv() *Config {
 		CookiePassthrough: config.CookiePassthrough,
 		PassthroughRequestHeaders: []string{
 			httpheaders.IfNoneMatch,
+			httpheaders.IfModifiedSince,
 			httpheaders.AcceptEncoding,
 			httpheaders.Range,
 		},
