@@ -45,20 +45,15 @@ func New(config *Config, originalResponseHeaders http.Header, url string) *Write
 	}
 }
 
-// TODO: Do not remove, will be used shortly in processing_handler.go
-//
 // SetIsFallbackImage sets the Fallback-Image header to
 // indicate that the fallback image was used.
-// func (w *Writer) SetIsFallbackImage() {
-// 	w.result.Set("Fallback-Image", "1")
-// }
-
-// SetMaxAge sets the max-age for the Cache-Control header.
-func (w *Writer) SetMaxAge(ttl int) {
-	// We set maxAge to ttl if it's explicitly passed
-	if ttl >= 0 {
-		w.maxAge = ttl
+func (w *Writer) SetIsFallbackImage() {
+	// We set maxAge to FallbackImageTTL if it's explicitly passed
+	if w.config.FallbackImageTTL >= 0 {
+		w.maxAge = w.config.FallbackImageTTL
 	}
+
+	w.result.Set(httpheaders.FallbackImage, "1")
 }
 
 // SetForceExpires sets the TTL from time
@@ -73,11 +68,7 @@ func (w *Writer) SetForceExpires(force *time.Time) {
 
 	// If maxAge outlives expires or was not set, we'll use expires as maxAge.
 	if w.maxAge < 0 || force.Before(currentMaxAgeTime) {
-		expiresTTL := min(w.config.DefaultTTL, max(0, int(time.Until(*force).Seconds())))
-
-		if expiresTTL > 0 {
-			w.maxAge = expiresTTL
-		}
+		w.maxAge = min(w.config.DefaultTTL, max(0, int(time.Until(*force).Seconds())))
 	}
 }
 

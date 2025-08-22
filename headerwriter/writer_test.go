@@ -162,12 +162,14 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 			res: http.Header{
 				httpheaders.CacheControl:          []string{"max-age=1, public"},
 				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
+				httpheaders.FallbackImage:         []string{"1"},
 			},
 			config: Config{
-				DefaultTTL: 3600,
+				DefaultTTL:       3600,
+				FallbackImageTTL: 1,
 			},
 			fn: func(w *Writer) {
-				w.SetMaxAge(1)
+				w.SetIsFallbackImage()
 			},
 		},
 		{
@@ -190,12 +192,14 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 			res: http.Header{
 				httpheaders.CacheControl:          []string{fmt.Sprintf("max-age=%s, public", shortExpiresSeconds)},
 				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
+				httpheaders.FallbackImage:         []string{"1"},
 			},
 			config: Config{
-				DefaultTTL: math.MaxInt32,
+				DefaultTTL:       math.MaxInt32,
+				FallbackImageTTL: 600,
 			},
 			fn: func(w *Writer) {
-				w.SetMaxAge(600)
+				w.SetIsFallbackImage()
 				w.SetForceExpires(&shortExpires)
 			},
 		},
@@ -269,36 +273,6 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 			config: Config{},
 			fn: func(w *Writer) {
 				w.SetContentType("image/png")
-			},
-		},
-		// NOTE: Do not remove, will be used shortly in processing_handler.go
-		//
-		// {
-		// 	name: "WriteIsFallbackImage",
-		// 	req:  http.Header{},
-		// 	res: http.Header{
-		// 		"Fallback-Image":                  []string{"1"},
-		// 		httpheaders.CacheControl:          []string{"no-cache"},
-		// 		httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
-		// 	},
-		// 	config: Config{},
-		// 	fn: func(w *Writer) {
-		// 		w.SetIsFallbackImage()
-		// 	},
-		// },
-		{
-			name: "SetMaxAgeZeroOrNegative",
-			req:  http.Header{},
-			res: http.Header{
-				httpheaders.CacheControl:          []string{"max-age=3600, public"},
-				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
-			},
-			config: Config{
-				DefaultTTL: 3600,
-			},
-			fn: func(w *Writer) {
-				w.SetMaxAge(0)
-				w.SetMaxAge(-10)
 			},
 		},
 		{

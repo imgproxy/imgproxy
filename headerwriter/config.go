@@ -8,6 +8,7 @@ import (
 type Config struct {
 	SetCanonicalHeader      bool // Indicates whether to set the canonical header
 	DefaultTTL              int  // Default Cache-Control max-age= value for cached images
+	FallbackImageTTL        int  // TTL for images served as fallbacks
 	CacheControlPassthrough bool // Passthrough the Cache-Control from the original response
 	LastModifiedEnabled     bool // Set the Last-Modified header
 	EnableClientHints       bool // Enable Vary header
@@ -19,6 +20,7 @@ func NewConfigFromEnv() *Config {
 	return &Config{
 		SetCanonicalHeader:      config.SetCanonicalHeader,
 		DefaultTTL:              config.TTL,
+		FallbackImageTTL:        config.FallbackImageTTL,
 		LastModifiedEnabled:     config.LastModifiedEnabled,
 		CacheControlPassthrough: config.CacheControlPassthrough,
 		EnableClientHints:       config.EnableClientHints,
