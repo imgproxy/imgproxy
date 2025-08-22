@@ -42,12 +42,12 @@ type Handler struct {
 
 // request holds the parameters and state for a single streaming request
 type request struct {
-	handler     *Handler
-	userRequest *http.Request
-	imageURL    string
-	reqID       string
-	po          *options.ProcessingOptions
-	rw          http.ResponseWriter
+	handler      *Handler
+	imageRequest *http.Request
+	imageURL     string
+	reqID        string
+	po           *options.ProcessingOptions
+	rw           http.ResponseWriter
 }
 
 // New creates new handler object
@@ -69,12 +69,12 @@ func (s *Handler) Execute(
 	rw http.ResponseWriter,
 ) error {
 	stream := &request{
-		handler:     s,
-		userRequest: userRequest,
-		imageURL:    imageURL,
-		reqID:       reqID,
-		po:          po,
-		rw:          rw,
+		handler:      s,
+		imageRequest: userRequest,
+		imageURL:     imageURL,
+		reqID:        reqID,
+		po:           po,
+		rw:           rw,
 	}
 
 	return stream.execute(ctx)
@@ -87,7 +87,7 @@ func (s *request) execute(ctx context.Context) error {
 	defer monitoring.StartStreamingSegment(ctx)()
 
 	// Passthrough request headers from the original request
-	requestHeaders := s.getPassthroughRequestHeaders()
+	requestHeaders := s.getImageRequestHeaders()
 	cookieJar, err := s.getCookieJar()
 	if err != nil {
 		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryStreaming))
@@ -135,16 +135,16 @@ func (s *request) getCookieJar() (http.CookieJar, error) {
 		return nil, nil
 	}
 
-	return cookies.JarFromRequest(s.userRequest)
+	return cookies.JarFromRequest(s.imageRequest)
 }
 
-// getPassthroughRequestHeaders returns a new http.Header containing only
+// getImageRequestHeaders returns a new http.Header containing only
 // the headers that should be passed through from the user request
-func (s *request) getPassthroughRequestHeaders() http.Header {
+func (s *request) getImageRequestHeaders() http.Header {
 	h := make(http.Header)
 
 	for _, key := range s.handler.config.PassthroughRequestHeaders {
-		values := s.userRequest.Header.Values(key)
+		values := s.imageRequest.Header.Values(key)
 
 		for _, value := range values {
 			h.Add(key, value)
@@ -184,7 +184,7 @@ func (s *request) streamData(res *http.Response) {
 	_, copyerr := io.CopyBuffer(s.rw, res.Body, *buf)
 
 	server.LogResponse(
-		s.reqID, s.userRequest, res.StatusCode, nil,
+		s.reqID, s.imageRequest, res.StatusCode, nil,
 		log.Fields{
 			"image_url":          s.imageURL,
 			"processing_options": s.po,

@@ -49,11 +49,13 @@ func New(config *Config, originalResponseHeaders http.Header, url string) *Write
 // indicate that the fallback image was used.
 func (w *Writer) SetIsFallbackImage() {
 	// We set maxAge to FallbackImageTTL if it's explicitly passed
-	if w.config.FallbackImageTTL >= 0 {
-		// However, we should not overwrite existing value if set (or greater than ours)
-		if w.maxAge < 0 || w.maxAge > w.config.FallbackImageTTL {
-			w.maxAge = w.config.FallbackImageTTL
-		}
+	if w.config.FallbackImageTTL < 0 {
+		return
+	}
+
+	// However, we should not overwrite existing value if set (or greater than ours)
+	if w.maxAge < 0 || w.maxAge > w.config.FallbackImageTTL {
+		w.maxAge = w.config.FallbackImageTTL
 	}
 }
 
