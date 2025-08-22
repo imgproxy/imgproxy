@@ -13,8 +13,8 @@ type Config struct {
 	// PassthroughRequestHeaders specifies the request headers to include in the passthrough response
 	PassthroughRequestHeaders []string
 
-	// KeepResponseHeaders specifies the response headers to copy from the response
-	KeepResponseHeaders []string
+	// PassthroughResponseHeaders specifies the response headers to copy from the response
+	PassthroughResponseHeaders []string
 }
 
 // NewConfigFromEnv creates a new Config instance from environment variables
@@ -27,7 +27,7 @@ func NewConfigFromEnv() *Config {
 			httpheaders.AcceptEncoding,
 			httpheaders.Range,
 		},
-		KeepResponseHeaders: []string{
+		PassthroughResponseHeaders: []string{
 			httpheaders.ContentType,
 			httpheaders.ContentEncoding,
 			httpheaders.ContentRange,

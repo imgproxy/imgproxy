@@ -111,7 +111,7 @@ func (s *request) execute(ctx context.Context) error {
 
 	// Output streaming response headers
 	hw := headerwriter.New(s.handler.hwConfig, res.Header, s.imageURL)
-	hw.Passthrough(s.handler.config.KeepResponseHeaders) // NOTE: priority? This is lowest as it was
+	hw.Passthrough(s.handler.config.PassthroughResponseHeaders) // NOTE: priority? This is lowest as it was
 	hw.SetContentLength(int(res.ContentLength))
 	hw.SetCanonical()
 	hw.SetMaxAge(s.po.Expires, 0)
@@ -157,21 +157,23 @@ func (s *request) getPassthroughRequestHeaders() http.Header {
 // writeContentDisposition writes the headers to the response writer
 func (s *request) writeContentDisposition(imagePath string, serverResponse *http.Response) {
 	// Try to set correct Content-Disposition file name and extension
-	if serverResponse.StatusCode >= 200 && serverResponse.StatusCode < 300 {
-		ct := serverResponse.Header.Get(httpheaders.ContentType)
-
-		// Try to best guess the file name and extension
-		cd := httpheaders.ContentDispositionValue(
-			imagePath,
-			s.po.Filename,
-			"",
-			ct,
-			s.po.ReturnAttachment,
-		)
-
-		// Write the Content-Disposition header
-		s.rw.Header().Set(httpheaders.ContentDisposition, cd)
+	if serverResponse.StatusCode < 200 || serverResponse.StatusCode >= 300 {
+		return
 	}
+
+	ct := serverResponse.Header.Get(httpheaders.ContentType)
+
+	// Try to best guess the file name and extension
+	cd := httpheaders.ContentDispositionValue(
+		imagePath,
+		s.po.Filename,
+		"",
+		ct,
+		s.po.ReturnAttachment,
+	)
+
+	// Write the Content-Disposition header
+	s.rw.Header().Set(httpheaders.ContentDisposition, cd)
 }
 
 // streamData copies the image data from the response body to the response writer

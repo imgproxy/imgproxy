@@ -199,14 +199,13 @@ func (w *Writer) setCSP() {
 // Write writes the headers to the response writer. It does not overwrite
 // target headers, which were set outside the header writer.
 func (w *Writer) Write(rw http.ResponseWriter) {
-	// By default, we set Cache-Control to No-Cache
-	w.setCacheControlNoCache()
-
 	// Then, let's try to set Cache-Control using priority order
 	switch {
 	case w.setCacheControl(w.maxAge): // First, try set explicit
 	case w.setCacheControlPassthrough(): // Try to pick up from request headers
 	case w.setCacheControl(w.config.DefaultTTL): // Fallback to default value
+	default:
+		w.setCacheControlNoCache() // By default we use no-cache
 	}
 
 	w.setCSP()
