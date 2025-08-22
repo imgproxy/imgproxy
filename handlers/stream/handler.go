@@ -114,7 +114,7 @@ func (s *request) execute(ctx context.Context) error {
 	hw.Passthrough(s.handler.config.PassthroughResponseHeaders) // NOTE: priority? This is lowest as it was
 	hw.SetContentLength(int(res.ContentLength))
 	hw.SetCanonical()
-	hw.SetForceExpires(s.po.Expires)
+	hw.SetExpires(s.po.Expires)
 	hw.Write(s.rw)
 
 	// Write Content-Disposition header

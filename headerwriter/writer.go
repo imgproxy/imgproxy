@@ -50,16 +50,16 @@ func New(config *Config, originalResponseHeaders http.Header, url string) *Write
 func (w *Writer) SetIsFallbackImage() {
 	// We set maxAge to FallbackImageTTL if it's explicitly passed
 	if w.config.FallbackImageTTL >= 0 {
-		w.maxAge = w.config.FallbackImageTTL
+		// However, we should not overwrite existing value if set (or greater than ours)
+		if w.maxAge < 0 || w.maxAge > w.config.FallbackImageTTL {
+			w.maxAge = w.config.FallbackImageTTL
+		}
 	}
-
-	w.result.Set(httpheaders.FallbackImage, "1")
 }
 
-// SetForceExpires sets the TTL from time
-func (w *Writer) SetForceExpires(force *time.Time) {
-	// Now, if force is passed as well
-	if force == nil {
+// SetExpires sets the TTL from time
+func (w *Writer) SetExpires(expires *time.Time) {
+	if expires == nil {
 		return
 	}
 
@@ -67,8 +67,8 @@ func (w *Writer) SetForceExpires(force *time.Time) {
 	currentMaxAgeTime := time.Now().Add(time.Duration(w.maxAge) * time.Second)
 
 	// If maxAge outlives expires or was not set, we'll use expires as maxAge.
-	if w.maxAge < 0 || force.Before(currentMaxAgeTime) {
-		w.maxAge = min(w.config.DefaultTTL, max(0, int(time.Until(*force).Seconds())))
+	if w.maxAge < 0 || expires.Before(currentMaxAgeTime) {
+		w.maxAge = min(w.config.DefaultTTL, max(0, int(time.Until(*expires).Seconds())))
 	}
 }
 

@@ -34,7 +34,6 @@ const (
 	Expect                          = "Expect"
 	ExpectCt                        = "Expect-Ct"
 	Expires                         = "Expires"
-	FallbackImage                   = "Fallback-Image"
 	Forwarded                       = "Forwarded"
 	Host                            = "Host"
 	IfMatch                         = "If-Match"

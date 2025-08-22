@@ -162,7 +162,6 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 			res: http.Header{
 				httpheaders.CacheControl:          []string{"max-age=1, public"},
 				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
-				httpheaders.FallbackImage:         []string{"1"},
 			},
 			config: Config{
 				DefaultTTL:       3600,
@@ -183,7 +182,7 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 				DefaultTTL: math.MaxInt32,
 			},
 			fn: func(w *Writer) {
-				w.SetForceExpires(&expires)
+				w.SetExpires(&expires)
 			},
 		},
 		{
@@ -192,7 +191,6 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 			res: http.Header{
 				httpheaders.CacheControl:          []string{fmt.Sprintf("max-age=%s, public", shortExpiresSeconds)},
 				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
-				httpheaders.FallbackImage:         []string{"1"},
 			},
 			config: Config{
 				DefaultTTL:       math.MaxInt32,
@@ -200,7 +198,7 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 			},
 			fn: func(w *Writer) {
 				w.SetIsFallbackImage()
-				w.SetForceExpires(&shortExpires)
+				w.SetExpires(&shortExpires)
 			},
 		},
 		{
@@ -286,7 +284,7 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 				DefaultTTL: 3600,
 			},
 			fn: func(w *Writer) {
-				w.SetForceExpires(nil)
+				w.SetExpires(nil)
 			},
 		},
 		{
