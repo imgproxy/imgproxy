@@ -17,6 +17,8 @@ import (
 	"github.com/imgproxy/imgproxy/v3/cookies"
 	"github.com/imgproxy/imgproxy/v3/errorreport"
 	"github.com/imgproxy/imgproxy/v3/etag"
+	"github.com/imgproxy/imgproxy/v3/handlers/stream"
+	"github.com/imgproxy/imgproxy/v3/headerwriter"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
@@ -275,7 +277,11 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) err
 	}
 
 	if po.Raw {
-		return streamOriginImage(ctx, reqID, r, rw, po, imageURL)
+		// TODO: Move this up
+		cfg := stream.NewConfigFromEnv()
+		hwCfg := headerwriter.NewConfigFromEnv()
+		handler := stream.New(cfg, hwCfg, imagedata.Fetcher)
+		return handler.Execute(ctx, r, imageURL, reqID, po, rw)
 	}
 
 	// SVG is a special case. Though saving to svg is not supported, SVG->SVG is.

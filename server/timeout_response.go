@@ -34,11 +34,6 @@ func (rw *timeoutResponse) Write(b []byte) (int, error) {
 	return n, err
 }
 
-// Header returns current HTTP headers
-func (rw *timeoutResponse) Header() http.Header {
-	return rw.ResponseWriter.Header()
-}
-
 // withWriteDeadline executes a Write* function with a deadline
 func (rw *timeoutResponse) withWriteDeadline(f func()) {
 	deadline := time.Now().Add(rw.timeout)
