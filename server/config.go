@@ -19,6 +19,7 @@ type Config struct {
 	PathPrefix            string        // Path prefix for the server
 	MaxClients            int           // Maximum number of concurrent clients
 	ReadRequestTimeout    time.Duration // Timeout for reading requests
+	WriteResponseTimeout  time.Duration // Timeout for writing responses
 	KeepAliveTimeout      time.Duration // Timeout for keep-alive connections
 	GracefulTimeout       time.Duration // Timeout for graceful shutdown
 	CORSAllowOrigin       string        // CORS allowed origin
@@ -26,24 +27,47 @@ type Config struct {
 	DevelopmentErrorsMode bool          // Enable development mode for detailed error messages
 	SocketReusePort       bool          // Enable SO_REUSEPORT socket option
 	HealthCheckPath       string        // Health check path from config
-	WriteResponseTimeout  time.Duration
 }
 
-// NewConfigFromEnv creates a new Config instance from environment variables
-func NewConfigFromEnv() *Config {
+// NewDefaultConfig returns default config values
+func NewDefaultConfig() *Config {
 	return &Config{
-		Network:               config.Network,
-		Bind:                  config.Bind,
-		PathPrefix:            config.PathPrefix,
-		MaxClients:            config.MaxClients,
-		ReadRequestTimeout:    time.Duration(config.ReadRequestTimeout) * time.Second,
-		KeepAliveTimeout:      time.Duration(config.KeepAliveTimeout) * time.Second,
+		Network:               "tcp",
+		Bind:                  ":8080",
+		PathPrefix:            "",
+		MaxClients:            2048,
+		ReadRequestTimeout:    10 * time.Second,
+		KeepAliveTimeout:      10 * time.Second,
+		WriteResponseTimeout:  10 * time.Second,
 		GracefulTimeout:       gracefulTimeout,
-		CORSAllowOrigin:       config.AllowOrigin,
-		Secret:                config.Secret,
-		DevelopmentErrorsMode: config.DevelopmentErrorsMode,
-		SocketReusePort:       config.SoReuseport,
-		HealthCheckPath:       config.HealthCheckPath,
-		WriteResponseTimeout:  time.Duration(config.WriteResponseTimeout) * time.Second,
+		CORSAllowOrigin:       "",
+		Secret:                "",
+		DevelopmentErrorsMode: false,
+		SocketReusePort:       false,
+		HealthCheckPath:       "",
 	}
+}
+
+// OverrideFromEnv overrides current values with environment variables
+func (c *Config) OverrideFromEnv() *Config {
+	c.Network = config.Network
+	c.Bind = config.Bind
+	c.PathPrefix = config.PathPrefix
+	c.MaxClients = config.MaxClients
+	c.ReadRequestTimeout = time.Duration(config.ReadRequestTimeout) * time.Second
+	c.KeepAliveTimeout = time.Duration(config.KeepAliveTimeout) * time.Second
+	c.GracefulTimeout = gracefulTimeout
+	c.CORSAllowOrigin = config.AllowOrigin
+	c.Secret = config.Secret
+	c.DevelopmentErrorsMode = config.DevelopmentErrorsMode
+	c.SocketReusePort = config.SoReuseport
+	c.HealthCheckPath = config.HealthCheckPath
+
+	return c
+}
+
+// NewConfigFromEnv creates a default Config instance and overrides values from the
+// environment (that's a shortcut)
+func NewConfigFromEnv() *Config {
+	return NewDefaultConfig().OverrideFromEnv()
 }
