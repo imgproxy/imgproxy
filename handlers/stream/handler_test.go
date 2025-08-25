@@ -52,18 +52,14 @@ func (s *HandlerTestSuite) SetupTest() {
 	tr, err := transport.NewTransport()
 	s.Require().NoError(err)
 
-	fc, err := imagefetcher.NewDefaultConfig().LoadFromEnv()
-	s.Require().NoError(err)
+	fc := imagefetcher.NewDefaultConfig()
 
 	fetcher, err := imagefetcher.NewFetcher(tr, fc)
 	s.Require().NoError(err)
 
-	cfg, err := NewDefaultConfig().LoadFromEnv()
-	s.Require().NoError(err)
+	cfg := NewDefaultConfig()
 
-	hwc, err := headerwriter.NewDefaultConfig().LoadFromEnv()
-	s.Require().NoError(err)
-
+	hwc := headerwriter.NewDefaultConfig()
 	hw, err := headerwriter.New(hwc)
 	s.Require().NoError(err)
 
@@ -221,8 +217,7 @@ func (s *HandlerTestSuite) TestHandlerCacheControl() {
 		oneMinuteDelta   = float64(time.Minute)
 	)
 
-	// Set this explicitly for testing purposes
-	config.TTL = 4242
+	defaultTTL := 4242
 
 	testCases := []testCase{
 		{
@@ -262,7 +257,7 @@ func (s *HandlerTestSuite) TestHandlerCacheControl() {
 			timestampOffset:    nil,
 			expectedStatusCode: 200,
 			validate: func(t *testing.T, res *http.Response) {
-				s.Require().Equal(s.maxAgeValue(res), time.Duration(config.TTL)*time.Second)
+				s.Require().Equal(s.maxAgeValue(res), time.Duration(defaultTTL)*time.Second)
 			},
 		},
 		// When expires is set in processing options, but not present in the response
@@ -334,17 +329,13 @@ func (s *HandlerTestSuite) TestHandlerCacheControl() {
 			timestampOffset:         nil,
 			expectedStatusCode:      200,
 			validate: func(t *testing.T, res *http.Response) {
-				s.Require().Equal(s.maxAgeValue(res), time.Duration(config.TTL)*time.Second)
+				s.Require().Equal(s.maxAgeValue(res), time.Duration(defaultTTL)*time.Second)
 			},
 		},
 	}
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			// Set config values for this test
-			config.CacheControlPassthrough = tc.cacheControlPassthrough
-			config.TTL = 4242 // Set consistent TTL for testing
-
 			data := s.readTestFile("test1.png")
 
 			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -359,17 +350,15 @@ func (s *HandlerTestSuite) TestHandlerCacheControl() {
 			tr, err := transport.NewTransport()
 			s.Require().NoError(err)
 
-			fc, err := imagefetcher.NewDefaultConfig().LoadFromEnv()
-			s.Require().NoError(err)
+			fc := imagefetcher.NewDefaultConfig()
 
 			fetcher, err := imagefetcher.NewFetcher(tr, fc)
 			s.Require().NoError(err)
 
-			cfg, err := NewDefaultConfig().LoadFromEnv()
-			s.Require().NoError(err)
-
-			hwc, err := headerwriter.NewDefaultConfig().LoadFromEnv()
-			s.Require().NoError(err)
+			cfg := NewDefaultConfig()
+			hwc := headerwriter.NewDefaultConfig()
+			hwc.CacheControlPassthrough = tc.cacheControlPassthrough
+			hwc.DefaultTTL = 4242
 
 			hw, err := headerwriter.New(hwc)
 			s.Require().NoError(err)
@@ -451,28 +440,18 @@ func (s *HandlerTestSuite) TestHandlerErrorResponse() {
 
 // TestHandlerCookiePassthrough tests the cookie passthrough behavior of the streaming service.
 func (s *HandlerTestSuite) TestHandlerCookiePassthrough() {
-	// Enable cookie passthrough for this test
-	config.CookiePassthrough = true
-	defer func() {
-		config.CookiePassthrough = false // Reset after test
-	}()
-
 	// Create new handler with updated config
 	tr, err := transport.NewTransport()
 	s.Require().NoError(err)
 
-	fc, err := imagefetcher.NewDefaultConfig().LoadFromEnv()
-	s.Require().NoError(err)
-
+	fc := imagefetcher.NewDefaultConfig()
 	fetcher, err := imagefetcher.NewFetcher(tr, fc)
 	s.Require().NoError(err)
 
-	cfg, err := NewDefaultConfig().LoadFromEnv()
-	s.Require().NoError(err)
+	cfg := NewDefaultConfig()
+	cfg.CookiePassthrough = true
 
-	hwc, err := headerwriter.NewDefaultConfig().LoadFromEnv()
-	s.Require().NoError(err)
-
+	hwc := headerwriter.NewDefaultConfig()
 	hw, err := headerwriter.New(hwc)
 	s.Require().NoError(err)
 
@@ -518,23 +497,18 @@ func (s *HandlerTestSuite) TestHandlerCanonicalHeader() {
 	defer ts.Close()
 
 	for _, sc := range []bool{true, false} {
-		config.SetCanonicalHeader = sc
-
 		// Create new handler with updated config
 		tr, err := transport.NewTransport()
 		s.Require().NoError(err)
 
-		fc, err := imagefetcher.NewDefaultConfig().LoadFromEnv()
-		s.Require().NoError(err)
-
+		fc := imagefetcher.NewDefaultConfig()
 		fetcher, err := imagefetcher.NewFetcher(tr, fc)
 		s.Require().NoError(err)
 
-		cfg, err := NewDefaultConfig().LoadFromEnv()
-		s.Require().NoError(err)
+		cfg := NewDefaultConfig()
+		hwc := headerwriter.NewDefaultConfig()
 
-		hwc, err := headerwriter.NewDefaultConfig().LoadFromEnv()
-		s.Require().NoError(err)
+		hwc.SetCanonicalHeader = sc
 
 		hw, err := headerwriter.New(hwc)
 		s.Require().NoError(err)

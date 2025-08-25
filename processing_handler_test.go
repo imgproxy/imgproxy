@@ -48,9 +48,7 @@ func (s *ProcessingHandlerTestSuite) SetupSuite() {
 
 	logrus.SetOutput(io.Discard)
 
-	cfg, err := server.NewDefaultConfig().LoadFromEnv()
-	s.Require().NoError(err)
-
+	cfg := server.NewDefaultConfig()
 	r, err := server.NewRouter(cfg)
 	s.Require().NoError(err)
 

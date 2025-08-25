@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/stretchr/testify/suite"
 )
@@ -21,10 +20,7 @@ type ServerTestSuite struct {
 }
 
 func (s *ServerTestSuite) SetupTest() {
-	config.Reset()
-	c, err := NewDefaultConfig().LoadFromEnv()
-	s.Require().NoError(err)
-	s.Require().NoError(c.Validate())
+	c := NewDefaultConfig()
 
 	s.config = c
 	s.config.Bind = "127.0.0.1:0" // Use port 0 for auto-assignment

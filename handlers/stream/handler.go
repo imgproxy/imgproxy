@@ -35,9 +35,9 @@ var (
 
 // Handler handles image passthrough requests, allowing images to be streamed directly
 type Handler struct {
-	fetcher *imagefetcher.Fetcher // Fetcher instance to handle image fetching
 	config  *Config               // Configuration for the streamer
-	hw      *headerwriter.Writer  // Configuration for header writing
+	fetcher *imagefetcher.Fetcher // Fetcher instance to handle image fetching
+	hw      *headerwriter.Writer  // Configured HeaderWriter instance
 }
 
 // request holds the parameters and state for a single streaming request

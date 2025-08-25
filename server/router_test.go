@@ -16,8 +16,7 @@ type RouterTestSuite struct {
 }
 
 func (s *RouterTestSuite) SetupTest() {
-	c, err := NewDefaultConfig().LoadFromEnv()
-	s.Require().NoError(err)
+	c := NewDefaultConfig()
 
 	c.PathPrefix = "/api"
 	r, err := NewRouter(c)
