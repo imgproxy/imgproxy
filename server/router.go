@@ -65,21 +65,20 @@ func (r *Router) add(method, prefix string, exact bool, handler RouteHandler, mi
 		exact:   exact,
 	}
 
-	// By default, we append to the end
-	index := len(r.routes)
+	r.routes = append(r.routes, newRoute)
 
-	// If route is exact, find the index of the latest exact route
-	if exact {
-		// Exact routes should be placed before non-exact
-		index = 0
-		for i, rt := range r.routes {
-			if rt.exact {
-				index = i + 1
-			}
+	// Sort routes by exact flag, exact routes go first in the
+	// same order they were added
+	slices.SortStableFunc(r.routes, func(a, b *route) int {
+		switch {
+		case a.exact == b.exact:
+			return 0
+		case a.exact:
+			return -1
+		default:
+			return 1
 		}
-	}
-
-	r.routes = slices.Insert(r.routes, index, newRoute)
+	})
 
 	return newRoute
 }
