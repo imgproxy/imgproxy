@@ -80,11 +80,7 @@ func (f *Fetcher) BuildRequest(ctx context.Context, url string, header http.Head
 	req.Header.Set(httpheaders.UserAgent, config.UserAgent)
 
 	// Set headers
-	for k, v := range header {
-		if len(v) > 0 {
-			req.Header.Set(k, v[0])
-		}
-	}
+	httpheaders.CopyToRequest(header, req)
 
 	return &Request{f, req, cancel}, nil
 }

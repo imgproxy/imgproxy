@@ -17,6 +17,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/testutil"
@@ -55,11 +56,7 @@ func (s *ImageDataTestSuite) SetupSuite() {
 			s.check(r)
 		}
 
-		for k, vv := range s.header {
-			for _, v := range vv {
-				rw.Header().Add(k, v)
-			}
-		}
+		httpheaders.CopyAll(s.header, rw.Header(), true)
 
 		data := s.data
 		if data == nil {
