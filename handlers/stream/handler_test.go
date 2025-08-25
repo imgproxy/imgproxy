@@ -52,10 +52,24 @@ func (s *HandlerTestSuite) SetupTest() {
 	tr, err := transport.NewTransport()
 	s.Require().NoError(err)
 
-	fetcher, err := imagefetcher.NewFetcher(tr, imagefetcher.NewConfigFromEnv())
+	fc, err := imagefetcher.NewDefaultConfig().LoadFromEnv()
 	s.Require().NoError(err)
 
-	s.handler = New(NewConfigFromEnv(), headerwriter.NewConfigFromEnv(), fetcher)
+	fetcher, err := imagefetcher.NewFetcher(tr, fc)
+	s.Require().NoError(err)
+
+	cfg, err := NewDefaultConfig().LoadFromEnv()
+	s.Require().NoError(err)
+
+	hwc, err := headerwriter.NewDefaultConfig().LoadFromEnv()
+	s.Require().NoError(err)
+
+	hw, err := headerwriter.New(hwc)
+	s.Require().NoError(err)
+
+	h, err := New(cfg, hw, fetcher)
+	s.Require().NoError(err)
+	s.handler = h
 }
 
 func (s *HandlerTestSuite) readTestFile(name string) []byte {
@@ -345,10 +359,23 @@ func (s *HandlerTestSuite) TestHandlerCacheControl() {
 			tr, err := transport.NewTransport()
 			s.Require().NoError(err)
 
-			fetcher, err := imagefetcher.NewFetcher(tr, imagefetcher.NewConfigFromEnv())
+			fc, err := imagefetcher.NewDefaultConfig().LoadFromEnv()
 			s.Require().NoError(err)
 
-			handler := New(NewConfigFromEnv(), headerwriter.NewConfigFromEnv(), fetcher)
+			fetcher, err := imagefetcher.NewFetcher(tr, fc)
+			s.Require().NoError(err)
+
+			cfg, err := NewDefaultConfig().LoadFromEnv()
+			s.Require().NoError(err)
+
+			hwc, err := headerwriter.NewDefaultConfig().LoadFromEnv()
+			s.Require().NoError(err)
+
+			hw, err := headerwriter.New(hwc)
+			s.Require().NoError(err)
+
+			handler, err := New(cfg, hw, fetcher)
+			s.Require().NoError(err)
 
 			req := httptest.NewRequest("GET", "/", nil)
 			rw := httptest.NewRecorder()
@@ -434,10 +461,23 @@ func (s *HandlerTestSuite) TestHandlerCookiePassthrough() {
 	tr, err := transport.NewTransport()
 	s.Require().NoError(err)
 
-	fetcher, err := imagefetcher.NewFetcher(tr, imagefetcher.NewConfigFromEnv())
+	fc, err := imagefetcher.NewDefaultConfig().LoadFromEnv()
 	s.Require().NoError(err)
 
-	handler := New(NewConfigFromEnv(), headerwriter.NewConfigFromEnv(), fetcher)
+	fetcher, err := imagefetcher.NewFetcher(tr, fc)
+	s.Require().NoError(err)
+
+	cfg, err := NewDefaultConfig().LoadFromEnv()
+	s.Require().NoError(err)
+
+	hwc, err := headerwriter.NewDefaultConfig().LoadFromEnv()
+	s.Require().NoError(err)
+
+	hw, err := headerwriter.New(hwc)
+	s.Require().NoError(err)
+
+	handler, err := New(cfg, hw, fetcher)
+	s.Require().NoError(err)
 
 	data := s.readTestFile("test1.png")
 
@@ -484,10 +524,23 @@ func (s *HandlerTestSuite) TestHandlerCanonicalHeader() {
 		tr, err := transport.NewTransport()
 		s.Require().NoError(err)
 
-		fetcher, err := imagefetcher.NewFetcher(tr, imagefetcher.NewConfigFromEnv())
+		fc, err := imagefetcher.NewDefaultConfig().LoadFromEnv()
 		s.Require().NoError(err)
 
-		handler := New(NewConfigFromEnv(), headerwriter.NewConfigFromEnv(), fetcher)
+		fetcher, err := imagefetcher.NewFetcher(tr, fc)
+		s.Require().NoError(err)
+
+		cfg, err := NewDefaultConfig().LoadFromEnv()
+		s.Require().NoError(err)
+
+		hwc, err := headerwriter.NewDefaultConfig().LoadFromEnv()
+		s.Require().NoError(err)
+
+		hw, err := headerwriter.New(hwc)
+		s.Require().NoError(err)
+
+		handler, err := New(cfg, hw, fetcher)
+		s.Require().NoError(err)
 
 		req := httptest.NewRequest("GET", "/", nil)
 		rw := httptest.NewRecorder()

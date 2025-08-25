@@ -48,8 +48,12 @@ type Router struct {
 }
 
 // NewRouter creates a new Router instance
-func NewRouter(config *Config) *Router {
-	return &Router{config: config}
+func NewRouter(config *Config) (*Router, error) {
+	if err := config.Validate(); err != nil {
+		return nil, err
+	}
+
+	return &Router{config: config}, nil
 }
 
 // add adds an abitary route to the router

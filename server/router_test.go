@@ -16,9 +16,14 @@ type RouterTestSuite struct {
 }
 
 func (s *RouterTestSuite) SetupTest() {
-	c := NewConfigFromEnv()
+	c, err := NewDefaultConfig().LoadFromEnv()
+	s.Require().NoError(err)
+
 	c.PathPrefix = "/api"
-	s.router = NewRouter(c)
+	r, err := NewRouter(c)
+	s.Require().NoError(err)
+
+	s.router = r
 }
 
 // TestHTTPMethods tests route methods registration and HTTP requests

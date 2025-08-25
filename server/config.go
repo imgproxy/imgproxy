@@ -1,6 +1,8 @@
 package server
 
 import (
+	"errors"
+	"fmt"
 	"time"
 
 	"github.com/imgproxy/imgproxy/v3/config"
@@ -49,7 +51,7 @@ func NewDefaultConfig() *Config {
 }
 
 // LoadFromEnv overrides current values with environment variables
-func (c *Config) LoadFromEnv() *Config {
+func (c *Config) LoadFromEnv() (*Config, error) {
 	c.Network = config.Network
 	c.Bind = config.Bind
 	c.PathPrefix = config.PathPrefix
@@ -63,11 +65,34 @@ func (c *Config) LoadFromEnv() *Config {
 	c.SocketReusePort = config.SoReuseport
 	c.HealthCheckPath = config.HealthCheckPath
 
-	return c
+	return c, nil
 }
 
-// NewConfigFromEnv creates a default Config instance and overrides values from the
-// environment (that's a shortcut)
-func NewConfigFromEnv() *Config {
-	return NewDefaultConfig().LoadFromEnv()
+// Validate checks that the config values are valid
+func (c *Config) Validate() error {
+	if len(c.Bind) == 0 {
+		return errors.New("bind address is not defined")
+	}
+
+	if c.MaxClients < 0 {
+		return fmt.Errorf("max clients number should be greater than or equal 0, now - %d", c.MaxClients)
+	}
+
+	if c.ReadRequestTimeout <= 0 {
+		return fmt.Errorf("read request timeout should be greater than 0, now - %d", c.ReadRequestTimeout)
+	}
+
+	if c.WriteResponseTimeout <= 0 {
+		return fmt.Errorf("write response timeout should be greater than 0, now - %d", c.WriteResponseTimeout)
+	}
+
+	if c.KeepAliveTimeout < 0 {
+		return fmt.Errorf("keep alive timeout should be greater than or equal to 0, now - %d", c.KeepAliveTimeout)
+	}
+
+	if c.GracefulTimeout < 0 {
+		return fmt.Errorf("graceful timeout should be greater than or equal to 0, now - %d", c.GracefulTimeout)
+	}
+
+	return nil
 }

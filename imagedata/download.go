@@ -40,7 +40,12 @@ func initDownloading() error {
 		return err
 	}
 
-	Fetcher, err = imagefetcher.NewFetcher(ts, imagefetcher.NewConfigFromEnv())
+	c, err := imagefetcher.NewDefaultConfig().LoadFromEnv()
+	if err != nil {
+		return ierrors.Wrap(err, 0, ierrors.WithPrefix("configuration error"))
+	}
+
+	Fetcher, err = imagefetcher.NewFetcher(ts, c)
 	if err != nil {
 		return ierrors.Wrap(err, 0, ierrors.WithPrefix("can't create image fetcher"))
 	}

@@ -17,7 +17,7 @@ const (
 	categoryDownload      = "download"
 	categoryProcessing    = "processing"
 	categoryIO            = "IO"
-	categoryStreaming     = "streaming"
+	categoryConfig        = "config(tmp)" // NOTE: THIS IS TEMPORARY
 )
 
 type (

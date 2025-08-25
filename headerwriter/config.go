@@ -1,6 +1,8 @@
 package headerwriter
 
 import (
+	"fmt"
+
 	"github.com/imgproxy/imgproxy/v3/config"
 )
 
@@ -29,7 +31,7 @@ func NewDefaultConfig() *Config {
 }
 
 // LoadFromEnv overrides configuration variables from environment
-func (c *Config) LoadFromEnv() *Config {
+func (c *Config) LoadFromEnv() (*Config, error) {
 	c.SetCanonicalHeader = config.SetCanonicalHeader
 	c.DefaultTTL = config.TTL
 	c.FallbackImageTTL = config.FallbackImageTTL
@@ -43,10 +45,18 @@ func (c *Config) LoadFromEnv() *Config {
 		config.AutoJxl ||
 		config.EnforceJxl
 
-	return c
+	return c, nil
 }
 
-// NewConfigFromEnv creates a new Config instance from the current configuration
-func NewConfigFromEnv() *Config {
-	return NewDefaultConfig().LoadFromEnv()
+// Validate checks config for errors
+func (c *Config) Validate() error {
+	if c.DefaultTTL < 0 {
+		return fmt.Errorf("image TTL should be greater than or equal to 0, now - %d", c.DefaultTTL)
+	}
+
+	if c.FallbackImageTTL < 0 {
+		return fmt.Errorf("fallback image TTL should be greater than or equal to 0, now - %d", c.FallbackImageTTL)
+	}
+
+	return nil
 }

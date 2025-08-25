@@ -48,7 +48,13 @@ func (s *ProcessingHandlerTestSuite) SetupSuite() {
 
 	logrus.SetOutput(io.Discard)
 
-	s.router = buildRouter(server.NewRouter(server.NewConfigFromEnv()))
+	cfg, err := server.NewDefaultConfig().LoadFromEnv()
+	s.Require().NoError(err)
+
+	r, err := server.NewRouter(cfg)
+	s.Require().NoError(err)
+
+	s.router = buildRouter(r)
 }
 
 func (s *ProcessingHandlerTestSuite) TeardownSuite() {

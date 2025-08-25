@@ -11,18 +11,27 @@ import (
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 )
 
-// Writer is a struct that builds HTTP response headers.
+// Writer is a struct that creates header writer factories.
 type Writer struct {
-	config                  *Config
+	config    *Config
+	varyValue string
+}
+
+// writer is a private struct that builds HTTP response headers for a specific request.
+type writer struct {
+	writer                  *Writer
 	originalResponseHeaders http.Header // Original response headers
 	result                  http.Header // Headers to be written to the response
 	maxAge                  int         // Current max age for Cache-Control header
 	url                     string      // URL of the request, used for canonical header
-	varyValue               string      // Vary header value
 }
 
-// New creates a new HeaderBuilder instance with the provided origin headers and URL
-func New(config *Config, originalResponseHeaders http.Header, url string) *Writer {
+// New creates a new header writer factory with the provided config.
+func New(config *Config) (*Writer, error) {
+	if err := config.Validate(); err != nil {
+		return nil, err
+	}
+
 	vary := make([]string, 0)
 
 	if config.SetVaryAccept {
@@ -36,31 +45,38 @@ func New(config *Config, originalResponseHeaders http.Header, url string) *Write
 	varyValue := strings.Join(vary, ", ")
 
 	return &Writer{
-		config:                  config,
+		config:    config,
+		varyValue: varyValue,
+	}, nil
+}
+
+// NewRequest creates a new header writer instance for a specific request with the provided origin headers and URL.
+func (w *Writer) NewRequest(originalResponseHeaders http.Header, url string) *writer {
+	return &writer{
+		writer:                  w,
 		originalResponseHeaders: originalResponseHeaders,
 		url:                     url,
 		result:                  make(http.Header),
 		maxAge:                  -1,
-		varyValue:               varyValue,
 	}
 }
 
 // SetIsFallbackImage sets the Fallback-Image header to
 // indicate that the fallback image was used.
-func (w *Writer) SetIsFallbackImage() {
+func (w *writer) SetIsFallbackImage() {
 	// We set maxAge to FallbackImageTTL if it's explicitly passed
-	if w.config.FallbackImageTTL < 0 {
+	if w.writer.config.FallbackImageTTL < 0 {
 		return
 	}
 
 	// However, we should not overwrite existing value if set (or greater than ours)
-	if w.maxAge < 0 || w.maxAge > w.config.FallbackImageTTL {
-		w.maxAge = w.config.FallbackImageTTL
+	if w.maxAge < 0 || w.maxAge > w.writer.config.FallbackImageTTL {
+		w.maxAge = w.writer.config.FallbackImageTTL
 	}
 }
 
 // SetExpires sets the TTL from time
-func (w *Writer) SetExpires(expires *time.Time) {
+func (w *writer) SetExpires(expires *time.Time) {
 	if expires == nil {
 		return
 	}
@@ -70,13 +86,13 @@ func (w *Writer) SetExpires(expires *time.Time) {
 
 	// If maxAge outlives expires or was not set, we'll use expires as maxAge.
 	if w.maxAge < 0 || expires.Before(currentMaxAgeTime) {
-		w.maxAge = min(w.config.DefaultTTL, max(0, int(time.Until(*expires).Seconds())))
+		w.maxAge = min(w.writer.config.DefaultTTL, max(0, int(time.Until(*expires).Seconds())))
 	}
 }
 
 // SetLastModified sets the Last-Modified header from request
-func (w *Writer) SetLastModified() {
-	if !w.config.LastModifiedEnabled {
+func (w *writer) SetLastModified() {
+	if !w.writer.config.LastModifiedEnabled {
 		return
 	}
 
@@ -89,14 +105,14 @@ func (w *Writer) SetLastModified() {
 }
 
 // SetVary sets the Vary header
-func (w *Writer) SetVary() {
-	if len(w.varyValue) > 0 {
-		w.result.Set(httpheaders.Vary, w.varyValue)
+func (w *writer) SetVary() {
+	if len(w.writer.varyValue) > 0 {
+		w.result.Set(httpheaders.Vary, w.writer.varyValue)
 	}
 }
 
 // Passthrough copies specified headers from the original response headers to the response headers.
-func (w *Writer) Passthrough(only []string) {
+func (w *writer) Passthrough(only []string) {
 	for _, key := range only {
 		values := w.originalResponseHeaders.Values(key)
 
@@ -108,7 +124,7 @@ func (w *Writer) Passthrough(only []string) {
 
 // CopyFrom copies specified headers from the headers object. Please note that
 // all the past operations may overwrite those values.
-func (w *Writer) CopyFrom(headers http.Header, only []string) {
+func (w *writer) CopyFrom(headers http.Header, only []string) {
 	for _, key := range only {
 		values := headers.Values(key)
 
@@ -119,7 +135,7 @@ func (w *Writer) CopyFrom(headers http.Header, only []string) {
 }
 
 // SetContentLength sets the Content-Length header
-func (w *Writer) SetContentLength(contentLength int) {
+func (w *writer) SetContentLength(contentLength int) {
 	if contentLength < 0 {
 		return
 	}
@@ -128,25 +144,25 @@ func (w *Writer) SetContentLength(contentLength int) {
 }
 
 // SetContentType sets the Content-Type header
-func (w *Writer) SetContentType(mime string) {
+func (w *writer) SetContentType(mime string) {
 	w.result.Set(httpheaders.ContentType, mime)
 }
 
 // writeCanonical sets the Link header with the canonical URL.
 // It is mandatory for any response if enabled in the configuration.
-func (b *Writer) SetCanonical() {
-	if !b.config.SetCanonicalHeader {
+func (w *writer) SetCanonical() {
+	if !w.writer.config.SetCanonicalHeader {
 		return
 	}
 
-	if strings.HasPrefix(b.url, "https://") || strings.HasPrefix(b.url, "http://") {
-		value := fmt.Sprintf(`<%s>; rel="canonical"`, b.url)
-		b.result.Set(httpheaders.Link, value)
+	if strings.HasPrefix(w.url, "https://") || strings.HasPrefix(w.url, "http://") {
+		value := fmt.Sprintf(`<%s>; rel="canonical"`, w.url)
+		w.result.Set(httpheaders.Link, value)
 	}
 }
 
 // setCacheControl sets the Cache-Control header with the specified value.
-func (w *Writer) setCacheControl(value int) bool {
+func (w *writer) setCacheControl(value int) bool {
 	if value <= 0 {
 		return false
 	}
@@ -156,14 +172,14 @@ func (w *Writer) setCacheControl(value int) bool {
 }
 
 // setCacheControlNoCache sets the Cache-Control header to no-cache (default).
-func (w *Writer) setCacheControlNoCache() {
+func (w *writer) setCacheControlNoCache() {
 	w.result.Set(httpheaders.CacheControl, "no-cache")
 }
 
 // setCacheControlPassthrough sets the Cache-Control header from the request
 // if passthrough is enabled in the configuration.
-func (w *Writer) setCacheControlPassthrough() bool {
-	if !w.config.CacheControlPassthrough || w.maxAge > 0 {
+func (w *writer) setCacheControlPassthrough() bool {
+	if !w.writer.config.CacheControlPassthrough || w.maxAge > 0 {
 		return false
 	}
 
@@ -183,18 +199,18 @@ func (w *Writer) setCacheControlPassthrough() bool {
 }
 
 // setCSP sets the Content-Security-Policy header to prevent script execution.
-func (w *Writer) setCSP() {
+func (w *writer) setCSP() {
 	w.result.Set(httpheaders.ContentSecurityPolicy, "script-src 'none'")
 }
 
 // Write writes the headers to the response writer. It does not overwrite
 // target headers, which were set outside the header writer.
-func (w *Writer) Write(rw http.ResponseWriter) {
+func (w *writer) Write(rw http.ResponseWriter) {
 	// Then, let's try to set Cache-Control using priority order
 	switch {
 	case w.setCacheControl(w.maxAge): // First, try set explicit
 	case w.setCacheControlPassthrough(): // Try to pick up from request headers
-	case w.setCacheControl(w.config.DefaultTTL): // Fallback to default value
+	case w.setCacheControl(w.writer.config.DefaultTTL): // Fallback to default value
 	default:
 		w.setCacheControlNoCache() // By default we use no-cache
 	}

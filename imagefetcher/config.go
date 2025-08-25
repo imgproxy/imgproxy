@@ -16,12 +16,12 @@ func NewDefaultConfig() *Config {
 }
 
 // LoadFromEnv loads config variables from env
-func (c *Config) LoadFromEnv() *Config {
+func (c *Config) LoadFromEnv() (*Config, error) {
 	c.MaxRedirects = config.MaxRedirects
-	return c
+	return c, nil
 }
 
-// NewConfigFromEnv creates a new Config instance from environment variables or defaults.
-func NewConfigFromEnv() *Config {
-	return NewDefaultConfig().LoadFromEnv()
+// Validate checks config for errors
+func (c *Config) Validate() error {
+	return nil
 }
