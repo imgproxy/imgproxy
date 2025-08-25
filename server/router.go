@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/http"
 	"regexp"
+	"slices"
 	"strings"
 
 	nanoid "github.com/matoous/go-nanoid/v2"
@@ -57,14 +58,30 @@ func (r *Router) add(method, prefix string, exact bool, handler RouteHandler, mi
 		handler = m(handler)
 	}
 
-	route := &route{method: method, path: r.config.PathPrefix + prefix, handler: handler, exact: exact}
+	newRoute := &route{
+		method:  method,
+		path:    r.config.PathPrefix + prefix,
+		handler: handler,
+		exact:   exact,
+	}
 
-	r.routes = append(
-		r.routes,
-		route,
-	)
+	// By default, we append to the end
+	index := len(r.routes)
 
-	return route
+	// If route is exact, find the index of the latest exact route
+	if exact {
+		// Exact routes should be placed before non-exact
+		index = 0
+		for i, rt := range r.routes {
+			if rt.exact {
+				index = i + 1
+			}
+		}
+	}
+
+	r.routes = slices.Insert(r.routes, index, newRoute)
+
+	return newRoute
 }
 
 // GET adds GET route

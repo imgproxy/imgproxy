@@ -48,8 +48,8 @@ func NewDefaultConfig() *Config {
 	}
 }
 
-// OverrideFromEnv overrides current values with environment variables
-func (c *Config) OverrideFromEnv() *Config {
+// LoadFromEnv overrides current values with environment variables
+func (c *Config) LoadFromEnv() *Config {
 	c.Network = config.Network
 	c.Bind = config.Bind
 	c.PathPrefix = config.PathPrefix
@@ -69,5 +69,5 @@ func (c *Config) OverrideFromEnv() *Config {
 // NewConfigFromEnv creates a default Config instance and overrides values from the
 // environment (that's a shortcut)
 func NewConfigFromEnv() *Config {
-	return NewDefaultConfig().OverrideFromEnv()
+	return NewDefaultConfig().LoadFromEnv()
 }
