@@ -113,25 +113,13 @@ func (w *writer) SetVary() {
 
 // Passthrough copies specified headers from the original response headers to the response headers.
 func (w *writer) Passthrough(only []string) {
-	for _, key := range only {
-		values := w.originalResponseHeaders.Values(key)
-
-		for _, value := range values {
-			w.result.Add(key, value)
-		}
-	}
+	httpheaders.Copy(w.originalResponseHeaders, w.result, only)
 }
 
 // CopyFrom copies specified headers from the headers object. Please note that
 // all the past operations may overwrite those values.
 func (w *writer) CopyFrom(headers http.Header, only []string) {
-	for _, key := range only {
-		values := headers.Values(key)
-
-		for _, value := range values {
-			w.result.Add(key, value)
-		}
-	}
+	httpheaders.Copy(headers, w.result, only)
 }
 
 // SetContentLength sets the Content-Length header
@@ -217,14 +205,6 @@ func (w *writer) Write(rw http.ResponseWriter) {
 
 	w.setCSP()
 
-	for key, values := range w.result {
-		// Do not overwrite existing headers which were set outside the header writer
-		if len(rw.Header().Get(key)) > 0 {
-			continue
-		}
-
-		for _, value := range values {
-			rw.Header().Add(key, value)
-		}
-	}
+	// Copy all headers to the response without overwriting existing ones
+	httpheaders.CopyAll(w.result, rw.Header(), false)
 }

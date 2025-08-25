@@ -147,14 +147,7 @@ func (s *request) getCookieJar() (http.CookieJar, error) {
 // the headers that should be passed through from the user request
 func (s *request) getImageRequestHeaders() http.Header {
 	h := make(http.Header)
-
-	for _, key := range s.handler.config.PassthroughRequestHeaders {
-		values := s.imageRequest.Header.Values(key)
-
-		for _, value := range values {
-			h.Add(key, value)
-		}
-	}
+	httpheaders.CopyFromRequest(s.imageRequest, h, s.handler.config.PassthroughRequestHeaders)
 
 	return h
 }
