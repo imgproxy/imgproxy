@@ -17,10 +17,10 @@ type Config struct {
 	PassthroughResponseHeaders []string
 }
 
-// NewConfigFromEnv creates a new Config instance from environment variables
-func NewConfigFromEnv() *Config {
+// NewDefaultConfig returns a new Config instance with default values.
+func NewDefaultConfig() *Config {
 	return &Config{
-		CookiePassthrough: config.CookiePassthrough,
+		CookiePassthrough: false,
 		PassthroughRequestHeaders: []string{
 			httpheaders.IfNoneMatch,
 			httpheaders.IfModifiedSince,
@@ -36,4 +36,15 @@ func NewConfigFromEnv() *Config {
 			httpheaders.Etag,
 		},
 	}
+}
+
+// LoadFromEnv loads config variables from environment
+func (c *Config) LoadFromEnv() (*Config, error) {
+	c.CookiePassthrough = config.CookiePassthrough
+	return c, nil
+}
+
+// Validate checks config for errors
+func (c *Config) Validate() error {
+	return nil
 }

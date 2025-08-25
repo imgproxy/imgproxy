@@ -1,6 +1,8 @@
 package headerwriter
 
 import (
+	"fmt"
+
 	"github.com/imgproxy/imgproxy/v3/config"
 )
 
@@ -15,20 +17,46 @@ type Config struct {
 	SetVaryAccept           bool // Whether to include Accept in Vary header
 }
 
-// NewConfigFromEnv creates a new Config instance from the current configuration
-func NewConfigFromEnv() *Config {
+// NewDefaultConfig returns a new Config instance with default values.
+func NewDefaultConfig() *Config {
 	return &Config{
-		SetCanonicalHeader:      config.SetCanonicalHeader,
-		DefaultTTL:              config.TTL,
-		FallbackImageTTL:        config.FallbackImageTTL,
-		LastModifiedEnabled:     config.LastModifiedEnabled,
-		CacheControlPassthrough: config.CacheControlPassthrough,
-		EnableClientHints:       config.EnableClientHints,
-		SetVaryAccept: config.AutoWebp ||
-			config.EnforceWebp ||
-			config.AutoAvif ||
-			config.EnforceAvif ||
-			config.AutoJxl ||
-			config.EnforceJxl,
+		SetCanonicalHeader:      false,
+		DefaultTTL:              31536000,
+		FallbackImageTTL:        0,
+		LastModifiedEnabled:     false,
+		CacheControlPassthrough: false,
+		EnableClientHints:       false,
+		SetVaryAccept:           false,
 	}
+}
+
+// LoadFromEnv overrides configuration variables from environment
+func (c *Config) LoadFromEnv() (*Config, error) {
+	c.SetCanonicalHeader = config.SetCanonicalHeader
+	c.DefaultTTL = config.TTL
+	c.FallbackImageTTL = config.FallbackImageTTL
+	c.LastModifiedEnabled = config.LastModifiedEnabled
+	c.CacheControlPassthrough = config.CacheControlPassthrough
+	c.EnableClientHints = config.EnableClientHints
+	c.SetVaryAccept = config.AutoWebp ||
+		config.EnforceWebp ||
+		config.AutoAvif ||
+		config.EnforceAvif ||
+		config.AutoJxl ||
+		config.EnforceJxl
+
+	return c, nil
+}
+
+// Validate checks config for errors
+func (c *Config) Validate() error {
+	if c.DefaultTTL < 0 {
+		return fmt.Errorf("image TTL should be greater than or equal to 0, now - %d", c.DefaultTTL)
+	}
+
+	if c.FallbackImageTTL < 0 {
+		return fmt.Errorf("fallback image TTL should be greater than or equal to 0, now - %d", c.FallbackImageTTL)
+	}
+
+	return nil
 }

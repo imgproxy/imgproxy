@@ -8,9 +8,20 @@ type Config struct {
 	MaxRedirects int
 }
 
-// NewConfigFromEnv creates a new Config instance from environment variables or defaults.
-func NewConfigFromEnv() *Config {
+// NewDefaultConfig returns a new Config instance with default values.
+func NewDefaultConfig() *Config {
 	return &Config{
-		MaxRedirects: config.MaxRedirects,
+		MaxRedirects: 10,
 	}
+}
+
+// LoadFromEnv loads config variables from env
+func (c *Config) LoadFromEnv() (*Config, error) {
+	c.MaxRedirects = config.MaxRedirects
+	return c, nil
+}
+
+// Validate checks config for errors
+func (c *Config) Validate() error {
+	return nil
 }

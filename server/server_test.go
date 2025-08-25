@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/stretchr/testify/suite"
 )
@@ -21,10 +20,13 @@ type ServerTestSuite struct {
 }
 
 func (s *ServerTestSuite) SetupTest() {
-	config.Reset()
-	s.config = NewConfigFromEnv()
+	c := NewDefaultConfig()
+
+	s.config = c
 	s.config.Bind = "127.0.0.1:0" // Use port 0 for auto-assignment
-	s.blankRouter = NewRouter(s.config)
+	r, err := NewRouter(s.config)
+	s.Require().NoError(err)
+	s.blankRouter = r
 }
 
 func (s *ServerTestSuite) mockHandler(reqID string, rw http.ResponseWriter, r *http.Request) error {
@@ -41,12 +43,11 @@ func (s *ServerTestSuite) TestStartServerWithInvalidBind() {
 		cancelCalled.Store(true)
 	}
 
-	invalidConfig := &Config{
-		Network: "tcp",
-		Bind:    "invalid-address", // Invalid address
-	}
+	invalidConfig := NewDefaultConfig()
+	invalidConfig.Bind = "-1.-1.-1.-1" // Invalid address
 
-	r := NewRouter(invalidConfig)
+	r, err := NewRouter(invalidConfig)
+	s.Require().NoError(err)
 
 	server, err := Start(cancelWrapper, r)
 
@@ -109,10 +110,11 @@ func (s *ServerTestSuite) TestWithCORS() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			config := &Config{
-				CORSAllowOrigin: tt.corsAllowOrigin,
-			}
-			router := NewRouter(config)
+			config := NewDefaultConfig()
+			config.CORSAllowOrigin = tt.corsAllowOrigin
+
+			router, err := NewRouter(config)
+			s.Require().NoError(err)
 
 			wrappedHandler := router.WithCORS(s.mockHandler)
 
@@ -154,10 +156,11 @@ func (s *ServerTestSuite) TestWithSecret() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			config := &Config{
-				Secret: tt.secret,
-			}
-			router := NewRouter(config)
+			config := NewDefaultConfig()
+			config.Secret = tt.secret
+
+			router, err := NewRouter(config)
+			s.Require().NoError(err)
 
 			wrappedHandler := router.WithSecret(s.mockHandler)
 
@@ -167,7 +170,7 @@ func (s *ServerTestSuite) TestWithSecret() {
 			}
 			rw := httptest.NewRecorder()
 
-			err := wrappedHandler("test-req-id", rw, req)
+			err = wrappedHandler("test-req-id", rw, req)
 
 			if tt.expectError {
 				s.Require().Error(err)

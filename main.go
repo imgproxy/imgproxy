@@ -137,8 +137,16 @@ func run(ctx context.Context) error {
 		return err
 	}
 
-	cfg := server.NewConfigFromEnv()
-	r := server.NewRouter(cfg)
+	cfg, err := server.NewDefaultConfig().LoadFromEnv()
+	if err != nil {
+		return err
+	}
+
+	r, err := server.NewRouter(cfg)
+	if err != nil {
+		return err
+	}
+
 	s, err := server.Start(cancel, buildRouter(r))
 	if err != nil {
 		return err

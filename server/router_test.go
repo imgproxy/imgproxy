@@ -16,13 +16,13 @@ type RouterTestSuite struct {
 }
 
 func (s *RouterTestSuite) SetupTest() {
-	c := NewConfigFromEnv()
-	c.PathPrefix = "/api"
-	s.router = NewRouter(c)
-}
+	c := NewDefaultConfig()
 
-func TestRouterSuite(t *testing.T) {
-	suite.Run(t, new(RouterTestSuite))
+	c.PathPrefix = "/api"
+	r, err := NewRouter(c)
+	s.Require().NoError(err)
+
+	s.router = r
 }
 
 // TestHTTPMethods tests route methods registration and HTTP requests
@@ -293,4 +293,24 @@ func (s *RouterTestSuite) TestReplaceIP() {
 			s.Require().Equal(tt.expectedAddr, capturedRemoteAddr)
 		})
 	}
+}
+
+// TestRouteOrder checks exact/non-exact insertion order
+func (s *RouterTestSuite) TestRouteOrder() {
+
+	h := func(reqID string, rw http.ResponseWriter, req *http.Request) error {
+		return nil
+	}
+
+	s.router.GET("/test", false, h)
+	s.router.GET("/test/path", true, h)
+	s.router.GET("/test/path/nested", true, h)
+
+	s.Require().Equal("/api/test/path", s.router.routes[0].path)
+	s.Require().Equal("/api/test/path/nested", s.router.routes[1].path)
+	s.Require().Equal("/api/test", s.router.routes[2].path)
+}
+
+func TestRouterSuite(t *testing.T) {
+	suite.Run(t, new(RouterTestSuite))
 }

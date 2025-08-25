@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/http"
 	"regexp"
+	"slices"
 	"strings"
 
 	nanoid "github.com/matoous/go-nanoid/v2"
@@ -47,8 +48,12 @@ type Router struct {
 }
 
 // NewRouter creates a new Router instance
-func NewRouter(config *Config) *Router {
-	return &Router{config: config}
+func NewRouter(config *Config) (*Router, error) {
+	if err := config.Validate(); err != nil {
+		return nil, err
+	}
+
+	return &Router{config: config}, nil
 }
 
 // add adds an abitary route to the router
@@ -57,14 +62,29 @@ func (r *Router) add(method, prefix string, exact bool, handler RouteHandler, mi
 		handler = m(handler)
 	}
 
-	route := &route{method: method, path: r.config.PathPrefix + prefix, handler: handler, exact: exact}
+	newRoute := &route{
+		method:  method,
+		path:    r.config.PathPrefix + prefix,
+		handler: handler,
+		exact:   exact,
+	}
 
-	r.routes = append(
-		r.routes,
-		route,
-	)
+	r.routes = append(r.routes, newRoute)
 
-	return route
+	// Sort routes by exact flag, exact routes go first in the
+	// same order they were added
+	slices.SortStableFunc(r.routes, func(a, b *route) int {
+		switch {
+		case a.exact == b.exact:
+			return 0
+		case a.exact:
+			return -1
+		default:
+			return 1
+		}
+	})
+
+	return newRoute
 }
 
 // GET adds GET route

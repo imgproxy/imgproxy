@@ -23,7 +23,7 @@ type writerTestCase struct {
 	req    http.Header
 	res    http.Header
 	config Config
-	fn     func(*Writer)
+	fn     func(*writer)
 }
 
 func (s *HeaderWriterSuite) TestHeaderCases() {
@@ -105,7 +105,7 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 				SetCanonicalHeader: true,
 				DefaultTTL:         3600,
 			},
-			fn: func(w *Writer) {
+			fn: func(w *writer) {
 				w.SetCanonical()
 			},
 		},
@@ -134,7 +134,7 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 				SetCanonicalHeader: false,
 				DefaultTTL:         3600,
 			},
-			fn: func(w *Writer) {
+			fn: func(w *writer) {
 				w.SetCanonical()
 			},
 		},
@@ -152,7 +152,7 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 				LastModifiedEnabled: true,
 				DefaultTTL:          3600,
 			},
-			fn: func(w *Writer) {
+			fn: func(w *writer) {
 				w.SetLastModified()
 			},
 		},
@@ -167,7 +167,7 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 				DefaultTTL:       3600,
 				FallbackImageTTL: 1,
 			},
-			fn: func(w *Writer) {
+			fn: func(w *writer) {
 				w.SetIsFallbackImage()
 			},
 		},
@@ -181,7 +181,7 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 			config: Config{
 				DefaultTTL: math.MaxInt32,
 			},
-			fn: func(w *Writer) {
+			fn: func(w *writer) {
 				w.SetExpires(&expires)
 			},
 		},
@@ -196,7 +196,7 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 				DefaultTTL:       math.MaxInt32,
 				FallbackImageTTL: 600,
 			},
-			fn: func(w *Writer) {
+			fn: func(w *writer) {
 				w.SetIsFallbackImage()
 				w.SetExpires(&shortExpires)
 			},
@@ -213,7 +213,7 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 				EnableClientHints: true,
 				SetVaryAccept:     true,
 			},
-			fn: func(w *Writer) {
+			fn: func(w *writer) {
 				w.SetVary()
 			},
 		},
@@ -228,7 +228,7 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
 			},
 			config: Config{},
-			fn: func(w *Writer) {
+			fn: func(w *writer) {
 				w.Passthrough([]string{"X-Test"})
 			},
 		},
@@ -241,7 +241,7 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
 			},
 			config: Config{},
-			fn: func(w *Writer) {
+			fn: func(w *writer) {
 				h := http.Header{}
 				h.Set("X-From", "baz")
 				w.CopyFrom(h, []string{"X-From"})
@@ -256,7 +256,7 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
 			},
 			config: Config{},
-			fn: func(w *Writer) {
+			fn: func(w *writer) {
 				w.SetContentLength(123)
 			},
 		},
@@ -269,7 +269,7 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
 			},
 			config: Config{},
-			fn: func(w *Writer) {
+			fn: func(w *writer) {
 				w.SetContentType("image/png")
 			},
 		},
@@ -283,7 +283,7 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 			config: Config{
 				DefaultTTL: 3600,
 			},
-			fn: func(w *Writer) {
+			fn: func(w *writer) {
 				w.SetExpires(nil)
 			},
 		},
@@ -298,7 +298,7 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 			config: Config{
 				SetVaryAccept: true,
 			},
-			fn: func(w *Writer) {
+			fn: func(w *writer) {
 				w.SetVary()
 			},
 		},
@@ -313,7 +313,7 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 			config: Config{
 				EnableClientHints: true,
 			},
-			fn: func(w *Writer) {
+			fn: func(w *writer) {
 				w.SetVary()
 			},
 		},
@@ -321,7 +321,10 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 
 	for _, tc := range tt {
 		s.Run(tc.name, func() {
-			writer := New(&tc.config, tc.req, tc.url)
+			factory, err := New(&tc.config)
+			s.Require().NoError(err)
+
+			writer := factory.NewRequest(tc.req, tc.url)
 
 			if tc.fn != nil {
 				tc.fn(writer)

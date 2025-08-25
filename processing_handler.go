@@ -277,10 +277,29 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) err
 	}
 
 	if po.Raw {
+		// NOTE: This is temporary, there would be no categoryConfig once we
+		// finish with refactoring.
 		// TODO: Move this up
-		cfg := stream.NewConfigFromEnv()
-		hwCfg := headerwriter.NewConfigFromEnv()
-		handler := stream.New(cfg, hwCfg, imagedata.Fetcher)
+		cfg, cerr := stream.NewDefaultConfig().LoadFromEnv()
+		if cerr != nil {
+			return ierrors.Wrap(cerr, 0, ierrors.WithCategory(categoryConfig))
+		}
+
+		hwc, cerr := headerwriter.NewDefaultConfig().LoadFromEnv()
+		if cerr != nil {
+			return ierrors.Wrap(cerr, 0, ierrors.WithCategory(categoryConfig))
+		}
+
+		hw, cerr := headerwriter.New(hwc)
+		if cerr != nil {
+			return ierrors.Wrap(cerr, 0, ierrors.WithCategory(categoryConfig))
+		}
+
+		handler, cerr := stream.New(cfg, hw, imagedata.Fetcher)
+		if cerr != nil {
+			return ierrors.Wrap(cerr, 0, ierrors.WithCategory(categoryConfig))
+		}
+
 		return handler.Execute(ctx, r, imageURL, reqID, po, rw)
 	}
 

@@ -35,9 +35,9 @@ var (
 
 // Handler handles image passthrough requests, allowing images to be streamed directly
 type Handler struct {
-	fetcher  *imagefetcher.Fetcher // Fetcher instance to handle image fetching
-	config   *Config               // Configuration for the streamer
-	hwConfig *headerwriter.Config  // Configuration for header writing
+	config  *Config               // Configuration for the streamer
+	fetcher *imagefetcher.Fetcher // Fetcher instance to handle image fetching
+	hw      *headerwriter.Writer  // Configured HeaderWriter instance
 }
 
 // request holds the parameters and state for a single streaming request
@@ -51,12 +51,16 @@ type request struct {
 }
 
 // New creates new handler object
-func New(config *Config, hwConfig *headerwriter.Config, fetcher *imagefetcher.Fetcher) *Handler {
-	return &Handler{
-		fetcher:  fetcher,
-		config:   config,
-		hwConfig: hwConfig,
+func New(config *Config, hw *headerwriter.Writer, fetcher *imagefetcher.Fetcher) (*Handler, error) {
+	if err := config.Validate(); err != nil {
+		return nil, err
 	}
+
+	return &Handler{
+		fetcher: fetcher,
+		config:  config,
+		hw:      hw,
+	}, nil
 }
 
 // Stream handles the image passthrough request, streaming the image directly to the response writer
@@ -110,7 +114,8 @@ func (s *request) execute(ctx context.Context) error {
 	}
 
 	// Output streaming response headers
-	hw := headerwriter.New(s.handler.hwConfig, res.Header, s.imageURL)
+	hw := s.handler.hw.NewRequest(res.Header, s.imageURL)
+
 	hw.Passthrough(s.handler.config.PassthroughResponseHeaders) // NOTE: priority? This is lowest as it was
 	hw.SetContentLength(int(res.ContentLength))
 	hw.SetCanonical()
