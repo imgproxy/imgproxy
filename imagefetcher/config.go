@@ -1,6 +1,7 @@
 package imagefetcher
 
 import (
+	"errors"
 	"time"
 
 	"github.com/imgproxy/imgproxy/v3/config"
@@ -36,5 +37,13 @@ func (c *Config) LoadFromEnv() (*Config, error) {
 
 // Validate checks config for errors
 func (c *Config) Validate() error {
+	if len(c.UserAgent) == 0 {
+		return errors.New("user agent cannot be empty")
+	}
+
+	if c.DownloadTimeout <= 0 {
+		return errors.New("download timeout must be greater than 0")
+	}
+
 	return nil
 }
