@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -12,11 +13,16 @@ import (
 	log "github.com/sirupsen/logrus"
 	"go.uber.org/automaxprocs/maxprocs"
 
+	"github.com/imgproxy/imgproxy/v3/auximageprovider"
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/config/loadenv"
 	"github.com/imgproxy/imgproxy/v3/errorreport"
 	"github.com/imgproxy/imgproxy/v3/gliblog"
 	"github.com/imgproxy/imgproxy/v3/handlers"
+	processingHandler "github.com/imgproxy/imgproxy/v3/handlers/processing"
+	"github.com/imgproxy/imgproxy/v3/handlers/stream"
+	"github.com/imgproxy/imgproxy/v3/headerwriter"
+	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/logger"
 	"github.com/imgproxy/imgproxy/v3/memory"
@@ -24,15 +30,77 @@ import (
 	"github.com/imgproxy/imgproxy/v3/monitoring/prometheus"
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/processing"
+	"github.com/imgproxy/imgproxy/v3/semaphores"
 	"github.com/imgproxy/imgproxy/v3/server"
 	"github.com/imgproxy/imgproxy/v3/version"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
 const (
-	faviconPath = "/favicon.ico"
-	healthPath  = "/health"
+	faviconPath    = "/favicon.ico"
+	healthPath     = "/health"
+	categoryConfig = "(tmp)config" // NOTE: temporary category for reporting configration errors
 )
+
+func callHandleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) error {
+	// NOTE: This is temporary, will be moved level up at once
+	hwc, err := headerwriter.LoadFromEnv(headerwriter.NewDefaultConfig())
+	if err != nil {
+		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
+	}
+
+	hw, err := headerwriter.New(hwc)
+	if err != nil {
+		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
+	}
+
+	sc, err := stream.LoadFromEnv(stream.NewDefaultConfig())
+	if err != nil {
+		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
+	}
+
+	stream, err := stream.New(sc, hw, imagedata.Fetcher)
+	if err != nil {
+		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
+	}
+
+	phc, err := processingHandler.LoadFromEnv(processingHandler.NewDefaultConfig())
+	if err != nil {
+		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
+	}
+
+	semc, err := semaphores.LoadFromEnv(semaphores.NewDefaultConfig())
+	if err != nil {
+		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
+	}
+
+	semaphores, err := semaphores.New(semc)
+	if err != nil {
+		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
+	}
+
+	fic := auximageprovider.NewDefaultStaticConfig()
+	fic, err = auximageprovider.LoadFallbackStaticConfigFromEnv(fic)
+	if err != nil {
+		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
+	}
+
+	fi, err := auximageprovider.NewStaticProvider(
+		r.Context(),
+		fic,
+		"fallback image",
+	)
+	if err != nil {
+		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
+	}
+
+	h, err := processingHandler.New(stream, hw, semaphores, fi, phc)
+	if err != nil {
+		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
+	}
+
+	return h.Execute(reqID, rw, r)
+}
 
 func buildRouter(r *server.Router) *server.Router {
 	r.GET("/", handlers.LandingHandler)
@@ -79,8 +147,6 @@ func initialize() error {
 	if err := imagedata.Init(); err != nil {
 		return err
 	}
-
-	initProcessingHandler()
 
 	errorreport.Init()
 
@@ -137,7 +203,7 @@ func run(ctx context.Context) error {
 		return err
 	}
 
-	cfg, err := server.NewDefaultConfig().LoadFromEnv()
+	cfg, err := server.LoadFromEnv(server.NewDefaultConfig())
 	if err != nil {
 		return err
 	}

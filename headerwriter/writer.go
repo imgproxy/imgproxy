@@ -19,11 +19,10 @@ type Writer struct {
 
 // Request is a private struct that builds HTTP response headers for a specific request.
 type Request struct {
-	writer                  *Writer
-	originalResponseHeaders http.Header // Original response headers
-	result                  http.Header // Headers to be written to the response
-	maxAge                  int         // Current max age for Cache-Control header
-	url                     string      // URL of the request, used for canonical header
+	writer        *Writer
+	originHeaders http.Header // Original response headers
+	result        http.Header // Headers to be written to the response
+	maxAge        int         // Current max age for Cache-Control header
 }
 
 // New creates a new header writer factory with the provided config.
@@ -51,14 +50,18 @@ func New(config *Config) (*Writer, error) {
 }
 
 // NewRequest creates a new header writer instance for a specific request with the provided origin headers and URL.
-func (w *Writer) NewRequest(originalResponseHeaders http.Header, url string) *Request {
+func (w *Writer) NewRequest() *Request {
 	return &Request{
-		writer:                  w,
-		originalResponseHeaders: originalResponseHeaders,
-		url:                     url,
-		result:                  make(http.Header),
-		maxAge:                  -1,
+		writer:        w,
+		result:        make(http.Header),
+		maxAge:        -1,
+		originHeaders: make(http.Header),
 	}
+}
+
+// SetOriginHeaders sets the origin headers for the request.
+func (r *Request) SetOriginHeaders(h http.Header) {
+	r.originHeaders = h
 }
 
 // SetIsFallbackImage sets the Fallback-Image header to
@@ -114,7 +117,7 @@ func (r *Request) SetContentDisposition(originURL, filename, ext, contentType st
 
 // Passthrough copies specified headers from the original response headers to the response headers.
 func (r *Request) Passthrough(only ...string) {
-	httpheaders.Copy(r.originalResponseHeaders, r.result, only)
+	httpheaders.Copy(r.originHeaders, r.result, only)
 }
 
 // CopyFrom copies specified headers from the headers object. Please note that
@@ -139,13 +142,13 @@ func (r *Request) SetContentType(mime string) {
 
 // writeCanonical sets the Link header with the canonical URL.
 // It is mandatory for any response if enabled in the configuration.
-func (r *Request) SetCanonical() {
+func (r *Request) SetCanonical(url string) {
 	if !r.writer.config.SetCanonicalHeader {
 		return
 	}
 
-	if strings.HasPrefix(r.url, "https://") || strings.HasPrefix(r.url, "http://") {
-		value := fmt.Sprintf(`<%s>; rel="canonical"`, r.url)
+	if strings.HasPrefix(url, "https://") || strings.HasPrefix(url, "http://") {
+		value := fmt.Sprintf(`<%s>; rel="canonical"`, url)
 		r.result.Set(httpheaders.Link, value)
 	}
 }
@@ -172,12 +175,12 @@ func (r *Request) setCacheControlPassthrough() bool {
 		return false
 	}
 
-	if val := r.originalResponseHeaders.Get(httpheaders.CacheControl); val != "" {
+	if val := r.originHeaders.Get(httpheaders.CacheControl); val != "" {
 		r.result.Set(httpheaders.CacheControl, val)
 		return true
 	}
 
-	if val := r.originalResponseHeaders.Get(httpheaders.Expires); val != "" {
+	if val := r.originHeaders.Get(httpheaders.Expires); val != "" {
 		if t, err := time.Parse(http.TimeFormat, val); err == nil {
 			maxAge := max(0, int(time.Until(t).Seconds()))
 			return r.setCacheControl(maxAge)

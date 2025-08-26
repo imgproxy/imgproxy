@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"io"
-	"net/http"
 	"sync"
 
 	"github.com/imgproxy/imgproxy/v3/asyncbuffer"
@@ -14,9 +13,7 @@ import (
 )
 
 var (
-	Watermark            ImageData
-	FallbackImage        ImageData
-	FallbackImageHeaders http.Header // Headers for the fallback image
+	Watermark ImageData
 )
 
 // ImageData represents the data of an image that can be read from a source.
@@ -139,10 +136,6 @@ func Init() error {
 		return err
 	}
 
-	if err := loadFallbackImage(); err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -177,31 +170,4 @@ func loadWatermark() error {
 	}
 
 	return nil
-}
-
-func loadFallbackImage() (err error) {
-	switch {
-	case len(config.FallbackImageData) > 0:
-		FallbackImage, err = NewFromBase64(config.FallbackImageData)
-		if err != nil {
-			return ierrors.Wrap(err, 0, ierrors.WithPrefix("can't load fallback image from Base64"))
-		}
-
-	case len(config.FallbackImagePath) > 0:
-		FallbackImage, err = NewFromPath(config.FallbackImagePath)
-		if err != nil {
-			return ierrors.Wrap(err, 0, ierrors.WithPrefix("can't read fallback image from file"))
-		}
-
-	case len(config.FallbackImageURL) > 0:
-		FallbackImage, FallbackImageHeaders, err = DownloadSync(context.Background(), config.FallbackImageURL, "fallback image", DefaultDownloadOptions())
-		if err != nil {
-			return ierrors.Wrap(err, 0, ierrors.WithPrefix("can't download from URL"))
-		}
-
-	default:
-		FallbackImage = nil
-	}
-
-	return err
 }

@@ -1,10 +1,11 @@
-package main
+package processing
 
 import (
 	"fmt"
 	"net/http"
 
 	"github.com/imgproxy/imgproxy/v3/ierrors"
+	"github.com/imgproxy/imgproxy/v3/imagetype"
 )
 
 // Monitoring error categories
@@ -21,9 +22,8 @@ const (
 )
 
 type (
-	ResponseWriteError   struct{ error }
-	InvalidURLError      string
-	TooManyRequestsError struct{}
+	ResponseWriteError struct{ error }
+	InvalidURLError    string
 )
 
 func newResponseWriteError(cause error) *ierrors.Error {
@@ -54,14 +54,18 @@ func newInvalidURLErrorf(status int, format string, args ...interface{}) error {
 
 func (e InvalidURLError) Error() string { return string(e) }
 
-func newTooManyRequestsError() error {
-	return ierrors.Wrap(
-		TooManyRequestsError{},
-		1,
-		ierrors.WithStatusCode(http.StatusTooManyRequests),
-		ierrors.WithPublicMessage("Too many requests"),
-		ierrors.WithShouldReport(false),
-	)
+// newCantSaveError creates "resulting image not supported" error
+func newCantSaveError(format imagetype.Type) error {
+	return ierrors.Wrap(newInvalidURLErrorf(
+		http.StatusUnprocessableEntity,
+		"Resulting image format is not supported: %s", format,
+	), 1, ierrors.WithCategory(categoryPathParsing))
 }
 
-func (e TooManyRequestsError) Error() string { return "Too many requests" }
+// newCantLoadError creates "source image not supported" error
+func newCantLoadError(format imagetype.Type) error {
+	return ierrors.Wrap(newInvalidURLErrorf(
+		http.StatusUnprocessableEntity,
+		"Source image format is not supported: %s", format,
+	), 1, ierrors.WithCategory(categoryProcessing))
+}
