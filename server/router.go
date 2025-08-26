@@ -57,14 +57,20 @@ func NewRouter(config *Config) (*Router, error) {
 }
 
 // add adds an abitary route to the router
-func (r *Router) add(method, prefix string, exact bool, handler RouteHandler, middlewares ...Middleware) *route {
+func (r *Router) add(method, path string, handler RouteHandler, middlewares ...Middleware) *route {
 	for _, m := range middlewares {
 		handler = m(handler)
 	}
 
+	exact := true
+	if strings.HasSuffix(path, "*") {
+		exact = false
+		path = strings.TrimSuffix(path, "*")
+	}
+
 	newRoute := &route{
 		method:  method,
-		path:    r.config.PathPrefix + prefix,
+		path:    r.config.PathPrefix + path,
 		handler: handler,
 		exact:   exact,
 	}
@@ -88,18 +94,18 @@ func (r *Router) add(method, prefix string, exact bool, handler RouteHandler, mi
 }
 
 // GET adds GET route
-func (r *Router) GET(prefix string, exact bool, handler RouteHandler, middlewares ...Middleware) *route {
-	return r.add(http.MethodGet, prefix, exact, handler, middlewares...)
+func (r *Router) GET(path string, handler RouteHandler, middlewares ...Middleware) *route {
+	return r.add(http.MethodGet, path, handler, middlewares...)
 }
 
 // OPTIONS adds OPTIONS route
-func (r *Router) OPTIONS(prefix string, exact bool, handler RouteHandler, middlewares ...Middleware) *route {
-	return r.add(http.MethodOptions, prefix, exact, handler, middlewares...)
+func (r *Router) OPTIONS(path string, handler RouteHandler, middlewares ...Middleware) *route {
+	return r.add(http.MethodOptions, path, handler, middlewares...)
 }
 
 // HEAD adds HEAD route
-func (r *Router) HEAD(prefix string, exact bool, handler RouteHandler, middlewares ...Middleware) *route {
-	return r.add(http.MethodHead, prefix, exact, handler, middlewares...)
+func (r *Router) HEAD(path string, handler RouteHandler, middlewares ...Middleware) *route {
+	return r.add(http.MethodHead, path, handler, middlewares...)
 }
 
 // ServeHTTP serves routes
