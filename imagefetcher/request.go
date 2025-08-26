@@ -72,19 +72,12 @@ func (r *Request) Send() (*http.Response, error) {
 func (r *Request) FetchImage() (*http.Response, error) {
 	res, err := r.Send()
 	if err != nil {
-		r.cancel()
 		return nil, err
-	}
-
-	// Closes the response body and cancels request context
-	cancel := func() {
-		res.Body.Close()
-		r.cancel()
 	}
 
 	// If the source image was not modified, close the body and NotModifiedError
 	if res.StatusCode == http.StatusNotModified {
-		cancel()
+		res.Body.Close()
 		return nil, newNotModifiedError(res.Header)
 	}
 
@@ -93,27 +86,20 @@ func (r *Request) FetchImage() (*http.Response, error) {
 	if res.StatusCode == http.StatusPartialContent {
 		err = checkPartialContentResponse(res)
 		if err != nil {
-			cancel()
+			res.Body.Close()
 			return nil, err
 		}
 	} else if res.StatusCode != http.StatusOK {
 		body := extractErraticBody(res)
-		cancel()
+		res.Body.Close()
 		return nil, newImageResponseStatusError(res.StatusCode, body)
 	}
 
 	// If the response is gzip encoded, wrap it in a gzip reader
 	err = wrapGzipBody(res)
 	if err != nil {
-		cancel()
+		res.Body.Close()
 		return nil, err
-	}
-
-	// Wrap the response body in a bodyReader to ensure the request context
-	// is cancelled when the body is closed
-	res.Body = &bodyReader{
-		body:    res.Body,
-		request: r,
 	}
 
 	return res, nil
@@ -186,24 +172,6 @@ func wrapGzipBody(res *http.Response) error {
 	}
 
 	return nil
-}
-
-// bodyReader is a wrapper around io.ReadCloser which closes original request context
-// when the body is closed.
-type bodyReader struct {
-	body    io.ReadCloser // The body to read from
-	request *Request
-}
-
-// Read reads data from the response body into the provided byte slice
-func (r *bodyReader) Read(p []byte) (int, error) {
-	return r.body.Read(p)
-}
-
-// Close closes the response body and cancels the request context
-func (r *bodyReader) Close() error {
-	defer r.request.cancel()
-	return r.body.Close()
 }
 
 // gzipReadCloser is a wrapper around gzip.Reader which also closes the original body
