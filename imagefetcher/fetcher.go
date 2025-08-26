@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/transport"
 	"github.com/imgproxy/imgproxy/v3/transport/common"
@@ -55,7 +54,7 @@ func (f *Fetcher) BuildRequest(ctx context.Context, url string, header http.Head
 	url = common.EscapeURL(url)
 
 	// Set request timeout and get cancel function
-	ctx, cancel := context.WithTimeout(ctx, time.Duration(config.DownloadTimeout)*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, f.config.DownloadTimeout)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
@@ -77,7 +76,7 @@ func (f *Fetcher) BuildRequest(ctx context.Context, url string, header http.Head
 	}
 
 	// Set user agent header
-	req.Header.Set(httpheaders.UserAgent, config.UserAgent)
+	req.Header.Set(httpheaders.UserAgent, f.config.UserAgent)
 
 	// Set headers
 	httpheaders.CopyToRequest(header, req)
