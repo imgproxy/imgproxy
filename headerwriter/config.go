@@ -15,6 +15,7 @@ type Config struct {
 	LastModifiedEnabled     bool // Set the Last-Modified header
 	EnableClientHints       bool // Enable Vary header
 	SetVaryAccept           bool // Whether to include Accept in Vary header
+	ETagEnabled             bool // Passthrough ETag header from server
 }
 
 // NewDefaultConfig returns a new Config instance with default values.
@@ -27,6 +28,7 @@ func NewDefaultConfig() *Config {
 		CacheControlPassthrough: false,
 		EnableClientHints:       false,
 		SetVaryAccept:           false,
+		ETagEnabled:             false,
 	}
 }
 
@@ -44,6 +46,7 @@ func (c *Config) LoadFromEnv() (*Config, error) {
 		config.EnforceAvif ||
 		config.AutoJxl ||
 		config.EnforceJxl
+	c.ETagEnabled = config.ETagEnabled
 
 	return c, nil
 }

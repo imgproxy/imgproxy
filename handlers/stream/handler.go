@@ -120,10 +120,12 @@ func (s *request) execute(ctx context.Context) error {
 	hw.SetContentLength(int(res.ContentLength))
 	hw.SetCanonical()
 	hw.SetExpires(s.po.Expires)
-	hw.Write(s.rw)
 
-	// Write Content-Disposition header
-	s.writeContentDisposition(r.URL().Path, res)
+	// Set the Content-Disposition header
+	s.setContentDisposition(r.URL().Path, res, hw)
+
+	// Write headers from writer
+	hw.Write(s.rw)
 
 	// Copy the status code from the original response
 	s.rw.WriteHeader(res.StatusCode)
@@ -152,8 +154,8 @@ func (s *request) getImageRequestHeaders() http.Header {
 	return h
 }
 
-// writeContentDisposition writes the headers to the response writer
-func (s *request) writeContentDisposition(imagePath string, serverResponse *http.Response) {
+// setContentDisposition writes the headers to the response writer
+func (s *request) setContentDisposition(imagePath string, serverResponse *http.Response, hw *headerwriter.Request) {
 	// Try to set correct Content-Disposition file name and extension
 	if serverResponse.StatusCode < 200 || serverResponse.StatusCode >= 300 {
 		return
@@ -161,17 +163,13 @@ func (s *request) writeContentDisposition(imagePath string, serverResponse *http
 
 	ct := serverResponse.Header.Get(httpheaders.ContentType)
 
-	// Try to best guess the file name and extension
-	cd := httpheaders.ContentDispositionValue(
+	hw.SetContentDisposition(
 		imagePath,
 		s.po.Filename,
 		"",
 		ct,
 		s.po.ReturnAttachment,
 	)
-
-	// Write the Content-Disposition header
-	s.rw.Header().Set(httpheaders.ContentDisposition, cd)
 }
 
 // streamData copies the image data from the response body to the response writer

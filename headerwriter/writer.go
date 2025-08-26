@@ -17,8 +17,8 @@ type Writer struct {
 	varyValue string
 }
 
-// writer is a private struct that builds HTTP response headers for a specific request.
-type writer struct {
+// Request is a private struct that builds HTTP response headers for a specific request.
+type Request struct {
 	writer                  *Writer
 	originalResponseHeaders http.Header // Original response headers
 	result                  http.Header // Headers to be written to the response
@@ -51,8 +51,8 @@ func New(config *Config) (*Writer, error) {
 }
 
 // NewRequest creates a new header writer instance for a specific request with the provided origin headers and URL.
-func (w *Writer) NewRequest(originalResponseHeaders http.Header, url string) *writer {
-	return &writer{
+func (w *Writer) NewRequest(originalResponseHeaders http.Header, url string) *Request {
+	return &Request{
 		writer:                  w,
 		originalResponseHeaders: originalResponseHeaders,
 		url:                     url,
@@ -63,123 +63,138 @@ func (w *Writer) NewRequest(originalResponseHeaders http.Header, url string) *wr
 
 // SetIsFallbackImage sets the Fallback-Image header to
 // indicate that the fallback image was used.
-func (w *writer) SetIsFallbackImage() {
+func (r *Request) SetIsFallbackImage() {
 	// We set maxAge to FallbackImageTTL if it's explicitly passed
-	if w.writer.config.FallbackImageTTL < 0 {
+	if r.writer.config.FallbackImageTTL < 0 {
 		return
 	}
 
 	// However, we should not overwrite existing value if set (or greater than ours)
-	if w.maxAge < 0 || w.maxAge > w.writer.config.FallbackImageTTL {
-		w.maxAge = w.writer.config.FallbackImageTTL
+	if r.maxAge < 0 || r.maxAge > r.writer.config.FallbackImageTTL {
+		r.maxAge = r.writer.config.FallbackImageTTL
 	}
 }
 
 // SetExpires sets the TTL from time
-func (w *writer) SetExpires(expires *time.Time) {
+func (r *Request) SetExpires(expires *time.Time) {
 	if expires == nil {
 		return
 	}
 
 	// Convert current maxAge to time
-	currentMaxAgeTime := time.Now().Add(time.Duration(w.maxAge) * time.Second)
+	currentMaxAgeTime := time.Now().Add(time.Duration(r.maxAge) * time.Second)
 
 	// If maxAge outlives expires or was not set, we'll use expires as maxAge.
-	if w.maxAge < 0 || expires.Before(currentMaxAgeTime) {
-		w.maxAge = min(w.writer.config.DefaultTTL, max(0, int(time.Until(*expires).Seconds())))
+	if r.maxAge < 0 || expires.Before(currentMaxAgeTime) {
+		r.maxAge = min(r.writer.config.DefaultTTL, max(0, int(time.Until(*expires).Seconds())))
 	}
 }
 
 // SetLastModified sets the Last-Modified header from request
-func (w *writer) SetLastModified() {
-	if !w.writer.config.LastModifiedEnabled {
+func (r *Request) SetLastModified() {
+	if !r.writer.config.LastModifiedEnabled {
 		return
 	}
 
-	val := w.originalResponseHeaders.Get(httpheaders.LastModified)
+	val := r.originalResponseHeaders.Get(httpheaders.LastModified)
 	if len(val) == 0 {
 		return
 	}
 
-	w.result.Set(httpheaders.LastModified, val)
+	r.result.Set(httpheaders.LastModified, val)
 }
 
 // SetVary sets the Vary header
-func (w *writer) SetVary() {
-	if len(w.writer.varyValue) > 0 {
-		w.result.Set(httpheaders.Vary, w.writer.varyValue)
+func (r *Request) SetVary() {
+	if len(r.writer.varyValue) > 0 {
+		r.result.Set(httpheaders.Vary, r.writer.varyValue)
+	}
+}
+
+// SetContentDisposition sets the Content-Disposition header, passthrough to ContentDispositionValue
+func (r *Request) SetContentDisposition(originURL, filename, ext, contentType string, returnAttachment bool) {
+	value := httpheaders.ContentDispositionValue(
+		originURL,
+		filename,
+		ext,
+		contentType,
+		returnAttachment,
+	)
+
+	if value != "" {
+		r.result.Set(httpheaders.ContentDisposition, value)
 	}
 }
 
 // Passthrough copies specified headers from the original response headers to the response headers.
-func (w *writer) Passthrough(only []string) {
-	httpheaders.Copy(w.originalResponseHeaders, w.result, only)
+func (r *Request) Passthrough(only []string) {
+	httpheaders.Copy(r.originalResponseHeaders, r.result, only)
 }
 
 // CopyFrom copies specified headers from the headers object. Please note that
 // all the past operations may overwrite those values.
-func (w *writer) CopyFrom(headers http.Header, only []string) {
-	httpheaders.Copy(headers, w.result, only)
+func (r *Request) CopyFrom(headers http.Header, only []string) {
+	httpheaders.Copy(headers, r.result, only)
 }
 
 // SetContentLength sets the Content-Length header
-func (w *writer) SetContentLength(contentLength int) {
+func (r *Request) SetContentLength(contentLength int) {
 	if contentLength < 0 {
 		return
 	}
 
-	w.result.Set(httpheaders.ContentLength, strconv.Itoa(contentLength))
+	r.result.Set(httpheaders.ContentLength, strconv.Itoa(contentLength))
 }
 
 // SetContentType sets the Content-Type header
-func (w *writer) SetContentType(mime string) {
-	w.result.Set(httpheaders.ContentType, mime)
+func (r *Request) SetContentType(mime string) {
+	r.result.Set(httpheaders.ContentType, mime)
 }
 
 // writeCanonical sets the Link header with the canonical URL.
 // It is mandatory for any response if enabled in the configuration.
-func (w *writer) SetCanonical() {
-	if !w.writer.config.SetCanonicalHeader {
+func (r *Request) SetCanonical() {
+	if !r.writer.config.SetCanonicalHeader {
 		return
 	}
 
-	if strings.HasPrefix(w.url, "https://") || strings.HasPrefix(w.url, "http://") {
-		value := fmt.Sprintf(`<%s>; rel="canonical"`, w.url)
-		w.result.Set(httpheaders.Link, value)
+	if strings.HasPrefix(r.url, "https://") || strings.HasPrefix(r.url, "http://") {
+		value := fmt.Sprintf(`<%s>; rel="canonical"`, r.url)
+		r.result.Set(httpheaders.Link, value)
 	}
 }
 
 // setCacheControl sets the Cache-Control header with the specified value.
-func (w *writer) setCacheControl(value int) bool {
+func (r *Request) setCacheControl(value int) bool {
 	if value <= 0 {
 		return false
 	}
 
-	w.result.Set(httpheaders.CacheControl, fmt.Sprintf("max-age=%d, public", value))
+	r.result.Set(httpheaders.CacheControl, fmt.Sprintf("max-age=%d, public", value))
 	return true
 }
 
 // setCacheControlNoCache sets the Cache-Control header to no-cache (default).
-func (w *writer) setCacheControlNoCache() {
-	w.result.Set(httpheaders.CacheControl, "no-cache")
+func (r *Request) setCacheControlNoCache() {
+	r.result.Set(httpheaders.CacheControl, "no-cache")
 }
 
 // setCacheControlPassthrough sets the Cache-Control header from the request
 // if passthrough is enabled in the configuration.
-func (w *writer) setCacheControlPassthrough() bool {
-	if !w.writer.config.CacheControlPassthrough || w.maxAge > 0 {
+func (r *Request) setCacheControlPassthrough() bool {
+	if !r.writer.config.CacheControlPassthrough || r.maxAge > 0 {
 		return false
 	}
 
-	if val := w.originalResponseHeaders.Get(httpheaders.CacheControl); val != "" {
-		w.result.Set(httpheaders.CacheControl, val)
+	if val := r.originalResponseHeaders.Get(httpheaders.CacheControl); val != "" {
+		r.result.Set(httpheaders.CacheControl, val)
 		return true
 	}
 
-	if val := w.originalResponseHeaders.Get(httpheaders.Expires); val != "" {
+	if val := r.originalResponseHeaders.Get(httpheaders.Expires); val != "" {
 		if t, err := time.Parse(http.TimeFormat, val); err == nil {
 			maxAge := max(0, int(time.Until(t).Seconds()))
-			return w.setCacheControl(maxAge)
+			return r.setCacheControl(maxAge)
 		}
 	}
 
@@ -187,24 +202,38 @@ func (w *writer) setCacheControlPassthrough() bool {
 }
 
 // setCSP sets the Content-Security-Policy header to prevent script execution.
-func (w *writer) setCSP() {
-	w.result.Set(httpheaders.ContentSecurityPolicy, "script-src 'none'")
+func (r *Request) setCSP() {
+	r.result.Set(httpheaders.ContentSecurityPolicy, "script-src 'none'")
+}
+
+// SetETag copies the ETag header from the original response headers to the result headers.
+func (r *Request) SetETag() {
+	if !r.writer.config.ETagEnabled {
+		return
+	}
+
+	etag := r.originalResponseHeaders.Get(httpheaders.Etag)
+	if len(etag) == 0 {
+		return
+	}
+
+	r.result.Set(httpheaders.Etag, etag)
 }
 
 // Write writes the headers to the response writer. It does not overwrite
 // target headers, which were set outside the header writer.
-func (w *writer) Write(rw http.ResponseWriter) {
+func (r *Request) Write(rw http.ResponseWriter) {
 	// Then, let's try to set Cache-Control using priority order
 	switch {
-	case w.setCacheControl(w.maxAge): // First, try set explicit
-	case w.setCacheControlPassthrough(): // Try to pick up from request headers
-	case w.setCacheControl(w.writer.config.DefaultTTL): // Fallback to default value
+	case r.setCacheControl(r.maxAge): // First, try set explicit
+	case r.setCacheControlPassthrough(): // Try to pick up from request headers
+	case r.setCacheControl(r.writer.config.DefaultTTL): // Fallback to default value
 	default:
-		w.setCacheControlNoCache() // By default we use no-cache
+		r.setCacheControlNoCache() // By default we use no-cache
 	}
 
-	w.setCSP()
+	r.setCSP()
 
 	// Copy all headers to the response without overwriting existing ones
-	httpheaders.CopyAll(w.result, rw.Header(), false)
+	httpheaders.CopyAll(r.result, rw.Header(), false)
 }
