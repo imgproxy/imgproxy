@@ -99,7 +99,9 @@ func (s *request) execute(ctx context.Context) error {
 
 	// Build the request to fetch the image
 	r, err := s.handler.fetcher.BuildRequest(ctx, s.imageURL, requestHeaders, cookieJar)
-	defer r.Cancel()
+	if r != nil {
+		defer r.Cancel()
+	}
 	if err != nil {
 		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryStreaming))
 	}
