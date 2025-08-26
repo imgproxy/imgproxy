@@ -35,22 +35,22 @@ const (
 )
 
 func buildRouter(r *server.Router) *server.Router {
-	r.GET("/", true, handlers.LandingHandler)
-	r.GET("", true, handlers.LandingHandler)
+	r.GET("/", handlers.LandingHandler)
+	r.GET("", handlers.LandingHandler)
 
-	r.GET(faviconPath, true, r.NotFoundHandler).Silent()
-	r.GET(healthPath, true, handlers.HealthHandler).Silent()
+	r.GET(faviconPath, r.NotFoundHandler).Silent()
+	r.GET(healthPath, handlers.HealthHandler).Silent()
 	if config.HealthCheckPath != "" {
-		r.GET(config.HealthCheckPath, true, handlers.HealthHandler).Silent()
+		r.GET(config.HealthCheckPath, handlers.HealthHandler).Silent()
 	}
 
 	r.GET(
-		"/", false, handleProcessing,
+		"/*", handleProcessing,
 		r.WithSecret, r.WithCORS, r.WithPanic, r.WithReportError, r.WithMonitoring,
 	)
 
-	r.HEAD("/", false, r.OkHandler, r.WithCORS)
-	r.OPTIONS("/", false, r.OkHandler, r.WithCORS)
+	r.HEAD("/*", r.OkHandler, r.WithCORS)
+	r.OPTIONS("/*", r.OkHandler, r.WithCORS)
 
 	return r
 }

@@ -54,9 +54,9 @@ func (s *RouterTestSuite) TestHTTPMethods() {
 	}
 
 	// Register routes with different configurations
-	s.router.GET("/get-test", true, getHandler)              // exact match
-	s.router.OPTIONS("/options-test", false, optionsHandler) // prefix match
-	s.router.HEAD("/head-test", true, headHandler)           // exact match
+	s.router.GET("/get-test", getHandler)              // exact match
+	s.router.OPTIONS("/options-test*", optionsHandler) // prefix match
+	s.router.HEAD("/head-test", headHandler)           // exact match
 
 	tests := []struct {
 		name          string
@@ -133,7 +133,7 @@ func (s *RouterTestSuite) TestMiddlewareOrder() {
 		return nil
 	}
 
-	s.router.GET("/test", true, handler, middleware2, middleware1)
+	s.router.GET("/test", handler, middleware2, middleware1)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/test", nil)
 	rw := httptest.NewRecorder()
@@ -153,7 +153,7 @@ func (s *RouterTestSuite) TestServeHTTP() {
 		return nil
 	}
 
-	s.router.GET("/test", true, handler)
+	s.router.GET("/test", handler)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/test", nil)
 	rw := httptest.NewRecorder()
@@ -174,7 +174,7 @@ func (s *RouterTestSuite) TestRequestID() {
 		return nil
 	}
 
-	s.router.GET("/test", true, handler)
+	s.router.GET("/test", handler)
 
 	// Test request ID passthrough (if present)
 	req := httptest.NewRequest(http.MethodGet, "/api/test", nil)
@@ -214,7 +214,7 @@ func (s *RouterTestSuite) TestLambdaRequestIDExtraction() {
 		return nil
 	}
 
-	s.router.GET("/test", true, handler)
+	s.router.GET("/test", handler)
 
 	// Test with valid Lambda context
 	req := httptest.NewRequest(http.MethodGet, "/api/test", nil)
@@ -235,7 +235,7 @@ func (s *RouterTestSuite) TestReplaceIP() {
 		return nil
 	}
 
-	s.router.GET("/test", true, handler)
+	s.router.GET("/test", handler)
 
 	tests := []struct {
 		name         string
@@ -302,9 +302,9 @@ func (s *RouterTestSuite) TestRouteOrder() {
 		return nil
 	}
 
-	s.router.GET("/test", false, h)
-	s.router.GET("/test/path", true, h)
-	s.router.GET("/test/path/nested", true, h)
+	s.router.GET("/test*", h)
+	s.router.GET("/test/path", h)
+	s.router.GET("/test/path/nested", h)
 
 	s.Require().Equal("/api/test/path", s.router.routes[0].path)
 	s.Require().Equal("/api/test/path/nested", s.router.routes[1].path)
