@@ -19,7 +19,6 @@ type HeaderWriterSuite struct {
 
 type writerTestCase struct {
 	name   string
-	url    string
 	req    http.Header
 	res    http.Header
 	config Config
@@ -94,7 +93,6 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 		{
 			name: "Canonical_ValidURL",
 			req:  http.Header{},
-			url:  "https://example.com/image.jpg",
 			res: http.Header{
 				httpheaders.Link:                  []string{"<https://example.com/image.jpg>; rel=\"canonical\""},
 				httpheaders.CacheControl:          []string{"max-age=3600, public"},
@@ -105,12 +103,11 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 				DefaultTTL:         3600,
 			},
 			fn: func(w *Request) {
-				w.SetCanonical()
+				w.SetCanonical("https://example.com/image.jpg")
 			},
 		},
 		{
 			name: "Canonical_InvalidURL",
-			url:  "ftp://example.com/image.jpg",
 			req:  http.Header{},
 			res: http.Header{
 				httpheaders.CacheControl:          []string{"max-age=3600, public"},
@@ -124,7 +121,6 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 		{
 			name: "WriteCanonical_Disabled",
 			req:  http.Header{},
-			url:  "https://example.com/image.jpg",
 			res: http.Header{
 				httpheaders.CacheControl:          []string{"max-age=3600, public"},
 				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
@@ -134,7 +130,7 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 				DefaultTTL:         3600,
 			},
 			fn: func(w *Request) {
-				w.SetCanonical()
+				w.SetCanonical("https://example.com/image.jpg")
 			},
 		},
 		{
@@ -305,7 +301,8 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 			factory, err := New(&tc.config)
 			s.Require().NoError(err)
 
-			writer := factory.NewRequest(tc.req, tc.url)
+			writer := factory.NewRequest()
+			writer.SetOriginHeaders(tc.req)
 
 			if tc.fn != nil {
 				tc.fn(writer)

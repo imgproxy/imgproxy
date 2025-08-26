@@ -48,6 +48,7 @@ type request struct {
 	reqID        string
 	po           *options.ProcessingOptions
 	rw           http.ResponseWriter
+	hw           *headerwriter.Request
 }
 
 // New creates new handler object
@@ -79,6 +80,7 @@ func (s *Handler) Execute(
 		reqID:        reqID,
 		po:           po,
 		rw:           rw,
+		hw:           s.hw.NewRequest(),
 	}
 
 	return stream.execute(ctx)
@@ -116,18 +118,17 @@ func (s *request) execute(ctx context.Context) error {
 	}
 
 	// Output streaming response headers
-	hw := s.handler.hw.NewRequest(res.Header, s.imageURL)
-
-	hw.Passthrough(s.handler.config.PassthroughResponseHeaders...) // NOTE: priority? This is lowest as it was
-	hw.SetContentLength(int(res.ContentLength))
-	hw.SetCanonical()
-	hw.SetExpires(s.po.Expires)
+	s.hw.SetOriginHeaders(res.Header)
+	s.hw.Passthrough(s.handler.config.PassthroughResponseHeaders...) // NOTE: priority? This is lowest as it was
+	s.hw.SetContentLength(int(res.ContentLength))
+	s.hw.SetCanonical(s.imageURL)
+	s.hw.SetExpires(s.po.Expires)
 
 	// Set the Content-Disposition header
-	s.setContentDisposition(r.URL().Path, res, hw)
+	s.setContentDisposition(r.URL().Path, res, s.hw)
 
 	// Write headers from writer
-	hw.Write(s.rw)
+	s.hw.Write(s.rw)
 
 	// Copy the status code from the original response
 	s.rw.WriteHeader(res.StatusCode)

@@ -20,19 +20,19 @@ func (s *SignatureTestSuite) SetupTest() {
 }
 
 func (s *SignatureTestSuite) TestVerifySignature() {
-	err := VerifySignature("dtLwhdnPPiu_epMl1LrzheLpvHas-4mwvY6L3Z8WwlY", "asd")
+	err := VerifySignature("oWaL7QoW5TsgbuiS9-5-DI8S3Ibbo1gdB2SteJh3a20", "asd")
 	s.Require().NoError(err)
 }
 
 func (s *SignatureTestSuite) TestVerifySignatureTruncated() {
 	config.SignatureSize = 8
 
-	err := VerifySignature("dtLwhdnPPis", "asd")
+	err := VerifySignature("oWaL7QoW5Ts", "asd")
 	s.Require().NoError(err)
 }
 
 func (s *SignatureTestSuite) TestVerifySignatureInvalid() {
-	err := VerifySignature("dtLwhdnPPis", "asd")
+	err := VerifySignature("oWaL7QoW5Ts", "asd")
 	s.Require().Error(err)
 }
 
@@ -40,10 +40,10 @@ func (s *SignatureTestSuite) TestVerifySignatureMultiplePairs() {
 	config.Keys = append(config.Keys, []byte("test-key2"))
 	config.Salts = append(config.Salts, []byte("test-salt2"))
 
-	err := VerifySignature("dtLwhdnPPiu_epMl1LrzheLpvHas-4mwvY6L3Z8WwlY", "asd")
+	err := VerifySignature("jYz1UZ7j1BCdSzH3pZhaYf0iuz0vusoOTdqJsUT6WXI", "asd")
 	s.Require().NoError(err)
 
-	err = VerifySignature("jbDffNPt1-XBgDccsaE-XJB9lx8JIJqdeYIZKgOqZpg", "asd")
+	err = VerifySignature("oWaL7QoW5TsgbuiS9-5-DI8S3Ibbo1gdB2SteJh3a20", "asd")
 	s.Require().NoError(err)
 
 	err = VerifySignature("dtLwhdnPPis", "asd")

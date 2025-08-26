@@ -4,6 +4,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
+	"slices"
 
 	"github.com/imgproxy/imgproxy/v3/config"
 )
@@ -13,10 +14,8 @@ func VerifySignature(signature, path string) error {
 		return nil
 	}
 
-	for _, s := range config.TrustedSignatures {
-		if s == signature {
-			return nil
-		}
+	if slices.Contains(config.TrustedSignatures, signature) {
+		return nil
 	}
 
 	messageMAC, err := base64.RawURLEncoding.DecodeString(signature)
@@ -36,6 +35,13 @@ func VerifySignature(signature, path string) error {
 func signatureFor(str string, key, salt []byte, signatureSize int) []byte {
 	mac := hmac.New(sha256.New, key)
 	mac.Write(salt)
+
+	// It's supposed that path starts with '/'. However, if and input path comes with the
+	// leading slash split, let's re-add it here.
+	if str[0] != '/' {
+		mac.Write([]byte{'/'})
+	}
+
 	mac.Write([]byte(str))
 	expectedMAC := mac.Sum(nil)
 	if signatureSize < 32 {

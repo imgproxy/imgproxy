@@ -1,5 +1,10 @@
 package main
 
+// NOTE: this test is the integration test for the processing handler. We can't extract and
+// move it to handlers package yet because it depends on the global routes, methods and
+// initialization functions. Once those would we wrapped into structures, we'll be able to move this test
+// to where it belongs.
+
 import (
 	"fmt"
 	"io"

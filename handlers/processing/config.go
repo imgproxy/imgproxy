@@ -1,0 +1,59 @@
+package processing
+
+import (
+	"errors"
+	"net/http"
+
+	"github.com/imgproxy/imgproxy/v3/config"
+)
+
+// Config represents handler config
+type Config struct {
+	PathPrefix              string // Route path prefix
+	CookiePassthrough       bool   // Whether to passthrough cookies
+	ReportDownloadingErrors bool   // Whether to report downloading errors
+	LastModifiedEnabled     bool   // Whether to enable Last-Modified
+	ETagEnabled             bool   // Whether to enable ETag
+	ReportIOErrors          bool   // Whether to report IO errors
+	FallbackImageHTTPCode   int    // Fallback image HTTP status code
+	EnableDebugHeaders      bool   // Whether to enable debug headers
+	FallbackImageData       string // Fallback image data (base64)
+	FallbackImagePath       string // Fallback image path (local file system)
+	FallbackImageURL        string // Fallback image URL (remote)
+}
+
+// NewDefaultConfig creates a new configuration with defaults
+func NewDefaultConfig() *Config {
+	return &Config{
+		PathPrefix:              "",
+		CookiePassthrough:       false,
+		ReportDownloadingErrors: true,
+		LastModifiedEnabled:     true,
+		ETagEnabled:             true,
+		ReportIOErrors:          false,
+		FallbackImageHTTPCode:   http.StatusOK,
+		EnableDebugHeaders:      false,
+	}
+}
+
+// LoadFromEnv loads config from environment variables
+func LoadFromEnv(c *Config) (*Config, error) {
+	c.PathPrefix = config.PathPrefix
+	c.CookiePassthrough = config.CookiePassthrough
+	c.ReportDownloadingErrors = config.ReportDownloadingErrors
+	c.LastModifiedEnabled = config.LastModifiedEnabled
+	c.ETagEnabled = config.ETagEnabled
+	c.ReportIOErrors = config.ReportIOErrors
+	c.FallbackImageHTTPCode = config.FallbackImageHTTPCode
+	c.EnableDebugHeaders = config.EnableDebugHeaders
+
+	return c, nil
+}
+
+// Validate checks configuration values
+func (c *Config) Validate() error {
+	if c.FallbackImageHTTPCode != 0 && (c.FallbackImageHTTPCode < 100 || c.FallbackImageHTTPCode > 599) {
+		return errors.New("fallback image HTTP code should be between 100 and 599")
+	}
+	return nil
+}

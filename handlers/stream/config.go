@@ -39,7 +39,7 @@ func NewDefaultConfig() *Config {
 }
 
 // LoadFromEnv loads config variables from environment
-func (c *Config) LoadFromEnv() (*Config, error) {
+func LoadFromEnv(c *Config) (*Config, error) {
 	c.CookiePassthrough = config.CookiePassthrough
 	return c, nil
 }
