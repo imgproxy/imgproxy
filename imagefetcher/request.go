@@ -178,7 +178,10 @@ func wrapGzipBody(res *http.Response) error {
 		if err != nil {
 			return nil
 		}
-		res.Body = gzipBody
+		res.Body = &gzipReadCloser{
+			Reader: gzipBody,
+			r:      res.Body,
+		}
 		res.Header.Del(httpheaders.ContentEncoding)
 	}
 
@@ -201,4 +204,16 @@ func (r *bodyReader) Read(p []byte) (int, error) {
 func (r *bodyReader) Close() error {
 	defer r.request.cancel()
 	return r.body.Close()
+}
+
+// gzipReadCloser is a wrapper around gzip.Reader which also closes the original body
+type gzipReadCloser struct {
+	*gzip.Reader
+	r io.ReadCloser
+}
+
+// Close closes the gzip reader and the original body
+func (gr *gzipReadCloser) Close() error {
+	gr.Reader.Close()
+	return gr.r.Close()
 }
