@@ -2,13 +2,11 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
-	"time"
 
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/sync/semaphore"
@@ -16,7 +14,6 @@ import (
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/cookies"
 	"github.com/imgproxy/imgproxy/v3/errorreport"
-	"github.com/imgproxy/imgproxy/v3/etag"
 	"github.com/imgproxy/imgproxy/v3/handlers/stream"
 	"github.com/imgproxy/imgproxy/v3/headerwriter"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
@@ -36,8 +33,6 @@ import (
 var (
 	queueSem      *semaphore.Weighted
 	processingSem *semaphore.Weighted
-
-	headerVaryValue string
 )
 
 func initProcessingHandler() {
@@ -46,88 +41,22 @@ func initProcessingHandler() {
 	}
 
 	processingSem = semaphore.NewWeighted(int64(config.Workers))
-
-	vary := make([]string, 0)
-
-	if config.AutoWebp ||
-		config.EnforceWebp ||
-		config.AutoAvif ||
-		config.EnforceAvif ||
-		config.AutoJxl ||
-		config.EnforceJxl {
-		vary = append(vary, "Accept")
-	}
-
-	if config.EnableClientHints {
-		vary = append(vary, "Sec-CH-DPR", "DPR", "Sec-CH-Width", "Width")
-	}
-
-	headerVaryValue = strings.Join(vary, ", ")
 }
 
-func setCacheControl(rw http.ResponseWriter, force *time.Time, originHeaders http.Header) {
-	ttl := -1
-
-	if _, ok := originHeaders["Fallback-Image"]; ok && config.FallbackImageTTL > 0 {
-		ttl = config.FallbackImageTTL
-	}
-
-	if force != nil && (ttl < 0 || force.Before(time.Now().Add(time.Duration(ttl)*time.Second))) {
-		ttl = min(config.TTL, max(0, int(time.Until(*force).Seconds())))
-	}
-
-	if config.CacheControlPassthrough && ttl < 0 && originHeaders != nil {
-		if val := originHeaders.Get(httpheaders.CacheControl); len(val) > 0 {
-			rw.Header().Set(httpheaders.CacheControl, val)
-			return
-		}
-
-		if val := originHeaders.Get(httpheaders.Expires); len(val) > 0 {
-			if t, err := time.Parse(http.TimeFormat, val); err == nil {
-				ttl = max(0, int(time.Until(t).Seconds()))
-			}
-		}
-	}
-
-	if ttl < 0 {
-		ttl = config.TTL
-	}
-
-	if ttl > 0 {
-		rw.Header().Set(httpheaders.CacheControl, fmt.Sprintf("max-age=%d, public", ttl))
-	} else {
-		rw.Header().Set(httpheaders.CacheControl, "no-cache")
-	}
-}
-
-func setLastModified(rw http.ResponseWriter, originHeaders http.Header) {
-	if config.LastModifiedEnabled {
-		if val := originHeaders.Get(httpheaders.LastModified); len(val) != 0 {
-			rw.Header().Set(httpheaders.LastModified, val)
-		}
-	}
-}
-
-func setVary(rw http.ResponseWriter) {
-	if len(headerVaryValue) > 0 {
-		rw.Header().Set(httpheaders.Vary, headerVaryValue)
-	}
-}
-
-func setCanonical(rw http.ResponseWriter, originURL string) {
-	if config.SetCanonicalHeader {
-		if strings.HasPrefix(originURL, "https://") || strings.HasPrefix(originURL, "http://") {
-			linkHeader := fmt.Sprintf(`<%s>; rel="canonical"`, originURL)
-			rw.Header().Set("Link", linkHeader)
-		}
-	}
-}
-
-func writeOriginContentLengthDebugHeader(rw http.ResponseWriter, originData imagedata.ImageData) error {
+// writeDebugHeaders writes debug headers (X-Origin-*, X-Result-*) to the response
+func writeDebugHeaders(rw http.ResponseWriter, result *processing.Result, originData imagedata.ImageData) error {
 	if !config.EnableDebugHeaders {
 		return nil
 	}
 
+	if result != nil {
+		rw.Header().Set(httpheaders.XOriginWidth, strconv.Itoa(result.OriginWidth))
+		rw.Header().Set(httpheaders.XOriginHeight, strconv.Itoa(result.OriginHeight))
+		rw.Header().Set(httpheaders.XResultWidth, strconv.Itoa(result.ResultWidth))
+		rw.Header().Set(httpheaders.XResultHeight, strconv.Itoa(result.ResultHeight))
+	}
+
+	// Try to read origin image size
 	size, err := originData.Size()
 	if err != nil {
 		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryImageDataSize))
@@ -138,18 +67,16 @@ func writeOriginContentLengthDebugHeader(rw http.ResponseWriter, originData imag
 	return nil
 }
 
-func writeDebugHeaders(rw http.ResponseWriter, result *processing.Result) {
-	if !config.EnableDebugHeaders || result == nil {
-		return
-	}
-
-	rw.Header().Set(httpheaders.XOriginWidth, strconv.Itoa(result.OriginWidth))
-	rw.Header().Set(httpheaders.XOriginHeight, strconv.Itoa(result.OriginHeight))
-	rw.Header().Set(httpheaders.XResultWidth, strconv.Itoa(result.ResultWidth))
-	rw.Header().Set(httpheaders.XResultHeight, strconv.Itoa(result.ResultHeight))
-}
-
-func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, statusCode int, resultData imagedata.ImageData, po *options.ProcessingOptions, originURL string, originData imagedata.ImageData, originHeaders http.Header) error {
+func respondWithImage(
+	reqID string,
+	r *http.Request,
+	rw http.ResponseWriter,
+	statusCode int,
+	resultData imagedata.ImageData,
+	po *options.ProcessingOptions,
+	originURL string,
+	hw *headerwriter.Request,
+) error {
 	// We read the size of the image data here, so we can set Content-Length header.
 	// This indireclty ensures that the image data is fully read from the source, no
 	// errors happened.
@@ -158,25 +85,29 @@ func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, sta
 		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryImageDataSize))
 	}
 
-	contentDisposition := httpheaders.ContentDispositionValue(
+	hw.SetContentType(resultData.Format().Mime())
+	hw.SetContentLength(resultSize)
+	hw.SetContentDisposition(
 		originURL,
 		po.Filename,
 		resultData.Format().Ext(),
 		"",
 		po.ReturnAttachment,
 	)
+	hw.SetExpires(po.Expires)
+	hw.SetVary()
+	hw.SetCanonical()
 
-	rw.Header().Set(httpheaders.ContentType, resultData.Format().Mime())
-	rw.Header().Set(httpheaders.ContentDisposition, contentDisposition)
+	if config.LastModifiedEnabled {
+		hw.Passthrough(httpheaders.LastModified)
+	}
 
-	setCacheControl(rw, po.Expires, originHeaders)
-	setLastModified(rw, originHeaders)
-	setVary(rw)
-	setCanonical(rw, originURL)
+	if config.ETagEnabled {
+		hw.Passthrough(httpheaders.Etag)
+	}
 
-	rw.Header().Set(httpheaders.ContentSecurityPolicy, "script-src 'none'")
+	hw.Write(rw)
 
-	rw.Header().Set(httpheaders.ContentLength, strconv.Itoa(resultSize))
 	rw.WriteHeader(statusCode)
 
 	_, err = io.Copy(rw, resultData.Reader())
@@ -201,13 +132,20 @@ func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, sta
 	return nil
 }
 
-func respondWithNotModified(reqID string, r *http.Request, rw http.ResponseWriter, po *options.ProcessingOptions, originURL string, originHeaders http.Header) {
-	setCacheControl(rw, po.Expires, originHeaders)
-	setVary(rw)
+func respondWithNotModified(reqID string, r *http.Request, rw http.ResponseWriter, po *options.ProcessingOptions, originURL string, hw *headerwriter.Request) {
+	hw.SetExpires(po.Expires)
+	hw.SetVary()
 
-	rw.WriteHeader(304)
+	if config.ETagEnabled {
+		hw.Passthrough(httpheaders.Etag)
+	}
+
+	hw.Write(rw)
+
+	rw.WriteHeader(http.StatusNotModified)
+
 	server.LogResponse(
-		reqID, r, 304, nil,
+		reqID, r, http.StatusNotModified, nil,
 		log.Fields{
 			"image_url":          originURL,
 			"processing_options": po,
@@ -215,7 +153,32 @@ func respondWithNotModified(reqID string, r *http.Request, rw http.ResponseWrite
 	)
 }
 
-func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) error {
+func callHandleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) error {
+	// NOTE: This is temporary, will be moved level up at once
+	hwc, err := headerwriter.NewDefaultConfig().LoadFromEnv()
+	if err != nil {
+		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
+	}
+
+	hw, err := headerwriter.New(hwc)
+	if err != nil {
+		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
+	}
+
+	sc, err := stream.NewDefaultConfig().LoadFromEnv()
+	if err != nil {
+		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
+	}
+
+	stream, err := stream.New(sc, hw, imagedata.Fetcher)
+	if err != nil {
+		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
+	}
+
+	return handleProcessing(reqID, rw, r, hw, stream)
+}
+
+func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request, hw *headerwriter.Writer, stream *stream.Handler) error {
 	stats.IncRequestsInProgress()
 	defer stats.DecRequestsInProgress()
 
@@ -277,30 +240,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) err
 	}
 
 	if po.Raw {
-		// NOTE: This is temporary, there would be no categoryConfig once we
-		// finish with refactoring.
-		// TODO: Move this up
-		cfg, cerr := stream.NewDefaultConfig().LoadFromEnv()
-		if cerr != nil {
-			return ierrors.Wrap(cerr, 0, ierrors.WithCategory(categoryConfig))
-		}
-
-		hwc, cerr := headerwriter.NewDefaultConfig().LoadFromEnv()
-		if cerr != nil {
-			return ierrors.Wrap(cerr, 0, ierrors.WithCategory(categoryConfig))
-		}
-
-		hw, cerr := headerwriter.New(hwc)
-		if cerr != nil {
-			return ierrors.Wrap(cerr, 0, ierrors.WithCategory(categoryConfig))
-		}
-
-		handler, cerr := stream.New(cfg, hw, imagedata.Fetcher)
-		if cerr != nil {
-			return ierrors.Wrap(cerr, 0, ierrors.WithCategory(categoryConfig))
-		}
-
-		return handler.Execute(ctx, r, imageURL, reqID, po, rw)
+		return stream.Execute(ctx, r, imageURL, reqID, po, rw)
 	}
 
 	// SVG is a special case. Though saving to svg is not supported, SVG->SVG is.
@@ -313,22 +253,14 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) err
 
 	imgRequestHeader := make(http.Header)
 
-	var etagHandler etag.Handler
-
+	// If ETag is enabled, we forward If-None-Match header
 	if config.ETagEnabled {
-		etagHandler.ParseExpectedETag(r.Header.Get("If-None-Match"))
-
-		if etagHandler.SetActualProcessingOptions(po) {
-			if imgEtag := etagHandler.ImageEtagExpected(); len(imgEtag) != 0 {
-				imgRequestHeader.Set("If-None-Match", imgEtag)
-			}
-		}
+		imgRequestHeader.Set(httpheaders.IfNoneMatch, r.Header.Get(httpheaders.IfNoneMatch))
 	}
 
+	// If LastModified is enabled, we forward If-Modified-Since header
 	if config.LastModifiedEnabled {
-		if modifiedSince := r.Header.Get("If-Modified-Since"); len(modifiedSince) != 0 {
-			imgRequestHeader.Set("If-Modified-Since", modifiedSince)
-		}
+		imgRequestHeader.Set(httpheaders.IfModifiedSince, r.Header.Get(httpheaders.IfModifiedSince))
 	}
 
 	if queueSem != nil {
@@ -393,27 +325,28 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) err
 		return imagedata.DownloadAsync(ctx, imageURL, "source image", downloadOpts)
 	}()
 
+	// Close originData if no error occurred
+	if err == nil {
+		defer originData.Close()
+	}
+
+	// Check that image detection didn't take too long
+	if terr := server.CheckTimeout(ctx); terr != nil {
+		return ierrors.Wrap(terr, 0, ierrors.WithCategory(categoryTimeout))
+	}
+
 	var nmErr imagefetcher.NotModifiedError
 
-	switch {
-	case err == nil:
-		defer originData.Close()
+	// Respond with NotModified if image was not modified
+	if errors.As(err, &nmErr) {
+		hwr := hw.NewRequest(nmErr.Headers(), imageURL)
 
-	case errors.As(err, &nmErr):
-		if config.ETagEnabled && len(etagHandler.ImageEtagExpected()) != 0 {
-			rw.Header().Set(httpheaders.Etag, etagHandler.GenerateExpectedETag())
-		}
-
-		respondWithNotModified(reqID, r, rw, po, imageURL, nmErr.Headers())
+		respondWithNotModified(reqID, r, rw, po, imageURL, hwr)
 		return nil
+	}
 
-	default:
-		// This may be a request timeout error or a request cancelled error.
-		// Check it before moving further
-		if terr := server.CheckTimeout(ctx); terr != nil {
-			return ierrors.Wrap(terr, 0, ierrors.WithCategory(categoryTimeout))
-		}
-
+	// If error is not related to NotModified, respond with fallback image
+	if err != nil {
 		ierr := ierrors.Wrap(err, 0, ierrors.WithCategory(categoryDownload))
 		if config.ReportDownloadingErrors {
 			ierr = ierrors.Wrap(ierr, 0, ierrors.WithShouldReport(true))
@@ -447,28 +380,6 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) err
 		}
 	}
 
-	if terr := server.CheckTimeout(ctx); terr != nil {
-		return ierrors.Wrap(terr, 0, ierrors.WithCategory(categoryTimeout))
-	}
-
-	if config.ETagEnabled && statusCode == http.StatusOK {
-		imgDataMatch, eerr := etagHandler.SetActualImageData(originData, originHeaders)
-		if eerr != nil && config.ReportIOErrors {
-			return ierrors.Wrap(eerr, 0, ierrors.WithCategory(categoryIO))
-		}
-
-		rw.Header().Set("ETag", etagHandler.GenerateActualETag())
-
-		if imgDataMatch && etagHandler.ProcessingOptionsMatch() {
-			respondWithNotModified(reqID, r, rw, po, imageURL, originHeaders)
-			return nil
-		}
-	}
-
-	if terr := server.CheckTimeout(ctx); terr != nil {
-		return ierrors.Wrap(terr, 0, ierrors.WithCategory(categoryTimeout))
-	}
-
 	if !vips.SupportsLoad(originData.Format()) {
 		return ierrors.Wrap(newInvalidURLErrorf(
 			http.StatusUnprocessableEntity,
@@ -496,18 +407,16 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) err
 		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryProcessing))
 	}
 
-	if terr := server.CheckTimeout(ctx); terr != nil {
-		return ierrors.Wrap(terr, 0, ierrors.WithCategory(categoryTimeout))
-	}
+	hwr := hw.NewRequest(originHeaders, imageURL)
 
-	writeDebugHeaders(rw, result)
-
-	err = writeOriginContentLengthDebugHeader(rw, originData)
+	// Write debug headers. It seems unlogical to move they to headerwriter since they're
+	// not used anywhere else.
+	err = writeDebugHeaders(rw, result, originData)
 	if err != nil {
 		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryImageDataSize))
 	}
 
-	err = respondWithImage(reqID, r, rw, statusCode, result.OutData, po, imageURL, originData, originHeaders)
+	err = respondWithImage(reqID, r, rw, statusCode, result.OutData, po, imageURL, hwr)
 	if err != nil {
 		return err
 	}

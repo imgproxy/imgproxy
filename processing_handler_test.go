@@ -8,7 +8,6 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"strings"
 	"testing"
 	"time"
 
@@ -17,11 +16,9 @@ import (
 
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/config/configurators"
-	"github.com/imgproxy/imgproxy/v3/etag"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
-	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/server"
 	"github.com/imgproxy/imgproxy/v3/svg"
 	"github.com/imgproxy/imgproxy/v3/testutil"
@@ -101,34 +98,6 @@ func (s *ProcessingHandlerTestSuite) readTestImageData(name string) imagedata.Im
 	s.Require().NoError(err)
 
 	return imgdata
-}
-
-func (s *ProcessingHandlerTestSuite) readImageData(imgdata imagedata.ImageData) []byte {
-	data, err := io.ReadAll(imgdata.Reader())
-	s.Require().NoError(err)
-	return data
-}
-
-func (s *ProcessingHandlerTestSuite) sampleETagData(imgETag string) (string, imagedata.ImageData, http.Header, string) {
-	poStr := "rs:fill:4:4"
-
-	po := options.NewProcessingOptions()
-	po.ResizingType = options.ResizeFill
-	po.Width = 4
-	po.Height = 4
-
-	imgdata := s.readTestImageData("test1.png")
-	headers := make(http.Header)
-
-	if len(imgETag) != 0 {
-		headers.Set(httpheaders.Etag, imgETag)
-	}
-
-	var h etag.Handler
-
-	h.SetActualProcessingOptions(po)
-	h.SetActualImageData(imgdata, headers)
-	return poStr, imgdata, headers, h.GenerateActualETag()
 }
 
 func (s *ProcessingHandlerTestSuite) TestRequest() {
@@ -411,166 +380,27 @@ func (s *ProcessingHandlerTestSuite) TestETagDisabled() {
 	s.Require().Empty(res.Header.Get("ETag"))
 }
 
-func (s *ProcessingHandlerTestSuite) TestETagReqNoIfNotModified() {
-	config.ETagEnabled = true
-
-	poStr, _, headers, etag := s.sampleETagData("loremipsumdolor")
-
-	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		s.Empty(r.Header.Get("If-None-Match"))
-
-		rw.Header().Set("ETag", headers.Get(httpheaders.Etag))
-		rw.WriteHeader(200)
-		rw.Write(s.readTestFile("test1.png"))
-	}))
-	defer ts.Close()
-
-	rw := s.send(fmt.Sprintf("/unsafe/%s/plain/%s", poStr, ts.URL))
-	res := rw.Result()
-
-	s.Require().Equal(200, res.StatusCode)
-	s.Require().Equal(etag, res.Header.Get("ETag"))
-}
-
-func (s *ProcessingHandlerTestSuite) TestETagDataNoIfNotModified() {
-	config.ETagEnabled = true
-
-	poStr, imgdata, _, etag := s.sampleETagData("")
-
-	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		s.Empty(r.Header.Get("If-None-Match"))
-
-		rw.WriteHeader(200)
-		rw.Write(s.readImageData(imgdata))
-	}))
-	defer ts.Close()
-
-	rw := s.send(fmt.Sprintf("/unsafe/%s/plain/%s", poStr, ts.URL))
-	res := rw.Result()
-
-	s.Require().Equal(200, res.StatusCode)
-	s.Require().Equal(etag, res.Header.Get("ETag"))
-}
-
-func (s *ProcessingHandlerTestSuite) TestETagReqMatch() {
-	config.ETagEnabled = true
-
-	poStr, _, headers, etag := s.sampleETagData(`"loremipsumdolor"`)
-
-	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		s.Equal(headers.Get(httpheaders.Etag), r.Header.Get(httpheaders.IfNoneMatch))
-
-		rw.WriteHeader(304)
-	}))
-	defer ts.Close()
-
-	header := make(http.Header)
-	header.Set("If-None-Match", etag)
-
-	rw := s.send(fmt.Sprintf("/unsafe/%s/plain/%s", poStr, ts.URL), header)
-	res := rw.Result()
-
-	s.Require().Equal(304, res.StatusCode)
-	s.Require().Equal(etag, res.Header.Get("ETag"))
-}
-
 func (s *ProcessingHandlerTestSuite) TestETagDataMatch() {
 	config.ETagEnabled = true
 
-	poStr, imgdata, _, etag := s.sampleETagData("")
+	etag := `"loremipsumdolor"`
 
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		s.Empty(r.Header.Get("If-None-Match"))
+		s.NotEmpty(r.Header.Get(httpheaders.IfNoneMatch))
 
-		rw.WriteHeader(200)
-		rw.Write(s.readImageData(imgdata))
+		rw.Header().Set(httpheaders.Etag, etag)
+		rw.WriteHeader(http.StatusNotModified)
 	}))
 	defer ts.Close()
 
 	header := make(http.Header)
-	header.Set("If-None-Match", etag)
+	header.Set(httpheaders.IfNoneMatch, etag)
 
-	rw := s.send(fmt.Sprintf("/unsafe/%s/plain/%s", poStr, ts.URL), header)
+	rw := s.send(fmt.Sprintf("/unsafe/plain/%s", ts.URL), header)
 	res := rw.Result()
 
 	s.Require().Equal(304, res.StatusCode)
-	s.Require().Equal(etag, res.Header.Get("ETag"))
-}
-
-func (s *ProcessingHandlerTestSuite) TestETagReqNotMatch() {
-	config.ETagEnabled = true
-
-	poStr, imgdata, headers, actualETag := s.sampleETagData(`"loremipsumdolor"`)
-	_, _, _, expectedETag := s.sampleETagData(`"loremipsum"`)
-
-	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		s.Equal(`"loremipsum"`, r.Header.Get("If-None-Match"))
-
-		rw.Header().Set("ETag", headers.Get(httpheaders.Etag))
-		rw.WriteHeader(200)
-		rw.Write(s.readImageData(imgdata))
-	}))
-	defer ts.Close()
-
-	header := make(http.Header)
-	header.Set("If-None-Match", expectedETag)
-
-	rw := s.send(fmt.Sprintf("/unsafe/%s/plain/%s", poStr, ts.URL), header)
-	res := rw.Result()
-
-	s.Require().Equal(200, res.StatusCode)
-	s.Require().Equal(actualETag, res.Header.Get("ETag"))
-}
-
-func (s *ProcessingHandlerTestSuite) TestETagDataNotMatch() {
-	config.ETagEnabled = true
-
-	poStr, imgdata, _, actualETag := s.sampleETagData("")
-	// Change the data hash
-	expectedETag := actualETag[:strings.IndexByte(actualETag, '/')] + "/Dasdbefj"
-
-	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		s.Empty(r.Header.Get("If-None-Match"))
-
-		rw.WriteHeader(200)
-		rw.Write(s.readImageData(imgdata))
-	}))
-	defer ts.Close()
-
-	header := make(http.Header)
-	header.Set("If-None-Match", expectedETag)
-
-	rw := s.send(fmt.Sprintf("/unsafe/%s/plain/%s", poStr, ts.URL), header)
-	res := rw.Result()
-
-	s.Require().Equal(200, res.StatusCode)
-	s.Require().Equal(actualETag, res.Header.Get("ETag"))
-}
-
-func (s *ProcessingHandlerTestSuite) TestETagProcessingOptionsNotMatch() {
-	config.ETagEnabled = true
-
-	poStr, imgdata, headers, actualETag := s.sampleETagData("")
-	// Change the processing options hash
-	expectedETag := "abcdefj" + actualETag[strings.IndexByte(actualETag, '/'):]
-
-	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		s.Empty(r.Header.Get("If-None-Match"))
-
-		rw.Header().Set("ETag", headers.Get(httpheaders.Etag))
-		rw.WriteHeader(200)
-		rw.Write(s.readImageData(imgdata))
-	}))
-	defer ts.Close()
-
-	header := make(http.Header)
-	header.Set("If-None-Match", expectedETag)
-
-	rw := s.send(fmt.Sprintf("/unsafe/%s/plain/%s", poStr, ts.URL), header)
-	res := rw.Result()
-
-	s.Require().Equal(200, res.StatusCode)
-	s.Require().Equal(actualETag, res.Header.Get("ETag"))
+	s.Require().Equal(etag, res.Header.Get(httpheaders.Etag))
 }
 
 func (s *ProcessingHandlerTestSuite) TestLastModifiedEnabled() {

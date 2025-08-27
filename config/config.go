@@ -351,10 +351,10 @@ func Reset() {
 	SwiftConnectTimeoutSeconds = 10
 	SwiftTimeoutSeconds = 60
 
-	ETagEnabled = false
+	ETagEnabled = true
 	ETagBuster = ""
 
-	LastModifiedEnabled = false
+	LastModifiedEnabled = true
 
 	BaseURL = ""
 	URLReplacements = make([]URLReplacement, 0)

@@ -45,7 +45,7 @@ func buildRouter(r *server.Router) *server.Router {
 	}
 
 	r.GET(
-		"/*", handleProcessing,
+		"/*", callHandleProcessing,
 		r.WithSecret, r.WithCORS, r.WithPanic, r.WithReportError, r.WithMonitoring,
 	)
 

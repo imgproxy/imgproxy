@@ -1,6 +1,8 @@
 package httpheaders
 
-import "net/http"
+import (
+	"net/http"
+)
 
 // Copy copies specified headers from one header to another.
 func Copy(from, to http.Header, only []string) {
