@@ -116,7 +116,7 @@ func (s *request) execute(ctx context.Context) error {
 	// Output streaming response headers
 	hw := s.handler.hw.NewRequest(res.Header, s.imageURL)
 
-	hw.Passthrough(s.handler.config.PassthroughResponseHeaders) // NOTE: priority? This is lowest as it was
+	hw.Passthrough(s.handler.config.PassthroughResponseHeaders...) // NOTE: priority? This is lowest as it was
 	hw.SetContentLength(int(res.ContentLength))
 	hw.SetCanonical()
 	hw.SetExpires(s.po.Expires)

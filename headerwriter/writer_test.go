@@ -210,7 +210,7 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 			},
 			config: Config{},
 			fn: func(w *Request) {
-				w.Passthrough([]string{"X-Test"})
+				w.Passthrough("X-Test")
 			},
 		},
 		{

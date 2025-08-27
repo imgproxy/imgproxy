@@ -96,11 +96,11 @@ func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, sta
 	hw.SetCanonical()
 
 	if config.LastModifiedEnabled {
-		hw.Passthrough([]string{httpheaders.LastModified})
+		hw.Passthrough(httpheaders.LastModified)
 	}
 
 	if config.ETagEnabled {
-		hw.Passthrough([]string{httpheaders.Etag})
+		hw.Passthrough(httpheaders.Etag)
 	}
 
 	hw.Write(rw)
@@ -134,7 +134,7 @@ func respondWithNotModified(reqID string, r *http.Request, rw http.ResponseWrite
 	hw.SetVary()
 
 	if config.ETagEnabled {
-		hw.Passthrough([]string{httpheaders.Etag})
+		hw.Passthrough(httpheaders.Etag)
 	}
 
 	hw.Write(rw)

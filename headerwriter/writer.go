@@ -113,7 +113,7 @@ func (r *Request) SetContentDisposition(originURL, filename, ext, contentType st
 }
 
 // Passthrough copies specified headers from the original response headers to the response headers.
-func (r *Request) Passthrough(only []string) {
+func (r *Request) Passthrough(only ...string) {
 	httpheaders.Copy(r.originalResponseHeaders, r.result, only)
 }
 
