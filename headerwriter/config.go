@@ -12,10 +12,8 @@ type Config struct {
 	DefaultTTL              int  // Default Cache-Control max-age= value for cached images
 	FallbackImageTTL        int  // TTL for images served as fallbacks
 	CacheControlPassthrough bool // Passthrough the Cache-Control from the original response
-	LastModifiedEnabled     bool // Set the Last-Modified header
 	EnableClientHints       bool // Enable Vary header
 	SetVaryAccept           bool // Whether to include Accept in Vary header
-	ETagEnabled             bool // Passthrough ETag header from server
 }
 
 // NewDefaultConfig returns a new Config instance with default values.
@@ -24,11 +22,9 @@ func NewDefaultConfig() *Config {
 		SetCanonicalHeader:      false,
 		DefaultTTL:              31536000,
 		FallbackImageTTL:        0,
-		LastModifiedEnabled:     false,
 		CacheControlPassthrough: false,
 		EnableClientHints:       false,
 		SetVaryAccept:           false,
-		ETagEnabled:             false,
 	}
 }
 
@@ -37,7 +33,6 @@ func (c *Config) LoadFromEnv() (*Config, error) {
 	c.SetCanonicalHeader = config.SetCanonicalHeader
 	c.DefaultTTL = config.TTL
 	c.FallbackImageTTL = config.FallbackImageTTL
-	c.LastModifiedEnabled = config.LastModifiedEnabled
 	c.CacheControlPassthrough = config.CacheControlPassthrough
 	c.EnableClientHints = config.EnableClientHints
 	c.SetVaryAccept = config.AutoWebp ||
@@ -46,7 +41,6 @@ func (c *Config) LoadFromEnv() (*Config, error) {
 		config.EnforceAvif ||
 		config.AutoJxl ||
 		config.EnforceJxl
-	c.ETagEnabled = config.ETagEnabled
 
 	return c, nil
 }

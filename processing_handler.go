@@ -92,10 +92,16 @@ func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, sta
 		po.ReturnAttachment,
 	)
 	hw.SetExpires(po.Expires)
-	hw.SetLastModified()
 	hw.SetVary()
 	hw.SetCanonical()
-	hw.SetETag()
+
+	if config.LastModifiedEnabled {
+		hw.Passthrough([]string{httpheaders.LastModified})
+	}
+
+	if config.ETagEnabled {
+		hw.Passthrough([]string{httpheaders.Etag})
+	}
 
 	hw.Write(rw)
 
@@ -126,10 +132,15 @@ func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, sta
 func respondWithNotModified(reqID string, r *http.Request, rw http.ResponseWriter, po *options.ProcessingOptions, originURL string, hw *headerwriter.Request) {
 	hw.SetExpires(po.Expires)
 	hw.SetVary()
-	hw.SetETag()
+
+	if config.ETagEnabled {
+		hw.Passthrough([]string{httpheaders.Etag})
+	}
+
 	hw.Write(rw)
 
 	rw.WriteHeader(http.StatusNotModified)
+
 	server.LogResponse(
 		reqID, r, http.StatusNotModified, nil,
 		log.Fields{
@@ -239,10 +250,12 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request, hw 
 
 	imgRequestHeader := make(http.Header)
 
+	// If ETag is enabled, we forward If-None-Match header
 	if config.ETagEnabled {
 		imgRequestHeader.Set(httpheaders.IfNoneMatch, r.Header.Get(httpheaders.IfNoneMatch))
 	}
 
+	// If LastModified is enabled, we forward If-Modified-Since header
 	if config.LastModifiedEnabled {
 		imgRequestHeader.Set(httpheaders.IfModifiedSince, r.Header.Get(httpheaders.IfModifiedSince))
 	}

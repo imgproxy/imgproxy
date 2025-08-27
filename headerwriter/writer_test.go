@@ -45,7 +45,6 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 				SetCanonicalHeader:      false,
 				DefaultTTL:              0,
 				CacheControlPassthrough: false,
-				LastModifiedEnabled:     false,
 				EnableClientHints:       false,
 				SetVaryAccept:           false,
 			},
@@ -136,24 +135,6 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 			},
 			fn: func(w *Request) {
 				w.SetCanonical()
-			},
-		},
-		{
-			name: "LastModified",
-			req: http.Header{
-				httpheaders.LastModified: []string{expires.Format(http.TimeFormat)},
-			},
-			res: http.Header{
-				httpheaders.LastModified:          []string{expires.Format(http.TimeFormat)},
-				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
-				httpheaders.CacheControl:          []string{"max-age=3600, public"},
-			},
-			config: Config{
-				LastModifiedEnabled: true,
-				DefaultTTL:          3600,
-			},
-			fn: func(w *Request) {
-				w.SetLastModified()
 			},
 		},
 		{

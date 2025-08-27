@@ -90,20 +90,6 @@ func (r *Request) SetExpires(expires *time.Time) {
 	}
 }
 
-// SetLastModified sets the Last-Modified header from request
-func (r *Request) SetLastModified() {
-	if !r.writer.config.LastModifiedEnabled {
-		return
-	}
-
-	val := r.originalResponseHeaders.Get(httpheaders.LastModified)
-	if len(val) == 0 {
-		return
-	}
-
-	r.result.Set(httpheaders.LastModified, val)
-}
-
 // SetVary sets the Vary header
 func (r *Request) SetVary() {
 	if len(r.writer.varyValue) > 0 {
@@ -204,20 +190,6 @@ func (r *Request) setCacheControlPassthrough() bool {
 // setCSP sets the Content-Security-Policy header to prevent script execution.
 func (r *Request) setCSP() {
 	r.result.Set(httpheaders.ContentSecurityPolicy, "script-src 'none'")
-}
-
-// SetETag copies the ETag header from the original response headers to the result headers.
-func (r *Request) SetETag() {
-	if !r.writer.config.ETagEnabled {
-		return
-	}
-
-	etag := r.originalResponseHeaders.Get(httpheaders.Etag)
-	if len(etag) == 0 {
-		return
-	}
-
-	r.result.Set(httpheaders.Etag, etag)
 }
 
 // Write writes the headers to the response writer. It does not overwrite
