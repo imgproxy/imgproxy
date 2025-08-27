@@ -43,12 +43,20 @@ func initProcessingHandler() {
 	processingSem = semaphore.NewWeighted(int64(config.Workers))
 }
 
-// writeOriginContentLengthDebugHeader writes the X-Origin-Content-Length header to the response.
-func writeOriginContentLengthDebugHeader(rw http.ResponseWriter, originData imagedata.ImageData) error {
+// writeDebugHeaders writes debug headers (X-Origin-*, X-Result-*) to the response
+func writeDebugHeaders(rw http.ResponseWriter, result *processing.Result, originData imagedata.ImageData) error {
 	if !config.EnableDebugHeaders {
 		return nil
 	}
 
+	if result != nil {
+		rw.Header().Set(httpheaders.XOriginWidth, strconv.Itoa(result.OriginWidth))
+		rw.Header().Set(httpheaders.XOriginHeight, strconv.Itoa(result.OriginHeight))
+		rw.Header().Set(httpheaders.XResultWidth, strconv.Itoa(result.ResultWidth))
+		rw.Header().Set(httpheaders.XResultHeight, strconv.Itoa(result.ResultHeight))
+	}
+
+	// Try to read origin image size
 	size, err := originData.Size()
 	if err != nil {
 		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryImageDataSize))
@@ -59,21 +67,16 @@ func writeOriginContentLengthDebugHeader(rw http.ResponseWriter, originData imag
 	return nil
 }
 
-// writeDebugHeaders writes debug headers (X-Origin-*, X-Result-*) to the response
-func writeDebugHeaders(rw http.ResponseWriter, result *processing.Result, originData imagedata.ImageData) error {
-	if !config.EnableDebugHeaders || result == nil {
-		return nil
-	}
-
-	rw.Header().Set(httpheaders.XOriginWidth, strconv.Itoa(result.OriginWidth))
-	rw.Header().Set(httpheaders.XOriginHeight, strconv.Itoa(result.OriginHeight))
-	rw.Header().Set(httpheaders.XResultWidth, strconv.Itoa(result.ResultWidth))
-	rw.Header().Set(httpheaders.XResultHeight, strconv.Itoa(result.ResultHeight))
-
-	return writeOriginContentLengthDebugHeader(rw, originData)
-}
-
-func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, statusCode int, resultData imagedata.ImageData, po *options.ProcessingOptions, originURL string, originData imagedata.ImageData, hw *headerwriter.Request) error {
+func respondWithImage(
+	reqID string,
+	r *http.Request,
+	rw http.ResponseWriter,
+	statusCode int,
+	resultData imagedata.ImageData,
+	po *options.ProcessingOptions,
+	originURL string,
+	hw *headerwriter.Request,
+) error {
 	// We read the size of the image data here, so we can set Content-Length header.
 	// This indireclty ensures that the image data is fully read from the source, no
 	// errors happened.
@@ -322,25 +325,28 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request, hw 
 		return imagedata.DownloadAsync(ctx, imageURL, "source image", downloadOpts)
 	}()
 
+	// Close originData if no error occurred
+	if err == nil {
+		defer originData.Close()
+	}
+
+	// Check that image detection didn't take too long
+	if terr := server.CheckTimeout(ctx); terr != nil {
+		return ierrors.Wrap(terr, 0, ierrors.WithCategory(categoryTimeout))
+	}
+
 	var nmErr imagefetcher.NotModifiedError
 
-	switch {
-	case err == nil:
-		defer originData.Close()
-
-	case errors.As(err, &nmErr):
+	// Respond with NotModified if image was not modified
+	if errors.As(err, &nmErr) {
 		hwr := hw.NewRequest(nmErr.Headers(), imageURL)
 
 		respondWithNotModified(reqID, r, rw, po, imageURL, hwr)
 		return nil
+	}
 
-	default:
-		// This may be a request timeout error or a request cancelled error.
-		// Check it before moving further
-		if terr := server.CheckTimeout(ctx); terr != nil {
-			return ierrors.Wrap(terr, 0, ierrors.WithCategory(categoryTimeout))
-		}
-
+	// If error is not related to NotModified, respond with fallback image
+	if err != nil {
 		ierr := ierrors.Wrap(err, 0, ierrors.WithCategory(categoryDownload))
 		if config.ReportDownloadingErrors {
 			ierr = ierrors.Wrap(ierr, 0, ierrors.WithShouldReport(true))
@@ -374,10 +380,6 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request, hw 
 		}
 	}
 
-	if terr := server.CheckTimeout(ctx); terr != nil {
-		return ierrors.Wrap(terr, 0, ierrors.WithCategory(categoryTimeout))
-	}
-
 	if !vips.SupportsLoad(originData.Format()) {
 		return ierrors.Wrap(newInvalidURLErrorf(
 			http.StatusUnprocessableEntity,
@@ -405,10 +407,6 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request, hw 
 		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryProcessing))
 	}
 
-	if terr := server.CheckTimeout(ctx); terr != nil {
-		return ierrors.Wrap(terr, 0, ierrors.WithCategory(categoryTimeout))
-	}
-
 	hwr := hw.NewRequest(originHeaders, imageURL)
 
 	// Write debug headers. It seems unlogical to move they to headerwriter since they're
@@ -418,7 +416,7 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request, hw 
 		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryImageDataSize))
 	}
 
-	err = respondWithImage(reqID, r, rw, statusCode, result.OutData, po, imageURL, originData, hwr)
+	err = respondWithImage(reqID, r, rw, statusCode, result.OutData, po, imageURL, hwr)
 	if err != nil {
 		return err
 	}
