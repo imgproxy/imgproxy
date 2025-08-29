@@ -142,6 +142,12 @@ func (ab *AsyncBuffer) addChunk(chunk *byteChunk) {
 // readChunks reads data from the upstream reader in background and stores them in the pool
 func (ab *AsyncBuffer) readChunks() {
 	defer func() {
+		if ab.bytesRead.Load() < int64(ab.dataLen) {
+			// If the reader has finished reading and we have not read enough data,
+			// set err to io.ErrUnexpectedEOF
+			ab.setErr(io.ErrUnexpectedEOF)
+		}
+
 		// Indicate that the reader has finished reading
 		ab.finished.Store(true)
 		ab.chunkCond.Close()
@@ -149,12 +155,6 @@ func (ab *AsyncBuffer) readChunks() {
 		// Close the upstream reader
 		if err := ab.r.Close(); err != nil {
 			logrus.WithField("source", "asyncbuffer.AsyncBuffer.readChunks").Warningf("error closing upstream reader: %s", err)
-		}
-
-		if ab.bytesRead.Load() < int64(ab.dataLen) {
-			// If the reader has finished reading and we have not read enough data,
-			// set err to io.ErrUnexpectedEOF
-			ab.setErr(io.ErrUnexpectedEOF)
 		}
 
 		ab.callFinishFn()
