@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"io"
 	"net/http"
@@ -11,6 +12,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/sync/semaphore"
 
+	"github.com/imgproxy/imgproxy/v3/auximageprovider"
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/cookies"
 	"github.com/imgproxy/imgproxy/v3/errorreport"
@@ -175,10 +177,25 @@ func callHandleProcessing(reqID string, rw http.ResponseWriter, r *http.Request)
 		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
 	}
 
-	return handleProcessing(reqID, rw, r, hw, stream)
+	fallbackImageProvider, err := auximageprovider.NewStaticProvider(
+		r.Context(),
+		auximageprovider.NewDefaultStaticConfig(auximageprovider.ImageKindFallback).LoadFromEnv(),
+	)
+	if err != nil {
+		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
+	}
+
+	return handleProcessing(reqID, rw, r, hw, stream, fallbackImageProvider)
 }
 
-func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request, hw *headerwriter.Writer, stream *stream.Handler) error {
+func handleProcessing(
+	reqID string,
+	rw http.ResponseWriter,
+	r *http.Request,
+	hw *headerwriter.Writer,
+	stream *stream.Handler,
+	fallbackImageProvider auximageprovider.Provider,
+) error {
 	stats.IncRequestsInProgress()
 	defer stats.DecRequestsInProgress()
 
@@ -352,7 +369,9 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request, hw 
 			ierr = ierrors.Wrap(ierr, 0, ierrors.WithShouldReport(true))
 		}
 
-		if imagedata.FallbackImage == nil {
+		// Try to get fallback image
+		fbData, fbHeaders := getFallbackImage(ctx, po, fallbackImageProvider)
+		if fbData == nil {
 			return ierr
 		}
 
@@ -372,8 +391,8 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request, hw 
 			statusCode = ierr.StatusCode()
 		}
 
-		originData = imagedata.FallbackImage
-		originHeaders = imagedata.FallbackImageHeaders.Clone()
+		originData = fbData
+		originHeaders = fbHeaders.Clone()
 
 		if config.FallbackImageTTL > 0 {
 			originHeaders.Set("Fallback-Image", "1")
@@ -422,4 +441,22 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request, hw 
 	}
 
 	return nil
+}
+
+func getFallbackImage(
+	ctx context.Context,
+	po *options.ProcessingOptions,
+	fallbackImageProvider auximageprovider.Provider,
+) (imagedata.ImageData, http.Header) {
+	if fallbackImageProvider == nil {
+		return nil, nil
+	}
+
+	data, h, err := fallbackImageProvider.Get(ctx, po)
+	if err != nil {
+		log.Warning(err.Error())
+		return nil, nil
+	}
+
+	return data, h
 }
