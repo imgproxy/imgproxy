@@ -36,6 +36,10 @@ func New(verifyNetworks bool) (*http.Transport, error) {
 		ExpectContinueTimeout: 1 * time.Second,
 		ForceAttemptHTTP2:     false,
 		DisableCompression:    true,
+
+		HTTP2: &http.HTTP2Config{
+			MaxReceiveBufferPerStream: 128 * 1024,
+		},
 	}
 
 	if config.ClientKeepAliveTimeout <= 0 {
@@ -52,6 +56,8 @@ func New(verifyNetworks bool) (*http.Transport, error) {
 		return nil, err
 	}
 
+	// TODO: Move this to transport.HTTP2 when https://go.dev/issue/67813 is closed
+	transport2.MaxReadFrameSize = 16 * 1024
 	transport2.PingTimeout = 5 * time.Second
 	transport2.ReadIdleTimeout = time.Second
 
