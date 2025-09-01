@@ -317,7 +317,7 @@ vips_band_format(VipsImage *in)
 }
 
 gboolean
-vips_is_animated(VipsImage *in)
+vips_image_is_animated(VipsImage *in)
 {
   int n_pages;
 
@@ -327,6 +327,20 @@ vips_is_animated(VipsImage *in)
       vips_image_get_typeof(in, "n-pages") == G_TYPE_INT &&
       vips_image_get_int(in, "n-pages", &n_pages) == 0 &&
       n_pages > 1);
+}
+
+int
+vips_image_remove_animation(VipsImage *in, VipsImage **out)
+{
+  if (vips_copy(in, out, NULL))
+    return -1;
+
+  vips_image_remove(*out, "delay");
+  vips_image_remove(*out, "loop");
+  vips_image_remove(*out, "page-height");
+  vips_image_remove(*out, "n-pages");
+
+  return 0;
 }
 
 int

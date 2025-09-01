@@ -348,12 +348,21 @@ func (img *Image) PageHeight() int {
 	return int(C.vips_image_get_page_height(img.VipsImage))
 }
 
+// Pages returns number of pages in the image file.
+//
+// WARNING: It's not the number of pages in the loaded image.
+// Use [Image.PagesLoaded] for that.
 func (img *Image) Pages() int {
 	p, err := img.GetIntDefault("n-pages", 1)
 	if err != nil {
 		return 1
 	}
 	return p
+}
+
+// PagesLoaded returns number of pages in the loaded image.
+func (img *Image) PagesLoaded() int {
+	return img.Height() / img.PageHeight()
 }
 
 func (img *Image) Load(imgdata imagedata.ImageData, shrink int, scale float64, pages int) error {
@@ -515,7 +524,22 @@ func (img *Image) Swap(in *Image) {
 }
 
 func (img *Image) IsAnimated() bool {
-	return C.vips_is_animated(img.VipsImage) > 0
+	return C.vips_image_is_animated(img.VipsImage) > 0
+}
+
+// RemoveAnimation removes all animation-related data from the image
+// making it a static image.
+//
+// It doesn't remove already loaded frames and keeps them vertically stacked.
+func (img *Image) RemoveAnimation() error {
+	var tmp *C.VipsImage
+
+	if C.vips_image_remove_animation(img.VipsImage, &tmp) != 0 {
+		return Error()
+	}
+
+	C.swap_and_clear(&img.VipsImage, tmp)
+	return nil
 }
 
 func (img *Image) HasAlpha() bool {
