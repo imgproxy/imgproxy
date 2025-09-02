@@ -8,6 +8,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/fetcher"
 	"github.com/imgproxy/imgproxy/v3/headerwriter"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
+	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/monitoring"
 	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
@@ -29,6 +30,8 @@ type request struct {
 	monitoringMeta monitoring.Meta
 	semaphores     *semaphores.Semaphores
 	hwr            *headerwriter.Request
+	imagedata      *imagedata.Factory
+	fetcher        *fetcher.Fetcher
 }
 
 // execute handles the actual processing logic

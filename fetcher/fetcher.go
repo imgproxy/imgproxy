@@ -23,8 +23,8 @@ type Fetcher struct {
 	config    *Config              // Configuration for the image fetcher
 }
 
-// NewFetcher creates a new ImageFetcher with the provided transport
-func NewFetcher(transport *transport.Transport, config *Config) (*Fetcher, error) {
+// New creates a new ImageFetcher with the provided transport
+func New(transport *transport.Transport, config *Config) (*Fetcher, error) {
 	if err := config.Validate(); err != nil {
 		return nil, err
 	}

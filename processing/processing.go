@@ -9,6 +9,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/fetcher"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/options"
@@ -83,6 +84,8 @@ func ProcessImage(
 	ctx context.Context,
 	imgdata imagedata.ImageData,
 	po *options.ProcessingOptions,
+	idf *imagedata.Factory,
+	fetcher *fetcher.Fetcher,
 ) (*Result, error) {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
@@ -101,7 +104,7 @@ func ProcessImage(
 
 	// Let's check if we should skip standard processing
 	if shouldSkipStandardProcessing(imgdata.Format(), po) {
-		return skipStandardProcessing(img, imgdata, po)
+		return skipStandardProcessing(img, imgdata, po, idf)
 	}
 
 	// Check if we expect image to be processed as animated.
@@ -145,7 +148,7 @@ func ProcessImage(
 		return nil, err
 	}
 
-	outData, err := saveImage(ctx, img, po)
+	outData, err := saveImage(ctx, img, po, fetcher)
 	if err != nil {
 		return nil, err
 	}
@@ -270,6 +273,7 @@ func skipStandardProcessing(
 	img *vips.Image,
 	imgdata imagedata.ImageData,
 	po *options.ProcessingOptions,
+	idf *imagedata.Factory,
 ) (*Result, error) {
 	// Even if we skip standard processing, we still need to check image dimensions
 	// to not send an image bomb to the client
@@ -280,7 +284,7 @@ func skipStandardProcessing(
 
 	// Even in this case, SVG is an exception
 	if imgdata.Format() == imagetype.SVG && config.SanitizeSvg {
-		sanitized, err := svg.Sanitize(imgdata)
+		sanitized, err := svg.Sanitize(imgdata, idf)
 		if err != nil {
 			return nil, err
 		}
@@ -515,6 +519,7 @@ func saveImage(
 	ctx context.Context,
 	img *vips.Image,
 	po *options.ProcessingOptions,
+	fetcher *fetcher.Fetcher,
 ) (imagedata.ImageData, error) {
 	// AVIF has a minimal dimension of 16 pixels.
 	// If one of the dimensions is less, we need to switch to another format.
@@ -534,9 +539,9 @@ func saveImage(
 	// If we want and can fit the image into the specified number of bytes,
 	// let's do it.
 	if po.MaxBytes > 0 && po.Format.SupportsQuality() {
-		return saveImageToFitBytes(ctx, po, img)
+		return saveImageToFitBytes(ctx, po, img, fetcher)
 	}
 
 	// Otherwise, just save the image with the specified quality.
-	return img.Save(po.Format, po.GetQuality())
+	return img.Save(po.Format, po.GetQuality(), fetcher)
 }

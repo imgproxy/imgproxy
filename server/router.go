@@ -127,14 +127,16 @@ func (r *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	rw.Header().Set(httpheaders.XRequestID, reqID)
 
 	for _, rr := range r.routes {
-		if rr.isMatch(req) {
-			if !rr.silent {
-				LogRequest(reqID, req)
-			}
-
-			rr.handler(reqID, rw, req)
-			return
+		if !rr.isMatch(req) {
+			continue
 		}
+
+		if !rr.silent {
+			LogRequest(reqID, req)
+		}
+
+		rr.handler(reqID, rw, req)
+		return
 	}
 
 	// Means that we have not found matching route

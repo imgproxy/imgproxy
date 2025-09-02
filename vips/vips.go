@@ -24,6 +24,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/fetcher"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
@@ -433,7 +434,7 @@ func (img *Image) LoadThumbnail(imgdata imagedata.ImageData) error {
 	return nil
 }
 
-func (img *Image) Save(imgtype imagetype.Type, quality int) (imagedata.ImageData, error) {
+func (img *Image) Save(imgtype imagetype.Type, quality int, fetcher *fetcher.Fetcher) (imagedata.ImageData, error) {
 	target := C.vips_target_new_to_memory()
 
 	cancel := func() {
@@ -480,7 +481,9 @@ func (img *Image) Save(imgtype imagetype.Type, quality int) (imagedata.ImageData
 
 	b := ptrToBytes(ptr, int(imgsize))
 
-	i := imagedata.NewFromBytesWithFormat(imgtype, b)
+	idf := imagedata.NewFactory(fetcher)
+
+	i := idf.NewFromBytesWithFormat(imgtype, b)
 	i.AddCancel(cancel)
 
 	return i, nil

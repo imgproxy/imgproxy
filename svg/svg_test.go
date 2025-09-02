@@ -14,6 +14,7 @@ import (
 
 type SvgTestSuite struct {
 	suite.Suite
+	idf *imagedata.Factory
 }
 
 func (s *SvgTestSuite) SetupSuite() {
@@ -21,6 +22,8 @@ func (s *SvgTestSuite) SetupSuite() {
 
 	err := imagedata.Init()
 	s.Require().NoError(err)
+
+	s.idf = imagedata.NewFactory(testutil.NewDefaultFetcher(s.T()))
 }
 
 func (s *SvgTestSuite) readTestFile(name string) imagedata.ImageData {
@@ -30,7 +33,7 @@ func (s *SvgTestSuite) readTestFile(name string) imagedata.ImageData {
 	data, err := os.ReadFile(filepath.Join(wd, "..", "testdata", name))
 	s.Require().NoError(err)
 
-	d, err := imagedata.NewFromBytes(data)
+	d, err := s.idf.NewFromBytes(data)
 	s.Require().NoError(err)
 
 	return d
@@ -39,7 +42,7 @@ func (s *SvgTestSuite) readTestFile(name string) imagedata.ImageData {
 func (s *SvgTestSuite) TestSanitize() {
 	origin := s.readTestFile("test1.svg")
 	expected := s.readTestFile("test1.sanitized.svg")
-	actual, err := Sanitize(origin)
+	actual, err := Sanitize(origin, s.idf)
 
 	s.Require().NoError(err)
 	s.Require().True(testutil.ReadersEqual(s.T(), expected.Reader(), actual.Reader()))

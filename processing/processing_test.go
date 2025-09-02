@@ -12,14 +12,18 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/fetcher"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/options"
+	"github.com/imgproxy/imgproxy/v3/testutil"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
 type ProcessingTestSuite struct {
 	suite.Suite
+	idf     *imagedata.Factory
+	fetcher *fetcher.Fetcher
 }
 
 func (s *ProcessingTestSuite) SetupSuite() {
@@ -33,6 +37,9 @@ func (s *ProcessingTestSuite) SetupSuite() {
 	s.Require().NoError(imagedata.Init())
 	s.Require().NoError(vips.Init())
 
+	s.fetcher = testutil.NewDefaultFetcher(s.T())
+	s.idf = imagedata.NewFactory(s.fetcher)
+
 	logrus.SetOutput(io.Discard)
 }
 
@@ -41,7 +48,7 @@ func (s *ProcessingTestSuite) openFile(name string) imagedata.ImageData {
 	s.Require().NoError(err)
 	path := filepath.Join(wd, "..", "testdata", name)
 
-	imagedata, err := imagedata.NewFromPath(path)
+	imagedata, err := s.idf.NewFromPath(path)
 	s.Require().NoError(err)
 
 	return imagedata
@@ -82,7 +89,7 @@ func (s *ProcessingTestSuite) TestResizeToFit() {
 			po.Width = tc.width
 			po.Height = tc.height
 
-			result, err := ProcessImage(context.Background(), imgdata, po)
+			result, err := ProcessImage(context.Background(), imgdata, po, s.idf, s.fetcher)
 			s.Require().NoError(err)
 			s.Require().NotNil(result)
 
@@ -121,7 +128,7 @@ func (s *ProcessingTestSuite) TestResizeToFitEnlarge() {
 			po.Width = tc.width
 			po.Height = tc.height
 
-			result, err := ProcessImage(context.Background(), imgdata, po)
+			result, err := ProcessImage(context.Background(), imgdata, po, s.idf, s.fetcher)
 			s.Require().NoError(err)
 			s.Require().NotNil(result)
 
@@ -165,7 +172,7 @@ func (s *ProcessingTestSuite) TestResizeToFitExtend() {
 			po.Width = tc.width
 			po.Height = tc.height
 
-			result, err := ProcessImage(context.Background(), imgdata, po)
+			result, err := ProcessImage(context.Background(), imgdata, po, s.idf, s.fetcher)
 			s.Require().NoError(err)
 			s.Require().NotNil(result)
 
@@ -209,7 +216,7 @@ func (s *ProcessingTestSuite) TestResizeToFitExtendAR() {
 			po.Width = tc.width
 			po.Height = tc.height
 
-			result, err := ProcessImage(context.Background(), imgdata, po)
+			result, err := ProcessImage(context.Background(), imgdata, po, s.idf, s.fetcher)
 			s.Require().NoError(err)
 			s.Require().NotNil(result)
 
@@ -247,7 +254,7 @@ func (s *ProcessingTestSuite) TestResizeToFill() {
 			po.Width = tc.width
 			po.Height = tc.height
 
-			result, err := ProcessImage(context.Background(), imgdata, po)
+			result, err := ProcessImage(context.Background(), imgdata, po, s.idf, s.fetcher)
 			s.Require().NoError(err)
 			s.Require().NotNil(result)
 
@@ -286,7 +293,7 @@ func (s *ProcessingTestSuite) TestResizeToFillEnlarge() {
 			po.Width = tc.width
 			po.Height = tc.height
 
-			result, err := ProcessImage(context.Background(), imgdata, po)
+			result, err := ProcessImage(context.Background(), imgdata, po, s.idf, s.fetcher)
 			s.Require().NoError(err)
 			s.Require().NotNil(result)
 
@@ -332,7 +339,7 @@ func (s *ProcessingTestSuite) TestResizeToFillExtend() {
 			po.Width = tc.width
 			po.Height = tc.height
 
-			result, err := ProcessImage(context.Background(), imgdata, po)
+			result, err := ProcessImage(context.Background(), imgdata, po, s.idf, s.fetcher)
 			s.Require().NoError(err)
 			s.Require().NotNil(result)
 
@@ -378,7 +385,7 @@ func (s *ProcessingTestSuite) TestResizeToFillExtendAR() {
 			po.Width = tc.width
 			po.Height = tc.height
 
-			result, err := ProcessImage(context.Background(), imgdata, po)
+			result, err := ProcessImage(context.Background(), imgdata, po, s.idf, s.fetcher)
 			s.Require().NoError(err)
 			s.Require().NotNil(result)
 
@@ -416,7 +423,7 @@ func (s *ProcessingTestSuite) TestResizeToFillDown() {
 			po.Width = tc.width
 			po.Height = tc.height
 
-			result, err := ProcessImage(context.Background(), imgdata, po)
+			result, err := ProcessImage(context.Background(), imgdata, po, s.idf, s.fetcher)
 			s.Require().NoError(err)
 			s.Require().NotNil(result)
 
@@ -455,7 +462,7 @@ func (s *ProcessingTestSuite) TestResizeToFillDownEnlarge() {
 			po.Width = tc.width
 			po.Height = tc.height
 
-			result, err := ProcessImage(context.Background(), imgdata, po)
+			result, err := ProcessImage(context.Background(), imgdata, po, s.idf, s.fetcher)
 			s.Require().NoError(err)
 			s.Require().NotNil(result)
 
@@ -501,7 +508,7 @@ func (s *ProcessingTestSuite) TestResizeToFillDownExtend() {
 			po.Width = tc.width
 			po.Height = tc.height
 
-			result, err := ProcessImage(context.Background(), imgdata, po)
+			result, err := ProcessImage(context.Background(), imgdata, po, s.idf, s.fetcher)
 			s.Require().NoError(err)
 			s.Require().NotNil(result)
 
@@ -545,7 +552,7 @@ func (s *ProcessingTestSuite) TestResizeToFillDownExtendAR() {
 			po.Width = tc.width
 			po.Height = tc.height
 
-			result, err := ProcessImage(context.Background(), imgdata, po)
+			result, err := ProcessImage(context.Background(), imgdata, po, s.idf, s.fetcher)
 			s.Require().NoError(err)
 			s.Require().NotNil(result)
 
@@ -974,7 +981,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 			po.Rotate = tc.rotate
 			po.Padding = tc.padding
 
-			result, err := ProcessImage(context.Background(), imgdata, po)
+			result, err := ProcessImage(context.Background(), imgdata, po, s.idf, s.fetcher)
 
 			s.Require().NoError(err)
 			s.Require().NotNil(result)
@@ -989,7 +996,7 @@ func (s *ProcessingTestSuite) TestImageResolutionTooLarge() {
 	po.SecurityOptions.MaxSrcResolution = 1
 
 	imgdata := s.openFile("test2.jpg")
-	_, err := ProcessImage(context.Background(), imgdata, po)
+	_, err := ProcessImage(context.Background(), imgdata, po, s.idf, s.fetcher)
 
 	s.Require().Error(err)
 	s.Require().Equal(422, ierrors.Wrap(err, 0).StatusCode())

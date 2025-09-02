@@ -7,9 +7,11 @@ import (
 
 	"github.com/imgproxy/imgproxy/v3/auximageprovider"
 	"github.com/imgproxy/imgproxy/v3/errorreport"
+	"github.com/imgproxy/imgproxy/v3/fetcher"
 	"github.com/imgproxy/imgproxy/v3/handlers/stream"
 	"github.com/imgproxy/imgproxy/v3/headerwriter"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
+	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/monitoring"
 	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
 	"github.com/imgproxy/imgproxy/v3/options"
@@ -24,6 +26,8 @@ type Handler struct {
 	config        *Config              // Handler configuration
 	semaphores    *semaphores.Semaphores
 	fallbackImage auximageprovider.Provider
+	imagedata     *imagedata.Factory
+	fetcher       *fetcher.Fetcher
 }
 
 // New creates new handler object
@@ -32,7 +36,9 @@ func New(
 	hw *headerwriter.Writer,
 	semaphores *semaphores.Semaphores,
 	fi auximageprovider.Provider,
+	idf *imagedata.Factory,
 	config *Config,
+	fetcher *fetcher.Fetcher,
 ) (*Handler, error) {
 	if err := config.Validate(); err != nil {
 		return nil, err
@@ -44,6 +50,8 @@ func New(
 		stream:        stream,
 		semaphores:    semaphores,
 		fallbackImage: fi,
+		imagedata:     idf,
+		fetcher:       fetcher,
 	}, nil
 }
 
@@ -81,6 +89,8 @@ func (h *Handler) Execute(
 		monitoringMeta: mm,
 		semaphores:     h.semaphores,
 		hwr:            h.hw.NewRequest(),
+		imagedata:      h.imagedata,
+		fetcher:        h.fetcher,
 	}
 
 	return req.execute(ctx)

@@ -15,6 +15,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/options"
+	"github.com/imgproxy/imgproxy/v3/testutil"
 )
 
 type ImageProviderTestSuite struct {
@@ -168,13 +169,16 @@ func (s *ImageProviderTestSuite) TestNewProvider() {
 		},
 	}
 
+	fetcher := testutil.NewDefaultFetcher(s.T())
+	idf := imagedata.NewFactory(fetcher)
+
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(t *testing.T) {
 			if tt.setupFunc != nil {
 				tt.setupFunc()
 			}
 
-			provider, err := NewStaticProvider(s.T().Context(), tt.config, "test image")
+			provider, err := NewStaticProvider(s.T().Context(), idf, tt.config, "test image")
 
 			if tt.expectError {
 				s.Require().Error(err)

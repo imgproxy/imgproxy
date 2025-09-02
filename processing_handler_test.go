@@ -1,4 +1,4 @@
-package main
+package imgproxy
 
 // NOTE: this test is the integration test for the processing handler. We can't extract and
 // move it to handlers package yet because it depends on the global routes, methods and
@@ -33,40 +33,53 @@ import (
 type ProcessingHandlerTestSuite struct {
 	suite.Suite
 
-	router *server.Router
+	router   *server.Router
+	config   *Config
+	instance *ImgProxy
 }
 
 func (s *ProcessingHandlerTestSuite) SetupSuite() {
 	config.Reset()
 
-	wd, err := os.Getwd()
+	// NOTE: if package had more than one test suite, which uses libvips, we've got
+	// to do it in TestMain
+	Init()
+
+	c, err := LoadFromEnv(NewDefaultConfig())
 	s.Require().NoError(err)
 
-	s.T().Setenv("IMGPROXY_LOCAL_FILESYSTEM_ROOT", filepath.Join(wd, "/testdata"))
-	s.T().Setenv("IMGPROXY_CLIENT_KEEP_ALIVE_TIMEOUT", "0")
-
-	err = initialize()
-	s.Require().NoError(err)
+	s.config = c
 
 	logrus.SetOutput(io.Discard)
 
-	cfg := server.NewDefaultConfig()
-	r, err := server.NewRouter(cfg)
+	wd, err := os.Getwd()
 	s.Require().NoError(err)
 
-	s.router = buildRouter(r)
+	testDataDir := filepath.Join(wd, "testdata")
+
+	// We don't need config.LocalFileSystemRoot anymore as it is used
+	// only during initialization
+	config.AllowLoopbackSourceAddresses = true
+	c.Transport.Local.Root = testDataDir
+	c.Transport.HTTP.ClientKeepAliveTimeout = 0
 }
 
 func (s *ProcessingHandlerTestSuite) TeardownSuite() {
-	shutdown()
 	logrus.SetOutput(os.Stdout)
+
+	// Let's shutdown the global state
+	// NOTE: This better be in the TestMain for each package, which uses global Init/Shutdown.
+	Shutdown()
 }
 
 func (s *ProcessingHandlerTestSuite) SetupTest() {
-	// We don't need config.LocalFileSystemRoot anymore as it is used
-	// only during initialization
-	config.Reset()
-	config.AllowLoopbackSourceAddresses = true
+	instance, err := New(s.T().Context(), s.config)
+	s.Require().NoError(err)
+
+	s.router, err = instance.BuildRouter()
+	s.Require().NoError(err)
+
+	s.instance = instance
 }
 
 func (s *ProcessingHandlerTestSuite) send(path string, header ...http.Header) *httptest.ResponseRecorder {
@@ -99,7 +112,7 @@ func (s *ProcessingHandlerTestSuite) readTestImageData(name string) imagedata.Im
 	data, err := os.ReadFile(filepath.Join(wd, "testdata", name))
 	s.Require().NoError(err)
 
-	imgdata, err := imagedata.NewFromBytes(data)
+	imgdata, err := s.instance.ImageDataFactory.NewFromBytes(data)
 	s.Require().NoError(err)
 
 	return imgdata
@@ -297,7 +310,7 @@ func (s *ProcessingHandlerTestSuite) TestSkipProcessingSVG() {
 
 	s.Require().Equal(200, res.StatusCode)
 
-	expected, err := svg.Sanitize(s.readTestImageData("test1.svg"))
+	expected, err := svg.Sanitize(s.readTestImageData("test1.svg"), s.instance.ImageDataFactory)
 	s.Require().NoError(err)
 
 	s.Require().True(testutil.ReadersEqual(s.T(), expected.Reader(), res.Body))
@@ -322,7 +335,7 @@ func (s *ProcessingHandlerTestSuite) TestErrorSavingToSVG() {
 }
 
 func (s *ProcessingHandlerTestSuite) TestCacheControlPassthroughCacheControl() {
-	config.CacheControlPassthrough = true
+	s.config.HeaderWriter.CacheControlPassthrough = true
 
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		rw.Header().Set("Cache-Control", "max-age=1234, public")
@@ -335,6 +348,7 @@ func (s *ProcessingHandlerTestSuite) TestCacheControlPassthroughCacheControl() {
 	rw := s.send("/unsafe/rs:fill:4:4/plain/" + ts.URL)
 	res := rw.Result()
 
+	s.Require().Equal(200, res.StatusCode)
 	s.Require().Equal("max-age=1234, public", res.Header.Get("Cache-Control"))
 	s.Require().Empty(res.Header.Get("Expires"))
 }

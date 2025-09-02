@@ -3,6 +3,7 @@ package processing
 import (
 	"context"
 
+	"github.com/imgproxy/imgproxy/v3/fetcher"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imath"
 	"github.com/imgproxy/imgproxy/v3/options"
@@ -17,6 +18,7 @@ func saveImageToFitBytes(
 	ctx context.Context,
 	po *options.ProcessingOptions,
 	img *vips.Image,
+	fetcher *fetcher.Fetcher,
 ) (imagedata.ImageData, error) {
 	var newQuality int
 
@@ -36,7 +38,7 @@ func saveImageToFitBytes(
 			return nil, err
 		}
 
-		imgdata, err := img.Save(po.Format, quality)
+		imgdata, err := img.Save(po.Format, quality, fetcher)
 		if err != nil {
 			return nil, err
 		}

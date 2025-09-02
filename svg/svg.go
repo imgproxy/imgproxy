@@ -20,7 +20,7 @@ var pool = sync.Pool{
 	},
 }
 
-func Sanitize(data imagedata.ImageData) (imagedata.ImageData, error) {
+func Sanitize(data imagedata.ImageData, idf *imagedata.Factory) (imagedata.ImageData, error) {
 	r := data.Reader()
 	l := xml.NewLexer(parse.NewInput(r))
 
@@ -62,7 +62,7 @@ func Sanitize(data imagedata.ImageData) (imagedata.ImageData, error) {
 				return nil, newSanitizeError(l.Err())
 			}
 
-			newData := imagedata.NewFromBytesWithFormat(
+			newData := idf.NewFromBytesWithFormat(
 				imagetype.SVG,
 				buf.Bytes(),
 			)

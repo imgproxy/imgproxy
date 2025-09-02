@@ -5,13 +5,10 @@ import (
 	"net/http"
 
 	"github.com/imgproxy/imgproxy/v3/config"
-	"github.com/imgproxy/imgproxy/v3/fetcher"
-	"github.com/imgproxy/imgproxy/v3/ierrors"
-	"github.com/imgproxy/imgproxy/v3/transport"
 )
 
 var (
-	Fetcher *fetcher.Fetcher
+	//	Fetcher *fetcher.Fetcher
 
 	// For tests. This needs to move to fetcher once we will have a way to isolate
 	// the fetcher in tests.
@@ -34,29 +31,29 @@ func DefaultDownloadOptions() DownloadOptions {
 	}
 }
 
-func initDownloading() error {
-	trc, err := transport.LoadFromEnv(transport.NewDefaultConfig())
-	if err != nil {
-		return err
-	}
+// func initDownloading() error {
+// 	trc, err := transport.LoadFromEnv(transport.NewDefaultConfig())
+// 	if err != nil {
+// 		return err
+// 	}
 
-	ts, err := transport.New(trc)
-	if err != nil {
-		return err
-	}
+// 	ts, err := transport.New(trc)
+// 	if err != nil {
+// 		return err
+// 	}
 
-	c, err := fetcher.LoadFromEnv(fetcher.NewDefaultConfig())
-	if err != nil {
-		return ierrors.Wrap(err, 0, ierrors.WithPrefix("configuration error"))
-	}
+// 	c, err := fetcher.LoadFromEnv(fetcher.NewDefaultConfig())
+// 	if err != nil {
+// 		return ierrors.Wrap(err, 0, ierrors.WithPrefix("configuration error"))
+// 	}
 
-	Fetcher, err = fetcher.NewFetcher(ts, c)
-	if err != nil {
-		return ierrors.Wrap(err, 0, ierrors.WithPrefix("can't create image fetcher"))
-	}
+// 	Fetcher, err = fetcher.New(ts, c)
+// 	if err != nil {
+// 		return ierrors.Wrap(err, 0, ierrors.WithPrefix("can't create image fetcher"))
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
 func RedirectAllRequestsTo(u string) {
 	redirectAllRequestsTo = u
