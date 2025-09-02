@@ -1,9 +1,4 @@
-package main
-
-// NOTE: this test is the integration test for the processing handler. We can't extract and
-// move it to handlers package yet because it depends on the global routes, methods and
-// initialization functions. Once those would we wrapped into structures, we'll be able to move this test
-// to where it belongs.
+package integration
 
 import (
 	"fmt"
@@ -11,70 +6,84 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"path/filepath"
 	"regexp"
 	"testing"
 	"time"
 
-	"github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/suite"
-
+	"github.com/imgproxy/imgproxy/v3"
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/config/configurators"
-	"github.com/imgproxy/imgproxy/v3/fetcher"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/server"
 	"github.com/imgproxy/imgproxy/v3/svg"
 	"github.com/imgproxy/imgproxy/v3/testutil"
-	"github.com/imgproxy/imgproxy/v3/transport"
 	"github.com/imgproxy/imgproxy/v3/vips"
+	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/suite"
 )
 
+// ProcessingHandlerTestSuite is a test suite for testing image processing handler
 type ProcessingHandlerTestSuite struct {
 	suite.Suite
 
-	router *server.Router
+	testData *testutil.TestDataProvider
+	config   testutil.LazyObj[*imgproxy.Config]
+	router   testutil.LazyObj[*server.Router]
+	imgproxy testutil.LazyObj[*imgproxy.Imgproxy]
 }
 
 func (s *ProcessingHandlerTestSuite) SetupSuite() {
-	config.Reset()
-
-	wd, err := os.Getwd()
-	s.Require().NoError(err)
-
-	s.T().Setenv("IMGPROXY_LOCAL_FILESYSTEM_ROOT", filepath.Join(wd, "/testdata"))
-	s.T().Setenv("IMGPROXY_CLIENT_KEEP_ALIVE_TIMEOUT", "0")
-
-	err = initialize()
-	s.Require().NoError(err)
-
+	// Silence all the logs
 	logrus.SetOutput(io.Discard)
 
-	cfg := server.NewDefaultConfig()
-	r, err := server.NewRouter(&cfg)
-	s.Require().NoError(err)
-
-	s.router = buildRouter(r)
+	// Initialize test data provider (local test files)
+	s.testData = testutil.NewTestDataProvider(s.T())
 }
 
 func (s *ProcessingHandlerTestSuite) TeardownSuite() {
-	shutdown()
 	logrus.SetOutput(os.Stdout)
 }
 
-func (s *ProcessingHandlerTestSuite) SetupTest() {
-	wd, err := os.Getwd()
-	s.Require().NoError(err)
+// setupObjs initializes lazy objects
+func (s *ProcessingHandlerTestSuite) setupObjs() {
+	s.config = testutil.NewLazyObj(s.T(), func() (*imgproxy.Config, error) {
+		c, err := imgproxy.LoadConfigFromEnv(nil)
+		s.Require().NoError(err)
 
-	config.Reset()
-	config.AllowLoopbackSourceAddresses = true
-	config.LocalFileSystemRoot = filepath.Join(wd, "/testdata")
-	config.ClientKeepAliveTimeout = 0
+		c.Transport.Local.Root = s.testData.Root()
+		c.Transport.HTTP.ClientKeepAliveTimeout = 0
+
+		return c, nil
+	})
+
+	s.imgproxy = testutil.NewLazyObj(s.T(), func() (*imgproxy.Imgproxy, error) {
+		return imgproxy.New(s.T().Context(), s.config())
+	})
+
+	s.router = testutil.NewLazyObj(s.T(), func() (*server.Router, error) {
+		return s.imgproxy().BuildRouter()
+	})
 }
 
-func (s *ProcessingHandlerTestSuite) send(path string, header ...http.Header) *httptest.ResponseRecorder {
+func (s *ProcessingHandlerTestSuite) SetupTest() {
+	config.Reset() // We reset config only at the start of each test
+
+	// NOTE: This must be moved to security config
+	config.AllowLoopbackSourceAddresses = true
+	// NOTE: end note
+
+	s.setupObjs()
+}
+
+func (s *ProcessingHandlerTestSuite) SetupSubTest() {
+	// We use t.Run() a lot, so we need to reset lazy objects at the beginning of each subtest
+	s.setupObjs()
+}
+
+// GET performs a GET request to the given path and returns the response recorder
+func (s *ProcessingHandlerTestSuite) GET(path string, header ...http.Header) *http.Response {
 	req := httptest.NewRequest(http.MethodGet, path, nil)
 	rw := httptest.NewRecorder()
 
@@ -82,84 +91,43 @@ func (s *ProcessingHandlerTestSuite) send(path string, header ...http.Header) *h
 		req.Header = header[0]
 	}
 
-	s.router.ServeHTTP(rw, req)
+	s.router().ServeHTTP(rw, req)
 
-	return rw
-}
-
-func (s *ProcessingHandlerTestSuite) readTestFile(name string) []byte {
-	wd, err := os.Getwd()
-	s.Require().NoError(err)
-
-	data, err := os.ReadFile(filepath.Join(wd, "testdata", name))
-	s.Require().NoError(err)
-
-	return data
-}
-
-func (s *ProcessingHandlerTestSuite) readTestImageData(name string) imagedata.ImageData {
-	wd, err := os.Getwd()
-	s.Require().NoError(err)
-
-	data, err := os.ReadFile(filepath.Join(wd, "testdata", name))
-	s.Require().NoError(err)
-
-	// NOTE: Temporary workaround. We create imagedata.Factory here
-	// because currently configuration is changed via env vars
-	// or config. We need to pick up those config changes.
-	// This will be addressed in the next PR
-	trc, err := transport.LoadConfigFromEnv(nil)
-	s.Require().NoError(err)
-
-	tr, err := transport.New(trc)
-	s.Require().NoError(err)
-
-	fc, err := fetcher.LoadConfigFromEnv(nil)
-	s.Require().NoError(err)
-
-	f, err := fetcher.New(tr, fc)
-	s.Require().NoError(err)
-
-	idf := imagedata.NewFactory(f)
-	// end of workaround
-
-	imgdata, err := idf.NewFromBytes(data)
-	s.Require().NoError(err)
-
-	return imgdata
-}
-
-func (s *ProcessingHandlerTestSuite) TestRequest() {
-	rw := s.send("/unsafe/rs:fill:4:4/plain/local:///test1.png")
-	res := rw.Result()
-
-	s.Require().Equal(200, res.StatusCode)
-	s.Require().Equal("image/png", res.Header.Get("Content-Type"))
-
-	format, err := imagetype.Detect(res.Body)
-
-	s.Require().NoError(err)
-	s.Require().Equal(imagetype.PNG, format)
+	return rw.Result()
 }
 
 func (s *ProcessingHandlerTestSuite) TestSignatureValidationFailure() {
 	config.Keys = [][]byte{[]byte("test-key")}
 	config.Salts = [][]byte{[]byte("test-salt")}
 
-	rw := s.send("/unsafe/rs:fill:4:4/plain/local:///test1.png")
-	res := rw.Result()
+	tt := []struct {
+		name       string
+		url        string
+		statusCode int
+	}{
+		{
+			name:       "NoSignature",
+			url:        "/unsafe/rs:fill:4:4/plain/local:///test1.png",
+			statusCode: http.StatusForbidden,
+		},
+		{
+			name:       "BadSignature",
+			url:        "/bad-signature/rs:fill:4:4/plain/local:///test1.png",
+			statusCode: http.StatusForbidden,
+		},
+		{
+			name:       "ValidSignature",
+			url:        "/My9d3xq_PYpVHsPrCyww0Kh1w5KZeZhIlWhsa4az1TI/rs:fill:4:4/plain/local:///test1.png",
+			statusCode: http.StatusOK,
+		},
+	}
 
-	s.Require().Equal(403, res.StatusCode)
-}
-
-func (s *ProcessingHandlerTestSuite) TestSignatureValidationSuccess() {
-	config.Keys = [][]byte{[]byte("test-key")}
-	config.Salts = [][]byte{[]byte("test-salt")}
-
-	rw := s.send("/My9d3xq_PYpVHsPrCyww0Kh1w5KZeZhIlWhsa4az1TI/rs:fill:4:4/plain/local:///test1.png")
-	res := rw.Result()
-
-	s.Require().Equal(200, res.StatusCode)
+	for _, tc := range tt {
+		s.Run(tc.name, func() {
+			res := s.GET(tc.url)
+			s.Require().Equal(tc.statusCode, res.StatusCode)
+		})
+	}
 }
 
 func (s *ProcessingHandlerTestSuite) TestSourceValidation() {
@@ -176,19 +144,16 @@ func (s *ProcessingHandlerTestSuite) TestSourceValidation() {
 			name:           "match http URL without wildcard",
 			allowedSources: []string{"local://", "http://images.dev/"},
 			requestPath:    "/unsafe/plain/http://images.dev/lorem/ipsum.jpg",
-			expectedError:  false,
 		},
 		{
 			name:           "match http URL with wildcard in hostname single level",
 			allowedSources: []string{"local://", "http://*.mycdn.dev/"},
 			requestPath:    "/unsafe/plain/http://a-1.mycdn.dev/lorem/ipsum.jpg",
-			expectedError:  false,
 		},
 		{
 			name:           "match http URL with wildcard in hostname multiple levels",
 			allowedSources: []string{"local://", "http://*.mycdn.dev/"},
 			requestPath:    "/unsafe/plain/http://a-1.b-2.mycdn.dev/lorem/ipsum.jpg",
-			expectedError:  false,
 		},
 		{
 			name:           "no match s3 URL with allowed local and http URLs",
@@ -206,26 +171,24 @@ func (s *ProcessingHandlerTestSuite) TestSourceValidation() {
 
 	for _, tc := range tt {
 		s.Run(tc.name, func() {
-			exps := make([]*regexp.Regexp, len(tc.allowedSources))
+			config.AllowedSources = make([]*regexp.Regexp, len(tc.allowedSources))
 			for i, pattern := range tc.allowedSources {
-				exps[i] = configurators.RegexpFromPattern(pattern)
+				config.AllowedSources[i] = configurators.RegexpFromPattern(pattern)
 			}
-			config.AllowedSources = exps
 
-			rw := s.send(tc.requestPath)
-			res := rw.Result()
+			res := s.GET(tc.requestPath)
 
 			if tc.expectedError {
-				s.Require().Equal(404, res.StatusCode)
+				s.Require().Equal(http.StatusNotFound, res.StatusCode)
 			} else {
-				s.Require().Equal(200, res.StatusCode)
+				s.Require().Equal(http.StatusOK, res.StatusCode)
 			}
 		})
 	}
 }
 
 func (s *ProcessingHandlerTestSuite) TestSourceNetworkValidation() {
-	data := s.readTestFile("test1.png")
+	data := s.testData.Read("test1.png")
 
 	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		rw.WriteHeader(200)
@@ -233,180 +196,158 @@ func (s *ProcessingHandlerTestSuite) TestSourceNetworkValidation() {
 	}))
 	defer server.Close()
 
-	var rw *httptest.ResponseRecorder
+	url := fmt.Sprintf("/unsafe/rs:fill:4:4/plain/%s/test1.png", server.URL)
 
-	u := fmt.Sprintf("/unsafe/rs:fill:4:4/plain/%s/test1.png", server.URL)
+	// We wrap this in a subtest to reset s.router()
+	s.Run("AllowLoopbackSourceAddressesTrue", func() {
+		config.AllowLoopbackSourceAddresses = true
+		res := s.GET(url)
+		s.Require().Equal(http.StatusOK, res.StatusCode)
+	})
 
-	rw = s.send(u)
-	s.Require().Equal(200, rw.Result().StatusCode)
-
-	config.AllowLoopbackSourceAddresses = false
-	rw = s.send(u)
-	s.Require().Equal(404, rw.Result().StatusCode)
+	s.Run("AllowLoopbackSourceAddressesFalse", func() {
+		config.AllowLoopbackSourceAddresses = false
+		res := s.GET(url)
+		s.Require().Equal(http.StatusNotFound, res.StatusCode)
+	})
 }
 
 func (s *ProcessingHandlerTestSuite) TestSourceFormatNotSupported() {
 	vips.DisableLoadSupport(imagetype.PNG)
 	defer vips.ResetLoadSupport()
 
-	rw := s.send("/unsafe/rs:fill:4:4/plain/local:///test1.png")
-	res := rw.Result()
-
-	s.Require().Equal(422, res.StatusCode)
+	res := s.GET("/unsafe/rs:fill:4:4/plain/local:///test1.png")
+	s.Require().Equal(http.StatusUnprocessableEntity, res.StatusCode)
 }
 
 func (s *ProcessingHandlerTestSuite) TestResultingFormatNotSupported() {
 	vips.DisableSaveSupport(imagetype.PNG)
 	defer vips.ResetSaveSupport()
 
-	rw := s.send("/unsafe/rs:fill:4:4/plain/local:///test1.png@png")
-	res := rw.Result()
-
-	s.Require().Equal(422, res.StatusCode)
+	res := s.GET("/unsafe/rs:fill:4:4/plain/local:///test1.png@png")
+	s.Require().Equal(http.StatusUnprocessableEntity, res.StatusCode)
 }
 
 func (s *ProcessingHandlerTestSuite) TestSkipProcessingConfig() {
 	config.SkipProcessingFormats = []imagetype.Type{imagetype.PNG}
 
-	rw := s.send("/unsafe/rs:fill:4:4/plain/local:///test1.png")
-	res := rw.Result()
+	res := s.GET("/unsafe/rs:fill:4:4/plain/local:///test1.png")
 
-	s.Require().Equal(200, res.StatusCode)
-
-	expected := s.readTestImageData("test1.png")
-
-	s.Require().True(testutil.ReadersEqual(s.T(), expected.Reader(), res.Body))
+	s.Require().Equal(http.StatusOK, res.StatusCode)
+	s.Require().True(s.testData.FileEqualsToReader("test1.png", res.Body))
 }
 
 func (s *ProcessingHandlerTestSuite) TestSkipProcessingPO() {
-	rw := s.send("/unsafe/rs:fill:4:4/skp:png/plain/local:///test1.png")
-	res := rw.Result()
+	res := s.GET("/unsafe/rs:fill:4:4/skp:png/plain/local:///test1.png")
 
-	s.Require().Equal(200, res.StatusCode)
-
-	expected := s.readTestImageData("test1.png")
-
-	s.Require().True(testutil.ReadersEqual(s.T(), expected.Reader(), res.Body))
+	s.Require().Equal(http.StatusOK, res.StatusCode)
+	s.Require().True(s.testData.FileEqualsToReader("test1.png", res.Body))
 }
 
 func (s *ProcessingHandlerTestSuite) TestSkipProcessingSameFormat() {
 	config.SkipProcessingFormats = []imagetype.Type{imagetype.PNG}
 
-	rw := s.send("/unsafe/rs:fill:4:4/plain/local:///test1.png@png")
-	res := rw.Result()
+	res := s.GET("/unsafe/rs:fill:4:4/plain/local:///test1.png@png")
 
-	s.Require().Equal(200, res.StatusCode)
-
-	expected := s.readTestImageData("test1.png")
-
-	s.Require().True(testutil.ReadersEqual(s.T(), expected.Reader(), res.Body))
+	s.Require().Equal(http.StatusOK, res.StatusCode)
+	s.Require().True(s.testData.FileEqualsToReader("test1.png", res.Body))
 }
 
 func (s *ProcessingHandlerTestSuite) TestSkipProcessingDifferentFormat() {
 	config.SkipProcessingFormats = []imagetype.Type{imagetype.PNG}
 
-	rw := s.send("/unsafe/rs:fill:4:4/plain/local:///test1.png@jpg")
-	res := rw.Result()
+	res := s.GET("/unsafe/rs:fill:4:4/plain/local:///test1.png@jpg")
 
-	s.Require().Equal(200, res.StatusCode)
-
-	expected := s.readTestImageData("test1.png")
-
-	s.Require().False(testutil.ReadersEqual(s.T(), expected.Reader(), res.Body))
+	s.Require().Equal(http.StatusOK, res.StatusCode)
+	s.Require().False(s.testData.FileEqualsToReader("test1.png", res.Body))
 }
 
 func (s *ProcessingHandlerTestSuite) TestSkipProcessingSVG() {
-	rw := s.send("/unsafe/rs:fill:4:4/plain/local:///test1.svg")
-	res := rw.Result()
+	res := s.GET("/unsafe/rs:fill:4:4/plain/local:///test1.svg")
 
-	s.Require().Equal(200, res.StatusCode)
+	s.Require().Equal(http.StatusOK, res.StatusCode)
 
-	expected, err := svg.Sanitize(s.readTestImageData("test1.svg"))
+	data, err := s.imgproxy().ImageDataFactory.NewFromBytes(s.testData.Read("test1.svg"))
+	s.Require().NoError(err)
+
+	expected, err := svg.Sanitize(data)
 	s.Require().NoError(err)
 
 	s.Require().True(testutil.ReadersEqual(s.T(), expected.Reader(), res.Body))
 }
 
 func (s *ProcessingHandlerTestSuite) TestNotSkipProcessingSVGToJPG() {
-	rw := s.send("/unsafe/rs:fill:4:4/plain/local:///test1.svg@jpg")
-	res := rw.Result()
+	res := s.GET("/unsafe/rs:fill:4:4/plain/local:///test1.svg@jpg")
 
-	s.Require().Equal(200, res.StatusCode)
-
-	expected := s.readTestImageData("test1.svg")
-
-	s.Require().False(testutil.ReadersEqual(s.T(), expected.Reader(), res.Body))
+	s.Require().Equal(http.StatusOK, res.StatusCode)
+	s.Require().False(s.testData.FileEqualsToReader("test1.svg", res.Body))
 }
 
 func (s *ProcessingHandlerTestSuite) TestErrorSavingToSVG() {
-	rw := s.send("/unsafe/rs:fill:4:4/plain/local:///test1.png@svg")
-	res := rw.Result()
+	res := s.GET("/unsafe/rs:fill:4:4/plain/local:///test1.png@svg")
 
-	s.Require().Equal(422, res.StatusCode)
+	s.Require().Equal(http.StatusUnprocessableEntity, res.StatusCode)
 }
 
 func (s *ProcessingHandlerTestSuite) TestCacheControlPassthroughCacheControl() {
-	config.CacheControlPassthrough = true
+	s.config().HeaderWriter.CacheControlPassthrough = true
 
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		rw.Header().Set("Cache-Control", "max-age=1234, public")
-		rw.Header().Set("Expires", time.Now().Add(time.Hour).UTC().Format(http.TimeFormat))
+		rw.Header().Set(httpheaders.CacheControl, "max-age=1234, public")
+		rw.Header().Set(httpheaders.Expires, time.Now().Add(time.Hour).UTC().Format(http.TimeFormat))
 		rw.WriteHeader(200)
-		rw.Write(s.readTestFile("test1.png"))
+		rw.Write(s.testData.Read("test1.png"))
 	}))
 	defer ts.Close()
 
-	rw := s.send("/unsafe/rs:fill:4:4/plain/" + ts.URL)
-	res := rw.Result()
+	res := s.GET("/unsafe/rs:fill:4:4/plain/" + ts.URL)
 
-	s.Require().Equal("max-age=1234, public", res.Header.Get("Cache-Control"))
-	s.Require().Empty(res.Header.Get("Expires"))
+	s.Require().Equal(http.StatusOK, res.StatusCode)
+	s.Require().Equal("max-age=1234, public", res.Header.Get(httpheaders.CacheControl))
+	s.Require().Empty(res.Header.Get(httpheaders.Expires))
 }
 
 func (s *ProcessingHandlerTestSuite) TestCacheControlPassthroughExpires() {
 	config.CacheControlPassthrough = true
 
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		rw.Header().Set("Expires", time.Now().Add(1239*time.Second).UTC().Format(http.TimeFormat))
+		rw.Header().Set(httpheaders.Expires, time.Now().Add(1239*time.Second).UTC().Format(http.TimeFormat))
 		rw.WriteHeader(200)
-		rw.Write(s.readTestFile("test1.png"))
+		rw.Write(s.testData.Read("test1.png"))
 	}))
 	defer ts.Close()
 
-	rw := s.send("/unsafe/rs:fill:4:4/plain/" + ts.URL)
-	res := rw.Result()
+	res := s.GET("/unsafe/rs:fill:4:4/plain/" + ts.URL)
 
 	// Use regex to allow some delay
-	s.Require().Regexp("max-age=123[0-9], public", res.Header.Get("Cache-Control"))
-	s.Require().Empty(res.Header.Get("Expires"))
+	s.Require().Regexp("max-age=123[0-9], public", res.Header.Get(httpheaders.CacheControl))
+	s.Require().Empty(res.Header.Get(httpheaders.Expires))
 }
 
 func (s *ProcessingHandlerTestSuite) TestCacheControlPassthroughDisabled() {
 	config.CacheControlPassthrough = false
 
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		rw.Header().Set("Cache-Control", "max-age=1234, public")
-		rw.Header().Set("Expires", time.Now().Add(time.Hour).UTC().Format(http.TimeFormat))
+		rw.Header().Set(httpheaders.CacheControl, "max-age=1234, public")
+		rw.Header().Set(httpheaders.Expires, time.Now().Add(time.Hour).UTC().Format(http.TimeFormat))
 		rw.WriteHeader(200)
-		rw.Write(s.readTestFile("test1.png"))
+		rw.Write(s.testData.Read("test1.png"))
 	}))
 	defer ts.Close()
 
-	rw := s.send("/unsafe/rs:fill:4:4/plain/" + ts.URL)
-	res := rw.Result()
+	res := s.GET("/unsafe/rs:fill:4:4/plain/" + ts.URL)
 
-	s.Require().NotEqual("max-age=1234, public", res.Header.Get("Cache-Control"))
-	s.Require().Empty(res.Header.Get("Expires"))
+	s.Require().NotEqual("max-age=1234, public", res.Header.Get(httpheaders.CacheControl))
+	s.Require().Empty(res.Header.Get(httpheaders.Expires))
 }
 
 func (s *ProcessingHandlerTestSuite) TestETagDisabled() {
 	config.ETagEnabled = false
 
-	rw := s.send("/unsafe/rs:fill:4:4/plain/local:///test1.png")
-	res := rw.Result()
+	res := s.GET("/unsafe/rs:fill:4:4/plain/local:///test1.png")
 
 	s.Require().Equal(200, res.StatusCode)
-	s.Require().Empty(res.Header.Get("ETag"))
+	s.Require().Empty(res.Header.Get(httpheaders.Etag))
 }
 
 func (s *ProcessingHandlerTestSuite) TestETagDataMatch() {
@@ -425,8 +366,7 @@ func (s *ProcessingHandlerTestSuite) TestETagDataMatch() {
 	header := make(http.Header)
 	header.Set(httpheaders.IfNoneMatch, etag)
 
-	rw := s.send(fmt.Sprintf("/unsafe/plain/%s", ts.URL), header)
-	res := rw.Result()
+	res := s.GET(fmt.Sprintf("/unsafe/plain/%s", ts.URL), header)
 
 	s.Require().Equal(304, res.StatusCode)
 	s.Require().Equal(etag, res.Header.Get(httpheaders.Etag))
@@ -435,39 +375,37 @@ func (s *ProcessingHandlerTestSuite) TestETagDataMatch() {
 func (s *ProcessingHandlerTestSuite) TestLastModifiedEnabled() {
 	config.LastModifiedEnabled = true
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		rw.Header().Set("Last-Modified", "Wed, 21 Oct 2015 07:28:00 GMT")
+		rw.Header().Set(httpheaders.LastModified, "Wed, 21 Oct 2015 07:28:00 GMT")
 		rw.WriteHeader(200)
-		rw.Write(s.readTestFile("test1.png"))
+		rw.Write(s.testData.Read("test1.png"))
 	}))
 	defer ts.Close()
 
-	rw := s.send("/unsafe/rs:fill:4:4/plain/" + ts.URL)
-	res := rw.Result()
+	res := s.GET("/unsafe/rs:fill:4:4/plain/" + ts.URL)
 
-	s.Require().Equal("Wed, 21 Oct 2015 07:28:00 GMT", res.Header.Get("Last-Modified"))
+	s.Require().Equal("Wed, 21 Oct 2015 07:28:00 GMT", res.Header.Get(httpheaders.LastModified))
 }
 
 func (s *ProcessingHandlerTestSuite) TestLastModifiedDisabled() {
 	config.LastModifiedEnabled = false
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		rw.Header().Set("Last-Modified", "Wed, 21 Oct 2015 07:28:00 GMT")
+		rw.Header().Set(httpheaders.LastModified, "Wed, 21 Oct 2015 07:28:00 GMT")
 		rw.WriteHeader(200)
-		rw.Write(s.readTestFile("test1.png"))
+		rw.Write(s.testData.Read("test1.png"))
 	}))
 	defer ts.Close()
 
-	rw := s.send("/unsafe/rs:fill:4:4/plain/" + ts.URL)
-	res := rw.Result()
+	res := s.GET("/unsafe/rs:fill:4:4/plain/" + ts.URL)
 
-	s.Require().Empty(res.Header.Get("Last-Modified"))
+	s.Require().Empty(res.Header.Get(httpheaders.LastModified))
 }
 
 func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqExactMatchLastModifiedDisabled() {
 	config.LastModifiedEnabled = false
-	data := s.readTestFile("test1.png")
+	data := s.testData.Read("test1.png")
 	lastModified := "Wed, 21 Oct 2015 07:28:00 GMT"
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		modifiedSince := r.Header.Get("If-Modified-Since")
+		modifiedSince := r.Header.Get(httpheaders.IfModifiedSince)
 		s.Empty(modifiedSince)
 		rw.WriteHeader(200)
 		rw.Write(data)
@@ -475,9 +413,8 @@ func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqExactMatchLastModifiedD
 	defer ts.Close()
 
 	header := make(http.Header)
-	header.Set("If-Modified-Since", lastModified)
-	rw := s.send(fmt.Sprintf("/unsafe/plain/%s", ts.URL), header)
-	res := rw.Result()
+	header.Set(httpheaders.IfModifiedSince, lastModified)
+	res := s.GET(fmt.Sprintf("/unsafe/plain/%s", ts.URL), header)
 
 	s.Require().Equal(200, res.StatusCode)
 }
@@ -486,25 +423,24 @@ func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqExactMatchLastModifiedE
 	config.LastModifiedEnabled = true
 	lastModified := "Wed, 21 Oct 2015 07:28:00 GMT"
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		modifiedSince := r.Header.Get("If-Modified-Since")
+		modifiedSince := r.Header.Get(httpheaders.IfModifiedSince)
 		s.Equal(lastModified, modifiedSince)
 		rw.WriteHeader(304)
 	}))
 	defer ts.Close()
 
 	header := make(http.Header)
-	header.Set("If-Modified-Since", lastModified)
-	rw := s.send(fmt.Sprintf("/unsafe/plain/%s", ts.URL), header)
-	res := rw.Result()
+	header.Set(httpheaders.IfModifiedSince, lastModified)
+	res := s.GET(fmt.Sprintf("/unsafe/plain/%s", ts.URL), header)
 
 	s.Require().Equal(304, res.StatusCode)
 }
 
 func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqCompareMoreRecentLastModifiedDisabled() {
-	data := s.readTestFile("test1.png")
+	data := s.testData.Read("test1.png")
 	config.LastModifiedEnabled = false
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		modifiedSince := r.Header.Get("If-Modified-Since")
+		modifiedSince := r.Header.Get(httpheaders.IfModifiedSince)
 		s.Empty(modifiedSince)
 		rw.WriteHeader(200)
 		rw.Write(data)
@@ -514,10 +450,9 @@ func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqCompareMoreRecentLastMo
 	recentTimestamp := "Thu, 25 Feb 2021 01:45:00 GMT"
 
 	header := make(http.Header)
-	header.Set("If-Modified-Since", recentTimestamp)
-	rw := s.send(fmt.Sprintf("/unsafe/plain/%s", ts.URL), header)
-	res := rw.Result()
+	header.Set(httpheaders.IfModifiedSince, recentTimestamp)
 
+	res := s.GET(fmt.Sprintf("/unsafe/plain/%s", ts.URL), header)
 	s.Require().Equal(200, res.StatusCode)
 }
 
@@ -525,7 +460,7 @@ func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqCompareMoreRecentLastMo
 	config.LastModifiedEnabled = true
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		fileLastModified, _ := time.Parse(http.TimeFormat, "Wed, 21 Oct 2015 07:28:00 GMT")
-		modifiedSince := r.Header.Get("If-Modified-Since")
+		modifiedSince := r.Header.Get(httpheaders.IfModifiedSince)
 		parsedModifiedSince, err := time.Parse(http.TimeFormat, modifiedSince)
 		s.NoError(err)
 		s.True(fileLastModified.Before(parsedModifiedSince))
@@ -536,18 +471,17 @@ func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqCompareMoreRecentLastMo
 	recentTimestamp := "Thu, 25 Feb 2021 01:45:00 GMT"
 
 	header := make(http.Header)
-	header.Set("If-Modified-Since", recentTimestamp)
-	rw := s.send(fmt.Sprintf("/unsafe/plain/%s", ts.URL), header)
-	res := rw.Result()
+	header.Set(httpheaders.IfModifiedSince, recentTimestamp)
+	res := s.GET(fmt.Sprintf("/unsafe/plain/%s", ts.URL), header)
 
 	s.Require().Equal(304, res.StatusCode)
 }
 
 func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqCompareTooOldLastModifiedDisabled() {
-	config.LastModifiedEnabled = false
-	data := s.readTestFile("test1.png")
+	s.config().ProcessingHandler.LastModifiedEnabled = false
+	data := s.testData.Read("test1.png")
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		modifiedSince := r.Header.Get("If-Modified-Since")
+		modifiedSince := r.Header.Get(httpheaders.IfModifiedSince)
 		s.Empty(modifiedSince)
 		rw.WriteHeader(200)
 		rw.Write(data)
@@ -557,19 +491,18 @@ func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqCompareTooOldLastModifi
 	oldTimestamp := "Tue, 01 Oct 2013 17:31:00 GMT"
 
 	header := make(http.Header)
-	header.Set("If-Modified-Since", oldTimestamp)
-	rw := s.send(fmt.Sprintf("/unsafe/plain/%s", ts.URL), header)
-	res := rw.Result()
+	header.Set(httpheaders.IfModifiedSince, oldTimestamp)
+	res := s.GET(fmt.Sprintf("/unsafe/plain/%s", ts.URL), header)
 
 	s.Require().Equal(200, res.StatusCode)
 }
 
 func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqCompareTooOldLastModifiedEnabled() {
 	config.LastModifiedEnabled = true
-	data := s.readTestFile("test1.png")
+	data := s.testData.Read("test1.png")
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		fileLastModified, _ := time.Parse(http.TimeFormat, "Wed, 21 Oct 2015 07:28:00 GMT")
-		modifiedSince := r.Header.Get("If-Modified-Since")
+		modifiedSince := r.Header.Get(httpheaders.IfModifiedSince)
 		parsedModifiedSince, err := time.Parse(http.TimeFormat, modifiedSince)
 		s.NoError(err)
 		s.True(fileLastModified.After(parsedModifiedSince))
@@ -581,9 +514,8 @@ func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqCompareTooOldLastModifi
 	oldTimestamp := "Tue, 01 Oct 2013 17:31:00 GMT"
 
 	header := make(http.Header)
-	header.Set("If-Modified-Since", oldTimestamp)
-	rw := s.send(fmt.Sprintf("/unsafe/plain/%s", ts.URL), header)
-	res := rw.Result()
+	header.Set(httpheaders.IfModifiedSince, oldTimestamp)
+	res := s.GET(fmt.Sprintf("/unsafe/plain/%s", ts.URL), header)
 
 	s.Require().Equal(200, res.StatusCode)
 }
@@ -591,43 +523,40 @@ func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqCompareTooOldLastModifi
 func (s *ProcessingHandlerTestSuite) TestAlwaysRasterizeSvg() {
 	config.AlwaysRasterizeSvg = true
 
-	rw := s.send("/unsafe/rs:fill:40:40/plain/local:///test1.svg")
-	res := rw.Result()
+	res := s.GET("/unsafe/rs:fill:40:40/plain/local:///test1.svg")
 
 	s.Require().Equal(200, res.StatusCode)
-	s.Require().Equal("image/png", res.Header.Get("Content-Type"))
+	s.Require().Equal("image/png", res.Header.Get(httpheaders.ContentType))
 }
 
 func (s *ProcessingHandlerTestSuite) TestAlwaysRasterizeSvgWithEnforceAvif() {
 	config.AlwaysRasterizeSvg = true
 	config.EnforceWebp = true
 
-	rw := s.send("/unsafe/plain/local:///test1.svg", http.Header{"Accept": []string{"image/webp"}})
-	res := rw.Result()
+	res := s.GET("/unsafe/plain/local:///test1.svg", http.Header{"Accept": []string{"image/webp"}})
 
 	s.Require().Equal(200, res.StatusCode)
-	s.Require().Equal("image/webp", res.Header.Get("Content-Type"))
+	s.Require().Equal("image/webp", res.Header.Get(httpheaders.ContentType))
 }
 
 func (s *ProcessingHandlerTestSuite) TestAlwaysRasterizeSvgDisabled() {
 	config.AlwaysRasterizeSvg = false
 	config.EnforceWebp = true
 
-	rw := s.send("/unsafe/plain/local:///test1.svg")
-	res := rw.Result()
+	res := s.GET("/unsafe/plain/local:///test1.svg")
 
 	s.Require().Equal(200, res.StatusCode)
-	s.Require().Equal("image/svg+xml", res.Header.Get("Content-Type"))
+	s.Require().Equal("image/svg+xml", res.Header.Get(httpheaders.ContentType))
 }
 
 func (s *ProcessingHandlerTestSuite) TestAlwaysRasterizeSvgWithFormat() {
 	config.AlwaysRasterizeSvg = true
 	config.SkipProcessingFormats = []imagetype.Type{imagetype.SVG}
-	rw := s.send("/unsafe/plain/local:///test1.svg@svg")
-	res := rw.Result()
+
+	res := s.GET("/unsafe/plain/local:///test1.svg@svg")
 
 	s.Require().Equal(200, res.StatusCode)
-	s.Require().Equal("image/svg+xml", res.Header.Get("Content-Type"))
+	s.Require().Equal("image/svg+xml", res.Header.Get(httpheaders.ContentType))
 }
 
 func (s *ProcessingHandlerTestSuite) TestMaxSrcFileSizeGlobal() {
@@ -635,12 +564,11 @@ func (s *ProcessingHandlerTestSuite) TestMaxSrcFileSizeGlobal() {
 
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		rw.WriteHeader(200)
-		rw.Write(s.readTestFile("test1.png"))
+		rw.Write(s.testData.Read("test1.png"))
 	}))
 	defer ts.Close()
 
-	rw := s.send("/unsafe/rs:fill:4:4/plain/" + ts.URL)
-	res := rw.Result()
+	res := s.GET("/unsafe/rs:fill:4:4/plain/" + ts.URL)
 
 	s.Require().Equal(422, res.StatusCode)
 }

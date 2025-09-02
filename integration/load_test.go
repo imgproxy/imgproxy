@@ -1,12 +1,12 @@
-//go:build integration
-// +build integration
-
 package integration
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"image/png"
+	"io"
+	"net/http"
 	"os"
 	"path"
 	"path/filepath"
@@ -14,28 +14,50 @@ import (
 	"testing"
 
 	"github.com/corona10/goimagehash"
+	"github.com/imgproxy/imgproxy/v3"
+	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
+	"github.com/imgproxy/imgproxy/v3/testutil"
 	"github.com/imgproxy/imgproxy/v3/vips"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 )
 
 const (
 	similarityThreshold = 5 // Distance between images to be considered similar
 )
 
+type LoadTestSuite struct {
+	suite.Suite
+	ctx            context.Context
+	cancel         context.CancelFunc
+	testData       *testutil.TestDataProvider
+	testImagesPath string
+}
+
+// SetupSuite starts imgproxy instance server
+func (s *LoadTestSuite) SetupSuite() {
+	s.testData = testutil.NewTestDataProvider(s.T())
+	s.testImagesPath = s.testData.Path("test-images")
+	s.ctx, s.cancel = context.WithCancel(s.T().Context())
+
+	s.startImgproxy(s.ctx)
+}
+
+// TearDownSuite stops imgproxy instance server
+func (s *LoadTestSuite) TearDownSuite() {
+	s.cancel()
+}
+
 // testLoadFolder fetches images iterates over images in the specified folder,
 // runs imgproxy on each image, and compares the result with the reference image
 // which is expected to be in the `integration` folder with the same name
 // but with `.png` extension.
-func testLoadFolder(t *testing.T, cs, sourcePath, folder string) {
-	t.Logf("Testing folder: %s", folder)
-
-	walkPath := path.Join(sourcePath, folder)
+func (s *LoadTestSuite) testLoadFolder(folder string) {
+	walkPath := path.Join(s.testImagesPath, folder)
 
 	// Iterate over the files in the source folder
 	err := filepath.Walk(walkPath, func(path string, info os.FileInfo, err error) error {
-		require.NoError(t, err)
+		s.Require().NoError(err)
 
 		// Skip directories
 		if info.IsDir() {
@@ -49,39 +71,79 @@ func testLoadFolder(t *testing.T, cs, sourcePath, folder string) {
 		referencePath := strings.TrimSuffix(basePath, filepath.Ext(basePath)) + ".png"
 
 		// Construct the full path to the reference image (integration/ folder)
-		referencePath = filepath.Join(sourcePath, "integration", folder, referencePath)
+		referencePath = filepath.Join(s.testImagesPath, "integration", folder, referencePath)
 
 		// Construct the source URL for imgproxy (no processing)
 		sourceUrl := fmt.Sprintf("insecure/plain/local:///%s/%s@png", folder, basePath)
 
-		imgproxyImageBytes := fetchImage(t, cs, sourceUrl)
+		imgproxyImageBytes := s.fetchImage(sourceUrl)
 		imgproxyImage, err := png.Decode(bytes.NewReader(imgproxyImageBytes))
-		require.NoError(t, err, "Failed to decode PNG image from imgproxy for %s", basePath)
+		s.Require().NoError(err, "Failed to decode PNG image from imgproxy for %s", basePath)
 
 		referenceFile, err := os.Open(referencePath)
-		require.NoError(t, err)
+		s.Require().NoError(err)
 		defer referenceFile.Close()
 
 		referenceImage, err := png.Decode(referenceFile)
-		require.NoError(t, err, "Failed to decode PNG reference image for %s", referencePath)
+		s.Require().NoError(err, "Failed to decode PNG reference image for %s", referencePath)
 
 		hash1, err := goimagehash.DifferenceHash(imgproxyImage)
-		require.NoError(t, err)
+		s.Require().NoError(err)
 
 		hash2, err := goimagehash.DifferenceHash(referenceImage)
-		require.NoError(t, err)
+		s.Require().NoError(err)
 
 		distance, err := hash1.Distance(hash2)
-		require.NoError(t, err)
+		s.Require().NoError(err)
 
-		assert.LessOrEqual(t, distance, similarityThreshold,
+		s.Require().LessOrEqual(distance, similarityThreshold,
 			"Image %s differs from reference image %s by %d, which is greater than the allowed threshold of %d",
 			basePath, referencePath, distance, similarityThreshold)
 
 		return nil
 	})
 
-	require.NoError(t, err)
+	s.Require().NoError(err)
+}
+
+// fetchImage fetches an image from the imgproxy server
+func (s *LoadTestSuite) fetchImage(path string) []byte {
+	url := fmt.Sprintf("http://%s:%d/%s", bindHost, bindPort, path)
+
+	resp, err := http.Get(url)
+	s.Require().NoError(err, "Failed to fetch image from %s", url)
+	defer resp.Body.Close()
+
+	s.Require().Equal(http.StatusOK, resp.StatusCode, "Expected status code 200 OK, got %d, url: %s", resp.StatusCode, url)
+
+	bytes, err := io.ReadAll(resp.Body)
+	s.Require().NoError(err, "Failed to read response body from %s", url)
+
+	return bytes
+}
+
+func (s *LoadTestSuite) startImgproxy(ctx context.Context) *imgproxy.Imgproxy {
+	c, err := imgproxy.LoadConfigFromEnv(nil)
+	s.Require().NoError(err)
+
+	c.Server.Bind = ":" + fmt.Sprintf("%d", bindPort)
+	c.Transport.Local.Root = s.testImagesPath
+	c.Server.LogMemStats = true
+
+	config.MaxAnimationFrames = 999
+	config.DevelopmentErrorsMode = true
+
+	i, err := imgproxy.New(ctx, c)
+	s.Require().NoError(err)
+
+	go func() {
+		err = i.StartServer(ctx)
+		if err != nil {
+			s.T().Errorf("Imgproxy server exited with error: %v", err)
+		}
+	}()
+
+	return i
 }
 
 // TestLoadSaveToPng ensures that our load pipeline works,
@@ -89,53 +151,34 @@ func testLoadFolder(t *testing.T, cs, sourcePath, folder string) {
 // in the folder, it does the passthrough request through imgproxy:
 // no processing, just convert format of the source file to png.
 // Then, it compares the result with the reference image.
-func TestLoadSaveToPng(t *testing.T) {
-	ctx := t.Context()
-
-	// TODO: Will be moved to test suite (like in processing_test.go)
-	// Since we use SupportsLoad, we need to initialize vips
-	defer vips.Shutdown() // either way it needs to be deinitialized
-	err := vips.Init()
-	require.NoError(t, err, "Failed to initialize vips")
-
-	path, err := testImagesPath(t)
-	require.NoError(t, err)
-
-	cs := startImgproxy(t, ctx, path)
-
-	if vips.SupportsLoad(imagetype.GIF) {
-		testLoadFolder(t, cs, path, "gif")
+func (s *LoadTestSuite) TestLoadSaveToPng() {
+	testCases := []struct {
+		name       string
+		imageType  imagetype.Type
+		folderName string
+	}{
+		{"GIF", imagetype.GIF, "gif"},
+		{"JPEG", imagetype.JPEG, "jpg"},
+		{"HEIC", imagetype.HEIC, "heif"},
+		{"JXL", imagetype.JXL, "jxl"},
+		{"SVG", imagetype.SVG, "svg"},
+		{"TIFF", imagetype.TIFF, "tiff"},
+		{"WEBP", imagetype.WEBP, "webp"},
+		{"BMP", imagetype.BMP, "bmp"},
+		{"ICO", imagetype.ICO, "ico"},
 	}
 
-	if vips.SupportsLoad(imagetype.JPEG) {
-		testLoadFolder(t, cs, path, "jpg")
+	for _, tc := range testCases {
+		s.T().Run(tc.name, func(t *testing.T) {
+			if vips.SupportsLoad(tc.imageType) {
+				s.testLoadFolder(tc.folderName)
+			} else {
+				t.Skipf("%s format not supported by VIPS", tc.name)
+			}
+		})
 	}
+}
 
-	if vips.SupportsLoad(imagetype.HEIC) {
-		testLoadFolder(t, cs, path, "heif")
-	}
-
-	if vips.SupportsLoad(imagetype.JXL) {
-		testLoadFolder(t, cs, path, "jxl")
-	}
-
-	if vips.SupportsLoad(imagetype.SVG) {
-		testLoadFolder(t, cs, path, "svg")
-	}
-
-	if vips.SupportsLoad(imagetype.TIFF) {
-		testLoadFolder(t, cs, path, "tiff")
-	}
-
-	if vips.SupportsLoad(imagetype.WEBP) {
-		testLoadFolder(t, cs, path, "webp")
-	}
-
-	if vips.SupportsLoad(imagetype.BMP) {
-		testLoadFolder(t, cs, path, "bmp")
-	}
-
-	if vips.SupportsLoad(imagetype.ICO) {
-		testLoadFolder(t, cs, path, "ico")
-	}
+func TestIntegration(t *testing.T) {
+	suite.Run(t, new(LoadTestSuite))
 }

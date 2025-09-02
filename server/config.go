@@ -3,6 +3,7 @@ package server
 import (
 	"errors"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/imgproxy/imgproxy/v3/config"
@@ -25,6 +26,10 @@ type Config struct {
 	DevelopmentErrorsMode bool          // Enable development mode for detailed error messages
 	SocketReusePort       bool          // Enable SO_REUSEPORT socket option
 	HealthCheckPath       string        // Health check path from config
+
+	// TODO: We are not sure where to put it yet
+	FreeMemoryInterval time.Duration // Interval for freeing memory
+	LogMemStats        bool          // Log memory stats
 }
 
 // NewDefaultConfig returns default config values
@@ -43,6 +48,8 @@ func NewDefaultConfig() Config {
 		DevelopmentErrorsMode: false,
 		SocketReusePort:       false,
 		HealthCheckPath:       "",
+		FreeMemoryInterval:    10 * time.Second,
+		LogMemStats:           false,
 	}
 }
 
@@ -62,6 +69,8 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c.DevelopmentErrorsMode = config.DevelopmentErrorsMode
 	c.SocketReusePort = config.SoReuseport
 	c.HealthCheckPath = config.HealthCheckPath
+	c.FreeMemoryInterval = time.Duration(config.FreeMemoryInterval) * time.Second
+	c.LogMemStats = len(os.Getenv("IMGPROXY_LOG_MEM_STATS")) > 0
 
 	return c, nil
 }
@@ -90,6 +99,10 @@ func (c *Config) Validate() error {
 
 	if c.GracefulTimeout < 0 {
 		return fmt.Errorf("graceful timeout should be greater than or equal to 0, now - %d", c.GracefulTimeout)
+	}
+
+	if c.FreeMemoryInterval <= 0 {
+		return errors.New("free memory interval should be greater than zero")
 	}
 
 	return nil

@@ -21,7 +21,12 @@ func (s *staticProvider) Get(_ context.Context, po *options.ProcessingOptions) (
 }
 
 // NewStaticFromTriple creates a new ImageProvider from either a base64 string, file path, or URL
-func NewStaticProvider(ctx context.Context, c *StaticConfig, desc string, idf *imagedata.Factory) (Provider, error) {
+func NewStaticProvider(
+	ctx context.Context,
+	c *StaticConfig,
+	desc string,
+	idf *imagedata.Factory,
+) (Provider, error) {
 	var (
 		data    imagedata.ImageData
 		headers = make(http.Header)

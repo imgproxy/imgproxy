@@ -13,8 +13,10 @@ import (
 type Config struct {
 	// UserAgent is the User-Agent header to use when fetching images.
 	UserAgent string
+
 	// DownloadTimeout is the timeout for downloading an image, in seconds.
 	DownloadTimeout time.Duration
+
 	// MaxRedirects is the maximum number of redirects to follow when fetching an image.
 	MaxRedirects int
 }
