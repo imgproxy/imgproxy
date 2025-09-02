@@ -387,7 +387,7 @@ func transformImage(
 	asAnimated bool,
 ) error {
 	if asAnimated {
-		return transformAnimated(ctx, img, po, imgdata)
+		return transformAnimated(ctx, img, po)
 	}
 
 	return mainPipeline.Run(ctx, img, po, imgdata)
@@ -397,7 +397,6 @@ func transformAnimated(
 	ctx context.Context,
 	img *vips.Image,
 	po *options.ProcessingOptions,
-	imgdata imagedata.ImageData,
 ) error {
 	if po.Trim.Enabled {
 		log.Warning("Trim is not supported for animated images")
