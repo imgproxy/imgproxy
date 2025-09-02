@@ -323,7 +323,6 @@ vips_image_is_animated(VipsImage *in)
 
   return (vips_image_get_typeof(in, "delay") != G_TYPE_INVALID &&
       vips_image_get_typeof(in, "loop") != G_TYPE_INVALID &&
-      vips_image_get_typeof(in, "page-height") == G_TYPE_INT &&
       vips_image_get_typeof(in, "n-pages") == G_TYPE_INT &&
       vips_image_get_int(in, "n-pages", &n_pages) == 0 &&
       n_pages > 1);
