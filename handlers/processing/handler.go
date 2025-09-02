@@ -26,7 +26,7 @@ type Handler struct {
 	semaphores     *semaphores.Semaphores
 	fallbackImage  auximageprovider.Provider
 	watermarkImage auximageprovider.Provider
-	imageData      *imagedata.Factory
+	idf            *imagedata.Factory
 }
 
 // New creates new handler object
@@ -50,7 +50,7 @@ func New(
 		semaphores:     semaphores,
 		fallbackImage:  fi,
 		watermarkImage: wi,
-		imageData:      idf,
+		idf:            idf,
 	}, nil
 }
 
@@ -88,7 +88,7 @@ func (h *Handler) Execute(
 		monitoringMeta: mm,
 		semaphores:     h.semaphores,
 		hwr:            h.hw.NewRequest(),
-		idf:            h.imageData,
+		idf:            h.idf,
 	}
 
 	return req.execute(ctx)
