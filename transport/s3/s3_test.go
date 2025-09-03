@@ -15,7 +15,7 @@ import (
 	"github.com/johannesboyne/gofakes3/backend/s3mem"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/transport/generichttp"
 )
 
 type S3TestSuite struct {
@@ -32,15 +32,21 @@ func (s *S3TestSuite) SetupSuite() {
 	faker := gofakes3.New(backend)
 	s.server = httptest.NewServer(faker.Server())
 
-	config.S3Enabled = true
-	config.S3Endpoint = s.server.URL
+	config := NewDefaultConfig()
+	config.Endpoint = s.server.URL
 
 	os.Setenv("AWS_REGION", "eu-central-1")
 	os.Setenv("AWS_ACCESS_KEY_ID", "Foo")
 	os.Setenv("AWS_SECRET_ACCESS_KEY", "Bar")
 
+	tc := generichttp.NewDefaultConfig()
+	tc.IgnoreSslVerification = true
+
+	trans, gerr := generichttp.New(false, tc)
+	s.Require().NoError(gerr)
+
 	var err error
-	s.transport, err = New()
+	s.transport, err = New(config, trans)
 	s.Require().NoError(err)
 
 	err = backend.CreateBucket("test")
@@ -72,20 +78,9 @@ func (s *S3TestSuite) SetupSuite() {
 
 func (s *S3TestSuite) TearDownSuite() {
 	s.server.Close()
-	config.Reset()
-}
-
-func (s *S3TestSuite) TestRoundTripWithETagDisabledReturns200() {
-	config.ETagEnabled = false
-	request, _ := http.NewRequest("GET", "s3://test/foo/test.png", nil)
-
-	response, err := s.transport.RoundTrip(request)
-	s.Require().NoError(err)
-	s.Require().Equal(200, response.StatusCode)
 }
 
 func (s *S3TestSuite) TestRoundTripWithETagEnabled() {
-	config.ETagEnabled = true
 	request, _ := http.NewRequest("GET", "s3://test/foo/test.png", nil)
 
 	response, err := s.transport.RoundTrip(request)
@@ -95,8 +90,6 @@ func (s *S3TestSuite) TestRoundTripWithETagEnabled() {
 }
 
 func (s *S3TestSuite) TestRoundTripWithIfNoneMatchReturns304() {
-	config.ETagEnabled = true
-
 	request, _ := http.NewRequest("GET", "s3://test/foo/test.png", nil)
 	request.Header.Set("If-None-Match", s.etag)
 
@@ -106,8 +99,6 @@ func (s *S3TestSuite) TestRoundTripWithIfNoneMatchReturns304() {
 }
 
 func (s *S3TestSuite) TestRoundTripWithUpdatedETagReturns200() {
-	config.ETagEnabled = true
-
 	request, _ := http.NewRequest("GET", "s3://test/foo/test.png", nil)
 	request.Header.Set("If-None-Match", s.etag+"_wrong")
 
@@ -116,17 +107,7 @@ func (s *S3TestSuite) TestRoundTripWithUpdatedETagReturns200() {
 	s.Require().Equal(http.StatusOK, response.StatusCode)
 }
 
-func (s *S3TestSuite) TestRoundTripWithLastModifiedDisabledReturns200() {
-	config.LastModifiedEnabled = false
-	request, _ := http.NewRequest("GET", "s3://test/foo/test.png", nil)
-
-	response, err := s.transport.RoundTrip(request)
-	s.Require().NoError(err)
-	s.Require().Equal(200, response.StatusCode)
-}
-
 func (s *S3TestSuite) TestRoundTripWithLastModifiedEnabled() {
-	config.LastModifiedEnabled = true
 	request, _ := http.NewRequest("GET", "s3://test/foo/test.png", nil)
 
 	response, err := s.transport.RoundTrip(request)
@@ -136,8 +117,6 @@ func (s *S3TestSuite) TestRoundTripWithLastModifiedEnabled() {
 }
 
 func (s *S3TestSuite) TestRoundTripWithIfModifiedSinceReturns304() {
-	config.LastModifiedEnabled = true
-
 	request, _ := http.NewRequest("GET", "s3://test/foo/test.png", nil)
 	request.Header.Set("If-Modified-Since", s.lastModified.Format(http.TimeFormat))
 
@@ -147,8 +126,6 @@ func (s *S3TestSuite) TestRoundTripWithIfModifiedSinceReturns304() {
 }
 
 func (s *S3TestSuite) TestRoundTripWithUpdatedLastModifiedReturns200() {
-	config.LastModifiedEnabled = true
-
 	request, _ := http.NewRequest("GET", "s3://test/foo/test.png", nil)
 	request.Header.Set("If-Modified-Since", s.lastModified.Add(-24*time.Hour).Format(http.TimeFormat))
 

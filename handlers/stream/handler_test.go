@@ -49,7 +49,10 @@ func (s *HandlerTestSuite) SetupTest() {
 	config.Reset()
 	config.AllowLoopbackSourceAddresses = true
 
-	tr, err := transport.NewTransport()
+	trc, err := transport.LoadFromEnv(transport.NewDefaultConfig())
+	s.Require().NoError(err)
+
+	tr, err := transport.New(trc)
 	s.Require().NoError(err)
 
 	fc := imagefetcher.NewDefaultConfig()
@@ -346,8 +349,11 @@ func (s *HandlerTestSuite) TestHandlerCacheControl() {
 			}))
 			defer ts.Close()
 
+			trc, err := transport.LoadFromEnv(transport.NewDefaultConfig())
+			s.Require().NoError(err)
+
 			// Create new handler with updated config for each test
-			tr, err := transport.NewTransport()
+			tr, err := transport.New(trc)
 			s.Require().NoError(err)
 
 			fc := imagefetcher.NewDefaultConfig()
@@ -440,8 +446,11 @@ func (s *HandlerTestSuite) TestHandlerErrorResponse() {
 
 // TestHandlerCookiePassthrough tests the cookie passthrough behavior of the streaming service.
 func (s *HandlerTestSuite) TestHandlerCookiePassthrough() {
+	trc, err := transport.LoadFromEnv(transport.NewDefaultConfig())
+	s.Require().NoError(err)
+
 	// Create new handler with updated config
-	tr, err := transport.NewTransport()
+	tr, err := transport.New(trc)
 	s.Require().NoError(err)
 
 	fc := imagefetcher.NewDefaultConfig()
@@ -497,8 +506,11 @@ func (s *HandlerTestSuite) TestHandlerCanonicalHeader() {
 	defer ts.Close()
 
 	for _, sc := range []bool{true, false} {
+		trc, err := transport.LoadFromEnv(transport.NewDefaultConfig())
+		s.Require().NoError(err)
+
 		// Create new handler with updated config
-		tr, err := transport.NewTransport()
+		tr, err := transport.New(trc)
 		s.Require().NoError(err)
 
 		fc := imagefetcher.NewDefaultConfig()

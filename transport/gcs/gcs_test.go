@@ -10,7 +10,8 @@ import (
 	"github.com/fsouza/fake-gcs-server/fakestorage"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/httpheaders"
+	"github.com/imgproxy/imgproxy/v3/transport/generichttp"
 )
 
 func getFreePort() (int, error) {
@@ -67,10 +68,16 @@ func (s *GCSTestSuite) SetupSuite() {
 	s.Require().NoError(err)
 	s.etag = obj.Etag
 
-	config.GCSEnabled = true
-	config.GCSEndpoint = s.server.PublicURL() + "/storage/v1/"
+	config := NewDefaultConfig()
+	config.Endpoint = s.server.PublicURL() + "/storage/v1/"
 
-	s.transport, err = New()
+	tc := generichttp.NewDefaultConfig()
+	tc.IgnoreSslVerification = true
+
+	trans, gerr := generichttp.New(false, tc)
+	s.Require().NoError(gerr)
+
+	s.transport, err = New(config, trans)
 	s.Require().NoError(err)
 }
 
@@ -78,30 +85,18 @@ func (s *GCSTestSuite) TearDownSuite() {
 	s.server.Stop()
 }
 
-func (s *GCSTestSuite) TestRoundTripWithETagDisabledReturns200() {
-	config.ETagEnabled = false
-	request, _ := http.NewRequest("GET", "gcs://test/foo/test.png", nil)
-
-	response, err := s.transport.RoundTrip(request)
-	s.Require().NoError(err)
-	s.Require().Equal(200, response.StatusCode)
-}
-
 func (s *GCSTestSuite) TestRoundTripWithETagEnabled() {
-	config.ETagEnabled = true
 	request, _ := http.NewRequest("GET", "gcs://test/foo/test.png", nil)
 
 	response, err := s.transport.RoundTrip(request)
 	s.Require().NoError(err)
 	s.Require().Equal(200, response.StatusCode)
-	s.Require().Equal(s.etag, response.Header.Get("ETag"))
+	s.Require().Equal(s.etag, response.Header.Get(httpheaders.Etag))
 }
 
 func (s *GCSTestSuite) TestRoundTripWithIfNoneMatchReturns304() {
-	config.ETagEnabled = true
-
 	request, _ := http.NewRequest("GET", "gcs://test/foo/test.png", nil)
-	request.Header.Set("If-None-Match", s.etag)
+	request.Header.Set(httpheaders.IfNoneMatch, s.etag)
 
 	response, err := s.transport.RoundTrip(request)
 	s.Require().NoError(err)
@@ -109,48 +104,34 @@ func (s *GCSTestSuite) TestRoundTripWithIfNoneMatchReturns304() {
 }
 
 func (s *GCSTestSuite) TestRoundTripWithUpdatedETagReturns200() {
-	config.ETagEnabled = true
-
 	request, _ := http.NewRequest("GET", "gcs://test/foo/test.png", nil)
-	request.Header.Set("If-None-Match", s.etag+"_wrong")
+	request.Header.Set(httpheaders.IfNoneMatch, s.etag+"_wrong")
 
 	response, err := s.transport.RoundTrip(request)
 	s.Require().NoError(err)
 	s.Require().Equal(http.StatusOK, response.StatusCode)
 }
 
-func (s *GCSTestSuite) TestRoundTripWithLastModifiedDisabledReturns200() {
-	config.LastModifiedEnabled = false
-	request, _ := http.NewRequest("GET", "gcs://test/foo/test.png", nil)
-
-	response, err := s.transport.RoundTrip(request)
-	s.Require().NoError(err)
-	s.Require().Equal(200, response.StatusCode)
-}
 func (s *GCSTestSuite) TestRoundTripWithLastModifiedEnabled() {
-	config.LastModifiedEnabled = true
 	request, _ := http.NewRequest("GET", "gcs://test/foo/test.png", nil)
 
 	response, err := s.transport.RoundTrip(request)
 	s.Require().NoError(err)
 	s.Require().Equal(200, response.StatusCode)
-	s.Require().Equal(s.lastModified.Format(http.TimeFormat), response.Header.Get("Last-Modified"))
+	s.Require().Equal(s.lastModified.Format(http.TimeFormat), response.Header.Get(httpheaders.LastModified))
 }
 func (s *GCSTestSuite) TestRoundTripWithIfModifiedSinceReturns304() {
-	config.LastModifiedEnabled = true
-
 	request, _ := http.NewRequest("GET", "gcs://test/foo/test.png", nil)
-	request.Header.Set("If-Modified-Since", s.lastModified.Format(http.TimeFormat))
+	request.Header.Set(httpheaders.IfModifiedSince, s.lastModified.Format(http.TimeFormat))
 
 	response, err := s.transport.RoundTrip(request)
 	s.Require().NoError(err)
 	s.Require().Equal(http.StatusNotModified, response.StatusCode)
 }
-func (s *GCSTestSuite) TestRoundTripWithUpdatedLastModifiedReturns200() {
-	config.LastModifiedEnabled = true
 
+func (s *GCSTestSuite) TestRoundTripWithUpdatedLastModifiedReturns200() {
 	request, _ := http.NewRequest("GET", "gcs://test/foo/test.png", nil)
-	request.Header.Set("If-Modified-Sicne", s.lastModified.Add(-24*time.Hour).Format(http.TimeFormat))
+	request.Header.Set(httpheaders.IfModifiedSince, s.lastModified.Add(-24*time.Hour).Format(http.TimeFormat))
 
 	response, err := s.transport.RoundTrip(request)
 	s.Require().NoError(err)

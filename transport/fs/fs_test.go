@@ -9,7 +9,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/httpheaders"
 )
 
 type FsTestSuite struct {
@@ -24,39 +24,27 @@ func (s *FsTestSuite) SetupSuite() {
 	wd, err := os.Getwd()
 	s.Require().NoError(err)
 
-	config.LocalFileSystemRoot = filepath.Join(wd, "..", "..", "testdata")
+	fsRoot := filepath.Join(wd, "..", "..", "testdata")
 
-	fi, err := os.Stat(filepath.Join(config.LocalFileSystemRoot, "test1.png"))
+	fi, err := os.Stat(filepath.Join(fsRoot, "test1.png"))
 	s.Require().NoError(err)
 
 	s.etag = BuildEtag("/test1.png", fi)
 	s.modTime = fi.ModTime()
-	s.transport = New()
-}
-
-func (s *FsTestSuite) TestRoundTripWithETagDisabledReturns200() {
-	config.ETagEnabled = false
-	request, _ := http.NewRequest("GET", "local:///test1.png", nil)
-
-	response, err := s.transport.RoundTrip(request)
-	s.Require().NoError(err)
-	s.Require().Equal(200, response.StatusCode)
+	s.transport = New(&Config{Root: fsRoot})
 }
 
 func (s *FsTestSuite) TestRoundTripWithETagEnabled() {
-	config.ETagEnabled = true
 	request, _ := http.NewRequest("GET", "local:///test1.png", nil)
 
 	response, err := s.transport.RoundTrip(request)
 	s.Require().NoError(err)
 	s.Require().Equal(200, response.StatusCode)
-	s.Require().Equal(s.etag, response.Header.Get("ETag"))
+	s.Require().Equal(s.etag, response.Header.Get(httpheaders.Etag))
 }
 func (s *FsTestSuite) TestRoundTripWithIfNoneMatchReturns304() {
-	config.ETagEnabled = true
-
 	request, _ := http.NewRequest("GET", "local:///test1.png", nil)
-	request.Header.Set("If-None-Match", s.etag)
+	request.Header.Set(httpheaders.IfNoneMatch, s.etag)
 
 	response, err := s.transport.RoundTrip(request)
 	s.Require().NoError(err)
@@ -64,39 +52,26 @@ func (s *FsTestSuite) TestRoundTripWithIfNoneMatchReturns304() {
 }
 
 func (s *FsTestSuite) TestRoundTripWithUpdatedETagReturns200() {
-	config.ETagEnabled = true
-
 	request, _ := http.NewRequest("GET", "local:///test1.png", nil)
-	request.Header.Set("If-None-Match", s.etag+"_wrong")
+	request.Header.Set(httpheaders.IfNoneMatch, s.etag+"_wrong")
 
 	response, err := s.transport.RoundTrip(request)
 	s.Require().NoError(err)
 	s.Require().Equal(http.StatusOK, response.StatusCode)
 }
-func (s *FsTestSuite) TestRoundTripWithLastModifiedDisabledReturns200() {
-	config.LastModifiedEnabled = false
-	request, _ := http.NewRequest("GET", "local:///test1.png", nil)
-
-	response, err := s.transport.RoundTrip(request)
-	s.Require().NoError(err)
-	s.Require().Equal(200, response.StatusCode)
-}
 
 func (s *FsTestSuite) TestRoundTripWithLastModifiedEnabledReturns200() {
-	config.LastModifiedEnabled = true
 	request, _ := http.NewRequest("GET", "local:///test1.png", nil)
 
 	response, err := s.transport.RoundTrip(request)
 	s.Require().NoError(err)
 	s.Require().Equal(200, response.StatusCode)
-	s.Require().Equal(s.modTime.Format(http.TimeFormat), response.Header.Get("Last-Modified"))
+	s.Require().Equal(s.modTime.Format(http.TimeFormat), response.Header.Get(httpheaders.LastModified))
 }
 
 func (s *FsTestSuite) TestRoundTripWithIfModifiedSinceReturns304() {
-	config.LastModifiedEnabled = true
-
 	request, _ := http.NewRequest("GET", "local:///test1.png", nil)
-	request.Header.Set("If-Modified-Since", s.modTime.Format(http.TimeFormat))
+	request.Header.Set(httpheaders.IfModifiedSince, s.modTime.Format(http.TimeFormat))
 
 	response, err := s.transport.RoundTrip(request)
 	s.Require().NoError(err)
@@ -104,15 +79,14 @@ func (s *FsTestSuite) TestRoundTripWithIfModifiedSinceReturns304() {
 }
 
 func (s *FsTestSuite) TestRoundTripWithUpdatedLastModifiedReturns200() {
-	config.LastModifiedEnabled = true
-
 	request, _ := http.NewRequest("GET", "local:///test1.png", nil)
-	request.Header.Set("If-Modified-Since", s.modTime.Add(-time.Minute).Format(http.TimeFormat))
+	request.Header.Set(httpheaders.IfModifiedSince, s.modTime.Add(-time.Minute).Format(http.TimeFormat))
 
 	response, err := s.transport.RoundTrip(request)
 	s.Require().NoError(err)
 	s.Require().Equal(http.StatusOK, response.StatusCode)
 }
-func TestS3Transport(t *testing.T) {
+
+func TestFSTransport(t *testing.T) {
 	suite.Run(t, new(FsTestSuite))
 }

@@ -10,7 +10,7 @@ import (
 	"github.com/ncw/swift/v2/swifttest"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/transport/generichttp"
 )
 
 const (
@@ -29,26 +29,32 @@ type SwiftTestSuite struct {
 func (s *SwiftTestSuite) SetupSuite() {
 	s.server, _ = swifttest.NewSwiftServer("localhost")
 
-	config.Reset()
+	config := NewDefaultConfig()
 
-	config.SwiftAuthURL = s.server.AuthURL
-	config.SwiftUsername = swifttest.TEST_ACCOUNT
-	config.SwiftAPIKey = swifttest.TEST_ACCOUNT
-	config.SwiftAuthVersion = 1
+	config.AuthURL = s.server.AuthURL
+	config.Username = swifttest.TEST_ACCOUNT
+	config.APIKey = swifttest.TEST_ACCOUNT
+	config.AuthVersion = 1
 
-	s.setupTestFile()
+	s.setupTestFile(config)
+
+	tc := generichttp.NewDefaultConfig()
+	tc.IgnoreSslVerification = true
+
+	trans, gerr := generichttp.New(false, tc)
+	s.Require().NoError(gerr)
 
 	var err error
-	s.transport, err = New()
+	s.transport, err = New(config, trans)
 	s.Require().NoError(err, "failed to initialize swift transport")
 }
 
-func (s *SwiftTestSuite) setupTestFile() {
+func (s *SwiftTestSuite) setupTestFile(config *Config) {
 	c := &swift.Connection{
-		UserName:    config.SwiftUsername,
-		ApiKey:      config.SwiftAPIKey,
-		AuthUrl:     config.SwiftAuthURL,
-		AuthVersion: config.SwiftAuthVersion,
+		UserName:    config.Username,
+		ApiKey:      config.APIKey,
+		AuthUrl:     config.AuthURL,
+		AuthVersion: config.AuthVersion,
 	}
 
 	ctx := context.Background()
@@ -83,17 +89,7 @@ func (s *SwiftTestSuite) TearDownSuite() {
 	s.server.Close()
 }
 
-func (s *SwiftTestSuite) TestRoundTripWithETagDisabledReturns200() {
-	config.ETagEnabled = false
-	request, _ := http.NewRequest("GET", "swift://test/foo/test.png", nil)
-
-	response, err := s.transport.RoundTrip(request)
-	s.Require().NoError(err)
-	s.Require().Equal(200, response.StatusCode)
-}
-
 func (s *SwiftTestSuite) TestRoundTripReturns404WhenObjectNotFound() {
-	config.ETagEnabled = true
 	request, _ := http.NewRequest("GET", "swift://test/foo/not-here.png", nil)
 
 	response, err := s.transport.RoundTrip(request)
@@ -102,7 +98,6 @@ func (s *SwiftTestSuite) TestRoundTripReturns404WhenObjectNotFound() {
 }
 
 func (s *SwiftTestSuite) TestRoundTripReturns404WhenContainerNotFound() {
-	config.ETagEnabled = true
 	request, _ := http.NewRequest("GET", "swift://invalid/foo/test.png", nil)
 
 	response, err := s.transport.RoundTrip(request)
@@ -111,7 +106,6 @@ func (s *SwiftTestSuite) TestRoundTripReturns404WhenContainerNotFound() {
 }
 
 func (s *SwiftTestSuite) TestRoundTripWithETagEnabled() {
-	config.ETagEnabled = true
 	request, _ := http.NewRequest("GET", "swift://test/foo/test.png", nil)
 
 	response, err := s.transport.RoundTrip(request)
@@ -121,8 +115,6 @@ func (s *SwiftTestSuite) TestRoundTripWithETagEnabled() {
 }
 
 func (s *SwiftTestSuite) TestRoundTripWithIfNoneMatchReturns304() {
-	config.ETagEnabled = true
-
 	request, _ := http.NewRequest("GET", "swift://test/foo/test.png", nil)
 	request.Header.Set("If-None-Match", s.etag)
 
@@ -132,8 +124,6 @@ func (s *SwiftTestSuite) TestRoundTripWithIfNoneMatchReturns304() {
 }
 
 func (s *SwiftTestSuite) TestRoundTripWithUpdatedETagReturns200() {
-	config.ETagEnabled = true
-
 	request, _ := http.NewRequest("GET", "swift://test/foo/test.png", nil)
 	request.Header.Set("If-None-Match", s.etag+"_wrong")
 
@@ -142,17 +132,7 @@ func (s *SwiftTestSuite) TestRoundTripWithUpdatedETagReturns200() {
 	s.Require().Equal(http.StatusOK, response.StatusCode)
 }
 
-func (s *SwiftTestSuite) TestRoundTripWithLastModifiedDisabledReturns200() {
-	config.LastModifiedEnabled = false
-	request, _ := http.NewRequest("GET", "swift://test/foo/test.png", nil)
-
-	response, err := s.transport.RoundTrip(request)
-	s.Require().NoError(err)
-	s.Require().Equal(200, response.StatusCode)
-}
-
 func (s *SwiftTestSuite) TestRoundTripWithLastModifiedEnabled() {
-	config.LastModifiedEnabled = true
 	request, _ := http.NewRequest("GET", "swift://test/foo/test.png", nil)
 
 	response, err := s.transport.RoundTrip(request)
@@ -162,8 +142,6 @@ func (s *SwiftTestSuite) TestRoundTripWithLastModifiedEnabled() {
 }
 
 func (s *SwiftTestSuite) TestRoundTripWithIfModifiedSinceReturns304() {
-	config.LastModifiedEnabled = true
-
 	request, _ := http.NewRequest("GET", "swift://test/foo/test.png", nil)
 	request.Header.Set("If-Modified-Since", s.lastModified.Format(http.TimeFormat))
 
@@ -173,8 +151,6 @@ func (s *SwiftTestSuite) TestRoundTripWithIfModifiedSinceReturns304() {
 }
 
 func (s *SwiftTestSuite) TestRoundTripWithUpdatedLastModifiedReturns200() {
-	config.LastModifiedEnabled = true
-
 	request, _ := http.NewRequest("GET", "swift://test/foo/test.png", nil)
 	request.Header.Set("If-Modified-Since", s.lastModified.Add(-24*time.Hour).Format(http.TimeFormat))
 

@@ -8,12 +8,15 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/security"
 	"golang.org/x/net/http2"
 )
 
-func New(verifyNetworks bool) (*http.Transport, error) {
+func New(verifyNetworks bool, config *Config) (*http.Transport, error) {
+	if err := config.Validate(); err != nil {
+		return nil, err
+	}
+
 	dialer := &net.Dialer{
 		Timeout:   30 * time.Second,
 		KeepAlive: 30 * time.Second,
@@ -30,7 +33,7 @@ func New(verifyNetworks bool) (*http.Transport, error) {
 		Proxy:                 http.ProxyFromEnvironment,
 		DialContext:           dialer.DialContext,
 		MaxIdleConns:          100,
-		MaxIdleConnsPerHost:   config.Workers + 1,
+		MaxIdleConnsPerHost:   100,
 		IdleConnTimeout:       time.Duration(config.ClientKeepAliveTimeout) * time.Second,
 		TLSHandshakeTimeout:   10 * time.Second,
 		ExpectContinueTimeout: 1 * time.Second,
