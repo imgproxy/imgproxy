@@ -16,9 +16,9 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/fetcher"
 	"github.com/imgproxy/imgproxy/v3/headerwriter"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
-	"github.com/imgproxy/imgproxy/v3/imagefetcher"
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/transport"
 )
@@ -55,9 +55,9 @@ func (s *HandlerTestSuite) SetupTest() {
 	tr, err := transport.New(trc)
 	s.Require().NoError(err)
 
-	fc := imagefetcher.NewDefaultConfig()
+	fc := fetcher.NewDefaultConfig()
 
-	fetcher, err := imagefetcher.NewFetcher(tr, fc)
+	fetcher, err := fetcher.NewFetcher(tr, fc)
 	s.Require().NoError(err)
 
 	cfg := NewDefaultConfig()
@@ -356,9 +356,9 @@ func (s *HandlerTestSuite) TestHandlerCacheControl() {
 			tr, err := transport.New(trc)
 			s.Require().NoError(err)
 
-			fc := imagefetcher.NewDefaultConfig()
+			fc := fetcher.NewDefaultConfig()
 
-			fetcher, err := imagefetcher.NewFetcher(tr, fc)
+			fetcher, err := fetcher.NewFetcher(tr, fc)
 			s.Require().NoError(err)
 
 			cfg := NewDefaultConfig()
@@ -453,8 +453,8 @@ func (s *HandlerTestSuite) TestHandlerCookiePassthrough() {
 	tr, err := transport.New(trc)
 	s.Require().NoError(err)
 
-	fc := imagefetcher.NewDefaultConfig()
-	fetcher, err := imagefetcher.NewFetcher(tr, fc)
+	fc := fetcher.NewDefaultConfig()
+	fetcher, err := fetcher.NewFetcher(tr, fc)
 	s.Require().NoError(err)
 
 	cfg := NewDefaultConfig()
@@ -513,8 +513,8 @@ func (s *HandlerTestSuite) TestHandlerCanonicalHeader() {
 		tr, err := transport.New(trc)
 		s.Require().NoError(err)
 
-		fc := imagefetcher.NewDefaultConfig()
-		fetcher, err := imagefetcher.NewFetcher(tr, fc)
+		fc := fetcher.NewDefaultConfig()
+		fetcher, err := fetcher.NewFetcher(tr, fc)
 		s.Require().NoError(err)
 
 		cfg := NewDefaultConfig()

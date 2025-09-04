@@ -7,10 +7,10 @@ import (
 	"sync"
 
 	"github.com/imgproxy/imgproxy/v3/cookies"
+	"github.com/imgproxy/imgproxy/v3/fetcher"
 	"github.com/imgproxy/imgproxy/v3/headerwriter"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
-	"github.com/imgproxy/imgproxy/v3/imagefetcher"
 	"github.com/imgproxy/imgproxy/v3/monitoring"
 	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
 	"github.com/imgproxy/imgproxy/v3/options"
@@ -35,9 +35,9 @@ var (
 
 // Handler handles image passthrough requests, allowing images to be streamed directly
 type Handler struct {
-	config  *Config               // Configuration for the streamer
-	fetcher *imagefetcher.Fetcher // Fetcher instance to handle image fetching
-	hw      *headerwriter.Writer  // Configured HeaderWriter instance
+	config  *Config              // Configuration for the streamer
+	fetcher *fetcher.Fetcher     // Fetcher instance to handle image fetching
+	hw      *headerwriter.Writer // Configured HeaderWriter instance
 }
 
 // request holds the parameters and state for a single streaming request
@@ -52,7 +52,7 @@ type request struct {
 }
 
 // New creates new handler object
-func New(config *Config, hw *headerwriter.Writer, fetcher *imagefetcher.Fetcher) (*Handler, error) {
+func New(config *Config, hw *headerwriter.Writer, fetcher *fetcher.Fetcher) (*Handler, error) {
 	if err := config.Validate(); err != nil {
 		return nil, err
 	}

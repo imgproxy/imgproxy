@@ -1,4 +1,4 @@
-package imagefetcher
+package fetcher
 
 import (
 	"compress/gzip"

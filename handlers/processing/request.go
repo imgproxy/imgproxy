@@ -5,9 +5,9 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/imgproxy/imgproxy/v3/fetcher"
 	"github.com/imgproxy/imgproxy/v3/headerwriter"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
-	"github.com/imgproxy/imgproxy/v3/imagefetcher"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/monitoring"
 	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
@@ -81,7 +81,7 @@ func (r *request) execute(ctx context.Context) error {
 	}
 
 	// Respond with NotModified if image was not modified
-	var nmErr imagefetcher.NotModifiedError
+	var nmErr fetcher.NotModifiedError
 
 	if errors.As(err, &nmErr) {
 		r.hwr.SetOriginHeaders(nmErr.Headers())
