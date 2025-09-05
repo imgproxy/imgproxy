@@ -14,6 +14,18 @@ import (
 	"github.com/imgproxy/imgproxy/v3/security"
 )
 
+// Factory represents ImageData factory
+type Factory struct {
+	fetcher *fetcher.Fetcher
+}
+
+// NewFactory creates a new factory
+func NewFactory(fetcher *fetcher.Fetcher) *Factory {
+	return &Factory{
+		fetcher: fetcher,
+	}
+}
+
 // NewFromBytesWithFormat creates a new ImageData instance from the provided format
 // and byte slice.
 func NewFromBytesWithFormat(format imagetype.Type, b []byte) ImageData {
@@ -25,7 +37,7 @@ func NewFromBytesWithFormat(format imagetype.Type, b []byte) ImageData {
 }
 
 // NewFromBytes creates a new ImageData instance from the provided byte slice.
-func NewFromBytes(b []byte) (ImageData, error) {
+func (f *Factory) NewFromBytes(b []byte) (ImageData, error) {
 	r := bytes.NewReader(b)
 
 	format, err := imagetype.Detect(r)
@@ -37,7 +49,7 @@ func NewFromBytes(b []byte) (ImageData, error) {
 }
 
 // NewFromPath creates a new ImageData from an os.File
-func NewFromPath(path string) (ImageData, error) {
+func (f *Factory) NewFromPath(path string) (ImageData, error) {
 	fl, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -49,21 +61,21 @@ func NewFromPath(path string) (ImageData, error) {
 		return nil, err
 	}
 
-	return NewFromBytes(b)
+	return f.NewFromBytes(b)
 }
 
 // NewFromBase64 creates a new ImageData from a base64 encoded byte slice
-func NewFromBase64(encoded string) (ImageData, error) {
+func (f *Factory) NewFromBase64(encoded string) (ImageData, error) {
 	b, err := base64.StdEncoding.DecodeString(encoded)
 	if err != nil {
 		return nil, err
 	}
 
-	return NewFromBytes(b)
+	return f.NewFromBytes(b)
 }
 
 // sendRequest is a common logic between sync and async download.
-func sendRequest(ctx context.Context, url string, opts DownloadOptions) (*fetcher.Request, *http.Response, http.Header, error) {
+func (f *Factory) sendRequest(ctx context.Context, url string, opts DownloadOptions) (*fetcher.Request, *http.Response, http.Header, error) {
 	h := make(http.Header)
 
 	// NOTE: This will be removed in the future when our test context gets better isolation
@@ -71,12 +83,12 @@ func sendRequest(ctx context.Context, url string, opts DownloadOptions) (*fetche
 		url = redirectAllRequestsTo
 	}
 
-	req, err := Fetcher.BuildRequest(ctx, url, opts.Header, opts.CookieJar)
+	req, err := f.fetcher.BuildRequest(ctx, url, opts.Header, opts.CookieJar)
 	if err != nil {
 		return req, nil, h, err
 	}
 
-	res, err := req.FetchImage()
+	res, err := req.Fetch()
 	if res != nil {
 		h = res.Header.Clone()
 	}
@@ -103,12 +115,12 @@ func sendRequest(ctx context.Context, url string, opts DownloadOptions) (*fetche
 }
 
 // DownloadSync downloads the image synchronously and returns the ImageData and HTTP headers.
-func DownloadSync(ctx context.Context, imageURL, desc string, opts DownloadOptions) (ImageData, http.Header, error) {
+func (f *Factory) DownloadSync(ctx context.Context, imageURL, desc string, opts DownloadOptions) (ImageData, http.Header, error) {
 	if opts.DownloadFinished != nil {
 		defer opts.DownloadFinished()
 	}
 
-	req, res, h, err := sendRequest(ctx, imageURL, opts)
+	req, res, h, err := f.sendRequest(ctx, imageURL, opts)
 	if res != nil {
 		defer res.Body.Close()
 	}
@@ -137,10 +149,10 @@ func DownloadSync(ctx context.Context, imageURL, desc string, opts DownloadOptio
 
 // DownloadAsync downloads the image asynchronously and returns the ImageData
 // backed by AsyncBuffer and HTTP headers.
-func DownloadAsync(ctx context.Context, imageURL, desc string, opts DownloadOptions) (ImageData, http.Header, error) {
+func (f *Factory) DownloadAsync(ctx context.Context, imageURL, desc string, opts DownloadOptions) (ImageData, http.Header, error) {
 	// We pass this responsibility to AsyncBuffer
 	//nolint:bodyclose
-	req, res, h, err := sendRequest(ctx, imageURL, opts)
+	req, res, h, err := f.sendRequest(ctx, imageURL, opts)
 	if err != nil {
 		if opts.DownloadFinished != nil {
 			defer opts.DownloadFinished()

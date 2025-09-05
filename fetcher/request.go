@@ -67,9 +67,11 @@ func (r *Request) Send() (*http.Response, error) {
 	}
 }
 
-// FetchImage fetches the image using the request and returns the response or an error.
-// It checks for the NotModified status and handles partial content responses.
-func (r *Request) FetchImage() (*http.Response, error) {
+// Fetch fetches the image using the request and returns the response or an error.
+// Unlike Send, it checks the request status and converts it into typed errors.
+// Specifically, it checks for Not Modified, ensures that Partial Content response
+// contains the entire image, and wraps gzip-encoded responses.
+func (r *Request) Fetch() (*http.Response, error) {
 	res, err := r.Send()
 	if err != nil {
 		return nil, err

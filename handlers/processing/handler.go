@@ -10,6 +10,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/handlers/stream"
 	"github.com/imgproxy/imgproxy/v3/headerwriter"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
+	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/monitoring"
 	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
 	"github.com/imgproxy/imgproxy/v3/options"
@@ -19,11 +20,13 @@ import (
 
 // Handler handles image processing requests
 type Handler struct {
-	hw            *headerwriter.Writer // Configured HeaderWriter instance
-	stream        *stream.Handler      // Stream handler for raw image streaming
-	config        *Config              // Handler configuration
-	semaphores    *semaphores.Semaphores
-	fallbackImage auximageprovider.Provider
+	hw             *headerwriter.Writer // Configured HeaderWriter instance
+	stream         *stream.Handler      // Stream handler for raw image streaming
+	config         *Config              // Handler configuration
+	semaphores     *semaphores.Semaphores
+	fallbackImage  auximageprovider.Provider
+	watermarkImage auximageprovider.Provider
+	imageData      *imagedata.Factory
 }
 
 // New creates new handler object
@@ -32,6 +35,8 @@ func New(
 	hw *headerwriter.Writer,
 	semaphores *semaphores.Semaphores,
 	fi auximageprovider.Provider,
+	wi auximageprovider.Provider,
+	idf *imagedata.Factory,
 	config *Config,
 ) (*Handler, error) {
 	if err := config.Validate(); err != nil {
@@ -39,11 +44,13 @@ func New(
 	}
 
 	return &Handler{
-		hw:            hw,
-		config:        config,
-		stream:        stream,
-		semaphores:    semaphores,
-		fallbackImage: fi,
+		hw:             hw,
+		config:         config,
+		stream:         stream,
+		semaphores:     semaphores,
+		fallbackImage:  fi,
+		watermarkImage: wi,
+		imageData:      idf,
 	}, nil
 }
 
@@ -81,6 +88,7 @@ func (h *Handler) Execute(
 		monitoringMeta: mm,
 		semaphores:     h.semaphores,
 		hwr:            h.hw.NewRequest(),
+		idf:            h.imageData,
 	}
 
 	return req.execute(ctx)

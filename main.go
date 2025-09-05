@@ -17,6 +17,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/config/loadenv"
 	"github.com/imgproxy/imgproxy/v3/errorreport"
+	"github.com/imgproxy/imgproxy/v3/fetcher"
 	"github.com/imgproxy/imgproxy/v3/gliblog"
 	"github.com/imgproxy/imgproxy/v3/handlers"
 	processingHandler "github.com/imgproxy/imgproxy/v3/handlers/processing"
@@ -32,6 +33,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/processing"
 	"github.com/imgproxy/imgproxy/v3/semaphores"
 	"github.com/imgproxy/imgproxy/v3/server"
+	"github.com/imgproxy/imgproxy/v3/transport"
 	"github.com/imgproxy/imgproxy/v3/version"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
@@ -59,7 +61,29 @@ func callHandleProcessing(reqID string, rw http.ResponseWriter, r *http.Request)
 		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
 	}
 
-	stream, err := stream.New(sc, hw, imagedata.Fetcher)
+	tcfg, err := transport.LoadFromEnv(transport.NewDefaultConfig())
+	if err != nil {
+		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
+	}
+
+	tr, err := transport.New(tcfg)
+	if err != nil {
+		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
+	}
+
+	fc, err := fetcher.LoadFromEnv(fetcher.NewDefaultConfig())
+	if err != nil {
+		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
+	}
+
+	fetcher, err := fetcher.New(tr, fc)
+	if err != nil {
+		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
+	}
+
+	idf := imagedata.NewFactory(fetcher)
+
+	stream, err := stream.New(sc, hw, fetcher)
 	if err != nil {
 		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
 	}
@@ -89,12 +113,29 @@ func callHandleProcessing(reqID string, rw http.ResponseWriter, r *http.Request)
 		r.Context(),
 		fic,
 		"fallback image",
+		idf,
 	)
 	if err != nil {
 		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
 	}
 
-	h, err := processingHandler.New(stream, hw, semaphores, fi, phc)
+	wic := auximageprovider.NewDefaultStaticConfig()
+	wic, err = auximageprovider.LoadFallbackStaticConfigFromEnv(wic)
+	if err != nil {
+		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
+	}
+
+	wi, err := auximageprovider.NewStaticProvider(
+		r.Context(),
+		wic,
+		"watermark image",
+		idf,
+	)
+	if err != nil {
+		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
+	}
+
+	h, err := processingHandler.New(stream, hw, semaphores, fi, wi, idf, phc)
 	if err != nil {
 		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
 	}
@@ -141,10 +182,6 @@ func initialize() error {
 	}
 
 	if err := monitoring.Init(); err != nil {
-		return err
-	}
-
-	if err := imagedata.Init(); err != nil {
 		return err
 	}
 

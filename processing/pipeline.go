@@ -3,6 +3,7 @@ package processing
 import (
 	"context"
 
+	"github.com/imgproxy/imgproxy/v3/auximageprovider"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/options"
@@ -14,6 +15,9 @@ type pipelineContext struct {
 	ctx context.Context
 
 	imgtype imagetype.Type
+
+	// The watermark image provider, if any watermarking is to be done.
+	watermarkProvider auximageprovider.Provider
 
 	trimmed bool
 
@@ -67,7 +71,13 @@ type pipelineContext struct {
 type pipelineStep func(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata imagedata.ImageData) error
 type pipeline []pipelineStep
 
-func (p pipeline) Run(ctx context.Context, img *vips.Image, po *options.ProcessingOptions, imgdata imagedata.ImageData) error {
+func (p pipeline) Run(
+	ctx context.Context,
+	img *vips.Image,
+	po *options.ProcessingOptions,
+	imgdata imagedata.ImageData,
+	watermark auximageprovider.Provider,
+) error {
 	pctx := pipelineContext{
 		ctx: ctx,
 
@@ -77,7 +87,8 @@ func (p pipeline) Run(ctx context.Context, img *vips.Image, po *options.Processi
 		dprScale:        1.0,
 		vectorBaseScale: 1.0,
 
-		cropGravity: po.Crop.Gravity,
+		cropGravity:       po.Crop.Gravity,
+		watermarkProvider: watermark,
 	}
 
 	if pctx.cropGravity.Type == options.GravityUnknown {

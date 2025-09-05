@@ -12,9 +12,11 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/fetcher"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/options"
+	"github.com/imgproxy/imgproxy/v3/transport"
 )
 
 type ImageProviderTestSuite struct {
@@ -62,8 +64,6 @@ func (s *ImageProviderTestSuite) SetupSuite() {
 		rw.WriteHeader(s.status)
 		rw.Write(data)
 	}))
-
-	s.Require().NoError(imagedata.Init())
 }
 
 func (s *ImageProviderTestSuite) TearDownSuite() {
@@ -168,13 +168,23 @@ func (s *ImageProviderTestSuite) TestNewProvider() {
 		},
 	}
 
+	trc := transport.NewDefaultConfig()
+	tr, err := transport.New(trc)
+	s.Require().NoError(err)
+
+	fc := fetcher.NewDefaultConfig()
+	f, err := fetcher.New(tr, fc)
+	s.Require().NoError(err)
+
+	idf := imagedata.NewFactory(f)
+
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(t *testing.T) {
 			if tt.setupFunc != nil {
 				tt.setupFunc()
 			}
 
-			provider, err := NewStaticProvider(s.T().Context(), tt.config, "test image")
+			provider, err := NewStaticProvider(s.T().Context(), tt.config, "test image", idf)
 
 			if tt.expectError {
 				s.Require().Error(err)

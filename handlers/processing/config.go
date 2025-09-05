@@ -17,9 +17,6 @@ type Config struct {
 	ReportIOErrors          bool   // Whether to report IO errors
 	FallbackImageHTTPCode   int    // Fallback image HTTP status code
 	EnableDebugHeaders      bool   // Whether to enable debug headers
-	FallbackImageData       string // Fallback image data (base64)
-	FallbackImagePath       string // Fallback image path (local file system)
-	FallbackImageURL        string // Fallback image URL (remote)
 }
 
 // NewDefaultConfig creates a new configuration with defaults

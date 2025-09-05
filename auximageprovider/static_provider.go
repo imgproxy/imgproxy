@@ -21,7 +21,7 @@ func (s *staticProvider) Get(_ context.Context, po *options.ProcessingOptions) (
 }
 
 // NewStaticFromTriple creates a new ImageProvider from either a base64 string, file path, or URL
-func NewStaticProvider(ctx context.Context, c *StaticConfig, desc string) (Provider, error) {
+func NewStaticProvider(ctx context.Context, c *StaticConfig, desc string, idf *imagedata.Factory) (Provider, error) {
 	var (
 		data    imagedata.ImageData
 		headers = make(http.Header)
@@ -30,11 +30,11 @@ func NewStaticProvider(ctx context.Context, c *StaticConfig, desc string) (Provi
 
 	switch {
 	case len(c.Base64Data) > 0:
-		data, err = imagedata.NewFromBase64(c.Base64Data)
+		data, err = idf.NewFromBase64(c.Base64Data)
 	case len(c.Path) > 0:
-		data, err = imagedata.NewFromPath(c.Path)
+		data, err = idf.NewFromPath(c.Path)
 	case len(c.URL) > 0:
-		data, headers, err = imagedata.DownloadSync(
+		data, headers, err = idf.DownloadSync(
 			ctx, c.URL, desc, imagedata.DownloadOptions{},
 		)
 	default:
