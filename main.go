@@ -120,7 +120,7 @@ func callHandleProcessing(reqID string, rw http.ResponseWriter, r *http.Request)
 	}
 
 	wic := auximageprovider.NewDefaultStaticConfig()
-	wic, err = auximageprovider.LoadFallbackStaticConfigFromEnv(wic)
+	wic, err = auximageprovider.LoadWatermarkStaticConfigFromEnv(wic)
 	if err != nil {
 		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
 	}
