@@ -30,6 +30,10 @@ func NewDefaultConfig() *Config {
 
 // LoadConfigFromEnv overrides configuration variables from environment
 func LoadConfigFromEnv(c *Config) (*Config, error) {
+	if c == nil {
+		c = NewDefaultConfig()
+	}
+
 	c.SetCanonicalHeader = config.SetCanonicalHeader
 	c.DefaultTTL = config.TTL
 	c.FallbackImageTTL = config.FallbackImageTTL

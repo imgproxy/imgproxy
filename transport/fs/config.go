@@ -22,6 +22,10 @@ func NewDefaultConfig() *Config {
 
 // LoadConfigFromEnv loads configuration from the global config package
 func LoadConfigFromEnv(c *Config) (*Config, error) {
+	if c == nil {
+		c = NewDefaultConfig()
+	}
+
 	c.Root = config.LocalFileSystemRoot
 
 	return c, nil

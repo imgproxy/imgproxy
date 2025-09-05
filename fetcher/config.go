@@ -29,9 +29,14 @@ func NewDefaultConfig() *Config {
 
 // LoadConfigFromEnv loads config variables from env
 func LoadConfigFromEnv(c *Config) (*Config, error) {
+	if c == nil {
+		c = NewDefaultConfig()
+	}
+
 	c.UserAgent = config.UserAgent
 	c.DownloadTimeout = time.Duration(config.DownloadTimeout) * time.Second
 	c.MaxRedirects = config.MaxRedirects
+
 	return c, nil
 }
 

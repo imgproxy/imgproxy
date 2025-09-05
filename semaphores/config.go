@@ -23,6 +23,10 @@ func NewDefaultConfig() *Config {
 
 // LoadConfigFromEnv loads config from environment variables
 func LoadConfigFromEnv(c *Config) (*Config, error) {
+	if c == nil {
+		c = NewDefaultConfig()
+	}
+
 	c.RequestsQueueSize = config.RequestsQueueSize
 	c.Workers = config.Workers
 

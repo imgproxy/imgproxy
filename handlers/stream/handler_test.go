@@ -49,7 +49,7 @@ func (s *HandlerTestSuite) SetupTest() {
 	config.Reset()
 	config.AllowLoopbackSourceAddresses = true
 
-	trc, err := transport.LoadConfigFromEnv(transport.NewDefaultConfig())
+	trc, err := transport.LoadConfigFromEnv(nil)
 	s.Require().NoError(err)
 
 	tr, err := transport.New(trc)
@@ -349,7 +349,7 @@ func (s *HandlerTestSuite) TestHandlerCacheControl() {
 			}))
 			defer ts.Close()
 
-			trc, err := transport.LoadConfigFromEnv(transport.NewDefaultConfig())
+			trc, err := transport.LoadConfigFromEnv(nil)
 			s.Require().NoError(err)
 
 			// Create new handler with updated config for each test
@@ -446,7 +446,7 @@ func (s *HandlerTestSuite) TestHandlerErrorResponse() {
 
 // TestHandlerCookiePassthrough tests the cookie passthrough behavior of the streaming service.
 func (s *HandlerTestSuite) TestHandlerCookiePassthrough() {
-	trc, err := transport.LoadConfigFromEnv(transport.NewDefaultConfig())
+	trc, err := transport.LoadConfigFromEnv(nil)
 	s.Require().NoError(err)
 
 	// Create new handler with updated config
@@ -506,7 +506,7 @@ func (s *HandlerTestSuite) TestHandlerCanonicalHeader() {
 	defer ts.Close()
 
 	for _, sc := range []bool{true, false} {
-		trc, err := transport.LoadConfigFromEnv(transport.NewDefaultConfig())
+		trc, err := transport.LoadConfigFromEnv(nil)
 		s.Require().NoError(err)
 
 		// Create new handler with updated config

@@ -20,6 +20,10 @@ func NewDefaultStaticConfig() *StaticConfig {
 
 // LoadWatermarkStaticConfigFromEnv loads the watermark configuration from the environment
 func LoadWatermarkStaticConfigFromEnv(c *StaticConfig) (*StaticConfig, error) {
+	if c == nil {
+		c = NewDefaultStaticConfig()
+	}
+
 	c.Base64Data = config.WatermarkData
 	c.Path = config.WatermarkPath
 	c.URL = config.WatermarkURL
@@ -29,6 +33,10 @@ func LoadWatermarkStaticConfigFromEnv(c *StaticConfig) (*StaticConfig, error) {
 
 // LoadFallbackStaticConfigFromEnv loads the fallback configuration from the environment
 func LoadFallbackStaticConfigFromEnv(c *StaticConfig) (*StaticConfig, error) {
+	if c == nil {
+		c = NewDefaultStaticConfig()
+	}
+
 	c.Base64Data = config.FallbackImageData
 	c.Path = config.FallbackImagePath
 	c.URL = config.FallbackImageURL

@@ -18,8 +18,13 @@ func NewDefaultConfig() *Config {
 
 // LoadConfigFromEnv loads configuration from the global config package
 func LoadConfigFromEnv(c *Config) (*Config, error) {
+	if c == nil {
+		c = NewDefaultConfig()
+	}
+
 	c.Key = config.GCSKey
 	c.Endpoint = config.GCSEndpoint
+
 	return c, nil
 }
 

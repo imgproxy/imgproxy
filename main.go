@@ -46,7 +46,7 @@ const (
 
 func callHandleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) error {
 	// NOTE: This is temporary, will be moved level up at once
-	hwc, err := headerwriter.LoadConfigFromEnv(headerwriter.NewDefaultConfig())
+	hwc, err := headerwriter.LoadConfigFromEnv(nil)
 	if err != nil {
 		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
 	}
@@ -56,12 +56,12 @@ func callHandleProcessing(reqID string, rw http.ResponseWriter, r *http.Request)
 		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
 	}
 
-	sc, err := stream.LoadConfigFromEnv(stream.NewDefaultConfig())
+	sc, err := stream.LoadConfigFromEnv(nil)
 	if err != nil {
 		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
 	}
 
-	tcfg, err := transport.LoadConfigFromEnv(transport.NewDefaultConfig())
+	tcfg, err := transport.LoadConfigFromEnv(nil)
 	if err != nil {
 		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
 	}
@@ -71,7 +71,7 @@ func callHandleProcessing(reqID string, rw http.ResponseWriter, r *http.Request)
 		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
 	}
 
-	fc, err := fetcher.LoadConfigFromEnv(fetcher.NewDefaultConfig())
+	fc, err := fetcher.LoadConfigFromEnv(nil)
 	if err != nil {
 		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
 	}
@@ -88,12 +88,12 @@ func callHandleProcessing(reqID string, rw http.ResponseWriter, r *http.Request)
 		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
 	}
 
-	phc, err := processingHandler.LoadConfigFromEnv(processingHandler.NewDefaultConfig())
+	phc, err := processingHandler.LoadConfigFromEnv(nil)
 	if err != nil {
 		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
 	}
 
-	semc, err := semaphores.LoadConfigFromEnv(semaphores.NewDefaultConfig())
+	semc, err := semaphores.LoadConfigFromEnv(nil)
 	if err != nil {
 		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
 	}
@@ -103,8 +103,7 @@ func callHandleProcessing(reqID string, rw http.ResponseWriter, r *http.Request)
 		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
 	}
 
-	fic := auximageprovider.NewDefaultStaticConfig()
-	fic, err = auximageprovider.LoadFallbackStaticConfigFromEnv(fic)
+	fic, err := auximageprovider.LoadFallbackStaticConfigFromEnv(nil)
 	if err != nil {
 		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
 	}
@@ -119,8 +118,7 @@ func callHandleProcessing(reqID string, rw http.ResponseWriter, r *http.Request)
 		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
 	}
 
-	wic := auximageprovider.NewDefaultStaticConfig()
-	wic, err = auximageprovider.LoadWatermarkStaticConfigFromEnv(wic)
+	wic, err := auximageprovider.LoadWatermarkStaticConfigFromEnv(nil)
 	if err != nil {
 		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
 	}
@@ -240,7 +238,7 @@ func run(ctx context.Context) error {
 		return err
 	}
 
-	cfg, err := server.LoadConfigFromEnv(server.NewDefaultConfig())
+	cfg, err := server.LoadConfigFromEnv(nil)
 	if err != nil {
 		return err
 	}

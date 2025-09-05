@@ -26,6 +26,10 @@ func NewDefaultConfig() *Config {
 
 // LoadConfigFromEnv loads configuration from the global config package
 func LoadConfigFromEnv(c *Config) (*Config, error) {
+	if c == nil {
+		c = NewDefaultConfig()
+	}
+
 	c.Region = config.S3Region
 	c.Endpoint = config.S3Endpoint
 	c.EndpointUsePathStyle = config.S3EndpointUsePathStyle

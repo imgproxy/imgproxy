@@ -24,6 +24,10 @@ func NewDefaultConfig() *Config {
 
 // LoadConfigFromEnv loads configuration from the global config package
 func LoadConfigFromEnv(c *Config) (*Config, error) {
+	if c == nil {
+		c = NewDefaultConfig()
+	}
+
 	c.Name = config.ABSName
 	c.Endpoint = config.ABSEndpoint
 	c.Key = config.ABSKey

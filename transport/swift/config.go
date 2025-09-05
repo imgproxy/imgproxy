@@ -34,6 +34,10 @@ func NewDefaultConfig() *Config {
 
 // LoadConfigFromEnv loads configuration from the global config package
 func LoadConfigFromEnv(c *Config) (*Config, error) {
+	if c == nil {
+		c = NewDefaultConfig()
+	}
+
 	c.Username = config.SwiftUsername
 	c.APIKey = config.SwiftAPIKey
 	c.AuthURL = config.SwiftAuthURL

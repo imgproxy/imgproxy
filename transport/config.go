@@ -49,6 +49,10 @@ func NewDefaultConfig() *Config {
 
 // LoadConfigFromEnv loads transport configuration from environment variables
 func LoadConfigFromEnv(c *Config) (*Config, error) {
+	if c == nil {
+		c = NewDefaultConfig()
+	}
+
 	var err error
 
 	if c.HTTP, err = generichttp.LoadConfigFromEnv(c.HTTP); err != nil {
