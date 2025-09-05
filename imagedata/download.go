@@ -35,7 +35,12 @@ func DefaultDownloadOptions() DownloadOptions {
 }
 
 func initDownloading() error {
-	ts, err := transport.NewTransport()
+	trc, err := transport.LoadFromEnv(transport.NewDefaultConfig())
+	if err != nil {
+		return err
+	}
+
+	ts, err := transport.New(trc)
 	if err != nil {
 		return err
 	}

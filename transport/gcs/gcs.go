@@ -14,11 +14,10 @@ import (
 	raw "google.golang.org/api/storage/v1"
 	htransport "google.golang.org/api/transport/http"
 
-	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/httprange"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/transport/common"
-	"github.com/imgproxy/imgproxy/v3/transport/generichttp"
 	"github.com/imgproxy/imgproxy/v3/transport/notmodified"
 )
 
@@ -29,9 +28,8 @@ type transport struct {
 	client *storage.Client
 }
 
-func buildHTTPClient(opts ...option.ClientOption) (*http.Client, error) {
-	trans, err := generichttp.New(false)
-	if err != nil {
+func buildHTTPClient(config *Config, trans *http.Transport, opts ...option.ClientOption) (*http.Client, error) {
+	if err := config.Validate(); err != nil {
 		return nil, err
 	}
 
@@ -43,27 +41,26 @@ func buildHTTPClient(opts ...option.ClientOption) (*http.Client, error) {
 	return &http.Client{Transport: htrans}, nil
 }
 
-func New() (http.RoundTripper, error) {
+func New(config *Config, trans *http.Transport) (http.RoundTripper, error) {
 	var client *storage.Client
 
 	opts := []option.ClientOption{
 		option.WithScopes(raw.DevstorageReadOnlyScope),
-		option.WithUserAgent(config.UserAgent),
 	}
 
-	if len(config.GCSKey) > 0 {
-		opts = append(opts, option.WithCredentialsJSON([]byte(config.GCSKey)))
+	if len(config.Key) > 0 {
+		opts = append(opts, option.WithCredentialsJSON([]byte(config.Key)))
 	}
 
-	if len(config.GCSEndpoint) > 0 {
-		opts = append(opts, option.WithEndpoint(config.GCSEndpoint))
+	if len(config.Endpoint) > 0 {
+		opts = append(opts, option.WithEndpoint(config.Endpoint))
 	}
 
 	if noAuth {
 		opts = append(opts, option.WithoutAuthentication())
 	}
 
-	httpClient, err := buildHTTPClient(opts...)
+	httpClient, err := buildHTTPClient(config, trans, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +108,7 @@ func (t transport) RoundTrip(req *http.Request) (*http.Response, error) {
 
 	header := make(http.Header)
 
-	if r := req.Header.Get("Range"); len(r) != 0 {
+	if r := req.Header.Get(httpheaders.Range); len(r) != 0 {
 		start, end, err := httprange.Parse(r)
 		if err != nil {
 			return httprange.InvalidHTTPRangeResponse(req), nil
@@ -135,24 +132,18 @@ func (t transport) RoundTrip(req *http.Request) (*http.Response, error) {
 			size = end - reader.Attrs.StartOffset + 1
 
 			statusCode = http.StatusPartialContent
-			header.Set("Content-Range", fmt.Sprintf("bytes %d-%d/%d", reader.Attrs.StartOffset, end, reader.Attrs.Size))
+			header.Set(httpheaders.ContentRange, fmt.Sprintf("bytes %d-%d/%d", reader.Attrs.StartOffset, end, reader.Attrs.Size))
 		}
 	}
 
 	// We haven't initialize reader yet, this means that we need non-ranged reader
 	if reader == nil {
-		if config.ETagEnabled || config.LastModifiedEnabled {
-			attrs, err := obj.Attrs(req.Context())
-			if err != nil {
-				return handleError(req, err)
-			}
-			if config.ETagEnabled {
-				header.Set("ETag", attrs.Etag)
-			}
-			if config.LastModifiedEnabled {
-				header.Set("Last-Modified", attrs.Updated.Format(http.TimeFormat))
-			}
+		attrs, aerr := obj.Attrs(req.Context())
+		if aerr != nil {
+			return handleError(req, aerr)
 		}
+		header.Set(httpheaders.Etag, attrs.Etag)
+		header.Set(httpheaders.LastModified, attrs.Updated.Format(http.TimeFormat))
 
 		if resp := notmodified.Response(req, header); resp != nil {
 			return resp, nil
@@ -168,10 +159,10 @@ func (t transport) RoundTrip(req *http.Request) (*http.Response, error) {
 		size = reader.Attrs.Size
 	}
 
-	header.Set("Accept-Ranges", "bytes")
-	header.Set("Content-Length", strconv.Itoa(int(size)))
-	header.Set("Content-Type", reader.Attrs.ContentType)
-	header.Set("Cache-Control", reader.Attrs.CacheControl)
+	header.Set(httpheaders.AcceptRanges, "bytes")
+	header.Set(httpheaders.ContentLength, strconv.Itoa(int(size)))
+	header.Set(httpheaders.ContentType, reader.Attrs.ContentType)
+	header.Set(httpheaders.CacheControl, reader.Attrs.CacheControl)
 
 	return &http.Response{
 		StatusCode:    statusCode,
@@ -196,7 +187,7 @@ func handleError(req *http.Request, err error) (*http.Response, error) {
 		Proto:         "HTTP/1.0",
 		ProtoMajor:    1,
 		ProtoMinor:    0,
-		Header:        http.Header{"Content-Type": {"text/plain"}},
+		Header:        http.Header{httpheaders.ContentType: {"text/plain"}},
 		ContentLength: int64(len(err.Error())),
 		Body:          io.NopCloser(strings.NewReader(err.Error())),
 		Close:         false,

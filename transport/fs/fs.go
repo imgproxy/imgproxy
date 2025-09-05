@@ -13,7 +13,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/httprange"
 	"github.com/imgproxy/imgproxy/v3/transport/common"
 	"github.com/imgproxy/imgproxy/v3/transport/notmodified"
@@ -23,8 +23,9 @@ type transport struct {
 	fs http.Dir
 }
 
-func New() transport {
-	return transport{fs: http.Dir(config.LocalFileSystemRoot)}
+func New(config *Config) transport {
+	// TODO: VALIDATE HERE
+	return transport{fs: http.Dir(config.Root)}
 }
 
 func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
@@ -55,11 +56,11 @@ func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error)
 	body := io.ReadCloser(f)
 
 	if mimetype := detectContentType(f, fi); len(mimetype) > 0 {
-		header.Set("Content-Type", mimetype)
+		header.Set(httpheaders.ContentType, mimetype)
 	}
 	f.Seek(0, io.SeekStart)
 
-	start, end, err := httprange.Parse(req.Header.Get("Range"))
+	start, end, err := httprange.Parse(req.Header.Get(httpheaders.Range))
 	switch {
 	case err != nil:
 		f.Close()
@@ -75,18 +76,14 @@ func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error)
 		statusCode = http.StatusPartialContent
 		size = end - start + 1
 		body = &fileLimiter{f: f, left: int(size)}
-		header.Set("Content-Range", fmt.Sprintf("bytes %d-%d/%d", start, end, fi.Size()))
+		header.Set(httpheaders.ContentRange, fmt.Sprintf("bytes %d-%d/%d", start, end, fi.Size()))
 
 	default:
-		if config.ETagEnabled {
-			etag := BuildEtag(path, fi)
-			header.Set("ETag", etag)
-		}
+		etag := BuildEtag(path, fi)
+		header.Set(httpheaders.Etag, etag)
 
-		if config.LastModifiedEnabled {
-			lastModified := fi.ModTime().Format(http.TimeFormat)
-			header.Set("Last-Modified", lastModified)
-		}
+		lastModified := fi.ModTime().Format(http.TimeFormat)
+		header.Set(httpheaders.LastModified, lastModified)
 	}
 
 	if resp := notmodified.Response(req, header); resp != nil {
@@ -94,8 +91,8 @@ func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error)
 		return resp, nil
 	}
 
-	header.Set("Accept-Ranges", "bytes")
-	header.Set("Content-Length", strconv.Itoa(int(size)))
+	header.Set(httpheaders.AcceptRanges, "bytes")
+	header.Set(httpheaders.ContentLength, strconv.Itoa(int(size)))
 
 	return &http.Response{
 		StatusCode:    statusCode,
@@ -122,7 +119,7 @@ func respNotFound(req *http.Request, msg string) *http.Response {
 		Proto:         "HTTP/1.0",
 		ProtoMajor:    1,
 		ProtoMinor:    0,
-		Header:        http.Header{"Content-Type": {"text/plain"}},
+		Header:        http.Header{httpheaders.ContentType: {"text/plain"}},
 		ContentLength: int64(len(msg)),
 		Body:          io.NopCloser(strings.NewReader(msg)),
 		Close:         false,

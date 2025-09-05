@@ -5,7 +5,6 @@ package transport
 import (
 	"net/http"
 
-	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/transport/generichttp"
 
 	azureTransport "github.com/imgproxy/imgproxy/v3/transport/azure"
@@ -17,13 +16,18 @@ import (
 
 // Transport is a wrapper around http.Transport which allows to track registered protocols
 type Transport struct {
+	config    *Config
 	transport *http.Transport
 	schemes   map[string]struct{}
 }
 
-// NewTransport creates a new HTTP transport with no protocols registered
-func NewTransport() (*Transport, error) {
-	transport, err := generichttp.New(true)
+// New creates a new HTTP transport with no protocols registered
+func New(config *Config) (*Transport, error) {
+	if err := config.Validate(); err != nil {
+		return nil, err
+	}
+
+	transport, err := generichttp.New(true, config.HTTP)
 	if err != nil {
 		return nil, err
 	}
@@ -35,8 +39,9 @@ func NewTransport() (*Transport, error) {
 	}
 
 	t := &Transport{
-		transport,
-		schemes,
+		config:    config,
+		transport: transport,
+		schemes:   schemes,
 	}
 
 	err = t.registerAllProtocols()
@@ -66,36 +71,41 @@ func (t *Transport) IsProtocolRegistered(scheme string) bool {
 
 // RegisterAllProtocols registers all enabled protocols in the given transport
 func (t *Transport) registerAllProtocols() error {
-	if config.LocalFileSystemRoot != "" {
-		t.RegisterProtocol("local", fsTransport.New())
+	transp, err := generichttp.New(false, t.config.HTTP)
+	if err != nil {
+		return err
 	}
 
-	if config.S3Enabled {
-		if tr, err := s3Transport.New(); err != nil {
+	if t.config.Local.Root != "" {
+		t.RegisterProtocol("local", fsTransport.New(t.config.Local))
+	}
+
+	if t.config.S3Enabled {
+		if tr, err := s3Transport.New(t.config.S3, transp); err != nil {
 			return err
 		} else {
 			t.RegisterProtocol("s3", tr)
 		}
 	}
 
-	if config.GCSEnabled {
-		if tr, err := gcsTransport.New(); err != nil {
+	if t.config.GCSEnabled {
+		if tr, err := gcsTransport.New(t.config.GCS, transp); err != nil {
 			return err
 		} else {
 			t.RegisterProtocol("gs", tr)
 		}
 	}
 
-	if config.ABSEnabled {
-		if tr, err := azureTransport.New(); err != nil {
+	if t.config.ABSEnabled {
+		if tr, err := azureTransport.New(t.config.ABS, transp); err != nil {
 			return err
 		} else {
 			t.RegisterProtocol("abs", tr)
 		}
 	}
 
-	if config.SwiftEnabled {
-		if tr, err := swiftTransport.New(); err != nil {
+	if t.config.SwiftEnabled {
+		if tr, err := swiftTransport.New(t.config.Swift, transp); err != nil {
 			return err
 		} else {
 			t.RegisterProtocol("swift", tr)

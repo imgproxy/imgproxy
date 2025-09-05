@@ -1,7 +1,6 @@
 package azure
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -16,10 +15,9 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/blob"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/blockblob"
 
-	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/httprange"
 	"github.com/imgproxy/imgproxy/v3/transport/common"
-	"github.com/imgproxy/imgproxy/v3/transport/generichttp"
 	"github.com/imgproxy/imgproxy/v3/transport/notmodified"
 )
 
@@ -27,7 +25,11 @@ type transport struct {
 	client *azblob.Client
 }
 
-func New() (http.RoundTripper, error) {
+func New(config *Config, trans *http.Transport) (http.RoundTripper, error) {
+	if err := config.Validate(); err != nil {
+		return nil, err
+	}
+
 	var (
 		client                 *azblob.Client
 		sharedKeyCredential    *azblob.SharedKeyCredential
@@ -35,21 +37,12 @@ func New() (http.RoundTripper, error) {
 		err                    error
 	)
 
-	if len(config.ABSName) == 0 {
-		return nil, errors.New("IMGPROXY_ABS_NAME must be set")
-	}
-
-	endpoint := config.ABSEndpoint
+	endpoint := config.Endpoint
 	if len(endpoint) == 0 {
-		endpoint = fmt.Sprintf("https://%s.blob.core.windows.net", config.ABSName)
+		endpoint = fmt.Sprintf("https://%s.blob.core.windows.net", config.Name)
 	}
 
 	endpointURL, err := url.Parse(endpoint)
-	if err != nil {
-		return nil, err
-	}
-
-	trans, err := generichttp.New(false)
 	if err != nil {
 		return nil, err
 	}
@@ -60,8 +53,8 @@ func New() (http.RoundTripper, error) {
 		},
 	}
 
-	if len(config.ABSKey) > 0 {
-		sharedKeyCredential, err = azblob.NewSharedKeyCredential(config.ABSName, config.ABSKey)
+	if len(config.Key) > 0 {
+		sharedKeyCredential, err = azblob.NewSharedKeyCredential(config.Name, config.Key)
 		if err != nil {
 			return nil, err
 		}
@@ -93,7 +86,7 @@ func (t transport) RoundTrip(req *http.Request) (*http.Response, error) {
 			Proto:         "HTTP/1.0",
 			ProtoMajor:    1,
 			ProtoMinor:    0,
-			Header:        http.Header{"Content-Type": {"text/plain"}},
+			Header:        http.Header{httpheaders.ContentType: {"text/plain"}},
 			ContentLength: int64(body.Len()),
 			Body:          io.NopCloser(body),
 			Close:         false,
@@ -106,7 +99,7 @@ func (t transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	header := make(http.Header)
 	opts := &blob.DownloadStreamOptions{}
 
-	if r := req.Header.Get("Range"); len(r) != 0 {
+	if r := req.Header.Get(httpheaders.Range); len(r) != 0 {
 		start, end, err := httprange.Parse(r)
 		if err != nil {
 			return httprange.InvalidHTTPRangeResponse(req), nil
@@ -147,13 +140,14 @@ func (t transport) RoundTrip(req *http.Request) (*http.Response, error) {
 		}
 	}
 
-	if config.ETagEnabled && result.ETag != nil {
+	if result.ETag != nil {
 		etag := string(*result.ETag)
-		header.Set("ETag", etag)
+		header.Set(httpheaders.Etag, etag)
 	}
-	if config.LastModifiedEnabled && result.LastModified != nil {
+
+	if result.LastModified != nil {
 		lastModified := result.LastModified.Format(http.TimeFormat)
-		header.Set("Last-Modified", lastModified)
+		header.Set(httpheaders.LastModified, lastModified)
 	}
 
 	if resp := notmodified.Response(req, header); resp != nil {
@@ -163,24 +157,24 @@ func (t transport) RoundTrip(req *http.Request) (*http.Response, error) {
 		return resp, nil
 	}
 
-	header.Set("Accept-Ranges", "bytes")
+	header.Set(httpheaders.AcceptRanges, "bytes")
 
 	contentLength := int64(0)
 	if result.ContentLength != nil {
 		contentLength = *result.ContentLength
-		header.Set("Content-Length", strconv.FormatInt(*result.ContentLength, 10))
+		header.Set(httpheaders.ContentLength, strconv.FormatInt(*result.ContentLength, 10))
 	}
 
 	if result.ContentType != nil {
-		header.Set("Content-Type", *result.ContentType)
+		header.Set(httpheaders.ContentType, *result.ContentType)
 	}
 
 	if result.ContentRange != nil {
-		header.Set("Content-Range", *result.ContentRange)
+		header.Set(httpheaders.ContentRange, *result.ContentRange)
 	}
 
 	if result.CacheControl != nil {
-		header.Set("Cache-Control", *result.CacheControl)
+		header.Set(httpheaders.CacheControl, *result.CacheControl)
 	}
 
 	return &http.Response{

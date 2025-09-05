@@ -6,14 +6,12 @@ import (
 	"io"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/ncw/swift/v2"
 
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/transport/common"
-	"github.com/imgproxy/imgproxy/v3/transport/generichttp"
 	"github.com/imgproxy/imgproxy/v3/transport/notmodified"
 )
 
@@ -21,27 +19,26 @@ type transport struct {
 	con *swift.Connection
 }
 
-func New() (http.RoundTripper, error) {
-	trans, err := generichttp.New(false)
-	if err != nil {
+func New(config *Config, trans *http.Transport) (http.RoundTripper, error) {
+	if err := config.Validate(); err != nil {
 		return nil, err
 	}
 
 	c := &swift.Connection{
-		UserName:       config.SwiftUsername,
-		ApiKey:         config.SwiftAPIKey,
-		AuthUrl:        config.SwiftAuthURL,
-		AuthVersion:    config.SwiftAuthVersion,
-		Domain:         config.SwiftDomain, // v3 auth only
-		Tenant:         config.SwiftTenant, // v2 auth only
-		Timeout:        time.Duration(config.SwiftTimeoutSeconds) * time.Second,
-		ConnectTimeout: time.Duration(config.SwiftConnectTimeoutSeconds) * time.Second,
+		UserName:       config.Username,
+		ApiKey:         config.APIKey,
+		AuthUrl:        config.AuthURL,
+		AuthVersion:    config.AuthVersion,
+		Domain:         config.Domain, // v3 auth only
+		Tenant:         config.Tenant, // v2 auth only
+		Timeout:        config.Timeout,
+		ConnectTimeout: config.ConnectTimeout,
 		Transport:      trans,
 	}
 
 	ctx := context.Background()
 
-	err = c.Authenticate(ctx)
+	err := c.Authenticate(ctx)
 
 	if err != nil {
 		return nil, ierrors.Wrap(err, 0, ierrors.WithPrefix("swift authentication error"))
