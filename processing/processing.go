@@ -8,6 +8,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"github.com/imgproxy/imgproxy/v3/auximageprovider"
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
@@ -83,6 +84,7 @@ func ProcessImage(
 	ctx context.Context,
 	imgdata imagedata.ImageData,
 	po *options.ProcessingOptions,
+	watermarkProvider auximageprovider.Provider,
 ) (*Result, error) {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
@@ -136,12 +138,12 @@ func ProcessImage(
 	}
 
 	// Transform the image (resize, crop, etc)
-	if err = transformImage(ctx, img, po, imgdata, animated); err != nil {
+	if err = transformImage(ctx, img, po, imgdata, animated, watermarkProvider); err != nil {
 		return nil, err
 	}
 
 	// Finalize the image (colorspace conversion, metadata stripping, etc)
-	if err = finalizePipeline.Run(ctx, img, po, imgdata); err != nil {
+	if err = finalizePipeline.Run(ctx, img, po, imgdata, watermarkProvider); err != nil {
 		return nil, err
 	}
 
@@ -385,18 +387,20 @@ func transformImage(
 	po *options.ProcessingOptions,
 	imgdata imagedata.ImageData,
 	asAnimated bool,
+	watermark auximageprovider.Provider,
 ) error {
 	if asAnimated {
-		return transformAnimated(ctx, img, po)
+		return transformAnimated(ctx, img, po, watermark)
 	}
 
-	return mainPipeline.Run(ctx, img, po, imgdata)
+	return mainPipeline.Run(ctx, img, po, imgdata, watermark)
 }
 
 func transformAnimated(
 	ctx context.Context,
 	img *vips.Image,
 	po *options.ProcessingOptions,
+	watermark auximageprovider.Provider,
 ) error {
 	if po.Trim.Enabled {
 		log.Warning("Trim is not supported for animated images")
@@ -450,7 +454,8 @@ func transformAnimated(
 
 		// Transform the frame using the main pipeline.
 		// We don't provide imgdata here to prevent scale-on-load.
-		if err = mainPipeline.Run(ctx, frame, po, nil); err != nil {
+		// Let's skip passing watermark here since in would be applied later to all frames at once.
+		if err = mainPipeline.Run(ctx, frame, po, nil, nil); err != nil {
 			return err
 		}
 
@@ -474,18 +479,25 @@ func transformAnimated(
 
 	// Apply watermark to all frames at once if it was requested.
 	// This is much more efficient than applying watermark to individual frames.
-	if watermarkEnabled && imagedata.Watermark != nil {
-		// Get DPR scale to apply watermark correctly on HiDPI images.
-		// `imgproxy-dpr-scale` is set by the pipeline.
-		dprScale, derr := img.GetDoubleDefault("imgproxy-dpr-scale", 1.0)
-		if derr != nil {
-			dprScale = 1.0
+	if watermarkEnabled && watermark != nil {
+		wmi, _, err := watermark.Get(ctx, po)
+		if err != nil {
+			return err
 		}
 
-		if err = applyWatermark(
-			img, imagedata.Watermark, &po.Watermark, dprScale, framesCount,
-		); err != nil {
-			return err
+		if wmi != nil {
+			// Get DPR scale to apply watermark correctly on HiDPI images.
+			// `imgproxy-dpr-scale` is set by the pipeline.
+			dprScale, derr := img.GetDoubleDefault("imgproxy-dpr-scale", 1.0)
+			if derr != nil {
+				dprScale = 1.0
+			}
+
+			if err = applyWatermark(
+				img, wmi, &po.Watermark, dprScale, framesCount,
+			); err != nil {
+				return err
+			}
 		}
 	}
 

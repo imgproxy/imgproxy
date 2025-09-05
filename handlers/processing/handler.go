@@ -19,11 +19,12 @@ import (
 
 // Handler handles image processing requests
 type Handler struct {
-	hw            *headerwriter.Writer // Configured HeaderWriter instance
-	stream        *stream.Handler      // Stream handler for raw image streaming
-	config        *Config              // Handler configuration
-	semaphores    *semaphores.Semaphores
-	fallbackImage auximageprovider.Provider
+	hw             *headerwriter.Writer // Configured HeaderWriter instance
+	stream         *stream.Handler      // Stream handler for raw image streaming
+	config         *Config              // Handler configuration
+	semaphores     *semaphores.Semaphores
+	fallbackImage  auximageprovider.Provider
+	watermarkImage auximageprovider.Provider
 }
 
 // New creates new handler object
@@ -32,6 +33,7 @@ func New(
 	hw *headerwriter.Writer,
 	semaphores *semaphores.Semaphores,
 	fi auximageprovider.Provider,
+	wi auximageprovider.Provider,
 	config *Config,
 ) (*Handler, error) {
 	if err := config.Validate(); err != nil {
@@ -39,11 +41,12 @@ func New(
 	}
 
 	return &Handler{
-		hw:            hw,
-		config:        config,
-		stream:        stream,
-		semaphores:    semaphores,
-		fallbackImage: fi,
+		hw:             hw,
+		config:         config,
+		stream:         stream,
+		semaphores:     semaphores,
+		fallbackImage:  fi,
+		watermarkImage: wi,
 	}, nil
 }
 

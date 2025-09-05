@@ -94,7 +94,22 @@ func callHandleProcessing(reqID string, rw http.ResponseWriter, r *http.Request)
 		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
 	}
 
-	h, err := processingHandler.New(stream, hw, semaphores, fi, phc)
+	wic := auximageprovider.NewDefaultStaticConfig()
+	wic, err = auximageprovider.LoadFallbackStaticConfigFromEnv(wic)
+	if err != nil {
+		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
+	}
+
+	wi, err := auximageprovider.NewStaticProvider(
+		r.Context(),
+		wic,
+		"watermark image",
+	)
+	if err != nil {
+		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
+	}
+
+	h, err := processingHandler.New(stream, hw, semaphores, fi, wi, phc)
 	if err != nil {
 		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
 	}

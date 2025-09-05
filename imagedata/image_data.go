@@ -7,13 +7,7 @@ import (
 	"sync"
 
 	"github.com/imgproxy/imgproxy/v3/asyncbuffer"
-	"github.com/imgproxy/imgproxy/v3/config"
-	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
-)
-
-var (
-	Watermark ImageData
 )
 
 // ImageData represents the data of an image that can be read from a source.
@@ -130,43 +124,6 @@ func (d *imageDataAsyncBuffer) Error() error {
 func Init() error {
 	if err := initDownloading(); err != nil {
 		return err
-	}
-
-	if err := loadWatermark(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func loadWatermark() error {
-	var err error
-
-	switch {
-	case len(config.WatermarkData) > 0:
-		Watermark, err = NewFromBase64(config.WatermarkData)
-
-		// NOTE: this should be something like err = ierrors.Wrap(err).WithStackDeep(0).WithPrefix("watermark")
-		// In the NewFromBase64 all errors should be wrapped to something like
-		// .WithPrefix("load from base64")
-		if err != nil {
-			return ierrors.Wrap(err, 0, ierrors.WithPrefix("can't load watermark from Base64"))
-		}
-
-	case len(config.WatermarkPath) > 0:
-		Watermark, err = NewFromPath(config.WatermarkPath)
-		if err != nil {
-			return ierrors.Wrap(err, 0, ierrors.WithPrefix("can't read watermark from file"))
-		}
-
-	case len(config.WatermarkURL) > 0:
-		Watermark, _, err = DownloadSync(context.Background(), config.WatermarkURL, "watermark", DefaultDownloadOptions())
-		if err != nil {
-			return ierrors.Wrap(err, 0, ierrors.WithPrefix("can't download from URL"))
-		}
-
-	default:
-		Watermark = nil
 	}
 
 	return nil

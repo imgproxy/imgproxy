@@ -59,7 +59,7 @@ func prepareWatermark(wm *vips.Image, wmData imagedata.ImageData, opts *options.
 		po.Padding.Bottom = offY - po.Padding.Top
 	}
 
-	if err := watermarkPipeline.Run(context.Background(), wm, po, wmData); err != nil {
+	if err := watermarkPipeline.Run(context.Background(), wm, po, wmData, nil); err != nil {
 		return err
 	}
 
@@ -164,9 +164,17 @@ func applyWatermark(img *vips.Image, wmData imagedata.ImageData, opts *options.W
 }
 
 func watermark(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata imagedata.ImageData) error {
-	if !po.Watermark.Enabled || imagedata.Watermark == nil {
+	if !po.Watermark.Enabled || pctx.watermarkProvider == nil {
 		return nil
 	}
 
-	return applyWatermark(img, imagedata.Watermark, &po.Watermark, pctx.dprScale, 1)
+	wm, _, err := pctx.watermarkProvider.Get(pctx.ctx, po)
+	if err != nil {
+		return err
+	}
+	if wm == nil {
+		return nil
+	}
+
+	return applyWatermark(img, wm, &po.Watermark, pctx.dprScale, 1)
 }

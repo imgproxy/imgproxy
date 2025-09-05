@@ -154,7 +154,7 @@ func (r *request) getFallbackImage(
 // processImage calls actual image processing
 func (r *request) processImage(ctx context.Context, originData imagedata.ImageData) (*processing.Result, error) {
 	defer monitoring.StartProcessingSegment(ctx, r.monitoringMeta.Filter(monitoring.MetaProcessingOptions))()
-	return processing.ProcessImage(ctx, originData, r.po)
+	return processing.ProcessImage(ctx, originData, r.po, r.handler.watermarkImage)
 }
 
 // writeDebugHeaders writes debug headers (X-Origin-*, X-Result-*) to the response
