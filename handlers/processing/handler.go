@@ -10,6 +10,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/handlers/stream"
 	"github.com/imgproxy/imgproxy/v3/headerwriter"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
+	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/monitoring"
 	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
 	"github.com/imgproxy/imgproxy/v3/options"
@@ -25,6 +26,7 @@ type Handler struct {
 	semaphores     *semaphores.Semaphores
 	fallbackImage  auximageprovider.Provider
 	watermarkImage auximageprovider.Provider
+	imageData      *imagedata.Factory
 }
 
 // New creates new handler object
@@ -34,6 +36,7 @@ func New(
 	semaphores *semaphores.Semaphores,
 	fi auximageprovider.Provider,
 	wi auximageprovider.Provider,
+	idf *imagedata.Factory,
 	config *Config,
 ) (*Handler, error) {
 	if err := config.Validate(); err != nil {
@@ -47,6 +50,7 @@ func New(
 		semaphores:     semaphores,
 		fallbackImage:  fi,
 		watermarkImage: wi,
+		imageData:      idf,
 	}, nil
 }
 
@@ -84,6 +88,7 @@ func (h *Handler) Execute(
 		monitoringMeta: mm,
 		semaphores:     h.semaphores,
 		hwr:            h.hw.NewRequest(),
+		idf:            h.imageData,
 	}
 
 	return req.execute(ctx)

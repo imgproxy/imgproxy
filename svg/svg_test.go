@@ -8,19 +8,29 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/fetcher"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/testutil"
+	"github.com/imgproxy/imgproxy/v3/transport"
 )
 
 type SvgTestSuite struct {
+	idf *imagedata.Factory
 	suite.Suite
 }
 
 func (s *SvgTestSuite) SetupSuite() {
 	config.Reset()
 
-	err := imagedata.Init()
+	trc := transport.NewDefaultConfig()
+	tr, err := transport.New(trc)
 	s.Require().NoError(err)
+
+	fc := fetcher.NewDefaultConfig()
+	f, err := fetcher.New(tr, fc)
+	s.Require().NoError(err)
+
+	s.idf = imagedata.NewFactory(f)
 }
 
 func (s *SvgTestSuite) readTestFile(name string) imagedata.ImageData {
@@ -30,7 +40,7 @@ func (s *SvgTestSuite) readTestFile(name string) imagedata.ImageData {
 	data, err := os.ReadFile(filepath.Join(wd, "..", "testdata", name))
 	s.Require().NoError(err)
 
-	d, err := imagedata.NewFromBytes(data)
+	d, err := s.idf.NewFromBytes(data)
 	s.Require().NoError(err)
 
 	return d

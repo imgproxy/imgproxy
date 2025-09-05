@@ -4,6 +4,7 @@ import (
 	"context"
 	"math"
 
+	"github.com/imgproxy/imgproxy/v3/auximageprovider"
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imath"
@@ -63,13 +64,10 @@ func prepareWatermark(wm *vips.Image, wmData imagedata.ImageData, opts *options.
 		return err
 	}
 
-	if opts.ShouldReplicate() || framesCount > 1 {
-		// We need to copy image if we're going to replicate.
-		// Replication requires image to be read several times, and this requires
-		// random access to pixels
-		if err := wm.CopyMemory(); err != nil {
-			return err
-		}
+	// We need to copy the image to ensure that it is in memory since we will
+	// close it after watermark processing is done.
+	if err := wm.CopyMemory(); err != nil {
+		return err
 	}
 
 	if opts.ShouldReplicate() {
@@ -82,7 +80,20 @@ func prepareWatermark(wm *vips.Image, wmData imagedata.ImageData, opts *options.
 	return wm.StripAll()
 }
 
-func applyWatermark(img *vips.Image, wmData imagedata.ImageData, opts *options.WatermarkOptions, offsetScale float64, framesCount int) error {
+func applyWatermark(img *vips.Image, watermark auximageprovider.Provider, opts *options.WatermarkOptions, offsetScale float64, framesCount int) error {
+	if watermark == nil {
+		return nil
+	}
+
+	wmData, _, err := watermark.Get(context.Background(), nil)
+	if err != nil {
+		return err
+	}
+	if wmData == nil {
+		return nil
+	}
+	defer wmData.Close()
+
 	wm := new(vips.Image)
 	defer wm.Clear()
 
@@ -168,13 +179,5 @@ func watermark(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOpt
 		return nil
 	}
 
-	wm, _, err := pctx.watermarkProvider.Get(pctx.ctx, po)
-	if err != nil {
-		return err
-	}
-	if wm == nil {
-		return nil
-	}
-
-	return applyWatermark(img, wm, &po.Watermark, pctx.dprScale, 1)
+	return applyWatermark(img, pctx.watermarkProvider, &po.Watermark, pctx.dprScale, 1)
 }

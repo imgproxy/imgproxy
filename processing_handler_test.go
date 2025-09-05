@@ -21,12 +21,14 @@ import (
 
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/config/configurators"
+	"github.com/imgproxy/imgproxy/v3/fetcher"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/server"
 	"github.com/imgproxy/imgproxy/v3/svg"
 	"github.com/imgproxy/imgproxy/v3/testutil"
+	"github.com/imgproxy/imgproxy/v3/transport"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
@@ -63,10 +65,13 @@ func (s *ProcessingHandlerTestSuite) TeardownSuite() {
 }
 
 func (s *ProcessingHandlerTestSuite) SetupTest() {
-	// We don't need config.LocalFileSystemRoot anymore as it is used
-	// only during initialization
+	wd, err := os.Getwd()
+	s.Require().NoError(err)
+
 	config.Reset()
 	config.AllowLoopbackSourceAddresses = true
+	config.LocalFileSystemRoot = filepath.Join(wd, "/testdata")
+	config.ClientKeepAliveTimeout = 0
 }
 
 func (s *ProcessingHandlerTestSuite) send(path string, header ...http.Header) *httptest.ResponseRecorder {
@@ -99,7 +104,26 @@ func (s *ProcessingHandlerTestSuite) readTestImageData(name string) imagedata.Im
 	data, err := os.ReadFile(filepath.Join(wd, "testdata", name))
 	s.Require().NoError(err)
 
-	imgdata, err := imagedata.NewFromBytes(data)
+	// NOTE: Temporary workaround. We create imagedata.Factory here
+	// because currently configuration is changed via env vars
+	// or config. We need to pick up those config changes.
+	// This will be addressed in the next PR
+	trc, err := transport.LoadFromEnv(transport.NewDefaultConfig())
+	s.Require().NoError(err)
+
+	tr, err := transport.New(trc)
+	s.Require().NoError(err)
+
+	fc, err := fetcher.LoadFromEnv(fetcher.NewDefaultConfig())
+	s.Require().NoError(err)
+
+	f, err := fetcher.New(tr, fc)
+	s.Require().NoError(err)
+
+	idf := imagedata.NewFactory(f)
+	// end of workaround
+
+	imgdata, err := idf.NewFromBytes(data)
 	s.Require().NoError(err)
 
 	return imgdata

@@ -16,6 +16,9 @@ type pipelineContext struct {
 
 	imgtype imagetype.Type
 
+	// The watermark image provider, if any watermarking is to be done.
+	watermarkProvider auximageprovider.Provider
+
 	trimmed bool
 
 	srcWidth  int
@@ -63,9 +66,6 @@ type pipelineContext struct {
 	// Can be 0 if any of the dimensions is not specified in the processing options
 	// or if the image already has the requested aspect ratio.
 	extendAspectRatioHeight int
-
-	// The watermark image provider, if any watermarking is to be done.
-	watermarkProvider auximageprovider.Provider
 }
 
 type pipelineStep func(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata imagedata.ImageData) error

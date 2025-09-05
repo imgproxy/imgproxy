@@ -10,6 +10,10 @@ import (
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 )
 
+var (
+	Watermark ImageData
+)
+
 // ImageData represents the data of an image that can be read from a source.
 // Please note that this interface can be backed by any reader, including lazy AsyncBuffer.
 // There is no other way to guarantee that the data is read without errors except reading it till EOF.
@@ -118,13 +122,5 @@ func (d *imageDataAsyncBuffer) Error() error {
 	if err := d.b.Error(); err != nil {
 		return wrapDownloadError(err, d.desc)
 	}
-	return nil
-}
-
-func Init() error {
-	if err := initDownloading(); err != nil {
-		return err
-	}
-
 	return nil
 }

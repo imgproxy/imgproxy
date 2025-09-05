@@ -85,6 +85,7 @@ func ProcessImage(
 	imgdata imagedata.ImageData,
 	po *options.ProcessingOptions,
 	watermarkProvider auximageprovider.Provider,
+	idf *imagedata.Factory,
 ) (*Result, error) {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
@@ -480,24 +481,17 @@ func transformAnimated(
 	// Apply watermark to all frames at once if it was requested.
 	// This is much more efficient than applying watermark to individual frames.
 	if watermarkEnabled && watermark != nil {
-		wmi, _, err := watermark.Get(ctx, po)
-		if err != nil {
-			return err
+		// Get DPR scale to apply watermark correctly on HiDPI images.
+		// `imgproxy-dpr-scale` is set by the pipeline.
+		dprScale, derr := img.GetDoubleDefault("imgproxy-dpr-scale", 1.0)
+		if derr != nil {
+			dprScale = 1.0
 		}
 
-		if wmi != nil {
-			// Get DPR scale to apply watermark correctly on HiDPI images.
-			// `imgproxy-dpr-scale` is set by the pipeline.
-			dprScale, derr := img.GetDoubleDefault("imgproxy-dpr-scale", 1.0)
-			if derr != nil {
-				dprScale = 1.0
-			}
-
-			if err = applyWatermark(
-				img, wmi, &po.Watermark, dprScale, framesCount,
-			); err != nil {
-				return err
-			}
+		if err = applyWatermark(
+			img, watermark, &po.Watermark, dprScale, framesCount,
+		); err != nil {
+			return err
 		}
 	}
 
