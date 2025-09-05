@@ -57,16 +57,16 @@ func (s *HandlerTestSuite) SetupTest() {
 
 	fc := fetcher.NewDefaultConfig()
 
-	fetcher, err := fetcher.New(tr, fc)
+	fetcher, err := fetcher.New(tr, &fc)
 	s.Require().NoError(err)
 
 	cfg := NewDefaultConfig()
 
 	hwc := headerwriter.NewDefaultConfig()
-	hw, err := headerwriter.New(hwc)
+	hw, err := headerwriter.New(&hwc)
 	s.Require().NoError(err)
 
-	h, err := New(cfg, hw, fetcher)
+	h, err := New(&cfg, hw, fetcher)
 	s.Require().NoError(err)
 	s.handler = h
 }
@@ -358,7 +358,7 @@ func (s *HandlerTestSuite) TestHandlerCacheControl() {
 
 			fc := fetcher.NewDefaultConfig()
 
-			fetcher, err := fetcher.New(tr, fc)
+			fetcher, err := fetcher.New(tr, &fc)
 			s.Require().NoError(err)
 
 			cfg := NewDefaultConfig()
@@ -366,10 +366,10 @@ func (s *HandlerTestSuite) TestHandlerCacheControl() {
 			hwc.CacheControlPassthrough = tc.cacheControlPassthrough
 			hwc.DefaultTTL = 4242
 
-			hw, err := headerwriter.New(hwc)
+			hw, err := headerwriter.New(&hwc)
 			s.Require().NoError(err)
 
-			handler, err := New(cfg, hw, fetcher)
+			handler, err := New(&cfg, hw, fetcher)
 			s.Require().NoError(err)
 
 			req := httptest.NewRequest("GET", "/", nil)
@@ -454,17 +454,17 @@ func (s *HandlerTestSuite) TestHandlerCookiePassthrough() {
 	s.Require().NoError(err)
 
 	fc := fetcher.NewDefaultConfig()
-	fetcher, err := fetcher.New(tr, fc)
+	fetcher, err := fetcher.New(tr, &fc)
 	s.Require().NoError(err)
 
 	cfg := NewDefaultConfig()
 	cfg.CookiePassthrough = true
 
 	hwc := headerwriter.NewDefaultConfig()
-	hw, err := headerwriter.New(hwc)
+	hw, err := headerwriter.New(&hwc)
 	s.Require().NoError(err)
 
-	handler, err := New(cfg, hw, fetcher)
+	handler, err := New(&cfg, hw, fetcher)
 	s.Require().NoError(err)
 
 	data := s.readTestFile("test1.png")
@@ -514,7 +514,7 @@ func (s *HandlerTestSuite) TestHandlerCanonicalHeader() {
 		s.Require().NoError(err)
 
 		fc := fetcher.NewDefaultConfig()
-		fetcher, err := fetcher.New(tr, fc)
+		fetcher, err := fetcher.New(tr, &fc)
 		s.Require().NoError(err)
 
 		cfg := NewDefaultConfig()
@@ -522,10 +522,10 @@ func (s *HandlerTestSuite) TestHandlerCanonicalHeader() {
 
 		hwc.SetCanonicalHeader = sc
 
-		hw, err := headerwriter.New(hwc)
+		hw, err := headerwriter.New(&hwc)
 		s.Require().NoError(err)
 
-		handler, err := New(cfg, hw, fetcher)
+		handler, err := New(&cfg, hw, fetcher)
 		s.Require().NoError(err)
 
 		req := httptest.NewRequest("GET", "/", nil)

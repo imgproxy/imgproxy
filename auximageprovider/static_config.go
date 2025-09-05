@@ -1,6 +1,9 @@
 package auximageprovider
 
-import "github.com/imgproxy/imgproxy/v3/config"
+import (
+	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/ensure"
+)
 
 // StaticConfig holds the configuration for the auxiliary image provider
 type StaticConfig struct {
@@ -10,8 +13,8 @@ type StaticConfig struct {
 }
 
 // NewDefaultStaticConfig creates a new default configuration for the auxiliary image provider
-func NewDefaultStaticConfig() *StaticConfig {
-	return &StaticConfig{
+func NewDefaultStaticConfig() StaticConfig {
+	return StaticConfig{
 		Base64Data: "",
 		Path:       "",
 		URL:        "",
@@ -20,9 +23,7 @@ func NewDefaultStaticConfig() *StaticConfig {
 
 // LoadWatermarkStaticConfigFromEnv loads the watermark configuration from the environment
 func LoadWatermarkStaticConfigFromEnv(c *StaticConfig) (*StaticConfig, error) {
-	if c == nil {
-		c = NewDefaultStaticConfig()
-	}
+	c = ensure.Ensure(c, NewDefaultStaticConfig)
 
 	c.Base64Data = config.WatermarkData
 	c.Path = config.WatermarkPath
@@ -33,9 +34,7 @@ func LoadWatermarkStaticConfigFromEnv(c *StaticConfig) (*StaticConfig, error) {
 
 // LoadFallbackStaticConfigFromEnv loads the fallback configuration from the environment
 func LoadFallbackStaticConfigFromEnv(c *StaticConfig) (*StaticConfig, error) {
-	if c == nil {
-		c = NewDefaultStaticConfig()
-	}
+	c = ensure.Ensure(c, NewDefaultStaticConfig)
 
 	c.Base64Data = config.FallbackImageData
 	c.Path = config.FallbackImagePath

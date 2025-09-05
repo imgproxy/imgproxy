@@ -4,6 +4,7 @@ package transport
 
 import (
 	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/ensure"
 	"github.com/imgproxy/imgproxy/v3/transport/azure"
 	"github.com/imgproxy/imgproxy/v3/transport/fs"
 	"github.com/imgproxy/imgproxy/v3/transport/gcs"
@@ -14,26 +15,26 @@ import (
 
 // Config represents configuration of the transport package
 type Config struct {
-	HTTP *generichttp.Config
+	HTTP generichttp.Config
 
-	Local *fs.Config
+	Local fs.Config
 
 	ABSEnabled bool
-	ABS        *azure.Config
+	ABS        azure.Config
 
 	GCSEnabled bool
-	GCS        *gcs.Config
+	GCS        gcs.Config
 
 	S3Enabled bool
-	S3        *s3.Config
+	S3        s3.Config
 
 	SwiftEnabled bool
-	Swift        *swift.Config
+	Swift        swift.Config
 }
 
 // NewDefaultConfig returns a new default transport configuration
-func NewDefaultConfig() *Config {
-	return &Config{
+func NewDefaultConfig() Config {
+	return Config{
 		HTTP:         generichttp.NewDefaultConfig(),
 		Local:        fs.NewDefaultConfig(),
 		ABSEnabled:   false,
@@ -49,33 +50,31 @@ func NewDefaultConfig() *Config {
 
 // LoadConfigFromEnv loads transport configuration from environment variables
 func LoadConfigFromEnv(c *Config) (*Config, error) {
-	if c == nil {
-		c = NewDefaultConfig()
-	}
+	c = ensure.Ensure(c, NewDefaultConfig)
 
 	var err error
 
-	if c.HTTP, err = generichttp.LoadConfigFromEnv(c.HTTP); err != nil {
+	if _, err = generichttp.LoadConfigFromEnv(&c.HTTP); err != nil {
 		return nil, err
 	}
 
-	if c.Local, err = fs.LoadConfigFromEnv(c.Local); err != nil {
+	if _, err = fs.LoadConfigFromEnv(&c.Local); err != nil {
 		return nil, err
 	}
 
-	if c.ABS, err = azure.LoadConfigFromEnv(c.ABS); err != nil {
+	if _, err = azure.LoadConfigFromEnv(&c.ABS); err != nil {
 		return nil, err
 	}
 
-	if c.GCS, err = gcs.LoadConfigFromEnv(c.GCS); err != nil {
+	if _, err = gcs.LoadConfigFromEnv(&c.GCS); err != nil {
 		return nil, err
 	}
 
-	if c.S3, err = s3.LoadConfigFromEnv(c.S3); err != nil {
+	if _, err = s3.LoadConfigFromEnv(&c.S3); err != nil {
 		return nil, err
 	}
 
-	if c.Swift, err = swift.LoadConfigFromEnv(c.Swift); err != nil {
+	if _, err = swift.LoadConfigFromEnv(&c.Swift); err != nil {
 		return nil, err
 	}
 

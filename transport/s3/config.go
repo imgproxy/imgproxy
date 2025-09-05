@@ -1,6 +1,9 @@
 package s3
 
-import "github.com/imgproxy/imgproxy/v3/config"
+import (
+	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/ensure"
+)
 
 // Config holds the configuration for S3 transport
 type Config struct {
@@ -13,8 +16,8 @@ type Config struct {
 }
 
 // NewDefaultConfig returns a new default configuration for S3 transport
-func NewDefaultConfig() *Config {
-	return &Config{
+func NewDefaultConfig() Config {
+	return Config{
 		Region:                  "",
 		Endpoint:                "",
 		EndpointUsePathStyle:    true,
@@ -26,9 +29,7 @@ func NewDefaultConfig() *Config {
 
 // LoadConfigFromEnv loads configuration from the global config package
 func LoadConfigFromEnv(c *Config) (*Config, error) {
-	if c == nil {
-		c = NewDefaultConfig()
-	}
+	c = ensure.Ensure(c, NewDefaultConfig)
 
 	c.Region = config.S3Region
 	c.Endpoint = config.S3Endpoint

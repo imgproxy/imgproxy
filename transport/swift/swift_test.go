@@ -36,16 +36,16 @@ func (s *SwiftTestSuite) SetupSuite() {
 	config.APIKey = swifttest.TEST_ACCOUNT
 	config.AuthVersion = 1
 
-	s.setupTestFile(config)
+	s.setupTestFile(&config)
 
 	tc := generichttp.NewDefaultConfig()
 	tc.IgnoreSslVerification = true
 
-	trans, gerr := generichttp.New(false, tc)
+	trans, gerr := generichttp.New(false, &tc)
 	s.Require().NoError(gerr)
 
 	var err error
-	s.transport, err = New(config, trans)
+	s.transport, err = New(&config, trans)
 	s.Require().NoError(err, "failed to initialize swift transport")
 }
 

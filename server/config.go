@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/ensure"
 )
 
 const (
@@ -32,8 +33,8 @@ type Config struct {
 }
 
 // NewDefaultConfig returns default config values
-func NewDefaultConfig() *Config {
-	return &Config{
+func NewDefaultConfig() Config {
+	return Config{
 		Network:               "tcp",
 		Bind:                  ":8080",
 		PathPrefix:            "",
@@ -52,9 +53,7 @@ func NewDefaultConfig() *Config {
 
 // LoadConfigFromEnv overrides current values with environment variables
 func LoadConfigFromEnv(c *Config) (*Config, error) {
-	if c == nil {
-		c = NewDefaultConfig()
-	}
+	c = ensure.Ensure(c, NewDefaultConfig)
 
 	c.Network = config.Network
 	c.Bind = config.Bind

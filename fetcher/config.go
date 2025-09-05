@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/ensure"
 	"github.com/imgproxy/imgproxy/v3/version"
 )
 
@@ -19,8 +20,8 @@ type Config struct {
 }
 
 // NewDefaultConfig returns a new Config instance with default values.
-func NewDefaultConfig() *Config {
-	return &Config{
+func NewDefaultConfig() Config {
+	return Config{
 		UserAgent:       "imgproxy/" + version.Version,
 		DownloadTimeout: 5 * time.Second,
 		MaxRedirects:    10,
@@ -29,9 +30,7 @@ func NewDefaultConfig() *Config {
 
 // LoadConfigFromEnv loads config variables from env
 func LoadConfigFromEnv(c *Config) (*Config, error) {
-	if c == nil {
-		c = NewDefaultConfig()
-	}
+	c = ensure.Ensure(c, NewDefaultConfig)
 
 	c.UserAgent = config.UserAgent
 	c.DownloadTimeout = time.Duration(config.DownloadTimeout) * time.Second

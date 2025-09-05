@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/ensure"
 )
 
 // Config represents handler config
@@ -20,8 +21,8 @@ type Config struct {
 }
 
 // NewDefaultConfig creates a new configuration with defaults
-func NewDefaultConfig() *Config {
-	return &Config{
+func NewDefaultConfig() Config {
+	return Config{
 		PathPrefix:              "",
 		CookiePassthrough:       false,
 		ReportDownloadingErrors: true,
@@ -35,9 +36,7 @@ func NewDefaultConfig() *Config {
 
 // LoadConfigFromEnv loads config from environment variables
 func LoadConfigFromEnv(c *Config) (*Config, error) {
-	if c == nil {
-		c = NewDefaultConfig()
-	}
+	c = ensure.Ensure(c, NewDefaultConfig)
 
 	c.PathPrefix = config.PathPrefix
 	c.CookiePassthrough = config.CookiePassthrough

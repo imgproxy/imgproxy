@@ -38,11 +38,11 @@ func (s *ProcessingTestSuite) SetupSuite() {
 	logrus.SetOutput(io.Discard)
 
 	trc := transport.NewDefaultConfig()
-	tr, err := transport.New(trc)
+	tr, err := transport.New(&trc)
 	s.Require().NoError(err)
 
 	fc := fetcher.NewDefaultConfig()
-	f, err := fetcher.New(tr, fc)
+	f, err := fetcher.New(tr, &fc)
 	s.Require().NoError(err)
 
 	s.idf = imagedata.NewFactory(f)

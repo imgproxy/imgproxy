@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/ensure"
 )
 
 // Config is the package-local configuration
@@ -17,8 +18,8 @@ type Config struct {
 }
 
 // NewDefaultConfig returns a new Config instance with default values.
-func NewDefaultConfig() *Config {
-	return &Config{
+func NewDefaultConfig() Config {
+	return Config{
 		SetCanonicalHeader:      false,
 		DefaultTTL:              31536000,
 		FallbackImageTTL:        0,
@@ -30,9 +31,7 @@ func NewDefaultConfig() *Config {
 
 // LoadConfigFromEnv overrides configuration variables from environment
 func LoadConfigFromEnv(c *Config) (*Config, error) {
-	if c == nil {
-		c = NewDefaultConfig()
-	}
+	c = ensure.Ensure(c, NewDefaultConfig)
 
 	c.SetCanonicalHeader = config.SetCanonicalHeader
 	c.DefaultTTL = config.TTL

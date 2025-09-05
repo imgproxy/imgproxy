@@ -22,7 +22,7 @@ type ServerTestSuite struct {
 func (s *ServerTestSuite) SetupTest() {
 	c := NewDefaultConfig()
 
-	s.config = c
+	s.config = &c
 	s.config.Bind = "127.0.0.1:0" // Use port 0 for auto-assignment
 	r, err := NewRouter(s.config)
 	s.Require().NoError(err)
@@ -46,7 +46,7 @@ func (s *ServerTestSuite) TestStartServerWithInvalidBind() {
 	invalidConfig := NewDefaultConfig()
 	invalidConfig.Bind = "-1.-1.-1.-1" // Invalid address
 
-	r, err := NewRouter(invalidConfig)
+	r, err := NewRouter(&invalidConfig)
 	s.Require().NoError(err)
 
 	server, err := Start(cancelWrapper, r)
@@ -113,7 +113,7 @@ func (s *ServerTestSuite) TestWithCORS() {
 			config := NewDefaultConfig()
 			config.CORSAllowOrigin = tt.corsAllowOrigin
 
-			router, err := NewRouter(config)
+			router, err := NewRouter(&config)
 			s.Require().NoError(err)
 
 			wrappedHandler := router.WithCORS(s.mockHandler)
@@ -159,7 +159,7 @@ func (s *ServerTestSuite) TestWithSecret() {
 			config := NewDefaultConfig()
 			config.Secret = tt.secret
 
-			router, err := NewRouter(config)
+			router, err := NewRouter(&config)
 			s.Require().NoError(err)
 
 			wrappedHandler := router.WithSecret(s.mockHandler)

@@ -2,6 +2,7 @@ package stream
 
 import (
 	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/ensure"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 )
 
@@ -18,8 +19,8 @@ type Config struct {
 }
 
 // NewDefaultConfig returns a new Config instance with default values.
-func NewDefaultConfig() *Config {
-	return &Config{
+func NewDefaultConfig() Config {
+	return Config{
 		CookiePassthrough: false,
 		PassthroughRequestHeaders: []string{
 			httpheaders.IfNoneMatch,
@@ -40,9 +41,7 @@ func NewDefaultConfig() *Config {
 
 // LoadConfigFromEnv loads config variables from environment
 func LoadConfigFromEnv(c *Config) (*Config, error) {
-	if c == nil {
-		c = NewDefaultConfig()
-	}
+	c = ensure.Ensure(c, NewDefaultConfig)
 
 	c.CookiePassthrough = config.CookiePassthrough
 

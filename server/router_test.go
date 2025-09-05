@@ -19,7 +19,7 @@ func (s *RouterTestSuite) SetupTest() {
 	c := NewDefaultConfig()
 
 	c.PathPrefix = "/api"
-	r, err := NewRouter(c)
+	r, err := NewRouter(&c)
 	s.Require().NoError(err)
 
 	s.router = r

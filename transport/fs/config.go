@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/ensure"
 )
 
 // Config holds the configuration for local file system transport
@@ -14,17 +15,15 @@ type Config struct {
 }
 
 // NewDefaultConfig returns a new default configuration for local file system transport
-func NewDefaultConfig() *Config {
-	return &Config{
+func NewDefaultConfig() Config {
+	return Config{
 		Root: "",
 	}
 }
 
 // LoadConfigFromEnv loads configuration from the global config package
 func LoadConfigFromEnv(c *Config) (*Config, error) {
-	if c == nil {
-		c = NewDefaultConfig()
-	}
+	c = ensure.Ensure(c, NewDefaultConfig)
 
 	c.Root = config.LocalFileSystemRoot
 

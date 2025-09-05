@@ -1,6 +1,9 @@
 package gcs
 
-import "github.com/imgproxy/imgproxy/v3/config"
+import (
+	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/ensure"
+)
 
 // Config holds the configuration for Google Cloud Storage transport
 type Config struct {
@@ -9,8 +12,8 @@ type Config struct {
 }
 
 // NewDefaultConfig returns a new default configuration for Google Cloud Storage transport
-func NewDefaultConfig() *Config {
-	return &Config{
+func NewDefaultConfig() Config {
+	return Config{
 		Key:      "",
 		Endpoint: "",
 	}
@@ -18,9 +21,7 @@ func NewDefaultConfig() *Config {
 
 // LoadConfigFromEnv loads configuration from the global config package
 func LoadConfigFromEnv(c *Config) (*Config, error) {
-	if c == nil {
-		c = NewDefaultConfig()
-	}
+	c = ensure.Ensure(c, NewDefaultConfig)
 
 	c.Key = config.GCSKey
 	c.Endpoint = config.GCSEndpoint
