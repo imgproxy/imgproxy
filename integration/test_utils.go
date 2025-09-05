@@ -2,7 +2,7 @@
 // +build integration
 
 // Integration test helpers for imgproxy.
-// We use regular `go build` instead of Docker to make sure
+// We use regular `make build` instead of Docker to make sure
 // tests run in the same environment as other tests,
 // including in CI, where everything runs in a custom Docker image
 // against the different libvips versions.
@@ -33,7 +33,7 @@ const (
 )
 
 var (
-	buildCmd = []string{"build", "-v", "-ldflags=-s -w", "-o", binPath} // imgproxy build command
+	buildCmd = []string{"build", "--", "-v", "-ldflags=-s -w", "-o", binPath} // imgproxy build command
 )
 
 // waitForPort tries to connect to host:port until successful or timeout
@@ -61,7 +61,7 @@ func waitForPort(host string, port int, timeout time.Duration) error {
 
 func startImgproxy(t *testing.T, ctx context.Context, testImagesPath string) string {
 	// Build the imgproxy binary
-	buildCmd := exec.Command("go", buildCmd...)
+	buildCmd := exec.Command("make", buildCmd...)
 	buildCmd.Dir = buildContext
 	buildCmd.Env = os.Environ()
 	buildOut, err := buildCmd.CombinedOutput()

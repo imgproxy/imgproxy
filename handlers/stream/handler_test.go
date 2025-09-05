@@ -57,7 +57,7 @@ func (s *HandlerTestSuite) SetupTest() {
 
 	fc := fetcher.NewDefaultConfig()
 
-	fetcher, err := fetcher.NewFetcher(tr, fc)
+	fetcher, err := fetcher.New(tr, fc)
 	s.Require().NoError(err)
 
 	cfg := NewDefaultConfig()
@@ -358,7 +358,7 @@ func (s *HandlerTestSuite) TestHandlerCacheControl() {
 
 			fc := fetcher.NewDefaultConfig()
 
-			fetcher, err := fetcher.NewFetcher(tr, fc)
+			fetcher, err := fetcher.New(tr, fc)
 			s.Require().NoError(err)
 
 			cfg := NewDefaultConfig()
@@ -454,7 +454,7 @@ func (s *HandlerTestSuite) TestHandlerCookiePassthrough() {
 	s.Require().NoError(err)
 
 	fc := fetcher.NewDefaultConfig()
-	fetcher, err := fetcher.NewFetcher(tr, fc)
+	fetcher, err := fetcher.New(tr, fc)
 	s.Require().NoError(err)
 
 	cfg := NewDefaultConfig()
@@ -514,7 +514,7 @@ func (s *HandlerTestSuite) TestHandlerCanonicalHeader() {
 		s.Require().NoError(err)
 
 		fc := fetcher.NewDefaultConfig()
-		fetcher, err := fetcher.NewFetcher(tr, fc)
+		fetcher, err := fetcher.New(tr, fc)
 		s.Require().NoError(err)
 
 		cfg := NewDefaultConfig()
