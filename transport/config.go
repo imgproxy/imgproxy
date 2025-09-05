@@ -47,31 +47,31 @@ func NewDefaultConfig() *Config {
 	}
 }
 
-// LoadFromEnv loads transport configuration from environment variables
-func LoadFromEnv(c *Config) (*Config, error) {
+// LoadConfigFromEnv loads transport configuration from environment variables
+func LoadConfigFromEnv(c *Config) (*Config, error) {
 	var err error
 
-	if c.HTTP, err = generichttp.LoadFromEnv(c.HTTP); err != nil {
+	if c.HTTP, err = generichttp.LoadConfigFromEnv(c.HTTP); err != nil {
 		return nil, err
 	}
 
-	if c.Local, err = fs.LoadFromEnv(c.Local); err != nil {
+	if c.Local, err = fs.LoadConfigFromEnv(c.Local); err != nil {
 		return nil, err
 	}
 
-	if c.ABS, err = azure.LoadFromEnv(c.ABS); err != nil {
+	if c.ABS, err = azure.LoadConfigFromEnv(c.ABS); err != nil {
 		return nil, err
 	}
 
-	if c.GCS, err = gcs.LoadFromEnv(c.GCS); err != nil {
+	if c.GCS, err = gcs.LoadConfigFromEnv(c.GCS); err != nil {
 		return nil, err
 	}
 
-	if c.S3, err = s3.LoadFromEnv(c.S3); err != nil {
+	if c.S3, err = s3.LoadConfigFromEnv(c.S3); err != nil {
 		return nil, err
 	}
 
-	if c.Swift, err = swift.LoadFromEnv(c.Swift); err != nil {
+	if c.Swift, err = swift.LoadConfigFromEnv(c.Swift); err != nil {
 		return nil, err
 	}
 

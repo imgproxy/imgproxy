@@ -21,8 +21,8 @@ func NewDefaultConfig() *Config {
 	}
 }
 
-// LoadFromEnv loads config from environment variables
-func LoadFromEnv(c *Config) (*Config, error) {
+// LoadConfigFromEnv loads config from environment variables
+func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c.RequestsQueueSize = config.RequestsQueueSize
 	c.Workers = config.Workers
 

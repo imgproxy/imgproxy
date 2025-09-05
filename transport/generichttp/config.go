@@ -21,8 +21,8 @@ func NewDefaultConfig() *Config {
 	}
 }
 
-// LoadFromEnv loads configuration from the global config package
-func LoadFromEnv(c *Config) (*Config, error) {
+// LoadConfigFromEnv loads configuration from the global config package
+func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c.ClientKeepAliveTimeout = time.Duration(config.ClientKeepAliveTimeout) * time.Second
 	c.IgnoreSslVerification = config.IgnoreSslVerification
 

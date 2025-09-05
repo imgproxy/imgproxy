@@ -27,8 +27,8 @@ func NewDefaultConfig() *Config {
 	}
 }
 
-// LoadFromEnv loads config variables from env
-func LoadFromEnv(c *Config) (*Config, error) {
+// LoadConfigFromEnv loads config variables from env
+func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c.UserAgent = config.UserAgent
 	c.DownloadTimeout = time.Duration(config.DownloadTimeout) * time.Second
 	c.MaxRedirects = config.MaxRedirects

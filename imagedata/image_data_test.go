@@ -70,13 +70,13 @@ func (s *ImageDataTestSuite) SetupSuite() {
 		rw.Write(data)
 	}))
 
-	ctr, err := transport.LoadFromEnv(transport.NewDefaultConfig())
+	ctr, err := transport.LoadConfigFromEnv(transport.NewDefaultConfig())
 	s.Require().NoError(err)
 
 	ts, err := transport.New(ctr)
 	s.Require().NoError(err)
 
-	c, err := fetcher.LoadFromEnv(fetcher.NewDefaultConfig())
+	c, err := fetcher.LoadConfigFromEnv(fetcher.NewDefaultConfig())
 	s.Require().NoError(err)
 
 	fetcher, err := fetcher.New(ts, c)

@@ -32,8 +32,8 @@ func NewDefaultConfig() *Config {
 	}
 }
 
-// LoadFromEnv loads configuration from the global config package
-func LoadFromEnv(c *Config) (*Config, error) {
+// LoadConfigFromEnv loads configuration from the global config package
+func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c.Username = config.SwiftUsername
 	c.APIKey = config.SwiftAPIKey
 	c.AuthURL = config.SwiftAuthURL

@@ -24,8 +24,8 @@ func NewDefaultConfig() *Config {
 	}
 }
 
-// LoadFromEnv loads configuration from the global config package
-func LoadFromEnv(c *Config) (*Config, error) {
+// LoadConfigFromEnv loads configuration from the global config package
+func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c.Region = config.S3Region
 	c.Endpoint = config.S3Endpoint
 	c.EndpointUsePathStyle = config.S3EndpointUsePathStyle

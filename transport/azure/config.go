@@ -22,8 +22,8 @@ func NewDefaultConfig() *Config {
 	}
 }
 
-// LoadFromEnv loads configuration from the global config package
-func LoadFromEnv(c *Config) (*Config, error) {
+// LoadConfigFromEnv loads configuration from the global config package
+func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c.Name = config.ABSName
 	c.Endpoint = config.ABSEndpoint
 	c.Key = config.ABSKey

@@ -50,8 +50,8 @@ func NewDefaultConfig() *Config {
 	}
 }
 
-// LoadFromEnv overrides current values with environment variables
-func LoadFromEnv(c *Config) (*Config, error) {
+// LoadConfigFromEnv overrides current values with environment variables
+func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c.Network = config.Network
 	c.Bind = config.Bind
 	c.PathPrefix = config.PathPrefix

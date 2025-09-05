@@ -46,7 +46,7 @@ const (
 
 func callHandleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) error {
 	// NOTE: This is temporary, will be moved level up at once
-	hwc, err := headerwriter.LoadFromEnv(headerwriter.NewDefaultConfig())
+	hwc, err := headerwriter.LoadConfigFromEnv(headerwriter.NewDefaultConfig())
 	if err != nil {
 		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
 	}
@@ -56,12 +56,12 @@ func callHandleProcessing(reqID string, rw http.ResponseWriter, r *http.Request)
 		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
 	}
 
-	sc, err := stream.LoadFromEnv(stream.NewDefaultConfig())
+	sc, err := stream.LoadConfigFromEnv(stream.NewDefaultConfig())
 	if err != nil {
 		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
 	}
 
-	tcfg, err := transport.LoadFromEnv(transport.NewDefaultConfig())
+	tcfg, err := transport.LoadConfigFromEnv(transport.NewDefaultConfig())
 	if err != nil {
 		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
 	}
@@ -71,7 +71,7 @@ func callHandleProcessing(reqID string, rw http.ResponseWriter, r *http.Request)
 		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
 	}
 
-	fc, err := fetcher.LoadFromEnv(fetcher.NewDefaultConfig())
+	fc, err := fetcher.LoadConfigFromEnv(fetcher.NewDefaultConfig())
 	if err != nil {
 		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
 	}
@@ -88,12 +88,12 @@ func callHandleProcessing(reqID string, rw http.ResponseWriter, r *http.Request)
 		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
 	}
 
-	phc, err := processingHandler.LoadFromEnv(processingHandler.NewDefaultConfig())
+	phc, err := processingHandler.LoadConfigFromEnv(processingHandler.NewDefaultConfig())
 	if err != nil {
 		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
 	}
 
-	semc, err := semaphores.LoadFromEnv(semaphores.NewDefaultConfig())
+	semc, err := semaphores.LoadConfigFromEnv(semaphores.NewDefaultConfig())
 	if err != nil {
 		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
 	}
@@ -240,7 +240,7 @@ func run(ctx context.Context) error {
 		return err
 	}
 
-	cfg, err := server.LoadFromEnv(server.NewDefaultConfig())
+	cfg, err := server.LoadConfigFromEnv(server.NewDefaultConfig())
 	if err != nil {
 		return err
 	}

@@ -108,13 +108,13 @@ func (s *ProcessingHandlerTestSuite) readTestImageData(name string) imagedata.Im
 	// because currently configuration is changed via env vars
 	// or config. We need to pick up those config changes.
 	// This will be addressed in the next PR
-	trc, err := transport.LoadFromEnv(transport.NewDefaultConfig())
+	trc, err := transport.LoadConfigFromEnv(transport.NewDefaultConfig())
 	s.Require().NoError(err)
 
 	tr, err := transport.New(trc)
 	s.Require().NoError(err)
 
-	fc, err := fetcher.LoadFromEnv(fetcher.NewDefaultConfig())
+	fc, err := fetcher.LoadConfigFromEnv(fetcher.NewDefaultConfig())
 	s.Require().NoError(err)
 
 	f, err := fetcher.New(tr, fc)

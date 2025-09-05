@@ -28,8 +28,8 @@ func NewDefaultConfig() *Config {
 	}
 }
 
-// LoadFromEnv overrides configuration variables from environment
-func LoadFromEnv(c *Config) (*Config, error) {
+// LoadConfigFromEnv overrides configuration variables from environment
+func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c.SetCanonicalHeader = config.SetCanonicalHeader
 	c.DefaultTTL = config.TTL
 	c.FallbackImageTTL = config.FallbackImageTTL
