@@ -1,6 +1,6 @@
-// imagefetcher is responsible for downloading images using HTTP requests through various protocols
+// fetcher is responsible for downloading images using HTTP requests through various protocols
 // defined in transport package
-package imagefetcher
+package fetcher
 
 import (
 	"context"

@@ -5,13 +5,13 @@ import (
 	"net/http"
 
 	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/fetcher"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
-	"github.com/imgproxy/imgproxy/v3/imagefetcher"
 	"github.com/imgproxy/imgproxy/v3/transport"
 )
 
 var (
-	Fetcher *imagefetcher.Fetcher
+	Fetcher *fetcher.Fetcher
 
 	// For tests. This needs to move to fetcher once we will have a way to isolate
 	// the fetcher in tests.
@@ -45,12 +45,12 @@ func initDownloading() error {
 		return err
 	}
 
-	c, err := imagefetcher.LoadFromEnv(imagefetcher.NewDefaultConfig())
+	c, err := fetcher.LoadFromEnv(fetcher.NewDefaultConfig())
 	if err != nil {
 		return ierrors.Wrap(err, 0, ierrors.WithPrefix("configuration error"))
 	}
 
-	Fetcher, err = imagefetcher.NewFetcher(ts, c)
+	Fetcher, err = fetcher.NewFetcher(ts, c)
 	if err != nil {
 		return ierrors.Wrap(err, 0, ierrors.WithPrefix("can't create image fetcher"))
 	}

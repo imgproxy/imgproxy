@@ -9,7 +9,7 @@ import (
 	"os"
 
 	"github.com/imgproxy/imgproxy/v3/asyncbuffer"
-	"github.com/imgproxy/imgproxy/v3/imagefetcher"
+	"github.com/imgproxy/imgproxy/v3/fetcher"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/security"
 )
@@ -63,7 +63,7 @@ func NewFromBase64(encoded string) (ImageData, error) {
 }
 
 // sendRequest is a common logic between sync and async download.
-func sendRequest(ctx context.Context, url string, opts DownloadOptions) (*imagefetcher.Request, *http.Response, http.Header, error) {
+func sendRequest(ctx context.Context, url string, opts DownloadOptions) (*fetcher.Request, *http.Response, http.Header, error) {
 	h := make(http.Header)
 
 	// NOTE: This will be removed in the future when our test context gets better isolation
