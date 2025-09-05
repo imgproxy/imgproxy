@@ -488,9 +488,7 @@ func transformAnimated(
 			dprScale = 1.0
 		}
 
-		if err = applyWatermark(
-			img, watermark, &po.Watermark, dprScale, framesCount,
-		); err != nil {
+		if err = applyWatermark(ctx, img, watermark, po, dprScale, framesCount); err != nil {
 			return err
 		}
 	}

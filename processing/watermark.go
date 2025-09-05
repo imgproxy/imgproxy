@@ -80,12 +80,19 @@ func prepareWatermark(wm *vips.Image, wmData imagedata.ImageData, opts *options.
 	return wm.StripAll()
 }
 
-func applyWatermark(img *vips.Image, watermark auximageprovider.Provider, opts *options.WatermarkOptions, offsetScale float64, framesCount int) error {
+func applyWatermark(
+	ctx context.Context,
+	img *vips.Image,
+	watermark auximageprovider.Provider,
+	po *options.ProcessingOptions,
+	offsetScale float64,
+	framesCount int,
+) error {
 	if watermark == nil {
 		return nil
 	}
 
-	wmData, _, err := watermark.Get(context.Background(), nil)
+	wmData, _, err := watermark.Get(ctx, po)
 	if err != nil {
 		return err
 	}
@@ -94,6 +101,8 @@ func applyWatermark(img *vips.Image, watermark auximageprovider.Provider, opts *
 	}
 	defer wmData.Close()
 
+	opts := po.Watermark
+
 	wm := new(vips.Image)
 	defer wm.Clear()
 
@@ -101,7 +110,7 @@ func applyWatermark(img *vips.Image, watermark auximageprovider.Provider, opts *
 	height := img.Height()
 	frameHeight := height / framesCount
 
-	if err := prepareWatermark(wm, wmData, opts, width, frameHeight, offsetScale, framesCount); err != nil {
+	if err := prepareWatermark(wm, wmData, &opts, width, frameHeight, offsetScale, framesCount); err != nil {
 		return err
 	}
 
@@ -174,10 +183,15 @@ func applyWatermark(img *vips.Image, watermark auximageprovider.Provider, opts *
 	return nil
 }
 
-func watermark(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata imagedata.ImageData) error {
+func watermark(
+	pctx *pipelineContext,
+	img *vips.Image,
+	po *options.ProcessingOptions,
+	imgdata imagedata.ImageData,
+) error {
 	if !po.Watermark.Enabled || pctx.watermarkProvider == nil {
 		return nil
 	}
 
-	return applyWatermark(img, pctx.watermarkProvider, &po.Watermark, pctx.dprScale, 1)
+	return applyWatermark(pctx.ctx, img, pctx.watermarkProvider, po, pctx.dprScale, 1)
 }
