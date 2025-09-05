@@ -16,8 +16,7 @@ import (
 type Config struct {
 	HTTP *generichttp.Config
 
-	LocalEnabled bool
-	Local        *fs.Config
+	Local *fs.Config
 
 	ABSEnabled bool
 	ABS        *azure.Config
@@ -36,7 +35,6 @@ type Config struct {
 func NewDefaultConfig() *Config {
 	return &Config{
 		HTTP:         generichttp.NewDefaultConfig(),
-		LocalEnabled: false,
 		Local:        fs.NewDefaultConfig(),
 		ABSEnabled:   false,
 		ABS:          azure.NewDefaultConfig(),
@@ -77,7 +75,6 @@ func LoadFromEnv(c *Config) (*Config, error) {
 		return nil, err
 	}
 
-	c.LocalEnabled = config.LocalFileSystemRoot != ""
 	c.ABSEnabled = config.ABSEnabled
 	c.GCSEnabled = config.GCSEnabled
 	c.S3Enabled = config.S3Enabled
