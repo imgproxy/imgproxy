@@ -1,4 +1,4 @@
-package processing
+package handlers
 
 import (
 	"fmt"
@@ -10,15 +10,15 @@ import (
 
 // Monitoring error categories
 const (
-	categoryTimeout       = "timeout"
-	categoryImageDataSize = "image_data_size"
-	categoryPathParsing   = "path_parsing"
-	categorySecurity      = "security"
-	categoryQueue         = "queue"
-	categoryDownload      = "download"
-	categoryProcessing    = "processing"
-	categoryIO            = "IO"
-	categoryConfig        = "config(tmp)" // NOTE: THIS IS TEMPORARY
+	CategoryTimeout       = "timeout"
+	CategoryImageDataSize = "image_data_size"
+	CategoryPathParsing   = "path_parsing"
+	CategorySecurity      = "security"
+	CategoryQueue         = "queue"
+	CategoryDownload      = "download"
+	CategoryProcessing    = "processing"
+	CategoryIO            = "IO"
+	CategoryConfig        = "config(tmp)" // NOTE: THIS IS TEMPORARY
 )
 
 type (
@@ -26,7 +26,7 @@ type (
 	InvalidURLError    string
 )
 
-func newResponseWriteError(cause error) *ierrors.Error {
+func NewResponseWriteError(cause error) *ierrors.Error {
 	return ierrors.Wrap(
 		ResponseWriteError{cause},
 		1,
@@ -42,7 +42,7 @@ func (e ResponseWriteError) Unwrap() error {
 	return e.error
 }
 
-func newInvalidURLErrorf(status int, format string, args ...interface{}) error {
+func NewInvalidURLErrorf(status int, format string, args ...interface{}) error {
 	return ierrors.Wrap(
 		InvalidURLError(fmt.Sprintf(format, args...)),
 		1,
@@ -54,18 +54,18 @@ func newInvalidURLErrorf(status int, format string, args ...interface{}) error {
 
 func (e InvalidURLError) Error() string { return string(e) }
 
-// newCantSaveError creates "resulting image not supported" error
-func newCantSaveError(format imagetype.Type) error {
-	return ierrors.Wrap(newInvalidURLErrorf(
+// NewCantSaveError creates "resulting image not supported" error
+func NewCantSaveError(format imagetype.Type) error {
+	return ierrors.Wrap(NewInvalidURLErrorf(
 		http.StatusUnprocessableEntity,
 		"Resulting image format is not supported: %s", format,
-	), 1, ierrors.WithCategory(categoryPathParsing))
+	), 1, ierrors.WithCategory(CategoryPathParsing))
 }
 
-// newCantLoadError creates "source image not supported" error
-func newCantLoadError(format imagetype.Type) error {
-	return ierrors.Wrap(newInvalidURLErrorf(
+// NewCantLoadError creates "source image not supported" error
+func NewCantLoadError(format imagetype.Type) error {
+	return ierrors.Wrap(NewInvalidURLErrorf(
 		http.StatusUnprocessableEntity,
 		"Source image format is not supported: %s", format,
-	), 1, ierrors.WithCategory(categoryProcessing))
+	), 1, ierrors.WithCategory(CategoryProcessing))
 }

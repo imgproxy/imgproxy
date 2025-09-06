@@ -98,7 +98,7 @@ func (r *Router) WithReportError(h RouteHandler) RouteHandler {
 		// Open the error context
 		ctx := errorreport.StartRequest(req)
 		req = req.WithContext(ctx)
-		errorreport.SetMetadata(req, "Request ID", reqID)
+		errorreport.SetMetadata(ctx, "Request ID", reqID)
 
 		// Call the underlying handler passing the context downwards
 		err := h(reqID, rw, req)

@@ -6,114 +6,48 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/imgproxy/imgproxy/v3/cookies"
 	"github.com/imgproxy/imgproxy/v3/errorreport"
+	"github.com/imgproxy/imgproxy/v3/handlers"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/monitoring"
-	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/processing"
 	"github.com/imgproxy/imgproxy/v3/server"
 	log "github.com/sirupsen/logrus"
 )
 
-// makeImageRequestHeaders creates headers for the image request
-func (r *request) makeImageRequestHeaders() http.Header {
-	h := make(http.Header)
-
-	// If ETag is enabled, we forward If-None-Match header
-	if r.config.ETagEnabled {
-		h.Set(httpheaders.IfNoneMatch, r.imageRequest.Header.Get(httpheaders.IfNoneMatch))
-	}
-
-	// If LastModified is enabled, we forward If-Modified-Since header
-	if r.config.LastModifiedEnabled {
-		h.Set(httpheaders.IfModifiedSince, r.imageRequest.Header.Get(httpheaders.IfModifiedSince))
-	}
-
-	return h
-}
-
-// acquireProcessingSem acquires the processing semaphore
-func (r *request) acquireProcessingSem(ctx context.Context) (context.CancelFunc, error) {
-	defer monitoring.StartQueueSegment(ctx)()
-
-	fn, err := r.semaphores.AcquireProcessing(ctx)
-	if err != nil {
-		// We don't actually need to check timeout here,
-		// but it's an easy way to check if this is an actual timeout
-		// or the request was canceled
-		if terr := server.CheckTimeout(ctx); terr != nil {
-			return nil, ierrors.Wrap(terr, 0, ierrors.WithCategory(categoryTimeout))
-		}
-
-		// We should never reach this line as err could be only ctx.Err()
-		// and we've already checked for it. But beter safe than sorry
-		return nil, ierrors.Wrap(err, 0, ierrors.WithCategory(categoryQueue))
-	}
-
-	return fn, nil
-}
-
-// makeDownloadOptions creates a new default download options
-func (r *request) makeDownloadOptions(ctx context.Context, h http.Header) imagedata.DownloadOptions {
-	downloadFinished := monitoring.StartDownloadingSegment(ctx, r.monitoringMeta.Filter(
-		monitoring.MetaSourceImageURL,
-		monitoring.MetaSourceImageOrigin,
-	))
-
-	return imagedata.DownloadOptions{
-		Header:           h,
-		MaxSrcFileSize:   r.po.SecurityOptions.MaxSrcFileSize,
-		DownloadFinished: downloadFinished,
-	}
-}
-
-// fetchImage downloads the source image asynchronously
-func (r *request) fetchImage(ctx context.Context, do imagedata.DownloadOptions) (imagedata.ImageData, http.Header, error) {
-	var err error
-
-	if r.config.CookiePassthrough {
-		do.CookieJar, err = cookies.JarFromRequest(r.imageRequest)
-		if err != nil {
-			return nil, nil, ierrors.Wrap(err, 0, ierrors.WithCategory(categoryDownload))
-		}
-	}
-
-	return r.idf.DownloadAsync(ctx, r.imageURL, "source image", do)
-}
-
 // handleDownloadError replaces the image data with fallback image if needed
-func (r *request) handleDownloadError(
+func handleDownloadError(
 	ctx context.Context,
+	r *request,
 	originalErr error,
 ) (imagedata.ImageData, int, error) {
-	err := r.wrapDownloadingErr(originalErr)
+	err := r.WrapDownloadingErr(originalErr)
 
 	// If there is no fallback image configured, just return the error
-	data, headers := r.getFallbackImage(ctx, r.po)
+	data, headers := getFallbackImage(ctx, r)
 	if data == nil {
 		return nil, 0, err
 	}
 
 	// Just send error
-	monitoring.SendError(ctx, categoryDownload, err)
+	monitoring.SendError(ctx, handlers.CategoryDownload, err)
 
 	// We didn't return, so we have to report error
 	if err.ShouldReport() {
-		errorreport.Report(err, r.imageRequest)
+		errorreport.Report(err, r.Req)
 	}
 
 	log.
-		WithField("request_id", r.reqID).
-		Warningf("Could not load image %s. Using fallback image. %s", r.imageURL, err.Error())
+		WithField("request_id", r.ID).
+		Warningf("Could not load image %s. Using fallback image. %s", r.ImageURL, err.Error())
 
 	var statusCode int
 
 	// Set status code if needed
-	if r.config.FallbackImageHTTPCode > 0 {
-		statusCode = r.config.FallbackImageHTTPCode
+	if r.Config.FallbackImageHTTPCode > 0 {
+		statusCode = r.Config.FallbackImageHTTPCode
 	} else {
 		statusCode = err.StatusCode()
 	}
@@ -122,27 +56,27 @@ func (r *request) handleDownloadError(
 	headers.Del(httpheaders.Expires)
 	headers.Del(httpheaders.LastModified)
 
-	r.hwr.SetOriginHeaders(headers)
-	r.hwr.SetIsFallbackImage()
+	r.HeaderWriter.SetOriginHeaders(headers)
+	r.HeaderWriter.SetIsFallbackImage()
 
 	return data, statusCode, nil
 }
 
 // getFallbackImage returns fallback image if any
-func (r *request) getFallbackImage(
+func getFallbackImage(
 	ctx context.Context,
-	po *options.ProcessingOptions,
+	r *request,
 ) (imagedata.ImageData, http.Header) {
-	if r.handler.fallbackImage == nil {
+	if r.Handler.fallbackImage == nil {
 		return nil, nil
 	}
 
-	data, h, err := r.handler.fallbackImage.Get(ctx, po)
+	data, h, err := r.Handler.fallbackImage.Get(ctx, r.Options)
 	if err != nil {
 		log.Warning(err.Error())
 
-		if ierr := r.wrapDownloadingErr(err); ierr.ShouldReport() {
-			errorreport.Report(ierr, r.imageRequest)
+		if ierr := r.WrapDownloadingErr(err); ierr.ShouldReport() {
+			errorreport.Report(ierr, r.Req)
 		}
 
 		return nil, nil
@@ -152,127 +86,130 @@ func (r *request) getFallbackImage(
 }
 
 // processImage calls actual image processing
-func (r *request) processImage(ctx context.Context, originData imagedata.ImageData) (*processing.Result, error) {
-	defer monitoring.StartProcessingSegment(ctx, r.monitoringMeta.Filter(monitoring.MetaProcessingOptions))()
-	return processing.ProcessImage(ctx, originData, r.po, r.handler.watermarkImage, r.handler.imageData)
+func processImage(
+	ctx context.Context,
+	r *request,
+	originData imagedata.ImageData,
+) (*processing.Result, error) {
+	defer monitoring.StartProcessingSegment(
+		ctx,
+		r.MonitoringMeta.Filter(monitoring.MetaProcessingOptions),
+	)()
+	return processing.ProcessImage(ctx, originData, r.Options, r.Handler.watermarkImage)
 }
 
 // writeDebugHeaders writes debug headers (X-Origin-*, X-Result-*) to the response
-func (r *request) writeDebugHeaders(result *processing.Result, originData imagedata.ImageData) error {
-	if !r.config.EnableDebugHeaders {
+func writeDebugHeaders(
+	r *request,
+	result *processing.Result,
+	originData imagedata.ImageData,
+) error {
+	if !r.Config.EnableDebugHeaders {
 		return nil
 	}
 
 	if result != nil {
-		r.rw.Header().Set(httpheaders.XOriginWidth, strconv.Itoa(result.OriginWidth))
-		r.rw.Header().Set(httpheaders.XOriginHeight, strconv.Itoa(result.OriginHeight))
-		r.rw.Header().Set(httpheaders.XResultWidth, strconv.Itoa(result.ResultWidth))
-		r.rw.Header().Set(httpheaders.XResultHeight, strconv.Itoa(result.ResultHeight))
+		r.ResponseWriter.Header().Set(httpheaders.XOriginWidth, strconv.Itoa(result.OriginWidth))
+		r.ResponseWriter.Header().Set(httpheaders.XOriginHeight, strconv.Itoa(result.OriginHeight))
+		r.ResponseWriter.Header().Set(httpheaders.XResultWidth, strconv.Itoa(result.ResultWidth))
+		r.ResponseWriter.Header().Set(httpheaders.XResultHeight, strconv.Itoa(result.ResultHeight))
 	}
 
 	// Try to read origin image size
 	size, err := originData.Size()
 	if err != nil {
-		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryImageDataSize))
+		return ierrors.Wrap(err, 0, ierrors.WithCategory(handlers.CategoryImageDataSize))
 	}
 
-	r.rw.Header().Set(httpheaders.XOriginContentLength, strconv.Itoa(size))
+	r.ResponseWriter.Header().Set(httpheaders.XOriginContentLength, strconv.Itoa(size))
 
 	return nil
 }
 
 // respondWithNotModified writes not-modified response
-func (r *request) respondWithNotModified() error {
-	r.hwr.SetExpires(r.po.Expires)
-	r.hwr.SetVary()
+func respondWithNotModified(r *request) error {
+	r.HeaderWriter.SetExpires(r.Options.Expires)
+	r.HeaderWriter.SetVary()
 
-	if r.config.LastModifiedEnabled {
-		r.hwr.Passthrough(httpheaders.LastModified)
+	if r.Config.LastModifiedEnabled {
+		r.HeaderWriter.Passthrough(httpheaders.LastModified)
 	}
 
-	if r.config.ETagEnabled {
-		r.hwr.Passthrough(httpheaders.Etag)
+	if r.Config.ETagEnabled {
+		r.HeaderWriter.Passthrough(httpheaders.Etag)
 	}
 
-	r.hwr.Write(r.rw)
+	r.HeaderWriter.Write(r.ResponseWriter)
 
-	r.rw.WriteHeader(http.StatusNotModified)
+	r.ResponseWriter.WriteHeader(http.StatusNotModified)
 
 	server.LogResponse(
-		r.reqID, r.imageRequest, http.StatusNotModified, nil,
+		r.ID, r.Req, http.StatusNotModified, nil,
 		log.Fields{
-			"image_url":          r.imageURL,
-			"processing_options": r.po,
+			"image_url":          r.ImageURL,
+			"processing_options": r.Options,
 		},
 	)
 
 	return nil
 }
 
-func (r *request) respondWithImage(statusCode int, resultData imagedata.ImageData) error {
+func respondWithImage(r *request, statusCode int, resultData imagedata.ImageData) error {
 	// We read the size of the image data here, so we can set Content-Length header.
 	// This indireclty ensures that the image data is fully read from the source, no
 	// errors happened.
 	resultSize, err := resultData.Size()
 	if err != nil {
-		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryImageDataSize))
+		return ierrors.Wrap(err, 0, ierrors.WithCategory(handlers.CategoryImageDataSize))
 	}
 
-	r.hwr.SetContentType(resultData.Format().Mime())
-	r.hwr.SetContentLength(resultSize)
-	r.hwr.SetContentDisposition(
-		r.imageURL,
-		r.po.Filename,
+	r.HeaderWriter.SetContentType(resultData.Format().Mime())
+	r.HeaderWriter.SetContentLength(resultSize)
+	r.HeaderWriter.SetContentDisposition(
+		r.ImageURL,
+		r.Options.Filename,
 		resultData.Format().Ext(),
 		"",
-		r.po.ReturnAttachment,
+		r.Options.ReturnAttachment,
 	)
-	r.hwr.SetExpires(r.po.Expires)
-	r.hwr.SetVary()
-	r.hwr.SetCanonical(r.imageURL)
+	r.HeaderWriter.SetExpires(r.Options.Expires)
+	r.HeaderWriter.SetVary()
+	r.HeaderWriter.SetCanonical(r.ImageURL)
 
-	if r.config.LastModifiedEnabled {
-		r.hwr.Passthrough(httpheaders.LastModified)
+	if r.Config.LastModifiedEnabled {
+		r.HeaderWriter.Passthrough(httpheaders.LastModified)
 	}
 
-	if r.config.ETagEnabled {
-		r.hwr.Passthrough(httpheaders.Etag)
+	if r.Config.ETagEnabled {
+		r.HeaderWriter.Passthrough(httpheaders.Etag)
 	}
 
-	r.hwr.Write(r.rw)
+	r.HeaderWriter.Write(r.ResponseWriter)
 
-	r.rw.WriteHeader(statusCode)
+	r.ResponseWriter.WriteHeader(statusCode)
 
-	_, err = io.Copy(r.rw, resultData.Reader())
+	_, err = io.Copy(r.ResponseWriter, resultData.Reader())
 
 	var ierr *ierrors.Error
 	if err != nil {
-		ierr = newResponseWriteError(err)
+		ierr = handlers.NewResponseWriteError(err)
 
-		if r.config.ReportIOErrors {
-			return ierrors.Wrap(ierr, 0, ierrors.WithCategory(categoryIO), ierrors.WithShouldReport(true))
+		if r.Config.ReportIOErrors {
+			return ierrors.Wrap(
+				ierr, 0,
+				ierrors.WithCategory(handlers.CategoryIO),
+				ierrors.WithShouldReport(true),
+			)
 		}
 	}
 
 	server.LogResponse(
-		r.reqID, r.imageRequest, statusCode, ierr,
+		r.ID, r.Req, statusCode, ierr,
 		log.Fields{
-			"image_url":          r.imageURL,
-			"processing_options": r.po,
+			"image_url":          r.ImageURL,
+			"processing_options": r.Options,
 		},
 	)
 
 	return nil
-}
-
-// wrapDownloadingErr wraps original error to download error
-func (r *request) wrapDownloadingErr(originalErr error) *ierrors.Error {
-	err := ierrors.Wrap(originalErr, 0, ierrors.WithCategory(categoryDownload))
-
-	// we report this error only if enabled
-	if r.config.ReportDownloadingErrors {
-		err = ierrors.Wrap(err, 0, ierrors.WithShouldReport(true))
-	}
-
-	return err
 }

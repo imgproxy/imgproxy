@@ -128,6 +128,9 @@ func (r *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	for _, rr := range r.routes {
 		if rr.isMatch(req) {
+			// Set req.Pattern. We use it to trim path prefixes in handlers.
+			req.Pattern = rr.path
+
 			if !rr.silent {
 				LogRequest(reqID, req)
 			}

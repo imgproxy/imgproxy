@@ -25,7 +25,7 @@ func New(config *Config) (*Semaphores, error) {
 	var queue *semaphore.Weighted
 
 	if config.RequestsQueueSize > 0 {
-		queue = semaphore.NewWeighted(int64(config.RequestsQueueSize + config.Workers))
+		queue = semaphore.NewWeighted(int64(config.RequestsQueueSize))
 	}
 
 	processing := semaphore.NewWeighted(int64(config.Workers))

@@ -88,11 +88,6 @@ func callHandleProcessing(reqID string, rw http.ResponseWriter, r *http.Request)
 		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
 	}
 
-	phc, err := processingHandler.LoadConfigFromEnv(nil)
-	if err != nil {
-		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
-	}
-
 	semc, err := semaphores.LoadConfigFromEnv(nil)
 	if err != nil {
 		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
@@ -133,7 +128,12 @@ func callHandleProcessing(reqID string, rw http.ResponseWriter, r *http.Request)
 		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
 	}
 
-	h, err := processingHandler.New(stream, hw, semaphores, fi, wi, idf, phc)
+	hCfg, err := handlers.LoadConfigFromEnv(nil)
+	if err != nil {
+		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
+	}
+
+	h, err := processingHandler.New(stream, hw, semaphores, fi, wi, idf, hCfg)
 	if err != nil {
 		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryConfig))
 	}

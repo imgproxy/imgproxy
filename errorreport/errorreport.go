@@ -24,8 +24,8 @@ func StartRequest(req *http.Request) context.Context {
 	return context.WithValue(req.Context(), metaCtxKey{}, meta)
 }
 
-func SetMetadata(req *http.Request, key string, value any) {
-	meta, ok := req.Context().Value(metaCtxKey{}).(map[string]any)
+func SetMetadata(ctx context.Context, key string, value any) {
+	meta, ok := ctx.Value(metaCtxKey{}).(map[string]any)
 	if !ok || meta == nil {
 		return
 	}

@@ -21,10 +21,10 @@ func TestSemaphoresQueueDisabled(t *testing.T) {
 }
 
 func TestSemaphoresQueueEnabled(t *testing.T) {
-	s, err := New(&Config{RequestsQueueSize: 1, Workers: 1})
+	s, err := New(&Config{RequestsQueueSize: 2, Workers: 1})
 	require.NoError(t, err)
 
-	// Should be able to acquire up to queue size + workers
+	// Should be able to acquire up to queue size
 	release1, err := s.AcquireQueue()
 	require.NoError(t, err)
 
