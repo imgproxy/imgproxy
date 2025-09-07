@@ -1,4 +1,4 @@
-package processing
+package handlers
 
 import (
 	"net/http"
@@ -96,7 +96,7 @@ func (s *PathTestSuite) TestParsePath() {
 
 				s.Require().Error(err)
 				s.Require().ErrorAs(err, &ierr)
-				s.Require().Equal(categoryPathParsing, ierr.Category())
+				s.Require().Equal(CategoryPathParsing, ierr.Category())
 
 				return
 			}

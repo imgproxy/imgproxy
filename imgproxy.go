@@ -31,19 +31,21 @@ const (
 
 // ImgProxy holds all the components needed for imgproxy to function
 type ImgProxy struct {
-	HeaderWriter      *headerwriter.Writer
-	Semaphores        *semaphores.Semaphores
-	FallbackImage     auximageprovider.Provider
-	WatermarkImage    auximageprovider.Provider
-	Fetcher           *fetcher.Fetcher
-	ProcessingHandler *processinghandler.Handler
-	StreamHandler     *stream.Handler
-	ImageDataFactory  *imagedata.Factory
-	Config            *Config
+	headerWriter      *headerwriter.Writer
+	semaphores        *semaphores.Semaphores
+	fallbackImage     auximageprovider.Provider
+	watermarkImage    auximageprovider.Provider
+	fetcher           *fetcher.Fetcher
+	processingHandler *processinghandler.Handler
+	streamHandler     *stream.Handler
+	imageDataFactory  *imagedata.Factory
+	config            *Config
 }
 
 // New creates a new imgproxy instance
 func New(ctx context.Context, config *Config) (*ImgProxy, error) {
+	i := &ImgProxy{}
+
 	headerWriter, err := headerwriter.New(&config.HeaderWriter)
 	if err != nil {
 		return nil, err
@@ -82,7 +84,7 @@ func New(ctx context.Context, config *Config) (*ImgProxy, error) {
 	}
 
 	ph, err := processinghandler.New(
-		streamHandler, headerWriter, semaphores, fallbackImage, watermarkImage, idf, &config.ProcessingHandler,
+		i, streamHandler, &config.ProcessingHandler,
 	)
 	if err != nil {
 		return nil, err
@@ -103,22 +105,22 @@ func New(ctx context.Context, config *Config) (*ImgProxy, error) {
 		return nil, err
 	}
 
-	return &ImgProxy{
-		HeaderWriter:      headerWriter,
-		Semaphores:        semaphores,
-		FallbackImage:     fallbackImage,
-		WatermarkImage:    watermarkImage,
-		Fetcher:           fetcher,
-		StreamHandler:     streamHandler,
-		ProcessingHandler: ph,
-		ImageDataFactory:  idf,
-		Config:            config,
-	}, nil
+	i.headerWriter = headerWriter
+	i.semaphores = semaphores
+	i.fallbackImage = fallbackImage
+	i.watermarkImage = watermarkImage
+	i.fetcher = fetcher
+	i.processingHandler = ph
+	i.streamHandler = streamHandler
+	i.imageDataFactory = idf
+	i.config = config
+
+	return i, nil
 }
 
 // BuildRouter sets up the HTTP routes and middleware
 func (i *ImgProxy) BuildRouter() (*server.Router, error) {
-	r, err := server.NewRouter(&i.Config.Server)
+	r, err := server.NewRouter(&i.config.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -128,12 +130,12 @@ func (i *ImgProxy) BuildRouter() (*server.Router, error) {
 
 	r.GET(faviconPath, r.NotFoundHandler).Silent()
 	r.GET(healthPath, handlers.HealthHandler).Silent()
-	if i.Config.Server.HealthCheckPath != "" {
-		r.GET(i.Config.Server.HealthCheckPath, handlers.HealthHandler).Silent()
+	if i.config.Server.HealthCheckPath != "" {
+		r.GET(i.config.Server.HealthCheckPath, handlers.HealthHandler).Silent()
 	}
 
 	r.GET(
-		"/*", i.ProcessingHandler.Execute,
+		"/*", i.processingHandler.Execute,
 		r.WithSecret, r.WithCORS, r.WithPanic, r.WithReportError, r.WithMonitoring,
 	)
 
@@ -171,7 +173,7 @@ func (i *ImgProxy) StartServer(ctx context.Context) error {
 
 // startMemoryTicker starts a ticker that periodically frees memory and optionally logs memory stats
 func (i *ImgProxy) startMemoryTicker(ctx context.Context) {
-	ticker := time.NewTicker(i.Config.Server.FreeMemoryInterval)
+	ticker := time.NewTicker(i.config.Server.FreeMemoryInterval)
 	defer ticker.Stop()
 
 	for {
@@ -181,9 +183,33 @@ func (i *ImgProxy) startMemoryTicker(ctx context.Context) {
 		case <-ticker.C:
 			memory.Free()
 
-			if i.Config.Server.LogMemStats {
+			if i.config.Server.LogMemStats {
 				memory.LogStats()
 			}
 		}
 	}
+}
+
+func (i *ImgProxy) HeaderWriter() *headerwriter.Writer {
+	return i.headerWriter
+}
+
+func (i *ImgProxy) Semaphores() *semaphores.Semaphores {
+	return i.semaphores
+}
+
+func (i *ImgProxy) FallbackImage() auximageprovider.Provider {
+	return i.fallbackImage
+}
+
+func (i *ImgProxy) WatermarkImage() auximageprovider.Provider {
+	return i.watermarkImage
+}
+
+func (i *ImgProxy) Fetcher() *fetcher.Fetcher {
+	return i.fetcher
+}
+
+func (i *ImgProxy) ImageDataFactory() *imagedata.Factory {
+	return i.imageDataFactory
 }

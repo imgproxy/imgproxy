@@ -3,54 +3,40 @@ package processing
 import (
 	"context"
 	"net/http"
-	"net/url"
 
-	"github.com/imgproxy/imgproxy/v3/auximageprovider"
-	"github.com/imgproxy/imgproxy/v3/errorreport"
+	"github.com/imgproxy/imgproxy/v3/handlers"
 	"github.com/imgproxy/imgproxy/v3/handlers/stream"
-	"github.com/imgproxy/imgproxy/v3/headerwriter"
-	"github.com/imgproxy/imgproxy/v3/ierrors"
-	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/monitoring"
 	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
 	"github.com/imgproxy/imgproxy/v3/options"
-	"github.com/imgproxy/imgproxy/v3/security"
-	"github.com/imgproxy/imgproxy/v3/semaphores"
 )
 
 // Handler handles image processing requests
 type Handler struct {
-	hw             *headerwriter.Writer // Configured HeaderWriter instance
-	stream         *stream.Handler      // Stream handler for raw image streaming
-	config         *Config              // Handler configuration
-	semaphores     *semaphores.Semaphores
-	fallbackImage  auximageprovider.Provider
-	watermarkImage auximageprovider.Provider
-	idf            *imagedata.Factory
+	hCtx   handlers.Context // Input context interface
+	stream *stream.Handler  // Stream handler for raw image streaming
+	config *handlers.Config // Handler configuration
+}
+
+type request struct {
+	*handlers.Request
+	Options *options.ProcessingOptions // Processing options extracted from URL
 }
 
 // New creates new handler object
 func New(
+	context handlers.Context,
 	stream *stream.Handler,
-	hw *headerwriter.Writer,
-	semaphores *semaphores.Semaphores,
-	fi auximageprovider.Provider,
-	wi auximageprovider.Provider,
-	idf *imagedata.Factory,
-	config *Config,
+	config *handlers.Config,
 ) (*Handler, error) {
 	if err := config.Validate(); err != nil {
 		return nil, err
 	}
 
 	return &Handler{
-		hw:             hw,
-		config:         config,
-		stream:         stream,
-		semaphores:     semaphores,
-		fallbackImage:  fi,
-		watermarkImage: wi,
-		idf:            idf,
+		hCtx:   context,
+		config: config,
+		stream: stream,
 	}, nil
 }
 
@@ -66,57 +52,29 @@ func (h *Handler) Execute(
 
 	ctx := imageRequest.Context()
 
-	// Verify URL signature and extract image url and processing options
-	imageURL, po, mm, err := h.newRequest(ctx, imageRequest)
+	r, po, err := handlers.NewRequest(h.hCtx, h, imageRequest, h.config, reqID, rw)
 	if err != nil {
 		return err
 	}
 
 	// if processing options indicate raw image streaming, stream it and return
 	if po.Raw {
-		return h.stream.Execute(ctx, imageRequest, imageURL, reqID, po, rw)
+		return h.stream.Execute(ctx, imageRequest, r.ImageURL, reqID, po, rw)
 	}
 
 	req := &request{
-		handler:        h,
-		imageRequest:   imageRequest,
-		reqID:          reqID,
-		rw:             rw,
-		config:         h.config,
-		po:             po,
-		imageURL:       imageURL,
-		monitoringMeta: mm,
-		semaphores:     h.semaphores,
-		hwr:            h.hw.NewRequest(),
-		idf:            h.idf,
+		Request: r,
+		Options: po,
 	}
 
-	return req.execute(ctx)
+	return execute(ctx, req)
 }
 
-// newRequest extracts image url and processing options from request URL and verifies them
-func (h *Handler) newRequest(
-	ctx context.Context,
-	imageRequest *http.Request,
-) (string, *options.ProcessingOptions, monitoring.Meta, error) {
-	// let's extract signature and valid request path from a request
-	path, signature, err := splitPathSignature(imageRequest, h.config)
-	if err != nil {
-		return "", nil, nil, err
-	}
+func (h *Handler) ParsePath(path string, headers http.Header) (*options.ProcessingOptions, string, error) {
+	return options.ParsePath(path, headers)
+}
 
-	// verify the signature (if any)
-	if err = security.VerifySignature(signature, path); err != nil {
-		return "", nil, nil, ierrors.Wrap(err, 0, ierrors.WithCategory(categorySecurity))
-	}
-
-	// parse image url and processing options
-	po, imageURL, err := options.ParsePath(path, imageRequest.Header)
-	if err != nil {
-		return "", nil, nil, ierrors.Wrap(err, 0, ierrors.WithCategory(categoryPathParsing))
-	}
-
-	// get image origin and create monitoring meta object
+func (h *Handler) CreateMeta(ctx context.Context, imageURL string, po *options.ProcessingOptions) monitoring.Meta {
 	imageOrigin := imageOrigin(imageURL)
 
 	mm := monitoring.Meta{
@@ -125,27 +83,13 @@ func (h *Handler) newRequest(
 		monitoring.MetaProcessingOptions: po.Diff().Flatten(),
 	}
 
-	// set error reporting and monitoring context
-	errorreport.SetMetadata(imageRequest, "Source Image URL", imageURL)
-	errorreport.SetMetadata(imageRequest, "Source Image Origin", imageOrigin)
-	errorreport.SetMetadata(imageRequest, "Processing Options", po)
-
 	monitoring.SetMetadata(ctx, mm)
 
-	// verify that image URL came from the valid source
-	err = security.VerifySourceURL(imageURL)
-	if err != nil {
-		return "", nil, mm, ierrors.Wrap(err, 0, ierrors.WithCategory(categorySecurity))
-	}
+	// NOTE: errorreport needs to be patched (just not in the context of this PR)
+	// set error reporting and monitoring context
+	// errorreport.SetMetadata(ctx, "Source Image URL", imageURL)
+	// errorreport.SetMetadata(ctx, "Source Image Origin", imageOrigin)
+	// errorreport.SetMetadata(ctx, "Processing Options", po)
 
-	return imageURL, po, mm, nil
-}
-
-// imageOrigin extracts image origin from URL
-func imageOrigin(imageURL string) string {
-	if u, uerr := url.Parse(imageURL); uerr == nil {
-		return u.Scheme + "://" + u.Host
-	}
-
-	return ""
+	return mm
 }

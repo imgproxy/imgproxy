@@ -4,7 +4,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/auximageprovider"
 	"github.com/imgproxy/imgproxy/v3/ensure"
 	"github.com/imgproxy/imgproxy/v3/fetcher"
-	processinghandler "github.com/imgproxy/imgproxy/v3/handlers/processing"
+	"github.com/imgproxy/imgproxy/v3/handlers"
 	"github.com/imgproxy/imgproxy/v3/handlers/stream"
 	"github.com/imgproxy/imgproxy/v3/headerwriter"
 	"github.com/imgproxy/imgproxy/v3/semaphores"
@@ -20,7 +20,7 @@ type Config struct {
 	WatermarkImage    auximageprovider.StaticConfig
 	Transport         transport.Config
 	Fetcher           fetcher.Config
-	ProcessingHandler processinghandler.Config
+	ProcessingHandler handlers.Config
 	StreamHandler     stream.Config
 	Server            server.Config
 }
@@ -34,7 +34,7 @@ func NewDefaultConfig() Config {
 		WatermarkImage:    auximageprovider.NewDefaultStaticConfig(),
 		Transport:         transport.NewDefaultConfig(),
 		Fetcher:           fetcher.NewDefaultConfig(),
-		ProcessingHandler: processinghandler.NewDefaultConfig(),
+		ProcessingHandler: handlers.NewDefaultConfig(),
 		StreamHandler:     stream.NewDefaultConfig(),
 		Server:            server.NewDefaultConfig(),
 	}
@@ -74,7 +74,7 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 		return nil, err
 	}
 
-	if _, err = processinghandler.LoadConfigFromEnv(&c.ProcessingHandler); err != nil {
+	if _, err = handlers.LoadConfigFromEnv(&c.ProcessingHandler); err != nil {
 		return nil, err
 	}
 

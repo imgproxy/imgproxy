@@ -267,7 +267,7 @@ func (s *ProcessingHandlerTestSuite) TestSkipProcessingSVG() {
 
 	s.Require().Equal(http.StatusOK, res.StatusCode)
 
-	data, err := s.imgproxy().ImageDataFactory.NewFromBytes(s.testData.Read("test1.svg"))
+	data, err := s.imgproxy().ImageDataFactory().NewFromBytes(s.testData.Read("test1.svg"))
 	s.Require().NoError(err)
 
 	expected, err := svg.Sanitize(data)
