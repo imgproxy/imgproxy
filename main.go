@@ -79,9 +79,9 @@ func initialize() error {
 }
 
 func shutdown() {
-	vips.Shutdown()
 	metrics.Stop()
 	errorreport.Close()
+	vips.Shutdown()
 }
 
 func run() error {
