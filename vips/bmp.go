@@ -56,9 +56,9 @@ func prepareBmpCanvas(width, height, bands int) (*C.VipsImage, []byte, error) {
 	return tmp, ptrToBytes(data, datalen), nil
 }
 
-func bmpClearOnPanic(img **C.VipsImage) {
+func bmpClearOnPanic(img *C.VipsImage) {
 	if rerr := recover(); rerr != nil {
-		C.clear_image(img)
+		C.unref_image(img)
 		panic(rerr)
 	}
 }
@@ -86,7 +86,7 @@ func (img *Image) decodeBmpPaletted(r io.Reader, width, height, bpp int, palette
 		return err
 	}
 
-	defer bmpClearOnPanic(&tmp)
+	defer bmpClearOnPanic(tmp)
 
 	// Each row is 4-byte aligned.
 	cap := 8 / bpp
@@ -101,7 +101,7 @@ func (img *Image) decodeBmpPaletted(r io.Reader, width, height, bpp int, palette
 
 	for y := y0; y != y1; y += yDelta {
 		if _, err = io.ReadFull(r, b); err != nil {
-			C.clear_image(&tmp)
+			C.unref_image(tmp)
 			return err
 		}
 
@@ -126,7 +126,7 @@ func (img *Image) decodeBmpPaletted(r io.Reader, width, height, bpp int, palette
 		}
 	}
 
-	C.swap_and_clear(&img.VipsImage, tmp)
+	img.swapAndUnref(tmp)
 
 	bmpSetBitDepth(img, len(palette))
 
@@ -140,7 +140,7 @@ func (img *Image) decodeBmpRLE(r io.Reader, width, height, bpp int, palette []Co
 		return err
 	}
 
-	defer bmpClearOnPanic(&tmp)
+	defer bmpClearOnPanic(tmp)
 
 	b := make([]byte, 256)
 
@@ -156,7 +156,7 @@ Loop:
 	for {
 		b1, b2, err := readPair()
 		if err != nil {
-			C.clear_image(&tmp)
+			C.unref_image(tmp)
 			return err
 		}
 
@@ -174,7 +174,7 @@ Loop:
 			case 2:
 				dx, dy, err := readPair()
 				if err != nil {
-					C.clear_image(&tmp)
+					C.unref_image(tmp)
 					return err
 				}
 
@@ -188,7 +188,7 @@ Loop:
 
 				n := ((pixelsCount+cap-1)/cap + 1) &^ 1
 				if _, err := io.ReadFull(r, b[:n]); err != nil {
-					C.clear_image(&tmp)
+					C.unref_image(tmp)
 					return err
 				}
 
@@ -248,7 +248,7 @@ Loop:
 		}
 	}
 
-	C.swap_and_clear(&img.VipsImage, tmp)
+	img.swapAndUnref(tmp)
 
 	bmpSetBitDepth(img, len(palette))
 
@@ -273,7 +273,7 @@ func (img *Image) decodeBmpRGB(r io.Reader, width, height, bands int, topDown, n
 		return err
 	}
 
-	defer bmpClearOnPanic(&tmp)
+	defer bmpClearOnPanic(tmp)
 
 	// Each row is 4-byte aligned.
 	b := make([]byte, (bands*width+3)&^3)
@@ -287,7 +287,7 @@ func (img *Image) decodeBmpRGB(r io.Reader, width, height, bands int, topDown, n
 
 	for y := y0; y != y1; y += yDelta {
 		if _, err = io.ReadFull(r, b); err != nil {
-			C.clear_image(&tmp)
+			C.unref_image(tmp)
 			return err
 		}
 
@@ -304,7 +304,7 @@ func (img *Image) decodeBmpRGB(r io.Reader, width, height, bands int, topDown, n
 		}
 	}
 
-	C.swap_and_clear(&img.VipsImage, tmp)
+	img.swapAndUnref(tmp)
 
 	return nil
 }
@@ -317,7 +317,7 @@ func (img *Image) decodeBmpRGB16(r io.Reader, width, height int, topDown, bmp565
 		return err
 	}
 
-	defer bmpClearOnPanic(&tmp)
+	defer bmpClearOnPanic(tmp)
 
 	// Each row is 4-byte aligned.
 	b := make([]byte, (2*width+3)&^3)
@@ -331,7 +331,7 @@ func (img *Image) decodeBmpRGB16(r io.Reader, width, height int, topDown, bmp565
 
 	for y := y0; y != y1; y += yDelta {
 		if _, err = io.ReadFull(r, b); err != nil {
-			C.clear_image(&tmp)
+			C.unref_image(tmp)
 			return err
 		}
 
@@ -350,7 +350,7 @@ func (img *Image) decodeBmpRGB16(r io.Reader, width, height int, topDown, bmp565
 		}
 	}
 
-	C.swap_and_clear(&img.VipsImage, tmp)
+	img.swapAndUnref(tmp)
 
 	return nil
 }

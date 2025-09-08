@@ -12,10 +12,8 @@ typedef struct _RGB {
 
 int vips_initialize();
 
-void clear_image(VipsImage **in);
+void unref_image(VipsImage *in);
 void g_free_go(void **buf);
-
-void swap_and_clear(VipsImage **in, VipsImage *out);
 
 int gif_resolution_limit();
 
