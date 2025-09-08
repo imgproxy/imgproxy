@@ -129,7 +129,7 @@ vips_tiffload_go(void *buf, size_t len, VipsImage **out)
 int
 vips_black_go(VipsImage **out, int width, int height, int bands)
 {
-  VipsImage *tmp;
+  VipsImage *tmp = NULL;
 
   int res = vips_black(&tmp, width, height, "bands", bands, NULL) ||
       vips_copy(tmp, out, "interpretation", VIPS_INTERPRETATION_sRGB, NULL);
@@ -786,7 +786,7 @@ vips_trim(VipsImage *in, VipsImage **out, double threshold,
 int
 vips_replicate_go(VipsImage *in, VipsImage **out, int width, int height, int centered)
 {
-  VipsImage *tmp;
+  VipsImage *tmp = NULL;
 
   int across = ceil((double) width / in->Xsize);
   int down = ceil((double) height / in->Ysize);
@@ -829,8 +829,7 @@ vips_embed_go(VipsImage *in, VipsImage **out, int x, int y, int width, int heigh
   int ret =
       vips_embed(in, out, x, y, width, height, "extend", VIPS_EXTEND_BLACK, NULL);
 
-  if (tmp)
-    VIPS_UNREF(tmp);
+  VIPS_UNREF(tmp);
 
   return ret;
 }
