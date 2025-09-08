@@ -23,6 +23,7 @@ var (
 	Network                string
 	Bind                   string
 	Timeout                int
+	GracefulStopTimeout    int
 	ReadRequestTimeout     int
 	WriteResponseTimeout   int
 	KeepAliveTimeout       int
@@ -231,6 +232,7 @@ func Reset() {
 	Network = "tcp"
 	Bind = ":8080"
 	Timeout = 10
+	GracefulStopTimeout = 20
 	ReadRequestTimeout = 10
 	WriteResponseTimeout = 10
 	KeepAliveTimeout = 10
@@ -437,6 +439,9 @@ func Configure() error {
 		configurators.Int(&Timeout, "IMGPROXY_WRITE_TIMEOUT")
 	}
 	configurators.Int(&Timeout, "IMGPROXY_TIMEOUT")
+
+	GracefulStopTimeout = Timeout * 2
+	configurators.Int(&GracefulStopTimeout, "IMGPROXY_GRACEFUL_STOP_TIMEOUT")
 
 	if _, ok := os.LookupEnv("IMGPROXY_READ_TIMEOUT"); ok {
 		log.Warning("IMGPROXY_READ_TIMEOUT is deprecated, use IMGPROXY_READ_REQUEST_TIMEOUT instead")

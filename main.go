@@ -208,9 +208,9 @@ func initialize() error {
 }
 
 func shutdown() {
-	vips.Shutdown()
 	monitoring.Stop()
 	errorreport.Close()
+	vips.Shutdown()
 }
 
 func run(ctx context.Context) error {

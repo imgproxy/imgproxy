@@ -9,11 +9,6 @@ import (
 	"github.com/imgproxy/imgproxy/v3/ensure"
 )
 
-const (
-	// gracefulTimeout represents graceful shutdown timeout
-	gracefulTimeout = time.Duration(5 * time.Second)
-)
-
 // Config represents HTTP server config
 type Config struct {
 	Listen                string        // Address to listen on
@@ -42,7 +37,7 @@ func NewDefaultConfig() Config {
 		ReadRequestTimeout:    10 * time.Second,
 		KeepAliveTimeout:      10 * time.Second,
 		WriteResponseTimeout:  10 * time.Second,
-		GracefulTimeout:       gracefulTimeout,
+		GracefulTimeout:       20 * time.Second,
 		CORSAllowOrigin:       "",
 		Secret:                "",
 		DevelopmentErrorsMode: false,
@@ -61,7 +56,7 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c.MaxClients = config.MaxClients
 	c.ReadRequestTimeout = time.Duration(config.ReadRequestTimeout) * time.Second
 	c.KeepAliveTimeout = time.Duration(config.KeepAliveTimeout) * time.Second
-	c.GracefulTimeout = gracefulTimeout
+	c.GracefulTimeout = time.Duration(config.GracefulStopTimeout) * time.Second
 	c.CORSAllowOrigin = config.AllowOrigin
 	c.Secret = config.Secret
 	c.DevelopmentErrorsMode = config.DevelopmentErrorsMode
