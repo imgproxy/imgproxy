@@ -2,9 +2,11 @@
 
 ## [Unreleased]
 ### Added
-- (pro) Add [color_profile](https://docs.imgproxy.net/latest/usage/processing#color-profile) processing option and [IMGPROXY_COLOR_PROFILES_DIR](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_COLOR_PROFILES_DIR) config
+- Add [IMGPROXY_GRACEFUL_STOP_TIMEOUT](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_GRACEFUL_STOP_TIMEOUT) config.
+- (pro) Add [color_profile](https://docs.imgproxy.net/latest/usage/processing#color-profile) processing option and [IMGPROXY_COLOR_PROFILES_DIR](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_COLOR_PROFILES_DIR) config.
 
 ### Changed
+- Update the default graceful stop timeout to twice the [IMGPROXY_TIMEOUT](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_TIMEOUT) config value.
 - (pro) Improve video decoding performance.
 - (pro) Respond with `422 Unprocessable Entity` on error during video decoding.
 

@@ -80,7 +80,10 @@ func startServer(cancel context.CancelFunc) (*http.Server, error) {
 func shutdownServer(s *http.Server) {
 	log.Info("Shutting down the server...")
 
-	ctx, close := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, close := context.WithTimeout(
+		context.Background(),
+		time.Duration(config.GracefulStopTimeout)*time.Second,
+	)
 	defer close()
 
 	s.Shutdown(ctx)
