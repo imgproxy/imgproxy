@@ -10,9 +10,11 @@ import (
 
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/config/configurators"
+	"github.com/urfave/cli/v3"
 )
 
-func healthcheck() int {
+// healthcheck performs a healthcheck on a running imgproxy instance
+func healthcheck(ctx context.Context, c *cli.Command) error {
 	network := config.Network
 	bind := config.Bind
 	pathprefix := config.PathPrefix
@@ -32,7 +34,7 @@ func healthcheck() int {
 	res, err := httpc.Get(fmt.Sprintf("http://imgproxy%s/health", pathprefix))
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
-		return 1
+		return cli.Exit(err, 1)
 	}
 	defer res.Body.Close()
 
@@ -40,8 +42,9 @@ func healthcheck() int {
 	fmt.Fprintln(os.Stderr, string(msg))
 
 	if res.StatusCode != 200 {
-		return 1
+		err := fmt.Errorf("healthcheck failed: %s", msg)
+		return cli.Exit(err, 1)
 	}
 
-	return 0
+	return nil
 }

@@ -17,6 +17,14 @@ import (
 	"github.com/imgproxy/imgproxy/v3/version"
 )
 
+func init() {
+	// We need to reset config to defaults once on app start.
+	// Tests could perform config.Reset() to ensure a clean state where required.
+	// NOTE: this is temporary workaround until we finally move
+	// to Config objects everywhere
+	Reset()
+}
+
 type URLReplacement = configurators.URLReplacement
 
 var (
@@ -425,8 +433,6 @@ func Reset() {
 }
 
 func Configure() error {
-	Reset()
-
 	if port := os.Getenv("PORT"); len(port) > 0 {
 		Bind = fmt.Sprintf(":%s", port)
 	}

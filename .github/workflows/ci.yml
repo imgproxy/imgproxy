@@ -33,7 +33,7 @@ jobs:
       - name: Mark git workspace as safe
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - name: Test
-        run: go test -tags integration ./...
+        run: go test ./...
 
   lint:
     runs-on: ubuntu-latest
