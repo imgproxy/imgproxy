@@ -5,16 +5,21 @@ import (
 	"net"
 
 	"github.com/imgproxy/imgproxy/v3"
-	"github.com/stretchr/testify/suite"
+	"github.com/imgproxy/imgproxy/v3/testutil"
 )
 
+type TestServer struct {
+	Addr     net.Addr
+	Shutdown context.CancelFunc
+}
+
 type Suite struct {
-	suite.Suite
+	testutil.LazySuite
 }
 
 // StartImgproxy starts imgproxy instance for the tests
 // Returns instance, instance address and stop function
-func (s *Suite) StartImgproxy(c *imgproxy.Config) (net.Addr, context.CancelFunc) {
+func (s *Suite) StartImgproxy(c *imgproxy.Config) *TestServer {
 	ctx, cancel := context.WithCancel(s.T().Context())
 
 	c.Server.Bind = ":0"
@@ -32,5 +37,8 @@ func (s *Suite) StartImgproxy(c *imgproxy.Config) (net.Addr, context.CancelFunc)
 		}
 	}()
 
-	return <-addrCh, cancel
+	return &TestServer{
+		Addr:     <-addrCh,
+		Shutdown: cancel,
+	}
 }

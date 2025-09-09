@@ -2,11 +2,9 @@ package integration
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"image/png"
 	"io"
-	"net"
 	"net/http"
 	"os"
 	"path"
@@ -32,8 +30,7 @@ type LoadTestSuite struct {
 	testData       *testutil.TestDataProvider
 	testImagesPath string
 
-	addr         net.Addr
-	stopImgproxy context.CancelFunc
+	server *TestServer
 }
 
 // SetupSuite starts imgproxy instance server
@@ -49,12 +46,12 @@ func (s *LoadTestSuite) SetupSuite() {
 	config.DevelopmentErrorsMode = true
 
 	// In this test we start the single imgproxy server for all test cases
-	s.addr, s.stopImgproxy = s.StartImgproxy(c)
+	s.server = s.StartImgproxy(c)
 }
 
 // TearDownSuite stops imgproxy instance server
 func (s *LoadTestSuite) TearDownSuite() {
-	s.stopImgproxy()
+	s.server.Shutdown()
 }
 
 // testLoadFolder fetches images iterates over images in the specified folder,
@@ -117,7 +114,7 @@ func (s *LoadTestSuite) testLoadFolder(folder string) {
 
 // fetchImage fetches an image from the imgproxy server
 func (s *LoadTestSuite) fetchImage(path string) []byte {
-	url := fmt.Sprintf("http://%s/%s", s.addr.String(), path)
+	url := fmt.Sprintf("http://%s/%s", s.server.Addr, path)
 
 	resp, err := http.Get(url)
 	s.Require().NoError(err, "Failed to fetch image from %s", url)

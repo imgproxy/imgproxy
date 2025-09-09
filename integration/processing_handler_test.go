@@ -1,7 +1,6 @@
 package integration
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"net/http"
@@ -36,6 +35,7 @@ type ProcessingHandlerTestSuite struct {
 	// happen afterwards. It is done via lazy obj. When all config values will be moved
 	// to imgproxy.Config struct, this can be removed.
 	config testutil.LazyObj[*imgproxy.Config]
+	server testutil.LazyObj[*TestServer]
 }
 
 func (s *ProcessingHandlerTestSuite) SetupSuite() {
@@ -44,15 +44,8 @@ func (s *ProcessingHandlerTestSuite) SetupSuite() {
 
 	// Initialize test data provider (local test files)
 	s.testData = testutil.NewTestDataProvider(s.T())
-}
 
-func (s *ProcessingHandlerTestSuite) TearDownSuite() {
-	logrus.SetOutput(os.Stdout)
-}
-
-// setupObjs initializes lazy objects
-func (s *ProcessingHandlerTestSuite) setupObjs() {
-	s.config = testutil.NewLazyObj(s.T(), func() (*imgproxy.Config, error) {
+	s.config, _ = testutil.NewLazySuiteObj(s, func() (*imgproxy.Config, error) {
 		c, err := imgproxy.LoadConfigFromEnv(nil)
 		s.Require().NoError(err)
 
@@ -61,6 +54,21 @@ func (s *ProcessingHandlerTestSuite) setupObjs() {
 
 		return c, nil
 	})
+
+	s.server, _ = testutil.NewLazySuiteObj(
+		s,
+		func() (*TestServer, error) {
+			return s.StartImgproxy(s.config()), nil
+		},
+		func(s *TestServer) error {
+			s.Shutdown()
+			return nil
+		},
+	)
+}
+
+func (s *ProcessingHandlerTestSuite) TearDownSuite() {
+	logrus.SetOutput(os.Stdout)
 }
 
 func (s *ProcessingHandlerTestSuite) SetupTest() {
@@ -69,23 +77,17 @@ func (s *ProcessingHandlerTestSuite) SetupTest() {
 	// NOTE: This must be moved to security config
 	config.AllowLoopbackSourceAddresses = true
 	// NOTE: end note
-
-	s.setupObjs()
 }
 
 func (s *ProcessingHandlerTestSuite) SetupSubTest() {
 	// We use t.Run() a lot, so we need to reset lazy objects at the beginning of each subtest
-	s.setupObjs()
+	s.ResetLazyObjects()
 }
 
 // GET performs a GET request to the imageproxy real server
 // NOTE: Do not forget to move this to Suite in case of need in other future test suites
 func (s *ProcessingHandlerTestSuite) GET(path string, header ...http.Header) *http.Response {
-	// In this test we start the imgproxy server instance per request
-	addr, stopServer := s.StartImgproxy(s.config())
-	defer stopServer()
-
-	url := fmt.Sprintf("http://%s%s", addr.String(), path)
+	url := fmt.Sprintf("http://%s%s", s.server().Addr, path)
 
 	// Perform GET request to an url
 	req, _ := http.NewRequest("GET", url, nil)
@@ -98,13 +100,6 @@ func (s *ProcessingHandlerTestSuite) GET(path string, header ...http.Header) *ht
 	// Do the request
 	resp, err := http.DefaultClient.Do(req)
 	s.Require().NoError(err)
-
-	// Read the entire body into memory and replace the original body with memory reader
-	// to avoid the defer
-	bodyBytes, err := io.ReadAll(resp.Body)
-	s.Require().NoError(err)
-	resp.Body.Close()
-	resp.Body = io.NopCloser(bytes.NewReader(bodyBytes))
 
 	return resp
 }

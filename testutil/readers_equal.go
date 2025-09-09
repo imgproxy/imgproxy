@@ -4,6 +4,7 @@ import (
 	"io"
 	"testing"
 
+	"github.com/imgproxy/imgproxy/v3/ioutil"
 	"github.com/stretchr/testify/require"
 )
 
@@ -20,8 +21,8 @@ func ReadersEqual(t *testing.T, expected, actual io.Reader) bool {
 	buf2 := make([]byte, bufSize)
 
 	for {
-		n1, err1 := expected.Read(buf1)
-		n2, err2 := actual.Read(buf2)
+		n1, err1 := ioutil.TryReadFull(expected, buf1)
+		n2, err2 := ioutil.TryReadFull(actual, buf2)
 
 		if n1 != n2 {
 			return false
