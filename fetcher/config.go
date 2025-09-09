@@ -6,6 +6,7 @@ import (
 
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/ensure"
+	"github.com/imgproxy/imgproxy/v3/fetcher/transport"
 	"github.com/imgproxy/imgproxy/v3/version"
 )
 
@@ -19,6 +20,9 @@ type Config struct {
 
 	// MaxRedirects is the maximum number of redirects to follow when fetching an image.
 	MaxRedirects int
+
+	// Transport holds the configuration for the transport layer.
+	Transport transport.Config
 }
 
 // NewDefaultConfig returns a new Config instance with default values.
@@ -27,6 +31,7 @@ func NewDefaultConfig() Config {
 		UserAgent:       "imgproxy/" + version.Version,
 		DownloadTimeout: 5 * time.Second,
 		MaxRedirects:    10,
+		Transport:       transport.NewDefaultConfig(),
 	}
 }
 
@@ -37,6 +42,11 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c.UserAgent = config.UserAgent
 	c.DownloadTimeout = time.Duration(config.DownloadTimeout) * time.Second
 	c.MaxRedirects = config.MaxRedirects
+
+	_, err := transport.LoadConfigFromEnv(&c.Transport)
+	if err != nil {
+		return nil, err
+	}
 
 	return c, nil
 }

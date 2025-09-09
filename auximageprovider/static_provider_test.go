@@ -16,7 +16,6 @@ import (
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/options"
-	"github.com/imgproxy/imgproxy/v3/transport"
 )
 
 type ImageProviderTestSuite struct {
@@ -168,12 +167,8 @@ func (s *ImageProviderTestSuite) TestNewProvider() {
 		},
 	}
 
-	trc := transport.NewDefaultConfig()
-	tr, err := transport.New(&trc)
-	s.Require().NoError(err)
-
 	fc := fetcher.NewDefaultConfig()
-	f, err := fetcher.New(tr, &fc)
+	f, err := fetcher.New(&fc)
 	s.Require().NoError(err)
 
 	idf := imagedata.NewFactory(f)

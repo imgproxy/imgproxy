@@ -85,7 +85,6 @@ func ProcessImage(
 	imgdata imagedata.ImageData,
 	po *options.ProcessingOptions,
 	watermarkProvider auximageprovider.Provider,
-	idf *imagedata.Factory,
 ) (*Result, error) {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()

@@ -5,13 +5,13 @@ package transport
 import (
 	"net/http"
 
-	"github.com/imgproxy/imgproxy/v3/transport/generichttp"
+	"github.com/imgproxy/imgproxy/v3/fetcher/transport/generichttp"
 
-	azureTransport "github.com/imgproxy/imgproxy/v3/transport/azure"
-	fsTransport "github.com/imgproxy/imgproxy/v3/transport/fs"
-	gcsTransport "github.com/imgproxy/imgproxy/v3/transport/gcs"
-	s3Transport "github.com/imgproxy/imgproxy/v3/transport/s3"
-	swiftTransport "github.com/imgproxy/imgproxy/v3/transport/swift"
+	azureTransport "github.com/imgproxy/imgproxy/v3/fetcher/transport/azure"
+	fsTransport "github.com/imgproxy/imgproxy/v3/fetcher/transport/fs"
+	gcsTransport "github.com/imgproxy/imgproxy/v3/fetcher/transport/gcs"
+	s3Transport "github.com/imgproxy/imgproxy/v3/fetcher/transport/s3"
+	swiftTransport "github.com/imgproxy/imgproxy/v3/fetcher/transport/swift"
 )
 
 // Transport is a wrapper around http.Transport which allows to track registered protocols

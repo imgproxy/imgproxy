@@ -18,7 +18,7 @@ func (s *TestCondSuite) SetupTest() {
 	s.cond = NewCond()
 }
 
-func (s *TestCondSuite) TeardownTest() {
+func (s *TestCondSuite) TearDownTest() {
 	if s.cond != nil {
 		s.cond.Close()
 	}

@@ -10,9 +10,9 @@ import (
 	"github.com/ncw/swift/v2"
 
 	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/fetcher/transport/common"
+	"github.com/imgproxy/imgproxy/v3/fetcher/transport/notmodified"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
-	"github.com/imgproxy/imgproxy/v3/transport/common"
-	"github.com/imgproxy/imgproxy/v3/transport/notmodified"
 )
 
 type transport struct {

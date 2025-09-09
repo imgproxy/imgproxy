@@ -14,11 +14,11 @@ import (
 	raw "google.golang.org/api/storage/v1"
 	htransport "google.golang.org/api/transport/http"
 
+	"github.com/imgproxy/imgproxy/v3/fetcher/transport/common"
+	"github.com/imgproxy/imgproxy/v3/fetcher/transport/notmodified"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/httprange"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
-	"github.com/imgproxy/imgproxy/v3/transport/common"
-	"github.com/imgproxy/imgproxy/v3/transport/notmodified"
 )
 
 // For tests

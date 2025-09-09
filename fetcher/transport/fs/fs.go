@@ -13,10 +13,10 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/imgproxy/imgproxy/v3/fetcher/transport/common"
+	"github.com/imgproxy/imgproxy/v3/fetcher/transport/notmodified"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/httprange"
-	"github.com/imgproxy/imgproxy/v3/transport/common"
-	"github.com/imgproxy/imgproxy/v3/transport/notmodified"
 )
 
 type transport struct {

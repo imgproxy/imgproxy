@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"net/http"
@@ -13,10 +14,10 @@ import (
 	"github.com/imgproxy/imgproxy/v3"
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/config/configurators"
+	"github.com/imgproxy/imgproxy/v3/fetcher"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
-	"github.com/imgproxy/imgproxy/v3/server"
 	"github.com/imgproxy/imgproxy/v3/svg"
 	"github.com/imgproxy/imgproxy/v3/testutil"
 	"github.com/imgproxy/imgproxy/v3/vips"
@@ -26,12 +27,15 @@ import (
 
 // ProcessingHandlerTestSuite is a test suite for testing image processing handler
 type ProcessingHandlerTestSuite struct {
-	suite.Suite
+	Suite
 
 	testData *testutil.TestDataProvider
-	config   testutil.LazyObj[*imgproxy.Config]
-	router   testutil.LazyObj[*server.Router]
-	imgproxy testutil.LazyObj[*imgproxy.Imgproxy]
+
+	// NOTE: lazy obj is required here because in the specific tests we sometimes
+	// change the config values in config.go. Config instantiation should
+	// happen afterwards. It is done via lazy obj. When all config values will be moved
+	// to imgproxy.Config struct, this can be removed.
+	config testutil.LazyObj[*imgproxy.Config]
 }
 
 func (s *ProcessingHandlerTestSuite) SetupSuite() {
@@ -42,7 +46,7 @@ func (s *ProcessingHandlerTestSuite) SetupSuite() {
 	s.testData = testutil.NewTestDataProvider(s.T())
 }
 
-func (s *ProcessingHandlerTestSuite) TeardownSuite() {
+func (s *ProcessingHandlerTestSuite) TearDownSuite() {
 	logrus.SetOutput(os.Stdout)
 }
 
@@ -52,18 +56,10 @@ func (s *ProcessingHandlerTestSuite) setupObjs() {
 		c, err := imgproxy.LoadConfigFromEnv(nil)
 		s.Require().NoError(err)
 
-		c.Transport.Local.Root = s.testData.Root()
-		c.Transport.HTTP.ClientKeepAliveTimeout = 0
+		c.Fetcher.Transport.Local.Root = s.testData.Root()
+		c.Fetcher.Transport.HTTP.ClientKeepAliveTimeout = 0
 
 		return c, nil
-	})
-
-	s.imgproxy = testutil.NewLazyObj(s.T(), func() (*imgproxy.Imgproxy, error) {
-		return imgproxy.New(s.T().Context(), s.config())
-	})
-
-	s.router = testutil.NewLazyObj(s.T(), func() (*server.Router, error) {
-		return s.imgproxy().BuildRouter()
 	})
 }
 
@@ -82,18 +78,35 @@ func (s *ProcessingHandlerTestSuite) SetupSubTest() {
 	s.setupObjs()
 }
 
-// GET performs a GET request to the given path and returns the response recorder
+// GET performs a GET request to the imageproxy real server
+// NOTE: Do not forget to move this to Suite in case of need in other future test suites
 func (s *ProcessingHandlerTestSuite) GET(path string, header ...http.Header) *http.Response {
-	req := httptest.NewRequest(http.MethodGet, path, nil)
-	rw := httptest.NewRecorder()
+	// In this test we start the imgproxy server instance per request
+	addr, stopServer := s.StartImgproxy(s.config())
+	defer stopServer()
 
-	if len(header) > 0 {
-		req.Header = header[0]
+	url := fmt.Sprintf("http://%s%s", addr.String(), path)
+
+	// Perform GET request to an url
+	req, _ := http.NewRequest("GET", url, nil)
+	for h := range header {
+		for k, v := range header[h] {
+			req.Header.Set(k, v[0]) // only first value will go to the request
+		}
 	}
 
-	s.router().ServeHTTP(rw, req)
+	// Do the request
+	resp, err := http.DefaultClient.Do(req)
+	s.Require().NoError(err)
 
-	return rw.Result()
+	// Read the entire body into memory and replace the original body with memory reader
+	// to avoid the defer
+	bodyBytes, err := io.ReadAll(resp.Body)
+	s.Require().NoError(err)
+	resp.Body.Close()
+	resp.Body = io.NopCloser(bytes.NewReader(bodyBytes))
+
+	return resp
 }
 
 func (s *ProcessingHandlerTestSuite) TestSignatureValidationFailure() {
@@ -267,7 +280,13 @@ func (s *ProcessingHandlerTestSuite) TestSkipProcessingSVG() {
 
 	s.Require().Equal(http.StatusOK, res.StatusCode)
 
-	data, err := s.imgproxy().ImageDataFactory.NewFromBytes(s.testData.Read("test1.svg"))
+	c := fetcher.NewDefaultConfig()
+	f, err := fetcher.New(&c)
+	s.Require().NoError(err)
+
+	idf := imagedata.NewFactory(f)
+
+	data, err := idf.NewFromBytes(s.testData.Read("test1.svg"))
 	s.Require().NoError(err)
 
 	expected, err := svg.Sanitize(data)

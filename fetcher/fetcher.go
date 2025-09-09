@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/imgproxy/imgproxy/v3/fetcher/transport"
+	"github.com/imgproxy/imgproxy/v3/fetcher/transport/common"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
-	"github.com/imgproxy/imgproxy/v3/transport"
-	"github.com/imgproxy/imgproxy/v3/transport/common"
 )
 
 const (
@@ -24,8 +24,13 @@ type Fetcher struct {
 }
 
 // New creates a new ImageFetcher with the provided transport
-func New(transport *transport.Transport, config *Config) (*Fetcher, error) {
+func New(config *Config) (*Fetcher, error) {
 	if err := config.Validate(); err != nil {
+		return nil, err
+	}
+
+	transport, err := transport.New(&config.Transport)
+	if err != nil {
 		return nil, err
 	}
 

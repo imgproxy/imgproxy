@@ -11,7 +11,6 @@ import (
 	"github.com/imgproxy/imgproxy/v3/fetcher"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/testutil"
-	"github.com/imgproxy/imgproxy/v3/transport"
 )
 
 type SvgTestSuite struct {
@@ -22,12 +21,8 @@ type SvgTestSuite struct {
 func (s *SvgTestSuite) SetupSuite() {
 	config.Reset()
 
-	trc := transport.NewDefaultConfig()
-	tr, err := transport.New(&trc)
-	s.Require().NoError(err)
-
-	fc := fetcher.NewDefaultConfig()
-	f, err := fetcher.New(tr, &fc)
+	c := fetcher.NewDefaultConfig()
+	f, err := fetcher.New(&c)
 	s.Require().NoError(err)
 
 	s.idf = imagedata.NewFactory(f)

@@ -5,12 +5,12 @@ package transport
 import (
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/ensure"
-	"github.com/imgproxy/imgproxy/v3/transport/azure"
-	"github.com/imgproxy/imgproxy/v3/transport/fs"
-	"github.com/imgproxy/imgproxy/v3/transport/gcs"
-	"github.com/imgproxy/imgproxy/v3/transport/generichttp"
-	"github.com/imgproxy/imgproxy/v3/transport/s3"
-	"github.com/imgproxy/imgproxy/v3/transport/swift"
+	"github.com/imgproxy/imgproxy/v3/fetcher/transport/azure"
+	"github.com/imgproxy/imgproxy/v3/fetcher/transport/fs"
+	"github.com/imgproxy/imgproxy/v3/fetcher/transport/gcs"
+	"github.com/imgproxy/imgproxy/v3/fetcher/transport/generichttp"
+	"github.com/imgproxy/imgproxy/v3/fetcher/transport/s3"
+	"github.com/imgproxy/imgproxy/v3/fetcher/transport/swift"
 )
 
 // Config represents configuration of the transport package
