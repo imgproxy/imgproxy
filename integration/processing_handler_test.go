@@ -43,7 +43,7 @@ func (s *ProcessingHandlerTestSuite) SetupSuite() {
 	logrus.SetOutput(io.Discard)
 
 	// Initialize test data provider (local test files)
-	s.testData = testutil.NewTestDataProvider(s.T())
+	s.testData = testutil.NewTestDataProvider(s.T)
 
 	s.config, _ = testutil.NewLazySuiteObj(s, func() (*imgproxy.Config, error) {
 		c, err := imgproxy.LoadConfigFromEnv(nil)

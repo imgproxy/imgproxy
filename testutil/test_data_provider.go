@@ -15,22 +15,25 @@ const (
 	TestDataFolderName = "testdata"
 )
 
+// TestDataProviderT is a function that returns a [testing.T]
+type TestDataProviderT func() *testing.T
+
 // TestDataProvider provides access to test data images
 type TestDataProvider struct {
 	path string
-	t    *testing.T
+	t    TestDataProviderT
 }
 
 // New creates a new TestDataProvider
-func NewTestDataProvider(t *testing.T) *TestDataProvider {
+func NewTestDataProvider(t TestDataProviderT) *TestDataProvider {
 	// if h, ok := t.(interface{ Helper() }); ok {
 	// 	h.Helper()
 	// }
-	t.Helper()
+	t().Helper()
 
 	path, err := findProjectRoot()
 	if err != nil {
-		require.NoError(t, err)
+		require.NoError(t(), err)
 	}
 
 	return &TestDataProvider{
@@ -80,10 +83,10 @@ func (p *TestDataProvider) Path(parts ...string) string {
 
 // Read reads a test data file and returns it as bytes
 func (p *TestDataProvider) Read(name string) []byte {
-	p.t.Helper()
+	p.t().Helper()
 
 	data, err := os.ReadFile(p.Path(name))
-	require.NoError(p.t, err)
+	require.NoError(p.t(), err)
 	return data
 }
 
@@ -95,5 +98,5 @@ func (p *TestDataProvider) Reader(name string) *bytes.Reader {
 // FileEqualsToReader compares the contents of a test data file with the contents of the given reader
 func (p *TestDataProvider) FileEqualsToReader(name string, reader io.Reader) bool {
 	expected := p.Reader(name)
-	return ReadersEqual(p.t, expected, reader)
+	return ReadersEqual(p.t(), expected, reader)
 }

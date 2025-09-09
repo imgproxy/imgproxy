@@ -35,7 +35,7 @@ type LoadTestSuite struct {
 
 // SetupSuite starts imgproxy instance server
 func (s *LoadTestSuite) SetupSuite() {
-	s.testData = testutil.NewTestDataProvider(s.T())
+	s.testData = testutil.NewTestDataProvider(s.T)
 	s.testImagesPath = s.testData.Path("test-images")
 
 	c, err := imgproxy.LoadConfigFromEnv(nil)
