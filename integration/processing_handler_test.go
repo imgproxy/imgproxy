@@ -2,15 +2,12 @@ package integration
 
 import (
 	"fmt"
-	"io"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"regexp"
 	"testing"
 	"time"
 
-	"github.com/imgproxy/imgproxy/v3"
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/config/configurators"
 	"github.com/imgproxy/imgproxy/v3/fetcher"
@@ -20,55 +17,12 @@ import (
 	"github.com/imgproxy/imgproxy/v3/svg"
 	"github.com/imgproxy/imgproxy/v3/testutil"
 	"github.com/imgproxy/imgproxy/v3/vips"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 )
 
 // ProcessingHandlerTestSuite is a test suite for testing image processing handler
 type ProcessingHandlerTestSuite struct {
 	Suite
-
-	testData *testutil.TestDataProvider
-
-	// NOTE: lazy obj is required here because in the specific tests we sometimes
-	// change the config values in config.go. Config instantiation should
-	// happen afterwards. It is done via lazy obj. When all config values will be moved
-	// to imgproxy.Config struct, this can be removed.
-	config testutil.LazyObj[*imgproxy.Config]
-	server testutil.LazyObj[*TestServer]
-}
-
-func (s *ProcessingHandlerTestSuite) SetupSuite() {
-	// Silence all the logs
-	logrus.SetOutput(io.Discard)
-
-	// Initialize test data provider (local test files)
-	s.testData = testutil.NewTestDataProvider(s.T)
-
-	s.config, _ = testutil.NewLazySuiteObj(s, func() (*imgproxy.Config, error) {
-		c, err := imgproxy.LoadConfigFromEnv(nil)
-		s.Require().NoError(err)
-
-		c.Fetcher.Transport.Local.Root = s.testData.Root()
-		c.Fetcher.Transport.HTTP.ClientKeepAliveTimeout = 0
-
-		return c, nil
-	})
-
-	s.server, _ = testutil.NewLazySuiteObj(
-		s,
-		func() (*TestServer, error) {
-			return s.StartImgproxy(s.config()), nil
-		},
-		func(s *TestServer) error {
-			s.Shutdown()
-			return nil
-		},
-	)
-}
-
-func (s *ProcessingHandlerTestSuite) TearDownSuite() {
-	logrus.SetOutput(os.Stdout)
 }
 
 func (s *ProcessingHandlerTestSuite) SetupTest() {
@@ -82,26 +36,6 @@ func (s *ProcessingHandlerTestSuite) SetupTest() {
 func (s *ProcessingHandlerTestSuite) SetupSubTest() {
 	// We use t.Run() a lot, so we need to reset lazy objects at the beginning of each subtest
 	s.ResetLazyObjects()
-}
-
-// GET performs a GET request to the imageproxy real server
-// NOTE: Do not forget to move this to Suite in case of need in other future test suites
-func (s *ProcessingHandlerTestSuite) GET(path string, header ...http.Header) *http.Response {
-	url := fmt.Sprintf("http://%s%s", s.server().Addr, path)
-
-	// Perform GET request to an url
-	req, _ := http.NewRequest("GET", url, nil)
-	for h := range header {
-		for k, v := range header[h] {
-			req.Header.Set(k, v[0]) // only first value will go to the request
-		}
-	}
-
-	// Do the request
-	resp, err := http.DefaultClient.Do(req)
-	s.Require().NoError(err)
-
-	return resp
 }
 
 func (s *ProcessingHandlerTestSuite) TestSignatureValidationFailure() {
@@ -196,7 +130,7 @@ func (s *ProcessingHandlerTestSuite) TestSourceValidation() {
 }
 
 func (s *ProcessingHandlerTestSuite) TestSourceNetworkValidation() {
-	data := s.testData.Read("test1.png")
+	data := s.TestData.Read("test1.png")
 
 	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		rw.WriteHeader(200)
@@ -242,14 +176,14 @@ func (s *ProcessingHandlerTestSuite) TestSkipProcessingConfig() {
 	res := s.GET("/unsafe/rs:fill:4:4/plain/local:///test1.png")
 
 	s.Require().Equal(http.StatusOK, res.StatusCode)
-	s.Require().True(s.testData.FileEqualsToReader("test1.png", res.Body))
+	s.Require().True(s.TestData.FileEqualsToReader("test1.png", res.Body))
 }
 
 func (s *ProcessingHandlerTestSuite) TestSkipProcessingPO() {
 	res := s.GET("/unsafe/rs:fill:4:4/skp:png/plain/local:///test1.png")
 
 	s.Require().Equal(http.StatusOK, res.StatusCode)
-	s.Require().True(s.testData.FileEqualsToReader("test1.png", res.Body))
+	s.Require().True(s.TestData.FileEqualsToReader("test1.png", res.Body))
 }
 
 func (s *ProcessingHandlerTestSuite) TestSkipProcessingSameFormat() {
@@ -258,7 +192,7 @@ func (s *ProcessingHandlerTestSuite) TestSkipProcessingSameFormat() {
 	res := s.GET("/unsafe/rs:fill:4:4/plain/local:///test1.png@png")
 
 	s.Require().Equal(http.StatusOK, res.StatusCode)
-	s.Require().True(s.testData.FileEqualsToReader("test1.png", res.Body))
+	s.Require().True(s.TestData.FileEqualsToReader("test1.png", res.Body))
 }
 
 func (s *ProcessingHandlerTestSuite) TestSkipProcessingDifferentFormat() {
@@ -267,7 +201,7 @@ func (s *ProcessingHandlerTestSuite) TestSkipProcessingDifferentFormat() {
 	res := s.GET("/unsafe/rs:fill:4:4/plain/local:///test1.png@jpg")
 
 	s.Require().Equal(http.StatusOK, res.StatusCode)
-	s.Require().False(s.testData.FileEqualsToReader("test1.png", res.Body))
+	s.Require().False(s.TestData.FileEqualsToReader("test1.png", res.Body))
 }
 
 func (s *ProcessingHandlerTestSuite) TestSkipProcessingSVG() {
@@ -281,7 +215,7 @@ func (s *ProcessingHandlerTestSuite) TestSkipProcessingSVG() {
 
 	idf := imagedata.NewFactory(f)
 
-	data, err := idf.NewFromBytes(s.testData.Read("test1.svg"))
+	data, err := idf.NewFromBytes(s.TestData.Read("test1.svg"))
 	s.Require().NoError(err)
 
 	expected, err := svg.Sanitize(data)
@@ -294,7 +228,7 @@ func (s *ProcessingHandlerTestSuite) TestNotSkipProcessingSVGToJPG() {
 	res := s.GET("/unsafe/rs:fill:4:4/plain/local:///test1.svg@jpg")
 
 	s.Require().Equal(http.StatusOK, res.StatusCode)
-	s.Require().False(s.testData.FileEqualsToReader("test1.svg", res.Body))
+	s.Require().False(s.TestData.FileEqualsToReader("test1.svg", res.Body))
 }
 
 func (s *ProcessingHandlerTestSuite) TestErrorSavingToSVG() {
@@ -304,13 +238,13 @@ func (s *ProcessingHandlerTestSuite) TestErrorSavingToSVG() {
 }
 
 func (s *ProcessingHandlerTestSuite) TestCacheControlPassthroughCacheControl() {
-	s.config().HeaderWriter.CacheControlPassthrough = true
+	s.Config().HeaderWriter.CacheControlPassthrough = true
 
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		rw.Header().Set(httpheaders.CacheControl, "max-age=1234, public")
 		rw.Header().Set(httpheaders.Expires, time.Now().Add(time.Hour).UTC().Format(http.TimeFormat))
 		rw.WriteHeader(200)
-		rw.Write(s.testData.Read("test1.png"))
+		rw.Write(s.TestData.Read("test1.png"))
 	}))
 	defer ts.Close()
 
@@ -327,7 +261,7 @@ func (s *ProcessingHandlerTestSuite) TestCacheControlPassthroughExpires() {
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		rw.Header().Set(httpheaders.Expires, time.Now().Add(1239*time.Second).UTC().Format(http.TimeFormat))
 		rw.WriteHeader(200)
-		rw.Write(s.testData.Read("test1.png"))
+		rw.Write(s.TestData.Read("test1.png"))
 	}))
 	defer ts.Close()
 
@@ -345,7 +279,7 @@ func (s *ProcessingHandlerTestSuite) TestCacheControlPassthroughDisabled() {
 		rw.Header().Set(httpheaders.CacheControl, "max-age=1234, public")
 		rw.Header().Set(httpheaders.Expires, time.Now().Add(time.Hour).UTC().Format(http.TimeFormat))
 		rw.WriteHeader(200)
-		rw.Write(s.testData.Read("test1.png"))
+		rw.Write(s.TestData.Read("test1.png"))
 	}))
 	defer ts.Close()
 
@@ -391,7 +325,7 @@ func (s *ProcessingHandlerTestSuite) TestLastModifiedEnabled() {
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		rw.Header().Set(httpheaders.LastModified, "Wed, 21 Oct 2015 07:28:00 GMT")
 		rw.WriteHeader(200)
-		rw.Write(s.testData.Read("test1.png"))
+		rw.Write(s.TestData.Read("test1.png"))
 	}))
 	defer ts.Close()
 
@@ -405,7 +339,7 @@ func (s *ProcessingHandlerTestSuite) TestLastModifiedDisabled() {
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		rw.Header().Set(httpheaders.LastModified, "Wed, 21 Oct 2015 07:28:00 GMT")
 		rw.WriteHeader(200)
-		rw.Write(s.testData.Read("test1.png"))
+		rw.Write(s.TestData.Read("test1.png"))
 	}))
 	defer ts.Close()
 
@@ -416,7 +350,7 @@ func (s *ProcessingHandlerTestSuite) TestLastModifiedDisabled() {
 
 func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqExactMatchLastModifiedDisabled() {
 	config.LastModifiedEnabled = false
-	data := s.testData.Read("test1.png")
+	data := s.TestData.Read("test1.png")
 	lastModified := "Wed, 21 Oct 2015 07:28:00 GMT"
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		modifiedSince := r.Header.Get(httpheaders.IfModifiedSince)
@@ -451,7 +385,7 @@ func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqExactMatchLastModifiedE
 }
 
 func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqCompareMoreRecentLastModifiedDisabled() {
-	data := s.testData.Read("test1.png")
+	data := s.TestData.Read("test1.png")
 	config.LastModifiedEnabled = false
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		modifiedSince := r.Header.Get(httpheaders.IfModifiedSince)
@@ -492,8 +426,8 @@ func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqCompareMoreRecentLastMo
 }
 
 func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqCompareTooOldLastModifiedDisabled() {
-	s.config().ProcessingHandler.LastModifiedEnabled = false
-	data := s.testData.Read("test1.png")
+	s.Config().ProcessingHandler.LastModifiedEnabled = false
+	data := s.TestData.Read("test1.png")
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		modifiedSince := r.Header.Get(httpheaders.IfModifiedSince)
 		s.Empty(modifiedSince)
@@ -513,7 +447,7 @@ func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqCompareTooOldLastModifi
 
 func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqCompareTooOldLastModifiedEnabled() {
 	config.LastModifiedEnabled = true
-	data := s.testData.Read("test1.png")
+	data := s.TestData.Read("test1.png")
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		fileLastModified, _ := time.Parse(http.TimeFormat, "Wed, 21 Oct 2015 07:28:00 GMT")
 		modifiedSince := r.Header.Get(httpheaders.IfModifiedSince)
@@ -578,7 +512,7 @@ func (s *ProcessingHandlerTestSuite) TestMaxSrcFileSizeGlobal() {
 
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		rw.WriteHeader(200)
-		rw.Write(s.testData.Read("test1.png"))
+		rw.Write(s.TestData.Read("test1.png"))
 	}))
 	defer ts.Close()
 

@@ -13,10 +13,8 @@ import (
 	"testing"
 
 	"github.com/corona10/goimagehash"
-	"github.com/imgproxy/imgproxy/v3"
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
-	"github.com/imgproxy/imgproxy/v3/testutil"
 	"github.com/imgproxy/imgproxy/v3/vips"
 	"github.com/stretchr/testify/suite"
 )
@@ -27,31 +25,17 @@ const (
 
 type LoadTestSuite struct {
 	Suite
-	testData       *testutil.TestDataProvider
-	testImagesPath string
 
-	server *TestServer
+	testImagesPath string
 }
 
-// SetupSuite starts imgproxy instance server
-func (s *LoadTestSuite) SetupSuite() {
-	s.testData = testutil.NewTestDataProvider(s.T)
-	s.testImagesPath = s.testData.Path("test-images")
+func (s *LoadTestSuite) SetupTest() {
+	s.testImagesPath = s.TestData.Path("test-images")
 
-	c, err := imgproxy.LoadConfigFromEnv(nil)
-	s.Require().NoError(err)
-
-	c.Fetcher.Transport.Local.Root = s.testImagesPath
 	config.MaxAnimationFrames = 999
 	config.DevelopmentErrorsMode = true
 
-	// In this test we start the single imgproxy server for all test cases
-	s.server = s.StartImgproxy(c)
-}
-
-// TearDownSuite stops imgproxy instance server
-func (s *LoadTestSuite) TearDownSuite() {
-	s.server.Shutdown()
+	s.Config().Fetcher.Transport.Local.Root = s.testImagesPath
 }
 
 // testLoadFolder fetches images iterates over images in the specified folder,
@@ -80,7 +64,7 @@ func (s *LoadTestSuite) testLoadFolder(folder string) {
 		referencePath = filepath.Join(s.testImagesPath, "integration", folder, referencePath)
 
 		// Construct the source URL for imgproxy (no processing)
-		sourceUrl := fmt.Sprintf("insecure/plain/local:///%s/%s@png", folder, basePath)
+		sourceUrl := fmt.Sprintf("/insecure/plain/local:///%s/%s@png", folder, basePath)
 
 		imgproxyImageBytes := s.fetchImage(sourceUrl)
 		imgproxyImage, err := png.Decode(bytes.NewReader(imgproxyImageBytes))
@@ -114,16 +98,13 @@ func (s *LoadTestSuite) testLoadFolder(folder string) {
 
 // fetchImage fetches an image from the imgproxy server
 func (s *LoadTestSuite) fetchImage(path string) []byte {
-	url := fmt.Sprintf("http://%s/%s", s.server.Addr, path)
-
-	resp, err := http.Get(url)
-	s.Require().NoError(err, "Failed to fetch image from %s", url)
+	resp := s.GET(path)
 	defer resp.Body.Close()
 
-	s.Require().Equal(http.StatusOK, resp.StatusCode, "Expected status code 200 OK, got %d, url: %s", resp.StatusCode, url)
+	s.Require().Equal(http.StatusOK, resp.StatusCode, "Expected status code 200 OK, got %d, path: %s", resp.StatusCode, path)
 
 	bytes, err := io.ReadAll(resp.Body)
-	s.Require().NoError(err, "Failed to read response body from %s", url)
+	s.Require().NoError(err, "Failed to read response body from %s", path)
 
 	return bytes
 }
