@@ -22,7 +22,6 @@ import (
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/testutil"
-	"github.com/imgproxy/imgproxy/v3/transport"
 )
 
 type ImageDataTestSuite struct {
@@ -70,16 +69,10 @@ func (s *ImageDataTestSuite) SetupSuite() {
 		rw.Write(data)
 	}))
 
-	ctr, err := transport.LoadConfigFromEnv(nil)
-	s.Require().NoError(err)
-
-	ts, err := transport.New(ctr)
-	s.Require().NoError(err)
-
 	c, err := fetcher.LoadConfigFromEnv(nil)
 	s.Require().NoError(err)
 
-	fetcher, err := fetcher.New(ts, c)
+	fetcher, err := fetcher.New(c)
 	s.Require().NoError(err)
 
 	s.factory = NewFactory(fetcher)

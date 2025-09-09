@@ -10,8 +10,8 @@ import (
 	"github.com/fsouza/fake-gcs-server/fakestorage"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/imgproxy/imgproxy/v3/fetcher/transport/generichttp"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
-	"github.com/imgproxy/imgproxy/v3/transport/generichttp"
 )
 
 func getFreePort() (int, error) {

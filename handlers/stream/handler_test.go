@@ -20,7 +20,6 @@ import (
 	"github.com/imgproxy/imgproxy/v3/headerwriter"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/options"
-	"github.com/imgproxy/imgproxy/v3/transport"
 )
 
 const (
@@ -49,15 +48,9 @@ func (s *HandlerTestSuite) SetupTest() {
 	config.Reset()
 	config.AllowLoopbackSourceAddresses = true
 
-	trc, err := transport.LoadConfigFromEnv(nil)
-	s.Require().NoError(err)
-
-	tr, err := transport.New(trc)
-	s.Require().NoError(err)
-
 	fc := fetcher.NewDefaultConfig()
 
-	fetcher, err := fetcher.New(tr, &fc)
+	fetcher, err := fetcher.New(&fc)
 	s.Require().NoError(err)
 
 	cfg := NewDefaultConfig()
@@ -349,16 +342,10 @@ func (s *HandlerTestSuite) TestHandlerCacheControl() {
 			}))
 			defer ts.Close()
 
-			trc, err := transport.LoadConfigFromEnv(nil)
+			fc, err := fetcher.LoadConfigFromEnv(nil)
 			s.Require().NoError(err)
 
-			// Create new handler with updated config for each test
-			tr, err := transport.New(trc)
-			s.Require().NoError(err)
-
-			fc := fetcher.NewDefaultConfig()
-
-			fetcher, err := fetcher.New(tr, &fc)
+			fetcher, err := fetcher.New(fc)
 			s.Require().NoError(err)
 
 			cfg := NewDefaultConfig()
@@ -446,15 +433,10 @@ func (s *HandlerTestSuite) TestHandlerErrorResponse() {
 
 // TestHandlerCookiePassthrough tests the cookie passthrough behavior of the streaming service.
 func (s *HandlerTestSuite) TestHandlerCookiePassthrough() {
-	trc, err := transport.LoadConfigFromEnv(nil)
+	fc, err := fetcher.LoadConfigFromEnv(nil)
 	s.Require().NoError(err)
 
-	// Create new handler with updated config
-	tr, err := transport.New(trc)
-	s.Require().NoError(err)
-
-	fc := fetcher.NewDefaultConfig()
-	fetcher, err := fetcher.New(tr, &fc)
+	fetcher, err := fetcher.New(fc)
 	s.Require().NoError(err)
 
 	cfg := NewDefaultConfig()
@@ -506,15 +488,10 @@ func (s *HandlerTestSuite) TestHandlerCanonicalHeader() {
 	defer ts.Close()
 
 	for _, sc := range []bool{true, false} {
-		trc, err := transport.LoadConfigFromEnv(nil)
+		fc, err := fetcher.LoadConfigFromEnv(nil)
 		s.Require().NoError(err)
 
-		// Create new handler with updated config
-		tr, err := transport.New(trc)
-		s.Require().NoError(err)
-
-		fc := fetcher.NewDefaultConfig()
-		fetcher, err := fetcher.New(tr, &fc)
+		fetcher, err := fetcher.New(fc)
 		s.Require().NoError(err)
 
 		cfg := NewDefaultConfig()

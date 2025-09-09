@@ -2,6 +2,7 @@ package imgproxy
 
 import (
 	"context"
+	"net"
 	"time"
 
 	"github.com/imgproxy/imgproxy/v3/auximageprovider"
@@ -15,7 +16,6 @@ import (
 	"github.com/imgproxy/imgproxy/v3/monitoring/prometheus"
 	"github.com/imgproxy/imgproxy/v3/semaphores"
 	"github.com/imgproxy/imgproxy/v3/server"
-	"github.com/imgproxy/imgproxy/v3/transport"
 )
 
 const (
@@ -43,12 +43,7 @@ func New(ctx context.Context, config *Config) (*Imgproxy, error) {
 		return nil, err
 	}
 
-	ts, err := transport.New(&config.Transport)
-	if err != nil {
-		return nil, err
-	}
-
-	fetcher, err := fetcher.New(ts, &config.Fetcher)
+	fetcher, err := fetcher.New(&config.Fetcher)
 	if err != nil {
 		return nil, err
 	}
@@ -123,7 +118,9 @@ func (i *Imgproxy) BuildRouter() (*server.Router, error) {
 }
 
 // Start runs the imgproxy server. This function blocks until the context is cancelled.
-func (i *Imgproxy) StartServer(ctx context.Context) error {
+// If hasStarted is not nil, it will be notified with the server address once
+// the server is ready or about to be ready to accept requests.
+func (i *Imgproxy) StartServer(ctx context.Context, hasStarted chan net.Addr) error {
 	go i.startMemoryTicker(ctx)
 
 	ctx, cancel := context.WithCancel(ctx)
@@ -142,6 +139,11 @@ func (i *Imgproxy) StartServer(ctx context.Context) error {
 		return err
 	}
 	defer s.Shutdown(context.Background())
+
+	if hasStarted != nil {
+		hasStarted <- s.Addr
+		close(hasStarted)
+	}
 
 	<-ctx.Done()
 

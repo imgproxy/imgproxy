@@ -10,7 +10,7 @@ import (
 	"github.com/ncw/swift/v2/swifttest"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/imgproxy/imgproxy/v3/transport/generichttp"
+	"github.com/imgproxy/imgproxy/v3/fetcher/transport/generichttp"
 )
 
 const (

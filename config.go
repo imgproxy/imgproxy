@@ -9,7 +9,6 @@ import (
 	"github.com/imgproxy/imgproxy/v3/headerwriter"
 	"github.com/imgproxy/imgproxy/v3/semaphores"
 	"github.com/imgproxy/imgproxy/v3/server"
-	"github.com/imgproxy/imgproxy/v3/transport"
 )
 
 // Config represents an instance configuration
@@ -18,7 +17,6 @@ type Config struct {
 	Semaphores        semaphores.Config
 	FallbackImage     auximageprovider.StaticConfig
 	WatermarkImage    auximageprovider.StaticConfig
-	Transport         transport.Config
 	Fetcher           fetcher.Config
 	ProcessingHandler processinghandler.Config
 	StreamHandler     stream.Config
@@ -32,7 +30,6 @@ func NewDefaultConfig() Config {
 		Semaphores:        semaphores.NewDefaultConfig(),
 		FallbackImage:     auximageprovider.NewDefaultStaticConfig(),
 		WatermarkImage:    auximageprovider.NewDefaultStaticConfig(),
-		Transport:         transport.NewDefaultConfig(),
 		Fetcher:           fetcher.NewDefaultConfig(),
 		ProcessingHandler: processinghandler.NewDefaultConfig(),
 		StreamHandler:     stream.NewDefaultConfig(),
@@ -63,10 +60,6 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 	}
 
 	if _, err = semaphores.LoadConfigFromEnv(&c.Semaphores); err != nil {
-		return nil, err
-	}
-
-	if _, err = transport.LoadConfigFromEnv(&c.Transport); err != nil {
 		return nil, err
 	}
 

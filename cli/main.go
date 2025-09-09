@@ -42,7 +42,7 @@ func run(ctx context.Context, cmd *cli.Command) error {
 		return err
 	}
 
-	if err := instance.StartServer(ctx); err != nil {
+	if err := instance.StartServer(ctx, nil); err != nil {
 		return err
 	}
 

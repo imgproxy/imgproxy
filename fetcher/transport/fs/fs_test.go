@@ -24,7 +24,7 @@ func (s *FsTestSuite) SetupSuite() {
 	wd, err := os.Getwd()
 	s.Require().NoError(err)
 
-	fsRoot := filepath.Join(wd, "..", "..", "testdata")
+	fsRoot := filepath.Join(wd, "..", "..", "..", "testdata")
 
 	fi, err := os.Stat(filepath.Join(fsRoot, "test1.png"))
 	s.Require().NoError(err)

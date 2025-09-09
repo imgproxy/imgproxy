@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"image/png"
 	"io"
+	"net"
 	"net/http"
 	"os"
 	"path"
@@ -27,25 +28,33 @@ const (
 )
 
 type LoadTestSuite struct {
-	suite.Suite
-	ctx            context.Context
-	cancel         context.CancelFunc
+	Suite
 	testData       *testutil.TestDataProvider
 	testImagesPath string
+
+	addr         net.Addr
+	stopImgproxy context.CancelFunc
 }
 
 // SetupSuite starts imgproxy instance server
 func (s *LoadTestSuite) SetupSuite() {
 	s.testData = testutil.NewTestDataProvider(s.T())
 	s.testImagesPath = s.testData.Path("test-images")
-	s.ctx, s.cancel = context.WithCancel(s.T().Context())
 
-	s.startImgproxy(s.ctx)
+	c, err := imgproxy.LoadConfigFromEnv(nil)
+	s.Require().NoError(err)
+
+	c.Fetcher.Transport.Local.Root = s.testImagesPath
+	config.MaxAnimationFrames = 999
+	config.DevelopmentErrorsMode = true
+
+	// In this test we start the single imgproxy server for all test cases
+	s.addr, s.stopImgproxy = s.StartImgproxy(c)
 }
 
 // TearDownSuite stops imgproxy instance server
 func (s *LoadTestSuite) TearDownSuite() {
-	s.cancel()
+	s.stopImgproxy()
 }
 
 // testLoadFolder fetches images iterates over images in the specified folder,
@@ -108,7 +117,7 @@ func (s *LoadTestSuite) testLoadFolder(folder string) {
 
 // fetchImage fetches an image from the imgproxy server
 func (s *LoadTestSuite) fetchImage(path string) []byte {
-	url := fmt.Sprintf("http://%s:%d/%s", bindHost, bindPort, path)
+	url := fmt.Sprintf("http://%s/%s", s.addr.String(), path)
 
 	resp, err := http.Get(url)
 	s.Require().NoError(err, "Failed to fetch image from %s", url)
@@ -120,30 +129,6 @@ func (s *LoadTestSuite) fetchImage(path string) []byte {
 	s.Require().NoError(err, "Failed to read response body from %s", url)
 
 	return bytes
-}
-
-func (s *LoadTestSuite) startImgproxy(ctx context.Context) *imgproxy.Imgproxy {
-	c, err := imgproxy.LoadConfigFromEnv(nil)
-	s.Require().NoError(err)
-
-	c.Server.Bind = ":" + fmt.Sprintf("%d", bindPort)
-	c.Transport.Local.Root = s.testImagesPath
-	c.Server.LogMemStats = true
-
-	config.MaxAnimationFrames = 999
-	config.DevelopmentErrorsMode = true
-
-	i, err := imgproxy.New(ctx, c)
-	s.Require().NoError(err)
-
-	go func() {
-		err = i.StartServer(ctx)
-		if err != nil {
-			s.T().Errorf("Imgproxy server exited with error: %v", err)
-		}
-	}()
-
-	return i
 }
 
 // TestLoadSaveToPng ensures that our load pipeline works,

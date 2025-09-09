@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	golog "log"
+	"net"
 	"net/http"
 
 	log "github.com/sirupsen/logrus"
@@ -22,6 +23,7 @@ const (
 type Server struct {
 	router *Router
 	server *http.Server
+	Addr   net.Addr
 }
 
 // Start starts the http server. cancel is called in case server failed to start, but it happened
@@ -41,6 +43,8 @@ func Start(cancel context.CancelFunc, router *Router) (*Server, error) {
 		log.WithField("source", "http_server").WriterLevel(log.ErrorLevel),
 		"", 0,
 	)
+
+	addr := l.Addr()
 
 	srv := &http.Server{
 		Handler:        router,
@@ -68,6 +72,7 @@ func Start(cancel context.CancelFunc, router *Router) (*Server, error) {
 	return &Server{
 		router: router,
 		server: srv,
+		Addr:   addr,
 	}, nil
 }
 

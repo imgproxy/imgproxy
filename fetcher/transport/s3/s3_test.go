@@ -15,7 +15,7 @@ import (
 	"github.com/johannesboyne/gofakes3/backend/s3mem"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/imgproxy/imgproxy/v3/transport/generichttp"
+	"github.com/imgproxy/imgproxy/v3/fetcher/transport/generichttp"
 )
 
 type S3TestSuite struct {
