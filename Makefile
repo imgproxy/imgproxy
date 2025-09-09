@@ -9,8 +9,25 @@ GOTEST := $(GOCMD) test
 GOFMT := gofmt
 GOLINT := golangci-lint
 GOTESTSUM := gotestsum
-
 SRCDIR := ./cli
+BREW_PREFIX :=
+
+# Common environment setup for CGO builds
+ifneq ($(shell which brew),)
+	BREW_PREFIX := $(shell brew --prefix)
+endif
+
+# Export CGO environment variables
+export CGO_LDFLAGS_ALLOW := -s|-w
+
+# Library paths for Homebrew-installed libraries on macOS
+ifdef BREW_PREFIX
+	export PKG_CONFIG_PATH := $(PKG_CONFIG_PATH):$(shell brew --prefix libffi)/lib/pkgconfig
+	export PKG_CONFIG_PATH := $(PKG_CONFIG_PATH):$(shell brew --prefix libarchive)/lib/pkgconfig
+	export PKG_CONFIG_PATH := $(PKG_CONFIG_PATH):$(shell brew --prefix cfitsio)/lib/pkgconfig
+
+	export CGO_LDFLAGS := $(CGO_LDFLAGS) -Wl,-no_warn_duplicate_libraries
+endif
 
 # Default target
 .PHONY: all
@@ -22,17 +39,13 @@ all: build
 #	make build -- -o output_name
 .PHONY: build
 build:
-	@args="$(filter-out $@,$(MAKECMDGOALS))"; \
-	if echo "$$args" | grep -q "\-o"; then \
-		$(GOBUILD) $$args $(SRCDIR); \
-	else \
-		$(GOBUILD) -o $(BINARY) $$args $(SRCDIR); \
-	fi
+	@$(GOBUILD) -o $(BINARY) $(filter-out $@,$(MAKECMDGOALS)) $(SRCDIR); \
 
 # Clean
 .PHONY: clean
 clean:
-	$(GOCLEAN)
+	echo $$PKG_CONFIG_PATH
+	@$(GOCLEAN)
 	rm -f $(BINARY)
 
 # Run tests
@@ -41,24 +54,21 @@ clean:
 #	make test -- -run FooTest
 .PHONY: test
 test:
-	@$(GOTEST) ./... $(filter-out $@,$(MAKECMDGOALS))
-
-# Run gotestsum
-#
-# Usage:
-#	make testsum -- -run FooTest
-testsum:
-	@$(GOTESTSUM) -- $(filter-out $@,$(MAKECMDGOALS))
+ifneq ($(shell which $(GOTESTSUM)),)
+	@$(GOTESTSUM) ./...
+else
+	@$(GOTEST) -v ./...
+endif
 
 # Format code
 .PHONY: fmt
 fmt:
-	$(GOFMT) -s -w .
+	@$(GOFMT) -s -w .
 
 # Lint code (requires golangci-lint installed)
 .PHONY: lint
 lint:
-	$(GOLINT) run ./...
+	@$(GOLINT) run
 
 # Make any unknown target do nothing to avoid "up to date" messages
 .PHONY: FORCE

@@ -12,3 +12,9 @@ if `IMGPROXY_USE_ETAG` is true.
 ### ❌ Removed
 
 - `Etag` calculations on the imgproxy side
+
+## 2025-09-09
+
+### ❌ Removed
+
+- `--keys`, `--salts` CLI args

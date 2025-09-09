@@ -2,8 +2,6 @@ package imgproxy
 
 import (
 	"context"
-	"os/signal"
-	"syscall"
 	"time"
 
 	"github.com/imgproxy/imgproxy/v3/auximageprovider"
@@ -128,7 +126,7 @@ func (i *Imgproxy) BuildRouter() (*server.Router, error) {
 func (i *Imgproxy) StartServer(ctx context.Context) error {
 	go i.startMemoryTicker(ctx)
 
-	ctx, cancel := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGTERM)
+	ctx, cancel := context.WithCancel(ctx)
 
 	if err := prometheus.StartServer(cancel); err != nil {
 		return err

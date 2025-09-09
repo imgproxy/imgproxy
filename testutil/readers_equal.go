@@ -2,6 +2,7 @@ package testutil
 
 import (
 	"io"
+	"testing"
 
 	"github.com/stretchr/testify/require"
 )
@@ -10,10 +11,10 @@ const bufSize = 4096
 
 // RequireReadersEqual compares two io.Reader contents in a streaming manner.
 // It fails the test if contents differ or if reading fails.
-func ReadersEqual(t require.TestingT, expected, actual io.Reader) bool {
-	if h, ok := t.(interface{ Helper() }); ok {
-		h.Helper()
-	}
+func ReadersEqual(t *testing.T, expected, actual io.Reader) bool {
+	// Marks this function as a test helper so in case failure happens here, location would
+	// point to the correct line in the calling test.
+	t.Helper()
 
 	buf1 := make([]byte, bufSize)
 	buf2 := make([]byte, bufSize)

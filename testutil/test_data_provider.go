@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"testing"
 
 	"github.com/stretchr/testify/require"
 )
@@ -17,14 +18,15 @@ const (
 // TestDataProvider provides access to test data images
 type TestDataProvider struct {
 	path string
-	t    require.TestingT
+	t    *testing.T
 }
 
 // New creates a new TestDataProvider
-func NewTestDataProvider(t require.TestingT) *TestDataProvider {
-	if h, ok := t.(interface{ Helper() }); ok {
-		h.Helper()
-	}
+func NewTestDataProvider(t *testing.T) *TestDataProvider {
+	// if h, ok := t.(interface{ Helper() }); ok {
+	// 	h.Helper()
+	// }
+	t.Helper()
 
 	path, err := findProjectRoot()
 	if err != nil {
@@ -78,9 +80,7 @@ func (p *TestDataProvider) Path(parts ...string) string {
 
 // Read reads a test data file and returns it as bytes
 func (p *TestDataProvider) Read(name string) []byte {
-	if h, ok := p.t.(interface{ Helper() }); ok {
-		h.Helper()
-	}
+	p.t.Helper()
 
 	data, err := os.ReadFile(p.Path(name))
 	require.NoError(p.t, err)

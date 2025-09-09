@@ -5,13 +5,4 @@ if ! git diff --staged --name-only | grep -qE ".*\.go$|\.golangci\.yml$"; then
   exit 0;
 fi
 
-if [ -x "$(which brew)" ]; then
-  export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:$(brew --prefix libffi)/lib/pkgconfig"
-  export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:$(brew --prefix libarchive)/lib/pkgconfig"
-  export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:$(brew --prefix cfitsio)/lib/lib/pkgconfig"
-fi
-
-export CGO_LDFLAGS_ALLOW="-s|-w"
-export CGO_CFLAGS_ALLOW="-I|-Xpreprocessor"
-
-golangci-lint --build-tags integration run
+make lint

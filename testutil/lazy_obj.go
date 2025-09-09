@@ -1,6 +1,8 @@
 package testutil
 
 import (
+	"testing"
+
 	"github.com/stretchr/testify/require"
 )
 
@@ -11,10 +13,8 @@ type LazyObj[T any] func() T
 type LazyObjInit[T any] func() (T, error)
 
 // NewLazyObj creates a new LazyObj that initializes the object on the first call.
-func NewLazyObj[T any](t require.TestingT, init LazyObjInit[T]) LazyObj[T] {
-	if h, ok := t.(interface{ Helper() }); ok {
-		h.Helper()
-	}
+func NewLazyObj[T any](t *testing.T, init LazyObjInit[T]) LazyObj[T] {
+	t.Helper()
 
 	var obj *T
 

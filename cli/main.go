@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/imgproxy/imgproxy/v3"
 	"github.com/imgproxy/imgproxy/v3/version"
@@ -19,10 +21,8 @@ func ver(ctx context.Context, c *cli.Command) error {
 
 // run starts the imgproxy server
 func run(ctx context.Context, cmd *cli.Command) error {
-	// NOTE: for now, these flags are loaded in config.go package
+	// NOTE: for now, this flag is loaded in config.go package
 
-	// keypath := cmd.String("keypath")
-	// saltpath := cmd.String("saltpath")
 	// presets := cmd.String("presets")
 
 	if err := imgproxy.Init(); err != nil {
@@ -34,6 +34,8 @@ func run(ctx context.Context, cmd *cli.Command) error {
 	if err != nil {
 		return err
 	}
+
+	ctx, _ = signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGTERM)
 
 	instance, err := imgproxy.New(ctx, cfg)
 	if err != nil {
@@ -52,14 +54,6 @@ func main() {
 		Name:  "imgproxy",
 		Usage: "Fast and secure standalone server for resizing and converting remote images",
 		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:  "keypath",
-				Usage: "path of the file with hex-encoded key",
-			},
-			&cli.StringFlag{
-				Name:  "saltpath",
-				Usage: "path of the file with hex-encoded salt",
-			},
 			&cli.StringFlag{
 				Name:  "presets",
 				Usage: "path of the file with presets",
