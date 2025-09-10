@@ -1,4 +1,4 @@
-package processing
+package handlers
 
 import (
 	"fmt"
@@ -12,16 +12,17 @@ import (
 // fixPathRe is used in path re-denormalization
 var fixPathRe = regexp.MustCompile(`/plain/(\S+)\:/([^/])`)
 
-// splitPathSignature splits signature and path components from the request URI
-func splitPathSignature(r *http.Request, config *Config) (string, string, error) {
+// SplitPathSignature splits signature and path components from the request URI
+func SplitPathSignature(r *http.Request) (string, string, error) {
 	uri := r.RequestURI
 
 	// cut query params
 	uri, _, _ = strings.Cut(uri, "?")
 
-	// cut path prefix
-	if len(config.PathPrefix) > 0 {
-		uri = strings.TrimPrefix(uri, config.PathPrefix)
+	// Cut path prefix.
+	// r.Pattern is set by the router and contains both global and route-specific prefixes combined.
+	if len(r.Pattern) > 0 {
+		uri = strings.TrimPrefix(uri, r.Pattern)
 	}
 
 	// cut leading slash
@@ -30,8 +31,8 @@ func splitPathSignature(r *http.Request, config *Config) (string, string, error)
 	signature, path, _ := strings.Cut(uri, "/")
 	if len(signature) == 0 || len(path) == 0 {
 		return "", "", ierrors.Wrap(
-			newInvalidURLErrorf(http.StatusNotFound, "Invalid path: %s", path), 0,
-			ierrors.WithCategory(categoryPathParsing),
+			NewInvalidURLErrorf(http.StatusNotFound, "Invalid path: %s", path), 0,
+			ierrors.WithCategory(CategoryPathParsing),
 		)
 	}
 

@@ -10,20 +10,18 @@ import (
 
 // Config represents handler config
 type Config struct {
-	PathPrefix              string // Route path prefix
-	CookiePassthrough       bool   // Whether to passthrough cookies
-	ReportDownloadingErrors bool   // Whether to report downloading errors
-	LastModifiedEnabled     bool   // Whether to enable Last-Modified
-	ETagEnabled             bool   // Whether to enable ETag
-	ReportIOErrors          bool   // Whether to report IO errors
-	FallbackImageHTTPCode   int    // Fallback image HTTP status code
-	EnableDebugHeaders      bool   // Whether to enable debug headers
+	CookiePassthrough       bool // Whether to passthrough cookies
+	ReportDownloadingErrors bool // Whether to report downloading errors
+	LastModifiedEnabled     bool // Whether to enable Last-Modified
+	ETagEnabled             bool // Whether to enable ETag
+	ReportIOErrors          bool // Whether to report IO errors
+	FallbackImageHTTPCode   int  // Fallback image HTTP status code
+	EnableDebugHeaders      bool // Whether to enable debug headers
 }
 
 // NewDefaultConfig creates a new configuration with defaults
 func NewDefaultConfig() Config {
 	return Config{
-		PathPrefix:              "",
 		CookiePassthrough:       false,
 		ReportDownloadingErrors: true,
 		LastModifiedEnabled:     true,
@@ -38,7 +36,6 @@ func NewDefaultConfig() Config {
 func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c = ensure.Ensure(c, NewDefaultConfig)
 
-	c.PathPrefix = config.PathPrefix
 	c.CookiePassthrough = config.CookiePassthrough
 	c.ReportDownloadingErrors = config.ReportDownloadingErrors
 	c.LastModifiedEnabled = config.LastModifiedEnabled
