@@ -9,29 +9,26 @@ import (
 	"github.com/imgproxy/imgproxy/v3/handlers"
 	"github.com/imgproxy/imgproxy/v3/headerwriter"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
-	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/monitoring"
 	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
 	"github.com/imgproxy/imgproxy/v3/options"
-	"github.com/imgproxy/imgproxy/v3/semaphores"
 	"github.com/imgproxy/imgproxy/v3/server"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
 // request holds the parameters and state for a single request request
 type request struct {
-	handler        *Handler
-	imageRequest   *http.Request
+	HandlerContext
+
 	reqID          string
+	req            *http.Request
 	rw             http.ResponseWriter
 	config         *Config
 	po             *options.ProcessingOptions
 	imageURL       string
 	monitoringMeta monitoring.Meta
-	semaphores     *semaphores.Semaphores
 	hwr            *headerwriter.Request
-	idf            *imagedata.Factory
 }
 
 // execute handles the actual processing logic
@@ -46,7 +43,7 @@ func (r *request) execute(ctx context.Context) error {
 	}
 
 	// Acquire queue semaphore (if enabled)
-	releaseQueueSem, err := r.semaphores.AcquireQueue()
+	releaseQueueSem, err := r.Semaphores().AcquireQueue()
 	if err != nil {
 		return err
 	}

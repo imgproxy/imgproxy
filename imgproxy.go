@@ -34,14 +34,14 @@ type ImgproxyHandlers struct {
 
 // Imgproxy holds all the components needed for imgproxy to function
 type Imgproxy struct {
-	HeaderWriter     *headerwriter.Writer
-	Semaphores       *semaphores.Semaphores
-	FallbackImage    auximageprovider.Provider
-	WatermarkImage   auximageprovider.Provider
-	Fetcher          *fetcher.Fetcher
-	ImageDataFactory *imagedata.Factory
-	Handlers         ImgproxyHandlers
-	Config           *Config
+	headerWriter     *headerwriter.Writer
+	semaphores       *semaphores.Semaphores
+	fallbackImage    auximageprovider.Provider
+	watermarkImage   auximageprovider.Provider
+	fetcher          *fetcher.Fetcher
+	imageDataFactory *imagedata.Factory
+	handlers         ImgproxyHandlers
+	config           *Config
 }
 
 // New creates a new imgproxy instance
@@ -74,25 +74,25 @@ func New(ctx context.Context, config *Config) (*Imgproxy, error) {
 	}
 
 	imgproxy := &Imgproxy{
-		HeaderWriter:     headerWriter,
-		Semaphores:       semaphores,
-		FallbackImage:    fallbackImage,
-		WatermarkImage:   watermarkImage,
-		Fetcher:          fetcher,
-		ImageDataFactory: idf,
-		Config:           config,
+		headerWriter:     headerWriter,
+		semaphores:       semaphores,
+		fallbackImage:    fallbackImage,
+		watermarkImage:   watermarkImage,
+		fetcher:          fetcher,
+		imageDataFactory: idf,
+		config:           config,
 	}
 
-	imgproxy.Handlers.Health = healthhandler.New()
-	imgproxy.Handlers.Landing = landinghandler.New()
+	imgproxy.handlers.Health = healthhandler.New()
+	imgproxy.handlers.Landing = landinghandler.New()
 
-	imgproxy.Handlers.Stream, err = streamhandler.New(&config.Handlers.Stream, headerWriter, fetcher)
+	imgproxy.handlers.Stream, err = streamhandler.New(&config.Handlers.Stream, headerWriter, fetcher)
 	if err != nil {
 		return nil, err
 	}
 
-	imgproxy.Handlers.Processing, err = processinghandler.New(
-		imgproxy.Handlers.Stream, headerWriter, semaphores, fallbackImage, watermarkImage, idf, &config.Handlers.Processing,
+	imgproxy.handlers.Processing, err = processinghandler.New(
+		imgproxy, imgproxy.handlers.Stream, &config.Handlers.Processing,
 	)
 	if err != nil {
 		return nil, err
@@ -103,22 +103,22 @@ func New(ctx context.Context, config *Config) (*Imgproxy, error) {
 
 // BuildRouter sets up the HTTP routes and middleware
 func (i *Imgproxy) BuildRouter() (*server.Router, error) {
-	r, err := server.NewRouter(&i.Config.Server)
+	r, err := server.NewRouter(&i.config.Server)
 	if err != nil {
 		return nil, err
 	}
 
-	r.GET("/", i.Handlers.Landing.Execute)
-	r.GET("", i.Handlers.Landing.Execute)
+	r.GET("/", i.handlers.Landing.Execute)
+	r.GET("", i.handlers.Landing.Execute)
 
 	r.GET(faviconPath, r.NotFoundHandler).Silent()
-	r.GET(healthPath, i.Handlers.Health.Execute).Silent()
-	if i.Config.Server.HealthCheckPath != "" {
-		r.GET(i.Config.Server.HealthCheckPath, i.Handlers.Health.Execute).Silent()
+	r.GET(healthPath, i.handlers.Health.Execute).Silent()
+	if i.config.Server.HealthCheckPath != "" {
+		r.GET(i.config.Server.HealthCheckPath, i.handlers.Health.Execute).Silent()
 	}
 
 	r.GET(
-		"/*", i.Handlers.Processing.Execute,
+		"/*", i.handlers.Processing.Execute,
 		r.WithSecret, r.WithCORS, r.WithPanic, r.WithReportError, r.WithMonitoring,
 	)
 
@@ -163,7 +163,7 @@ func (i *Imgproxy) StartServer(ctx context.Context, hasStarted chan net.Addr) er
 
 // startMemoryTicker starts a ticker that periodically frees memory and optionally logs memory stats
 func (i *Imgproxy) startMemoryTicker(ctx context.Context) {
-	ticker := time.NewTicker(i.Config.Server.FreeMemoryInterval)
+	ticker := time.NewTicker(i.config.Server.FreeMemoryInterval)
 	defer ticker.Stop()
 
 	for {
@@ -173,9 +173,29 @@ func (i *Imgproxy) startMemoryTicker(ctx context.Context) {
 		case <-ticker.C:
 			memory.Free()
 
-			if i.Config.Server.LogMemStats {
+			if i.config.Server.LogMemStats {
 				memory.LogStats()
 			}
 		}
 	}
+}
+
+func (i *Imgproxy) HeaderWriter() *headerwriter.Writer {
+	return i.headerWriter
+}
+
+func (i *Imgproxy) Semaphores() *semaphores.Semaphores {
+	return i.semaphores
+}
+
+func (i *Imgproxy) FallbackImage() auximageprovider.Provider {
+	return i.fallbackImage
+}
+
+func (i *Imgproxy) WatermarkImage() auximageprovider.Provider {
+	return i.watermarkImage
+}
+
+func (i *Imgproxy) ImageDataFactory() *imagedata.Factory {
+	return i.imageDataFactory
 }
