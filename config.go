@@ -5,35 +5,42 @@ import (
 	"github.com/imgproxy/imgproxy/v3/ensure"
 	"github.com/imgproxy/imgproxy/v3/fetcher"
 	processinghandler "github.com/imgproxy/imgproxy/v3/handlers/processing"
-	"github.com/imgproxy/imgproxy/v3/handlers/stream"
+	streamhandler "github.com/imgproxy/imgproxy/v3/handlers/stream"
 	"github.com/imgproxy/imgproxy/v3/headerwriter"
 	"github.com/imgproxy/imgproxy/v3/semaphores"
 	"github.com/imgproxy/imgproxy/v3/server"
 )
 
+// HandlerConfigs holds the configurations for imgproxy handlers
+type HandlerConfigs struct {
+	Processing processinghandler.Config
+	Stream     streamhandler.Config
+}
+
 // Config represents an instance configuration
 type Config struct {
-	HeaderWriter      headerwriter.Config
-	Semaphores        semaphores.Config
-	FallbackImage     auximageprovider.StaticConfig
-	WatermarkImage    auximageprovider.StaticConfig
-	Fetcher           fetcher.Config
-	ProcessingHandler processinghandler.Config
-	StreamHandler     stream.Config
-	Server            server.Config
+	HeaderWriter   headerwriter.Config
+	Semaphores     semaphores.Config
+	FallbackImage  auximageprovider.StaticConfig
+	WatermarkImage auximageprovider.StaticConfig
+	Fetcher        fetcher.Config
+	Handlers       HandlerConfigs
+	Server         server.Config
 }
 
 // NewDefaultConfig creates a new default configuration
 func NewDefaultConfig() Config {
 	return Config{
-		HeaderWriter:      headerwriter.NewDefaultConfig(),
-		Semaphores:        semaphores.NewDefaultConfig(),
-		FallbackImage:     auximageprovider.NewDefaultStaticConfig(),
-		WatermarkImage:    auximageprovider.NewDefaultStaticConfig(),
-		Fetcher:           fetcher.NewDefaultConfig(),
-		ProcessingHandler: processinghandler.NewDefaultConfig(),
-		StreamHandler:     stream.NewDefaultConfig(),
-		Server:            server.NewDefaultConfig(),
+		HeaderWriter:   headerwriter.NewDefaultConfig(),
+		Semaphores:     semaphores.NewDefaultConfig(),
+		FallbackImage:  auximageprovider.NewDefaultStaticConfig(),
+		WatermarkImage: auximageprovider.NewDefaultStaticConfig(),
+		Fetcher:        fetcher.NewDefaultConfig(),
+		Handlers: HandlerConfigs{
+			Processing: processinghandler.NewDefaultConfig(),
+			Stream:     streamhandler.NewDefaultConfig(),
+		},
+		Server: server.NewDefaultConfig(),
 	}
 }
 
@@ -67,11 +74,11 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 		return nil, err
 	}
 
-	if _, err = processinghandler.LoadConfigFromEnv(&c.ProcessingHandler); err != nil {
+	if _, err = processinghandler.LoadConfigFromEnv(&c.Handlers.Processing); err != nil {
 		return nil, err
 	}
 
-	if _, err = stream.LoadConfigFromEnv(&c.StreamHandler); err != nil {
+	if _, err = streamhandler.LoadConfigFromEnv(&c.Handlers.Stream); err != nil {
 		return nil, err
 	}
 

@@ -1,4 +1,4 @@
-package handlers
+package health
 
 import (
 	"net/http"
@@ -11,8 +11,20 @@ import (
 
 var imgproxyIsRunningMsg = []byte("imgproxy is running")
 
-// HealthHandler handles the health check requests
-func HealthHandler(reqID string, rw http.ResponseWriter, r *http.Request) error {
+// Handler handles health requests
+type Handler struct{}
+
+// New creates new handler object
+func New() *Handler {
+	return &Handler{}
+}
+
+// Execute handles the health request
+func (h *Handler) Execute(
+	reqID string,
+	rw http.ResponseWriter,
+	req *http.Request,
+) error {
 	var (
 		status int
 		msg    []byte
@@ -34,7 +46,7 @@ func HealthHandler(reqID string, rw http.ResponseWriter, r *http.Request) error 
 
 	// Log response only if something went wrong
 	if ierr != nil {
-		server.LogResponse(reqID, r, status, ierr)
+		server.LogResponse(reqID, req, status, ierr)
 	}
 
 	rw.Header().Set(httpheaders.ContentType, "text/plain")
