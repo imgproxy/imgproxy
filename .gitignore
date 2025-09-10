@@ -8,5 +8,6 @@ tmp/
 docker-base
 docs/sitemap.txt
 .env
+.imgproxyrc
 .devcontainer/*
 k6/*.json
