@@ -19,25 +19,27 @@ import (
 	"github.com/imgproxy/imgproxy/v3/semaphores"
 )
 
+// HandlerContext provides access to shared handler dependencies
+type HandlerContext interface {
+	HeaderWriter() *headerwriter.Writer
+	Semaphores() *semaphores.Semaphores
+	FallbackImage() auximageprovider.Provider
+	WatermarkImage() auximageprovider.Provider
+	ImageDataFactory() *imagedata.Factory
+}
+
 // Handler handles image processing requests
 type Handler struct {
-	hw             *headerwriter.Writer // Configured HeaderWriter instance
-	stream         *stream.Handler      // Stream handler for raw image streaming
-	config         *Config              // Handler configuration
-	semaphores     *semaphores.Semaphores
-	fallbackImage  auximageprovider.Provider
-	watermarkImage auximageprovider.Provider
-	idf            *imagedata.Factory
+	HandlerContext
+
+	stream *stream.Handler // Stream handler for raw image streaming
+	config *Config         // Handler configuration
 }
 
 // New creates new handler object
 func New(
+	hCtx HandlerContext,
 	stream *stream.Handler,
-	hw *headerwriter.Writer,
-	semaphores *semaphores.Semaphores,
-	fi auximageprovider.Provider,
-	wi auximageprovider.Provider,
-	idf *imagedata.Factory,
 	config *Config,
 ) (*Handler, error) {
 	if err := config.Validate(); err != nil {
@@ -45,13 +47,9 @@ func New(
 	}
 
 	return &Handler{
-		hw:             hw,
+		HandlerContext: hCtx,
 		config:         config,
 		stream:         stream,
-		semaphores:     semaphores,
-		fallbackImage:  fi,
-		watermarkImage: wi,
-		idf:            idf,
 	}, nil
 }
 
@@ -59,49 +57,48 @@ func New(
 func (h *Handler) Execute(
 	reqID string,
 	rw http.ResponseWriter,
-	imageRequest *http.Request,
+	req *http.Request,
 ) error {
 	// Increment the number of requests in progress
 	stats.IncRequestsInProgress()
 	defer stats.DecRequestsInProgress()
 
-	ctx := imageRequest.Context()
+	ctx := req.Context()
 
 	// Verify URL signature and extract image url and processing options
-	imageURL, po, mm, err := h.newRequest(ctx, imageRequest)
+	imageURL, po, mm, err := h.newRequest(ctx, req)
 	if err != nil {
 		return err
 	}
 
 	// if processing options indicate raw image streaming, stream it and return
 	if po.Raw {
-		return h.stream.Execute(ctx, imageRequest, imageURL, reqID, po, rw)
+		return h.stream.Execute(ctx, req, imageURL, reqID, po, rw)
 	}
 
-	req := &request{
-		handler:        h,
-		imageRequest:   imageRequest,
+	hReq := &request{
+		HandlerContext: h,
+
 		reqID:          reqID,
+		req:            req,
 		rw:             rw,
 		config:         h.config,
 		po:             po,
 		imageURL:       imageURL,
 		monitoringMeta: mm,
-		semaphores:     h.semaphores,
-		hwr:            h.hw.NewRequest(),
-		idf:            h.idf,
+		hwr:            h.HeaderWriter().NewRequest(),
 	}
 
-	return req.execute(ctx)
+	return hReq.execute(ctx)
 }
 
 // newRequest extracts image url and processing options from request URL and verifies them
 func (h *Handler) newRequest(
 	ctx context.Context,
-	imageRequest *http.Request,
+	req *http.Request,
 ) (string, *options.ProcessingOptions, monitoring.Meta, error) {
 	// let's extract signature and valid request path from a request
-	path, signature, err := handlers.SplitPathSignature(imageRequest)
+	path, signature, err := handlers.SplitPathSignature(req)
 	if err != nil {
 		return "", nil, nil, err
 	}
@@ -112,7 +109,7 @@ func (h *Handler) newRequest(
 	}
 
 	// parse image url and processing options
-	po, imageURL, err := options.ParsePath(path, imageRequest.Header)
+	po, imageURL, err := options.ParsePath(path, req.Header)
 	if err != nil {
 		return "", nil, nil, ierrors.Wrap(err, 0, ierrors.WithCategory(handlers.CategoryPathParsing))
 	}
@@ -127,9 +124,9 @@ func (h *Handler) newRequest(
 	}
 
 	// set error reporting and monitoring context
-	errorreport.SetMetadata(imageRequest, "Source Image URL", imageURL)
-	errorreport.SetMetadata(imageRequest, "Source Image Origin", imageOrigin)
-	errorreport.SetMetadata(imageRequest, "Processing Options", po)
+	errorreport.SetMetadata(req, "Source Image URL", imageURL)
+	errorreport.SetMetadata(req, "Source Image Origin", imageOrigin)
+	errorreport.SetMetadata(req, "Processing Options", po)
 
 	monitoring.SetMetadata(ctx, mm)
 

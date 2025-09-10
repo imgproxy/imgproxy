@@ -25,12 +25,12 @@ func (r *request) makeImageRequestHeaders() http.Header {
 
 	// If ETag is enabled, we forward If-None-Match header
 	if r.config.ETagEnabled {
-		h.Set(httpheaders.IfNoneMatch, r.imageRequest.Header.Get(httpheaders.IfNoneMatch))
+		h.Set(httpheaders.IfNoneMatch, r.req.Header.Get(httpheaders.IfNoneMatch))
 	}
 
 	// If LastModified is enabled, we forward If-Modified-Since header
 	if r.config.LastModifiedEnabled {
-		h.Set(httpheaders.IfModifiedSince, r.imageRequest.Header.Get(httpheaders.IfModifiedSince))
+		h.Set(httpheaders.IfModifiedSince, r.req.Header.Get(httpheaders.IfModifiedSince))
 	}
 
 	return h
@@ -40,7 +40,7 @@ func (r *request) makeImageRequestHeaders() http.Header {
 func (r *request) acquireProcessingSem(ctx context.Context) (context.CancelFunc, error) {
 	defer monitoring.StartQueueSegment(ctx)()
 
-	fn, err := r.semaphores.AcquireProcessing(ctx)
+	fn, err := r.Semaphores().AcquireProcessing(ctx)
 	if err != nil {
 		// We don't actually need to check timeout here,
 		// but it's an easy way to check if this is an actual timeout
@@ -76,13 +76,13 @@ func (r *request) fetchImage(ctx context.Context, do imagedata.DownloadOptions) 
 	var err error
 
 	if r.config.CookiePassthrough {
-		do.CookieJar, err = cookies.JarFromRequest(r.imageRequest)
+		do.CookieJar, err = cookies.JarFromRequest(r.req)
 		if err != nil {
 			return nil, nil, ierrors.Wrap(err, 0, ierrors.WithCategory(handlers.CategoryDownload))
 		}
 	}
 
-	return r.idf.DownloadAsync(ctx, r.imageURL, "source image", do)
+	return r.ImageDataFactory().DownloadAsync(ctx, r.imageURL, "source image", do)
 }
 
 // handleDownloadError replaces the image data with fallback image if needed
@@ -103,7 +103,7 @@ func (r *request) handleDownloadError(
 
 	// We didn't return, so we have to report error
 	if err.ShouldReport() {
-		errorreport.Report(err, r.imageRequest)
+		errorreport.Report(err, r.req)
 	}
 
 	log.
@@ -134,16 +134,18 @@ func (r *request) getFallbackImage(
 	ctx context.Context,
 	po *options.ProcessingOptions,
 ) (imagedata.ImageData, http.Header) {
-	if r.handler.fallbackImage == nil {
+	fbi := r.FallbackImage()
+
+	if fbi == nil {
 		return nil, nil
 	}
 
-	data, h, err := r.handler.fallbackImage.Get(ctx, po)
+	data, h, err := fbi.Get(ctx, po)
 	if err != nil {
 		log.Warning(err.Error())
 
 		if ierr := r.wrapDownloadingErr(err); ierr.ShouldReport() {
-			errorreport.Report(ierr, r.imageRequest)
+			errorreport.Report(ierr, r.req)
 		}
 
 		return nil, nil
@@ -155,7 +157,7 @@ func (r *request) getFallbackImage(
 // processImage calls actual image processing
 func (r *request) processImage(ctx context.Context, originData imagedata.ImageData) (*processing.Result, error) {
 	defer monitoring.StartProcessingSegment(ctx, r.monitoringMeta.Filter(monitoring.MetaProcessingOptions))()
-	return processing.ProcessImage(ctx, originData, r.po, r.handler.watermarkImage)
+	return processing.ProcessImage(ctx, originData, r.po, r.WatermarkImage())
 }
 
 // writeDebugHeaders writes debug headers (X-Origin-*, X-Result-*) to the response
@@ -200,7 +202,7 @@ func (r *request) respondWithNotModified() error {
 	r.rw.WriteHeader(http.StatusNotModified)
 
 	server.LogResponse(
-		r.reqID, r.imageRequest, http.StatusNotModified, nil,
+		r.reqID, r.req, http.StatusNotModified, nil,
 		log.Fields{
 			"image_url":          r.imageURL,
 			"processing_options": r.po,
@@ -256,7 +258,7 @@ func (r *request) respondWithImage(statusCode int, resultData imagedata.ImageDat
 	}
 
 	server.LogResponse(
-		r.reqID, r.imageRequest, statusCode, ierr,
+		r.reqID, r.req, statusCode, ierr,
 		log.Fields{
 			"image_url":          r.imageURL,
 			"processing_options": r.po,
