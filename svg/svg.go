@@ -37,11 +37,16 @@ func Sanitize(data *imagedata.ImageData) (*imagedata.ImageData, error) {
 	for {
 		tt, tdata := l.Next()
 
-		if ignoreTag > 0 {
-			switch tt {
-			case xml.ErrorToken:
+		if tt == xml.ErrorToken {
+			if l.Err() != io.EOF {
 				cancel()
 				return nil, l.Err()
+			}
+			break
+		}
+
+		if ignoreTag > 0 {
+			switch tt {
 			case xml.EndTagToken, xml.StartTagCloseVoidToken:
 				ignoreTag--
 			case xml.StartTagToken:
@@ -52,20 +57,6 @@ func Sanitize(data *imagedata.ImageData) (*imagedata.ImageData, error) {
 		}
 
 		switch tt {
-		case xml.ErrorToken:
-			if l.Err() != io.EOF {
-				cancel()
-				return nil, l.Err()
-			}
-
-			newData := imagedata.ImageData{
-				Data:    buf.Bytes(),
-				Type:    data.Type,
-				Headers: cloneHeaders(data.Headers),
-			}
-			newData.SetCancel(cancel)
-
-			return &newData, nil
 		case xml.StartTagToken:
 			curTagName = strings.ToLower(string(l.Text()))
 
@@ -94,4 +85,13 @@ func Sanitize(data *imagedata.ImageData) (*imagedata.ImageData, error) {
 			buf.Write(tdata)
 		}
 	}
+
+	newData := imagedata.ImageData{
+		Data:    buf.Bytes(),
+		Type:    data.Type,
+		Headers: cloneHeaders(data.Headers),
+	}
+	newData.SetCancel(cancel)
+
+	return &newData, nil
 }

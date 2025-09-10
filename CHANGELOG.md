@@ -17,6 +17,7 @@
 - Fix `X-Origin-Height` and `X-Result-Height` debug header values for animated images.
 - Fix keeping copyright info in EXIF.
 - Fix preserving color profiles in TIFF images.
+- Fix freezes during sanitization or minification of some broken SVGs.
 - (pro) Fix generating thumbnails for VP9 videos with high bit depth.
 - (pro) Fix `IMGPROXY_CUSTOM_RESPONSE_HEADERS` and `IMGPROXY_RESPONSE_HEADERS_PASSTHROUGH` configs behavior when the `raw` processing option is used.
 
