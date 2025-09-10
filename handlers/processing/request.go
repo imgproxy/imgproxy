@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/imgproxy/imgproxy/v3/fetcher"
+	"github.com/imgproxy/imgproxy/v3/handlers"
 	"github.com/imgproxy/imgproxy/v3/headerwriter"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
@@ -41,7 +42,7 @@ func (r *request) execute(ctx context.Context) error {
 		r.po.Format == imagetype.SVG
 
 	if !canSave {
-		return newCantSaveError(r.po.Format)
+		return handlers.NewCantSaveError(r.po.Format)
 	}
 
 	// Acquire queue semaphore (if enabled)
@@ -79,7 +80,7 @@ func (r *request) execute(ctx context.Context) error {
 
 	// Check that image detection didn't take too long
 	if terr := server.CheckTimeout(ctx); terr != nil {
-		return ierrors.Wrap(terr, 0, ierrors.WithCategory(categoryTimeout))
+		return ierrors.Wrap(terr, 0, ierrors.WithCategory(handlers.CategoryTimeout))
 	}
 
 	// Respond with NotModified if image was not modified
@@ -104,7 +105,7 @@ func (r *request) execute(ctx context.Context) error {
 
 	// Check if image supports load from origin format
 	if !vips.SupportsLoad(originData.Format()) {
-		return newCantLoadError(originData.Format())
+		return handlers.NewCantLoadError(originData.Format())
 	}
 
 	// Actually process the image
@@ -117,19 +118,19 @@ func (r *request) execute(ctx context.Context) error {
 
 	// First, check if the processing error wasn't caused by an image data error
 	if derr := originData.Error(); derr != nil {
-		return ierrors.Wrap(derr, 0, ierrors.WithCategory(categoryDownload))
+		return ierrors.Wrap(derr, 0, ierrors.WithCategory(handlers.CategoryDownload))
 	}
 
 	// If it wasn't, than it was a processing error
 	if err != nil {
-		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryProcessing))
+		return ierrors.Wrap(err, 0, ierrors.WithCategory(handlers.CategoryProcessing))
 	}
 
 	// Write debug headers. It seems unlogical to move they to headerwriter since they're
 	// not used anywhere else.
 	err = r.writeDebugHeaders(result, originData)
 	if err != nil {
-		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryImageDataSize))
+		return ierrors.Wrap(err, 0, ierrors.WithCategory(handlers.CategoryImageDataSize))
 	}
 
 	// Responde with actual image

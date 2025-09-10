@@ -1,4 +1,4 @@
-package processing
+package handlers
 
 import (
 	"net/http"
@@ -84,19 +84,17 @@ func (s *PathTestSuite) TestParsePath() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			config := &Config{
-				PathPrefix: tc.pathPrefix,
-			}
 
 			req := s.createRequest(tc.requestPath)
-			path, signature, err := splitPathSignature(req, config)
+			req.Pattern = tc.pathPrefix
+			path, signature, err := SplitPathSignature(req)
 
 			if tc.expectedError {
 				var ierr *ierrors.Error
 
 				s.Require().Error(err)
 				s.Require().ErrorAs(err, &ierr)
-				s.Require().Equal(categoryPathParsing, ierr.Category())
+				s.Require().Equal(CategoryPathParsing, ierr.Category())
 
 				return
 			}

@@ -7,6 +7,7 @@ import (
 
 	"github.com/imgproxy/imgproxy/v3/auximageprovider"
 	"github.com/imgproxy/imgproxy/v3/errorreport"
+	"github.com/imgproxy/imgproxy/v3/handlers"
 	"github.com/imgproxy/imgproxy/v3/handlers/stream"
 	"github.com/imgproxy/imgproxy/v3/headerwriter"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
@@ -100,20 +101,20 @@ func (h *Handler) newRequest(
 	imageRequest *http.Request,
 ) (string, *options.ProcessingOptions, monitoring.Meta, error) {
 	// let's extract signature and valid request path from a request
-	path, signature, err := splitPathSignature(imageRequest, h.config)
+	path, signature, err := handlers.SplitPathSignature(imageRequest)
 	if err != nil {
 		return "", nil, nil, err
 	}
 
 	// verify the signature (if any)
 	if err = security.VerifySignature(signature, path); err != nil {
-		return "", nil, nil, ierrors.Wrap(err, 0, ierrors.WithCategory(categorySecurity))
+		return "", nil, nil, ierrors.Wrap(err, 0, ierrors.WithCategory(handlers.CategorySecurity))
 	}
 
 	// parse image url and processing options
 	po, imageURL, err := options.ParsePath(path, imageRequest.Header)
 	if err != nil {
-		return "", nil, nil, ierrors.Wrap(err, 0, ierrors.WithCategory(categoryPathParsing))
+		return "", nil, nil, ierrors.Wrap(err, 0, ierrors.WithCategory(handlers.CategoryPathParsing))
 	}
 
 	// get image origin and create monitoring meta object
@@ -135,7 +136,7 @@ func (h *Handler) newRequest(
 	// verify that image URL came from the valid source
 	err = security.VerifySourceURL(imageURL)
 	if err != nil {
-		return "", nil, mm, ierrors.Wrap(err, 0, ierrors.WithCategory(categorySecurity))
+		return "", nil, mm, ierrors.Wrap(err, 0, ierrors.WithCategory(handlers.CategorySecurity))
 	}
 
 	return imageURL, po, mm, nil
