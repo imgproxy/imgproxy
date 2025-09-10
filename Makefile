@@ -1,6 +1,6 @@
 # imgproxy Makefile
 
-BINARY := imgproxy
+BINARY := ./imgproxy
 
 GOCMD := go
 GOBUILD := $(GOCMD) build
@@ -10,6 +10,7 @@ GOFMT := gofmt
 GOLINT := golangci-lint
 GOTESTSUM := gotestsum
 SRCDIR := ./cli
+RCFILE := ./.imgproxyrc
 BREW_PREFIX :=
 
 # Common environment setup for CGO builds
@@ -29,6 +30,19 @@ ifdef BREW_PREFIX
 	export CGO_LDFLAGS := $(CGO_LDFLAGS) -Wl,-no_warn_duplicate_libraries
 endif
 
+# Get build arguments
+ifeq (build,$(firstword $(MAKECMDGOALS)))
+	BUILD_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
+endif
+
+# Get run arguments
+ifeq (run,$(firstword $(MAKECMDGOALS)))
+	RUN_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
+endif
+ifeq (build-and-run,$(firstword $(MAKECMDGOALS)))
+	RUN_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
+endif
+
 # Default target
 .PHONY: all
 all: build
@@ -39,7 +53,7 @@ all: build
 #	make build -- -o output_name
 .PHONY: build
 build:
-	@$(GOBUILD) -o $(BINARY) $(filter-out $@,$(MAKECMDGOALS)) $(SRCDIR); \
+	@$(GOBUILD) -o $(BINARY) $(BUILD_ARGS) $(SRCDIR)
 
 # Clean
 .PHONY: clean
@@ -47,6 +61,24 @@ clean:
 	echo $$PKG_CONFIG_PATH
 	@$(GOCLEAN)
 	rm -f $(BINARY)
+
+# Run imgproxy binary
+#
+# Usage:
+#	make run -- arg1 arg2
+#
+# If .imgproxyrc exists, it will be sourced before running the binary.
+.PHONY: run
+run: SHELL := bash
+run:
+ifneq (,$(wildcard $(RCFILE)))
+	@source $(RCFILE) && $(BINARY) $(RUN_ARGS)
+else
+	@$(BINARY) $(RUN_ARGS)
+endif
+
+.PHONY: build-and-run
+build-and-run: build run
 
 # Run tests
 #
