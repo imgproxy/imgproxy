@@ -7,9 +7,10 @@ import (
 
 	"github.com/imgproxy/imgproxy/v3/auximageprovider"
 	"github.com/imgproxy/imgproxy/v3/fetcher"
-	"github.com/imgproxy/imgproxy/v3/handlers"
+	healthhandler "github.com/imgproxy/imgproxy/v3/handlers/health"
+	landinghandler "github.com/imgproxy/imgproxy/v3/handlers/landing"
 	processinghandler "github.com/imgproxy/imgproxy/v3/handlers/processing"
-	"github.com/imgproxy/imgproxy/v3/handlers/stream"
+	streamhandler "github.com/imgproxy/imgproxy/v3/handlers/stream"
 	"github.com/imgproxy/imgproxy/v3/headerwriter"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/memory"
@@ -23,17 +24,24 @@ const (
 	healthPath  = "/health"
 )
 
+// ImgproxyHandlers holds the handlers for imgproxy
+type ImgproxyHandlers struct {
+	Health     *healthhandler.Handler
+	Landing    *landinghandler.Handler
+	Processing *processinghandler.Handler
+	Stream     *streamhandler.Handler
+}
+
 // Imgproxy holds all the components needed for imgproxy to function
 type Imgproxy struct {
-	HeaderWriter      *headerwriter.Writer
-	Semaphores        *semaphores.Semaphores
-	FallbackImage     auximageprovider.Provider
-	WatermarkImage    auximageprovider.Provider
-	Fetcher           *fetcher.Fetcher
-	ProcessingHandler *processinghandler.Handler
-	StreamHandler     *stream.Handler
-	ImageDataFactory  *imagedata.Factory
-	Config            *Config
+	HeaderWriter     *headerwriter.Writer
+	Semaphores       *semaphores.Semaphores
+	FallbackImage    auximageprovider.Provider
+	WatermarkImage   auximageprovider.Provider
+	Fetcher          *fetcher.Fetcher
+	ImageDataFactory *imagedata.Factory
+	Handlers         ImgproxyHandlers
+	Config           *Config
 }
 
 // New creates a new imgproxy instance
@@ -65,29 +73,32 @@ func New(ctx context.Context, config *Config) (*Imgproxy, error) {
 		return nil, err
 	}
 
-	streamHandler, err := stream.New(&config.StreamHandler, headerWriter, fetcher)
+	imgproxy := &Imgproxy{
+		HeaderWriter:     headerWriter,
+		Semaphores:       semaphores,
+		FallbackImage:    fallbackImage,
+		WatermarkImage:   watermarkImage,
+		Fetcher:          fetcher,
+		ImageDataFactory: idf,
+		Config:           config,
+	}
+
+	imgproxy.Handlers.Health = healthhandler.New()
+	imgproxy.Handlers.Landing = landinghandler.New()
+
+	imgproxy.Handlers.Stream, err = streamhandler.New(&config.Handlers.Stream, headerWriter, fetcher)
 	if err != nil {
 		return nil, err
 	}
 
-	ph, err := processinghandler.New(
-		streamHandler, headerWriter, semaphores, fallbackImage, watermarkImage, idf, &config.ProcessingHandler,
+	imgproxy.Handlers.Processing, err = processinghandler.New(
+		imgproxy.Handlers.Stream, headerWriter, semaphores, fallbackImage, watermarkImage, idf, &config.Handlers.Processing,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Imgproxy{
-		HeaderWriter:      headerWriter,
-		Semaphores:        semaphores,
-		FallbackImage:     fallbackImage,
-		WatermarkImage:    watermarkImage,
-		Fetcher:           fetcher,
-		StreamHandler:     streamHandler,
-		ProcessingHandler: ph,
-		ImageDataFactory:  idf,
-		Config:            config,
-	}, nil
+	return imgproxy, nil
 }
 
 // BuildRouter sets up the HTTP routes and middleware
@@ -97,17 +108,17 @@ func (i *Imgproxy) BuildRouter() (*server.Router, error) {
 		return nil, err
 	}
 
-	r.GET("/", handlers.LandingHandler)
-	r.GET("", handlers.LandingHandler)
+	r.GET("/", i.Handlers.Landing.Execute)
+	r.GET("", i.Handlers.Landing.Execute)
 
 	r.GET(faviconPath, r.NotFoundHandler).Silent()
-	r.GET(healthPath, handlers.HealthHandler).Silent()
+	r.GET(healthPath, i.Handlers.Health.Execute).Silent()
 	if i.Config.Server.HealthCheckPath != "" {
-		r.GET(i.Config.Server.HealthCheckPath, handlers.HealthHandler).Silent()
+		r.GET(i.Config.Server.HealthCheckPath, i.Handlers.Health.Execute).Silent()
 	}
 
 	r.GET(
-		"/*", i.ProcessingHandler.Execute,
+		"/*", i.Handlers.Processing.Execute,
 		r.WithSecret, r.WithCORS, r.WithPanic, r.WithReportError, r.WithMonitoring,
 	)
 

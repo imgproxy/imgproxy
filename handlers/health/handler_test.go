@@ -1,4 +1,4 @@
-package handlers
+package health
 
 import (
 	"net/http"
@@ -14,8 +14,11 @@ func TestHealthHandler(t *testing.T) {
 	// Create a ResponseRecorder to record the response
 	rr := httptest.NewRecorder()
 
+	// Create a new health handler
+	h := New()
+
 	// Call the handler function directly (no need for actual HTTP request)
-	HealthHandler("test-req-id", rr, nil)
+	h.Execute("test-req-id", rr, nil)
 
 	// Check that we get a valid response (either 200 or 500 depending on vips state)
 	assert.True(t, rr.Code == http.StatusOK || rr.Code == http.StatusInternalServerError)
