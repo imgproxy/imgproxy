@@ -3,77 +3,56 @@ package auximageprovider
 import (
 	"encoding/base64"
 	"io"
-	"net/http"
-	"net/http/httptest"
-	"os"
 	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/fetcher"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/options"
+	"github.com/imgproxy/imgproxy/v3/testutil"
 )
 
 type ImageProviderTestSuite struct {
-	suite.Suite
+	testutil.LazySuite
 
-	server      *httptest.Server
 	testData    []byte
 	testDataB64 string
 
-	// Server state
-	status int
-	data   []byte
-	header http.Header
+	testServer testutil.LazyTestServer
+	idf        *imagedata.Factory
 }
 
 func (s *ImageProviderTestSuite) SetupSuite() {
-	config.Reset()
-	config.AllowLoopbackSourceAddresses = true
+	s.testData = testutil.NewTestDataProvider(s.T).Read("test1.jpg")
+	s.testDataB64 = base64.StdEncoding.EncodeToString(s.testData)
 
-	// Load test image data
-	f, err := os.Open("../testdata/test1.jpg")
-	s.Require().NoError(err)
-	defer f.Close()
+	fc := fetcher.NewDefaultConfig()
+	fc.Transport.HTTP.AllowLoopbackSourceAddresses = true
 
-	data, err := io.ReadAll(f)
+	f, err := fetcher.New(&fc)
 	s.Require().NoError(err)
 
-	s.testData = data
-	s.testDataB64 = base64.StdEncoding.EncodeToString(data)
+	s.idf = imagedata.NewFactory(f)
 
-	// Create test server
-	s.server = httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		for k, vv := range s.header {
-			for _, v := range vv {
-				rw.Header().Add(k, v)
-			}
-		}
+	s.testServer, _ = testutil.NewLazySuiteTestServer(
+		s,
+		func(srv *testutil.TestServer) error {
+			srv.SetHeaders(
+				httpheaders.ContentType, "image/jpeg",
+				httpheaders.ContentLength, strconv.Itoa(len(s.testData)),
+			).SetBody(s.testData)
 
-		data := s.data
-		if data == nil {
-			data = s.testData
-		}
-
-		rw.Header().Set(httpheaders.ContentLength, strconv.Itoa(len(data)))
-		rw.WriteHeader(s.status)
-		rw.Write(data)
-	}))
+			return nil
+		},
+	)
 }
 
-func (s *ImageProviderTestSuite) TearDownSuite() {
-	s.server.Close()
-}
-
-func (s *ImageProviderTestSuite) SetupTest() {
-	s.status = http.StatusOK
-	s.data = nil
-	s.header = http.Header{}
-	s.header.Set(httpheaders.ContentType, "image/jpeg")
+func (s *ImageProviderTestSuite) SetupSubTest() {
+	// We use t.Run() a lot, so we need to reset lazy objects at the beginning of each subtest
+	s.ResetLazyObjects()
 }
 
 // Helper function to read data from ImageData
@@ -114,7 +93,7 @@ func (s *ImageProviderTestSuite) TestNewProvider() {
 		},
 		{
 			name:   "URL",
-			config: &StaticConfig{URL: s.server.URL},
+			config: &StaticConfig{URL: s.testServer().URL()},
 			validateFunc: func(provider Provider) {
 				s.Equal(s.testData, s.readImageData(provider))
 			},
@@ -149,10 +128,12 @@ func (s *ImageProviderTestSuite) TestNewProvider() {
 		},
 		{
 			name:   "HeadersPassedThrough",
-			config: &StaticConfig{URL: s.server.URL},
+			config: &StaticConfig{URL: s.testServer().URL()},
 			setupFunc: func() {
-				s.header.Set("X-Custom-Header", "test-value")
-				s.header.Set(httpheaders.CacheControl, "max-age=3600")
+				s.testServer().SetHeaders(
+					"X-Custom-Header", "test-value",
+					httpheaders.CacheControl, "max-age=3600",
+				)
 			},
 			validateFunc: func(provider Provider) {
 				imgData, headers, err := provider.Get(s.T().Context(), &options.ProcessingOptions{})
@@ -167,19 +148,13 @@ func (s *ImageProviderTestSuite) TestNewProvider() {
 		},
 	}
 
-	fc := fetcher.NewDefaultConfig()
-	f, err := fetcher.New(&fc)
-	s.Require().NoError(err)
-
-	idf := imagedata.NewFactory(f)
-
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(t *testing.T) {
 			if tt.setupFunc != nil {
 				tt.setupFunc()
 			}
 
-			provider, err := NewStaticProvider(s.T().Context(), tt.config, "test image", idf)
+			provider, err := NewStaticProvider(s.T().Context(), tt.config, "test image", s.idf)
 
 			if tt.expectError {
 				s.Require().Error(err)

@@ -1082,10 +1082,10 @@ func applyURLOption(po *ProcessingOptions, name string, args []string, usedPrese
 }
 
 func applyURLOptions(po *ProcessingOptions, options urlOptions, allowAll bool, usedPresets ...string) error {
-	allowAll = allowAll || len(config.AllowedProcessiongOptions) == 0
+	allowAll = allowAll || len(config.AllowedProcessingOptions) == 0
 
 	for _, opt := range options {
-		if !allowAll && !slices.Contains(config.AllowedProcessiongOptions, opt.Name) {
+		if !allowAll && !slices.Contains(config.AllowedProcessingOptions, opt.Name) {
 			return newForbiddenOptionError("processing", opt.Name)
 		}
 

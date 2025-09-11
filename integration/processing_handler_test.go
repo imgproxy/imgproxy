@@ -27,10 +27,7 @@ type ProcessingHandlerTestSuite struct {
 
 func (s *ProcessingHandlerTestSuite) SetupTest() {
 	config.Reset() // We reset config only at the start of each test
-
-	// NOTE: This must be moved to security config
-	config.AllowLoopbackSourceAddresses = true
-	// NOTE: end note
+	s.Config().Fetcher.Transport.HTTP.AllowLoopbackSourceAddresses = true
 }
 
 func (s *ProcessingHandlerTestSuite) SetupSubTest() {
@@ -142,13 +139,13 @@ func (s *ProcessingHandlerTestSuite) TestSourceNetworkValidation() {
 
 	// We wrap this in a subtest to reset s.router()
 	s.Run("AllowLoopbackSourceAddressesTrue", func() {
-		config.AllowLoopbackSourceAddresses = true
+		s.Config().Fetcher.Transport.HTTP.AllowLoopbackSourceAddresses = true
 		res := s.GET(url)
 		s.Require().Equal(http.StatusOK, res.StatusCode)
 	})
 
 	s.Run("AllowLoopbackSourceAddressesFalse", func() {
-		config.AllowLoopbackSourceAddresses = false
+		s.Config().Fetcher.Transport.HTTP.AllowLoopbackSourceAddresses = false
 		res := s.GET(url)
 		s.Require().Equal(http.StatusNotFound, res.StatusCode)
 	})
@@ -256,7 +253,7 @@ func (s *ProcessingHandlerTestSuite) TestCacheControlPassthroughCacheControl() {
 }
 
 func (s *ProcessingHandlerTestSuite) TestCacheControlPassthroughExpires() {
-	config.CacheControlPassthrough = true
+	s.Config().Server.ResponseWriter.CacheControlPassthrough = true
 
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		rw.Header().Set(httpheaders.Expires, time.Now().Add(1239*time.Second).UTC().Format(http.TimeFormat))
@@ -290,7 +287,7 @@ func (s *ProcessingHandlerTestSuite) TestCacheControlPassthroughDisabled() {
 }
 
 func (s *ProcessingHandlerTestSuite) TestETagDisabled() {
-	config.ETagEnabled = false
+	s.Config().Handlers.Processing.ETagEnabled = false
 
 	res := s.GET("/unsafe/rs:fill:4:4/plain/local:///test1.png")
 
@@ -299,7 +296,7 @@ func (s *ProcessingHandlerTestSuite) TestETagDisabled() {
 }
 
 func (s *ProcessingHandlerTestSuite) TestETagDataMatch() {
-	config.ETagEnabled = true
+	s.Config().Handlers.Processing.ETagEnabled = true
 
 	etag := `"loremipsumdolor"`
 
@@ -321,7 +318,8 @@ func (s *ProcessingHandlerTestSuite) TestETagDataMatch() {
 }
 
 func (s *ProcessingHandlerTestSuite) TestLastModifiedEnabled() {
-	config.LastModifiedEnabled = true
+	s.Config().Handlers.Processing.LastModifiedEnabled = true
+
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		rw.Header().Set(httpheaders.LastModified, "Wed, 21 Oct 2015 07:28:00 GMT")
 		rw.WriteHeader(200)
@@ -335,7 +333,7 @@ func (s *ProcessingHandlerTestSuite) TestLastModifiedEnabled() {
 }
 
 func (s *ProcessingHandlerTestSuite) TestLastModifiedDisabled() {
-	config.LastModifiedEnabled = false
+	s.Config().Handlers.Processing.LastModifiedEnabled = false
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		rw.Header().Set(httpheaders.LastModified, "Wed, 21 Oct 2015 07:28:00 GMT")
 		rw.WriteHeader(200)
@@ -349,7 +347,7 @@ func (s *ProcessingHandlerTestSuite) TestLastModifiedDisabled() {
 }
 
 func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqExactMatchLastModifiedDisabled() {
-	config.LastModifiedEnabled = false
+	s.Config().Handlers.Processing.LastModifiedEnabled = false
 	data := s.TestData.Read("test1.png")
 	lastModified := "Wed, 21 Oct 2015 07:28:00 GMT"
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
@@ -368,7 +366,7 @@ func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqExactMatchLastModifiedD
 }
 
 func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqExactMatchLastModifiedEnabled() {
-	config.LastModifiedEnabled = true
+	s.Config().Handlers.Processing.LastModifiedEnabled = true
 	lastModified := "Wed, 21 Oct 2015 07:28:00 GMT"
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		modifiedSince := r.Header.Get(httpheaders.IfModifiedSince)
@@ -386,7 +384,7 @@ func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqExactMatchLastModifiedE
 
 func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqCompareMoreRecentLastModifiedDisabled() {
 	data := s.TestData.Read("test1.png")
-	config.LastModifiedEnabled = false
+	s.Config().Handlers.Processing.LastModifiedEnabled = false
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		modifiedSince := r.Header.Get(httpheaders.IfModifiedSince)
 		s.Empty(modifiedSince)

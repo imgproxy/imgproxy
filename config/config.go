@@ -58,7 +58,7 @@ var (
 	PngUnlimited                bool
 	SvgUnlimited                bool
 	MaxResultDimension          int
-	AllowedProcessiongOptions   []string
+	AllowedProcessingOptions    []string
 	AllowSecurityOptions        bool
 
 	JpegProgressive       bool
@@ -267,7 +267,7 @@ func Reset() {
 	PngUnlimited = false
 	SvgUnlimited = false
 	MaxResultDimension = 0
-	AllowedProcessiongOptions = make([]string, 0)
+	AllowedProcessingOptions = make([]string, 0)
 	AllowSecurityOptions = false
 
 	JpegProgressive = false
@@ -502,7 +502,7 @@ func Configure() error {
 	configurators.Bool(&SvgUnlimited, "IMGPROXY_SVG_UNLIMITED")
 
 	configurators.Int(&MaxResultDimension, "IMGPROXY_MAX_RESULT_DIMENSION")
-	configurators.StringSlice(&AllowedProcessiongOptions, "IMGPROXY_ALLOWED_PROCESSING_OPTIONS")
+	configurators.StringSlice(&AllowedProcessingOptions, "IMGPROXY_ALLOWED_PROCESSING_OPTIONS")
 
 	configurators.Bool(&AllowSecurityOptions, "IMGPROXY_ALLOW_SECURITY_OPTIONS")
 

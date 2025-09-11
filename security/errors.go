@@ -13,7 +13,6 @@ type (
 	ImageResolutionError string
 	SecurityOptionsError struct{}
 	SourceURLError       string
-	SourceAddressError   string
 )
 
 func newSignatureError(msg string) error {
@@ -75,15 +74,3 @@ func newSourceURLError(imageURL string) error {
 }
 
 func (e SourceURLError) Error() string { return string(e) }
-
-func newSourceAddressError(msg string) error {
-	return ierrors.Wrap(
-		SourceAddressError(msg),
-		1,
-		ierrors.WithStatusCode(http.StatusNotFound),
-		ierrors.WithPublicMessage("Invalid source URL"),
-		ierrors.WithShouldReport(false),
-	)
-}
-
-func (e SourceAddressError) Error() string { return string(e) }

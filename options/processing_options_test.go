@@ -646,7 +646,7 @@ func (s *ProcessingOptionsTestSuite) TestParseBase64URLOnlyPresets() {
 }
 
 func (s *ProcessingOptionsTestSuite) TestParseAllowedOptions() {
-	config.AllowedProcessiongOptions = []string{"w", "h", "pr"}
+	config.AllowedProcessingOptions = []string{"w", "h", "pr"}
 
 	presets["test1"] = urlOptions{
 		urlOption{Name: "blur", Args: []string{"0.2"}},

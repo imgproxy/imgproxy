@@ -51,7 +51,7 @@ func NewLazySuiteObj[T any](
 	// Get the [LazySuite] instance
 	lazy := s.Lazy()
 	// Create the [LazyObj] instance
-	obj, cancel := NewLazyObj(lazy, newFn, dropFn...)
+	obj, cancel := newLazyObj(lazy, newFn, dropFn...)
 	// Add cleanup function to the resets list
 	lazy.resets = append(lazy.resets, cancel)
 
