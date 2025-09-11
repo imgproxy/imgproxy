@@ -29,8 +29,12 @@ func (s *ServerTestSuite) SetupTest() {
 	s.blankRouter = r
 }
 
-func (s *ServerTestSuite) mockHandler(reqID string, rw http.ResponseWriter, r *http.Request) error {
+func (s *ServerTestSuite) mockHandler(reqID string, rw ResponseWriter, r *http.Request) error {
 	return nil
+}
+
+func (s *ServerTestSuite) wrapRW(rw http.ResponseWriter) ResponseWriter {
+	return s.blankRouter.rwFactory.NewWriter(rw)
 }
 
 func (s *ServerTestSuite) TestStartServerWithInvalidBind() {
@@ -121,7 +125,7 @@ func (s *ServerTestSuite) TestWithCORS() {
 			req := httptest.NewRequest("GET", "/test", nil)
 			rw := httptest.NewRecorder()
 
-			wrappedHandler("test-req-id", rw, req)
+			wrappedHandler("test-req-id", s.wrapRW(rw), req)
 
 			s.Equal(tt.expectedOrigin, rw.Header().Get(httpheaders.AccessControlAllowOrigin))
 			s.Equal(tt.expectedMethods, rw.Header().Get(httpheaders.AccessControlAllowMethods))
@@ -170,7 +174,7 @@ func (s *ServerTestSuite) TestWithSecret() {
 			}
 			rw := httptest.NewRecorder()
 
-			err = wrappedHandler("test-req-id", rw, req)
+			err = wrappedHandler("test-req-id", s.wrapRW(rw), req)
 
 			if tt.expectError {
 				s.Require().Error(err)
@@ -182,7 +186,7 @@ func (s *ServerTestSuite) TestWithSecret() {
 }
 
 func (s *ServerTestSuite) TestIntoSuccess() {
-	mockHandler := func(reqID string, rw http.ResponseWriter, r *http.Request) error {
+	mockHandler := func(reqID string, rw ResponseWriter, r *http.Request) error {
 		rw.WriteHeader(http.StatusOK)
 		return nil
 	}
@@ -192,14 +196,14 @@ func (s *ServerTestSuite) TestIntoSuccess() {
 	req := httptest.NewRequest("GET", "/test", nil)
 	rw := httptest.NewRecorder()
 
-	wrappedHandler("test-req-id", rw, req)
+	wrappedHandler("test-req-id", s.wrapRW(rw), req)
 
 	s.Equal(http.StatusOK, rw.Code)
 }
 
 func (s *ServerTestSuite) TestIntoWithError() {
 	testError := errors.New("test error")
-	mockHandler := func(reqID string, rw http.ResponseWriter, r *http.Request) error {
+	mockHandler := func(reqID string, rw ResponseWriter, r *http.Request) error {
 		return testError
 	}
 
@@ -208,7 +212,7 @@ func (s *ServerTestSuite) TestIntoWithError() {
 	req := httptest.NewRequest("GET", "/test", nil)
 	rw := httptest.NewRecorder()
 
-	wrappedHandler("test-req-id", rw, req)
+	wrappedHandler("test-req-id", s.wrapRW(rw), req)
 
 	s.Equal(http.StatusInternalServerError, rw.Code)
 	s.Equal("text/plain", rw.Header().Get(httpheaders.ContentType))
@@ -216,7 +220,7 @@ func (s *ServerTestSuite) TestIntoWithError() {
 
 func (s *ServerTestSuite) TestIntoPanicWithError() {
 	testError := errors.New("panic error")
-	mockHandler := func(reqID string, rw http.ResponseWriter, r *http.Request) error {
+	mockHandler := func(reqID string, rw ResponseWriter, r *http.Request) error {
 		panic(testError)
 	}
 
@@ -226,7 +230,7 @@ func (s *ServerTestSuite) TestIntoPanicWithError() {
 	rw := httptest.NewRecorder()
 
 	s.NotPanics(func() {
-		err := wrappedHandler("test-req-id", rw, req)
+		err := wrappedHandler("test-req-id", s.wrapRW(rw), req)
 		s.Require().Error(err, "panic error")
 	})
 
@@ -234,7 +238,7 @@ func (s *ServerTestSuite) TestIntoPanicWithError() {
 }
 
 func (s *ServerTestSuite) TestIntoPanicWithAbortHandler() {
-	mockHandler := func(reqID string, rw http.ResponseWriter, r *http.Request) error {
+	mockHandler := func(reqID string, rw ResponseWriter, r *http.Request) error {
 		panic(http.ErrAbortHandler)
 	}
 
@@ -245,12 +249,12 @@ func (s *ServerTestSuite) TestIntoPanicWithAbortHandler() {
 
 	// Should re-panic with ErrAbortHandler
 	s.Panics(func() {
-		wrappedHandler("test-req-id", rw, req)
+		wrappedHandler("test-req-id", s.wrapRW(rw), req)
 	})
 }
 
 func (s *ServerTestSuite) TestIntoPanicWithNonError() {
-	mockHandler := func(reqID string, rw http.ResponseWriter, r *http.Request) error {
+	mockHandler := func(reqID string, rw ResponseWriter, r *http.Request) error {
 		panic("string panic")
 	}
 
@@ -261,7 +265,7 @@ func (s *ServerTestSuite) TestIntoPanicWithNonError() {
 
 	// Should re-panic with non-error panics
 	s.NotPanics(func() {
-		err := wrappedHandler("test-req-id", rw, req)
+		err := wrappedHandler("test-req-id", s.wrapRW(rw), req)
 		s.Require().Error(err, "string panic")
 	})
 }

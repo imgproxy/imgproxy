@@ -8,6 +8,7 @@ import (
 
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/ensure"
+	"github.com/imgproxy/imgproxy/v3/server/responsewriter"
 )
 
 // Config represents HTTP server config
@@ -18,7 +19,6 @@ type Config struct {
 	PathPrefix            string        // Path prefix for the server
 	MaxClients            int           // Maximum number of concurrent clients
 	ReadRequestTimeout    time.Duration // Timeout for reading requests
-	WriteResponseTimeout  time.Duration // Timeout for writing responses
 	KeepAliveTimeout      time.Duration // Timeout for keep-alive connections
 	GracefulTimeout       time.Duration // Timeout for graceful shutdown
 	CORSAllowOrigin       string        // CORS allowed origin
@@ -26,6 +26,8 @@ type Config struct {
 	DevelopmentErrorsMode bool          // Enable development mode for detailed error messages
 	SocketReusePort       bool          // Enable SO_REUSEPORT socket option
 	HealthCheckPath       string        // Health check path from config
+
+	ResponseWriter responsewriter.Config // Response writer config
 
 	// TODO: We are not sure where to put it yet
 	FreeMemoryInterval time.Duration // Interval for freeing memory
@@ -41,7 +43,6 @@ func NewDefaultConfig() Config {
 		MaxClients:            2048,
 		ReadRequestTimeout:    10 * time.Second,
 		KeepAliveTimeout:      10 * time.Second,
-		WriteResponseTimeout:  10 * time.Second,
 		GracefulTimeout:       20 * time.Second,
 		CORSAllowOrigin:       "",
 		Secret:                "",
@@ -50,6 +51,8 @@ func NewDefaultConfig() Config {
 		HealthCheckPath:       "",
 		FreeMemoryInterval:    10 * time.Second,
 		LogMemStats:           false,
+
+		ResponseWriter: responsewriter.NewDefaultConfig(),
 	}
 }
 
@@ -72,6 +75,10 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c.FreeMemoryInterval = time.Duration(config.FreeMemoryInterval) * time.Second
 	c.LogMemStats = len(os.Getenv("IMGPROXY_LOG_MEM_STATS")) > 0
 
+	if _, err := responsewriter.LoadConfigFromEnv(&c.ResponseWriter); err != nil {
+		return nil, err
+	}
+
 	return c, nil
 }
 
@@ -87,10 +94,6 @@ func (c *Config) Validate() error {
 
 	if c.ReadRequestTimeout <= 0 {
 		return fmt.Errorf("read request timeout should be greater than 0, now - %d", c.ReadRequestTimeout)
-	}
-
-	if c.WriteResponseTimeout <= 0 {
-		return fmt.Errorf("write response timeout should be greater than 0, now - %d", c.WriteResponseTimeout)
 	}
 
 	if c.KeepAliveTimeout < 0 {

@@ -1,7 +1,6 @@
 package stream
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -17,9 +16,10 @@ import (
 
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/fetcher"
-	"github.com/imgproxy/imgproxy/v3/headerwriter"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/options"
+	"github.com/imgproxy/imgproxy/v3/server/responsewriter"
+	"github.com/imgproxy/imgproxy/v3/testutil"
 )
 
 const (
@@ -27,13 +27,53 @@ const (
 )
 
 type HandlerTestSuite struct {
-	suite.Suite
-	handler *Handler
+	testutil.LazySuite
+
+	rwConf    testutil.LazyObj[*responsewriter.Config]
+	rwFactory testutil.LazyObj[*responsewriter.Factory]
+
+	config  testutil.LazyObj[*Config]
+	handler testutil.LazyObj[*Handler]
 }
 
 func (s *HandlerTestSuite) SetupSuite() {
 	config.Reset()
 	config.AllowLoopbackSourceAddresses = true
+
+	s.rwConf, _ = testutil.NewLazySuiteObj(
+		s,
+		func() (*responsewriter.Config, error) {
+			c := responsewriter.NewDefaultConfig()
+			return &c, nil
+		},
+	)
+
+	s.rwFactory, _ = testutil.NewLazySuiteObj(
+		s,
+		func() (*responsewriter.Factory, error) {
+			return responsewriter.NewFactory(s.rwConf())
+		},
+	)
+
+	s.config, _ = testutil.NewLazySuiteObj(
+		s,
+		func() (*Config, error) {
+			c := NewDefaultConfig()
+			return &c, nil
+		},
+	)
+
+	s.handler, _ = testutil.NewLazySuiteObj(
+		s,
+		func() (*Handler, error) {
+			fc := fetcher.NewDefaultConfig()
+
+			fetcher, err := fetcher.New(&fc)
+			s.Require().NoError(err)
+
+			return New(s.config(), fetcher)
+		},
+	)
 
 	// Silence logs during tests
 	logrus.SetOutput(io.Discard)
@@ -47,27 +87,35 @@ func (s *HandlerTestSuite) TearDownSuite() {
 func (s *HandlerTestSuite) SetupTest() {
 	config.Reset()
 	config.AllowLoopbackSourceAddresses = true
+}
 
-	fc := fetcher.NewDefaultConfig()
-
-	fetcher, err := fetcher.New(&fc)
-	s.Require().NoError(err)
-
-	cfg := NewDefaultConfig()
-
-	hwc := headerwriter.NewDefaultConfig()
-	hw, err := headerwriter.New(&hwc)
-	s.Require().NoError(err)
-
-	h, err := New(&cfg, hw, fetcher)
-	s.Require().NoError(err)
-	s.handler = h
+func (s *HandlerTestSuite) SetupSubTest() {
+	// We use t.Run() a lot, so we need to reset lazy objects at the beginning of each subtest
+	s.ResetLazyObjects()
 }
 
 func (s *HandlerTestSuite) readTestFile(name string) []byte {
 	data, err := os.ReadFile(filepath.Join(testDataPath, name))
 	s.Require().NoError(err)
 	return data
+}
+
+func (s *HandlerTestSuite) execute(
+	imageURL string,
+	header http.Header,
+	po *options.ProcessingOptions,
+) *httptest.ResponseRecorder {
+	req := httptest.NewRequest("GET", "/", nil)
+	httpheaders.CopyAll(header, req.Header, true)
+
+	ctx := s.T().Context()
+	rw := httptest.NewRecorder()
+	rww := s.rwFactory().NewWriter(rw)
+
+	err := s.handler().Execute(ctx, req, imageURL, "test-req-id", po, rww)
+	s.Require().NoError(err)
+
+	return rw
 }
 
 // TestHandlerBasicRequest checks basic streaming request
@@ -81,12 +129,7 @@ func (s *HandlerTestSuite) TestHandlerBasicRequest() {
 	}))
 	defer ts.Close()
 
-	req := httptest.NewRequest("GET", "/", nil)
-	rw := httptest.NewRecorder()
-	po := &options.ProcessingOptions{}
-
-	err := s.handler.Execute(context.Background(), req, ts.URL, "request-1", po, rw)
-	s.Require().NoError(err)
+	rw := s.execute(ts.URL, nil, &options.ProcessingOptions{})
 
 	res := rw.Result()
 	s.Require().Equal(200, res.StatusCode)
@@ -114,12 +157,7 @@ func (s *HandlerTestSuite) TestHandlerResponseHeadersPassthrough() {
 	}))
 	defer ts.Close()
 
-	req := httptest.NewRequest("GET", "/", nil)
-	rw := httptest.NewRecorder()
-	po := &options.ProcessingOptions{}
-
-	err := s.handler.Execute(context.Background(), req, ts.URL, "test-req-id", po, rw)
-	s.Require().NoError(err)
+	rw := s.execute(ts.URL, nil, &options.ProcessingOptions{})
 
 	res := rw.Result()
 	s.Require().Equal(200, res.StatusCode)
@@ -148,16 +186,12 @@ func (s *HandlerTestSuite) TestHandlerRequestHeadersPassthrough() {
 	}))
 	defer ts.Close()
 
-	req := httptest.NewRequest("GET", "/", nil)
-	req.Header.Set(httpheaders.IfNoneMatch, etag)
-	req.Header.Set(httpheaders.AcceptEncoding, "gzip")
-	req.Header.Set(httpheaders.Range, "bytes=*")
+	h := make(http.Header)
+	h.Set(httpheaders.IfNoneMatch, etag)
+	h.Set(httpheaders.AcceptEncoding, "gzip")
+	h.Set(httpheaders.Range, "bytes=*")
 
-	rw := httptest.NewRecorder()
-	po := &options.ProcessingOptions{}
-
-	err := s.handler.Execute(context.Background(), req, ts.URL, "test-req-id", po, rw)
-	s.Require().NoError(err)
+	rw := s.execute(ts.URL, h, &options.ProcessingOptions{})
 
 	res := rw.Result()
 	s.Require().Equal(200, res.StatusCode)
@@ -175,8 +209,6 @@ func (s *HandlerTestSuite) TestHandlerContentDisposition() {
 	}))
 	defer ts.Close()
 
-	req := httptest.NewRequest("GET", "/", nil)
-	rw := httptest.NewRecorder()
 	po := &options.ProcessingOptions{
 		Filename:         "custom_name",
 		ReturnAttachment: true,
@@ -184,8 +216,7 @@ func (s *HandlerTestSuite) TestHandlerContentDisposition() {
 
 	// Use a URL with a .png extension to help content disposition logic
 	imageURL := ts.URL + "/test.png"
-	err := s.handler.Execute(context.Background(), req, imageURL, "test-req-id", po, rw)
-	s.Require().NoError(err)
+	rw := s.execute(imageURL, nil, po)
 
 	res := rw.Result()
 	s.Require().Equal(200, res.StatusCode)
@@ -342,25 +373,9 @@ func (s *HandlerTestSuite) TestHandlerCacheControl() {
 			}))
 			defer ts.Close()
 
-			fc, err := fetcher.LoadConfigFromEnv(nil)
-			s.Require().NoError(err)
+			s.rwConf().CacheControlPassthrough = tc.cacheControlPassthrough
+			s.rwConf().DefaultTTL = 4242
 
-			fetcher, err := fetcher.New(fc)
-			s.Require().NoError(err)
-
-			cfg := NewDefaultConfig()
-			hwc := headerwriter.NewDefaultConfig()
-			hwc.CacheControlPassthrough = tc.cacheControlPassthrough
-			hwc.DefaultTTL = 4242
-
-			hw, err := headerwriter.New(&hwc)
-			s.Require().NoError(err)
-
-			handler, err := New(&cfg, hw, fetcher)
-			s.Require().NoError(err)
-
-			req := httptest.NewRequest("GET", "/", nil)
-			rw := httptest.NewRecorder()
 			po := &options.ProcessingOptions{}
 
 			if tc.timestampOffset != nil {
@@ -368,8 +383,7 @@ func (s *HandlerTestSuite) TestHandlerCacheControl() {
 				po.Expires = &expires
 			}
 
-			err = handler.Execute(context.Background(), req, ts.URL, "test-req-id", po, rw)
-			s.Require().NoError(err)
+			rw := s.execute(ts.URL, nil, po)
 
 			res := rw.Result()
 			s.Require().Equal(tc.expectedStatusCode, res.StatusCode)
@@ -400,12 +414,7 @@ func (s *HandlerTestSuite) TestHandlerSecurityHeaders() {
 	}))
 	defer ts.Close()
 
-	req := httptest.NewRequest("GET", "/", nil)
-	rw := httptest.NewRecorder()
-	po := &options.ProcessingOptions{}
-
-	err := s.handler.Execute(context.Background(), req, ts.URL, "test-req-id", po, rw)
-	s.Require().NoError(err)
+	rw := s.execute(ts.URL, nil, &options.ProcessingOptions{})
 
 	res := rw.Result()
 	s.Require().Equal(200, res.StatusCode)
@@ -420,12 +429,7 @@ func (s *HandlerTestSuite) TestHandlerErrorResponse() {
 	}))
 	defer ts.Close()
 
-	req := httptest.NewRequest("GET", "/", nil)
-	rw := httptest.NewRecorder()
-	po := &options.ProcessingOptions{}
-
-	err := s.handler.Execute(context.Background(), req, ts.URL, "test-req-id", po, rw)
-	s.Require().NoError(err)
+	rw := s.execute(ts.URL, nil, &options.ProcessingOptions{})
 
 	res := rw.Result()
 	s.Require().Equal(404, res.StatusCode)
@@ -433,21 +437,7 @@ func (s *HandlerTestSuite) TestHandlerErrorResponse() {
 
 // TestHandlerCookiePassthrough tests the cookie passthrough behavior of the streaming service.
 func (s *HandlerTestSuite) TestHandlerCookiePassthrough() {
-	fc, err := fetcher.LoadConfigFromEnv(nil)
-	s.Require().NoError(err)
-
-	fetcher, err := fetcher.New(fc)
-	s.Require().NoError(err)
-
-	cfg := NewDefaultConfig()
-	cfg.CookiePassthrough = true
-
-	hwc := headerwriter.NewDefaultConfig()
-	hw, err := headerwriter.New(&hwc)
-	s.Require().NoError(err)
-
-	handler, err := New(&cfg, hw, fetcher)
-	s.Require().NoError(err)
+	s.config().CookiePassthrough = true
 
 	data := s.readTestFile("test1.png")
 
@@ -464,13 +454,10 @@ func (s *HandlerTestSuite) TestHandlerCookiePassthrough() {
 	}))
 	defer ts.Close()
 
-	req := httptest.NewRequest("GET", "/", nil)
-	req.Header.Set(httpheaders.Cookie, "test_cookie=test_value")
-	rw := httptest.NewRecorder()
-	po := &options.ProcessingOptions{}
+	h := make(http.Header)
+	h.Set(httpheaders.Cookie, "test_cookie=test_value")
 
-	err = handler.Execute(context.Background(), req, ts.URL, "test-req-id", po, rw)
-	s.Require().NoError(err)
+	rw := s.execute(ts.URL, h, &options.ProcessingOptions{})
 
 	res := rw.Result()
 	s.Require().Equal(200, res.StatusCode)
@@ -488,29 +475,9 @@ func (s *HandlerTestSuite) TestHandlerCanonicalHeader() {
 	defer ts.Close()
 
 	for _, sc := range []bool{true, false} {
-		fc, err := fetcher.LoadConfigFromEnv(nil)
-		s.Require().NoError(err)
+		s.rwConf().SetCanonicalHeader = sc
 
-		fetcher, err := fetcher.New(fc)
-		s.Require().NoError(err)
-
-		cfg := NewDefaultConfig()
-		hwc := headerwriter.NewDefaultConfig()
-
-		hwc.SetCanonicalHeader = sc
-
-		hw, err := headerwriter.New(&hwc)
-		s.Require().NoError(err)
-
-		handler, err := New(&cfg, hw, fetcher)
-		s.Require().NoError(err)
-
-		req := httptest.NewRequest("GET", "/", nil)
-		rw := httptest.NewRecorder()
-		po := &options.ProcessingOptions{}
-
-		err = handler.Execute(context.Background(), req, ts.URL, "test-req-id", po, rw)
-		s.Require().NoError(err)
+		rw := s.execute(ts.URL, nil, &options.ProcessingOptions{})
 
 		res := rw.Result()
 		s.Require().Equal(200, res.StatusCode)

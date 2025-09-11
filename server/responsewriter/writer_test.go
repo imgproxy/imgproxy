@@ -1,4 +1,4 @@
-package headerwriter
+package responsewriter
 
 import (
 	"fmt"
@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type HeaderWriterSuite struct {
+type ResponseWriterSuite struct {
 	suite.Suite
 }
 
@@ -22,15 +22,17 @@ type writerTestCase struct {
 	req    http.Header
 	res    http.Header
 	config Config
-	fn     func(*Request)
+	fn     func(*Writer)
 }
 
-func (s *HeaderWriterSuite) TestHeaderCases() {
+func (s *ResponseWriterSuite) TestHeaderCases() {
 	expires := time.Date(2030, 8, 1, 0, 0, 0, 0, time.UTC)
 	expiresSeconds := strconv.Itoa(int(time.Until(expires).Seconds()))
 
 	shortExpires := time.Now().Add(10 * time.Second)
 	shortExpiresSeconds := strconv.Itoa(int(time.Until(shortExpires).Seconds()))
+
+	writeResponseTimeout := 10 * time.Second
 
 	tt := []writerTestCase{
 		{
@@ -44,8 +46,7 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 				SetCanonicalHeader:      false,
 				DefaultTTL:              0,
 				CacheControlPassthrough: false,
-				EnableClientHints:       false,
-				SetVaryAccept:           false,
+				WriteResponseTimeout:    writeResponseTimeout,
 			},
 		},
 		{
@@ -60,6 +61,7 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 			config: Config{
 				CacheControlPassthrough: true,
 				DefaultTTL:              3600,
+				WriteResponseTimeout:    writeResponseTimeout,
 			},
 		},
 		{
@@ -74,6 +76,7 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 			config: Config{
 				CacheControlPassthrough: true,
 				DefaultTTL:              3600,
+				WriteResponseTimeout:    writeResponseTimeout,
 			},
 		},
 		{
@@ -88,6 +91,7 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 			config: Config{
 				CacheControlPassthrough: true,
 				DefaultTTL:              3600,
+				WriteResponseTimeout:    writeResponseTimeout,
 			},
 		},
 		{
@@ -99,10 +103,11 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
 			},
 			config: Config{
-				SetCanonicalHeader: true,
-				DefaultTTL:         3600,
+				SetCanonicalHeader:   true,
+				DefaultTTL:           3600,
+				WriteResponseTimeout: writeResponseTimeout,
 			},
-			fn: func(w *Request) {
+			fn: func(w *Writer) {
 				w.SetCanonical("https://example.com/image.jpg")
 			},
 		},
@@ -114,8 +119,9 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
 			},
 			config: Config{
-				SetCanonicalHeader: true,
-				DefaultTTL:         3600,
+				SetCanonicalHeader:   true,
+				DefaultTTL:           3600,
+				WriteResponseTimeout: writeResponseTimeout,
 			},
 		},
 		{
@@ -126,10 +132,11 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
 			},
 			config: Config{
-				SetCanonicalHeader: false,
-				DefaultTTL:         3600,
+				SetCanonicalHeader:   false,
+				DefaultTTL:           3600,
+				WriteResponseTimeout: writeResponseTimeout,
 			},
-			fn: func(w *Request) {
+			fn: func(w *Writer) {
 				w.SetCanonical("https://example.com/image.jpg")
 			},
 		},
@@ -141,10 +148,11 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
 			},
 			config: Config{
-				DefaultTTL:       3600,
-				FallbackImageTTL: 1,
+				DefaultTTL:           3600,
+				FallbackImageTTL:     1,
+				WriteResponseTimeout: writeResponseTimeout,
 			},
-			fn: func(w *Request) {
+			fn: func(w *Writer) {
 				w.SetIsFallbackImage()
 			},
 		},
@@ -156,9 +164,10 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
 			},
 			config: Config{
-				DefaultTTL: math.MaxInt32,
+				DefaultTTL:           math.MaxInt32,
+				WriteResponseTimeout: writeResponseTimeout,
 			},
-			fn: func(w *Request) {
+			fn: func(w *Writer) {
 				w.SetExpires(&expires)
 			},
 		},
@@ -170,10 +179,11 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
 			},
 			config: Config{
-				DefaultTTL:       math.MaxInt32,
-				FallbackImageTTL: 600,
+				DefaultTTL:           math.MaxInt32,
+				FallbackImageTTL:     600,
+				WriteResponseTimeout: writeResponseTimeout,
 			},
-			fn: func(w *Request) {
+			fn: func(w *Writer) {
 				w.SetIsFallbackImage()
 				w.SetExpires(&shortExpires)
 			},
@@ -187,10 +197,10 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
 			},
 			config: Config{
-				EnableClientHints: true,
-				SetVaryAccept:     true,
+				VaryValue:            "Accept, Sec-CH-DPR, DPR, Sec-CH-Width, Width",
+				WriteResponseTimeout: writeResponseTimeout,
 			},
-			fn: func(w *Request) {
+			fn: func(w *Writer) {
 				w.SetVary()
 			},
 		},
@@ -204,8 +214,10 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 				httpheaders.CacheControl:          []string{"no-cache"},
 				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
 			},
-			config: Config{},
-			fn: func(w *Request) {
+			config: Config{
+				WriteResponseTimeout: writeResponseTimeout,
+			},
+			fn: func(w *Writer) {
 				w.Passthrough("X-Test")
 			},
 		},
@@ -217,8 +229,10 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 				httpheaders.CacheControl:          []string{"no-cache"},
 				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
 			},
-			config: Config{},
-			fn: func(w *Request) {
+			config: Config{
+				WriteResponseTimeout: writeResponseTimeout,
+			},
+			fn: func(w *Writer) {
 				h := http.Header{}
 				h.Set("X-From", "baz")
 				w.CopyFrom(h, []string{"X-From"})
@@ -232,8 +246,10 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 				httpheaders.CacheControl:          []string{"no-cache"},
 				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
 			},
-			config: Config{},
-			fn: func(w *Request) {
+			config: Config{
+				WriteResponseTimeout: writeResponseTimeout,
+			},
+			fn: func(w *Writer) {
 				w.SetContentLength(123)
 			},
 		},
@@ -245,8 +261,10 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 				httpheaders.CacheControl:          []string{"no-cache"},
 				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
 			},
-			config: Config{},
-			fn: func(w *Request) {
+			config: Config{
+				WriteResponseTimeout: writeResponseTimeout,
+			},
+			fn: func(w *Writer) {
 				w.SetContentType("image/png")
 			},
 		},
@@ -258,58 +276,30 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
 			},
 			config: Config{
-				DefaultTTL: 3600,
+				DefaultTTL:           3600,
+				WriteResponseTimeout: writeResponseTimeout,
 			},
-			fn: func(w *Request) {
+			fn: func(w *Writer) {
 				w.SetExpires(nil)
-			},
-		},
-		{
-			name: "WriteVaryAcceptOnly",
-			req:  http.Header{},
-			res: http.Header{
-				httpheaders.Vary:                  []string{"Accept"},
-				httpheaders.CacheControl:          []string{"no-cache"},
-				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
-			},
-			config: Config{
-				SetVaryAccept: true,
-			},
-			fn: func(w *Request) {
-				w.SetVary()
-			},
-		},
-		{
-			name: "WriteVaryClientHintsOnly",
-			req:  http.Header{},
-			res: http.Header{
-				httpheaders.Vary:                  []string{"Sec-CH-DPR, DPR, Sec-CH-Width, Width"},
-				httpheaders.CacheControl:          []string{"no-cache"},
-				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
-			},
-			config: Config{
-				EnableClientHints: true,
-			},
-			fn: func(w *Request) {
-				w.SetVary()
 			},
 		},
 	}
 
 	for _, tc := range tt {
 		s.Run(tc.name, func() {
-			factory, err := New(&tc.config)
+			factory, err := NewFactory(&tc.config)
 			s.Require().NoError(err)
 
-			writer := factory.NewRequest()
+			r := httptest.NewRecorder()
+
+			writer := factory.NewWriter(r)
 			writer.SetOriginHeaders(tc.req)
 
 			if tc.fn != nil {
 				tc.fn(writer)
 			}
 
-			r := httptest.NewRecorder()
-			writer.Write(r)
+			writer.WriteHeader(http.StatusOK)
 
 			s.Require().Equal(tc.res, r.Header())
 		})
@@ -317,5 +307,5 @@ func (s *HeaderWriterSuite) TestHeaderCases() {
 }
 
 func TestHeaderWriter(t *testing.T) {
-	suite.Run(t, new(HeaderWriterSuite))
+	suite.Run(t, new(ResponseWriterSuite))
 }

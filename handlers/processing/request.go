@@ -7,7 +7,6 @@ import (
 
 	"github.com/imgproxy/imgproxy/v3/fetcher"
 	"github.com/imgproxy/imgproxy/v3/handlers"
-	"github.com/imgproxy/imgproxy/v3/headerwriter"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/monitoring"
@@ -23,12 +22,11 @@ type request struct {
 
 	reqID          string
 	req            *http.Request
-	rw             http.ResponseWriter
+	rw             server.ResponseWriter
 	config         *Config
 	po             *options.ProcessingOptions
 	imageURL       string
 	monitoringMeta monitoring.Meta
-	hwr            *headerwriter.Request
 }
 
 // execute handles the actual processing logic
@@ -84,13 +82,13 @@ func (r *request) execute(ctx context.Context) error {
 	var nmErr fetcher.NotModifiedError
 
 	if errors.As(err, &nmErr) {
-		r.hwr.SetOriginHeaders(nmErr.Headers())
+		r.rw.SetOriginHeaders(nmErr.Headers())
 
 		return r.respondWithNotModified()
 	}
 
 	// Prepare to write image response headers
-	r.hwr.SetOriginHeaders(originHeaders)
+	r.rw.SetOriginHeaders(originHeaders)
 
 	// If error is not related to NotModified, respond with fallback image and replace image data
 	if err != nil {
@@ -123,7 +121,7 @@ func (r *request) execute(ctx context.Context) error {
 		return ierrors.Wrap(err, 0, ierrors.WithCategory(handlers.CategoryProcessing))
 	}
 
-	// Write debug headers. It seems unlogical to move they to headerwriter since they're
+	// Write debug headers. It seems unlogical to move they to responsewriter since they're
 	// not used anywhere else.
 	err = r.writeDebugHeaders(result, originData)
 	if err != nil {
