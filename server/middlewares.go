@@ -23,9 +23,12 @@ func (r *Router) WithMonitoring(h RouteHandler) RouteHandler {
 		return h
 	}
 
-	return func(reqID string, rw http.ResponseWriter, req *http.Request) error {
-		ctx, cancel, rw := monitoring.StartRequest(req.Context(), rw, req)
+	return func(reqID string, rw ResponseWriter, req *http.Request) error {
+		ctx, cancel, newRw := monitoring.StartRequest(req.Context(), rw.HTTPResponseWriter(), req)
 		defer cancel()
+
+		// Replace rw.ResponseWriter with new one returned from monitoring
+		rw.SetHTTPResponseWriter(newRw)
 
 		return h(reqID, rw, req.WithContext(ctx))
 	}
@@ -37,7 +40,7 @@ func (r *Router) WithCORS(h RouteHandler) RouteHandler {
 		return h
 	}
 
-	return func(reqID string, rw http.ResponseWriter, req *http.Request) error {
+	return func(reqID string, rw ResponseWriter, req *http.Request) error {
 		rw.Header().Set(httpheaders.AccessControlAllowOrigin, r.config.CORSAllowOrigin)
 		rw.Header().Set(httpheaders.AccessControlAllowMethods, "GET, OPTIONS")
 
@@ -53,7 +56,7 @@ func (r *Router) WithSecret(h RouteHandler) RouteHandler {
 
 	authHeader := fmt.Appendf(nil, "Bearer %s", r.config.Secret)
 
-	return func(reqID string, rw http.ResponseWriter, req *http.Request) error {
+	return func(reqID string, rw ResponseWriter, req *http.Request) error {
 		if subtle.ConstantTimeCompare([]byte(req.Header.Get(httpheaders.Authorization)), authHeader) == 1 {
 			return h(reqID, rw, req)
 		} else {
@@ -64,7 +67,7 @@ func (r *Router) WithSecret(h RouteHandler) RouteHandler {
 
 // WithPanic recovers panic and converts it to normal error
 func (r *Router) WithPanic(h RouteHandler) RouteHandler {
-	return func(reqID string, rw http.ResponseWriter, r *http.Request) (retErr error) {
+	return func(reqID string, rw ResponseWriter, r *http.Request) (retErr error) {
 		defer func() {
 			// try to recover from panic
 			rerr := recover()
@@ -94,7 +97,7 @@ func (r *Router) WithPanic(h RouteHandler) RouteHandler {
 // WithReportError handles error reporting.
 // It should be placed after `WithMonitoring`, but before `WithPanic`.
 func (r *Router) WithReportError(h RouteHandler) RouteHandler {
-	return func(reqID string, rw http.ResponseWriter, req *http.Request) error {
+	return func(reqID string, rw ResponseWriter, req *http.Request) error {
 		// Open the error context
 		ctx := errorreport.StartRequest(req)
 		req = req.WithContext(ctx)

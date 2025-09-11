@@ -22,7 +22,7 @@ func New() *Handler {
 // Execute handles the health request
 func (h *Handler) Execute(
 	reqID string,
-	rw http.ResponseWriter,
+	rw server.ResponseWriter,
 	req *http.Request,
 ) error {
 	var (

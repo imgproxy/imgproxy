@@ -11,7 +11,6 @@ import (
 	landinghandler "github.com/imgproxy/imgproxy/v3/handlers/landing"
 	processinghandler "github.com/imgproxy/imgproxy/v3/handlers/processing"
 	streamhandler "github.com/imgproxy/imgproxy/v3/handlers/stream"
-	"github.com/imgproxy/imgproxy/v3/headerwriter"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/memory"
 	"github.com/imgproxy/imgproxy/v3/monitoring/prometheus"
@@ -34,7 +33,6 @@ type ImgproxyHandlers struct {
 
 // Imgproxy holds all the components needed for imgproxy to function
 type Imgproxy struct {
-	headerWriter     *headerwriter.Writer
 	semaphores       *semaphores.Semaphores
 	fallbackImage    auximageprovider.Provider
 	watermarkImage   auximageprovider.Provider
@@ -46,11 +44,6 @@ type Imgproxy struct {
 
 // New creates a new imgproxy instance
 func New(ctx context.Context, config *Config) (*Imgproxy, error) {
-	headerWriter, err := headerwriter.New(&config.HeaderWriter)
-	if err != nil {
-		return nil, err
-	}
-
 	fetcher, err := fetcher.New(&config.Fetcher)
 	if err != nil {
 		return nil, err
@@ -74,7 +67,6 @@ func New(ctx context.Context, config *Config) (*Imgproxy, error) {
 	}
 
 	imgproxy := &Imgproxy{
-		headerWriter:     headerWriter,
 		semaphores:       semaphores,
 		fallbackImage:    fallbackImage,
 		watermarkImage:   watermarkImage,
@@ -86,7 +78,7 @@ func New(ctx context.Context, config *Config) (*Imgproxy, error) {
 	imgproxy.handlers.Health = healthhandler.New()
 	imgproxy.handlers.Landing = landinghandler.New()
 
-	imgproxy.handlers.Stream, err = streamhandler.New(&config.Handlers.Stream, headerWriter, fetcher)
+	imgproxy.handlers.Stream, err = streamhandler.New(&config.Handlers.Stream, fetcher)
 	if err != nil {
 		return nil, err
 	}
@@ -178,10 +170,6 @@ func (i *Imgproxy) startMemoryTicker(ctx context.Context) {
 			}
 		}
 	}
-}
-
-func (i *Imgproxy) HeaderWriter() *headerwriter.Writer {
-	return i.headerWriter
 }
 
 func (i *Imgproxy) Semaphores() *semaphores.Semaphores {

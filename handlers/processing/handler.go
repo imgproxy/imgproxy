@@ -9,7 +9,6 @@ import (
 	"github.com/imgproxy/imgproxy/v3/errorreport"
 	"github.com/imgproxy/imgproxy/v3/handlers"
 	"github.com/imgproxy/imgproxy/v3/handlers/stream"
-	"github.com/imgproxy/imgproxy/v3/headerwriter"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/monitoring"
@@ -17,11 +16,11 @@ import (
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/security"
 	"github.com/imgproxy/imgproxy/v3/semaphores"
+	"github.com/imgproxy/imgproxy/v3/server"
 )
 
 // HandlerContext provides access to shared handler dependencies
 type HandlerContext interface {
-	HeaderWriter() *headerwriter.Writer
 	Semaphores() *semaphores.Semaphores
 	FallbackImage() auximageprovider.Provider
 	WatermarkImage() auximageprovider.Provider
@@ -56,7 +55,7 @@ func New(
 // Execute handles the image processing request
 func (h *Handler) Execute(
 	reqID string,
-	rw http.ResponseWriter,
+	rw server.ResponseWriter,
 	req *http.Request,
 ) error {
 	// Increment the number of requests in progress
@@ -86,7 +85,6 @@ func (h *Handler) Execute(
 		po:             po,
 		imageURL:       imageURL,
 		monitoringMeta: mm,
-		hwr:            h.HeaderWriter().NewRequest(),
 	}
 
 	return hReq.execute(ctx)

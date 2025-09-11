@@ -123,8 +123,8 @@ func (r *request) handleDownloadError(
 	headers.Del(httpheaders.Expires)
 	headers.Del(httpheaders.LastModified)
 
-	r.hwr.SetOriginHeaders(headers)
-	r.hwr.SetIsFallbackImage()
+	r.rw.SetOriginHeaders(headers)
+	r.rw.SetIsFallbackImage()
 
 	return data, statusCode, nil
 }
@@ -186,18 +186,16 @@ func (r *request) writeDebugHeaders(result *processing.Result, originData imaged
 
 // respondWithNotModified writes not-modified response
 func (r *request) respondWithNotModified() error {
-	r.hwr.SetExpires(r.po.Expires)
-	r.hwr.SetVary()
+	r.rw.SetExpires(r.po.Expires)
+	r.rw.SetVary()
 
 	if r.config.LastModifiedEnabled {
-		r.hwr.Passthrough(httpheaders.LastModified)
+		r.rw.Passthrough(httpheaders.LastModified)
 	}
 
 	if r.config.ETagEnabled {
-		r.hwr.Passthrough(httpheaders.Etag)
+		r.rw.Passthrough(httpheaders.Etag)
 	}
-
-	r.hwr.Write(r.rw)
 
 	r.rw.WriteHeader(http.StatusNotModified)
 
@@ -221,28 +219,26 @@ func (r *request) respondWithImage(statusCode int, resultData imagedata.ImageDat
 		return ierrors.Wrap(err, 0, ierrors.WithCategory(handlers.CategoryImageDataSize))
 	}
 
-	r.hwr.SetContentType(resultData.Format().Mime())
-	r.hwr.SetContentLength(resultSize)
-	r.hwr.SetContentDisposition(
+	r.rw.SetContentType(resultData.Format().Mime())
+	r.rw.SetContentLength(resultSize)
+	r.rw.SetContentDisposition(
 		r.imageURL,
 		r.po.Filename,
 		resultData.Format().Ext(),
 		"",
 		r.po.ReturnAttachment,
 	)
-	r.hwr.SetExpires(r.po.Expires)
-	r.hwr.SetVary()
-	r.hwr.SetCanonical(r.imageURL)
+	r.rw.SetExpires(r.po.Expires)
+	r.rw.SetVary()
+	r.rw.SetCanonical(r.imageURL)
 
 	if r.config.LastModifiedEnabled {
-		r.hwr.Passthrough(httpheaders.LastModified)
+		r.rw.Passthrough(httpheaders.LastModified)
 	}
 
 	if r.config.ETagEnabled {
-		r.hwr.Passthrough(httpheaders.Etag)
+		r.rw.Passthrough(httpheaders.Etag)
 	}
-
-	r.hwr.Write(r.rw)
 
 	r.rw.WriteHeader(statusCode)
 

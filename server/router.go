@@ -11,6 +11,7 @@ import (
 	nanoid "github.com/matoous/go-nanoid/v2"
 
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
+	"github.com/imgproxy/imgproxy/v3/server/responsewriter"
 )
 
 const (
@@ -23,8 +24,10 @@ var (
 	requestIDRe = regexp.MustCompile(`^[A-Za-z0-9_\-]+$`)
 )
 
+type ResponseWriter = *responsewriter.Writer
+
 // RouteHandler is a function that handles HTTP requests.
-type RouteHandler func(string, http.ResponseWriter, *http.Request) error
+type RouteHandler func(string, ResponseWriter, *http.Request) error
 
 // Middleware is a function that wraps a RouteHandler with additional functionality.
 type Middleware func(next RouteHandler) RouteHandler
@@ -40,6 +43,9 @@ type route struct {
 
 // Router is responsible for routing HTTP requests
 type Router struct {
+	// Response writers factory
+	rwFactory *responsewriter.Factory
+
 	// config represents the server configuration
 	config *Config
 
@@ -53,7 +59,15 @@ func NewRouter(config *Config) (*Router, error) {
 		return nil, err
 	}
 
-	return &Router{config: config}, nil
+	rwf, err := responsewriter.NewFactory(&config.ResponseWriter)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Router{
+		rwFactory: rwf,
+		config:    config,
+	}, nil
 }
 
 // add adds an abitary route to the router
@@ -114,8 +128,8 @@ func (r *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	req, timeoutCancel := startRequestTimer(req)
 	defer timeoutCancel()
 
-	// Create the response writer which times out on write
-	rw = newTimeoutResponse(rw, r.config.WriteResponseTimeout)
+	// Create the [ResponseWriter]
+	rww := r.rwFactory.NewWriter(rw)
 
 	// Get/create request ID
 	reqID := r.getRequestID(req)
@@ -123,8 +137,8 @@ func (r *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	// Replace request IP from headers
 	r.replaceRemoteAddr(req)
 
-	rw.Header().Set(httpheaders.Server, defaultServerName)
-	rw.Header().Set(httpheaders.XRequestID, reqID)
+	rww.Header().Set(httpheaders.Server, defaultServerName)
+	rww.Header().Set(httpheaders.XRequestID, reqID)
 
 	for _, rr := range r.routes {
 		if !rr.isMatch(req) {
@@ -138,18 +152,18 @@ func (r *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			LogRequest(reqID, req)
 		}
 
-		rr.handler(reqID, rw, req)
+		rr.handler(reqID, rww, req)
 		return
 	}
 
 	// Means that we have not found matching route
 	LogRequest(reqID, req)
 	LogResponse(reqID, req, http.StatusNotFound, newRouteNotDefinedError(req.URL.Path))
-	r.NotFoundHandler(reqID, rw, req)
+	r.NotFoundHandler(reqID, rww, req)
 }
 
 // NotFoundHandler is default 404 handler
-func (r *Router) NotFoundHandler(reqID string, rw http.ResponseWriter, req *http.Request) error {
+func (r *Router) NotFoundHandler(reqID string, rw ResponseWriter, req *http.Request) error {
 	rw.Header().Set(httpheaders.ContentType, "text/plain")
 	rw.WriteHeader(http.StatusNotFound)
 	rw.Write([]byte{' '}) // Write a single byte to make AWS Lambda happy
@@ -158,7 +172,7 @@ func (r *Router) NotFoundHandler(reqID string, rw http.ResponseWriter, req *http
 }
 
 // OkHandler is a default 200 OK handler
-func (r *Router) OkHandler(reqID string, rw http.ResponseWriter, req *http.Request) error {
+func (r *Router) OkHandler(reqID string, rw ResponseWriter, req *http.Request) error {
 	rw.Header().Set(httpheaders.ContentType, "text/plain")
 	rw.WriteHeader(http.StatusOK)
 	rw.Write([]byte{' '}) // Write a single byte to make AWS Lambda happy

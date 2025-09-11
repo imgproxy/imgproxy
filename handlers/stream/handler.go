@@ -6,16 +6,16 @@ import (
 	"net/http"
 	"sync"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/imgproxy/imgproxy/v3/cookies"
 	"github.com/imgproxy/imgproxy/v3/fetcher"
-	"github.com/imgproxy/imgproxy/v3/headerwriter"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/monitoring"
 	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/server"
-	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -35,9 +35,8 @@ var (
 
 // Handler handles image passthrough requests, allowing images to be streamed directly
 type Handler struct {
-	config  *Config              // Configuration for the streamer
-	fetcher *fetcher.Fetcher     // Fetcher instance to handle image fetching
-	hw      *headerwriter.Writer // Configured HeaderWriter instance
+	config  *Config          // Configuration for the streamer
+	fetcher *fetcher.Fetcher // Fetcher instance to handle image fetching
 }
 
 // request holds the parameters and state for a single streaming request
@@ -47,12 +46,11 @@ type request struct {
 	imageURL     string
 	reqID        string
 	po           *options.ProcessingOptions
-	rw           http.ResponseWriter
-	hw           *headerwriter.Request
+	rw           server.ResponseWriter
 }
 
 // New creates new handler object
-func New(config *Config, hw *headerwriter.Writer, fetcher *fetcher.Fetcher) (*Handler, error) {
+func New(config *Config, fetcher *fetcher.Fetcher) (*Handler, error) {
 	if err := config.Validate(); err != nil {
 		return nil, err
 	}
@@ -60,7 +58,6 @@ func New(config *Config, hw *headerwriter.Writer, fetcher *fetcher.Fetcher) (*Ha
 	return &Handler{
 		fetcher: fetcher,
 		config:  config,
-		hw:      hw,
 	}, nil
 }
 
@@ -71,7 +68,7 @@ func (s *Handler) Execute(
 	imageURL string,
 	reqID string,
 	po *options.ProcessingOptions,
-	rw http.ResponseWriter,
+	rw server.ResponseWriter,
 ) error {
 	stream := &request{
 		handler:      s,
@@ -80,7 +77,6 @@ func (s *Handler) Execute(
 		reqID:        reqID,
 		po:           po,
 		rw:           rw,
-		hw:           s.hw.NewRequest(),
 	}
 
 	return stream.execute(ctx)
@@ -118,17 +114,14 @@ func (s *request) execute(ctx context.Context) error {
 	}
 
 	// Output streaming response headers
-	s.hw.SetOriginHeaders(res.Header)
-	s.hw.Passthrough(s.handler.config.PassthroughResponseHeaders...) // NOTE: priority? This is lowest as it was
-	s.hw.SetContentLength(int(res.ContentLength))
-	s.hw.SetCanonical(s.imageURL)
-	s.hw.SetExpires(s.po.Expires)
+	s.rw.SetOriginHeaders(res.Header)
+	s.rw.Passthrough(s.handler.config.PassthroughResponseHeaders...) // NOTE: priority? This is lowest as it was
+	s.rw.SetContentLength(int(res.ContentLength))
+	s.rw.SetCanonical(s.imageURL)
+	s.rw.SetExpires(s.po.Expires)
 
 	// Set the Content-Disposition header
-	s.setContentDisposition(r.URL().Path, res, s.hw)
-
-	// Write headers from writer
-	s.hw.Write(s.rw)
+	s.setContentDisposition(r.URL().Path, res)
 
 	// Copy the status code from the original response
 	s.rw.WriteHeader(res.StatusCode)
@@ -158,7 +151,7 @@ func (s *request) getImageRequestHeaders() http.Header {
 }
 
 // setContentDisposition writes the headers to the response writer
-func (s *request) setContentDisposition(imagePath string, serverResponse *http.Response, hw *headerwriter.Request) {
+func (s *request) setContentDisposition(imagePath string, serverResponse *http.Response) {
 	// Try to set correct Content-Disposition file name and extension
 	if serverResponse.StatusCode < 200 || serverResponse.StatusCode >= 300 {
 		return
@@ -166,7 +159,7 @@ func (s *request) setContentDisposition(imagePath string, serverResponse *http.R
 
 	ct := serverResponse.Header.Get(httpheaders.ContentType)
 
-	hw.SetContentDisposition(
+	s.rw.SetContentDisposition(
 		imagePath,
 		s.po.Filename,
 		"",
