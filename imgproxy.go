@@ -14,8 +14,8 @@ import (
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/memory"
 	"github.com/imgproxy/imgproxy/v3/monitoring/prometheus"
-	"github.com/imgproxy/imgproxy/v3/semaphores"
 	"github.com/imgproxy/imgproxy/v3/server"
+	"github.com/imgproxy/imgproxy/v3/workers"
 )
 
 const (
@@ -33,7 +33,7 @@ type ImgproxyHandlers struct {
 
 // Imgproxy holds all the components needed for imgproxy to function
 type Imgproxy struct {
-	semaphores       *semaphores.Semaphores
+	workers          *workers.Workers
 	fallbackImage    auximageprovider.Provider
 	watermarkImage   auximageprovider.Provider
 	fetcher          *fetcher.Fetcher
@@ -61,13 +61,13 @@ func New(ctx context.Context, config *Config) (*Imgproxy, error) {
 		return nil, err
 	}
 
-	semaphores, err := semaphores.New(&config.Semaphores)
+	workers, err := workers.New(&config.Workers)
 	if err != nil {
 		return nil, err
 	}
 
 	imgproxy := &Imgproxy{
-		semaphores:       semaphores,
+		workers:          workers,
 		fallbackImage:    fallbackImage,
 		watermarkImage:   watermarkImage,
 		fetcher:          fetcher,
@@ -172,8 +172,8 @@ func (i *Imgproxy) startMemoryTicker(ctx context.Context) {
 	}
 }
 
-func (i *Imgproxy) Semaphores() *semaphores.Semaphores {
-	return i.semaphores
+func (i *Imgproxy) Workers() *workers.Workers {
+	return i.workers
 }
 
 func (i *Imgproxy) FallbackImage() auximageprovider.Provider {

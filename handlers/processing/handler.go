@@ -15,13 +15,13 @@ import (
 	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/security"
-	"github.com/imgproxy/imgproxy/v3/semaphores"
 	"github.com/imgproxy/imgproxy/v3/server"
+	"github.com/imgproxy/imgproxy/v3/workers"
 )
 
 // HandlerContext provides access to shared handler dependencies
 type HandlerContext interface {
-	Semaphores() *semaphores.Semaphores
+	Workers() *workers.Workers
 	FallbackImage() auximageprovider.Provider
 	WatermarkImage() auximageprovider.Provider
 	ImageDataFactory() *imagedata.Factory

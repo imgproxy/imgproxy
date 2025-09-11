@@ -1,4 +1,4 @@
-package semaphores
+package workers
 
 import (
 	"net/http"

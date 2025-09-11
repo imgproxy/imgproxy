@@ -40,19 +40,12 @@ func (r *request) execute(ctx context.Context) error {
 		return handlers.NewCantSaveError(r.po.Format)
 	}
 
-	// Acquire queue semaphore (if enabled)
-	releaseQueueSem, err := r.Semaphores().AcquireQueue()
+	// Acquire worker
+	releaseWorker, err := r.acquireWorker(ctx)
 	if err != nil {
 		return err
 	}
-	defer releaseQueueSem()
-
-	// Acquire processing semaphore
-	releaseProcessingSem, err := r.acquireProcessingSem(ctx)
-	if err != nil {
-		return err
-	}
-	defer releaseProcessingSem()
+	defer releaseWorker()
 
 	// Deal with processing image counter
 	stats.IncImagesInProgress()
