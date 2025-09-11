@@ -23,10 +23,10 @@ type LazyObjNew[T any] func() (T, error)
 // If the object was not yet initialized, the callback is not called.
 type LazyObjDrop[T any] func(T) error
 
-// NewLazyObj creates a new [LazyObj] that initializes the object on the first call.
+// newLazyObj creates a new [LazyObj] that initializes the object on the first call.
 // It returns a function that can be called to get the object and a cancel function
 // that can be called to reset the object.
-func NewLazyObj[T any](
+func newLazyObj[T any](
 	s LazyObjT,
 	newFn LazyObjNew[T],
 	dropFn ...LazyObjDrop[T],

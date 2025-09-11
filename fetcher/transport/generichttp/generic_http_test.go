@@ -1,9 +1,8 @@
-package security
+package generichttp
 
 import (
 	"testing"
 
-	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/stretchr/testify/require"
 )
 
@@ -100,24 +99,14 @@ func TestVerifySourceNetwork(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			// Backup original config
-			originalLoopback := config.AllowLoopbackSourceAddresses
-			originalLinkLocal := config.AllowLinkLocalSourceAddresses
-			originalPrivate := config.AllowPrivateSourceAddresses
-
-			// Restore original config after test
-			defer func() {
-				config.AllowLoopbackSourceAddresses = originalLoopback
-				config.AllowLinkLocalSourceAddresses = originalLinkLocal
-				config.AllowPrivateSourceAddresses = originalPrivate
-			}()
+			config := NewDefaultConfig()
 
 			// Override config for the test
 			config.AllowLoopbackSourceAddresses = tc.allowLoopback
 			config.AllowLinkLocalSourceAddresses = tc.allowLinkLocal
 			config.AllowPrivateSourceAddresses = tc.allowPrivate
 
-			err := VerifySourceNetwork(tc.addr)
+			err := verifySourceNetwork(tc.addr, &config)
 
 			if tc.expectErr {
 				require.Error(t, err)

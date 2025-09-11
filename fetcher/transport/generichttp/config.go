@@ -10,15 +10,21 @@ import (
 
 // Config holds the configuration for the generic HTTP transport
 type Config struct {
-	ClientKeepAliveTimeout time.Duration
-	IgnoreSslVerification  bool
+	ClientKeepAliveTimeout        time.Duration
+	IgnoreSslVerification         bool
+	AllowLoopbackSourceAddresses  bool
+	AllowLinkLocalSourceAddresses bool
+	AllowPrivateSourceAddresses   bool
 }
 
 // NewDefaultConfig returns a new default configuration for the generic HTTP transport
 func NewDefaultConfig() Config {
 	return Config{
-		ClientKeepAliveTimeout: 90 * time.Second,
-		IgnoreSslVerification:  false,
+		ClientKeepAliveTimeout:        90 * time.Second,
+		IgnoreSslVerification:         false,
+		AllowLoopbackSourceAddresses:  false,
+		AllowLinkLocalSourceAddresses: false,
+		AllowPrivateSourceAddresses:   true,
 	}
 }
 
@@ -28,6 +34,9 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 
 	c.ClientKeepAliveTimeout = time.Duration(config.ClientKeepAliveTimeout) * time.Second
 	c.IgnoreSslVerification = config.IgnoreSslVerification
+	c.AllowLinkLocalSourceAddresses = config.AllowLinkLocalSourceAddresses
+	c.AllowLoopbackSourceAddresses = config.AllowLoopbackSourceAddresses
+	c.AllowPrivateSourceAddresses = config.AllowPrivateSourceAddresses
 
 	return c, nil
 }

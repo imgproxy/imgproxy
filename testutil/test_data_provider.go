@@ -26,9 +26,6 @@ type TestDataProvider struct {
 
 // New creates a new TestDataProvider
 func NewTestDataProvider(t TestDataProviderT) *TestDataProvider {
-	// if h, ok := t.(interface{ Helper() }); ok {
-	// 	h.Helper()
-	// }
 	t().Helper()
 
 	path, err := findProjectRoot()

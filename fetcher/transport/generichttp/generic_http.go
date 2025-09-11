@@ -3,12 +3,12 @@ package generichttp
 
 import (
 	"crypto/tls"
+	"fmt"
 	"net"
 	"net/http"
 	"syscall"
 	"time"
 
-	"github.com/imgproxy/imgproxy/v3/security"
 	"golang.org/x/net/http2"
 )
 
@@ -25,7 +25,7 @@ func New(verifyNetworks bool, config *Config) (*http.Transport, error) {
 
 	if verifyNetworks {
 		dialer.Control = func(network, address string, c syscall.RawConn) error {
-			return security.VerifySourceNetwork(address)
+			return verifySourceNetwork(address, config)
 		}
 	}
 
@@ -65,4 +65,30 @@ func New(verifyNetworks bool, config *Config) (*http.Transport, error) {
 	transport2.ReadIdleTimeout = time.Second
 
 	return transport, nil
+}
+
+func verifySourceNetwork(addr string, config *Config) error {
+	host, _, err := net.SplitHostPort(addr)
+	if err != nil {
+		host = addr
+	}
+
+	ip := net.ParseIP(host)
+	if ip == nil {
+		return newSourceAddressError(fmt.Sprintf("Invalid source address: %s", addr))
+	}
+
+	if !config.AllowLoopbackSourceAddresses && (ip.IsLoopback() || ip.IsUnspecified()) {
+		return newSourceAddressError(fmt.Sprintf("Loopback source address is not allowed: %s", addr))
+	}
+
+	if !config.AllowLinkLocalSourceAddresses && (ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast()) {
+		return newSourceAddressError(fmt.Sprintf("Link-local source address is not allowed: %s", addr))
+	}
+
+	if !config.AllowPrivateSourceAddresses && ip.IsPrivate() {
+		return newSourceAddressError(fmt.Sprintf("Private source address is not allowed: %s", addr))
+	}
+
+	return nil
 }

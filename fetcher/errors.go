@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 
+	"github.com/imgproxy/imgproxy/v3/fetcher/transport/generichttp"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
-	"github.com/imgproxy/imgproxy/v3/security"
 )
 
 const msgSourceImageIsUnreachable = "Source image is unreachable"
@@ -157,13 +158,21 @@ func (e NotModifiedError) Headers() http.Header {
 func WrapError(err error) error {
 	isTimeout := false
 
-	var secArrdErr security.SourceAddressError
+	var secArrdErr generichttp.SourceAddressError
 
 	switch {
 	case errors.Is(err, context.DeadlineExceeded):
 		isTimeout = true
 	case errors.Is(err, context.Canceled):
 		return newImageRequestCanceledError(err)
+	case err == io.ErrUnexpectedEOF:
+		return ierrors.Wrap(
+			newImageRequestError(err),
+			1,
+			ierrors.WithPublicMessage("source image is corrupted"),
+			ierrors.WithShouldReport(false),
+			ierrors.WithStatusCode(http.StatusUnprocessableEntity),
+		)
 	case errors.As(err, &secArrdErr):
 		return ierrors.Wrap(
 			err,
