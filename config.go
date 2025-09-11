@@ -6,8 +6,8 @@ import (
 	"github.com/imgproxy/imgproxy/v3/fetcher"
 	processinghandler "github.com/imgproxy/imgproxy/v3/handlers/processing"
 	streamhandler "github.com/imgproxy/imgproxy/v3/handlers/stream"
-	"github.com/imgproxy/imgproxy/v3/semaphores"
 	"github.com/imgproxy/imgproxy/v3/server"
+	"github.com/imgproxy/imgproxy/v3/workers"
 )
 
 // HandlerConfigs holds the configurations for imgproxy handlers
@@ -18,7 +18,7 @@ type HandlerConfigs struct {
 
 // Config represents an instance configuration
 type Config struct {
-	Semaphores     semaphores.Config
+	Workers        workers.Config
 	FallbackImage  auximageprovider.StaticConfig
 	WatermarkImage auximageprovider.StaticConfig
 	Fetcher        fetcher.Config
@@ -29,7 +29,7 @@ type Config struct {
 // NewDefaultConfig creates a new default configuration
 func NewDefaultConfig() Config {
 	return Config{
-		Semaphores:     semaphores.NewDefaultConfig(),
+		Workers:        workers.NewDefaultConfig(),
 		FallbackImage:  auximageprovider.NewDefaultStaticConfig(),
 		WatermarkImage: auximageprovider.NewDefaultStaticConfig(),
 		Fetcher:        fetcher.NewDefaultConfig(),
@@ -59,7 +59,7 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 		return nil, err
 	}
 
-	if _, err = semaphores.LoadConfigFromEnv(&c.Semaphores); err != nil {
+	if _, err = workers.LoadConfigFromEnv(&c.Workers); err != nil {
 		return nil, err
 	}
 

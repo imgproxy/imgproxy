@@ -36,11 +36,11 @@ func (r *request) makeImageRequestHeaders() http.Header {
 	return h
 }
 
-// acquireProcessingSem acquires the processing semaphore
-func (r *request) acquireProcessingSem(ctx context.Context) (context.CancelFunc, error) {
+// acquireWorker acquires the processing worker
+func (r *request) acquireWorker(ctx context.Context) (context.CancelFunc, error) {
 	defer monitoring.StartQueueSegment(ctx)()
 
-	fn, err := r.Semaphores().AcquireProcessing(ctx)
+	fn, err := r.Workers().Acquire(ctx)
 	if err != nil {
 		// We don't actually need to check timeout here,
 		// but it's an easy way to check if this is an actual timeout
