@@ -4,6 +4,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/config"
 )
 
+// Security options (part of processing options)
 type Options struct {
 	MaxSrcResolution            int
 	MaxSrcFileSize              int
@@ -12,18 +13,7 @@ type Options struct {
 	MaxResultDimension          int
 }
 
-// NOTE: Remove this function in imgproxy v4
-// TODO: Replace this with security.NewOptions() when ProcessingOptions gets config
-func DefaultOptions() Options {
-	return Options{
-		MaxSrcResolution:            config.MaxSrcResolution,
-		MaxSrcFileSize:              config.MaxSrcFileSize,
-		MaxAnimationFrames:          config.MaxAnimationFrames,
-		MaxAnimationFrameResolution: config.MaxAnimationFrameResolution,
-		MaxResultDimension:          config.MaxResultDimension,
-	}
-}
-
+// NOTE: This function is a part of processing option, we'll move it in the next PR
 func IsSecurityOptionsAllowed() error {
 	if config.AllowSecurityOptions {
 		return nil

@@ -11,7 +11,6 @@ import (
 	"github.com/imgproxy/imgproxy/v3/asyncbuffer"
 	"github.com/imgproxy/imgproxy/v3/fetcher"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
-	"github.com/imgproxy/imgproxy/v3/security"
 )
 
 // Factory represents ImageData factory
@@ -101,7 +100,7 @@ func (f *Factory) sendRequest(ctx context.Context, url string, opts DownloadOpti
 		return req, nil, h, err
 	}
 
-	res, err = security.LimitResponseSize(res, opts.MaxSrcFileSize)
+	res, err = limitResponseSize(res, opts.MaxSrcFileSize)
 	if err != nil {
 		if res != nil {
 			res.Body.Close()

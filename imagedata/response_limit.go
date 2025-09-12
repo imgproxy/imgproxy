@@ -1,4 +1,4 @@
-package security
+package imagedata
 
 import (
 	"io"
@@ -28,11 +28,11 @@ func (lr *hardLimitReadCloser) Close() error {
 	return lr.r.Close()
 }
 
-// LimitResponseSize limits the size of the response body to MaxSrcFileSize (if set).
+// limitResponseSize limits the size of the response body to MaxSrcFileSize (if set).
 // First, it tries to use Content-Length header to check the limit.
 // If Content-Length is not set, it limits the size of the response body by wrapping
 // body reader with hard limit reader.
-func LimitResponseSize(r *http.Response, limit int) (*http.Response, error) {
+func limitResponseSize(r *http.Response, limit int) (*http.Response, error) {
 	if limit == 0 {
 		return r, nil
 	}

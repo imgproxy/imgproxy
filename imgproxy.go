@@ -40,7 +40,7 @@ type Imgproxy struct {
 	fetcher          *fetcher.Fetcher
 	imageDataFactory *imagedata.Factory
 	handlers         ImgproxyHandlers
-	security         *security.Security
+	security         *security.Checker
 	config           *Config
 }
 
@@ -196,6 +196,6 @@ func (i *Imgproxy) ImageDataFactory() *imagedata.Factory {
 	return i.imageDataFactory
 }
 
-func (i *Imgproxy) Security() *security.Security {
+func (i *Imgproxy) Security() *security.Checker {
 	return i.security
 }

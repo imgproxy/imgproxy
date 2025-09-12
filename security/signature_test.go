@@ -13,7 +13,7 @@ type SignatureTestSuite struct {
 	testutil.LazySuite
 
 	config   testutil.LazyObj[*Config]
-	security testutil.LazyObj[*Security]
+	security testutil.LazyObj[*Checker]
 }
 
 func (s *SignatureTestSuite) SetupSuite() {
@@ -27,7 +27,7 @@ func (s *SignatureTestSuite) SetupSuite() {
 
 	s.security, _ = testutil.NewLazySuiteObj(
 		s,
-		func() (*Security, error) {
+		func() (*Checker, error) {
 			return New(s.config())
 		},
 	)

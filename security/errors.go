@@ -9,7 +9,6 @@ import (
 
 type (
 	SignatureError       string
-	FileSizeError        struct{}
 	ImageResolutionError string
 	SecurityOptionsError struct{}
 	SourceURLError       string
@@ -26,18 +25,6 @@ func newSignatureError(msg string) error {
 }
 
 func (e SignatureError) Error() string { return string(e) }
-
-func newFileSizeError() error {
-	return ierrors.Wrap(
-		FileSizeError{},
-		1,
-		ierrors.WithStatusCode(http.StatusUnprocessableEntity),
-		ierrors.WithPublicMessage("Invalid source image"),
-		ierrors.WithShouldReport(false),
-	)
-}
-
-func (e FileSizeError) Error() string { return "Source image file is too big" }
 
 func newImageResolutionError(msg string) error {
 	return ierrors.Wrap(

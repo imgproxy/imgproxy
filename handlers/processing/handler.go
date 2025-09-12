@@ -25,7 +25,7 @@ type HandlerContext interface {
 	FallbackImage() auximageprovider.Provider
 	WatermarkImage() auximageprovider.Provider
 	ImageDataFactory() *imagedata.Factory
-	Security() *security.Security
+	Security() *security.Checker
 }
 
 // Handler handles image processing requests
