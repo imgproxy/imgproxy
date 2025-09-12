@@ -106,7 +106,7 @@ func (r *request) execute(ctx context.Context) error {
 
 	// First, check if the processing error wasn't caused by an image data error
 	if derr := originData.Error(); derr != nil {
-		return ierrors.Wrap(derr, 0, ierrors.WithCategory(handlers.CategoryDownload))
+		return r.wrapDownloadingErr(derr)
 	}
 
 	// If it wasn't, than it was a processing error
@@ -118,7 +118,7 @@ func (r *request) execute(ctx context.Context) error {
 	// not used anywhere else.
 	err = r.writeDebugHeaders(result, originData)
 	if err != nil {
-		return ierrors.Wrap(err, 0, ierrors.WithCategory(handlers.CategoryImageDataSize))
+		return err
 	}
 
 	// Responde with actual image
