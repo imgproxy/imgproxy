@@ -5,16 +5,14 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"slices"
-
-	"github.com/imgproxy/imgproxy/v3/config"
 )
 
-func VerifySignature(signature, path string) error {
-	if len(config.Keys) == 0 || len(config.Salts) == 0 {
+func (s *Security) VerifySignature(signature, path string) error {
+	if len(s.config.Keys) == 0 || len(s.config.Salts) == 0 {
 		return nil
 	}
 
-	if slices.Contains(config.TrustedSignatures, signature) {
+	if slices.Contains(s.config.TrustedSignatures, signature) {
 		return nil
 	}
 
@@ -23,8 +21,8 @@ func VerifySignature(signature, path string) error {
 		return newSignatureError("Invalid signature encoding")
 	}
 
-	for i := 0; i < len(config.Keys); i++ {
-		if hmac.Equal(messageMAC, signatureFor(path, config.Keys[i], config.Salts[i], config.SignatureSize)) {
+	for i := 0; i < len(s.config.Keys); i++ {
+		if hmac.Equal(messageMAC, signatureFor(path, s.config.Keys[i], s.config.Salts[i], s.config.SignatureSize)) {
 			return nil
 		}
 	}

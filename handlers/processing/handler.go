@@ -25,6 +25,7 @@ type HandlerContext interface {
 	FallbackImage() auximageprovider.Provider
 	WatermarkImage() auximageprovider.Provider
 	ImageDataFactory() *imagedata.Factory
+	Security() *security.Security
 }
 
 // Handler handles image processing requests
@@ -102,7 +103,7 @@ func (h *Handler) newRequest(
 	}
 
 	// verify the signature (if any)
-	if err = security.VerifySignature(signature, path); err != nil {
+	if err = h.Security().VerifySignature(signature, path); err != nil {
 		return "", nil, nil, ierrors.Wrap(err, 0, ierrors.WithCategory(handlers.CategorySecurity))
 	}
 
@@ -129,7 +130,7 @@ func (h *Handler) newRequest(
 	monitoring.SetMetadata(ctx, mm)
 
 	// verify that image URL came from the valid source
-	err = security.VerifySourceURL(imageURL)
+	err = h.Security().VerifySourceURL(imageURL)
 	if err != nil {
 		return "", nil, mm, ierrors.Wrap(err, 0, ierrors.WithCategory(handlers.CategorySecurity))
 	}
