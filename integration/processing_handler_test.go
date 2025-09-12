@@ -110,9 +110,9 @@ func (s *ProcessingHandlerTestSuite) TestSourceValidation() {
 
 	for _, tc := range tt {
 		s.Run(tc.name, func() {
-			config.AllowedSources = make([]*regexp.Regexp, len(tc.allowedSources))
+			s.Config().Security.AllowedSources = make([]*regexp.Regexp, len(tc.allowedSources))
 			for i, pattern := range tc.allowedSources {
-				config.AllowedSources[i] = configurators.RegexpFromPattern(pattern)
+				s.Config().Security.AllowedSources[i] = configurators.RegexpFromPattern(pattern)
 			}
 
 			res := s.GET(tc.requestPath)
@@ -168,7 +168,7 @@ func (s *ProcessingHandlerTestSuite) TestResultingFormatNotSupported() {
 }
 
 func (s *ProcessingHandlerTestSuite) TestSkipProcessingConfig() {
-	config.SkipProcessingFormats = []imagetype.Type{imagetype.PNG}
+	s.Config().ProcessingOptions.SkipProcessingFormats = []imagetype.Type{imagetype.PNG}
 
 	res := s.GET("/unsafe/rs:fill:4:4/plain/local:///test1.png")
 
@@ -184,7 +184,7 @@ func (s *ProcessingHandlerTestSuite) TestSkipProcessingPO() {
 }
 
 func (s *ProcessingHandlerTestSuite) TestSkipProcessingSameFormat() {
-	config.SkipProcessingFormats = []imagetype.Type{imagetype.PNG}
+	s.Config().ProcessingOptions.SkipProcessingFormats = []imagetype.Type{imagetype.PNG}
 
 	res := s.GET("/unsafe/rs:fill:4:4/plain/local:///test1.png@png")
 
@@ -193,7 +193,7 @@ func (s *ProcessingHandlerTestSuite) TestSkipProcessingSameFormat() {
 }
 
 func (s *ProcessingHandlerTestSuite) TestSkipProcessingDifferentFormat() {
-	config.SkipProcessingFormats = []imagetype.Type{imagetype.PNG}
+	s.Config().ProcessingOptions.SkipProcessingFormats = []imagetype.Type{imagetype.PNG}
 
 	res := s.GET("/unsafe/rs:fill:4:4/plain/local:///test1.png@jpg")
 
@@ -270,7 +270,7 @@ func (s *ProcessingHandlerTestSuite) TestCacheControlPassthroughExpires() {
 }
 
 func (s *ProcessingHandlerTestSuite) TestCacheControlPassthroughDisabled() {
-	config.CacheControlPassthrough = false
+	s.Config().Server.ResponseWriter.CacheControlPassthrough = false
 
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		rw.Header().Set(httpheaders.CacheControl, "max-age=1234, public")
@@ -403,7 +403,7 @@ func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqCompareMoreRecentLastMo
 }
 
 func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqCompareMoreRecentLastModifiedEnabled() {
-	config.LastModifiedEnabled = true
+	s.Config().Handlers.Processing.LastModifiedEnabled = true
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		fileLastModified, _ := time.Parse(http.TimeFormat, "Wed, 21 Oct 2015 07:28:00 GMT")
 		modifiedSince := r.Header.Get(httpheaders.IfModifiedSince)
@@ -444,7 +444,7 @@ func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqCompareTooOldLastModifi
 }
 
 func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqCompareTooOldLastModifiedEnabled() {
-	config.LastModifiedEnabled = true
+	s.Config().Handlers.Processing.LastModifiedEnabled = true
 	data := s.TestData.Read("test1.png")
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		fileLastModified, _ := time.Parse(http.TimeFormat, "Wed, 21 Oct 2015 07:28:00 GMT")
@@ -476,8 +476,8 @@ func (s *ProcessingHandlerTestSuite) TestAlwaysRasterizeSvg() {
 }
 
 func (s *ProcessingHandlerTestSuite) TestAlwaysRasterizeSvgWithEnforceAvif() {
+	s.Config().ProcessingOptions.EnforceWebp = true
 	config.AlwaysRasterizeSvg = true
-	config.EnforceWebp = true
 
 	res := s.GET("/unsafe/plain/local:///test1.svg", http.Header{"Accept": []string{"image/webp"}})
 
@@ -486,8 +486,8 @@ func (s *ProcessingHandlerTestSuite) TestAlwaysRasterizeSvgWithEnforceAvif() {
 }
 
 func (s *ProcessingHandlerTestSuite) TestAlwaysRasterizeSvgDisabled() {
+	s.Config().ProcessingOptions.EnforceWebp = true
 	config.AlwaysRasterizeSvg = false
-	config.EnforceWebp = true
 
 	res := s.GET("/unsafe/plain/local:///test1.svg")
 
@@ -497,7 +497,7 @@ func (s *ProcessingHandlerTestSuite) TestAlwaysRasterizeSvgDisabled() {
 
 func (s *ProcessingHandlerTestSuite) TestAlwaysRasterizeSvgWithFormat() {
 	config.AlwaysRasterizeSvg = true
-	config.SkipProcessingFormats = []imagetype.Type{imagetype.SVG}
+	s.Config().ProcessingOptions.SkipProcessingFormats = []imagetype.Type{imagetype.SVG}
 
 	res := s.GET("/unsafe/plain/local:///test1.svg@svg")
 
@@ -506,7 +506,7 @@ func (s *ProcessingHandlerTestSuite) TestAlwaysRasterizeSvgWithFormat() {
 }
 
 func (s *ProcessingHandlerTestSuite) TestMaxSrcFileSizeGlobal() {
-	config.MaxSrcFileSize = 1
+	s.Config().Security.DefaultOptions.MaxSrcFileSize = 1
 
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		rw.WriteHeader(200)

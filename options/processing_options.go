@@ -2,22 +2,15 @@ package options
 
 import (
 	"encoding/base64"
-	"fmt"
-	"net/http"
 	"slices"
 	"strconv"
-	"strings"
 	"time"
 
-	log "github.com/sirupsen/logrus"
-
-	"github.com/imgproxy/imgproxy/v3/config"
-	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
-	"github.com/imgproxy/imgproxy/v3/imath"
 	"github.com/imgproxy/imgproxy/v3/security"
 	"github.com/imgproxy/imgproxy/v3/structdiff"
 	"github.com/imgproxy/imgproxy/v3/vips"
+	log "github.com/sirupsen/logrus"
 )
 
 const maxClientHintDPR = 8
@@ -55,10 +48,19 @@ type WatermarkOptions struct {
 	Opacity  float64
 	Position GravityOptions
 	Scale    float64
+	factory  *Factory
 }
 
 func (wo WatermarkOptions) ShouldReplicate() bool {
 	return wo.Position.Type == GravityReplicate
+}
+
+func (wo *WatermarkOptions) NewDefaultProcessingOptions() *ProcessingOptions {
+	if wo.factory == nil {
+		return nil
+	}
+
+	return wo.factory.New()
 }
 
 type ProcessingOptions struct {
@@ -118,77 +120,8 @@ type ProcessingOptions struct {
 	SecurityOptions security.Options
 
 	defaultQuality int
-}
 
-func NewProcessingOptions() *ProcessingOptions {
-	// NOTE: This is temporary hack until ProcessingOptions does not have Factory
-	securityCfg, err := security.LoadConfigFromEnv(nil)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	// NOTE: This is a temporary workaround for logrus bug that deadlocks
-	// if log is used within another log (issue 1448)
-	if len(securityCfg.Salts) == 0 {
-		securityCfg.Salts = [][]byte{[]byte("logrusbugworkaround")}
-	}
-
-	if len(securityCfg.Keys) == 0 {
-		securityCfg.Keys = [][]byte{[]byte("logrusbugworkaround")}
-	}
-	// END OF WORKAROUND
-
-	security, err := security.New(securityCfg)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	securityOptions := security.NewOptions()
-	// NOTE: This is temporary hack until ProcessingOptions does not have Factory
-
-	po := ProcessingOptions{
-		ResizingType:      ResizeFit,
-		Width:             0,
-		Height:            0,
-		ZoomWidth:         1,
-		ZoomHeight:        1,
-		Gravity:           GravityOptions{Type: GravityCenter},
-		Enlarge:           false,
-		Extend:            ExtendOptions{Enabled: false, Gravity: GravityOptions{Type: GravityCenter}},
-		ExtendAspectRatio: ExtendOptions{Enabled: false, Gravity: GravityOptions{Type: GravityCenter}},
-		Padding:           PaddingOptions{Enabled: false},
-		Trim:              TrimOptions{Enabled: false, Threshold: 10, Smart: true},
-		Rotate:            0,
-		Quality:           0,
-		MaxBytes:          0,
-		Format:            imagetype.Unknown,
-		Background:        vips.Color{R: 255, G: 255, B: 255},
-		Blur:              0,
-		Sharpen:           0,
-		Dpr:               1,
-		Watermark:         WatermarkOptions{Opacity: 1, Position: GravityOptions{Type: GravityCenter}},
-		StripMetadata:     config.StripMetadata,
-		KeepCopyright:     config.KeepCopyright,
-		StripColorProfile: config.StripColorProfile,
-		AutoRotate:        config.AutoRotate,
-		EnforceThumbnail:  config.EnforceThumbnail,
-		ReturnAttachment:  config.ReturnAttachment,
-
-		SkipProcessingFormats: append([]imagetype.Type(nil), config.SkipProcessingFormats...),
-		UsedPresets:           make([]string, 0, len(config.Presets)),
-
-		SecurityOptions: securityOptions,
-
-		// Basically, we need this to update ETag when `IMGPROXY_QUALITY` is changed
-		defaultQuality: config.Quality,
-	}
-
-	po.FormatQuality = make(map[imagetype.Type]int, len(config.FormatQuality))
-	for k, v := range config.FormatQuality {
-		po.FormatQuality[k] = v
-	}
-
-	return &po
+	factory *Factory
 }
 
 func (po *ProcessingOptions) GetQuality() int {
@@ -205,8 +138,16 @@ func (po *ProcessingOptions) GetQuality() int {
 	return q
 }
 
+func (po *ProcessingOptions) NewDefault() *ProcessingOptions {
+	if po.factory == nil {
+		return nil
+	}
+
+	return po.factory.New()
+}
+
 func (po *ProcessingOptions) Diff() structdiff.Entries {
-	return structdiff.Diff(NewProcessingOptions(), po)
+	return structdiff.Diff(po.NewDefault(), po)
 }
 
 func (po *ProcessingOptions) String() string {
@@ -217,131 +158,73 @@ func (po *ProcessingOptions) MarshalJSON() ([]byte, error) {
 	return po.Diff().MarshalJSON()
 }
 
-func parseDimension(d *int, name, arg string) error {
-	if v, err := strconv.Atoi(arg); err == nil && v >= 0 {
-		*d = v
-	} else {
-		return newOptionArgumentError("Invalid %s: %s", name, arg)
-	}
-
-	return nil
-}
-
-func parseBoolOption(str string) bool {
-	b, err := strconv.ParseBool(str)
-
-	if err != nil {
-		log.Warningf("`%s` is not a valid boolean value. Treated as false", str)
-	}
-
-	return b
-}
-
-func isGravityOffcetValid(gravity GravityType, offset float64) bool {
-	return gravity != GravityFocusPoint || (offset >= 0 && offset <= 1)
-}
-
-func parseGravity(g *GravityOptions, name string, args []string, allowedTypes []GravityType) error {
-	nArgs := len(args)
-
-	if t, ok := gravityTypes[args[0]]; ok && slices.Contains(allowedTypes, t) {
-		g.Type = t
-	} else {
-		return newOptionArgumentError("Invalid %s: %s", name, args[0])
-	}
-
-	switch g.Type {
-	case GravitySmart:
-		if nArgs > 1 {
-			return newOptionArgumentError("Invalid %s arguments: %v", name, args)
-		}
-		g.X, g.Y = 0.0, 0.0
-
-	case GravityFocusPoint:
-		if nArgs != 3 {
-			return newOptionArgumentError("Invalid %s arguments: %v", name, args)
-		}
-		fallthrough
-
-	default:
-		if nArgs > 3 {
-			return newOptionArgumentError("Invalid %s arguments: %v", name, args)
-		}
-
-		if nArgs > 1 {
-			if x, err := strconv.ParseFloat(args[1], 64); err == nil && isGravityOffcetValid(g.Type, x) {
-				g.X = x
-			} else {
-				return newOptionArgumentError("Invalid %s X: %s", name, args[1])
-			}
-		}
-
-		if nArgs > 2 {
-			if y, err := strconv.ParseFloat(args[2], 64); err == nil && isGravityOffcetValid(g.Type, y) {
-				g.Y = y
-			} else {
-				return newOptionArgumentError("Invalid %s Y: %s", name, args[2])
-			}
-		}
-	}
-
-	return nil
-}
-
-func parseExtend(opts *ExtendOptions, name string, args []string) error {
-	if len(args) > 4 {
-		return newOptionArgumentError("Invalid %s arguments: %v", name, args)
-	}
-
-	opts.Enabled = parseBoolOption(args[0])
-
+// applyNumberOption applies a single argument option which is a number
+func applyNumberOption[T number](args []string, name string, value *T, validate ...func(T) bool) error {
 	if len(args) > 1 {
-		return parseGravity(&opts.Gravity, name+" gravity", args[1:], extendGravityTypes)
+		return newOptionArgumentError("invalid %s arguments: %v", name, args)
 	}
 
+	val, err := parseNumber[T](args[0])
+	if err != nil {
+		return newOptionArgumentError("invalid %s: %s", name, args[0])
+	}
+
+	if len(validate) > 0 {
+		for _, v := range validate {
+			if v != nil && !v(val) {
+				return newOptionArgumentError("invalid %s: %s", name, args[0])
+			}
+		}
+	}
+
+	if value == nil {
+		return newOptionArgumentError("invalid %s: nil pointer", name)
+	}
+
+	*value = val
+	return nil
+}
+
+// applyBoolOption applies a boolean option using the provided setter function
+func applyBoolOption(args []string, name string, value *bool) error {
+	if len(args) > 1 {
+		return newOptionArgumentError("invalid %s arguments: %v", name, args)
+	}
+
+	if value == nil {
+		return newOptionArgumentError("invalid %s: nil pointer", name)
+	}
+
+	*value = parseBool(args[0])
 	return nil
 }
 
 func applyWidthOption(po *ProcessingOptions, args []string) error {
-	if len(args) > 1 {
-		return newOptionArgumentError("Invalid width arguments: %v", args)
-	}
-
-	return parseDimension(&po.Width, "width", args[0])
+	return applyNumberOption(args, "width", &po.Width, func(value int) bool {
+		return value >= 0
+	})
 }
 
 func applyHeightOption(po *ProcessingOptions, args []string) error {
-	if len(args) > 1 {
-		return newOptionArgumentError("Invalid height arguments: %v", args)
-	}
-
-	return parseDimension(&po.Height, "height", args[0])
+	return applyNumberOption(args, "height", &po.Height, func(value int) bool {
+		return value >= 0
+	})
 }
 
 func applyMinWidthOption(po *ProcessingOptions, args []string) error {
-	if len(args) > 1 {
-		return newOptionArgumentError("Invalid min width arguments: %v", args)
-	}
-
-	return parseDimension(&po.MinWidth, "min width", args[0])
+	return applyNumberOption(args, "min width", &po.MinWidth, func(value int) bool {
+		return value >= 0
+	})
 }
 
 func applyMinHeightOption(po *ProcessingOptions, args []string) error {
-	if len(args) > 1 {
-		return newOptionArgumentError("Invalid min height arguments: %v", args)
-	}
-
-	return parseDimension(&po.MinHeight, " min height", args[0])
+	return applyNumberOption(args, "min height", &po.MinHeight, func(value int) bool {
+		return value >= 0
+	})
 }
 
 func applyEnlargeOption(po *ProcessingOptions, args []string) error {
-	if len(args) > 1 {
-		return newOptionArgumentError("Invalid enlarge arguments: %v", args)
-	}
-
-	po.Enlarge = parseBoolOption(args[0])
-
-	return nil
+	return applyBoolOption(args, "enlarge", &po.Enlarge)
 }
 
 func applyExtendOption(po *ProcessingOptions, args []string) error {
@@ -425,7 +308,7 @@ func applyZoomOption(po *ProcessingOptions, args []string) error {
 		return newOptionArgumentError("Invalid zoom arguments: %v", args)
 	}
 
-	if z, err := strconv.ParseFloat(args[0], 64); err == nil && z > 0 {
+	if z, err := parseNumber[float64](args[0]); err == nil && z > 0 {
 		po.ZoomWidth = z
 		po.ZoomHeight = z
 	} else {
@@ -433,7 +316,7 @@ func applyZoomOption(po *ProcessingOptions, args []string) error {
 	}
 
 	if nArgs > 1 {
-		if z, err := strconv.ParseFloat(args[1], 64); err == nil && z > 0 {
+		if z, err := parseNumber[float64](args[1]); err == nil && z > 0 {
 			po.ZoomHeight = z
 		} else {
 			return newOptionArgumentError("Invalid zoom value: %s", args[1])
@@ -444,17 +327,9 @@ func applyZoomOption(po *ProcessingOptions, args []string) error {
 }
 
 func applyDprOption(po *ProcessingOptions, args []string) error {
-	if len(args) > 1 {
-		return newOptionArgumentError("Invalid dpr arguments: %v", args)
-	}
-
-	if d, err := strconv.ParseFloat(args[0], 64); err == nil && d > 0 {
-		po.Dpr = d
-	} else {
-		return newOptionArgumentError("Invalid dpr: %s", args[0])
-	}
-
-	return nil
+	return applyNumberOption(args, "dpr", &po.Dpr, func(value float64) bool {
+		return value > 0
+	})
 }
 
 func applyGravityOption(po *ProcessingOptions, args []string) error {
@@ -551,11 +426,11 @@ func applyTrimOption(po *ProcessingOptions, args []string) error {
 	}
 
 	if nArgs > 2 && len(args[2]) > 0 {
-		po.Trim.EqualHor = parseBoolOption(args[2])
+		po.Trim.EqualHor = parseBool(args[2])
 	}
 
 	if nArgs > 3 && len(args[3]) > 0 {
-		po.Trim.EqualVer = parseBoolOption(args[3])
+		po.Trim.EqualVer = parseBool(args[3])
 	}
 
 	return nil
@@ -566,7 +441,7 @@ func applyRotateOption(po *ProcessingOptions, args []string) error {
 		return newOptionArgumentError("Invalid rotate arguments: %v", args)
 	}
 
-	if r, err := strconv.Atoi(args[0]); err == nil && r%90 == 0 {
+	if r, err := parseNumber[int](args[0]); err == nil && r%90 == 0 {
 		po.Rotate = r
 	} else {
 		return newOptionArgumentError("Invalid rotation angle: %s", args[0])
@@ -574,19 +449,10 @@ func applyRotateOption(po *ProcessingOptions, args []string) error {
 
 	return nil
 }
-
 func applyQualityOption(po *ProcessingOptions, args []string) error {
-	if len(args) > 1 {
-		return newOptionArgumentError("Invalid quality arguments: %v", args)
-	}
-
-	if q, err := strconv.Atoi(args[0]); err == nil && q >= 0 && q <= 100 {
-		po.Quality = q
-	} else {
-		return newOptionArgumentError("Invalid quality: %s", args[0])
-	}
-
-	return nil
+	return applyNumberOption(args, "quality", &po.Quality, func(value int) bool {
+		return value >= 0 && value <= 100
+	})
 }
 
 func applyFormatQualityOption(po *ProcessingOptions, args []string) error {
@@ -601,7 +467,7 @@ func applyFormatQualityOption(po *ProcessingOptions, args []string) error {
 			return newOptionArgumentError("Invalid image format: %s", args[i])
 		}
 
-		if q, err := strconv.Atoi(args[i+1]); err == nil && q >= 0 && q <= 100 {
+		if q, err := parseNumber[int](args[i+1]); err == nil && q >= 0 && q <= 100 {
 			po.FormatQuality[f] = q
 		} else {
 			return newOptionArgumentError("Invalid quality for %s: %s", args[i], args[i+1])
@@ -612,17 +478,9 @@ func applyFormatQualityOption(po *ProcessingOptions, args []string) error {
 }
 
 func applyMaxBytesOption(po *ProcessingOptions, args []string) error {
-	if len(args) > 1 {
-		return newOptionArgumentError("Invalid max_bytes arguments: %v", args)
-	}
-
-	if max, err := strconv.Atoi(args[0]); err == nil && max >= 0 {
-		po.MaxBytes = max
-	} else {
-		return newOptionArgumentError("Invalid max_bytes: %s", args[0])
-	}
-
-	return nil
+	return applyNumberOption(args, "max_bytes", &po.MaxBytes, func(value int) bool {
+		return value >= 0
+	})
 }
 
 func applyBackgroundOption(po *ProcessingOptions, args []string) error {
@@ -666,66 +524,21 @@ func applyBackgroundOption(po *ProcessingOptions, args []string) error {
 }
 
 func applyBlurOption(po *ProcessingOptions, args []string) error {
-	if len(args) > 1 {
-		return newOptionArgumentError("Invalid blur arguments: %v", args)
-	}
-
-	if b, err := strconv.ParseFloat(args[0], 32); err == nil && b >= 0 {
-		po.Blur = float32(b)
-	} else {
-		return newOptionArgumentError("Invalid blur: %s", args[0])
-	}
-
-	return nil
+	return applyNumberOption(args, "blur", &po.Blur, func(value float32) bool {
+		return value >= 0
+	})
 }
 
 func applySharpenOption(po *ProcessingOptions, args []string) error {
-	if len(args) > 1 {
-		return newOptionArgumentError("Invalid sharpen arguments: %v", args)
-	}
-
-	if s, err := strconv.ParseFloat(args[0], 32); err == nil && s >= 0 {
-		po.Sharpen = float32(s)
-	} else {
-		return newOptionArgumentError("Invalid sharpen: %s", args[0])
-	}
-
-	return nil
+	return applyNumberOption(args, "sharpen", &po.Sharpen, func(value float32) bool {
+		return value >= 0
+	})
 }
 
 func applyPixelateOption(po *ProcessingOptions, args []string) error {
-	if len(args) > 1 {
-		return newOptionArgumentError("Invalid pixelate arguments: %v", args)
-	}
-
-	if p, err := strconv.Atoi(args[0]); err == nil && p >= 0 {
-		po.Pixelate = p
-	} else {
-		return newOptionArgumentError("Invalid pixelate: %s", args[0])
-	}
-
-	return nil
-}
-
-func applyPresetOption(po *ProcessingOptions, args []string, usedPresets ...string) error {
-	for _, preset := range args {
-		if p, ok := presets[preset]; ok {
-			if slices.Contains(usedPresets, preset) {
-				log.Warningf("Recursive preset usage is detected: %s", preset)
-				continue
-			}
-
-			po.UsedPresets = append(po.UsedPresets, preset)
-
-			if err := applyURLOptions(po, p, true, append(usedPresets, preset)...); err != nil {
-				return err
-			}
-		} else {
-			return newOptionArgumentError("Unknown preset: %s", preset)
-		}
-	}
-
-	return nil
+	return applyNumberOption(args, "pixelate", &po.Pixelate, func(value int) bool {
+		return value >= 0
+	})
 }
 
 func applyWatermarkOption(po *ProcessingOptions, args []string) error {
@@ -788,7 +601,6 @@ func applyFormatOption(po *ProcessingOptions, args []string) error {
 
 	return nil
 }
-
 func applyCacheBusterOption(po *ProcessingOptions, args []string) error {
 	if len(args) > 1 {
 		return newOptionArgumentError("Invalid cache buster arguments: %v", args)
@@ -812,13 +624,7 @@ func applySkipProcessingFormatsOption(po *ProcessingOptions, args []string) erro
 }
 
 func applyRawOption(po *ProcessingOptions, args []string) error {
-	if len(args) > 1 {
-		return newOptionArgumentError("Invalid return_attachment arguments: %v", args)
-	}
-
-	po.Raw = parseBoolOption(args[0])
-
-	return nil
+	return applyBoolOption(args, "raw", &po.Raw)
 }
 
 func applyFilenameOption(po *ProcessingOptions, args []string) error {
@@ -828,7 +634,7 @@ func applyFilenameOption(po *ProcessingOptions, args []string) error {
 
 	po.Filename = args[0]
 
-	if len(args) > 1 && parseBoolOption(args[1]) {
+	if len(args) > 1 && parseBool(args[1]) {
 		decoded, err := base64.RawURLEncoding.DecodeString(po.Filename)
 		if err != nil {
 			return newOptionArgumentError("Invalid filename encoding: %s", err)
@@ -861,63 +667,27 @@ func applyExpiresOption(po *ProcessingOptions, args []string) error {
 }
 
 func applyStripMetadataOption(po *ProcessingOptions, args []string) error {
-	if len(args) > 1 {
-		return newOptionArgumentError("Invalid strip metadata arguments: %v", args)
-	}
-
-	po.StripMetadata = parseBoolOption(args[0])
-
-	return nil
+	return applyBoolOption(args, "strip metadata", &po.StripMetadata)
 }
 
 func applyKeepCopyrightOption(po *ProcessingOptions, args []string) error {
-	if len(args) > 1 {
-		return newOptionArgumentError("Invalid keep copyright arguments: %v", args)
-	}
-
-	po.KeepCopyright = parseBoolOption(args[0])
-
-	return nil
+	return applyBoolOption(args, "keep copyright", &po.KeepCopyright)
 }
 
 func applyStripColorProfileOption(po *ProcessingOptions, args []string) error {
-	if len(args) > 1 {
-		return newOptionArgumentError("Invalid strip color profile arguments: %v", args)
-	}
-
-	po.StripColorProfile = parseBoolOption(args[0])
-
-	return nil
+	return applyBoolOption(args, "strip color profile", &po.StripColorProfile)
 }
 
 func applyAutoRotateOption(po *ProcessingOptions, args []string) error {
-	if len(args) > 1 {
-		return newOptionArgumentError("Invalid auto rotate arguments: %v", args)
-	}
-
-	po.AutoRotate = parseBoolOption(args[0])
-
-	return nil
+	return applyBoolOption(args, "auto rotate", &po.AutoRotate)
 }
 
 func applyEnforceThumbnailOption(po *ProcessingOptions, args []string) error {
-	if len(args) > 1 {
-		return newOptionArgumentError("Invalid enforce thumbnail arguments: %v", args)
-	}
-
-	po.EnforceThumbnail = parseBoolOption(args[0])
-
-	return nil
+	return applyBoolOption(args, "enforce thumbnail", &po.EnforceThumbnail)
 }
 
 func applyReturnAttachmentOption(po *ProcessingOptions, args []string) error {
-	if len(args) > 1 {
-		return newOptionArgumentError("Invalid return_attachment arguments: %v", args)
-	}
-
-	po.ReturnAttachment = parseBoolOption(args[0])
-
-	return nil
+	return applyBoolOption(args, "return_attachment", &po.ReturnAttachment)
 }
 
 func applyMaxSrcResolutionOption(po *ProcessingOptions, args []string) error {
@@ -947,7 +717,7 @@ func applyMaxSrcFileSizeOption(po *ProcessingOptions, args []string) error {
 		return newOptionArgumentError("Invalid max_src_file_size arguments: %v", args)
 	}
 
-	if x, err := strconv.Atoi(args[0]); err == nil {
+	if x, err := parseNumber[int](args[0]); err == nil {
 		po.SecurityOptions.MaxSrcFileSize = x
 	} else {
 		return newOptionArgumentError("Invalid max_src_file_size: %s", args[0])
@@ -965,7 +735,7 @@ func applyMaxAnimationFramesOption(po *ProcessingOptions, args []string) error {
 		return newOptionArgumentError("Invalid max_animation_frames arguments: %v", args)
 	}
 
-	if x, err := strconv.Atoi(args[0]); err == nil && x > 0 {
+	if x, err := parseNumber[int](args[0]); err == nil && x > 0 {
 		po.SecurityOptions.MaxAnimationFrames = x
 	} else {
 		return newOptionArgumentError("Invalid max_animation_frames: %s", args[0])
@@ -983,7 +753,7 @@ func applyMaxAnimationFrameResolutionOption(po *ProcessingOptions, args []string
 		return newOptionArgumentError("Invalid max_animation_frame_resolution arguments: %v", args)
 	}
 
-	if x, err := strconv.ParseFloat(args[0], 64); err == nil {
+	if x, err := parseNumber[float64](args[0]); err == nil {
 		po.SecurityOptions.MaxAnimationFrameResolution = int(x * 1000000)
 	} else {
 		return newOptionArgumentError("Invalid max_animation_frame_resolution: %s", args[0])
@@ -1001,7 +771,7 @@ func applyMaxResultDimensionOption(po *ProcessingOptions, args []string) error {
 		return newOptionArgumentError("Invalid max_result_dimension arguments: %v", args)
 	}
 
-	if x, err := strconv.Atoi(args[0]); err == nil {
+	if x, err := parseNumber[int](args[0]); err == nil {
 		po.SecurityOptions.MaxResultDimension = x
 	} else {
 		return newOptionArgumentError("Invalid max_result_dimension: %s", args[0])
@@ -1010,7 +780,7 @@ func applyMaxResultDimensionOption(po *ProcessingOptions, args []string) error {
 	return nil
 }
 
-func applyURLOption(po *ProcessingOptions, name string, args []string, usedPresets ...string) error {
+func (f *Factory) applyURLOption(po *ProcessingOptions, name string, args []string, usedPresets ...string) error {
 	switch name {
 	case "resize", "rs":
 		return applyResizeOption(po, args)
@@ -1090,7 +860,7 @@ func applyURLOption(po *ProcessingOptions, name string, args []string, usedPrese
 		return applyReturnAttachmentOption(po, args)
 	// Presets
 	case "preset", "pr":
-		return applyPresetOption(po, args, usedPresets...)
+		return f.applyPresetOption(po, args, usedPresets...)
 	// Security
 	case "max_src_resolution", "msr":
 		return applyMaxSrcResolutionOption(po, args)
@@ -1107,15 +877,15 @@ func applyURLOption(po *ProcessingOptions, name string, args []string, usedPrese
 	return newUnknownOptionError("processing", name)
 }
 
-func applyURLOptions(po *ProcessingOptions, options urlOptions, allowAll bool, usedPresets ...string) error {
-	allowAll = allowAll || len(config.AllowedProcessingOptions) == 0
+func (f *Factory) applyURLOptions(po *ProcessingOptions, options urlOptions, allowAll bool, usedPresets ...string) error {
+	allowAll = allowAll || len(f.config.AllowedProcessingOptions) == 0
 
 	for _, opt := range options {
-		if !allowAll && !slices.Contains(config.AllowedProcessingOptions, opt.Name) {
+		if !allowAll && !slices.Contains(f.config.AllowedProcessingOptions, opt.Name) {
 			return newForbiddenOptionError("processing", opt.Name)
 		}
 
-		if err := applyURLOption(po, opt.Name, opt.Args, usedPresets...); err != nil {
+		if err := f.applyURLOption(po, opt.Name, opt.Args, usedPresets...); err != nil {
 			return err
 		}
 	}
@@ -1123,136 +893,23 @@ func applyURLOptions(po *ProcessingOptions, options urlOptions, allowAll bool, u
 	return nil
 }
 
-func defaultProcessingOptions(headers http.Header) (*ProcessingOptions, error) {
-	po := NewProcessingOptions()
-
-	headerAccept := headers.Get("Accept")
-
-	if strings.Contains(headerAccept, "image/webp") {
-		po.PreferWebP = config.AutoWebp || config.EnforceWebp
-		po.EnforceWebP = config.EnforceWebp
-	}
-
-	if strings.Contains(headerAccept, "image/avif") {
-		po.PreferAvif = config.AutoAvif || config.EnforceAvif
-		po.EnforceAvif = config.EnforceAvif
-	}
-
-	if strings.Contains(headerAccept, "image/jxl") {
-		po.PreferJxl = config.AutoJxl || config.EnforceJxl
-		po.EnforceJxl = config.EnforceJxl
-	}
-
-	if config.EnableClientHints {
-		headerDPR := headers.Get("Sec-CH-DPR")
-		if len(headerDPR) == 0 {
-			headerDPR = headers.Get("DPR")
-		}
-		if len(headerDPR) > 0 {
-			if dpr, err := strconv.ParseFloat(headerDPR, 64); err == nil && (dpr > 0 && dpr <= maxClientHintDPR) {
-				po.Dpr = dpr
+func (f *Factory) applyPresetOption(po *ProcessingOptions, args []string, usedPresets ...string) error {
+	for _, preset := range args {
+		if p, ok := f.presets[preset]; ok {
+			if slices.Contains(usedPresets, preset) {
+				log.Warningf("Recursive preset usage is detected: %s", preset)
+				continue
 			}
-		}
 
-		headerWidth := headers.Get("Sec-CH-Width")
-		if len(headerWidth) == 0 {
-			headerWidth = headers.Get("Width")
-		}
-		if len(headerWidth) > 0 {
-			if w, err := strconv.Atoi(headerWidth); err == nil {
-				po.Width = imath.Shrink(w, po.Dpr)
+			po.UsedPresets = append(po.UsedPresets, preset)
+
+			if err := f.applyURLOptions(po, p, true, append(usedPresets, preset)...); err != nil {
+				return err
 			}
+		} else {
+			return newOptionArgumentError("Unknown preset: %s", preset)
 		}
 	}
 
-	if _, ok := presets["default"]; ok {
-		if err := applyPresetOption(po, []string{"default"}); err != nil {
-			return po, err
-		}
-	}
-
-	return po, nil
-}
-
-func parsePathOptions(parts []string, headers http.Header) (*ProcessingOptions, string, error) {
-	if _, ok := resizeTypes[parts[0]]; ok {
-		return nil, "", newInvalidURLError("It looks like you're using the deprecated basic URL format")
-	}
-
-	po, err := defaultProcessingOptions(headers)
-	if err != nil {
-		return nil, "", err
-	}
-
-	options, urlParts := parseURLOptions(parts)
-
-	if err = applyURLOptions(po, options, false); err != nil {
-		return nil, "", err
-	}
-
-	url, extension, err := DecodeURL(urlParts)
-	if err != nil {
-		return nil, "", err
-	}
-
-	if !po.Raw && len(extension) > 0 {
-		if err = applyFormatOption(po, []string{extension}); err != nil {
-			return nil, "", err
-		}
-	}
-
-	return po, url, nil
-}
-
-func parsePathPresets(parts []string, headers http.Header) (*ProcessingOptions, string, error) {
-	po, err := defaultProcessingOptions(headers)
-	if err != nil {
-		return nil, "", err
-	}
-
-	presets := strings.Split(parts[0], config.ArgumentsSeparator)
-	urlParts := parts[1:]
-
-	if err = applyPresetOption(po, presets); err != nil {
-		return nil, "", err
-	}
-
-	url, extension, err := DecodeURL(urlParts)
-	if err != nil {
-		return nil, "", err
-	}
-
-	if !po.Raw && len(extension) > 0 {
-		if err = applyFormatOption(po, []string{extension}); err != nil {
-			return nil, "", err
-		}
-	}
-
-	return po, url, nil
-}
-
-func ParsePath(path string, headers http.Header) (*ProcessingOptions, string, error) {
-	if path == "" || path == "/" {
-		return nil, "", newInvalidURLError("Invalid path: %s", path)
-	}
-
-	parts := strings.Split(strings.TrimPrefix(path, "/"), "/")
-
-	var (
-		imageURL string
-		po       *ProcessingOptions
-		err      error
-	)
-
-	if config.OnlyPresets {
-		po, imageURL, err = parsePathPresets(parts, headers)
-	} else {
-		po, imageURL, err = parsePathOptions(parts, headers)
-	}
-
-	if err != nil {
-		return nil, "", ierrors.Wrap(err, 0)
-	}
-
-	return po, imageURL, nil
+	return nil
 }

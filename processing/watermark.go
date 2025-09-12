@@ -27,7 +27,7 @@ func prepareWatermark(wm *vips.Image, wmData imagedata.ImageData, opts *options.
 		return err
 	}
 
-	po := options.NewProcessingOptions()
+	po := opts.NewDefaultProcessingOptions()
 	po.ResizingType = options.ResizeFit
 	po.Dpr = 1
 	po.Enlarge = true
