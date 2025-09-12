@@ -2,6 +2,7 @@ package options
 
 import (
 	"encoding/base64"
+	"fmt"
 	"net/http"
 	"slices"
 	"strconv"
@@ -120,6 +121,31 @@ type ProcessingOptions struct {
 }
 
 func NewProcessingOptions() *ProcessingOptions {
+	// NOTE: This is temporary hack until ProcessingOptions does not have Factory
+	securityCfg, err := security.LoadConfigFromEnv(nil)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	// NOTE: This is a temporary workaround for logrus bug that deadlocks
+	// if log is used within another log (issue 1448)
+	if len(securityCfg.Salts) == 0 {
+		securityCfg.Salts = [][]byte{[]byte("logrusbugworkaround")}
+	}
+
+	if len(securityCfg.Keys) == 0 {
+		securityCfg.Keys = [][]byte{[]byte("logrusbugworkaround")}
+	}
+	// END OF WORKAROUND
+
+	security, err := security.New(securityCfg)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	securityOptions := security.NewOptions()
+	// NOTE: This is temporary hack until ProcessingOptions does not have Factory
+
 	po := ProcessingOptions{
 		ResizingType:      ResizeFit,
 		Width:             0,
@@ -151,7 +177,7 @@ func NewProcessingOptions() *ProcessingOptions {
 		SkipProcessingFormats: append([]imagetype.Type(nil), config.SkipProcessingFormats...),
 		UsedPresets:           make([]string, 0, len(config.Presets)),
 
-		SecurityOptions: security.DefaultOptions(),
+		SecurityOptions: securityOptions,
 
 		// Basically, we need this to update ETag when `IMGPROXY_QUALITY` is changed
 		defaultQuality: config.Quality,

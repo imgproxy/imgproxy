@@ -6,60 +6,78 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/testutil"
 )
 
 type SignatureTestSuite struct {
-	suite.Suite
+	testutil.LazySuite
+
+	config   testutil.LazyObj[*Config]
+	security testutil.LazyObj[*Checker]
+}
+
+func (s *SignatureTestSuite) SetupSuite() {
+	s.config, _ = testutil.NewLazySuiteObj(
+		s,
+		func() (*Config, error) {
+			c := NewDefaultConfig()
+			return &c, nil
+		},
+	)
+
+	s.security, _ = testutil.NewLazySuiteObj(
+		s,
+		func() (*Checker, error) {
+			return New(s.config())
+		},
+	)
 }
 
 func (s *SignatureTestSuite) SetupTest() {
 	config.Reset()
 
-	config.Keys = [][]byte{[]byte("test-key")}
-	config.Salts = [][]byte{[]byte("test-salt")}
+	s.config().Keys = [][]byte{[]byte("test-key")}
+	s.config().Salts = [][]byte{[]byte("test-salt")}
 }
 
 func (s *SignatureTestSuite) TestVerifySignature() {
-	err := VerifySignature("oWaL7QoW5TsgbuiS9-5-DI8S3Ibbo1gdB2SteJh3a20", "asd")
+	err := s.security().VerifySignature("oWaL7QoW5TsgbuiS9-5-DI8S3Ibbo1gdB2SteJh3a20", "asd")
 	s.Require().NoError(err)
 }
 
 func (s *SignatureTestSuite) TestVerifySignatureTruncated() {
-	config.SignatureSize = 8
+	s.config().SignatureSize = 8
 
-	err := VerifySignature("oWaL7QoW5Ts", "asd")
+	err := s.security().VerifySignature("oWaL7QoW5Ts", "asd")
 	s.Require().NoError(err)
 }
 
 func (s *SignatureTestSuite) TestVerifySignatureInvalid() {
-	err := VerifySignature("oWaL7QoW5Ts", "asd")
+	err := s.security().VerifySignature("oWaL7QoW5Ts", "asd")
 	s.Require().Error(err)
 }
 
 func (s *SignatureTestSuite) TestVerifySignatureMultiplePairs() {
-	config.Keys = append(config.Keys, []byte("test-key2"))
-	config.Salts = append(config.Salts, []byte("test-salt2"))
+	s.config().Keys = append(s.config().Keys, []byte("test-key2"))
+	s.config().Salts = append(s.config().Salts, []byte("test-salt2"))
 
-	err := VerifySignature("jYz1UZ7j1BCdSzH3pZhaYf0iuz0vusoOTdqJsUT6WXI", "asd")
+	err := s.security().VerifySignature("jYz1UZ7j1BCdSzH3pZhaYf0iuz0vusoOTdqJsUT6WXI", "asd")
 	s.Require().NoError(err)
 
-	err = VerifySignature("oWaL7QoW5TsgbuiS9-5-DI8S3Ibbo1gdB2SteJh3a20", "asd")
+	err = s.security().VerifySignature("oWaL7QoW5TsgbuiS9-5-DI8S3Ibbo1gdB2SteJh3a20", "asd")
 	s.Require().NoError(err)
 
-	err = VerifySignature("dtLwhdnPPis", "asd")
+	err = s.security().VerifySignature("dtLwhdnPPis", "asd")
 	s.Require().Error(err)
 }
 
 func (s *SignatureTestSuite) TestVerifySignatureTrusted() {
-	config.TrustedSignatures = []string{"truested"}
-	defer func() {
-		config.TrustedSignatures = []string{}
-	}()
+	s.config().TrustedSignatures = []string{"truested"}
 
-	err := VerifySignature("truested", "asd")
+	err := s.security().VerifySignature("truested", "asd")
 	s.Require().NoError(err)
 
-	err = VerifySignature("untrusted", "asd")
+	err = s.security().VerifySignature("untrusted", "asd")
 	s.Require().Error(err)
 }
 

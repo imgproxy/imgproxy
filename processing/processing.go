@@ -215,7 +215,7 @@ func checkImageSize(
 		return width, height, nil
 	}
 
-	err := security.CheckDimensions(width, height, frames, secops)
+	err := secops.CheckDimensions(width, height, frames)
 
 	return width, height, err
 }

@@ -14,6 +14,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/memory"
 	"github.com/imgproxy/imgproxy/v3/monitoring/prometheus"
+	"github.com/imgproxy/imgproxy/v3/security"
 	"github.com/imgproxy/imgproxy/v3/server"
 	"github.com/imgproxy/imgproxy/v3/workers"
 )
@@ -39,6 +40,7 @@ type Imgproxy struct {
 	fetcher          *fetcher.Fetcher
 	imageDataFactory *imagedata.Factory
 	handlers         ImgproxyHandlers
+	security         *security.Checker
 	config           *Config
 }
 
@@ -66,6 +68,11 @@ func New(ctx context.Context, config *Config) (*Imgproxy, error) {
 		return nil, err
 	}
 
+	security, err := security.New(&config.Security)
+	if err != nil {
+		return nil, err
+	}
+
 	imgproxy := &Imgproxy{
 		workers:          workers,
 		fallbackImage:    fallbackImage,
@@ -73,6 +80,7 @@ func New(ctx context.Context, config *Config) (*Imgproxy, error) {
 		fetcher:          fetcher,
 		imageDataFactory: idf,
 		config:           config,
+		security:         security,
 	}
 
 	imgproxy.handlers.Health = healthhandler.New()
@@ -186,4 +194,8 @@ func (i *Imgproxy) WatermarkImage() auximageprovider.Provider {
 
 func (i *Imgproxy) ImageDataFactory() *imagedata.Factory {
 	return i.imageDataFactory
+}
+
+func (i *Imgproxy) Security() *security.Checker {
+	return i.security
 }
