@@ -1,11 +1,13 @@
 package server
 
 import (
+	"context"
+	"fmt"
+	"log/slog"
 	"net"
 	"net/http"
 
 	"github.com/imgproxy/imgproxy/v3/ierrors"
-	log "github.com/sirupsen/logrus"
 )
 
 func LogRequest(reqID string, r *http.Request) {
@@ -13,52 +15,51 @@ func LogRequest(reqID string, r *http.Request) {
 
 	clientIP, _, _ := net.SplitHostPort(r.RemoteAddr)
 
-	log.WithFields(log.Fields{
-		"request_id": reqID,
-		"method":     r.Method,
-		"client_ip":  clientIP,
-	}).Infof("Started %s", path)
+	slog.Info(
+		fmt.Sprintf("Started %s", path),
+		"request_id", reqID,
+		"method", r.Method,
+		"client_ip", clientIP,
+	)
 }
 
-func LogResponse(reqID string, r *http.Request, status int, err *ierrors.Error, additional ...log.Fields) {
-	var level log.Level
+func LogResponse(reqID string, r *http.Request, status int, err *ierrors.Error, additional ...slog.Attr) {
+	var level slog.Level
 
 	switch {
 	case status >= 500 || (err != nil && err.StatusCode() >= 500):
-		level = log.ErrorLevel
+		level = slog.LevelError
 	case status >= 400:
-		level = log.WarnLevel
+		level = slog.LevelWarn
 	default:
-		level = log.InfoLevel
+		level = slog.LevelInfo
 	}
 
 	clientIP, _, _ := net.SplitHostPort(r.RemoteAddr)
 
-	fields := log.Fields{
-		"request_id": reqID,
-		"method":     r.Method,
-		"status":     status,
-		"client_ip":  clientIP,
+	attrs := []slog.Attr{
+		slog.String("request_id", reqID),
+		slog.String("method", r.Method),
+		slog.Int("status", status),
+		slog.String("client_ip", clientIP),
 	}
 
 	if err != nil {
-		fields["error"] = err
+		attrs = append(attrs, slog.String("error", err.Error()))
 
-		if level <= log.ErrorLevel {
+		if level >= slog.LevelError {
 			if stack := err.FormatStack(); len(stack) > 0 {
-				fields["stack"] = stack
+				attrs = append(attrs, slog.String("stack", stack))
 			}
 		}
 	}
 
-	for _, f := range additional {
-		for k, v := range f {
-			fields[k] = v
-		}
-	}
+	attrs = append(attrs, additional...)
 
-	log.WithFields(fields).Logf(
+	slog.LogAttrs(
+		context.Background(),
 		level,
-		"Completed in %s %s", requestStartedAt(r.Context()), r.RequestURI,
+		fmt.Sprintf("Completed in %s %s", requestStartedAt(r.Context()), r.RequestURI),
+		attrs...,
 	)
 }

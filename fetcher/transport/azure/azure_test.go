@@ -3,16 +3,15 @@ package azure
 import (
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/fetcher/transport/generichttp"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
+	"github.com/imgproxy/imgproxy/v3/logger"
 )
 
 type AzureTestSuite struct {
@@ -27,7 +26,7 @@ type AzureTestSuite struct {
 func (s *AzureTestSuite) SetupSuite() {
 	data := make([]byte, 32)
 
-	logrus.SetOutput(os.Stdout)
+	logger.Mute()
 
 	s.etag = "testetag"
 	s.lastModified, _ = time.Parse(http.TimeFormat, "Wed, 21 Oct 2015 07:28:00 GMT")
@@ -60,6 +59,7 @@ func (s *AzureTestSuite) SetupSuite() {
 func (s *AzureTestSuite) TearDownSuite() {
 	s.server.Close()
 	config.IgnoreSslVerification = false
+	logger.Unmute()
 }
 
 func (s *AzureTestSuite) TestRoundTripWithETag() {
