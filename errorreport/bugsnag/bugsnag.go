@@ -1,10 +1,11 @@
 package bugsnag
 
 import (
+	"fmt"
+	"log/slog"
 	"net/http"
 
 	"github.com/bugsnag/bugsnag-go/v2"
-	"github.com/sirupsen/logrus"
 
 	"github.com/imgproxy/imgproxy/v3/config"
 )
@@ -14,7 +15,10 @@ var enabled bool
 type logger struct{}
 
 func (l logger) Printf(format string, v ...interface{}) {
-	logrus.WithField("source", "bugsnag").Debugf(format, v...)
+	slog.Debug(
+		fmt.Sprintf(format, v...),
+		"source", "bugsnag",
+	)
 }
 
 func Init() {

@@ -2,13 +2,12 @@ package responsewriter
 
 import (
 	"fmt"
-	"io"
-	"os"
 	"testing"
 
-	"github.com/imgproxy/imgproxy/v3/config"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/logger"
 )
 
 type ResponseWriterConfigSuite struct {
@@ -16,11 +15,11 @@ type ResponseWriterConfigSuite struct {
 }
 
 func (s *ResponseWriterConfigSuite) SetupSuite() {
-	logrus.SetOutput(io.Discard)
+	logger.Mute()
 }
 
 func (s *ResponseWriterConfigSuite) TearDownSuite() {
-	logrus.SetOutput(os.Stdout)
+	logger.Unmute()
 }
 
 func (s *ResponseWriterConfigSuite) TestLoadingVaryValueFromEnv() {

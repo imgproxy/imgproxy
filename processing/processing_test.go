@@ -3,18 +3,17 @@ package processing
 import (
 	"context"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"testing"
 
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/fetcher"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
+	"github.com/imgproxy/imgproxy/v3/logger"
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/security"
 	"github.com/imgproxy/imgproxy/v3/vips"
@@ -36,7 +35,7 @@ func (s *ProcessingTestSuite) SetupSuite() {
 
 	s.Require().NoError(vips.Init())
 
-	logrus.SetOutput(io.Discard)
+	logger.Mute()
 
 	fc := fetcher.NewDefaultConfig()
 	f, err := fetcher.New(&fc)
@@ -55,6 +54,10 @@ func (s *ProcessingTestSuite) SetupSuite() {
 
 	s.pof, err = options.NewFactory(cfg, security)
 	s.Require().NoError(err)
+}
+
+func (s *ProcessingTestSuite) TearDownSuite() {
+	logger.Unmute()
 }
 
 func (s *ProcessingTestSuite) openFile(name string) imagedata.ImageData {

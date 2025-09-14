@@ -1,6 +1,7 @@
 package options
 
 import (
+	"log/slog"
 	"maps"
 	"net/http"
 	"slices"
@@ -181,6 +182,10 @@ func (po *ProcessingOptions) String() string {
 
 func (po *ProcessingOptions) MarshalJSON() ([]byte, error) {
 	return po.Diff().MarshalJSON()
+}
+
+func (po *ProcessingOptions) LogValue() slog.Value {
+	return po.Diff().LogValue()
 }
 
 // Default returns the ProcessingOptions instance with defaults set

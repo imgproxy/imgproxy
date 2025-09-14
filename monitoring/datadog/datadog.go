@@ -2,6 +2,8 @@ package datadog
 
 import (
 	"context"
+	"fmt"
+	"log/slog"
 	"net"
 	"net/http"
 	"os"
@@ -14,7 +16,6 @@ import (
 	"github.com/DataDog/dd-trace-go/v2/ddtrace/ext"
 	"github.com/DataDog/dd-trace-go/v2/ddtrace/tracer"
 	"github.com/felixge/httpsnoop"
-	log "github.com/sirupsen/logrus"
 
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/monitoring/errformat"
@@ -86,7 +87,7 @@ func Init() {
 		enabledMetrics = true
 		go runMetricsCollector()
 	} else {
-		log.Warnf("Can't initialize DogStatsD client: %s", err)
+		slog.Warn(fmt.Sprintf("Can't initialize DogStatsD client: %s", err))
 	}
 }
 
@@ -239,5 +240,5 @@ type dataDogLogger struct {
 }
 
 func (l dataDogLogger) Log(msg string) {
-	log.Info(msg)
+	slog.Info(msg)
 }

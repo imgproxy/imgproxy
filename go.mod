@@ -11,7 +11,6 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.12.0
 	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.6.2
 	github.com/DarthSim/godotenv v1.3.1
-	github.com/DataDog/datadog-agent/pkg/trace v0.67.0
 	github.com/DataDog/datadog-go/v5 v5.7.1
 	github.com/DataDog/dd-trace-go/v2 v2.2.3
 	github.com/airbrake/gobrake/v5 v5.6.2
@@ -33,13 +32,13 @@ require (
 	github.com/honeybadger-io/honeybadger-go v0.8.0
 	github.com/johannesboyne/gofakes3 v0.0.0-20250916175020-ebf3e50324d3
 	github.com/matoous/go-nanoid/v2 v2.1.0
+	github.com/mattn/go-isatty v0.0.20
 	github.com/ncw/swift/v2 v2.0.4
 	github.com/newrelic/go-agent/v3 v3.40.1
 	github.com/newrelic/newrelic-telemetry-sdk-go v0.8.1
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.23.2
 	github.com/shirou/gopsutil v3.21.11+incompatible
-	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.11.1
 	github.com/tdewolff/parse/v2 v2.8.3
 	github.com/trimmer-io/go-xmp v1.0.0
@@ -83,6 +82,7 @@ require (
 	github.com/DataDog/datadog-agent/pkg/obfuscate v0.67.0 // indirect
 	github.com/DataDog/datadog-agent/pkg/proto v0.67.0 // indirect
 	github.com/DataDog/datadog-agent/pkg/remoteconfig/state v0.69.0 // indirect
+	github.com/DataDog/datadog-agent/pkg/trace v0.67.0 // indirect
 	github.com/DataDog/datadog-agent/pkg/util/log v0.67.0 // indirect
 	github.com/DataDog/datadog-agent/pkg/util/scrubber v0.67.0 // indirect
 	github.com/DataDog/datadog-agent/pkg/version v0.67.0 // indirect

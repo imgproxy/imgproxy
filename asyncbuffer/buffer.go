@@ -17,10 +17,9 @@ import (
 	"context"
 	"errors"
 	"io"
+	"log/slog"
 	"sync"
 	"sync/atomic"
-
-	"github.com/sirupsen/logrus"
 
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/ioutil"
@@ -154,7 +153,11 @@ func (ab *AsyncBuffer) readChunks() {
 
 		// Close the upstream reader
 		if err := ab.r.Close(); err != nil {
-			logrus.WithField("source", "asyncbuffer.AsyncBuffer.readChunks").Warningf("error closing upstream reader: %s", err)
+			slog.Warn(
+				"error closing upstream reader",
+				"error", err,
+				"source", "asyncbuffer.AsyncBuffer.readChunks",
+			)
 		}
 
 		ab.callFinishFn()

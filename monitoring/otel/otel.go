@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 	"reflect"
@@ -17,7 +18,6 @@ import (
 
 	"github.com/felixge/httpsnoop"
 	"github.com/shirou/gopsutil/process"
-	"github.com/sirupsen/logrus"
 	ec2 "go.opentelemetry.io/contrib/detectors/aws/ec2/v2"
 	"go.opentelemetry.io/contrib/detectors/aws/ecs"
 	"go.opentelemetry.io/contrib/detectors/aws/eks"
@@ -78,7 +78,7 @@ func Init() error {
 		return nil
 	}
 
-	otel.SetErrorHandler(&errorHandler{entry: logrus.WithField("from", "opentelemetry")})
+	otel.SetErrorHandler(errorHandler{})
 
 	var (
 		traceExporter  *otlptrace.Exporter
@@ -123,7 +123,7 @@ func Init() error {
 	if merged, merr := resource.Merge(awsRes, res); merr == nil {
 		res = merged
 	} else {
-		logrus.Warnf("Can't add AWS attributes to OpenTelemetry: %s", merr)
+		slog.Warn(fmt.Sprintf("Can't add AWS attributes to OpenTelemetry: %s", merr))
 	}
 
 	opts := []sdktrace.TracerProviderOption{
@@ -185,7 +185,7 @@ func Init() error {
 func mapDeprecatedConfig() {
 	endpoint := os.Getenv("IMGPROXY_OPEN_TELEMETRY_ENDPOINT")
 	if len(endpoint) > 0 {
-		logrus.Warn("The IMGPROXY_OPEN_TELEMETRY_ENDPOINT config is deprecated. Use IMGPROXY_OPEN_TELEMETRY_ENABLE and OTEL_EXPORTER_OTLP_ENDPOINT instead. See https://docs.imgproxy.net/latest/monitoring/open_telemetry#deprecated-environment-variables")
+		slog.Warn("The IMGPROXY_OPEN_TELEMETRY_ENDPOINT config is deprecated. Use IMGPROXY_OPEN_TELEMETRY_ENABLE and OTEL_EXPORTER_OTLP_ENDPOINT instead. See https://docs.imgproxy.net/latest/monitoring/open_telemetry#deprecated-environment-variables")
 		config.OpenTelemetryEnable = true
 	}
 
@@ -196,7 +196,7 @@ func mapDeprecatedConfig() {
 	protocol := "grpc"
 
 	if prot := os.Getenv("IMGPROXY_OPEN_TELEMETRY_PROTOCOL"); len(prot) > 0 {
-		logrus.Warn("The IMGPROXY_OPEN_TELEMETRY_PROTOCOL config is deprecated. Use OTEL_EXPORTER_OTLP_PROTOCOL instead. See https://docs.imgproxy.net/latest/monitoring/open_telemetry#deprecated-environment-variables")
+		slog.Warn("The IMGPROXY_OPEN_TELEMETRY_PROTOCOL config is deprecated. Use OTEL_EXPORTER_OTLP_PROTOCOL instead. See https://docs.imgproxy.net/latest/monitoring/open_telemetry#deprecated-environment-variables")
 		protocol = prot
 		os.Setenv("OTEL_EXPORTER_OTLP_PROTOCOL", protocol)
 	}
@@ -207,7 +207,7 @@ func mapDeprecatedConfig() {
 		switch protocol {
 		case "grpc":
 			if insecure, _ := strconv.ParseBool(os.Getenv("IMGPROXY_OPEN_TELEMETRY_GRPC_INSECURE")); insecure {
-				logrus.Warn("The IMGPROXY_OPEN_TELEMETRY_GRPC_INSECURE config is deprecated. Use OTEL_EXPORTER_OTLP_ENDPOINT with the `http://` schema instead. See https://docs.imgproxy.net/latest/monitoring/open_telemetry#deprecated-environment-variables")
+				slog.Warn("The IMGPROXY_OPEN_TELEMETRY_GRPC_INSECURE config is deprecated. Use OTEL_EXPORTER_OTLP_ENDPOINT with the `http://` schema instead. See https://docs.imgproxy.net/latest/monitoring/open_telemetry#deprecated-environment-variables")
 				schema = "http"
 			}
 		case "http":
@@ -218,17 +218,17 @@ func mapDeprecatedConfig() {
 	}
 
 	if serviceName := os.Getenv("IMGPROXY_OPEN_TELEMETRY_SERVICE_NAME"); len(serviceName) > 0 {
-		logrus.Warn("The IMGPROXY_OPEN_TELEMETRY_SERVICE_NAME config is deprecated. Use OTEL_SERVICE_NAME instead. See https://docs.imgproxy.net/latest/monitoring/open_telemetry#deprecated-environment-variables")
+		slog.Warn("The IMGPROXY_OPEN_TELEMETRY_SERVICE_NAME config is deprecated. Use OTEL_SERVICE_NAME instead. See https://docs.imgproxy.net/latest/monitoring/open_telemetry#deprecated-environment-variables")
 		os.Setenv("OTEL_SERVICE_NAME", serviceName)
 	}
 
 	if propagators := os.Getenv("IMGPROXY_OPEN_TELEMETRY_PROPAGATORS"); len(propagators) > 0 {
-		logrus.Warn("The IMGPROXY_OPEN_TELEMETRY_PROPAGATORS config is deprecated. Use OTEL_PROPAGATORS instead. See https://docs.imgproxy.net/latest/monitoring/open_telemetry#deprecated-environment-variables")
+		slog.Warn("The IMGPROXY_OPEN_TELEMETRY_PROPAGATORS config is deprecated. Use OTEL_PROPAGATORS instead. See https://docs.imgproxy.net/latest/monitoring/open_telemetry#deprecated-environment-variables")
 		os.Setenv("OTEL_PROPAGATORS", propagators)
 	}
 
 	if timeout := os.Getenv("IMGPROXY_OPEN_TELEMETRY_CONNECTION_TIMEOUT"); len(timeout) > 0 {
-		logrus.Warn("The IMGPROXY_OPEN_TELEMETRY_CONNECTION_TIMEOUT config is deprecated. Use OTEL_EXPORTER_OTLP_TIMEOUT instead. See https://docs.imgproxy.net/latest/monitoring/open_telemetry#deprecated-environment-variables")
+		slog.Warn("The IMGPROXY_OPEN_TELEMETRY_CONNECTION_TIMEOUT config is deprecated. Use OTEL_EXPORTER_OTLP_TIMEOUT instead. See https://docs.imgproxy.net/latest/monitoring/open_telemetry#deprecated-environment-variables")
 
 		if to, _ := strconv.Atoi(timeout); to > 0 {
 			os.Setenv("OTEL_EXPORTER_OTLP_TIMEOUT", strconv.Itoa(to*1000))
@@ -711,7 +711,7 @@ func AddGaugeFunc(name, desc, u string, f GaugeFunc) {
 		}),
 	)
 	if err != nil {
-		logrus.Warnf("Can't add %s gauge to OpenTelemetry: %s", name, err)
+		slog.Warn(fmt.Sprintf("Can't add %s gauge to OpenTelemetry: %s", name, err))
 	}
 }
 
@@ -739,10 +739,8 @@ func SetBufferMaxSize(t string, size int) {
 	}
 }
 
-type errorHandler struct {
-	entry *logrus.Entry
-}
+type errorHandler struct{}
 
-func (h *errorHandler) Handle(err error) {
-	h.entry.Warn(err.Error())
+func (h errorHandler) Handle(err error) {
+	slog.Warn(err.Error(), "source", "opentelemetry")
 }

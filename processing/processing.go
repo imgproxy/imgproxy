@@ -3,10 +3,10 @@ package processing
 import (
 	"context"
 	"errors"
+	"fmt"
+	"log/slog"
 	"runtime"
 	"slices"
-
-	log "github.com/sirupsen/logrus"
 
 	"github.com/imgproxy/imgproxy/v3/auximageprovider"
 	"github.com/imgproxy/imgproxy/v3/config"
@@ -53,7 +53,7 @@ func ValidatePreferredFormats() error {
 
 	for _, t := range config.PreferredFormats {
 		if !vips.SupportsSave(t) {
-			log.Warnf("%s can't be a preferred format as it's saving is not supported", t)
+			slog.Warn(fmt.Sprintf("%s can't be a preferred format as it's saving is not supported", t))
 		} else {
 			filtered = append(filtered, t)
 		}
@@ -183,7 +183,7 @@ func initialLoadImage(
 		if err := img.LoadThumbnail(imgdata); err == nil {
 			return true, nil
 		} else {
-			log.Debugf("Can't load thumbnail: %s", err)
+			slog.Debug(fmt.Sprintf("Can't load thumbnail: %s", err))
 		}
 	}
 
@@ -425,7 +425,7 @@ func transformAnimated(
 	// NOTE: END TEMPORARY BLOCK
 
 	if po.Trim.Enabled {
-		log.Warning("Trim is not supported for animated images")
+		slog.Warn("Trim is not supported for animated images")
 		po.Trim.Enabled = false
 	}
 
@@ -550,10 +550,10 @@ func saveImage(
 			po.Format = imagetype.JPEG
 		}
 
-		log.Warningf(
+		slog.Warn(fmt.Sprintf(
 			"Minimal dimension of AVIF is 16, current image size is %dx%d. Image will be saved as %s",
 			img.Width(), img.Height(), po.Format,
-		)
+		))
 	}
 
 	// If we want and can fit the image into the specified number of bytes,

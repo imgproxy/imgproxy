@@ -1,9 +1,8 @@
 package processing
 
 import (
+	"log/slog"
 	"math"
-
-	log "github.com/sirupsen/logrus"
 
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
@@ -66,7 +65,7 @@ func scaleOnLoad(c *Context) error {
 		defer thumbnail.Clear()
 
 		if err := thumbnail.LoadThumbnail(c.ImgData); err != nil {
-			log.Debugf("Can't load thumbnail: %s", err)
+			slog.Debug("Can't load thumbnail: %s", "error", err)
 			return nil
 		}
 

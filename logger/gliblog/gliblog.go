@@ -5,7 +5,7 @@ package gliblog
 #include "gliblog.h"
 */
 import "C"
-import log "github.com/sirupsen/logrus"
+import "log/slog"
 
 //export logGLib
 func logGLib(cdomain *C.char, logLevel C.GLogLevelFlags, cstr *C.char) {
@@ -19,13 +19,11 @@ func logGLib(cdomain *C.char, logLevel C.GLogLevelFlags, cstr *C.char) {
 		domain = "GLib"
 	}
 
-	entry := log.WithField("source", domain)
-
 	switch logLevel {
 	case C.G_LOG_LEVEL_WARNING:
-		entry.Warn(str)
+		slog.Warn(str, "source", domain)
 	default:
-		entry.Error(str)
+		slog.Error(str, "source", domain)
 	}
 }
 

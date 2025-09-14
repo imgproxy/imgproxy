@@ -3,10 +3,9 @@ package stream
 import (
 	"context"
 	"io"
+	"log/slog"
 	"net/http"
 	"sync"
-
-	log "github.com/sirupsen/logrus"
 
 	"github.com/imgproxy/imgproxy/v3/cookies"
 	"github.com/imgproxy/imgproxy/v3/fetcher"
@@ -177,10 +176,8 @@ func (s *request) streamData(res *http.Response) {
 
 	server.LogResponse(
 		s.reqID, s.imageRequest, res.StatusCode, nil,
-		log.Fields{
-			"image_url":          s.imageURL,
-			"processing_options": s.po,
-		},
+		slog.String("image_url", s.imageURL),
+		slog.Any("processing_options", s.po),
 	)
 
 	// We've got to skip logging here
