@@ -3,17 +3,19 @@
 package imgproxy
 
 import (
-	"github.com/DataDog/datadog-agent/pkg/trace/log"
+	"fmt"
+	"log/slog"
+
+	"go.uber.org/automaxprocs/maxprocs"
+
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/config/loadenv"
 	"github.com/imgproxy/imgproxy/v3/errorreport"
-	"github.com/imgproxy/imgproxy/v3/gliblog"
 	"github.com/imgproxy/imgproxy/v3/logger"
 	"github.com/imgproxy/imgproxy/v3/monitoring"
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/processing"
 	"github.com/imgproxy/imgproxy/v3/vips"
-	"go.uber.org/automaxprocs/maxprocs"
 )
 
 // Init performs the global resources initialization. This should be done once per process.
@@ -22,7 +24,8 @@ func Init() error {
 		return err
 	}
 
-	if err := logger.Init(); err != nil {
+	logCfg := logger.LoadConfigFromEnv(nil)
+	if err := logger.Init(logCfg); err != nil {
 		return err
 	}
 
@@ -34,9 +37,9 @@ func Init() error {
 	}
 	// NOTE: End of temporary workaround.
 
-	gliblog.Init()
-
-	maxprocs.Set(maxprocs.Logger(log.Debugf))
+	maxprocs.Set(maxprocs.Logger(func(msg string, args ...any) {
+		slog.Debug(fmt.Sprintf(msg, args...))
+	}))
 
 	if err := monitoring.Init(); err != nil {
 		return err

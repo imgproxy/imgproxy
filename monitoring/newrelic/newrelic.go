@@ -3,6 +3,7 @@ package newrelic
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"math"
 	"net/http"
 	"reflect"
@@ -12,7 +13,6 @@ import (
 
 	"github.com/newrelic/go-agent/v3/newrelic"
 	"github.com/newrelic/newrelic-telemetry-sdk-go/telemetry"
-	log "github.com/sirupsen/logrus"
 
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/monitoring/errformat"
@@ -89,19 +89,24 @@ func Init() error {
 		metricsURL = euMetricURL
 	}
 
+	errLogger := slog.NewLogLogger(
+		slog.With("from", "newrelic").Handler(),
+		slog.LevelWarn,
+	)
+
 	harvester, err = telemetry.NewHarvester(
 		telemetry.ConfigAPIKey(config.NewRelicKey),
 		telemetry.ConfigCommonAttributes(harvesterAttributes),
 		telemetry.ConfigHarvestPeriod(0), // Don't harvest automatically
 		telemetry.ConfigMetricsURLOverride(metricsURL),
-		telemetry.ConfigBasicErrorLogger(log.StandardLogger().WithField("from", "newrelic").WriterLevel(log.WarnLevel)),
+		telemetry.ConfigBasicErrorLogger(errLogger.Writer()),
 	)
 	if err == nil {
 		harvesterCtx, harvesterCtxCancel = context.WithCancel(context.Background())
 		enabledHarvester = true
 		go runMetricsCollector()
 	} else {
-		log.Warnf("Can't init New Relic telemetry harvester: %s", err)
+		slog.Warn(fmt.Sprintf("Can't init New Relic telemetry harvester: %s", err))
 	}
 
 	enabled = true

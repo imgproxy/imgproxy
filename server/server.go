@@ -3,11 +3,10 @@ package server
 import (
 	"context"
 	"fmt"
-	golog "log"
+	"log/slog"
 	"net"
 	"net/http"
 
-	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/netutil"
 
 	"github.com/imgproxy/imgproxy/v3/config"
@@ -39,9 +38,9 @@ func Start(cancel context.CancelFunc, router *Router) (*Server, error) {
 		l = netutil.LimitListener(l, router.config.MaxClients)
 	}
 
-	errLogger := golog.New(
-		log.WithField("source", "http_server").WriterLevel(log.ErrorLevel),
-		"", 0,
+	errLogger := slog.NewLogLogger(
+		slog.With("source", "http_server").Handler(),
+		slog.LevelError,
 	)
 
 	addr := l.Addr()
@@ -60,10 +59,10 @@ func Start(cancel context.CancelFunc, router *Router) (*Server, error) {
 	}
 
 	go func() {
-		log.Infof("Starting server at %s", router.config.Bind)
+		slog.Info(fmt.Sprintf("Starting server at %s", router.config.Bind))
 
 		if err := srv.Serve(l); err != nil && err != http.ErrServerClosed {
-			log.Error(err)
+			slog.Error(err.Error(), "source", "http_server")
 		}
 
 		cancel()
@@ -78,7 +77,7 @@ func Start(cancel context.CancelFunc, router *Router) (*Server, error) {
 
 // Shutdown gracefully shuts down the server
 func (s *Server) Shutdown(ctx context.Context) {
-	log.Info("Shutting down the server...")
+	slog.Info("Shutting down the server...")
 
 	ctx, close := context.WithTimeout(ctx, s.router.config.GracefulTimeout)
 	defer close()
