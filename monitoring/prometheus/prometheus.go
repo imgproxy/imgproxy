@@ -3,6 +3,7 @@ package prometheus
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"time"
@@ -10,7 +11,6 @@ import (
 	"github.com/felixge/httpsnoop"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	log "github.com/sirupsen/logrus"
 
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
@@ -167,9 +167,9 @@ func StartServer(cancel context.CancelFunc) error {
 	}
 
 	go func() {
-		log.Infof("Starting Prometheus server at %s", config.PrometheusBind)
+		slog.Info(fmt.Sprintf("Starting Prometheus server at %s", config.PrometheusBind))
 		if err := s.Serve(l); err != nil && err != http.ErrServerClosed {
-			log.Error(err)
+			slog.Error(err.Error())
 		}
 		cancel()
 	}()

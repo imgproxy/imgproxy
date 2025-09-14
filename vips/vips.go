@@ -11,6 +11,7 @@ import "C"
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"math"
 	"net/http"
 	"os"
@@ -20,8 +21,6 @@ import (
 	"sync"
 	"time"
 	"unsafe"
-
-	log "github.com/sirupsen/logrus"
 
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
@@ -414,7 +413,7 @@ func (img *Image) Load(imgdata imagedata.ImageData, shrink int, scale float64, p
 		if C.vips_fix_float_tiff(img.VipsImage, &tmp) == 0 {
 			img.swapAndUnref(tmp)
 		} else {
-			log.Warnf("Can't fix TIFF: %s", Error())
+			slog.Warn("Can't fix TIFF", "error", Error())
 		}
 	}
 
@@ -808,7 +807,7 @@ func (img *Image) BackupColourProfile() {
 	if C.vips_icc_backup(img.VipsImage, &tmp) == 0 {
 		img.swapAndUnref(tmp)
 	} else {
-		log.Warningf("Can't backup ICC profile: %s", Error())
+		slog.Warn("Can't backup ICC profile", "error", Error())
 	}
 }
 
@@ -818,7 +817,7 @@ func (img *Image) RestoreColourProfile() {
 	if C.vips_icc_restore(img.VipsImage, &tmp) == 0 {
 		img.swapAndUnref(tmp)
 	} else {
-		log.Warningf("Can't restore ICC profile: %s", Error())
+		slog.Warn("Can't restore ICC profile", "error", Error())
 	}
 }
 
@@ -843,7 +842,7 @@ func (img *Image) ImportColourProfile() error {
 	if C.vips_icc_import_go(img.VipsImage, &tmp) == 0 {
 		img.swapAndUnref(tmp)
 	} else {
-		log.Warningf("Can't import ICC profile: %s", Error())
+		slog.Warn("Can't import ICC profile", "error", Error())
 	}
 
 	return nil
@@ -865,7 +864,7 @@ func (img *Image) ExportColourProfile() error {
 	if C.vips_icc_export_go(img.VipsImage, &tmp) == 0 {
 		img.swapAndUnref(tmp)
 	} else {
-		log.Warningf("Can't export ICC profile: %s", Error())
+		slog.Warn("Can't export ICC profile", "error", Error())
 	}
 
 	return nil
@@ -882,7 +881,7 @@ func (img *Image) ExportColourProfileToSRGB() error {
 	if C.vips_icc_export_srgb(img.VipsImage, &tmp) == 0 {
 		img.swapAndUnref(tmp)
 	} else {
-		log.Warningf("Can't export ICC profile: %s", Error())
+		slog.Warn("Can't export ICC profile", "error", Error())
 	}
 
 	return nil
@@ -901,7 +900,7 @@ func (img *Image) TransformColourProfileToSRGB() error {
 	if C.vips_icc_transform_srgb(img.VipsImage, &tmp) == 0 {
 		img.swapAndUnref(tmp)
 	} else {
-		log.Warningf("Can't transform ICC profile to sRGB: %s", Error())
+		slog.Warn("Can't transform ICC profile to sRGB", "error", Error())
 	}
 
 	return nil
@@ -913,7 +912,7 @@ func (img *Image) RemoveColourProfile() error {
 	if C.vips_icc_remove(img.VipsImage, &tmp) == 0 {
 		img.swapAndUnref(tmp)
 	} else {
-		log.Warningf("Can't remove ICC profile: %s", Error())
+		slog.Warn("Can't remove ICC profile", "error", Error())
 	}
 
 	return nil

@@ -2,12 +2,11 @@ package security
 
 import (
 	"fmt"
+	"log/slog"
 	"regexp"
 
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/ensure"
-
-	log "github.com/sirupsen/logrus"
 )
 
 // Config is the package-local configuration
@@ -75,11 +74,11 @@ func (c *Config) Validate() error {
 	}
 
 	if len(c.Keys) == 0 {
-		log.Warning("No keys defined, so signature checking is disabled")
+		slog.Warn("No keys defined, so signature checking is disabled")
 	}
 
 	if len(c.Salts) == 0 {
-		log.Warning("No salts defined, so signature checking is disabled")
+		slog.Warn("No salts defined, so signature checking is disabled")
 	}
 
 	if c.SignatureSize < 1 || c.SignatureSize > 32 {

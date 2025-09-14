@@ -2,13 +2,14 @@ package options
 
 import (
 	"encoding/base64"
+	"fmt"
+	"log/slog"
 	"slices"
 	"strconv"
 	"time"
 
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/vips"
-	log "github.com/sirupsen/logrus"
 )
 
 func applyWidthOption(po *ProcessingOptions, args []string) error {
@@ -540,7 +541,7 @@ func applyPresetOption(f *Factory, po *ProcessingOptions, args []string, usedPre
 	for _, preset := range args {
 		if p, ok := f.presets[preset]; ok {
 			if slices.Contains(usedPresets, preset) {
-				log.Warningf("Recursive preset usage is detected: %s", preset)
+				slog.Warn(fmt.Sprintf("Recursive preset usage is detected: %s", preset))
 				continue
 			}
 

@@ -1,10 +1,10 @@
 package options
 
 import (
+	"fmt"
+	"log/slog"
 	"slices"
 	"strconv"
-
-	log "github.com/sirupsen/logrus"
 )
 
 // ensureMaxArgs checks if the number of arguments is as expected
@@ -24,7 +24,7 @@ func parseBool(value *bool, name string, args ...string) error {
 	b, err := strconv.ParseBool(args[0])
 
 	if err != nil {
-		log.Warningf("%s `%s` is not a valid boolean value. Treated as false", name, args[0])
+		slog.Warn(fmt.Sprintf("%s `%s` is not a valid boolean value. Treated as false", name, args[0]))
 	}
 
 	*value = b

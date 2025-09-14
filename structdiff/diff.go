@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"reflect"
 	"strings"
 )
@@ -65,6 +66,14 @@ func (d Entries) MarshalJSON() ([]byte, error) {
 	buf.WriteByte('}')
 
 	return buf.Bytes(), nil
+}
+
+func (d Entries) LogValue() slog.Value {
+	attrs := make([]slog.Attr, 0, len(d))
+	for _, e := range d {
+		attrs = append(attrs, slog.Any(e.Name, e.Value))
+	}
+	return slog.GroupValue(attrs...)
 }
 
 func (d Entries) flatten(m map[string]interface{}, prefix string) {

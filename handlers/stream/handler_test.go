@@ -5,17 +5,16 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"strconv"
 	"testing"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/fetcher"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
+	"github.com/imgproxy/imgproxy/v3/logger"
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/server/responsewriter"
 	"github.com/imgproxy/imgproxy/v3/testutil"
@@ -79,11 +78,11 @@ func (s *HandlerTestSuite) SetupSuite() {
 	s.testServer, _ = testutil.NewLazySuiteTestServer(s)
 
 	// Silence logs during tests
-	logrus.SetOutput(io.Discard)
+	logger.Mute()
 }
 
 func (s *HandlerTestSuite) TearDownSuite() {
-	logrus.SetOutput(os.Stdout)
+	logger.Unmute()
 }
 
 func (s *HandlerTestSuite) SetupSubTest() {

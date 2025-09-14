@@ -3,15 +3,12 @@ package integration
 import (
 	"context"
 	"fmt"
-	"io"
 	"net"
 	"net/http"
-	"os"
-
-	"github.com/sirupsen/logrus"
 
 	"github.com/imgproxy/imgproxy/v3"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
+	"github.com/imgproxy/imgproxy/v3/logger"
 	"github.com/imgproxy/imgproxy/v3/testutil"
 )
 
@@ -41,7 +38,7 @@ type Suite struct {
 
 func (s *Suite) SetupSuite() {
 	// Silence all the logs
-	logrus.SetOutput(io.Discard)
+	logger.Mute()
 
 	// Initialize test data provider (local test files)
 	s.TestData = testutil.NewTestDataProvider(s.T)
@@ -76,7 +73,7 @@ func (s *Suite) SetupSuite() {
 }
 
 func (s *Suite) TearDownSuite() {
-	logrus.SetOutput(os.Stdout)
+	logger.Unmute()
 }
 
 // startServer starts imgproxy instance's server for the tests.

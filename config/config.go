@@ -4,13 +4,12 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"log/slog"
 	"math"
 	"os"
 	"regexp"
 	"runtime"
 	"strings"
-
-	log "github.com/sirupsen/logrus"
 
 	"github.com/imgproxy/imgproxy/v3/config/configurators"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
@@ -441,7 +440,7 @@ func Configure() error {
 	configurators.String(&Bind, "IMGPROXY_BIND")
 
 	if _, ok := os.LookupEnv("IMGPROXY_WRITE_TIMEOUT"); ok {
-		log.Warning("IMGPROXY_WRITE_TIMEOUT is deprecated, use IMGPROXY_TIMEOUT instead")
+		slog.Warn("IMGPROXY_WRITE_TIMEOUT is deprecated, use IMGPROXY_TIMEOUT instead")
 		configurators.Int(&Timeout, "IMGPROXY_WRITE_TIMEOUT")
 	}
 	configurators.Int(&Timeout, "IMGPROXY_TIMEOUT")
@@ -450,7 +449,7 @@ func Configure() error {
 	configurators.Int(&GracefulStopTimeout, "IMGPROXY_GRACEFUL_STOP_TIMEOUT")
 
 	if _, ok := os.LookupEnv("IMGPROXY_READ_TIMEOUT"); ok {
-		log.Warning("IMGPROXY_READ_TIMEOUT is deprecated, use IMGPROXY_READ_REQUEST_TIMEOUT instead")
+		slog.Warn("IMGPROXY_READ_TIMEOUT is deprecated, use IMGPROXY_READ_REQUEST_TIMEOUT instead")
 		configurators.Int(&ReadRequestTimeout, "IMGPROXY_READ_TIMEOUT")
 	}
 	configurators.Int(&ReadRequestTimeout, "IMGPROXY_READ_REQUEST_TIMEOUT")
@@ -464,7 +463,7 @@ func Configure() error {
 
 	if lambdaFn := os.Getenv("AWS_LAMBDA_FUNCTION_NAME"); len(lambdaFn) > 0 {
 		Workers = 1
-		log.Info("AWS Lambda environment detected, setting workers to 1")
+		slog.Info("AWS Lambda environment detected, setting workers to 1")
 	} else {
 		configurators.Int(&Workers, "IMGPROXY_CONCURRENCY")
 		configurators.Int(&Workers, "IMGPROXY_WORKERS")
@@ -528,11 +527,11 @@ func Configure() error {
 	configurators.Bool(&ReturnAttachment, "IMGPROXY_RETURN_ATTACHMENT")
 
 	if _, ok := os.LookupEnv("IMGPROXY_ENABLE_WEBP_DETECTION"); ok {
-		log.Warning("IMGPROXY_ENABLE_WEBP_DETECTION is deprecated, use IMGPROXY_AUTO_WEBP instead")
+		slog.Warn("IMGPROXY_ENABLE_WEBP_DETECTION is deprecated, use IMGPROXY_AUTO_WEBP instead")
 		configurators.Bool(&AutoWebp, "IMGPROXY_ENABLE_WEBP_DETECTION")
 	}
 	if _, ok := os.LookupEnv("IMGPROXY_ENABLE_AVIF_DETECTION"); ok {
-		log.Warning("IMGPROXY_ENABLE_AVIF_DETECTION is deprecated, use IMGPROXY_AUTO_AVIF instead")
+		slog.Warn("IMGPROXY_ENABLE_AVIF_DETECTION is deprecated, use IMGPROXY_AUTO_AVIF instead")
 		configurators.Bool(&AutoAvif, "IMGPROXY_ENABLE_AVIF_DETECTION")
 	}
 
@@ -695,10 +694,10 @@ func Configure() error {
 		return fmt.Errorf("Number of keys and number of salts should be equal. Keys: %d, salts: %d", len(Keys), len(Salts))
 	}
 	if len(Keys) == 0 {
-		log.Warning("No keys defined, so signature checking is disabled")
+		slog.Warn("No keys defined, so signature checking is disabled")
 	}
 	if len(Salts) == 0 {
-		log.Warning("No salts defined, so signature checking is disabled")
+		slog.Warn("No salts defined, so signature checking is disabled")
 	}
 
 	if SignatureSize < 1 || SignatureSize > 32 {
@@ -792,7 +791,7 @@ func Configure() error {
 	}
 
 	if IgnoreSslVerification {
-		log.Warning("Ignoring SSL verification is very unsafe")
+		slog.Warn("Ignoring SSL verification is very unsafe")
 	}
 
 	if LocalFileSystemRoot != "" {
@@ -806,12 +805,12 @@ func Configure() error {
 		}
 
 		if LocalFileSystemRoot == "/" {
-			log.Warning("Exposing root via IMGPROXY_LOCAL_FILESYSTEM_ROOT is unsafe")
+			slog.Warn("Exposing root via IMGPROXY_LOCAL_FILESYSTEM_ROOT is unsafe")
 		}
 	}
 
 	if _, ok := os.LookupEnv("IMGPROXY_USE_GCS"); !ok && len(GCSKey) > 0 {
-		log.Warning("Set IMGPROXY_USE_GCS to true since it may be required by future versions to enable GCS support")
+		slog.Warn("Set IMGPROXY_USE_GCS to true since it may be required by future versions to enable GCS support")
 		GCSEnabled = true
 	}
 
