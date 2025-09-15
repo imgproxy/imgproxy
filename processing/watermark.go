@@ -22,12 +22,12 @@ var watermarkPipeline = pipeline{
 	padding,
 }
 
-func prepareWatermark(wm *vips.Image, wmData imagedata.ImageData, opts *options.WatermarkOptions, imgWidth, imgHeight int, offsetScale float64, framesCount int) error {
+func prepareWatermark(wm *vips.Image, wmData imagedata.ImageData, opts *options.WatermarkOptions, pof *options.Factory, imgWidth, imgHeight int, offsetScale float64, framesCount int) error {
 	if err := wm.Load(wmData, 1, 1.0, 1); err != nil {
 		return err
 	}
 
-	po := options.NewProcessingOptions()
+	po := pof.NewProcessingOptions()
 	po.ResizingType = options.ResizeFit
 	po.Dpr = 1
 	po.Enlarge = true
@@ -60,7 +60,7 @@ func prepareWatermark(wm *vips.Image, wmData imagedata.ImageData, opts *options.
 		po.Padding.Bottom = offY - po.Padding.Top
 	}
 
-	if err := watermarkPipeline.Run(context.Background(), wm, po, wmData, nil); err != nil {
+	if err := watermarkPipeline.Run(context.Background(), wm, po, wmData, nil, pof); err != nil {
 		return err
 	}
 
@@ -84,6 +84,7 @@ func applyWatermark(
 	ctx context.Context,
 	img *vips.Image,
 	watermark auximageprovider.Provider,
+	pof *options.Factory,
 	po *options.ProcessingOptions,
 	offsetScale float64,
 	framesCount int,
@@ -110,7 +111,7 @@ func applyWatermark(
 	height := img.Height()
 	frameHeight := height / framesCount
 
-	if err := prepareWatermark(wm, wmData, &opts, width, frameHeight, offsetScale, framesCount); err != nil {
+	if err := prepareWatermark(wm, wmData, &opts, pof, width, frameHeight, offsetScale, framesCount); err != nil {
 		return err
 	}
 
@@ -193,5 +194,5 @@ func watermark(
 		return nil
 	}
 
-	return applyWatermark(pctx.ctx, img, pctx.watermarkProvider, po, pctx.dprScale, 1)
+	return applyWatermark(pctx.ctx, img, pctx.watermarkProvider, pctx.processingOptionsFactory, po, pctx.dprScale, 1)
 }

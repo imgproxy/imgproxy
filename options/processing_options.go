@@ -2,7 +2,6 @@ package options
 
 import (
 	"encoding/base64"
-	"fmt"
 	"net/http"
 	"slices"
 	"strconv"
@@ -11,7 +10,6 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/imath"
@@ -118,77 +116,7 @@ type ProcessingOptions struct {
 	SecurityOptions security.Options
 
 	defaultQuality int
-}
-
-func NewProcessingOptions() *ProcessingOptions {
-	// NOTE: This is temporary hack until ProcessingOptions does not have Factory
-	securityCfg, err := security.LoadConfigFromEnv(nil)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	// NOTE: This is a temporary workaround for logrus bug that deadlocks
-	// if log is used within another log (issue 1448)
-	if len(securityCfg.Salts) == 0 {
-		securityCfg.Salts = [][]byte{[]byte("logrusbugworkaround")}
-	}
-
-	if len(securityCfg.Keys) == 0 {
-		securityCfg.Keys = [][]byte{[]byte("logrusbugworkaround")}
-	}
-	// END OF WORKAROUND
-
-	security, err := security.New(securityCfg)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	securityOptions := security.NewOptions()
-	// NOTE: This is temporary hack until ProcessingOptions does not have Factory
-
-	po := ProcessingOptions{
-		ResizingType:      ResizeFit,
-		Width:             0,
-		Height:            0,
-		ZoomWidth:         1,
-		ZoomHeight:        1,
-		Gravity:           GravityOptions{Type: GravityCenter},
-		Enlarge:           false,
-		Extend:            ExtendOptions{Enabled: false, Gravity: GravityOptions{Type: GravityCenter}},
-		ExtendAspectRatio: ExtendOptions{Enabled: false, Gravity: GravityOptions{Type: GravityCenter}},
-		Padding:           PaddingOptions{Enabled: false},
-		Trim:              TrimOptions{Enabled: false, Threshold: 10, Smart: true},
-		Rotate:            0,
-		Quality:           0,
-		MaxBytes:          0,
-		Format:            imagetype.Unknown,
-		Background:        vips.Color{R: 255, G: 255, B: 255},
-		Blur:              0,
-		Sharpen:           0,
-		Dpr:               1,
-		Watermark:         WatermarkOptions{Opacity: 1, Position: GravityOptions{Type: GravityCenter}},
-		StripMetadata:     config.StripMetadata,
-		KeepCopyright:     config.KeepCopyright,
-		StripColorProfile: config.StripColorProfile,
-		AutoRotate:        config.AutoRotate,
-		EnforceThumbnail:  config.EnforceThumbnail,
-		ReturnAttachment:  config.ReturnAttachment,
-
-		SkipProcessingFormats: append([]imagetype.Type(nil), config.SkipProcessingFormats...),
-		UsedPresets:           make([]string, 0, len(config.Presets)),
-
-		SecurityOptions: securityOptions,
-
-		// Basically, we need this to update ETag when `IMGPROXY_QUALITY` is changed
-		defaultQuality: config.Quality,
-	}
-
-	po.FormatQuality = make(map[imagetype.Type]int, len(config.FormatQuality))
-	for k, v := range config.FormatQuality {
-		po.FormatQuality[k] = v
-	}
-
-	return &po
+	defaultOptions *ProcessingOptions
 }
 
 func (po *ProcessingOptions) GetQuality() int {
@@ -206,7 +134,7 @@ func (po *ProcessingOptions) GetQuality() int {
 }
 
 func (po *ProcessingOptions) Diff() structdiff.Entries {
-	return structdiff.Diff(NewProcessingOptions(), po)
+	return structdiff.Diff(po.defaultOptions, po)
 }
 
 func (po *ProcessingOptions) String() string {

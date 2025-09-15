@@ -80,6 +80,8 @@ func (f *Factory) NewProcessingOptions() *ProcessingOptions {
 		defaultQuality: f.config.Quality,
 	}
 
+	po.defaultOptions = &po
+
 	po.FormatQuality = make(map[imagetype.Type]int, len(f.config.FormatQuality))
 	maps.Copy(po.FormatQuality, f.config.FormatQuality)
 
