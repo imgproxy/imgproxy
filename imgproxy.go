@@ -35,15 +35,15 @@ type ImgproxyHandlers struct {
 
 // Imgproxy holds all the components needed for imgproxy to function
 type Imgproxy struct {
-	workers                  *workers.Workers
-	fallbackImage            auximageprovider.Provider
-	watermarkImage           auximageprovider.Provider
-	fetcher                  *fetcher.Fetcher
-	imageDataFactory         *imagedata.Factory
-	handlers                 ImgproxyHandlers
-	security                 *security.Checker
-	processingOptionsFactory *options.Factory
-	config                   *Config
+	workers          *workers.Workers
+	fallbackImage    auximageprovider.Provider
+	watermarkImage   auximageprovider.Provider
+	fetcher          *fetcher.Fetcher
+	imageDataFactory *imagedata.Factory
+	handlers         ImgproxyHandlers
+	security         *security.Checker
+	optionsFactory   *options.Factory
+	config           *Config
 }
 
 // New creates a new imgproxy instance
@@ -75,20 +75,20 @@ func New(ctx context.Context, config *Config) (*Imgproxy, error) {
 		return nil, err
 	}
 
-	processingOptionsFactory, err := options.NewFactory(&config.ProcessingOptions, security)
+	processingOptionsFactory, err := options.NewFactory(&config.Options, security)
 	if err != nil {
 		return nil, err
 	}
 
 	imgproxy := &Imgproxy{
-		workers:                  workers,
-		fallbackImage:            fallbackImage,
-		watermarkImage:           watermarkImage,
-		fetcher:                  fetcher,
-		imageDataFactory:         idf,
-		config:                   config,
-		security:                 security,
-		processingOptionsFactory: processingOptionsFactory,
+		workers:          workers,
+		fallbackImage:    fallbackImage,
+		watermarkImage:   watermarkImage,
+		fetcher:          fetcher,
+		imageDataFactory: idf,
+		config:           config,
+		security:         security,
+		optionsFactory:   processingOptionsFactory,
 	}
 
 	imgproxy.handlers.Health = healthhandler.New()
@@ -208,6 +208,6 @@ func (i *Imgproxy) Security() *security.Checker {
 	return i.security
 }
 
-func (i *Imgproxy) ProcessingOptionsFactory() *options.Factory {
-	return i.processingOptionsFactory
+func (i *Imgproxy) OptionsFactory() *options.Factory {
+	return i.optionsFactory
 }

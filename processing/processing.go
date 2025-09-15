@@ -85,7 +85,6 @@ func ProcessImage(
 	imgdata imagedata.ImageData,
 	po *options.ProcessingOptions,
 	watermarkProvider auximageprovider.Provider,
-	processingOptionsFactory *options.Factory,
 ) (*Result, error) {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
@@ -139,12 +138,12 @@ func ProcessImage(
 	}
 
 	// Transform the image (resize, crop, etc)
-	if err = transformImage(ctx, img, po, imgdata, animated, watermarkProvider, processingOptionsFactory); err != nil {
+	if err = transformImage(ctx, img, po, imgdata, animated, watermarkProvider); err != nil {
 		return nil, err
 	}
 
 	// Finalize the image (colorspace conversion, metadata stripping, etc)
-	if err = finalizePipeline.Run(ctx, img, po, imgdata, watermarkProvider, processingOptionsFactory); err != nil {
+	if err = finalizePipeline.Run(ctx, img, po, imgdata, watermarkProvider); err != nil {
 		return nil, err
 	}
 
@@ -389,13 +388,12 @@ func transformImage(
 	imgdata imagedata.ImageData,
 	asAnimated bool,
 	watermark auximageprovider.Provider,
-	processingOptionsFactory *options.Factory,
 ) error {
 	if asAnimated {
-		return transformAnimated(ctx, img, po, watermark, processingOptionsFactory)
+		return transformAnimated(ctx, img, po, watermark)
 	}
 
-	return mainPipeline.Run(ctx, img, po, imgdata, watermark, processingOptionsFactory)
+	return mainPipeline.Run(ctx, img, po, imgdata, watermark)
 }
 
 func transformAnimated(
@@ -403,7 +401,6 @@ func transformAnimated(
 	img *vips.Image,
 	po *options.ProcessingOptions,
 	watermark auximageprovider.Provider,
-	processingOptionsFactory *options.Factory,
 ) error {
 	if po.Trim.Enabled {
 		log.Warning("Trim is not supported for animated images")
@@ -458,7 +455,7 @@ func transformAnimated(
 		// Transform the frame using the main pipeline.
 		// We don't provide imgdata here to prevent scale-on-load.
 		// Let's skip passing watermark here since in would be applied later to all frames at once.
-		if err = mainPipeline.Run(ctx, frame, po, nil, nil, processingOptionsFactory); err != nil {
+		if err = mainPipeline.Run(ctx, frame, po, nil, nil); err != nil {
 			return err
 		}
 
@@ -490,7 +487,7 @@ func transformAnimated(
 			dprScale = 1.0
 		}
 
-		if err = applyWatermark(ctx, img, watermark, processingOptionsFactory, po, dprScale, framesCount); err != nil {
+		if err = applyWatermark(ctx, img, watermark, po, dprScale, framesCount); err != nil {
 			return err
 		}
 	}

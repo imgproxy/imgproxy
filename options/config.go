@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"slices"
 
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/ensure"
@@ -107,19 +108,18 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c.ReturnAttachment = config.ReturnAttachment
 
 	// Image processing formats
-	copy(c.SkipProcessingFormats, config.SkipProcessingFormats)
+	c.SkipProcessingFormats = slices.Clone(config.SkipProcessingFormats)
 
 	// Presets configuration
-	copy(c.Presets, config.Presets)
+	c.Presets = slices.Clone(config.Presets)
 	c.OnlyPresets = config.OnlyPresets
 
 	// Quality settings
 	c.Quality = config.Quality
-	c.FormatQuality = make(map[imagetype.Type]int, len(config.FormatQuality))
-	maps.Copy(c.FormatQuality, config.FormatQuality)
+	c.FormatQuality = maps.Clone(config.FormatQuality)
 
 	// Security and validation
-	copy(c.AllowedProcessingOptions, config.AllowedProcessingOptions)
+	c.AllowedProcessingOptions = slices.Clone(config.AllowedProcessingOptions)
 
 	// Format preference and enforcement
 	c.AutoWebp = config.AutoWebp
@@ -135,9 +135,8 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 	// URL processing
 	c.ArgumentsSeparator = config.ArgumentsSeparator
 	c.BaseURL = config.BaseURL
-	c.URLReplacements = append([]URLReplacement(nil), config.URLReplacements...)
+	c.URLReplacements = slices.Clone(config.URLReplacements)
 	c.Base64URLIncludesFilename = config.Base64URLIncludesFilename
-	c.Presets = config.Presets
 
 	return c, nil
 }

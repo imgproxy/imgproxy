@@ -2,6 +2,7 @@ package options
 
 import (
 	"encoding/base64"
+	"maps"
 	"net/http"
 	"slices"
 	"strconv"
@@ -119,6 +120,46 @@ type ProcessingOptions struct {
 	defaultOptions *ProcessingOptions
 }
 
+func newDefaultProcessingOptions(config *Config, security *security.Checker) *ProcessingOptions {
+	po := ProcessingOptions{
+		ResizingType:      ResizeFit,
+		Width:             0,
+		Height:            0,
+		ZoomWidth:         1,
+		ZoomHeight:        1,
+		Gravity:           GravityOptions{Type: GravityCenter},
+		Enlarge:           false,
+		Extend:            ExtendOptions{Enabled: false, Gravity: GravityOptions{Type: GravityCenter}},
+		ExtendAspectRatio: ExtendOptions{Enabled: false, Gravity: GravityOptions{Type: GravityCenter}},
+		Padding:           PaddingOptions{Enabled: false},
+		Trim:              TrimOptions{Enabled: false, Threshold: 10, Smart: true},
+		Rotate:            0,
+		Quality:           0,
+		FormatQuality:     maps.Clone(config.FormatQuality),
+		MaxBytes:          0,
+		Format:            imagetype.Unknown,
+		Background:        vips.Color{R: 255, G: 255, B: 255},
+		Blur:              0,
+		Sharpen:           0,
+		Dpr:               1,
+		Watermark:         WatermarkOptions{Opacity: 1, Position: GravityOptions{Type: GravityCenter}},
+		StripMetadata:     config.StripMetadata,
+		KeepCopyright:     config.KeepCopyright,
+		StripColorProfile: config.StripColorProfile,
+		AutoRotate:        config.AutoRotate,
+		EnforceThumbnail:  config.EnforceThumbnail,
+		ReturnAttachment:  config.ReturnAttachment,
+
+		SkipProcessingFormats: slices.Clone(config.SkipProcessingFormats),
+
+		SecurityOptions: security.NewOptions(),
+
+		defaultQuality: config.Quality,
+	}
+
+	return &po
+}
+
 func (po *ProcessingOptions) GetQuality() int {
 	q := po.Quality
 
@@ -143,6 +184,34 @@ func (po *ProcessingOptions) String() string {
 
 func (po *ProcessingOptions) MarshalJSON() ([]byte, error) {
 	return po.Diff().MarshalJSON()
+}
+
+// Default returns the ProcessingOptions instance with defaults set
+func (po *ProcessingOptions) Default() *ProcessingOptions {
+	return po.defaultOptions.clone()
+}
+
+// clone clones ProcessingOptions struct and its slices and maps
+func (po *ProcessingOptions) clone() *ProcessingOptions {
+	clone := *po
+
+	clone.FormatQuality = maps.Clone(po.FormatQuality)
+	clone.SkipProcessingFormats = slices.Clone(po.SkipProcessingFormats)
+	clone.UsedPresets = slices.Clone(po.UsedPresets)
+
+	if po.Expires != nil {
+		poExipres := *po.Expires
+		clone.Expires = &poExipres
+	}
+
+	// Copy the pointer to the default options struct from parent.
+	// Nil means that we have just cloned the default options struct itself
+	// so we set it as default options.
+	if clone.defaultOptions == nil {
+		clone.defaultOptions = po
+	}
+
+	return &clone
 }
 
 func parseDimension(d *int, name, arg string) error {

@@ -11,6 +11,7 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.10.1
 	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.6.1
 	github.com/DarthSim/godotenv v1.3.1
+	github.com/DataDog/datadog-agent/pkg/trace v0.67.0
 	github.com/DataDog/datadog-go/v5 v5.6.0
 	github.com/DataDog/dd-trace-go/v2 v2.0.1
 	github.com/airbrake/gobrake/v5 v5.6.2
@@ -42,6 +43,7 @@ require (
 	github.com/stretchr/testify v1.10.0
 	github.com/tdewolff/parse/v2 v2.8.1
 	github.com/trimmer-io/go-xmp v1.0.0
+	github.com/urfave/cli/v3 v3.4.1
 	go.opentelemetry.io/contrib/detectors/aws/ec2 v1.37.0
 	go.opentelemetry.io/contrib/detectors/aws/ecs v1.37.0
 	go.opentelemetry.io/contrib/detectors/aws/eks v1.37.0
@@ -58,7 +60,6 @@ require (
 	go.opentelemetry.io/otel/sdk/metric v1.37.0
 	go.opentelemetry.io/otel/trace v1.37.0
 	go.uber.org/automaxprocs v1.6.0
-	golang.org/x/image v0.28.0
 	golang.org/x/net v0.41.0
 	golang.org/x/sync v0.15.0
 	golang.org/x/sys v0.33.0
@@ -82,7 +83,6 @@ require (
 	github.com/DataDog/datadog-agent/pkg/obfuscate v0.67.0 // indirect
 	github.com/DataDog/datadog-agent/pkg/proto v0.67.0 // indirect
 	github.com/DataDog/datadog-agent/pkg/remoteconfig/state v0.67.0 // indirect
-	github.com/DataDog/datadog-agent/pkg/trace v0.67.0 // indirect
 	github.com/DataDog/datadog-agent/pkg/util/log v0.67.0 // indirect
 	github.com/DataDog/datadog-agent/pkg/util/scrubber v0.67.0 // indirect
 	github.com/DataDog/datadog-agent/pkg/version v0.67.0 // indirect
@@ -119,7 +119,6 @@ require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cihub/seelog v0.0.0-20170130134532-f561c5e57575 // indirect
 	github.com/cncf/xds/go v0.0.0-20250501225837-2ac532fd4443 // indirect
-	github.com/cpuguy83/go-md2man/v2 v2.0.7 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/eapache/queue/v2 v2.0.0-20230407133247-75960ed334e4 // indirect
@@ -175,7 +174,6 @@ require (
 	github.com/prometheus/common v0.65.0 // indirect
 	github.com/prometheus/procfs v0.17.0 // indirect
 	github.com/puzpuzpuz/xsync/v3 v3.5.1 // indirect
-	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/ryszard/goskiplist v0.0.0-20150312221310-2dfbae5fcf46 // indirect
 	github.com/secure-systems-lab/go-securesystemslib v0.9.0 // indirect
 	github.com/shabbyrobe/gocovmerge v0.0.0-20190829150210-3e036491d500 // indirect
@@ -184,7 +182,6 @@ require (
 	github.com/tinylib/msgp v1.3.0 // indirect
 	github.com/tklauser/go-sysconf v0.3.15 // indirect
 	github.com/tklauser/numcpus v0.10.0 // indirect
-	github.com/urfave/cli/v3 v3.4.1 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	github.com/zeebo/errs v1.4.0 // indirect

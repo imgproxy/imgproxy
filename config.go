@@ -20,14 +20,14 @@ type HandlerConfigs struct {
 
 // Config represents an instance configuration
 type Config struct {
-	Workers           workers.Config
-	FallbackImage     auximageprovider.StaticConfig
-	WatermarkImage    auximageprovider.StaticConfig
-	Fetcher           fetcher.Config
-	Handlers          HandlerConfigs
-	Server            server.Config
-	Security          security.Config
-	ProcessingOptions options.Config
+	Workers        workers.Config
+	FallbackImage  auximageprovider.StaticConfig
+	WatermarkImage auximageprovider.StaticConfig
+	Fetcher        fetcher.Config
+	Handlers       HandlerConfigs
+	Server         server.Config
+	Security       security.Config
+	Options        options.Config
 }
 
 // NewDefaultConfig creates a new default configuration
@@ -41,9 +41,9 @@ func NewDefaultConfig() Config {
 			Processing: processinghandler.NewDefaultConfig(),
 			Stream:     streamhandler.NewDefaultConfig(),
 		},
-		Server:            server.NewDefaultConfig(),
-		Security:          security.NewDefaultConfig(),
-		ProcessingOptions: options.NewDefaultConfig(),
+		Server:   server.NewDefaultConfig(),
+		Security: security.NewDefaultConfig(),
+		Options:  options.NewDefaultConfig(),
 	}
 }
 
@@ -85,7 +85,7 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 		return nil, err
 	}
 
-	if _, err = options.LoadConfigFromEnv(&c.ProcessingOptions); err != nil {
+	if _, err = options.LoadConfigFromEnv(&c.Options); err != nil {
 		return nil, err
 	}
 

@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
@@ -56,11 +57,6 @@ func (s *ProcessingOptionsTestSuite) SetupSuite() {
 			return NewFactory(s.config(), s.security())
 		},
 	)
-}
-
-func (s *ProcessingOptionsTestSuite) SetupTest() {
-	// NOTE: This is temporary, remove once finish img-57-po
-	config.Reset()
 }
 
 func (s *ProcessingOptionsTestSuite) SetupSubTest() {
@@ -520,7 +516,6 @@ func (s *ProcessingOptionsTestSuite) TestParsePathWebpDetection() {
 
 func (s *ProcessingOptionsTestSuite) TestParsePathWebpEnforce() {
 	s.config().EnforceWebp = true
-	config.EnforceWebp = true // TODO: REMOVE, THIS IS TEMP
 
 	path := "/plain/http://images.dev/lorem/ipsum.jpg@png"
 	headers := http.Header{"Accept": []string{"image/webp"}}
@@ -533,8 +528,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathWebpEnforce() {
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathWidthHeader() {
-	s.config().EnableClientHints = true // TODO: REMOVE
-	config.EnableClientHints = true     // TODO: REMOVE
+	s.config().EnableClientHints = true
 
 	path := "/plain/http://images.dev/lorem/ipsum.jpg@png"
 	headers := http.Header{"Width": []string{"100"}}
@@ -689,6 +683,23 @@ func (s *ProcessingOptionsTestSuite) TestParseAllowedOptions() {
 			}
 		})
 	}
+}
+
+func (s *ProcessingOptionsTestSuite) TestProcessingOptionsClone() {
+	now := time.Now()
+
+	// Create ProcessingOptions using factory
+	original := s.factory().NewProcessingOptions()
+	original.SkipProcessingFormats = []imagetype.Type{
+		imagetype.PNG, imagetype.JPEG,
+	}
+	original.UsedPresets = []string{"preset1", "preset2"}
+	original.Expires = &now
+
+	// Clone the original
+	cloned := original.clone()
+
+	testutil.EqualButNotSame(s.T(), original, cloned)
 }
 
 func TestProcessingOptions(t *testing.T) {

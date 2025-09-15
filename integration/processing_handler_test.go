@@ -168,7 +168,7 @@ func (s *ProcessingHandlerTestSuite) TestResultingFormatNotSupported() {
 }
 
 func (s *ProcessingHandlerTestSuite) TestSkipProcessingConfig() {
-	s.Config().ProcessingOptions.SkipProcessingFormats = []imagetype.Type{imagetype.PNG}
+	s.Config().Options.SkipProcessingFormats = []imagetype.Type{imagetype.PNG}
 
 	res := s.GET("/unsafe/rs:fill:4:4/plain/local:///test1.png")
 
@@ -184,7 +184,7 @@ func (s *ProcessingHandlerTestSuite) TestSkipProcessingPO() {
 }
 
 func (s *ProcessingHandlerTestSuite) TestSkipProcessingSameFormat() {
-	s.Config().ProcessingOptions.SkipProcessingFormats = []imagetype.Type{imagetype.PNG}
+	s.Config().Options.SkipProcessingFormats = []imagetype.Type{imagetype.PNG}
 
 	res := s.GET("/unsafe/rs:fill:4:4/plain/local:///test1.png@png")
 
@@ -477,7 +477,7 @@ func (s *ProcessingHandlerTestSuite) TestAlwaysRasterizeSvg() {
 
 func (s *ProcessingHandlerTestSuite) TestAlwaysRasterizeSvgWithEnforceAvif() {
 	config.AlwaysRasterizeSvg = true
-	s.Config().ProcessingOptions.EnforceWebp = true
+	s.Config().Options.EnforceWebp = true
 
 	res := s.GET("/unsafe/plain/local:///test1.svg", http.Header{"Accept": []string{"image/webp"}})
 
@@ -487,7 +487,7 @@ func (s *ProcessingHandlerTestSuite) TestAlwaysRasterizeSvgWithEnforceAvif() {
 
 func (s *ProcessingHandlerTestSuite) TestAlwaysRasterizeSvgDisabled() {
 	config.AlwaysRasterizeSvg = false
-	s.Config().ProcessingOptions.EnforceWebp = true
+	s.Config().Options.EnforceWebp = true
 
 	res := s.GET("/unsafe/plain/local:///test1.svg")
 
@@ -497,7 +497,7 @@ func (s *ProcessingHandlerTestSuite) TestAlwaysRasterizeSvgDisabled() {
 
 func (s *ProcessingHandlerTestSuite) TestAlwaysRasterizeSvgWithFormat() {
 	config.AlwaysRasterizeSvg = true
-	s.Config().ProcessingOptions.SkipProcessingFormats = []imagetype.Type{imagetype.SVG}
+	s.Config().Options.SkipProcessingFormats = []imagetype.Type{imagetype.SVG}
 
 	res := s.GET("/unsafe/plain/local:///test1.svg@svg")
 

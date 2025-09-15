@@ -16,18 +16,6 @@ func (f *Factory) parsePresets() error {
 	return nil
 }
 
-// validatePresets validates all presets by applying them to a new ProcessingOptions instance
-func (f *Factory) validatePresets() error {
-	for name, opts := range f.presets {
-		po := f.NewProcessingOptions()
-		if err := f.applyURLOptions(po, opts, true, name); err != nil {
-			return fmt.Errorf("Error in preset `%s`: %s", name, err)
-		}
-	}
-
-	return nil
-}
-
 // parsePreset parses a preset string and returns the name and options
 func (f *Factory) parsePreset(presetStr string) error {
 	presetStr = strings.Trim(presetStr, " ")
@@ -65,6 +53,18 @@ func (f *Factory) parsePreset(presetStr string) error {
 	}
 
 	f.presets[name] = opts
+
+	return nil
+}
+
+// validatePresets validates all presets by applying them to a new ProcessingOptions instance
+func (f *Factory) validatePresets() error {
+	for name, opts := range f.presets {
+		po := f.NewProcessingOptions()
+		if err := f.applyURLOptions(po, opts, true, name); err != nil {
+			return fmt.Errorf("Error in preset `%s`: %s", name, err)
+		}
+	}
 
 	return nil
 }

@@ -26,7 +26,7 @@ type HandlerContext interface {
 	WatermarkImage() auximageprovider.Provider
 	ImageDataFactory() *imagedata.Factory
 	Security() *security.Checker
-	ProcessingOptionsFactory() *options.Factory
+	OptionsFactory() *options.Factory
 }
 
 // Handler handles image processing requests
@@ -109,7 +109,7 @@ func (h *Handler) newRequest(
 	}
 
 	// parse image url and processing options
-	po, imageURL, err := h.HandlerContext.ProcessingOptionsFactory().ParsePath(path, req.Header)
+	po, imageURL, err := h.OptionsFactory().ParsePath(path, req.Header)
 	if err != nil {
 		return "", nil, nil, ierrors.Wrap(err, 0, ierrors.WithCategory(handlers.CategoryPathParsing))
 	}

@@ -19,8 +19,6 @@ type pipelineContext struct {
 	// The watermark image provider, if any watermarking is to be done.
 	watermarkProvider auximageprovider.Provider
 
-	processingOptionsFactory *options.Factory
-
 	trimmed bool
 
 	srcWidth  int
@@ -79,7 +77,6 @@ func (p pipeline) Run(
 	po *options.ProcessingOptions,
 	imgdata imagedata.ImageData,
 	watermark auximageprovider.Provider,
-	processingOptionsFactory *options.Factory,
 ) error {
 	pctx := pipelineContext{
 		ctx: ctx,
@@ -90,9 +87,8 @@ func (p pipeline) Run(
 		dprScale:        1.0,
 		vectorBaseScale: 1.0,
 
-		cropGravity:              po.Crop.Gravity,
-		watermarkProvider:        watermark,
-		processingOptionsFactory: processingOptionsFactory,
+		cropGravity:       po.Crop.Gravity,
+		watermarkProvider: watermark,
 	}
 
 	if pctx.cropGravity.Type == options.GravityUnknown {

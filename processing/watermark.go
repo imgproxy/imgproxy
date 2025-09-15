@@ -22,20 +22,22 @@ var watermarkPipeline = pipeline{
 	padding,
 }
 
-func prepareWatermark(wm *vips.Image, wmData imagedata.ImageData, opts *options.WatermarkOptions, pof *options.Factory, imgWidth, imgHeight int, offsetScale float64, framesCount int) error {
+func prepareWatermark(wm *vips.Image, wmData imagedata.ImageData, po *options.ProcessingOptions, imgWidth, imgHeight int, offsetScale float64, framesCount int) error {
 	if err := wm.Load(wmData, 1, 1.0, 1); err != nil {
 		return err
 	}
 
-	po := pof.NewProcessingOptions()
-	po.ResizingType = options.ResizeFit
-	po.Dpr = 1
-	po.Enlarge = true
-	po.Format = wmData.Format()
+	opts := po.Watermark
+
+	wmPo := po.Default()
+	wmPo.ResizingType = options.ResizeFit
+	wmPo.Dpr = 1
+	wmPo.Enlarge = true
+	wmPo.Format = wmData.Format()
 
 	if opts.Scale > 0 {
-		po.Width = max(imath.ScaleToEven(imgWidth, opts.Scale), 1)
-		po.Height = max(imath.ScaleToEven(imgHeight, opts.Scale), 1)
+		wmPo.Width = max(imath.ScaleToEven(imgWidth, opts.Scale), 1)
+		wmPo.Height = max(imath.ScaleToEven(imgHeight, opts.Scale), 1)
 	}
 
 	if opts.ShouldReplicate() {
@@ -53,14 +55,14 @@ func prepareWatermark(wm *vips.Image, wmData imagedata.ImageData, opts *options.
 			offY = imath.ScaleToEven(imgHeight, opts.Position.Y)
 		}
 
-		po.Padding.Enabled = true
-		po.Padding.Left = offX / 2
-		po.Padding.Right = offX - po.Padding.Left
-		po.Padding.Top = offY / 2
-		po.Padding.Bottom = offY - po.Padding.Top
+		wmPo.Padding.Enabled = true
+		wmPo.Padding.Left = offX / 2
+		wmPo.Padding.Right = offX - wmPo.Padding.Left
+		wmPo.Padding.Top = offY / 2
+		wmPo.Padding.Bottom = offY - wmPo.Padding.Top
 	}
 
-	if err := watermarkPipeline.Run(context.Background(), wm, po, wmData, nil, pof); err != nil {
+	if err := watermarkPipeline.Run(context.Background(), wm, wmPo, wmData, nil); err != nil {
 		return err
 	}
 
@@ -84,7 +86,6 @@ func applyWatermark(
 	ctx context.Context,
 	img *vips.Image,
 	watermark auximageprovider.Provider,
-	pof *options.Factory,
 	po *options.ProcessingOptions,
 	offsetScale float64,
 	framesCount int,
@@ -111,7 +112,7 @@ func applyWatermark(
 	height := img.Height()
 	frameHeight := height / framesCount
 
-	if err := prepareWatermark(wm, wmData, &opts, pof, width, frameHeight, offsetScale, framesCount); err != nil {
+	if err := prepareWatermark(wm, wmData, po, width, frameHeight, offsetScale, framesCount); err != nil {
 		return err
 	}
 
@@ -194,5 +195,5 @@ func watermark(
 		return nil
 	}
 
-	return applyWatermark(pctx.ctx, img, pctx.watermarkProvider, pctx.processingOptionsFactory, po, pctx.dprScale, 1)
+	return applyWatermark(pctx.ctx, img, pctx.watermarkProvider, po, pctx.dprScale, 1)
 }
