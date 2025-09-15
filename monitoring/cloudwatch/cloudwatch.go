@@ -3,6 +3,7 @@ package cloudwatch
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"slices"
 	"sync"
 	"time"
@@ -11,7 +12,6 @@ import (
 	awsConfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatch"
 	cloudwatchTypes "github.com/aws/aws-sdk-go-v2/service/cloudwatch/types"
-	"github.com/sirupsen/logrus"
 
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
@@ -268,7 +268,7 @@ func runMetricsCollector() {
 				defer cancel()
 
 				if _, err := client.PutMetricData(ctx, &input); err != nil {
-					logrus.Warnf("Can't send CloudWatch metrics: %s", err)
+					slog.Warn(fmt.Sprintf("Can't send CloudWatch metrics: %s", err))
 				}
 			}()
 		case <-collectorCtx.Done():

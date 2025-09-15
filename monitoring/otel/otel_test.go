@@ -1,21 +1,24 @@
 package otel
 
 import (
-	"io"
 	"os"
 	"strings"
 	"testing"
 
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/logger"
 )
 
 type OtelTestSuite struct{ suite.Suite }
 
 func (s *OtelTestSuite) SetupSuite() {
-	logrus.SetOutput(io.Discard)
+	logger.Mute()
+}
+
+func (s *OtelTestSuite) TearDownSuite() {
+	logger.Unmute()
 }
 
 func (s *OtelTestSuite) SetupTest() {

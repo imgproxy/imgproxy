@@ -2,7 +2,9 @@ package processing
 
 import (
 	"context"
+	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"strconv"
 
@@ -16,7 +18,6 @@ import (
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/processing"
 	"github.com/imgproxy/imgproxy/v3/server"
-	log "github.com/sirupsen/logrus"
 )
 
 // makeImageRequestHeaders creates headers for the image request
@@ -106,9 +107,10 @@ func (r *request) handleDownloadError(
 		errorreport.Report(err, r.req)
 	}
 
-	log.
-		WithField("request_id", r.reqID).
-		Warningf("Could not load image %s. Using fallback image. %s", r.imageURL, err.Error())
+	slog.Warn(
+		fmt.Sprintf("Could not load image %s. Using fallback image. %s", r.imageURL, err.Error()),
+		"request_id", r.reqID,
+	)
 
 	var statusCode int
 
@@ -142,7 +144,7 @@ func (r *request) getFallbackImage(
 
 	data, h, err := fbi.Get(ctx, po)
 	if err != nil {
-		log.Warning(err.Error())
+		slog.Warn(err.Error())
 
 		if ierr := r.wrapDownloadingErr(err); ierr.ShouldReport() {
 			errorreport.Report(ierr, r.req)
@@ -201,10 +203,8 @@ func (r *request) respondWithNotModified() error {
 
 	server.LogResponse(
 		r.reqID, r.req, http.StatusNotModified, nil,
-		log.Fields{
-			"image_url":          r.imageURL,
-			"processing_options": r.po,
-		},
+		slog.String("image_url", r.imageURL),
+		slog.Any("processing_options", r.po),
 	)
 
 	return nil
@@ -255,10 +255,8 @@ func (r *request) respondWithImage(statusCode int, resultData imagedata.ImageDat
 
 	server.LogResponse(
 		r.reqID, r.req, statusCode, ierr,
-		log.Fields{
-			"image_url":          r.imageURL,
-			"processing_options": r.po,
-		},
+		slog.String("image_url", r.imageURL),
+		slog.Any("processing_options", r.po),
 	)
 
 	return nil

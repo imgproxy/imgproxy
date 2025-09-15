@@ -3,13 +3,12 @@ package options
 import (
 	"encoding/base64"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"slices"
 	"strconv"
 	"strings"
 	"time"
-
-	log "github.com/sirupsen/logrus"
 
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
@@ -217,6 +216,10 @@ func (po *ProcessingOptions) MarshalJSON() ([]byte, error) {
 	return po.Diff().MarshalJSON()
 }
 
+func (po *ProcessingOptions) LogValue() slog.Value {
+	return po.Diff().LogValue()
+}
+
 func parseDimension(d *int, name, arg string) error {
 	if v, err := strconv.Atoi(arg); err == nil && v >= 0 {
 		*d = v
@@ -231,7 +234,7 @@ func parseBoolOption(str string) bool {
 	b, err := strconv.ParseBool(str)
 
 	if err != nil {
-		log.Warningf("`%s` is not a valid boolean value. Treated as false", str)
+		slog.Warn(fmt.Sprintf("`%s` is not a valid boolean value. Treated as false", str))
 	}
 
 	return b
@@ -711,7 +714,7 @@ func applyPresetOption(po *ProcessingOptions, args []string, usedPresets ...stri
 	for _, preset := range args {
 		if p, ok := presets[preset]; ok {
 			if slices.Contains(usedPresets, preset) {
-				log.Warningf("Recursive preset usage is detected: %s", preset)
+				slog.Warn(fmt.Sprintf("Recursive preset usage is detected: %s", preset))
 				continue
 			}
 

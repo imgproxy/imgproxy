@@ -1,9 +1,9 @@
 package processing
 
 import (
+	"fmt"
+	"log/slog"
 	"math"
-
-	log "github.com/sirupsen/logrus"
 
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
@@ -67,7 +67,7 @@ func scaleOnLoad(pctx *pipelineContext, img *vips.Image, po *options.ProcessingO
 		defer thumbnail.Clear()
 
 		if err := thumbnail.LoadThumbnail(imgdata); err != nil {
-			log.Debugf("Can't load thumbnail: %s", err)
+			slog.Debug(fmt.Sprintf("Can't load thumbnail: %s", err))
 			return nil
 		}
 
