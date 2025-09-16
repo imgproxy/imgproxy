@@ -193,7 +193,7 @@ func (s *ProcessingHandlerTestSuite) TestSkipProcessingSameFormat() {
 }
 
 func (s *ProcessingHandlerTestSuite) TestSkipProcessingDifferentFormat() {
-	config.SkipProcessingFormats = []imagetype.Type{imagetype.PNG}
+	s.Config().Options.SkipProcessingFormats = []imagetype.Type{imagetype.PNG}
 
 	res := s.GET("/unsafe/rs:fill:4:4/plain/local:///test1.png@jpg")
 
@@ -270,7 +270,7 @@ func (s *ProcessingHandlerTestSuite) TestCacheControlPassthroughExpires() {
 }
 
 func (s *ProcessingHandlerTestSuite) TestCacheControlPassthroughDisabled() {
-	config.CacheControlPassthrough = false
+	s.Config().Server.ResponseWriter.CacheControlPassthrough = false
 
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		rw.Header().Set(httpheaders.CacheControl, "max-age=1234, public")
@@ -403,7 +403,7 @@ func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqCompareMoreRecentLastMo
 }
 
 func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqCompareMoreRecentLastModifiedEnabled() {
-	config.LastModifiedEnabled = true
+	s.Config().Handlers.Processing.LastModifiedEnabled = true
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		fileLastModified, _ := time.Parse(http.TimeFormat, "Wed, 21 Oct 2015 07:28:00 GMT")
 		modifiedSince := r.Header.Get(httpheaders.IfModifiedSince)
@@ -444,7 +444,7 @@ func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqCompareTooOldLastModifi
 }
 
 func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqCompareTooOldLastModifiedEnabled() {
-	config.LastModifiedEnabled = true
+	s.Config().Handlers.Processing.LastModifiedEnabled = true
 	data := s.TestData.Read("test1.png")
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		fileLastModified, _ := time.Parse(http.TimeFormat, "Wed, 21 Oct 2015 07:28:00 GMT")
