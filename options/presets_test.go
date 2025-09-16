@@ -1,101 +1,93 @@
 package options
 
 import (
-	"fmt"
 	"testing"
 
+	"github.com/imgproxy/imgproxy/v3/security"
+	"github.com/imgproxy/imgproxy/v3/testutil"
 	"github.com/stretchr/testify/suite"
-
-	"github.com/imgproxy/imgproxy/v3/config"
 )
 
-type PresetsTestSuite struct{ suite.Suite }
+type PresetsTestSuite struct {
+	testutil.LazySuite
 
-func (s *PresetsTestSuite) SetupTest() {
-	config.Reset()
-	// Reset presets
-	presets = make(map[string]urlOptions)
+	security *security.Checker
+}
+
+func (s *PresetsTestSuite) SetupSuite() {
+	c := security.NewDefaultConfig()
+	security, err := security.New(&c)
+	s.Require().NoError(err)
+	s.security = security
+}
+
+func (s *PresetsTestSuite) newFactory(presets ...string) (*Factory, error) {
+	c := NewDefaultConfig()
+	c.Presets = presets
+	return NewFactory(&c, s.security)
 }
 
 func (s *PresetsTestSuite) TestParsePreset() {
-	err := parsePreset("test=resize:fit:100:200/sharpen:2")
+	f, err := s.newFactory("test=resize:fit:100:200/sharpen:2")
 
 	s.Require().NoError(err)
-
 	s.Require().Equal(urlOptions{
 		urlOption{Name: "resize", Args: []string{"fit", "100", "200"}},
 		urlOption{Name: "sharpen", Args: []string{"2"}},
-	}, presets["test"])
+	}, f.presets["test"])
 }
 
 func (s *PresetsTestSuite) TestParsePresetInvalidString() {
 	presetStr := "resize:fit:100:200/sharpen:2"
-	err := parsePreset(presetStr)
+	_, err := s.newFactory(presetStr)
 
-	s.Require().Equal(fmt.Errorf("Invalid preset string: %s", presetStr), err)
-	s.Require().Empty(presets)
+	s.Require().Error(err, "invalid preset string: %s", presetStr)
 }
 
 func (s *PresetsTestSuite) TestParsePresetEmptyName() {
 	presetStr := "=resize:fit:100:200/sharpen:2"
-	err := parsePreset(presetStr)
+	_, err := s.newFactory(presetStr)
 
-	s.Require().Equal(fmt.Errorf("Empty preset name: %s", presetStr), err)
-	s.Require().Empty(presets)
+	s.Require().Error(err, "empty preset name: %s", presetStr)
 }
 
 func (s *PresetsTestSuite) TestParsePresetEmptyValue() {
 	presetStr := "test="
-	err := parsePreset(presetStr)
+	_, err := s.newFactory(presetStr)
 
-	s.Require().Equal(fmt.Errorf("Empty preset value: %s", presetStr), err)
-	s.Require().Empty(presets)
+	s.Require().Error(err, "empty preset value: %s", presetStr)
 }
 
 func (s *PresetsTestSuite) TestParsePresetInvalidValue() {
 	presetStr := "test=resize:fit:100:200/sharpen:2/blur"
-	err := parsePreset(presetStr)
+	_, err := s.newFactory(presetStr)
 
-	s.Require().Equal(fmt.Errorf("Invalid preset value: %s", presetStr), err)
-	s.Require().Empty(presets)
+	s.Require().Error(err, "invalid preset value: %s", presetStr)
 }
 
 func (s *PresetsTestSuite) TestParsePresetEmptyString() {
-	err := parsePreset("  ")
+	f, err := s.newFactory("   ")
 
 	s.Require().NoError(err)
-	s.Require().Empty(presets)
+	s.Require().Empty(f.presets)
 }
 
 func (s *PresetsTestSuite) TestParsePresetComment() {
-	err := parsePreset("#  test=resize:fit:100:200/sharpen:2")
+	f, err := s.newFactory("#  test=resize:fit:100:200/sharpen:2")
 
 	s.Require().NoError(err)
-	s.Require().Empty(presets)
+	s.Require().Empty(f.presets)
 }
 
 func (s *PresetsTestSuite) TestValidatePresets() {
-	presets = map[string]urlOptions{
-		"test": {
-			urlOption{Name: "resize", Args: []string{"fit", "100", "200"}},
-			urlOption{Name: "sharpen", Args: []string{"2"}},
-		},
-	}
-
-	err := ValidatePresets()
+	f, err := s.newFactory("test=resize:fit:100:200/sharpen:2")
 
 	s.Require().NoError(err)
+	s.Require().NotEmpty(f.presets)
 }
 
 func (s *PresetsTestSuite) TestValidatePresetsInvalid() {
-	presets = map[string]urlOptions{
-		"test": {
-			urlOption{Name: "resize", Args: []string{"fit", "-1", "-2"}},
-			urlOption{Name: "sharpen", Args: []string{"2"}},
-		},
-	}
-
-	err := ValidatePresets()
+	_, err := s.newFactory("test=resize:fit:-1:-2/sharpen:2")
 
 	s.Require().Error(err)
 }

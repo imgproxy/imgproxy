@@ -14,6 +14,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/memory"
 	"github.com/imgproxy/imgproxy/v3/monitoring/prometheus"
+	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/security"
 	"github.com/imgproxy/imgproxy/v3/server"
 	"github.com/imgproxy/imgproxy/v3/workers"
@@ -41,6 +42,7 @@ type Imgproxy struct {
 	imageDataFactory *imagedata.Factory
 	handlers         ImgproxyHandlers
 	security         *security.Checker
+	optionsFactory   *options.Factory
 	config           *Config
 }
 
@@ -73,6 +75,11 @@ func New(ctx context.Context, config *Config) (*Imgproxy, error) {
 		return nil, err
 	}
 
+	processingOptionsFactory, err := options.NewFactory(&config.Options, security)
+	if err != nil {
+		return nil, err
+	}
+
 	imgproxy := &Imgproxy{
 		workers:          workers,
 		fallbackImage:    fallbackImage,
@@ -81,6 +88,7 @@ func New(ctx context.Context, config *Config) (*Imgproxy, error) {
 		imageDataFactory: idf,
 		config:           config,
 		security:         security,
+		optionsFactory:   processingOptionsFactory,
 	}
 
 	imgproxy.handlers.Health = healthhandler.New()
@@ -198,4 +206,8 @@ func (i *Imgproxy) ImageDataFactory() *imagedata.Factory {
 
 func (i *Imgproxy) Security() *security.Checker {
 	return i.security
+}
+
+func (i *Imgproxy) OptionsFactory() *options.Factory {
+	return i.optionsFactory
 }

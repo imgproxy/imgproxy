@@ -2,7 +2,7 @@ package options
 
 import (
 	"encoding/base64"
-	"fmt"
+	"maps"
 	"net/http"
 	"slices"
 	"strconv"
@@ -11,7 +11,6 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/imath"
@@ -118,34 +117,10 @@ type ProcessingOptions struct {
 	SecurityOptions security.Options
 
 	defaultQuality int
+	defaultOptions *ProcessingOptions
 }
 
-func NewProcessingOptions() *ProcessingOptions {
-	// NOTE: This is temporary hack until ProcessingOptions does not have Factory
-	securityCfg, err := security.LoadConfigFromEnv(nil)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	// NOTE: This is a temporary workaround for logrus bug that deadlocks
-	// if log is used within another log (issue 1448)
-	if len(securityCfg.Salts) == 0 {
-		securityCfg.Salts = [][]byte{[]byte("logrusbugworkaround")}
-	}
-
-	if len(securityCfg.Keys) == 0 {
-		securityCfg.Keys = [][]byte{[]byte("logrusbugworkaround")}
-	}
-	// END OF WORKAROUND
-
-	security, err := security.New(securityCfg)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	securityOptions := security.NewOptions()
-	// NOTE: This is temporary hack until ProcessingOptions does not have Factory
-
+func newDefaultProcessingOptions(config *Config, security *security.Checker) *ProcessingOptions {
 	po := ProcessingOptions{
 		ResizingType:      ResizeFit,
 		Width:             0,
@@ -160,6 +135,7 @@ func NewProcessingOptions() *ProcessingOptions {
 		Trim:              TrimOptions{Enabled: false, Threshold: 10, Smart: true},
 		Rotate:            0,
 		Quality:           0,
+		FormatQuality:     maps.Clone(config.FormatQuality),
 		MaxBytes:          0,
 		Format:            imagetype.Unknown,
 		Background:        vips.Color{R: 255, G: 255, B: 255},
@@ -174,18 +150,11 @@ func NewProcessingOptions() *ProcessingOptions {
 		EnforceThumbnail:  config.EnforceThumbnail,
 		ReturnAttachment:  config.ReturnAttachment,
 
-		SkipProcessingFormats: append([]imagetype.Type(nil), config.SkipProcessingFormats...),
-		UsedPresets:           make([]string, 0, len(config.Presets)),
+		SkipProcessingFormats: slices.Clone(config.SkipProcessingFormats),
 
-		SecurityOptions: securityOptions,
+		SecurityOptions: security.NewOptions(),
 
-		// Basically, we need this to update ETag when `IMGPROXY_QUALITY` is changed
 		defaultQuality: config.Quality,
-	}
-
-	po.FormatQuality = make(map[imagetype.Type]int, len(config.FormatQuality))
-	for k, v := range config.FormatQuality {
-		po.FormatQuality[k] = v
 	}
 
 	return &po
@@ -206,7 +175,7 @@ func (po *ProcessingOptions) GetQuality() int {
 }
 
 func (po *ProcessingOptions) Diff() structdiff.Entries {
-	return structdiff.Diff(NewProcessingOptions(), po)
+	return structdiff.Diff(po.defaultOptions, po)
 }
 
 func (po *ProcessingOptions) String() string {
@@ -215,6 +184,34 @@ func (po *ProcessingOptions) String() string {
 
 func (po *ProcessingOptions) MarshalJSON() ([]byte, error) {
 	return po.Diff().MarshalJSON()
+}
+
+// Default returns the ProcessingOptions instance with defaults set
+func (po *ProcessingOptions) Default() *ProcessingOptions {
+	return po.defaultOptions.clone()
+}
+
+// clone clones ProcessingOptions struct and its slices and maps
+func (po *ProcessingOptions) clone() *ProcessingOptions {
+	clone := *po
+
+	clone.FormatQuality = maps.Clone(po.FormatQuality)
+	clone.SkipProcessingFormats = slices.Clone(po.SkipProcessingFormats)
+	clone.UsedPresets = slices.Clone(po.UsedPresets)
+
+	if po.Expires != nil {
+		poExipres := *po.Expires
+		clone.Expires = &poExipres
+	}
+
+	// Copy the pointer to the default options struct from parent.
+	// Nil means that we have just cloned the default options struct itself
+	// so we set it as default options.
+	if clone.defaultOptions == nil {
+		clone.defaultOptions = po
+	}
+
+	return &clone
 }
 
 func parseDimension(d *int, name, arg string) error {
@@ -707,9 +704,9 @@ func applyPixelateOption(po *ProcessingOptions, args []string) error {
 	return nil
 }
 
-func applyPresetOption(po *ProcessingOptions, args []string, usedPresets ...string) error {
+func (f *Factory) applyPresetOption(po *ProcessingOptions, args []string, usedPresets ...string) error {
 	for _, preset := range args {
-		if p, ok := presets[preset]; ok {
+		if p, ok := f.presets[preset]; ok {
 			if slices.Contains(usedPresets, preset) {
 				log.Warningf("Recursive preset usage is detected: %s", preset)
 				continue
@@ -717,7 +714,7 @@ func applyPresetOption(po *ProcessingOptions, args []string, usedPresets ...stri
 
 			po.UsedPresets = append(po.UsedPresets, preset)
 
-			if err := applyURLOptions(po, p, true, append(usedPresets, preset)...); err != nil {
+			if err := f.applyURLOptions(po, p, true, append(usedPresets, preset)...); err != nil {
 				return err
 			}
 		} else {
@@ -1010,7 +1007,7 @@ func applyMaxResultDimensionOption(po *ProcessingOptions, args []string) error {
 	return nil
 }
 
-func applyURLOption(po *ProcessingOptions, name string, args []string, usedPresets ...string) error {
+func (f *Factory) applyURLOption(po *ProcessingOptions, name string, args []string, usedPresets ...string) error {
 	switch name {
 	case "resize", "rs":
 		return applyResizeOption(po, args)
@@ -1090,7 +1087,7 @@ func applyURLOption(po *ProcessingOptions, name string, args []string, usedPrese
 		return applyReturnAttachmentOption(po, args)
 	// Presets
 	case "preset", "pr":
-		return applyPresetOption(po, args, usedPresets...)
+		return f.applyPresetOption(po, args, usedPresets...)
 	// Security
 	case "max_src_resolution", "msr":
 		return applyMaxSrcResolutionOption(po, args)
@@ -1107,15 +1104,15 @@ func applyURLOption(po *ProcessingOptions, name string, args []string, usedPrese
 	return newUnknownOptionError("processing", name)
 }
 
-func applyURLOptions(po *ProcessingOptions, options urlOptions, allowAll bool, usedPresets ...string) error {
-	allowAll = allowAll || len(config.AllowedProcessingOptions) == 0
+func (f *Factory) applyURLOptions(po *ProcessingOptions, options urlOptions, allowAll bool, usedPresets ...string) error {
+	allowAll = allowAll || len(f.config.AllowedProcessingOptions) == 0
 
 	for _, opt := range options {
-		if !allowAll && !slices.Contains(config.AllowedProcessingOptions, opt.Name) {
+		if !allowAll && !slices.Contains(f.config.AllowedProcessingOptions, opt.Name) {
 			return newForbiddenOptionError("processing", opt.Name)
 		}
 
-		if err := applyURLOption(po, opt.Name, opt.Args, usedPresets...); err != nil {
+		if err := f.applyURLOption(po, opt.Name, opt.Args, usedPresets...); err != nil {
 			return err
 		}
 	}
@@ -1123,27 +1120,27 @@ func applyURLOptions(po *ProcessingOptions, options urlOptions, allowAll bool, u
 	return nil
 }
 
-func defaultProcessingOptions(headers http.Header) (*ProcessingOptions, error) {
-	po := NewProcessingOptions()
+func (f *Factory) defaultProcessingOptions(headers http.Header) (*ProcessingOptions, error) {
+	po := f.NewProcessingOptions()
 
 	headerAccept := headers.Get("Accept")
 
 	if strings.Contains(headerAccept, "image/webp") {
-		po.PreferWebP = config.AutoWebp || config.EnforceWebp
-		po.EnforceWebP = config.EnforceWebp
+		po.PreferWebP = f.config.AutoWebp || f.config.EnforceWebp
+		po.EnforceWebP = f.config.EnforceWebp
 	}
 
 	if strings.Contains(headerAccept, "image/avif") {
-		po.PreferAvif = config.AutoAvif || config.EnforceAvif
-		po.EnforceAvif = config.EnforceAvif
+		po.PreferAvif = f.config.AutoAvif || f.config.EnforceAvif
+		po.EnforceAvif = f.config.EnforceAvif
 	}
 
 	if strings.Contains(headerAccept, "image/jxl") {
-		po.PreferJxl = config.AutoJxl || config.EnforceJxl
-		po.EnforceJxl = config.EnforceJxl
+		po.PreferJxl = f.config.AutoJxl || f.config.EnforceJxl
+		po.EnforceJxl = f.config.EnforceJxl
 	}
 
-	if config.EnableClientHints {
+	if f.config.EnableClientHints {
 		headerDPR := headers.Get("Sec-CH-DPR")
 		if len(headerDPR) == 0 {
 			headerDPR = headers.Get("DPR")
@@ -1165,8 +1162,8 @@ func defaultProcessingOptions(headers http.Header) (*ProcessingOptions, error) {
 		}
 	}
 
-	if _, ok := presets["default"]; ok {
-		if err := applyPresetOption(po, []string{"default"}); err != nil {
+	if _, ok := f.presets["default"]; ok {
+		if err := f.applyPresetOption(po, []string{"default"}); err != nil {
 			return po, err
 		}
 	}
@@ -1174,80 +1171,21 @@ func defaultProcessingOptions(headers http.Header) (*ProcessingOptions, error) {
 	return po, nil
 }
 
-func parsePathOptions(parts []string, headers http.Header) (*ProcessingOptions, string, error) {
-	if _, ok := resizeTypes[parts[0]]; ok {
-		return nil, "", newInvalidURLError("It looks like you're using the deprecated basic URL format")
-	}
-
-	po, err := defaultProcessingOptions(headers)
-	if err != nil {
-		return nil, "", err
-	}
-
-	options, urlParts := parseURLOptions(parts)
-
-	if err = applyURLOptions(po, options, false); err != nil {
-		return nil, "", err
-	}
-
-	url, extension, err := DecodeURL(urlParts)
-	if err != nil {
-		return nil, "", err
-	}
-
-	if !po.Raw && len(extension) > 0 {
-		if err = applyFormatOption(po, []string{extension}); err != nil {
-			return nil, "", err
-		}
-	}
-
-	return po, url, nil
-}
-
-func parsePathPresets(parts []string, headers http.Header) (*ProcessingOptions, string, error) {
-	po, err := defaultProcessingOptions(headers)
-	if err != nil {
-		return nil, "", err
-	}
-
-	presets := strings.Split(parts[0], config.ArgumentsSeparator)
-	urlParts := parts[1:]
-
-	if err = applyPresetOption(po, presets); err != nil {
-		return nil, "", err
-	}
-
-	url, extension, err := DecodeURL(urlParts)
-	if err != nil {
-		return nil, "", err
-	}
-
-	if !po.Raw && len(extension) > 0 {
-		if err = applyFormatOption(po, []string{extension}); err != nil {
-			return nil, "", err
-		}
-	}
-
-	return po, url, nil
-}
-
-func ParsePath(path string, headers http.Header) (*ProcessingOptions, string, error) {
+// ParsePath parses the given request path and returns the processing options and image URL
+func (f *Factory) ParsePath(
+	path string,
+	headers http.Header,
+) (po *ProcessingOptions, imageURL string, err error) {
 	if path == "" || path == "/" {
-		return nil, "", newInvalidURLError("Invalid path: %s", path)
+		return nil, "", newInvalidURLError("invalid path: %s", path)
 	}
 
 	parts := strings.Split(strings.TrimPrefix(path, "/"), "/")
 
-	var (
-		imageURL string
-		po       *ProcessingOptions
-		err      error
-	)
-
-	if config.OnlyPresets {
-		po, imageURL, err = parsePathPresets(parts, headers)
+	if f.config.OnlyPresets {
+		po, imageURL, err = f.parsePathPresets(parts, headers)
 	} else {
-		po, imageURL, err = parsePathOptions(parts, headers)
+		po, imageURL, err = f.parsePathOptions(parts, headers)
 	}
 
 	if err != nil {
@@ -1255,4 +1193,63 @@ func ParsePath(path string, headers http.Header) (*ProcessingOptions, string, er
 	}
 
 	return po, imageURL, nil
+}
+
+// parsePathOptions parses processing options from the URL path
+func (f *Factory) parsePathOptions(parts []string, headers http.Header) (*ProcessingOptions, string, error) {
+	if _, ok := resizeTypes[parts[0]]; ok {
+		return nil, "", newInvalidURLError("It looks like you're using the deprecated basic URL format")
+	}
+
+	po, err := f.defaultProcessingOptions(headers)
+	if err != nil {
+		return nil, "", err
+	}
+
+	options, urlParts := f.parseURLOptions(parts)
+
+	if err = f.applyURLOptions(po, options, false); err != nil {
+		return nil, "", err
+	}
+
+	url, extension, err := f.DecodeURL(urlParts)
+	if err != nil {
+		return nil, "", err
+	}
+
+	if !po.Raw && len(extension) > 0 {
+		if err = applyFormatOption(po, []string{extension}); err != nil {
+			return nil, "", err
+		}
+	}
+
+	return po, url, nil
+}
+
+// parsePathPresets parses presets from the URL path
+func (f *Factory) parsePathPresets(parts []string, headers http.Header) (*ProcessingOptions, string, error) {
+	po, err := f.defaultProcessingOptions(headers)
+	if err != nil {
+		return nil, "", err
+	}
+
+	presets := strings.Split(parts[0], f.config.ArgumentsSeparator)
+	urlParts := parts[1:]
+
+	if err = f.applyPresetOption(po, presets); err != nil {
+		return nil, "", err
+	}
+
+	url, extension, err := f.DecodeURL(urlParts)
+	if err != nil {
+		return nil, "", err
+	}
+
+	if !po.Raw && len(extension) > 0 {
+		if err = applyFormatOption(po, []string{extension}); err != nil {
+			return nil, "", err
+		}
+	}
+
+	return po, url, nil
 }
