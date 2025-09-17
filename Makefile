@@ -103,6 +103,13 @@ fmt:
 lint:
 	@$(GOLINT) run
 
+# Upgrade direct Go dependencies
+.PHONY: upgrade
+upgrade:
+	@$(GOCMD) mod tidy
+	@$(GOCMD) get $$($(GOCMD) list -f '{{if not (or .Main .Indirect)}}{{.Path}}{{end}}' -m all)
+	@$(GOCMD) mod tidy
+
 # Make any unknown target do nothing to avoid "up to date" messages
 .PHONY: FORCE
 %: FORCE

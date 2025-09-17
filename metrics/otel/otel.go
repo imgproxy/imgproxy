@@ -18,7 +18,7 @@ import (
 	"github.com/felixge/httpsnoop"
 	"github.com/shirou/gopsutil/process"
 	"github.com/sirupsen/logrus"
-	"go.opentelemetry.io/contrib/detectors/aws/ec2"
+	ec2 "go.opentelemetry.io/contrib/detectors/aws/ec2/v2"
 	"go.opentelemetry.io/contrib/detectors/aws/ecs"
 	"go.opentelemetry.io/contrib/detectors/aws/eks"
 	"go.opentelemetry.io/contrib/propagators/autoprop"
