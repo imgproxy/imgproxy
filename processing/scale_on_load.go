@@ -5,7 +5,6 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/imath"
@@ -22,7 +21,7 @@ func canScaleOnLoad(pctx *pipelineContext, imgdata imagedata.ImageData, scale fl
 		return true
 	}
 
-	if config.DisableShrinkOnLoad || scale >= 1 {
+	if pctx.config.DisableShrinkOnLoad || scale >= 1 {
 		return false
 	}
 

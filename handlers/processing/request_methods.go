@@ -156,8 +156,13 @@ func (r *request) getFallbackImage(
 
 // processImage calls actual image processing
 func (r *request) processImage(ctx context.Context, originData imagedata.ImageData) (*processing.Result, error) {
+	config, err := processing.LoadConfigFromEnv(nil)
+	if err != nil {
+		return nil, ierrors.Wrap(err, 0, ierrors.WithCategory(handlers.CategoryConfig))
+	}
+
 	defer monitoring.StartProcessingSegment(ctx, r.monitoringMeta.Filter(monitoring.MetaProcessingOptions))()
-	return processing.ProcessImage(ctx, originData, r.po, r.WatermarkImage())
+	return processing.ProcessImage(ctx, originData, r.po, r.WatermarkImage(), config)
 }
 
 // writeDebugHeaders writes debug headers (X-Origin-*, X-Result-*) to the response

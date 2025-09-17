@@ -14,6 +14,8 @@ import (
 type pipelineContext struct {
 	ctx context.Context
 
+	config *Config
+
 	imgtype imagetype.Type
 
 	// The watermark image provider, if any watermarking is to be done.
@@ -77,9 +79,11 @@ func (p pipeline) Run(
 	po *options.ProcessingOptions,
 	imgdata imagedata.ImageData,
 	watermark auximageprovider.Provider,
+	config *Config,
 ) error {
 	pctx := pipelineContext{
-		ctx: ctx,
+		ctx:    ctx,
+		config: config,
 
 		wscale: 1.0,
 		hscale: 1.0,

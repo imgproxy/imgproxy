@@ -17,13 +17,15 @@ import (
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/security"
+	"github.com/imgproxy/imgproxy/v3/testutil"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
 type ProcessingTestSuite struct {
-	suite.Suite
-	idf *imagedata.Factory
-	pof *options.Factory
+	testutil.LazySuite
+	idf              *imagedata.Factory
+	pof              *options.Factory
+	processingConfig testutil.LazyObj[*Config]
 }
 
 func (s *ProcessingTestSuite) SetupSuite() {
@@ -55,6 +57,13 @@ func (s *ProcessingTestSuite) SetupSuite() {
 
 	s.pof, err = options.NewFactory(cfg, security)
 	s.Require().NoError(err)
+
+	s.processingConfig, _ = testutil.NewLazySuiteObj(
+		s,
+		func() (*Config, error) {
+			return LoadConfigFromEnv(nil)
+		},
+	)
 }
 
 func (s *ProcessingTestSuite) openFile(name string) imagedata.ImageData {
@@ -103,7 +112,7 @@ func (s *ProcessingTestSuite) TestResizeToFit() {
 			po.Width = tc.width
 			po.Height = tc.height
 
-			result, err := ProcessImage(context.Background(), imgdata, po, nil)
+			result, err := ProcessImage(context.Background(), imgdata, po, nil, s.processingConfig())
 			s.Require().NoError(err)
 			s.Require().NotNil(result)
 
@@ -142,7 +151,7 @@ func (s *ProcessingTestSuite) TestResizeToFitEnlarge() {
 			po.Width = tc.width
 			po.Height = tc.height
 
-			result, err := ProcessImage(context.Background(), imgdata, po, nil)
+			result, err := ProcessImage(context.Background(), imgdata, po, nil, s.processingConfig())
 			s.Require().NoError(err)
 			s.Require().NotNil(result)
 
@@ -186,7 +195,7 @@ func (s *ProcessingTestSuite) TestResizeToFitExtend() {
 			po.Width = tc.width
 			po.Height = tc.height
 
-			result, err := ProcessImage(context.Background(), imgdata, po, nil)
+			result, err := ProcessImage(context.Background(), imgdata, po, nil, s.processingConfig())
 			s.Require().NoError(err)
 			s.Require().NotNil(result)
 
@@ -230,7 +239,7 @@ func (s *ProcessingTestSuite) TestResizeToFitExtendAR() {
 			po.Width = tc.width
 			po.Height = tc.height
 
-			result, err := ProcessImage(context.Background(), imgdata, po, nil)
+			result, err := ProcessImage(context.Background(), imgdata, po, nil, s.processingConfig())
 			s.Require().NoError(err)
 			s.Require().NotNil(result)
 
@@ -268,7 +277,7 @@ func (s *ProcessingTestSuite) TestResizeToFill() {
 			po.Width = tc.width
 			po.Height = tc.height
 
-			result, err := ProcessImage(context.Background(), imgdata, po, nil)
+			result, err := ProcessImage(context.Background(), imgdata, po, nil, s.processingConfig())
 			s.Require().NoError(err)
 			s.Require().NotNil(result)
 
@@ -307,7 +316,7 @@ func (s *ProcessingTestSuite) TestResizeToFillEnlarge() {
 			po.Width = tc.width
 			po.Height = tc.height
 
-			result, err := ProcessImage(context.Background(), imgdata, po, nil)
+			result, err := ProcessImage(context.Background(), imgdata, po, nil, s.processingConfig())
 			s.Require().NoError(err)
 			s.Require().NotNil(result)
 
@@ -353,7 +362,7 @@ func (s *ProcessingTestSuite) TestResizeToFillExtend() {
 			po.Width = tc.width
 			po.Height = tc.height
 
-			result, err := ProcessImage(context.Background(), imgdata, po, nil)
+			result, err := ProcessImage(context.Background(), imgdata, po, nil, s.processingConfig())
 			s.Require().NoError(err)
 			s.Require().NotNil(result)
 
@@ -399,7 +408,7 @@ func (s *ProcessingTestSuite) TestResizeToFillExtendAR() {
 			po.Width = tc.width
 			po.Height = tc.height
 
-			result, err := ProcessImage(context.Background(), imgdata, po, nil)
+			result, err := ProcessImage(context.Background(), imgdata, po, nil, s.processingConfig())
 			s.Require().NoError(err)
 			s.Require().NotNil(result)
 
@@ -437,7 +446,7 @@ func (s *ProcessingTestSuite) TestResizeToFillDown() {
 			po.Width = tc.width
 			po.Height = tc.height
 
-			result, err := ProcessImage(context.Background(), imgdata, po, nil)
+			result, err := ProcessImage(context.Background(), imgdata, po, nil, s.processingConfig())
 			s.Require().NoError(err)
 			s.Require().NotNil(result)
 
@@ -476,7 +485,7 @@ func (s *ProcessingTestSuite) TestResizeToFillDownEnlarge() {
 			po.Width = tc.width
 			po.Height = tc.height
 
-			result, err := ProcessImage(context.Background(), imgdata, po, nil)
+			result, err := ProcessImage(context.Background(), imgdata, po, nil, s.processingConfig())
 			s.Require().NoError(err)
 			s.Require().NotNil(result)
 
@@ -522,7 +531,7 @@ func (s *ProcessingTestSuite) TestResizeToFillDownExtend() {
 			po.Width = tc.width
 			po.Height = tc.height
 
-			result, err := ProcessImage(context.Background(), imgdata, po, nil)
+			result, err := ProcessImage(context.Background(), imgdata, po, nil, s.processingConfig())
 			s.Require().NoError(err)
 			s.Require().NotNil(result)
 
@@ -566,7 +575,7 @@ func (s *ProcessingTestSuite) TestResizeToFillDownExtendAR() {
 			po.Width = tc.width
 			po.Height = tc.height
 
-			result, err := ProcessImage(context.Background(), imgdata, po, nil)
+			result, err := ProcessImage(context.Background(), imgdata, po, nil, s.processingConfig())
 			s.Require().NoError(err)
 			s.Require().NotNil(result)
 
@@ -995,7 +1004,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 			po.Rotate = tc.rotate
 			po.Padding = tc.padding
 
-			result, err := ProcessImage(context.Background(), imgdata, po, nil)
+			result, err := ProcessImage(context.Background(), imgdata, po, nil, s.processingConfig())
 
 			s.Require().NoError(err)
 			s.Require().NotNil(result)
@@ -1010,7 +1019,7 @@ func (s *ProcessingTestSuite) TestImageResolutionTooLarge() {
 	po.SecurityOptions.MaxSrcResolution = 1
 
 	imgdata := s.openFile("test2.jpg")
-	_, err := ProcessImage(context.Background(), imgdata, po, nil)
+	_, err := ProcessImage(context.Background(), imgdata, po, nil, s.processingConfig())
 
 	s.Require().Error(err)
 	s.Require().Equal(422, ierrors.Wrap(err, 0).StatusCode())

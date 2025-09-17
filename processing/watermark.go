@@ -5,7 +5,6 @@ import (
 	"math"
 
 	"github.com/imgproxy/imgproxy/v3/auximageprovider"
-	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imath"
 	"github.com/imgproxy/imgproxy/v3/options"
@@ -22,7 +21,7 @@ var watermarkPipeline = pipeline{
 	padding,
 }
 
-func prepareWatermark(wm *vips.Image, wmData imagedata.ImageData, po *options.ProcessingOptions, imgWidth, imgHeight int, offsetScale float64, framesCount int) error {
+func prepareWatermark(wm *vips.Image, wmData imagedata.ImageData, po *options.ProcessingOptions, config *Config, imgWidth, imgHeight int, offsetScale float64, framesCount int) error {
 	if err := wm.Load(wmData, 1, 1.0, 1); err != nil {
 		return err
 	}
@@ -62,7 +61,7 @@ func prepareWatermark(wm *vips.Image, wmData imagedata.ImageData, po *options.Pr
 		wmPo.Padding.Bottom = offY - wmPo.Padding.Top
 	}
 
-	if err := watermarkPipeline.Run(context.Background(), wm, wmPo, wmData, nil); err != nil {
+	if err := watermarkPipeline.Run(context.Background(), wm, wmPo, wmData, nil, config); err != nil {
 		return err
 	}
 
@@ -89,6 +88,7 @@ func applyWatermark(
 	po *options.ProcessingOptions,
 	offsetScale float64,
 	framesCount int,
+	config *Config,
 ) error {
 	if watermark == nil {
 		return nil
@@ -112,7 +112,7 @@ func applyWatermark(
 	height := img.Height()
 	frameHeight := height / framesCount
 
-	if err := prepareWatermark(wm, wmData, po, width, frameHeight, offsetScale, framesCount); err != nil {
+	if err := prepareWatermark(wm, wmData, po, config, width, frameHeight, offsetScale, framesCount); err != nil {
 		return err
 	}
 
@@ -195,5 +195,5 @@ func watermark(
 		return nil
 	}
 
-	return applyWatermark(pctx.ctx, img, pctx.watermarkProvider, po, pctx.dprScale, 1)
+	return applyWatermark(pctx.ctx, img, pctx.watermarkProvider, po, pctx.dprScale, 1, pctx.config)
 }
