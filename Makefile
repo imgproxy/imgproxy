@@ -53,7 +53,7 @@ all: build
 #	make build -- -o output_name
 .PHONY: build
 build:
-	@$(GOBUILD) -o $(BINARY) $(BUILD_ARGS) $(SRCDIR)
+	@$(GOBUILD) -v -o $(BINARY) $(BUILD_ARGS) $(SRCDIR)
 
 # Clean
 .PHONY: clean
@@ -101,6 +101,13 @@ fmt:
 .PHONY: lint
 lint:
 	@$(GOLINT) run
+
+# Upgrade direct Go dependencies
+.PHONY: upgrade
+upgrade:
+	@$(GOCMD) mod tidy
+	@$(GOCMD) get $$($(GOCMD) list -f '{{if not (or .Main .Indirect)}}{{.Path}}{{end}}' -m all)
+	@$(GOCMD) mod tidy
 
 # Make any unknown target do nothing to avoid "up to date" messages
 .PHONY: FORCE
