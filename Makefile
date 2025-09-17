@@ -53,7 +53,7 @@ all: build
 #	make build -- -o output_name
 .PHONY: build
 build:
-	@$(GOBUILD) -o $(BINARY) $(BUILD_ARGS) $(SRCDIR)
+	@$(GOBUILD) -v -o $(BINARY) $(BUILD_ARGS) $(SRCDIR)
 
 # Clean
 .PHONY: clean
