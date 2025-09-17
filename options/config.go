@@ -54,6 +54,8 @@ type Config struct {
 	BaseURL                   string           // Base URL for relative URLs
 	URLReplacements           []URLReplacement // URL replacement rules
 	Base64URLIncludesFilename bool             // Whether base64 URLs include filename
+
+	AllowSecurityOptions bool // Whether to allow security options in URLs
 }
 
 // NewDefaultConfig creates a new default configuration for options processing
@@ -92,6 +94,8 @@ func NewDefaultConfig() Config {
 		ArgumentsSeparator:        ":",
 		BaseURL:                   "",
 		Base64URLIncludesFilename: false,
+
+		AllowSecurityOptions: false,
 	}
 }
 
@@ -137,6 +141,8 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c.BaseURL = config.BaseURL
 	c.URLReplacements = slices.Clone(config.URLReplacements)
 	c.Base64URLIncludesFilename = config.Base64URLIncludesFilename
+
+	c.AllowSecurityOptions = config.AllowSecurityOptions
 
 	return c, nil
 }
