@@ -80,5 +80,5 @@ func newInvalidArgsError(name string, args []string, expected ...string) error {
 		msg += " (expected " + strings.Join(expected, ", ") + ")"
 	}
 
-	return newOptionArgumentError(msg, name, args, expected[0])
+	return newOptionArgumentError(msg, name, args)
 }
