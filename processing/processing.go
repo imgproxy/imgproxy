@@ -13,6 +13,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/options"
+	"github.com/imgproxy/imgproxy/v3/processing/pipeline"
 	"github.com/imgproxy/imgproxy/v3/security"
 	"github.com/imgproxy/imgproxy/v3/server"
 	"github.com/imgproxy/imgproxy/v3/svg"
@@ -21,7 +22,7 @@ import (
 
 // The main processing pipeline (without finalization).
 // Applied to non-animated images and individual frames of animated images.
-var mainPipeline = pipeline{
+var mainPipeline = Pipeline{
 	vectorGuardScale,
 	trim,
 	prepare,
@@ -42,7 +43,7 @@ var mainPipeline = pipeline{
 
 // The finalization pipeline.
 // Applied right before saving the image.
-var finalizePipeline = pipeline{
+var finalizePipeline = Pipeline{
 	colorspaceToResult,
 	stripMetadata,
 }
@@ -142,8 +143,15 @@ func ProcessImage(
 		return nil, err
 	}
 
+	// NOTE: THIS IS TEMPORARY
+	runner, err := tmpNewRunner(watermarkProvider)
+	if err != nil {
+		return nil, err
+	}
+	// NOTE: END TEMPORARY BLOCK
+
 	// Finalize the image (colorspace conversion, metadata stripping, etc)
-	if err = finalizePipeline.Run(ctx, img, po, imgdata, watermarkProvider); err != nil {
+	if err = runner.Run(finalizePipeline, ctx, img, po, imgdata); err != nil {
 		return nil, err
 	}
 
@@ -393,7 +401,14 @@ func transformImage(
 		return transformAnimated(ctx, img, po, watermark)
 	}
 
-	return mainPipeline.Run(ctx, img, po, imgdata, watermark)
+	// NOTE: THIS IS TEMPORARY
+	runner, err := tmpNewRunner(watermark)
+	if err != nil {
+		return err
+	}
+	// NOTE: END TEMPORARY BLOCK
+
+	return runner.Run(mainPipeline, ctx, img, po, imgdata)
 }
 
 func transformAnimated(
@@ -452,10 +467,17 @@ func transformAnimated(
 
 		frames = append(frames, frame)
 
+		// NOTE: THIS IS TEMPORARY
+		runner, rerr := tmpNewRunner(watermark)
+		if rerr != nil {
+			return rerr
+		}
+		// NOTE: END TEMPORARY BLOCK
+
 		// Transform the frame using the main pipeline.
 		// We don't provide imgdata here to prevent scale-on-load.
-		// Let's skip passing watermark here since in would be applied later to all frames at once.
-		if err = mainPipeline.Run(ctx, frame, po, nil, nil); err != nil {
+		// Watermarking is disabled for individual frames (see above)
+		if err = runner.Run(mainPipeline, ctx, frame, po, nil); err != nil {
 			return err
 		}
 
@@ -542,4 +564,17 @@ func saveImage(
 
 	// Otherwise, just save the image with the specified quality.
 	return img.Save(po.Format, po.GetQuality())
+}
+
+func tmpNewRunner(watermarkProvider auximageprovider.Provider) (*Runner, error) {
+	// NOTE: THIS IS TEMPORARY
+	config, err := pipeline.LoadConfigFromEnv(nil)
+	if err != nil {
+		return nil, err
+	}
+
+	runner := New(config, watermarkProvider)
+
+	return runner, nil
+	// NOTE: END TEMPORARY BLOCK
 }

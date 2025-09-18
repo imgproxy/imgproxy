@@ -1,7 +1,6 @@
 package processing
 
 import (
-	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
@@ -25,24 +24,24 @@ func extendImage(img *vips.Image, width, height int, gravity *options.GravityOpt
 	return img.Embed(width, height, offX, offY)
 }
 
-func extend(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata imagedata.ImageData) error {
-	if !po.Extend.Enabled {
+func extend(c *Context) error {
+	if !c.PO.Extend.Enabled {
 		return nil
 	}
 
-	width, height := pctx.targetWidth, pctx.targetHeight
-	return extendImage(img, width, height, &po.Extend.Gravity, pctx.dprScale)
+	width, height := c.TargetWidth, c.TargetHeight
+	return extendImage(c.Img, width, height, &c.PO.Extend.Gravity, c.DprScale)
 }
 
-func extendAspectRatio(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata imagedata.ImageData) error {
-	if !po.ExtendAspectRatio.Enabled {
+func extendAspectRatio(c *Context) error {
+	if !c.PO.ExtendAspectRatio.Enabled {
 		return nil
 	}
 
-	width, height := pctx.extendAspectRatioWidth, pctx.extendAspectRatioHeight
+	width, height := c.ExtendAspectRatioWidth, c.ExtendAspectRatioHeight
 	if width == 0 || height == 0 {
 		return nil
 	}
 
-	return extendImage(img, width, height, &po.ExtendAspectRatio.Gravity, pctx.dprScale)
+	return extendImage(c.Img, width, height, &c.PO.ExtendAspectRatio.Gravity, c.DprScale)
 }
