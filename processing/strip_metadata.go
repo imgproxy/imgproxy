@@ -5,10 +5,8 @@ import (
 
 	"github.com/trimmer-io/go-xmp/xmp"
 
-	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagemeta/iptc"
 	"github.com/imgproxy/imgproxy/v3/imagemeta/photoshop"
-	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
@@ -105,29 +103,29 @@ func stripXMP(img *vips.Image) []byte {
 	return xmpData
 }
 
-func stripMetadata(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata imagedata.ImageData) error {
-	if !po.StripMetadata {
+func stripMetadata(ctx *Context) error {
+	if !ctx.PO.StripMetadata {
 		return nil
 	}
 
 	var ps3Data, xmpData []byte
 
-	if po.KeepCopyright {
-		ps3Data = stripPS3(img)
-		xmpData = stripXMP(img)
+	if ctx.PO.KeepCopyright {
+		ps3Data = stripPS3(ctx.Img)
+		xmpData = stripXMP(ctx.Img)
 	}
 
-	if err := img.Strip(po.KeepCopyright); err != nil {
+	if err := ctx.Img.Strip(ctx.PO.KeepCopyright); err != nil {
 		return err
 	}
 
-	if po.KeepCopyright {
+	if ctx.PO.KeepCopyright {
 		if len(ps3Data) > 0 {
-			img.SetBlob("iptc-data", ps3Data)
+			ctx.Img.SetBlob("iptc-data", ps3Data)
 		}
 
 		if len(xmpData) > 0 {
-			img.SetBlob("xmp-data", xmpData)
+			ctx.Img.SetBlob("xmp-data", xmpData)
 		}
 	}
 

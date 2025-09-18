@@ -1,7 +1,6 @@
 package processing
 
 import (
-	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imath"
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/vips"
@@ -32,21 +31,21 @@ func cropImage(img *vips.Image, cropWidth, cropHeight int, gravity *options.Grav
 	return img.Crop(left, top, cropWidth, cropHeight)
 }
 
-func crop(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata imagedata.ImageData) error {
-	width, height := pctx.cropWidth, pctx.cropHeight
+func crop(c *Context) error {
+	width, height := c.CropWidth, c.CropHeight
 
-	opts := pctx.cropGravity
-	opts.RotateAndFlip(pctx.angle, pctx.flip)
-	opts.RotateAndFlip(po.Rotate, false)
+	opts := c.CropGravity
+	opts.RotateAndFlip(c.Angle, c.Flip)
+	opts.RotateAndFlip(c.PO.Rotate, false)
 
-	if (pctx.angle+po.Rotate)%180 == 90 {
+	if (c.Angle+c.PO.Rotate)%180 == 90 {
 		width, height = height, width
 	}
 
 	// Since we crop before scaling, we shouldn't consider DPR
-	return cropImage(img, width, height, &opts, 1.0)
+	return cropImage(c.Img, width, height, &opts, 1.0)
 }
 
-func cropToResult(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata imagedata.ImageData) error {
-	return cropImage(img, pctx.resultCropWidth, pctx.resultCropHeight, &po.Gravity, pctx.dprScale)
+func cropToResult(c *Context) error {
+	return cropImage(c.Img, c.ResultCropWidth, c.ResultCropHeight, &c.PO.Gravity, c.DprScale)
 }

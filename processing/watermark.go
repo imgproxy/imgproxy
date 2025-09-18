@@ -12,7 +12,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
-var watermarkPipeline = pipeline{
+var watermarkPipeline = Pipeline{
 	vectorGuardScale,
 	prepare,
 	scaleOnLoad,
@@ -62,7 +62,14 @@ func prepareWatermark(wm *vips.Image, wmData imagedata.ImageData, po *options.Pr
 		wmPo.Padding.Bottom = offY - wmPo.Padding.Top
 	}
 
-	if err := watermarkPipeline.Run(context.Background(), wm, wmPo, wmData, nil); err != nil {
+	// NOTE: THIS IS TEMPORARY
+	runner, err := tmpNewRunner(nil) // watermark will present in runner
+	if err != nil {
+		return err
+	}
+	// NOTE: END TEMPORARY BLOCK
+
+	if err := runner.Run(watermarkPipeline, context.Background(), wm, wmPo, wmData); err != nil {
 		return err
 	}
 
@@ -126,6 +133,7 @@ func applyWatermark(
 		return err
 	}
 
+	// TODO: Use runner config
 	opacity := opts.Opacity * config.WatermarkOpacity
 
 	// If we replicated the watermark and need to apply it to an animated image,
@@ -185,15 +193,10 @@ func applyWatermark(
 	return nil
 }
 
-func watermark(
-	pctx *pipelineContext,
-	img *vips.Image,
-	po *options.ProcessingOptions,
-	imgdata imagedata.ImageData,
-) error {
-	if !po.Watermark.Enabled || pctx.watermarkProvider == nil {
+func watermark(c *Context) error {
+	if !c.PO.Watermark.Enabled || c.WatermarkProvider == nil {
 		return nil
 	}
 
-	return applyWatermark(pctx.ctx, img, pctx.watermarkProvider, po, pctx.dprScale, 1)
+	return applyWatermark(c.Сtx, c.Img, c.WatermarkProvider, c.PO, c.DprScale, 1)
 }

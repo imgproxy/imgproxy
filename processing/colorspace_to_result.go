@@ -1,48 +1,42 @@
 package processing
 
-import (
-	"github.com/imgproxy/imgproxy/v3/imagedata"
-	"github.com/imgproxy/imgproxy/v3/options"
-	"github.com/imgproxy/imgproxy/v3/vips"
-)
+func colorspaceToResult(c *Context) error {
+	keepProfile := !c.PO.StripColorProfile && c.PO.Format.SupportsColourProfile()
 
-func colorspaceToResult(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata imagedata.ImageData) error {
-	keepProfile := !po.StripColorProfile && po.Format.SupportsColourProfile()
-
-	if img.IsLinear() {
-		if err := img.RgbColourspace(); err != nil {
+	if c.Img.IsLinear() {
+		if err := c.Img.RgbColourspace(); err != nil {
 			return err
 		}
 	}
 
 	// vips 8.15+ tends to lose the colour profile during some color conversions.
 	// We probably have a backup of the colour profile, so we need to restore it.
-	img.RestoreColourProfile()
+	c.Img.RestoreColourProfile()
 
-	if img.ColourProfileImported() {
+	if c.Img.ColourProfileImported() {
 		if keepProfile {
 			// We imported ICC profile and want to keep it,
 			// so we need to export it
-			if err := img.ExportColourProfile(); err != nil {
+			if err := c.Img.ExportColourProfile(); err != nil {
 				return err
 			}
 		} else {
 			// We imported ICC profile but don't want to keep it,
 			// so we need to export image to sRGB for maximum compatibility
-			if err := img.ExportColourProfileToSRGB(); err != nil {
+			if err := c.Img.ExportColourProfileToSRGB(); err != nil {
 				return err
 			}
 		}
 	} else if !keepProfile {
 		// We don't import ICC profile and don't want to keep it,
 		// so we need to transform it to sRGB for maximum compatibility
-		if err := img.TransformColourProfileToSRGB(); err != nil {
+		if err := c.Img.TransformColourProfileToSRGB(); err != nil {
 			return err
 		}
 	}
 
 	if !keepProfile {
-		return img.RemoveColourProfile()
+		return c.Img.RemoveColourProfile()
 	}
 
 	return nil

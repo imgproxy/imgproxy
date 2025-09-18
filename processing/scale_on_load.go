@@ -5,7 +5,6 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/imath"
@@ -13,8 +12,8 @@ import (
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
-func canScaleOnLoad(pctx *pipelineContext, imgdata imagedata.ImageData, scale float64) bool {
-	if imgdata == nil || pctx.trimmed || scale == 1 {
+func canScaleOnLoad(c *Context, imgdata imagedata.ImageData, scale float64) bool {
+	if imgdata == nil || scale == 1 {
 		return false
 	}
 
@@ -22,7 +21,7 @@ func canScaleOnLoad(pctx *pipelineContext, imgdata imagedata.ImageData, scale fl
 		return true
 	}
 
-	if config.DisableShrinkOnLoad || scale >= 1 {
+	if c.Config.DisableShrinkOnLoad || scale >= 1 {
 		return false
 	}
 
@@ -45,86 +44,86 @@ func calcJpegShink(shrink float64) int {
 	return 1
 }
 
-func scaleOnLoad(pctx *pipelineContext, img *vips.Image, po *options.ProcessingOptions, imgdata imagedata.ImageData) error {
-	wshrink := float64(pctx.srcWidth) / float64(imath.Scale(pctx.srcWidth, pctx.wscale))
-	hshrink := float64(pctx.srcHeight) / float64(imath.Scale(pctx.srcHeight, pctx.hscale))
+func scaleOnLoad(c *Context) error {
+	wshrink := float64(c.SrcWidth) / float64(imath.Scale(c.SrcWidth, c.WScale))
+	hshrink := float64(c.SrcHeight) / float64(imath.Scale(c.SrcHeight, c.HScale))
 	preshrink := math.Min(wshrink, hshrink)
 	prescale := 1.0 / preshrink
 
-	if imgdata != nil && imgdata.Format().IsVector() {
+	if c.ImgData != nil && c.ImgData.Format().IsVector() {
 		// For vector images, apply the vector base scale
-		prescale *= pctx.vectorBaseScale
+		prescale *= c.VectorBaseScale
 	}
 
-	if !canScaleOnLoad(pctx, imgdata, prescale) {
+	if !canScaleOnLoad(c, c.ImgData, prescale) {
 		return nil
 	}
 
 	var newWidth, newHeight int
 
-	if imgdata.Format().SupportsThumbnail() {
+	if c.ImgData.Format().SupportsThumbnail() {
 		thumbnail := new(vips.Image)
 		defer thumbnail.Clear()
 
-		if err := thumbnail.LoadThumbnail(imgdata); err != nil {
+		if err := thumbnail.LoadThumbnail(c.ImgData); err != nil {
 			log.Debugf("Can't load thumbnail: %s", err)
 			return nil
 		}
 
 		angle, flip := 0, false
-		newWidth, newHeight, angle, flip = extractMeta(thumbnail, po.Rotate, po.AutoRotate)
+		newWidth, newHeight, angle, flip = extractMeta(thumbnail, c.PO.Rotate, c.PO.AutoRotate)
 
-		if newWidth >= pctx.srcWidth || float64(newWidth)/float64(pctx.srcWidth) < prescale {
+		if newWidth >= c.SrcWidth || float64(newWidth)/float64(c.SrcWidth) < prescale {
 			return nil
 		}
 
-		img.Swap(thumbnail)
-		pctx.angle = angle
-		pctx.flip = flip
+		c.Img.Swap(thumbnail)
+		c.Angle = angle
+		c.Flip = flip
 	} else {
 		jpegShrink := calcJpegShink(preshrink)
 
-		if pctx.imgtype == imagetype.JPEG && jpegShrink == 1 {
+		if c.ImgData.Format() == imagetype.JPEG && jpegShrink == 1 {
 			return nil
 		}
 
-		if err := img.Load(imgdata, jpegShrink, prescale, 1); err != nil {
+		if err := c.Img.Load(c.ImgData, jpegShrink, prescale, 1); err != nil {
 			return err
 		}
 
-		newWidth, newHeight, _, _ = extractMeta(img, po.Rotate, po.AutoRotate)
+		newWidth, newHeight, _, _ = extractMeta(c.Img, c.PO.Rotate, c.PO.AutoRotate)
 	}
 
 	// Update scales after scale-on-load
-	wpreshrink := float64(pctx.srcWidth) / float64(newWidth)
-	hpreshrink := float64(pctx.srcHeight) / float64(newHeight)
+	wpreshrink := float64(c.SrcWidth) / float64(newWidth)
+	hpreshrink := float64(c.SrcHeight) / float64(newHeight)
 
-	pctx.wscale = wpreshrink * pctx.wscale
-	if newWidth == imath.Scale(newWidth, pctx.wscale) {
-		pctx.wscale = 1.0
+	c.WScale = wpreshrink * c.WScale
+	if newWidth == imath.Scale(newWidth, c.WScale) {
+		c.WScale = 1.0
 	}
 
-	pctx.hscale = hpreshrink * pctx.hscale
-	if newHeight == imath.Scale(newHeight, pctx.hscale) {
-		pctx.hscale = 1.0
+	c.HScale = hpreshrink * c.HScale
+	if newHeight == imath.Scale(newHeight, c.HScale) {
+		c.HScale = 1.0
 	}
 
 	// We should crop before scaling, but we scaled the image on load,
 	// so we need to adjust crop options
-	if pctx.cropWidth > 0 {
-		pctx.cropWidth = max(1, imath.Shrink(pctx.cropWidth, wpreshrink))
+	if c.CropWidth > 0 {
+		c.CropWidth = max(1, imath.Shrink(c.CropWidth, wpreshrink))
 	}
-	if pctx.cropHeight > 0 {
-		pctx.cropHeight = max(1, imath.Shrink(pctx.cropHeight, hpreshrink))
+	if c.CropHeight > 0 {
+		c.CropHeight = max(1, imath.Shrink(c.CropHeight, hpreshrink))
 	}
-	if pctx.cropGravity.Type != options.GravityFocusPoint {
+	if c.CropGravity.Type != options.GravityFocusPoint {
 		// Adjust only when crop gravity offsets are absolute
-		if math.Abs(pctx.cropGravity.X) >= 1.0 {
+		if math.Abs(c.CropGravity.X) >= 1.0 {
 			// Round offsets to prevent turning absolute offsets to relative (ex: 1.0 => 0.5)
-			pctx.cropGravity.X = math.RoundToEven(pctx.cropGravity.X / wpreshrink)
+			c.CropGravity.X = math.RoundToEven(c.CropGravity.X / wpreshrink)
 		}
-		if math.Abs(pctx.cropGravity.Y) >= 1.0 {
-			pctx.cropGravity.Y = math.RoundToEven(pctx.cropGravity.Y / hpreshrink)
+		if math.Abs(c.CropGravity.Y) >= 1.0 {
+			c.CropGravity.Y = math.RoundToEven(c.CropGravity.Y / hpreshrink)
 		}
 	}
 
