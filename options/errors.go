@@ -3,14 +3,16 @@ package options
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 )
 
 type (
-	InvalidURLError     string
-	UnknownOptionError  string
-	OptionArgumentError string
+	InvalidURLError      string
+	UnknownOptionError   string
+	OptionArgumentError  string
+	SecurityOptionsError struct{}
 )
 
 func newInvalidURLError(format string, args ...interface{}) error {
@@ -58,3 +60,25 @@ func newOptionArgumentError(format string, args ...interface{}) error {
 }
 
 func (e OptionArgumentError) Error() string { return string(e) }
+
+func newSecurityOptionsError() error {
+	return ierrors.Wrap(
+		SecurityOptionsError{},
+		1,
+		ierrors.WithStatusCode(http.StatusForbidden),
+		ierrors.WithPublicMessage("Invalid URL"),
+		ierrors.WithShouldReport(false),
+	)
+}
+
+func (e SecurityOptionsError) Error() string { return "Security processing options are not allowed" }
+
+// newInvalidArgsError creates a standardized error for invalid arguments
+func newInvalidArgsError(name string, args []string, expected ...string) error {
+	msg := "Invalid %s arguments: %s"
+	if len(expected) > 0 {
+		msg += " (expected " + strings.Join(expected, ", ") + ")"
+	}
+
+	return newOptionArgumentError(msg, name, args, expected[0])
+}

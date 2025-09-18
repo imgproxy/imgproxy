@@ -1,9 +1,5 @@
 package security
 
-import (
-	"github.com/imgproxy/imgproxy/v3/config"
-)
-
 // Security options (part of processing options)
 type Options struct {
 	MaxSrcResolution            int
@@ -11,15 +7,6 @@ type Options struct {
 	MaxAnimationFrames          int
 	MaxAnimationFrameResolution int
 	MaxResultDimension          int
-}
-
-// NOTE: This function is a part of processing option, we'll move it in the next PR
-func IsSecurityOptionsAllowed() error {
-	if config.AllowSecurityOptions {
-		return nil
-	}
-
-	return newSecurityOptionsError()
 }
 
 // CheckDimensions checks if the given dimensions are within the allowed limits

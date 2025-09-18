@@ -10,7 +10,6 @@ import (
 type (
 	SignatureError       string
 	ImageResolutionError string
-	SecurityOptionsError struct{}
 	SourceURLError       string
 )
 
@@ -37,18 +36,6 @@ func newImageResolutionError(msg string) error {
 }
 
 func (e ImageResolutionError) Error() string { return string(e) }
-
-func newSecurityOptionsError() error {
-	return ierrors.Wrap(
-		SecurityOptionsError{},
-		1,
-		ierrors.WithStatusCode(http.StatusForbidden),
-		ierrors.WithPublicMessage("Invalid URL"),
-		ierrors.WithShouldReport(false),
-	)
-}
-
-func (e SecurityOptionsError) Error() string { return "Security processing options are not allowed" }
 
 func newSourceURLError(imageURL string) error {
 	return ierrors.Wrap(
