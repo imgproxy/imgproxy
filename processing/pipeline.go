@@ -13,7 +13,7 @@ import (
 
 // NOTE: this will be called pipeline.Context in the separate package
 type Context struct {
-	Сtx context.Context
+	Ctx context.Context
 
 	// Global processing configuration which could be used by individual steps
 	Config *pipeline.Config
@@ -127,7 +127,7 @@ func (r *Runner) newContext(
 	imgdata imagedata.ImageData,
 ) Context {
 	pctx := Context{
-		Сtx:     ctx,
+		Ctx:     ctx,
 		Config:  r.config,
 		Img:     img,
 		PO:      po,

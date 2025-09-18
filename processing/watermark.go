@@ -198,5 +198,5 @@ func watermark(c *Context) error {
 		return nil
 	}
 
-	return applyWatermark(c.Сtx, c.Img, c.WatermarkProvider, c.PO, c.DprScale, 1)
+	return applyWatermark(c.Ctx, c.Img, c.WatermarkProvider, c.PO, c.DprScale, 1)
 }
