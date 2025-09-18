@@ -13,7 +13,6 @@ import (
 	"github.com/imgproxy/imgproxy/v3/errorreport"
 	"github.com/imgproxy/imgproxy/v3/logger"
 	"github.com/imgproxy/imgproxy/v3/monitoring"
-	"github.com/imgproxy/imgproxy/v3/processing"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
@@ -49,11 +48,6 @@ func Init() error {
 	}
 
 	errorreport.Init()
-
-	if err := processing.ValidatePreferredFormats(); err != nil {
-		vips.Shutdown()
-		return err
-	}
 
 	return nil
 }

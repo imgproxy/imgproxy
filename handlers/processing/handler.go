@@ -14,6 +14,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/monitoring"
 	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
 	"github.com/imgproxy/imgproxy/v3/options"
+	"github.com/imgproxy/imgproxy/v3/processing"
 	"github.com/imgproxy/imgproxy/v3/security"
 	"github.com/imgproxy/imgproxy/v3/server"
 	"github.com/imgproxy/imgproxy/v3/workers"
@@ -27,6 +28,7 @@ type HandlerContext interface {
 	ImageDataFactory() *imagedata.Factory
 	Security() *security.Checker
 	OptionsFactory() *options.Factory
+	Processor() *processing.Processor
 }
 
 // Handler handles image processing requests

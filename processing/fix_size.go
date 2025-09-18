@@ -101,7 +101,7 @@ func fixIcoSize(img *vips.Image) error {
 	return nil
 }
 
-func fixSize(c *Context) error {
+func (p *Processor) fixSize(c *Context) error {
 	switch c.PO.Format {
 	case imagetype.WEBP:
 		return fixWebpSize(c.Img)

@@ -4,7 +4,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/imath"
 )
 
-func padding(c *Context) error {
+func (p *Processor) padding(c *Context) error {
 	if !c.PO.Padding.Enabled {
 		return nil
 	}

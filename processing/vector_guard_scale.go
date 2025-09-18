@@ -6,7 +6,7 @@ import (
 
 // vectorGuardScale checks if the image is a vector format and downscales it
 // to the maximum allowed resolution if necessary
-func vectorGuardScale(c *Context) error {
+func (p *Processor) vectorGuardScale(c *Context) error {
 	if c.ImgData == nil || !c.ImgData.Format().IsVector() {
 		return nil
 	}
@@ -19,6 +19,7 @@ func vectorGuardScale(c *Context) error {
 			return err
 		}
 	}
+	c.CalcParams()
 
 	return nil
 }
