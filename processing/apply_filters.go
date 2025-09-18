@@ -1,21 +1,21 @@
 package processing
 
-func applyFilters(с *Context) error {
-	if с.PO.Blur == 0 && с.PO.Sharpen == 0 && с.PO.Pixelate <= 1 {
+func applyFilters(c *Context) error {
+	if c.PO.Blur == 0 && c.PO.Sharpen == 0 && c.PO.Pixelate <= 1 {
 		return nil
 	}
 
-	if err := с.Img.CopyMemory(); err != nil {
+	if err := c.Img.CopyMemory(); err != nil {
 		return err
 	}
 
-	if err := с.Img.RgbColourspace(); err != nil {
+	if err := c.Img.RgbColourspace(); err != nil {
 		return err
 	}
 
-	if err := с.Img.ApplyFilters(с.PO.Blur, с.PO.Sharpen, с.PO.Pixelate); err != nil {
+	if err := c.Img.ApplyFilters(c.PO.Blur, c.PO.Sharpen, c.PO.Pixelate); err != nil {
 		return err
 	}
 
-	return с.Img.CopyMemory()
+	return c.Img.CopyMemory()
 }
