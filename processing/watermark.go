@@ -22,7 +22,15 @@ var watermarkPipeline = Pipeline{
 	padding,
 }
 
-func prepareWatermark(wm *vips.Image, wmData imagedata.ImageData, po *options.ProcessingOptions, imgWidth, imgHeight int, offsetScale float64, framesCount int) error {
+func prepareWatermark(
+	ctx context.Context,
+	runner *Runner,
+	wm *vips.Image,
+	wmData imagedata.ImageData,
+	po *options.ProcessingOptions,
+	imgWidth, imgHeight int,
+	offsetScale float64,
+) error {
 	if err := wm.Load(wmData, 1, 1.0, 1); err != nil {
 		return err
 	}
@@ -62,14 +70,7 @@ func prepareWatermark(wm *vips.Image, wmData imagedata.ImageData, po *options.Pr
 		wmPo.Padding.Bottom = offY - wmPo.Padding.Top
 	}
 
-	// NOTE: THIS IS TEMPORARY
-	runner, err := tmpNewRunner(nil) // watermark will present in runner
-	if err != nil {
-		return err
-	}
-	// NOTE: END TEMPORARY BLOCK
-
-	if err := runner.Run(watermarkPipeline, context.Background(), wm, wmPo, wmData); err != nil {
+	if err := runner.Run(watermarkPipeline, ctx, wm, wmPo, wmData); err != nil {
 		return err
 	}
 
@@ -91,6 +92,7 @@ func prepareWatermark(wm *vips.Image, wmData imagedata.ImageData, po *options.Pr
 
 func applyWatermark(
 	ctx context.Context,
+	runner *Runner,
 	img *vips.Image,
 	watermark auximageprovider.Provider,
 	po *options.ProcessingOptions,
@@ -119,7 +121,9 @@ func applyWatermark(
 	height := img.Height()
 	frameHeight := height / framesCount
 
-	if err := prepareWatermark(wm, wmData, po, width, frameHeight, offsetScale, framesCount); err != nil {
+	if err := prepareWatermark(
+		ctx, runner, wm, wmData, po, width, frameHeight, offsetScale,
+	); err != nil {
 		return err
 	}
 
@@ -198,5 +202,5 @@ func watermark(c *Context) error {
 		return nil
 	}
 
-	return applyWatermark(c.Ctx, c.Img, c.WatermarkProvider, c.PO, c.DprScale, 1)
+	return applyWatermark(c.Ctx, c.Runner(), c.Img, c.WatermarkProvider, c.PO, c.DprScale, 1)
 }

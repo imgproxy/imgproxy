@@ -417,6 +417,13 @@ func transformAnimated(
 	po *options.ProcessingOptions,
 	watermark auximageprovider.Provider,
 ) error {
+	// NOTE: THIS IS TEMPORARY
+	runner, rerr := tmpNewRunner(watermark)
+	if rerr != nil {
+		return rerr
+	}
+	// NOTE: END TEMPORARY BLOCK
+
 	if po.Trim.Enabled {
 		log.Warning("Trim is not supported for animated images")
 		po.Trim.Enabled = false
@@ -467,13 +474,6 @@ func transformAnimated(
 
 		frames = append(frames, frame)
 
-		// NOTE: THIS IS TEMPORARY
-		runner, rerr := tmpNewRunner(watermark)
-		if rerr != nil {
-			return rerr
-		}
-		// NOTE: END TEMPORARY BLOCK
-
 		// Transform the frame using the main pipeline.
 		// We don't provide imgdata here to prevent scale-on-load.
 		// Watermarking is disabled for individual frames (see above)
@@ -509,7 +509,7 @@ func transformAnimated(
 			dprScale = 1.0
 		}
 
-		if err = applyWatermark(ctx, img, watermark, po, dprScale, framesCount); err != nil {
+		if err = applyWatermark(ctx, runner, img, watermark, po, dprScale, framesCount); err != nil {
 			return err
 		}
 	}

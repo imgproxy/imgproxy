@@ -13,6 +13,9 @@ import (
 
 // NOTE: this will be called pipeline.Context in the separate package
 type Context struct {
+	// The runner that runs this pipeline
+	runner *Runner
+
 	Ctx context.Context
 
 	// Global processing configuration which could be used by individual steps
@@ -127,6 +130,8 @@ func (r *Runner) newContext(
 	imgdata imagedata.ImageData,
 ) Context {
 	pctx := Context{
+		runner: r,
+
 		Ctx:     ctx,
 		Config:  r.config,
 		Img:     img,
@@ -148,4 +153,8 @@ func (r *Runner) newContext(
 	}
 
 	return pctx
+}
+
+func (c *Context) Runner() *Runner {
+	return c.runner
 }
