@@ -31,7 +31,7 @@ func cropImage(img *vips.Image, cropWidth, cropHeight int, gravity *options.Grav
 	return img.Crop(left, top, cropWidth, cropHeight)
 }
 
-func crop(c *Context) error {
+func (p *Processor) crop(c *Context) error {
 	width, height := c.CropWidth, c.CropHeight
 
 	opts := c.CropGravity
@@ -46,6 +46,6 @@ func crop(c *Context) error {
 	return cropImage(c.Img, width, height, &opts, 1.0)
 }
 
-func cropToResult(c *Context) error {
+func (p *Processor) cropToResult(c *Context) error {
 	return cropImage(c.Img, c.ResultCropWidth, c.ResultCropHeight, &c.PO.Gravity, c.DprScale)
 }

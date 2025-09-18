@@ -6,20 +6,13 @@ import (
 	"github.com/imgproxy/imgproxy/v3/auximageprovider"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/options"
-	"github.com/imgproxy/imgproxy/v3/processing/pipeline"
 	"github.com/imgproxy/imgproxy/v3/server"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
-// NOTE: this will be called pipeline.Context in the separate package
 type Context struct {
-	// The runner that runs this pipeline
-	runner *Runner
-
+	// The context to check for timeouts and cancellations
 	Ctx context.Context
-
-	// Global processing configuration which could be used by individual steps
-	Config *pipeline.Config
 
 	// VIPS image
 	Img *vips.Image
@@ -80,33 +73,18 @@ type Context struct {
 	ExtendAspectRatioHeight int
 }
 
-// NOTE: same, pipeline.Step, pipeline.Pipeline, pipeline.Runner
-type Step func(ctx *Context) error
+type Step func(c *Context) error
 type Pipeline []Step
 
-// Runner is responsible for running a processing pipeline
-type Runner struct {
-	config    *pipeline.Config
-	watermark auximageprovider.Provider
-}
-
-// New creates a new Runner instance with the given configuration and watermark provider
-func New(config *pipeline.Config, watermark auximageprovider.Provider) *Runner {
-	return &Runner{
-		config:    config,
-		watermark: watermark,
-	}
-}
-
 // Run runs the given pipeline with the given parameters
-func (f *Runner) Run(
-	p Pipeline,
+func (p Pipeline) Run(
 	ctx context.Context,
 	img *vips.Image,
 	po *options.ProcessingOptions,
 	imgdata imagedata.ImageData,
 ) error {
-	pctx := f.newContext(ctx, img, po, imgdata)
+	pctx := p.newContext(ctx, img, po, imgdata)
+	pctx.CalcParams() // calc initial params if not done before
 
 	for _, step := range p {
 		if err := step(&pctx); err != nil {
@@ -123,17 +101,14 @@ func (f *Runner) Run(
 	return nil
 }
 
-func (r *Runner) newContext(
+func (p Pipeline) newContext(
 	ctx context.Context,
 	img *vips.Image,
 	po *options.ProcessingOptions,
 	imgdata imagedata.ImageData,
 ) Context {
 	pctx := Context{
-		runner: r,
-
 		Ctx:     ctx,
-		Config:  r.config,
 		Img:     img,
 		PO:      po,
 		ImgData: imgdata,
@@ -144,8 +119,7 @@ func (r *Runner) newContext(
 		DprScale:        1.0,
 		VectorBaseScale: 1.0,
 
-		CropGravity:       po.Crop.Gravity,
-		WatermarkProvider: r.watermark,
+		CropGravity: po.Crop.Gravity,
 	}
 
 	if pctx.CropGravity.Type == options.GravityUnknown {
@@ -153,8 +127,4 @@ func (r *Runner) newContext(
 	}
 
 	return pctx
-}
-
-func (c *Context) Runner() *Runner {
-	return c.runner
 }
