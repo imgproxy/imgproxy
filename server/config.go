@@ -8,12 +8,49 @@ import (
 
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/ensure"
+	"github.com/imgproxy/imgproxy/v3/env"
 	"github.com/imgproxy/imgproxy/v3/server/responsewriter"
+)
+
+var (
+	bind = env.Define(
+		"IMGPROXY_BIND",
+		"Address and port to bind to",
+		"host:port, not empty",
+		env.String,
+		":8080",
+		env.NotEmpty,
+	)
+
+	network = env.Define(
+		"IMGPROXY_NETWORK",
+		"Network type",
+		"tcp/unix/udp",
+		env.String,
+		"tcp",
+	)
+
+	maxClients = env.Define(
+		"IMGPROXY_MAX_CLIENTS",
+		"Maximum number of concurrent clients",
+		"number > 0",
+		env.Int,
+		2048,
+		env.Positive,
+	)
+
+	readRequestTimeout = env.Define(
+		"IMGPROXY_READ_REQUEST_TIMEOUT",
+		"Timeout for reading requests",
+		"seconds > 0",
+		env.DurationSec,
+		time.Second*10,
+		env.Positive,
+	)
 )
 
 // Config represents HTTP server config
 type Config struct {
-	Listen                string        // Address to listen on
 	Network               string        // Network type (tcp, unix)
 	Bind                  string        // Bind address
 	PathPrefix            string        // Path prefix for the server
@@ -37,10 +74,10 @@ type Config struct {
 // NewDefaultConfig returns default config values
 func NewDefaultConfig() Config {
 	return Config{
-		Network:               "tcp",
-		Bind:                  ":8080",
+		Network:               network.Default(),
+		Bind:                  bind.Default(),
 		PathPrefix:            "",
-		MaxClients:            2048,
+		MaxClients:            maxClients.Default(),
 		ReadRequestTimeout:    10 * time.Second,
 		KeepAliveTimeout:      10 * time.Second,
 		GracefulTimeout:       20 * time.Second,
@@ -60,11 +97,22 @@ func NewDefaultConfig() Config {
 func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c = ensure.Ensure(c, NewDefaultConfig)
 
-	c.Network = config.Network
-	c.Bind = config.Bind
+	err := errors.Join(
+		network.Get(&c.Network),
+		bind.Get(&c.Bind),
+		maxClients.Get(&c.MaxClients),
+		readRequestTimeout.Get(&c.ReadRequestTimeout),
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// c.Network = config.Network
+	// c.Bind = config.Bind
 	c.PathPrefix = config.PathPrefix
-	c.MaxClients = config.MaxClients
-	c.ReadRequestTimeout = time.Duration(config.ReadRequestTimeout) * time.Second
+	// c.MaxClients = config.MaxClients
+	// c.ReadRequestTimeout = time.Duration(config.ReadRequestTimeout) * time.Second
 	c.KeepAliveTimeout = time.Duration(config.KeepAliveTimeout) * time.Second
 	c.GracefulTimeout = time.Duration(config.GracefulStopTimeout) * time.Second
 	c.CORSAllowOrigin = config.AllowOrigin
@@ -88,9 +136,9 @@ func (c *Config) Validate() error {
 		return errors.New("bind address is not defined")
 	}
 
-	if c.MaxClients < 0 {
-		return fmt.Errorf("max clients number should be greater than or equal 0, now - %d", c.MaxClients)
-	}
+	// if c.MaxClients < 0 {
+	// 	return fmt.Errorf("max clients number should be greater than or equal 0, now - %d", c.MaxClients)
+	// }
 
 	if c.ReadRequestTimeout <= 0 {
 		return fmt.Errorf("read request timeout should be greater than 0, now - %d", c.ReadRequestTimeout)
