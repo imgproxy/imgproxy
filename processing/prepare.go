@@ -117,6 +117,16 @@ func (pctx *Context) calcScale(width, height int, po *options.ProcessingOptions)
 			wshrink /= minShrink
 			hshrink /= minShrink
 
+			// If we reached this point, this means that we can't reach the target size
+			// because the image is smaller than it, and the enlargement is disabled.
+			// If the DprScale is less than 1, the image will be downscaled, moving
+			// even further from the target size, so we need to compensate it.
+			// The compensation may increase the DprScale too much, but this is okay,
+			// because we'll handle this further in the code.
+			//
+			// If the Extend option is enabled, we want to keep the resulting image
+			// composition the same regardless of the DPR, so we don't apply this compensation
+			// in this case.
 			if !po.Extend.Enabled {
 				pctx.DprScale /= minShrink
 			}
