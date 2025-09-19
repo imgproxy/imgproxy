@@ -3,28 +3,17 @@ package options
 import (
 	"testing"
 
-	"github.com/imgproxy/imgproxy/v3/security"
-	"github.com/imgproxy/imgproxy/v3/testutil"
 	"github.com/stretchr/testify/suite"
 )
 
 type PresetsTestSuite struct {
-	testutil.LazySuite
-
-	security *security.Checker
-}
-
-func (s *PresetsTestSuite) SetupSuite() {
-	c := security.NewDefaultConfig()
-	security, err := security.New(&c)
-	s.Require().NoError(err)
-	s.security = security
+	suite.Suite
 }
 
 func (s *PresetsTestSuite) newFactory(presets ...string) (*Factory, error) {
 	c := NewDefaultConfig()
 	c.Presets = presets
-	return NewFactory(&c, s.security)
+	return NewFactory(&c)
 }
 
 func (s *PresetsTestSuite) TestParsePreset() {

@@ -3,6 +3,7 @@ package processing
 import (
 	"github.com/imgproxy/imgproxy/v3/imath"
 	"github.com/imgproxy/imgproxy/v3/options"
+	"github.com/imgproxy/imgproxy/v3/options/keys"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
@@ -33,12 +34,13 @@ func cropImage(img *vips.Image, cropWidth, cropHeight int, gravity *options.Grav
 
 func crop(c *Context) error {
 	width, height := c.CropWidth, c.CropHeight
+	rotateAngle := options.GetInt(c.PO, keys.Rotate, 0)
 
 	opts := c.CropGravity
 	opts.RotateAndFlip(c.Angle, c.Flip)
-	opts.RotateAndFlip(c.PO.Rotate, false)
+	opts.RotateAndFlip(rotateAngle, false)
 
-	if (c.Angle+c.PO.Rotate)%180 == 90 {
+	if (c.Angle+rotateAngle)%180 == 90 {
 		width, height = height, width
 	}
 
@@ -47,5 +49,6 @@ func crop(c *Context) error {
 }
 
 func cropToResult(c *Context) error {
-	return cropImage(c.Img, c.ResultCropWidth, c.ResultCropHeight, &c.PO.Gravity, c.DprScale)
+	gravity := options.GetGravity(c.PO, keys.Gravity, options.GravityCenter)
+	return cropImage(c.Img, c.ResultCropWidth, c.ResultCropHeight, &gravity, c.DprScale)
 }

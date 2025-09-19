@@ -15,6 +15,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/monitoring"
 	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
 	"github.com/imgproxy/imgproxy/v3/options"
+	"github.com/imgproxy/imgproxy/v3/options/keys"
 	"github.com/imgproxy/imgproxy/v3/server"
 )
 
@@ -45,7 +46,7 @@ type request struct {
 	imageRequest *http.Request
 	imageURL     string
 	reqID        string
-	po           *options.ProcessingOptions
+	po           options.Options
 	rw           server.ResponseWriter
 }
 
@@ -67,7 +68,7 @@ func (s *Handler) Execute(
 	userRequest *http.Request,
 	imageURL string,
 	reqID string,
-	po *options.ProcessingOptions,
+	po options.Options,
 	rw server.ResponseWriter,
 ) error {
 	stream := &request{
@@ -118,7 +119,7 @@ func (s *request) execute(ctx context.Context) error {
 	s.rw.Passthrough(s.handler.config.PassthroughResponseHeaders...) // NOTE: priority? This is lowest as it was
 	s.rw.SetContentLength(int(res.ContentLength))
 	s.rw.SetCanonical(s.imageURL)
-	s.rw.SetExpires(s.po.Expires)
+	s.rw.SetExpires(options.GetTime(s.po, keys.Expires))
 
 	// Set the Content-Disposition header
 	s.setContentDisposition(r.URL().Path, res)
@@ -161,10 +162,10 @@ func (s *request) setContentDisposition(imagePath string, serverResponse *http.R
 
 	s.rw.SetContentDisposition(
 		imagePath,
-		s.po.Filename,
+		options.Get(s.po, keys.Filename, ""),
 		"",
 		ct,
-		s.po.ReturnAttachment,
+		options.Get(s.po, keys.ReturnAttachment, false),
 	)
 }
 

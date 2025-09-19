@@ -2,17 +2,24 @@ package processing
 
 import (
 	"github.com/imgproxy/imgproxy/v3/imath"
+	"github.com/imgproxy/imgproxy/v3/options"
+	"github.com/imgproxy/imgproxy/v3/options/keys"
 )
 
 func padding(c *Context) error {
-	if !c.PO.Padding.Enabled {
+	if !options.Get(c.PO, keys.PaddingEnabled, false) {
 		return nil
 	}
 
-	paddingTop := imath.ScaleToEven(c.PO.Padding.Top, c.DprScale)
-	paddingRight := imath.ScaleToEven(c.PO.Padding.Right, c.DprScale)
-	paddingBottom := imath.ScaleToEven(c.PO.Padding.Bottom, c.DprScale)
-	paddingLeft := imath.ScaleToEven(c.PO.Padding.Left, c.DprScale)
+	paddingTop := options.GetInt(c.PO, keys.PaddingTop, 0)
+	paddingRight := options.GetInt(c.PO, keys.PaddingRight, 0)
+	paddingBottom := options.GetInt(c.PO, keys.PaddingBottom, 0)
+	paddingLeft := options.GetInt(c.PO, keys.PaddingLeft, 0)
+
+	paddingTop = imath.ScaleToEven(paddingTop, c.DprScale)
+	paddingRight = imath.ScaleToEven(paddingRight, c.DprScale)
+	paddingBottom = imath.ScaleToEven(paddingBottom, c.DprScale)
+	paddingLeft = imath.ScaleToEven(paddingLeft, c.DprScale)
 
 	return c.Img.Embed(
 		c.Img.Width()+paddingLeft+paddingRight,

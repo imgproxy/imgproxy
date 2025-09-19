@@ -12,16 +12,14 @@ import (
 
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
-	"github.com/imgproxy/imgproxy/v3/security"
+	"github.com/imgproxy/imgproxy/v3/options/keys"
 	"github.com/imgproxy/imgproxy/v3/testutil"
+	"github.com/imgproxy/imgproxy/v3/vips"
 	"github.com/stretchr/testify/suite"
 )
 
 type ProcessingOptionsTestSuite struct {
 	testutil.LazySuite
-
-	securityCfg testutil.LazyObj[*security.Config]
-	security    testutil.LazyObj[*security.Checker]
 
 	config  testutil.LazyObj[*Config]
 	factory testutil.LazyObj[*Factory]
@@ -36,25 +34,10 @@ func (s *ProcessingOptionsTestSuite) SetupSuite() {
 		},
 	)
 
-	s.securityCfg, _ = testutil.NewLazySuiteObj(
-		s,
-		func() (*security.Config, error) {
-			c := security.NewDefaultConfig()
-			return &c, nil
-		},
-	)
-
-	s.security, _ = testutil.NewLazySuiteObj(
-		s,
-		func() (*security.Checker, error) {
-			return security.New(s.securityCfg())
-		},
-	)
-
 	s.factory, _ = testutil.NewLazySuiteObj(
 		s,
 		func() (*Factory, error) {
-			return NewFactory(s.config(), s.security())
+			return NewFactory(s.config())
 		},
 	)
 }
@@ -70,7 +53,7 @@ func (s *ProcessingOptionsTestSuite) TestParseBase64URL() {
 
 	s.Require().NoError(err)
 	s.Require().Equal(originURL, imageURL)
-	s.Require().Equal(imagetype.PNG, po.Format)
+	s.Require().Equal(imagetype.PNG, Get(po, keys.Format, imagetype.Unknown))
 }
 
 func (s *ProcessingOptionsTestSuite) TestParseBase64URLWithFilename() {
@@ -82,7 +65,7 @@ func (s *ProcessingOptionsTestSuite) TestParseBase64URLWithFilename() {
 
 	s.Require().NoError(err)
 	s.Require().Equal(originURL, imageURL)
-	s.Require().Equal(imagetype.PNG, po.Format)
+	s.Require().Equal(imagetype.PNG, Get(po, keys.Format, imagetype.Unknown))
 }
 
 func (s *ProcessingOptionsTestSuite) TestParseBase64URLWithoutExtension() {
@@ -92,7 +75,7 @@ func (s *ProcessingOptionsTestSuite) TestParseBase64URLWithoutExtension() {
 
 	s.Require().NoError(err)
 	s.Require().Equal(originURL, imageURL)
-	s.Require().Equal(imagetype.Unknown, po.Format)
+	s.Require().Equal(imagetype.Unknown, Get(po, keys.Format, imagetype.Unknown))
 }
 
 func (s *ProcessingOptionsTestSuite) TestParseBase64URLWithBase() {
@@ -104,7 +87,7 @@ func (s *ProcessingOptionsTestSuite) TestParseBase64URLWithBase() {
 
 	s.Require().NoError(err)
 	s.Require().Equal(fmt.Sprintf("%s%s", s.config().BaseURL, originURL), imageURL)
-	s.Require().Equal(imagetype.PNG, po.Format)
+	s.Require().Equal(imagetype.PNG, Get(po, keys.Format, imagetype.Unknown))
 }
 
 func (s *ProcessingOptionsTestSuite) TestParseBase64URLWithReplacement() {
@@ -119,7 +102,7 @@ func (s *ProcessingOptionsTestSuite) TestParseBase64URLWithReplacement() {
 
 	s.Require().NoError(err)
 	s.Require().Equal("http://images.dev/lorem/dolor/ipsum.jpg?param=value", imageURL)
-	s.Require().Equal(imagetype.PNG, po.Format)
+	s.Require().Equal(imagetype.PNG, Get(po, keys.Format, imagetype.Unknown))
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePlainURL() {
@@ -129,7 +112,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePlainURL() {
 
 	s.Require().NoError(err)
 	s.Require().Equal(originURL, imageURL)
-	s.Require().Equal(imagetype.PNG, po.Format)
+	s.Require().Equal(imagetype.PNG, Get(po, keys.Format, imagetype.Unknown))
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePlainURLWithoutExtension() {
@@ -140,7 +123,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePlainURLWithoutExtension() {
 
 	s.Require().NoError(err)
 	s.Require().Equal(originURL, imageURL)
-	s.Require().Equal(imagetype.Unknown, po.Format)
+	s.Require().Equal(imagetype.Unknown, Get(po, keys.Format, imagetype.Unknown))
 }
 func (s *ProcessingOptionsTestSuite) TestParsePlainURLEscaped() {
 	originURL := "http://images.dev/lorem/ipsum.jpg?param=value"
@@ -149,7 +132,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePlainURLEscaped() {
 
 	s.Require().NoError(err)
 	s.Require().Equal(originURL, imageURL)
-	s.Require().Equal(imagetype.PNG, po.Format)
+	s.Require().Equal(imagetype.PNG, Get(po, keys.Format, imagetype.Unknown))
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePlainURLWithBase() {
@@ -161,7 +144,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePlainURLWithBase() {
 
 	s.Require().NoError(err)
 	s.Require().Equal(fmt.Sprintf("%s%s", s.config().BaseURL, originURL), imageURL)
-	s.Require().Equal(imagetype.PNG, po.Format)
+	s.Require().Equal(imagetype.PNG, Get(po, keys.Format, imagetype.Unknown))
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePlainURLWithReplacement() {
@@ -176,7 +159,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePlainURLWithReplacement() {
 
 	s.Require().NoError(err)
 	s.Require().Equal("http://images.dev/lorem/dolor/ipsum.jpg", imageURL)
-	s.Require().Equal(imagetype.PNG, po.Format)
+	s.Require().Equal(imagetype.PNG, Get(po, keys.Format, imagetype.Unknown))
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePlainURLEscapedWithBase() {
@@ -188,7 +171,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePlainURLEscapedWithBase() {
 
 	s.Require().NoError(err)
 	s.Require().Equal(fmt.Sprintf("%s%s", s.config().BaseURL, originURL), imageURL)
-	s.Require().Equal(imagetype.PNG, po.Format)
+	s.Require().Equal(imagetype.PNG, Get(po, keys.Format, imagetype.Unknown))
 }
 
 func (s *ProcessingOptionsTestSuite) TestParseWithArgumentsSeparator() {
@@ -199,9 +182,9 @@ func (s *ProcessingOptionsTestSuite) TestParseWithArgumentsSeparator() {
 
 	s.Require().NoError(err)
 
-	s.Require().Equal(100, po.Width)
-	s.Require().Equal(100, po.Height)
-	s.Require().True(po.Enlarge)
+	s.Require().Equal(100, GetInt(po, keys.Width, 0))
+	s.Require().Equal(100, GetInt(po, keys.Height, 0))
+	s.Require().True(Get(po, keys.Enlarge, false))
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathFormat() {
@@ -210,7 +193,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathFormat() {
 
 	s.Require().NoError(err)
 
-	s.Require().Equal(imagetype.WEBP, po.Format)
+	s.Require().Equal(imagetype.WEBP, Get(po, keys.Format, imagetype.Unknown))
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathResize() {
@@ -219,10 +202,10 @@ func (s *ProcessingOptionsTestSuite) TestParsePathResize() {
 
 	s.Require().NoError(err)
 
-	s.Require().Equal(ResizeFill, po.ResizingType)
-	s.Require().Equal(100, po.Width)
-	s.Require().Equal(200, po.Height)
-	s.Require().True(po.Enlarge)
+	s.Require().Equal(ResizeFill, Get(po, keys.ResizingType, ResizeFit))
+	s.Require().Equal(100, GetInt(po, keys.Width, 0))
+	s.Require().Equal(200, GetInt(po, keys.Height, 0))
+	s.Require().True(Get(po, keys.Enlarge, false))
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathResizingType() {
@@ -231,7 +214,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathResizingType() {
 
 	s.Require().NoError(err)
 
-	s.Require().Equal(ResizeFill, po.ResizingType)
+	s.Require().Equal(ResizeFill, Get(po, keys.ResizingType, ResizeFit))
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathSize() {
@@ -240,9 +223,9 @@ func (s *ProcessingOptionsTestSuite) TestParsePathSize() {
 
 	s.Require().NoError(err)
 
-	s.Require().Equal(100, po.Width)
-	s.Require().Equal(200, po.Height)
-	s.Require().True(po.Enlarge)
+	s.Require().Equal(100, GetInt(po, keys.Width, 0))
+	s.Require().Equal(200, GetInt(po, keys.Height, 0))
+	s.Require().True(Get(po, keys.Enlarge, false))
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathWidth() {
@@ -251,7 +234,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathWidth() {
 
 	s.Require().NoError(err)
 
-	s.Require().Equal(100, po.Width)
+	s.Require().Equal(100, GetInt(po, keys.Width, 0))
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathHeight() {
@@ -260,7 +243,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathHeight() {
 
 	s.Require().NoError(err)
 
-	s.Require().Equal(100, po.Height)
+	s.Require().Equal(100, GetInt(po, keys.Height, 0))
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathEnlarge() {
@@ -269,7 +252,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathEnlarge() {
 
 	s.Require().NoError(err)
 
-	s.Require().True(po.Enlarge)
+	s.Require().True(Get(po, keys.Enlarge, false))
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathExtend() {
@@ -278,10 +261,10 @@ func (s *ProcessingOptionsTestSuite) TestParsePathExtend() {
 
 	s.Require().NoError(err)
 
-	s.Require().True(po.Extend.Enabled)
-	s.Require().Equal(GravitySouth, po.Extend.Gravity.Type)
-	s.Require().InDelta(10.0, po.Extend.Gravity.X, 0.0001)
-	s.Require().InDelta(20.0, po.Extend.Gravity.Y, 0.0001)
+	s.Require().True(Get(po, keys.ExtendEnabled, false))
+	s.Require().Equal(GravitySouth, Get(po, keys.ExtendGravityType, GravityUnknown))
+	s.Require().InDelta(10.0, GetFloat(po, keys.ExtendGravityXOffset, 0.0), 0.0001)
+	s.Require().InDelta(20.0, GetFloat(po, keys.ExtendGravityYOffset, 0.0), 0.0001)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathExtendSmartGravity() {
@@ -304,7 +287,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathGravity() {
 
 	s.Require().NoError(err)
 
-	s.Require().Equal(GravitySouthEast, po.Gravity.Type)
+	s.Require().Equal(GravitySouthEast, Get(po, keys.GravityType, GravityUnknown))
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathGravityFocusPoint() {
@@ -313,9 +296,9 @@ func (s *ProcessingOptionsTestSuite) TestParsePathGravityFocusPoint() {
 
 	s.Require().NoError(err)
 
-	s.Require().Equal(GravityFocusPoint, po.Gravity.Type)
-	s.Require().InDelta(0.5, po.Gravity.X, 0.0001)
-	s.Require().InDelta(0.75, po.Gravity.Y, 0.0001)
+	s.Require().Equal(GravityFocusPoint, Get(po, keys.GravityType, GravityUnknown))
+	s.Require().InDelta(0.5, GetFloat(po, keys.GravityXOffset, 0.0), 0.0001)
+	s.Require().InDelta(0.75, GetFloat(po, keys.GravityYOffset, 0.0), 0.0001)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathGravityReplicate() {
@@ -331,11 +314,11 @@ func (s *ProcessingOptionsTestSuite) TestParsePathCrop() {
 
 	s.Require().NoError(err)
 
-	s.Require().InDelta(100.0, po.Crop.Width, 0.0001)
-	s.Require().InDelta(200.0, po.Crop.Height, 0.0001)
-	s.Require().Equal(GravityUnknown, po.Crop.Gravity.Type)
-	s.Require().InDelta(0.0, po.Crop.Gravity.X, 0.0001)
-	s.Require().InDelta(0.0, po.Crop.Gravity.Y, 0.0001)
+	s.Require().InDelta(100.0, GetFloat(po, keys.CropWidth, 0.0), 0.0001)
+	s.Require().InDelta(200.0, GetFloat(po, keys.CropHeight, 0.0), 0.0001)
+	s.Require().Equal(GravityUnknown, Get(po, keys.CropGravityType, GravityUnknown))
+	s.Require().InDelta(0.0, GetFloat(po, keys.CropGravityXOffset, 0.0), 0.0001)
+	s.Require().InDelta(0.0, GetFloat(po, keys.CropGravityYOffset, 0.0), 0.0001)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathCropGravity() {
@@ -344,11 +327,11 @@ func (s *ProcessingOptionsTestSuite) TestParsePathCropGravity() {
 
 	s.Require().NoError(err)
 
-	s.Require().InDelta(100.0, po.Crop.Width, 0.0001)
-	s.Require().InDelta(200.0, po.Crop.Height, 0.0001)
-	s.Require().Equal(GravityNorthWest, po.Crop.Gravity.Type)
-	s.Require().InDelta(10.0, po.Crop.Gravity.X, 0.0001)
-	s.Require().InDelta(20.0, po.Crop.Gravity.Y, 0.0001)
+	s.Require().InDelta(100.0, GetFloat(po, keys.CropWidth, 0.0), 0.0001)
+	s.Require().InDelta(200.0, GetFloat(po, keys.CropHeight, 0.0), 0.0001)
+	s.Require().Equal(GravityNorthWest, Get(po, keys.CropGravityType, GravityUnknown))
+	s.Require().InDelta(10.0, GetFloat(po, keys.CropGravityXOffset, 0.0), 0.0001)
+	s.Require().InDelta(20.0, GetFloat(po, keys.CropGravityYOffset, 0.0), 0.0001)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathCropGravityReplicate() {
@@ -364,7 +347,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathQuality() {
 
 	s.Require().NoError(err)
 
-	s.Require().Equal(55, po.Quality)
+	s.Require().Equal(55, GetInt(po, keys.Quality, 0))
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathBackground() {
@@ -373,10 +356,11 @@ func (s *ProcessingOptionsTestSuite) TestParsePathBackground() {
 
 	s.Require().NoError(err)
 
-	s.Require().True(po.Flatten)
-	s.Require().Equal(uint8(128), po.Background.R)
-	s.Require().Equal(uint8(129), po.Background.G)
-	s.Require().Equal(uint8(130), po.Background.B)
+	s.Require().True(Get(po, keys.Flatten, false))
+	s.Require().Equal(
+		vips.Color{R: 128, G: 129, B: 130},
+		Get(po, keys.Background, vips.Color{}),
+	)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathBackgroundHex() {
@@ -385,10 +369,11 @@ func (s *ProcessingOptionsTestSuite) TestParsePathBackgroundHex() {
 
 	s.Require().NoError(err)
 
-	s.Require().True(po.Flatten)
-	s.Require().Equal(uint8(0xff), po.Background.R)
-	s.Require().Equal(uint8(0xdd), po.Background.G)
-	s.Require().Equal(uint8(0xee), po.Background.B)
+	s.Require().True(Get(po, keys.Flatten, false))
+	s.Require().Equal(
+		vips.Color{R: 0xff, G: 0xdd, B: 0xee},
+		Get(po, keys.Background, vips.Color{}),
+	)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathBackgroundDisable() {
@@ -397,7 +382,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathBackgroundDisable() {
 
 	s.Require().NoError(err)
 
-	s.Require().False(po.Flatten)
+	s.Require().False(Get(po, keys.Flatten, false))
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathBlur() {
@@ -406,7 +391,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathBlur() {
 
 	s.Require().NoError(err)
 
-	s.Require().InDelta(float32(0.2), po.Blur, 0.0001)
+	s.Require().InDelta(0.2, GetFloat(po, keys.Blur, 0.0), 0.0001)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathSharpen() {
@@ -415,27 +400,29 @@ func (s *ProcessingOptionsTestSuite) TestParsePathSharpen() {
 
 	s.Require().NoError(err)
 
-	s.Require().InDelta(float32(0.2), po.Sharpen, 0.0001)
+	s.Require().InDelta(0.2, GetFloat(po, keys.Sharpen, 0.0), 0.0001)
 }
+
 func (s *ProcessingOptionsTestSuite) TestParsePathDpr() {
 	path := "/dpr:2/plain/http://images.dev/lorem/ipsum.jpg"
 	po, _, err := s.factory().ParsePath(path, make(http.Header))
 
 	s.Require().NoError(err)
 
-	s.Require().InDelta(2.0, po.Dpr, 0.0001)
+	s.Require().InDelta(2.0, GetFloat(po, keys.Dpr, 1.0), 0.0001)
 }
+
 func (s *ProcessingOptionsTestSuite) TestParsePathWatermark() {
 	path := "/watermark:0.5:soea:10:20:0.6/plain/http://images.dev/lorem/ipsum.jpg"
 	po, _, err := s.factory().ParsePath(path, make(http.Header))
 
 	s.Require().NoError(err)
 
-	s.Require().True(po.Watermark.Enabled)
-	s.Require().Equal(GravitySouthEast, po.Watermark.Position.Type)
-	s.Require().InDelta(10.0, po.Watermark.Position.X, 0.0001)
-	s.Require().InDelta(20.0, po.Watermark.Position.Y, 0.0001)
-	s.Require().InDelta(0.6, po.Watermark.Scale, 0.0001)
+	s.Require().True(Get(po, keys.WatermarkEnabled, false))
+	s.Require().Equal(GravitySouthEast, Get(po, keys.WatermarkPosition, GravityUnknown))
+	s.Require().InDelta(10.0, GetFloat(po, keys.WatermarkXOffset, 0.0), 0.0001)
+	s.Require().InDelta(20.0, GetFloat(po, keys.WatermarkYOffset, 0.0), 0.0001)
+	s.Require().InDelta(0.6, GetFloat(po, keys.WatermarkScale, 0.0), 0.0001)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathPreset() {
@@ -449,9 +436,10 @@ func (s *ProcessingOptionsTestSuite) TestParsePathPreset() {
 
 	s.Require().NoError(err)
 
-	s.Require().Equal(ResizeFill, po.ResizingType)
-	s.Require().InDelta(float32(0.2), po.Blur, 0.0001)
-	s.Require().Equal(50, po.Quality)
+	s.Require().Equal(ResizeFill, Get(po, keys.ResizingType, ResizeFit))
+	s.Require().InDelta(float32(0.2), GetFloat(po, keys.Blur, 0.0), 0.0001)
+	s.Require().Equal(50, GetInt(po, keys.Quality, 0))
+	s.Require().ElementsMatch([]string{"test1", "test2"}, Get(po, keys.UsedPresets, []string{}))
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathPresetDefault() {
@@ -464,9 +452,10 @@ func (s *ProcessingOptionsTestSuite) TestParsePathPresetDefault() {
 
 	s.Require().NoError(err)
 
-	s.Require().Equal(ResizeFill, po.ResizingType)
-	s.Require().InDelta(float32(0.2), po.Blur, 0.0001)
-	s.Require().Equal(70, po.Quality)
+	s.Require().Equal(ResizeFill, Get(po, keys.ResizingType, ResizeFit))
+	s.Require().InDelta(float32(0.2), GetFloat(po, keys.Blur, 0.0), 0.0001)
+	s.Require().Equal(70, GetInt(po, keys.Quality, 0))
+	s.Require().ElementsMatch([]string{"default"}, Get(po, keys.UsedPresets, []string{}))
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathPresetLoopDetection() {
@@ -480,7 +469,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathPresetLoopDetection() {
 
 	s.Require().NoError(err)
 
-	s.Require().ElementsMatch(po.UsedPresets, []string{"test1", "test2"})
+	s.Require().ElementsMatch([]string{"test1", "test2"}, Get(po, keys.UsedPresets, []string{}))
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathCachebuster() {
@@ -489,7 +478,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathCachebuster() {
 
 	s.Require().NoError(err)
 
-	s.Require().Equal("123", po.CacheBuster)
+	s.Require().Equal("123", Get(po, keys.CacheBuster, ""))
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathStripMetadata() {
@@ -498,7 +487,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathStripMetadata() {
 
 	s.Require().NoError(err)
 
-	s.Require().True(po.StripMetadata)
+	s.Require().True(Get(po, keys.StripMetadata, false))
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathWebpDetection() {
@@ -510,8 +499,8 @@ func (s *ProcessingOptionsTestSuite) TestParsePathWebpDetection() {
 
 	s.Require().NoError(err)
 
-	s.Require().True(po.PreferWebP)
-	s.Require().False(po.EnforceWebP)
+	s.Require().True(Get(po, keys.PreferWebP, false))
+	s.Require().False(Get(po, keys.EnforceWebP, false))
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathWebpEnforce() {
@@ -523,8 +512,66 @@ func (s *ProcessingOptionsTestSuite) TestParsePathWebpEnforce() {
 
 	s.Require().NoError(err)
 
-	s.Require().True(po.PreferWebP)
-	s.Require().True(po.EnforceWebP)
+	s.Require().True(Get(po, keys.PreferWebP, false))
+	s.Require().True(Get(po, keys.EnforceWebP, false))
+}
+
+func (s *ProcessingOptionsTestSuite) TestParsePathAvifDetection() {
+	s.config().AutoWebp = true
+	s.config().AutoAvif = true
+
+	path := "/plain/http://images.dev/lorem/ipsum.jpg"
+	headers := http.Header{"Accept": []string{"image/webp,image/avif"}}
+	po, _, err := s.factory().ParsePath(path, headers)
+
+	s.Require().NoError(err)
+
+	s.Require().True(Get(po, keys.PreferAvif, false))
+	s.Require().False(Get(po, keys.EnforceAvif, false))
+}
+
+func (s *ProcessingOptionsTestSuite) TestParsePathAvifEnforce() {
+	s.config().EnforceWebp = true
+	s.config().EnforceAvif = true
+
+	path := "/plain/http://images.dev/lorem/ipsum.jpg@png"
+	headers := http.Header{"Accept": []string{"image/webp,image/avif"}}
+	po, _, err := s.factory().ParsePath(path, headers)
+
+	s.Require().NoError(err)
+
+	s.Require().True(Get(po, keys.PreferAvif, false))
+	s.Require().True(Get(po, keys.EnforceAvif, false))
+}
+
+func (s *ProcessingOptionsTestSuite) TestParsePathJxlDetection() {
+	s.config().AutoWebp = true
+	s.config().AutoAvif = true
+	s.config().AutoJxl = true
+
+	path := "/plain/http://images.dev/lorem/ipsum.jpg"
+	headers := http.Header{"Accept": []string{"image/webp,image/avif,image/jxl"}}
+	po, _, err := s.factory().ParsePath(path, headers)
+
+	s.Require().NoError(err)
+
+	s.Require().True(Get(po, keys.PreferJxl, false))
+	s.Require().False(Get(po, keys.EnforceJxl, false))
+}
+
+func (s *ProcessingOptionsTestSuite) TestParsePathJxlEnforce() {
+	s.config().EnforceWebp = true
+	s.config().EnforceAvif = true
+	s.config().EnforceJxl = true
+
+	path := "/plain/http://images.dev/lorem/ipsum.jpg@png"
+	headers := http.Header{"Accept": []string{"image/webp,image/avif,image/jxl"}}
+	po, _, err := s.factory().ParsePath(path, headers)
+
+	s.Require().NoError(err)
+
+	s.Require().True(Get(po, keys.PreferJxl, false))
+	s.Require().True(Get(po, keys.EnforceJxl, false))
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathWidthHeader() {
@@ -536,7 +583,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathWidthHeader() {
 
 	s.Require().NoError(err)
 
-	s.Require().Equal(100, po.Width)
+	s.Require().Equal(100, GetInt(po, keys.Width, 0))
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathWidthHeaderDisabled() {
@@ -546,7 +593,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathWidthHeaderDisabled() {
 
 	s.Require().NoError(err)
 
-	s.Require().Equal(0, po.Width)
+	s.Require().Equal(0, GetInt(po, keys.Width, 0))
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathWidthHeaderRedefine() {
@@ -558,7 +605,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathWidthHeaderRedefine() {
 
 	s.Require().NoError(err)
 
-	s.Require().Equal(150, po.Width)
+	s.Require().Equal(150, GetInt(po, keys.Width, 0))
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathDprHeader() {
@@ -570,7 +617,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathDprHeader() {
 
 	s.Require().NoError(err)
 
-	s.Require().InDelta(2.0, po.Dpr, 0.0001)
+	s.Require().InDelta(2.0, GetFloat(po, keys.Dpr, 1.0), 0.0001)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathDprHeaderDisabled() {
@@ -580,7 +627,23 @@ func (s *ProcessingOptionsTestSuite) TestParsePathDprHeaderDisabled() {
 
 	s.Require().NoError(err)
 
-	s.Require().InDelta(1.0, po.Dpr, 0.0001)
+	s.Require().InDelta(1.0, GetFloat(po, keys.Dpr, 1.0), 0.0001)
+}
+
+func (s *ProcessingOptionsTestSuite) TestParsePathWidthAndDprHeaderCombined() {
+	s.config().EnableClientHints = true
+
+	path := "/plain/http://images.dev/lorem/ipsum.jpg@png"
+	headers := http.Header{
+		"Width": []string{"100"},
+		"Dpr":   []string{"2"},
+	}
+	po, _, err := s.factory().ParsePath(path, headers)
+
+	s.Require().NoError(err)
+
+	s.Require().Equal(50, GetInt(po, keys.Width, 0))
+	s.Require().InDelta(2.0, GetFloat(po, keys.Dpr, 1.0), 0.0001)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParseSkipProcessing() {
@@ -590,7 +653,10 @@ func (s *ProcessingOptionsTestSuite) TestParseSkipProcessing() {
 
 	s.Require().NoError(err)
 
-	s.Require().Equal([]imagetype.Type{imagetype.JPEG, imagetype.PNG}, po.SkipProcessingFormats)
+	s.Require().ElementsMatch(
+		[]imagetype.Type{imagetype.JPEG, imagetype.PNG},
+		Get(po, keys.SkipProcessing, []imagetype.Type(nil)),
+	)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParseSkipProcessingInvalid() {
@@ -599,14 +665,15 @@ func (s *ProcessingOptionsTestSuite) TestParseSkipProcessingInvalid() {
 	_, _, err := s.factory().ParsePath(path, make(http.Header))
 
 	s.Require().Error(err)
-	s.Require().Equal("Invalid image format in skip processing: bad_format", err.Error())
+	s.Require().Equal("Invalid image format in skip_processing: bad_format", err.Error())
 }
 
 func (s *ProcessingOptionsTestSuite) TestParseExpires() {
 	path := "/exp:32503669200/plain/http://images.dev/lorem/ipsum.jpg"
-	_, _, err := s.factory().ParsePath(path, make(http.Header))
+	po, _, err := s.factory().ParsePath(path, make(http.Header))
 
 	s.Require().NoError(err)
+	s.Require().Equal(time.Unix(32503669200, 0), GetTime(po, keys.Expires))
 }
 
 func (s *ProcessingOptionsTestSuite) TestParseExpiresExpired() {
@@ -623,14 +690,17 @@ func (s *ProcessingOptionsTestSuite) TestParsePathOnlyPresets() {
 		"test2=quality:50",
 	}
 
-	path := "/test1:test2/plain/http://images.dev/lorem/ipsum.jpg"
+	originURL := "http://images.dev/lorem/ipsum.jpg"
+	path := "/test1:test2/plain/" + originURL + "@png"
 
-	po, _, err := s.factory().ParsePath(path, make(http.Header))
+	po, imageURL, err := s.factory().ParsePath(path, make(http.Header))
 
 	s.Require().NoError(err)
 
-	s.Require().InDelta(float32(0.2), po.Blur, 0.0001)
-	s.Require().Equal(50, po.Quality)
+	s.Require().InDelta(0.2, GetFloat(po, keys.Blur, 0.0), 0.0001)
+	s.Require().Equal(50, GetInt(po, keys.Quality, 0))
+	s.Require().Equal(imagetype.PNG, Get(po, keys.Format, imagetype.Unknown))
+	s.Require().Equal(originURL, imageURL)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParseBase64URLOnlyPresets() {
@@ -647,8 +717,9 @@ func (s *ProcessingOptionsTestSuite) TestParseBase64URLOnlyPresets() {
 
 	s.Require().NoError(err)
 
-	s.Require().InDelta(float32(0.2), po.Blur, 0.0001)
-	s.Require().Equal(50, po.Quality)
+	s.Require().InDelta(0.2, GetFloat(po, keys.Blur, 0.0), 0.0001)
+	s.Require().Equal(50, GetInt(po, keys.Quality, 0))
+	s.Require().Equal(imagetype.PNG, Get(po, keys.Format, imagetype.Unknown))
 	s.Require().Equal(originURL, imageURL)
 }
 
@@ -685,22 +756,22 @@ func (s *ProcessingOptionsTestSuite) TestParseAllowedOptions() {
 	}
 }
 
-func (s *ProcessingOptionsTestSuite) TestProcessingOptionsClone() {
-	now := time.Now()
+// func (s *ProcessingOptionsTestSuite) TestProcessingOptionsClone() {
+// 	now := time.Now()
 
-	// Create ProcessingOptions using factory
-	original := s.factory().NewProcessingOptions()
-	original.SkipProcessingFormats = []imagetype.Type{
-		imagetype.PNG, imagetype.JPEG,
-	}
-	original.UsedPresets = []string{"preset1", "preset2"}
-	original.Expires = &now
+// 	// Create Options using factory
+// 	original := s.factory().NewProcessingOptions()
+// 	original.SkipProcessingFormats = []imagetype.Type{
+// 		imagetype.PNG, imagetype.JPEG,
+// 	}
+// 	original.UsedPresets = []string{"preset1", "preset2"}
+// 	original.Expires = &now
 
-	// Clone the original
-	cloned := original.clone()
+// 	// Clone the original
+// 	cloned := original.clone()
 
-	testutil.EqualButNotSame(s.T(), original, cloned)
-}
+// 	testutil.EqualButNotSame(s.T(), original, cloned)
+// }
 
 func TestProcessingOptions(t *testing.T) {
 	suite.Run(t, new(ProcessingOptionsTestSuite))

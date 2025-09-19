@@ -61,8 +61,8 @@ func (w *Writer) SetIsFallbackImage() {
 }
 
 // SetExpires sets the TTL from time
-func (w *Writer) SetExpires(expires *time.Time) {
-	if expires == nil {
+func (w *Writer) SetExpires(expires time.Time) {
+	if expires.IsZero() {
 		return
 	}
 
@@ -71,7 +71,7 @@ func (w *Writer) SetExpires(expires *time.Time) {
 
 	// If maxAge outlives expires or was not set, we'll use expires as maxAge.
 	if w.maxAge < 0 || expires.Before(currentMaxAgeTime) {
-		w.maxAge = min(w.config.DefaultTTL, max(0, int(time.Until(*expires).Seconds())))
+		w.maxAge = min(w.config.DefaultTTL, max(0, int(time.Until(expires).Seconds())))
 	}
 }
 

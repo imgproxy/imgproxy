@@ -7,6 +7,8 @@ import (
 
 	"github.com/imgproxy/imgproxy/v3/imagemeta/iptc"
 	"github.com/imgproxy/imgproxy/v3/imagemeta/photoshop"
+	"github.com/imgproxy/imgproxy/v3/options"
+	"github.com/imgproxy/imgproxy/v3/options/keys"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
@@ -104,22 +106,24 @@ func stripXMP(img *vips.Image) []byte {
 }
 
 func stripMetadata(ctx *Context) error {
-	if !ctx.PO.StripMetadata {
+	if !options.Get(ctx.PO, keys.StripMetadata, true) {
 		return nil
 	}
 
+	keepCopyright := options.Get(ctx.PO, keys.KeepCopyright, true)
+
 	var ps3Data, xmpData []byte
 
-	if ctx.PO.KeepCopyright {
+	if keepCopyright {
 		ps3Data = stripPS3(ctx.Img)
 		xmpData = stripXMP(ctx.Img)
 	}
 
-	if err := ctx.Img.Strip(ctx.PO.KeepCopyright); err != nil {
+	if err := ctx.Img.Strip(keepCopyright); err != nil {
 		return err
 	}
 
-	if ctx.PO.KeepCopyright {
+	if keepCopyright {
 		if len(ps3Data) > 0 {
 			ctx.Img.SetBlob("iptc-data", ps3Data)
 		}

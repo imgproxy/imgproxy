@@ -75,7 +75,7 @@ func New(ctx context.Context, config *Config) (*Imgproxy, error) {
 		return nil, err
 	}
 
-	processingOptionsFactory, err := options.NewFactory(&config.Options, security)
+	processingOptionsFactory, err := options.NewFactory(&config.Options)
 	if err != nil {
 		return nil, err
 	}

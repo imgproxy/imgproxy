@@ -168,7 +168,7 @@ func (s *ResponseWriterSuite) TestHeaderCases() {
 				WriteResponseTimeout: writeResponseTimeout,
 			},
 			fn: func(w *Writer) {
-				w.SetExpires(&expires)
+				w.SetExpires(expires)
 			},
 		},
 		{
@@ -185,7 +185,7 @@ func (s *ResponseWriterSuite) TestHeaderCases() {
 			},
 			fn: func(w *Writer) {
 				w.SetIsFallbackImage()
-				w.SetExpires(&shortExpires)
+				w.SetExpires(shortExpires)
 			},
 		},
 		{
@@ -269,7 +269,7 @@ func (s *ResponseWriterSuite) TestHeaderCases() {
 			},
 		},
 		{
-			name: "SetMaxAgeFromExpiresNil",
+			name: "SetMaxAgeFromExpiresZero",
 			req:  http.Header{},
 			res: http.Header{
 				httpheaders.CacheControl:          []string{"max-age=3600, public"},
@@ -280,7 +280,7 @@ func (s *ResponseWriterSuite) TestHeaderCases() {
 				WriteResponseTimeout: writeResponseTimeout,
 			},
 			fn: func(w *Writer) {
-				w.SetExpires(nil)
+				w.SetExpires(time.Time{})
 			},
 		},
 	}

@@ -5,6 +5,7 @@ import (
 
 	"github.com/imgproxy/imgproxy/v3/imath"
 	"github.com/imgproxy/imgproxy/v3/options"
+	"github.com/imgproxy/imgproxy/v3/options/keys"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
@@ -50,13 +51,16 @@ func calcCropSize(orig int, crop float64) int {
 	}
 }
 
-func (pctx *Context) calcScale(width, height int, po *options.ProcessingOptions) {
+func (pctx *Context) calcScale(width, height int, po options.Options) {
 	var wshrink, hshrink float64
 
-	srcW, srcH := float64(width), float64(height)
-	dstW, dstH := float64(po.Width), float64(po.Height)
+	poWidth := options.Get(po, keys.Width, 0)
+	poHeight := options.Get(po, keys.Height, 0)
 
-	if po.Width == 0 {
+	srcW, srcH := float64(width), float64(height)
+	dstW, dstH := float64(poWidth), float64(poHeight)
+
+	if poWidth == 0 {
 		dstW = srcW
 	}
 
@@ -66,7 +70,7 @@ func (pctx *Context) calcScale(width, height int, po *options.ProcessingOptions)
 		wshrink = srcW / dstW
 	}
 
-	if po.Height == 0 {
+	if poHeight == 0 {
 		dstH = srcH
 	}
 
@@ -77,7 +81,7 @@ func (pctx *Context) calcScale(width, height int, po *options.ProcessingOptions)
 	}
 
 	if wshrink != 1 || hshrink != 1 {
-		rt := po.ResizingType
+		rt := options.Get(po, keys.ResizingType, options.ResizeFit)
 
 		if rt == options.ResizeAuto {
 			srcD := srcW - srcH
@@ -91,9 +95,9 @@ func (pctx *Context) calcScale(width, height int, po *options.ProcessingOptions)
 		}
 
 		switch {
-		case po.Width == 0 && rt != options.ResizeForce:
+		case poWidth == 0 && rt != options.ResizeForce:
 			wshrink = hshrink
-		case po.Height == 0 && rt != options.ResizeForce:
+		case poHeight == 0 && rt != options.ResizeForce:
 			hshrink = wshrink
 		case rt == options.ResizeFit:
 			wshrink = math.Max(wshrink, hshrink)
@@ -104,14 +108,15 @@ func (pctx *Context) calcScale(width, height int, po *options.ProcessingOptions)
 		}
 	}
 
-	wshrink /= po.ZoomWidth
-	hshrink /= po.ZoomHeight
+	wshrink /= options.GetFloat(po, keys.ZoomWidth, 1.0)
+	hshrink /= options.GetFloat(po, keys.ZoomHeight, 1.0)
 
-	pctx.DprScale = po.Dpr
+	pctx.DprScale = options.GetFloat(po, keys.Dpr, 1.0)
 
+	enlargeEnabled := options.Get(po, keys.Enlarge, false)
 	isVector := pctx.ImgData != nil && pctx.ImgData.Format().IsVector()
 
-	if !po.Enlarge && !isVector {
+	if !enlargeEnabled && !isVector {
 		minShrink := math.Min(wshrink, hshrink)
 		if minShrink < 1 {
 			wshrink /= minShrink
@@ -127,7 +132,7 @@ func (pctx *Context) calcScale(width, height int, po *options.ProcessingOptions)
 			// If the Extend option is enabled, we want to keep the resulting image
 			// composition the same regardless of the DPR, so we don't apply this compensation
 			// in this case.
-			if !po.Extend.Enabled {
+			if !options.Get(po, keys.ExtendEnabled, false) {
 				pctx.DprScale /= minShrink
 			}
 		}
@@ -137,15 +142,15 @@ func (pctx *Context) calcScale(width, height int, po *options.ProcessingOptions)
 		pctx.DprScale = math.Min(pctx.DprScale, math.Min(wshrink, hshrink))
 	}
 
-	if po.MinWidth > 0 {
-		if minShrink := srcW / float64(po.MinWidth); minShrink < wshrink {
+	if minWidth := options.GetInt(po, keys.MinWidth, 0); minWidth > 0 {
+		if minShrink := srcW / float64(minWidth); minShrink < wshrink {
 			hshrink /= wshrink / minShrink
 			wshrink = minShrink
 		}
 	}
 
-	if po.MinHeight > 0 {
-		if minShrink := srcH / float64(po.MinHeight); minShrink < hshrink {
+	if minHeight := options.GetInt(po, keys.MinHeight, 0); minHeight > 0 {
+		if minShrink := srcH / float64(minHeight); minShrink < hshrink {
 			wshrink /= hshrink / minShrink
 			hshrink = minShrink
 		}
@@ -166,14 +171,23 @@ func (pctx *Context) calcScale(width, height int, po *options.ProcessingOptions)
 	pctx.HScale = 1.0 / hshrink
 }
 
-func (pctx *Context) calcSizes(widthToScale, heightToScale int, po *options.ProcessingOptions) {
-	pctx.TargetWidth = imath.Scale(po.Width, pctx.DprScale*po.ZoomWidth)
-	pctx.TargetHeight = imath.Scale(po.Height, pctx.DprScale*po.ZoomHeight)
+func (pctx *Context) calcSizes(widthToScale, heightToScale int, po options.Options) {
+	poWidth := options.GetInt(po, keys.Width, 0)
+	poHeight := options.GetInt(po, keys.Height, 0)
+
+	zoomWidth := options.GetFloat(po, keys.ZoomWidth, 1.0)
+	zoomHeight := options.GetFloat(po, keys.ZoomHeight, 1.0)
+
+	pctx.TargetWidth = imath.Scale(poWidth, pctx.DprScale*zoomWidth)
+	pctx.TargetHeight = imath.Scale(poHeight, pctx.DprScale*zoomHeight)
 
 	pctx.ScaledWidth = imath.Scale(widthToScale, pctx.WScale)
 	pctx.ScaledHeight = imath.Scale(heightToScale, pctx.HScale)
 
-	if po.ResizingType == options.ResizeFillDown && !po.Enlarge {
+	resizingType := options.Get(po, keys.ResizingType, options.ResizeFit)
+	enlarge := options.Get(po, keys.Enlarge, false)
+
+	if resizingType == options.ResizeFillDown && !enlarge {
 		diffW := float64(pctx.TargetWidth) / float64(pctx.ScaledWidth)
 		diffH := float64(pctx.TargetHeight) / float64(pctx.ScaledHeight)
 
@@ -195,7 +209,9 @@ func (pctx *Context) calcSizes(widthToScale, heightToScale int, po *options.Proc
 		pctx.ResultCropHeight = pctx.TargetHeight
 	}
 
-	if po.ExtendAspectRatio.Enabled && pctx.TargetWidth > 0 && pctx.TargetHeight > 0 {
+	extendAspectRatioEnabled := options.Get(po, keys.ExtendAspectRatioEnabled, false)
+
+	if extendAspectRatioEnabled && pctx.TargetWidth > 0 && pctx.TargetHeight > 0 {
 		outWidth := imath.MinNonZero(pctx.ScaledWidth, pctx.ResultCropWidth)
 		outHeight := imath.MinNonZero(pctx.ScaledHeight, pctx.ResultCropHeight)
 
@@ -214,8 +230,8 @@ func (pctx *Context) calcSizes(widthToScale, heightToScale int, po *options.Proc
 	}
 }
 
-func (pctx *Context) limitScale(widthToScale, heightToScale int, po *options.ProcessingOptions) {
-	maxresultDim := po.SecurityOptions.MaxResultDimension
+func (pctx *Context) limitScale(widthToScale, heightToScale int, po options.Options) {
+	maxresultDim := pctx.SecOps.MaxResultDimension
 
 	if maxresultDim <= 0 {
 		return
@@ -224,17 +240,24 @@ func (pctx *Context) limitScale(widthToScale, heightToScale int, po *options.Pro
 	outWidth := imath.MinNonZero(pctx.ScaledWidth, pctx.ResultCropWidth)
 	outHeight := imath.MinNonZero(pctx.ScaledHeight, pctx.ResultCropHeight)
 
-	if po.Extend.Enabled {
+	if options.Get(po, keys.ExtendEnabled, false) {
 		outWidth = max(outWidth, pctx.TargetWidth)
 		outHeight = max(outHeight, pctx.TargetHeight)
-	} else if po.ExtendAspectRatio.Enabled {
+	} else if options.Get(po, keys.ExtendAspectRatioEnabled, false) {
 		outWidth = max(outWidth, pctx.ExtendAspectRatioWidth)
 		outHeight = max(outHeight, pctx.ExtendAspectRatioHeight)
 	}
 
-	if po.Padding.Enabled {
-		outWidth += imath.ScaleToEven(po.Padding.Left, pctx.DprScale) + imath.ScaleToEven(po.Padding.Right, pctx.DprScale)
-		outHeight += imath.ScaleToEven(po.Padding.Top, pctx.DprScale) + imath.ScaleToEven(po.Padding.Bottom, pctx.DprScale)
+	if options.Get(po, keys.PaddingEnabled, false) {
+		paddingTop := options.GetInt(po, keys.PaddingTop, 0)
+		paddingBottom := options.GetInt(po, keys.PaddingBottom, 0)
+		paddingLeft := options.GetInt(po, keys.PaddingLeft, 0)
+		paddingRight := options.GetInt(po, keys.PaddingRight, 0)
+
+		outWidth += imath.ScaleToEven(paddingLeft, pctx.DprScale)
+		outWidth += imath.ScaleToEven(paddingRight, pctx.DprScale)
+		outHeight += imath.ScaleToEven(paddingTop, pctx.DprScale)
+		outHeight += imath.ScaleToEven(paddingBottom, pctx.DprScale)
 	}
 
 	if maxresultDim > 0 && (outWidth > maxresultDim || outHeight > maxresultDim) {
@@ -262,10 +285,16 @@ func (pctx *Context) limitScale(widthToScale, heightToScale int, po *options.Pro
 // This can't be done in advance because some steps like trimming and rasterization could
 // happen before this step.
 func prepare(c *Context) error {
-	c.SrcWidth, c.SrcHeight, c.Angle, c.Flip = extractMeta(c.Img, c.PO.Rotate, c.PO.AutoRotate)
+	rotateAngle := options.GetInt(c.PO, keys.Rotate, 0)
+	autoRotate := options.Get(c.PO, keys.AutoRotate, true)
 
-	c.CropWidth = calcCropSize(c.SrcWidth, c.PO.Crop.Width)
-	c.CropHeight = calcCropSize(c.SrcHeight, c.PO.Crop.Height)
+	c.SrcWidth, c.SrcHeight, c.Angle, c.Flip = extractMeta(c.Img, rotateAngle, autoRotate)
+
+	cropWidth := options.GetFloat(c.PO, keys.CropWidth, 0.0)
+	cropHeight := options.GetFloat(c.PO, keys.CropHeight, 0.0)
+
+	c.CropWidth = calcCropSize(c.SrcWidth, cropWidth)
+	c.CropHeight = calcCropSize(c.SrcHeight, cropHeight)
 
 	widthToScale := imath.MinNonZero(c.CropWidth, c.SrcWidth)
 	heightToScale := imath.MinNonZero(c.CropHeight, c.SrcHeight)

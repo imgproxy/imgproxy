@@ -14,6 +14,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/monitoring"
 	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
 	"github.com/imgproxy/imgproxy/v3/options"
+	"github.com/imgproxy/imgproxy/v3/options/keys"
 	"github.com/imgproxy/imgproxy/v3/security"
 	"github.com/imgproxy/imgproxy/v3/server"
 	"github.com/imgproxy/imgproxy/v3/workers"
@@ -73,7 +74,7 @@ func (h *Handler) Execute(
 	}
 
 	// if processing options indicate raw image streaming, stream it and return
-	if po.Raw {
+	if options.Get(po, keys.Raw, false) {
 		return h.stream.Execute(ctx, req, imageURL, reqID, po, rw)
 	}
 
@@ -85,6 +86,7 @@ func (h *Handler) Execute(
 		rw:             rw,
 		config:         h.config,
 		po:             po,
+		secops:         h.Security().NewOptions(po),
 		imageURL:       imageURL,
 		monitoringMeta: mm,
 	}
@@ -96,7 +98,7 @@ func (h *Handler) Execute(
 func (h *Handler) newRequest(
 	ctx context.Context,
 	req *http.Request,
-) (string, *options.ProcessingOptions, monitoring.Meta, error) {
+) (string, options.Options, monitoring.Meta, error) {
 	// let's extract signature and valid request path from a request
 	path, signature, err := handlers.SplitPathSignature(req)
 	if err != nil {
@@ -120,7 +122,7 @@ func (h *Handler) newRequest(
 	mm := monitoring.Meta{
 		monitoring.MetaSourceImageURL:    imageURL,
 		monitoring.MetaSourceImageOrigin: imageOrigin,
-		monitoring.MetaProcessingOptions: po.Diff().Flatten(),
+		monitoring.MetaOptions:           po.Map(),
 	}
 
 	// set error reporting and monitoring context
