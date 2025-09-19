@@ -1,9 +1,7 @@
 package integration
 
 import (
-	"bytes"
 	"fmt"
-	"image/png"
 	"io"
 	"net/http"
 	"os"
@@ -11,10 +9,12 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"unsafe"
 
-	"github.com/corona10/goimagehash"
 	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
+	"github.com/imgproxy/imgproxy/v3/testutil"
 	"github.com/imgproxy/imgproxy/v3/vips"
 	"github.com/stretchr/testify/suite"
 )
@@ -66,25 +66,33 @@ func (s *LoadTestSuite) testLoadFolder(folder string) {
 		// Construct the source URL for imgproxy (no processing)
 		sourceUrl := fmt.Sprintf("/insecure/plain/local:///%s/%s@png", folder, basePath)
 
-		imgproxyImageBytes := s.fetchImage(sourceUrl)
-		imgproxyImage, err := png.Decode(bytes.NewReader(imgproxyImageBytes))
-		s.Require().NoError(err, "Failed to decode PNG image from imgproxy for %s", basePath)
+		imgproxyImageData := s.fetchImage(sourceUrl)
+		var imgproxyImage vips.Image
+		s.Require().NoError(imgproxyImage.Load(imgproxyImageData, 1, 1.0, 1))
+
+		hash1, err := testutil.ImageHash(unsafe.Pointer(imgproxyImage.VipsImage))
+		s.Require().NoError(err)
 
 		referenceFile, err := os.Open(referencePath)
 		s.Require().NoError(err)
 		defer referenceFile.Close()
 
-		referenceImage, err := png.Decode(referenceFile)
-		s.Require().NoError(err, "Failed to decode PNG reference image for %s", referencePath)
-
-		hash1, err := goimagehash.DifferenceHash(imgproxyImage)
+		referenceImageData, err := s.Imgproxy().ImageDataFactory().NewFromPath(referencePath)
 		s.Require().NoError(err)
 
-		hash2, err := goimagehash.DifferenceHash(referenceImage)
+		var referenceImage vips.Image
+		s.Require().NoError(referenceImage.Load(referenceImageData, 1, 1.0, 1))
+
+		hash2, err := testutil.ImageHash(unsafe.Pointer(referenceImage.VipsImage))
 		s.Require().NoError(err)
 
 		distance, err := hash1.Distance(hash2)
 		s.Require().NoError(err)
+
+		imgproxyImageData.Close()
+		referenceImageData.Close()
+		imgproxyImage.Clear()
+		referenceImage.Clear()
 
 		s.Require().LessOrEqual(distance, similarityThreshold,
 			"Image %s differs from reference image %s by %d, which is greater than the allowed threshold of %d",
@@ -97,7 +105,7 @@ func (s *LoadTestSuite) testLoadFolder(folder string) {
 }
 
 // fetchImage fetches an image from the imgproxy server
-func (s *LoadTestSuite) fetchImage(path string) []byte {
+func (s *LoadTestSuite) fetchImage(path string) imagedata.ImageData {
 	resp := s.GET(path)
 	defer resp.Body.Close()
 
@@ -106,7 +114,10 @@ func (s *LoadTestSuite) fetchImage(path string) []byte {
 	bytes, err := io.ReadAll(resp.Body)
 	s.Require().NoError(err, "Failed to read response body from %s", path)
 
-	return bytes
+	d, err := s.Imgproxy().ImageDataFactory().NewFromBytes(bytes)
+	s.Require().NoError(err, "Failed to load image from bytes for %s", path)
+
+	return d
 }
 
 // TestLoadSaveToPng ensures that our load pipeline works,
