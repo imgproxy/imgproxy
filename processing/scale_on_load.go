@@ -12,7 +12,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
-func canScaleOnLoad(c *Context, imgdata imagedata.ImageData, scale float64) bool {
+func (p *Processor) canScaleOnLoad(c *Context, imgdata imagedata.ImageData, scale float64) bool {
 	if imgdata == nil || scale == 1 {
 		return false
 	}
@@ -21,7 +21,7 @@ func canScaleOnLoad(c *Context, imgdata imagedata.ImageData, scale float64) bool
 		return true
 	}
 
-	if c.Config.DisableShrinkOnLoad || scale >= 1 {
+	if p.config.DisableShrinkOnLoad || scale >= 1 {
 		return false
 	}
 
@@ -44,7 +44,7 @@ func calcJpegShink(shrink float64) int {
 	return 1
 }
 
-func scaleOnLoad(c *Context) error {
+func (p *Processor) scaleOnLoad(c *Context) error {
 	wshrink := float64(c.SrcWidth) / float64(imath.Scale(c.SrcWidth, c.WScale))
 	hshrink := float64(c.SrcHeight) / float64(imath.Scale(c.SrcHeight, c.HScale))
 	preshrink := math.Min(wshrink, hshrink)
@@ -55,7 +55,7 @@ func scaleOnLoad(c *Context) error {
 		prescale *= c.VectorBaseScale
 	}
 
-	if !canScaleOnLoad(c, c.ImgData, prescale) {
+	if !p.canScaleOnLoad(c, c.ImgData, prescale) {
 		return nil
 	}
 
@@ -71,7 +71,7 @@ func scaleOnLoad(c *Context) error {
 		}
 
 		angle, flip := 0, false
-		newWidth, newHeight, angle, flip = extractMeta(thumbnail, c.PO.Rotate, c.PO.AutoRotate)
+		newWidth, newHeight, angle, flip = c.ExtractGeometry(thumbnail, c.PO.Rotate, c.PO.AutoRotate)
 
 		if newWidth >= c.SrcWidth || float64(newWidth)/float64(c.SrcWidth) < prescale {
 			return nil
@@ -91,7 +91,7 @@ func scaleOnLoad(c *Context) error {
 			return err
 		}
 
-		newWidth, newHeight, _, _ = extractMeta(c.Img, c.PO.Rotate, c.PO.AutoRotate)
+		newWidth, newHeight, _, _ = c.ExtractGeometry(c.Img, c.PO.Rotate, c.PO.AutoRotate)
 	}
 
 	// Update scales after scale-on-load

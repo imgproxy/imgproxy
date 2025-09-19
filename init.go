@@ -10,7 +10,6 @@ import (
 	"github.com/imgproxy/imgproxy/v3/gliblog"
 	"github.com/imgproxy/imgproxy/v3/logger"
 	"github.com/imgproxy/imgproxy/v3/monitoring"
-	"github.com/imgproxy/imgproxy/v3/processing"
 	"github.com/imgproxy/imgproxy/v3/vips"
 	"go.uber.org/automaxprocs/maxprocs"
 )
@@ -46,11 +45,6 @@ func Init() error {
 	}
 
 	errorreport.Init()
-
-	if err := processing.ValidatePreferredFormats(); err != nil {
-		vips.Shutdown()
-		return err
-	}
 
 	return nil
 }

@@ -1,6 +1,6 @@
 package processing
 
-func colorspaceToProcessing(c *Context) error {
+func (p *Processor) colorspaceToProcessing(c *Context) error {
 	if c.Img.ColourProfileImported() {
 		return nil
 	}
@@ -9,7 +9,7 @@ func colorspaceToProcessing(c *Context) error {
 		return err
 	}
 
-	convertToLinear := c.Config.UseLinearColorspace && (c.WScale != 1 || c.HScale != 1)
+	convertToLinear := p.config.UseLinearColorspace && (c.WScale != 1 || c.HScale != 1)
 
 	if c.Img.IsLinear() {
 		// The image is linear. If we keep its ICC, we'll get wrong colors after

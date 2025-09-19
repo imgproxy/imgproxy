@@ -1,6 +1,6 @@
 package processing
 
-func flatten(c *Context) error {
+func (p *Processor) flatten(c *Context) error {
 	if !c.PO.Flatten && c.PO.Format.SupportsAlpha() {
 		return nil
 	}

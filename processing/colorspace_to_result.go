@@ -1,6 +1,6 @@
 package processing
 
-func colorspaceToResult(c *Context) error {
+func (p *Processor) colorspaceToResult(c *Context) error {
 	keepProfile := !c.PO.StripColorProfile && c.PO.Format.SupportsColourProfile()
 
 	if c.Img.IsLinear() {
