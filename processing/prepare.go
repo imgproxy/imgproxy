@@ -109,7 +109,9 @@ func (pctx *Context) calcScale(width, height int, po *options.ProcessingOptions)
 
 	pctx.DprScale = po.Dpr
 
-	if !po.Enlarge && pctx.ImgData != nil && !pctx.ImgData.Format().IsVector() {
+	isVector := pctx.ImgData != nil && pctx.ImgData.Format().IsVector()
+
+	if !po.Enlarge && !isVector {
 		minShrink := math.Min(wshrink, hshrink)
 		if minShrink < 1 {
 			wshrink /= minShrink
