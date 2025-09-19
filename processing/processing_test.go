@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"unsafe"
 
 	"github.com/stretchr/testify/suite"
 
@@ -251,6 +252,12 @@ func (s *ProcessingTestSuite) TestResizeToFitExtendAR() {
 			s.Require().NotNil(result)
 
 			s.checkSize(result, tc.outWidth, tc.outHeight)
+
+			var i vips.Image
+			s.Require().NoError(i.Load(result.OutData, 1, 1.0, 1))
+			h, err := testutil.ImageHash(unsafe.Pointer(i.VipsImage))
+			s.Require().NoError(err)
+			fmt.Println(h.ToString())
 		})
 	}
 }
