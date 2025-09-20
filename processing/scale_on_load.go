@@ -9,6 +9,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/imath"
 	"github.com/imgproxy/imgproxy/v3/options"
+	"github.com/imgproxy/imgproxy/v3/options/keys"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
@@ -61,6 +62,9 @@ func scaleOnLoad(c *Context) error {
 
 	var newWidth, newHeight int
 
+	rotateAngle := options.GetInt(c.PO, keys.Rotate, 0)
+	autoRotate := options.Get(c.PO, keys.AutoRotate, true)
+
 	if c.ImgData.Format().SupportsThumbnail() {
 		thumbnail := new(vips.Image)
 		defer thumbnail.Clear()
@@ -71,7 +75,7 @@ func scaleOnLoad(c *Context) error {
 		}
 
 		angle, flip := 0, false
-		newWidth, newHeight, angle, flip = extractMeta(thumbnail, c.PO.Rotate, c.PO.AutoRotate)
+		newWidth, newHeight, angle, flip = extractMeta(thumbnail, rotateAngle, autoRotate)
 
 		if newWidth >= c.SrcWidth || float64(newWidth)/float64(c.SrcWidth) < prescale {
 			return nil
@@ -91,7 +95,7 @@ func scaleOnLoad(c *Context) error {
 			return err
 		}
 
-		newWidth, newHeight, _, _ = extractMeta(c.Img, c.PO.Rotate, c.PO.AutoRotate)
+		newWidth, newHeight, _, _ = extractMeta(c.Img, rotateAngle, autoRotate)
 	}
 
 	// Update scales after scale-on-load

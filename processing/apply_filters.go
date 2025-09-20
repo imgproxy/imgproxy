@@ -1,7 +1,16 @@
 package processing
 
+import (
+	"github.com/imgproxy/imgproxy/v3/options"
+	"github.com/imgproxy/imgproxy/v3/options/keys"
+)
+
 func applyFilters(c *Context) error {
-	if c.PO.Blur == 0 && c.PO.Sharpen == 0 && c.PO.Pixelate <= 1 {
+	blur := options.GetFloat(c.PO, keys.Blur, 0.0)
+	sharpen := options.GetFloat(c.PO, keys.Sharpen, 0.0)
+	pixelate := options.GetInt(c.PO, keys.Pixelate, 1)
+
+	if blur == 0 && sharpen == 0 && pixelate <= 1 {
 		return nil
 	}
 
@@ -13,7 +22,7 @@ func applyFilters(c *Context) error {
 		return err
 	}
 
-	if err := c.Img.ApplyFilters(c.PO.Blur, c.PO.Sharpen, c.PO.Pixelate); err != nil {
+	if err := c.Img.ApplyFilters(blur, sharpen, pixelate); err != nil {
 		return err
 	}
 

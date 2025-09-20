@@ -4,6 +4,8 @@ import (
 	"math"
 
 	"github.com/imgproxy/imgproxy/v3/imagetype"
+	"github.com/imgproxy/imgproxy/v3/options"
+	"github.com/imgproxy/imgproxy/v3/options/keys"
 	"github.com/imgproxy/imgproxy/v3/vips"
 	log "github.com/sirupsen/logrus"
 )
@@ -89,7 +91,7 @@ func fixIcoSize(img *vips.Image) error {
 }
 
 func fixSize(c *Context) error {
-	switch c.PO.Format {
+	switch options.Get(c.PO, keys.Format, imagetype.Unknown) {
 	case imagetype.WEBP:
 		return fixWebpSize(c.Img)
 	case imagetype.AVIF, imagetype.HEIC:

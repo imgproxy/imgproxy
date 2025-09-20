@@ -1,7 +1,14 @@
 package processing
 
+import (
+	"github.com/imgproxy/imgproxy/v3/options"
+	"github.com/imgproxy/imgproxy/v3/options/keys"
+)
+
 func rotateAndFlip(ctx *Context) error {
-	if ctx.Angle%360 == 0 && ctx.PO.Rotate%360 == 0 && !ctx.Flip {
+	rotateAngle := options.GetInt(ctx.PO, keys.Rotate, 0)
+
+	if ctx.Angle%360 == 0 && rotateAngle%360 == 0 && !ctx.Flip {
 		return nil
 	}
 
@@ -19,5 +26,5 @@ func rotateAndFlip(ctx *Context) error {
 		}
 	}
 
-	return ctx.Img.Rotate(ctx.PO.Rotate)
+	return ctx.Img.Rotate(rotateAngle)
 }

@@ -1,7 +1,13 @@
 package processing
 
+import (
+	"github.com/imgproxy/imgproxy/v3/options"
+	"github.com/imgproxy/imgproxy/v3/options/keys"
+	"github.com/imgproxy/imgproxy/v3/vips"
+)
+
 func trim(c *Context) error {
-	if !c.PO.Trim.Enabled {
+	if !options.Get(c.PO, keys.TrimEnabled, false) {
 		return nil
 	}
 
@@ -10,7 +16,13 @@ func trim(c *Context) error {
 		return err
 	}
 
-	if err := c.Img.Trim(c.PO.Trim.Threshold, c.PO.Trim.Smart, c.PO.Trim.Color, c.PO.Trim.EqualHor, c.PO.Trim.EqualVer); err != nil {
+	if err := c.Img.Trim(
+		options.GetFloat(c.PO, keys.TrimThreshold, 10.0),
+		options.Get(c.PO, keys.TrimSmart, true),
+		options.Get(c.PO, keys.TrimColor, vips.Color{}),
+		options.Get(c.PO, keys.TrimEqualHor, false),
+		options.Get(c.PO, keys.TrimEqualVer, false),
+	); err != nil {
 		return err
 	}
 	if err := c.Img.CopyMemory(); err != nil {

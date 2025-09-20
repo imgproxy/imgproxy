@@ -57,10 +57,10 @@ func (f *Factory) parsePreset(presetStr string) error {
 	return nil
 }
 
-// validatePresets validates all presets by applying them to a new ProcessingOptions instance
+// validatePresets validates all presets by applying them to a new Options instance
 func (f *Factory) validatePresets() error {
 	for name, opts := range f.presets {
-		po := f.NewProcessingOptions()
+		po := New()
 		if err := f.applyURLOptions(po, opts, true, name); err != nil {
 			return fmt.Errorf("Error in preset `%s`: %s", name, err)
 		}

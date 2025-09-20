@@ -168,7 +168,7 @@ func (s *ProcessingHandlerTestSuite) TestResultingFormatNotSupported() {
 }
 
 func (s *ProcessingHandlerTestSuite) TestSkipProcessingConfig() {
-	s.Config().Options.SkipProcessingFormats = []imagetype.Type{imagetype.PNG}
+	config.SkipProcessingFormats = []imagetype.Type{imagetype.PNG}
 
 	res := s.GET("/unsafe/rs:fill:4:4/plain/local:///test1.png")
 
@@ -184,7 +184,7 @@ func (s *ProcessingHandlerTestSuite) TestSkipProcessingPO() {
 }
 
 func (s *ProcessingHandlerTestSuite) TestSkipProcessingSameFormat() {
-	s.Config().Options.SkipProcessingFormats = []imagetype.Type{imagetype.PNG}
+	config.SkipProcessingFormats = []imagetype.Type{imagetype.PNG}
 
 	res := s.GET("/unsafe/rs:fill:4:4/plain/local:///test1.png@png")
 
@@ -193,7 +193,7 @@ func (s *ProcessingHandlerTestSuite) TestSkipProcessingSameFormat() {
 }
 
 func (s *ProcessingHandlerTestSuite) TestSkipProcessingDifferentFormat() {
-	s.Config().Options.SkipProcessingFormats = []imagetype.Type{imagetype.PNG}
+	config.SkipProcessingFormats = []imagetype.Type{imagetype.PNG}
 
 	res := s.GET("/unsafe/rs:fill:4:4/plain/local:///test1.png@jpg")
 
@@ -497,7 +497,7 @@ func (s *ProcessingHandlerTestSuite) TestAlwaysRasterizeSvgDisabled() {
 
 func (s *ProcessingHandlerTestSuite) TestAlwaysRasterizeSvgWithFormat() {
 	config.AlwaysRasterizeSvg = true
-	s.Config().Options.SkipProcessingFormats = []imagetype.Type{imagetype.SVG}
+	config.SkipProcessingFormats = []imagetype.Type{imagetype.SVG}
 
 	res := s.GET("/unsafe/plain/local:///test1.svg@svg")
 

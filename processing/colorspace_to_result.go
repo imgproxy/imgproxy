@@ -1,7 +1,15 @@
 package processing
 
+import (
+	"github.com/imgproxy/imgproxy/v3/imagetype"
+	"github.com/imgproxy/imgproxy/v3/options"
+	"github.com/imgproxy/imgproxy/v3/options/keys"
+)
+
 func colorspaceToResult(c *Context) error {
-	keepProfile := !c.PO.StripColorProfile && c.PO.Format.SupportsColourProfile()
+	stripColorProfile := options.Get(c.PO, keys.StripColorProfile, false)
+	format := options.Get(c.PO, keys.Format, imagetype.Unknown)
+	keepProfile := stripColorProfile && format.SupportsColourProfile()
 
 	if c.Img.IsLinear() {
 		if err := c.Img.RgbColourspace(); err != nil {

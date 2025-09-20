@@ -17,6 +17,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/fetcher"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/options"
+	"github.com/imgproxy/imgproxy/v3/options/keys"
 	"github.com/imgproxy/imgproxy/v3/server/responsewriter"
 	"github.com/imgproxy/imgproxy/v3/testutil"
 )
@@ -94,7 +95,7 @@ func (s *HandlerTestSuite) SetupSubTest() {
 func (s *HandlerTestSuite) execute(
 	imageURL string,
 	header http.Header,
-	po *options.ProcessingOptions,
+	po options.Options,
 ) *http.Response {
 	imageURL = s.testServer().URL() + imageURL
 	req := httptest.NewRequest("GET", "/", nil)
@@ -116,7 +117,7 @@ func (s *HandlerTestSuite) TestHandlerBasicRequest() {
 
 	s.testServer().SetHeaders(httpheaders.ContentType, "image/png").SetBody(data)
 
-	res := s.execute("", nil, &options.ProcessingOptions{})
+	res := s.execute("", nil, options.New())
 
 	s.Require().Equal(200, res.StatusCode)
 	s.Require().Equal("image/png", res.Header.Get(httpheaders.ContentType))
@@ -141,7 +142,7 @@ func (s *HandlerTestSuite) TestHandlerResponseHeadersPassthrough() {
 		httpheaders.LastModified, "Wed, 21 Oct 2015 07:28:00 GMT",
 	).SetBody(data)
 
-	res := s.execute("", nil, &options.ProcessingOptions{})
+	res := s.execute("", nil, options.New())
 
 	s.Require().Equal(200, res.StatusCode)
 	s.Require().Equal("image/png", res.Header.Get(httpheaders.ContentType))
@@ -172,7 +173,7 @@ func (s *HandlerTestSuite) TestHandlerRequestHeadersPassthrough() {
 	h.Set(httpheaders.AcceptEncoding, "gzip")
 	h.Set(httpheaders.Range, "bytes=*")
 
-	res := s.execute("", h, &options.ProcessingOptions{})
+	res := s.execute("", h, options.New())
 
 	s.Require().Equal(200, res.StatusCode)
 	s.Require().Equal(etag, res.Header.Get(httpheaders.Etag))
@@ -184,10 +185,9 @@ func (s *HandlerTestSuite) TestHandlerContentDisposition() {
 
 	s.testServer().SetHeaders(httpheaders.ContentType, "image/png").SetBody(data)
 
-	po := &options.ProcessingOptions{
-		Filename:         "custom_name",
-		ReturnAttachment: true,
-	}
+	po := options.New()
+	po[keys.Filename] = "custom_name"
+	po[keys.ReturnAttachment] = true
 
 	// Use a URL with a .png extension to help content disposition logic
 	res := s.execute("/test.png", nil, po)
@@ -345,11 +345,10 @@ func (s *HandlerTestSuite) TestHandlerCacheControl() {
 			s.rwConf().CacheControlPassthrough = tc.cacheControlPassthrough
 			s.rwConf().DefaultTTL = 4242
 
-			po := &options.ProcessingOptions{}
+			po := options.New()
 
 			if tc.timestampOffset != nil {
-				expires := time.Now().Add(*tc.timestampOffset)
-				po.Expires = &expires
+				po[keys.Expires] = time.Now().Add(*tc.timestampOffset)
 			}
 
 			res := s.execute("", nil, po)
@@ -376,7 +375,7 @@ func (s *HandlerTestSuite) TestHandlerSecurityHeaders() {
 
 	s.testServer().SetHeaders(httpheaders.ContentType, "image/png").SetBody(data)
 
-	res := s.execute("", nil, &options.ProcessingOptions{})
+	res := s.execute("", nil, options.New())
 
 	s.Require().Equal(http.StatusOK, res.StatusCode)
 	s.Require().Equal("script-src 'none'", res.Header.Get(httpheaders.ContentSecurityPolicy))
@@ -386,7 +385,7 @@ func (s *HandlerTestSuite) TestHandlerSecurityHeaders() {
 func (s *HandlerTestSuite) TestHandlerErrorResponse() {
 	s.testServer().SetStatusCode(http.StatusNotFound).SetBody([]byte("Not Found"))
 
-	res := s.execute("", nil, &options.ProcessingOptions{})
+	res := s.execute("", nil, options.New())
 
 	s.Require().Equal(http.StatusNotFound, res.StatusCode)
 }
@@ -410,7 +409,7 @@ func (s *HandlerTestSuite) TestHandlerCookiePassthrough() {
 	h := make(http.Header)
 	h.Set(httpheaders.Cookie, "test_cookie=test_value")
 
-	res := s.execute("", h, &options.ProcessingOptions{})
+	res := s.execute("", h, options.New())
 
 	s.Require().Equal(200, res.StatusCode)
 }
@@ -424,7 +423,7 @@ func (s *HandlerTestSuite) TestHandlerCanonicalHeader() {
 	for _, sc := range []bool{true, false} {
 		s.rwConf().SetCanonicalHeader = sc
 
-		res := s.execute("", nil, &options.ProcessingOptions{})
+		res := s.execute("", nil, options.New())
 
 		s.Require().Equal(200, res.StatusCode)
 

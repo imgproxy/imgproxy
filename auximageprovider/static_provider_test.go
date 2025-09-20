@@ -57,7 +57,7 @@ func (s *ImageProviderTestSuite) SetupSubTest() {
 
 // Helper function to read data from ImageData
 func (s *ImageProviderTestSuite) readImageData(provider Provider) []byte {
-	imgData, _, err := provider.Get(s.T().Context(), &options.ProcessingOptions{})
+	imgData, _, err := provider.Get(s.T().Context(), options.New())
 	s.Require().NoError(err)
 	s.Require().NotNil(imgData)
 	defer imgData.Close()
@@ -136,7 +136,7 @@ func (s *ImageProviderTestSuite) TestNewProvider() {
 				)
 			},
 			validateFunc: func(provider Provider) {
-				imgData, headers, err := provider.Get(s.T().Context(), &options.ProcessingOptions{})
+				imgData, headers, err := provider.Get(s.T().Context(), options.New())
 				s.Require().NoError(err)
 				s.Require().NotNil(imgData)
 				defer imgData.Close()

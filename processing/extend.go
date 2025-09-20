@@ -2,6 +2,7 @@ package processing
 
 import (
 	"github.com/imgproxy/imgproxy/v3/options"
+	"github.com/imgproxy/imgproxy/v3/options/keys"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
@@ -25,16 +26,17 @@ func extendImage(img *vips.Image, width, height int, gravity *options.GravityOpt
 }
 
 func extend(c *Context) error {
-	if !c.PO.Extend.Enabled {
+	if !options.Get(c.PO, keys.ExtendEnabled, false) {
 		return nil
 	}
 
 	width, height := c.TargetWidth, c.TargetHeight
-	return extendImage(c.Img, width, height, &c.PO.Extend.Gravity, c.DprScale)
+	gravity := options.GetGravity(c.PO, keys.ExtendGravity, options.GravityCenter)
+	return extendImage(c.Img, width, height, &gravity, c.DprScale)
 }
 
 func extendAspectRatio(c *Context) error {
-	if !c.PO.ExtendAspectRatio.Enabled {
+	if !options.Get(c.PO, keys.ExtendAspectRatioEnabled, false) {
 		return nil
 	}
 
@@ -43,5 +45,6 @@ func extendAspectRatio(c *Context) error {
 		return nil
 	}
 
-	return extendImage(c.Img, width, height, &c.PO.ExtendAspectRatio.Gravity, c.DprScale)
+	gravity := options.GetGravity(c.PO, keys.ExtendAspectRatioGravity, options.GravityCenter)
+	return extendImage(c.Img, width, height, &gravity, c.DprScale)
 }

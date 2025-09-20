@@ -9,6 +9,8 @@ import (
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imath"
 	"github.com/imgproxy/imgproxy/v3/options"
+	"github.com/imgproxy/imgproxy/v3/options/keys"
+	"github.com/imgproxy/imgproxy/v3/security"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
@@ -22,12 +24,17 @@ var watermarkPipeline = Pipeline{
 	padding,
 }
 
+func shouldReplicateWatermark(gt options.GravityType) bool {
+	return gt == options.GravityReplicate
+}
+
 func prepareWatermark(
 	ctx context.Context,
 	runner *Runner,
 	wm *vips.Image,
 	wmData imagedata.ImageData,
-	po *options.ProcessingOptions,
+	po options.Options,
+	secops security.Options,
 	imgWidth, imgHeight int,
 	offsetScale float64,
 ) error {
@@ -35,42 +42,47 @@ func prepareWatermark(
 		return err
 	}
 
-	opts := po.Watermark
+	wmPo := options.New()
+	wmPo[keys.ResizingType] = options.ResizeFit
+	wmPo[keys.Dpr] = 1
+	wmPo[keys.Enlarge] = true
+	wmPo[keys.Format] = wmData.Format()
 
-	wmPo := po.Default()
-	wmPo.ResizingType = options.ResizeFit
-	wmPo.Dpr = 1
-	wmPo.Enlarge = true
-	wmPo.Format = wmData.Format()
-
-	if opts.Scale > 0 {
-		wmPo.Width = max(imath.ScaleToEven(imgWidth, opts.Scale), 1)
-		wmPo.Height = max(imath.ScaleToEven(imgHeight, opts.Scale), 1)
+	if scale := options.GetFloat(po, keys.WatermarkScale, 0.0); scale > 0 {
+		wmPo[keys.Width] = max(imath.ScaleToEven(imgWidth, scale), 1)
+		wmPo[keys.Height] = max(imath.ScaleToEven(imgHeight, scale), 1)
 	}
 
-	if opts.ShouldReplicate() {
-		var offX, offY int
+	shouldReplicate := shouldReplicateWatermark(
+		options.Get(po, keys.WatermarkPosition, options.GravityCenter),
+	)
 
-		if math.Abs(opts.Position.X) >= 1.0 {
-			offX = imath.RoundToEven(opts.Position.X * offsetScale)
+	if shouldReplicate {
+		offsetX := options.GetFloat(po, keys.WatermarkXOffset, 0.0)
+		offsetY := options.GetFloat(po, keys.WatermarkYOffset, 0.0)
+
+		var padX, padY int
+
+		if math.Abs(offsetX) >= 1.0 {
+			padX = imath.RoundToEven(offsetX * offsetScale)
 		} else {
-			offX = imath.ScaleToEven(imgWidth, opts.Position.X)
+			padX = imath.ScaleToEven(imgWidth, offsetX)
 		}
 
-		if math.Abs(opts.Position.Y) >= 1.0 {
-			offY = imath.RoundToEven(opts.Position.Y * offsetScale)
+		if math.Abs(offsetY) >= 1.0 {
+			padY = imath.RoundToEven(offsetY * offsetScale)
 		} else {
-			offY = imath.ScaleToEven(imgHeight, opts.Position.Y)
+			padY = imath.ScaleToEven(imgHeight, offsetY)
 		}
 
-		wmPo.Padding.Enabled = true
-		wmPo.Padding.Left = offX / 2
-		wmPo.Padding.Right = offX - wmPo.Padding.Left
-		wmPo.Padding.Top = offY / 2
-		wmPo.Padding.Bottom = offY - wmPo.Padding.Top
+		wmPo[keys.PaddingEnabled] = true
+		wmPo[keys.PaddingLeft] = padX / 2
+		wmPo[keys.PaddingRight] = padX - padX/2
+		wmPo[keys.PaddingTop] = padY / 2
+		wmPo[keys.PaddingBottom] = padY - padY/2
 	}
 
-	if err := runner.Run(watermarkPipeline, ctx, wm, wmPo, wmData); err != nil {
+	if err := runner.Run(watermarkPipeline, ctx, wm, wmPo, secops, wmData); err != nil {
 		return err
 	}
 
@@ -80,7 +92,7 @@ func prepareWatermark(
 		return err
 	}
 
-	if opts.ShouldReplicate() {
+	if shouldReplicate {
 		if err := wm.Replicate(imgWidth, imgHeight, true); err != nil {
 			return err
 		}
@@ -95,7 +107,8 @@ func applyWatermark(
 	runner *Runner,
 	img *vips.Image,
 	watermark auximageprovider.Provider,
-	po *options.ProcessingOptions,
+	po options.Options,
+	secops security.Options,
 	offsetScale float64,
 	framesCount int,
 ) error {
@@ -112,8 +125,6 @@ func applyWatermark(
 	}
 	defer wmData.Close()
 
-	opts := po.Watermark
-
 	wm := new(vips.Image)
 	defer wm.Clear()
 
@@ -122,7 +133,7 @@ func applyWatermark(
 	frameHeight := height / framesCount
 
 	if err := prepareWatermark(
-		ctx, runner, wm, wmData, po, width, frameHeight, offsetScale,
+		ctx, runner, wm, wmData, po, secops, width, frameHeight, offsetScale,
 	); err != nil {
 		return err
 	}
@@ -138,11 +149,14 @@ func applyWatermark(
 	}
 
 	// TODO: Use runner config
-	opacity := opts.Opacity * config.WatermarkOpacity
+	opacity := config.WatermarkOpacity * options.GetFloat(po, keys.WatermarkOpacity, 1.0)
+
+	position := options.Get(po, keys.WatermarkPosition, options.GravityCenter)
+	shouldReplicate := shouldReplicateWatermark(position)
 
 	// If we replicated the watermark and need to apply it to an animated image,
 	// it is faster to replicate the watermark to all the image and apply it single-pass
-	if opts.ShouldReplicate() && framesCount > 1 {
+	if shouldReplicate && framesCount > 1 {
 		if err := wm.Replicate(width, height, false); err != nil {
 			return err
 		}
@@ -154,8 +168,13 @@ func applyWatermark(
 	wmWidth := wm.Width()
 	wmHeight := wm.Height()
 
-	if !opts.ShouldReplicate() {
-		left, top = calcPosition(width, frameHeight, wmWidth, wmHeight, &opts.Position, offsetScale, true)
+	if !shouldReplicate {
+		gr := options.GravityOptions{
+			Type: position,
+			X:    options.GetFloat(po, keys.WatermarkXOffset, 0.0),
+			Y:    options.GetFloat(po, keys.WatermarkYOffset, 0.0),
+		}
+		left, top = calcPosition(width, frameHeight, wmWidth, wmHeight, &gr, offsetScale, true)
 	}
 
 	if left >= width || top >= height || -left >= wmWidth || -top >= wmHeight {
@@ -198,9 +217,11 @@ func applyWatermark(
 }
 
 func watermark(c *Context) error {
-	if !c.PO.Watermark.Enabled || c.WatermarkProvider == nil {
+	if !options.Get(c.PO, keys.WatermarkEnabled, false) || c.WatermarkProvider == nil {
 		return nil
 	}
 
-	return applyWatermark(c.Ctx, c.Runner(), c.Img, c.WatermarkProvider, c.PO, c.DprScale, 1)
+	return applyWatermark(
+		c.Ctx, c.Runner(), c.Img, c.WatermarkProvider, c.PO, c.SecOps, c.DprScale, 1,
+	)
 }
