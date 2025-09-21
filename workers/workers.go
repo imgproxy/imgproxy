@@ -3,7 +3,6 @@ package workers
 import (
 	"context"
 
-	"github.com/imgproxy/imgproxy/v3/monitoring"
 	"golang.org/x/sync/semaphore"
 )
 
@@ -42,8 +41,6 @@ func New(config *Config) (*Workers, error) {
 // Acquire acquires a worker.
 // It returns a worker release function and an error if any.
 func (s *Workers) Acquire(ctx context.Context) (context.CancelFunc, error) {
-	defer monitoring.StartQueueSegment(ctx)()
-
 	// First, try to acquire the queue semaphore if configured.
 	// If the queue is full, return an error immediately.
 	releaseQueue, err := s.acquireQueue()
