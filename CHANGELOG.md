@@ -1,6 +1,10 @@
 # Changelog
 
 ## [Unreleased]
+### Changed
+- Format New Relic and OpenTelemetry metadata values that implement the `fmt.Stringer` interface as strings.
+
+## [3.30.0] - 2025-09-17
 ### Added
 - Add [IMGPROXY_GRACEFUL_STOP_TIMEOUT](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_GRACEFUL_STOP_TIMEOUT) config.
 - (pro) Add [color_profile](https://docs.imgproxy.net/latest/usage/processing#color-profile) processing option and [IMGPROXY_COLOR_PROFILES_DIR](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_COLOR_PROFILES_DIR) config.

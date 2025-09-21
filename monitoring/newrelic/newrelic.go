@@ -146,6 +146,11 @@ func setMetadata(span attributable, key string, value interface{}) {
 		return
 	}
 
+	if stringer, ok := value.(fmt.Stringer); ok {
+		span.AddAttribute(key, stringer.String())
+		return
+	}
+
 	rv := reflect.ValueOf(value)
 	switch {
 	case rv.Kind() == reflect.String || rv.Kind() == reflect.Bool:
