@@ -431,6 +431,11 @@ func setMetadata(span trace.Span, key string, value interface{}) {
 		return
 	}
 
+	if stringer, ok := value.(fmt.Stringer); ok {
+		span.SetAttributes(attribute.String(key, stringer.String()))
+		return
+	}
+
 	rv := reflect.ValueOf(value)
 
 	switch {
