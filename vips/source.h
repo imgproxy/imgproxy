@@ -21,7 +21,7 @@ typedef struct _VipsImgproxySourceClass {
 // creates new vips async source from a reader handle
 VipsImgproxySource *vips_new_imgproxy_source(uintptr_t readerHandle);
 
-#endif
-
 // unreferences the source, which leads to reader close
 void unref_imgproxy_source(VipsImgproxySource *source);
+
+#endif

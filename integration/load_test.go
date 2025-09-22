@@ -1,40 +1,38 @@
 package integration
 
 import (
-	"bytes"
 	"fmt"
-	"image/png"
-	"io"
 	"net/http"
 	"os"
 	"path"
 	"path/filepath"
-	"strings"
 	"testing"
 
-	"github.com/corona10/goimagehash"
-	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
+	"github.com/imgproxy/imgproxy/v3/testutil"
 	"github.com/imgproxy/imgproxy/v3/vips"
 	"github.com/stretchr/testify/suite"
 )
 
 const (
-	similarityThreshold = 5 // Distance between images to be considered similar
+	maxDistance = 0 // maximum image distance
 )
 
 type LoadTestSuite struct {
 	Suite
 
-	testImagesPath string
+	matcher           *testutil.ImageHashMatcher
+	testImagesPath    string
+	saveTmpImagesPath string
 }
 
 func (s *LoadTestSuite) SetupTest() {
 	s.testImagesPath = s.TestData.Path("test-images")
+	s.saveTmpImagesPath = os.Getenv("TEST_SAVE_TMP_IMAGES")
+	s.matcher = testutil.NewImageHashMatcher(s.TestData)
 
-	config.MaxAnimationFrames = 999
-	config.DevelopmentErrorsMode = true
-
+	s.Config().Security.DefaultOptions.MaxAnimationFrames = 999
+	s.Config().Server.DevelopmentErrorsMode = true
 	s.Config().Fetcher.Transport.Local.Root = s.testImagesPath
 }
 
@@ -55,58 +53,24 @@ func (s *LoadTestSuite) testLoadFolder(folder string) {
 		}
 
 		// get the base name of the file (8-bpp.png)
-		basePath := filepath.Base(path)
-
-		// Replace the extension with .png
-		referencePath := strings.TrimSuffix(basePath, filepath.Ext(basePath)) + ".png"
-
-		// Construct the full path to the reference image (integration/ folder)
-		referencePath = filepath.Join(s.testImagesPath, "integration", folder, referencePath)
+		baseName := filepath.Base(path)
 
 		// Construct the source URL for imgproxy (no processing)
-		sourceUrl := fmt.Sprintf("/insecure/plain/local:///%s/%s@png", folder, basePath)
+		sourceUrl := fmt.Sprintf("/insecure/plain/local:///%s/%s@bmp", folder, baseName)
 
-		imgproxyImageBytes := s.fetchImage(sourceUrl)
-		imgproxyImage, err := png.Decode(bytes.NewReader(imgproxyImageBytes))
-		s.Require().NoError(err, "Failed to decode PNG image from imgproxy for %s", basePath)
+		// Read source image from imgproxy
+		resp := s.GET(sourceUrl)
+		defer resp.Body.Close()
 
-		referenceFile, err := os.Open(referencePath)
-		s.Require().NoError(err)
-		defer referenceFile.Close()
+		s.Require().Equal(http.StatusOK, resp.StatusCode, "expected status code 200 OK, got %d, path: %s", resp.StatusCode, path)
 
-		referenceImage, err := png.Decode(referenceFile)
-		s.Require().NoError(err, "Failed to decode PNG reference image for %s", referencePath)
-
-		hash1, err := goimagehash.DifferenceHash(imgproxyImage)
-		s.Require().NoError(err)
-
-		hash2, err := goimagehash.DifferenceHash(referenceImage)
-		s.Require().NoError(err)
-
-		distance, err := hash1.Distance(hash2)
-		s.Require().NoError(err)
-
-		s.Require().LessOrEqual(distance, similarityThreshold,
-			"Image %s differs from reference image %s by %d, which is greater than the allowed threshold of %d",
-			basePath, referencePath, distance, similarityThreshold)
+		// Match image to precalculated hash
+		s.matcher.ImageMatches(s.T(), resp.Body, baseName, maxDistance)
 
 		return nil
 	})
 
 	s.Require().NoError(err)
-}
-
-// fetchImage fetches an image from the imgproxy server
-func (s *LoadTestSuite) fetchImage(path string) []byte {
-	resp := s.GET(path)
-	defer resp.Body.Close()
-
-	s.Require().Equal(http.StatusOK, resp.StatusCode, "Expected status code 200 OK, got %d, path: %s", resp.StatusCode, path)
-
-	bytes, err := io.ReadAll(resp.Body)
-	s.Require().NoError(err, "Failed to read response body from %s", path)
-
-	return bytes
 }
 
 // TestLoadSaveToPng ensures that our load pipeline works,

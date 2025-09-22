@@ -124,7 +124,7 @@ vips_foreign_save_bmp_build(VipsObject *object)
   // bands (3 or 4) * 8 bits
   int bands = vips_image_get_bands(in);
 
-  if ((bands > 3) || (bands > 4)) {
+  if ((bands < 3) || (bands > 4)) {
     vips_error("vips_foreign_save_bmp_build", "BMP source file must have 3 or 4 bands (RGB or RGBA)");
     return -1;
   }
