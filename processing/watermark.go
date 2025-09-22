@@ -24,7 +24,15 @@ func (p *Processor) watermarkPipeline() Pipeline {
 	}
 }
 
-func (p *Processor) prepareWatermark(wm *vips.Image, wmData imagedata.ImageData, po *options.ProcessingOptions, imgWidth, imgHeight int, offsetScale float64, framesCount int) error {
+func (p *Processor) prepareWatermark(
+	ctx context.Context,
+	wm *vips.Image,
+	wmData imagedata.ImageData,
+	po *options.ProcessingOptions,
+	imgWidth, imgHeight int,
+	offsetScale float64,
+	framesCount int,
+) error {
 	if err := wm.Load(wmData, 1, 1.0, 1); err != nil {
 		return err
 	}
@@ -64,7 +72,7 @@ func (p *Processor) prepareWatermark(wm *vips.Image, wmData imagedata.ImageData,
 		wmPo.Padding.Bottom = offY - wmPo.Padding.Top
 	}
 
-	if err := p.watermarkPipeline().Run(context.Background(), wm, wmPo, wmData); err != nil {
+	if err := p.watermarkPipeline().Run(ctx, wm, wmPo, wmData); err != nil {
 		return err
 	}
 
@@ -113,7 +121,7 @@ func (p *Processor) applyWatermark(
 	height := img.Height()
 	frameHeight := height / framesCount
 
-	if err := p.prepareWatermark(wm, wmData, po, width, frameHeight, offsetScale, framesCount); err != nil {
+	if err := p.prepareWatermark(ctx, wm, wmData, po, width, frameHeight, offsetScale, framesCount); err != nil {
 		return err
 	}
 

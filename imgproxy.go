@@ -32,7 +32,6 @@ type ImgproxyHandlers struct {
 	Landing    *landinghandler.Handler
 	Processing *processinghandler.Handler
 	Stream     *streamhandler.Handler
-	Processor  *processing.Processor
 }
 
 // Imgproxy holds all the components needed for imgproxy to function

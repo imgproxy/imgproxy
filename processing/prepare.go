@@ -9,11 +9,11 @@ import (
 )
 
 // ExtractGeometry extracts image width, height, orientation angle and flip flag from the image metadata.
-func (c *Context) ExtractGeometry(img *vips.Image, baseAngle int, autoRotate bool) (int, int, int, bool) {
+func ExtractGeometry(img *vips.Image, baseAngle int, autoRotate bool) (int, int, int, bool) {
 	width := img.Width()
 	height := img.Height()
 
-	angle, flip := c.angleFlip(img, autoRotate)
+	angle, flip := angleFlip(img, autoRotate)
 
 	if (angle+baseAngle)%180 != 0 {
 		width, height = height, width
@@ -24,7 +24,7 @@ func (c *Context) ExtractGeometry(img *vips.Image, baseAngle int, autoRotate boo
 
 // angleFlip returns the orientation angle and flip flag based on the image metadata
 // and po.AutoRotate flag.
-func (c *Context) angleFlip(img *vips.Image, autoRotate bool) (int, bool) {
+func angleFlip(img *vips.Image, autoRotate bool) (int, bool) {
 	if !autoRotate {
 		return 0, false
 	}
@@ -65,28 +65,20 @@ func (c *Context) CalcCropSize(orig int, crop float64) int {
 	}
 }
 
-// calcShrink calculates the destination size and shrink factor
-func calcShrink(value int, src, dst float64) (float64, float64) {
-	if value == 0 {
-		dst = src
-	}
-
-	shrink := 1.0
-	if dst != src {
-		shrink = src / dst
-	}
-
-	return dst, shrink
-}
-
 func (c *Context) calcScale(width, height int, po *options.ProcessingOptions) {
-	var wshrink, hshrink float64
-
+	wshrink, hshrink := 1.0, 1.0
 	srcW, srcH := float64(width), float64(height)
-	dstW, dstH := float64(po.Width), float64(po.Height)
 
-	dstW, wshrink = calcShrink(po.Width, srcW, dstW)
-	dstH, hshrink = calcShrink(po.Height, srcH, dstH)
+	dstW := imath.NonZero(float64(po.Width), srcW)
+	dstH := imath.NonZero(float64(po.Height), srcH)
+
+	if dstW != srcW {
+		wshrink = srcW / dstW
+	}
+
+	if dstH != srcH {
+		hshrink = srcH / dstH
+	}
 
 	if wshrink != 1 || hshrink != 1 {
 		rt := po.ResizingType
@@ -273,11 +265,7 @@ func (c *Context) limitScale(widthToScale, heightToScale int, po *options.Proces
 // Prepare calculates context image parameters based on the current image size.
 // Some steps (like trim) must call this function when finished.
 func (c *Context) CalcParams() {
-	if c.ImgData == nil {
-		return
-	}
-
-	c.SrcWidth, c.SrcHeight, c.Angle, c.Flip = c.ExtractGeometry(c.Img, c.PO.Rotate, c.PO.AutoRotate)
+	c.SrcWidth, c.SrcHeight, c.Angle, c.Flip = ExtractGeometry(c.Img, c.PO.Rotate, c.PO.AutoRotate)
 
 	c.CropWidth = c.CalcCropSize(c.SrcWidth, c.PO.Crop.Width)
 	c.CropHeight = c.CalcCropSize(c.SrcHeight, c.PO.Crop.Height)

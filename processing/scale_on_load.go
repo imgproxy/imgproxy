@@ -70,7 +70,7 @@ func (p *Processor) scaleOnLoad(c *Context) error {
 		}
 
 		angle, flip := 0, false
-		newWidth, newHeight, angle, flip = c.ExtractGeometry(thumbnail, c.PO.Rotate, c.PO.AutoRotate)
+		newWidth, newHeight, angle, flip = ExtractGeometry(thumbnail, c.PO.Rotate, c.PO.AutoRotate)
 
 		if newWidth >= c.SrcWidth || float64(newWidth)/float64(c.SrcWidth) < prescale {
 			return nil
@@ -90,7 +90,7 @@ func (p *Processor) scaleOnLoad(c *Context) error {
 			return err
 		}
 
-		newWidth, newHeight, _, _ = c.ExtractGeometry(c.Img, c.PO.Rotate, c.PO.AutoRotate)
+		newWidth, newHeight, _, _ = ExtractGeometry(c.Img, c.PO.Rotate, c.PO.AutoRotate)
 	}
 
 	// Update scales after scale-on-load

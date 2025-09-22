@@ -101,6 +101,14 @@ func (s *ProcessingTestSuite) checkSize(r *Result, width, height int) {
 	s.Require().Equal(height, r.ResultHeight, "Height mismatch")
 }
 
+func (s *ProcessingTestSuite) processImageAndCheck(imgdata imagedata.ImageData, po *options.ProcessingOptions, expectedWidth, expectedHeight int) {
+	result, err := s.processor().ProcessImage(context.Background(), imgdata, po, nil)
+	s.Require().NoError(err)
+	s.Require().NotNil(result)
+
+	s.checkSize(result, expectedWidth, expectedHeight)
+}
+
 func (s *ProcessingTestSuite) TestResizeToFit() {
 	imgdata := s.openFile("test2.jpg")
 
@@ -130,11 +138,7 @@ func (s *ProcessingTestSuite) TestResizeToFit() {
 			po.Width = tc.width
 			po.Height = tc.height
 
-			result, err := s.processor().ProcessImage(context.Background(), imgdata, po, nil)
-			s.Require().NoError(err)
-			s.Require().NotNil(result)
-
-			s.checkSize(result, tc.outWidth, tc.outHeight)
+			s.processImageAndCheck(imgdata, po, tc.outWidth, tc.outHeight)
 		})
 	}
 }
@@ -169,11 +173,7 @@ func (s *ProcessingTestSuite) TestResizeToFitEnlarge() {
 			po.Width = tc.width
 			po.Height = tc.height
 
-			result, err := s.processor().ProcessImage(context.Background(), imgdata, po, nil)
-			s.Require().NoError(err)
-			s.Require().NotNil(result)
-
-			s.checkSize(result, tc.outWidth, tc.outHeight)
+			s.processImageAndCheck(imgdata, po, tc.outWidth, tc.outHeight)
 		})
 	}
 }
@@ -213,11 +213,7 @@ func (s *ProcessingTestSuite) TestResizeToFitExtend() {
 			po.Width = tc.width
 			po.Height = tc.height
 
-			result, err := s.processor().ProcessImage(context.Background(), imgdata, po, nil)
-			s.Require().NoError(err)
-			s.Require().NotNil(result)
-
-			s.checkSize(result, tc.outWidth, tc.outHeight)
+			s.processImageAndCheck(imgdata, po, tc.outWidth, tc.outHeight)
 		})
 	}
 }
@@ -257,11 +253,7 @@ func (s *ProcessingTestSuite) TestResizeToFitExtendAR() {
 			po.Width = tc.width
 			po.Height = tc.height
 
-			result, err := s.processor().ProcessImage(context.Background(), imgdata, po, nil)
-			s.Require().NoError(err)
-			s.Require().NotNil(result)
-
-			s.checkSize(result, tc.outWidth, tc.outHeight)
+			s.processImageAndCheck(imgdata, po, tc.outWidth, tc.outHeight)
 		})
 	}
 }
@@ -295,11 +287,7 @@ func (s *ProcessingTestSuite) TestResizeToFill() {
 			po.Width = tc.width
 			po.Height = tc.height
 
-			result, err := s.processor().ProcessImage(context.Background(), imgdata, po, nil)
-			s.Require().NoError(err)
-			s.Require().NotNil(result)
-
-			s.checkSize(result, tc.outWidth, tc.outHeight)
+			s.processImageAndCheck(imgdata, po, tc.outWidth, tc.outHeight)
 		})
 	}
 }
@@ -334,11 +322,7 @@ func (s *ProcessingTestSuite) TestResizeToFillEnlarge() {
 			po.Width = tc.width
 			po.Height = tc.height
 
-			result, err := s.processor().ProcessImage(context.Background(), imgdata, po, nil)
-			s.Require().NoError(err)
-			s.Require().NotNil(result)
-
-			s.checkSize(result, tc.outWidth, tc.outHeight)
+			s.processImageAndCheck(imgdata, po, tc.outWidth, tc.outHeight)
 		})
 	}
 }
@@ -380,11 +364,7 @@ func (s *ProcessingTestSuite) TestResizeToFillExtend() {
 			po.Width = tc.width
 			po.Height = tc.height
 
-			result, err := s.processor().ProcessImage(context.Background(), imgdata, po, nil)
-			s.Require().NoError(err)
-			s.Require().NotNil(result)
-
-			s.checkSize(result, tc.outWidth, tc.outHeight)
+			s.processImageAndCheck(imgdata, po, tc.outWidth, tc.outHeight)
 		})
 	}
 }
@@ -426,11 +406,7 @@ func (s *ProcessingTestSuite) TestResizeToFillExtendAR() {
 			po.Width = tc.width
 			po.Height = tc.height
 
-			result, err := s.processor().ProcessImage(context.Background(), imgdata, po, nil)
-			s.Require().NoError(err)
-			s.Require().NotNil(result)
-
-			s.checkSize(result, tc.outWidth, tc.outHeight)
+			s.processImageAndCheck(imgdata, po, tc.outWidth, tc.outHeight)
 		})
 	}
 }
@@ -464,11 +440,7 @@ func (s *ProcessingTestSuite) TestResizeToFillDown() {
 			po.Width = tc.width
 			po.Height = tc.height
 
-			result, err := s.processor().ProcessImage(context.Background(), imgdata, po, nil)
-			s.Require().NoError(err)
-			s.Require().NotNil(result)
-
-			s.checkSize(result, tc.outWidth, tc.outHeight)
+			s.processImageAndCheck(imgdata, po, tc.outWidth, tc.outHeight)
 		})
 	}
 }
@@ -503,11 +475,7 @@ func (s *ProcessingTestSuite) TestResizeToFillDownEnlarge() {
 			po.Width = tc.width
 			po.Height = tc.height
 
-			result, err := s.processor().ProcessImage(context.Background(), imgdata, po, nil)
-			s.Require().NoError(err)
-			s.Require().NotNil(result)
-
-			s.checkSize(result, tc.outWidth, tc.outHeight)
+			s.processImageAndCheck(imgdata, po, tc.outWidth, tc.outHeight)
 		})
 	}
 }
@@ -549,11 +517,7 @@ func (s *ProcessingTestSuite) TestResizeToFillDownExtend() {
 			po.Width = tc.width
 			po.Height = tc.height
 
-			result, err := s.processor().ProcessImage(context.Background(), imgdata, po, nil)
-			s.Require().NoError(err)
-			s.Require().NotNil(result)
-
-			s.checkSize(result, tc.outWidth, tc.outHeight)
+			s.processImageAndCheck(imgdata, po, tc.outWidth, tc.outHeight)
 		})
 	}
 }
@@ -593,11 +557,7 @@ func (s *ProcessingTestSuite) TestResizeToFillDownExtendAR() {
 			po.Width = tc.width
 			po.Height = tc.height
 
-			result, err := s.processor().ProcessImage(context.Background(), imgdata, po, nil)
-			s.Require().NoError(err)
-			s.Require().NotNil(result)
-
-			s.checkSize(result, tc.outWidth, tc.outHeight)
+			s.processImageAndCheck(imgdata, po, tc.outWidth, tc.outHeight)
 		})
 	}
 }
@@ -1022,12 +982,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 			po.Rotate = tc.rotate
 			po.Padding = tc.padding
 
-			result, err := s.processor().ProcessImage(context.Background(), imgdata, po, nil)
-
-			s.Require().NoError(err)
-			s.Require().NotNil(result)
-
-			s.checkSize(result, tc.outWidth, tc.outHeight)
+			s.processImageAndCheck(imgdata, po, tc.outWidth, tc.outHeight)
 		})
 	}
 }

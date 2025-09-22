@@ -2,6 +2,7 @@ package processing
 
 import (
 	"errors"
+	"fmt"
 	"log/slog"
 
 	"github.com/imgproxy/imgproxy/v3/config"
@@ -54,7 +55,7 @@ func (c *Config) Validate() error {
 
 	for _, t := range c.PreferredFormats {
 		if !vips.SupportsSave(t) {
-			slog.Warn("%s can't be a preferred format as it's saving is not supported", t)
+			slog.Warn(fmt.Sprintf("%s can't be a preferred format as it's saving is not supported", t))
 		} else {
 			filtered = append(filtered, t)
 		}

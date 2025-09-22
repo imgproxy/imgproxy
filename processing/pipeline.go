@@ -14,13 +14,13 @@ type Context struct {
 	// The context to check for timeouts and cancellations
 	Ctx context.Context
 
-	// VIPS image
+	// Current image being processed
 	Img *vips.Image
 
 	// Processing options this pipeline runs with
 	PO *options.ProcessingOptions
 
-	// Source image data
+	// Original image data
 	ImgData imagedata.ImageData
 
 	// The watermark image provider, if any watermarking is to be done.
@@ -84,7 +84,7 @@ func (p Pipeline) Run(
 	imgdata imagedata.ImageData,
 ) error {
 	pctx := p.newContext(ctx, img, po, imgdata)
-	pctx.CalcParams() // calc initial params if not done before
+	pctx.CalcParams()
 
 	for _, step := range p {
 		if err := step(&pctx); err != nil {
