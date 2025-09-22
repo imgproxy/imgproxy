@@ -39,6 +39,9 @@ RUN go install github.com/air-verse/air@latest
 # Install lefthook
 RUN go install github.com/evilmartians/lefthook@latest
 
+# Install gotestsum
+RUN go install gotest.tools/gotestsum@latest
+
 # Install golangci-lint
 RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.1.6
 

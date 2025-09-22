@@ -16,8 +16,8 @@ import (
 	"github.com/corona10/goimagehash"
 )
 
-// ImageHash calculates a hash of the VipsImage
-func ImageHash(vipsImgPtr unsafe.Pointer) (*goimagehash.ImageHash, error) {
+// ImageDifferenceHash calculates a hash of the VipsImage
+func ImageDifferenceHash(vipsImgPtr unsafe.Pointer) (*goimagehash.ImageHash, error) {
 	vipsImg := (*C.VipsImage)(vipsImgPtr)
 
 	// Convert to RGBA and read into memory using VIPS

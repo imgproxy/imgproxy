@@ -21,36 +21,36 @@ vips_image_read_to_memory(VipsImage *in, void **buf, size_t *size)
     return -1;
   }
 
+  VipsImage *base = vips_image_new();
+  VipsImage **t = (VipsImage **) vips_object_local_array(VIPS_OBJECT(base), 2);
+
   // Initialize output parameters
   *buf = NULL;
   *size = 0;
 
   // Convert to sRGB colorspace first if needed
-  if (vips_colourspace(in, &rgba_image, VIPS_INTERPRETATION_sRGB, NULL) != 0) {
+  if (vips_colourspace(in, &t[0], VIPS_INTERPRETATION_sRGB, NULL) != 0) {
+    VIPS_UNREF(base);
     vips_error("vips_image_read_to_memory", "failed to convert to sRGB");
     return -1;
   }
 
+  in = t[0];
+
   // Add alpha channel if not present (convert to RGBA)
-  VipsImage *with_alpha = NULL;
-  if (vips_image_hasalpha(rgba_image)) {
-    // Already has alpha, just reference it
-    with_alpha = rgba_image;
-    g_object_ref(with_alpha);
-  }
-  else {
+  if (!vips_image_hasalpha(in)) {
     // Add alpha channel
-    if (vips_addalpha(rgba_image, &with_alpha, NULL) != 0) {
-      g_object_unref(rgba_image);
+    if (vips_addalpha(in, &t[1], NULL) != 0) {
+      VIPS_UNREF(base);
       vips_error("vips_image_read_to_memory", "failed to add alpha channel");
       return -1;
     }
+    in = t[1];
   }
-  g_object_unref(rgba_image);
 
   // Get raw pixel data
-  *buf = vips_image_write_to_memory(with_alpha, size);
-  g_object_unref(with_alpha);
+  *buf = vips_image_write_to_memory(in, size);
+  VIPS_UNREF(base);
 
   if (*buf == NULL) {
     vips_error("vips_image_read_to_memory", "failed to write image to memory");

@@ -255,7 +255,7 @@ func (s *ProcessingTestSuite) TestResizeToFitExtendAR() {
 
 			var i vips.Image
 			s.Require().NoError(i.Load(result.OutData, 1, 1.0, 1))
-			h, err := testutil.ImageHash(unsafe.Pointer(i.VipsImage))
+			h, err := testutil.ImageDifferenceHash(unsafe.Pointer(i.VipsImage))
 			s.Require().NoError(err)
 			fmt.Println(h.ToString())
 		})
