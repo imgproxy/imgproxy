@@ -1,4 +1,4 @@
-#include "image_hash.h"
+#include "image_hash_matcher.h"
 
 /**
  * vips_image_read_to_memory: converts VipsImage to RGBA format and reads into memory buffer
@@ -12,48 +12,54 @@
  * Returns: 0 on success, -1 on error
  */
 int
-vips_image_read_to_memory(VipsImage *in, void **buf, size_t *size)
+vips_image_read_from_to_memory(void *in, size_t in_size, void **out, size_t *out_size, int *out_width, int *out_height)
 {
-  VipsImage *rgba_image = NULL;
-
-  if (!in || !buf || !size) {
-    vips_error("vips_image_read_to_memory", "invalid arguments");
+  if (!in || !out || !out_size || !out_width || !out_height) {
+    vips_error("vips_image_read_from_to_memory", "invalid arguments");
     return -1;
   }
 
-  VipsImage *base = vips_image_new();
+  VipsImage *base = vips_image_new_from_buffer(in, in_size, "", NULL);
+  if (base == NULL) {
+    return -1;
+  }
+
   VipsImage **t = (VipsImage **) vips_object_local_array(VIPS_OBJECT(base), 2);
 
   // Initialize output parameters
-  *buf = NULL;
-  *size = 0;
+  *out = NULL;
+  *out_size = 0;
 
   // Convert to sRGB colorspace first if needed
-  if (vips_colourspace(in, &t[0], VIPS_INTERPRETATION_sRGB, NULL) != 0) {
+  if (vips_colourspace(base, &t[0], VIPS_INTERPRETATION_sRGB, NULL) != 0) {
     VIPS_UNREF(base);
-    vips_error("vips_image_read_to_memory", "failed to convert to sRGB");
+    vips_error("vips_image_read_from_to_memory", "failed to convert to sRGB");
     return -1;
   }
 
   in = t[0];
 
   // Add alpha channel if not present (convert to RGBA)
-  if (!vips_image_hasalpha(in)) {
+  if (!vips_image_hasalpha(base)) {
     // Add alpha channel
-    if (vips_addalpha(in, &t[1], NULL) != 0) {
+    if (vips_addalpha(base, &t[1], NULL) != 0) {
       VIPS_UNREF(base);
-      vips_error("vips_image_read_to_memory", "failed to add alpha channel");
+      vips_error("vips_image_read_from_to_memory", "failed to add alpha channel");
       return -1;
     }
     in = t[1];
   }
 
-  // Get raw pixel data
-  *buf = vips_image_write_to_memory(in, size);
+  // Get raw pixel data, width and height
+  *out = vips_image_write_to_memory(in, out_size);
+  *out_width = base->Xsize;
+  *out_height = base->Ysize;
+
+  // Dispose the image regardless of the result
   VIPS_UNREF(base);
 
-  if (*buf == NULL) {
-    vips_error("vips_image_read_to_memory", "failed to write image to memory");
+  if (*out == NULL) {
+    vips_error("vips_image_read_from_to_memory", "failed to write image to memory");
     return -1;
   }
 

@@ -2,17 +2,12 @@ package integration
 
 import (
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"path"
 	"path/filepath"
-	"strings"
 	"testing"
-	"unsafe"
 
-	"github.com/corona10/goimagehash"
-	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/testutil"
 	"github.com/imgproxy/imgproxy/v3/vips"
@@ -26,17 +21,15 @@ const (
 type LoadTestSuite struct {
 	Suite
 
-	testImagesPath      string
-	hashesPath          string
-	saveTmpImagesPath   string
-	createMissingHashes bool
+	matcher           *testutil.ImageHashMatcher
+	testImagesPath    string
+	saveTmpImagesPath string
 }
 
 func (s *LoadTestSuite) SetupTest() {
 	s.testImagesPath = s.TestData.Path("test-images")
-	s.hashesPath = s.TestData.Path("test-hashes")
 	s.saveTmpImagesPath = os.Getenv("TEST_SAVE_TMP_IMAGES")
-	s.createMissingHashes = len(os.Getenv("TEST_CREATE_MISSING_HASHES")) > 0
+	s.matcher = testutil.NewImageHashMatcher(s.TestData)
 
 	s.Config().Security.DefaultOptions.MaxAnimationFrames = 999
 	s.Config().Server.DevelopmentErrorsMode = true
@@ -66,114 +59,18 @@ func (s *LoadTestSuite) testLoadFolder(folder string) {
 		sourceUrl := fmt.Sprintf("/insecure/plain/local:///%s/%s@bmp", folder, baseName)
 
 		// Read source image from imgproxy
-		sourceImageData := s.fetchImage(sourceUrl)
-		defer sourceImageData.Close()
+		resp := s.GET(sourceUrl)
+		defer resp.Body.Close()
 
-		// Save the source image if requested
-		s.saveTmpImage(folder, baseName, sourceImageData)
+		s.Require().Equal(http.StatusOK, resp.StatusCode, "expected status code 200 OK, got %d, path: %s", resp.StatusCode, path)
 
-		// Calculate image hash of the image returned by imgproxy
-		var sourceImage vips.Image
-		s.Require().NoError(sourceImage.Load(sourceImageData, 1, 1.0, 1))
-		defer sourceImage.Clear()
-
-		sourceHash, err := testutil.ImageDifferenceHash(unsafe.Pointer(sourceImage.VipsImage))
-		s.Require().NoError(err)
-
-		// Calculate image hash path (create folder if missing)
-		hashPath, err := s.makeTargetPath(s.hashesPath, s.T().Name(), baseName, "hash")
-		s.Require().NoError(err)
-
-		// Try to read or create the hash file
-		f, err := os.Open(hashPath)
-		if os.IsNotExist(err) {
-			// If the hash file does not exist, and we are not allowed to create it, fail
-			if !s.createMissingHashes {
-				s.Require().NoError(err, "failed to read target hash from %s, use TEST_CREATE_MISSING_HASHES=true to create it", hashPath)
-			}
-
-			h, hashErr := os.Create(hashPath)
-			s.Require().NoError(hashErr, "failed to create target hash file %s", hashPath)
-			defer h.Close()
-
-			hashErr = sourceHash.Dump(h)
-			s.Require().NoError(hashErr, "failed to write target hash to %s", hashPath)
-
-			s.T().Logf("Created missing hash in %s", hashPath)
-		} else {
-			// Otherwise, if there is no error or error is something else
-			s.Require().NoError(err)
-
-			targetHash, err := goimagehash.LoadImageHash(f)
-			s.Require().NoError(err, "failed to load target hash from %s", hashPath)
-
-			distance, err := sourceHash.Distance(targetHash)
-			s.Require().NoError(err, "failed to calculate hash distance for %s", baseName)
-
-			s.Require().LessOrEqual(distance, maxDistance, "image hashes are too different for %s: distance %d", baseName, distance)
-		}
+		// Match image to precalculated hash
+		s.matcher.ImageMatches(s.T(), resp.Body, baseName, maxDistance)
 
 		return nil
 	})
 
 	s.Require().NoError(err)
-}
-
-// fetchImage fetches an image from the imgproxy server
-func (s *LoadTestSuite) fetchImage(path string) imagedata.ImageData {
-	resp := s.GET(path)
-	defer resp.Body.Close()
-
-	s.Require().Equal(http.StatusOK, resp.StatusCode, "expected status code 200 OK, got %d, path: %s", resp.StatusCode, path)
-
-	bytes, err := io.ReadAll(resp.Body)
-	s.Require().NoError(err, "failed to read response body from %s", path)
-
-	d, err := s.Imgproxy().ImageDataFactory().NewFromBytes(bytes)
-	s.Require().NoError(err, "failed to load image from bytes for %s", path)
-
-	return d
-}
-
-// makeTargetPath creates the target directory and returns file path for saving
-// the image or hash.
-func (s *LoadTestSuite) makeTargetPath(base, folder, filename, ext string) (string, error) {
-	// Create the target directory if it doesn't exist
-	targetDir := path.Join(base, folder)
-	err := os.MkdirAll(targetDir, 0755)
-	s.Require().NoError(err, "failed to create %s target directory", targetDir)
-
-	// Replace the extension with the detected one
-	filename = strings.TrimSuffix(filename, filepath.Ext(filename)) + "." + ext
-
-	// Create the target file
-	targetPath := path.Join(targetDir, filename)
-
-	return targetPath, nil
-}
-
-// saveTmpImage saves the provided image data to a temporary file
-func (s *LoadTestSuite) saveTmpImage(folder, filename string, imageData imagedata.ImageData) {
-	if s.saveTmpImagesPath == "" {
-		return
-	}
-
-	// Detect the image type to get the correct extension
-	ext, err := imagetype.Detect(imageData.Reader())
-	s.Require().NoError(err)
-
-	targetPath, err := s.makeTargetPath(s.saveTmpImagesPath, folder, filename, ext.String())
-	s.Require().NoError(err, "failed to create TEST_SAVE_TMP_IMAGES target path for %s/%s", folder, filename)
-
-	targetFile, err := os.Create(targetPath)
-	s.Require().NoError(err, "failed to create TEST_SAVE_TMP_IMAGES target file %s", targetPath)
-	defer targetFile.Close()
-
-	// Write the image data to the file
-	_, err = io.Copy(targetFile, imageData.Reader())
-	s.Require().NoError(err, "failed to write to TEST_SAVE_TMP_IMAGES target file %s", targetPath)
-
-	s.T().Logf("Saved temporary image to %s", targetPath)
 }
 
 // TestLoadSaveToPng ensures that our load pipeline works,
