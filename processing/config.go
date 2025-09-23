@@ -13,12 +13,20 @@ import (
 
 // Config holds pipeline-related configuration.
 type Config struct {
-	PreferredFormats    []imagetype.Type
-	WatermarkOpacity    float64
-	DisableShrinkOnLoad bool
-	UseLinearColorspace bool
-	SanitizeSvg         bool
-	AlwaysRasterizeSvg  bool
+	PreferredFormats      []imagetype.Type
+	SkipProcessingFormats []imagetype.Type
+	WatermarkOpacity      float64
+	DisableShrinkOnLoad   bool
+	UseLinearColorspace   bool
+	SanitizeSvg           bool
+	AlwaysRasterizeSvg    bool
+	Quality               int
+	FormatQuality         map[imagetype.Type]int
+	StripMetadata         bool
+	KeepCopyright         bool
+	StripColorProfile     bool
+	AutoRotate            bool
+	EnforceThumbnail      bool
 }
 
 // NewConfig creates a new Config instance with the given parameters.
@@ -31,6 +39,17 @@ func NewDefaultConfig() Config {
 			imagetype.GIF,
 		},
 		SanitizeSvg: true,
+		Quality:     80,
+		FormatQuality: map[imagetype.Type]int{
+			imagetype.WEBP: 79,
+			imagetype.AVIF: 63,
+			imagetype.JXL:  77,
+		},
+		StripMetadata:     true,
+		KeepCopyright:     true,
+		StripColorProfile: true,
+		AutoRotate:        true,
+		EnforceThumbnail:  false,
 	}
 }
 
@@ -41,9 +60,12 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c.WatermarkOpacity = config.WatermarkOpacity
 	c.DisableShrinkOnLoad = config.DisableShrinkOnLoad
 	c.UseLinearColorspace = config.UseLinearColorspace
+	c.SkipProcessingFormats = config.SkipProcessingFormats
 	c.PreferredFormats = config.PreferredFormats
 	c.SanitizeSvg = config.SanitizeSvg
 	c.AlwaysRasterizeSvg = config.AlwaysRasterizeSvg
+	c.AutoRotate = config.AutoRotate
+	c.EnforceThumbnail = config.EnforceThumbnail
 
 	return c, nil
 }

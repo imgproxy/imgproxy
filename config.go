@@ -29,7 +29,7 @@ type Config struct {
 	Server         server.Config
 	Security       security.Config
 	Processing     processing.Config
-	Options        options.Config
+	OptionsParser  options.Config
 }
 
 // NewDefaultConfig creates a new default configuration
@@ -43,10 +43,10 @@ func NewDefaultConfig() Config {
 			Processing: processinghandler.NewDefaultConfig(),
 			Stream:     streamhandler.NewDefaultConfig(),
 		},
-		Server:     server.NewDefaultConfig(),
-		Security:   security.NewDefaultConfig(),
-		Processing: processing.NewDefaultConfig(),
-		Options:    options.NewDefaultConfig(),
+		Server:        server.NewDefaultConfig(),
+		Security:      security.NewDefaultConfig(),
+		Processing:    processing.NewDefaultConfig(),
+		OptionsParser: options.NewDefaultConfig(),
 	}
 }
 
@@ -88,7 +88,7 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 		return nil, err
 	}
 
-	if _, err = options.LoadConfigFromEnv(&c.Options); err != nil {
+	if _, err = options.LoadConfigFromEnv(&c.OptionsParser); err != nil {
 		return nil, err
 	}
 

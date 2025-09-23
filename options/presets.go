@@ -6,9 +6,9 @@ import (
 )
 
 // parsePresets parses presets from the config and fills the presets map
-func (f *Factory) parsePresets() error {
-	for _, presetStr := range f.config.Presets {
-		if err := f.parsePreset(presetStr); err != nil {
+func (p *Parser) parsePresets() error {
+	for _, presetStr := range p.config.Presets {
+		if err := p.parsePreset(presetStr); err != nil {
 			return err
 		}
 	}
@@ -17,7 +17,7 @@ func (f *Factory) parsePresets() error {
 }
 
 // parsePreset parses a preset string and returns the name and options
-func (f *Factory) parsePreset(presetStr string) error {
+func (p *Parser) parsePreset(presetStr string) error {
 	presetStr = strings.Trim(presetStr, " ")
 
 	if len(presetStr) == 0 || strings.HasPrefix(presetStr, "#") {
@@ -42,26 +42,26 @@ func (f *Factory) parsePreset(presetStr string) error {
 
 	optsStr := strings.Split(value, "/")
 
-	opts, rest := f.parseURLOptions(optsStr)
+	opts, rest := p.parseURLOptions(optsStr)
 
 	if len(rest) > 0 {
 		return fmt.Errorf("invalid preset value: %s", presetStr)
 	}
 
-	if f.presets == nil {
-		f.presets = make(Presets)
+	if p.presets == nil {
+		p.presets = make(Presets)
 	}
 
-	f.presets[name] = opts
+	p.presets[name] = opts
 
 	return nil
 }
 
-// validatePresets validates all presets by applying them to a new ProcessingOptions instance
-func (f *Factory) validatePresets() error {
-	for name, opts := range f.presets {
-		po := f.NewProcessingOptions()
-		if err := f.applyURLOptions(po, opts, true, name); err != nil {
+// validatePresets validates all presets by applying them to a new Options instance
+func (p *Parser) validatePresets() error {
+	for name, opts := range p.presets {
+		po := New()
+		if err := p.applyURLOptions(po, opts, true, name); err != nil {
 			return fmt.Errorf("Error in preset `%s`: %s", name, err)
 		}
 	}

@@ -1,7 +1,9 @@
 package processing
 
 func (p *Processor) rotateAndFlip(c *Context) error {
-	if c.Angle%360 == 0 && c.PO.Rotate%360 == 0 && !c.Flip {
+	rotateAngle := c.PO.Rotate()
+
+	if c.Angle%360 == 0 && rotateAngle%360 == 0 && !c.Flip {
 		return nil
 	}
 
@@ -19,5 +21,5 @@ func (p *Processor) rotateAndFlip(c *Context) error {
 		}
 	}
 
-	return c.Img.Rotate(c.PO.Rotate)
+	return c.Img.Rotate(rotateAngle)
 }

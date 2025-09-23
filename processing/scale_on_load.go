@@ -60,6 +60,9 @@ func (p *Processor) scaleOnLoad(c *Context) error {
 
 	var newWidth, newHeight int
 
+	rotateAngle := c.PO.Rotate()
+	autoRotate := c.PO.AutoRotate()
+
 	if c.ImgData.Format().SupportsThumbnail() {
 		thumbnail := new(vips.Image)
 		defer thumbnail.Clear()
@@ -70,7 +73,7 @@ func (p *Processor) scaleOnLoad(c *Context) error {
 		}
 
 		angle, flip := 0, false
-		newWidth, newHeight, angle, flip = ExtractGeometry(thumbnail, c.PO.Rotate, c.PO.AutoRotate)
+		newWidth, newHeight, angle, flip = ExtractGeometry(thumbnail, rotateAngle, autoRotate)
 
 		if newWidth >= c.SrcWidth || float64(newWidth)/float64(c.SrcWidth) < prescale {
 			return nil
@@ -90,7 +93,7 @@ func (p *Processor) scaleOnLoad(c *Context) error {
 			return err
 		}
 
-		newWidth, newHeight, _, _ = ExtractGeometry(c.Img, c.PO.Rotate, c.PO.AutoRotate)
+		newWidth, newHeight, _, _ = ExtractGeometry(c.Img, rotateAngle, autoRotate)
 	}
 
 	// Update scales after scale-on-load

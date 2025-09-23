@@ -9,11 +9,20 @@ import (
 )
 
 type (
+	TypeMismatchError struct{ error }
+
 	InvalidURLError      string
 	UnknownOptionError   string
 	OptionArgumentError  string
 	SecurityOptionsError struct{}
 )
+
+func newTypeMismatchError(key string, exp, got any) error {
+	return ierrors.Wrap(
+		TypeMismatchError{fmt.Errorf("option %s is %T, not %T", key, exp, got)},
+		1,
+	)
+}
 
 func newInvalidURLError(format string, args ...interface{}) error {
 	return ierrors.Wrap(

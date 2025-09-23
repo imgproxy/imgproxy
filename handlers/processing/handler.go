@@ -14,6 +14,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/monitoring"
 	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
 	"github.com/imgproxy/imgproxy/v3/options"
+	"github.com/imgproxy/imgproxy/v3/options/keys"
 	"github.com/imgproxy/imgproxy/v3/processing"
 	"github.com/imgproxy/imgproxy/v3/security"
 	"github.com/imgproxy/imgproxy/v3/server"
@@ -24,10 +25,9 @@ import (
 type HandlerContext interface {
 	Workers() *workers.Workers
 	FallbackImage() auximageprovider.Provider
-	WatermarkImage() auximageprovider.Provider
 	ImageDataFactory() *imagedata.Factory
 	Security() *security.Checker
-	OptionsFactory() *options.Factory
+	OptionsParser() *options.Parser
 	Processor() *processing.Processor
 }
 
@@ -75,7 +75,7 @@ func (h *Handler) Execute(
 	}
 
 	// if processing options indicate raw image streaming, stream it and return
-	if po.Raw {
+	if po.GetBool(keys.Raw, false) {
 		return h.stream.Execute(ctx, req, imageURL, reqID, po, rw)
 	}
 
@@ -87,6 +87,7 @@ func (h *Handler) Execute(
 		rw:             rw,
 		config:         h.config,
 		po:             po,
+		secops:         h.Security().NewOptions(po),
 		imageURL:       imageURL,
 		monitoringMeta: mm,
 	}
@@ -98,7 +99,7 @@ func (h *Handler) Execute(
 func (h *Handler) newRequest(
 	ctx context.Context,
 	req *http.Request,
-) (string, *options.ProcessingOptions, monitoring.Meta, error) {
+) (string, *options.Options, monitoring.Meta, error) {
 	// let's extract signature and valid request path from a request
 	path, signature, err := handlers.SplitPathSignature(req)
 	if err != nil {
@@ -111,7 +112,7 @@ func (h *Handler) newRequest(
 	}
 
 	// parse image url and processing options
-	po, imageURL, err := h.OptionsFactory().ParsePath(path, req.Header)
+	po, imageURL, err := h.OptionsParser().ParsePath(path, req.Header)
 	if err != nil {
 		return "", nil, nil, ierrors.Wrap(err, 0, ierrors.WithCategory(handlers.CategoryPathParsing))
 	}
@@ -122,20 +123,20 @@ func (h *Handler) newRequest(
 	mm := monitoring.Meta{
 		monitoring.MetaSourceImageURL:    imageURL,
 		monitoring.MetaSourceImageOrigin: imageOrigin,
-		monitoring.MetaProcessingOptions: po.Diff().Flatten(),
+		monitoring.MetaOptions:           po.Map(),
 	}
 
 	// set error reporting and monitoring context
 	errorreport.SetMetadata(req, "Source Image URL", imageURL)
 	errorreport.SetMetadata(req, "Source Image Origin", imageOrigin)
-	errorreport.SetMetadata(req, "Processing Options", po)
+	errorreport.SetMetadata(req, "Options", po.NestedMap())
 
 	monitoring.SetMetadata(ctx, mm)
 
 	// verify that image URL came from the valid source
 	err = h.Security().VerifySourceURL(imageURL)
 	if err != nil {
-		return "", nil, mm, ierrors.Wrap(err, 0, ierrors.WithCategory(handlers.CategorySecurity))
+		return "", options.New(), mm, ierrors.Wrap(err, 0, ierrors.WithCategory(handlers.CategorySecurity))
 	}
 
 	return imageURL, po, mm, nil

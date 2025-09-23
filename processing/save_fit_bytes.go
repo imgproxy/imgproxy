@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/imgproxy/imgproxy/v3/imagedata"
+	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/imath"
-	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/server"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
@@ -15,13 +15,15 @@ import (
 // or the best effort data if it was not possible to fit into the limit.
 func saveImageToFitBytes(
 	ctx context.Context,
-	po *options.ProcessingOptions,
 	img *vips.Image,
+	format imagetype.Type,
+	startQuality int,
+	target int,
 ) (imagedata.ImageData, error) {
 	var newQuality int
 
-	// Start with the quality specified in the options.
-	quality := po.GetQuality()
+	// Start with the specified quality and go down from there.
+	quality := startQuality
 
 	// We will probably save the image multiple times, so we need to process its pixels
 	// to ensure that it is in random access mode.
@@ -36,7 +38,7 @@ func saveImageToFitBytes(
 			return nil, err
 		}
 
-		imgdata, err := img.Save(po.Format, quality)
+		imgdata, err := img.Save(format, quality)
 		if err != nil {
 			return nil, err
 		}
@@ -48,7 +50,7 @@ func saveImageToFitBytes(
 		}
 
 		// If we fit the limit or quality is too low, return the result.
-		if size <= po.MaxBytes || quality <= 10 {
+		if size <= target || quality <= 10 {
 			return imgdata, err
 		}
 
@@ -56,7 +58,7 @@ func saveImageToFitBytes(
 		imgdata.Close()
 
 		// Tune quality for the next attempt based on how much we exceed the limit.
-		delta := float64(size) / float64(po.MaxBytes)
+		delta := float64(size) / float64(target)
 		switch {
 		case delta > 3:
 			newQuality = imath.Scale(quality, 0.25)

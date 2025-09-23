@@ -43,7 +43,7 @@ type Imgproxy struct {
 	imageDataFactory *imagedata.Factory
 	handlers         ImgproxyHandlers
 	security         *security.Checker
-	optionsFactory   *options.Factory
+	optionsParser    *options.Parser
 	processor        *processing.Processor
 	config           *Config
 }
@@ -77,7 +77,7 @@ func New(ctx context.Context, config *Config) (*Imgproxy, error) {
 		return nil, err
 	}
 
-	processingOptionsFactory, err := options.NewFactory(&config.Options, security)
+	optionsParser, err := options.NewParser(&config.OptionsParser)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +95,7 @@ func New(ctx context.Context, config *Config) (*Imgproxy, error) {
 		imageDataFactory: idf,
 		config:           config,
 		security:         security,
-		optionsFactory:   processingOptionsFactory,
+		optionsParser:    optionsParser,
 		processor:        processor,
 	}
 
@@ -216,8 +216,8 @@ func (i *Imgproxy) Security() *security.Checker {
 	return i.security
 }
 
-func (i *Imgproxy) OptionsFactory() *options.Factory {
-	return i.optionsFactory
+func (i *Imgproxy) OptionsParser() *options.Parser {
+	return i.optionsParser
 }
 
 func (i *Imgproxy) Processor() *processing.Processor {

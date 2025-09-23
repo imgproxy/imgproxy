@@ -6,7 +6,8 @@ func (p *Processor) scale(c *Context) error {
 	}
 
 	wscale, hscale := c.WScale, c.HScale
-	if (c.Angle+c.PO.Rotate)%180 == 90 {
+
+	if (c.Angle+c.PO.Rotate())%180 == 90 {
 		wscale, hscale = hscale, wscale
 	}
 

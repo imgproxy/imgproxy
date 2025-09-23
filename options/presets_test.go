@@ -3,32 +3,21 @@ package options
 import (
 	"testing"
 
-	"github.com/imgproxy/imgproxy/v3/security"
-	"github.com/imgproxy/imgproxy/v3/testutil"
 	"github.com/stretchr/testify/suite"
 )
 
 type PresetsTestSuite struct {
-	testutil.LazySuite
-
-	security *security.Checker
+	suite.Suite
 }
 
-func (s *PresetsTestSuite) SetupSuite() {
-	c := security.NewDefaultConfig()
-	security, err := security.New(&c)
-	s.Require().NoError(err)
-	s.security = security
-}
-
-func (s *PresetsTestSuite) newFactory(presets ...string) (*Factory, error) {
+func (s *PresetsTestSuite) newParser(presets ...string) (*Parser, error) {
 	c := NewDefaultConfig()
 	c.Presets = presets
-	return NewFactory(&c, s.security)
+	return NewParser(&c)
 }
 
 func (s *PresetsTestSuite) TestParsePreset() {
-	f, err := s.newFactory("test=resize:fit:100:200/sharpen:2")
+	f, err := s.newParser("test=resize:fit:100:200/sharpen:2")
 
 	s.Require().NoError(err)
 	s.Require().Equal(urlOptions{
@@ -39,55 +28,55 @@ func (s *PresetsTestSuite) TestParsePreset() {
 
 func (s *PresetsTestSuite) TestParsePresetInvalidString() {
 	presetStr := "resize:fit:100:200/sharpen:2"
-	_, err := s.newFactory(presetStr)
+	_, err := s.newParser(presetStr)
 
 	s.Require().Error(err, "invalid preset string: %s", presetStr)
 }
 
 func (s *PresetsTestSuite) TestParsePresetEmptyName() {
 	presetStr := "=resize:fit:100:200/sharpen:2"
-	_, err := s.newFactory(presetStr)
+	_, err := s.newParser(presetStr)
 
 	s.Require().Error(err, "empty preset name: %s", presetStr)
 }
 
 func (s *PresetsTestSuite) TestParsePresetEmptyValue() {
 	presetStr := "test="
-	_, err := s.newFactory(presetStr)
+	_, err := s.newParser(presetStr)
 
 	s.Require().Error(err, "empty preset value: %s", presetStr)
 }
 
 func (s *PresetsTestSuite) TestParsePresetInvalidValue() {
 	presetStr := "test=resize:fit:100:200/sharpen:2/blur"
-	_, err := s.newFactory(presetStr)
+	_, err := s.newParser(presetStr)
 
 	s.Require().Error(err, "invalid preset value: %s", presetStr)
 }
 
 func (s *PresetsTestSuite) TestParsePresetEmptyString() {
-	f, err := s.newFactory("   ")
+	f, err := s.newParser("   ")
 
 	s.Require().NoError(err)
 	s.Require().Empty(f.presets)
 }
 
 func (s *PresetsTestSuite) TestParsePresetComment() {
-	f, err := s.newFactory("#  test=resize:fit:100:200/sharpen:2")
+	f, err := s.newParser("#  test=resize:fit:100:200/sharpen:2")
 
 	s.Require().NoError(err)
 	s.Require().Empty(f.presets)
 }
 
 func (s *PresetsTestSuite) TestValidatePresets() {
-	f, err := s.newFactory("test=resize:fit:100:200/sharpen:2")
+	f, err := s.newParser("test=resize:fit:100:200/sharpen:2")
 
 	s.Require().NoError(err)
 	s.Require().NotEmpty(f.presets)
 }
 
 func (s *PresetsTestSuite) TestValidatePresetsInvalid() {
-	_, err := s.newFactory("test=resize:fit:-1:-2/sharpen:2")
+	_, err := s.newParser("test=resize:fit:-1:-2/sharpen:2")
 
 	s.Require().Error(err)
 }

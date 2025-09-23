@@ -1,7 +1,8 @@
-package vips
+package color
 
 import (
 	"fmt"
+	"log/slog"
 	"regexp"
 )
 
@@ -12,10 +13,10 @@ const (
 	hexColorShortFormat = "%1x%1x%1x"
 )
 
-type Color struct{ R, G, B uint8 }
+type RGB struct{ R, G, B uint8 }
 
-func ColorFromHex(hexcolor string) (Color, error) {
-	c := Color{}
+func RGBFromHex(hexcolor string) (RGB, error) {
+	c := RGB{}
 
 	if !hexColorRegex.MatchString(hexcolor) {
 		return c, newColorError("Invalid hex color: %s", hexcolor)
@@ -31,4 +32,8 @@ func ColorFromHex(hexcolor string) (Color, error) {
 	}
 
 	return c, nil
+}
+
+func (c RGB) LogValue() slog.Value {
+	return slog.StringValue(fmt.Sprintf("#%02x%02x%02x", c.R, c.G, c.B))
 }

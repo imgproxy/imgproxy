@@ -5,14 +5,14 @@ import (
 )
 
 func (p *Processor) padding(c *Context) error {
-	if !c.PO.Padding.Enabled {
+	if !c.PO.PaddingEnabled() {
 		return nil
 	}
 
-	paddingTop := imath.ScaleToEven(c.PO.Padding.Top, c.DprScale)
-	paddingRight := imath.ScaleToEven(c.PO.Padding.Right, c.DprScale)
-	paddingBottom := imath.ScaleToEven(c.PO.Padding.Bottom, c.DprScale)
-	paddingLeft := imath.ScaleToEven(c.PO.Padding.Left, c.DprScale)
+	paddingTop := imath.ScaleToEven(c.PO.PaddingTop(), c.DprScale)
+	paddingRight := imath.ScaleToEven(c.PO.PaddingRight(), c.DprScale)
+	paddingBottom := imath.ScaleToEven(c.PO.PaddingBottom(), c.DprScale)
+	paddingLeft := imath.ScaleToEven(c.PO.PaddingLeft(), c.DprScale)
 
 	return c.Img.Embed(
 		c.Img.Width()+paddingLeft+paddingRight,

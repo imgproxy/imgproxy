@@ -1,7 +1,11 @@
 package processing
 
 func (p *Processor) applyFilters(c *Context) error {
-	if c.PO.Blur == 0 && c.PO.Sharpen == 0 && c.PO.Pixelate <= 1 {
+	blur := c.PO.Blur()
+	sharpen := c.PO.Sharpen()
+	pixelate := c.PO.Pixelate()
+
+	if blur == 0 && sharpen == 0 && pixelate <= 1 {
 		return nil
 	}
 
@@ -13,7 +17,7 @@ func (p *Processor) applyFilters(c *Context) error {
 		return err
 	}
 
-	if err := c.Img.ApplyFilters(c.PO.Blur, c.PO.Sharpen, c.PO.Pixelate); err != nil {
+	if err := c.Img.ApplyFilters(blur, sharpen, pixelate); err != nil {
 		return err
 	}
 
