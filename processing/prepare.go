@@ -54,7 +54,7 @@ func angleFlip(img *vips.Image, autoRotate bool) (int, bool) {
 }
 
 // CalcCropSize calculates the crop size based on the original size and crop scale.
-func (c *Context) CalcCropSize(orig int, crop float64) int {
+func CalcCropSize(orig int, crop float64) int {
 	switch {
 	case crop == 0.0:
 		return 0
@@ -267,8 +267,8 @@ func (c *Context) limitScale(widthToScale, heightToScale int, po *options.Proces
 func (c *Context) CalcParams() {
 	c.SrcWidth, c.SrcHeight, c.Angle, c.Flip = ExtractGeometry(c.Img, c.PO.Rotate, c.PO.AutoRotate)
 
-	c.CropWidth = c.CalcCropSize(c.SrcWidth, c.PO.Crop.Width)
-	c.CropHeight = c.CalcCropSize(c.SrcHeight, c.PO.Crop.Height)
+	c.CropWidth = CalcCropSize(c.SrcWidth, c.PO.Crop.Width)
+	c.CropHeight = CalcCropSize(c.SrcHeight, c.PO.Crop.Height)
 
 	widthToScale := imath.MinNonZero(c.CropWidth, c.SrcWidth)
 	heightToScale := imath.MinNonZero(c.CropHeight, c.SrcHeight)
