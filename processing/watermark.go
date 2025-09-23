@@ -4,7 +4,6 @@ import (
 	"context"
 	"math"
 
-	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imath"
 	"github.com/imgproxy/imgproxy/v3/options"
@@ -136,7 +135,7 @@ func (p *Processor) applyWatermark(
 	}
 
 	// TODO: Use runner config
-	opacity := opts.Opacity * config.WatermarkOpacity
+	opacity := opts.Opacity * p.config.WatermarkOpacity
 
 	// If we replicated the watermark and need to apply it to an animated image,
 	// it is faster to replicate the watermark to all the image and apply it single-pass

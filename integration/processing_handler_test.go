@@ -36,9 +36,6 @@ func (s *ProcessingHandlerTestSuite) SetupSubTest() {
 }
 
 func (s *ProcessingHandlerTestSuite) TestSignatureValidationFailure() {
-	config.Keys = [][]byte{[]byte("test-key")}
-	config.Salts = [][]byte{[]byte("test-salt")}
-
 	tt := []struct {
 		name       string
 		url        string
@@ -63,6 +60,9 @@ func (s *ProcessingHandlerTestSuite) TestSignatureValidationFailure() {
 
 	for _, tc := range tt {
 		s.Run(tc.name, func() {
+			s.Config().Security.Keys = [][]byte{[]byte("test-key")}
+			s.Config().Security.Salts = [][]byte{[]byte("test-salt")}
+
 			res := s.GET(tc.url)
 			s.Require().Equal(tc.statusCode, res.StatusCode)
 		})
@@ -110,9 +110,9 @@ func (s *ProcessingHandlerTestSuite) TestSourceValidation() {
 
 	for _, tc := range tt {
 		s.Run(tc.name, func() {
-			config.AllowedSources = make([]*regexp.Regexp, len(tc.allowedSources))
+			s.Config().Security.AllowedSources = make([]*regexp.Regexp, len(tc.allowedSources))
 			for i, pattern := range tc.allowedSources {
-				config.AllowedSources[i] = configurators.RegexpFromPattern(pattern)
+				s.Config().Security.AllowedSources[i] = configurators.RegexpFromPattern(pattern)
 			}
 
 			res := s.GET(tc.requestPath)
@@ -467,7 +467,7 @@ func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqCompareTooOldLastModifi
 }
 
 func (s *ProcessingHandlerTestSuite) TestAlwaysRasterizeSvg() {
-	config.AlwaysRasterizeSvg = true
+	s.Config().Processing.AlwaysRasterizeSvg = true
 
 	res := s.GET("/unsafe/rs:fill:40:40/plain/local:///test1.svg")
 
@@ -476,7 +476,7 @@ func (s *ProcessingHandlerTestSuite) TestAlwaysRasterizeSvg() {
 }
 
 func (s *ProcessingHandlerTestSuite) TestAlwaysRasterizeSvgWithEnforceAvif() {
-	config.AlwaysRasterizeSvg = true
+	s.Config().Processing.AlwaysRasterizeSvg = true
 	s.Config().Options.EnforceWebp = true
 
 	res := s.GET("/unsafe/plain/local:///test1.svg", http.Header{"Accept": []string{"image/webp"}})
@@ -486,7 +486,7 @@ func (s *ProcessingHandlerTestSuite) TestAlwaysRasterizeSvgWithEnforceAvif() {
 }
 
 func (s *ProcessingHandlerTestSuite) TestAlwaysRasterizeSvgDisabled() {
-	config.AlwaysRasterizeSvg = false
+	s.Config().Processing.AlwaysRasterizeSvg = false
 	s.Config().Options.EnforceWebp = true
 
 	res := s.GET("/unsafe/plain/local:///test1.svg")
@@ -496,7 +496,7 @@ func (s *ProcessingHandlerTestSuite) TestAlwaysRasterizeSvgDisabled() {
 }
 
 func (s *ProcessingHandlerTestSuite) TestAlwaysRasterizeSvgWithFormat() {
-	config.AlwaysRasterizeSvg = true
+	s.Config().Processing.AlwaysRasterizeSvg = true
 	s.Config().Options.SkipProcessingFormats = []imagetype.Type{imagetype.SVG}
 
 	res := s.GET("/unsafe/plain/local:///test1.svg@svg")

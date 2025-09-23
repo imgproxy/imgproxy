@@ -17,6 +17,8 @@ type Config struct {
 	WatermarkOpacity    float64
 	DisableShrinkOnLoad bool
 	UseLinearColorspace bool
+	SanitizeSvg         bool
+	AlwaysRasterizeSvg  bool
 }
 
 // NewConfig creates a new Config instance with the given parameters.
@@ -28,6 +30,7 @@ func NewDefaultConfig() Config {
 			imagetype.PNG,
 			imagetype.GIF,
 		},
+		SanitizeSvg: true,
 	}
 }
 
@@ -39,6 +42,8 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c.DisableShrinkOnLoad = config.DisableShrinkOnLoad
 	c.UseLinearColorspace = config.UseLinearColorspace
 	c.PreferredFormats = config.PreferredFormats
+	c.SanitizeSvg = config.SanitizeSvg
+	c.AlwaysRasterizeSvg = config.AlwaysRasterizeSvg
 
 	return c, nil
 }

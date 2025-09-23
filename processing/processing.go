@@ -8,7 +8,6 @@ import (
 	"slices"
 
 	"github.com/imgproxy/imgproxy/v3/auximageprovider"
-	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/options"
@@ -78,14 +77,14 @@ func (p *Processor) ProcessImage(
 
 	// Load a single page/frame of the image so we can analyze it
 	// and decide how to process it further
-	thumbnailLoaded, err := initialLoadImage(img, imgdata, po.EnforceThumbnail)
+	thumbnailLoaded, err := p.initialLoadImage(img, imgdata, po.EnforceThumbnail)
 	if err != nil {
 		return nil, err
 	}
 
 	// Let's check if we should skip standard processing
-	if shouldSkipStandardProcessing(imgdata.Format(), po) {
-		return skipStandardProcessing(img, imgdata, po)
+	if p.shouldSkipStandardProcessing(imgdata.Format(), po) {
+		return p.skipStandardProcessing(img, imgdata, po)
 	}
 
 	// Check if we expect image to be processed as animated.
@@ -96,7 +95,7 @@ func (p *Processor) ProcessImage(
 
 	// Determine output format and check if it's supported.
 	// The determined format is stored in po.Format.
-	if err = determineOutputFormat(img, imgdata, po, animated); err != nil {
+	if err = p.determineOutputFormat(img, imgdata, po, animated); err != nil {
 		return nil, err
 	}
 
@@ -108,13 +107,13 @@ func (p *Processor) ProcessImage(
 	// and remove animation-related data if not animated.
 	// Don't reload if we initially loaded a thumbnail.
 	if !thumbnailLoaded {
-		if err = reloadImageForProcessing(img, imgdata, po, animated); err != nil {
+		if err = p.reloadImageForProcessing(img, imgdata, po, animated); err != nil {
 			return nil, err
 		}
 	}
 
 	// Check image dimensions and number of frames for security reasons
-	originWidth, originHeight, err := checkImageSize(img, imgdata.Format(), po.SecurityOptions)
+	originWidth, originHeight, err := p.checkImageSize(img, imgdata.Format(), po.SecurityOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -129,12 +128,12 @@ func (p *Processor) ProcessImage(
 		return nil, err
 	}
 
-	outData, err := saveImage(ctx, img, po)
+	outData, err := p.saveImage(ctx, img, po)
 	if err != nil {
 		return nil, err
 	}
 
-	resultWidth, resultHeight, _ := getImageSize(img)
+	resultWidth, resultHeight, _ := p.getImageSize(img)
 
 	return &Result{
 		OutData:      outData,
@@ -148,7 +147,7 @@ func (p *Processor) ProcessImage(
 // initialLoadImage loads a single page/frame of the image.
 // If the image format supports thumbnails and thumbnail loading is enforced,
 // it tries to load the thumbnail first.
-func initialLoadImage(
+func (p *Processor) initialLoadImage(
 	img *vips.Image,
 	imgdata imagedata.ImageData,
 	enforceThumbnail bool,
@@ -166,7 +165,7 @@ func initialLoadImage(
 
 // reloadImageForProcessing reloads the image for processing.
 // For animated images, it loads all frames up to MaxAnimationFrames.
-func reloadImageForProcessing(
+func (p *Processor) reloadImageForProcessing(
 	img *vips.Image,
 	imgdata imagedata.ImageData,
 	po *options.ProcessingOptions,
@@ -185,12 +184,12 @@ func reloadImageForProcessing(
 
 // checkImageSize checks the image dimensions and number of frames against security options.
 // It returns the image width, height and a security check error, if any.
-func checkImageSize(
+func (p *Processor) checkImageSize(
 	img *vips.Image,
 	imgtype imagetype.Type,
 	secops security.Options,
 ) (int, int, error) {
-	width, height, frames := getImageSize(img)
+	width, height, frames := p.getImageSize(img)
 
 	if imgtype.IsVector() {
 		// We don't check vector image dimensions as we can render it in any size
@@ -204,7 +203,7 @@ func checkImageSize(
 
 // getImageSize returns the width and height of the image, taking into account
 // orientation and animation.
-func getImageSize(img *vips.Image) (int, int, int) {
+func (p *Processor) getImageSize(img *vips.Image) (int, int, int) {
 	width, height := img.Width(), img.Height()
 	frames := 1
 
@@ -225,7 +224,10 @@ func getImageSize(img *vips.Image) (int, int, int) {
 }
 
 // Returns true if image should not be processed as usual
-func shouldSkipStandardProcessing(inFormat imagetype.Type, po *options.ProcessingOptions) bool {
+func (p *Processor) shouldSkipStandardProcessing(
+	inFormat imagetype.Type,
+	po *options.ProcessingOptions,
+) bool {
 	outFormat := po.Format
 	skipProcessingFormatEnabled := slices.Contains(po.SkipProcessingFormats, inFormat)
 
@@ -235,9 +237,9 @@ func shouldSkipStandardProcessing(inFormat imagetype.Type, po *options.Processin
 		switch {
 		case outFormat == imagetype.SVG:
 			return true
-		case isOutUnknown && !config.AlwaysRasterizeSvg:
+		case isOutUnknown && !p.config.AlwaysRasterizeSvg:
 			return true
-		case isOutUnknown && config.AlwaysRasterizeSvg && skipProcessingFormatEnabled:
+		case isOutUnknown && p.config.AlwaysRasterizeSvg && skipProcessingFormatEnabled:
 			return true
 		default:
 			return false
@@ -250,20 +252,20 @@ func shouldSkipStandardProcessing(inFormat imagetype.Type, po *options.Processin
 // skipStandardProcessing skips standard image processing and returns the original image data.
 //
 // SVG images may be sanitized if configured to do so.
-func skipStandardProcessing(
+func (p *Processor) skipStandardProcessing(
 	img *vips.Image,
 	imgdata imagedata.ImageData,
 	po *options.ProcessingOptions,
 ) (*Result, error) {
 	// Even if we skip standard processing, we still need to check image dimensions
 	// to not send an image bomb to the client
-	originWidth, originHeight, err := checkImageSize(img, imgdata.Format(), po.SecurityOptions)
+	originWidth, originHeight, err := p.checkImageSize(img, imgdata.Format(), po.SecurityOptions)
 	if err != nil {
 		return nil, err
 	}
 
 	// Even in this case, SVG is an exception
-	if imgdata.Format() == imagetype.SVG && config.SanitizeSvg {
+	if imgdata.Format() == imagetype.SVG && p.config.SanitizeSvg {
 		sanitized, err := svg.Sanitize(imgdata)
 		if err != nil {
 			return nil, err
@@ -292,7 +294,7 @@ func skipStandardProcessing(
 // and image properties.
 //
 // It modifies the ProcessingOptions in place to set the output format.
-func determineOutputFormat(
+func (p *Processor) determineOutputFormat(
 	img *vips.Image,
 	imgdata imagedata.ImageData,
 	po *options.ProcessingOptions,
@@ -314,10 +316,10 @@ func determineOutputFormat(
 			po.Format = imagetype.AVIF
 		case po.PreferWebP:
 			po.Format = imagetype.WEBP
-		case isImageTypePreferred(imgdata.Format()):
+		case p.isImageTypePreferred(imgdata.Format()):
 			po.Format = imgdata.Format()
 		default:
-			po.Format = findPreferredFormat(animated, expectTransparency)
+			po.Format = p.findPreferredFormat(animated, expectTransparency)
 		}
 	case po.EnforceJxl && !animated:
 		po.Format = imagetype.JXL
@@ -335,12 +337,15 @@ func determineOutputFormat(
 }
 
 // isImageTypePreferred checks if the given image type is in the list of preferred formats.
-func isImageTypePreferred(imgtype imagetype.Type) bool {
-	return slices.Contains(config.PreferredFormats, imgtype)
+func (p *Processor) isImageTypePreferred(imgtype imagetype.Type) bool {
+	return slices.Contains(p.config.PreferredFormats, imgtype)
 }
 
 // isImageTypeCompatible checks if the given image type is compatible with the image properties.
-func isImageTypeCompatible(imgtype imagetype.Type, animated, expectTransparency bool) bool {
+func (p *Processor) isImageTypeCompatible(
+	imgtype imagetype.Type,
+	animated, expectTransparency bool,
+) bool {
 	if animated && !imgtype.SupportsAnimationSave() {
 		return false
 	}
@@ -353,14 +358,14 @@ func isImageTypeCompatible(imgtype imagetype.Type, animated, expectTransparency 
 }
 
 // findPreferredFormat finds a suitable preferred format based on image's properties.
-func findPreferredFormat(animated, expectTransparency bool) imagetype.Type {
-	for _, t := range config.PreferredFormats {
-		if isImageTypeCompatible(t, animated, expectTransparency) {
+func (p *Processor) findPreferredFormat(animated, expectTransparency bool) imagetype.Type {
+	for _, t := range p.config.PreferredFormats {
+		if p.isImageTypeCompatible(t, animated, expectTransparency) {
 			return t
 		}
 	}
 
-	return config.PreferredFormats[0]
+	return p.config.PreferredFormats[0]
 }
 
 func (p *Processor) transformImage(
@@ -494,7 +499,7 @@ func (p *Processor) transformAnimated(
 	return nil
 }
 
-func saveImage(
+func (p *Processor) saveImage(
 	ctx context.Context,
 	img *vips.Image,
 	po *options.ProcessingOptions,
