@@ -1,222 +1,19 @@
 package options
 
 import (
-	"log/slog"
-	"maps"
 	"net/http"
 	"slices"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/imgproxy/imgproxy/v3/ierrors"
-	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/imath"
-	"github.com/imgproxy/imgproxy/v3/security"
-	"github.com/imgproxy/imgproxy/v3/structdiff"
-	"github.com/imgproxy/imgproxy/v3/vips"
+	"github.com/imgproxy/imgproxy/v3/options/keys"
 )
 
 const maxClientHintDPR = 8
 
-type ExtendOptions struct {
-	Enabled bool
-	Gravity GravityOptions
-}
-
-type CropOptions struct {
-	Width   float64
-	Height  float64
-	Gravity GravityOptions
-}
-
-type PaddingOptions struct {
-	Enabled bool
-	Top     int
-	Right   int
-	Bottom  int
-	Left    int
-}
-
-type TrimOptions struct {
-	Enabled   bool
-	Threshold float64
-	Smart     bool
-	Color     vips.Color
-	EqualHor  bool
-	EqualVer  bool
-}
-
-type WatermarkOptions struct {
-	Enabled  bool
-	Opacity  float64
-	Position GravityOptions
-	Scale    float64
-}
-
-func (wo WatermarkOptions) ShouldReplicate() bool {
-	return wo.Position.Type == GravityReplicate
-}
-
-type ProcessingOptions struct {
-	defaultOptions *ProcessingOptions
-	config         *Config
-
-	ResizingType      ResizeType
-	Width             int
-	Height            int
-	MinWidth          int
-	MinHeight         int
-	ZoomWidth         float64
-	ZoomHeight        float64
-	Dpr               float64
-	Gravity           GravityOptions
-	Enlarge           bool
-	Extend            ExtendOptions
-	ExtendAspectRatio ExtendOptions
-	Crop              CropOptions
-	Padding           PaddingOptions
-	Trim              TrimOptions
-	Rotate            int
-	Format            imagetype.Type
-	Quality           int
-	FormatQuality     map[imagetype.Type]int
-	MaxBytes          int
-	Flatten           bool
-	Background        vips.Color
-	Blur              float32
-	Sharpen           float32
-	Pixelate          int
-	StripMetadata     bool
-	KeepCopyright     bool
-	StripColorProfile bool
-	AutoRotate        bool
-	EnforceThumbnail  bool
-
-	SkipProcessingFormats []imagetype.Type
-
-	CacheBuster string
-
-	Expires *time.Time
-
-	Watermark WatermarkOptions
-
-	PreferWebP  bool
-	EnforceWebP bool
-	PreferAvif  bool
-	EnforceAvif bool
-	PreferJxl   bool
-	EnforceJxl  bool
-
-	Filename         string
-	ReturnAttachment bool
-
-	Raw bool
-
-	UsedPresets []string
-
-	SecurityOptions security.Options
-}
-
-func newDefaultProcessingOptions(config *Config, security *security.Checker) *ProcessingOptions {
-	po := ProcessingOptions{
-		config: config,
-
-		ResizingType:      ResizeFit,
-		Width:             0,
-		Height:            0,
-		ZoomWidth:         1,
-		ZoomHeight:        1,
-		Gravity:           GravityOptions{Type: GravityCenter},
-		Enlarge:           false,
-		Extend:            ExtendOptions{Enabled: false, Gravity: GravityOptions{Type: GravityCenter}},
-		ExtendAspectRatio: ExtendOptions{Enabled: false, Gravity: GravityOptions{Type: GravityCenter}},
-		Padding:           PaddingOptions{Enabled: false},
-		Trim:              TrimOptions{Enabled: false, Threshold: 10, Smart: true},
-		Rotate:            0,
-		Quality:           0,
-		FormatQuality:     maps.Clone(config.FormatQuality),
-		MaxBytes:          0,
-		Format:            imagetype.Unknown,
-		Background:        vips.Color{R: 255, G: 255, B: 255},
-		Blur:              0,
-		Sharpen:           0,
-		Dpr:               1,
-		Watermark:         WatermarkOptions{Opacity: 1, Position: GravityOptions{Type: GravityCenter}},
-		StripMetadata:     config.StripMetadata,
-		KeepCopyright:     config.KeepCopyright,
-		StripColorProfile: config.StripColorProfile,
-		AutoRotate:        config.AutoRotate,
-		EnforceThumbnail:  config.EnforceThumbnail,
-		ReturnAttachment:  config.ReturnAttachment,
-
-		SkipProcessingFormats: slices.Clone(config.SkipProcessingFormats),
-
-		SecurityOptions: security.NewOptions(),
-	}
-
-	return &po
-}
-
-func (po *ProcessingOptions) GetQuality() int {
-	q := po.Quality
-
-	if q == 0 {
-		q = po.FormatQuality[po.Format]
-	}
-
-	if q == 0 {
-		q = po.config.Quality
-	}
-
-	return q
-}
-
-func (po *ProcessingOptions) Diff() structdiff.Entries {
-	return structdiff.Diff(po.defaultOptions, po)
-}
-
-func (po *ProcessingOptions) String() string {
-	return po.Diff().String()
-}
-
-func (po *ProcessingOptions) MarshalJSON() ([]byte, error) {
-	return po.Diff().MarshalJSON()
-}
-
-func (po *ProcessingOptions) LogValue() slog.Value {
-	return po.Diff().LogValue()
-}
-
-// Default returns the ProcessingOptions instance with defaults set
-func (po *ProcessingOptions) Default() *ProcessingOptions {
-	return po.defaultOptions.clone()
-}
-
-// clone clones ProcessingOptions struct and its slices and maps
-func (po *ProcessingOptions) clone() *ProcessingOptions {
-	clone := *po
-
-	clone.FormatQuality = maps.Clone(po.FormatQuality)
-	clone.SkipProcessingFormats = slices.Clone(po.SkipProcessingFormats)
-	clone.UsedPresets = slices.Clone(po.UsedPresets)
-
-	if po.Expires != nil {
-		poExipres := *po.Expires
-		clone.Expires = &poExipres
-	}
-
-	// Copy the pointer to the default options struct from parent.
-	// Nil means that we have just cloned the default options struct itself
-	// so we set it as default options.
-	if clone.defaultOptions == nil {
-		clone.defaultOptions = po
-	}
-
-	return &clone
-}
-
-func (f *Factory) applyURLOption(po *ProcessingOptions, name string, args []string, usedPresets ...string) error {
+func (p *Parser) applyURLOption(po *Options, name string, args []string, usedPresets ...string) error {
 	switch name {
 	case "resize", "rs":
 		return applyResizeOption(po, args)
@@ -265,63 +62,63 @@ func (f *Factory) applyURLOption(po *ProcessingOptions, name string, args []stri
 	case "watermark", "wm":
 		return applyWatermarkOption(po, args)
 	case "strip_metadata", "sm":
-		return applyStripMetadataOption(po, args)
+		return applyStripMetadataOption(po.Main(), args)
 	case "keep_copyright", "kcr":
-		return applyKeepCopyrightOption(po, args)
+		return applyKeepCopyrightOption(po.Main(), args)
 	case "strip_color_profile", "scp":
-		return applyStripColorProfileOption(po, args)
+		return applyStripColorProfileOption(po.Main(), args)
 	case "enforce_thumbnail", "eth":
-		return applyEnforceThumbnailOption(po, args)
+		return applyEnforceThumbnailOption(po.Main(), args)
 	// Saving options
 	case "quality", "q":
-		return applyQualityOption(po, args)
+		return applyQualityOption(po.Main(), args)
 	case "format_quality", "fq":
-		return applyFormatQualityOption(po, args)
+		return applyFormatQualityOption(po.Main(), args)
 	case "max_bytes", "mb":
-		return applyMaxBytesOption(po, args)
+		return applyMaxBytesOption(po.Main(), args)
 	case "format", "f", "ext":
-		return applyFormatOption(po, args)
+		return applyFormatOption(po.Main(), args)
 	// Handling options
 	case "skip_processing", "skp":
-		return applySkipProcessingFormatsOption(po, args)
+		return applySkipProcessingFormatsOption(po.Main(), args)
 	case "raw":
-		return applyRawOption(po, args)
+		return applyRawOption(po.Main(), args)
 	case "cachebuster", "cb":
-		return applyCacheBusterOption(po, args)
+		return applyCacheBusterOption(po.Main(), args)
 	case "expires", "exp":
-		return applyExpiresOption(po, args)
+		return applyExpiresOption(po.Main(), args)
 	case "filename", "fn":
-		return applyFilenameOption(po, args)
+		return applyFilenameOption(po.Main(), args)
 	case "return_attachment", "att":
-		return applyReturnAttachmentOption(po, args)
+		return applyReturnAttachmentOption(po.Main(), args)
 	// Presets
 	case "preset", "pr":
-		return applyPresetOption(f, po, args, usedPresets...)
+		return applyPresetOption(p, po, args, usedPresets...)
 	// Security
 	case "max_src_resolution", "msr":
-		return applyMaxSrcResolutionOption(po, args)
+		return applyMaxSrcResolutionOption(p, po.Main(), args)
 	case "max_src_file_size", "msfs":
-		return applyMaxSrcFileSizeOption(po, args)
+		return applyMaxSrcFileSizeOption(p, po.Main(), args)
 	case "max_animation_frames", "maf":
-		return applyMaxAnimationFramesOption(po, args)
+		return applyMaxAnimationFramesOption(p, po.Main(), args)
 	case "max_animation_frame_resolution", "mafr":
-		return applyMaxAnimationFrameResolutionOption(po, args)
+		return applyMaxAnimationFrameResolutionOption(p, po.Main(), args)
 	case "max_result_dimension", "mrd":
-		return applyMaxResultDimensionOption(po, args)
+		return applyMaxResultDimensionOption(p, po.Main(), args)
 	}
 
 	return newUnknownOptionError("processing", name)
 }
 
-func (f *Factory) applyURLOptions(po *ProcessingOptions, options urlOptions, allowAll bool, usedPresets ...string) error {
-	allowAll = allowAll || len(f.config.AllowedProcessingOptions) == 0
+func (p *Parser) applyURLOptions(po *Options, options urlOptions, allowAll bool, usedPresets ...string) error {
+	allowAll = allowAll || len(p.config.AllowedProcessingOptions) == 0
 
 	for _, opt := range options {
-		if !allowAll && !slices.Contains(f.config.AllowedProcessingOptions, opt.Name) {
+		if !allowAll && !slices.Contains(p.config.AllowedProcessingOptions, opt.Name) {
 			return newForbiddenOptionError("processing", opt.Name)
 		}
 
-		if err := f.applyURLOption(po, opt.Name, opt.Args, usedPresets...); err != nil {
+		if err := p.applyURLOption(po, opt.Name, opt.Args, usedPresets...); err != nil {
 			return err
 		}
 	}
@@ -329,34 +126,46 @@ func (f *Factory) applyURLOptions(po *ProcessingOptions, options urlOptions, all
 	return nil
 }
 
-func (f *Factory) defaultProcessingOptions(headers http.Header) (*ProcessingOptions, error) {
-	po := f.NewProcessingOptions()
+func (p *Parser) defaultProcessingOptions(headers http.Header) (*Options, error) {
+	po := New()
 
 	headerAccept := headers.Get("Accept")
 
-	if strings.Contains(headerAccept, "image/webp") {
-		po.PreferWebP = f.config.AutoWebp || f.config.EnforceWebp
-		po.EnforceWebP = f.config.EnforceWebp
+	if (p.config.AutoWebp || p.config.EnforceWebp) && strings.Contains(headerAccept, "image/webp") {
+		po.Set(keys.PreferWebP, true)
+
+		if p.config.EnforceWebp {
+			po.Set(keys.EnforceWebP, true)
+		}
 	}
 
-	if strings.Contains(headerAccept, "image/avif") {
-		po.PreferAvif = f.config.AutoAvif || f.config.EnforceAvif
-		po.EnforceAvif = f.config.EnforceAvif
+	if (p.config.AutoAvif || p.config.EnforceAvif) && strings.Contains(headerAccept, "image/avif") {
+		po.Set(keys.PreferAvif, true)
+
+		if p.config.EnforceAvif {
+			po.Set(keys.EnforceAvif, true)
+		}
 	}
 
-	if strings.Contains(headerAccept, "image/jxl") {
-		po.PreferJxl = f.config.AutoJxl || f.config.EnforceJxl
-		po.EnforceJxl = f.config.EnforceJxl
+	if (p.config.AutoJxl || p.config.EnforceJxl) && strings.Contains(headerAccept, "image/jxl") {
+		po.Set(keys.PreferJxl, true)
+
+		if p.config.EnforceJxl {
+			po.Set(keys.EnforceJxl, true)
+		}
 	}
 
-	if f.config.EnableClientHints {
+	if p.config.EnableClientHints {
+		dpr := 1.0
+
 		headerDPR := headers.Get("Sec-CH-DPR")
 		if len(headerDPR) == 0 {
 			headerDPR = headers.Get("DPR")
 		}
 		if len(headerDPR) > 0 {
-			if dpr, err := strconv.ParseFloat(headerDPR, 64); err == nil && (dpr > 0 && dpr <= maxClientHintDPR) {
-				po.Dpr = dpr
+			if d, err := strconv.ParseFloat(headerDPR, 64); err == nil && (d > 0 && d <= maxClientHintDPR) {
+				dpr = d
+				po.Set(keys.Dpr, dpr)
 			}
 		}
 
@@ -366,13 +175,13 @@ func (f *Factory) defaultProcessingOptions(headers http.Header) (*ProcessingOpti
 		}
 		if len(headerWidth) > 0 {
 			if w, err := strconv.Atoi(headerWidth); err == nil {
-				po.Width = imath.Shrink(w, po.Dpr)
+				po.Set(keys.Width, imath.Shrink(w, dpr))
 			}
 		}
 	}
 
-	if _, ok := f.presets["default"]; ok {
-		if err := applyPresetOption(f, po, []string{"default"}); err != nil {
+	if _, ok := p.presets["default"]; ok {
+		if err := applyPresetOption(p, po, []string{"default"}); err != nil {
 			return po, err
 		}
 	}
@@ -381,20 +190,20 @@ func (f *Factory) defaultProcessingOptions(headers http.Header) (*ProcessingOpti
 }
 
 // ParsePath parses the given request path and returns the processing options and image URL
-func (f *Factory) ParsePath(
+func (p *Parser) ParsePath(
 	path string,
 	headers http.Header,
-) (po *ProcessingOptions, imageURL string, err error) {
+) (po *Options, imageURL string, err error) {
 	if path == "" || path == "/" {
 		return nil, "", newInvalidURLError("invalid path: %s", path)
 	}
 
 	parts := strings.Split(strings.TrimPrefix(path, "/"), "/")
 
-	if f.config.OnlyPresets {
-		po, imageURL, err = f.parsePathPresets(parts, headers)
+	if p.config.OnlyPresets {
+		po, imageURL, err = p.parsePathPresets(parts, headers)
 	} else {
-		po, imageURL, err = f.parsePathOptions(parts, headers)
+		po, imageURL, err = p.parsePathOptions(parts, headers)
 	}
 
 	if err != nil {
@@ -405,28 +214,28 @@ func (f *Factory) ParsePath(
 }
 
 // parsePathOptions parses processing options from the URL path
-func (f *Factory) parsePathOptions(parts []string, headers http.Header) (*ProcessingOptions, string, error) {
+func (p *Parser) parsePathOptions(parts []string, headers http.Header) (*Options, string, error) {
 	if _, ok := resizeTypes[parts[0]]; ok {
 		return nil, "", newInvalidURLError("It looks like you're using the deprecated basic URL format")
 	}
 
-	po, err := f.defaultProcessingOptions(headers)
+	po, err := p.defaultProcessingOptions(headers)
 	if err != nil {
 		return nil, "", err
 	}
 
-	options, urlParts := f.parseURLOptions(parts)
+	options, urlParts := p.parseURLOptions(parts)
 
-	if err = f.applyURLOptions(po, options, false); err != nil {
+	if err = p.applyURLOptions(po, options, false); err != nil {
 		return nil, "", err
 	}
 
-	url, extension, err := f.DecodeURL(urlParts)
+	url, extension, err := p.DecodeURL(urlParts)
 	if err != nil {
 		return nil, "", err
 	}
 
-	if !po.Raw && len(extension) > 0 {
+	if !Get(po, keys.Raw, false) && len(extension) > 0 {
 		if err = applyFormatOption(po, []string{extension}); err != nil {
 			return nil, "", err
 		}
@@ -436,37 +245,29 @@ func (f *Factory) parsePathOptions(parts []string, headers http.Header) (*Proces
 }
 
 // parsePathPresets parses presets from the URL path
-func (f *Factory) parsePathPresets(parts []string, headers http.Header) (*ProcessingOptions, string, error) {
-	po, err := f.defaultProcessingOptions(headers)
+func (p *Parser) parsePathPresets(parts []string, headers http.Header) (*Options, string, error) {
+	po, err := p.defaultProcessingOptions(headers)
 	if err != nil {
 		return nil, "", err
 	}
 
-	presets := strings.Split(parts[0], f.config.ArgumentsSeparator)
+	presets := strings.Split(parts[0], p.config.ArgumentsSeparator)
 	urlParts := parts[1:]
 
-	if err = applyPresetOption(f, po, presets); err != nil {
+	if err = applyPresetOption(p, po, presets); err != nil {
 		return nil, "", err
 	}
 
-	url, extension, err := f.DecodeURL(urlParts)
+	url, extension, err := p.DecodeURL(urlParts)
 	if err != nil {
 		return nil, "", err
 	}
 
-	if !po.Raw && len(extension) > 0 {
+	if !Get(po, keys.Raw, false) && len(extension) > 0 {
 		if err = applyFormatOption(po, []string{extension}); err != nil {
 			return nil, "", err
 		}
 	}
 
 	return po, url, nil
-}
-
-func (po *ProcessingOptions) isSecurityOptionsAllowed() error {
-	if po.config.AllowSecurityOptions {
-		return nil
-	}
-
-	return newSecurityOptionsError()
 }

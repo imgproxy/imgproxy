@@ -1,7 +1,7 @@
 package processing
 
 func (p *Processor) trim(c *Context) error {
-	if !c.PO.Trim.Enabled {
+	if !c.PO.TrimEnabled() {
 		return nil
 	}
 
@@ -10,7 +10,13 @@ func (p *Processor) trim(c *Context) error {
 		return err
 	}
 
-	if err := c.Img.Trim(c.PO.Trim.Threshold, c.PO.Trim.Smart, c.PO.Trim.Color, c.PO.Trim.EqualHor, c.PO.Trim.EqualVer); err != nil {
+	if err := c.Img.Trim(
+		c.PO.TrimThreshold(),
+		c.PO.TrimSmart(),
+		c.PO.TrimColor(),
+		c.PO.TrimEqualHor(),
+		c.PO.TrimEqualVer(),
+	); err != nil {
 		return err
 	}
 	if err := c.Img.CopyMemory(); err != nil {

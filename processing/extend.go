@@ -1,11 +1,10 @@
 package processing
 
 import (
-	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
-func extendImage(img *vips.Image, width, height int, gravity *options.GravityOptions, offsetScale float64) error {
+func extendImage(img *vips.Image, width, height int, gravity *GravityOptions, offsetScale float64) error {
 	imgWidth := img.Width()
 	imgHeight := img.Height()
 
@@ -25,16 +24,17 @@ func extendImage(img *vips.Image, width, height int, gravity *options.GravityOpt
 }
 
 func (p *Processor) extend(c *Context) error {
-	if !c.PO.Extend.Enabled {
+	if !c.PO.ExtendEnabled() {
 		return nil
 	}
 
 	width, height := c.TargetWidth, c.TargetHeight
-	return extendImage(c.Img, width, height, &c.PO.Extend.Gravity, c.DprScale)
+	gravity := c.PO.ExtendGravity()
+	return extendImage(c.Img, width, height, &gravity, c.DprScale)
 }
 
 func (p *Processor) extendAspectRatio(c *Context) error {
-	if !c.PO.ExtendAspectRatio.Enabled {
+	if !c.PO.ExtendAspectRatioEnabled() {
 		return nil
 	}
 
@@ -43,5 +43,6 @@ func (p *Processor) extendAspectRatio(c *Context) error {
 		return nil
 	}
 
-	return extendImage(c.Img, width, height, &c.PO.ExtendAspectRatio.Gravity, c.DprScale)
+	gravity := c.PO.ExtendAspectRatioGravity()
+	return extendImage(c.Img, width, height, &gravity, c.DprScale)
 }

@@ -7,7 +7,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/options"
 )
 
-func calcPosition(width, height, innerWidth, innerHeight int, gravity *options.GravityOptions, dpr float64, allowOverflow bool) (left, top int) {
+func calcPosition(width, height, innerWidth, innerHeight int, gravity *GravityOptions, dpr float64, allowOverflow bool) (left, top int) {
 	if gravity.Type == options.GravityFocusPoint {
 		pointX := imath.ScaleToEven(width, gravity.X)
 		pointY := imath.ScaleToEven(height, gravity.Y)

@@ -104,22 +104,24 @@ func stripXMP(img *vips.Image) []byte {
 }
 
 func (p *Processor) stripMetadata(c *Context) error {
-	if !c.PO.StripMetadata {
+	if !c.PO.StripMetadata() {
 		return nil
 	}
 
+	keepCopyright := c.PO.KeepCopyright()
+
 	var ps3Data, xmpData []byte
 
-	if c.PO.KeepCopyright {
+	if keepCopyright {
 		ps3Data = stripPS3(c.Img)
 		xmpData = stripXMP(c.Img)
 	}
 
-	if err := c.Img.Strip(c.PO.KeepCopyright); err != nil {
+	if err := c.Img.Strip(keepCopyright); err != nil {
 		return err
 	}
 
-	if c.PO.KeepCopyright {
+	if keepCopyright {
 		if len(ps3Data) > 0 {
 			c.Img.SetBlob("iptc-data", ps3Data)
 		}

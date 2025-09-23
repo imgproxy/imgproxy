@@ -12,6 +12,8 @@ import (
 	"github.com/imgproxy/imgproxy/v3/monitoring"
 	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
 	"github.com/imgproxy/imgproxy/v3/options"
+	"github.com/imgproxy/imgproxy/v3/options/keys"
+	"github.com/imgproxy/imgproxy/v3/security"
 	"github.com/imgproxy/imgproxy/v3/server"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
@@ -24,20 +26,23 @@ type request struct {
 	req            *http.Request
 	rw             server.ResponseWriter
 	config         *Config
-	po             *options.ProcessingOptions
+	po             *options.Options
+	secops         security.Options
 	imageURL       string
 	monitoringMeta monitoring.Meta
 }
 
 // execute handles the actual processing logic
 func (r *request) execute(ctx context.Context) error {
+	outFormat := options.Get(r.po, keys.Format, imagetype.Unknown)
+
 	// Check if we can save the resulting image
-	canSave := vips.SupportsSave(r.po.Format) ||
-		r.po.Format == imagetype.Unknown ||
-		r.po.Format == imagetype.SVG
+	canSave := vips.SupportsSave(outFormat) ||
+		outFormat == imagetype.Unknown ||
+		outFormat == imagetype.SVG
 
 	if !canSave {
-		return handlers.NewCantSaveError(r.po.Format)
+		return handlers.NewCantSaveError(outFormat)
 	}
 
 	// Acquire worker

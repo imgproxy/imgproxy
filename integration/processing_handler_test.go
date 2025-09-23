@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/config/configurators"
 	"github.com/imgproxy/imgproxy/v3/fetcher"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
@@ -26,7 +25,6 @@ type ProcessingHandlerTestSuite struct {
 }
 
 func (s *ProcessingHandlerTestSuite) SetupTest() {
-	config.Reset() // We reset config only at the start of each test
 	s.Config().Fetcher.Transport.HTTP.AllowLoopbackSourceAddresses = true
 }
 
@@ -168,7 +166,7 @@ func (s *ProcessingHandlerTestSuite) TestResultingFormatNotSupported() {
 }
 
 func (s *ProcessingHandlerTestSuite) TestSkipProcessingConfig() {
-	s.Config().Options.SkipProcessingFormats = []imagetype.Type{imagetype.PNG}
+	s.Config().Processing.SkipProcessingFormats = []imagetype.Type{imagetype.PNG}
 
 	res := s.GET("/unsafe/rs:fill:4:4/plain/local:///test1.png")
 
@@ -184,7 +182,7 @@ func (s *ProcessingHandlerTestSuite) TestSkipProcessingPO() {
 }
 
 func (s *ProcessingHandlerTestSuite) TestSkipProcessingSameFormat() {
-	s.Config().Options.SkipProcessingFormats = []imagetype.Type{imagetype.PNG}
+	s.Config().Processing.SkipProcessingFormats = []imagetype.Type{imagetype.PNG}
 
 	res := s.GET("/unsafe/rs:fill:4:4/plain/local:///test1.png@png")
 
@@ -193,7 +191,7 @@ func (s *ProcessingHandlerTestSuite) TestSkipProcessingSameFormat() {
 }
 
 func (s *ProcessingHandlerTestSuite) TestSkipProcessingDifferentFormat() {
-	s.Config().Options.SkipProcessingFormats = []imagetype.Type{imagetype.PNG}
+	s.Config().Processing.SkipProcessingFormats = []imagetype.Type{imagetype.PNG}
 
 	res := s.GET("/unsafe/rs:fill:4:4/plain/local:///test1.png@jpg")
 
@@ -477,7 +475,7 @@ func (s *ProcessingHandlerTestSuite) TestAlwaysRasterizeSvg() {
 
 func (s *ProcessingHandlerTestSuite) TestAlwaysRasterizeSvgWithEnforceAvif() {
 	s.Config().Processing.AlwaysRasterizeSvg = true
-	s.Config().Options.EnforceWebp = true
+	s.Config().OptionsParser.EnforceWebp = true
 
 	res := s.GET("/unsafe/plain/local:///test1.svg", http.Header{"Accept": []string{"image/webp"}})
 
@@ -487,7 +485,7 @@ func (s *ProcessingHandlerTestSuite) TestAlwaysRasterizeSvgWithEnforceAvif() {
 
 func (s *ProcessingHandlerTestSuite) TestAlwaysRasterizeSvgDisabled() {
 	s.Config().Processing.AlwaysRasterizeSvg = false
-	s.Config().Options.EnforceWebp = true
+	s.Config().OptionsParser.EnforceWebp = true
 
 	res := s.GET("/unsafe/plain/local:///test1.svg")
 
@@ -497,7 +495,7 @@ func (s *ProcessingHandlerTestSuite) TestAlwaysRasterizeSvgDisabled() {
 
 func (s *ProcessingHandlerTestSuite) TestAlwaysRasterizeSvgWithFormat() {
 	s.Config().Processing.AlwaysRasterizeSvg = true
-	s.Config().Options.SkipProcessingFormats = []imagetype.Type{imagetype.SVG}
+	s.Config().Processing.SkipProcessingFormats = []imagetype.Type{imagetype.SVG}
 
 	res := s.GET("/unsafe/plain/local:///test1.svg@svg")
 

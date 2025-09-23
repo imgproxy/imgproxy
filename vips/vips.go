@@ -31,6 +31,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/monitoring/newrelic"
 	"github.com/imgproxy/imgproxy/v3/monitoring/otel"
 	"github.com/imgproxy/imgproxy/v3/monitoring/prometheus"
+	"github.com/imgproxy/imgproxy/v3/vips/color"
 )
 
 type Image struct {
@@ -323,7 +324,7 @@ func gbool(b bool) C.gboolean {
 	return C.gboolean(0)
 }
 
-func cRGB(c Color) C.RGB {
+func cRGB(c color.RGB) C.RGB {
 	return C.RGB{
 		r: C.double(c.R),
 		g: C.double(c.G),
@@ -751,7 +752,7 @@ func (img *Image) SmartCrop(width, height int) error {
 	return nil
 }
 
-func (img *Image) Trim(threshold float64, smart bool, color Color, equalHor bool, equalVer bool) error {
+func (img *Image) Trim(threshold float64, smart bool, color color.RGB, equalHor bool, equalVer bool) error {
 	var tmp *C.VipsImage
 
 	if err := img.CopyMemory(); err != nil {
@@ -767,7 +768,7 @@ func (img *Image) Trim(threshold float64, smart bool, color Color, equalHor bool
 	return nil
 }
 
-func (img *Image) Flatten(bg Color) error {
+func (img *Image) Flatten(bg color.RGB) error {
 	var tmp *C.VipsImage
 
 	if C.vips_flatten_go(img.VipsImage, &tmp, cRGB(bg)) != 0 {
@@ -778,7 +779,7 @@ func (img *Image) Flatten(bg Color) error {
 	return nil
 }
 
-func (img *Image) ApplyFilters(blurSigma, sharpSigma float32, pixelatePixels int) error {
+func (img *Image) ApplyFilters(blurSigma, sharpSigma float64, pixelatePixels int) error {
 	var tmp *C.VipsImage
 
 	if C.vips_apply_filters(img.VipsImage, &tmp, C.double(blurSigma), C.double(sharpSigma), C.int(pixelatePixels)) != 0 {

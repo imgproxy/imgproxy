@@ -9,22 +9,22 @@ import (
 
 const urlTokenPlain = "plain"
 
-func (f *Factory) preprocessURL(u string) string {
-	for _, repl := range f.config.URLReplacements {
+func (p *Parser) preprocessURL(u string) string {
+	for _, repl := range p.config.URLReplacements {
 		u = repl.Regexp.ReplaceAllString(u, repl.Replacement)
 	}
 
-	if len(f.config.BaseURL) == 0 || strings.HasPrefix(u, f.config.BaseURL) {
+	if len(p.config.BaseURL) == 0 || strings.HasPrefix(u, p.config.BaseURL) {
 		return u
 	}
 
-	return fmt.Sprintf("%s%s", f.config.BaseURL, u)
+	return fmt.Sprintf("%s%s", p.config.BaseURL, u)
 }
 
-func (f *Factory) decodeBase64URL(parts []string) (string, string, error) {
+func (p *Parser) decodeBase64URL(parts []string) (string, string, error) {
 	var format string
 
-	if len(parts) > 1 && f.config.Base64URLIncludesFilename {
+	if len(parts) > 1 && p.config.Base64URLIncludesFilename {
 		parts = parts[:len(parts)-1]
 	}
 
@@ -48,10 +48,10 @@ func (f *Factory) decodeBase64URL(parts []string) (string, string, error) {
 		return "", "", newInvalidURLError("Invalid url encoding: %s", encoded)
 	}
 
-	return f.preprocessURL(string(imageURL)), format, nil
+	return p.preprocessURL(string(imageURL)), format, nil
 }
 
-func (f *Factory) decodePlainURL(parts []string) (string, string, error) {
+func (p *Parser) decodePlainURL(parts []string) (string, string, error) {
 	var format string
 
 	encoded := strings.Join(parts, "/")
@@ -74,17 +74,17 @@ func (f *Factory) decodePlainURL(parts []string) (string, string, error) {
 		return "", "", newInvalidURLError("Invalid url encoding: %s", encoded)
 	}
 
-	return f.preprocessURL(unescaped), format, nil
+	return p.preprocessURL(unescaped), format, nil
 }
 
-func (f *Factory) DecodeURL(parts []string) (string, string, error) {
+func (p *Parser) DecodeURL(parts []string) (string, string, error) {
 	if len(parts) == 0 {
 		return "", "", newInvalidURLError("Image URL is empty")
 	}
 
 	if parts[0] == urlTokenPlain && len(parts) > 1 {
-		return f.decodePlainURL(parts[1:])
+		return p.decodePlainURL(parts[1:])
 	}
 
-	return f.decodeBase64URL(parts)
+	return p.decodeBase64URL(parts)
 }

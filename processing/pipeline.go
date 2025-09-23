@@ -6,6 +6,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/auximageprovider"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/options"
+	"github.com/imgproxy/imgproxy/v3/security"
 	"github.com/imgproxy/imgproxy/v3/server"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
@@ -18,7 +19,10 @@ type Context struct {
 	Img *vips.Image
 
 	// Processing options this pipeline runs with
-	PO *options.ProcessingOptions
+	PO ProcessingOptions
+
+	// Security options this pipeline runs with
+	SecOps security.Options
 
 	// Original image data
 	ImgData imagedata.ImageData
@@ -33,7 +37,7 @@ type Context struct {
 
 	CropWidth   int
 	CropHeight  int
-	CropGravity options.GravityOptions
+	CropGravity GravityOptions
 
 	WScale float64
 	HScale float64
@@ -80,10 +84,11 @@ type Pipeline []Step
 func (p Pipeline) Run(
 	ctx context.Context,
 	img *vips.Image,
-	po *options.ProcessingOptions,
+	po ProcessingOptions,
+	secops security.Options,
 	imgdata imagedata.ImageData,
 ) error {
-	pctx := p.newContext(ctx, img, po, imgdata)
+	pctx := p.newContext(ctx, img, po, secops, imgdata)
 	pctx.CalcParams()
 
 	for _, step := range p {
@@ -104,13 +109,15 @@ func (p Pipeline) Run(
 func (p Pipeline) newContext(
 	ctx context.Context,
 	img *vips.Image,
-	po *options.ProcessingOptions,
+	po ProcessingOptions,
+	secops security.Options,
 	imgdata imagedata.ImageData,
 ) Context {
 	pctx := Context{
 		Ctx:     ctx,
 		Img:     img,
 		PO:      po,
+		SecOps:  secops,
 		ImgData: imgdata,
 
 		WScale: 1.0,
@@ -119,11 +126,12 @@ func (p Pipeline) newContext(
 		DprScale:        1.0,
 		VectorBaseScale: 1.0,
 
-		CropGravity: po.Crop.Gravity,
+		CropGravity: po.CropGravity(),
 	}
 
+	// If crop gravity is not set, use the general gravity option
 	if pctx.CropGravity.Type == options.GravityUnknown {
-		pctx.CropGravity = po.Gravity
+		pctx.CropGravity = po.Gravity()
 	}
 
 	return pctx

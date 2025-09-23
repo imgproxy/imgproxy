@@ -7,7 +7,6 @@ import (
 	"runtime"
 	"slices"
 
-	"github.com/imgproxy/imgproxy/v3/auximageprovider"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/options"
@@ -64,8 +63,8 @@ type Result struct {
 func (p *Processor) ProcessImage(
 	ctx context.Context,
 	imgdata imagedata.ImageData,
-	po *options.ProcessingOptions,
-	watermarkProvider auximageprovider.Provider,
+	o *options.Options,
+	secops security.Options,
 ) (*Result, error) {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
@@ -75,56 +74,59 @@ func (p *Processor) ProcessImage(
 	img := new(vips.Image)
 	defer img.Clear()
 
+	po := p.NewProcessingOptions(o)
+
 	// Load a single page/frame of the image so we can analyze it
 	// and decide how to process it further
-	thumbnailLoaded, err := p.initialLoadImage(img, imgdata, po.EnforceThumbnail)
+	thumbnailLoaded, err := p.initialLoadImage(img, imgdata, po.EnforceThumbnail())
 	if err != nil {
 		return nil, err
 	}
 
 	// Let's check if we should skip standard processing
 	if p.shouldSkipStandardProcessing(imgdata.Format(), po) {
-		return p.skipStandardProcessing(img, imgdata, po)
+		return p.skipStandardProcessing(img, imgdata, po, secops)
 	}
 
 	// Check if we expect image to be processed as animated.
 	// If MaxAnimationFrames is 1, we never process as animated since we can only
 	// process a single frame.
-	animated := po.SecurityOptions.MaxAnimationFrames > 1 &&
+	animated := secops.MaxAnimationFrames > 1 &&
 		img.IsAnimated()
 
 	// Determine output format and check if it's supported.
-	// The determined format is stored in po.Format.
-	if err = p.determineOutputFormat(img, imgdata, po, animated); err != nil {
+	// The determined format is stored in po[KeyFormat].
+	outFormat, err := p.determineOutputFormat(img, imgdata, po, animated)
+	if err != nil {
 		return nil, err
 	}
 
 	// Now, as we know the output format, we know for sure if the image
 	// should be processed as animated
-	animated = animated && po.Format.SupportsAnimationSave()
+	animated = animated && outFormat.SupportsAnimationSave()
 
 	// Load required number of frames/pages for processing
 	// and remove animation-related data if not animated.
 	// Don't reload if we initially loaded a thumbnail.
 	if !thumbnailLoaded {
-		if err = p.reloadImageForProcessing(img, imgdata, po, animated); err != nil {
+		if err = p.reloadImageForProcessing(img, imgdata, po, secops, animated); err != nil {
 			return nil, err
 		}
 	}
 
 	// Check image dimensions and number of frames for security reasons
-	originWidth, originHeight, err := p.checkImageSize(img, imgdata.Format(), po.SecurityOptions)
+	originWidth, originHeight, err := p.checkImageSize(img, imgdata.Format(), secops)
 	if err != nil {
 		return nil, err
 	}
 
 	// Transform the image (resize, crop, etc)
-	if err = p.transformImage(ctx, img, po, imgdata, animated); err != nil {
+	if err = p.transformImage(ctx, img, po, secops, imgdata, animated); err != nil {
 		return nil, err
 	}
 
 	// Finalize the image (colorspace conversion, metadata stripping, etc)
-	if err = p.finalizePipeline().Run(ctx, img, po, imgdata); err != nil {
+	if err = p.finalizePipeline().Run(ctx, img, po, secops, imgdata); err != nil {
 		return nil, err
 	}
 
@@ -168,13 +170,14 @@ func (p *Processor) initialLoadImage(
 func (p *Processor) reloadImageForProcessing(
 	img *vips.Image,
 	imgdata imagedata.ImageData,
-	po *options.ProcessingOptions,
+	po ProcessingOptions,
+	secops security.Options,
 	asAnimated bool,
 ) error {
 	// If we are going to process the image as animated, we need to load all frames
 	// up to MaxAnimationFrames
 	if asAnimated {
-		frames := min(img.Pages(), po.SecurityOptions.MaxAnimationFrames)
+		frames := min(img.Pages(), secops.MaxAnimationFrames)
 		return img.Load(imgdata, 1, 1.0, frames)
 	}
 
@@ -226,10 +229,10 @@ func (p *Processor) getImageSize(img *vips.Image) (int, int, int) {
 // Returns true if image should not be processed as usual
 func (p *Processor) shouldSkipStandardProcessing(
 	inFormat imagetype.Type,
-	po *options.ProcessingOptions,
+	po ProcessingOptions,
 ) bool {
-	outFormat := po.Format
-	skipProcessingFormatEnabled := slices.Contains(po.SkipProcessingFormats, inFormat)
+	outFormat := po.Format()
+	skipProcessingFormatEnabled := po.ShouldSkipFormatProcessing(inFormat)
 
 	if inFormat == imagetype.SVG {
 		isOutUnknown := outFormat == imagetype.Unknown
@@ -255,11 +258,12 @@ func (p *Processor) shouldSkipStandardProcessing(
 func (p *Processor) skipStandardProcessing(
 	img *vips.Image,
 	imgdata imagedata.ImageData,
-	po *options.ProcessingOptions,
+	po ProcessingOptions,
+	secops security.Options,
 ) (*Result, error) {
 	// Even if we skip standard processing, we still need to check image dimensions
 	// to not send an image bomb to the client
-	originWidth, originHeight, err := p.checkImageSize(img, imgdata.Format(), po.SecurityOptions)
+	originWidth, originHeight, err := p.checkImageSize(img, imgdata.Format(), secops)
 	if err != nil {
 		return nil, err
 	}
@@ -297,43 +301,47 @@ func (p *Processor) skipStandardProcessing(
 func (p *Processor) determineOutputFormat(
 	img *vips.Image,
 	imgdata imagedata.ImageData,
-	po *options.ProcessingOptions,
+	po ProcessingOptions,
 	animated bool,
-) error {
+) (imagetype.Type, error) {
 	// Check if the image may have transparency
-	expectTransparency := !po.Flatten &&
-		(img.HasAlpha() || po.Padding.Enabled || po.Extend.Enabled)
+	expectTransparency := !po.ShouldFlatten() &&
+		(img.HasAlpha() || po.PaddingEnabled() || po.ExtendEnabled())
+
+	format := po.Format()
 
 	switch {
-	case po.Format == imagetype.SVG:
+	case format == imagetype.SVG:
 		// At this point we can't allow requested format to be SVG as we can't save SVGs
-		return newSaveFormatError(po.Format)
-	case po.Format == imagetype.Unknown:
+		return imagetype.Unknown, newSaveFormatError(format)
+	case format == imagetype.Unknown:
 		switch {
-		case po.PreferJxl && !animated:
-			po.Format = imagetype.JXL
-		case po.PreferAvif && !animated:
-			po.Format = imagetype.AVIF
-		case po.PreferWebP:
-			po.Format = imagetype.WEBP
+		case po.PreferJxl() && !animated:
+			format = imagetype.JXL
+		case po.PreferAvif() && !animated:
+			format = imagetype.AVIF
+		case po.PreferWebP():
+			format = imagetype.WEBP
 		case p.isImageTypePreferred(imgdata.Format()):
-			po.Format = imgdata.Format()
+			format = imgdata.Format()
 		default:
-			po.Format = p.findPreferredFormat(animated, expectTransparency)
+			format = p.findPreferredFormat(animated, expectTransparency)
 		}
-	case po.EnforceJxl && !animated:
-		po.Format = imagetype.JXL
-	case po.EnforceAvif && !animated:
-		po.Format = imagetype.AVIF
-	case po.EnforceWebP:
-		po.Format = imagetype.WEBP
+	case po.EnforceJxl() && !animated:
+		format = imagetype.JXL
+	case po.EnforceAvif() && !animated:
+		format = imagetype.AVIF
+	case po.EnforceWebP():
+		format = imagetype.WEBP
 	}
 
-	if !vips.SupportsSave(po.Format) {
-		return newSaveFormatError(po.Format)
+	po.SetFormat(format)
+
+	if !vips.SupportsSave(format) {
+		return format, newSaveFormatError(format)
 	}
 
-	return nil
+	return format, nil
 }
 
 // isImageTypePreferred checks if the given image type is in the list of preferred formats.
@@ -371,25 +379,27 @@ func (p *Processor) findPreferredFormat(animated, expectTransparency bool) image
 func (p *Processor) transformImage(
 	ctx context.Context,
 	img *vips.Image,
-	po *options.ProcessingOptions,
+	po ProcessingOptions,
+	secops security.Options,
 	imgdata imagedata.ImageData,
 	asAnimated bool,
 ) error {
 	if asAnimated {
-		return p.transformAnimated(ctx, img, po)
+		return p.transformAnimated(ctx, img, po, secops)
 	}
 
-	return p.mainPipeline().Run(ctx, img, po, imgdata)
+	return p.mainPipeline().Run(ctx, img, po, secops, imgdata)
 }
 
 func (p *Processor) transformAnimated(
 	ctx context.Context,
 	img *vips.Image,
-	po *options.ProcessingOptions,
+	po ProcessingOptions,
+	secops security.Options,
 ) error {
-	if po.Trim.Enabled {
+	if po.TrimEnabled() {
 		slog.Warn("Trim is not supported for animated images")
-		po.Trim.Enabled = false
+		po.DisableTrim()
 	}
 
 	imgWidth := img.Width()
@@ -412,9 +422,11 @@ func (p *Processor) transformAnimated(
 
 	// Disable watermarking for individual frames.
 	// It's more efficient to apply watermark to all frames at once after they are processed.
-	watermarkEnabled := po.Watermark.Enabled
-	po.Watermark.Enabled = false
-	defer func() { po.Watermark.Enabled = watermarkEnabled }()
+	watermarkOpacity := po.WatermarkOpacity()
+	if watermarkOpacity > 0 {
+		po.DeleteWatermarkOpacity()
+		defer func() { po.SetWatermarkOpacity(watermarkOpacity) }()
+	}
 
 	// Make a slice to hold processed frames and ensure they are cleared on function exit
 	frames := make([]*vips.Image, 0, framesCount)
@@ -440,7 +452,7 @@ func (p *Processor) transformAnimated(
 		// Transform the frame using the main pipeline.
 		// We don't provide imgdata here to prevent scale-on-load.
 		// Watermarking is disabled for individual frames (see above)
-		if err = p.mainPipeline().Run(ctx, frame, po, nil); err != nil {
+		if err = p.mainPipeline().Run(ctx, frame, po, secops, nil); err != nil {
 			return err
 		}
 
@@ -464,7 +476,7 @@ func (p *Processor) transformAnimated(
 
 	// Apply watermark to all frames at once if it was requested.
 	// This is much more efficient than applying watermark to individual frames.
-	if watermarkEnabled && p.watermarkProvider != nil {
+	if watermarkOpacity > 0 && p.watermarkProvider != nil {
 		// Get DPR scale to apply watermark correctly on HiDPI images.
 		// `imgproxy-dpr-scale` is set by the pipeline.
 		dprScale, derr := img.GetDoubleDefault("imgproxy-dpr-scale", 1.0)
@@ -472,7 +484,10 @@ func (p *Processor) transformAnimated(
 			dprScale = 1.0
 		}
 
-		if err = p.applyWatermark(ctx, img, po, dprScale, framesCount); err != nil {
+		// Set watermark opacity back
+		po.SetWatermarkOpacity(watermarkOpacity)
+
+		if err = p.applyWatermark(ctx, img, po, secops, dprScale, framesCount); err != nil {
 			return err
 		}
 	}
@@ -502,29 +517,35 @@ func (p *Processor) transformAnimated(
 func (p *Processor) saveImage(
 	ctx context.Context,
 	img *vips.Image,
-	po *options.ProcessingOptions,
+	po ProcessingOptions,
 ) (imagedata.ImageData, error) {
+	outFormat := po.Format()
+
 	// AVIF has a minimal dimension of 16 pixels.
 	// If one of the dimensions is less, we need to switch to another format.
-	if po.Format == imagetype.AVIF && (img.Width() < 16 || img.Height() < 16) {
+	if outFormat == imagetype.AVIF && (img.Width() < 16 || img.Height() < 16) {
 		if img.HasAlpha() {
-			po.Format = imagetype.PNG
+			outFormat = imagetype.PNG
 		} else {
-			po.Format = imagetype.JPEG
+			outFormat = imagetype.JPEG
 		}
+
+		po.SetFormat(outFormat)
 
 		slog.Warn(fmt.Sprintf(
 			"Minimal dimension of AVIF is 16, current image size is %dx%d. Image will be saved as %s",
-			img.Width(), img.Height(), po.Format,
+			img.Width(), img.Height(), outFormat,
 		))
 	}
 
+	quality := po.Quality(outFormat)
+
 	// If we want and can fit the image into the specified number of bytes,
 	// let's do it.
-	if po.MaxBytes > 0 && po.Format.SupportsQuality() {
-		return saveImageToFitBytes(ctx, po, img)
+	if maxBytes := po.MaxBytes(); maxBytes > 0 && outFormat.SupportsQuality() {
+		return saveImageToFitBytes(ctx, img, outFormat, quality, maxBytes)
 	}
 
 	// Otherwise, just save the image with the specified quality.
-	return img.Save(po.Format, po.GetQuality())
+	return img.Save(outFormat, quality)
 }

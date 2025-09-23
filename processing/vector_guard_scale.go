@@ -11,8 +11,8 @@ func (p *Processor) vectorGuardScale(c *Context) error {
 		return nil
 	}
 
-	if resolution := c.Img.Width() * c.Img.Height(); resolution > c.PO.SecurityOptions.MaxSrcResolution {
-		scale := math.Sqrt(float64(c.PO.SecurityOptions.MaxSrcResolution) / float64(resolution))
+	if resolution := c.Img.Width() * c.Img.Height(); resolution > c.SecOps.MaxSrcResolution {
+		scale := math.Sqrt(float64(c.SecOps.MaxSrcResolution) / float64(resolution))
 		c.VectorBaseScale = scale
 
 		if err := c.Img.Load(c.ImgData, 1, scale, 1); err != nil {

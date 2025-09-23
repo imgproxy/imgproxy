@@ -6,7 +6,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
-func cropImage(img *vips.Image, cropWidth, cropHeight int, gravity *options.GravityOptions, offsetScale float64) error {
+func cropImage(img *vips.Image, cropWidth, cropHeight int, gravity *GravityOptions, offsetScale float64) error {
 	if cropWidth == 0 && cropHeight == 0 {
 		return nil
 	}
@@ -33,12 +33,13 @@ func cropImage(img *vips.Image, cropWidth, cropHeight int, gravity *options.Grav
 
 func (p *Processor) crop(c *Context) error {
 	width, height := c.CropWidth, c.CropHeight
+	rotateAngle := c.PO.Rotate()
 
 	opts := c.CropGravity
 	opts.RotateAndFlip(c.Angle, c.Flip)
-	opts.RotateAndFlip(c.PO.Rotate, false)
+	opts.RotateAndFlip(rotateAngle, false)
 
-	if (c.Angle+c.PO.Rotate)%180 == 90 {
+	if (c.Angle+rotateAngle)%180 == 90 {
 		width, height = height, width
 	}
 
@@ -47,5 +48,6 @@ func (p *Processor) crop(c *Context) error {
 }
 
 func (p *Processor) cropToResult(c *Context) error {
-	return cropImage(c.Img, c.ResultCropWidth, c.ResultCropHeight, &c.PO.Gravity, c.DprScale)
+	gravity := c.PO.Gravity()
+	return cropImage(c.Img, c.ResultCropWidth, c.ResultCropHeight, &gravity, c.DprScale)
 }

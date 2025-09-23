@@ -14,7 +14,7 @@ import (
 const (
 	MetaSourceImageURL    = "imgproxy.source_image_url"
 	MetaSourceImageOrigin = "imgproxy.source_image_origin"
-	MetaProcessingOptions = "imgproxy.processing_options"
+	MetaOptions           = "imgproxy.options"
 )
 
 type Meta map[string]any

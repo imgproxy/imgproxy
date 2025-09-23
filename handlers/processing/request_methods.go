@@ -15,6 +15,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/monitoring"
 	"github.com/imgproxy/imgproxy/v3/options"
+	"github.com/imgproxy/imgproxy/v3/options/keys"
 	"github.com/imgproxy/imgproxy/v3/processing"
 	"github.com/imgproxy/imgproxy/v3/server"
 )
@@ -66,7 +67,7 @@ func (r *request) makeDownloadOptions(ctx context.Context, h http.Header) imaged
 
 	return imagedata.DownloadOptions{
 		Header:           h,
-		MaxSrcFileSize:   r.po.SecurityOptions.MaxSrcFileSize,
+		MaxSrcFileSize:   r.secops.MaxSrcFileSize,
 		DownloadFinished: downloadFinished,
 	}
 }
@@ -135,7 +136,7 @@ func (r *request) handleDownloadError(
 // getFallbackImage returns fallback image if any
 func (r *request) getFallbackImage(
 	ctx context.Context,
-	po *options.ProcessingOptions,
+	po *options.Options,
 ) (imagedata.ImageData, http.Header) {
 	fbi := r.FallbackImage()
 
@@ -159,8 +160,8 @@ func (r *request) getFallbackImage(
 
 // processImage calls actual image processing
 func (r *request) processImage(ctx context.Context, originData imagedata.ImageData) (*processing.Result, error) {
-	defer monitoring.StartProcessingSegment(ctx, r.monitoringMeta.Filter(monitoring.MetaProcessingOptions))()
-	return r.Processor().ProcessImage(ctx, originData, r.po, r.WatermarkImage())
+	defer monitoring.StartProcessingSegment(ctx, r.monitoringMeta.Filter(monitoring.MetaOptions))()
+	return r.Processor().ProcessImage(ctx, originData, r.po, r.secops)
 }
 
 // writeDebugHeaders writes debug headers (X-Origin-*, X-Result-*) to the response
@@ -189,7 +190,7 @@ func (r *request) writeDebugHeaders(result *processing.Result, originData imaged
 
 // respondWithNotModified writes not-modified response
 func (r *request) respondWithNotModified() error {
-	r.rw.SetExpires(r.po.Expires)
+	r.rw.SetExpires(r.po.GetTime(keys.Expires))
 	r.rw.SetVary()
 
 	if r.config.LastModifiedEnabled {
@@ -224,12 +225,12 @@ func (r *request) respondWithImage(statusCode int, resultData imagedata.ImageDat
 	r.rw.SetContentLength(resultSize)
 	r.rw.SetContentDisposition(
 		r.imageURL,
-		r.po.Filename,
+		r.po.GetString(keys.Filename, ""),
 		resultData.Format().Ext(),
 		"",
-		r.po.ReturnAttachment,
+		r.po.GetBool(keys.ReturnAttachment, false),
 	)
-	r.rw.SetExpires(r.po.Expires)
+	r.rw.SetExpires(r.po.GetTime(keys.Expires))
 	r.rw.SetVary()
 	r.rw.SetCanonical(r.imageURL)
 
