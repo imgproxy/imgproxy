@@ -24,7 +24,7 @@ func extendImage(img *vips.Image, width, height int, gravity *options.GravityOpt
 	return img.Embed(width, height, offX, offY)
 }
 
-func extend(c *Context) error {
+func (p *Processor) extend(c *Context) error {
 	if !c.PO.Extend.Enabled {
 		return nil
 	}
@@ -33,7 +33,7 @@ func extend(c *Context) error {
 	return extendImage(c.Img, width, height, &c.PO.Extend.Gravity, c.DprScale)
 }
 
-func extendAspectRatio(c *Context) error {
+func (p *Processor) extendAspectRatio(c *Context) error {
 	if !c.PO.ExtendAspectRatio.Enabled {
 		return nil
 	}

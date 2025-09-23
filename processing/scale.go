@@ -1,6 +1,6 @@
 package processing
 
-func scale(c *Context) error {
+func (p *Processor) scale(c *Context) error {
 	if c.WScale == 1 && c.HScale == 1 {
 		return nil
 	}

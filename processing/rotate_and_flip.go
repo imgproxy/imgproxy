@@ -1,23 +1,23 @@
 package processing
 
-func rotateAndFlip(ctx *Context) error {
-	if ctx.Angle%360 == 0 && ctx.PO.Rotate%360 == 0 && !ctx.Flip {
+func (p *Processor) rotateAndFlip(c *Context) error {
+	if c.Angle%360 == 0 && c.PO.Rotate%360 == 0 && !c.Flip {
 		return nil
 	}
 
-	if err := ctx.Img.CopyMemory(); err != nil {
+	if err := c.Img.CopyMemory(); err != nil {
 		return err
 	}
 
-	if err := ctx.Img.Rotate(ctx.Angle); err != nil {
+	if err := c.Img.Rotate(c.Angle); err != nil {
 		return err
 	}
 
-	if ctx.Flip {
-		if err := ctx.Img.Flip(); err != nil {
+	if c.Flip {
+		if err := c.Img.Flip(); err != nil {
 			return err
 		}
 	}
 
-	return ctx.Img.Rotate(ctx.PO.Rotate)
+	return c.Img.Rotate(c.PO.Rotate)
 }

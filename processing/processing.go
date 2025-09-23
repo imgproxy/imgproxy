@@ -2,7 +2,6 @@ package processing
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log/slog"
 	"runtime"
@@ -13,59 +12,41 @@ import (
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/options"
-	"github.com/imgproxy/imgproxy/v3/processing/pipeline"
 	"github.com/imgproxy/imgproxy/v3/security"
 	"github.com/imgproxy/imgproxy/v3/server"
 	"github.com/imgproxy/imgproxy/v3/svg"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
-// The main processing pipeline (without finalization).
-// Applied to non-animated images and individual frames of animated images.
-var mainPipeline = Pipeline{
-	vectorGuardScale,
-	trim,
-	prepare,
-	scaleOnLoad,
-	colorspaceToProcessing,
-	crop,
-	scale,
-	rotateAndFlip,
-	cropToResult,
-	applyFilters,
-	extend,
-	extendAspectRatio,
-	padding,
-	fixSize,
-	flatten,
-	watermark,
+// mainPipeline constructs the main image processing pipeline.
+// This pipeline is applied to each image frame.
+func (p *Processor) mainPipeline() Pipeline {
+	return Pipeline{
+		p.vectorGuardScale,
+		p.trim,
+		p.scaleOnLoad,
+		p.colorspaceToProcessing,
+		p.crop,
+		p.scale,
+		p.rotateAndFlip,
+		p.cropToResult,
+		p.applyFilters,
+		p.extend,
+		p.extendAspectRatio,
+		p.padding,
+		p.fixSize,
+		p.flatten,
+		p.watermark,
+	}
 }
 
-// The finalization pipeline.
-// Applied right before saving the image.
-var finalizePipeline = Pipeline{
-	colorspaceToResult,
-	stripMetadata,
-}
-
-func ValidatePreferredFormats() error {
-	filtered := config.PreferredFormats[:0]
-
-	for _, t := range config.PreferredFormats {
-		if !vips.SupportsSave(t) {
-			slog.Warn(fmt.Sprintf("%s can't be a preferred format as it's saving is not supported", t))
-		} else {
-			filtered = append(filtered, t)
-		}
+// finalizePipeline constructs the finalization pipeline.
+// This pipeline is applied before saving the image.
+func (p *Processor) finalizePipeline() Pipeline {
+	return Pipeline{
+		p.colorspaceToResult,
+		p.stripMetadata,
 	}
-
-	if len(filtered) == 0 {
-		return errors.New("no supported preferred formats specified")
-	}
-
-	config.PreferredFormats = filtered
-
-	return nil
 }
 
 // Result holds the result of image processing.
@@ -81,7 +62,7 @@ type Result struct {
 // and returns a [Result] that includes the processed image data and dimensions.
 //
 // The provided processing options may be modified during processing.
-func ProcessImage(
+func (p *Processor) ProcessImage(
 	ctx context.Context,
 	imgdata imagedata.ImageData,
 	po *options.ProcessingOptions,
@@ -139,19 +120,12 @@ func ProcessImage(
 	}
 
 	// Transform the image (resize, crop, etc)
-	if err = transformImage(ctx, img, po, imgdata, animated, watermarkProvider); err != nil {
+	if err = p.transformImage(ctx, img, po, imgdata, animated); err != nil {
 		return nil, err
 	}
-
-	// NOTE: THIS IS TEMPORARY
-	runner, err := tmpNewRunner(watermarkProvider)
-	if err != nil {
-		return nil, err
-	}
-	// NOTE: END TEMPORARY BLOCK
 
 	// Finalize the image (colorspace conversion, metadata stripping, etc)
-	if err = runner.Run(finalizePipeline, ctx, img, po, imgdata); err != nil {
+	if err = p.finalizePipeline().Run(ctx, img, po, imgdata); err != nil {
 		return nil, err
 	}
 
@@ -389,41 +363,25 @@ func findPreferredFormat(animated, expectTransparency bool) imagetype.Type {
 	return config.PreferredFormats[0]
 }
 
-func transformImage(
+func (p *Processor) transformImage(
 	ctx context.Context,
 	img *vips.Image,
 	po *options.ProcessingOptions,
 	imgdata imagedata.ImageData,
 	asAnimated bool,
-	watermark auximageprovider.Provider,
 ) error {
 	if asAnimated {
-		return transformAnimated(ctx, img, po, watermark)
+		return p.transformAnimated(ctx, img, po)
 	}
 
-	// NOTE: THIS IS TEMPORARY
-	runner, err := tmpNewRunner(watermark)
-	if err != nil {
-		return err
-	}
-	// NOTE: END TEMPORARY BLOCK
-
-	return runner.Run(mainPipeline, ctx, img, po, imgdata)
+	return p.mainPipeline().Run(ctx, img, po, imgdata)
 }
 
-func transformAnimated(
+func (p *Processor) transformAnimated(
 	ctx context.Context,
 	img *vips.Image,
 	po *options.ProcessingOptions,
-	watermark auximageprovider.Provider,
 ) error {
-	// NOTE: THIS IS TEMPORARY
-	runner, rerr := tmpNewRunner(watermark)
-	if rerr != nil {
-		return rerr
-	}
-	// NOTE: END TEMPORARY BLOCK
-
 	if po.Trim.Enabled {
 		slog.Warn("Trim is not supported for animated images")
 		po.Trim.Enabled = false
@@ -477,7 +435,7 @@ func transformAnimated(
 		// Transform the frame using the main pipeline.
 		// We don't provide imgdata here to prevent scale-on-load.
 		// Watermarking is disabled for individual frames (see above)
-		if err = runner.Run(mainPipeline, ctx, frame, po, nil); err != nil {
+		if err = p.mainPipeline().Run(ctx, frame, po, nil); err != nil {
 			return err
 		}
 
@@ -501,7 +459,7 @@ func transformAnimated(
 
 	// Apply watermark to all frames at once if it was requested.
 	// This is much more efficient than applying watermark to individual frames.
-	if watermarkEnabled && watermark != nil {
+	if watermarkEnabled && p.watermarkProvider != nil {
 		// Get DPR scale to apply watermark correctly on HiDPI images.
 		// `imgproxy-dpr-scale` is set by the pipeline.
 		dprScale, derr := img.GetDoubleDefault("imgproxy-dpr-scale", 1.0)
@@ -509,7 +467,7 @@ func transformAnimated(
 			dprScale = 1.0
 		}
 
-		if err = applyWatermark(ctx, runner, img, watermark, po, dprScale, framesCount); err != nil {
+		if err = p.applyWatermark(ctx, img, po, dprScale, framesCount); err != nil {
 			return err
 		}
 	}
@@ -564,17 +522,4 @@ func saveImage(
 
 	// Otherwise, just save the image with the specified quality.
 	return img.Save(po.Format, po.GetQuality())
-}
-
-func tmpNewRunner(watermarkProvider auximageprovider.Provider) (*Runner, error) {
-	// NOTE: THIS IS TEMPORARY
-	config, err := pipeline.LoadConfigFromEnv(nil)
-	if err != nil {
-		return nil, err
-	}
-
-	runner := New(config, watermarkProvider)
-
-	return runner, nil
-	// NOTE: END TEMPORARY BLOCK
 }

@@ -1,6 +1,6 @@
 package processing
 
-func applyFilters(c *Context) error {
+func (p *Processor) applyFilters(c *Context) error {
 	if c.PO.Blur == 0 && c.PO.Sharpen == 0 && c.PO.Pixelate <= 1 {
 		return nil
 	}

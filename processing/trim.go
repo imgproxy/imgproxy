@@ -1,12 +1,12 @@
 package processing
 
-func trim(c *Context) error {
+func (p *Processor) trim(c *Context) error {
 	if !c.PO.Trim.Enabled {
 		return nil
 	}
 
 	// We need to import color profile before trim
-	if err := colorspaceToProcessing(c); err != nil {
+	if err := p.colorspaceToProcessing(c); err != nil {
 		return err
 	}
 
@@ -18,6 +18,7 @@ func trim(c *Context) error {
 	}
 
 	c.ImgData = nil
+	c.CalcParams()
 
 	return nil
 }

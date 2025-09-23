@@ -52,3 +52,10 @@ func ShrinkToEven(a int, shrink float64) int {
 
 	return RoundToEven(float64(a) / shrink)
 }
+
+func NonZero[T ~int | ~float32 | ~float64](a, b T) T {
+	if a != 0 {
+		return a
+	}
+	return b
+}
