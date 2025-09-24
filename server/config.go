@@ -3,7 +3,9 @@ package server
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/imgproxy/imgproxy/v3/config"
@@ -11,9 +13,106 @@ import (
 	"github.com/imgproxy/imgproxy/v3/server/responsewriter"
 )
 
+type EnvDesc struct {
+	Name        string
+	Description string // is not used programmatically, most likely not needed
+	Format      string
+}
+
+var (
+	network = EnvDesc{
+		Name:        "IMGPROXY_NETWORK",
+		Description: "Network type (tcp, unix)",
+		Format:      "tcp|udp|unix",
+	}
+
+	bind = EnvDesc{
+		Name:        "IMGPROXY_BIND",
+		Description: "Address to bind the server to",
+		Format:      "address:port",
+	}
+
+	maxClients = EnvDesc{
+		Name:        "IMGPROXY_MAX_CLIENTS",
+		Description: "Maximum number of concurrent clients",
+		Format:      "number >= 0",
+	}
+
+	readRequestTimeout = EnvDesc{
+		Name:        "IMGPROXY_READ_REQUEST_TIMEOUT",
+		Description: "Timeout for reading requests",
+		Format:      "number >= 0, seconds",
+	}
+)
+
+// Getenv returns the value of the env variable
+func (d *EnvDesc) Lookup() (string, bool) {
+	return os.LookupEnv(d.Name)
+}
+
+// WarnParseError logs a warning when an env var fails to parse
+func (d *EnvDesc) WarnParseError(err error, value any) {
+	v, _ := d.Lookup()
+
+	slog.Warn(
+		"failed to parse env var, using default value",
+		"name", d.Name,
+		"format", d.Format,
+		"value", v,
+		"error", err,
+		"default", value,
+	)
+}
+
+func (d *EnvDesc) Errorf(msg string, args ...any) error {
+	return fmt.Errorf(
+		"invalid %s value (format: %s): %s",
+		d.Name,
+		d.Format,
+		fmt.Sprintf(msg, args...),
+	)
+}
+
+// configurators.Int
+func Int(i *int, desc *EnvDesc) {
+	env, ok := desc.Lookup()
+	if !ok {
+		return
+	}
+
+	value, err := strconv.Atoi(env)
+	if err != nil {
+		desc.WarnParseError(err, *i)
+		return
+	}
+	*i = value
+}
+
+// configurators.Duration (in seconds)
+func Duration(d *time.Duration, desc *EnvDesc) {
+	env, ok := desc.Lookup()
+	if !ok {
+		return
+	}
+
+	value, err := strconv.Atoi(env)
+	if err != nil {
+		desc.WarnParseError(err, *d)
+		return
+	}
+	*d = time.Duration(value) * time.Second
+}
+
+// configurators.String
+func String(s *string, desc *EnvDesc) {
+	if env, ok := desc.Lookup(); ok {
+		// No warning here: empty string is a valid value, it has no format
+		*s = env
+	}
+}
+
 // Config represents HTTP server config
 type Config struct {
-	Listen                string        // Address to listen on
 	Network               string        // Network type (tcp, unix)
 	Bind                  string        // Bind address
 	PathPrefix            string        // Path prefix for the server
@@ -60,11 +159,12 @@ func NewDefaultConfig() Config {
 func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c = ensure.Ensure(c, NewDefaultConfig)
 
-	c.Network = config.Network
+	String(&config.Network, &network)
+	String(&c.Bind, &bind)
 	c.Bind = config.Bind
 	c.PathPrefix = config.PathPrefix
-	c.MaxClients = config.MaxClients
-	c.ReadRequestTimeout = time.Duration(config.ReadRequestTimeout) * time.Second
+	Int(&c.MaxClients, &maxClients)
+	Duration(&c.ReadRequestTimeout, &readRequestTimeout)
 	c.KeepAliveTimeout = time.Duration(config.KeepAliveTimeout) * time.Second
 	c.GracefulTimeout = time.Duration(config.GracefulStopTimeout) * time.Second
 	c.CORSAllowOrigin = config.AllowOrigin
@@ -85,15 +185,15 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 // Validate checks that the config values are valid
 func (c *Config) Validate() error {
 	if len(c.Bind) == 0 {
-		return errors.New("bind address is not defined")
+		return bind.Errorf("should not be empty")
 	}
 
 	if c.MaxClients < 0 {
-		return fmt.Errorf("max clients number should be greater than or equal 0, now - %d", c.MaxClients)
+		return maxClients.Errorf("current value: %v", c.MaxClients)
 	}
 
 	if c.ReadRequestTimeout <= 0 {
-		return fmt.Errorf("read request timeout should be greater than 0, now - %d", c.ReadRequestTimeout)
+		return readRequestTimeout.Errorf("current value: %v", c.ReadRequestTimeout)
 	}
 
 	if c.KeepAliveTimeout < 0 {

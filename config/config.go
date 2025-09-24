@@ -711,9 +711,9 @@ func Configure() error {
 	if Timeout <= 0 {
 		return fmt.Errorf("Timeout should be greater than 0, now - %d\n", Timeout)
 	}
-	if ReadRequestTimeout <= 0 {
-		return fmt.Errorf("Read request timeout should be greater than 0, now - %d\n", ReadRequestTimeout)
-	}
+	// if ReadRequestTimeout <= 0 {
+	// 	return fmt.Errorf("Read request timeout should be greater than 0, now - %d\n", ReadRequestTimeout)
+	// }
 	if WriteResponseTimeout <= 0 {
 		return fmt.Errorf("Write response timeout should be greater than 0, now - %d\n", WriteResponseTimeout)
 	}
@@ -736,9 +736,9 @@ func Configure() error {
 		return fmt.Errorf("Requests queue size should be greater than or equal 0, now - %d\n", RequestsQueueSize)
 	}
 
-	if MaxClients < 0 {
-		return fmt.Errorf("Max clients number should be greater than or equal 0, now - %d\n", MaxClients)
-	}
+	// if MaxClients < 0 {
+	// 	return fmt.Errorf("Max clients number should be greater than or equal 0, now - %d\n", MaxClients)
+	// }
 
 	if TTL < 0 {
 		return fmt.Errorf("TTL should be greater than or equal to 0, now - %d\n", TTL)
