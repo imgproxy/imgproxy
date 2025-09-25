@@ -1,12 +1,8 @@
 package processing
 
-import (
-	"github.com/imgproxy/imgproxy/v3/vips"
-)
-
-func extendImage(img *vips.Image, width, height int, gravity *GravityOptions, offsetScale float64) error {
-	imgWidth := img.Width()
-	imgHeight := img.Height()
+func extendImage(c *Context, width, height int, gravity *GravityOptions) error {
+	imgWidth := c.Img.Width()
+	imgHeight := c.Img.Height()
 
 	if width <= imgWidth && height <= imgHeight {
 		return nil
@@ -19,8 +15,8 @@ func extendImage(img *vips.Image, width, height int, gravity *GravityOptions, of
 		height = imgHeight
 	}
 
-	offX, offY := calcPosition(width, height, imgWidth, imgHeight, gravity, offsetScale, false)
-	return img.Embed(width, height, offX, offY)
+	offX, offY := calcPosition(width, height, imgWidth, imgHeight, gravity, c.DprScale, false)
+	return c.Img.Embed(width, height, offX, offY)
 }
 
 func (p *Processor) extend(c *Context) error {
@@ -30,7 +26,7 @@ func (p *Processor) extend(c *Context) error {
 
 	width, height := c.TargetWidth, c.TargetHeight
 	gravity := c.PO.ExtendGravity()
-	return extendImage(c.Img, width, height, &gravity, c.DprScale)
+	return extendImage(c, width, height, &gravity)
 }
 
 func (p *Processor) extendAspectRatio(c *Context) error {
@@ -44,5 +40,5 @@ func (p *Processor) extendAspectRatio(c *Context) error {
 	}
 
 	gravity := c.PO.ExtendAspectRatioGravity()
-	return extendImage(c.Img, width, height, &gravity, c.DprScale)
+	return extendImage(c, width, height, &gravity)
 }
