@@ -145,6 +145,15 @@ func (o *Options) Delete(key string) {
 	delete(o.m, key)
 }
 
+// DeleteByPrefix removes all options that start with the given prefix.
+func (o *Options) DeleteByPrefix(prefix string) {
+	for k := range o.m {
+		if strings.HasPrefix(k, prefix) {
+			delete(o.m, k)
+		}
+	}
+}
+
 // DeleteFromChildren removes an option by its key from the child Options if any.
 func (o *Options) DeleteFromChildren(key string) {
 	if o.child == nil {
