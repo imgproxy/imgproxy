@@ -15,6 +15,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
 	"github.com/imgproxy/imgproxy/v3/reuseport"
+	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
 var (
@@ -33,10 +34,7 @@ var (
 	bufferDefaultSize *prometheus.GaugeVec
 	bufferMaxSize     *prometheus.GaugeVec
 
-	workers            prometheus.Gauge
-	requestsInProgress prometheus.GaugeFunc
-	imagesInProgress   prometheus.GaugeFunc
-	workersUtilization prometheus.GaugeFunc
+	workers prometheus.Gauge
 )
 
 func Init() {
@@ -112,23 +110,41 @@ func Init() {
 	})
 	workers.Set(float64(config.Workers))
 
-	requestsInProgress = prometheus.NewGaugeFunc(prometheus.GaugeOpts{
+	requestsInProgress := prometheus.NewGaugeFunc(prometheus.GaugeOpts{
 		Namespace: config.PrometheusNamespace,
 		Name:      "requests_in_progress",
 		Help:      "A gauge of the number of requests currently being in progress.",
 	}, stats.RequestsInProgress)
 
-	imagesInProgress = prometheus.NewGaugeFunc(prometheus.GaugeOpts{
+	imagesInProgress := prometheus.NewGaugeFunc(prometheus.GaugeOpts{
 		Namespace: config.PrometheusNamespace,
 		Name:      "images_in_progress",
 		Help:      "A gauge of the number of images currently being in progress.",
 	}, stats.ImagesInProgress)
 
-	workersUtilization = prometheus.NewGaugeFunc(prometheus.GaugeOpts{
+	workersUtilization := prometheus.NewGaugeFunc(prometheus.GaugeOpts{
 		Namespace: config.PrometheusNamespace,
 		Name:      "workers_utilization",
 		Help:      "A gauge of the workers utilization in percents.",
 	}, stats.WorkersUtilization)
+
+	vipsMemoryBytes := prometheus.NewGaugeFunc(prometheus.GaugeOpts{
+		Namespace: config.PrometheusNamespace,
+		Name:      "vips_memory_bytes",
+		Help:      "A gauge of the vips tracked memory usage in bytes.",
+	}, vips.GetMem)
+
+	vipsMaxMemoryBytes := prometheus.NewGaugeFunc(prometheus.GaugeOpts{
+		Namespace: config.PrometheusNamespace,
+		Name:      "vips_max_memory_bytes",
+		Help:      "A gauge of the max vips tracked memory usage in bytes.",
+	}, vips.GetMemHighwater)
+
+	vipsAllocs := prometheus.NewGaugeFunc(prometheus.GaugeOpts{
+		Namespace: config.PrometheusNamespace,
+		Name:      "vips_allocs",
+		Help:      "A gauge of the number of active vips allocations.",
+	}, vips.GetAllocs)
 
 	prometheus.MustRegister(
 		requestsTotal,
@@ -145,6 +161,9 @@ func Init() {
 		requestsInProgress,
 		imagesInProgress,
 		workersUtilization,
+		vipsMemoryBytes,
+		vipsMaxMemoryBytes,
+		vipsAllocs,
 	)
 
 	enabled = true
@@ -269,17 +288,4 @@ func SetBufferMaxSize(t string, size int) {
 	if enabled {
 		bufferMaxSize.With(prometheus.Labels{"type": t}).Set(float64(size))
 	}
-}
-
-func AddGaugeFunc(name, help string, f func() float64) {
-	if !enabled {
-		return
-	}
-
-	gauge := prometheus.NewGaugeFunc(prometheus.GaugeOpts{
-		Namespace: config.PrometheusNamespace,
-		Name:      name,
-		Help:      help,
-	}, f)
-	prometheus.MustRegister(gauge)
 }

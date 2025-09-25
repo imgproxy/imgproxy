@@ -47,11 +47,10 @@ import (
 	"github.com/imgproxy/imgproxy/v3/monitoring/errformat"
 	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
 	"github.com/imgproxy/imgproxy/v3/version"
+	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
 type hasSpanCtxKey struct{}
-
-type GaugeFunc func() float64
 
 var (
 	enabled        bool
@@ -634,6 +633,33 @@ func addDefaultMetrics() error {
 		return fmt.Errorf("Can't add buffer_max_size_bytes gauge to OpenTelemetry: %s", err)
 	}
 
+	vipsMemory, err := meter.Float64ObservableGauge(
+		"vips_memory_bytes",
+		metric.WithUnit("By"),
+		metric.WithDescription("A gauge of the vips tracked memory usage in bytes."),
+	)
+	if err != nil {
+		return fmt.Errorf("Can't add vips_memory_bytes gauge to OpenTelemetry: %s", err)
+	}
+
+	vipsMaxMemory, err := meter.Float64ObservableGauge(
+		"vips_max_memory_bytes",
+		metric.WithUnit("By"),
+		metric.WithDescription("A gauge of the max vips tracked memory usage in bytes."),
+	)
+	if err != nil {
+		return fmt.Errorf("Can't add vips_max_memory_bytes gauge to OpenTelemetry: %s", err)
+	}
+
+	vipsAllocs, err := meter.Float64ObservableGauge(
+		"vips_allocs",
+		metric.WithUnit("1"),
+		metric.WithDescription("A gauge of the number of active vips allocations."),
+	)
+	if err != nil {
+		return fmt.Errorf("Can't add vips_allocs gauge to OpenTelemetry: %s", err)
+	}
+
 	_, err = meter.RegisterCallback(
 		func(ctx context.Context, o metric.Observer) error {
 			memStats, merr := proc.MemoryInfo()
@@ -669,6 +695,11 @@ func addDefaultMetrics() error {
 			for t, v := range bufferMaxSizes {
 				o.ObserveInt64(bufferMaxSizeGauge, int64(v), metric.WithAttributes(attribute.String("type", t)))
 			}
+
+			o.ObserveFloat64(vipsMemory, vips.GetMem())
+			o.ObserveFloat64(vipsMaxMemory, vips.GetMemHighwater())
+			o.ObserveFloat64(vipsAllocs, vips.GetAllocs())
+
 			return nil
 		},
 		processResidentMemory,
@@ -684,6 +715,9 @@ func addDefaultMetrics() error {
 		workersUtilizationGauge,
 		bufferDefaultSizeGauge,
 		bufferMaxSizeGauge,
+		vipsMemory,
+		vipsMaxMemory,
+		vipsAllocs,
 	)
 	if err != nil {
 		return fmt.Errorf("Can't register OpenTelemetry callbacks: %s", err)
@@ -699,25 +733,6 @@ func addDefaultMetrics() error {
 	}
 
 	return nil
-}
-
-func AddGaugeFunc(name, desc, u string, f GaugeFunc) {
-	if meter == nil {
-		return
-	}
-
-	_, err := meter.Float64ObservableGauge(
-		name,
-		metric.WithUnit(u),
-		metric.WithDescription(desc),
-		metric.WithFloat64Callback(func(_ context.Context, obsrv metric.Float64Observer) error {
-			obsrv.Observe(f())
-			return nil
-		}),
-	)
-	if err != nil {
-		slog.Warn(fmt.Sprintf("Can't add %s gauge to OpenTelemetry: %s", name, err))
-	}
 }
 
 func ObserveBufferSize(t string, size int) {

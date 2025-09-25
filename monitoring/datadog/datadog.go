@@ -9,7 +9,6 @@ import (
 	"os"
 	"reflect"
 	"strconv"
-	"sync"
 	"time"
 
 	"github.com/DataDog/datadog-go/v5/statsd"
@@ -21,11 +20,10 @@ import (
 	"github.com/imgproxy/imgproxy/v3/monitoring/errformat"
 	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
 	"github.com/imgproxy/imgproxy/v3/version"
+	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
 type spanCtxKey struct{}
-
-type GaugeFunc func() float64
 
 var (
 	enabled        bool
@@ -33,9 +31,6 @@ var (
 
 	statsdClient     *statsd.Client
 	statsdClientStop chan struct{}
-
-	gaugeFuncs      = make(map[string]GaugeFunc)
-	gaugeFuncsMutex sync.RWMutex
 )
 
 func Init() {
@@ -186,13 +181,6 @@ func SendError(ctx context.Context, errType string, err error) {
 	}
 }
 
-func AddGaugeFunc(name string, f GaugeFunc) {
-	gaugeFuncsMutex.Lock()
-	defer gaugeFuncsMutex.Unlock()
-
-	gaugeFuncs["imgproxy."+name] = f
-}
-
 func ObserveBufferSize(t string, size int) {
 	if enabledMetrics {
 		statsdClient.Histogram("imgproxy.buffer.size", float64(size), []string{"type:" + t}, 1)
@@ -217,19 +205,14 @@ func runMetricsCollector() {
 	for {
 		select {
 		case <-tick.C:
-			func() {
-				gaugeFuncsMutex.RLock()
-				defer gaugeFuncsMutex.RUnlock()
-
-				for name, f := range gaugeFuncs {
-					statsdClient.Gauge(name, f(), nil, 1)
-				}
-			}()
-
 			statsdClient.Gauge("imgproxy.workers", float64(config.Workers), nil, 1)
 			statsdClient.Gauge("imgproxy.requests_in_progress", stats.RequestsInProgress(), nil, 1)
 			statsdClient.Gauge("imgproxy.images_in_progress", stats.ImagesInProgress(), nil, 1)
 			statsdClient.Gauge("imgproxy.workers_utilization", stats.WorkersUtilization(), nil, 1)
+
+			statsdClient.Gauge("imgproxy.vips.memory", vips.GetMem(), nil, 1)
+			statsdClient.Gauge("imgproxy.vips.max_memory", vips.GetMemHighwater(), nil, 1)
+			statsdClient.Gauge("imgproxy.vips.allocs", vips.GetAllocs(), nil, 1)
 		case <-statsdClientStop:
 			return
 		}

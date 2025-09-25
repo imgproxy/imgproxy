@@ -26,11 +26,6 @@ import (
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
-	"github.com/imgproxy/imgproxy/v3/monitoring/cloudwatch"
-	"github.com/imgproxy/imgproxy/v3/monitoring/datadog"
-	"github.com/imgproxy/imgproxy/v3/monitoring/newrelic"
-	"github.com/imgproxy/imgproxy/v3/monitoring/otel"
-	"github.com/imgproxy/imgproxy/v3/monitoring/prometheus"
 	"github.com/imgproxy/imgproxy/v3/vips/color"
 )
 
@@ -122,53 +117,6 @@ func Init() error {
 	default:
 		vipsConf.WebpPreset = C.VIPS_FOREIGN_WEBP_PRESET_DEFAULT
 	}
-
-	prometheus.AddGaugeFunc(
-		"vips_memory_bytes",
-		"A gauge of the vips tracked memory usage in bytes.",
-		GetMem,
-	)
-	prometheus.AddGaugeFunc(
-		"vips_max_memory_bytes",
-		"A gauge of the max vips tracked memory usage in bytes.",
-		GetMemHighwater,
-	)
-	prometheus.AddGaugeFunc(
-		"vips_allocs",
-		"A gauge of the number of active vips allocations.",
-		GetAllocs,
-	)
-
-	datadog.AddGaugeFunc("vips.memory", GetMem)
-	datadog.AddGaugeFunc("vips.max_memory", GetMemHighwater)
-	datadog.AddGaugeFunc("vips.allocs", GetAllocs)
-
-	newrelic.AddGaugeFunc("vips.memory", GetMem)
-	newrelic.AddGaugeFunc("vips.max_memory", GetMemHighwater)
-	newrelic.AddGaugeFunc("vips.allocs", GetAllocs)
-
-	otel.AddGaugeFunc(
-		"vips_memory_bytes",
-		"A gauge of the vips tracked memory usage in bytes.",
-		"By",
-		GetMem,
-	)
-	otel.AddGaugeFunc(
-		"vips_max_memory_bytes",
-		"A gauge of the max vips tracked memory usage in bytes.",
-		"By",
-		GetMemHighwater,
-	)
-	otel.AddGaugeFunc(
-		"vips_allocs",
-		"A gauge of the number of active vips allocations.",
-		"1",
-		GetAllocs,
-	)
-
-	cloudwatch.AddGaugeFunc("VipsMemory", "Bytes", GetMem)
-	cloudwatch.AddGaugeFunc("VipsMaxMemory", "Bytes", GetMemHighwater)
-	cloudwatch.AddGaugeFunc("VipsAllocs", "Count", GetAllocs)
 
 	return nil
 }
