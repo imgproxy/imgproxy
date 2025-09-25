@@ -83,11 +83,16 @@ func newSecurityOptionsError() error {
 func (e SecurityOptionsError) Error() string { return "Security processing options are not allowed" }
 
 // newInvalidArgsError creates a standardized error for invalid arguments
-func newInvalidArgsError(name string, args []string, expected ...string) error {
-	msg := "Invalid %s arguments: %s"
+func newInvalidArgsError(name string, args []string) error {
+	return newOptionArgumentError("Invalid %s arguments: %s", name, args)
+}
+
+// newInvalidArgumentError creates a standardized error for an invalid single argument
+func newInvalidArgumentError(key, arg string, expected ...string) error {
+	msg := "Invalid %s: %s"
 	if len(expected) > 0 {
 		msg += " (expected " + strings.Join(expected, ", ") + ")"
 	}
 
-	return newOptionArgumentError(msg, name, args)
+	return newOptionArgumentError(msg, key, arg)
 }

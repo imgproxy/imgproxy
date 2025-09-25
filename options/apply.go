@@ -1,9 +1,9 @@
 package options
 
 import (
-	"encoding/base64"
 	"fmt"
 	"log/slog"
+	"maps"
 	"slices"
 	"strconv"
 	"time"
@@ -81,7 +81,9 @@ func applyResizingTypeOption(o *Options, args []string) error {
 	if r, ok := resizeTypes[args[0]]; ok {
 		o.Set(keys.ResizingType, r)
 	} else {
-		return newOptionArgumentError("Invalid %s: %s", keys.ResizingType, args[0])
+		return newInvalidArgumentError(
+			keys.ResizingType, args[0], slices.Collect(maps.Keys(resizeTypes))...,
+		)
 	}
 
 	return nil
@@ -133,7 +135,7 @@ func applyDprOption(o *Options, args []string) error {
 }
 
 func applyGravityOption(o *Options, args []string) error {
-	return parseGravity(o, keys.Gravity, args, cropGravityTypes)
+	return parseGravity(o, keys.Gravity, cropGravityTypes, args...)
 }
 
 func applyCropOption(o *Options, args []string) error {
@@ -148,7 +150,7 @@ func applyCropOption(o *Options, args []string) error {
 	}
 
 	if len(args) > 2 {
-		return parseGravity(o, keys.CropGravity, args[2:], cropGravityTypes)
+		return parseGravity(o, keys.CropGravity, cropGravityTypes, args[2:]...)
 	}
 
 	return nil
@@ -208,10 +210,8 @@ func applyTrimOption(o *Options, args []string) error {
 	}
 
 	if nArgs > 1 && len(args[1]) > 0 {
-		if c, err := color.RGBFromHex(args[1]); err == nil {
-			o.Set(keys.TrimColor, c)
-		} else {
-			return newOptionArgumentError("Invalid %s: %s", keys.TrimColor, args[1])
+		if err := parseHexRGBColor(o, keys.TrimColor, args[1]); err != nil {
+			return err
 		}
 	} else {
 		o.Delete(keys.TrimColor)
@@ -280,10 +280,8 @@ func applyBackgroundOption(o *Options, args []string) error {
 			return nil
 		}
 
-		if c, err := color.RGBFromHex(args[0]); err == nil {
-			o.Set(keys.Background, c)
-		} else {
-			return newOptionArgumentError("Invalid %s argument: %s", keys.Background, err)
+		if err := parseHexRGBColor(o, keys.Background, args[0]); err != nil {
+			return err
 		}
 
 	case 3:
@@ -292,25 +290,25 @@ func applyBackgroundOption(o *Options, args []string) error {
 		if r, err := strconv.ParseUint(args[0], 10, 8); err == nil && r <= 255 {
 			c.R = uint8(r)
 		} else {
-			return newOptionArgumentError("Invalid %s red channel: %s", keys.Background, args[0])
+			return newInvalidArgumentError(keys.Background+".R", args[0], "number in range 0-255")
 		}
 
 		if g, err := strconv.ParseUint(args[1], 10, 8); err == nil && g <= 255 {
 			c.G = uint8(g)
 		} else {
-			return newOptionArgumentError("Invalid %s green channel: %s", keys.Background, args[1])
+			return newInvalidArgumentError(keys.Background+".G", args[1], "number in range 0-255")
 		}
 
 		if b, err := strconv.ParseUint(args[2], 10, 8); err == nil && b <= 255 {
 			c.B = uint8(b)
 		} else {
-			return newOptionArgumentError("Invalid %s blue channel: %s", keys.Background, args[2])
+			return newInvalidArgumentError(keys.Background+".B", args[2], "number in range 0-255")
 		}
 
 		o.Set(keys.Background, c)
 
 	default:
-		return newOptionArgumentError("Invalid %s arguments: %v", keys.Background, args)
+		return newInvalidArgsError(keys.Background, args)
 	}
 
 	return nil
@@ -333,17 +331,15 @@ func applyWatermarkOption(o *Options, args []string) error {
 		return err
 	}
 
-	if wo, err := strconv.ParseFloat(args[0], 64); err == nil && wo >= 0 && wo <= 1 {
-		o.Set(keys.WatermarkOpacity, wo)
-	} else {
-		return newOptionArgumentError("Invalid %s: %s", keys.WatermarkOpacity, args[0])
+	if err := parseOpacityFloat(o, keys.WatermarkOpacity, args[0]); err != nil {
+		return err
 	}
 
 	if len(args) > 1 && len(args[1]) > 0 {
-		if pos, ok := gravityTypes[args[1]]; ok && slices.Contains(watermarkGravityTypes, pos) {
-			o.Set(keys.WatermarkPosition, pos)
-		} else {
-			return newOptionArgumentError("Invalid %s: %s", keys.WatermarkPosition, args[1])
+		if _, err := parseGravityType(
+			o, keys.WatermarkPosition, watermarkGravityTypes, args[1],
+		); err != nil {
+			return err
 		}
 	}
 
@@ -376,7 +372,7 @@ func applyFormatOption(o *Options, args []string) error {
 	if f, ok := imagetype.GetTypeByName(args[0]); ok {
 		o.Set(keys.Format, f)
 	} else {
-		return newOptionArgumentError("Invalid image format: %s", args[0])
+		return newInvalidArgumentError(keys.Format, args[0], "supported image format")
 	}
 
 	return nil
@@ -413,19 +409,13 @@ func applyFilenameOption(o *Options, args []string) error {
 		return err
 	}
 
-	filename := args[0]
-
 	if len(args) > 1 && len(args[1]) > 0 {
 		if encoded, _ := strconv.ParseBool(args[1]); encoded {
-			if decoded, err := base64.RawURLEncoding.DecodeString(filename); err == nil {
-				filename = string(decoded)
-			} else {
-				return newOptionArgumentError("Invalid %s encoding: %s", keys.Filename, err)
-			}
+			return parseBase64String(o, keys.Filename, args[0])
 		}
 	}
 
-	o.Set(keys.Filename, filename)
+	o.Set(keys.Filename, args[0])
 
 	return nil
 }
@@ -437,7 +427,7 @@ func applyExpiresOption(o *Options, args []string) error {
 
 	timestamp, err := strconv.ParseInt(args[0], 10, 64)
 	if err != nil {
-		return newOptionArgumentError("Invalid %s argument: %v", keys.Expires, args[0])
+		return newInvalidArgumentError(keys.Expires, args[0], "unix timestamp")
 	}
 
 	if timestamp > 0 && timestamp < time.Now().Unix() {

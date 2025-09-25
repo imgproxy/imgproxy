@@ -1,12 +1,15 @@
 package options
 
 import (
+	"encoding/base64"
 	"fmt"
 	"log/slog"
 	"slices"
 	"strconv"
+	"strings"
 
 	"github.com/imgproxy/imgproxy/v3/options/keys"
+	"github.com/imgproxy/imgproxy/v3/vips/color"
 )
 
 // ensureMaxArgs checks if the number of arguments is as expected
@@ -58,7 +61,7 @@ func parsePositiveFloat(o *Options, key string, args ...string) error {
 
 	f, err := strconv.ParseFloat(args[0], 64)
 	if err != nil || f < 0 {
-		return newInvalidArgsError(key, args, "positive number or 0")
+		return newInvalidArgumentError(key, args[0], "positive number or 0")
 	}
 
 	o.Set(key, f)
@@ -74,7 +77,7 @@ func parsePositiveNonZeroFloat(o *Options, key string, args ...string) error {
 
 	f, err := strconv.ParseFloat(args[0], 64)
 	if err != nil || f <= 0 {
-		return newInvalidArgsError(key, args, "positive number")
+		return newInvalidArgumentError(key, args[0], "positive number")
 	}
 
 	o.Set(key, f)
@@ -90,7 +93,7 @@ func parseInt(o *Options, key string, args ...string) error {
 
 	i, err := strconv.Atoi(args[0])
 	if err != nil {
-		return newOptionArgumentError(key, args)
+		return newInvalidArgumentError(key, args[0], "integer number")
 	}
 
 	o.Set(key, i)
@@ -106,7 +109,7 @@ func parsePositiveNonZeroInt(o *Options, key string, args ...string) error {
 
 	i, err := strconv.Atoi(args[0])
 	if err != nil || i <= 0 {
-		return newInvalidArgsError(key, args, "positive number")
+		return newInvalidArgumentError(key, args[0], "positive number")
 	}
 
 	o.Set(key, i)
@@ -122,7 +125,7 @@ func parsePositiveInt(o *Options, key string, args ...string) error {
 
 	i, err := strconv.Atoi(args[0])
 	if err != nil || i < 0 {
-		return newOptionArgumentError("Invalid %s arguments: %s (expected positive number)", key, args)
+		return newInvalidArgumentError(key, args[0], "positive number or 0")
 	}
 
 	o.Set(key, i)
@@ -138,10 +141,26 @@ func parseQualityInt(o *Options, key string, args ...string) error {
 
 	i, err := strconv.Atoi(args[0])
 	if err != nil || i < 1 || i > 100 {
-		return newInvalidArgsError(key, args, "number in range 1-100")
+		return newInvalidArgumentError(key, args[0], "number in range 1-100")
 	}
 
 	o.Set(key, i)
+
+	return nil
+}
+
+// parseOpacityFloat parses an opacity float option value (0-1)
+func parseOpacityFloat(o *Options, key string, args ...string) error {
+	if err := ensureMaxArgs(key, args, 1); err != nil {
+		return err
+	}
+
+	f, err := strconv.ParseFloat(args[0], 64)
+	if err != nil || f < 0 || f > 1 {
+		return newInvalidArgumentError(key, args[0], "number in range 0-1")
+	}
+
+	o.Set(key, f)
 
 	return nil
 }
@@ -154,7 +173,7 @@ func parseResolution(o *Options, key string, args ...string) error {
 
 	f, err := strconv.ParseFloat(args[0], 64)
 	if err != nil || f < 0 {
-		return newInvalidArgsError(key, args, "positive number or 0")
+		return newInvalidArgumentError(key, args[0], "positive number or 0")
 	}
 
 	// Resolution is defined as megapixels but stored as pixels
@@ -163,15 +182,70 @@ func parseResolution(o *Options, key string, args ...string) error {
 	return nil
 }
 
-func isGravityOffcetValid(gravity GravityType, offset float64) bool {
+// parseBase64String parses a base64-encoded string option value
+func parseBase64String(o *Options, key string, args ...string) error {
+	if err := ensureMaxArgs(key, args, 1); err != nil {
+		return err
+	}
+
+	b, err := base64.RawURLEncoding.DecodeString(strings.TrimRight(args[0], "="))
+	if err != nil {
+		return newInvalidArgumentError(key, args[0], "URL-safe base64-encoded string")
+	}
+
+	o.Set(key, string(b))
+
+	return nil
+}
+
+func parseHexRGBColor(o *Options, key string, args ...string) error {
+	if err := ensureMaxArgs(key, args, 1); err != nil {
+		return err
+	}
+
+	c, err := color.RGBFromHex(args[0])
+	if err != nil {
+		return newInvalidArgumentError(key, args[0], "hex-encoded color")
+	}
+
+	o.Set(key, c)
+
+	return nil
+}
+
+func parseGravityType(
+	o *Options,
+	key string,
+	allowedTypes []GravityType,
+	args ...string,
+) (GravityType, error) {
+	if err := ensureMaxArgs(key, args, 1); err != nil {
+		return GravityUnknown, err
+	}
+
+	gType, ok := gravityTypes[args[0]]
+	if !ok || !slices.Contains(allowedTypes, gType) {
+		types := make([]string, len(allowedTypes))
+		for i, at := range allowedTypes {
+			types[i] = at.String()
+		}
+		return GravityUnknown, newInvalidArgumentError(key, args[0], types...)
+	}
+
+	o.Set(key, gType)
+
+	return gType, nil
+}
+
+func isGravityOffsetValid(gravity GravityType, offset float64) bool {
 	return gravity != GravityFocusPoint || (offset >= 0 && offset <= 1)
 }
 
 func parseGravity(
 	o *Options,
 	key string,
-	args []string,
 	allowedTypes []GravityType,
+	args ...string,
 ) error {
 	nArgs := len(args)
 
@@ -179,11 +253,9 @@ func parseGravity(
 	keyXOffset := key + keys.SuffixXOffset
 	keyYOffset := key + keys.SuffixYOffset
 
-	gType, ok := gravityTypes[args[0]]
-	if ok && slices.Contains(allowedTypes, gType) {
-		o.Set(keyType, gType)
-	} else {
-		return newOptionArgumentError("Invalid %s: %s", keyType, args[0])
+	gType, err := parseGravityType(o, keyType, allowedTypes, args[0])
+	if err != nil {
+		return err
 	}
 
 	switch gType {
@@ -206,18 +278,18 @@ func parseGravity(
 		}
 
 		if nArgs > 1 {
-			if x, err := strconv.ParseFloat(args[1], 64); err == nil && isGravityOffcetValid(gType, x) {
+			if x, err := strconv.ParseFloat(args[1], 64); err == nil && isGravityOffsetValid(gType, x) {
 				o.Set(keyXOffset, x)
 			} else {
-				return newOptionArgumentError("Invalid %s: %s", keyXOffset, args[1])
+				return newInvalidArgumentError(keyXOffset, args[1])
 			}
 		}
 
 		if nArgs > 2 {
-			if y, err := strconv.ParseFloat(args[2], 64); err == nil && isGravityOffcetValid(gType, y) {
+			if y, err := strconv.ParseFloat(args[2], 64); err == nil && isGravityOffsetValid(gType, y) {
 				o.Set(keyYOffset, y)
 			} else {
-				return newOptionArgumentError("Invalid %s: %s", keyYOffset, args[2])
+				return newInvalidArgumentError(keyYOffset, args[2])
 			}
 		}
 	}
@@ -235,7 +307,7 @@ func parseExtend(o *Options, key string, args []string) error {
 	}
 
 	if len(args) > 1 {
-		return parseGravity(o, key+keys.SuffixGravity, args[1:], extendGravityTypes)
+		return parseGravity(o, key+keys.SuffixGravity, extendGravityTypes, args[1:]...)
 	}
 
 	return nil
