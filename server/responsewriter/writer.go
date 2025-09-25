@@ -50,7 +50,7 @@ func (w *Writer) SetOriginHeaders(h http.Header) {
 // indicate that the fallback image was used.
 func (w *Writer) SetIsFallbackImage() {
 	// We set maxAge to FallbackImageTTL if it's explicitly passed
-	if w.config.FallbackImageTTL < 0 {
+	if w.config.FallbackImageTTL <= 0 {
 		return
 	}
 
