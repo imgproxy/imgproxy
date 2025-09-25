@@ -7,7 +7,6 @@ import (
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/imath"
-	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
@@ -118,7 +117,7 @@ func (p *Processor) scaleOnLoad(c *Context) error {
 	if c.CropHeight > 0 {
 		c.CropHeight = max(1, imath.Shrink(c.CropHeight, hpreshrink))
 	}
-	if c.CropGravity.Type != options.GravityFocusPoint {
+	if c.CropGravity.Type != GravityFocusPoint {
 		// Adjust only when crop gravity offsets are absolute
 		if math.Abs(c.CropGravity.X) >= 1.0 {
 			// Round offsets to prevent turning absolute offsets to relative (ex: 1.0 => 0.5)

@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/imgproxy/imgproxy/v3/imagedata"
-	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/security"
 	"github.com/imgproxy/imgproxy/v3/server"
 	"github.com/imgproxy/imgproxy/v3/vips"
@@ -126,7 +125,7 @@ func (p Pipeline) newContext(
 	}
 
 	// If crop gravity is not set, use the general gravity option
-	if pctx.CropGravity.Type == options.GravityUnknown {
+	if pctx.CropGravity.Type == GravityUnknown {
 		pctx.CropGravity = po.Gravity()
 	}
 

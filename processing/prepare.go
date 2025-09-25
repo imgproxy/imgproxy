@@ -4,7 +4,6 @@ import (
 	"math"
 
 	"github.com/imgproxy/imgproxy/v3/imath"
-	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
@@ -86,26 +85,26 @@ func (c *Context) calcScale(width, height int, po ProcessingOptions) {
 	if wshrink != 1 || hshrink != 1 {
 		rt := po.ResizingType()
 
-		if rt == options.ResizeAuto {
+		if rt == ResizeAuto {
 			srcD := srcW - srcH
 			dstD := dstW - dstH
 
 			if (srcD >= 0 && dstD >= 0) || (srcD < 0 && dstD < 0) {
-				rt = options.ResizeFill
+				rt = ResizeFill
 			} else {
-				rt = options.ResizeFit
+				rt = ResizeFit
 			}
 		}
 
 		switch {
-		case poWidth == 0 && rt != options.ResizeForce:
+		case poWidth == 0 && rt != ResizeForce:
 			wshrink = hshrink
-		case poHeight == 0 && rt != options.ResizeForce:
+		case poHeight == 0 && rt != ResizeForce:
 			hshrink = wshrink
-		case rt == options.ResizeFit:
+		case rt == ResizeFit:
 			wshrink = math.Max(wshrink, hshrink)
 			hshrink = wshrink
-		case rt == options.ResizeFill || rt == options.ResizeFillDown:
+		case rt == ResizeFill || rt == ResizeFillDown:
 			wshrink = math.Min(wshrink, hshrink)
 			hshrink = wshrink
 		}
@@ -180,7 +179,7 @@ func (c *Context) calcSizes(widthToScale, heightToScale int, po ProcessingOption
 	c.ScaledWidth = imath.Scale(widthToScale, c.WScale)
 	c.ScaledHeight = imath.Scale(heightToScale, c.HScale)
 
-	if po.ResizingType() == options.ResizeFillDown && !po.Enlarge() {
+	if po.ResizingType() == ResizeFillDown && !po.Enlarge() {
 		diffW := float64(c.TargetWidth) / float64(c.ScaledWidth)
 		diffH := float64(c.TargetHeight) / float64(c.ScaledHeight)
 

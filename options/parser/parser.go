@@ -1,4 +1,4 @@
-package options
+package optionsparser
 
 // Presets is a map of preset names to their corresponding urlOptions
 type Presets = map[string]urlOptions
@@ -9,8 +9,8 @@ type Parser struct {
 	presets Presets // Parsed presets
 }
 
-// NewParser creates new Parser instance
-func NewParser(config *Config) (*Parser, error) {
+// New creates new Parser instance
+func New(config *Config) (*Parser, error) {
 	if err := config.Validate(); err != nil {
 		return nil, err
 	}

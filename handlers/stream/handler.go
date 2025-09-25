@@ -45,7 +45,7 @@ type request struct {
 	imageRequest *http.Request
 	imageURL     string
 	reqID        string
-	po           *options.Options
+	opts         *options.Options
 	rw           server.ResponseWriter
 }
 
@@ -67,7 +67,7 @@ func (s *Handler) Execute(
 	userRequest *http.Request,
 	imageURL string,
 	reqID string,
-	po *options.Options,
+	o *options.Options,
 	rw server.ResponseWriter,
 ) error {
 	stream := &request{
@@ -75,7 +75,7 @@ func (s *Handler) Execute(
 		imageRequest: userRequest,
 		imageURL:     imageURL,
 		reqID:        reqID,
-		po:           po,
+		opts:         o,
 		rw:           rw,
 	}
 
@@ -118,7 +118,7 @@ func (s *request) execute(ctx context.Context) error {
 	s.rw.Passthrough(s.handler.config.PassthroughResponseHeaders...) // NOTE: priority? This is lowest as it was
 	s.rw.SetContentLength(int(res.ContentLength))
 	s.rw.SetCanonical(s.imageURL)
-	s.rw.SetExpires(s.po.GetTime(keys.Expires))
+	s.rw.SetExpires(s.opts.GetTime(keys.Expires))
 
 	// Set the Content-Disposition header
 	s.setContentDisposition(r.URL().Path, res)
@@ -161,10 +161,10 @@ func (s *request) setContentDisposition(imagePath string, serverResponse *http.R
 
 	s.rw.SetContentDisposition(
 		imagePath,
-		s.po.GetString(keys.Filename, ""),
+		s.opts.GetString(keys.Filename, ""),
 		"",
 		ct,
-		s.po.GetBool(keys.ReturnAttachment, false),
+		s.opts.GetBool(keys.ReturnAttachment, false),
 	)
 }
 
@@ -178,7 +178,7 @@ func (s *request) streamData(res *http.Response) {
 	server.LogResponse(
 		s.reqID, s.imageRequest, res.StatusCode, nil,
 		slog.String("image_url", s.imageURL),
-		slog.Any("processing_options", s.po),
+		slog.Any("processing_options", s.opts),
 	)
 
 	// We've got to skip logging here

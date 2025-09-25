@@ -1,4 +1,4 @@
-package options
+package optionsparser
 
 import (
 	"testing"
@@ -13,7 +13,7 @@ type PresetsTestSuite struct {
 func (s *PresetsTestSuite) newParser(presets ...string) (*Parser, error) {
 	c := NewDefaultConfig()
 	c.Presets = presets
-	return NewParser(&c)
+	return New(&c)
 }
 
 func (s *PresetsTestSuite) TestParsePreset() {

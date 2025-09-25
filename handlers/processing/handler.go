@@ -15,6 +15,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/options/keys"
+	optionsparser "github.com/imgproxy/imgproxy/v3/options/parser"
 	"github.com/imgproxy/imgproxy/v3/processing"
 	"github.com/imgproxy/imgproxy/v3/security"
 	"github.com/imgproxy/imgproxy/v3/server"
@@ -27,7 +28,7 @@ type HandlerContext interface {
 	FallbackImage() auximageprovider.Provider
 	ImageDataFactory() *imagedata.Factory
 	Security() *security.Checker
-	OptionsParser() *options.Parser
+	OptionsParser() *optionsparser.Parser
 	Processor() *processing.Processor
 }
 
@@ -69,14 +70,14 @@ func (h *Handler) Execute(
 	ctx := req.Context()
 
 	// Verify URL signature and extract image url and processing options
-	imageURL, po, mm, err := h.newRequest(ctx, req)
+	imageURL, o, mm, err := h.newRequest(ctx, req)
 	if err != nil {
 		return err
 	}
 
 	// if processing options indicate raw image streaming, stream it and return
-	if po.GetBool(keys.Raw, false) {
-		return h.stream.Execute(ctx, req, imageURL, reqID, po, rw)
+	if o.GetBool(keys.Raw, false) {
+		return h.stream.Execute(ctx, req, imageURL, reqID, o, rw)
 	}
 
 	hReq := &request{
@@ -86,8 +87,8 @@ func (h *Handler) Execute(
 		req:            req,
 		rw:             rw,
 		config:         h.config,
-		po:             po,
-		secops:         h.Security().NewOptions(po),
+		opts:           o,
+		secops:         h.Security().NewOptions(o),
 		imageURL:       imageURL,
 		monitoringMeta: mm,
 	}
@@ -112,7 +113,7 @@ func (h *Handler) newRequest(
 	}
 
 	// parse image url and processing options
-	po, imageURL, err := h.OptionsParser().ParsePath(path, req.Header)
+	o, imageURL, err := h.OptionsParser().ParsePath(path, req.Header)
 	if err != nil {
 		return "", nil, nil, ierrors.Wrap(err, 0, ierrors.WithCategory(handlers.CategoryPathParsing))
 	}
@@ -123,13 +124,13 @@ func (h *Handler) newRequest(
 	mm := monitoring.Meta{
 		monitoring.MetaSourceImageURL:    imageURL,
 		monitoring.MetaSourceImageOrigin: imageOrigin,
-		monitoring.MetaOptions:           po.Map(),
+		monitoring.MetaOptions:           o.Map(),
 	}
 
 	// set error reporting and monitoring context
 	errorreport.SetMetadata(req, "Source Image URL", imageURL)
 	errorreport.SetMetadata(req, "Source Image Origin", imageOrigin)
-	errorreport.SetMetadata(req, "Options", po.NestedMap())
+	errorreport.SetMetadata(req, "Options", o.NestedMap())
 
 	monitoring.SetMetadata(ctx, mm)
 
@@ -139,7 +140,7 @@ func (h *Handler) newRequest(
 		return "", options.New(), mm, ierrors.Wrap(err, 0, ierrors.WithCategory(handlers.CategorySecurity))
 	}
 
-	return imageURL, po, mm, nil
+	return imageURL, o, mm, nil
 }
 
 // imageOrigin extracts image origin from URL

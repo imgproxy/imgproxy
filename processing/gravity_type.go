@@ -1,11 +1,11 @@
-package options
+package processing
 
 import "fmt"
 
 type GravityType int
 
 func (gt GravityType) String() string {
-	for k, v := range gravityTypes {
+	for k, v := range GravityTypes {
 		if v == gt {
 			return k
 		}
@@ -14,7 +14,7 @@ func (gt GravityType) String() string {
 }
 
 func (gt GravityType) MarshalJSON() ([]byte, error) {
-	for k, v := range gravityTypes {
+	for k, v := range GravityTypes {
 		if v == gt {
 			return []byte(fmt.Sprintf("%q", k)), nil
 		}
@@ -40,7 +40,7 @@ const (
 	GravityReplicate
 )
 
-var gravityTypes = map[string]GravityType{
+var GravityTypes = map[string]GravityType{
 	"ce":   GravityCenter,
 	"no":   GravityNorth,
 	"ea":   GravityEast,
@@ -67,7 +67,7 @@ var commonGravityTypes = []GravityType{
 	GravitySouthEast,
 }
 
-var cropGravityTypes = append(
+var CropGravityTypes = append(
 	[]GravityType{
 		GravitySmart,
 		GravityFocusPoint,
@@ -75,14 +75,14 @@ var cropGravityTypes = append(
 	commonGravityTypes...,
 )
 
-var extendGravityTypes = append(
+var ExtendGravityTypes = append(
 	[]GravityType{
 		GravityFocusPoint,
 	},
 	commonGravityTypes...,
 )
 
-var watermarkGravityTypes = append(
+var WatermarkGravityTypes = append(
 	[]GravityType{
 		GravityReplicate,
 	},

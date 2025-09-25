@@ -1,4 +1,4 @@
-package options
+package optionsparser
 
 import (
 	"encoding/base64"

@@ -5,50 +5,50 @@ import (
 	"github.com/imgproxy/imgproxy/v3/options/keys"
 )
 
-var gravityTypesRotationMap = map[int]map[options.GravityType]options.GravityType{
+var gravityTypesRotationMap = map[int]map[GravityType]GravityType{
 	90: {
-		options.GravityNorth:     options.GravityWest,
-		options.GravityEast:      options.GravityNorth,
-		options.GravitySouth:     options.GravityEast,
-		options.GravityWest:      options.GravitySouth,
-		options.GravityNorthWest: options.GravitySouthWest,
-		options.GravityNorthEast: options.GravityNorthWest,
-		options.GravitySouthWest: options.GravitySouthEast,
-		options.GravitySouthEast: options.GravityNorthEast,
+		GravityNorth:     GravityWest,
+		GravityEast:      GravityNorth,
+		GravitySouth:     GravityEast,
+		GravityWest:      GravitySouth,
+		GravityNorthWest: GravitySouthWest,
+		GravityNorthEast: GravityNorthWest,
+		GravitySouthWest: GravitySouthEast,
+		GravitySouthEast: GravityNorthEast,
 	},
 	180: {
-		options.GravityNorth:     options.GravitySouth,
-		options.GravityEast:      options.GravityWest,
-		options.GravitySouth:     options.GravityNorth,
-		options.GravityWest:      options.GravityEast,
-		options.GravityNorthWest: options.GravitySouthEast,
-		options.GravityNorthEast: options.GravitySouthWest,
-		options.GravitySouthWest: options.GravityNorthEast,
-		options.GravitySouthEast: options.GravityNorthWest,
+		GravityNorth:     GravitySouth,
+		GravityEast:      GravityWest,
+		GravitySouth:     GravityNorth,
+		GravityWest:      GravityEast,
+		GravityNorthWest: GravitySouthEast,
+		GravityNorthEast: GravitySouthWest,
+		GravitySouthWest: GravityNorthEast,
+		GravitySouthEast: GravityNorthWest,
 	},
 	270: {
-		options.GravityNorth:     options.GravityEast,
-		options.GravityEast:      options.GravitySouth,
-		options.GravitySouth:     options.GravityWest,
-		options.GravityWest:      options.GravityNorth,
-		options.GravityNorthWest: options.GravityNorthEast,
-		options.GravityNorthEast: options.GravitySouthEast,
-		options.GravitySouthWest: options.GravityNorthWest,
-		options.GravitySouthEast: options.GravitySouthWest,
+		GravityNorth:     GravityEast,
+		GravityEast:      GravitySouth,
+		GravitySouth:     GravityWest,
+		GravityWest:      GravityNorth,
+		GravityNorthWest: GravityNorthEast,
+		GravityNorthEast: GravitySouthEast,
+		GravitySouthWest: GravityNorthWest,
+		GravitySouthEast: GravitySouthWest,
 	},
 }
 
-var gravityTypesFlipMap = map[options.GravityType]options.GravityType{
-	options.GravityEast:      options.GravityWest,
-	options.GravityWest:      options.GravityEast,
-	options.GravityNorthWest: options.GravityNorthEast,
-	options.GravityNorthEast: options.GravityNorthWest,
-	options.GravitySouthWest: options.GravitySouthEast,
-	options.GravitySouthEast: options.GravitySouthWest,
+var gravityTypesFlipMap = map[GravityType]GravityType{
+	GravityEast:      GravityWest,
+	GravityWest:      GravityEast,
+	GravityNorthWest: GravityNorthEast,
+	GravityNorthEast: GravityNorthWest,
+	GravitySouthWest: GravitySouthEast,
+	GravitySouthEast: GravitySouthWest,
 }
 
 type GravityOptions struct {
-	Type options.GravityType
+	Type GravityType
 	X, Y float64
 }
 
@@ -56,7 +56,7 @@ type GravityOptions struct {
 // It fills the [GravityOptions] struct with the options values under the given prefix.
 // If the gravity type is not set in the options,
 // it returns a [GravityOptions] with the provided default type.
-func NewGravityOptions(o *options.Options, prefix string, defType options.GravityType) GravityOptions {
+func NewGravityOptions(o *options.Options, prefix string, defType GravityType) GravityOptions {
 	gr := GravityOptions{
 		Type: options.Get(o, prefix+keys.SuffixType, defType),
 		X:    o.GetFloat(prefix+keys.SuffixXOffset, 0.0),
@@ -75,9 +75,9 @@ func (g *GravityOptions) RotateAndFlip(angle int, flip bool) {
 		}
 
 		switch g.Type {
-		case options.GravityCenter, options.GravityNorth, options.GravitySouth:
+		case GravityCenter, GravityNorth, GravitySouth:
 			g.X = -g.X
-		case options.GravityFocusPoint:
+		case GravityFocusPoint:
 			g.X = 1.0 - g.X
 		}
 	}
@@ -91,29 +91,29 @@ func (g *GravityOptions) RotateAndFlip(angle int, flip bool) {
 			switch angle {
 			case 90:
 				switch g.Type {
-				case options.GravityCenter, options.GravityEast, options.GravityWest:
+				case GravityCenter, GravityEast, GravityWest:
 					g.X, g.Y = g.Y, -g.X
-				case options.GravityFocusPoint:
+				case GravityFocusPoint:
 					g.X, g.Y = g.Y, 1.0-g.X
 				default:
 					g.X, g.Y = g.Y, g.X
 				}
 			case 180:
 				switch g.Type {
-				case options.GravityCenter:
+				case GravityCenter:
 					g.X, g.Y = -g.X, -g.Y
-				case options.GravityNorth, options.GravitySouth:
+				case GravityNorth, GravitySouth:
 					g.X = -g.X
-				case options.GravityEast, options.GravityWest:
+				case GravityEast, GravityWest:
 					g.Y = -g.Y
-				case options.GravityFocusPoint:
+				case GravityFocusPoint:
 					g.X, g.Y = 1.0-g.X, 1.0-g.Y
 				}
 			case 270:
 				switch g.Type {
-				case options.GravityCenter, options.GravityNorth, options.GravitySouth:
+				case GravityCenter, GravityNorth, GravitySouth:
 					g.X, g.Y = -g.Y, g.X
-				case options.GravityFocusPoint:
+				case GravityFocusPoint:
 					g.X, g.Y = 1.0-g.Y, g.X
 				default:
 					g.X, g.Y = g.Y, g.X

@@ -1,8 +1,10 @@
-package options
+package optionsparser
 
 import (
 	"fmt"
 	"strings"
+
+	"github.com/imgproxy/imgproxy/v3/options"
 )
 
 // parsePresets parses presets from the config and fills the presets map
@@ -60,8 +62,8 @@ func (p *Parser) parsePreset(presetStr string) error {
 // validatePresets validates all presets by applying them to a new Options instance
 func (p *Parser) validatePresets() error {
 	for name, opts := range p.presets {
-		po := New()
-		if err := p.applyURLOptions(po, opts, true, name); err != nil {
+		o := options.New()
+		if err := p.applyURLOptions(o, opts, true, name); err != nil {
 			return fmt.Errorf("Error in preset `%s`: %s", name, err)
 		}
 	}

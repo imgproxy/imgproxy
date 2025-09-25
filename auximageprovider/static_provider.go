@@ -16,7 +16,7 @@ type staticProvider struct {
 }
 
 // Get returns the static image data and headers stored in the provider.
-func (s *staticProvider) Get(_ context.Context, po *options.Options) (imagedata.ImageData, http.Header, error) {
+func (s *staticProvider) Get(_ context.Context, _ *options.Options) (imagedata.ImageData, http.Header, error) {
 	return s.data, s.headers.Clone(), nil
 }
 
