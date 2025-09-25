@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"slices"
 	"sync"
 	"time"
 
@@ -15,14 +14,8 @@ import (
 
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
+	"github.com/imgproxy/imgproxy/v3/vips"
 )
-
-type GaugeFunc func() float64
-
-type gauge struct {
-	unit cloudwatchTypes.StandardUnit
-	f    GaugeFunc
-}
 
 type bufferStats struct {
 	count         int
@@ -33,9 +26,6 @@ var (
 	enabled bool
 
 	client *cloudwatch.Client
-
-	gauges      = make(map[string]gauge)
-	gaugesMutex sync.RWMutex
 
 	collectorCtx       context.Context
 	collectorCtxCancel context.CancelFunc
@@ -83,19 +73,6 @@ func Stop() {
 
 func Enabled() bool {
 	return enabled
-}
-
-func AddGaugeFunc(name, unit string, f GaugeFunc) {
-	gaugesMutex.Lock()
-	defer gaugesMutex.Unlock()
-
-	standardUnit := cloudwatchTypes.StandardUnit(unit)
-
-	if !slices.Contains(cloudwatchTypes.StandardUnitNone.Values(), standardUnit) {
-		panic(fmt.Errorf("Unknown CloudWatch unit: %s", unit))
-	}
-
-	gauges[name] = gauge{unit: standardUnit, f: f}
 }
 
 func ObserveBufferSize(t string, size int) {
@@ -165,22 +142,8 @@ func runMetricsCollector() {
 	for {
 		select {
 		case <-tick.C:
-			metricsCount := len(gauges) + len(bufferDefaultSizes) + len(bufferMaxSizes) + len(bufferSizeStats) + 3
+			metricsCount := len(bufferDefaultSizes) + len(bufferMaxSizes) + len(bufferSizeStats) + 8
 			metrics := make([]cloudwatchTypes.MetricDatum, 0, metricsCount)
-
-			func() {
-				gaugesMutex.RLock()
-				defer gaugesMutex.RUnlock()
-
-				for name, g := range gauges {
-					metrics = append(metrics, cloudwatchTypes.MetricDatum{
-						Dimensions: []cloudwatchTypes.Dimension{dimension},
-						MetricName: aws.String(name),
-						Unit:       g.unit,
-						Value:      aws.Float64(g.f()),
-					})
-				}
-			}()
 
 			func() {
 				bufferStatsMutex.Lock()
@@ -256,6 +219,27 @@ func runMetricsCollector() {
 				Value: aws.Float64(
 					stats.WorkersUtilization(),
 				),
+			})
+
+			metrics = append(metrics, cloudwatchTypes.MetricDatum{
+				Dimensions: []cloudwatchTypes.Dimension{dimension},
+				MetricName: aws.String("VipsMemory"),
+				Unit:       cloudwatchTypes.StandardUnitBytes,
+				Value:      aws.Float64(vips.GetMem()),
+			})
+
+			metrics = append(metrics, cloudwatchTypes.MetricDatum{
+				Dimensions: []cloudwatchTypes.Dimension{dimension},
+				MetricName: aws.String("VipsMaxMemory"),
+				Unit:       cloudwatchTypes.StandardUnitBytes,
+				Value:      aws.Float64(vips.GetMemHighwater()),
+			})
+
+			metrics = append(metrics, cloudwatchTypes.MetricDatum{
+				Dimensions: []cloudwatchTypes.Dimension{dimension},
+				MetricName: aws.String("VipsAllocs"),
+				Unit:       cloudwatchTypes.StandardUnitCount,
+				Value:      aws.Float64(vips.GetAllocs()),
 			})
 
 			input := cloudwatch.PutMetricDataInput{

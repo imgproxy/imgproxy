@@ -17,11 +17,10 @@ import (
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/monitoring/errformat"
 	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
+	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
 type transactionCtxKey struct{}
-
-type GaugeFunc func() float64
 
 type attributable interface {
 	AddAttribute(key string, value interface{})
@@ -41,9 +40,6 @@ var (
 
 	harvesterCtx       context.Context
 	harvesterCtxCancel context.CancelFunc
-
-	gaugeFuncs      = make(map[string]GaugeFunc)
-	gaugeFuncsMutex sync.RWMutex
 
 	bufferSummaries      = make(map[string]*telemetry.Summary)
 	bufferSummariesMutex sync.RWMutex
@@ -211,13 +207,6 @@ func SendError(ctx context.Context, errType string, err error) {
 	}
 }
 
-func AddGaugeFunc(name string, f GaugeFunc) {
-	gaugeFuncsMutex.Lock()
-	defer gaugeFuncsMutex.Unlock()
-
-	gaugeFuncs["imgproxy."+name] = f
-}
-
 func ObserveBufferSize(t string, size int) {
 	if enabledHarvester {
 		bufferSummariesMutex.Lock()
@@ -271,19 +260,6 @@ func runMetricsCollector() {
 		select {
 		case <-tick.C:
 			func() {
-				gaugeFuncsMutex.RLock()
-				defer gaugeFuncsMutex.RUnlock()
-
-				for name, f := range gaugeFuncs {
-					harvester.RecordMetric(telemetry.Gauge{
-						Name:      name,
-						Value:     f(),
-						Timestamp: time.Now(),
-					})
-				}
-			}()
-
-			func() {
 				bufferSummariesMutex.RLock()
 				defer bufferSummariesMutex.RUnlock()
 
@@ -322,6 +298,24 @@ func runMetricsCollector() {
 			harvester.RecordMetric(telemetry.Gauge{
 				Name:      "imgproxy.workers_utilization",
 				Value:     stats.WorkersUtilization(),
+				Timestamp: time.Now(),
+			})
+
+			harvester.RecordMetric(telemetry.Gauge{
+				Name:      "imgproxy.vips.memory",
+				Value:     vips.GetMem(),
+				Timestamp: time.Now(),
+			})
+
+			harvester.RecordMetric(telemetry.Gauge{
+				Name:      "imgproxy.vips.max_memory",
+				Value:     vips.GetMemHighwater(),
+				Timestamp: time.Now(),
+			})
+
+			harvester.RecordMetric(telemetry.Gauge{
+				Name:      "imgproxy.vips.allocs",
+				Value:     vips.GetAllocs(),
 				Timestamp: time.Now(),
 			})
 
