@@ -56,9 +56,9 @@ type GravityOptions struct {
 // It fills the [GravityOptions] struct with the options values under the given prefix.
 // If the gravity type is not set in the options,
 // it returns a [GravityOptions] with the provided default type.
-func NewGravityOptions(o ProcessingOptions, prefix string, defType options.GravityType) GravityOptions {
+func NewGravityOptions(o *options.Options, prefix string, defType options.GravityType) GravityOptions {
 	gr := GravityOptions{
-		Type: options.Get(o.Options, prefix+keys.SuffixType, defType),
+		Type: options.Get(o, prefix+keys.SuffixType, defType),
 		X:    o.GetFloat(prefix+keys.SuffixXOffset, 0.0),
 		Y:    o.GetFloat(prefix+keys.SuffixYOffset, 0.0),
 	}

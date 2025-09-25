@@ -66,7 +66,7 @@ func (po ProcessingOptions) Enlarge() bool {
 }
 
 func (po ProcessingOptions) Gravity() GravityOptions {
-	return NewGravityOptions(po, keys.Gravity, options.GravityCenter)
+	return NewGravityOptions(po.Options, keys.Gravity, options.GravityCenter)
 }
 
 func (po ProcessingOptions) ExtendEnabled() bool {
@@ -74,7 +74,7 @@ func (po ProcessingOptions) ExtendEnabled() bool {
 }
 
 func (po ProcessingOptions) ExtendGravity() GravityOptions {
-	return NewGravityOptions(po, keys.ExtendGravity, options.GravityCenter)
+	return NewGravityOptions(po.Options, keys.ExtendGravity, options.GravityCenter)
 }
 
 func (po ProcessingOptions) ExtendAspectRatioEnabled() bool {
@@ -82,7 +82,7 @@ func (po ProcessingOptions) ExtendAspectRatioEnabled() bool {
 }
 
 func (po ProcessingOptions) ExtendAspectRatioGravity() GravityOptions {
-	return NewGravityOptions(po, keys.ExtendAspectRatioGravity, options.GravityCenter)
+	return NewGravityOptions(po.Options, keys.ExtendAspectRatioGravity, options.GravityCenter)
 }
 
 func (po ProcessingOptions) Rotate() int {
@@ -102,7 +102,7 @@ func (po ProcessingOptions) CropHeight() float64 {
 }
 
 func (po ProcessingOptions) CropGravity() GravityOptions {
-	return NewGravityOptions(po, keys.CropGravity, options.GravityUnknown)
+	return NewGravityOptions(po.Options, keys.CropGravity, options.GravityUnknown)
 }
 
 func (po ProcessingOptions) Format() imagetype.Type {
