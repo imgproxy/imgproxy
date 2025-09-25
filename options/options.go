@@ -127,7 +127,7 @@ func (o *Options) Set(key string, value any) {
 	o.m[key] = value
 }
 
-// Propagate propagates a value under the given key to the child Options if any.
+// Propagate propagates a value under the given key to the Options descendants if any.
 func (o *Options) Propagate(key string) {
 	if o.child == nil {
 		return
@@ -154,8 +154,8 @@ func (o *Options) DeleteByPrefix(prefix string) {
 	}
 }
 
-// DeleteFromChildren removes an option by its key from the child Options if any.
-func (o *Options) DeleteFromChildren(key string) {
+// DeleteFromDescendants removes an option by its key from the Options descendants if any.
+func (o *Options) DeleteFromDescendants(key string) {
 	if o.child == nil {
 		return
 	}

@@ -92,7 +92,7 @@ func (s *OptionsTestSuite) TestPropagate() {
 	s.Require().False(grandChild.Has("key3"))
 }
 
-func (s *OptionsTestSuite) TestDeleteFromChildren() {
+func (s *OptionsTestSuite) TestDeleteFromDescendants() {
 	o := New()
 	o.Set("key1", "value1")
 
@@ -104,7 +104,7 @@ func (s *OptionsTestSuite) TestDeleteFromChildren() {
 	grandChild.Set("key1", "grandchild_value1")
 	grandChild.Set("key2", 300)
 
-	o.DeleteFromChildren("key1")
+	o.DeleteFromDescendants("key1")
 
 	s.Require().Equal("value1", Get(o, "key1", ""))
 
