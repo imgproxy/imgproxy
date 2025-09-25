@@ -22,7 +22,6 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
@@ -38,20 +37,12 @@ var (
 	typeSupportSave sync.Map
 
 	gifResolutionLimit int
+
+	initOnce sync.Once
 )
 
-var vipsConf struct {
-	JpegProgressive       C.int
-	PngInterlaced         C.int
-	PngQuantize           C.int
-	PngQuantizationColors C.int
-	AvifSpeed             C.int
-	JxlEffort             C.int
-	WebpEffort            C.int
-	WebpPreset            C.VipsForeignWebpPreset
-	PngUnlimited          C.int
-	SvgUnlimited          C.int
-}
+// Global vips config. Can be set with [Init]
+var config *Config
 
 var badImageErrRe = []*regexp.Regexp{
 	regexp.MustCompile(`^(\S+)load_buffer: `),
@@ -60,13 +51,32 @@ var badImageErrRe = []*regexp.Regexp{
 	regexp.MustCompile(`^webp2vips: `),
 }
 
-func Init() error {
+func init() {
+	// Just get sure that we have some config
+	c := NewDefaultConfig()
+	config = &c
+}
+
+func Init(c *Config) error {
+	if err := c.Validate(); err != nil {
+		return err
+	}
+
+	config = c
+
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 
-	if err := C.vips_initialize(); err != 0 {
-		C.vips_shutdown()
-		return newVipsError("unable to start vips!")
+	// vips_initialize must be called only once
+	var initErr error
+	initOnce.Do(func() {
+		if err := C.vips_initialize(); err != 0 {
+			C.vips_shutdown()
+			initErr = newVipsError("unable to start vips!")
+		}
+	})
+	if initErr != nil {
+		return initErr
 	}
 
 	// Disable libvips cache. Since processing pipeline is fine tuned, we won't get much profit from it.
@@ -83,40 +93,10 @@ func Init() error {
 		C.vips_concurrency_set(1)
 	}
 
-	if len(os.Getenv("IMGPROXY_VIPS_LEAK_CHECK")) > 0 {
-		C.vips_leak_set(C.gboolean(1))
-	}
-
-	if len(os.Getenv("IMGPROXY_VIPS_CACHE_TRACE")) > 0 {
-		C.vips_cache_set_trace(C.gboolean(1))
-	}
+	C.vips_leak_set(gbool(config.LeakCheck))
+	C.vips_cache_set_trace(gbool(config.CacheTrace))
 
 	gifResolutionLimit = int(C.gif_resolution_limit())
-
-	vipsConf.JpegProgressive = gbool(config.JpegProgressive)
-	vipsConf.PngInterlaced = gbool(config.PngInterlaced)
-	vipsConf.PngQuantize = gbool(config.PngQuantize)
-	vipsConf.PngQuantizationColors = C.int(config.PngQuantizationColors)
-	vipsConf.AvifSpeed = C.int(config.AvifSpeed)
-	vipsConf.JxlEffort = C.int(config.JxlEffort)
-	vipsConf.WebpEffort = C.int(config.WebpEffort)
-	vipsConf.PngUnlimited = gbool(config.PngUnlimited)
-	vipsConf.SvgUnlimited = gbool(config.SvgUnlimited)
-
-	switch config.WebpPreset {
-	case config.WebpPresetPhoto:
-		vipsConf.WebpPreset = C.VIPS_FOREIGN_WEBP_PRESET_PHOTO
-	case config.WebpPresetPicture:
-		vipsConf.WebpPreset = C.VIPS_FOREIGN_WEBP_PRESET_PICTURE
-	case config.WebpPresetDrawing:
-		vipsConf.WebpPreset = C.VIPS_FOREIGN_WEBP_PRESET_DRAWING
-	case config.WebpPresetIcon:
-		vipsConf.WebpPreset = C.VIPS_FOREIGN_WEBP_PRESET_ICON
-	case config.WebpPresetText:
-		vipsConf.WebpPreset = C.VIPS_FOREIGN_WEBP_PRESET_TEXT
-	default:
-		vipsConf.WebpPreset = C.VIPS_FOREIGN_WEBP_PRESET_DEFAULT
-	}
 
 	return nil
 }
@@ -334,13 +314,13 @@ func (img *Image) Load(imgdata imagedata.ImageData, shrink int, scale float64, p
 	case imagetype.JXL:
 		err = C.vips_jxlload_source_go(source, C.int(pages), &tmp)
 	case imagetype.PNG:
-		err = C.vips_pngload_source_go(source, &tmp, vipsConf.PngUnlimited)
+		err = C.vips_pngload_source_go(source, &tmp, gbool(config.PngUnlimited))
 	case imagetype.WEBP:
 		err = C.vips_webpload_source_go(source, C.double(scale), C.int(pages), &tmp)
 	case imagetype.GIF:
 		err = C.vips_gifload_source_go(source, C.int(pages), &tmp)
 	case imagetype.SVG:
-		err = C.vips_svgload_source_go(source, C.double(scale), &tmp, vipsConf.SvgUnlimited)
+		err = C.vips_svgload_source_go(source, C.double(scale), &tmp, gbool(config.SvgUnlimited))
 	case imagetype.HEIC, imagetype.AVIF:
 		err = C.vips_heifload_source_go(source, &tmp, C.int(0))
 	case imagetype.TIFF:
@@ -400,19 +380,29 @@ func (img *Image) Save(imgtype imagetype.Type, quality int) (imagedata.ImageData
 
 	switch imgtype {
 	case imagetype.JPEG:
-		err = C.vips_jpegsave_go(img.VipsImage, target, C.int(quality), vipsConf.JpegProgressive)
+		err = C.vips_jpegsave_go(img.VipsImage, target, C.int(quality), gbool(config.JpegProgressive))
 	case imagetype.JXL:
-		err = C.vips_jxlsave_go(img.VipsImage, target, C.int(quality), vipsConf.JxlEffort)
+		err = C.vips_jxlsave_go(img.VipsImage, target, C.int(quality), C.int(config.JxlEffort))
 	case imagetype.PNG:
-		err = C.vips_pngsave_go(img.VipsImage, target, vipsConf.PngInterlaced, vipsConf.PngQuantize, vipsConf.PngQuantizationColors)
+		err = C.vips_pngsave_go(
+			img.VipsImage, target,
+			gbool(config.PngInterlaced),
+			gbool(config.PngQuantize),
+			C.int(config.PngQuantizationColors),
+		)
 	case imagetype.WEBP:
-		err = C.vips_webpsave_go(img.VipsImage, target, C.int(quality), vipsConf.WebpEffort, vipsConf.WebpPreset)
+		err = C.vips_webpsave_go(
+			img.VipsImage, target,
+			C.int(quality),
+			C.int(config.WebpEffort),
+			config.WebpPreset.C(),
+		)
 	case imagetype.GIF:
 		err = C.vips_gifsave_go(img.VipsImage, target)
 	case imagetype.HEIC:
 		err = C.vips_heifsave_go(img.VipsImage, target, C.int(quality))
 	case imagetype.AVIF:
-		err = C.vips_avifsave_go(img.VipsImage, target, C.int(quality), vipsConf.AvifSpeed)
+		err = C.vips_avifsave_go(img.VipsImage, target, C.int(quality), C.int(config.AvifSpeed))
 	case imagetype.TIFF:
 		err = C.vips_tiffsave_go(img.VipsImage, target, C.int(quality))
 	case imagetype.BMP:

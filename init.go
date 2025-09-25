@@ -43,7 +43,11 @@ func Init() error {
 		return err
 	}
 
-	if err := vips.Init(); err != nil {
+	vipsCfg, err := vips.LoadConfigFromEnv(nil)
+	if err != nil {
+		return err
+	}
+	if err := vips.Init(vipsCfg); err != nil {
 		return err
 	}
 
