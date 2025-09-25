@@ -3,7 +3,6 @@ package options
 import (
 	"fmt"
 	"log/slog"
-	"maps"
 	"slices"
 	"strconv"
 	"time"
@@ -74,19 +73,7 @@ func applySizeOption(o *Options, args []string) (err error) {
 }
 
 func applyResizingTypeOption(o *Options, args []string) error {
-	if err := ensureMaxArgs(keys.ResizingType, args, 1); err != nil {
-		return err
-	}
-
-	if r, ok := resizeTypes[args[0]]; ok {
-		o.Set(keys.ResizingType, r)
-	} else {
-		return newInvalidArgumentError(
-			keys.ResizingType, args[0], slices.Collect(maps.Keys(resizeTypes))...,
-		)
-	}
-
-	return nil
+	return parseFromMap(o, keys.ResizingType, resizeTypes, args...)
 }
 
 func applyResizeOption(o *Options, args []string) error {

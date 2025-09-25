@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"log/slog"
+	"maps"
 	"slices"
 	"strconv"
 	"strings"
@@ -198,6 +199,7 @@ func parseBase64String(o *Options, key string, args ...string) error {
 	return nil
 }
 
+// parseHexRGBColor parses a hex-encoded RGB color option value
 func parseHexRGBColor(o *Options, key string, args ...string) error {
 	if err := ensureMaxArgs(key, args, 1); err != nil {
 		return err
@@ -209,6 +211,22 @@ func parseHexRGBColor(o *Options, key string, args ...string) error {
 	}
 
 	o.Set(key, c)
+
+	return nil
+}
+
+// parseFromMap parses an option value from a map of allowed values
+func parseFromMap[T comparable](o *Options, key string, m map[string]T, args ...string) error {
+	if err := ensureMaxArgs(key, args, 1); err != nil {
+		return err
+	}
+
+	v, ok := m[args[0]]
+	if !ok {
+		return newInvalidArgumentError(key, args[0], slices.Collect(maps.Keys(m))...)
+	}
+
+	o.Set(key, v)
 
 	return nil
 }
