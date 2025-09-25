@@ -3,7 +3,6 @@ package processing
 import (
 	"context"
 
-	"github.com/imgproxy/imgproxy/v3/auximageprovider"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/security"
@@ -26,9 +25,6 @@ type Context struct {
 
 	// Original image data
 	ImgData imagedata.ImageData
-
-	// The watermark image provider, if any watermarking is to be done.
-	WatermarkProvider auximageprovider.Provider
 
 	SrcWidth  int
 	SrcHeight int

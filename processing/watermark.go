@@ -212,7 +212,7 @@ func (p *Processor) applyWatermark(
 }
 
 func (p *Processor) watermark(c *Context) error {
-	if c.WatermarkProvider == nil || c.PO.WatermarkOpacity() == 0 {
+	if p.watermarkProvider == nil || c.PO.WatermarkOpacity() == 0 {
 		return nil
 	}
 
