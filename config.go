@@ -6,7 +6,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/fetcher"
 	processinghandler "github.com/imgproxy/imgproxy/v3/handlers/processing"
 	streamhandler "github.com/imgproxy/imgproxy/v3/handlers/stream"
-	"github.com/imgproxy/imgproxy/v3/options"
+	optionsparser "github.com/imgproxy/imgproxy/v3/options/parser"
 	"github.com/imgproxy/imgproxy/v3/processing"
 	"github.com/imgproxy/imgproxy/v3/security"
 	"github.com/imgproxy/imgproxy/v3/server"
@@ -29,7 +29,7 @@ type Config struct {
 	Server         server.Config
 	Security       security.Config
 	Processing     processing.Config
-	OptionsParser  options.Config
+	OptionsParser  optionsparser.Config
 }
 
 // NewDefaultConfig creates a new default configuration
@@ -46,7 +46,7 @@ func NewDefaultConfig() Config {
 		Server:        server.NewDefaultConfig(),
 		Security:      security.NewDefaultConfig(),
 		Processing:    processing.NewDefaultConfig(),
-		OptionsParser: options.NewDefaultConfig(),
+		OptionsParser: optionsparser.NewDefaultConfig(),
 	}
 }
 
@@ -88,7 +88,7 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 		return nil, err
 	}
 
-	if _, err = options.LoadConfigFromEnv(&c.OptionsParser); err != nil {
+	if _, err = optionsparser.LoadConfigFromEnv(&c.OptionsParser); err != nil {
 		return nil, err
 	}
 

@@ -14,7 +14,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/memory"
 	"github.com/imgproxy/imgproxy/v3/monitoring/prometheus"
-	"github.com/imgproxy/imgproxy/v3/options"
+	optionsparser "github.com/imgproxy/imgproxy/v3/options/parser"
 	"github.com/imgproxy/imgproxy/v3/processing"
 	"github.com/imgproxy/imgproxy/v3/security"
 	"github.com/imgproxy/imgproxy/v3/server"
@@ -43,7 +43,7 @@ type Imgproxy struct {
 	imageDataFactory *imagedata.Factory
 	handlers         ImgproxyHandlers
 	security         *security.Checker
-	optionsParser    *options.Parser
+	optionsParser    *optionsparser.Parser
 	processor        *processing.Processor
 	config           *Config
 }
@@ -77,7 +77,7 @@ func New(ctx context.Context, config *Config) (*Imgproxy, error) {
 		return nil, err
 	}
 
-	optionsParser, err := options.NewParser(&config.OptionsParser)
+	optionsParser, err := optionsparser.New(&config.OptionsParser)
 	if err != nil {
 		return nil, err
 	}
@@ -216,7 +216,7 @@ func (i *Imgproxy) Security() *security.Checker {
 	return i.security
 }
 
-func (i *Imgproxy) OptionsParser() *options.Parser {
+func (i *Imgproxy) OptionsParser() *optionsparser.Parser {
 	return i.optionsParser
 }
 

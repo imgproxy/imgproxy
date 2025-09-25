@@ -1,4 +1,4 @@
-package options
+package processing
 
 import "fmt"
 
@@ -12,7 +12,7 @@ const (
 	ResizeAuto
 )
 
-var resizeTypes = map[string]ResizeType{
+var ResizeTypes = map[string]ResizeType{
 	"fit":       ResizeFit,
 	"fill":      ResizeFill,
 	"fill-down": ResizeFillDown,
@@ -21,7 +21,7 @@ var resizeTypes = map[string]ResizeType{
 }
 
 func (rt ResizeType) String() string {
-	for k, v := range resizeTypes {
+	for k, v := range ResizeTypes {
 		if v == rt {
 			return k
 		}
@@ -30,7 +30,7 @@ func (rt ResizeType) String() string {
 }
 
 func (rt ResizeType) MarshalJSON() ([]byte, error) {
-	for k, v := range resizeTypes {
+	for k, v := range ResizeTypes {
 		if v == rt {
 			return []byte(fmt.Sprintf("%q", k)), nil
 		}

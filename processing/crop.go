@@ -2,7 +2,6 @@ package processing
 
 import (
 	"github.com/imgproxy/imgproxy/v3/imath"
-	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
@@ -20,7 +19,7 @@ func cropImage(img *vips.Image, cropWidth, cropHeight int, gravity *GravityOptio
 		return nil
 	}
 
-	if gravity.Type == options.GravitySmart {
+	if gravity.Type == GravitySmart {
 		if err := img.CopyMemory(); err != nil {
 			return err
 		}

@@ -25,8 +25,8 @@ func (p *Processor) watermarkPipeline() Pipeline {
 	}
 }
 
-func shouldReplicateWatermark(gt options.GravityType) bool {
-	return gt == options.GravityReplicate
+func shouldReplicateWatermark(gt GravityType) bool {
+	return gt == GravityReplicate
 }
 
 func (p *Processor) prepareWatermark(
@@ -44,7 +44,7 @@ func (p *Processor) prepareWatermark(
 	}
 
 	wmPo := p.NewProcessingOptions(options.New())
-	wmPo.Set(keys.ResizingType, options.ResizeFit)
+	wmPo.Set(keys.ResizingType, ResizeFit)
 	wmPo.Set(keys.Dpr, 1)
 	wmPo.Set(keys.Enlarge, true)
 	wmPo.Set(keys.Format, wmData.Format())

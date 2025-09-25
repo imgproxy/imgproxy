@@ -14,7 +14,6 @@ import (
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/monitoring"
-	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/options/keys"
 	"github.com/imgproxy/imgproxy/v3/processing"
 	"github.com/imgproxy/imgproxy/v3/server"
@@ -94,7 +93,7 @@ func (r *request) handleDownloadError(
 	err := r.wrapDownloadingErr(originalErr)
 
 	// If there is no fallback image configured, just return the error
-	data, headers := r.getFallbackImage(ctx, r.po)
+	data, headers := r.getFallbackImage(ctx)
 	if data == nil {
 		return nil, 0, err
 	}
@@ -134,17 +133,14 @@ func (r *request) handleDownloadError(
 }
 
 // getFallbackImage returns fallback image if any
-func (r *request) getFallbackImage(
-	ctx context.Context,
-	po *options.Options,
-) (imagedata.ImageData, http.Header) {
+func (r *request) getFallbackImage(ctx context.Context) (imagedata.ImageData, http.Header) {
 	fbi := r.FallbackImage()
 
 	if fbi == nil {
 		return nil, nil
 	}
 
-	data, h, err := fbi.Get(ctx, po)
+	data, h, err := fbi.Get(ctx, r.opts)
 	if err != nil {
 		slog.Warn(err.Error())
 
@@ -161,7 +157,7 @@ func (r *request) getFallbackImage(
 // processImage calls actual image processing
 func (r *request) processImage(ctx context.Context, originData imagedata.ImageData) (*processing.Result, error) {
 	defer monitoring.StartProcessingSegment(ctx, r.monitoringMeta.Filter(monitoring.MetaOptions))()
-	return r.Processor().ProcessImage(ctx, originData, r.po, r.secops)
+	return r.Processor().ProcessImage(ctx, originData, r.opts, r.secops)
 }
 
 // writeDebugHeaders writes debug headers (X-Origin-*, X-Result-*) to the response
@@ -190,7 +186,7 @@ func (r *request) writeDebugHeaders(result *processing.Result, originData imaged
 
 // respondWithNotModified writes not-modified response
 func (r *request) respondWithNotModified() error {
-	r.rw.SetExpires(r.po.GetTime(keys.Expires))
+	r.rw.SetExpires(r.opts.GetTime(keys.Expires))
 	r.rw.SetVary()
 
 	if r.config.LastModifiedEnabled {
@@ -206,7 +202,7 @@ func (r *request) respondWithNotModified() error {
 	server.LogResponse(
 		r.reqID, r.req, http.StatusNotModified, nil,
 		slog.String("image_url", r.imageURL),
-		slog.Any("processing_options", r.po),
+		slog.Any("processing_options", r.opts),
 	)
 
 	return nil
@@ -225,12 +221,12 @@ func (r *request) respondWithImage(statusCode int, resultData imagedata.ImageDat
 	r.rw.SetContentLength(resultSize)
 	r.rw.SetContentDisposition(
 		r.imageURL,
-		r.po.GetString(keys.Filename, ""),
+		r.opts.GetString(keys.Filename, ""),
 		resultData.Format().Ext(),
 		"",
-		r.po.GetBool(keys.ReturnAttachment, false),
+		r.opts.GetBool(keys.ReturnAttachment, false),
 	)
-	r.rw.SetExpires(r.po.GetTime(keys.Expires))
+	r.rw.SetExpires(r.opts.GetTime(keys.Expires))
 	r.rw.SetVary()
 	r.rw.SetCanonical(r.imageURL)
 
@@ -258,7 +254,7 @@ func (r *request) respondWithImage(statusCode int, resultData imagedata.ImageDat
 	server.LogResponse(
 		r.reqID, r.req, statusCode, ierr,
 		slog.String("image_url", r.imageURL),
-		slog.Any("processing_options", r.po),
+		slog.Any("processing_options", r.opts),
 	)
 
 	return nil

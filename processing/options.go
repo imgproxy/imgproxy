@@ -41,8 +41,8 @@ func (po ProcessingOptions) MinHeight() int {
 	return po.GetInt(keys.MinHeight, 0)
 }
 
-func (po ProcessingOptions) ResizingType() options.ResizeType {
-	return options.Get(po.Options, keys.ResizingType, options.ResizeFit)
+func (po ProcessingOptions) ResizingType() ResizeType {
+	return options.Get(po.Options, keys.ResizingType, ResizeFit)
 }
 
 func (po ProcessingOptions) ZoomWidth() float64 {
@@ -66,7 +66,7 @@ func (po ProcessingOptions) Enlarge() bool {
 }
 
 func (po ProcessingOptions) Gravity() GravityOptions {
-	return NewGravityOptions(po.Options, keys.Gravity, options.GravityCenter)
+	return NewGravityOptions(po.Options, keys.Gravity, GravityCenter)
 }
 
 func (po ProcessingOptions) ExtendEnabled() bool {
@@ -74,7 +74,7 @@ func (po ProcessingOptions) ExtendEnabled() bool {
 }
 
 func (po ProcessingOptions) ExtendGravity() GravityOptions {
-	return NewGravityOptions(po.Options, keys.ExtendGravity, options.GravityCenter)
+	return NewGravityOptions(po.Options, keys.ExtendGravity, GravityCenter)
 }
 
 func (po ProcessingOptions) ExtendAspectRatioEnabled() bool {
@@ -82,7 +82,7 @@ func (po ProcessingOptions) ExtendAspectRatioEnabled() bool {
 }
 
 func (po ProcessingOptions) ExtendAspectRatioGravity() GravityOptions {
-	return NewGravityOptions(po.Options, keys.ExtendAspectRatioGravity, options.GravityCenter)
+	return NewGravityOptions(po.Options, keys.ExtendAspectRatioGravity, GravityCenter)
 }
 
 func (po ProcessingOptions) Rotate() int {
@@ -102,7 +102,7 @@ func (po ProcessingOptions) CropHeight() float64 {
 }
 
 func (po ProcessingOptions) CropGravity() GravityOptions {
-	return NewGravityOptions(po.Options, keys.CropGravity, options.GravityUnknown)
+	return NewGravityOptions(po.Options, keys.CropGravity, GravityUnknown)
 }
 
 func (po ProcessingOptions) Format() imagetype.Type {
@@ -225,8 +225,8 @@ func (po ProcessingOptions) DeleteWatermarkOpacity() {
 	po.Delete(keys.WatermarkOpacity)
 }
 
-func (po ProcessingOptions) WatermarkPosition() options.GravityType {
-	return options.Get(po.Options, keys.WatermarkPosition, options.GravityCenter)
+func (po ProcessingOptions) WatermarkPosition() GravityType {
+	return options.Get(po.Options, keys.WatermarkPosition, GravityCenter)
 }
 
 func (po ProcessingOptions) WatermarkXOffset() float64 {

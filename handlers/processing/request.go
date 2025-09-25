@@ -26,7 +26,7 @@ type request struct {
 	req            *http.Request
 	rw             server.ResponseWriter
 	config         *Config
-	po             *options.Options
+	opts           *options.Options
 	secops         security.Options
 	imageURL       string
 	monitoringMeta monitoring.Meta
@@ -34,7 +34,7 @@ type request struct {
 
 // execute handles the actual processing logic
 func (r *request) execute(ctx context.Context) error {
-	outFormat := options.Get(r.po, keys.Format, imagetype.Unknown)
+	outFormat := options.Get(r.opts, keys.Format, imagetype.Unknown)
 
 	// Check if we can save the resulting image
 	canSave := vips.SupportsSave(outFormat) ||

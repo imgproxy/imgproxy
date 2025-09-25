@@ -94,7 +94,7 @@ func (s *HandlerTestSuite) SetupSubTest() {
 func (s *HandlerTestSuite) execute(
 	imageURL string,
 	header http.Header,
-	po *options.Options,
+	o *options.Options,
 ) *http.Response {
 	imageURL = s.testServer().URL() + imageURL
 	req := httptest.NewRequest("GET", "/", nil)
@@ -104,7 +104,7 @@ func (s *HandlerTestSuite) execute(
 	rw := httptest.NewRecorder()
 	rww := s.rwFactory().NewWriter(rw)
 
-	err := s.handler().Execute(ctx, req, imageURL, "test-req-id", po, rww)
+	err := s.handler().Execute(ctx, req, imageURL, "test-req-id", o, rww)
 	s.Require().NoError(err)
 
 	return rw.Result()
@@ -184,12 +184,12 @@ func (s *HandlerTestSuite) TestHandlerContentDisposition() {
 
 	s.testServer().SetHeaders(httpheaders.ContentType, "image/png").SetBody(data)
 
-	po := options.New()
-	po.Set(keys.Filename, "custom_name")
-	po.Set(keys.ReturnAttachment, true)
+	o := options.New()
+	o.Set(keys.Filename, "custom_name")
+	o.Set(keys.ReturnAttachment, true)
 
 	// Use a URL with a .png extension to help content disposition logic
-	res := s.execute("/test.png", nil, po)
+	res := s.execute("/test.png", nil, o)
 
 	s.Require().Equal(200, res.StatusCode)
 	s.Require().Contains(res.Header.Get(httpheaders.ContentDisposition), "custom_name.png")
@@ -284,7 +284,7 @@ func (s *HandlerTestSuite) TestHandlerCacheControl() {
 				s.Require().InDelta(thirtyMinutes, s.maxAgeValue(res), oneMinuteDelta)
 			},
 		},
-		// When expires is not set in po, but both expires and cc are present in response,
+		// When expires is not set in o, but both expires and cc are present in response,
 		// and passthrough is enabled
 		{
 			name:                    "BothHeadersPassthroughEnabled",
@@ -344,13 +344,13 @@ func (s *HandlerTestSuite) TestHandlerCacheControl() {
 			s.rwConf().CacheControlPassthrough = tc.cacheControlPassthrough
 			s.rwConf().DefaultTTL = 4242
 
-			po := options.New()
+			o := options.New()
 
 			if tc.timestampOffset != nil {
-				po.Set(keys.Expires, time.Now().Add(*tc.timestampOffset))
+				o.Set(keys.Expires, time.Now().Add(*tc.timestampOffset))
 			}
 
-			res := s.execute("", nil, po)
+			res := s.execute("", nil, o)
 			s.Require().Equal(tc.expectedStatusCode, res.StatusCode)
 			tc.validate(s.T(), res)
 		})

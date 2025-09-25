@@ -1,4 +1,4 @@
-package options
+package optionsparser
 
 import (
 	"encoding/base64"
@@ -9,7 +9,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/options/keys"
+	"github.com/imgproxy/imgproxy/v3/processing"
 	"github.com/imgproxy/imgproxy/v3/vips/color"
 )
 
@@ -22,7 +24,7 @@ func ensureMaxArgs(name string, args []string, max int) error {
 }
 
 // parseBool parses a boolean option value and warns if the value is invalid
-func parseBool(o *Options, key string, args ...string) error {
+func parseBool(o *options.Options, key string, args ...string) error {
 	if err := ensureMaxArgs(key, args, 1); err != nil {
 		return err
 	}
@@ -39,7 +41,7 @@ func parseBool(o *Options, key string, args ...string) error {
 }
 
 // parseFloat parses a float64 option value
-func parseFloat(o *Options, key string, args ...string) error {
+func parseFloat(o *options.Options, key string, args ...string) error {
 	if err := ensureMaxArgs(key, args, 1); err != nil {
 		return err
 	}
@@ -55,7 +57,7 @@ func parseFloat(o *Options, key string, args ...string) error {
 }
 
 // parsePositiveFloat parses a positive float64 option value
-func parsePositiveFloat(o *Options, key string, args ...string) error {
+func parsePositiveFloat(o *options.Options, key string, args ...string) error {
 	if err := ensureMaxArgs(key, args, 1); err != nil {
 		return err
 	}
@@ -71,7 +73,7 @@ func parsePositiveFloat(o *Options, key string, args ...string) error {
 }
 
 // parsePositiveNonZeroFloat parses a positive non-zero float64 option value
-func parsePositiveNonZeroFloat(o *Options, key string, args ...string) error {
+func parsePositiveNonZeroFloat(o *options.Options, key string, args ...string) error {
 	if err := ensureMaxArgs(key, args, 1); err != nil {
 		return err
 	}
@@ -87,7 +89,7 @@ func parsePositiveNonZeroFloat(o *Options, key string, args ...string) error {
 }
 
 // parseInt parses a positive integer option value
-func parseInt(o *Options, key string, args ...string) error {
+func parseInt(o *options.Options, key string, args ...string) error {
 	if err := ensureMaxArgs(key, args, 1); err != nil {
 		return err
 	}
@@ -103,7 +105,7 @@ func parseInt(o *Options, key string, args ...string) error {
 }
 
 // parsePositiveNonZeroInt parses a positive non-zero integer option value
-func parsePositiveNonZeroInt(o *Options, key string, args ...string) error {
+func parsePositiveNonZeroInt(o *options.Options, key string, args ...string) error {
 	if err := ensureMaxArgs(key, args, 1); err != nil {
 		return err
 	}
@@ -119,7 +121,7 @@ func parsePositiveNonZeroInt(o *Options, key string, args ...string) error {
 }
 
 // parsePositiveInt parses a positive integer option value
-func parsePositiveInt(o *Options, key string, args ...string) error {
+func parsePositiveInt(o *options.Options, key string, args ...string) error {
 	if err := ensureMaxArgs(key, args, 1); err != nil {
 		return err
 	}
@@ -135,7 +137,7 @@ func parsePositiveInt(o *Options, key string, args ...string) error {
 }
 
 // parseQualityInt parses a quality integer option value (1-100)
-func parseQualityInt(o *Options, key string, args ...string) error {
+func parseQualityInt(o *options.Options, key string, args ...string) error {
 	if err := ensureMaxArgs(key, args, 1); err != nil {
 		return err
 	}
@@ -151,7 +153,7 @@ func parseQualityInt(o *Options, key string, args ...string) error {
 }
 
 // parseOpacityFloat parses an opacity float option value (0-1)
-func parseOpacityFloat(o *Options, key string, args ...string) error {
+func parseOpacityFloat(o *options.Options, key string, args ...string) error {
 	if err := ensureMaxArgs(key, args, 1); err != nil {
 		return err
 	}
@@ -167,7 +169,7 @@ func parseOpacityFloat(o *Options, key string, args ...string) error {
 }
 
 // parseResolution parses a resolution option value in megapixels and stores it as pixels
-func parseResolution(o *Options, key string, args ...string) error {
+func parseResolution(o *options.Options, key string, args ...string) error {
 	if err := ensureMaxArgs(key, args, 1); err != nil {
 		return err
 	}
@@ -184,7 +186,7 @@ func parseResolution(o *Options, key string, args ...string) error {
 }
 
 // parseBase64String parses a base64-encoded string option value
-func parseBase64String(o *Options, key string, args ...string) error {
+func parseBase64String(o *options.Options, key string, args ...string) error {
 	if err := ensureMaxArgs(key, args, 1); err != nil {
 		return err
 	}
@@ -200,7 +202,7 @@ func parseBase64String(o *Options, key string, args ...string) error {
 }
 
 // parseHexRGBColor parses a hex-encoded RGB color option value
-func parseHexRGBColor(o *Options, key string, args ...string) error {
+func parseHexRGBColor(o *options.Options, key string, args ...string) error {
 	if err := ensureMaxArgs(key, args, 1); err != nil {
 		return err
 	}
@@ -216,7 +218,7 @@ func parseHexRGBColor(o *Options, key string, args ...string) error {
 }
 
 // parseFromMap parses an option value from a map of allowed values
-func parseFromMap[T comparable](o *Options, key string, m map[string]T, args ...string) error {
+func parseFromMap[T comparable](o *options.Options, key string, m map[string]T, args ...string) error {
 	if err := ensureMaxArgs(key, args, 1); err != nil {
 		return err
 	}
@@ -232,22 +234,22 @@ func parseFromMap[T comparable](o *Options, key string, m map[string]T, args ...
 }
 
 func parseGravityType(
-	o *Options,
+	o *options.Options,
 	key string,
-	allowedTypes []GravityType,
+	allowedTypes []processing.GravityType,
 	args ...string,
-) (GravityType, error) {
+) (processing.GravityType, error) {
 	if err := ensureMaxArgs(key, args, 1); err != nil {
-		return GravityUnknown, err
+		return processing.GravityUnknown, err
 	}
 
-	gType, ok := gravityTypes[args[0]]
+	gType, ok := processing.GravityTypes[args[0]]
 	if !ok || !slices.Contains(allowedTypes, gType) {
 		types := make([]string, len(allowedTypes))
 		for i, at := range allowedTypes {
 			types[i] = at.String()
 		}
-		return GravityUnknown, newInvalidArgumentError(key, args[0], types...)
+		return processing.GravityUnknown, newInvalidArgumentError(key, args[0], types...)
 	}
 
 	o.Set(key, gType)
@@ -255,14 +257,14 @@ func parseGravityType(
 	return gType, nil
 }
 
-func isGravityOffsetValid(gravity GravityType, offset float64) bool {
-	return gravity != GravityFocusPoint || (offset >= 0 && offset <= 1)
+func isGravityOffsetValid(gravity processing.GravityType, offset float64) bool {
+	return gravity != processing.GravityFocusPoint || (offset >= 0 && offset <= 1)
 }
 
 func parseGravity(
-	o *Options,
+	o *options.Options,
 	key string,
-	allowedTypes []GravityType,
+	allowedTypes []processing.GravityType,
 	args ...string,
 ) error {
 	nArgs := len(args)
@@ -277,14 +279,14 @@ func parseGravity(
 	}
 
 	switch gType {
-	case GravitySmart:
+	case processing.GravitySmart:
 		if nArgs > 1 {
 			return newInvalidArgsError(key, args)
 		}
 		o.Delete(keyXOffset)
 		o.Delete(keyYOffset)
 
-	case GravityFocusPoint:
+	case processing.GravityFocusPoint:
 		if nArgs != 3 {
 			return newInvalidArgsError(key, args)
 		}
@@ -315,7 +317,7 @@ func parseGravity(
 	return nil
 }
 
-func parseExtend(o *Options, key string, args []string) error {
+func parseExtend(o *options.Options, key string, args []string) error {
 	if err := ensureMaxArgs(key, args, 4); err != nil {
 		return err
 	}
@@ -325,7 +327,7 @@ func parseExtend(o *Options, key string, args []string) error {
 	}
 
 	if len(args) > 1 {
-		return parseGravity(o, key+keys.SuffixGravity, extendGravityTypes, args[1:]...)
+		return parseGravity(o, key+keys.SuffixGravity, processing.ExtendGravityTypes, args[1:]...)
 	}
 
 	return nil
