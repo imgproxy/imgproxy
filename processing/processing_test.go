@@ -30,7 +30,8 @@ type ProcessingTestSuite struct {
 }
 
 func (s *ProcessingTestSuite) SetupSuite() {
-	s.Require().NoError(vips.Init())
+	vipsCfg := vips.NewDefaultConfig()
+	s.Require().NoError(vips.Init(&vipsCfg))
 
 	logger.Mute()
 
