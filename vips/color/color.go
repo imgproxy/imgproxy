@@ -38,10 +38,6 @@ func (c RGB) String() string {
 	return fmt.Sprintf("#%02x%02x%02x", c.R, c.G, c.B)
 }
 
-func (c RGB) MarshalJSON() ([]byte, error) {
-	return []byte(fmt.Sprintf(`"#%02x%02x%02x"`, c.R, c.G, c.B)), nil
-}
-
 func (c RGB) LogValue() slog.Value {
 	return slog.StringValue(c.String())
 }
