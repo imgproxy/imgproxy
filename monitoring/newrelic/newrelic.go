@@ -90,7 +90,7 @@ func Init() error {
 	}
 
 	errLogger := slog.NewLogLogger(
-		slog.With("from", "newrelic").Handler(),
+		slog.With("source", "newrelic").Handler(),
 		slog.LevelWarn,
 	)
 
