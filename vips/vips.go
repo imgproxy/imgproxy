@@ -25,6 +25,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
+	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/vips/color"
 )
 
@@ -368,47 +369,43 @@ func (img *Image) LoadThumbnail(imgdata imagedata.ImageData) error {
 	return nil
 }
 
-func (img *Image) Save(imgtype imagetype.Type, quality int) (imagedata.ImageData, error) {
+func (img *Image) Save(
+	imgtype imagetype.Type,
+	quality int,
+	o *options.Options,
+) (imagedata.ImageData, error) {
 	target := C.vips_target_new_to_memory()
 
 	cancel := func() {
 		C.vips_unref_target(target)
 	}
 
+	so := newSaveOptions(o)
+
 	err := C.int(0)
 	imgsize := C.size_t(0)
 
 	switch imgtype {
 	case imagetype.JPEG:
-		err = C.vips_jpegsave_go(img.VipsImage, target, C.int(quality), gbool(config.JpegProgressive))
+		err = C.vips_jpegsave_go(img.VipsImage, target, C.int(quality), so)
 	case imagetype.JXL:
-		err = C.vips_jxlsave_go(img.VipsImage, target, C.int(quality), C.int(config.JxlEffort))
+		err = C.vips_jxlsave_go(img.VipsImage, target, C.int(quality), so)
 	case imagetype.PNG:
-		err = C.vips_pngsave_go(
-			img.VipsImage, target,
-			gbool(config.PngInterlaced),
-			gbool(config.PngQuantize),
-			C.int(config.PngQuantizationColors),
-		)
+		err = C.vips_pngsave_go(img.VipsImage, target, so)
 	case imagetype.WEBP:
-		err = C.vips_webpsave_go(
-			img.VipsImage, target,
-			C.int(quality),
-			C.int(config.WebpEffort),
-			config.WebpPreset.C(),
-		)
+		err = C.vips_webpsave_go(img.VipsImage, target, C.int(quality), so)
 	case imagetype.GIF:
-		err = C.vips_gifsave_go(img.VipsImage, target)
+		err = C.vips_gifsave_go(img.VipsImage, target, so)
 	case imagetype.HEIC:
-		err = C.vips_heifsave_go(img.VipsImage, target, C.int(quality))
+		err = C.vips_heifsave_go(img.VipsImage, target, C.int(quality), so)
 	case imagetype.AVIF:
-		err = C.vips_avifsave_go(img.VipsImage, target, C.int(quality), C.int(config.AvifSpeed))
+		err = C.vips_avifsave_go(img.VipsImage, target, C.int(quality), so)
 	case imagetype.TIFF:
-		err = C.vips_tiffsave_go(img.VipsImage, target, C.int(quality))
+		err = C.vips_tiffsave_go(img.VipsImage, target, C.int(quality), so)
 	case imagetype.BMP:
-		err = C.vips_bmpsave_target_go(img.VipsImage, target)
+		err = C.vips_bmpsave_target_go(img.VipsImage, target, so)
 	case imagetype.ICO:
-		err = C.vips_icosave_target_go(img.VipsImage, target)
+		err = C.vips_icosave_target_go(img.VipsImage, target, so)
 	default:
 		// NOTE: probably, it would be better to use defer unref + additionally ref the target
 		// before passing it to the imagedata.ImageData

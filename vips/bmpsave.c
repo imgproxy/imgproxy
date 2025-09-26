@@ -303,7 +303,7 @@ vips_bmpsave_target(VipsImage *in, VipsTarget *target, ...)
 
 // wrapper function which hides varargs (...) from CGo
 int
-vips_bmpsave_target_go(VipsImage *in, VipsTarget *target)
+vips_bmpsave_target_go(VipsImage *in, VipsTarget *target, ImgproxySaveOptions opts)
 {
   return vips_bmpsave_target(in, VIPS_TARGET(target), NULL);
 }

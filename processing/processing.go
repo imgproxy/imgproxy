@@ -543,9 +543,9 @@ func (p *Processor) saveImage(
 	// If we want and can fit the image into the specified number of bytes,
 	// let's do it.
 	if maxBytes := po.MaxBytes(); maxBytes > 0 && outFormat.SupportsQuality() {
-		return saveImageToFitBytes(ctx, img, outFormat, quality, maxBytes)
+		return saveImageToFitBytes(ctx, img, outFormat, quality, maxBytes, po.Options)
 	}
 
 	// Otherwise, just save the image with the specified quality.
-	return img.Save(outFormat, quality)
+	return img.Save(outFormat, quality, po.Options)
 }

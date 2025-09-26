@@ -1025,38 +1025,39 @@ vips_strip_all(VipsImage *in, VipsImage **out)
 }
 
 int
-vips_jpegsave_go(VipsImage *in, VipsTarget *target, int quality, int interlace)
+vips_jpegsave_go(VipsImage *in, VipsTarget *target, int quality, ImgproxySaveOptions opts)
 {
   return vips_jpegsave_target(
       in, target,
       "Q", quality,
       "optimize_coding", TRUE,
-      "interlace", interlace,
+      "interlace", opts.JpegProgressive,
       NULL);
 }
 
 int
-vips_jxlsave_go(VipsImage *in, VipsTarget *target, int quality, int effort)
+vips_jxlsave_go(VipsImage *in, VipsTarget *target, int quality, ImgproxySaveOptions opts)
 {
   return vips_jxlsave_target(
       in, target,
       "Q", quality,
-      "effort", effort,
+      "effort", opts.JxlEffort,
       NULL);
 }
 
 int
-vips_pngsave_go(VipsImage *in, VipsTarget *target, int interlace, int quantize, int colors)
+vips_pngsave_go(VipsImage *in, VipsTarget *target, ImgproxySaveOptions opts)
 {
+  int quantize = opts.PngQuantize;
   int bitdepth;
 
   if (quantize) {
     bitdepth = 1;
-    if (colors > 16)
+    if (opts.PngQuantizationColors > 16)
       bitdepth = 8;
-    else if (colors > 4)
+    else if (opts.PngQuantizationColors > 4)
       bitdepth = 4;
-    else if (colors > 2)
+    else if (opts.PngQuantizationColors > 2)
       bitdepth = 2;
   }
   else {
@@ -1067,7 +1068,6 @@ vips_pngsave_go(VipsImage *in, VipsTarget *target, int interlace, int quantize, 
       else if (bitdepth > 2)
         bitdepth = 4;
       quantize = 1;
-      colors = 1 << bitdepth;
     }
   }
 
@@ -1075,31 +1075,31 @@ vips_pngsave_go(VipsImage *in, VipsTarget *target, int interlace, int quantize, 
     return vips_pngsave_target(
         in, target,
         "filter", VIPS_FOREIGN_PNG_FILTER_ALL,
-        "interlace", interlace,
+        "interlace", opts.PngInterlaced,
         NULL);
 
   return vips_pngsave_target(
       in, target,
       "filter", VIPS_FOREIGN_PNG_FILTER_NONE,
-      "interlace", interlace,
+      "interlace", opts.PngInterlaced,
       "palette", quantize,
       "bitdepth", bitdepth,
       NULL);
 }
 
 int
-vips_webpsave_go(VipsImage *in, VipsTarget *target, int quality, int effort, VipsForeignWebpPreset preset)
+vips_webpsave_go(VipsImage *in, VipsTarget *target, int quality, ImgproxySaveOptions opts)
 {
   return vips_webpsave_target(
       in, target,
       "Q", quality,
-      "effort", effort,
-      "preset", preset,
+      "effort", opts.WebpEffort,
+      "preset", opts.WebpPreset,
       NULL);
 }
 
 int
-vips_gifsave_go(VipsImage *in, VipsTarget *target)
+vips_gifsave_go(VipsImage *in, VipsTarget *target, ImgproxySaveOptions opts)
 {
   int bitdepth = vips_get_palette_bit_depth(in);
   if (bitdepth <= 0 || bitdepth > 8)
@@ -1108,13 +1108,13 @@ vips_gifsave_go(VipsImage *in, VipsTarget *target)
 }
 
 int
-vips_tiffsave_go(VipsImage *in, VipsTarget *target, int quality)
+vips_tiffsave_go(VipsImage *in, VipsTarget *target, int quality, ImgproxySaveOptions opts)
 {
   return vips_tiffsave_target(in, target, "Q", quality, NULL);
 }
 
 int
-vips_heifsave_go(VipsImage *in, VipsTarget *target, int quality)
+vips_heifsave_go(VipsImage *in, VipsTarget *target, int quality, ImgproxySaveOptions opts)
 {
   return vips_heifsave_target(
       in, target,
@@ -1124,13 +1124,13 @@ vips_heifsave_go(VipsImage *in, VipsTarget *target, int quality)
 }
 
 int
-vips_avifsave_go(VipsImage *in, VipsTarget *target, int quality, int speed)
+vips_avifsave_go(VipsImage *in, VipsTarget *target, int quality, ImgproxySaveOptions opts)
 {
   return vips_heifsave_target(
       in, target,
       "Q", quality,
       "compression", VIPS_FOREIGN_HEIF_COMPRESSION_AV1,
-      "effort", 9 - speed,
+      "effort", 9 - opts.AvifSpeed,
       NULL);
 }
 

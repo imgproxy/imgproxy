@@ -243,7 +243,7 @@ vips_icosave_target(VipsImage *in, VipsTarget *target, ...)
 
 // wrapper function which hides varargs (...) from CGo
 int
-vips_icosave_target_go(VipsImage *in, VipsTarget *target)
+vips_icosave_target_go(VipsImage *in, VipsTarget *target, ImgproxySaveOptions opts)
 {
   return vips_icosave_target(in, VIPS_TARGET(target), NULL);
 }

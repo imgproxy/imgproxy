@@ -6,6 +6,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/imath"
+	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/server"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
@@ -19,6 +20,7 @@ func saveImageToFitBytes(
 	format imagetype.Type,
 	startQuality int,
 	target int,
+	o *options.Options,
 ) (imagedata.ImageData, error) {
 	var newQuality int
 
@@ -38,7 +40,7 @@ func saveImageToFitBytes(
 			return nil, err
 		}
 
-		imgdata, err := img.Save(format, quality)
+		imgdata, err := img.Save(format, quality, o)
 		if err != nil {
 			return nil, err
 		}
