@@ -125,7 +125,7 @@ func (r *Router) HEAD(path string, handler RouteHandler, middlewares ...Middlewa
 // ServeHTTP serves routes
 func (r *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	// Attach timer to the context
-	req, timeoutCancel := startRequestTimer(req)
+	req, timeoutCancel := startRequestTimer(req, r.config.RequestTimeout)
 	defer timeoutCancel()
 
 	// Create the [ResponseWriter]

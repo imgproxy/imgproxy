@@ -1,15 +1,21 @@
 package logger
 
 import (
+	"errors"
 	"log/slog"
 	"os"
 	"strings"
 
 	"github.com/mattn/go-isatty"
 
-	"github.com/imgproxy/imgproxy/v3/config/configurators"
 	"github.com/imgproxy/imgproxy/v3/ensure"
+	"github.com/imgproxy/imgproxy/v3/env"
 	"github.com/imgproxy/imgproxy/v3/logger/syslog"
+)
+
+var (
+	IMGPROXY_LOG_FORMAT = env.Describe("IMGPROXY_LOG_FORMAT", "pretty|structured|json|gcp")
+	IMGPROXY_LOG_LEVEL  = env.Describe("IMGPROXY_LOG_LEVEL", "debug|info|warn|error")
 )
 
 type Config struct {
@@ -34,24 +40,30 @@ func NewDefaultConfig() Config {
 	return o
 }
 
-func LoadConfigFromEnv(o *Config) *Config {
+func LoadConfigFromEnv(o *Config) (*Config, error) {
 	o = ensure.Ensure(o, NewDefaultConfig)
 
 	var logFormat, logLevel string
-	configurators.String(&logFormat, "IMGPROXY_LOG_FORMAT")
-	configurators.String(&logLevel, "IMGPROXY_LOG_LEVEL")
+
+	_, slErr := syslog.LoadConfigFromEnv(&o.Syslog)
+
+	err := errors.Join(
+		slErr,
+		env.String(&logFormat, IMGPROXY_LOG_FORMAT),
+		env.String(&logLevel, IMGPROXY_LOG_LEVEL),
+	)
 
 	if logFormat != "" {
 		o.Format = parseFormat(logFormat)
 	}
+
 	if logLevel != "" {
 		o.Level = parseLevel(logLevel)
 	}
 
 	// Load syslog config
-	syslog.LoadConfigFromEnv(&o.Syslog)
 
-	return o
+	return o, err
 }
 
 func (c *Config) Validate() error {

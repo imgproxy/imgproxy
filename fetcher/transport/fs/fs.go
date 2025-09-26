@@ -23,9 +23,12 @@ type transport struct {
 	fs http.Dir
 }
 
-func New(config *Config) transport {
-	// TODO: VALIDATE HERE
-	return transport{fs: http.Dir(config.Root)}
+func New(config *Config) (transport, error) {
+	if err := config.Validate(); err != nil {
+		return transport{}, err
+	}
+
+	return transport{fs: http.Dir(config.Root)}, nil
 }
 
 func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error) {

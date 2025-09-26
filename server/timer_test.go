@@ -25,7 +25,7 @@ func TestCheckTimeout(t *testing.T) {
 			name: "ActiveTimerContext",
 			setup: func() context.Context {
 				req := httptest.NewRequest(http.MethodGet, "/test", nil)
-				newReq, _ := startRequestTimer(req)
+				newReq, _ := startRequestTimer(req, 10*time.Second)
 				return newReq.Context()
 			},
 			fail: false,
@@ -34,7 +34,7 @@ func TestCheckTimeout(t *testing.T) {
 			name: "CancelledContext",
 			setup: func() context.Context {
 				req := httptest.NewRequest(http.MethodGet, "/test", nil)
-				newReq, cancel := startRequestTimer(req)
+				newReq, cancel := startRequestTimer(req, 10*time.Second)
 				cancel() // Cancel immediately
 				return newReq.Context()
 			},

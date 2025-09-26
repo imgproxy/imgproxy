@@ -5,11 +5,25 @@ package vips
 */
 import "C"
 import (
-	"fmt"
-	"os"
+	"errors"
 
-	globalConfig "github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/ensure"
+	"github.com/imgproxy/imgproxy/v3/env"
+)
+
+var (
+	IMGPROXY_JPEG_PROGRESSIVE        = env.Describe("IMGPROXY_JPEG_PROGRESSIVE", "boolean")
+	IMGPROXY_PNG_INTERLACED          = env.Describe("IMGPROXY_PNG_INTERLACED", "boolean")
+	IMGPROXY_PNG_QUANTIZE            = env.Describe("IMGPROXY_PNG_QUANTIZE", "boolean")
+	IMGPROXY_PNG_QUANTIZATION_COLORS = env.Describe("IMGPROXY_PNG_QUANTIZATION_COLORS", "number between 2 and 256")
+	IMGPROXY_WEBP_PRESET             = env.Describe("IMGPROXY_WEBP_PRESET", "default|picture|photo|drawing|icon|text")
+	IMGPROXY_AVIF_SPEED              = env.Describe("IMGPROXY_AVIF_SPEED", "number between 0 and 9")
+	IMGPROXY_WEBP_EFFORT             = env.Describe("IMGPROXY_WEBP_EFFORT", "number between 1 and 6")
+	IMGPROXY_JXL_EFFORT              = env.Describe("IMGPROXY_JXL_EFFORT", "number between 1 and 9")
+	IMGPROXY_PNG_UNLIMITED           = env.Describe("IMGPROXY_PNG_UNLIMITED", "boolean")
+	IMGPROXY_SVG_UNLIMITED           = env.Describe("IMGPROXY_SVG_UNLIMITED", "boolean")
+	IMGPROXY_VIPS_LEAK_CHECK         = env.Describe("IMGPROXY_VIPS_LEAK_CHECK", "boolean")
+	IMGPROXY_VIPS_CACHE_TRACE        = env.Describe("IMGPROXY_VIPS_CACHE_TRACE", "boolean")
 )
 
 type Config struct {
@@ -69,53 +83,61 @@ func NewDefaultConfig() Config {
 func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c = ensure.Ensure(c, NewDefaultConfig)
 
-	c.JpegProgressive = globalConfig.JpegProgressive
+	var leakCheck, cacheTrace string
 
-	c.PngInterlaced = globalConfig.PngInterlaced
-	c.PngQuantize = globalConfig.PngQuantize
-	c.PngQuantizationColors = globalConfig.PngQuantizationColors
+	// default preset so parsing below won't fail on empty value
+	webpPreset := c.WebpPreset.String()
 
-	if pr, ok := WebpPresets[globalConfig.WebpPreset]; ok {
-		c.WebpPreset = pr
-	} else {
-		return nil, fmt.Errorf("invalid WebP preset: %s", globalConfig.WebpPreset)
+	err := errors.Join(
+		env.Bool(&c.JpegProgressive, IMGPROXY_JPEG_PROGRESSIVE),
+		env.Bool(&c.PngInterlaced, IMGPROXY_PNG_INTERLACED),
+		env.Bool(&c.PngQuantize, IMGPROXY_PNG_QUANTIZE),
+		env.Int(&c.PngQuantizationColors, IMGPROXY_PNG_QUANTIZATION_COLORS),
+		env.Int(&c.AvifSpeed, IMGPROXY_AVIF_SPEED),
+		env.Int(&c.WebpEffort, IMGPROXY_WEBP_EFFORT),
+		env.Int(&c.JxlEffort, IMGPROXY_JXL_EFFORT),
+		env.Bool(&c.PngUnlimited, IMGPROXY_PNG_UNLIMITED),
+		env.Bool(&c.SvgUnlimited, IMGPROXY_SVG_UNLIMITED),
+
+		env.String(&webpPreset, IMGPROXY_WEBP_PRESET),
+		env.String(&leakCheck, IMGPROXY_VIPS_LEAK_CHECK),
+		env.String(&cacheTrace, IMGPROXY_VIPS_CACHE_TRACE),
+	)
+	if err != nil {
+		return nil, err
 	}
 
-	c.AvifSpeed = globalConfig.AvifSpeed
-	c.WebpEffort = globalConfig.WebpEffort
-	c.JxlEffort = globalConfig.JxlEffort
+	if pr, ok := WebpPresets[webpPreset]; ok {
+		c.WebpPreset = pr
+	} else {
+		return nil, IMGPROXY_WEBP_PRESET.Errorf("invalid WebP preset: %s", webpPreset)
+	}
 
-	c.PngUnlimited = globalConfig.PngUnlimited
-	c.SvgUnlimited = globalConfig.SvgUnlimited
-
-	c.LeakCheck = len(os.Getenv("IMGPROXY_VIPS_LEAK_CHECK")) > 0
-	c.CacheTrace = len(os.Getenv("IMGPROXY_VIPS_CACHE_TRACE")) > 0
+	c.LeakCheck = len(leakCheck) > 0
+	c.CacheTrace = len(cacheTrace) > 0
 
 	return c, nil
 }
 
 func (c *Config) Validate() error {
 	if c.PngQuantizationColors < 2 || c.PngQuantizationColors > 256 {
-		return fmt.Errorf(
-			"IMGPROXY_PNG_QUANTIZATION_COLORS must be between 2 and 256, got %d",
-			c.PngQuantizationColors,
-		)
+		return IMGPROXY_PNG_QUANTIZATION_COLORS.ErrorRange()
 	}
 
 	if c.WebpPreset < C.VIPS_FOREIGN_WEBP_PRESET_DEFAULT || c.WebpPreset >= C.VIPS_FOREIGN_WEBP_PRESET_LAST {
-		return fmt.Errorf("invalid IMGPROXY_WEBP_PRESET: %d", c.WebpPreset)
+		return IMGPROXY_WEBP_PRESET.ErrorRange()
 	}
 
 	if c.AvifSpeed < 0 || c.AvifSpeed > 9 {
-		return fmt.Errorf("IMGPROXY_AVIF_SPEED must be between 0 and 9, got %d", c.AvifSpeed)
+		return IMGPROXY_AVIF_SPEED.ErrorRange()
 	}
 
 	if c.JxlEffort < 1 || c.JxlEffort > 9 {
-		return fmt.Errorf("IMGPROXY_JXL_EFFORT must be between 1 and 9, got %d", c.JxlEffort)
+		return IMGPROXY_JXL_EFFORT.ErrorRange()
 	}
 
 	if c.WebpEffort < 1 || c.WebpEffort > 6 {
-		return fmt.Errorf("IMGPROXY_WEBP_EFFORT must be between 1 and 6, got %d", c.WebpEffort)
+		return IMGPROXY_WEBP_EFFORT.ErrorRange()
 	}
 
 	return nil

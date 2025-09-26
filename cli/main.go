@@ -9,6 +9,7 @@ import (
 
 	"github.com/imgproxy/imgproxy/v3"
 	"github.com/imgproxy/imgproxy/v3/logger"
+	optionsparser "github.com/imgproxy/imgproxy/v3/options/parser"
 	"github.com/imgproxy/imgproxy/v3/version"
 	"github.com/urfave/cli/v3"
 )
@@ -21,10 +22,6 @@ func ver(ctx context.Context, c *cli.Command) error {
 
 // run starts the imgproxy server
 func run(ctx context.Context, cmd *cli.Command) error {
-	// NOTE: for now, this flag is loaded in config.go package
-
-	// presets := cmd.String("presets")
-
 	if err := imgproxy.Init(); err != nil {
 		return err
 	}
@@ -55,7 +52,7 @@ func main() {
 		Usage: "Fast and secure standalone server for resizing and converting remote images",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name:  "presets",
+				Name:  optionsparser.PresetsFlagName,
 				Usage: "path of the file with presets",
 			},
 		},

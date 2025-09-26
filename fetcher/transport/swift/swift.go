@@ -9,7 +9,6 @@ import (
 
 	"github.com/ncw/swift/v2"
 
-	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/fetcher/transport/common"
 	"github.com/imgproxy/imgproxy/v3/fetcher/transport/notmodified"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
@@ -92,16 +91,12 @@ func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error)
 		return nil, ierrors.Wrap(err, 0, ierrors.WithPrefix("error opening object"))
 	}
 
-	if config.ETagEnabled {
-		if etag, ok := objectHeaders["Etag"]; ok {
-			header.Set("ETag", etag)
-		}
+	if etag, ok := objectHeaders["Etag"]; ok {
+		header.Set("ETag", etag)
 	}
 
-	if config.LastModifiedEnabled {
-		if lastModified, ok := objectHeaders["Last-Modified"]; ok {
-			header.Set("Last-Modified", lastModified)
-		}
+	if lastModified, ok := objectHeaders["Last-Modified"]; ok {
+		header.Set("Last-Modified", lastModified)
 	}
 
 	if resp := notmodified.Response(req, header); resp != nil {

@@ -77,39 +77,43 @@ func (t *Transport) registerAllProtocols() error {
 	}
 
 	if t.config.Local.Root != "" {
-		t.RegisterProtocol("local", fsTransport.New(&t.config.Local))
+		p, err := fsTransport.New(&t.config.Local)
+		if err != nil {
+			return err
+		}
+		t.RegisterProtocol("local", p)
 	}
 
 	if t.config.S3Enabled {
-		if tr, err := s3Transport.New(&t.config.S3, transp); err != nil {
+		tr, err := s3Transport.New(&t.config.S3, transp)
+		if err != nil {
 			return err
-		} else {
-			t.RegisterProtocol("s3", tr)
 		}
+		t.RegisterProtocol("s3", tr)
 	}
 
 	if t.config.GCSEnabled {
-		if tr, err := gcsTransport.New(&t.config.GCS, transp); err != nil {
+		tr, err := gcsTransport.New(&t.config.GCS, transp)
+		if err != nil {
 			return err
-		} else {
-			t.RegisterProtocol("gs", tr)
 		}
+		t.RegisterProtocol("gs", tr)
 	}
 
 	if t.config.ABSEnabled {
-		if tr, err := azureTransport.New(&t.config.ABS, transp); err != nil {
+		tr, err := azureTransport.New(&t.config.ABS, transp)
+		if err != nil {
 			return err
-		} else {
-			t.RegisterProtocol("abs", tr)
 		}
+		t.RegisterProtocol("abs", tr)
 	}
 
 	if t.config.SwiftEnabled {
-		if tr, err := swiftTransport.New(&t.config.Swift, transp); err != nil {
+		tr, err := swiftTransport.New(&t.config.Swift, transp)
+		if err != nil {
 			return err
-		} else {
-			t.RegisterProtocol("swift", tr)
 		}
+		t.RegisterProtocol("swift", tr)
 	}
 
 	return nil

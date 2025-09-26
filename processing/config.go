@@ -2,13 +2,28 @@ package processing
 
 import (
 	"errors"
-	"fmt"
-	"log/slog"
 
-	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/ensure"
+	"github.com/imgproxy/imgproxy/v3/env"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/vips"
+)
+
+var (
+	IMGPROXY_PREFERRED_FORMATS       = env.Describe("IMGPROXY_PREFERRED_FORMATS", "jpeg|png|gif|webp|avif|jxl|tiff|svg")
+	IMGPROXY_SKIP_PROCESSING_FORMATS = env.Describe("IMGPROXY_SKIP_PROCESSING_FORMATS", "jpeg|png|gif|webp|avif|jxl|tiff|svg")
+	IMGPROXY_WATERMARK_OPACITY       = env.Describe("IMGPROXY_WATERMARK_OPACITY", "number between 0..1")
+	IMGPROXY_DISABLE_SHRINK_ON_LOAD  = env.Describe("IMGPROXY_DISABLE_SHRINK_ON_LOAD", "boolean")
+	IMGPROXY_USE_LINEAR_COLORSPACE   = env.Describe("IMGPROXY_USE_LINEAR_COLORSPACE", "boolean")
+	IMGPROXY_SANITIZE_SVG            = env.Describe("IMGPROXY_SANITIZE_SVG", "boolean")
+	IMGPROXY_ALWAYS_RASTERIZE_SVG    = env.Describe("IMGPROXY_ALWAYS_RASTERIZE_SVG", "boolean")
+	IMGPROXY_QUALITY                 = env.Describe("IMGPROXY_QUALITY", "number between 0..100")
+	IMGPROXY_FORMAT_QUALITY          = env.Describe("IMGPROXY_FORMAT_QUALITY", "comma-separated list of format=quality pairs where quality is between 0..100")
+	IMGPROXY_STRIP_METADATA          = env.Describe("IMGPROXY_STRIP_METADATA", "boolean")
+	IMGPROXY_KEEP_COPYRIGHT          = env.Describe("IMGPROXY_KEEP_COPYRIGHT", "boolean")
+	IMGPROXY_STRIP_COLOR_PROFILE     = env.Describe("IMGPROXY_STRIP_COLOR_PROFILE", "boolean")
+	IMGPROXY_AUTO_ROTATE             = env.Describe("IMGPROXY_AUTO_ROTATE", "boolean")
+	IMGPROXY_ENFORCE_THUMBNAIL       = env.Describe("IMGPROXY_ENFORCE_THUMBNAIL", "boolean")
 )
 
 // Config holds pipeline-related configuration.
@@ -57,39 +72,49 @@ func NewDefaultConfig() Config {
 func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c = ensure.Ensure(c, NewDefaultConfig)
 
-	c.WatermarkOpacity = config.WatermarkOpacity
-	c.DisableShrinkOnLoad = config.DisableShrinkOnLoad
-	c.UseLinearColorspace = config.UseLinearColorspace
-	c.SkipProcessingFormats = config.SkipProcessingFormats
-	c.PreferredFormats = config.PreferredFormats
-	c.SanitizeSvg = config.SanitizeSvg
-	c.AlwaysRasterizeSvg = config.AlwaysRasterizeSvg
-	c.AutoRotate = config.AutoRotate
-	c.EnforceThumbnail = config.EnforceThumbnail
+	err := errors.Join(
+		env.Float(&c.WatermarkOpacity, IMGPROXY_WATERMARK_OPACITY),
+		env.Bool(&c.DisableShrinkOnLoad, IMGPROXY_DISABLE_SHRINK_ON_LOAD),
+		env.Bool(&c.UseLinearColorspace, IMGPROXY_USE_LINEAR_COLORSPACE),
+		env.Bool(&c.SanitizeSvg, IMGPROXY_SANITIZE_SVG),
+		env.Bool(&c.AlwaysRasterizeSvg, IMGPROXY_ALWAYS_RASTERIZE_SVG),
+		env.Int(&c.Quality, IMGPROXY_QUALITY),
+		env.ImageTypesQuality(c.FormatQuality, IMGPROXY_FORMAT_QUALITY),
+		env.Bool(&c.StripMetadata, IMGPROXY_STRIP_METADATA),
+		env.Bool(&c.KeepCopyright, IMGPROXY_KEEP_COPYRIGHT),
+		env.Bool(&c.StripColorProfile, IMGPROXY_STRIP_COLOR_PROFILE),
+		env.Bool(&c.AutoRotate, IMGPROXY_AUTO_ROTATE),
+		env.Bool(&c.EnforceThumbnail, IMGPROXY_ENFORCE_THUMBNAIL),
 
-	return c, nil
+		env.ImageTypes(&c.PreferredFormats, IMGPROXY_PREFERRED_FORMATS),
+		env.ImageTypes(&c.SkipProcessingFormats, IMGPROXY_SKIP_PROCESSING_FORMATS),
+	)
+
+	return c, err
 }
 
 // Validate checks if the configuration is valid
 func (c *Config) Validate() error {
-	if c.WatermarkOpacity <= 0 {
-		return errors.New("watermark opacity should be greater than 0")
-	} else if c.WatermarkOpacity > 1 {
-		return errors.New("watermark opacity should be less than or equal to 1")
+	if c.WatermarkOpacity <= 0 || c.WatermarkOpacity > 1 {
+		return IMGPROXY_WATERMARK_OPACITY.Errorf("must be between 0 and 1")
+	}
+
+	if c.Quality <= 0 || c.Quality > 100 {
+		return IMGPROXY_QUALITY.Errorf("must be between 0 and 100")
 	}
 
 	filtered := c.PreferredFormats[:0]
 
 	for _, t := range c.PreferredFormats {
 		if !vips.SupportsSave(t) {
-			slog.Warn(fmt.Sprintf("%s can't be a preferred format as it's saving is not supported", t))
+			IMGPROXY_PREFERRED_FORMATS.Warn("can't be a preferred format as it's saving is not supported", "format", t)
 		} else {
 			filtered = append(filtered, t)
 		}
 	}
 
 	if len(filtered) == 0 {
-		return errors.New("no supported preferred formats specified")
+		return IMGPROXY_PREFERRED_FORMATS.Errorf("no supported preferred formats specified")
 	}
 
 	c.PreferredFormats = filtered

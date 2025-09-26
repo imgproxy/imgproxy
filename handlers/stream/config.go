@@ -1,9 +1,16 @@
 package stream
 
 import (
-	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/ensure"
+	"github.com/imgproxy/imgproxy/v3/env"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
+)
+
+var (
+	// NOTE: processing handler has the similar variable. For now, we do not want
+	// to couple hanlders/processing and handlers/stream packages, so we duplicate it here.
+	// Discuss.
+	IMGPROXY_COOKIE_PASSTHROUGH = env.Describe("IMGPROXY_COOKIE_PASSTHROUGH", "boolean")
 )
 
 // Config represents the configuration for the image streamer
@@ -43,9 +50,9 @@ func NewDefaultConfig() Config {
 func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c = ensure.Ensure(c, NewDefaultConfig)
 
-	c.CookiePassthrough = config.CookiePassthrough
+	err := env.Bool(&c.CookiePassthrough, IMGPROXY_COOKIE_PASSTHROUGH)
 
-	return c, nil
+	return c, err
 }
 
 // Validate checks config for errors

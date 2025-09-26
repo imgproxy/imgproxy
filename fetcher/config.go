@@ -2,12 +2,19 @@ package fetcher
 
 import (
 	"errors"
+	"strings"
 	"time"
 
-	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/ensure"
+	"github.com/imgproxy/imgproxy/v3/env"
 	"github.com/imgproxy/imgproxy/v3/fetcher/transport"
 	"github.com/imgproxy/imgproxy/v3/version"
+)
+
+var (
+	IMGPROXY_USER_AGENT       = env.Describe("IMGPROXY_USER_AGENT", "non-empty string")
+	IMGPROXY_DOWNLOAD_TIMEOUT = env.Describe("IMGPROXY_DOWNLOAD_TIMEOUT", "seconds => 0")
+	IMGPROXY_MAX_REDIRECTS    = env.Describe("IMGPROXY_MAX_REDIRECTS", "integer > 0")
 )
 
 // Config holds the configuration for the image fetcher.
@@ -39,26 +46,33 @@ func NewDefaultConfig() Config {
 func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c = ensure.Ensure(c, NewDefaultConfig)
 
-	c.UserAgent = config.UserAgent
-	c.DownloadTimeout = time.Duration(config.DownloadTimeout) * time.Second
-	c.MaxRedirects = config.MaxRedirects
+	_, trErr := transport.LoadConfigFromEnv(&c.Transport)
 
-	_, err := transport.LoadConfigFromEnv(&c.Transport)
-	if err != nil {
-		return nil, err
-	}
+	err := errors.Join(
+		trErr,
+		env.String(&c.UserAgent, IMGPROXY_USER_AGENT),
+		env.Duration(&c.DownloadTimeout, IMGPROXY_DOWNLOAD_TIMEOUT),
+		env.Int(&c.MaxRedirects, IMGPROXY_MAX_REDIRECTS),
+	)
 
-	return c, nil
+	// Set the current version in the User-Agent string
+	c.UserAgent = strings.ReplaceAll(c.UserAgent, "%current_version", version.Version)
+
+	return c, err
 }
 
 // Validate checks config for errors
 func (c *Config) Validate() error {
 	if len(c.UserAgent) == 0 {
-		return errors.New("user agent cannot be empty")
+		return IMGPROXY_USER_AGENT.ErrorEmpty()
 	}
 
 	if c.DownloadTimeout <= 0 {
-		return errors.New("download timeout must be greater than 0")
+		return IMGPROXY_DOWNLOAD_TIMEOUT.ErrorZeroOrNegative()
+	}
+
+	if c.MaxRedirects <= 0 {
+		return IMGPROXY_MAX_REDIRECTS.ErrorZeroOrNegative()
 	}
 
 	return nil

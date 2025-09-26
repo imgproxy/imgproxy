@@ -9,7 +9,6 @@ import (
 
 	"golang.org/x/net/netutil"
 
-	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/reuseport"
 )
 
@@ -52,7 +51,7 @@ func Start(cancel context.CancelFunc, router *Router) (*Server, error) {
 		ErrorLog:       errLogger,
 	}
 
-	if config.KeepAliveTimeout > 0 {
+	if router.config.KeepAliveTimeout > 0 {
 		srv.IdleTimeout = router.config.KeepAliveTimeout
 	} else {
 		srv.SetKeepAlivesEnabled(false)
@@ -79,7 +78,7 @@ func Start(cancel context.CancelFunc, router *Router) (*Server, error) {
 func (s *Server) Shutdown(ctx context.Context) {
 	slog.Info("Shutting down the server...")
 
-	ctx, close := context.WithTimeout(ctx, s.router.config.GracefulTimeout)
+	ctx, close := context.WithTimeout(ctx, s.router.config.GracefulStopTimeout)
 	defer close()
 
 	s.server.Shutdown(ctx)

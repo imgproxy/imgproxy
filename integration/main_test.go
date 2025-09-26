@@ -9,7 +9,11 @@ import (
 
 // TestMain performs global setup/teardown for the integration tests.
 func TestMain(m *testing.M) {
-	imgproxy.Init()
+	err := imgproxy.Init()
+	if err != nil {
+		panic(err)
+	}
+
 	os.Exit(m.Run())
 	imgproxy.Shutdown()
 }

@@ -31,7 +31,7 @@ func (s *FsTestSuite) SetupSuite() {
 
 	s.etag = BuildEtag("/test1.png", fi)
 	s.modTime = fi.ModTime()
-	s.transport = New(&Config{Root: fsRoot})
+	s.transport, _ = New(&Config{Root: fsRoot})
 }
 
 func (s *FsTestSuite) TestRoundTripWithETagEnabled() {
