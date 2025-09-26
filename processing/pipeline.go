@@ -39,9 +39,9 @@ type Context struct {
 
 	DprScale float64
 
-	// The base scale factor for vector images.
+	// The base shrink factor for vector images.
 	// It is used to downscale the input vector image to the maximum allowed resolution
-	VectorBaseScale float64
+	VectorBaseShrink float64
 
 	// The width we aim to get.
 	// Based on the requested width scaled according to processing options.
@@ -118,8 +118,8 @@ func (p Pipeline) newContext(
 		WScale: 1.0,
 		HScale: 1.0,
 
-		DprScale:        1.0,
-		VectorBaseScale: 1.0,
+		DprScale:         1.0,
+		VectorBaseShrink: 1.0,
 
 		CropGravity: po.CropGravity(),
 	}

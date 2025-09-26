@@ -35,6 +35,6 @@ int vips_icosave_target_go(VipsImage *in, VipsTarget *target, ImgproxySaveOption
 VIPS_API
 int icoload_source(VipsSource *source, VipsImage **out, ...)
     G_GNUC_NULL_TERMINATED;
-int vips_icoload_source_go(VipsImgproxySource *source, VipsImage **out);
+int vips_icoload_source_go(VipsImgproxySource *source, VipsImage **out, ImgproxyLoadOptions lo);
 
 #endif

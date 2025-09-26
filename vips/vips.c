@@ -62,54 +62,82 @@ vips_health()
   return res;
 }
 
+int
+check_shrink(const char *function, double shrink)
+{
+  if (shrink != 0)
+    return 0;
+
+  vips_error(function, "shrink can't be 0");
+  return -1;
+}
+
 // loads jpeg from a source
 int
-vips_jpegload_source_go(VipsImgproxySource *source, int shrink, VipsImage **out)
+vips_jpegload_source_go(VipsImgproxySource *source, VipsImage **out, ImgproxyLoadOptions lo)
 {
-  if (shrink > 1)
-    return vips_jpegload_source(VIPS_SOURCE(source), out, "access", VIPS_ACCESS_SEQUENTIAL, "shrink", shrink,
-        NULL);
-
-  return vips_jpegload_source(VIPS_SOURCE(source), out, "access", VIPS_ACCESS_SEQUENTIAL, NULL);
+  return check_shrink("vips_jpegload_source_go", lo.Shrink) ||
+      vips_jpegload_source(
+          VIPS_SOURCE(source), out,
+          "access", VIPS_ACCESS_SEQUENTIAL,
+          "shrink", (int) lo.Shrink,
+          NULL);
 }
 
 // loads xjl from source
 int
-vips_jxlload_source_go(VipsImgproxySource *source, int pages, VipsImage **out)
+vips_jxlload_source_go(VipsImgproxySource *source, VipsImage **out, ImgproxyLoadOptions lo)
 {
-  return vips_jxlload_source(VIPS_SOURCE(source), out, "access", VIPS_ACCESS_SEQUENTIAL, "n", pages, NULL);
+  return vips_jxlload_source(
+      VIPS_SOURCE(source), out,
+      "access", VIPS_ACCESS_SEQUENTIAL,
+      "page", lo.Page,
+      "n", lo.Pages,
+      NULL);
 }
 
 int
-vips_pngload_source_go(VipsImgproxySource *source, VipsImage **out, int unlimited)
+vips_pngload_source_go(VipsImgproxySource *source, VipsImage **out, ImgproxyLoadOptions lo)
 {
   return vips_pngload_source(
       VIPS_SOURCE(source), out,
       "access", VIPS_ACCESS_SEQUENTIAL,
-      "unlimited", unlimited,
+      "unlimited", lo.PngUnlimited,
       NULL);
 }
 
 int
-vips_webpload_source_go(VipsImgproxySource *source, double scale, int pages, VipsImage **out)
+vips_webpload_source_go(VipsImgproxySource *source, VipsImage **out, ImgproxyLoadOptions lo)
 {
-  return vips_webpload_source(
+  return check_shrink("vips_webpload_source_go", lo.Shrink) ||
+      vips_webpload_source(
+          VIPS_SOURCE(source), out,
+          "access", VIPS_ACCESS_SEQUENTIAL,
+          "scale", 1.0 / lo.Shrink,
+          "page", lo.Page,
+          "n", lo.Pages,
+          NULL);
+}
+
+int
+vips_gifload_source_go(VipsImgproxySource *source, VipsImage **out, ImgproxyLoadOptions lo)
+{
+  return vips_gifload_source(
       VIPS_SOURCE(source), out,
       "access", VIPS_ACCESS_SEQUENTIAL,
-      "scale", scale,
-      "n", pages,
+      "page", lo.Page,
+      "n", lo.Pages,
       NULL);
 }
 
 int
-vips_gifload_source_go(VipsImgproxySource *source, int pages, VipsImage **out)
+vips_svgload_source_go(VipsImgproxySource *source, VipsImage **out, ImgproxyLoadOptions lo)
 {
-  return vips_gifload_source(VIPS_SOURCE(source), out, "access", VIPS_ACCESS_SEQUENTIAL, "n", pages, NULL);
-}
+  if (check_shrink("vips_svgload_source_go", lo.Shrink))
+    return -1;
 
-int
-vips_svgload_source_go(VipsImgproxySource *source, double scale, VipsImage **out, int unlimited)
-{
+  double scale = 1.0 / lo.Shrink;
+
   // libvips limits the minimal scale to 0.001, so we have to scale down dpi
   // for lower scale values
   double dpi = 72.0;
@@ -123,24 +151,29 @@ vips_svgload_source_go(VipsImgproxySource *source, double scale, VipsImage **out
       "access", VIPS_ACCESS_SEQUENTIAL,
       "scale", scale,
       "dpi", dpi,
-      "unlimited", unlimited,
+      "unlimited", lo.SvgUnlimited,
       NULL);
 }
 
 int
-vips_heifload_source_go(VipsImgproxySource *source, VipsImage **out, int thumbnail)
+vips_heifload_source_go(VipsImgproxySource *source, VipsImage **out, ImgproxyLoadOptions lo)
 {
   return vips_heifload_source(
       VIPS_SOURCE(source), out,
       "access", VIPS_ACCESS_SEQUENTIAL,
-      "thumbnail", thumbnail,
+      "thumbnail", lo.Thumbnail,
       NULL);
 }
 
 int
-vips_tiffload_source_go(VipsImgproxySource *source, VipsImage **out)
+vips_tiffload_source_go(VipsImgproxySource *source, VipsImage **out, ImgproxyLoadOptions lo)
 {
-  return vips_tiffload_source(VIPS_SOURCE(source), out, "access", VIPS_ACCESS_SEQUENTIAL, NULL);
+  return vips_tiffload_source(
+      VIPS_SOURCE(source), out,
+      "access", VIPS_ACCESS_SEQUENTIAL,
+      "page", lo.Page,
+      "n", lo.Pages,
+      NULL);
 }
 
 int

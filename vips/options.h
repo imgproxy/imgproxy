@@ -1,5 +1,16 @@
 #include <vips/vips.h>
 
+typedef struct _ImgproxyLoadOptions {
+  double Shrink;      // Shrink-on-load factor. 1.0 means no shrinking.
+  gboolean Thumbnail; // Whether to load thumbnail (for heif).
+
+  int Page;  // Page number to load (for multi-page images).
+  int Pages; // Number of pages to load (for multi-page images).
+
+  gboolean PngUnlimited; // Whether to disable vips_pngload limits.
+  gboolean SvgUnlimited; // Whether to disable vips_svgload limits.
+} ImgproxyLoadOptions;
+
 typedef struct _ImgproxySaveOptions {
   gboolean JpegProgressive; // Whether to save JPEG as progressive.
 

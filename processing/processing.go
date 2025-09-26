@@ -162,7 +162,7 @@ func (p *Processor) initialLoadImage(
 		}
 	}
 
-	return false, img.Load(imgdata, 1, 1.0, 1)
+	return false, img.Load(imgdata, 1.0, 0, 1)
 }
 
 // reloadImageForProcessing reloads the image for processing.
@@ -178,7 +178,7 @@ func (p *Processor) reloadImageForProcessing(
 	// up to MaxAnimationFrames
 	if asAnimated {
 		frames := min(img.Pages(), secops.MaxAnimationFrames)
-		return img.Load(imgdata, 1, 1.0, frames)
+		return img.Load(imgdata, 1.0, 0, frames)
 	}
 
 	// Otherwise, we just need to remove any animation-related data

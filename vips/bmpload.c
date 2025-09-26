@@ -931,7 +931,7 @@ vips_bmpload_source(VipsSource *source, VipsImage **out, ...)
 
 // wrapper function which hiders varargs (...) from CGo
 int
-vips_bmpload_source_go(VipsImgproxySource *source, VipsImage **out)
+vips_bmpload_source_go(VipsImgproxySource *source, VipsImage **out, ImgproxyLoadOptions lo)
 {
   return vips_bmpload_source(
       VIPS_SOURCE(source), out,
