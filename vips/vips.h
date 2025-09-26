@@ -26,14 +26,14 @@ int gif_resolution_limit();
 
 int vips_health();
 
-int vips_jpegload_source_go(VipsImgproxySource *source, int shrink, VipsImage **out);
-int vips_jxlload_source_go(VipsImgproxySource *source, int pages, VipsImage **out);
-int vips_pngload_source_go(VipsImgproxySource *source, VipsImage **out, int unlimited);
-int vips_webpload_source_go(VipsImgproxySource *source, double scale, int pages, VipsImage **out);
-int vips_gifload_source_go(VipsImgproxySource *source, int pages, VipsImage **out);
-int vips_svgload_source_go(VipsImgproxySource *source, double scale, VipsImage **out, int unlimited);
-int vips_heifload_source_go(VipsImgproxySource *source, VipsImage **out, int thumbnail);
-int vips_tiffload_source_go(VipsImgproxySource *source, VipsImage **out);
+int vips_jpegload_source_go(VipsImgproxySource *source, VipsImage **out, ImgproxyLoadOptions lo);
+int vips_jxlload_source_go(VipsImgproxySource *source, VipsImage **out, ImgproxyLoadOptions lo);
+int vips_pngload_source_go(VipsImgproxySource *source, VipsImage **out, ImgproxyLoadOptions lo);
+int vips_webpload_source_go(VipsImgproxySource *source, VipsImage **out, ImgproxyLoadOptions lo);
+int vips_gifload_source_go(VipsImgproxySource *source, VipsImage **out, ImgproxyLoadOptions lo);
+int vips_svgload_source_go(VipsImgproxySource *source, VipsImage **out, ImgproxyLoadOptions lo);
+int vips_heifload_source_go(VipsImgproxySource *source, VipsImage **out, ImgproxyLoadOptions lo);
+int vips_tiffload_source_go(VipsImgproxySource *source, VipsImage **out, ImgproxyLoadOptions lo);
 
 int vips_black_go(VipsImage **out, int width, int height, int bands);
 

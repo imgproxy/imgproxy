@@ -46,7 +46,7 @@ var (
 var config *Config
 
 var badImageErrRe = []*regexp.Regexp{
-	regexp.MustCompile(`^(\S+)load_buffer: `),
+	regexp.MustCompile(`^(\S+)load_source: `),
 	regexp.MustCompile(`^VipsJpeg: `),
 	regexp.MustCompile(`^tiff2vips: `),
 	regexp.MustCompile(`^webp2vips: `),
@@ -301,35 +301,41 @@ func (img *Image) PagesLoaded() int {
 	return img.Height() / img.PageHeight()
 }
 
-func (img *Image) Load(imgdata imagedata.ImageData, shrink int, scale float64, pages int) error {
+func (img *Image) Load(
+	imgdata imagedata.ImageData,
+	shrink float64,
+	page, pages int,
+) error {
 	var tmp *C.VipsImage
-
-	err := C.int(0)
 
 	source := newVipsImgproxySource(imgdata.Reader())
 	defer C.unref_imgproxy_source(source)
 
+	lo := newLoadOptions(shrink, page, pages)
+
+	err := C.int(0)
+
 	switch imgdata.Format() {
 	case imagetype.JPEG:
-		err = C.vips_jpegload_source_go(source, C.int(shrink), &tmp)
+		err = C.vips_jpegload_source_go(source, &tmp, lo)
 	case imagetype.JXL:
-		err = C.vips_jxlload_source_go(source, C.int(pages), &tmp)
+		err = C.vips_jxlload_source_go(source, &tmp, lo)
 	case imagetype.PNG:
-		err = C.vips_pngload_source_go(source, &tmp, gbool(config.PngUnlimited))
+		err = C.vips_pngload_source_go(source, &tmp, lo)
 	case imagetype.WEBP:
-		err = C.vips_webpload_source_go(source, C.double(scale), C.int(pages), &tmp)
+		err = C.vips_webpload_source_go(source, &tmp, lo)
 	case imagetype.GIF:
-		err = C.vips_gifload_source_go(source, C.int(pages), &tmp)
+		err = C.vips_gifload_source_go(source, &tmp, lo)
 	case imagetype.SVG:
-		err = C.vips_svgload_source_go(source, C.double(scale), &tmp, gbool(config.SvgUnlimited))
+		err = C.vips_svgload_source_go(source, &tmp, lo)
 	case imagetype.HEIC, imagetype.AVIF:
-		err = C.vips_heifload_source_go(source, &tmp, C.int(0))
+		err = C.vips_heifload_source_go(source, &tmp, lo)
 	case imagetype.TIFF:
-		err = C.vips_tiffload_source_go(source, &tmp)
+		err = C.vips_tiffload_source_go(source, &tmp, lo)
 	case imagetype.BMP:
-		err = C.vips_bmpload_source_go(source, &tmp)
+		err = C.vips_bmpload_source_go(source, &tmp, lo)
 	case imagetype.ICO:
-		err = C.vips_icoload_source_go(source, &tmp)
+		err = C.vips_icoload_source_go(source, &tmp, lo)
 	default:
 		return newVipsError("Usupported image type to load")
 	}
@@ -360,7 +366,10 @@ func (img *Image) LoadThumbnail(imgdata imagedata.ImageData) error {
 	source := newVipsImgproxySource(imgdata.Reader())
 	defer C.unref_imgproxy_source(source)
 
-	if err := C.vips_heifload_source_go(source, &tmp, C.int(1)); err != 0 {
+	lo := newLoadOptions(1.0, 0, 1)
+	lo.Thumbnail = 1
+
+	if err := C.vips_heifload_source_go(source, &tmp, lo); err != 0 {
 		return Error()
 	}
 

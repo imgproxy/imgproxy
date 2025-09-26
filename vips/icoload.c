@@ -386,7 +386,7 @@ vips_icoload_source(VipsSource *source, VipsImage **out, ...)
 
 // wrapper function which hiders varargs (...) from CGo
 int
-vips_icoload_source_go(VipsImgproxySource *source, VipsImage **out)
+vips_icoload_source_go(VipsImgproxySource *source, VipsImage **out, ImgproxyLoadOptions lo)
 {
   return vips_icoload_source(VIPS_SOURCE(source), out, "access", VIPS_ACCESS_SEQUENTIAL, NULL);
 }

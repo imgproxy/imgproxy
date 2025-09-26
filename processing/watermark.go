@@ -39,7 +39,7 @@ func (p *Processor) prepareWatermark(
 	offsetScale float64,
 	framesCount int,
 ) error {
-	if err := wm.Load(wmData, 1, 1.0, 1); err != nil {
+	if err := wm.Load(wmData, 1.0, 0, 1); err != nil {
 		return err
 	}
 
