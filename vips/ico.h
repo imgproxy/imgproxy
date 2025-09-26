@@ -29,7 +29,7 @@ typedef struct __attribute__((packed)) _ICONDIRENTRY_IcoHeader {
 } ICONDIRENTRY_IcoHeader;
 
 // defined in icosave.c
-int vips_icosave_target_go(VipsImage *in, VipsTarget *target);
+int vips_icosave_target_go(VipsImage *in, VipsTarget *target, ImgproxySaveOptions opts);
 
 // defined in icoload.c
 VIPS_API
