@@ -27,7 +27,7 @@ func New(config *Config) (*Transport, error) {
 		return nil, err
 	}
 
-	transport, err := generichttp.New(true, &config.HTTP)
+	transport, err := generichttp.New(true, &config.HTTP, config.SourceURLQuerySeparator)
 	if err != nil {
 		return nil, err
 	}
@@ -71,13 +71,15 @@ func (t *Transport) IsProtocolRegistered(scheme string) bool {
 
 // RegisterAllProtocols registers all enabled protocols in the given transport
 func (t *Transport) registerAllProtocols() error {
-	transp, err := generichttp.New(false, &t.config.HTTP)
+	sep := t.config.SourceURLQuerySeparator // shortcut
+
+	transp, err := generichttp.New(false, &t.config.HTTP, sep)
 	if err != nil {
 		return err
 	}
 
 	if t.config.Local.Root != "" {
-		p, err := fsTransport.New(&t.config.Local)
+		p, err := fsTransport.New(&t.config.Local, sep)
 		if err != nil {
 			return err
 		}
@@ -85,7 +87,7 @@ func (t *Transport) registerAllProtocols() error {
 	}
 
 	if t.config.S3Enabled {
-		tr, err := s3Transport.New(&t.config.S3, transp)
+		tr, err := s3Transport.New(&t.config.S3, transp, sep)
 		if err != nil {
 			return err
 		}
@@ -93,7 +95,7 @@ func (t *Transport) registerAllProtocols() error {
 	}
 
 	if t.config.GCSEnabled {
-		tr, err := gcsTransport.New(&t.config.GCS, transp)
+		tr, err := gcsTransport.New(&t.config.GCS, transp, sep)
 		if err != nil {
 			return err
 		}
@@ -101,7 +103,7 @@ func (t *Transport) registerAllProtocols() error {
 	}
 
 	if t.config.ABSEnabled {
-		tr, err := azureTransport.New(&t.config.ABS, transp)
+		tr, err := azureTransport.New(&t.config.ABS, transp, sep)
 		if err != nil {
 			return err
 		}
@@ -109,7 +111,7 @@ func (t *Transport) registerAllProtocols() error {
 	}
 
 	if t.config.SwiftEnabled {
-		tr, err := swiftTransport.New(&t.config.Swift, transp)
+		tr, err := swiftTransport.New(&t.config.Swift, transp, sep)
 		if err != nil {
 			return err
 		}

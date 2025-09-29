@@ -25,7 +25,8 @@ import (
 var noAuth bool = false
 
 type transport struct {
-	client *storage.Client
+	client      *storage.Client
+	qsSeparator string
 }
 
 func buildHTTPClient(config *Config, trans *http.Transport, opts ...option.ClientOption) (*http.Client, error) {
@@ -41,7 +42,7 @@ func buildHTTPClient(config *Config, trans *http.Transport, opts ...option.Clien
 	return &http.Client{Transport: htrans}, nil
 }
 
-func New(config *Config, trans *http.Transport) (http.RoundTripper, error) {
+func New(config *Config, trans *http.Transport, sep string) (http.RoundTripper, error) {
 	var client *storage.Client
 
 	opts := []option.ClientOption{
@@ -72,11 +73,11 @@ func New(config *Config, trans *http.Transport) (http.RoundTripper, error) {
 		return nil, ierrors.Wrap(err, 0, ierrors.WithPrefix("Can't create GCS client"))
 	}
 
-	return transport{client}, nil
+	return transport{client, sep}, nil
 }
 
 func (t transport) RoundTrip(req *http.Request) (*http.Response, error) {
-	bucket, key, query := common.GetBucketAndKey(req.URL)
+	bucket, key, query := common.GetBucketAndKey(req.URL, t.qsSeparator)
 
 	if len(bucket) == 0 || len(key) == 0 {
 		body := strings.NewReader("Invalid GCS URL: bucket name or object key is empty")
