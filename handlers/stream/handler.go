@@ -37,6 +37,7 @@ var (
 type Handler struct {
 	config  *Config          // Configuration for the streamer
 	fetcher *fetcher.Fetcher // Fetcher instance to handle image fetching
+	cookies *cookies.Cookies // Cookies manager
 }
 
 // request holds the parameters and state for a single streaming request
@@ -50,7 +51,7 @@ type request struct {
 }
 
 // New creates new handler object
-func New(config *Config, fetcher *fetcher.Fetcher) (*Handler, error) {
+func New(config *Config, fetcher *fetcher.Fetcher, cookies *cookies.Cookies) (*Handler, error) {
 	if err := config.Validate(); err != nil {
 		return nil, err
 	}
@@ -58,6 +59,7 @@ func New(config *Config, fetcher *fetcher.Fetcher) (*Handler, error) {
 	return &Handler{
 		fetcher: fetcher,
 		config:  config,
+		cookies: cookies,
 	}, nil
 }
 
@@ -134,11 +136,7 @@ func (s *request) execute(ctx context.Context) error {
 
 // getCookieJar returns non-empty cookie jar if cookie passthrough is enabled
 func (s *request) getCookieJar() (http.CookieJar, error) {
-	if !s.handler.config.CookiePassthrough {
-		return nil, nil
-	}
-
-	return cookies.JarFromRequest(s.imageRequest)
+	return s.handler.cookies.JarFromRequest(s.imageRequest)
 }
 
 // getImageRequestHeaders returns a new http.Header containing only

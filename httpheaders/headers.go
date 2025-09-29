@@ -62,6 +62,7 @@ const (
 	XContentTypeOptions             = "X-Content-Type-Options"
 	XForwardedFor                   = "X-Forwarded-For"
 	XForwardedHost                  = "X-Forwarded-Host"
+	XForwardedPort                  = "X-Forwarded-Port"
 	XForwardedProto                 = "X-Forwarded-Proto"
 	XFrameOptions                   = "X-Frame-Options"
 	XOriginWidth                    = "X-Origin-Width"
