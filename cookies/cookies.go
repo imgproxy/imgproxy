@@ -5,65 +5,72 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
+	"slices"
 	"sync"
 
 	"golang.org/x/net/publicsuffix"
 
-	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 )
 
-type cookieError string
-
-func (e cookieError) Error() string { return string(e) }
-
-type anyCookieJarEntry struct {
-	Name   string
-	Value  string
-	Quoted bool
+// Cookies represents a cookies manager
+type Cookies struct {
+	config *Config
 }
 
-// anyCookieJar is a cookie jar that stores all cookies in memory
+// cookieJar is a cookie jar that stores all cookies in memory
 // and doesn't care about domains and paths
-type anyCookieJar struct {
-	entries []anyCookieJarEntry
+type cookieJar struct {
+	entries []*http.Cookie
 	mu      sync.RWMutex
 }
 
-func (j *anyCookieJar) SetCookies(u *url.URL, cookies []*http.Cookie) {
+// New creates a new Cookies instance
+func New(config *Config) (*Cookies, error) {
+	if err := config.Validate(); err != nil {
+		return nil, err
+	}
+
+	cookies := &Cookies{config: config}
+
+	return cookies, nil
+}
+
+// SetCookies stores the cookies in the jar. For each source cookie it creates
+// a new cookie with only Name, Value and Quoted fields set.
+func (j *cookieJar) SetCookies(u *url.URL, cookies []*http.Cookie) {
 	j.mu.Lock()
 	defer j.mu.Unlock()
 
+	// Remove all unimportant cookie params
 	for _, c := range cookies {
-		entry := anyCookieJarEntry{
+		j.entries = append(j.entries, &http.Cookie{
 			Name:   c.Name,
 			Value:  c.Value,
 			Quoted: c.Quoted,
-		}
-		j.entries = append(j.entries, entry)
+		})
 	}
 }
 
-func (j *anyCookieJar) Cookies(u *url.URL) []*http.Cookie {
+// Cookies returns all stored cookies
+func (j *cookieJar) Cookies(u *url.URL) []*http.Cookie {
 	j.mu.RLock()
 	defer j.mu.RUnlock()
 
-	cookies := make([]*http.Cookie, 0, len(j.entries))
-	for _, e := range j.entries {
-		c := http.Cookie{
-			Name:   e.Name,
-			Value:  e.Value,
-			Quoted: e.Quoted,
-		}
-		cookies = append(cookies, &c)
-	}
-
-	return cookies
+	// NOTE: do we need to clone, or we could just return a ref?
+	return slices.Clone(j.entries)
 }
 
-func JarFromRequest(r *http.Request) (jar http.CookieJar, err error) {
-	if config.CookiePassthroughAll {
-		jar = &anyCookieJar{}
+// JarFromRequest creates a cookie jar from the given HTTP request
+func (c *Cookies) JarFromRequest(r *http.Request) (jar http.CookieJar, err error) {
+	// If cookie passthrough is disabled, return nil jar
+	if !c.config.CookiePassthrough {
+		return nil, nil
+	}
+
+	if c.config.CookiePassthroughAll {
+		jar = &cookieJar{}
 	} else {
 		jar, err = cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
 		if err != nil {
@@ -77,22 +84,22 @@ func JarFromRequest(r *http.Request) (jar http.CookieJar, err error) {
 
 	var cookieBase *url.URL
 
-	if !config.CookiePassthroughAll {
-		if len(config.CookieBaseURL) > 0 {
-			if cookieBase, err = url.Parse(config.CookieBaseURL); err != nil {
+	if !c.config.CookiePassthroughAll {
+		if len(c.config.CookieBaseURL) > 0 {
+			if cookieBase, err = url.Parse(c.config.CookieBaseURL); err != nil {
 				return nil, ierrors.Wrap(cookieError(fmt.Sprintf("can't parse cookie base URL: %s", err)), 0)
 			}
 		}
 
 		if cookieBase == nil {
-			scheme := r.Header.Get("X-Forwarded-Proto")
+			scheme := r.Header.Get(httpheaders.XForwardedProto)
 			if len(scheme) == 0 {
 				scheme = "http"
 			}
 
-			host := r.Header.Get("X-Forwarded-Host")
+			host := r.Header.Get(httpheaders.XForwardedHost)
 			if len(host) == 0 {
-				host = r.Header.Get("Host")
+				host = r.Header.Get(httpheaders.Host)
 			}
 			if len(host) == 0 {
 				host = r.Host
@@ -102,7 +109,7 @@ func JarFromRequest(r *http.Request) (jar http.CookieJar, err error) {
 				return jar, nil
 			}
 
-			port := r.Header.Get("X-Forwarded-Port")
+			port := r.Header.Get(httpheaders.XForwardedPort)
 			if len(port) > 0 {
 				host = host + ":" + port
 			}

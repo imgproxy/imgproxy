@@ -9,7 +9,6 @@ import (
 )
 
 var (
-	IMGPROXY_COOKIE_PASSTHROUGH        = env.Describe("IMGPROXY_COOKIE_PASSTHROUGH", "boolean")
 	IMGPROXY_REPORT_DOWNLOADING_ERRORS = env.Describe("IMGPROXY_REPORT_DOWNLOADING_ERRORS", "boolean")
 	IMGPROXY_LAST_MODIFIED_ENABLED     = env.Describe("IMGPROXY_LAST_MODIFIED_ENABLED", "boolean")
 	IMGPROXY_ETAG_ENABLED              = env.Describe("IMGPROXY_ETAG_ENABLED", "boolean")
@@ -20,7 +19,6 @@ var (
 
 // Config represents handler config
 type Config struct {
-	CookiePassthrough       bool // Whether to passthrough cookies
 	ReportDownloadingErrors bool // Whether to report downloading errors
 	LastModifiedEnabled     bool // Whether to enable Last-Modified
 	ETagEnabled             bool // Whether to enable ETag
@@ -32,7 +30,6 @@ type Config struct {
 // NewDefaultConfig creates a new configuration with defaults
 func NewDefaultConfig() Config {
 	return Config{
-		CookiePassthrough:       false,
 		ReportDownloadingErrors: true,
 		LastModifiedEnabled:     true,
 		ETagEnabled:             true,
@@ -47,7 +44,6 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c = ensure.Ensure(c, NewDefaultConfig)
 
 	err := errors.Join(
-		env.Bool(&c.CookiePassthrough, IMGPROXY_COOKIE_PASSTHROUGH),
 		env.Bool(&c.ReportDownloadingErrors, IMGPROXY_REPORT_DOWNLOADING_ERRORS),
 		env.Bool(&c.LastModifiedEnabled, IMGPROXY_LAST_MODIFIED_ENABLED),
 		env.Bool(&c.ETagEnabled, IMGPROXY_ETAG_ENABLED),

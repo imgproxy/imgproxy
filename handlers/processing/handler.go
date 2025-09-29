@@ -6,6 +6,7 @@ import (
 	"net/url"
 
 	"github.com/imgproxy/imgproxy/v3/auximageprovider"
+	"github.com/imgproxy/imgproxy/v3/cookies"
 	"github.com/imgproxy/imgproxy/v3/errorreport"
 	"github.com/imgproxy/imgproxy/v3/handlers"
 	"github.com/imgproxy/imgproxy/v3/handlers/stream"
@@ -30,6 +31,7 @@ type HandlerContext interface {
 	Security() *security.Checker
 	OptionsParser() *optionsparser.Parser
 	Processor() *processing.Processor
+	Cookies() *cookies.Cookies
 }
 
 // Handler handles image processing requests

@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/imgproxy/imgproxy/v3/cookies"
 	"github.com/imgproxy/imgproxy/v3/errorreport"
 	"github.com/imgproxy/imgproxy/v3/handlers"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
@@ -75,11 +74,9 @@ func (r *request) makeDownloadOptions(ctx context.Context, h http.Header) imaged
 func (r *request) fetchImage(ctx context.Context, do imagedata.DownloadOptions) (imagedata.ImageData, http.Header, error) {
 	var err error
 
-	if r.config.CookiePassthrough {
-		do.CookieJar, err = cookies.JarFromRequest(r.req)
-		if err != nil {
-			return nil, nil, ierrors.Wrap(err, 0, ierrors.WithCategory(handlers.CategoryDownload))
-		}
+	do.CookieJar, err = r.Cookies().JarFromRequest(r.req)
+	if err != nil {
+		return nil, nil, ierrors.Wrap(err, 0, ierrors.WithCategory(handlers.CategoryDownload))
 	}
 
 	return r.ImageDataFactory().DownloadAsync(ctx, r.imageURL, "source image", do)

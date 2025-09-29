@@ -15,9 +15,6 @@ var (
 
 // Config represents the configuration for the image streamer
 type Config struct {
-	// CookiePassthrough indicates whether cookies should be passed through to the image response
-	CookiePassthrough bool
-
 	// PassthroughRequestHeaders specifies the request headers to include in the passthrough response
 	PassthroughRequestHeaders []string
 
@@ -28,7 +25,6 @@ type Config struct {
 // NewDefaultConfig returns a new Config instance with default values.
 func NewDefaultConfig() Config {
 	return Config{
-		CookiePassthrough: false,
 		PassthroughRequestHeaders: []string{
 			httpheaders.IfNoneMatch,
 			httpheaders.IfModifiedSince,
@@ -49,10 +45,7 @@ func NewDefaultConfig() Config {
 // LoadConfigFromEnv loads config variables from environment
 func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c = ensure.Ensure(c, NewDefaultConfig)
-
-	err := env.Bool(&c.CookiePassthrough, IMGPROXY_COOKIE_PASSTHROUGH)
-
-	return c, err
+	return c, nil
 }
 
 // Validate checks config for errors
