@@ -22,10 +22,11 @@ import (
 )
 
 type transport struct {
-	client *azblob.Client
+	client      *azblob.Client
+	qsSeparator string
 }
 
-func New(config *Config, trans *http.Transport) (http.RoundTripper, error) {
+func New(config *Config, trans *http.Transport, sep string) (http.RoundTripper, error) {
 	if err := config.Validate(); err != nil {
 		return nil, err
 	}
@@ -73,11 +74,11 @@ func New(config *Config, trans *http.Transport) (http.RoundTripper, error) {
 		return nil, err
 	}
 
-	return transport{client}, nil
+	return transport{client, sep}, nil
 }
 
 func (t transport) RoundTrip(req *http.Request) (*http.Response, error) {
-	container, key, _ := common.GetBucketAndKey(req.URL)
+	container, key, _ := common.GetBucketAndKey(req.URL, t.qsSeparator)
 
 	if len(container) == 0 || len(key) == 0 {
 		body := strings.NewReader("Invalid ABS URL: container name or object key is empty")

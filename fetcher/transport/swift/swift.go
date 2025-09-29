@@ -15,10 +15,11 @@ import (
 )
 
 type transport struct {
-	con *swift.Connection
+	con         *swift.Connection
+	qsSeparator string
 }
 
-func New(config *Config, trans *http.Transport) (http.RoundTripper, error) {
+func New(config *Config, trans *http.Transport, sep string) (http.RoundTripper, error) {
 	if err := config.Validate(); err != nil {
 		return nil, err
 	}
@@ -43,11 +44,11 @@ func New(config *Config, trans *http.Transport) (http.RoundTripper, error) {
 		return nil, ierrors.Wrap(err, 0, ierrors.WithPrefix("swift authentication error"))
 	}
 
-	return transport{con: c}, nil
+	return transport{con: c, qsSeparator: sep}, nil
 }
 
 func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
-	container, objectName, _ := common.GetBucketAndKey(req.URL)
+	container, objectName, _ := common.GetBucketAndKey(req.URL, t.qsSeparator)
 
 	if len(container) == 0 || len(objectName) == 0 {
 		body := strings.NewReader("Invalid Swift URL: container name or object name is empty")

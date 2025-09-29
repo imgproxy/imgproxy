@@ -12,7 +12,7 @@ import (
 	"golang.org/x/net/http2"
 )
 
-func New(verifyNetworks bool, config *Config) (*http.Transport, error) {
+func New(verifyNetworks bool, config *Config, sep string) (*http.Transport, error) {
 	if err := config.Validate(); err != nil {
 		return nil, err
 	}
