@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 )
 
@@ -15,10 +14,10 @@ import (
 type timerSinceCtxKey struct{}
 
 // startRequestTimer starts a new request timer.
-func startRequestTimer(r *http.Request) (*http.Request, context.CancelFunc) {
+func startRequestTimer(r *http.Request, timeout time.Duration) (*http.Request, context.CancelFunc) {
 	ctx := r.Context()
 	ctx = context.WithValue(ctx, timerSinceCtxKey{}, time.Now())
-	ctx, cancel := context.WithTimeout(ctx, time.Duration(config.Timeout)*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, timeout)
 	return r.WithContext(ctx), cancel
 }
 

@@ -1,8 +1,15 @@
 package gcs
 
 import (
-	"github.com/imgproxy/imgproxy/v3/config"
+	"errors"
+
 	"github.com/imgproxy/imgproxy/v3/ensure"
+	"github.com/imgproxy/imgproxy/v3/env"
+)
+
+var (
+	IMGPROXY_GCS_KEY      = env.Describe("IMGPROXY_GCS_KEY", "string")
+	IMGPROXY_GCS_ENDPOINT = env.Describe("IMGPROXY_GCS_ENDPOINT", "string")
 )
 
 // Config holds the configuration for Google Cloud Storage transport
@@ -23,10 +30,12 @@ func NewDefaultConfig() Config {
 func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c = ensure.Ensure(c, NewDefaultConfig)
 
-	c.Key = config.GCSKey
-	c.Endpoint = config.GCSEndpoint
+	err := errors.Join(
+		env.String(&c.Key, IMGPROXY_GCS_KEY),
+		env.String(&c.Endpoint, IMGPROXY_GCS_ENDPOINT),
+	)
 
-	return c, nil
+	return c, err
 }
 
 // Validate checks the configuration for errors

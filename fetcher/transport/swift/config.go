@@ -1,10 +1,22 @@
 package swift
 
 import (
+	"errors"
 	"time"
 
-	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/ensure"
+	"github.com/imgproxy/imgproxy/v3/env"
+)
+
+var (
+	IMGPROXY_SWIFT_USERNAME                = env.Describe("IMGPROXY_SWIFT_USERNAME", "string")
+	IMGPROXY_SWIFT_API_KEY                 = env.Describe("IMGPROXY_SWIFT_API_KEY", "string")
+	IMGPROXY_SWIFT_AUTH_URL                = env.Describe("IMGPROXY_SWIFT_AUTH_URL", "string")
+	IMGPROXY_SWIFT_DOMAIN                  = env.Describe("IMGPROXY_SWIFT_DOMAIN", "string")
+	IMGPROXY_SWIFT_TENANT                  = env.Describe("IMGPROXY_SWIFT_TENANT", "string")
+	IMGPROXY_SWIFT_AUTH_VERSION            = env.Describe("IMGPROXY_SWIFT_AUTH_VERSION", "number")
+	IMGPROXY_SWIFT_CONNECT_TIMEOUT_SECONDS = env.Describe("IMGPROXY_SWIFT_CONNECT_TIMEOUT_SECONDS", "number")
+	IMGPROXY_SWIFT_TIMEOUT_SECONDS         = env.Describe("IMGPROXY_SWIFT_TIMEOUT_SECONDS", "number")
 )
 
 // Config holds the configuration for Swift transport
@@ -37,16 +49,18 @@ func NewDefaultConfig() Config {
 func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c = ensure.Ensure(c, NewDefaultConfig)
 
-	c.Username = config.SwiftUsername
-	c.APIKey = config.SwiftAPIKey
-	c.AuthURL = config.SwiftAuthURL
-	c.Domain = config.SwiftDomain
-	c.Tenant = config.SwiftTenant
-	c.AuthVersion = config.SwiftAuthVersion
-	c.ConnectTimeout = time.Duration(config.SwiftConnectTimeoutSeconds) * time.Second
-	c.Timeout = time.Duration(config.SwiftTimeoutSeconds) * time.Second
+	err := errors.Join(
+		env.String(&c.Username, IMGPROXY_SWIFT_USERNAME),
+		env.String(&c.APIKey, IMGPROXY_SWIFT_API_KEY),
+		env.String(&c.AuthURL, IMGPROXY_SWIFT_AUTH_URL),
+		env.String(&c.Domain, IMGPROXY_SWIFT_DOMAIN),
+		env.String(&c.Tenant, IMGPROXY_SWIFT_TENANT),
+		env.Int(&c.AuthVersion, IMGPROXY_SWIFT_AUTH_VERSION),
+		env.Duration(&c.ConnectTimeout, IMGPROXY_SWIFT_CONNECT_TIMEOUT_SECONDS),
+		env.Duration(&c.Timeout, IMGPROXY_SWIFT_TIMEOUT_SECONDS),
+	)
 
-	return c, nil
+	return c, err
 }
 
 // Validate checks the configuration for errors

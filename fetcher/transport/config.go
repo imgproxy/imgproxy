@@ -3,14 +3,23 @@
 package transport
 
 import (
-	"github.com/imgproxy/imgproxy/v3/config"
+	"errors"
+
 	"github.com/imgproxy/imgproxy/v3/ensure"
+	"github.com/imgproxy/imgproxy/v3/env"
 	"github.com/imgproxy/imgproxy/v3/fetcher/transport/azure"
 	"github.com/imgproxy/imgproxy/v3/fetcher/transport/fs"
 	"github.com/imgproxy/imgproxy/v3/fetcher/transport/gcs"
 	"github.com/imgproxy/imgproxy/v3/fetcher/transport/generichttp"
 	"github.com/imgproxy/imgproxy/v3/fetcher/transport/s3"
 	"github.com/imgproxy/imgproxy/v3/fetcher/transport/swift"
+)
+
+var (
+	IMGPROXY_USE_ABS   = env.Describe("IMGPROXY_USE_ABS", "boolean")
+	IMGPROXY_USE_GCS   = env.Describe("IMGPROXY_GCS_ENABLED", "boolean")
+	IMGPROXY_USE_S3    = env.Describe("IMGPROXY_USE_S3", "boolean")
+	IMGPROXY_USE_SWIFT = env.Describe("IMGPROXY_USE_SWIFT", "boolean")
 )
 
 // Config represents configuration of the transport package
@@ -52,38 +61,27 @@ func NewDefaultConfig() Config {
 func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c = ensure.Ensure(c, NewDefaultConfig)
 
-	var err error
+	_, genericErr := generichttp.LoadConfigFromEnv(&c.HTTP)
+	_, localErr := fs.LoadConfigFromEnv(&c.Local)
+	_, azureErr := azure.LoadConfigFromEnv(&c.ABS)
+	_, gcsErr := gcs.LoadConfigFromEnv(&c.GCS)
+	_, s3Err := s3.LoadConfigFromEnv(&c.S3)
+	_, swiftErr := swift.LoadConfigFromEnv(&c.Swift)
 
-	if _, err = generichttp.LoadConfigFromEnv(&c.HTTP); err != nil {
-		return nil, err
-	}
+	err := errors.Join(
+		genericErr,
+		localErr,
+		azureErr,
+		gcsErr,
+		s3Err,
+		swiftErr,
+		env.Bool(&c.ABSEnabled, IMGPROXY_USE_ABS),
+		env.Bool(&c.GCSEnabled, IMGPROXY_USE_GCS),
+		env.Bool(&c.S3Enabled, IMGPROXY_USE_S3),
+		env.Bool(&c.SwiftEnabled, IMGPROXY_USE_SWIFT),
+	)
 
-	if _, err = fs.LoadConfigFromEnv(&c.Local); err != nil {
-		return nil, err
-	}
-
-	if _, err = azure.LoadConfigFromEnv(&c.ABS); err != nil {
-		return nil, err
-	}
-
-	if _, err = gcs.LoadConfigFromEnv(&c.GCS); err != nil {
-		return nil, err
-	}
-
-	if _, err = s3.LoadConfigFromEnv(&c.S3); err != nil {
-		return nil, err
-	}
-
-	if _, err = swift.LoadConfigFromEnv(&c.Swift); err != nil {
-		return nil, err
-	}
-
-	c.ABSEnabled = config.ABSEnabled
-	c.GCSEnabled = config.GCSEnabled
-	c.S3Enabled = config.S3Enabled
-	c.SwiftEnabled = config.SwiftEnabled
-
-	return c, nil
+	return c, err
 }
 
 func (c *Config) Validate() error {

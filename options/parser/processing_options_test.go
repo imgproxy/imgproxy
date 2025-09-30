@@ -10,7 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/options/keys"
@@ -93,7 +92,7 @@ func (s *ProcessingOptionsTestSuite) TestParseBase64URLWithBase() {
 }
 
 func (s *ProcessingOptionsTestSuite) TestParseBase64URLWithReplacement() {
-	s.config().URLReplacements = []config.URLReplacement{
+	s.config().URLReplacements = []URLReplacement{
 		{Regexp: regexp.MustCompile("^test://([^/]*)/"), Replacement: "test2://images.dev/${1}/dolor/"},
 		{Regexp: regexp.MustCompile("^test2://"), Replacement: "http://"},
 	}
@@ -150,7 +149,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePlainURLWithBase() {
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePlainURLWithReplacement() {
-	s.config().URLReplacements = []config.URLReplacement{
+	s.config().URLReplacements = []URLReplacement{
 		{Regexp: regexp.MustCompile("^test://([^/]*)/"), Replacement: "test2://images.dev/${1}/dolor/"},
 		{Regexp: regexp.MustCompile("^test2://"), Replacement: "http://"},
 	}

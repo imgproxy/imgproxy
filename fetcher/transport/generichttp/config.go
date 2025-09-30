@@ -1,11 +1,19 @@
 package generichttp
 
 import (
-	"fmt"
+	"errors"
 	"time"
 
-	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/ensure"
+	"github.com/imgproxy/imgproxy/v3/env"
+)
+
+var (
+	IMGPROXY_CLIENT_KEEP_ALIVE_TIMEOUT         = env.Describe("IMGPROXY_CLIENT_KEEP_ALIVE_TIMEOUT", "seconds => 0")
+	IMGPROXY_IGNORE_SSL_VERIFICATION           = env.Describe("IMGPROXY_IGNORE_SSL_VERIFICATION", "boolean")
+	IMGPROXY_ALLOW_LOOPBACK_SOURCE_ADDRESSES   = env.Describe("IMGPROXY_ALLOW_LOOPBACK_SOURCE_ADDRESSES", "boolean")
+	IMGPROXY_ALLOW_LINK_LOCAL_SOURCE_ADDRESSES = env.Describe("IMGPROXY_ALLOW_LINK_LOCAL_SOURCE_ADDRESSES", "boolean")
+	IMGPROXY_ALLOW_PRIVATE_SOURCE_ADDRESSES    = env.Describe("IMGPROXY_ALLOW_PRIVATE_SOURCE_ADDRESSES", "boolean")
 )
 
 // Config holds the configuration for the generic HTTP transport
@@ -32,19 +40,25 @@ func NewDefaultConfig() Config {
 func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c = ensure.Ensure(c, NewDefaultConfig)
 
-	c.ClientKeepAliveTimeout = time.Duration(config.ClientKeepAliveTimeout) * time.Second
-	c.IgnoreSslVerification = config.IgnoreSslVerification
-	c.AllowLinkLocalSourceAddresses = config.AllowLinkLocalSourceAddresses
-	c.AllowLoopbackSourceAddresses = config.AllowLoopbackSourceAddresses
-	c.AllowPrivateSourceAddresses = config.AllowPrivateSourceAddresses
+	err := errors.Join(
+		env.Duration(&c.ClientKeepAliveTimeout, IMGPROXY_CLIENT_KEEP_ALIVE_TIMEOUT),
+		env.Bool(&c.IgnoreSslVerification, IMGPROXY_IGNORE_SSL_VERIFICATION),
+		env.Bool(&c.AllowLinkLocalSourceAddresses, IMGPROXY_ALLOW_LINK_LOCAL_SOURCE_ADDRESSES),
+		env.Bool(&c.AllowLoopbackSourceAddresses, IMGPROXY_ALLOW_LOOPBACK_SOURCE_ADDRESSES),
+		env.Bool(&c.AllowPrivateSourceAddresses, IMGPROXY_ALLOW_PRIVATE_SOURCE_ADDRESSES),
+	)
 
-	return c, nil
+	return c, err
 }
 
 // Validate checks the configuration for errors
 func (c *Config) Validate() error {
 	if c.ClientKeepAliveTimeout < 0 {
-		return fmt.Errorf("client KeepAlive timeout should be greater than or equal to 0, now - %d", c.ClientKeepAliveTimeout)
+		return IMGPROXY_CLIENT_KEEP_ALIVE_TIMEOUT.ErrorZeroOrNegative()
+	}
+
+	if c.IgnoreSslVerification {
+		IMGPROXY_IGNORE_SSL_VERIFICATION.Warn("ignoring SSL verification is very unsafe") // ⎈
 	}
 
 	return nil

@@ -3,24 +3,42 @@ package server
 import (
 	"errors"
 	"fmt"
-	"os"
 	"time"
 
-	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/ensure"
+	"github.com/imgproxy/imgproxy/v3/env"
 	"github.com/imgproxy/imgproxy/v3/server/responsewriter"
+)
+
+var (
+	IMGPROXY_PORT                    = env.Describe("IMGPROXY_PORT", "port")
+	IMGPROXY_NETWORK                 = env.Describe("IMGPROXY_NETWORK", "tcp|tcp4|tcp6|udp|udp4|udp6|unix|unixgram|unixpacket")
+	IMGPROXY_BIND                    = env.Describe("IMGPROXY_BIND", "address:port, path to unix socket, etc")
+	IMGPROXY_PATH_PREFIX             = env.Describe("IMGPROXY_PATH_PREFIX", "string")
+	IMGPROXY_MAX_CLIENTS             = env.Describe("IMGPROXY_MAX_CLIENTS", "number, 0 means unlimited")
+	IMGPROXY_TIMEOUT                 = env.Describe("IMGPROXY_TIMEOUT", "seconds > 0")
+	IMGPROXY_READ_REQUEST_TIMEOUT    = env.Describe("IMGPROXY_READ_REQUEST_TIMEOUT", "seconds > 0")
+	IMGPROXY_KEEP_ALIVE_TIMEOUT      = env.Describe("IMGPROXY_KEEP_ALIVE_TIMEOUT", "seconds >= 0")
+	IMGPROXY_GRACEFUL_STOP_TIMEOUT   = env.Describe("IMGPROXY_GRACEFUL_STOP_TIMEOUT", "seconds >= 0")
+	IMGPROXY_ALLOW_ORIGIN            = env.Describe("IMGPROXY_ALLOW_ORIGIN", "string")
+	IMGPROXY_SECRET                  = env.Describe("IMGPROXY_SECRET", "string")
+	IMGPROXY_DEVELOPMENT_ERRORS_MODE = env.Describe("IMGPROXY_DEVELOPMENT_ERRORS_MODE", "boolean")
+	IMGPROXY_SO_REUSEPORT            = env.Describe("IMGPROXY_SO_REUSEPORT", "boolean")
+	IMGPROXY_HEALTH_CHECK_PATH       = env.Describe("IMGPROXY_HEALTH_CHECK_PATH", "string")
+	IMGPROXY_FREE_MEMORY_INTERVAL    = env.Describe("IMGPROXY_FREE_MEMORY_INTERVAL", "seconds >= 0")
+	IMGPROXY_LOG_MEM_STATS           = env.Describe("IMGPROXY_LOG_MEM_STATS", "boolean")
 )
 
 // Config represents HTTP server config
 type Config struct {
-	Listen                string        // Address to listen on
 	Network               string        // Network type (tcp, unix)
 	Bind                  string        // Bind address
 	PathPrefix            string        // Path prefix for the server
 	MaxClients            int           // Maximum number of concurrent clients
+	RequestTimeout        time.Duration // Timeout for requests
 	ReadRequestTimeout    time.Duration // Timeout for reading requests
 	KeepAliveTimeout      time.Duration // Timeout for keep-alive connections
-	GracefulTimeout       time.Duration // Timeout for graceful shutdown
+	GracefulStopTimeout   time.Duration // Timeout for graceful shutdown
 	CORSAllowOrigin       string        // CORS allowed origin
 	Secret                string        // Secret for authorization
 	DevelopmentErrorsMode bool          // Enable development mode for detailed error messages
@@ -41,9 +59,10 @@ func NewDefaultConfig() Config {
 		Bind:                  ":8080",
 		PathPrefix:            "",
 		MaxClients:            2048,
+		RequestTimeout:        10 * time.Second,
 		ReadRequestTimeout:    10 * time.Second,
 		KeepAliveTimeout:      10 * time.Second,
-		GracefulTimeout:       20 * time.Second,
+		GracefulStopTimeout:   20 * time.Second,
 		CORSAllowOrigin:       "",
 		Secret:                "",
 		DevelopmentErrorsMode: false,
@@ -60,52 +79,67 @@ func NewDefaultConfig() Config {
 func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c = ensure.Ensure(c, NewDefaultConfig)
 
-	c.Network = config.Network
-	c.Bind = config.Bind
-	c.PathPrefix = config.PathPrefix
-	c.MaxClients = config.MaxClients
-	c.ReadRequestTimeout = time.Duration(config.ReadRequestTimeout) * time.Second
-	c.KeepAliveTimeout = time.Duration(config.KeepAliveTimeout) * time.Second
-	c.GracefulTimeout = time.Duration(config.GracefulStopTimeout) * time.Second
-	c.CORSAllowOrigin = config.AllowOrigin
-	c.Secret = config.Secret
-	c.DevelopmentErrorsMode = config.DevelopmentErrorsMode
-	c.SocketReusePort = config.SoReuseport
-	c.HealthCheckPath = config.HealthCheckPath
-	c.FreeMemoryInterval = time.Duration(config.FreeMemoryInterval) * time.Second
-	c.LogMemStats = len(os.Getenv("IMGPROXY_LOG_MEM_STATS")) > 0
-
-	if _, err := responsewriter.LoadConfigFromEnv(&c.ResponseWriter); err != nil {
+	var port string
+	if err := env.String(&port, IMGPROXY_PORT); err != nil {
 		return nil, err
 	}
 
-	return c, nil
+	if len(port) > 0 {
+		c.Bind = fmt.Sprintf(":%s", port)
+	}
+
+	_, rwErr := responsewriter.LoadConfigFromEnv(&c.ResponseWriter)
+
+	err := errors.Join(
+		rwErr,
+		env.String(&c.Network, IMGPROXY_NETWORK),
+		env.String(&c.Bind, IMGPROXY_BIND),
+		env.URLPath(&c.PathPrefix, IMGPROXY_PATH_PREFIX),
+		env.Int(&c.MaxClients, IMGPROXY_MAX_CLIENTS),
+		env.Duration(&c.RequestTimeout, IMGPROXY_TIMEOUT),
+		env.Duration(&c.ReadRequestTimeout, IMGPROXY_READ_REQUEST_TIMEOUT),
+		env.Duration(&c.KeepAliveTimeout, IMGPROXY_KEEP_ALIVE_TIMEOUT),
+		env.Duration(&c.GracefulStopTimeout, IMGPROXY_GRACEFUL_STOP_TIMEOUT),
+		env.String(&c.CORSAllowOrigin, IMGPROXY_ALLOW_ORIGIN),
+		env.String(&c.Secret, IMGPROXY_SECRET),
+		env.Bool(&c.DevelopmentErrorsMode, IMGPROXY_DEVELOPMENT_ERRORS_MODE),
+		env.Bool(&c.SocketReusePort, IMGPROXY_SO_REUSEPORT),
+		env.URLPath(&c.HealthCheckPath, IMGPROXY_HEALTH_CHECK_PATH),
+		env.Duration(&c.FreeMemoryInterval, IMGPROXY_FREE_MEMORY_INTERVAL),
+		env.Bool(&c.LogMemStats, IMGPROXY_LOG_MEM_STATS),
+	)
+
+	return c, err
 }
 
 // Validate checks that the config values are valid
 func (c *Config) Validate() error {
 	if len(c.Bind) == 0 {
-		return errors.New("bind address is not defined")
+		return IMGPROXY_BIND.ErrorEmpty()
 	}
 
 	if c.MaxClients < 0 {
-		return fmt.Errorf("max clients number should be greater than or equal 0, now - %d", c.MaxClients)
+		return IMGPROXY_MAX_CLIENTS.ErrorNegative()
+	}
+
+	if c.RequestTimeout <= 0 {
+		return IMGPROXY_TIMEOUT.ErrorZeroOrNegative()
 	}
 
 	if c.ReadRequestTimeout <= 0 {
-		return fmt.Errorf("read request timeout should be greater than 0, now - %d", c.ReadRequestTimeout)
+		return IMGPROXY_READ_REQUEST_TIMEOUT.ErrorZeroOrNegative()
 	}
 
 	if c.KeepAliveTimeout < 0 {
-		return fmt.Errorf("keep alive timeout should be greater than or equal to 0, now - %d", c.KeepAliveTimeout)
+		return IMGPROXY_KEEP_ALIVE_TIMEOUT.ErrorNegative()
 	}
 
-	if c.GracefulTimeout < 0 {
-		return fmt.Errorf("graceful timeout should be greater than or equal to 0, now - %d", c.GracefulTimeout)
+	if c.GracefulStopTimeout < 0 {
+		return IMGPROXY_GRACEFUL_STOP_TIMEOUT.ErrorNegative()
 	}
 
 	if c.FreeMemoryInterval <= 0 {
-		return errors.New("free memory interval should be greater than zero")
+		return IMGPROXY_FREE_MEMORY_INTERVAL.ErrorZeroOrNegative()
 	}
 
 	return nil

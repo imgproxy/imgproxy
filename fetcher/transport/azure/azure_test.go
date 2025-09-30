@@ -8,7 +8,6 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/fetcher/transport/generichttp"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/logger"
@@ -17,7 +16,7 @@ import (
 type AzureTestSuite struct {
 	suite.Suite
 
-	server       *httptest.Server
+	server       *httptest.Server // TODO: use testutils.TestServer
 	transport    http.RoundTripper
 	etag         string
 	lastModified time.Time
@@ -58,7 +57,6 @@ func (s *AzureTestSuite) SetupSuite() {
 
 func (s *AzureTestSuite) TearDownSuite() {
 	s.server.Close()
-	config.IgnoreSslVerification = false
 	logger.Unmute()
 }
 

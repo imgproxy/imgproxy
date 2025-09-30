@@ -8,20 +8,18 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/imgproxy/imgproxy/v3/config"
-	"github.com/imgproxy/imgproxy/v3/config/configurators"
+	"github.com/imgproxy/imgproxy/v3/env"
+	"github.com/imgproxy/imgproxy/v3/server"
 	"github.com/urfave/cli/v3"
 )
 
 // healthcheck performs a healthcheck on a running imgproxy instance
 func healthcheck(ctx context.Context, c *cli.Command) error {
-	network := config.Network
-	bind := config.Bind
-	pathprefix := config.PathPrefix
+	var network, bind, pathprefix string
 
-	configurators.String(&network, "IMGPROXY_NETWORK")
-	configurators.String(&bind, "IMGPROXY_BIND")
-	configurators.URLPath(&pathprefix, "IMGPROXY_PATH_PREFIX")
+	env.String(&network, server.IMGPROXY_NETWORK)
+	env.String(&bind, server.IMGPROXY_BIND)
+	env.String(&pathprefix, server.IMGPROXY_PATH_PREFIX)
 
 	httpc := http.Client{
 		Transport: &http.Transport{

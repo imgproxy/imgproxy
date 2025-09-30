@@ -6,8 +6,16 @@ import (
 	"log/slog"
 	"strings"
 
-	"github.com/imgproxy/imgproxy/v3/config/configurators"
 	"github.com/imgproxy/imgproxy/v3/ensure"
+	"github.com/imgproxy/imgproxy/v3/env"
+)
+
+var (
+	IMGPROXY_SYSLOG_ENABLE  = env.Describe("IMGPROXY_SYSLOG_ENABLE", "boolean")
+	IMGPROXY_SYSLOG_LEVEL   = env.Describe("IMGPROXY_SYSLOG_LEVEL", "debug|info|warn|error|crit")
+	IMGPROXY_SYSLOG_NETWORK = env.Describe("IMGPROXY_SYSLOG_NETWORK", "string")
+	IMGPROXY_SYSLOG_ADDRESS = env.Describe("IMGPROXY_SYSLOG_ADDRESS", "string")
+	IMGPROXY_SYSLOG_TAG     = env.Describe("IMGPROXY_SYSLOG_TAG", "string")
 )
 
 type Config struct {
@@ -26,23 +34,24 @@ func NewDefaultConfig() Config {
 	}
 }
 
-func LoadConfigFromEnv(c *Config) *Config {
+func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c = ensure.Ensure(c, NewDefaultConfig)
 
-	configurators.Bool(&c.Enabled, "IMGPROXY_SYSLOG_ENABLE")
-
-	configurators.String(&c.Network, "IMGPROXY_SYSLOG_NETWORK")
-	configurators.String(&c.Addr, "IMGPROXY_SYSLOG_ADDRESS")
-	configurators.String(&c.Tag, "IMGPROXY_SYSLOG_TAG")
-
 	var levelStr string
-	configurators.String(&levelStr, "IMGPROXY_SYSLOG_LEVEL")
+
+	err := errors.Join(
+		env.Bool(&c.Enabled, IMGPROXY_SYSLOG_ENABLE),
+		env.String(&c.Network, IMGPROXY_SYSLOG_NETWORK),
+		env.String(&c.Addr, IMGPROXY_SYSLOG_ADDRESS),
+		env.String(&c.Tag, IMGPROXY_SYSLOG_TAG),
+		env.String(&levelStr, IMGPROXY_SYSLOG_LEVEL),
+	)
 
 	if levelStr != "" {
 		c.Level = parseLevel(levelStr)
 	}
 
-	return c
+	return c, err
 }
 
 func (c *Config) Validate() error {
@@ -51,7 +60,7 @@ func (c *Config) Validate() error {
 	}
 
 	if c.Network != "" && c.Addr == "" {
-		return errors.New("Syslog address is required if syslog network is set")
+		return errors.New("syslog address is required if syslog network is set")
 	}
 
 	return nil

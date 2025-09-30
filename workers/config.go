@@ -1,11 +1,16 @@
 package workers
 
 import (
-	"fmt"
+	"errors"
 	"runtime"
 
-	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/ensure"
+	"github.com/imgproxy/imgproxy/v3/env"
+)
+
+var (
+	IMGPROXY_REQUESTS_QUEUE_SIZE = env.Describe("IMGPROXY_REQUESTS_QUEUE_SIZE", "number > 0")
+	IMGPROXY_WORKERS_NUMBER      = env.Describe("IMGPROXY_WORKERS_NUMBER", "number > 0")
 )
 
 // Config represents [Workers] config
@@ -26,20 +31,22 @@ func NewDefaultConfig() Config {
 func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c = ensure.Ensure(c, NewDefaultConfig)
 
-	c.RequestsQueueSize = config.RequestsQueueSize
-	c.WorkersNumber = config.Workers
+	err := errors.Join(
+		env.Int(&c.RequestsQueueSize, IMGPROXY_REQUESTS_QUEUE_SIZE),
+		env.Int(&c.WorkersNumber, IMGPROXY_WORKERS_NUMBER),
+	)
 
-	return c, nil
+	return c, err
 }
 
 // Validate checks configuration values
 func (c *Config) Validate() error {
 	if c.RequestsQueueSize < 0 {
-		return fmt.Errorf("requests queue size should be greater than or equal 0, now - %d", c.RequestsQueueSize)
+		return IMGPROXY_REQUESTS_QUEUE_SIZE.ErrorNegative()
 	}
 
 	if c.WorkersNumber <= 0 {
-		return fmt.Errorf("workers number should be greater than 0, now - %d", c.WorkersNumber)
+		return IMGPROXY_WORKERS_NUMBER.ErrorZeroOrNegative()
 	}
 
 	return nil

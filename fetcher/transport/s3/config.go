@@ -1,8 +1,19 @@
 package s3
 
 import (
-	"github.com/imgproxy/imgproxy/v3/config"
+	"errors"
+
 	"github.com/imgproxy/imgproxy/v3/ensure"
+	"github.com/imgproxy/imgproxy/v3/env"
+)
+
+var (
+	IMGPROXY_S3_REGION                    = env.Describe("IMGPROXY_S3_REGION", "string")
+	IMGPROXY_S3_ENDPOINT                  = env.Describe("IMGPROXY_S3_ENDPOINT", "string")
+	IMGPROXY_S3_ENDPOINT_USE_PATH_STYLE   = env.Describe("IMGPROXY_S3_ENDPOINT_USE_PATH_STYLE", "boolean")
+	IMGPROXY_S3_ASSUME_ROLE_ARN           = env.Describe("IMGPROXY_S3_ASSUME_ROLE_ARN", "string")
+	IMGPROXY_S3_ASSUME_ROLE_EXTERNAL_ID   = env.Describe("IMGPROXY_S3_ASSUME_ROLE_EXTERNAL_ID", "string")
+	IMGPROXY_S3_DECRYPTION_CLIENT_ENABLED = env.Describe("IMGPROXY_S3_DECRYPTION_CLIENT_ENABLED", "boolean")
 )
 
 // Config holds the configuration for S3 transport
@@ -31,14 +42,16 @@ func NewDefaultConfig() Config {
 func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c = ensure.Ensure(c, NewDefaultConfig)
 
-	c.Region = config.S3Region
-	c.Endpoint = config.S3Endpoint
-	c.EndpointUsePathStyle = config.S3EndpointUsePathStyle
-	c.AssumeRoleArn = config.S3AssumeRoleArn
-	c.AssumeRoleExternalID = config.S3AssumeRoleExternalID
-	c.DecryptionClientEnabled = config.S3DecryptionClientEnabled
+	err := errors.Join(
+		env.String(&c.Region, IMGPROXY_S3_REGION),
+		env.String(&c.Endpoint, IMGPROXY_S3_ENDPOINT),
+		env.Bool(&c.EndpointUsePathStyle, IMGPROXY_S3_ENDPOINT_USE_PATH_STYLE),
+		env.String(&c.AssumeRoleArn, IMGPROXY_S3_ASSUME_ROLE_ARN),
+		env.String(&c.AssumeRoleExternalID, IMGPROXY_S3_ASSUME_ROLE_EXTERNAL_ID),
+		env.Bool(&c.DecryptionClientEnabled, IMGPROXY_S3_DECRYPTION_CLIENT_ENABLED),
+	)
 
-	return c, nil
+	return c, err
 }
 
 // Validate checks the configuration for errors

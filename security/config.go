@@ -1,12 +1,27 @@
 package security
 
 import (
+	"errors"
 	"fmt"
-	"log/slog"
 	"regexp"
 
-	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/ensure"
+	"github.com/imgproxy/imgproxy/v3/env"
+)
+
+var (
+	IMGPROXY_ALLOW_SECURITY_OPTIONS = env.Describe("IMGPROXY_ALLOW_SECURITY_OPTIONS", "boolean")
+	IMGPROXY_ALLOWED_SOURCES        = env.Describe("IMGPROXY_ALLOWED_SOURCES", "comma-separated lists of regexes")
+	IMGPROXY_KEYS                   = env.Describe("IMGPROXY_KEYS", "comma-separated list of hex strings")
+	IMGPROXY_SALTS                  = env.Describe("IMGPROXY_SALTS", "comma-separated list of hex strings")
+	IMGPROXY_SIGNATURE_SIZE         = env.Describe("IMGPROXY_SIGNATURE_SIZE", "number between 1 and 32")
+	IMGPROXY_TRUSTED_SIGNATURES     = env.Describe("IMGPROXY_TRUSTED_SIGNATURES", "comma-separated list of strings")
+
+	IMGPROXY_MAX_SRC_RESOLUTION             = env.Describe("IMGPROXY_MAX_SRC_RESOLUTION", "number > 0")
+	IMGPROXY_MAX_SRC_FILE_SIZE              = env.Describe("IMGPROXY_MAX_SRC_FILE_SIZE", "number >= 0")
+	IMGPROXY_MAX_ANIMATION_FRAMES           = env.Describe("IMGPROXY_MAX_ANIMATION_FRAMES", "number > 0")
+	IMGPROXY_MAX_ANIMATION_FRAME_RESOLUTION = env.Describe("IMGPROXY_MAX_ANIMATION_FRAME_RESOLUTION", "number > 0")
+	IMGPROXY_MAX_RESULT_DIMENSION           = env.Describe("IMGPROXY_MAX_RESULT_DIMENSION", "number > 0")
 )
 
 // Config is the package-local configuration
@@ -24,7 +39,7 @@ type Config struct {
 func NewDefaultConfig() Config {
 	return Config{
 		DefaultOptions: Options{
-			MaxSrcResolution:            50000000,
+			MaxSrcResolution:            50_000_000,
 			MaxSrcFileSize:              0,
 			MaxAnimationFrames:          1,
 			MaxAnimationFrameResolution: 0,
@@ -39,34 +54,37 @@ func NewDefaultConfig() Config {
 func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c = ensure.Ensure(c, NewDefaultConfig)
 
-	c.AllowSecurityOptions = config.AllowSecurityOptions
-	c.AllowedSources = config.AllowedSources
-	c.Keys = config.Keys
-	c.Salts = config.Salts
-	c.SignatureSize = config.SignatureSize
-	c.TrustedSignatures = config.TrustedSignatures
+	err := errors.Join(
+		env.Bool(&c.AllowSecurityOptions, IMGPROXY_ALLOW_SECURITY_OPTIONS),
+		env.Patterns(&c.AllowedSources, IMGPROXY_ALLOWED_SOURCES),
+		env.Int(&c.SignatureSize, IMGPROXY_SIGNATURE_SIZE),
+		env.StringSlice(&c.TrustedSignatures, IMGPROXY_TRUSTED_SIGNATURES),
 
-	c.DefaultOptions.MaxSrcResolution = config.MaxSrcResolution
-	c.DefaultOptions.MaxSrcFileSize = config.MaxSrcFileSize
-	c.DefaultOptions.MaxAnimationFrames = config.MaxAnimationFrames
-	c.DefaultOptions.MaxAnimationFrameResolution = config.MaxAnimationFrameResolution
-	c.DefaultOptions.MaxResultDimension = config.MaxResultDimension
+		env.MegaInt(&c.DefaultOptions.MaxSrcResolution, IMGPROXY_MAX_SRC_RESOLUTION),
+		env.Int(&c.DefaultOptions.MaxSrcFileSize, IMGPROXY_MAX_SRC_FILE_SIZE),
+		env.Int(&c.DefaultOptions.MaxAnimationFrames, IMGPROXY_MAX_ANIMATION_FRAMES),
+		env.MegaInt(&c.DefaultOptions.MaxAnimationFrameResolution, IMGPROXY_MAX_ANIMATION_FRAME_RESOLUTION),
+		env.Int(&c.DefaultOptions.MaxResultDimension, IMGPROXY_MAX_RESULT_DIMENSION),
 
-	return c, nil
+		env.HexSlice(&c.Keys, IMGPROXY_KEYS),
+		env.HexSlice(&c.Salts, IMGPROXY_SALTS),
+	)
+
+	return c, err
 }
 
 // Validate validates the configuration
 func (c *Config) Validate() error {
 	if c.DefaultOptions.MaxSrcResolution <= 0 {
-		return fmt.Errorf("max src resolution should be greater than 0, now - %d", c.DefaultOptions.MaxSrcResolution)
+		return IMGPROXY_MAX_SRC_RESOLUTION.ErrorZeroOrNegative()
 	}
 
 	if c.DefaultOptions.MaxSrcFileSize < 0 {
-		return fmt.Errorf("max src file size should be greater than or equal to 0, now - %d", c.DefaultOptions.MaxSrcFileSize)
+		return IMGPROXY_MAX_SRC_FILE_SIZE.ErrorNegative()
 	}
 
 	if c.DefaultOptions.MaxAnimationFrames <= 0 {
-		return fmt.Errorf("max animation frames should be greater than 0, now - %d", c.DefaultOptions.MaxAnimationFrames)
+		return IMGPROXY_MAX_ANIMATION_FRAMES.ErrorZeroOrNegative()
 	}
 
 	if len(c.Keys) != len(c.Salts) {
@@ -74,15 +92,15 @@ func (c *Config) Validate() error {
 	}
 
 	if len(c.Keys) == 0 {
-		slog.Warn("No keys defined, so signature checking is disabled")
+		IMGPROXY_KEYS.Warn("No keys defined, signature checking is disabled")
 	}
 
 	if len(c.Salts) == 0 {
-		slog.Warn("No salts defined, so signature checking is disabled")
+		IMGPROXY_SALTS.Warn("No salts defined, signature checking is disabled")
 	}
 
 	if c.SignatureSize < 1 || c.SignatureSize > 32 {
-		return fmt.Errorf("signature size should be within 1 and 32, now - %d", c.SignatureSize)
+		return IMGPROXY_SIGNATURE_SIZE.Errorf("invalid size")
 	}
 
 	return nil

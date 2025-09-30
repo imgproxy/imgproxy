@@ -1,12 +1,21 @@
 package responsewriter
 
 import (
-	"fmt"
+	"errors"
 	"strings"
 	"time"
 
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/ensure"
+	"github.com/imgproxy/imgproxy/v3/env"
+)
+
+var (
+	IMGPROXY_SET_CANONICAL_HEADER      = env.Describe("IMGPROXY_SET_CANONICAL_HEADER", "boolean")
+	IMGPROXY_TTL                       = env.Describe("IMGPROXY_TTL", "seconds >= 0")
+	IMGPROXY_FALLBACK_IMAGE_TTL        = env.Describe("IMGPROXY_FALLBACK_IMAGE_TTL", "seconds >= 0")
+	IMGPROXY_CACHE_CONTROL_PASSTHROUGH = env.Describe("IMGPROXY_CACHE_CONTROL_PASSTHROUGH", "boolean")
+	IMGPROXY_WRITE_RESPONSE_TIMEOUT    = env.Describe("IMGPROXY_WRITE_RESPONSE_TIMEOUT", "seconds > 0")
 )
 
 // Config holds configuration for response writer
@@ -23,7 +32,7 @@ type Config struct {
 func NewDefaultConfig() Config {
 	return Config{
 		SetCanonicalHeader:      false,
-		DefaultTTL:              31536000,
+		DefaultTTL:              31_536_000,
 		FallbackImageTTL:        0,
 		CacheControlPassthrough: false,
 		VaryValue:               "",
@@ -35,11 +44,16 @@ func NewDefaultConfig() Config {
 func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c = ensure.Ensure(c, NewDefaultConfig)
 
-	c.SetCanonicalHeader = config.SetCanonicalHeader
-	c.DefaultTTL = config.TTL
-	c.FallbackImageTTL = config.FallbackImageTTL
-	c.CacheControlPassthrough = config.CacheControlPassthrough
-	c.WriteResponseTimeout = time.Duration(config.WriteResponseTimeout) * time.Second
+	err := errors.Join(
+		env.Bool(&c.SetCanonicalHeader, IMGPROXY_SET_CANONICAL_HEADER),
+		env.Int(&c.DefaultTTL, IMGPROXY_TTL),
+		env.Int(&c.FallbackImageTTL, IMGPROXY_FALLBACK_IMAGE_TTL),
+		env.Bool(&c.CacheControlPassthrough, IMGPROXY_CACHE_CONTROL_PASSTHROUGH),
+		env.Duration(&c.WriteResponseTimeout, IMGPROXY_WRITE_RESPONSE_TIMEOUT),
+	)
+	if err != nil {
+		return nil, err
+	}
 
 	vary := make([]string, 0)
 
@@ -56,6 +70,7 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 	return c, nil
 }
 
+// TODO: REMOVE REFERENCE TO GLOBAL CONFIG
 func (c *Config) envEnableFormatDetection() bool {
 	return config.AutoWebp ||
 		config.EnforceWebp ||
@@ -72,15 +87,15 @@ func (c *Config) envEnableClientHints() bool {
 // Validate checks config for errors
 func (c *Config) Validate() error {
 	if c.DefaultTTL < 0 {
-		return fmt.Errorf("image TTL should be greater than or equal to 0, now - %d", c.DefaultTTL)
+		return IMGPROXY_TTL.ErrorNegative()
 	}
 
 	if c.FallbackImageTTL < 0 {
-		return fmt.Errorf("fallback image TTL should be greater than or equal to 0, now - %d", c.FallbackImageTTL)
+		return IMGPROXY_FALLBACK_IMAGE_TTL.ErrorNegative()
 	}
 
 	if c.WriteResponseTimeout <= 0 {
-		return fmt.Errorf("write response timeout should be greater than 0, now - %d", c.WriteResponseTimeout)
+		return IMGPROXY_WRITE_RESPONSE_TIMEOUT.ErrorZeroOrNegative()
 	}
 
 	return nil
