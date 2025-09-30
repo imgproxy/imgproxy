@@ -3,7 +3,10 @@ package env
 import (
 	"fmt"
 	"log/slog"
+	"maps"
 	"os"
+	"slices"
+	"strings"
 )
 
 // Desc describes an environment variable
@@ -18,6 +21,12 @@ func Describe(name string, format string) Desc {
 		Name:   name,
 		Format: format,
 	}
+}
+
+// DescribeByMap creates a new EnvDesc with format based on a map keys
+func DescribeByMap[T any](name string, m map[string]T) Desc {
+	format := strings.Join(slices.Collect(maps.Keys(m)), "|")
+	return Describe(name, format)
 }
 
 // Getenv returns the value of the env variable

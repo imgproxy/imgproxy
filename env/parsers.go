@@ -300,3 +300,18 @@ func HexSlice(b *[][]byte, desc Desc) error {
 
 	return nil
 }
+
+func FromMap[T any](v *T, m map[string]T, desc Desc) error {
+	env, ok := desc.Get()
+	if !ok {
+		return nil
+	}
+
+	if val, ok := m[env]; ok {
+		*v = val
+	} else {
+		return desc.Errorf("%s", env)
+	}
+
+	return nil
+}

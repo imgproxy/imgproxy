@@ -16,7 +16,7 @@ var (
 	IMGPROXY_PNG_INTERLACED          = env.Describe("IMGPROXY_PNG_INTERLACED", "boolean")
 	IMGPROXY_PNG_QUANTIZE            = env.Describe("IMGPROXY_PNG_QUANTIZE", "boolean")
 	IMGPROXY_PNG_QUANTIZATION_COLORS = env.Describe("IMGPROXY_PNG_QUANTIZATION_COLORS", "number between 2 and 256")
-	IMGPROXY_WEBP_PRESET             = env.Describe("IMGPROXY_WEBP_PRESET", "default|picture|photo|drawing|icon|text")
+	IMGPROXY_WEBP_PRESET             = env.DescribeByMap("IMGPROXY_WEBP_PRESET", WebpPresets)
 	IMGPROXY_AVIF_SPEED              = env.Describe("IMGPROXY_AVIF_SPEED", "number between 0 and 9")
 	IMGPROXY_WEBP_EFFORT             = env.Describe("IMGPROXY_WEBP_EFFORT", "number between 1 and 6")
 	IMGPROXY_JXL_EFFORT              = env.Describe("IMGPROXY_JXL_EFFORT", "number between 1 and 9")
@@ -83,11 +83,6 @@ func NewDefaultConfig() Config {
 func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c = ensure.Ensure(c, NewDefaultConfig)
 
-	var leakCheck, cacheTrace string
-
-	// default preset so parsing below won't fail on empty value
-	webpPreset := c.WebpPreset.String()
-
 	err := errors.Join(
 		env.Bool(&c.JpegProgressive, IMGPROXY_JPEG_PROGRESSIVE),
 		env.Bool(&c.PngInterlaced, IMGPROXY_PNG_INTERLACED),
@@ -99,24 +94,12 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 		env.Bool(&c.PngUnlimited, IMGPROXY_PNG_UNLIMITED),
 		env.Bool(&c.SvgUnlimited, IMGPROXY_SVG_UNLIMITED),
 
-		env.String(&webpPreset, IMGPROXY_WEBP_PRESET),
-		env.String(&leakCheck, IMGPROXY_VIPS_LEAK_CHECK),
-		env.String(&cacheTrace, IMGPROXY_VIPS_CACHE_TRACE),
+		env.FromMap(&c.WebpPreset, WebpPresets, IMGPROXY_WEBP_PRESET),
+		env.Bool(&c.LeakCheck, IMGPROXY_VIPS_LEAK_CHECK),
+		env.Bool(&c.CacheTrace, IMGPROXY_VIPS_CACHE_TRACE),
 	)
-	if err != nil {
-		return nil, err
-	}
 
-	if pr, ok := WebpPresets[webpPreset]; ok {
-		c.WebpPreset = pr
-	} else {
-		return nil, IMGPROXY_WEBP_PRESET.Errorf("invalid WebP preset: %s", webpPreset)
-	}
-
-	c.LeakCheck = len(leakCheck) > 0
-	c.CacheTrace = len(cacheTrace) > 0
-
-	return c, nil
+	return c, err
 }
 
 func (c *Config) Validate() error {
