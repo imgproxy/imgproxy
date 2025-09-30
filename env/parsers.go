@@ -300,3 +300,27 @@ func HexSlice(b *[][]byte, desc Desc) error {
 
 	return nil
 }
+
+// StringMap parses a map[string]string from the environment variable using semicolon-separated key=value pairs
+func StringMap(m *map[string]string, desc Desc) error {
+	value, ok := desc.Get()
+	if !ok {
+		return nil
+	}
+
+	mm := make(map[string]string)
+
+	keyvalues := strings.Split(value, ";")
+
+	for _, keyvalue := range keyvalues {
+		parts := strings.SplitN(keyvalue, "=", 2)
+		if len(parts) != 2 {
+			return desc.Errorf("invalid key/value: %s", keyvalue)
+		}
+		mm[parts[0]] = parts[1]
+	}
+
+	*m = mm
+
+	return nil
+}

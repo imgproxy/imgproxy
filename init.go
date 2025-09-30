@@ -58,7 +58,9 @@ func Init() error {
 		return err
 	}
 
-	errorreport.Init()
+	if err := errorreport.Init(); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -66,6 +68,6 @@ func Init() error {
 // Shutdown performs global cleanup
 func Shutdown() {
 	monitoring.Stop()
-	errorreport.Close()
 	vips.Shutdown()
+	errorreport.Close()
 }

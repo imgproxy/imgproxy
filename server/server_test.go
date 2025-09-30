@@ -24,6 +24,7 @@ func (s *ServerTestSuite) SetupTest() {
 
 	s.config = &c
 	s.config.Bind = "127.0.0.1:0" // Use port 0 for auto-assignment
+
 	r, err := NewRouter(s.config)
 	s.Require().NoError(err)
 	s.blankRouter = r

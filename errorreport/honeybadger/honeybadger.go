@@ -1,37 +1,51 @@
 package honeybadger
 
 import (
+	"errors"
 	"net/http"
 	"reflect"
 	"strings"
 
 	"github.com/honeybadger-io/honeybadger-go"
 
-	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/env"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 )
 
 var (
-	enabled bool
+	IMGPROXY_HONEYBADGER_KEY = env.Describe("IMGPROXY_HONEYBADGER_KEY", "string")
+	IMGPROXY_HONEYBADGER_ENV = env.Describe("IMGPROXY_HONEYBADGER_ENV", "string")
 
 	metaReplacer = strings.NewReplacer("-", "_", " ", "_")
 )
 
-func Init() {
-	if len(config.HoneybadgerKey) > 0 {
-		honeybadger.Configure(honeybadger.Configuration{
-			APIKey: config.HoneybadgerKey,
-			Env:    config.HoneybadgerEnv,
-		})
-		enabled = true
+type reporter struct{}
+
+func New() (*reporter, error) {
+	key := ""
+	envir := "production"
+
+	err := errors.Join(
+		env.String(&key, IMGPROXY_HONEYBADGER_KEY),
+		env.String(&envir, IMGPROXY_HONEYBADGER_ENV),
+	)
+	if err != nil {
+		return nil, err
 	}
+
+	if len(key) == 0 {
+		return nil, nil
+	}
+
+	honeybadger.Configure(honeybadger.Configuration{
+		APIKey: key,
+		Env:    envir,
+	})
+
+	return &reporter{}, nil
 }
 
-func Report(err error, req *http.Request, meta map[string]any) {
-	if !enabled {
-		return
-	}
-
+func (r *reporter) Report(err error, req *http.Request, meta map[string]any) {
 	extra := make(honeybadger.CGIData, len(req.Header)+len(meta))
 
 	for k, v := range req.Header {
@@ -51,4 +65,8 @@ func Report(err error, req *http.Request, meta map[string]any) {
 	}
 
 	honeybadger.Notify(hbErr, req.URL, extra)
+}
+
+func (r *reporter) Close() {
+	// noop
 }

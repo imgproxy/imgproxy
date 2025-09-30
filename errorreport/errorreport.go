@@ -10,20 +10,57 @@ import (
 	"github.com/imgproxy/imgproxy/v3/errorreport/sentry"
 )
 
-type metaCtxKey struct{}
-
-func Init() {
-	bugsnag.Init()
-	honeybadger.Init()
-	sentry.Init()
-	airbrake.Init()
+// reporter is an interface that all error reporters must implement.
+// most of our reporters are singletons, so in most cases close is noop.
+type reporter interface {
+	Report(err error, req *http.Request, meta map[string]any)
+	Close()
 }
 
+// metaCtxKey is the context.Context key for request metadata
+type metaCtxKey struct{}
+
+// initialized reporters
+var reporters []reporter
+
+// New initializes all configured error reporters and returns a Reporter instance.
+func Init() error {
+	reporters = make([]reporter, 0)
+
+	if r, err := bugsnag.New(); err != nil {
+		return err
+	} else if r != nil {
+		reporters = append(reporters, r)
+	}
+
+	if r, err := honeybadger.New(); err != nil {
+		return err
+	} else if r != nil {
+		reporters = append(reporters, r)
+	}
+
+	if r, err := sentry.New(); err != nil {
+		return err
+	} else if r != nil {
+		reporters = append(reporters, r)
+	}
+
+	if r, err := airbrake.New(); err != nil {
+		return err
+	} else if r != nil {
+		reporters = append(reporters, r)
+	}
+
+	return nil
+}
+
+// StartRequest initializes metadata storage in the request context.
 func StartRequest(req *http.Request) context.Context {
 	meta := make(map[string]any)
 	return context.WithValue(req.Context(), metaCtxKey{}, meta)
 }
 
+// SetMetadata sets a metadata key-value pair in the request context.
 func SetMetadata(req *http.Request, key string, value any) {
 	meta, ok := req.Context().Value(metaCtxKey{}).(map[string]any)
 	if !ok || meta == nil {
@@ -33,18 +70,21 @@ func SetMetadata(req *http.Request, key string, value any) {
 	meta[key] = value
 }
 
+// Report reports an error to all configured reporters with the request and its metadata.
 func Report(err error, req *http.Request) {
 	meta, ok := req.Context().Value(metaCtxKey{}).(map[string]any)
 	if !ok {
 		meta = nil
 	}
 
-	bugsnag.Report(err, req, meta)
-	honeybadger.Report(err, req, meta)
-	sentry.Report(err, req, meta)
-	airbrake.Report(err, req, meta)
+	for _, reporter := range reporters {
+		reporter.Report(err, req, meta)
+	}
 }
 
+// Close closes all reporters
 func Close() {
-	airbrake.Close()
+	for _, reporter := range reporters {
+		reporter.Close()
+	}
 }

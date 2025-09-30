@@ -1,37 +1,60 @@
 package sentry
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/getsentry/sentry-go"
 
-	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/env"
+	"github.com/imgproxy/imgproxy/v3/version"
+)
+
+const (
+	// flushTimeout is the maximum time to wait for Sentry to send events
+	flushTimeout = 5 * time.Second
 )
 
 var (
-	enabled bool
-
-	timeout = 5 * time.Second
+	IMGPROXY_SENTRY_DSN         = env.Describe("IMGPROXY_SENTRY_DSN", "string")
+	IMGPROXY_SENTRY_RELEASE     = env.Describe("IMGPROXY_SENTRY_RELEASE", "string")
+	IMGPROXY_SENTRY_ENVIRONMENT = env.Describe("IMGPROXY_SENTRY_ENVIRONMENT", "string")
 )
 
-func Init() {
-	if len(config.SentryDSN) > 0 {
-		sentry.Init(sentry.ClientOptions{
-			Dsn:         config.SentryDSN,
-			Release:     config.SentryRelease,
-			Environment: config.SentryEnvironment,
-		})
+// reporter is a Sentry error reporter
+type reporter struct{}
 
-		enabled = true
+// new creates and configures a new Sentry reporter
+func New() (*reporter, error) {
+	dsn := ""
+	environment := "production"
+	release := fmt.Sprintf("imgproxy@%s", version.Version)
+
+	err := errors.Join(
+		env.String(&dsn, IMGPROXY_SENTRY_DSN),
+		env.String(&release, IMGPROXY_SENTRY_RELEASE),
+		env.String(&environment, IMGPROXY_SENTRY_ENVIRONMENT),
+	)
+	if err != nil {
+		return nil, err
 	}
+
+	if len(dsn) == 0 {
+		return nil, nil
+	}
+
+	sentry.Init(sentry.ClientOptions{
+		Dsn:         dsn,
+		Release:     release,
+		Environment: environment,
+	})
+
+	return &reporter{}, nil
 }
 
-func Report(err error, req *http.Request, meta map[string]any) {
-	if !enabled {
-		return
-	}
-
+func (r *reporter) Report(err error, req *http.Request, meta map[string]any) {
 	hub := sentry.CurrentHub().Clone()
 	hub.Scope().SetRequest(req)
 	hub.Scope().SetLevel(sentry.LevelError)
@@ -55,7 +78,11 @@ func Report(err error, req *http.Request, meta map[string]any) {
 
 		eventID := hub.CaptureEvent(event)
 		if eventID != nil {
-			hub.Flush(timeout)
+			hub.Flush(flushTimeout)
 		}
 	}
+}
+
+func (r *reporter) Close() {
+	sentry.Flush(flushTimeout)
 }
