@@ -5,43 +5,45 @@ import (
 	"strings"
 
 	"github.com/airbrake/gobrake/v5"
-
-	"github.com/imgproxy/imgproxy/v3/config"
 )
 
 var (
-	notifier *gobrake.Notifier
-
 	metaReplacer = strings.NewReplacer(" ", "-")
 )
 
-func Init() {
-	if len(config.AirbrakeProjectKey) > 0 {
-		notifier = gobrake.NewNotifierWithOptions(&gobrake.NotifierOptions{
-			ProjectId:   int64(config.AirbrakeProjectID),
-			ProjectKey:  config.AirbrakeProjectKey,
-			Environment: config.AirbrakeEnv,
-		})
-	}
+type reporter struct {
+	notifier *gobrake.Notifier
 }
 
-func Report(err error, req *http.Request, meta map[string]any) {
-	if notifier == nil {
-		return
+func New(config *Config) (*reporter, error) {
+	if err := config.Validate(); err != nil {
+		return nil, err
 	}
 
-	notice := notifier.Notice(err, req, 2)
+	if len(config.ProjectKey) == 0 {
+		return nil, nil
+	}
+
+	notifier := gobrake.NewNotifierWithOptions(&gobrake.NotifierOptions{
+		ProjectId:   int64(config.ProjectID),
+		ProjectKey:  config.ProjectKey,
+		Environment: config.Env,
+	})
+
+	return &reporter{notifier}, nil
+}
+
+func (r *reporter) Report(err error, req *http.Request, meta map[string]any) {
+	notice := r.notifier.Notice(err, req, 2)
 
 	for k, v := range meta {
 		key := metaReplacer.Replace(strings.ToLower(k))
 		notice.Context[key] = v
 	}
 
-	notifier.SendNoticeAsync(notice)
+	r.notifier.SendNoticeAsync(notice)
 }
 
-func Close() {
-	if notifier != nil {
-		notifier.Close()
-	}
+func (r *reporter) Close() {
+	r.notifier.Close()
 }

@@ -6,13 +6,31 @@ import (
 	"net/http"
 
 	"github.com/bugsnag/bugsnag-go/v2"
-
-	"github.com/imgproxy/imgproxy/v3/config"
 )
 
-var enabled bool
-
+// logger is the logger forwarder for bugsnag
 type logger struct{}
+
+type reporter struct{}
+
+func New(config *Config) (*reporter, error) {
+	if err := config.Validate(); err != nil {
+		return nil, err
+	}
+
+	if len(config.Key) == 0 {
+		return nil, nil
+	}
+
+	bugsnag.Configure(bugsnag.Configuration{
+		APIKey:       config.Key,
+		ReleaseStage: config.Stage,
+		PanicHandler: func() {}, // Disable forking the process
+		Logger:       logger{},
+	})
+
+	return &reporter{}, nil
+}
 
 func (l logger) Printf(format string, v ...interface{}) {
 	slog.Debug(
@@ -21,27 +39,15 @@ func (l logger) Printf(format string, v ...interface{}) {
 	)
 }
 
-func Init() {
-	if len(config.BugsnagKey) > 0 {
-		bugsnag.Configure(bugsnag.Configuration{
-			APIKey:       config.BugsnagKey,
-			ReleaseStage: config.BugsnagStage,
-			PanicHandler: func() {}, // Disable forking the process
-			Logger:       logger{},
-		})
-		enabled = true
-	}
-}
-
-func Report(err error, req *http.Request, meta map[string]any) {
-	if !enabled {
-		return
-	}
-
+func (r *reporter) Report(err error, req *http.Request, meta map[string]any) {
 	extra := make(bugsnag.MetaData)
 	for k, v := range meta {
 		extra.Add("Processing Context", k, v)
 	}
 
 	bugsnag.Notify(err, req, extra)
+}
+
+func (r *reporter) Close() {
+	// noop
 }

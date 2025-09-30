@@ -5,33 +5,36 @@ import (
 	"time"
 
 	"github.com/getsentry/sentry-go"
-
-	"github.com/imgproxy/imgproxy/v3/config"
 )
 
-var (
-	enabled bool
-
-	timeout = 5 * time.Second
+const (
+	// flushTimeout is the maximum time to wait for Sentry to send events
+	flushTimeout = 5 * time.Second
 )
 
-func Init() {
-	if len(config.SentryDSN) > 0 {
-		sentry.Init(sentry.ClientOptions{
-			Dsn:         config.SentryDSN,
-			Release:     config.SentryRelease,
-			Environment: config.SentryEnvironment,
-		})
+// reporter is a Sentry error reporter
+type reporter struct{}
 
-		enabled = true
+// New creates and configures a new Sentry reporter
+func New(config *Config) (*reporter, error) {
+	if err := config.Validate(); err != nil {
+		return nil, err
 	}
+
+	if len(config.DSN) == 0 {
+		return nil, nil
+	}
+
+	sentry.Init(sentry.ClientOptions{
+		Dsn:         config.DSN,
+		Release:     config.Release,
+		Environment: config.Environment,
+	})
+
+	return &reporter{}, nil
 }
 
-func Report(err error, req *http.Request, meta map[string]any) {
-	if !enabled {
-		return
-	}
-
+func (r *reporter) Report(err error, req *http.Request, meta map[string]any) {
 	hub := sentry.CurrentHub().Clone()
 	hub.Scope().SetRequest(req)
 	hub.Scope().SetLevel(sentry.LevelError)
@@ -55,7 +58,11 @@ func Report(err error, req *http.Request, meta map[string]any) {
 
 		eventID := hub.CaptureEvent(event)
 		if eventID != nil {
-			hub.Flush(timeout)
+			hub.Flush(flushTimeout)
 		}
 	}
+}
+
+func (r *reporter) Close() {
+	sentry.Flush(flushTimeout)
 }

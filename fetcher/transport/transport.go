@@ -27,7 +27,7 @@ func New(config *Config) (*Transport, error) {
 		return nil, err
 	}
 
-	transport, err := generichttp.New(true, &config.HTTP, config.SourceURLQuerySeparator)
+	transport, err := generichttp.New(true, &config.HTTP)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +73,7 @@ func (t *Transport) IsProtocolRegistered(scheme string) bool {
 func (t *Transport) registerAllProtocols() error {
 	sep := t.config.SourceURLQuerySeparator // shortcut
 
-	transp, err := generichttp.New(false, &t.config.HTTP, sep)
+	transp, err := generichttp.New(false, &t.config.HTTP)
 	if err != nil {
 		return err
 	}

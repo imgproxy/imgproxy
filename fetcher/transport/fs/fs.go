@@ -20,22 +20,22 @@ import (
 )
 
 type transport struct {
-	fs          http.Dir
-	qsSeparator string
+	fs             http.Dir
+	querySeparator string
 }
 
-func New(config *Config, sep string) (transport, error) {
+func New(config *Config, querySeparator string) (transport, error) {
 	if err := config.Validate(); err != nil {
 		return transport{}, err
 	}
 
-	return transport{fs: http.Dir(config.Root), qsSeparator: sep}, nil
+	return transport{fs: http.Dir(config.Root), querySeparator: querySeparator}, nil
 }
 
 func (t transport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
 	header := make(http.Header)
 
-	_, path, _ := common.GetBucketAndKey(req.URL, t.qsSeparator)
+	_, path, _ := common.GetBucketAndKey(req.URL, t.querySeparator)
 	path = "/" + path
 
 	f, err := t.fs.Open(path)

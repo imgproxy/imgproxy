@@ -41,11 +41,11 @@ type transport struct {
 
 	mu sync.RWMutex
 
-	config      *Config
-	qsSeparator string
+	config         *Config
+	querySeparator string
 }
 
-func New(config *Config, trans *http.Transport, sep string) (http.RoundTripper, error) {
+func New(config *Config, trans *http.Transport, querySeparator string) (http.RoundTripper, error) {
 	if err := config.Validate(); err != nil {
 		return nil, err
 	}
@@ -103,12 +103,12 @@ func New(config *Config, trans *http.Transport, sep string) (http.RoundTripper, 
 		clientsByRegion: map[string]s3Client{conf.Region: client},
 		clientsByBucket: make(map[string]s3Client),
 		config:          config,
-		qsSeparator:     sep,
+		querySeparator:  querySeparator,
 	}, nil
 }
 
 func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
-	bucket, key, query := common.GetBucketAndKey(req.URL, t.qsSeparator)
+	bucket, key, query := common.GetBucketAndKey(req.URL, t.querySeparator)
 
 	if len(bucket) == 0 || len(key) == 0 {
 		body := strings.NewReader("Invalid S3 URL: bucket name or object key is empty")

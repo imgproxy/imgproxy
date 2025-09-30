@@ -54,11 +54,18 @@ func Init() error {
 	if err != nil {
 		return err
 	}
-	if err := vips.Init(vipsCfg); err != nil {
-		return err
+	if vipsErr := vips.Init(vipsCfg); vipsErr != nil {
+		return vipsErr
 	}
 
-	errorreport.Init()
+	errCfg, errErr := errorreport.LoadConfigFromEnv(nil)
+	if errErr != nil {
+		return errErr
+	}
+
+	if err := errorreport.Init(errCfg); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -66,6 +73,6 @@ func Init() error {
 // Shutdown performs global cleanup
 func Shutdown() {
 	monitoring.Stop()
-	errorreport.Close()
 	vips.Shutdown()
+	errorreport.Close()
 }

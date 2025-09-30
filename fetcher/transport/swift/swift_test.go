@@ -41,7 +41,7 @@ func (s *SwiftTestSuite) SetupSuite() {
 	tc := generichttp.NewDefaultConfig()
 	tc.IgnoreSslVerification = true
 
-	trans, gerr := generichttp.New(false, &tc, "?")
+	trans, gerr := generichttp.New(false, &tc)
 	s.Require().NoError(gerr)
 
 	var err error
