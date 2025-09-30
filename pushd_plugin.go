@@ -18,6 +18,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/google/uuid"
+	"github.com/imgproxy/imgproxy/v3/config"
 )
 
 var pushdPath = "/pushd"
@@ -116,7 +117,11 @@ func createMD5Hash(data []byte) string {
 func uploadToS3(data []byte, s3Key string, uploaded chan bool) {
 	md5Hash := createMD5Hash(data)
 	log.Infof("Uploading rendered image to: %s with md5 hash: %s", s3Key, md5Hash)
-	awsSession, err := session.NewSession()
+	awsSession, err := session.NewSession(&aws.Config{
+		Endpoint: aws.String(config.S3Endpoint),
+		Region:   aws.String(config.S3Region),
+		S3ForcePathStyle: aws.Bool(true),
+	})
 	if err != nil {
 		log.Error(err.Error())
 		return
