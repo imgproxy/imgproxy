@@ -1,5 +1,22 @@
 # 📑 Changelog (version/4 dev)
 
+## 2025-10-01
+
+### 🆕 Added
+
+- `DD_TRACE_AGENT_PORT` (default: 8126) as a default DataDog trace agent port.
+
+## 2025-09-30
+
+### ❌ Removed
+
+- Deprecated `IMGPROXY_OPEN_TELEMETRY_ENDPOINT` is removed.
+- Deprecated `IMGPROXY_OPEN_TELEMETRY_PROTOCOL` is removed.
+- Deprecated `IMGPROXY_OPEN_TELEMETRY_GRPC_INSECURE` is removed.
+- Deprecated `IMGPROXY_OPEN_TELEMETRY_SERVICE_NAME` is removed.
+- Deprecated `IMGPROXY_OPEN_TELEMETRY_PROPAGATORS` is removed.
+- Deprecated `IMGPROXY_OPEN_TELEMETRY_CONNECTION_TIMEOUT` is removed.
+
 ## 2025-09-26
 
 ### ❌ Removed

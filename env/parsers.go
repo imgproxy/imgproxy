@@ -3,6 +3,7 @@ package env
 import (
 	"bufio"
 	"encoding/hex"
+	"fmt"
 	"os"
 	"regexp"
 	"strconv"
@@ -55,13 +56,13 @@ func MegaInt(f *int, desc Desc) error {
 	if err != nil {
 		return desc.ErrorParse(err)
 	}
-	*f = int(value) * 1000000
+	*f = int(value) * 1_000_000
 
 	return nil
 }
 
-// Duration parses a duration (in seconds) from the environment variable
-func Duration(d *time.Duration, desc Desc) error {
+// duration parses a duration (in resolution) from the environment variable
+func duration(d *time.Duration, desc Desc, resolution time.Duration) error {
 	env, ok := desc.Get()
 	if !ok {
 		return nil
@@ -74,6 +75,16 @@ func Duration(d *time.Duration, desc Desc) error {
 	*d = time.Duration(value) * time.Second
 
 	return nil
+}
+
+// Duration parses a duration (in seconds) from the environment variable
+func Duration(d *time.Duration, desc Desc) error {
+	return duration(d, desc, time.Second)
+}
+
+// DurationMils parses a duration (in milliseconds) from the environment variable
+func DurationMils(d *time.Duration, desc Desc) error {
+	return duration(d, desc, time.Millisecond)
 }
 
 // String sets the string from the environment variable. Empty value is allowed.
@@ -301,6 +312,7 @@ func HexSlice(b *[][]byte, desc Desc) error {
 	return nil
 }
 
+// FromMap sets a value from a enum map based on the environment variable
 func FromMap[T any](v *T, m map[string]T, desc Desc) error {
 	env, ok := desc.Get()
 	if !ok {
@@ -312,6 +324,30 @@ func FromMap[T any](v *T, m map[string]T, desc Desc) error {
 	} else {
 		return desc.Errorf("%s", env)
 	}
+
+	return nil
+}
+
+// StringMap parses a map of string key-value pairs from the environment variable
+func StringMap(m *map[string]string, desc Desc) error {
+	env, ok := desc.Get()
+	if !ok {
+		return nil
+	}
+
+	mm := make(map[string]string)
+
+	keyvalues := strings.SplitSeq(env, ";")
+
+	for keyvalue := range keyvalues {
+		parts := strings.SplitN(keyvalue, "=", 2)
+		if len(parts) != 2 {
+			return fmt.Errorf("invalid key/value: %s", keyvalue)
+		}
+		mm[parts[0]] = parts[1]
+	}
+
+	*m = mm
 
 	return nil
 }

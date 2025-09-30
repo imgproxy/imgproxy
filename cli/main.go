@@ -38,6 +38,7 @@ func run(ctx context.Context, cmd *cli.Command) error {
 	if err != nil {
 		return err
 	}
+	defer instance.Close(ctx)
 
 	if err := instance.StartServer(ctx, nil); err != nil {
 		return err

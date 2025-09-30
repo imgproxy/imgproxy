@@ -13,7 +13,6 @@ import (
 	"github.com/imgproxy/imgproxy/v3/env"
 	"github.com/imgproxy/imgproxy/v3/errorreport"
 	"github.com/imgproxy/imgproxy/v3/logger"
-	"github.com/imgproxy/imgproxy/v3/monitoring"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
@@ -46,10 +45,6 @@ func Init() error {
 		slog.Debug(fmt.Sprintf(msg, args...))
 	}))
 
-	if err := monitoring.Init(); err != nil {
-		return err
-	}
-
 	vipsCfg, err := vips.LoadConfigFromEnv(nil)
 	if err != nil {
 		return err
@@ -72,7 +67,6 @@ func Init() error {
 
 // Shutdown performs global cleanup
 func Shutdown() {
-	monitoring.Stop()
 	vips.Shutdown()
 	errorreport.Close()
 }

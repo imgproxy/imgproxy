@@ -11,6 +11,7 @@ import (
 	nanoid "github.com/matoous/go-nanoid/v2"
 
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
+	"github.com/imgproxy/imgproxy/v3/monitoring"
 	"github.com/imgproxy/imgproxy/v3/server/responsewriter"
 )
 
@@ -51,10 +52,13 @@ type Router struct {
 
 	// routes is the collection of all routes
 	routes []*route
+
+	// monitoring is the monitoring instance
+	monitoring *monitoring.Monitoring
 }
 
 // NewRouter creates a new Router instance
-func NewRouter(config *Config) (*Router, error) {
+func NewRouter(config *Config, monitoring *monitoring.Monitoring) (*Router, error) {
 	if err := config.Validate(); err != nil {
 		return nil, err
 	}
@@ -65,8 +69,9 @@ func NewRouter(config *Config) (*Router, error) {
 	}
 
 	return &Router{
-		rwFactory: rwf,
-		config:    config,
+		rwFactory:  rwf,
+		config:     config,
+		monitoring: monitoring,
 	}, nil
 }
 

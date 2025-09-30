@@ -6,7 +6,6 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
-	"os"
 	"reflect"
 	"strconv"
 	"time"
@@ -16,93 +15,96 @@ import (
 	"github.com/DataDog/dd-trace-go/v2/ddtrace/tracer"
 	"github.com/felixge/httpsnoop"
 
-	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/monitoring/errformat"
 	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
 	"github.com/imgproxy/imgproxy/v3/version"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
+// spanCtxKey is the context key type for storing the root span in the request context
 type spanCtxKey struct{}
 
-var (
-	enabled        bool
-	enabledMetrics bool
+// dataDogLogger is a custom logger for DataDog
+type dataDogLogger struct{}
+
+func (l dataDogLogger) Log(msg string) {
+	slog.Info(msg)
+}
+
+// DataDog holds DataDog client and configuration
+type DataDog struct {
+	stats  *stats.Stats
+	config *Config
 
 	statsdClient     *statsd.Client
 	statsdClientStop chan struct{}
-)
+}
 
-func Init() {
-	if !config.DataDogEnable {
-		return
+// New creates a new DataDog instance
+func New(config *Config, stats *stats.Stats) (*DataDog, error) {
+	dd := &DataDog{
+		stats:  stats,
+		config: config,
 	}
 
-	name := os.Getenv("DD_SERVICE")
-	if len(name) == 0 {
-		name = "imgproxy"
-	}
-
-	logStartup := false
-	if b, err := strconv.ParseBool(os.Getenv("DD_TRACE_STARTUP_LOGS")); err == nil {
-		logStartup = b
+	if !config.Enabled() {
+		return dd, nil
 	}
 
 	tracer.Start(
-		tracer.WithService(name),
+		tracer.WithService(config.Service),
 		tracer.WithServiceVersion(version.Version),
 		tracer.WithLogger(dataDogLogger{}),
-		tracer.WithLogStartup(logStartup),
+		tracer.WithLogStartup(config.TraceStartupLogs),
+		tracer.WithAgentAddr(net.JoinHostPort(config.AgentHost, strconv.Itoa(config.TracePort))),
 	)
 
-	enabled = true
-
-	statsdHost, statsdPort := os.Getenv("DD_AGENT_HOST"), os.Getenv("DD_DOGSTATSD_PORT")
-	if len(statsdHost) == 0 {
-		statsdHost = "localhost"
-	}
-	if len(statsdPort) == 0 {
-		statsdPort = "8125"
-	}
-
-	if !config.DataDogEnableMetrics {
-		return
+	// If additional metrics collection is not enabled, return early
+	if !config.EnableMetrics {
+		return dd, nil
 	}
 
 	var err error
-	statsdClient, err = statsd.New(
-		net.JoinHostPort(statsdHost, statsdPort),
+
+	dd.statsdClient, err = statsd.New(
+		net.JoinHostPort(config.AgentHost, strconv.Itoa(config.StatsDPort)),
 		statsd.WithTags([]string{
-			"service:" + name,
+			"service:" + config.Service,
 			"version:" + version.Version,
 		}),
 	)
+
 	if err == nil {
-		statsdClientStop = make(chan struct{})
-		enabledMetrics = true
-		go runMetricsCollector()
+		dd.statsdClientStop = make(chan struct{})
+		go dd.runMetricsCollector()
 	} else {
-		slog.Warn(fmt.Sprintf("Can't initialize DogStatsD client: %s", err))
+		slog.Warn(fmt.Sprintf("can't initialize DogStatsD client: %s", err))
+	}
+
+	return dd, nil
+}
+
+// Enabled returns true if DataDog is enabled
+func (dd *DataDog) Enabled() bool {
+	return dd.config.Enabled()
+}
+
+// Stop stops the DataDog tracer and metrics collection
+func (dd *DataDog) Stop() {
+	if !dd.Enabled() {
+		return
+	}
+
+	tracer.Stop()
+
+	if dd.statsdClient != nil {
+		close(dd.statsdClientStop)
+		dd.statsdClient.Close()
 	}
 }
 
-func Stop() {
-	if enabled {
-		tracer.Stop()
-
-		if statsdClient != nil {
-			close(statsdClientStop)
-			statsdClient.Close()
-		}
-	}
-}
-
-func Enabled() bool {
-	return enabled
-}
-
-func StartRootSpan(ctx context.Context, rw http.ResponseWriter, r *http.Request) (context.Context, context.CancelFunc, http.ResponseWriter) {
-	if !enabled {
+func (dd *DataDog) StartRootSpan(ctx context.Context, rw http.ResponseWriter, r *http.Request) (context.Context, context.CancelFunc, http.ResponseWriter) {
+	if !dd.Enabled() {
 		return ctx, func() {}, rw
 	}
 
@@ -142,8 +144,8 @@ func setMetadata(span *tracer.Span, key string, value any) {
 	span.SetTag(key, value)
 }
 
-func SetMetadata(ctx context.Context, key string, value any) {
-	if !enabled {
+func (dd *DataDog) SetMetadata(ctx context.Context, key string, value any) {
+	if !dd.Enabled() {
 		return
 	}
 
@@ -152,8 +154,8 @@ func SetMetadata(ctx context.Context, key string, value any) {
 	}
 }
 
-func StartSpan(ctx context.Context, name string, meta map[string]any) context.CancelFunc {
-	if !enabled {
+func (dd *DataDog) StartSpan(ctx context.Context, name string, meta map[string]any) context.CancelFunc {
+	if !dd.Enabled() {
 		return func() {}
 	}
 
@@ -170,8 +172,8 @@ func StartSpan(ctx context.Context, name string, meta map[string]any) context.Ca
 	return func() {}
 }
 
-func SendError(ctx context.Context, errType string, err error) {
-	if !enabled {
+func (dd *DataDog) SendError(ctx context.Context, errType string, err error) {
+	if !dd.Enabled() {
 		return
 	}
 
@@ -181,47 +183,23 @@ func SendError(ctx context.Context, errType string, err error) {
 	}
 }
 
-func ObserveBufferSize(t string, size int) {
-	if enabledMetrics {
-		statsdClient.Histogram("imgproxy.buffer.size", float64(size), []string{"type:" + t}, 1)
-	}
-}
-
-func SetBufferDefaultSize(t string, size int) {
-	if enabledMetrics {
-		statsdClient.Gauge("imgproxy.buffer.default_size", float64(size), []string{"type:" + t}, 1)
-	}
-}
-
-func SetBufferMaxSize(t string, size int) {
-	if enabledMetrics {
-		statsdClient.Gauge("imgproxy.buffer.max_size", float64(size), []string{"type:" + t}, 1)
-	}
-}
-
-func runMetricsCollector() {
-	tick := time.NewTicker(10 * time.Second)
+func (dd *DataDog) runMetricsCollector() {
+	tick := time.NewTicker(dd.config.MetricsInterval)
 	defer tick.Stop()
+
 	for {
 		select {
 		case <-tick.C:
-			statsdClient.Gauge("imgproxy.workers", float64(config.Workers), nil, 1)
-			statsdClient.Gauge("imgproxy.requests_in_progress", stats.RequestsInProgress(), nil, 1)
-			statsdClient.Gauge("imgproxy.images_in_progress", stats.ImagesInProgress(), nil, 1)
-			statsdClient.Gauge("imgproxy.workers_utilization", stats.WorkersUtilization(), nil, 1)
+			dd.statsdClient.Gauge("imgproxy.workers", float64(dd.stats.WorkersNumber), nil, 1)
+			dd.statsdClient.Gauge("imgproxy.requests_in_progress", dd.stats.RequestsInProgress(), nil, 1)
+			dd.statsdClient.Gauge("imgproxy.images_in_progress", dd.stats.ImagesInProgress(), nil, 1)
+			dd.statsdClient.Gauge("imgproxy.workers_utilization", dd.stats.WorkersUtilization(), nil, 1)
 
-			statsdClient.Gauge("imgproxy.vips.memory", vips.GetMem(), nil, 1)
-			statsdClient.Gauge("imgproxy.vips.max_memory", vips.GetMemHighwater(), nil, 1)
-			statsdClient.Gauge("imgproxy.vips.allocs", vips.GetAllocs(), nil, 1)
-		case <-statsdClientStop:
+			dd.statsdClient.Gauge("imgproxy.vips.memory", vips.GetMem(), nil, 1)
+			dd.statsdClient.Gauge("imgproxy.vips.max_memory", vips.GetMemHighwater(), nil, 1)
+			dd.statsdClient.Gauge("imgproxy.vips.allocs", vips.GetAllocs(), nil, 1)
+		case <-dd.statsdClientStop:
 			return
 		}
 	}
-}
-
-type dataDogLogger struct {
-}
-
-func (l dataDogLogger) Log(msg string) {
-	slog.Info(msg)
 }

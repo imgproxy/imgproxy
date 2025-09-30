@@ -16,11 +16,30 @@ import (
 	"github.com/imgproxy/imgproxy/v3/fetcher"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/logger"
+	"github.com/imgproxy/imgproxy/v3/monitoring"
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/options/keys"
 	"github.com/imgproxy/imgproxy/v3/server/responsewriter"
 	"github.com/imgproxy/imgproxy/v3/testutil"
 )
+
+type Ctx struct {
+	fetcher    *fetcher.Fetcher
+	monitoring *monitoring.Monitoring
+	cookies    *cookies.Cookies
+}
+
+func (c *Ctx) Fetcher() *fetcher.Fetcher {
+	return c.fetcher
+}
+
+func (c *Ctx) Monitoring() *monitoring.Monitoring {
+	return c.monitoring
+}
+
+func (c *Ctx) Cookies() *cookies.Cookies {
+	return c.cookies
+}
 
 type HandlerTestSuite struct {
 	testutil.LazySuite
@@ -31,7 +50,8 @@ type HandlerTestSuite struct {
 	rwFactory testutil.LazyObj[*responsewriter.Factory]
 
 	cookieConf testutil.LazyObj[*cookies.Config]
-	cookies    testutil.LazyObj[*cookies.Cookies]
+
+	ctx testutil.LazyObj[*Ctx]
 
 	config  testutil.LazyObj[*Config]
 	handler testutil.LazyObj[*Handler]
@@ -67,10 +87,33 @@ func (s *HandlerTestSuite) SetupSuite() {
 		},
 	)
 
-	s.cookies, _ = testutil.NewLazySuiteObj(
+	s.ctx, _ = testutil.NewLazySuiteObj(
 		s,
-		func() (*cookies.Cookies, error) {
-			return cookies.New(s.cookieConf())
+		func() (*Ctx, error) {
+			fc := fetcher.NewDefaultConfig()
+			fc.Transport.HTTP.AllowLoopbackSourceAddresses = true
+
+			fetcher, err := fetcher.New(&fc)
+			if err != nil {
+				return nil, err
+			}
+
+			mc := monitoring.NewDefaultConfig()
+			monitoring, err := monitoring.New(s.T().Context(), &mc, 1)
+			if err != nil {
+				return nil, err
+			}
+
+			cookies, err := cookies.New(s.cookieConf())
+			if err != nil {
+				return nil, err
+			}
+
+			return &Ctx{
+				fetcher:    fetcher,
+				monitoring: monitoring,
+				cookies:    cookies,
+			}, nil
 		},
 	)
 
@@ -85,13 +128,7 @@ func (s *HandlerTestSuite) SetupSuite() {
 	s.handler, _ = testutil.NewLazySuiteObj(
 		s,
 		func() (*Handler, error) {
-			fc := fetcher.NewDefaultConfig()
-			fc.Transport.HTTP.AllowLoopbackSourceAddresses = true
-
-			fetcher, err := fetcher.New(&fc)
-			s.Require().NoError(err)
-
-			return New(s.config(), fetcher, s.cookies())
+			return New(s.ctx(), s.config())
 		},
 	)
 

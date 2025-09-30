@@ -10,7 +10,6 @@ import (
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/monitoring"
-	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/options/keys"
 	"github.com/imgproxy/imgproxy/v3/security"
@@ -53,8 +52,8 @@ func (r *request) execute(ctx context.Context) error {
 	defer releaseWorker()
 
 	// Deal with processing image counter
-	stats.IncImagesInProgress()
-	defer stats.DecImagesInProgress()
+	r.Monitoring().Stats().IncImagesInProgress()
+	defer r.Monitoring().Stats().DecImagesInProgress()
 
 	// Response status code is OK by default
 	statusCode := http.StatusOK

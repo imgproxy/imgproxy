@@ -46,9 +46,12 @@ func loadAWSSecret(ctx context.Context) error {
 		return fmt.Errorf("can't load AWS Secrets Manager config: %s", err)
 	}
 
-	conf.Region = defaultAWSRegion
 	if len(secretRegion) > 0 {
 		conf.Region = secretRegion
+	}
+
+	if len(conf.Region) == 0 {
+		conf.Region = defaultAWSRegion
 	}
 
 	// Let's create secrets manager client

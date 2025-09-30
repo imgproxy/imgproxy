@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -12,250 +11,181 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatch"
 	cloudwatchTypes "github.com/aws/aws-sdk-go-v2/service/cloudwatch/types"
 
-	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
-type bufferStats struct {
-	count         int
-	sum, min, max int
-}
+const (
+	// AWS CloudWatch PutMetrics timeout
+	putMetricsTimeout = 30 * time.Second
 
-var (
-	enabled bool
+	// default AWS region to set if neither aws env region nor config region are set
+	defaultAwsRegion = "us-west-1"
+)
+
+// CloudWatch holds CloudWatch client and configuration
+type CloudWatch struct {
+	config *Config
+	stats  *stats.Stats
 
 	client *cloudwatch.Client
 
 	collectorCtx       context.Context
 	collectorCtxCancel context.CancelFunc
+}
 
-	bufferDefaultSizes = make(map[string]int)
-	bufferMaxSizes     = make(map[string]int)
-	bufferSizeStats    = make(map[string]*bufferStats)
-	bufferStatsMutex   sync.Mutex
-)
-
-func Init() error {
-	if len(config.CloudWatchServiceName) == 0 {
-		return nil
+// New creates a new CloudWatch instance
+func New(ctx context.Context, config *Config, stats *stats.Stats) (*CloudWatch, error) {
+	cw := &CloudWatch{
+		config: config,
+		stats:  stats,
 	}
 
-	conf, err := awsConfig.LoadDefaultConfig(context.Background())
+	if !config.Enabled() {
+		return cw, nil
+	}
+
+	if err := config.Validate(); err != nil {
+		return nil, err
+	}
+
+	conf, err := awsConfig.LoadDefaultConfig(ctx)
 	if err != nil {
-		return fmt.Errorf("can't load CloudWatch config: %s", err)
+		return nil, fmt.Errorf("can't load CloudWatch config: %s", err)
 	}
 
-	if len(config.CloudWatchRegion) != 0 {
-		conf.Region = config.CloudWatchRegion
+	if len(config.Region) > 0 {
+		conf.Region = config.Region
 	}
 
 	if len(conf.Region) == 0 {
-		conf.Region = "us-west-1"
+		conf.Region = defaultAwsRegion
 	}
 
-	client = cloudwatch.NewFromConfig(conf)
+	cw.client = cloudwatch.NewFromConfig(conf)
+	cw.collectorCtx, cw.collectorCtxCancel = context.WithCancel(ctx)
 
-	collectorCtx, collectorCtxCancel = context.WithCancel(context.Background())
+	go cw.runMetricsCollector()
 
-	go runMetricsCollector()
-
-	enabled = true
-
-	return nil
+	return cw, nil
 }
 
-func Stop() {
-	if enabled {
-		collectorCtxCancel()
-	}
+// Enabled returns true if CloudWatch is enabled
+func (cw *CloudWatch) Enabled() bool {
+	return cw.config.Enabled()
 }
 
-func Enabled() bool {
-	return enabled
-}
-
-func ObserveBufferSize(t string, size int) {
-	if enabled {
-		bufferStatsMutex.Lock()
-		defer bufferStatsMutex.Unlock()
-
-		sizef := size
-
-		stats, ok := bufferSizeStats[t]
-		if !ok {
-			stats = &bufferStats{count: 1, sum: sizef, min: sizef, max: sizef}
-			bufferSizeStats[t] = stats
-			return
-		}
-
-		stats.count += 1
-		stats.sum += sizef
-		stats.min = min(stats.min, sizef)
-		stats.max = max(stats.max, sizef)
+// Stop stops the CloudWatch metrics collection
+func (cw *CloudWatch) Stop() {
+	if cw.collectorCtxCancel != nil {
+		cw.collectorCtxCancel()
 	}
 }
 
-func SetBufferDefaultSize(t string, size int) {
-	if enabled {
-		bufferStatsMutex.Lock()
-		defer bufferStatsMutex.Unlock()
-
-		bufferDefaultSizes[t] = size
-	}
-}
-
-func SetBufferMaxSize(t string, size int) {
-	if enabled {
-		bufferStatsMutex.Lock()
-		defer bufferStatsMutex.Unlock()
-
-		bufferMaxSizes[t] = size
-	}
-}
-
-func runMetricsCollector() {
-	tick := time.NewTicker(10 * time.Second)
+// runMetricsCollector collects and sends metrics to CloudWatch
+func (cw *CloudWatch) runMetricsCollector() {
+	tick := time.NewTicker(cw.config.MetricsInterval)
 	defer tick.Stop()
 
 	dimension := cloudwatchTypes.Dimension{
 		Name:  aws.String("ServiceName"),
-		Value: aws.String(config.CloudWatchServiceName),
+		Value: aws.String(cw.config.ServiceName),
 	}
 
-	bufferDimensions := make(map[string]cloudwatchTypes.Dimension)
-	bufferDimension := func(t string) cloudwatchTypes.Dimension {
-		if d, ok := bufferDimensions[t]; ok {
-			return d
-		}
+	dimensions := []cloudwatchTypes.Dimension{dimension}
 
-		d := cloudwatchTypes.Dimension{
-			Name:  aws.String("BufferType"),
-			Value: aws.String(t),
-		}
+	namespace := aws.String(cw.config.Namespace)
 
-		bufferDimensions[t] = d
-
-		return d
-	}
+	// metric names
+	metricNameWorkers := aws.String("Workers")
+	metricNameRequestsInProgress := aws.String("RequestsInProgress")
+	metricNameImagesInProgress := aws.String("ImagesInProgress")
+	metricNameConcurrencyUtilization := aws.String("ConcurrencyUtilization")
+	metricNameWorkersUtilization := aws.String("WorkersUtilization")
+	metricNameVipsMemory := aws.String("VipsMemory")
+	metricNameVipsMaxMemory := aws.String("VipsMaxMemory")
+	metricNameVipsAllocs := aws.String("VipsAllocs")
 
 	for {
 		select {
 		case <-tick.C:
-			metricsCount := len(bufferDefaultSizes) + len(bufferMaxSizes) + len(bufferSizeStats) + 8
-			metrics := make([]cloudwatchTypes.MetricDatum, 0, metricsCount)
-
-			func() {
-				bufferStatsMutex.Lock()
-				defer bufferStatsMutex.Unlock()
-
-				for t, size := range bufferDefaultSizes {
-					metrics = append(metrics, cloudwatchTypes.MetricDatum{
-						Dimensions: []cloudwatchTypes.Dimension{dimension, bufferDimension(t)},
-						MetricName: aws.String("BufferDefaultSize"),
-						Unit:       cloudwatchTypes.StandardUnitBytes,
-						Value:      aws.Float64(float64(size)),
-					})
-				}
-
-				for t, size := range bufferMaxSizes {
-					metrics = append(metrics, cloudwatchTypes.MetricDatum{
-						Dimensions: []cloudwatchTypes.Dimension{dimension, bufferDimension(t)},
-						MetricName: aws.String("BufferMaximumSize"),
-						Unit:       cloudwatchTypes.StandardUnitBytes,
-						Value:      aws.Float64(float64(size)),
-					})
-				}
-
-				for t, stats := range bufferSizeStats {
-					metrics = append(metrics, cloudwatchTypes.MetricDatum{
-						Dimensions: []cloudwatchTypes.Dimension{dimension, bufferDimension(t)},
-						MetricName: aws.String("BufferSize"),
-						Unit:       cloudwatchTypes.StandardUnitBytes,
-						StatisticValues: &cloudwatchTypes.StatisticSet{
-							SampleCount: aws.Float64(float64(stats.count)),
-							Sum:         aws.Float64(float64(stats.sum)),
-							Minimum:     aws.Float64(float64(stats.min)),
-							Maximum:     aws.Float64(float64(stats.max)),
-						},
-					})
-				}
-			}()
+			// 8 is the number of metrics we send
+			metrics := make([]cloudwatchTypes.MetricDatum, 0, 8)
 
 			metrics = append(metrics, cloudwatchTypes.MetricDatum{
-				Dimensions: []cloudwatchTypes.Dimension{dimension},
-				MetricName: aws.String("Workers"),
+				Dimensions: dimensions,
+				MetricName: metricNameWorkers,
 				Unit:       cloudwatchTypes.StandardUnitCount,
-				Value:      aws.Float64(float64(config.Workers)),
+				Value:      aws.Float64(float64(cw.stats.WorkersNumber)),
 			})
 
 			metrics = append(metrics, cloudwatchTypes.MetricDatum{
-				Dimensions: []cloudwatchTypes.Dimension{dimension},
-				MetricName: aws.String("RequestsInProgress"),
+				Dimensions: dimensions,
+				MetricName: metricNameRequestsInProgress,
 				Unit:       cloudwatchTypes.StandardUnitCount,
-				Value:      aws.Float64(stats.RequestsInProgress()),
+				Value:      aws.Float64(cw.stats.RequestsInProgress()),
 			})
 
 			metrics = append(metrics, cloudwatchTypes.MetricDatum{
-				Dimensions: []cloudwatchTypes.Dimension{dimension},
-				MetricName: aws.String("ImagesInProgress"),
+				Dimensions: dimensions,
+				MetricName: metricNameImagesInProgress,
 				Unit:       cloudwatchTypes.StandardUnitCount,
-				Value:      aws.Float64(stats.ImagesInProgress()),
+				Value:      aws.Float64(cw.stats.ImagesInProgress()),
 			})
 
 			metrics = append(metrics, cloudwatchTypes.MetricDatum{
-				Dimensions: []cloudwatchTypes.Dimension{dimension},
-				MetricName: aws.String("ConcurrencyUtilization"),
+				Dimensions: dimensions,
+				MetricName: metricNameConcurrencyUtilization,
 				Unit:       cloudwatchTypes.StandardUnitPercent,
 				Value: aws.Float64(
-					stats.WorkersUtilization(),
+					cw.stats.WorkersUtilization(),
 				),
 			})
 
 			metrics = append(metrics, cloudwatchTypes.MetricDatum{
-				Dimensions: []cloudwatchTypes.Dimension{dimension},
-				MetricName: aws.String("WorkersUtilization"),
+				Dimensions: dimensions,
+				MetricName: metricNameWorkersUtilization,
 				Unit:       cloudwatchTypes.StandardUnitPercent,
 				Value: aws.Float64(
-					stats.WorkersUtilization(),
+					cw.stats.WorkersUtilization(),
 				),
 			})
 
 			metrics = append(metrics, cloudwatchTypes.MetricDatum{
-				Dimensions: []cloudwatchTypes.Dimension{dimension},
-				MetricName: aws.String("VipsMemory"),
+				Dimensions: dimensions,
+				MetricName: metricNameVipsMemory,
 				Unit:       cloudwatchTypes.StandardUnitBytes,
 				Value:      aws.Float64(vips.GetMem()),
 			})
 
 			metrics = append(metrics, cloudwatchTypes.MetricDatum{
-				Dimensions: []cloudwatchTypes.Dimension{dimension},
-				MetricName: aws.String("VipsMaxMemory"),
+				Dimensions: dimensions,
+				MetricName: metricNameVipsMaxMemory,
 				Unit:       cloudwatchTypes.StandardUnitBytes,
 				Value:      aws.Float64(vips.GetMemHighwater()),
 			})
 
 			metrics = append(metrics, cloudwatchTypes.MetricDatum{
-				Dimensions: []cloudwatchTypes.Dimension{dimension},
-				MetricName: aws.String("VipsAllocs"),
+				Dimensions: dimensions,
+				MetricName: metricNameVipsAllocs,
 				Unit:       cloudwatchTypes.StandardUnitCount,
 				Value:      aws.Float64(vips.GetAllocs()),
 			})
 
 			input := cloudwatch.PutMetricDataInput{
-				Namespace:  aws.String(config.CloudWatchNamespace),
+				Namespace:  namespace,
 				MetricData: metrics,
 			}
 
 			func() {
-				ctx, cancel := context.WithTimeout(collectorCtx, 30*time.Second)
+				ctx, cancel := context.WithTimeout(cw.collectorCtx, putMetricsTimeout)
 				defer cancel()
 
-				if _, err := client.PutMetricData(ctx, &input); err != nil {
-					slog.Warn(fmt.Sprintf("Can't send CloudWatch metrics: %s", err))
+				if _, err := cw.client.PutMetricData(ctx, &input); err != nil {
+					slog.Warn(fmt.Sprintf("can't send CloudWatch metrics: %s", err))
 				}
 			}()
-		case <-collectorCtx.Done():
+		case <-cw.collectorCtx.Done():
 			return
 		}
 	}

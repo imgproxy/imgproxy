@@ -2,6 +2,7 @@ package monitoring
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"github.com/imgproxy/imgproxy/v3/monitoring/cloudwatch"
@@ -9,67 +10,77 @@ import (
 	"github.com/imgproxy/imgproxy/v3/monitoring/newrelic"
 	"github.com/imgproxy/imgproxy/v3/monitoring/otel"
 	"github.com/imgproxy/imgproxy/v3/monitoring/prometheus"
+	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
 )
 
-const (
-	MetaSourceImageURL    = "imgproxy.source_image_url"
-	MetaSourceImageOrigin = "imgproxy.source_image_origin"
-	MetaOptions           = "imgproxy.options"
-)
+// Monitoring holds all monitoring service instances
+type Monitoring struct {
+	config *Config
+	stats  *stats.Stats
 
-type Meta map[string]any
-
-// Filter creates a copy of Meta with only the specified keys.
-func (m Meta) Filter(only ...string) Meta {
-	filtered := make(Meta)
-	for _, key := range only {
-		if value, ok := m[key]; ok {
-			filtered[key] = value
-		}
-	}
-	return filtered
+	prometheus *prometheus.Prometheus
+	newrelic   *newrelic.NewRelic
+	datadog    *datadog.DataDog
+	otel       *otel.Otel
+	cloudwatch *cloudwatch.CloudWatch
 }
 
-func Init() error {
-	prometheus.Init()
-
-	if err := newrelic.Init(); err != nil {
-		return nil
+// New creates a new Monitoring instance
+func New(ctx context.Context, config *Config, workersNumber int) (*Monitoring, error) {
+	if err := config.Validate(); err != nil {
+		return nil, err
 	}
 
-	datadog.Init()
-
-	if err := otel.Init(); err != nil {
-		return err
+	m := &Monitoring{
+		config: config,
+		stats:  stats.New(workersNumber),
 	}
 
-	if err := cloudwatch.Init(); err != nil {
-		return err
-	}
+	var prErr, nlErr, ddErr, otelErr, cwErr error
 
-	return nil
+	m.prometheus, prErr = prometheus.New(&config.Prometheus, m.stats)
+	m.newrelic, nlErr = newrelic.New(&config.NewRelic, m.stats)
+	m.datadog, ddErr = datadog.New(&config.DataDog, m.stats)
+	m.otel, otelErr = otel.New(&config.OpenTelemetry, m.stats)
+	m.cloudwatch, cwErr = cloudwatch.New(ctx, &config.CloudWatch, m.stats)
+
+	err := errors.Join(prErr, nlErr, ddErr, otelErr, cwErr)
+
+	return m, err
 }
 
-func Stop() {
-	newrelic.Stop()
-	datadog.Stop()
-	otel.Stop()
-	cloudwatch.Stop()
+// Enabled returns true if at least one monitoring service is enabled
+func (m *Monitoring) Enabled() bool {
+	return m.prometheus.Enabled() ||
+		m.newrelic.Enabled() ||
+		m.datadog.Enabled() ||
+		m.otel.Enabled() ||
+		m.cloudwatch.Enabled()
 }
 
-func Enabled() bool {
-	return prometheus.Enabled() ||
-		newrelic.Enabled() ||
-		datadog.Enabled() ||
-		otel.Enabled() ||
-		cloudwatch.Enabled()
+// Stats returns the stats instance
+func (m *Monitoring) Stats() *stats.Stats {
+	return m.stats
 }
 
-func StartRequest(ctx context.Context, rw http.ResponseWriter, r *http.Request) (context.Context, context.CancelFunc, http.ResponseWriter) {
-	promCancel, rw := prometheus.StartRequest(rw)
-	ctx, nrCancel, rw := newrelic.StartTransaction(ctx, rw, r)
-	ctx, ddCancel, rw := datadog.StartRootSpan(ctx, rw, r)
-	ctx, otelCancel, rw := otel.StartRootSpan(ctx, rw, r)
+// Stop stops all monitoring services
+func (m *Monitoring) Stop(ctx context.Context) {
+	m.newrelic.Stop(ctx)
+	m.datadog.Stop()
+	m.otel.Stop(ctx)
+	m.cloudwatch.Stop()
+}
+
+// StartPrometheus starts the Prometheus metrics server
+func (m *Monitoring) StartPrometheus(cancel context.CancelFunc) error {
+	return m.prometheus.StartServer(cancel)
+}
+
+func (m *Monitoring) StartRequest(ctx context.Context, rw http.ResponseWriter, r *http.Request) (context.Context, context.CancelFunc, http.ResponseWriter) {
+	promCancel, rw := m.prometheus.StartRequest(rw)
+	ctx, nrCancel, rw := m.newrelic.StartTransaction(ctx, rw, r)
+	ctx, ddCancel, rw := m.datadog.StartRootSpan(ctx, rw, r)
+	ctx, otelCancel, rw := m.otel.StartRootSpan(ctx, rw, r)
 
 	cancel := func() {
 		promCancel()
@@ -81,19 +92,19 @@ func StartRequest(ctx context.Context, rw http.ResponseWriter, r *http.Request) 
 	return ctx, cancel, rw
 }
 
-func SetMetadata(ctx context.Context, meta Meta) {
+func (m *Monitoring) SetMetadata(ctx context.Context, meta Meta) {
 	for key, value := range meta {
-		newrelic.SetMetadata(ctx, key, value)
-		datadog.SetMetadata(ctx, key, value)
-		otel.SetMetadata(ctx, key, value)
+		m.newrelic.SetMetadata(ctx, key, value)
+		m.datadog.SetMetadata(ctx, key, value)
+		m.otel.SetMetadata(ctx, key, value)
 	}
 }
 
-func StartQueueSegment(ctx context.Context) context.CancelFunc {
-	promCancel := prometheus.StartQueueSegment()
-	nrCancel := newrelic.StartSegment(ctx, "Queue", nil)
-	ddCancel := datadog.StartSpan(ctx, "queue", nil)
-	otelCancel := otel.StartSpan(ctx, "queue", nil)
+func (m *Monitoring) StartQueueSegment(ctx context.Context) context.CancelFunc {
+	promCancel := m.prometheus.StartQueueSegment()
+	nrCancel := m.newrelic.StartSegment(ctx, "Queue", nil)
+	ddCancel := m.datadog.StartSpan(ctx, "queue", nil)
+	otelCancel := m.otel.StartSpan(ctx, "queue", nil)
 
 	cancel := func() {
 		promCancel()
@@ -105,11 +116,11 @@ func StartQueueSegment(ctx context.Context) context.CancelFunc {
 	return cancel
 }
 
-func StartDownloadingSegment(ctx context.Context, meta Meta) context.CancelFunc {
-	promCancel := prometheus.StartDownloadingSegment()
-	nrCancel := newrelic.StartSegment(ctx, "Downloading image", meta)
-	ddCancel := datadog.StartSpan(ctx, "downloading_image", meta)
-	otelCancel := otel.StartSpan(ctx, "downloading_image", meta)
+func (m *Monitoring) StartDownloadingSegment(ctx context.Context, meta Meta) context.CancelFunc {
+	promCancel := m.prometheus.StartDownloadingSegment()
+	nrCancel := m.newrelic.StartSegment(ctx, "Downloading image", meta)
+	ddCancel := m.datadog.StartSpan(ctx, "downloading_image", meta)
+	otelCancel := m.otel.StartSpan(ctx, "downloading_image", meta)
 
 	cancel := func() {
 		promCancel()
@@ -121,11 +132,11 @@ func StartDownloadingSegment(ctx context.Context, meta Meta) context.CancelFunc 
 	return cancel
 }
 
-func StartProcessingSegment(ctx context.Context, meta Meta) context.CancelFunc {
-	promCancel := prometheus.StartProcessingSegment()
-	nrCancel := newrelic.StartSegment(ctx, "Processing image", meta)
-	ddCancel := datadog.StartSpan(ctx, "processing_image", meta)
-	otelCancel := otel.StartSpan(ctx, "processing_image", meta)
+func (m *Monitoring) StartProcessingSegment(ctx context.Context, meta Meta) context.CancelFunc {
+	promCancel := m.prometheus.StartProcessingSegment()
+	nrCancel := m.newrelic.StartSegment(ctx, "Processing image", meta)
+	ddCancel := m.datadog.StartSpan(ctx, "processing_image", meta)
+	otelCancel := m.otel.StartSpan(ctx, "processing_image", meta)
 
 	cancel := func() {
 		promCancel()
@@ -137,11 +148,11 @@ func StartProcessingSegment(ctx context.Context, meta Meta) context.CancelFunc {
 	return cancel
 }
 
-func StartStreamingSegment(ctx context.Context) context.CancelFunc {
-	promCancel := prometheus.StartStreamingSegment()
-	nrCancel := newrelic.StartSegment(ctx, "Streaming image", nil)
-	ddCancel := datadog.StartSpan(ctx, "streaming_image", nil)
-	otelCancel := otel.StartSpan(ctx, "streaming_image", nil)
+func (m *Monitoring) StartStreamingSegment(ctx context.Context) context.CancelFunc {
+	promCancel := m.prometheus.StartStreamingSegment()
+	nrCancel := m.newrelic.StartSegment(ctx, "Streaming image", nil)
+	ddCancel := m.datadog.StartSpan(ctx, "streaming_image", nil)
+	otelCancel := m.otel.StartSpan(ctx, "streaming_image", nil)
 
 	cancel := func() {
 		promCancel()
@@ -153,33 +164,9 @@ func StartStreamingSegment(ctx context.Context) context.CancelFunc {
 	return cancel
 }
 
-func SendError(ctx context.Context, errType string, err error) {
-	prometheus.IncrementErrorsTotal(errType)
-	newrelic.SendError(ctx, errType, err)
-	datadog.SendError(ctx, errType, err)
-	otel.SendError(ctx, errType, err)
-}
-
-func ObserveBufferSize(t string, size int) {
-	prometheus.ObserveBufferSize(t, size)
-	newrelic.ObserveBufferSize(t, size)
-	datadog.ObserveBufferSize(t, size)
-	otel.ObserveBufferSize(t, size)
-	cloudwatch.ObserveBufferSize(t, size)
-}
-
-func SetBufferDefaultSize(t string, size int) {
-	prometheus.SetBufferDefaultSize(t, size)
-	newrelic.SetBufferDefaultSize(t, size)
-	datadog.SetBufferDefaultSize(t, size)
-	otel.SetBufferDefaultSize(t, size)
-	cloudwatch.SetBufferDefaultSize(t, size)
-}
-
-func SetBufferMaxSize(t string, size int) {
-	prometheus.SetBufferMaxSize(t, size)
-	newrelic.SetBufferMaxSize(t, size)
-	datadog.SetBufferMaxSize(t, size)
-	otel.SetBufferMaxSize(t, size)
-	cloudwatch.SetBufferMaxSize(t, size)
+func (m *Monitoring) SendError(ctx context.Context, errType string, err error) {
+	m.prometheus.IncrementErrorsTotal(errType)
+	m.newrelic.SendError(ctx, errType, err)
+	m.datadog.SendError(ctx, errType, err)
+	m.otel.SendError(ctx, errType, err)
 }
