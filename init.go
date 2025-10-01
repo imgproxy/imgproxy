@@ -11,7 +11,6 @@ import (
 
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/env"
-	"github.com/imgproxy/imgproxy/v3/errorreport"
 	"github.com/imgproxy/imgproxy/v3/logger"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
@@ -53,20 +52,10 @@ func Init() error {
 		return vipsErr
 	}
 
-	errCfg, errErr := errorreport.LoadConfigFromEnv(nil)
-	if errErr != nil {
-		return errErr
-	}
-
-	if err := errorreport.Init(errCfg); err != nil {
-		return err
-	}
-
 	return nil
 }
 
 // Shutdown performs global cleanup
 func Shutdown() {
 	vips.Shutdown()
-	errorreport.Close()
 }

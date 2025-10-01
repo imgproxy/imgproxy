@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
+	"github.com/imgproxy/imgproxy/v3/errorreport"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/monitoring"
 )
@@ -23,8 +24,12 @@ func (s *RouterTestSuite) SetupTest() {
 	m, err := monitoring.New(s.T().Context(), &mc, 1)
 	s.Require().NoError(err)
 
+	erCfg := errorreport.NewDefaultConfig()
+	er, err := errorreport.New(&erCfg)
+	s.Require().NoError(err)
+
 	c.PathPrefix = "/api"
-	r, err := NewRouter(&c, m)
+	r, err := NewRouter(&c, m, er)
 	s.Require().NoError(err)
 
 	s.router = r

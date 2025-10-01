@@ -13,7 +13,9 @@ const (
 )
 
 // reporter is a Sentry error reporter
-type reporter struct{}
+type reporter struct {
+	hub *sentry.Hub
+}
 
 // New creates and configures a new Sentry reporter
 func New(config *Config) (*reporter, error) {
@@ -25,17 +27,22 @@ func New(config *Config) (*reporter, error) {
 		return nil, nil
 	}
 
-	sentry.Init(sentry.ClientOptions{
+	client, err := sentry.NewClient(sentry.ClientOptions{
 		Dsn:         config.DSN,
 		Release:     config.Release,
 		Environment: config.Environment,
 	})
+	if err != nil {
+		return nil, err
+	}
 
-	return &reporter{}, nil
+	hub := sentry.NewHub(client, sentry.NewScope())
+
+	return &reporter{hub: hub}, nil
 }
 
 func (r *reporter) Report(err error, req *http.Request, meta map[string]any) {
-	hub := sentry.CurrentHub().Clone()
+	hub := r.hub.Clone()
 	hub.Scope().SetRequest(req)
 	hub.Scope().SetLevel(sentry.LevelError)
 
@@ -56,13 +63,10 @@ func (r *reporter) Report(err error, req *http.Request, meta map[string]any) {
 			}
 		}
 
-		eventID := hub.CaptureEvent(event)
-		if eventID != nil {
-			hub.Flush(flushTimeout)
-		}
+		hub.CaptureEvent(event)
 	}
 }
 
 func (r *reporter) Close() {
-	sentry.Flush(flushTimeout)
+	r.hub.Flush(flushTimeout)
 }

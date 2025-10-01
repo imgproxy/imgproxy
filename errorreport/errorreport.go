@@ -20,42 +20,46 @@ type reporter interface {
 // metaCtxKey is the context.Context key for request metadata
 type metaCtxKey struct{}
 
-// initialized reporters
-var reporters []reporter
+type Reporter struct {
+	// initialized reporters
+	reporters []reporter
+}
 
 // Init initializes all configured error reporters and returns a Reporter instance.
-func Init(config *Config) error {
+func New(config *Config) (*Reporter, error) {
 	if err := config.Validate(); err != nil {
-		return err
+		return nil, err
 	}
 
-	reporters = make([]reporter, 0)
+	reporters := make([]reporter, 0)
 
 	if r, err := bugsnag.New(&config.Bugsnag); err != nil {
-		return err
+		return nil, err
 	} else if r != nil {
 		reporters = append(reporters, r)
 	}
 
 	if r, err := honeybadger.New(&config.Honeybadger); err != nil {
-		return err
+		return nil, err
 	} else if r != nil {
 		reporters = append(reporters, r)
 	}
 
 	if r, err := sentry.New(&config.Sentry); err != nil {
-		return err
+		return nil, err
 	} else if r != nil {
 		reporters = append(reporters, r)
 	}
 
 	if r, err := airbrake.New(&config.Airbrake); err != nil {
-		return err
+		return nil, err
 	} else if r != nil {
 		reporters = append(reporters, r)
 	}
 
-	return nil
+	return &Reporter{
+		reporters: reporters,
+	}, nil
 }
 
 // StartRequest initializes metadata storage in the request context.
@@ -75,20 +79,20 @@ func SetMetadata(req *http.Request, key string, value any) {
 }
 
 // Report reports an error to all configured reporters with the request and its metadata.
-func Report(err error, req *http.Request) {
+func (r *Reporter) Report(err error, req *http.Request) {
 	meta, ok := req.Context().Value(metaCtxKey{}).(map[string]any)
 	if !ok {
 		meta = nil
 	}
 
-	for _, reporter := range reporters {
+	for _, reporter := range r.reporters {
 		reporter.Report(err, req, meta)
 	}
 }
 
 // Close closes all reporters
-func Close() {
-	for _, reporter := range reporters {
+func (r *Reporter) Close() {
+	for _, reporter := range r.reporters {
 		reporter.Close()
 	}
 }

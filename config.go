@@ -4,6 +4,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/auximageprovider"
 	"github.com/imgproxy/imgproxy/v3/cookies"
 	"github.com/imgproxy/imgproxy/v3/ensure"
+	"github.com/imgproxy/imgproxy/v3/errorreport"
 	"github.com/imgproxy/imgproxy/v3/fetcher"
 	processinghandler "github.com/imgproxy/imgproxy/v3/handlers/processing"
 	streamhandler "github.com/imgproxy/imgproxy/v3/handlers/stream"
@@ -35,6 +36,7 @@ type Config struct {
 	OptionsParser  optionsparser.Config
 	Cookies        cookies.Config
 	Monitoring     monitoring.Config
+	ErrorReport    errorreport.Config
 }
 
 // NewDefaultConfig creates a new default configuration
@@ -54,6 +56,7 @@ func NewDefaultConfig() Config {
 		OptionsParser: optionsparser.NewDefaultConfig(),
 		Cookies:       cookies.NewDefaultConfig(),
 		Monitoring:    monitoring.NewDefaultConfig(),
+		ErrorReport:   errorreport.NewDefaultConfig(),
 	}
 }
 
@@ -108,6 +111,10 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 	}
 
 	if _, err = monitoring.LoadConfigFromEnv(&c.Monitoring); err != nil {
+		return nil, err
+	}
+
+	if _, err = errorreport.LoadConfigFromEnv(&c.ErrorReport); err != nil {
 		return nil, err
 	}
 

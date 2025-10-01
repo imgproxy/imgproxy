@@ -32,6 +32,7 @@ type HandlerContext interface {
 	Processor() *processing.Processor
 	Cookies() *cookies.Cookies
 	Monitoring() *monitoring.Monitoring
+	ErrorReporter() *errorreport.Reporter
 }
 
 // Handler handles image processing requests

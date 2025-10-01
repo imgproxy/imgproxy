@@ -10,6 +10,7 @@ import (
 
 	nanoid "github.com/matoous/go-nanoid/v2"
 
+	"github.com/imgproxy/imgproxy/v3/errorreport"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/monitoring"
 	"github.com/imgproxy/imgproxy/v3/server/responsewriter"
@@ -55,10 +56,17 @@ type Router struct {
 
 	// monitoring is the monitoring instance
 	monitoring *monitoring.Monitoring
+
+	// errorReporter is the error reporter
+	errorReporter *errorreport.Reporter
 }
 
 // NewRouter creates a new Router instance
-func NewRouter(config *Config, monitoring *monitoring.Monitoring) (*Router, error) {
+func NewRouter(
+	config *Config,
+	monitoring *monitoring.Monitoring,
+	errReporter *errorreport.Reporter,
+) (*Router, error) {
 	if err := config.Validate(); err != nil {
 		return nil, err
 	}
@@ -69,9 +77,10 @@ func NewRouter(config *Config, monitoring *monitoring.Monitoring) (*Router, erro
 	}
 
 	return &Router{
-		rwFactory:  rwf,
-		config:     config,
-		monitoring: monitoring,
+		rwFactory:     rwf,
+		config:        config,
+		monitoring:    monitoring,
+		errorReporter: errReporter,
 	}, nil
 }
 

@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/imgproxy/imgproxy/v3/errorreport"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/monitoring"
 	"github.com/stretchr/testify/suite"
@@ -16,9 +17,10 @@ import (
 
 type ServerTestSuite struct {
 	suite.Suite
-	config      *Config
-	monitoring  *monitoring.Monitoring
-	blankRouter *Router
+	config        *Config
+	monitoring    *monitoring.Monitoring
+	errorReporter *errorreport.Reporter
+	blankRouter   *Router
 }
 
 func (s *ServerTestSuite) SetupTest() {
@@ -32,7 +34,12 @@ func (s *ServerTestSuite) SetupTest() {
 	s.Require().NoError(err)
 	s.monitoring = m
 
-	r, err := NewRouter(s.config, m)
+	erCfg := errorreport.NewDefaultConfig()
+	er, err := errorreport.New(&erCfg)
+	s.Require().NoError(err)
+	s.errorReporter = er
+
+	r, err := NewRouter(s.config, m, er)
 	s.Require().NoError(err)
 	s.blankRouter = r
 }
@@ -58,7 +65,7 @@ func (s *ServerTestSuite) TestStartServerWithInvalidBind() {
 	invalidConfig := NewDefaultConfig()
 	invalidConfig.Bind = "-1.-1.-1.-1" // Invalid address
 
-	r, err := NewRouter(&invalidConfig, s.monitoring)
+	r, err := NewRouter(&invalidConfig, s.monitoring, s.errorReporter)
 	s.Require().NoError(err)
 
 	server, err := Start(cancelWrapper, r)
@@ -125,7 +132,7 @@ func (s *ServerTestSuite) TestWithCORS() {
 			config := NewDefaultConfig()
 			config.CORSAllowOrigin = tt.corsAllowOrigin
 
-			router, err := NewRouter(&config, s.monitoring)
+			router, err := NewRouter(&config, s.monitoring, s.errorReporter)
 			s.Require().NoError(err)
 
 			wrappedHandler := router.WithCORS(s.mockHandler)
@@ -171,7 +178,7 @@ func (s *ServerTestSuite) TestWithSecret() {
 			config := NewDefaultConfig()
 			config.Secret = tt.secret
 
-			router, err := NewRouter(&config, s.monitoring)
+			router, err := NewRouter(&config, s.monitoring, s.errorReporter)
 			s.Require().NoError(err)
 
 			wrappedHandler := router.WithSecret(s.mockHandler)

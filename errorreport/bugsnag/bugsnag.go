@@ -11,7 +11,13 @@ import (
 // logger is the logger forwarder for bugsnag
 type logger struct{}
 
-type reporter struct{}
+func (l logger) Printf(format string, v ...interface{}) {
+	slog.Debug(fmt.Sprintf(format, v...), "source", "bugsnag")
+}
+
+type reporter struct {
+	notifier *bugsnag.Notifier
+}
 
 func New(config *Config) (*reporter, error) {
 	if err := config.Validate(); err != nil {
@@ -22,21 +28,15 @@ func New(config *Config) (*reporter, error) {
 		return nil, nil
 	}
 
-	bugsnag.Configure(bugsnag.Configuration{
+	notifier := bugsnag.New(bugsnag.Configuration{
 		APIKey:       config.Key,
 		ReleaseStage: config.Stage,
 		PanicHandler: func() {}, // Disable forking the process
 		Logger:       logger{},
+		Synchronous:  true,
 	})
 
-	return &reporter{}, nil
-}
-
-func (l logger) Printf(format string, v ...interface{}) {
-	slog.Debug(
-		fmt.Sprintf(format, v...),
-		"source", "bugsnag",
-	)
+	return &reporter{notifier: notifier}, nil
 }
 
 func (r *reporter) Report(err error, req *http.Request, meta map[string]any) {
@@ -45,7 +45,9 @@ func (r *reporter) Report(err error, req *http.Request, meta map[string]any) {
 		extra.Add("Processing Context", k, v)
 	}
 
-	bugsnag.Notify(err, req, extra)
+	if repErr := r.notifier.Notify(err, req, extra); repErr != nil {
+		slog.Warn("Failed to report error to Bugsnag", "error", repErr)
+	}
 }
 
 func (r *reporter) Close() {

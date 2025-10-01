@@ -7,6 +7,7 @@ import (
 
 	"github.com/imgproxy/imgproxy/v3/auximageprovider"
 	"github.com/imgproxy/imgproxy/v3/cookies"
+	"github.com/imgproxy/imgproxy/v3/errorreport"
 	"github.com/imgproxy/imgproxy/v3/fetcher"
 	healthhandler "github.com/imgproxy/imgproxy/v3/handlers/health"
 	landinghandler "github.com/imgproxy/imgproxy/v3/handlers/landing"
@@ -49,6 +50,7 @@ type Imgproxy struct {
 	cookies          *cookies.Cookies
 	monitoring       *monitoring.Monitoring
 	config           *Config
+	errorReporter    *errorreport.Reporter
 }
 
 // New creates a new imgproxy instance
@@ -104,6 +106,11 @@ func New(ctx context.Context, config *Config) (*Imgproxy, error) {
 		return nil, err
 	}
 
+	errorReporter, err := errorreport.New(&config.ErrorReport)
+	if err != nil {
+		return nil, err
+	}
+
 	imgproxy := &Imgproxy{
 		workers:          workers,
 		fallbackImage:    fallbackImage,
@@ -116,6 +123,7 @@ func New(ctx context.Context, config *Config) (*Imgproxy, error) {
 		processor:        processor,
 		cookies:          cookies,
 		monitoring:       monitoring,
+		errorReporter:    errorReporter,
 	}
 
 	imgproxy.handlers.Health = healthhandler.New()
@@ -138,7 +146,7 @@ func New(ctx context.Context, config *Config) (*Imgproxy, error) {
 
 // BuildRouter sets up the HTTP routes and middleware
 func (i *Imgproxy) BuildRouter() (*server.Router, error) {
-	r, err := server.NewRouter(&i.config.Server, i.monitoring)
+	r, err := server.NewRouter(&i.config.Server, i.monitoring, i.errorReporter)
 	if err != nil {
 		return nil, err
 	}
@@ -199,6 +207,7 @@ func (i *Imgproxy) StartServer(ctx context.Context, hasStarted chan net.Addr) er
 // Close gracefully shuts down the imgproxy instance
 func (i *Imgproxy) Close(ctx context.Context) {
 	i.monitoring.Stop(ctx)
+	i.errorReporter.Close()
 }
 
 // startMemoryTicker starts a ticker that periodically frees memory and optionally logs memory stats
@@ -258,4 +267,8 @@ func (i *Imgproxy) Cookies() *cookies.Cookies {
 
 func (i *Imgproxy) Monitoring() *monitoring.Monitoring {
 	return i.monitoring
+}
+
+func (i *Imgproxy) ErrorReporter() *errorreport.Reporter {
+	return i.errorReporter
 }
