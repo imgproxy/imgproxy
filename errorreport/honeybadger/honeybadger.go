@@ -1,6 +1,7 @@
 package honeybadger
 
 import (
+	"log/slog"
 	"net/http"
 	"reflect"
 	"strings"
@@ -14,7 +15,9 @@ var (
 	metaReplacer = strings.NewReplacer("-", "_", " ", "_")
 )
 
-type reporter struct{}
+type reporter struct {
+	client *honeybadger.Client
+}
 
 func New(config *Config) (*reporter, error) {
 	if err := config.Validate(); err != nil {
@@ -25,12 +28,12 @@ func New(config *Config) (*reporter, error) {
 		return nil, nil
 	}
 
-	honeybadger.Configure(honeybadger.Configuration{
+	client := honeybadger.New(honeybadger.Configuration{
 		APIKey: config.Key,
 		Env:    config.Env,
 	})
 
-	return &reporter{}, nil
+	return &reporter{client: client}, nil
 }
 
 func (r *reporter) Report(err error, req *http.Request, meta map[string]any) {
@@ -52,9 +55,11 @@ func (r *reporter) Report(err error, req *http.Request, meta map[string]any) {
 		hbErr.Class = reflect.TypeOf(e.Unwrap()).String()
 	}
 
-	honeybadger.Notify(hbErr, req.URL, extra)
+	if _, repErr := r.client.Notify(hbErr, req.URL, extra); repErr != nil {
+		slog.Warn("Failed to report error to Honeybadger", "error", repErr)
+	}
 }
 
 func (r *reporter) Close() {
-	// noop
+	r.client.Flush()
 }

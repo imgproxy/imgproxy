@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/imgproxy/imgproxy/v3/errorreport"
 	"github.com/imgproxy/imgproxy/v3/handlers"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
@@ -100,7 +99,7 @@ func (r *request) handleDownloadError(
 
 	// We didn't return, so we have to report error
 	if err.ShouldReport() {
-		errorreport.Report(err, r.req)
+		r.ErrorReporter().Report(err, r.req)
 	}
 
 	slog.Warn(
@@ -142,7 +141,7 @@ func (r *request) getFallbackImage(ctx context.Context) (imagedata.ImageData, ht
 		slog.Warn(err.Error())
 
 		if ierr := r.wrapDownloadingErr(err); ierr.ShouldReport() {
-			errorreport.Report(ierr, r.req)
+			r.ErrorReporter().Report(ierr, r.req)
 		}
 
 		return nil, nil
