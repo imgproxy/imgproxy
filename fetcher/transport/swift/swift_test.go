@@ -45,7 +45,7 @@ func (s *SwiftTestSuite) SetupSuite() {
 	s.Require().NoError(gerr)
 
 	var err error
-	s.transport, err = New(&config, trans)
+	s.transport, err = New(&config, trans, "?")
 	s.Require().NoError(err, "failed to initialize swift transport")
 }
 

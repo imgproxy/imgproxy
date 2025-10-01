@@ -77,7 +77,7 @@ func (s *GCSTestSuite) SetupSuite() {
 	trans, gerr := generichttp.New(false, &tc)
 	s.Require().NoError(gerr)
 
-	s.transport, err = New(&config, trans)
+	s.transport, err = New(&config, trans, "?")
 	s.Require().NoError(err)
 }
 

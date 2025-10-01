@@ -5,7 +5,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/ensure"
 	"github.com/imgproxy/imgproxy/v3/env"
 )
@@ -16,6 +15,16 @@ var (
 	IMGPROXY_FALLBACK_IMAGE_TTL        = env.Describe("IMGPROXY_FALLBACK_IMAGE_TTL", "seconds >= 0")
 	IMGPROXY_CACHE_CONTROL_PASSTHROUGH = env.Describe("IMGPROXY_CACHE_CONTROL_PASSTHROUGH", "boolean")
 	IMGPROXY_WRITE_RESPONSE_TIMEOUT    = env.Describe("IMGPROXY_WRITE_RESPONSE_TIMEOUT", "seconds > 0")
+
+	// NOTE: These are referenced here to determine if we need to set the Vary header
+	// Unfotunately, we can not reuse them from optionsparser package due to import cycle
+	IMGPROXY_AUTO_WEBP           = env.Describe("IMGPROXY_AUTO_WEBP", "boolean")
+	IMGPROXY_AUTO_AVIF           = env.Describe("IMGPROXY_AUTO_AVIF", "boolean")
+	IMGPROXY_AUTO_JXL            = env.Describe("IMGPROXY_AUTO_JXL", "boolean")
+	IMGPROXY_ENFORCE_WEBP        = env.Describe("IMGPROXY_ENFORCE_WEBP", "boolean")
+	IMGPROXY_ENFORCE_AVIF        = env.Describe("IMGPROXY_ENFORCE_AVIF", "boolean")
+	IMGPROXY_ENFORCE_JXL         = env.Describe("IMGPROXY_ENFORCE_JXL", "boolean")
+	IMGPROXY_ENABLE_CLIENT_HINTS = env.Describe("IMGPROXY_ENABLE_CLIENT_HINTS", "boolean")
 )
 
 // Config holds configuration for response writer
@@ -57,11 +66,19 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 
 	vary := make([]string, 0)
 
-	if c.envEnableFormatDetection() {
+	var ok bool
+
+	if err, ok = c.envEnableFormatDetection(); err != nil {
+		return nil, err
+	}
+	if ok {
 		vary = append(vary, "Accept")
 	}
 
-	if c.envEnableClientHints() {
+	if err, ok = c.envEnableClientHints(); err != nil {
+		return nil, err
+	}
+	if ok {
 		vary = append(vary, "Sec-CH-DPR", "DPR", "Sec-CH-Width", "Width")
 	}
 
@@ -70,18 +87,36 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 	return c, nil
 }
 
-// TODO: REMOVE REFERENCE TO GLOBAL CONFIG
-func (c *Config) envEnableFormatDetection() bool {
-	return config.AutoWebp ||
-		config.EnforceWebp ||
-		config.AutoAvif ||
-		config.EnforceAvif ||
-		config.AutoJxl ||
-		config.EnforceJxl
+// envEnableFormatDetection checks if any of the format detection options are enabled
+func (c *Config) envEnableFormatDetection() (error, bool) {
+	var autoWebp, enforceWebp, autoAvif, enforceAvif, autoJxl, enforceJxl bool
+
+	// We won't need those variables in runtime, hence, we could
+	// read them here once into local variables
+	err := errors.Join(
+		env.Bool(&autoWebp, IMGPROXY_AUTO_WEBP),
+		env.Bool(&enforceWebp, IMGPROXY_ENFORCE_WEBP),
+		env.Bool(&autoAvif, IMGPROXY_AUTO_AVIF),
+		env.Bool(&enforceAvif, IMGPROXY_ENFORCE_AVIF),
+		env.Bool(&autoJxl, IMGPROXY_AUTO_JXL),
+		env.Bool(&enforceJxl, IMGPROXY_ENFORCE_JXL),
+	)
+	if err != nil {
+		return err, false
+	}
+
+	return nil, autoWebp ||
+		enforceWebp ||
+		autoAvif ||
+		enforceAvif ||
+		autoJxl ||
+		enforceJxl
 }
 
-func (c *Config) envEnableClientHints() bool {
-	return config.EnableClientHints
+// envEnableClientHints checks if client hints are enabled
+func (c *Config) envEnableClientHints() (err error, ok bool) {
+	err = env.Bool(&ok, IMGPROXY_ENABLE_CLIENT_HINTS)
+	return
 }
 
 // Validate checks config for errors

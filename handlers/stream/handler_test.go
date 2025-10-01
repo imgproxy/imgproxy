@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/imgproxy/imgproxy/v3/config"
+	"github.com/imgproxy/imgproxy/v3/cookies"
 	"github.com/imgproxy/imgproxy/v3/fetcher"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/logger"
@@ -28,6 +29,9 @@ type HandlerTestSuite struct {
 
 	rwConf    testutil.LazyObj[*responsewriter.Config]
 	rwFactory testutil.LazyObj[*responsewriter.Factory]
+
+	cookieConf testutil.LazyObj[*cookies.Config]
+	cookies    testutil.LazyObj[*cookies.Cookies]
 
 	config  testutil.LazyObj[*Config]
 	handler testutil.LazyObj[*Handler]
@@ -55,6 +59,21 @@ func (s *HandlerTestSuite) SetupSuite() {
 		},
 	)
 
+	s.cookieConf, _ = testutil.NewLazySuiteObj(
+		s,
+		func() (*cookies.Config, error) {
+			c := cookies.NewDefaultConfig()
+			return &c, nil
+		},
+	)
+
+	s.cookies, _ = testutil.NewLazySuiteObj(
+		s,
+		func() (*cookies.Cookies, error) {
+			return cookies.New(s.cookieConf())
+		},
+	)
+
 	s.config, _ = testutil.NewLazySuiteObj(
 		s,
 		func() (*Config, error) {
@@ -72,7 +91,7 @@ func (s *HandlerTestSuite) SetupSuite() {
 			fetcher, err := fetcher.New(&fc)
 			s.Require().NoError(err)
 
-			return New(s.config(), fetcher)
+			return New(s.config(), fetcher, s.cookies())
 		},
 	)
 
@@ -391,7 +410,7 @@ func (s *HandlerTestSuite) TestHandlerErrorResponse() {
 
 // TestHandlerCookiePassthrough tests the cookie passthrough behavior of the streaming service.
 func (s *HandlerTestSuite) TestHandlerCookiePassthrough() {
-	s.config().CookiePassthrough = true
+	s.cookieConf().CookiePassthrough = true
 
 	data := s.testData.Read("test1.png")
 

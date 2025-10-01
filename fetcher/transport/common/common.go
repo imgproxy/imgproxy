@@ -3,8 +3,6 @@ package common
 import (
 	"net/url"
 	"strings"
-
-	"github.com/imgproxy/imgproxy/v3/config"
 )
 
 func EscapeURL(u string) string {
@@ -28,7 +26,7 @@ func EscapeURL(u string) string {
 	return u
 }
 
-func GetBucketAndKey(u *url.URL) (bucket, key, query string) {
+func GetBucketAndKey(u *url.URL, sep string) (bucket, key, query string) {
 	bucket = u.Host
 
 	// We can't use u.Path here because `url.Parse` unescapes the original URL's path.
@@ -60,8 +58,8 @@ func GetBucketAndKey(u *url.URL) (bucket, key, query string) {
 	// Since we replaced `?` with `%3F` in `EscapeURL`, `url.Parse` will treat query
 	// string as a part of the path.
 	// Also, query string separator may be different from `?`, so we can't rely on `url.URL.RawQuery`.
-	if len(config.SourceURLQuerySeparator) > 0 {
-		key, query, _ = strings.Cut(key, config.SourceURLQuerySeparator)
+	if len(sep) > 0 {
+		key, query, _ = strings.Cut(key, sep)
 	}
 
 	return

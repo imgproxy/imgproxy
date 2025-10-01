@@ -4,6 +4,7 @@ package transport
 
 import (
 	"errors"
+	"os"
 
 	"github.com/imgproxy/imgproxy/v3/ensure"
 	"github.com/imgproxy/imgproxy/v3/env"
@@ -16,10 +17,11 @@ import (
 )
 
 var (
-	IMGPROXY_USE_ABS   = env.Describe("IMGPROXY_USE_ABS", "boolean")
-	IMGPROXY_USE_GCS   = env.Describe("IMGPROXY_GCS_ENABLED", "boolean")
-	IMGPROXY_USE_S3    = env.Describe("IMGPROXY_USE_S3", "boolean")
-	IMGPROXY_USE_SWIFT = env.Describe("IMGPROXY_USE_SWIFT", "boolean")
+	IMGPROXY_USE_ABS                    = env.Describe("IMGPROXY_USE_ABS", "boolean")
+	IMGPROXY_USE_GCS                    = env.Describe("IMGPROXY_GCS_ENABLED", "boolean")
+	IMGPROXY_USE_S3                     = env.Describe("IMGPROXY_USE_S3", "boolean")
+	IMGPROXY_USE_SWIFT                  = env.Describe("IMGPROXY_USE_SWIFT", "boolean")
+	IMGPROXY_SOURCE_URL_QUERY_SEPARATOR = env.Describe("IMGPROXY_SOURCE_URL_QUERY_SEPARATOR", "string")
 )
 
 // Config represents configuration of the transport package
@@ -39,21 +41,27 @@ type Config struct {
 
 	SwiftEnabled bool
 	Swift        swift.Config
+
+	// query string separator (see docs). Unfortunately, we'll have to pass this
+	// to each transport which needs it as the consturctor parameter. Otherwise,
+	// we would have to add it to each transport config struct.
+	SourceURLQuerySeparator string
 }
 
 // NewDefaultConfig returns a new default transport configuration
 func NewDefaultConfig() Config {
 	return Config{
-		HTTP:         generichttp.NewDefaultConfig(),
-		Local:        fs.NewDefaultConfig(),
-		ABSEnabled:   false,
-		ABS:          azure.NewDefaultConfig(),
-		GCSEnabled:   false,
-		GCS:          gcs.NewDefaultConfig(),
-		S3Enabled:    false,
-		S3:           s3.NewDefaultConfig(),
-		SwiftEnabled: false,
-		Swift:        swift.NewDefaultConfig(),
+		HTTP:                    generichttp.NewDefaultConfig(),
+		Local:                   fs.NewDefaultConfig(),
+		ABSEnabled:              false,
+		ABS:                     azure.NewDefaultConfig(),
+		GCSEnabled:              false,
+		GCS:                     gcs.NewDefaultConfig(),
+		S3Enabled:               false,
+		S3:                      s3.NewDefaultConfig(),
+		SwiftEnabled:            false,
+		Swift:                   swift.NewDefaultConfig(),
+		SourceURLQuerySeparator: "?", // default is ?, but can be overriden with empty
 	}
 }
 
@@ -80,6 +88,12 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 		env.Bool(&c.S3Enabled, IMGPROXY_USE_S3),
 		env.Bool(&c.SwiftEnabled, IMGPROXY_USE_SWIFT),
 	)
+
+	// empty value is a valid value for this separator, we can't rely on env.String,
+	// which skips empty values
+	if s, ok := os.LookupEnv(IMGPROXY_SOURCE_URL_QUERY_SEPARATOR.Name); ok {
+		c.SourceURLQuerySeparator = s
+	}
 
 	return c, err
 }

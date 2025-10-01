@@ -46,7 +46,7 @@ func (s *S3TestSuite) SetupSuite() {
 	s.Require().NoError(gerr)
 
 	var err error
-	s.transport, err = New(&config, trans)
+	s.transport, err = New(&config, trans, "?")
 	s.Require().NoError(err)
 
 	err = backend.CreateBucket("test")

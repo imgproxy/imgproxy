@@ -2,6 +2,7 @@ package imgproxy
 
 import (
 	"github.com/imgproxy/imgproxy/v3/auximageprovider"
+	"github.com/imgproxy/imgproxy/v3/cookies"
 	"github.com/imgproxy/imgproxy/v3/ensure"
 	"github.com/imgproxy/imgproxy/v3/fetcher"
 	processinghandler "github.com/imgproxy/imgproxy/v3/handlers/processing"
@@ -30,6 +31,7 @@ type Config struct {
 	Security       security.Config
 	Processing     processing.Config
 	OptionsParser  optionsparser.Config
+	Cookies        cookies.Config
 }
 
 // NewDefaultConfig creates a new default configuration
@@ -93,6 +95,10 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 	}
 
 	if _, err = processing.LoadConfigFromEnv(&c.Processing); err != nil {
+		return nil, err
+	}
+
+	if _, err = cookies.LoadConfigFromEnv(&c.Cookies); err != nil {
 		return nil, err
 	}
 

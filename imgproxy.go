@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/imgproxy/imgproxy/v3/auximageprovider"
+	"github.com/imgproxy/imgproxy/v3/cookies"
 	"github.com/imgproxy/imgproxy/v3/fetcher"
 	healthhandler "github.com/imgproxy/imgproxy/v3/handlers/health"
 	landinghandler "github.com/imgproxy/imgproxy/v3/handlers/landing"
@@ -45,6 +46,7 @@ type Imgproxy struct {
 	security         *security.Checker
 	optionsParser    *optionsparser.Parser
 	processor        *processing.Processor
+	cookies          *cookies.Cookies
 	config           *Config
 }
 
@@ -87,6 +89,11 @@ func New(ctx context.Context, config *Config) (*Imgproxy, error) {
 		return nil, err
 	}
 
+	cookies, err := cookies.New(&config.Cookies)
+	if err != nil {
+		return nil, err
+	}
+
 	imgproxy := &Imgproxy{
 		workers:          workers,
 		fallbackImage:    fallbackImage,
@@ -97,12 +104,13 @@ func New(ctx context.Context, config *Config) (*Imgproxy, error) {
 		security:         security,
 		optionsParser:    optionsParser,
 		processor:        processor,
+		cookies:          cookies,
 	}
 
 	imgproxy.handlers.Health = healthhandler.New()
 	imgproxy.handlers.Landing = landinghandler.New()
 
-	imgproxy.handlers.Stream, err = streamhandler.New(&config.Handlers.Stream, fetcher)
+	imgproxy.handlers.Stream, err = streamhandler.New(&config.Handlers.Stream, fetcher, cookies)
 	if err != nil {
 		return nil, err
 	}
@@ -222,4 +230,8 @@ func (i *Imgproxy) OptionsParser() *optionsparser.Parser {
 
 func (i *Imgproxy) Processor() *processing.Processor {
 	return i.processor
+}
+
+func (i *Imgproxy) Cookies() *cookies.Cookies {
+	return i.cookies
 }

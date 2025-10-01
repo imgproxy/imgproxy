@@ -7,31 +7,33 @@ import (
 
 	"github.com/honeybadger-io/honeybadger-go"
 
-	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 )
 
 var (
-	enabled bool
-
 	metaReplacer = strings.NewReplacer("-", "_", " ", "_")
 )
 
-func Init() {
-	if len(config.HoneybadgerKey) > 0 {
-		honeybadger.Configure(honeybadger.Configuration{
-			APIKey: config.HoneybadgerKey,
-			Env:    config.HoneybadgerEnv,
-		})
-		enabled = true
+type reporter struct{}
+
+func New(config *Config) (*reporter, error) {
+	if err := config.Validate(); err != nil {
+		return nil, err
 	}
+
+	if len(config.Key) == 0 {
+		return nil, nil
+	}
+
+	honeybadger.Configure(honeybadger.Configuration{
+		APIKey: config.Key,
+		Env:    config.Env,
+	})
+
+	return &reporter{}, nil
 }
 
-func Report(err error, req *http.Request, meta map[string]any) {
-	if !enabled {
-		return
-	}
-
+func (r *reporter) Report(err error, req *http.Request, meta map[string]any) {
 	extra := make(honeybadger.CGIData, len(req.Header)+len(meta))
 
 	for k, v := range req.Header {
@@ -51,4 +53,8 @@ func Report(err error, req *http.Request, meta map[string]any) {
 	}
 
 	honeybadger.Notify(hbErr, req.URL, extra)
+}
+
+func (r *reporter) Close() {
+	// noop
 }
