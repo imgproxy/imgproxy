@@ -13,7 +13,6 @@ import (
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/monitoring"
-	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/options/keys"
 	optionsparser "github.com/imgproxy/imgproxy/v3/options/parser"
@@ -32,6 +31,7 @@ type HandlerContext interface {
 	OptionsParser() *optionsparser.Parser
 	Processor() *processing.Processor
 	Cookies() *cookies.Cookies
+	Monitoring() *monitoring.Monitoring
 }
 
 // Handler handles image processing requests
@@ -66,8 +66,8 @@ func (h *Handler) Execute(
 	req *http.Request,
 ) error {
 	// Increment the number of requests in progress
-	stats.IncRequestsInProgress()
-	defer stats.DecRequestsInProgress()
+	h.Monitoring().Stats().IncRequestsInProgress()
+	defer h.Monitoring().Stats().DecRequestsInProgress()
 
 	ctx := req.Context()
 
@@ -134,7 +134,7 @@ func (h *Handler) newRequest(
 	errorreport.SetMetadata(req, "Source Image Origin", imageOrigin)
 	errorreport.SetMetadata(req, "Options", o.NestedMap())
 
-	monitoring.SetMetadata(ctx, mm)
+	h.Monitoring().SetMetadata(ctx, mm)
 
 	// verify that image URL came from the valid source
 	err = h.Security().VerifySourceURL(imageURL)

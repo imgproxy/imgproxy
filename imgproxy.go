@@ -14,7 +14,7 @@ import (
 	streamhandler "github.com/imgproxy/imgproxy/v3/handlers/stream"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/memory"
-	"github.com/imgproxy/imgproxy/v3/monitoring/prometheus"
+	"github.com/imgproxy/imgproxy/v3/monitoring"
 	optionsparser "github.com/imgproxy/imgproxy/v3/options/parser"
 	"github.com/imgproxy/imgproxy/v3/processing"
 	"github.com/imgproxy/imgproxy/v3/security"
@@ -47,11 +47,16 @@ type Imgproxy struct {
 	optionsParser    *optionsparser.Parser
 	processor        *processing.Processor
 	cookies          *cookies.Cookies
+	monitoring       *monitoring.Monitoring
 	config           *Config
 }
 
 // New creates a new imgproxy instance
 func New(ctx context.Context, config *Config) (*Imgproxy, error) {
+	if err := config.Validate(); err != nil {
+		return nil, err
+	}
+
 	fetcher, err := fetcher.New(&config.Fetcher)
 	if err != nil {
 		return nil, err
@@ -94,6 +99,11 @@ func New(ctx context.Context, config *Config) (*Imgproxy, error) {
 		return nil, err
 	}
 
+	monitoring, err := monitoring.New(ctx, &config.Monitoring, config.Workers.WorkersNumber)
+	if err != nil {
+		return nil, err
+	}
+
 	imgproxy := &Imgproxy{
 		workers:          workers,
 		fallbackImage:    fallbackImage,
@@ -105,12 +115,13 @@ func New(ctx context.Context, config *Config) (*Imgproxy, error) {
 		optionsParser:    optionsParser,
 		processor:        processor,
 		cookies:          cookies,
+		monitoring:       monitoring,
 	}
 
 	imgproxy.handlers.Health = healthhandler.New()
 	imgproxy.handlers.Landing = landinghandler.New()
 
-	imgproxy.handlers.Stream, err = streamhandler.New(&config.Handlers.Stream, fetcher, cookies)
+	imgproxy.handlers.Stream, err = streamhandler.New(imgproxy, &config.Handlers.Stream)
 	if err != nil {
 		return nil, err
 	}
@@ -127,7 +138,7 @@ func New(ctx context.Context, config *Config) (*Imgproxy, error) {
 
 // BuildRouter sets up the HTTP routes and middleware
 func (i *Imgproxy) BuildRouter() (*server.Router, error) {
-	r, err := server.NewRouter(&i.config.Server)
+	r, err := server.NewRouter(&i.config.Server, i.monitoring)
 	if err != nil {
 		return nil, err
 	}
@@ -160,7 +171,7 @@ func (i *Imgproxy) StartServer(ctx context.Context, hasStarted chan net.Addr) er
 
 	ctx, cancel := context.WithCancel(ctx)
 
-	if err := prometheus.StartServer(cancel); err != nil {
+	if err := i.monitoring.StartPrometheus(cancel); err != nil {
 		return err
 	}
 
@@ -185,6 +196,11 @@ func (i *Imgproxy) StartServer(ctx context.Context, hasStarted chan net.Addr) er
 	return nil
 }
 
+// Close gracefully shuts down the imgproxy instance
+func (i *Imgproxy) Close(ctx context.Context) {
+	i.monitoring.Stop(ctx)
+}
+
 // startMemoryTicker starts a ticker that periodically frees memory and optionally logs memory stats
 func (i *Imgproxy) startMemoryTicker(ctx context.Context) {
 	ticker := time.NewTicker(i.config.Server.FreeMemoryInterval)
@@ -202,6 +218,10 @@ func (i *Imgproxy) startMemoryTicker(ctx context.Context) {
 			}
 		}
 	}
+}
+
+func (i *Imgproxy) Fetcher() *fetcher.Fetcher {
+	return i.fetcher
 }
 
 func (i *Imgproxy) Workers() *workers.Workers {
@@ -234,4 +254,8 @@ func (i *Imgproxy) Processor() *processing.Processor {
 
 func (i *Imgproxy) Cookies() *cookies.Cookies {
 	return i.cookies
+}
+
+func (i *Imgproxy) Monitoring() *monitoring.Monitoring {
+	return i.monitoring
 }

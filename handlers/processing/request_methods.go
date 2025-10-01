@@ -37,7 +37,7 @@ func (r *request) makeImageRequestHeaders() http.Header {
 
 // acquireWorker acquires the processing worker
 func (r *request) acquireWorker(ctx context.Context) (context.CancelFunc, error) {
-	defer monitoring.StartQueueSegment(ctx)()
+	defer r.Monitoring().StartQueueSegment(ctx)()
 
 	fn, err := r.Workers().Acquire(ctx)
 	if err != nil {
@@ -58,7 +58,7 @@ func (r *request) acquireWorker(ctx context.Context) (context.CancelFunc, error)
 
 // makeDownloadOptions creates a new default download options
 func (r *request) makeDownloadOptions(ctx context.Context, h http.Header) imagedata.DownloadOptions {
-	downloadFinished := monitoring.StartDownloadingSegment(ctx, r.monitoringMeta.Filter(
+	downloadFinished := r.Monitoring().StartDownloadingSegment(ctx, r.monitoringMeta.Filter(
 		monitoring.MetaSourceImageURL,
 		monitoring.MetaSourceImageOrigin,
 	))
@@ -96,7 +96,7 @@ func (r *request) handleDownloadError(
 	}
 
 	// Just send error
-	monitoring.SendError(ctx, handlers.CategoryDownload, err)
+	r.Monitoring().SendError(ctx, handlers.CategoryDownload, err)
 
 	// We didn't return, so we have to report error
 	if err.ShouldReport() {
@@ -153,7 +153,7 @@ func (r *request) getFallbackImage(ctx context.Context) (imagedata.ImageData, ht
 
 // processImage calls actual image processing
 func (r *request) processImage(ctx context.Context, originData imagedata.ImageData) (*processing.Result, error) {
-	defer monitoring.StartProcessingSegment(ctx, r.monitoringMeta.Filter(monitoring.MetaOptions))()
+	defer r.Monitoring().StartProcessingSegment(ctx, r.monitoringMeta.Filter(monitoring.MetaOptions))()
 	return r.Processor().ProcessImage(ctx, originData, r.opts, r.secops)
 }
 

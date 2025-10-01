@@ -10,7 +10,6 @@ import (
 	"github.com/imgproxy/imgproxy/v3/errorreport"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
-	"github.com/imgproxy/imgproxy/v3/monitoring"
 )
 
 const (
@@ -19,12 +18,12 @@ const (
 
 // WithMonitoring wraps RouteHandler with monitoring handling.
 func (r *Router) WithMonitoring(h RouteHandler) RouteHandler {
-	if !monitoring.Enabled() {
+	if !r.monitoring.Enabled() {
 		return h
 	}
 
 	return func(reqID string, rw ResponseWriter, req *http.Request) error {
-		ctx, cancel, newRw := monitoring.StartRequest(req.Context(), rw.HTTPResponseWriter(), req)
+		ctx, cancel, newRw := r.monitoring.StartRequest(req.Context(), rw.HTTPResponseWriter(), req)
 		defer cancel()
 
 		// Replace rw.ResponseWriter with new one returned from monitoring
@@ -122,7 +121,7 @@ func (r *Router) WithReportError(h RouteHandler) RouteHandler {
 
 		// We do not need to send any canceled context
 		if !errors.Is(ierr, context.Canceled) {
-			monitoring.SendError(ctx, errCat, err)
+			r.monitoring.SendError(ctx, errCat, err)
 		}
 
 		// Report error to error collectors

@@ -2,39 +2,56 @@ package stats
 
 import (
 	"sync/atomic"
-
-	"github.com/imgproxy/imgproxy/v3/config"
 )
 
-var (
+// Stats holds statistics counters thread safely
+type Stats struct {
 	requestsInProgress int64
 	imagesInProgress   int64
-)
-
-func RequestsInProgress() float64 {
-	return float64(atomic.LoadInt64(&requestsInProgress))
+	WorkersNumber      int
 }
 
-func IncRequestsInProgress() {
-	atomic.AddInt64(&requestsInProgress, 1)
+// New creates a new Stats instance
+func New(workersNumber int) *Stats {
+	return &Stats{
+		WorkersNumber: workersNumber,
+	}
 }
 
-func DecRequestsInProgress() {
-	atomic.AddInt64(&requestsInProgress, -1)
+// RequestsInProgress returns the current number of requests in progress
+func (s *Stats) RequestsInProgress() float64 {
+	return float64(atomic.LoadInt64(&s.requestsInProgress))
 }
 
-func ImagesInProgress() float64 {
-	return float64(atomic.LoadInt64(&imagesInProgress))
+// IncRequestsInProgress increments the requests in progress counter
+func (s *Stats) IncRequestsInProgress() {
+	atomic.AddInt64(&s.requestsInProgress, 1)
 }
 
-func IncImagesInProgress() {
-	atomic.AddInt64(&imagesInProgress, 1)
+// DecRequestsInProgress decrements the requests in progress counter
+func (s *Stats) DecRequestsInProgress() {
+	atomic.AddInt64(&s.requestsInProgress, -1)
 }
 
-func DecImagesInProgress() {
-	atomic.AddInt64(&imagesInProgress, -1)
+// ImagesInProgress returns the current number of images being processed
+func (s *Stats) ImagesInProgress() float64 {
+	return float64(atomic.LoadInt64(&s.imagesInProgress))
 }
 
-func WorkersUtilization() float64 {
-	return RequestsInProgress() / float64(config.Workers) * 100.0
+// IncImagesInProgress increments the images in progress counter
+func (s *Stats) IncImagesInProgress() {
+	atomic.AddInt64(&s.imagesInProgress, 1)
+}
+
+// DecImagesInProgress decrements the images in progress counter
+func (s *Stats) DecImagesInProgress() {
+	atomic.AddInt64(&s.imagesInProgress, -1)
+}
+
+// WorkersUtilization returns the current workers utilization percentage
+func (s *Stats) WorkersUtilization() float64 {
+	if s.WorkersNumber == 0 {
+		return 0.0
+	}
+	return s.RequestsInProgress() / float64(s.WorkersNumber) * 100.0
 }

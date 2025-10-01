@@ -4,133 +4,134 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"math"
 	"net/http"
 	"reflect"
 	"regexp"
-	"sync"
 	"time"
 
 	"github.com/newrelic/go-agent/v3/newrelic"
 	"github.com/newrelic/newrelic-telemetry-sdk-go/telemetry"
 
-	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/monitoring/errformat"
 	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
+// transactionCtxKey context key for storing New Relic transaction in context
 type transactionCtxKey struct{}
 
+// attributable is an interface for New Relic entities that can have attributes set on them
 type attributable interface {
-	AddAttribute(key string, value interface{})
+	AddAttribute(key string, value any)
 }
 
 const (
+	// Metric API endpoints. NOTE: Possibly, this should be configurable?
 	defaultMetricURL = "https://metric-api.newrelic.com/metric/v1"
 	euMetricURL      = "https://metric-api.eu.newrelic.com/metric/v1"
 )
 
-var (
-	enabled          = false
-	enabledHarvester = false
+type NewRelic struct {
+	stats  *stats.Stats
+	config *Config
 
 	app       *newrelic.Application
 	harvester *telemetry.Harvester
 
 	harvesterCtx       context.Context
 	harvesterCtxCancel context.CancelFunc
+}
 
-	bufferSummaries      = make(map[string]*telemetry.Summary)
-	bufferSummariesMutex sync.RWMutex
-
-	interval = 10 * time.Second
-
-	licenseEuRegex = regexp.MustCompile(`(^eu.+?)x`)
-)
-
-func Init() error {
-	if len(config.NewRelicKey) == 0 {
-		return nil
+func New(config *Config, stats *stats.Stats) (*NewRelic, error) {
+	nl := &NewRelic{
+		config: config,
+		stats:  stats,
 	}
 
-	name := config.NewRelicAppName
-	if len(name) == 0 {
-		name = "imgproxy"
+	if !config.Enabled() {
+		return nl, nil
 	}
 
 	var err error
 
-	app, err = newrelic.NewApplication(
-		newrelic.ConfigAppName(name),
-		newrelic.ConfigLicense(config.NewRelicKey),
+	// Initialize New Relic APM agent
+	nl.app, err = newrelic.NewApplication(
+		newrelic.ConfigAppName(config.AppName),
+		newrelic.ConfigLicense(config.Key),
 		func(c *newrelic.Config) {
-			if len(config.NewRelicLabels) > 0 {
-				c.Labels = config.NewRelicLabels
+			if len(config.Labels) > 0 {
+				c.Labels = config.Labels
 			}
 		},
 	)
 
 	if err != nil {
-		return fmt.Errorf("Can't init New Relic agent: %s", err)
+		return nil, fmt.Errorf("can't init New Relic agent: %s", err)
 	}
 
-	harvesterAttributes := map[string]interface{}{"appName": name}
-	for k, v := range config.NewRelicLabels {
+	// Initialize New Relic Telemetry SDK harvester
+	harvesterAttributes := map[string]any{"appName": config.AppName}
+	for k, v := range config.Labels {
 		harvesterAttributes[k] = v
 	}
 
+	// Choose metrics endpoint based on license key pattern
+	licenseEuRegex := regexp.MustCompile(`(^eu.+?)x`)
+
 	metricsURL := defaultMetricURL
-	if licenseEuRegex.MatchString(config.NewRelicKey) {
+	if licenseEuRegex.MatchString(config.Key) {
 		metricsURL = euMetricURL
 	}
 
+	// Initialize error logger
 	errLogger := slog.NewLogLogger(
 		slog.With("source", "newrelic").Handler(),
 		slog.LevelWarn,
 	)
 
-	harvester, err = telemetry.NewHarvester(
-		telemetry.ConfigAPIKey(config.NewRelicKey),
+	// Create harvester
+	harvester, err := telemetry.NewHarvester(
+		telemetry.ConfigAPIKey(config.Key),
 		telemetry.ConfigCommonAttributes(harvesterAttributes),
 		telemetry.ConfigHarvestPeriod(0), // Don't harvest automatically
 		telemetry.ConfigMetricsURLOverride(metricsURL),
 		telemetry.ConfigBasicErrorLogger(errLogger.Writer()),
 	)
 	if err == nil {
-		harvesterCtx, harvesterCtxCancel = context.WithCancel(context.Background())
-		enabledHarvester = true
-		go runMetricsCollector()
+		// In case, there were no errors while starting the harvester, start the metrics collector
+		nl.harvester = harvester
+		nl.harvesterCtx, nl.harvesterCtxCancel = context.WithCancel(context.Background())
+		go nl.runMetricsCollector()
 	} else {
 		slog.Warn(fmt.Sprintf("Can't init New Relic telemetry harvester: %s", err))
 	}
 
-	enabled = true
-
-	return nil
+	return nl, nil
 }
 
-func Stop() {
-	if enabled {
-		app.Shutdown(5 * time.Second)
+// Enabled returns true if New Relic is enabled
+func (nl *NewRelic) Enabled() bool {
+	return nl.config.Enabled()
+}
 
-		if enabledHarvester {
-			harvesterCtxCancel()
-			harvester.HarvestNow(context.Background())
-		}
+// Stop stops the New Relic APM agent and Telemetry SDK harvester
+func (nl *NewRelic) Stop(ctx context.Context) {
+	if nl.app != nil {
+		nl.app.Shutdown(5 * time.Second)
+	}
+
+	if nl.harvester != nil {
+		nl.harvesterCtxCancel()
+		nl.harvester.HarvestNow(ctx)
 	}
 }
 
-func Enabled() bool {
-	return enabled
-}
-
-func StartTransaction(ctx context.Context, rw http.ResponseWriter, r *http.Request) (context.Context, context.CancelFunc, http.ResponseWriter) {
-	if !enabled {
+func (nl *NewRelic) StartTransaction(ctx context.Context, rw http.ResponseWriter, r *http.Request) (context.Context, context.CancelFunc, http.ResponseWriter) {
+	if !nl.Enabled() {
 		return ctx, func() {}, rw
 	}
 
-	txn := app.StartTransaction("request")
+	txn := nl.app.StartTransaction("request")
 	txn.SetWebRequestHTTP(r)
 	newRw := txn.SetWebResponse(rw)
 	cancel := func() { txn.End() }
@@ -166,8 +167,8 @@ func setMetadata(span attributable, key string, value interface{}) {
 	}
 }
 
-func SetMetadata(ctx context.Context, key string, value interface{}) {
-	if !enabled {
+func (nl *NewRelic) SetMetadata(ctx context.Context, key string, value interface{}) {
+	if !nl.Enabled() {
 		return
 	}
 
@@ -176,8 +177,8 @@ func SetMetadata(ctx context.Context, key string, value interface{}) {
 	}
 }
 
-func StartSegment(ctx context.Context, name string, meta map[string]any) context.CancelFunc {
-	if !enabled {
+func (nl *NewRelic) StartSegment(ctx context.Context, name string, meta map[string]any) context.CancelFunc {
+	if !nl.Enabled() {
 		return func() {}
 	}
 
@@ -194,8 +195,8 @@ func StartSegment(ctx context.Context, name string, meta map[string]any) context
 	return func() {}
 }
 
-func SendError(ctx context.Context, errType string, err error) {
-	if !enabled {
+func (nl *NewRelic) SendError(ctx context.Context, errType string, err error) {
+	if !nl.Enabled() {
 		return
 	}
 
@@ -207,120 +208,57 @@ func SendError(ctx context.Context, errType string, err error) {
 	}
 }
 
-func ObserveBufferSize(t string, size int) {
-	if enabledHarvester {
-		bufferSummariesMutex.Lock()
-		defer bufferSummariesMutex.Unlock()
-
-		summary, ok := bufferSummaries[t]
-		if !ok {
-			summary = &telemetry.Summary{
-				Name:       "imgproxy.buffer.size",
-				Attributes: map[string]interface{}{"buffer_type": t},
-				Timestamp:  time.Now(),
-			}
-			bufferSummaries[t] = summary
-		}
-
-		sizef := float64(size)
-
-		summary.Count += 1
-		summary.Sum += sizef
-		summary.Min = math.Min(summary.Min, sizef)
-		summary.Max = math.Max(summary.Max, sizef)
-	}
-}
-
-func SetBufferDefaultSize(t string, size int) {
-	if enabledHarvester {
-		harvester.RecordMetric(telemetry.Gauge{
-			Name:       "imgproxy.buffer.default_size",
-			Value:      float64(size),
-			Attributes: map[string]interface{}{"buffer_type": t},
-			Timestamp:  time.Now(),
-		})
-	}
-}
-
-func SetBufferMaxSize(t string, size int) {
-	if enabledHarvester {
-		harvester.RecordMetric(telemetry.Gauge{
-			Name:       "imgproxy.buffer.max_size",
-			Value:      float64(size),
-			Attributes: map[string]interface{}{"buffer_type": t},
-			Timestamp:  time.Now(),
-		})
-	}
-}
-
-func runMetricsCollector() {
-	tick := time.NewTicker(interval)
+func (nl *NewRelic) runMetricsCollector() {
+	tick := time.NewTicker(nl.config.MetricsInterval)
 	defer tick.Stop()
+
 	for {
 		select {
 		case <-tick.C:
-			func() {
-				bufferSummariesMutex.RLock()
-				defer bufferSummariesMutex.RUnlock()
-
-				now := time.Now()
-
-				for _, summary := range bufferSummaries {
-					summary.Interval = now.Sub(summary.Timestamp)
-					harvester.RecordMetric(*summary)
-
-					summary.Timestamp = now
-					summary.Count = 0
-					summary.Sum = 0
-					summary.Min = 0
-					summary.Max = 0
-				}
-			}()
-
-			harvester.RecordMetric(telemetry.Gauge{
+			nl.harvester.RecordMetric(telemetry.Gauge{
 				Name:      "imgproxy.workers",
-				Value:     float64(config.Workers),
+				Value:     float64(nl.stats.WorkersNumber),
 				Timestamp: time.Now(),
 			})
 
-			harvester.RecordMetric(telemetry.Gauge{
+			nl.harvester.RecordMetric(telemetry.Gauge{
 				Name:      "imgproxy.requests_in_progress",
-				Value:     stats.RequestsInProgress(),
+				Value:     nl.stats.RequestsInProgress(),
 				Timestamp: time.Now(),
 			})
 
-			harvester.RecordMetric(telemetry.Gauge{
+			nl.harvester.RecordMetric(telemetry.Gauge{
 				Name:      "imgproxy.images_in_progress",
-				Value:     stats.ImagesInProgress(),
+				Value:     nl.stats.ImagesInProgress(),
 				Timestamp: time.Now(),
 			})
 
-			harvester.RecordMetric(telemetry.Gauge{
+			nl.harvester.RecordMetric(telemetry.Gauge{
 				Name:      "imgproxy.workers_utilization",
-				Value:     stats.WorkersUtilization(),
+				Value:     nl.stats.WorkersUtilization(),
 				Timestamp: time.Now(),
 			})
 
-			harvester.RecordMetric(telemetry.Gauge{
+			nl.harvester.RecordMetric(telemetry.Gauge{
 				Name:      "imgproxy.vips.memory",
 				Value:     vips.GetMem(),
 				Timestamp: time.Now(),
 			})
 
-			harvester.RecordMetric(telemetry.Gauge{
+			nl.harvester.RecordMetric(telemetry.Gauge{
 				Name:      "imgproxy.vips.max_memory",
 				Value:     vips.GetMemHighwater(),
 				Timestamp: time.Now(),
 			})
 
-			harvester.RecordMetric(telemetry.Gauge{
+			nl.harvester.RecordMetric(telemetry.Gauge{
 				Name:      "imgproxy.vips.allocs",
 				Value:     vips.GetAllocs(),
 				Timestamp: time.Now(),
 			})
 
-			harvester.HarvestNow(harvesterCtx)
-		case <-harvesterCtx.Done():
+			nl.harvester.HarvestNow(nl.harvesterCtx)
+		case <-nl.harvesterCtx.Done():
 			return
 		}
 	}

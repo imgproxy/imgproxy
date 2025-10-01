@@ -7,6 +7,8 @@ import (
 	"github.com/imgproxy/imgproxy/v3/fetcher"
 	processinghandler "github.com/imgproxy/imgproxy/v3/handlers/processing"
 	streamhandler "github.com/imgproxy/imgproxy/v3/handlers/stream"
+	"github.com/imgproxy/imgproxy/v3/monitoring"
+	"github.com/imgproxy/imgproxy/v3/monitoring/prometheus"
 	optionsparser "github.com/imgproxy/imgproxy/v3/options/parser"
 	"github.com/imgproxy/imgproxy/v3/processing"
 	"github.com/imgproxy/imgproxy/v3/security"
@@ -32,6 +34,7 @@ type Config struct {
 	Processing     processing.Config
 	OptionsParser  optionsparser.Config
 	Cookies        cookies.Config
+	Monitoring     monitoring.Config
 }
 
 // NewDefaultConfig creates a new default configuration
@@ -49,6 +52,8 @@ func NewDefaultConfig() Config {
 		Security:      security.NewDefaultConfig(),
 		Processing:    processing.NewDefaultConfig(),
 		OptionsParser: optionsparser.NewDefaultConfig(),
+		Cookies:       cookies.NewDefaultConfig(),
+		Monitoring:    monitoring.NewDefaultConfig(),
 	}
 }
 
@@ -102,5 +107,17 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 		return nil, err
 	}
 
+	if _, err = monitoring.LoadConfigFromEnv(&c.Monitoring); err != nil {
+		return nil, err
+	}
+
 	return c, nil
+}
+
+func (c *Config) Validate() error {
+	if c.Monitoring.Prometheus.Enabled() && c.Monitoring.Prometheus.Bind == c.Server.Bind {
+		return prometheus.IMGPROXY_PROMETHEUS_BIND.Errorf("should be different than IMGPROXY_BIND: %s", c.Server.Bind)
+	}
+
+	return nil
 }

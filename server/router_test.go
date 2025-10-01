@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
+	"github.com/imgproxy/imgproxy/v3/monitoring"
 )
 
 type RouterTestSuite struct {
@@ -18,8 +19,12 @@ type RouterTestSuite struct {
 func (s *RouterTestSuite) SetupTest() {
 	c := NewDefaultConfig()
 
+	mc := monitoring.NewDefaultConfig()
+	m, err := monitoring.New(s.T().Context(), &mc, 1)
+	s.Require().NoError(err)
+
 	c.PathPrefix = "/api"
-	r, err := NewRouter(&c)
+	r, err := NewRouter(&c, m)
 	s.Require().NoError(err)
 
 	s.router = r

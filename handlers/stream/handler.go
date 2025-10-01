@@ -12,7 +12,6 @@ import (
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/monitoring"
-	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/options/keys"
 	"github.com/imgproxy/imgproxy/v3/server"
@@ -33,15 +32,24 @@ var (
 	}
 )
 
+// HandlerContext provides access to shared handler dependencies
+type HandlerContext interface {
+	Fetcher() *fetcher.Fetcher
+	Cookies() *cookies.Cookies
+	Monitoring() *monitoring.Monitoring
+}
+
 // Handler handles image passthrough requests, allowing images to be streamed directly
 type Handler struct {
-	config  *Config          // Configuration for the streamer
-	fetcher *fetcher.Fetcher // Fetcher instance to handle image fetching
-	cookies *cookies.Cookies // Cookies manager
+	HandlerContext
+
+	config *Config // Configuration for the streamer
 }
 
 // request holds the parameters and state for a single streaming request
 type request struct {
+	HandlerContext
+
 	handler      *Handler
 	imageRequest *http.Request
 	imageURL     string
@@ -51,15 +59,14 @@ type request struct {
 }
 
 // New creates new handler object
-func New(config *Config, fetcher *fetcher.Fetcher, cookies *cookies.Cookies) (*Handler, error) {
+func New(hCtx HandlerContext, config *Config) (*Handler, error) {
 	if err := config.Validate(); err != nil {
 		return nil, err
 	}
 
 	return &Handler{
-		fetcher: fetcher,
-		config:  config,
-		cookies: cookies,
+		HandlerContext: hCtx,
+		config:         config,
 	}, nil
 }
 
@@ -73,12 +80,13 @@ func (s *Handler) Execute(
 	rw server.ResponseWriter,
 ) error {
 	stream := &request{
-		handler:      s,
-		imageRequest: userRequest,
-		imageURL:     imageURL,
-		reqID:        reqID,
-		opts:         o,
-		rw:           rw,
+		HandlerContext: s.HandlerContext,
+		handler:        s,
+		imageRequest:   userRequest,
+		imageURL:       imageURL,
+		reqID:          reqID,
+		opts:           o,
+		rw:             rw,
 	}
 
 	return stream.execute(ctx)
@@ -86,9 +94,9 @@ func (s *Handler) Execute(
 
 // execute handles the actual streaming logic
 func (s *request) execute(ctx context.Context) error {
-	stats.IncImagesInProgress()
-	defer stats.DecImagesInProgress()
-	defer monitoring.StartStreamingSegment(ctx)()
+	s.Monitoring().Stats().IncImagesInProgress()
+	defer s.Monitoring().Stats().DecImagesInProgress()
+	defer s.Monitoring().StartStreamingSegment(ctx)()
 
 	// Passthrough request headers from the original request
 	requestHeaders := s.getImageRequestHeaders()
@@ -98,7 +106,7 @@ func (s *request) execute(ctx context.Context) error {
 	}
 
 	// Build the request to fetch the image
-	r, err := s.handler.fetcher.BuildRequest(ctx, s.imageURL, requestHeaders, cookieJar)
+	r, err := s.Fetcher().BuildRequest(ctx, s.imageURL, requestHeaders, cookieJar)
 	if r != nil {
 		defer r.Cancel()
 	}
@@ -136,7 +144,7 @@ func (s *request) execute(ctx context.Context) error {
 
 // getCookieJar returns non-empty cookie jar if cookie passthrough is enabled
 func (s *request) getCookieJar() (http.CookieJar, error) {
-	return s.handler.cookies.JarFromRequest(s.imageRequest)
+	return s.Cookies().JarFromRequest(s.imageRequest)
 }
 
 // getImageRequestHeaders returns a new http.Header containing only

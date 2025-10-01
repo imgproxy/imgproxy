@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/http"
 	"strconv"
 	"time"
@@ -12,14 +13,14 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
-	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
-	"github.com/imgproxy/imgproxy/v3/reuseport"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
-var (
-	enabled = false
+// Prometheus holds Prometheus metrics and configuration
+type Prometheus struct {
+	config *Config
+	stats  *stats.Stats
 
 	requestsTotal    prometheus.Counter
 	statusCodesTotal *prometheus.CounterVec
@@ -30,134 +31,118 @@ var (
 	downloadDuration    prometheus.Histogram
 	processingDuration  prometheus.Histogram
 
-	bufferSize        *prometheus.HistogramVec
-	bufferDefaultSize *prometheus.GaugeVec
-	bufferMaxSize     *prometheus.GaugeVec
-
 	workers prometheus.Gauge
-)
+}
 
-func Init() {
-	if len(config.PrometheusBind) == 0 {
-		return
+// New creates a new Prometheus instance
+func New(config *Config, stats *stats.Stats) (*Prometheus, error) {
+	p := &Prometheus{
+		config: config,
+		stats:  stats,
 	}
 
-	requestsTotal = prometheus.NewCounter(prometheus.CounterOpts{
-		Namespace: config.PrometheusNamespace,
+	if !config.Enabled() {
+		return p, nil
+	}
+
+	if err := config.Validate(); err != nil {
+		return nil, err
+	}
+
+	p.requestsTotal = prometheus.NewCounter(prometheus.CounterOpts{
+		Namespace: config.Namespace,
 		Name:      "requests_total",
 		Help:      "A counter of the total number of HTTP requests imgproxy processed.",
 	})
 
-	statusCodesTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Namespace: config.PrometheusNamespace,
+	p.statusCodesTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: config.Namespace,
 		Name:      "status_codes_total",
 		Help:      "A counter of the response status codes.",
 	}, []string{"status"})
 
-	errorsTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Namespace: config.PrometheusNamespace,
+	p.errorsTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: config.Namespace,
 		Name:      "errors_total",
 		Help:      "A counter of the occurred errors separated by type.",
 	}, []string{"type"})
 
-	requestDuration = prometheus.NewHistogram(prometheus.HistogramOpts{
-		Namespace: config.PrometheusNamespace,
+	p.requestDuration = prometheus.NewHistogram(prometheus.HistogramOpts{
+		Namespace: config.Namespace,
 		Name:      "request_duration_seconds",
 		Help:      "A histogram of the response latency.",
 	})
 
-	requestSpanDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
-		Namespace: config.PrometheusNamespace,
+	p.requestSpanDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Namespace: config.Namespace,
 		Name:      "request_span_duration_seconds",
 		Help:      "A histogram of the queue latency.",
 	}, []string{"span"})
 
-	downloadDuration = prometheus.NewHistogram(prometheus.HistogramOpts{
-		Namespace: config.PrometheusNamespace,
+	p.downloadDuration = prometheus.NewHistogram(prometheus.HistogramOpts{
+		Namespace: config.Namespace,
 		Name:      "download_duration_seconds",
 		Help:      "A histogram of the source image downloading latency.",
 	})
 
-	processingDuration = prometheus.NewHistogram(prometheus.HistogramOpts{
-		Namespace: config.PrometheusNamespace,
+	p.processingDuration = prometheus.NewHistogram(prometheus.HistogramOpts{
+		Namespace: config.Namespace,
 		Name:      "processing_duration_seconds",
 		Help:      "A histogram of the image processing latency.",
 	})
 
-	bufferSize = prometheus.NewHistogramVec(prometheus.HistogramOpts{
-		Namespace: config.PrometheusNamespace,
-		Name:      "buffer_size_bytes",
-		Help:      "A histogram of the buffer size in bytes.",
-		Buckets:   prometheus.ExponentialBuckets(1024, 2, 14),
-	}, []string{"type"})
-
-	bufferDefaultSize = prometheus.NewGaugeVec(prometheus.GaugeOpts{
-		Namespace: config.PrometheusNamespace,
-		Name:      "buffer_default_size_bytes",
-		Help:      "A gauge of the buffer default size in bytes.",
-	}, []string{"type"})
-
-	bufferMaxSize = prometheus.NewGaugeVec(prometheus.GaugeOpts{
-		Namespace: config.PrometheusNamespace,
-		Name:      "buffer_max_size_bytes",
-		Help:      "A gauge of the buffer max size in bytes.",
-	}, []string{"type"})
-
-	workers = prometheus.NewGauge(prometheus.GaugeOpts{
-		Namespace: config.PrometheusNamespace,
+	p.workers = prometheus.NewGauge(prometheus.GaugeOpts{
+		Namespace: config.Namespace,
 		Name:      "workers",
 		Help:      "A gauge of the number of running workers.",
 	})
-	workers.Set(float64(config.Workers))
+	p.workers.Set(float64(stats.WorkersNumber))
 
 	requestsInProgress := prometheus.NewGaugeFunc(prometheus.GaugeOpts{
-		Namespace: config.PrometheusNamespace,
+		Namespace: config.Namespace,
 		Name:      "requests_in_progress",
 		Help:      "A gauge of the number of requests currently being in progress.",
 	}, stats.RequestsInProgress)
 
 	imagesInProgress := prometheus.NewGaugeFunc(prometheus.GaugeOpts{
-		Namespace: config.PrometheusNamespace,
+		Namespace: config.Namespace,
 		Name:      "images_in_progress",
 		Help:      "A gauge of the number of images currently being in progress.",
 	}, stats.ImagesInProgress)
 
 	workersUtilization := prometheus.NewGaugeFunc(prometheus.GaugeOpts{
-		Namespace: config.PrometheusNamespace,
+		Namespace: config.Namespace,
 		Name:      "workers_utilization",
 		Help:      "A gauge of the workers utilization in percents.",
 	}, stats.WorkersUtilization)
 
 	vipsMemoryBytes := prometheus.NewGaugeFunc(prometheus.GaugeOpts{
-		Namespace: config.PrometheusNamespace,
+		Namespace: config.Namespace,
 		Name:      "vips_memory_bytes",
 		Help:      "A gauge of the vips tracked memory usage in bytes.",
 	}, vips.GetMem)
 
 	vipsMaxMemoryBytes := prometheus.NewGaugeFunc(prometheus.GaugeOpts{
-		Namespace: config.PrometheusNamespace,
+		Namespace: config.Namespace,
 		Name:      "vips_max_memory_bytes",
 		Help:      "A gauge of the max vips tracked memory usage in bytes.",
 	}, vips.GetMemHighwater)
 
 	vipsAllocs := prometheus.NewGaugeFunc(prometheus.GaugeOpts{
-		Namespace: config.PrometheusNamespace,
+		Namespace: config.Namespace,
 		Name:      "vips_allocs",
 		Help:      "A gauge of the number of active vips allocations.",
 	}, vips.GetAllocs)
 
 	prometheus.MustRegister(
-		requestsTotal,
-		statusCodesTotal,
-		errorsTotal,
-		requestDuration,
-		requestSpanDuration,
-		downloadDuration,
-		processingDuration,
-		bufferSize,
-		bufferDefaultSize,
-		bufferMaxSize,
-		workers,
+		p.requestsTotal,
+		p.statusCodesTotal,
+		p.errorsTotal,
+		p.requestDuration,
+		p.requestSpanDuration,
+		p.downloadDuration,
+		p.processingDuration,
+		p.workers,
 		requestsInProgress,
 		imagesInProgress,
 		workersUtilization,
@@ -166,27 +151,30 @@ func Init() {
 		vipsAllocs,
 	)
 
-	enabled = true
+	return p, nil
 }
 
-func Enabled() bool {
-	return enabled
+// Enabled returns true if Prometheus monitoring is enabled
+func (p *Prometheus) Enabled() bool {
+	return p.config.Enabled()
 }
 
-func StartServer(cancel context.CancelFunc) error {
-	if !enabled {
+// StartServer starts the Prometheus metrics server
+func (p *Prometheus) StartServer(cancel context.CancelFunc) error {
+	// If not enabled, do nothing
+	if !p.Enabled() {
 		return nil
 	}
 
 	s := http.Server{Handler: promhttp.Handler()}
 
-	l, err := reuseport.Listen("tcp", config.PrometheusBind, config.SoReuseport)
+	l, err := net.Listen("tcp", p.config.Bind)
 	if err != nil {
-		return fmt.Errorf("Can't start Prometheus metrics server: %s", err)
+		return fmt.Errorf("can't start Prometheus metrics server: %s", err)
 	}
 
 	go func() {
-		slog.Info(fmt.Sprintf("Starting Prometheus server at %s", config.PrometheusBind))
+		slog.Info(fmt.Sprintf("Starting Prometheus server at %s", p.config.Bind))
 		if err := s.Serve(l); err != nil && err != http.ErrServerClosed {
 			slog.Error(err.Error())
 		}
@@ -196,40 +184,40 @@ func StartServer(cancel context.CancelFunc) error {
 	return nil
 }
 
-func StartRequest(rw http.ResponseWriter) (context.CancelFunc, http.ResponseWriter) {
-	if !enabled {
+func (p *Prometheus) StartRequest(rw http.ResponseWriter) (context.CancelFunc, http.ResponseWriter) {
+	if !p.Enabled() {
 		return func() {}, rw
 	}
 
-	requestsTotal.Inc()
+	p.requestsTotal.Inc()
 
 	newRw := httpsnoop.Wrap(rw, httpsnoop.Hooks{
 		WriteHeader: func(next httpsnoop.WriteHeaderFunc) httpsnoop.WriteHeaderFunc {
 			return func(statusCode int) {
-				statusCodesTotal.With(prometheus.Labels{"status": strconv.Itoa(statusCode)}).Inc()
+				p.statusCodesTotal.With(prometheus.Labels{"status": strconv.Itoa(statusCode)}).Inc()
 				next(statusCode)
 			}
 		},
 	})
 
-	return startDuration(requestDuration), newRw
+	return p.startDuration(p.requestDuration), newRw
 }
 
-func StartQueueSegment() context.CancelFunc {
-	if !enabled {
+func (p *Prometheus) StartQueueSegment() context.CancelFunc {
+	if !p.Enabled() {
 		return func() {}
 	}
 
-	return startDuration(requestSpanDuration.With(prometheus.Labels{"span": "queue"}))
+	return p.startDuration(p.requestSpanDuration.With(prometheus.Labels{"span": "queue"}))
 }
 
-func StartDownloadingSegment() context.CancelFunc {
-	if !enabled {
+func (p *Prometheus) StartDownloadingSegment() context.CancelFunc {
+	if !p.Enabled() {
 		return func() {}
 	}
 
-	cancel := startDuration(requestSpanDuration.With(prometheus.Labels{"span": "downloading"}))
-	cancelLegacy := startDuration(downloadDuration)
+	cancel := p.startDuration(p.requestSpanDuration.With(prometheus.Labels{"span": "downloading"}))
+	cancelLegacy := p.startDuration(p.downloadDuration)
 
 	return func() {
 		cancel()
@@ -237,13 +225,13 @@ func StartDownloadingSegment() context.CancelFunc {
 	}
 }
 
-func StartProcessingSegment() context.CancelFunc {
-	if !enabled {
+func (p *Prometheus) StartProcessingSegment() context.CancelFunc {
+	if !p.Enabled() {
 		return func() {}
 	}
 
-	cancel := startDuration(requestSpanDuration.With(prometheus.Labels{"span": "processing"}))
-	cancelLegacy := startDuration(processingDuration)
+	cancel := p.startDuration(p.requestSpanDuration.With(prometheus.Labels{"span": "processing"}))
+	cancelLegacy := p.startDuration(p.processingDuration)
 
 	return func() {
 		cancel()
@@ -251,41 +239,25 @@ func StartProcessingSegment() context.CancelFunc {
 	}
 }
 
-func StartStreamingSegment() context.CancelFunc {
-	if !enabled {
+func (p *Prometheus) StartStreamingSegment() context.CancelFunc {
+	if !p.Enabled() {
 		return func() {}
 	}
 
-	return startDuration(requestSpanDuration.With(prometheus.Labels{"span": "streaming"}))
+	return p.startDuration(p.requestSpanDuration.With(prometheus.Labels{"span": "streaming"}))
 }
 
-func startDuration(m prometheus.Observer) context.CancelFunc {
+func (p *Prometheus) startDuration(m prometheus.Observer) context.CancelFunc {
 	t := time.Now()
 	return func() {
 		m.Observe(time.Since(t).Seconds())
 	}
 }
 
-func IncrementErrorsTotal(t string) {
-	if enabled {
-		errorsTotal.With(prometheus.Labels{"type": t}).Inc()
+func (p *Prometheus) IncrementErrorsTotal(t string) {
+	if !p.Enabled() {
+		return
 	}
-}
 
-func ObserveBufferSize(t string, size int) {
-	if enabled {
-		bufferSize.With(prometheus.Labels{"type": t}).Observe(float64(size))
-	}
-}
-
-func SetBufferDefaultSize(t string, size int) {
-	if enabled {
-		bufferDefaultSize.With(prometheus.Labels{"type": t}).Set(float64(size))
-	}
-}
-
-func SetBufferMaxSize(t string, size int) {
-	if enabled {
-		bufferMaxSize.With(prometheus.Labels{"type": t}).Set(float64(size))
-	}
+	p.errorsTotal.With(prometheus.Labels{"type": t}).Inc()
 }
