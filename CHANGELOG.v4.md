@@ -1,5 +1,11 @@
 # 📑 Changelog (version/4 dev)
 
+## 2025-10-02
+
+### 🆕 Added
+
+- Custom metrics are now reported as timeslices (see [New Relic’s documentation](https://docs.newrelic.com/docs/apm/agents/manage-apm-agents/agent-data/collect-custom-metrics/) for details). Metric names have been changed from "imgproxy.X" to "Custom/imgproxy/X".
+
 ## 2025-10-01
 
 ### 🆕 Added

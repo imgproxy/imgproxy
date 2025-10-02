@@ -3,14 +3,11 @@ package newrelic
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"net/http"
 	"reflect"
-	"regexp"
 	"time"
 
 	"github.com/newrelic/go-agent/v3/newrelic"
-	"github.com/newrelic/newrelic-telemetry-sdk-go/telemetry"
 
 	"github.com/imgproxy/imgproxy/v3/monitoring/errformat"
 	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
@@ -25,21 +22,14 @@ type attributable interface {
 	AddAttribute(key string, value any)
 }
 
-const (
-	// Metric API endpoints. NOTE: Possibly, this should be configurable?
-	defaultMetricURL = "https://metric-api.newrelic.com/metric/v1"
-	euMetricURL      = "https://metric-api.eu.newrelic.com/metric/v1"
-)
-
 type NewRelic struct {
 	stats  *stats.Stats
 	config *Config
 
-	app       *newrelic.Application
-	harvester *telemetry.Harvester
+	app *newrelic.Application
 
-	harvesterCtx       context.Context
-	harvesterCtxCancel context.CancelFunc
+	metricsCtx       context.Context
+	metricsCtxCancel context.CancelFunc
 }
 
 func New(config *Config, stats *stats.Stats) (*NewRelic, error) {
@@ -69,42 +59,8 @@ func New(config *Config, stats *stats.Stats) (*NewRelic, error) {
 		return nil, fmt.Errorf("can't init New Relic agent: %s", err)
 	}
 
-	// Initialize New Relic Telemetry SDK harvester
-	harvesterAttributes := map[string]any{"appName": config.AppName}
-	for k, v := range config.Labels {
-		harvesterAttributes[k] = v
-	}
-
-	// Choose metrics endpoint based on license key pattern
-	licenseEuRegex := regexp.MustCompile(`(^eu.+?)x`)
-
-	metricsURL := defaultMetricURL
-	if licenseEuRegex.MatchString(config.Key) {
-		metricsURL = euMetricURL
-	}
-
-	// Initialize error logger
-	errLogger := slog.NewLogLogger(
-		slog.With("source", "newrelic").Handler(),
-		slog.LevelWarn,
-	)
-
-	// Create harvester
-	harvester, err := telemetry.NewHarvester(
-		telemetry.ConfigAPIKey(config.Key),
-		telemetry.ConfigCommonAttributes(harvesterAttributes),
-		telemetry.ConfigHarvestPeriod(0), // Don't harvest automatically
-		telemetry.ConfigMetricsURLOverride(metricsURL),
-		telemetry.ConfigBasicErrorLogger(errLogger.Writer()),
-	)
-	if err == nil {
-		// In case, there were no errors while starting the harvester, start the metrics collector
-		nl.harvester = harvester
-		nl.harvesterCtx, nl.harvesterCtxCancel = context.WithCancel(context.Background())
-		go nl.runMetricsCollector()
-	} else {
-		slog.Warn(fmt.Sprintf("Can't init New Relic telemetry harvester: %s", err))
-	}
+	nl.metricsCtx, nl.metricsCtxCancel = context.WithCancel(context.Background())
+	go nl.runMetricsCollector()
 
 	return nl, nil
 }
@@ -116,13 +72,12 @@ func (nl *NewRelic) Enabled() bool {
 
 // Stop stops the New Relic APM agent and Telemetry SDK harvester
 func (nl *NewRelic) Stop(ctx context.Context) {
-	if nl.app != nil {
-		nl.app.Shutdown(5 * time.Second)
+	if nl.metricsCtxCancel != nil {
+		nl.metricsCtxCancel()
 	}
 
-	if nl.harvester != nil {
-		nl.harvesterCtxCancel()
-		nl.harvester.HarvestNow(ctx)
+	if nl.app != nil {
+		nl.app.Shutdown(5 * time.Second)
 	}
 }
 
@@ -215,50 +170,15 @@ func (nl *NewRelic) runMetricsCollector() {
 	for {
 		select {
 		case <-tick.C:
-			nl.harvester.RecordMetric(telemetry.Gauge{
-				Name:      "imgproxy.workers",
-				Value:     float64(nl.stats.WorkersNumber),
-				Timestamp: time.Now(),
-			})
+			nl.app.RecordCustomMetric("imgproxy/workers", float64(nl.stats.WorkersNumber))
+			nl.app.RecordCustomMetric("imgproxy/requests_in_progress", float64(nl.stats.RequestsInProgress()))
+			nl.app.RecordCustomMetric("imgproxy/images_in_progress", float64(nl.stats.ImagesInProgress()))
+			nl.app.RecordCustomMetric("imgproxy/workers_utilization", nl.stats.WorkersUtilization())
 
-			nl.harvester.RecordMetric(telemetry.Gauge{
-				Name:      "imgproxy.requests_in_progress",
-				Value:     nl.stats.RequestsInProgress(),
-				Timestamp: time.Now(),
-			})
-
-			nl.harvester.RecordMetric(telemetry.Gauge{
-				Name:      "imgproxy.images_in_progress",
-				Value:     nl.stats.ImagesInProgress(),
-				Timestamp: time.Now(),
-			})
-
-			nl.harvester.RecordMetric(telemetry.Gauge{
-				Name:      "imgproxy.workers_utilization",
-				Value:     nl.stats.WorkersUtilization(),
-				Timestamp: time.Now(),
-			})
-
-			nl.harvester.RecordMetric(telemetry.Gauge{
-				Name:      "imgproxy.vips.memory",
-				Value:     vips.GetMem(),
-				Timestamp: time.Now(),
-			})
-
-			nl.harvester.RecordMetric(telemetry.Gauge{
-				Name:      "imgproxy.vips.max_memory",
-				Value:     vips.GetMemHighwater(),
-				Timestamp: time.Now(),
-			})
-
-			nl.harvester.RecordMetric(telemetry.Gauge{
-				Name:      "imgproxy.vips.allocs",
-				Value:     vips.GetAllocs(),
-				Timestamp: time.Now(),
-			})
-
-			nl.harvester.HarvestNow(nl.harvesterCtx)
-		case <-nl.harvesterCtx.Done():
+			nl.app.RecordCustomMetric("imgproxy/vips/memory", float64(vips.GetMem()))
+			nl.app.RecordCustomMetric("imgproxy/vips/max_memory", float64(vips.GetMemHighwater()))
+			nl.app.RecordCustomMetric("imgproxy/vips/allocs", float64(vips.GetAllocs()))
+		case <-nl.metricsCtx.Done():
 			return
 		}
 	}

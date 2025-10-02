@@ -35,7 +35,6 @@ require (
 	github.com/mattn/go-isatty v0.0.20
 	github.com/ncw/swift/v2 v2.0.4
 	github.com/newrelic/go-agent/v3 v3.40.1
-	github.com/newrelic/newrelic-telemetry-sdk-go v0.8.1
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.23.2
 	github.com/shirou/gopsutil v3.21.11+incompatible
