@@ -23,6 +23,9 @@ vips_initialize()
   extern GType vips_foreign_load_ico_source_get_type(void);
   vips_foreign_load_ico_source_get_type();
 
+  extern GType vips_foreign_load_ico_buffer_get_type(void);
+  vips_foreign_load_ico_buffer_get_type();
+
   extern GType vips_foreign_save_ico_target_get_type(void);
   vips_foreign_save_ico_target_get_type();
 

@@ -15,7 +15,6 @@ import (
 	"io"
 	"os"
 	"path"
-	"path/filepath"
 	"strings"
 	"testing"
 	"unsafe"
@@ -78,8 +77,9 @@ func (m *ImageHashMatcher) ImageMatches(t *testing.T, img io.Reader, key string,
 	//nolint:gocritic
 	readErr := C.vips_image_read_from_to_memory(unsafe.Pointer(unsafe.SliceData(buf)), C.size_t(len(buf)), &data, &size, &width, &height)
 	if readErr != 0 {
-		t.Fatal("failed to load image using VIPS") // FailNow()
+		t.Fatalf("failed to read image from memory, key: %s, error: %s", key, vipsErrorMessage())
 	}
+
 	defer C.vips_memory_buffer_free(data)
 
 	// Convert raw RGBA pixel data to Go image.Image
@@ -98,7 +98,7 @@ func (m *ImageHashMatcher) ImageMatches(t *testing.T, img io.Reader, key string,
 	if os.IsNotExist(err) {
 		// If the hash file does not exist, and we are not allowed to create it, fail
 		if !m.createMissingHashes {
-			require.NoError(t, err, "failed to read target hash from %s, use TEST_CREATE_MISSING_HASHES=true to create it", hashPath)
+			require.NoError(t, err, "failed to read target hash from %s, use TEST_CREATE_MISSING_HASHES=true to create it, TEST_SAVE_TMP_IMAGES_PATH=/some/path to check resulting images", hashPath)
 		}
 
 		// Create missing hash file
@@ -137,7 +137,7 @@ func (m *ImageHashMatcher) makeTargetPath(t *testing.T, base, folder, filename, 
 	require.NoError(t, err, "failed to create %s target directory", targetDir)
 
 	// Replace the extension with the detected one
-	filename = strings.TrimSuffix(filename, filepath.Ext(filename)) + "." + ext
+	filename = filename + "." + ext
 
 	// Create the target file
 	targetPath := path.Join(targetDir, filename)
@@ -186,4 +186,10 @@ func createRGBAFromRGBAPixels(width, height int, data unsafe.Pointer, size C.siz
 	copy(img.Pix, pixels)
 
 	return img, nil
+}
+
+// vipsErrorMessage reads VIPS error message
+func vipsErrorMessage() string {
+	defer C.vips_error_clear()
+	return strings.TrimSpace(C.GoString(C.vips_error_buffer()))
 }

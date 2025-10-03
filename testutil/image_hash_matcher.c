@@ -24,6 +24,11 @@ vips_image_read_from_to_memory(void *in, size_t in_size, void **out, size_t *out
     return -1;
   }
 
+  // NOTE: Looks like there is a vips bug: if there were errors during format detection,
+  // they would be saved in vips error buffer. However, if format detection was successful,
+  // we expect that error buffer should be empty.
+  // vips_error_clear();
+
   VipsImage **t = (VipsImage **) vips_object_local_array(VIPS_OBJECT(base), 2);
 
   // Initialize output parameters
