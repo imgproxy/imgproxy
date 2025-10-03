@@ -101,7 +101,7 @@ func (s *MatrixTestSuite) TestMatrix() {
 	for _, source := range formats {
 		for _, target := range formats {
 			s.Run(fmt.Sprintf("%s/%s", source.String(), target.String()), func() {
-				if !target.IsVector() && source.IsVector() {
+				if !source.IsVector() && target.IsVector() {
 					// we can not vectorize a raster image
 					s.T().Logf("Skipping %s -> %s conversion: we can not vectorize raster image", source.String(), target.String())
 					return
