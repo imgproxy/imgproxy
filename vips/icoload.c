@@ -58,7 +58,7 @@ vips_foreign_load_ico_source_is_a_source(VipsSource *source)
   // However, vips requires this method to be present.
   unsigned char *buf = vips_source_sniff(source, 4);
   if (!buf) {
-    vips_error("vips_foreign_load_bmp_source_is_a_source", "unable to sniff source");
+    vips_error("vips_foreign_load_ico_source_is_a_source", "unable to sniff source");
     return 0;
   }
 
@@ -359,6 +359,116 @@ vips_foreign_load_ico_source_class_init(
 static void
 vips_foreign_load_ico_source_init(VipsForeignLoadIcoSource *source)
 {
+}
+
+typedef struct _VipsForeignLoadIcoBuffer {
+  VipsForeignLoadIco parent_object;
+
+  /* Load from a buffer.
+   */
+  VipsBlob *blob;
+
+} VipsForeignLoadIcoBuffer;
+
+typedef VipsForeignLoadIcoClass VipsForeignLoadIcoBufferClass;
+
+G_DEFINE_TYPE(VipsForeignLoadIcoBuffer, vips_foreign_load_ico_buffer,
+    vips_foreign_load_ico_get_type());
+
+static int
+vips_foreign_load_ico_buffer_build(VipsObject *object)
+{
+  VipsForeignLoadIco *ico = (VipsForeignLoadIco *) object;
+  VipsForeignLoadIcoBuffer *buffer = (VipsForeignLoadIcoBuffer *) object;
+
+  if (buffer->blob &&
+      !(ico->source = vips_source_new_from_memory(
+            VIPS_AREA(buffer->blob)->data,
+            VIPS_AREA(buffer->blob)->length)))
+    return -1;
+
+  return VIPS_OBJECT_CLASS(vips_foreign_load_ico_buffer_parent_class)
+      ->build(object);
+}
+
+/**
+ * Checks if the source is a ICO image
+ */
+static gboolean
+vips_foreign_load_ico_buffer_is_a_buffer(const void *buf, size_t len)
+{
+  if (len < 4) {
+    vips_error("vips_foreign_load_ico_buffer_is_a_buffer", "buffer too short");
+    return 0;
+  }
+
+  return ((VipsPel *) buf)[0] == 0 && ((VipsPel *) buf)[1] == 0 && ((VipsPel *) buf)[2] == 1 && ((VipsPel *) buf)[3] == 0;
+}
+
+static void
+vips_foreign_load_ico_buffer_class_init(VipsForeignLoadIcoBufferClass *class)
+{
+  GObjectClass *gobject_class = G_OBJECT_CLASS(class);
+  VipsObjectClass *object_class = (VipsObjectClass *) class;
+  VipsForeignLoadClass *load_class = (VipsForeignLoadClass *) class;
+
+  gobject_class->set_property = vips_object_set_property;
+  gobject_class->get_property = vips_object_get_property;
+
+  object_class->nickname = "icoload_buffer";
+  object_class->description = "load ico from buffer";
+  object_class->build = vips_foreign_load_ico_buffer_build;
+
+  load_class->is_a_buffer = vips_foreign_load_ico_buffer_is_a_buffer;
+
+  VIPS_ARG_BOXED(class, "buffer", 1,
+      "Buffer",
+      "Buffer to load from",
+      VIPS_ARGUMENT_REQUIRED_INPUT,
+      G_STRUCT_OFFSET(VipsForeignLoadIcoBuffer, blob),
+      VIPS_TYPE_BLOB);
+}
+
+static void
+vips_foreign_load_ico_buffer_init(VipsForeignLoadIcoBuffer *buffer)
+{
+}
+
+/**
+ * vips_icoload_buffer:
+ * @buf: (array length=len) (element-type guint8): memory area to load
+ * @len: (type gsize): size of memory area
+ * @out: (out): image to write
+ * @...: `NULL`-terminated list of optional named arguments
+ *
+ * Exactly as [ctor@Image.pngload], but read from a PNG-formatted memory block.
+ *
+ * You must not free the buffer while @out is active. The
+ * [signal@Object::postclose] signal on @out is a good place to free.
+ *
+ * ::: seealso
+ *     [ctor@Image.pngload].
+ *
+ * Returns: 0 on success, -1 on error.
+ */
+int
+vips_icoload_buffer(void *buf, size_t len, VipsImage **out, ...)
+{
+  va_list ap;
+  VipsBlob *blob;
+  int result;
+
+  /* We don't take a copy of the data or free it.
+   */
+  blob = vips_blob_new(NULL, buf, len);
+
+  va_start(ap, out);
+  result = vips_call_split("icoload_buffer", ap, blob, out);
+  va_end(ap);
+
+  vips_area_unref(VIPS_AREA(blob));
+
+  return result;
 }
 
 /**

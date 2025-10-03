@@ -44,26 +44,31 @@ func (s *Suite) SetupSuite() {
 	s.TestData = testutil.NewTestDataProvider(s.T)
 
 	s.Config, _ = testutil.NewLazySuiteObj(s, func() (*imgproxy.Config, error) {
-		// TODO: replace with NewDefaultConfig when we get rid of global config
-		c, err := imgproxy.LoadConfigFromEnv(nil)
-		s.Require().NoError(err)
+		c := imgproxy.NewDefaultConfig()
 
 		c.Server.Bind = ":0"
 
 		c.Fetcher.Transport.Local.Root = s.TestData.Root()
 		c.Fetcher.Transport.HTTP.ClientKeepAliveTimeout = 0
 
-		return c, nil
+		return &c, nil
 	})
 
 	s.Imgproxy, _ = testutil.NewLazySuiteObj(s, func() (*imgproxy.Imgproxy, error) {
 		return imgproxy.New(s.T().Context(), s.Config())
 	})
 
+	// NOTE: if we used s.T().Context() in startServer, server would have been stopped
+	// after the first subtest because s.T().Context() is cancelled after subtest.
+	//
+	// If resetLazyObjs is not called in SetupSubTest, the server would shutdown
+	// and won't restart in the second subtest because lazy obj would not be nil.
+	ctx := s.T().Context()
+
 	s.Server, _ = testutil.NewLazySuiteObj(
 		s,
 		func() (*TestServer, error) {
-			return s.startServer(s.Imgproxy()), nil
+			return s.startServer(ctx, s.Imgproxy()), nil
 		},
 		func(s *TestServer) error {
 			s.Shutdown()
@@ -78,8 +83,8 @@ func (s *Suite) TearDownSuite() {
 
 // startServer starts imgproxy instance's server for the tests.
 // Returns [TestServer] that contains the server address and shutdown function
-func (s *Suite) startServer(i *imgproxy.Imgproxy) *TestServer {
-	ctx, cancel := context.WithCancel(s.T().Context())
+func (s *Suite) startServer(ctx context.Context, i *imgproxy.Imgproxy) *TestServer {
+	ctx, cancel := context.WithCancel(ctx)
 
 	addrCh := make(chan net.Addr)
 

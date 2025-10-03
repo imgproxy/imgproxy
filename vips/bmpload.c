@@ -832,7 +832,7 @@ static gboolean
 vips_foreign_load_bmp_buffer_is_a_buffer(const void *buf, size_t len)
 {
   if (len < 2) {
-    vips_error("vips_foreign_load_bmp_buffer_is_a_buffer", "unable to sniff source");
+    vips_error("vips_foreign_load_bmp_buffer_is_a_buffer", "buffer too short");
     return 0;
   }
 
@@ -870,7 +870,7 @@ vips_foreign_load_bmp_buffer_init(VipsForeignLoadBmpBuffer *buffer)
 }
 
 /**
- * vips_pngload_buffer:
+ * vips_bmpload_buffer:
  * @buf: (array length=len) (element-type guint8): memory area to load
  * @len: (type gsize): size of memory area
  * @out: (out): image to write
