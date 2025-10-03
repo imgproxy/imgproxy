@@ -9,6 +9,7 @@ import (
 
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
+	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/testutil"
 )
 
@@ -45,7 +46,10 @@ func (s *SvgTestSuite) TestSanitize() {
 	origin := s.readTestFile("test1.svg")
 	expected := s.readTestFile("test1.sanitized.svg")
 
-	actual, err := Sanitize(origin)
+	config := NewDefaultConfig()
+	svg := New(&config)
+
+	actual, err := svg.Process(options.New(), origin)
 	s.Require().NoError(err)
 
 	s.compare(expected, actual)

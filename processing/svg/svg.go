@@ -7,20 +7,55 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/tdewolff/parse/v2"
-	"github.com/tdewolff/parse/v2/xml"
-
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
+	"github.com/imgproxy/imgproxy/v3/options"
+	"github.com/tdewolff/parse/v2"
+	"github.com/tdewolff/parse/v2/xml"
 )
 
+// pool represents temorary pool for svg sanitized data
 var pool = sync.Pool{
 	New: func() any {
 		return bytes.NewBuffer(nil)
 	},
 }
 
-func Sanitize(data imagedata.ImageData) (imagedata.ImageData, error) {
+// Processor provides SVG processing capabilities
+type Processor struct {
+	config *Config
+}
+
+// New creates a new SVG processor instance
+func New(config *Config) *Processor {
+	return &Processor{
+		config: config,
+	}
+}
+
+// Process processes the given image data
+func (p *Processor) Process(o *options.Options, data imagedata.ImageData) (imagedata.ImageData, error) {
+	if data.Format() != imagetype.SVG {
+		return data, nil
+	}
+
+	var err error
+
+	data, err = p.sanitize(data)
+	if err != nil {
+		return data, err
+	}
+
+	return data, nil
+}
+
+// sanitize sanitizes the SVG data.
+// It strips <script> and unsafe attributes (on* events).
+func (p *Processor) sanitize(data imagedata.ImageData) (imagedata.ImageData, error) {
+	if !p.config.Sanitize {
+		return data, nil
+	}
+
 	r := data.Reader()
 	l := xml.NewLexer(parse.NewInput(r))
 

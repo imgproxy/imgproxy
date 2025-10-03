@@ -12,7 +12,6 @@ import (
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/security"
 	"github.com/imgproxy/imgproxy/v3/server"
-	"github.com/imgproxy/imgproxy/v3/svg"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
@@ -268,20 +267,9 @@ func (p *Processor) skipStandardProcessing(
 		return nil, err
 	}
 
-	// Even in this case, SVG is an exception
-	if imgdata.Format() == imagetype.SVG && p.config.SanitizeSvg {
-		sanitized, err := svg.Sanitize(imgdata)
-		if err != nil {
-			return nil, err
-		}
-
-		return &Result{
-			OutData:      sanitized,
-			OriginWidth:  originWidth,
-			OriginHeight: originHeight,
-			ResultWidth:  originWidth,
-			ResultHeight: originHeight,
-		}, nil
+	imgdata, err = p.svg.Process(po.Options, imgdata)
+	if err != nil {
+		return nil, err
 	}
 
 	// Return the original image
