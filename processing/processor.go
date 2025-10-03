@@ -2,12 +2,14 @@ package processing
 
 import (
 	"github.com/imgproxy/imgproxy/v3/auximageprovider"
+	"github.com/imgproxy/imgproxy/v3/processing/svg"
 )
 
 // Processor is responsible for processing images according to the given configuration.
 type Processor struct {
 	config            *Config
 	watermarkProvider auximageprovider.Provider
+	svg               *svg.Processor
 }
 
 // New creates a new Processor instance with the given configuration and watermark provider
@@ -19,5 +21,6 @@ func New(config *Config, watermark auximageprovider.Provider) (*Processor, error
 	return &Processor{
 		config:            config,
 		watermarkProvider: watermark,
+		svg:               svg.New(&config.Svg),
 	}, nil
 }

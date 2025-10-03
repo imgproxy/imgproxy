@@ -6,6 +6,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/ensure"
 	"github.com/imgproxy/imgproxy/v3/env"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
+	"github.com/imgproxy/imgproxy/v3/processing/svg"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
@@ -15,7 +16,6 @@ var (
 	IMGPROXY_WATERMARK_OPACITY       = env.Describe("IMGPROXY_WATERMARK_OPACITY", "number between 0..1")
 	IMGPROXY_DISABLE_SHRINK_ON_LOAD  = env.Describe("IMGPROXY_DISABLE_SHRINK_ON_LOAD", "boolean")
 	IMGPROXY_USE_LINEAR_COLORSPACE   = env.Describe("IMGPROXY_USE_LINEAR_COLORSPACE", "boolean")
-	IMGPROXY_SANITIZE_SVG            = env.Describe("IMGPROXY_SANITIZE_SVG", "boolean")
 	IMGPROXY_ALWAYS_RASTERIZE_SVG    = env.Describe("IMGPROXY_ALWAYS_RASTERIZE_SVG", "boolean")
 	IMGPROXY_QUALITY                 = env.Describe("IMGPROXY_QUALITY", "number between 0..100")
 	IMGPROXY_FORMAT_QUALITY          = env.Describe("IMGPROXY_FORMAT_QUALITY", "comma-separated list of format=quality pairs where quality is between 0..100")
@@ -33,7 +33,6 @@ type Config struct {
 	WatermarkOpacity      float64
 	DisableShrinkOnLoad   bool
 	UseLinearColorspace   bool
-	SanitizeSvg           bool
 	AlwaysRasterizeSvg    bool
 	Quality               int
 	FormatQuality         map[imagetype.Type]int
@@ -42,6 +41,8 @@ type Config struct {
 	StripColorProfile     bool
 	AutoRotate            bool
 	EnforceThumbnail      bool
+
+	Svg svg.Config
 }
 
 // NewConfig creates a new Config instance with the given parameters.
@@ -53,8 +54,7 @@ func NewDefaultConfig() Config {
 			imagetype.PNG,
 			imagetype.GIF,
 		},
-		SanitizeSvg: true,
-		Quality:     80,
+		Quality: 80,
 		FormatQuality: map[imagetype.Type]int{
 			imagetype.WEBP: 79,
 			imagetype.AVIF: 63,
@@ -65,6 +65,8 @@ func NewDefaultConfig() Config {
 		StripColorProfile: true,
 		AutoRotate:        true,
 		EnforceThumbnail:  false,
+
+		Svg: svg.NewDefaultConfig(),
 	}
 }
 
@@ -72,11 +74,13 @@ func NewDefaultConfig() Config {
 func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c = ensure.Ensure(c, NewDefaultConfig)
 
+	_, svgErr := svg.LoadConfigFromEnv(&c.Svg)
+
 	err := errors.Join(
+		svgErr,
 		env.Float(&c.WatermarkOpacity, IMGPROXY_WATERMARK_OPACITY),
 		env.Bool(&c.DisableShrinkOnLoad, IMGPROXY_DISABLE_SHRINK_ON_LOAD),
 		env.Bool(&c.UseLinearColorspace, IMGPROXY_USE_LINEAR_COLORSPACE),
-		env.Bool(&c.SanitizeSvg, IMGPROXY_SANITIZE_SVG),
 		env.Bool(&c.AlwaysRasterizeSvg, IMGPROXY_ALWAYS_RASTERIZE_SVG),
 		env.Int(&c.Quality, IMGPROXY_QUALITY),
 		env.ImageTypesQuality(c.FormatQuality, IMGPROXY_FORMAT_QUALITY),

@@ -13,7 +13,8 @@ import (
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
-	"github.com/imgproxy/imgproxy/v3/svg"
+	"github.com/imgproxy/imgproxy/v3/options"
+	"github.com/imgproxy/imgproxy/v3/processing/svg"
 	"github.com/imgproxy/imgproxy/v3/testutil"
 	"github.com/imgproxy/imgproxy/v3/vips"
 	"github.com/stretchr/testify/suite"
@@ -213,7 +214,10 @@ func (s *ProcessingHandlerTestSuite) TestSkipProcessingSVG() {
 	data, err := idf.NewFromBytes(s.TestData.Read("test1.svg"))
 	s.Require().NoError(err)
 
-	expected, err := svg.Sanitize(data)
+	cfg := svg.NewDefaultConfig()
+	svg := svg.New(&cfg)
+
+	expected, err := svg.Process(&options.Options{}, data)
 	s.Require().NoError(err)
 
 	s.Require().True(testutil.ReadersEqual(s.T(), expected.Reader(), res.Body))
