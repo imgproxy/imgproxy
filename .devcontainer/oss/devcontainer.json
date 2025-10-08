@@ -1,10 +1,8 @@
 {
-    "build": {
-        "dockerfile": "../Dockerfile"
-    },
+    "image": "ghcr.io/imgproxy/imgproxy-base:v4-dev",
     "name": "imgproxy OSS",
     "forwardPorts": [
-        8080
+        8081
     ],
     "containerEnv": {
         "IMGPROXY_LOCAL_FILESYSTEM_ROOT": "/images",
@@ -24,7 +22,8 @@
     "customizations": {
         "vscode": {
             "extensions": [
-                "golang.go"
+                "golang.go",
+                "xaver.clang-format"
             ]
         }
     },

@@ -1,17 +1,17 @@
 pre-commit:
-  scripts:
-    lint:
-      tags: lint
   commands:
+    lint-go:
+      tags: lint
+      run: make lint-go
     lint-clang:
       tags: lint
-      run: command -v clang-format && find . -not -path "./.tmp/*" -not -path "./.git/*" \( -iname "*.h" -o -iname "*.c" -o -iname "*.cpp" \) | xargs clang-format --dry-run --Werror
+      run: make lint-clang
 
 pre-push:
-  scripts:
+  commands:
     test:
       tags: test
-  commands:
-    check-links:
-      tags: docs
-      run: command -v lychee && lychee docs README.md CHANGELOG.md --exclude localhost --exclude twitter.com --exclude x.com --exclude-path docs/index.html
+      run: make test
+    lychee:
+      tags: test
+      run: make lychee
