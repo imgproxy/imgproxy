@@ -686,21 +686,21 @@ int vips_blur_region(VipsImage *in, VipsImage **out, int left, int top, int widt
   VipsImage **t = (VipsImage **) vips_object_local_array(VIPS_OBJECT(base), 2);
 
   if (vips_extract_area(in, &t[0], left, top, width, height, NULL)) {
-    clear_image(&base);
+    VIPS_UNREF(base);
     return 1;
   }
 
   if (vips_gaussblur(t[0], &t[1], blur_sigma, NULL)) {
-    clear_image(&base);
+    VIPS_UNREF(base);
     return 1;
   }
 
   if (vips_insert(in, t[1], out, left, top, NULL)) {
-    clear_image(&base);
+    VIPS_UNREF(base);
     return 1;
   }
 
-  clear_image(&base);
+  VIPS_UNREF(base);
 
   return 0;
 }

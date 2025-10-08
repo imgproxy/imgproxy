@@ -774,7 +774,7 @@ func (img *Image) BlurRegion(x0 int, y0 int, x1 int, y1 int, sigma float32) erro
 		return Error()
 	}
 
-	C.swap_and_clear(&img.VipsImage, tmp)
+	img.swapAndUnref(tmp)
 
 	return nil
 }
