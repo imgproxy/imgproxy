@@ -1,8 +1,11 @@
 # Changelog
 
-## [Unreleased]
+## [3.30.1] - 2025-10-10
 ### Changed
 - Format New Relic and OpenTelemetry metadata values that implement the `fmt.Stringer` interface as strings.
+
+### Fixed
+- (pro) Fix memory leak during video thumbnail generation.
 
 ## [3.30.0] - 2025-09-17
 ### Added
