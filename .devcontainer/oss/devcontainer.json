@@ -17,15 +17,31 @@
             "source": "${localWorkspaceFolder}/testdata/test-images",
             "target": "/images",
             "type": "bind"
+        },
+        {
+            "source": "${localWorkspaceFolder}/.tmp/_dev-root/.cache",
+            "target": "/root/.cache",
+            "type": "bind"
+        },
+        {
+            "source": "${localWorkspaceFolder}/.tmp/_dev-root/go/pkg/mod",
+            "target": "/root/go/pkg/mod",
+            "type": "bind"
+        },
+        {
+            "source": "${localWorkspaceFolder}/.tmp/_dev-root/.bash_history",
+            "target": "/root/.bash_history",
+            "type": "bind"
         }
     ],
     "customizations": {
         "vscode": {
             "extensions": [
                 "golang.go",
-                "xaver.clang-format"
+                "ms-vscode.cpptools"
             ]
         }
     },
-    "postCreateCommand": "lefthook install"
+    "postCreateCommand": "lefthook install",
+    "initializeCommand": "mkdir -p ${localWorkspaceFolder}/.tmp/_dev-root/.cache ${localWorkspaceFolder}/.tmp/_dev-root/go/pkg/mod && touch ${localWorkspaceFolder}/.tmp/_dev-root/.bash_history",
 }

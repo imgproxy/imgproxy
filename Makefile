@@ -14,7 +14,7 @@ GOTESTSUM := gotestsum
 SRCDIR := ./cli
 RCFILE := ./.imgproxyrc
 BREW_PREFIX :=
-GOCACHE_TMP_DIR ?= $(MAKEFILE_DIR).tmp/_go-cache
+DEVROOT_TMP_DIR ?= $(MAKEFILE_DIR).tmp/_dev-root
 BASE_IMAGE ?= ghcr.io/imgproxy/imgproxy-base:v4-dev
 
 # Common environment setup for CGO builds
@@ -53,11 +53,11 @@ _run-in-docker:
 ifdef IMGPROXY_IN_BASE_CONTAINER
 	@$(MAKE) $(DOCKERCMD)
 else
-	@mkdir -p ${GOCACHE_TMP_DIR}/.cache ${GOCACHE_TMP_DIR}/go/pkg/mod
+	@mkdir -p ${DEVROOT_TMP_DIR}/.cache ${DEVROOT_TMP_DIR}/go/pkg/mod
 	@docker run --init --rm -it \
 		-v "$(MAKEFILE_DIR):/workspaces/imgproxy" \
-		-v "${GOCACHE_TMP_DIR}/.cache:/root/.cache" \
-		-v "${GOCACHE_TMP_DIR}/go/pkg/mod:/root/go/pkg/mod" \
+		-v "${DEVROOT_TMP_DIR}/.cache:/root/.cache" \
+		-v "${DEVROOT_TMP_DIR}/go/pkg/mod:/root/go/pkg/mod" \
 		-w /workspaces/imgproxy \
 		-e IMGPROXY_IN_BASE_CONTAINER=1 \
 		$(BASE_IMAGE) \
