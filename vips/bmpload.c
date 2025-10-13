@@ -580,8 +580,9 @@ vips_foreign_load_bmp_rle_generate_strip(VipsRect *r, VipsRegion *out_region, Vi
             bmp->dy = dy;                    // We do not care if Y pos is outside of the impage, it's a separate check
 
             break; // we need to skip lines, so we exit the loop
-          } // Movement by X might not lead to EOL, so we continue
+          }
           else {
+            // Movement by X might not lead to EOL, so we continue
             bmp->dy = dy;              // 0
             x = MIN(x + dx, r->width); // Move to the desired pixel
           }
