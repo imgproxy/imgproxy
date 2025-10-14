@@ -14,59 +14,59 @@ import (
 	"github.com/imgproxy/imgproxy/v3/vips/color"
 )
 
-func applyWidthOption(o *options.Options, args []string) error {
-	return parsePositiveInt(o, keys.Width, args...)
+func (p *Parser) applyWidthOption(o *options.Options, args []string) error {
+	return p.parsePositiveInt(o, keys.Width, args...)
 }
 
-func applyHeightOption(o *options.Options, args []string) error {
-	return parsePositiveInt(o, keys.Height, args...)
+func (p *Parser) applyHeightOption(o *options.Options, args []string) error {
+	return p.parsePositiveInt(o, keys.Height, args...)
 }
 
-func applyMinWidthOption(o *options.Options, args []string) error {
-	return parsePositiveInt(o, keys.MinWidth, args...)
+func (p *Parser) applyMinWidthOption(o *options.Options, args []string) error {
+	return p.parsePositiveInt(o, keys.MinWidth, args...)
 }
 
-func applyMinHeightOption(o *options.Options, args []string) error {
-	return parsePositiveInt(o, keys.MinHeight, args...)
+func (p *Parser) applyMinHeightOption(o *options.Options, args []string) error {
+	return p.parsePositiveInt(o, keys.MinHeight, args...)
 }
 
-func applyEnlargeOption(o *options.Options, args []string) error {
-	return parseBool(o, keys.Enlarge, args...)
+func (p *Parser) applyEnlargeOption(o *options.Options, args []string) error {
+	return p.parseBool(o, keys.Enlarge, args...)
 }
 
-func applyExtendOption(o *options.Options, args []string) error {
-	return parseExtend(o, keys.PrefixExtend, args)
+func (p *Parser) applyExtendOption(o *options.Options, args []string) error {
+	return p.parseExtend(o, keys.PrefixExtend, args)
 }
 
-func applyExtendAspectRatioOption(o *options.Options, args []string) error {
-	return parseExtend(o, keys.PrefixExtendAspectRatio, args)
+func (p *Parser) applyExtendAspectRatioOption(o *options.Options, args []string) error {
+	return p.parseExtend(o, keys.PrefixExtendAspectRatio, args)
 }
 
-func applySizeOption(o *options.Options, args []string) (err error) {
-	if err = ensureMaxArgs("size", args, 7); err != nil {
+func (p *Parser) applySizeOption(o *options.Options, args []string) (err error) {
+	if err = p.ensureMaxArgs("size", args, 7); err != nil {
 		return
 	}
 
 	if len(args) >= 1 && len(args[0]) > 0 {
-		if err = applyWidthOption(o, args[0:1]); err != nil {
+		if err = p.applyWidthOption(o, args[0:1]); err != nil {
 			return
 		}
 	}
 
 	if len(args) >= 2 && len(args[1]) > 0 {
-		if err = applyHeightOption(o, args[1:2]); err != nil {
+		if err = p.applyHeightOption(o, args[1:2]); err != nil {
 			return
 		}
 	}
 
 	if len(args) >= 3 && len(args[2]) > 0 {
-		if err = applyEnlargeOption(o, args[2:3]); err != nil {
+		if err = p.applyEnlargeOption(o, args[2:3]); err != nil {
 			return
 		}
 	}
 
 	if len(args) >= 4 && len(args[3]) > 0 {
-		if err = applyExtendOption(o, args[3:]); err != nil {
+		if err = p.applyExtendOption(o, args[3:]); err != nil {
 			return
 		}
 	}
@@ -74,23 +74,23 @@ func applySizeOption(o *options.Options, args []string) (err error) {
 	return nil
 }
 
-func applyResizingTypeOption(o *options.Options, args []string) error {
-	return parseFromMap(o, keys.ResizingType, processing.ResizeTypes, args...)
+func (p *Parser) applyResizingTypeOption(o *options.Options, args []string) error {
+	return parseFromMap(p, o, keys.ResizingType, processing.ResizeTypes, args...)
 }
 
-func applyResizeOption(o *options.Options, args []string) error {
-	if err := ensureMaxArgs("resize", args, 8); err != nil {
+func (p *Parser) applyResizeOption(o *options.Options, args []string) error {
+	if err := p.ensureMaxArgs("resize", args, 8); err != nil {
 		return err
 	}
 
 	if len(args[0]) > 0 {
-		if err := applyResizingTypeOption(o, args[0:1]); err != nil {
+		if err := p.applyResizingTypeOption(o, args[0:1]); err != nil {
 			return err
 		}
 	}
 
 	if len(args) > 1 {
-		if err := applySizeOption(o, args[1:]); err != nil {
+		if err := p.applySizeOption(o, args[1:]); err != nil {
 			return err
 		}
 	}
@@ -98,12 +98,12 @@ func applyResizeOption(o *options.Options, args []string) error {
 	return nil
 }
 
-func applyZoomOption(o *options.Options, args []string) error {
-	if err := ensureMaxArgs("zoom", args, 2); err != nil {
+func (p *Parser) applyZoomOption(o *options.Options, args []string) error {
+	if err := p.ensureMaxArgs("zoom", args, 2); err != nil {
 		return err
 	}
 
-	if err := parsePositiveNonZeroFloat(o, keys.ZoomWidth, args[0]); err != nil {
+	if err := p.parsePositiveNonZeroFloat(o, keys.ZoomWidth, args[0]); err != nil {
 		return err
 	}
 
@@ -112,52 +112,52 @@ func applyZoomOption(o *options.Options, args []string) error {
 		return nil
 	}
 
-	if err := parsePositiveNonZeroFloat(o, keys.ZoomHeight, args[1]); err != nil {
+	if err := p.parsePositiveNonZeroFloat(o, keys.ZoomHeight, args[1]); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func applyDprOption(o *options.Options, args []string) error {
-	return parsePositiveNonZeroFloat(o, keys.Dpr, args...)
+func (p *Parser) applyDprOption(o *options.Options, args []string) error {
+	return p.parsePositiveNonZeroFloat(o, keys.Dpr, args...)
 }
 
-func applyGravityOption(o *options.Options, args []string) error {
-	return parseGravity(o, keys.Gravity, processing.CropGravityTypes, args...)
+func (p *Parser) applyGravityOption(o *options.Options, args []string) error {
+	return p.parseGravity(o, keys.Gravity, processing.CropGravityTypes, args...)
 }
 
-func applyCropOption(o *options.Options, args []string) error {
-	if err := parsePositiveFloat(o, keys.CropWidth, args[0]); err != nil {
+func (p *Parser) applyCropOption(o *options.Options, args []string) error {
+	if err := p.parsePositiveFloat(o, keys.CropWidth, args[0]); err != nil {
 		return err
 	}
 
 	if len(args) > 1 {
-		if err := parsePositiveFloat(o, keys.CropHeight, args[1]); err != nil {
+		if err := p.parsePositiveFloat(o, keys.CropHeight, args[1]); err != nil {
 			return err
 		}
 	}
 
 	if len(args) > 2 {
-		return parseGravity(o, keys.CropGravity, processing.CropGravityTypes, args[2:]...)
+		return p.parseGravity(o, keys.CropGravity, processing.CropGravityTypes, args[2:]...)
 	}
 
 	return nil
 }
 
-func applyPaddingOption(o *options.Options, args []string) error {
-	if err := ensureMaxArgs("padding", args, 4); err != nil {
+func (p *Parser) applyPaddingOption(o *options.Options, args []string) error {
+	if err := p.ensureMaxArgs("padding", args, 4); err != nil {
 		return err
 	}
 
 	if len(args) > 0 && len(args[0]) > 0 {
-		if err := parsePositiveInt(o, keys.PaddingTop, args[0]); err != nil {
+		if err := p.parsePositiveInt(o, keys.PaddingTop, args[0]); err != nil {
 			return err
 		}
 	}
 
 	if len(args) > 1 && len(args[1]) > 0 {
-		if err := parsePositiveInt(o, keys.PaddingRight, args[1]); err != nil {
+		if err := p.parsePositiveInt(o, keys.PaddingRight, args[1]); err != nil {
 			return err
 		}
 	} else {
@@ -165,7 +165,7 @@ func applyPaddingOption(o *options.Options, args []string) error {
 	}
 
 	if len(args) > 2 && len(args[2]) > 0 {
-		if err := parsePositiveInt(o, keys.PaddingBottom, args[2]); err != nil {
+		if err := p.parsePositiveInt(o, keys.PaddingBottom, args[2]); err != nil {
 			return err
 		}
 	} else {
@@ -173,7 +173,7 @@ func applyPaddingOption(o *options.Options, args []string) error {
 	}
 
 	if len(args) > 3 && len(args[3]) > 0 {
-		if err := parsePositiveInt(o, keys.PaddingLeft, args[3]); err != nil {
+		if err := p.parsePositiveInt(o, keys.PaddingLeft, args[3]); err != nil {
 			return err
 		}
 	} else {
@@ -183,15 +183,15 @@ func applyPaddingOption(o *options.Options, args []string) error {
 	return nil
 }
 
-func applyTrimOption(o *options.Options, args []string) error {
-	if err := ensureMaxArgs("trim", args, 4); err != nil {
+func (p *Parser) applyTrimOption(o *options.Options, args []string) error {
+	if err := p.ensureMaxArgs("trim", args, 4); err != nil {
 		return err
 	}
 
 	nArgs := len(args)
 
 	if len(args[0]) > 0 {
-		if err := parseFloat(o, keys.TrimThreshold, args[0]); err != nil {
+		if err := p.parseFloat(o, keys.TrimThreshold, args[0]); err != nil {
 			return err
 		}
 	} else {
@@ -199,7 +199,7 @@ func applyTrimOption(o *options.Options, args []string) error {
 	}
 
 	if nArgs > 1 && len(args[1]) > 0 {
-		if err := parseHexRGBColor(o, keys.TrimColor, args[1]); err != nil {
+		if err := p.parseHexRGBColor(o, keys.TrimColor, args[1]); err != nil {
 			return err
 		}
 	} else {
@@ -207,13 +207,13 @@ func applyTrimOption(o *options.Options, args []string) error {
 	}
 
 	if nArgs > 2 && len(args[2]) > 0 {
-		if err := parseBool(o, keys.TrimEqualHor, args[2]); err != nil {
+		if err := p.parseBool(o, keys.TrimEqualHor, args[2]); err != nil {
 			return err
 		}
 	}
 
 	if nArgs > 3 && len(args[3]) > 0 {
-		if err := parseBool(o, keys.TrimEqualVer, args[3]); err != nil {
+		if err := p.parseBool(o, keys.TrimEqualVer, args[3]); err != nil {
 			return err
 		}
 	}
@@ -221,8 +221,8 @@ func applyTrimOption(o *options.Options, args []string) error {
 	return nil
 }
 
-func applyRotateOption(o *options.Options, args []string) error {
-	if err := parseInt(o, keys.Rotate, args...); err != nil {
+func (p *Parser) applyRotateOption(o *options.Options, args []string) error {
+	if err := p.parseInt(o, keys.Rotate, args...); err != nil {
 		return err
 	}
 
@@ -233,11 +233,11 @@ func applyRotateOption(o *options.Options, args []string) error {
 	return nil
 }
 
-func applyQualityOption(o *options.Options, args []string) error {
-	return parseQualityInt(o, keys.Quality, args...)
+func (p *Parser) applyQualityOption(o *options.Options, args []string) error {
+	return p.parseQualityInt(o, keys.Quality, args...)
 }
 
-func applyFormatQualityOption(o *options.Options, args []string) error {
+func (p *Parser) applyFormatQualityOption(o *options.Options, args []string) error {
 	argsLen := len(args)
 	if len(args)%2 != 0 {
 		return newOptionArgumentError("Missing %s for: %s", keys.PrefixFormatQuality, args[argsLen-1])
@@ -249,7 +249,7 @@ func applyFormatQualityOption(o *options.Options, args []string) error {
 			return newOptionArgumentError("Invalid image format: %s", args[i])
 		}
 
-		if err := parseQualityInt(o, keys.FormatQuality(f), args[i+1]); err != nil {
+		if err := p.parseQualityInt(o, keys.FormatQuality(f), args[i+1]); err != nil {
 			return err
 		}
 	}
@@ -257,11 +257,11 @@ func applyFormatQualityOption(o *options.Options, args []string) error {
 	return nil
 }
 
-func applyMaxBytesOption(o *options.Options, args []string) error {
-	return parsePositiveInt(o, keys.MaxBytes, args...)
+func (p *Parser) applyMaxBytesOption(o *options.Options, args []string) error {
+	return p.parsePositiveInt(o, keys.MaxBytes, args...)
 }
 
-func applyBackgroundOption(o *options.Options, args []string) error {
+func (p *Parser) applyBackgroundOption(o *options.Options, args []string) error {
 	switch len(args) {
 	case 1:
 		if len(args[0]) == 0 {
@@ -269,7 +269,7 @@ func applyBackgroundOption(o *options.Options, args []string) error {
 			return nil
 		}
 
-		if err := parseHexRGBColor(o, keys.Background, args[0]); err != nil {
+		if err := p.parseHexRGBColor(o, keys.Background, args[0]); err != nil {
 			return err
 		}
 
@@ -303,29 +303,29 @@ func applyBackgroundOption(o *options.Options, args []string) error {
 	return nil
 }
 
-func applyBlurOption(o *options.Options, args []string) error {
-	return parsePositiveNonZeroFloat(o, keys.Blur, args...)
+func (p *Parser) applyBlurOption(o *options.Options, args []string) error {
+	return p.parsePositiveNonZeroFloat(o, keys.Blur, args...)
 }
 
-func applySharpenOption(o *options.Options, args []string) error {
-	return parsePositiveNonZeroFloat(o, keys.Sharpen, args...)
+func (p *Parser) applySharpenOption(o *options.Options, args []string) error {
+	return p.parsePositiveNonZeroFloat(o, keys.Sharpen, args...)
 }
 
-func applyPixelateOption(o *options.Options, args []string) error {
-	return parsePositiveInt(o, keys.Pixelate, args...)
+func (p *Parser) applyPixelateOption(o *options.Options, args []string) error {
+	return p.parsePositiveInt(o, keys.Pixelate, args...)
 }
 
-func applyWatermarkOption(o *options.Options, args []string) error {
-	if err := ensureMaxArgs("watermark", args, 7); err != nil {
+func (p *Parser) applyWatermarkOption(o *options.Options, args []string) error {
+	if err := p.ensureMaxArgs("watermark", args, 7); err != nil {
 		return err
 	}
 
-	if err := parseOpacityFloat(o, keys.WatermarkOpacity, args[0]); err != nil {
+	if err := p.parseOpacityFloat(o, keys.WatermarkOpacity, args[0]); err != nil {
 		return err
 	}
 
 	if len(args) > 1 && len(args[1]) > 0 {
-		if _, err := parseGravityType(
+		if _, err := p.parseGravityType(
 			o, keys.WatermarkPosition, processing.WatermarkGravityTypes, args[1],
 		); err != nil {
 			return err
@@ -333,19 +333,19 @@ func applyWatermarkOption(o *options.Options, args []string) error {
 	}
 
 	if len(args) > 2 && len(args[2]) > 0 {
-		if err := parseFloat(o, keys.WatermarkXOffset, args[2]); err != nil {
+		if err := p.parseFloat(o, keys.WatermarkXOffset, args[2]); err != nil {
 			return err
 		}
 	}
 
 	if len(args) > 3 && len(args[3]) > 0 {
-		if err := parseFloat(o, keys.WatermarkYOffset, args[3]); err != nil {
+		if err := p.parseFloat(o, keys.WatermarkYOffset, args[3]); err != nil {
 			return err
 		}
 	}
 
 	if len(args) > 4 && len(args[4]) > 0 {
-		if err := parsePositiveNonZeroFloat(o, keys.WatermarkScale, args[4]); err == nil {
+		if err := p.parsePositiveNonZeroFloat(o, keys.WatermarkScale, args[4]); err == nil {
 			return err
 		}
 	}
@@ -353,8 +353,8 @@ func applyWatermarkOption(o *options.Options, args []string) error {
 	return nil
 }
 
-func applyFormatOption(o *options.Options, args []string) error {
-	if err := ensureMaxArgs(keys.Format, args, 1); err != nil {
+func (p *Parser) applyFormatOption(o *options.Options, args []string) error {
+	if err := p.ensureMaxArgs(keys.Format, args, 1); err != nil {
 		return err
 	}
 
@@ -367,8 +367,8 @@ func applyFormatOption(o *options.Options, args []string) error {
 	return nil
 }
 
-func applyCacheBusterOption(o *options.Options, args []string) error {
-	if err := ensureMaxArgs(keys.CacheBuster, args, 1); err != nil {
+func (p *Parser) applyCacheBusterOption(o *options.Options, args []string) error {
+	if err := p.ensureMaxArgs(keys.CacheBuster, args, 1); err != nil {
 		return err
 	}
 
@@ -377,7 +377,7 @@ func applyCacheBusterOption(o *options.Options, args []string) error {
 	return nil
 }
 
-func applySkipProcessingFormatsOption(o *options.Options, args []string) error {
+func (p *Parser) applySkipProcessingFormatsOption(o *options.Options, args []string) error {
 	for _, format := range args {
 		if f, ok := imagetype.GetTypeByName(format); ok {
 			options.AppendToSlice(o, keys.SkipProcessing, f)
@@ -389,18 +389,18 @@ func applySkipProcessingFormatsOption(o *options.Options, args []string) error {
 	return nil
 }
 
-func applyRawOption(o *options.Options, args []string) error {
-	return parseBool(o, keys.Raw, args...)
+func (p *Parser) applyRawOption(o *options.Options, args []string) error {
+	return p.parseBool(o, keys.Raw, args...)
 }
 
-func applyFilenameOption(o *options.Options, args []string) error {
-	if err := ensureMaxArgs(keys.Filename, args, 2); err != nil {
+func (p *Parser) applyFilenameOption(o *options.Options, args []string) error {
+	if err := p.ensureMaxArgs(keys.Filename, args, 2); err != nil {
 		return err
 	}
 
 	if len(args) > 1 && len(args[1]) > 0 {
 		if encoded, _ := strconv.ParseBool(args[1]); encoded {
-			return parseBase64String(o, keys.Filename, args[0])
+			return p.parseBase64String(o, keys.Filename, args[0])
 		}
 	}
 
@@ -409,8 +409,8 @@ func applyFilenameOption(o *options.Options, args []string) error {
 	return nil
 }
 
-func applyExpiresOption(o *options.Options, args []string) error {
-	if err := ensureMaxArgs(keys.Expires, args, 1); err != nil {
+func (p *Parser) applyExpiresOption(o *options.Options, args []string) error {
+	if err := p.ensureMaxArgs(keys.Expires, args, 1); err != nil {
 		return err
 	}
 
@@ -428,71 +428,71 @@ func applyExpiresOption(o *options.Options, args []string) error {
 	return nil
 }
 
-func applyStripMetadataOption(o *options.Options, args []string) error {
-	return parseBool(o, keys.StripMetadata, args...)
+func (p *Parser) applyStripMetadataOption(o *options.Options, args []string) error {
+	return p.parseBool(o, keys.StripMetadata, args...)
 }
 
-func applyKeepCopyrightOption(o *options.Options, args []string) error {
-	return parseBool(o, keys.KeepCopyright, args...)
+func (p *Parser) applyKeepCopyrightOption(o *options.Options, args []string) error {
+	return p.parseBool(o, keys.KeepCopyright, args...)
 }
 
-func applyStripColorProfileOption(o *options.Options, args []string) error {
-	return parseBool(o, keys.StripColorProfile, args...)
+func (p *Parser) applyStripColorProfileOption(o *options.Options, args []string) error {
+	return p.parseBool(o, keys.StripColorProfile, args...)
 }
 
-func applyAutoRotateOption(o *options.Options, args []string) error {
-	return parseBool(o, keys.AutoRotate, args...)
+func (p *Parser) applyAutoRotateOption(o *options.Options, args []string) error {
+	return p.parseBool(o, keys.AutoRotate, args...)
 }
 
-func applyEnforceThumbnailOption(o *options.Options, args []string) error {
-	return parseBool(o, keys.EnforceThumbnail, args...)
+func (p *Parser) applyEnforceThumbnailOption(o *options.Options, args []string) error {
+	return p.parseBool(o, keys.EnforceThumbnail, args...)
 }
 
-func applyReturnAttachmentOption(o *options.Options, args []string) error {
-	return parseBool(o, keys.ReturnAttachment, args...)
+func (p *Parser) applyReturnAttachmentOption(o *options.Options, args []string) error {
+	return p.parseBool(o, keys.ReturnAttachment, args...)
 }
 
-func applyMaxSrcResolutionOption(p *Parser, o *options.Options, args []string) error {
+func (p *Parser) applyMaxSrcResolutionOption(o *options.Options, args []string) error {
 	if err := p.IsSecurityOptionsAllowed(); err != nil {
 		return err
 	}
 
-	return parseResolution(o, keys.MaxSrcResolution, args...)
+	return p.parseResolution(o, keys.MaxSrcResolution, args...)
 }
 
-func applyMaxSrcFileSizeOption(p *Parser, o *options.Options, args []string) error {
+func (p *Parser) applyMaxSrcFileSizeOption(o *options.Options, args []string) error {
 	if err := p.IsSecurityOptionsAllowed(); err != nil {
 		return err
 	}
 
-	return parseInt(o, keys.MaxSrcFileSize, args...)
+	return p.parseInt(o, keys.MaxSrcFileSize, args...)
 }
 
-func applyMaxAnimationFramesOption(p *Parser, o *options.Options, args []string) error {
+func (p *Parser) applyMaxAnimationFramesOption(o *options.Options, args []string) error {
 	if err := p.IsSecurityOptionsAllowed(); err != nil {
 		return err
 	}
 
-	return parsePositiveNonZeroInt(o, keys.MaxAnimationFrames, args...)
+	return p.parsePositiveNonZeroInt(o, keys.MaxAnimationFrames, args...)
 }
 
-func applyMaxAnimationFrameResolutionOption(p *Parser, o *options.Options, args []string) error {
+func (p *Parser) applyMaxAnimationFrameResolutionOption(o *options.Options, args []string) error {
 	if err := p.IsSecurityOptionsAllowed(); err != nil {
 		return err
 	}
 
-	return parseResolution(o, keys.MaxAnimationFrameResolution, args...)
+	return p.parseResolution(o, keys.MaxAnimationFrameResolution, args...)
 }
 
-func applyMaxResultDimensionOption(p *Parser, o *options.Options, args []string) error {
+func (p *Parser) applyMaxResultDimensionOption(o *options.Options, args []string) error {
 	if err := p.IsSecurityOptionsAllowed(); err != nil {
 		return err
 	}
 
-	return parseInt(o, keys.MaxResultDimension, args...)
+	return p.parseInt(o, keys.MaxResultDimension, args...)
 }
 
-func applyPresetOption(p *Parser, o *options.Options, args []string, usedPresets ...string) error {
+func (p *Parser) applyPresetOption(o *options.Options, args []string, usedPresets ...string) error {
 	for _, preset := range args {
 		if pr, ok := p.presets[preset]; ok {
 			if slices.Contains(usedPresets, preset) {

@@ -16,7 +16,7 @@ import (
 )
 
 // ensureMaxArgs checks if the number of arguments is as expected
-func ensureMaxArgs(name string, args []string, max int) error {
+func (p *Parser) ensureMaxArgs(name string, args []string, max int) error {
 	if len(args) > max {
 		return newInvalidArgsError(name, args)
 	}
@@ -24,8 +24,8 @@ func ensureMaxArgs(name string, args []string, max int) error {
 }
 
 // parseBool parses a boolean option value and warns if the value is invalid
-func parseBool(o *options.Options, key string, args ...string) error {
-	if err := ensureMaxArgs(key, args, 1); err != nil {
+func (p *Parser) parseBool(o *options.Options, key string, args ...string) error {
+	if err := p.ensureMaxArgs(key, args, 1); err != nil {
 		return err
 	}
 
@@ -41,8 +41,8 @@ func parseBool(o *options.Options, key string, args ...string) error {
 }
 
 // parseFloat parses a float64 option value
-func parseFloat(o *options.Options, key string, args ...string) error {
-	if err := ensureMaxArgs(key, args, 1); err != nil {
+func (p *Parser) parseFloat(o *options.Options, key string, args ...string) error {
+	if err := p.ensureMaxArgs(key, args, 1); err != nil {
 		return err
 	}
 
@@ -57,8 +57,8 @@ func parseFloat(o *options.Options, key string, args ...string) error {
 }
 
 // parsePositiveFloat parses a positive float64 option value
-func parsePositiveFloat(o *options.Options, key string, args ...string) error {
-	if err := ensureMaxArgs(key, args, 1); err != nil {
+func (p *Parser) parsePositiveFloat(o *options.Options, key string, args ...string) error {
+	if err := p.ensureMaxArgs(key, args, 1); err != nil {
 		return err
 	}
 
@@ -73,8 +73,8 @@ func parsePositiveFloat(o *options.Options, key string, args ...string) error {
 }
 
 // parsePositiveNonZeroFloat parses a positive non-zero float64 option value
-func parsePositiveNonZeroFloat(o *options.Options, key string, args ...string) error {
-	if err := ensureMaxArgs(key, args, 1); err != nil {
+func (p *Parser) parsePositiveNonZeroFloat(o *options.Options, key string, args ...string) error {
+	if err := p.ensureMaxArgs(key, args, 1); err != nil {
 		return err
 	}
 
@@ -89,8 +89,8 @@ func parsePositiveNonZeroFloat(o *options.Options, key string, args ...string) e
 }
 
 // parseInt parses a positive integer option value
-func parseInt(o *options.Options, key string, args ...string) error {
-	if err := ensureMaxArgs(key, args, 1); err != nil {
+func (p *Parser) parseInt(o *options.Options, key string, args ...string) error {
+	if err := p.ensureMaxArgs(key, args, 1); err != nil {
 		return err
 	}
 
@@ -105,8 +105,8 @@ func parseInt(o *options.Options, key string, args ...string) error {
 }
 
 // parsePositiveNonZeroInt parses a positive non-zero integer option value
-func parsePositiveNonZeroInt(o *options.Options, key string, args ...string) error {
-	if err := ensureMaxArgs(key, args, 1); err != nil {
+func (p *Parser) parsePositiveNonZeroInt(o *options.Options, key string, args ...string) error {
+	if err := p.ensureMaxArgs(key, args, 1); err != nil {
 		return err
 	}
 
@@ -121,8 +121,8 @@ func parsePositiveNonZeroInt(o *options.Options, key string, args ...string) err
 }
 
 // parsePositiveInt parses a positive integer option value
-func parsePositiveInt(o *options.Options, key string, args ...string) error {
-	if err := ensureMaxArgs(key, args, 1); err != nil {
+func (p *Parser) parsePositiveInt(o *options.Options, key string, args ...string) error {
+	if err := p.ensureMaxArgs(key, args, 1); err != nil {
 		return err
 	}
 
@@ -137,8 +137,8 @@ func parsePositiveInt(o *options.Options, key string, args ...string) error {
 }
 
 // parseQualityInt parses a quality integer option value (1-100)
-func parseQualityInt(o *options.Options, key string, args ...string) error {
-	if err := ensureMaxArgs(key, args, 1); err != nil {
+func (p *Parser) parseQualityInt(o *options.Options, key string, args ...string) error {
+	if err := p.ensureMaxArgs(key, args, 1); err != nil {
 		return err
 	}
 
@@ -153,8 +153,8 @@ func parseQualityInt(o *options.Options, key string, args ...string) error {
 }
 
 // parseOpacityFloat parses an opacity float option value (0-1)
-func parseOpacityFloat(o *options.Options, key string, args ...string) error {
-	if err := ensureMaxArgs(key, args, 1); err != nil {
+func (p *Parser) parseOpacityFloat(o *options.Options, key string, args ...string) error {
+	if err := p.ensureMaxArgs(key, args, 1); err != nil {
 		return err
 	}
 
@@ -169,8 +169,8 @@ func parseOpacityFloat(o *options.Options, key string, args ...string) error {
 }
 
 // parseResolution parses a resolution option value in megapixels and stores it as pixels
-func parseResolution(o *options.Options, key string, args ...string) error {
-	if err := ensureMaxArgs(key, args, 1); err != nil {
+func (p *Parser) parseResolution(o *options.Options, key string, args ...string) error {
+	if err := p.ensureMaxArgs(key, args, 1); err != nil {
 		return err
 	}
 
@@ -186,8 +186,8 @@ func parseResolution(o *options.Options, key string, args ...string) error {
 }
 
 // parseBase64String parses a base64-encoded string option value
-func parseBase64String(o *options.Options, key string, args ...string) error {
-	if err := ensureMaxArgs(key, args, 1); err != nil {
+func (p *Parser) parseBase64String(o *options.Options, key string, args ...string) error {
+	if err := p.ensureMaxArgs(key, args, 1); err != nil {
 		return err
 	}
 
@@ -202,8 +202,8 @@ func parseBase64String(o *options.Options, key string, args ...string) error {
 }
 
 // parseHexRGBColor parses a hex-encoded RGB color option value
-func parseHexRGBColor(o *options.Options, key string, args ...string) error {
-	if err := ensureMaxArgs(key, args, 1); err != nil {
+func (p *Parser) parseHexRGBColor(o *options.Options, key string, args ...string) error {
+	if err := p.ensureMaxArgs(key, args, 1); err != nil {
 		return err
 	}
 
@@ -218,8 +218,14 @@ func parseHexRGBColor(o *options.Options, key string, args ...string) error {
 }
 
 // parseFromMap parses an option value from a map of allowed values
-func parseFromMap[T comparable](o *options.Options, key string, m map[string]T, args ...string) error {
-	if err := ensureMaxArgs(key, args, 1); err != nil {
+func parseFromMap[T comparable](
+	p *Parser,
+	o *options.Options,
+	key string,
+	m map[string]T,
+	args ...string,
+) error {
+	if err := p.ensureMaxArgs(key, args, 1); err != nil {
 		return err
 	}
 
@@ -233,13 +239,13 @@ func parseFromMap[T comparable](o *options.Options, key string, m map[string]T, 
 	return nil
 }
 
-func parseGravityType(
+func (p *Parser) parseGravityType(
 	o *options.Options,
 	key string,
 	allowedTypes []processing.GravityType,
 	args ...string,
 ) (processing.GravityType, error) {
-	if err := ensureMaxArgs(key, args, 1); err != nil {
+	if err := p.ensureMaxArgs(key, args, 1); err != nil {
 		return processing.GravityUnknown, err
 	}
 
@@ -257,11 +263,11 @@ func parseGravityType(
 	return gType, nil
 }
 
-func isGravityOffsetValid(gravity processing.GravityType, offset float64) bool {
+func (p *Parser) isGravityOffsetValid(gravity processing.GravityType, offset float64) bool {
 	return gravity != processing.GravityFocusPoint || (offset >= 0 && offset <= 1)
 }
 
-func parseGravity(
+func (p *Parser) parseGravity(
 	o *options.Options,
 	key string,
 	allowedTypes []processing.GravityType,
@@ -273,7 +279,7 @@ func parseGravity(
 	keyXOffset := key + keys.SuffixXOffset
 	keyYOffset := key + keys.SuffixYOffset
 
-	gType, err := parseGravityType(o, keyType, allowedTypes, args[0])
+	gType, err := p.parseGravityType(o, keyType, allowedTypes, args[0])
 	if err != nil {
 		return err
 	}
@@ -298,7 +304,7 @@ func parseGravity(
 		}
 
 		if nArgs > 1 {
-			if x, err := strconv.ParseFloat(args[1], 64); err == nil && isGravityOffsetValid(gType, x) {
+			if x, err := strconv.ParseFloat(args[1], 64); err == nil && p.isGravityOffsetValid(gType, x) {
 				o.Set(keyXOffset, x)
 			} else {
 				return newInvalidArgumentError(keyXOffset, args[1])
@@ -306,7 +312,7 @@ func parseGravity(
 		}
 
 		if nArgs > 2 {
-			if y, err := strconv.ParseFloat(args[2], 64); err == nil && isGravityOffsetValid(gType, y) {
+			if y, err := strconv.ParseFloat(args[2], 64); err == nil && p.isGravityOffsetValid(gType, y) {
 				o.Set(keyYOffset, y)
 			} else {
 				return newInvalidArgumentError(keyYOffset, args[2])
@@ -317,17 +323,17 @@ func parseGravity(
 	return nil
 }
 
-func parseExtend(o *options.Options, key string, args []string) error {
-	if err := ensureMaxArgs(key, args, 4); err != nil {
+func (p *Parser) parseExtend(o *options.Options, key string, args []string) error {
+	if err := p.ensureMaxArgs(key, args, 4); err != nil {
 		return err
 	}
 
-	if err := parseBool(o, key+keys.SuffixEnabled, args[0]); err != nil {
+	if err := p.parseBool(o, key+keys.SuffixEnabled, args[0]); err != nil {
 		return err
 	}
 
 	if len(args) > 1 {
-		return parseGravity(o, key+keys.SuffixGravity, processing.ExtendGravityTypes, args[1:]...)
+		return p.parseGravity(o, key+keys.SuffixGravity, processing.ExtendGravityTypes, args[1:]...)
 	}
 
 	return nil

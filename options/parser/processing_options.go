@@ -23,95 +23,95 @@ func (p *Parser) applyURLOption(
 ) error {
 	switch name {
 	case "resize", "rs":
-		return applyResizeOption(o, args)
+		return p.applyResizeOption(o, args)
 	case "size", "s":
-		return applySizeOption(o, args)
+		return p.applySizeOption(o, args)
 	case "resizing_type", "rt":
-		return applyResizingTypeOption(o, args)
+		return p.applyResizingTypeOption(o, args)
 	case "width", "w":
-		return applyWidthOption(o, args)
+		return p.applyWidthOption(o, args)
 	case "height", "h":
-		return applyHeightOption(o, args)
+		return p.applyHeightOption(o, args)
 	case "min-width", "mw":
-		return applyMinWidthOption(o, args)
+		return p.applyMinWidthOption(o, args)
 	case "min-height", "mh":
-		return applyMinHeightOption(o, args)
+		return p.applyMinHeightOption(o, args)
 	case "zoom", "z":
-		return applyZoomOption(o, args)
+		return p.applyZoomOption(o, args)
 	case "dpr":
-		return applyDprOption(o, args)
+		return p.applyDprOption(o, args)
 	case "enlarge", "el":
-		return applyEnlargeOption(o, args)
+		return p.applyEnlargeOption(o, args)
 	case "extend", "ex":
-		return applyExtendOption(o, args)
+		return p.applyExtendOption(o, args)
 	case "extend_aspect_ratio", "extend_ar", "exar":
-		return applyExtendAspectRatioOption(o, args)
+		return p.applyExtendAspectRatioOption(o, args)
 	case "gravity", "g":
-		return applyGravityOption(o, args)
+		return p.applyGravityOption(o, args)
 	case "crop", "c":
-		return applyCropOption(o, args)
+		return p.applyCropOption(o, args)
 	case "trim", "t":
-		return applyTrimOption(o, args)
+		return p.applyTrimOption(o, args)
 	case "padding", "pd":
-		return applyPaddingOption(o, args)
+		return p.applyPaddingOption(o, args)
 	case "auto_rotate", "ar":
-		return applyAutoRotateOption(o, args)
+		return p.applyAutoRotateOption(o, args)
 	case "rotate", "rot":
-		return applyRotateOption(o, args)
+		return p.applyRotateOption(o, args)
 	case "background", "bg":
-		return applyBackgroundOption(o, args)
+		return p.applyBackgroundOption(o, args)
 	case "blur", "bl":
-		return applyBlurOption(o, args)
+		return p.applyBlurOption(o, args)
 	case "sharpen", "sh":
-		return applySharpenOption(o, args)
+		return p.applySharpenOption(o, args)
 	case "pixelate", "pix":
-		return applyPixelateOption(o, args)
+		return p.applyPixelateOption(o, args)
 	case "watermark", "wm":
-		return applyWatermarkOption(o, args)
+		return p.applyWatermarkOption(o, args)
 	case "strip_metadata", "sm":
-		return applyStripMetadataOption(o.Main(), args)
+		return p.applyStripMetadataOption(o.Main(), args)
 	case "keep_copyright", "kcr":
-		return applyKeepCopyrightOption(o.Main(), args)
+		return p.applyKeepCopyrightOption(o.Main(), args)
 	case "strip_color_profile", "scp":
-		return applyStripColorProfileOption(o.Main(), args)
+		return p.applyStripColorProfileOption(o.Main(), args)
 	case "enforce_thumbnail", "eth":
-		return applyEnforceThumbnailOption(o.Main(), args)
+		return p.applyEnforceThumbnailOption(o.Main(), args)
 	// Saving options
 	case "quality", "q":
-		return applyQualityOption(o.Main(), args)
+		return p.applyQualityOption(o.Main(), args)
 	case "format_quality", "fq":
-		return applyFormatQualityOption(o.Main(), args)
+		return p.applyFormatQualityOption(o.Main(), args)
 	case "max_bytes", "mb":
-		return applyMaxBytesOption(o.Main(), args)
+		return p.applyMaxBytesOption(o.Main(), args)
 	case "format", "f", "ext":
-		return applyFormatOption(o.Main(), args)
+		return p.applyFormatOption(o.Main(), args)
 	// Handling options
 	case "skip_processing", "skp":
-		return applySkipProcessingFormatsOption(o.Main(), args)
+		return p.applySkipProcessingFormatsOption(o.Main(), args)
 	case "raw":
-		return applyRawOption(o.Main(), args)
+		return p.applyRawOption(o.Main(), args)
 	case "cachebuster", "cb":
-		return applyCacheBusterOption(o.Main(), args)
+		return p.applyCacheBusterOption(o.Main(), args)
 	case "expires", "exp":
-		return applyExpiresOption(o.Main(), args)
+		return p.applyExpiresOption(o.Main(), args)
 	case "filename", "fn":
-		return applyFilenameOption(o.Main(), args)
+		return p.applyFilenameOption(o.Main(), args)
 	case "return_attachment", "att":
-		return applyReturnAttachmentOption(o.Main(), args)
+		return p.applyReturnAttachmentOption(o.Main(), args)
 	// Presets
 	case "preset", "pr":
-		return applyPresetOption(p, o, args, usedPresets...)
+		return p.applyPresetOption(o, args, usedPresets...)
 	// Security
 	case "max_src_resolution", "msr":
-		return applyMaxSrcResolutionOption(p, o.Main(), args)
+		return p.applyMaxSrcResolutionOption(o, args)
 	case "max_src_file_size", "msfs":
-		return applyMaxSrcFileSizeOption(p, o.Main(), args)
+		return p.applyMaxSrcFileSizeOption(o, args)
 	case "max_animation_frames", "maf":
-		return applyMaxAnimationFramesOption(p, o.Main(), args)
+		return p.applyMaxAnimationFramesOption(o.Main(), args)
 	case "max_animation_frame_resolution", "mafr":
-		return applyMaxAnimationFrameResolutionOption(p, o.Main(), args)
+		return p.applyMaxAnimationFrameResolutionOption(o.Main(), args)
 	case "max_result_dimension", "mrd":
-		return applyMaxResultDimensionOption(p, o.Main(), args)
+		return p.applyMaxResultDimensionOption(o.Main(), args)
 	}
 
 	return newUnknownOptionError("processing", name)
@@ -193,7 +193,7 @@ func (p *Parser) defaultProcessingOptions(headers http.Header) (*options.Options
 	}
 
 	if _, ok := p.presets["default"]; ok {
-		if err := applyPresetOption(p, o, []string{"default"}); err != nil {
+		if err := p.applyPresetOption(o, []string{"default"}); err != nil {
 			return o, err
 		}
 	}
@@ -251,7 +251,7 @@ func (p *Parser) parsePathOptions(
 	}
 
 	if !options.Get(o, keys.Raw, false) && len(extension) > 0 {
-		if err = applyFormatOption(o, []string{extension}); err != nil {
+		if err = p.applyFormatOption(o, []string{extension}); err != nil {
 			return nil, "", err
 		}
 	}
@@ -269,7 +269,7 @@ func (p *Parser) parsePathPresets(parts []string, headers http.Header) (*options
 	presets := strings.Split(parts[0], p.config.ArgumentsSeparator)
 	urlParts := parts[1:]
 
-	if err = applyPresetOption(p, o, presets); err != nil {
+	if err = p.applyPresetOption(o, presets); err != nil {
 		return nil, "", err
 	}
 
@@ -279,7 +279,7 @@ func (p *Parser) parsePathPresets(parts []string, headers http.Header) (*options
 	}
 
 	if !options.Get(o, keys.Raw, false) && len(extension) > 0 {
-		if err = applyFormatOption(o, []string{extension}); err != nil {
+		if err = p.applyFormatOption(o, []string{extension}); err != nil {
 			return nil, "", err
 		}
 	}
