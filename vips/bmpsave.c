@@ -15,39 +15,6 @@ static VipsBandFormat bandfmt_bmp[10] = {
   /* Promotion: */ UC, UC, UC, UC, UC, UC, UC, UC, UC, UC
 };
 
-// BMP BITMAPINFOHEADERV5 file header struct, ((packed)) since we
-// do not want any compiler-induced padding
-typedef struct __attribute__((packed)) _BmpHeader {
-  uint8_t sig[2];              // Signature 'BM'
-  uint32_t file_size;          // File size in bytes
-  uint16_t reserved[2];        // Reserved fields
-  uint32_t pix_offset;         // Offset to pixel data
-  uint32_t dib_header_size;    // DIB header size
-  int32_t width;               // Image width
-  int32_t height;              // Image height
-  uint16_t color_plane;        // Number of color planes
-  uint16_t bpp;                // Bits per pixel
-  uint32_t compression;        // Compression method
-  uint32_t image_size;         // Image size
-  uint32_t x_pixels_per_meter; // Horizontal resolution
-  uint32_t y_pixels_per_meter; // Vertical resolution
-  uint32_t color_use;          // Number of colors in palette
-  uint32_t color_important;    // Number of important colors
-  uint32_t rmask;              // Red mask
-  uint32_t gmask;              // Green mask
-  uint32_t bmask;              // Blue mask
-  uint32_t amask;              // Alpha mask (optional, only for 32 bpp BMP files)
-  uint8_t cs_type[4];          // Color space type (B G R s)
-  uint8_t cs[36];              // CIEXYZTRIPLE Color Space
-  uint32_t red_gamma;          // Red gamma
-  uint32_t green_gamma;        // Green gamma
-  uint32_t blue_gamma;         // Blue gamma
-  uint32_t intent;
-  uint32_t profile_data; // Profile data (optional, only for 32 bpp BMP files)
-  uint32_t profile_size;
-  uint32_t reserved_5;
-} BmpHeader;
-
 typedef struct _VipsForeignSaveBmp {
   VipsForeignSave parent_object;
 
@@ -139,25 +106,31 @@ vips_foreign_save_bmp_build(VipsObject *object)
   uint32_t pix_offset = BMP_FILE_HEADER_LEN + BMP_V5_INFO_HEADER_LEN;
 
   // Format BMP file header. We write 24/32 bpp BMP files only with no compression.
-  BmpHeader header;
+  BmpFileHeader file_header;
+  memset(&file_header, 0, sizeof(file_header));
+  file_header.sig[0] = 'B';
+  file_header.sig[1] = 'M';
+  file_header.size = GUINT32_TO_LE(pix_offset + image_size);
+  file_header.offset = GUINT32_TO_LE(pix_offset);
+  file_header.info_header_len = GUINT32_TO_LE(BMP_V5_INFO_HEADER_LEN);
 
-  header.sig[0] = 'B';
-  header.sig[1] = 'M';
-  header.file_size = GUINT32_TO_LE(pix_offset + image_size);
-  header.reserved[0] = 0;
-  header.reserved[1] = 0;
-  header.pix_offset = GUINT32_TO_LE(pix_offset);
-  header.dib_header_size = GUINT32_TO_LE(BMP_V5_INFO_HEADER_LEN);
+  if (vips_target_write(bmp->target, &file_header, sizeof(file_header)) < 0) {
+    vips_error("vips_foreign_save_bmp_build", "unable to write BMP header to target");
+    return -1;
+  }
+
+  BmpDibHeader header;
+  memset(&header, 0, sizeof(header));
   header.width = GINT32_TO_LE(in->Xsize);
   header.height = GINT32_TO_LE(-in->Ysize);
-  header.color_plane = GUINT16_TO_LE(1);
+  header.planes = GUINT16_TO_LE(1);
   header.bpp = GUINT16_TO_LE(bpp);
   header.compression = COMPRESSION_BI_RGB;
   header.image_size = GUINT32_TO_LE(image_size);
-  header.x_pixels_per_meter = 0; // GUINT32_TO_LE(2835);
-  header.y_pixels_per_meter = 0; // GUINT32_TO_LE(2835);
-  header.color_use = 0;
-  header.color_important = 0;
+  header.x_ppm = 0; // GUINT32_TO_LE(2835);
+  header.y_ppm = 0; // GUINT32_TO_LE(2835);
+  header.num_colors = 0;
+  header.num_important_colors = 0;
   header.rmask = GUINT32_TO_LE(0x00FF0000); // Standard says that masks are in BE order
   header.gmask = GUINT32_TO_LE(0x0000FF00);
   header.bmask = GUINT32_TO_LE(0x000000FF);
@@ -166,10 +139,9 @@ vips_foreign_save_bmp_build(VipsObject *object)
   header.cs_type[1] = 'G';
   header.cs_type[2] = 'R';
   header.cs_type[3] = 's';
-  memset(header.cs, 0, sizeof(header.cs)); // CIEXYZTRIPLE Color Space
-  header.red_gamma = 0;
-  header.green_gamma = 0;
-  header.blue_gamma = 0;
+  header.rgamma = 0;
+  header.ggamma = 0;
+  header.bgamma = 0;
   header.intent = GUINT32_TO_LE(4); // IMAGES intent, must be 4
   header.profile_data = 0;
   header.profile_size = 0;

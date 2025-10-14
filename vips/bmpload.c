@@ -157,17 +157,14 @@ vips_foreign_load_bmp_header(VipsForeignLoad *load)
   if (vips_source_rewind(bmp->source))
     return -1;
 
-  VipsPel file_header_buf[BMP_FILE_HEADER_LEN + 4];
-
-  // Read the header + the next uint32 after
-  if (vips_foreign_load_read_full(bmp->source, &file_header_buf, BMP_FILE_HEADER_LEN + 4) <= 0) {
+  BmpFileHeader file_header;
+  if (vips_foreign_load_read_full(bmp->source, &file_header, sizeof(file_header)) <= 0) {
     vips_error("vips_foreign_load_bmp_header", "unable to read file header from the source");
     return -1;
   }
 
-  // Check if the info header length is valid
-  uint32_t offset = GUINT32_FROM_LE(*(uint32_t *) (file_header_buf + 10));
-  uint32_t info_header_len = GUINT32_FROM_LE(*(uint32_t *) (file_header_buf + 14));
+  uint32_t offset = GUINT32_FROM_LE(file_header.offset);
+  uint32_t info_header_len = GUINT32_FROM_LE(file_header.info_header_len);
 
   if (
       (info_header_len != BMP_BITMAP_INFO_HEADER_LEN) &&
@@ -177,21 +174,22 @@ vips_foreign_load_bmp_header(VipsForeignLoad *load)
     return -1;
   }
 
-  // Now, read the info header. -4 bytes is because we've already read the first 4 bytes of
-  // the header (info_header_len) at the previous step. Constants include those 4 bytes.
-  VipsPel *info_header = VIPS_ARRAY(load, info_header_len - 4, VipsPel);
+  BmpDibHeader dib_header;
+  memset(&dib_header, 0, sizeof(dib_header));
 
-  if (vips_foreign_load_read_full(bmp->source, info_header, info_header_len - 4) <= 0) {
+  if (vips_foreign_load_read_full(bmp->source, &dib_header, info_header_len - 4) <= 0) {
     vips_error("vips_foreign_load_bmp_header", "unable to read BMP info header");
     return -1;
   }
 
-  int32_t width = GINT32_FROM_LE(*(int32_t *) (info_header));
-  int32_t height = GINT32_FROM_LE(*(int32_t *) (info_header + 4));
-  uint16_t planes = GUINT16_FROM_LE(*(uint16_t *) (info_header + 8));
-  uint16_t bpp = GUINT16_FROM_LE(*(uint16_t *) (info_header + 10));
-  uint32_t compression = GUINT32_FROM_LE(*(uint32_t *) (info_header + 12));
-  uint32_t num_colors = GUINT32_FROM_LE(*(uint32_t *) (info_header + 28));
+  VipsPel *info_header = (VipsPel *) &dib_header;
+
+  int32_t width = GINT32_FROM_LE(dib_header.width);
+  int32_t height = GINT32_FROM_LE(dib_header.height);
+  uint16_t planes = GUINT16_FROM_LE(dib_header.planes);
+  uint16_t bpp = GUINT16_FROM_LE(dib_header.bpp);
+  uint32_t compression = GUINT32_FROM_LE(dib_header.compression);
+  uint32_t num_colors = GUINT32_FROM_LE(dib_header.num_colors);
   bool top_down = FALSE;
   bool rle = FALSE;
   bool bmp565 = FALSE;
@@ -207,7 +205,7 @@ vips_foreign_load_bmp_header(VipsForeignLoad *load)
   // If the info header is V4 or V5, check for alpha channel mask explicitly.
   // If it's non-zero, then the target image should have an alpha channel.
   if ((has_alpha) && (info_header_len > BMP_BITMAP_INFO_HEADER_LEN)) {
-    has_alpha = GUINT32_FROM_LE(*(uint32_t *) (info_header + 48)) != 0;
+    has_alpha = dib_header.amask != 0;
   }
 
   // Target image should have alpha channel only in case source image has alpha channel
@@ -247,43 +245,38 @@ vips_foreign_load_bmp_header(VipsForeignLoad *load)
   else if (
       (compression == COMPRESSION_BI_BITFIELDS) ||
       (compression == COMPRESSION_BI_BITFIELDS_ALPHA)) {
+
     int color_mask_len = 3;
 
     if (bpp > 24) {
       color_mask_len = 4;
     }
 
-    uint32_t color_mask_buf[4];
-    uint32_t *color_mask;
-
     // for the non-v4/v5 bmp image we need to load color mask separately since
-    // it is not included in the header
+    // it is not included in the header, hence, we had no read it before. Otherwise,
+    // for v4/v5 headers color masks are already read.
     if (info_header_len == BMP_BITMAP_INFO_HEADER_LEN) {
+      memset(&dib_header.rmask, 0, 4 * sizeof(uint32_t));
+
       // let's attach it to load itself so we won't care about conditionally freeing it
-      if (vips_foreign_load_read_full(bmp->source, color_mask_buf, color_mask_len * sizeof(uint32_t)) <= 0) {
+      if (vips_foreign_load_read_full(bmp->source, &dib_header.rmask, color_mask_len * sizeof(uint32_t)) <= 0) {
         vips_error("vips_foreign_load_bmp_header", "unable to read BMP color mask");
         return -1;
       }
-      color_mask = color_mask_buf;
-    }
-    else {
-      // In case of v4/v5 info header, the color mask is already included in the info header,
-      // we just need to read it
-      color_mask = (uint32_t *) ((VipsPel *) info_header + 36);
     }
 
     // Standard says that color masks are in BE order. However, we do all the
     // checks and calculations as like as masks were in LE order.
-    rmask = GUINT32_FROM_LE(color_mask[0]);
-    gmask = GUINT32_FROM_LE(color_mask[1]);
-    bmask = GUINT32_FROM_LE(color_mask[2]);
+    rmask = GUINT32_FROM_LE(dib_header.rmask);
+    gmask = GUINT32_FROM_LE(dib_header.gmask);
+    bmask = GUINT32_FROM_LE(dib_header.bmask);
     amask = 0; // default alpha mask is 0
 
     if (color_mask_len > 3) {
-      amask = GUINT32_FROM_LE(color_mask[3]);
+      amask = GUINT32_FROM_LE(dib_header.amask);
     }
 
-    if ((bpp == 16) && (rmask = 0xF800) && (gmask == 0x7E0) && (bmask == 0x1F)) {
+    if ((bpp == 16) && (rmask == 0xF800) && (gmask == 0x7E0) && (bmask == 0x1F)) {
       bmp565 = TRUE;
     }
     else if ((bpp == 16) && (rmask == 0x7C00) && (gmask == 0x3E0) && (bmask == 0x1F)) {
@@ -580,9 +573,8 @@ vips_foreign_load_bmp_rle_generate_strip(VipsRect *r, VipsRegion *out_region, Vi
             bmp->dy = dy;                    // We do not care if Y pos is outside of the impage, it's a separate check
 
             break; // we need to skip lines, so we exit the loop
-          }
+          } // Movement by X might not lead to EOL, so we continue
           else {
-            // Movement by X might not lead to EOL, so we continue
             bmp->dy = dy;              // 0
             x = MIN(x + dx, r->width); // Move to the desired pixel
           }
