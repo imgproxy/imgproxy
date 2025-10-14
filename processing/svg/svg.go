@@ -3,15 +3,12 @@ package svg
 import (
 	"bytes"
 	"errors"
-	"io"
-	"strings"
 	"sync"
 
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/options"
-	"github.com/tdewolff/parse/v2"
-	"github.com/tdewolff/parse/v2/xml"
+	svgparser "github.com/imgproxy/imgproxy/v3/processing/svg/parser"
 )
 
 // pool represents temorary pool for svg sanitized data
@@ -56,8 +53,13 @@ func (p *Processor) sanitize(data imagedata.ImageData) (imagedata.ImageData, err
 		return data, nil
 	}
 
-	r := data.Reader()
-	l := xml.NewLexer(parse.NewInput(r))
+	doc, err := svgparser.NewDocument(data.Reader())
+	if err != nil {
+		return nil, newSanitizeError(err)
+	}
+
+	// Sanitize the document's children
+	p.sanitizeChildren(&doc.Node)
 
 	buf, ok := pool.Get().(*bytes.Buffer)
 	if !ok {
@@ -69,62 +71,13 @@ func (p *Processor) sanitize(data imagedata.ImageData) (imagedata.ImageData, err
 		pool.Put(buf)
 	}
 
-	ignoreTag := 0
-
-	var curTagName string
-
-	for {
-		tt, tdata := l.Next()
-
-		if tt == xml.ErrorToken {
-			if l.Err() != io.EOF {
-				cancel()
-				return nil, newSanitizeError(l.Err())
-			}
-			break
-		}
-
-		if ignoreTag > 0 {
-			switch tt {
-			case xml.EndTagToken, xml.StartTagCloseVoidToken:
-				ignoreTag--
-			case xml.StartTagToken:
-				ignoreTag++
-			}
-
-			continue
-		}
-
-		switch tt {
-		case xml.StartTagToken:
-			curTagName = strings.ToLower(string(l.Text()))
-
-			if curTagName == "script" {
-				ignoreTag++
-				continue
-			}
-
-			buf.Write(tdata)
-		case xml.AttributeToken:
-			attrName := strings.ToLower(string(l.Text()))
-
-			if _, unsafe := unsafeAttrs[attrName]; unsafe {
-				continue
-			}
-
-			if curTagName == "use" && (attrName == "href" || attrName == "xlink:href") {
-				val := strings.TrimSpace(strings.Trim(string(l.AttrVal()), `"'`))
-				if len(val) > 0 && val[0] != '#' {
-					continue
-				}
-			}
-
-			buf.Write(tdata)
-		default:
-			buf.Write(tdata)
-		}
+	// Write the sanitized document to the buffer
+	if _, err := doc.WriteTo(buf); err != nil {
+		cancel()
+		return nil, newSanitizeError(err)
 	}
 
+	// Create new ImageData from the sanitized buffer
 	newData := imagedata.NewFromBytesWithFormat(
 		imagetype.SVG,
 		buf.Bytes(),
@@ -132,4 +85,78 @@ func (p *Processor) sanitize(data imagedata.ImageData) (imagedata.ImageData, err
 	newData.AddCancel(cancel)
 
 	return newData, nil
+}
+
+// sanitizeChildren sanitizes all child elements of the given element.
+func (p *Processor) sanitizeChildren(el *svgparser.Node) {
+	if el == nil || len(el.Children) == 0 {
+		return
+	}
+
+	// Filter children in place
+	filteredChildren := el.Children[:0]
+	for _, toc := range el.Children {
+		childEl, ok := toc.(*svgparser.Node)
+		if !ok {
+			// Keep non-element nodes (text, comments, etc.)
+			filteredChildren = append(filteredChildren, toc)
+			continue
+		}
+
+		// Sanitize the child element.
+		// Keep this child if sanitizeElement returned true.
+		if p.sanitizeElement(childEl) {
+			filteredChildren = append(filteredChildren, childEl)
+		}
+	}
+
+	el.Children = filteredChildren
+}
+
+// sanitizeElement sanitizes a single SVG element.
+// It returns true if the element should be kept, false if it should be removed.
+func (p *Processor) sanitizeElement(el *svgparser.Node) bool {
+	if el == nil {
+		return false
+	}
+
+	// Strip <script> tags
+	if el.Name.Local == "script" {
+		return false
+	}
+
+	// Filter out unsafe attributes (such as on* events)
+	el.Attrs = filterAttributes(el.Attrs, func(attr svgparser.Attr) bool {
+		_, unsafe := unsafeAttrs[attr.Name.Local]
+		return !unsafe
+	})
+
+	// Special handling for <use> tags.
+	if el.Name.Local == "use" {
+		el.Attrs = filterAttributes(el.Attrs, func(attr svgparser.Attr) bool {
+			// Keep non-href attributes
+			if attr.Name.Local != "href" {
+				return true
+			}
+			// Strip hrefs that are not internal references
+			return len(attr.Value) == 0 || attr.Value[0] == '#'
+		})
+	}
+
+	// Recurse into children
+	p.sanitizeChildren(el)
+
+	// Keep this element
+	return true
+}
+
+// filterAttributes filters attributes based on the given predicate function.
+func filterAttributes(attrs []svgparser.Attr, f func(attr svgparser.Attr) bool) []svgparser.Attr {
+	filtered := attrs[:0]
+	for _, attr := range attrs {
+		if f(attr) {
+			filtered = append(filtered, attr)
+		}
+	}
+	return filtered
 }
