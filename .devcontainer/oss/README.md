@@ -19,10 +19,12 @@ lefthook install
 
 You can use [`air`](https://github.com/air-verse/air) for hot-reloading during development. Simply run: `air`.
 
-Port `8080` is forwared to the host.
+Port `8081` is forwared to the host.
 
 # Test images
 
 [test images repo](https://github.com/imgproxy/test-images.git) will be automatically cloned or pulled to `.devcontainer/images` folder before the container starts.
 
-[Try it](http://localhost:8080/insecure/rs:fit:300:200/plain/local:///kitten.jpg@png). -->
+Use `make devcontainer` to attach to the running devcontainer instance.
+
+[Try it](http://localhost:8081/insecure/rs:fit:300:200/plain/local:///kitten.jpg@png). -->

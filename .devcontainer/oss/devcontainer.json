@@ -5,6 +5,7 @@
         8081
     ],
     "containerEnv": {
+        "IMGPROXY_PORT": "8081",
         "IMGPROXY_LOCAL_FILESYSTEM_ROOT": "/images",
         "IMGPROXY_ENABLE_VIDEO_THUMBNAILS": "true",
         "IMGPROXY_MAX_ANIMATION_FRAMES": "999",
