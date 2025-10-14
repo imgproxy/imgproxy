@@ -182,8 +182,6 @@ vips_foreign_load_bmp_header(VipsForeignLoad *load)
     return -1;
   }
 
-  VipsPel *info_header = (VipsPel *) &dib_header;
-
   int32_t width = GINT32_FROM_LE(dib_header.width);
   int32_t height = GINT32_FROM_LE(dib_header.height);
   uint16_t planes = GUINT16_FROM_LE(dib_header.planes);
@@ -573,8 +571,9 @@ vips_foreign_load_bmp_rle_generate_strip(VipsRect *r, VipsRegion *out_region, Vi
             bmp->dy = dy;                    // We do not care if Y pos is outside of the impage, it's a separate check
 
             break; // we need to skip lines, so we exit the loop
-          } // Movement by X might not lead to EOL, so we continue
+          }
           else {
+            // Movement by X might not lead to EOL, so we continue
             bmp->dy = dy;              // 0
             x = MIN(x + dx, r->width); // Move to the desired pixel
           }
