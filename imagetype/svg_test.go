@@ -25,6 +25,12 @@ func TestSVGDetectSuccess(t *testing.T) {
 	typ, err = IsSVG(r)
 	require.NoError(t, err)
 	require.Equal(t, SVG, typ)
+
+	// Partial content; Simulate limit reader
+	r = bufreader.New(strings.NewReader(`<svg xmlns="http://www.w3.org/2000/svg">SomethingSomething...`))
+	typ, err = IsSVG(r)
+	require.NoError(t, err)
+	require.Equal(t, SVG, typ)
 }
 
 func TestSVGDetectNotSvg(t *testing.T) {

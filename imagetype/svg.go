@@ -1,14 +1,11 @@
 package imagetype
 
 import (
+	"encoding/xml"
 	"errors"
 	"io"
-	"strings"
 
 	"github.com/imgproxy/imgproxy/v3/bufreader"
-
-	"github.com/tdewolff/parse/v2"
-	"github.com/tdewolff/parse/v2/xml"
 )
 
 func init() {
@@ -18,33 +15,27 @@ func init() {
 }
 
 func IsSVG(r bufreader.ReadPeeker) (Type, error) {
-	l := xml.NewLexer(parse.NewInput(r))
+	dec := xml.NewDecoder(r)
+	dec.Strict = false
 
 	for {
-		tt, _ := l.Next()
-
-		switch tt {
-		case xml.ErrorToken:
-			err := l.Err()
-
-			if err == io.EOF || err == io.ErrUnexpectedEOF {
-				// EOF or unexpected EOF means we don't have enough data to determine the type
-				return Unknown, nil
-			}
-
-			var perr *parse.Error
+		tok, err := dec.RawToken()
+		if err == io.EOF || err == io.ErrUnexpectedEOF {
+			// EOF or unexpected EOF means we don't have enough data to determine the type
+			return Unknown, nil
+		}
+		if err != nil {
+			var perr *xml.SyntaxError
 			if errors.As(err, &perr) {
 				// If the error is a parse error, we can assume that the data is not SVG
 				return Unknown, nil
 			}
 
 			return Unknown, err
+		}
 
-		case xml.StartTagToken:
-			tag := strings.ToLower(string(l.Text()))
-			if tag == "svg" || tag == "svg:svg" {
-				return SVG, nil
-			}
+		if se, ok := tok.(xml.StartElement); ok && se.Name.Local == "svg" {
+			return SVG, nil
 		}
 	}
 }
