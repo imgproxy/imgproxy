@@ -156,10 +156,10 @@ func TestRegisterDetector(t *testing.T) {
 	}
 
 	// Create a test detector functions
-	testDetector1 := func(r bufreader.ReadPeeker) (Type, error) { return JPEG, nil }
-	testDetector2 := func(r bufreader.ReadPeeker) (Type, error) { return PNG, nil }
-	testDetector3 := func(r bufreader.ReadPeeker) (Type, error) { return GIF, nil }
-	testDetector4 := func(r bufreader.ReadPeeker) (Type, error) { return SVG, nil }
+	testDetector1 := func(r bufreader.ReadPeeker, _, _ string) (Type, error) { return JPEG, nil }
+	testDetector2 := func(r bufreader.ReadPeeker, _, _ string) (Type, error) { return PNG, nil }
+	testDetector3 := func(r bufreader.ReadPeeker, _, _ string) (Type, error) { return GIF, nil }
+	testDetector4 := func(r bufreader.ReadPeeker, _, _ string) (Type, error) { return SVG, nil }
 
 	// Register the detectors using the method
 	testRegistry.RegisterDetector(0, testDetector1)
@@ -195,7 +195,7 @@ func TestRegisterMagicBytes(t *testing.T) {
 	require.Len(t, testRegistry.detectors, 1)
 	require.Equal(t, -1, testRegistry.detectors[0].priority)
 
-	typ, err := testRegistry.Detect(bufreader.New(bytes.NewReader(jpegMagic)))
+	typ, err := testRegistry.Detect(bufreader.New(bytes.NewReader(jpegMagic)), "", "")
 	require.NoError(t, err)
 	require.Equal(t, JPEG, typ)
 }
@@ -207,12 +207,12 @@ func TestDetectionErrorReturns(t *testing.T) {
 	detErr := error(nil)
 
 	// The first detector will fail with detErr
-	testRegistry.RegisterDetector(0, func(r bufreader.ReadPeeker) (Type, error) {
+	testRegistry.RegisterDetector(0, func(r bufreader.ReadPeeker, _, _ string) (Type, error) {
 		return Unknown, detErr
 	})
 
 	// The second detector will succeed
-	testRegistry.RegisterDetector(1, func(r bufreader.ReadPeeker) (Type, error) {
+	testRegistry.RegisterDetector(1, func(r bufreader.ReadPeeker, _, _ string) (Type, error) {
 		return JPEG, nil
 	})
 
@@ -221,19 +221,19 @@ func TestDetectionErrorReturns(t *testing.T) {
 
 	// Should not fail with io.EOF
 	detErr = io.EOF
-	typ, err := testRegistry.Detect(r)
+	typ, err := testRegistry.Detect(r, "", "")
 	require.Equal(t, JPEG, typ)
 	require.NoError(t, err)
 
 	// Should not fail with io.ErrUnexpectedEOF
 	detErr = io.ErrUnexpectedEOF
-	typ, err = testRegistry.Detect(r)
+	typ, err = testRegistry.Detect(r, "", "")
 	require.Equal(t, JPEG, typ)
 	require.NoError(t, err)
 
 	// Should fail with other read errors
 	detErr = io.ErrClosedPipe
-	typ, err = testRegistry.Detect(r)
+	typ, err = testRegistry.Detect(r, "", "")
 	require.Equal(t, Unknown, typ)
 	require.Error(t, err)
 	require.ErrorAs(t, err, &TypeDetectionError{})

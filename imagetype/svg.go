@@ -17,7 +17,7 @@ func init() {
 	RegisterDetector(100, IsSVG)
 }
 
-func IsSVG(r bufreader.ReadPeeker) (Type, error) {
+func IsSVG(r bufreader.ReadPeeker, _, _ string) (Type, error) {
 	l := xml.NewLexer(parse.NewInput(r))
 
 	for {

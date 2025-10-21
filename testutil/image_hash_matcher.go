@@ -152,7 +152,7 @@ func (m *ImageHashMatcher) saveTmpImage(t *testing.T, key string, buf []byte) {
 	}
 
 	// Detect the image type to get the correct extension
-	ext, err := imagetype.Detect(bytes.NewReader(buf))
+	ext, err := imagetype.Detect(bytes.NewReader(buf), "", "")
 	require.NoError(t, err)
 
 	targetPath, err := m.makeTargetPath(t, m.saveTmpImagesPath, t.Name(), key, ext.String())
