@@ -1,11 +1,11 @@
 package imagetype
 
 import (
-	"encoding/xml"
 	"errors"
 	"io"
 
 	"github.com/imgproxy/imgproxy/v3/bufreader"
+	svgparser "github.com/imgproxy/imgproxy/v3/processing/svg/parser"
 )
 
 func init() {
@@ -15,17 +15,16 @@ func init() {
 }
 
 func IsSVG(r bufreader.ReadPeeker, _, _ string) (Type, error) {
-	dec := xml.NewDecoder(r)
-	dec.Strict = false
+	dec := svgparser.NewDecoder(r)
 
 	for {
-		tok, err := dec.RawToken()
+		tok, err := dec.Token()
 		if err == io.EOF || err == io.ErrUnexpectedEOF {
 			// EOF or unexpected EOF means we don't have enough data to determine the type
 			return Unknown, nil
 		}
 		if err != nil {
-			var perr *xml.SyntaxError
+			var perr svgparser.SyntaxError
 			if errors.As(err, &perr) {
 				// If the error is a parse error, we can assume that the data is not SVG
 				return Unknown, nil
@@ -34,7 +33,7 @@ func IsSVG(r bufreader.ReadPeeker, _, _ string) (Type, error) {
 			return Unknown, err
 		}
 
-		if se, ok := tok.(xml.StartElement); ok && se.Name.Local == "svg" {
+		if se, ok := tok.(svgparser.StartElement); ok && se.Name.Local == "svg" {
 			return SVG, nil
 		}
 	}

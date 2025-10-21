@@ -2,40 +2,32 @@ package svgparser
 
 import (
 	"bufio"
-	"encoding/xml"
 	"errors"
 	"fmt"
 	"io"
-
-	"golang.org/x/net/html/charset"
+	"strings"
 )
-
-type Attr = xml.Attr
 
 type Node struct {
 	Parent   *Node
-	Name     xml.Name
+	Name     Name
 	Attrs    []Attr
 	Children []any
 }
 
-func (n *Node) readFrom(r io.ReadSeeker) error {
+func (n *Node) readFrom(r io.Reader) error {
 	if n.Parent != nil {
 		return errors.New("cannot read child node")
 	}
 
-	dec := xml.NewDecoder(r)
-	dec.Strict = false
-	dec.CharsetReader = charset.NewReaderLabel
+	dec := NewDecoder(r)
+	defer dec.Close()
 
 	curNode := n
 
 	for {
-		// Save the current position to know where to read raw CData from.
-		pos := dec.InputOffset()
-
 		// Read raw token so decoder doesn't mess with attributes and namespaces.
-		tok, err := dec.RawToken()
+		tok, err := dec.Token()
 		if err == io.EOF {
 			break
 		}
@@ -44,7 +36,7 @@ func (n *Node) readFrom(r io.ReadSeeker) error {
 		}
 
 		switch t := tok.(type) {
-		case xml.StartElement:
+		case StartElement:
 			// An element is opened, create a node for it
 			el := &Node{
 				Parent: curNode,
@@ -55,7 +47,7 @@ func (n *Node) readFrom(r io.ReadSeeker) error {
 			curNode.Children = append(curNode.Children, el)
 			curNode = el
 
-		case xml.EndElement:
+		case EndElement:
 			// If the current node has no parent, then we are at the root,
 			// which can't be closed.
 			if curNode.Parent == nil {
@@ -75,23 +67,20 @@ func (n *Node) readFrom(r io.ReadSeeker) error {
 			// The node is closed, return to its parent
 			curNode = curNode.Parent
 
-		case xml.CharData:
-			// We want CData as is, so read it raw
-			cdata, err := readRawCData(r, pos, dec.InputOffset()-pos)
-			if err != nil {
-				return err
-			}
+		case CData:
+			curNode.Children = append(curNode.Children, t.Clone())
 
-			curNode.Children = append(curNode.Children, cdata)
+		case Text:
+			curNode.Children = append(curNode.Children, t.Clone())
 
-		case xml.Directive:
-			curNode.Children = append(curNode.Children, t.Copy())
+		case Directive:
+			curNode.Children = append(curNode.Children, t.Clone())
 
-		case xml.Comment:
-			curNode.Children = append(curNode.Children, t.Copy())
+		case Comment:
+			curNode.Children = append(curNode.Children, t.Clone())
 
-		case xml.ProcInst:
-			curNode.Children = append(curNode.Children, t.Copy())
+		case ProcInst:
+			curNode.Children = append(curNode.Children, t.Clone())
 		}
 	}
 
@@ -144,22 +133,24 @@ func (n *Node) writeAttrsTo(w *bufio.Writer) error {
 		if err := writeFullName(w, attr.Name); err != nil {
 			return err
 		}
-		if _, err := w.WriteString(`="`); err != nil {
-			return err
-		}
-		if len(attr.Value) > 2 && attr.Value[0] == '&' && attr.Value[len(attr.Value)-1] == ';' {
-			// Attribute value is an entity, write it as is
+		if len(attr.Value) > 0 {
+			quote := byte('"')
+			if strings.IndexByte(attr.Value, quote) != -1 {
+				quote = '\''
+			}
+
+			if err := w.WriteByte('='); err != nil {
+				return err
+			}
+			if err := w.WriteByte(quote); err != nil {
+				return err
+			}
 			if _, err := w.WriteString(attr.Value); err != nil {
 				return err
 			}
-		} else {
-			// Escape the attribute value
-			if err := escapeString(w, attr.Value); err != nil {
+			if err := w.WriteByte(quote); err != nil {
 				return err
 			}
-		}
-		if err := w.WriteByte('"'); err != nil {
-			return err
 		}
 	}
 
@@ -174,8 +165,19 @@ func (n *Node) writeChildrenTo(w *bufio.Writer) error {
 				return err
 			}
 
-		case CData:
+		case Text:
 			if _, err := w.Write([]byte(c)); err != nil {
+				return err
+			}
+
+		case CData:
+			if _, err := w.WriteString("<![CDATA["); err != nil {
+				return err
+			}
+			if _, err := w.Write([]byte(c)); err != nil {
+				return err
+			}
+			if _, err := w.WriteString("]]>"); err != nil {
 				return err
 			}
 
@@ -191,7 +193,7 @@ func (n *Node) writeChildrenTo(w *bufio.Writer) error {
 			}
 
 		case Directive:
-			if _, err := w.WriteString("<!"); err != nil {
+			if _, err := w.WriteString("<!DOCTYPE"); err != nil {
 				return err
 			}
 			if _, err := w.Write([]byte(c)); err != nil {
@@ -209,8 +211,10 @@ func (n *Node) writeChildrenTo(w *bufio.Writer) error {
 				return err
 			}
 			if len(c.Inst) > 0 {
-				if err := w.WriteByte(' '); err != nil {
-					return err
+				if !isSpace(c.Inst[0]) {
+					if err := w.WriteByte(' '); err != nil {
+						return err
+					}
 				}
 				if _, err := w.Write([]byte(c.Inst)); err != nil {
 					return err
@@ -228,14 +232,14 @@ func (n *Node) writeChildrenTo(w *bufio.Writer) error {
 	return nil
 }
 
-func fullName(name xml.Name) string {
+func fullName(name Name) string {
 	if len(name.Space) == 0 {
 		return name.Local
 	}
 	return name.Space + ":" + name.Local
 }
 
-func writeFullName(w *bufio.Writer, name xml.Name) error {
+func writeFullName(w *bufio.Writer, name Name) error {
 	if len(name.Space) > 0 {
 		if _, err := w.WriteString(name.Space); err != nil {
 			return err

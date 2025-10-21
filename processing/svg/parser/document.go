@@ -9,7 +9,7 @@ type Document struct {
 	Node
 }
 
-func NewDocument(r io.ReadSeeker) (*Document, error) {
+func NewDocument(r io.Reader) (*Document, error) {
 	doc := &Document{}
 	if err := doc.readFrom(r); err != nil {
 		return nil, err
