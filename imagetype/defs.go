@@ -185,7 +185,4 @@ func init() {
 
 	// BMP magic bytes
 	RegisterMagicBytes(BMP, []byte("BM"))
-
-	// TIFF magic bytes (little-endian and big-endian)
-	RegisterMagicBytes(TIFF, []byte("II*\x00"), []byte("MM\x00*")) // Big-Endian, Little-endian
 }

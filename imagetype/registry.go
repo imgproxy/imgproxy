@@ -29,7 +29,7 @@ type TypeDesc struct {
 }
 
 // DetectFunc is a function that detects the image type from byte data
-type DetectFunc func(r bufreader.ReadPeeker) (Type, error)
+type DetectFunc func(r bufreader.ReadPeeker, ct, ext string) (Type, error)
 
 // detector is a struct that holds a detection function and its priority
 type detector struct {
@@ -125,8 +125,8 @@ func RegisterMagicBytes(typ Type, signature ...[]byte) {
 
 // Detect attempts to detect the image type from a reader.
 // It first tries magic byte detection, then custom detectors in registration order
-func Detect(r io.Reader) (Type, error) {
-	return globalRegistry.Detect(r)
+func Detect(r io.Reader, ct, ext string) (Type, error) {
+	return globalRegistry.Detect(r, ct, ext)
 }
 
 // RegisterDetector registers a custom detector function on this registry instance
@@ -145,7 +145,7 @@ func (r *registry) RegisterDetector(priority int, fn DetectFunc) {
 
 // RegisterMagicBytes registers magic bytes for a specific image type on this registry instance
 func (r *registry) RegisterMagicBytes(typ Type, signature ...[]byte) {
-	r.RegisterDetector(-1, func(r bufreader.ReadPeeker) (Type, error) {
+	r.RegisterDetector(-1, func(r bufreader.ReadPeeker, _, _ string) (Type, error) {
 		for _, sig := range signature {
 			b, err := r.Peek(len(sig))
 			if err != nil {
@@ -162,12 +162,12 @@ func (r *registry) RegisterMagicBytes(typ Type, signature ...[]byte) {
 }
 
 // Detect runs image format detection
-func (r *registry) Detect(re io.Reader) (Type, error) {
+func (r *registry) Detect(re io.Reader, ct, ext string) (Type, error) {
 	br := bufreader.New(io.LimitReader(re, maxDetectionLimit))
 
 	for _, d := range r.detectors {
 		br.Rewind()
-		typ, err := d.fn(br)
+		typ, err := d.fn(br, ct, ext)
 		if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
 			return Unknown, newTypeDetectionError(err)
 		}

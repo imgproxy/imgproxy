@@ -2,6 +2,7 @@ package imagetype
 
 import (
 	"os"
+	"path"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -43,6 +44,7 @@ func TestDetect(t *testing.T) {
 		{"BMP", "../testdata/test-images/bmp/24-bpp.bmp", BMP},
 		{"TIFF", "../testdata/test-images/tiff/tiff.tiff", TIFF},
 		{"SVG", "../testdata/test-images/svg/svg.svg", SVG},
+		{"RAW", "../testdata/test-images/raw/RAW_CANON_1DM2.CR2", Unknown}, // RAW is not supported
 	}
 
 	for _, tt := range tests {
@@ -51,8 +53,12 @@ func TestDetect(t *testing.T) {
 			require.NoError(t, err)
 			defer f.Close()
 
-			got, err := Detect(f)
-			require.NoError(t, err)
+			got, err := Detect(f, "", path.Ext(tt.file))
+			if tt.want == Unknown {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
 			require.Equal(t, tt.want, got)
 		})
 	}

@@ -7,9 +7,12 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/imgproxy/imgproxy/v3/asyncbuffer"
 	"github.com/imgproxy/imgproxy/v3/fetcher"
+	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 )
 
@@ -39,7 +42,7 @@ func NewFromBytesWithFormat(format imagetype.Type, b []byte) ImageData {
 func (f *Factory) NewFromBytes(b []byte) (ImageData, error) {
 	r := bytes.NewReader(b)
 
-	format, err := imagetype.Detect(r)
+	format, err := imagetype.Detect(r, "", "")
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +140,10 @@ func (f *Factory) DownloadSync(ctx context.Context, imageURL, desc string, opts 
 		return nil, h, wrapDownloadError(err, desc)
 	}
 
-	format, err := imagetype.Detect(bytes.NewReader(b))
+	ct := res.Header.Get(httpheaders.ContentType)
+	ext := strings.ToLower(filepath.Ext(res.Request.URL.Path))
+
+	format, err := imagetype.Detect(bytes.NewReader(b), ct, ext)
 	if err != nil {
 		return nil, h, wrapDownloadError(err, desc)
 	}
@@ -161,7 +167,10 @@ func (f *Factory) DownloadAsync(ctx context.Context, imageURL, desc string, opts
 
 	b := asyncbuffer.New(res.Body, int(res.ContentLength), opts.DownloadFinished)
 
-	format, err := imagetype.Detect(b.Reader())
+	ct := res.Header.Get(httpheaders.ContentType)
+	ext := strings.ToLower(filepath.Ext(res.Request.URL.Path))
+
+	format, err := imagetype.Detect(b.Reader(), ct, ext)
 	if err != nil {
 		b.Close()
 		req.Cancel()

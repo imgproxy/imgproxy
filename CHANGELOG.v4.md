@@ -1,5 +1,11 @@
 # 📑 Changelog (version/4 dev)
 
+## 2021-10-20
+
+### 🆕 Added
+
+- [pro] Perceptual Hash (pHash) calculation
+
 ## 2025-10-02
 
 ### 🆕 Added
