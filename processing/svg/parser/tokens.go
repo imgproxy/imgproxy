@@ -13,8 +13,9 @@ type Attr struct {
 }
 
 type StartElement struct {
-	Name Name
-	Attr []Attr
+	Name        Name
+	Attr        []Attr
+	SelfClosing bool
 }
 
 type EndElement struct {

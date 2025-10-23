@@ -45,7 +45,10 @@ func (n *Node) readFrom(r io.Reader) error {
 			}
 			// Append the node to the current node's children and make it current
 			curNode.Children = append(curNode.Children, el)
-			curNode = el
+
+			if !t.SelfClosing {
+				curNode = el
+			}
 
 		case EndElement:
 			// If the current node has no parent, then we are at the root,

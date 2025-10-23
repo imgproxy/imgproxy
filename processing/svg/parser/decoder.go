@@ -40,9 +40,6 @@ type Decoder struct {
 	buf *buffer
 	err error
 
-	needClose   bool
-	nameToClose Name
-
 	line int
 }
 
@@ -122,13 +119,6 @@ func (d *Decoder) checkBOM() {
 func (d *Decoder) Token() (any, error) {
 	if d.err != nil {
 		return nil, d.err
-	}
-
-	// If needClose is set, then we met a self-closing tag in the previous call,
-	// so we need to return the corresponding end element now.
-	if d.needClose {
-		d.needClose = false
-		return EndElement{Name: d.nameToClose}, nil
 	}
 
 	b, ok := d.peek(1)
@@ -260,33 +250,31 @@ func (d *Decoder) readStartTag() (StartElement, bool) {
 		return StartElement{}, false
 	}
 
-	var attrs []Attr
+	tag := StartElement{Name: name}
 
 	// Read attributes
 	for {
 		if !d.skipSpaces() {
-			return StartElement{}, false
+			return tag, false
 		}
 
 		b, ok := d.mustReadByte()
 		if !ok {
-			return StartElement{}, false
+			return tag, false
 		}
 
 		if b == '/' {
 			// Self-closing tag
 			b, ok = d.mustReadByte()
 			if !ok {
-				return StartElement{}, false
+				return tag, false
 			}
 			if b != '>' {
 				d.setSyntaxError("expected '>' at the end of self-closing tag, got %q", b)
-				return StartElement{}, false
+				return tag, false
 			}
 
-			// Set needClose to return the corresponding end element in the next call.
-			d.needClose = true
-			d.nameToClose = name
+			tag.SelfClosing = true
 
 			break
 		}
@@ -305,16 +293,16 @@ func (d *Decoder) readStartTag() (StartElement, bool) {
 			if d.err == nil {
 				d.setSyntaxError("expected attribute name")
 			}
-			return StartElement{}, false
+			return tag, false
 		}
 
 		if !d.skipSpaces() {
-			return StartElement{}, false
+			return tag, false
 		}
 
 		b, ok = d.mustReadByte()
 		if !ok {
-			return StartElement{}, false
+			return tag, false
 		}
 
 		var attrValue string
@@ -324,7 +312,7 @@ func (d *Decoder) readStartTag() (StartElement, bool) {
 			d.unreadByte(b)
 		} else {
 			if !d.skipSpaces() {
-				return StartElement{}, false
+				return tag, false
 			}
 
 			// Read attribute value
@@ -333,21 +321,18 @@ func (d *Decoder) readStartTag() (StartElement, bool) {
 				if d.err == nil {
 					d.setSyntaxError("expected value for attribute %q", attrName.Local)
 				}
-				return StartElement{}, false
+				return tag, false
 			}
 			attrValue = string(val)
 		}
 
-		attrs = append(attrs, Attr{
+		tag.Attr = append(tag.Attr, Attr{
 			Name:  attrName,
 			Value: attrValue,
 		})
 	}
 
-	return StartElement{
-		Name: name,
-		Attr: attrs,
-	}, true
+	return tag, true
 }
 
 // readAttrValue reads an attribute value.
