@@ -73,14 +73,15 @@ func (m *ImageHashMatcher) ImageMatches(t *testing.T, img io.Reader, key string,
 	var size C.size_t
 	var width, height C.int
 
+	bufPtr := unsafe.Pointer(unsafe.SliceData(buf))
+
 	// no one knows why this triggers linter
 	//nolint:gocritic
-	readErr := C.vips_image_read_from_to_memory(unsafe.Pointer(unsafe.SliceData(buf)), C.size_t(len(buf)), &data, &size, &width, &height)
+	readErr := C.vips_image_read_from_to_memory(bufPtr, C.size_t(len(buf)), &data, &size, &width, &height)
 	if readErr != 0 {
 		t.Fatalf("failed to read image from memory, key: %s, error: %s", key, vipsErrorMessage())
 	}
-
-	defer C.vips_memory_buffer_free(data)
+	defer C.g_free(C.gpointer(data))
 
 	// Convert raw RGBA pixel data to Go image.Image
 	goImg, err := createRGBAFromRGBAPixels(int(width), int(height), data, size)

@@ -13,7 +13,4 @@ int vips_image_read_from_to_memory(
     int *out_width, int *out_height // out image width and height
 );
 
-// Function to free/discard the memory buffer
-void vips_memory_buffer_free(void *buf);
-
 #endif
