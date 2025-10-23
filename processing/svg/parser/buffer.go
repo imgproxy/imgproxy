@@ -1,6 +1,8 @@
 package svgparser
 
 import (
+	"bytes"
+	"math"
 	"slices"
 	"sync"
 )
@@ -37,21 +39,35 @@ func (b *buffer) Reset() {
 	*b = (*b)[:0]
 }
 
+func (b *buffer) Write(p []byte) (n int, err error) {
+	if len(p) == 0 {
+		return 0, nil
+	}
+
+	b.grow(len(p))
+	*b = append(*b, p...)
+	return len(p), nil
+}
+
 // WriteByte writes a single byte to the buffer.
 func (b *buffer) WriteByte(p byte) error {
-	if c := cap(*b); len(*b) == c {
-		*b = slices.Grow(*b, c)
-	}
+	b.grow(1)
 	*b = append(*b, p)
 	return nil
 }
 
-// Last returns the last n bytes of the buffer.
-// If n is greater than the buffer length, the entire buffer is returned.
-func (b *buffer) Last(n int) []byte {
-	l := len(*b)
-	n = min(n, l)
-	return (*b)[l-n:]
+// grow ensures that the buffer has at least n free bytes of capacity.
+// It grows the buffer to the next power of two if necessary.
+func (b *buffer) grow(n int) {
+	if req := len(*b) + n; req > cap(*b) {
+		p := math.Ceil(math.Log2(float64(req)))
+		*b = slices.Grow(*b, 1<<int(p))
+	}
+}
+
+// HasSuffix reports whether the buffer ends with the given suffix.
+func (b *buffer) HasSuffix(suffix []byte) bool {
+	return bytes.HasSuffix(*b, suffix)
 }
 
 // Remove removes the last n bytes.

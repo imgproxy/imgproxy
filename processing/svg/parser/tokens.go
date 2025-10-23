@@ -1,5 +1,7 @@
 package svgparser
 
+import "bytes"
+
 type Name struct {
 	Space string
 	Local string
@@ -22,35 +24,35 @@ type EndElement struct {
 type Directive []byte
 
 func (d Directive) Clone() Directive {
-	return Directive(append([]byte(nil), []byte(d)...))
+	return Directive(bytes.Clone([]byte(d)))
 }
 
 type Comment []byte
 
 func (c Comment) Clone() Comment {
-	return Comment(append([]byte(nil), []byte(c)...))
+	return Comment(bytes.Clone([]byte(c)))
 }
 
 type ProcInst struct {
-	Target string
+	Target []byte
 	Inst   []byte
 }
 
 func (p ProcInst) Clone() ProcInst {
 	return ProcInst{
-		Target: p.Target,
-		Inst:   append([]byte(nil), p.Inst...),
+		Target: bytes.Clone(p.Target),
+		Inst:   bytes.Clone(p.Inst),
 	}
 }
 
 type Text []byte
 
 func (t Text) Clone() Text {
-	return Text(append([]byte(nil), []byte(t)...))
+	return Text(bytes.Clone([]byte(t)))
 }
 
 type CData []byte
 
 func (c CData) Clone() CData {
-	return CData(append([]byte(nil), []byte(c)...))
+	return CData(bytes.Clone([]byte(c)))
 }

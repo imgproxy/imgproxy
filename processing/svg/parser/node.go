@@ -207,7 +207,7 @@ func (n *Node) writeChildrenTo(w *bufio.Writer) error {
 			if _, err := w.WriteString("<?"); err != nil {
 				return err
 			}
-			if _, err := w.WriteString(c.Target); err != nil {
+			if _, err := w.Write(c.Target); err != nil {
 				return err
 			}
 			if len(c.Inst) > 0 {

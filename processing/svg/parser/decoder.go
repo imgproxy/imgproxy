@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"regexp"
-	"strings"
 	"sync"
 	"unicode/utf8"
 
@@ -28,6 +27,10 @@ var (
 	cdataStart    = []byte("<![CDATA[")
 	cdataEnd      = []byte("]]>")
 	doctypeStart  = []byte("<!DOCTYPE")
+
+	targetXML = []byte("xml")
+
+	nameSep = []byte{':'}
 )
 
 var encodingRE = regexp.MustCompile(`(?s)^(.*encoding=)("[^"]+?"|'[^']+?')(.*)$`)
@@ -212,18 +215,28 @@ func (d *Decoder) readText() []byte {
 	d.buf.Reset()
 
 	for {
-		b, ok := d.readByte()
+		b, ok := d.peekBuffered()
 		if !ok {
 			break
 		}
 
-		if b == '<' {
-			// We've reached the start of a tag, unread the byte for further processing.
-			d.unreadByte()
+		ind := bytes.IndexByte(b, '<')
+		if ind >= 0 {
+			// Found the start of a tag.
+			b = b[:ind]
+		}
+
+		d.buf.Write(b)
+
+		// Discard the bytes we've read.
+		if !d.discard(len(b)) {
 			break
 		}
 
-		d.buf.WriteByte(b)
+		if ind >= 0 {
+			// We've read up to the start of a tag, break the loop.
+			break
+		}
 	}
 
 	// Return what we've read.
@@ -337,45 +350,29 @@ func (d *Decoder) readStartTag() (StartElement, bool) {
 
 // readAttrValue reads an attribute value.
 func (d *Decoder) readAttrValue() ([]byte, bool) {
+	d.buf.Reset()
+
 	b, ok := d.mustReadByte()
 	if !ok {
 		return nil, false
 	}
 
-	var quote byte
-
 	if b == '"' || b == '\'' {
 		// Quoted attribute value
-		quote = b
-	} else {
-		// Unread the byte for further processing
-		d.unreadByte()
-	}
-
-	d.buf.Reset()
-
-	for {
-		b, ok := d.mustReadByte()
-		if !ok {
+		// We can just read until the closing quote.
+		if !d.mustReadUntil(b) {
 			return nil, false
 		}
-
-		if quote != 0 {
-			// Quoted attribute value
-			if b == quote {
-				// End of attribute value
-				break
-			}
-		} else {
-			// Unquoted attribute value
-			if !isValueByte(b) {
-				// End of attribute value
-				d.unreadByte()
-				break
-			}
+		// Remove the trailing quote from the buffer
+		d.buf.Remove(1)
+	} else {
+		// Unquoted attribute value.
+		// Unread the byte for further processing
+		d.unreadByte()
+		// Read until we meet a byte that is not valid in an unquoted attribute value.
+		if !d.mustReadWhileFn(isValueByte) {
+			return nil, false
 		}
-
-		d.buf.WriteByte(b)
 	}
 
 	return d.buf.Bytes(), true
@@ -427,33 +424,33 @@ func (d *Decoder) readEndTag() (Name, bool) {
 //
 // If the processing instruction specifies an encoding, it recreates
 // the reader with the specified encoding.
-func (d *Decoder) readProcInst() (string, []byte, bool) {
+func (d *Decoder) readProcInst() ([]byte, []byte, bool) {
 	// Discard '<?'
 	if !d.discard(len(procInstStart)) {
-		return "", nil, false
+		return nil, nil, false
 	}
 
 	// Target name should follow immediately after `<?`.
-	target, ok := d.readName()
-	if !ok {
+	if !d.readName() {
 		// If we couldn't read a name but there was no error, it means
 		// there was no valid target name after <?.
 		// Set an error in this case.
 		if d.err == nil {
 			d.err = newSyntaxError("expected target name after <?")
 		}
-		return "", nil, false
+		return nil, nil, false
 	}
 
-	d.buf.Reset()
+	target := d.buf.Bytes()
 
 	// Read until '?>'
+	// We don't reset the buffer here, as we don't want target name to be overwritten.
 	for {
-		if !d.readUntil('>') {
-			return "", nil, false
+		if !d.mustReadUntil('>') {
+			return nil, nil, false
 		}
 
-		if bytes.Equal(d.buf.Last(len(procInstEnd)), procInstEnd) {
+		if d.buf.HasSuffix(procInstEnd) {
 			break
 		}
 	}
@@ -461,11 +458,12 @@ func (d *Decoder) readProcInst() (string, []byte, bool) {
 	// Trim the trailing '?>'
 	d.buf.Remove(len(procInstEnd))
 
-	data := d.buf.Bytes()
+	// Separate the target and data
+	data := d.buf.Bytes()[len(target):]
 
-	if target == "xml" {
+	if bytes.Equal(target, targetXML) {
 		// Get the encoding from the processing instruction data
-		data = d.handleProcInstEncoding(d.buf.Bytes())
+		data = d.handleProcInstEncoding(data)
 	}
 
 	return target, data, true
@@ -482,29 +480,29 @@ func (d *Decoder) handleProcInstEncoding(data []byte) []byte {
 	}
 
 	// Get the encoding from the processing instruction data
-	encoding := string(bytes.Trim(matches[2], `"'`))
-	encoding = strings.ToLower(encoding)
+	encoding := bytes.Trim(matches[2], `"'`)
 
-	if encoding == "utf-8" || encoding == "utf8" {
+	if bytes.EqualFold(encoding, []byte("utf-8")) || bytes.EqualFold(encoding, []byte("utf8")) {
 		// No need for special handling if encoding is already UTF-8
 		return data
 	}
 
 	// Recreate the reader with defined encoding.
 	// If the encoding is UTF-16/32, we have already handled it in the BOM check.
-	if !strings.HasPrefix(encoding, "utf") {
-		if !d.setEncoding(encoding) {
+	if len(encoding) < 3 || !bytes.EqualFold(encoding[:3], []byte("utf")) {
+		if !d.setEncoding(string(encoding)) {
 			return data
 		}
 	}
 
 	// Build the updated data with "UTF-8" encoding.
-	// We allocate a new slice here, but non-UTF-8 encodings are rare,
-	// so we can live with that.
-	updated := make([]byte, 0, len(matches[1])+6+len(matches[3])) // 6 is len(`"UTF-8"`)
-	updated = append(updated, matches[1]...)                      // Up to encoding=
-	updated = append(updated, `"UTF-8"`...)                       // New encoding
-	updated = append(updated, matches[3]...)                      // After encoding declaration
+	// We write it to the buffer that already contains the processing instruction data,
+	// so we mark the position of the updated data start.
+	start := d.buf.Len()
+	d.buf.Write(matches[1])        // Up to encoding=
+	d.buf.Write([]byte(`"UTF-8"`)) // New encoding
+	d.buf.Write(matches[3])        // After encoding declaration
+	updated := d.buf.Bytes()[start:]
 
 	return updated
 }
@@ -521,11 +519,11 @@ func (d *Decoder) readComment() ([]byte, bool) {
 	d.buf.Reset()
 
 	for {
-		if !d.readUntil('>') {
+		if !d.mustReadUntil('>') {
 			return nil, false
 		}
 
-		if bytes.Equal(d.buf.Last(len(commentEnd)), commentEnd) {
+		if d.buf.HasSuffix(commentEnd) {
 			break
 		}
 	}
@@ -549,11 +547,11 @@ func (d *Decoder) readCData() ([]byte, bool) {
 
 	// Read until ']]>'
 	for {
-		if !d.readUntil('>') {
+		if !d.mustReadUntil('>') {
 			return nil, false
 		}
 
-		if bytes.Equal(d.buf.Last(len(cdataEnd)), cdataEnd) {
+		if d.buf.HasSuffix(cdataEnd) {
 			break
 		}
 	}
@@ -642,52 +640,31 @@ func (d *Decoder) readDoctype() ([]byte, bool) {
 func (d *Decoder) readNSName() (Name, bool) {
 	var name Name
 
-	nameStr, ok := d.readName()
-	if !ok {
+	if !d.readName() {
 		return name, false
 	}
 
-	if strings.Count(nameStr, ":") > 1 {
-		d.err = newSyntaxError("invalid name with multiple colons: %q", nameStr)
-		return name, false
-	}
+	nameBytes := d.buf.Bytes()
 
-	if space, local, ok := strings.Cut(nameStr, ":"); ok && len(space) > 0 && len(local) > 0 {
-		name.Space = space
-		name.Local = local
+	if space, local, ok := bytes.Cut(nameBytes, nameSep); ok && len(space) > 0 && len(local) > 0 {
+		name.Space = string(space)
+		name.Local = string(local)
 	} else {
-		name.Local = nameStr
+		name.Local = string(nameBytes)
 	}
 
 	return name, true
 }
 
-// readName reads a name (tag or attribute) until a non-name byte is encountered.
-func (d *Decoder) readName() (string, bool) {
+// readName reads a name (tag or attribute) to the buffer until a non-name byte is encountered.
+func (d *Decoder) readName() bool {
 	d.buf.Reset()
 
-	var (
-		b  byte
-		ok bool
-	)
-
-	for {
-		b, ok = d.mustReadByte()
-		if !ok {
-			return "", false
-		}
-
-		// If the byte is not valid in a name, the name is finished.
-		// Unread the byte for further processing and break the loop.
-		if !isNameByte(b) {
-			d.unreadByte()
-			break
-		}
-
-		d.buf.WriteByte(b)
+	if !d.mustReadWhileFn(isNameByte) {
+		return false
 	}
 
-	return d.buf.String(), d.buf.Len() > 0
+	return d.buf.Len() > 0
 }
 
 func isNameByte(c byte) bool {
@@ -702,13 +679,30 @@ func isNameByte(c byte) bool {
 // skipSpaces skips whitespace characters.
 func (d *Decoder) skipSpaces() bool {
 	for {
-		b, ok := d.readByte()
+		b, ok := d.peekBuffered()
 		if !ok {
 			return false
 		}
 
-		if !isSpace(b) {
-			return d.unreadByte()
+		found := false
+		for i, c := range b {
+			if !isSpace(c) {
+				// Found a non-space byte.
+				// Trim the bytes up to (but not including) this byte.
+				b = b[:i]
+				found = true
+				break
+			}
+		}
+
+		// Discard the spaces we've read.
+		if !d.discard(len(b)) {
+			return false
+		}
+
+		if found {
+			// We've skipped all spaces, break the loop.
+			return true
 		}
 	}
 }
@@ -764,18 +758,65 @@ func (d *Decoder) unreadByte() bool {
 	return true
 }
 
-// readUntil reads bytes to the buffer until the specified delimiter byte is encountered.
+// mustReadUntil reads bytes to the buffer until the specified delimiter byte is encountered.
 // The delimiter byte is included in the buffer.
-func (d *Decoder) readUntil(delim byte) bool {
+func (d *Decoder) mustReadUntil(delim byte) bool {
 	for {
-		b, ok := d.mustReadByte()
+		b, ok := d.mustPeekBuffered()
 		if !ok {
 			return false
 		}
 
-		d.buf.WriteByte(b)
+		ind := bytes.IndexByte(b, delim)
+		if ind >= 0 {
+			// Found the delimiter byte.
+			// Trim the bytes up to and including the delimiter.
+			b = b[:ind+1]
+		}
 
-		if b == delim {
+		d.buf.Write(b)
+
+		// Discard the bytes we've read.
+		if !d.discard(len(b)) {
+			return false
+		}
+
+		if ind >= 0 {
+			// We've read up to the delimiter byte, break the loop.
+			return true
+		}
+	}
+}
+
+// mustReadWhileFn reads bytes to the buffer while the provided function returns true.
+// The byte that causes the function to return false is not included in the buffer.
+func (d *Decoder) mustReadWhileFn(f func(byte) bool) bool {
+	for {
+		b, ok := d.mustPeekBuffered()
+		if !ok {
+			return false
+		}
+
+		found := false
+		for i, c := range b {
+			if !f(c) {
+				// Found a byte that does not satisfy the condition.
+				// Trim the bytes up to (but not including) this byte.
+				b = b[:i]
+				found = true
+				break
+			}
+		}
+
+		d.buf.Write(b)
+
+		// Discard the bytes we've read.
+		if !d.discard(len(b)) {
+			return false
+		}
+
+		if found {
+			// We've read up to the delimiter byte, break the loop.
 			return true
 		}
 	}
@@ -802,6 +843,23 @@ func (d *Decoder) mustPeek(n int) ([]byte, bool) {
 		}
 	}
 	return b, ok
+}
+
+// peekBuffered peeks at all currently buffered bytes without advancing the reader.
+// If no bytes are buffered, it peeks at least 1 byte.
+// If an error occurs, it sets d.err and returns false.
+func (d *Decoder) peekBuffered() ([]byte, bool) {
+	toPeek := max(d.r.Buffered(), 1)
+	return d.peek(toPeek)
+}
+
+// mustPeekBuffered peeks at all currently buffered bytes without advancing the reader.
+// If no bytes are buffered, it peeks at least 1 byte.
+// If an error occurs, it sets d.err and returns false.
+// If io.EOF is encountered, it sets d.err to a more descriptive error.
+func (d *Decoder) mustPeekBuffered() ([]byte, bool) {
+	toPeek := max(d.r.Buffered(), 1)
+	return d.mustPeek(toPeek)
 }
 
 // discard discards the next n bytes from the reader.
