@@ -42,10 +42,12 @@ type Decoder struct {
 
 	needClose   bool
 	nameToClose Name
+
+	line int
 }
 
 func NewDecoder(r io.Reader) *Decoder {
-	dec := Decoder{buf: newBuffer()}
+	dec := Decoder{buf: newBuffer(), line: 1}
 
 	dec.setReader(r)
 	dec.checkBOM()
@@ -253,7 +255,7 @@ func (d *Decoder) readStartTag() (StartElement, bool) {
 	name, ok := d.readNSName()
 	if !ok {
 		if d.err == nil {
-			d.err = newSyntaxError("expected name after <")
+			d.setSyntaxError("expected name after <")
 		}
 		return StartElement{}, false
 	}
@@ -278,7 +280,7 @@ func (d *Decoder) readStartTag() (StartElement, bool) {
 				return StartElement{}, false
 			}
 			if b != '>' {
-				d.err = newSyntaxError("expected '>' at the end of self-closing tag, got %q", b)
+				d.setSyntaxError("expected '>' at the end of self-closing tag, got %q", b)
 				return StartElement{}, false
 			}
 
@@ -295,13 +297,13 @@ func (d *Decoder) readStartTag() (StartElement, bool) {
 		}
 
 		// Unread the byte for further processing
-		d.unreadByte()
+		d.unreadByte(b)
 
 		// Read attribute name
 		attrName, ok := d.readNSName()
 		if !ok {
 			if d.err == nil {
-				d.err = newSyntaxError("expected attribute name")
+				d.setSyntaxError("expected attribute name")
 			}
 			return StartElement{}, false
 		}
@@ -319,7 +321,7 @@ func (d *Decoder) readStartTag() (StartElement, bool) {
 
 		// If the next byte is not '=', this is an attribute without value.
 		if b != '=' {
-			d.unreadByte()
+			d.unreadByte(b)
 		} else {
 			if !d.skipSpaces() {
 				return StartElement{}, false
@@ -329,7 +331,7 @@ func (d *Decoder) readStartTag() (StartElement, bool) {
 			val, ok := d.readAttrValue()
 			if !ok {
 				if d.err == nil {
-					d.err = newSyntaxError("expected value for attribute %q", attrName.Local)
+					d.setSyntaxError("expected value for attribute %q", attrName.Local)
 				}
 				return StartElement{}, false
 			}
@@ -368,7 +370,7 @@ func (d *Decoder) readAttrValue() ([]byte, bool) {
 	} else {
 		// Unquoted attribute value.
 		// Unread the byte for further processing
-		d.unreadByte()
+		d.unreadByte(b)
 		// Read until we meet a byte that is not valid in an unquoted attribute value.
 		if !d.mustReadWhileFn(isValueByte) {
 			return nil, false
@@ -397,7 +399,7 @@ func (d *Decoder) readEndTag() (Name, bool) {
 	name, ok := d.readNSName()
 	if !ok {
 		if d.err == nil {
-			d.err = newSyntaxError("expected name after </")
+			d.setSyntaxError("expected name after </")
 		}
 		return name, false
 	}
@@ -413,7 +415,7 @@ func (d *Decoder) readEndTag() (Name, bool) {
 		return name, false
 	}
 	if b != '>' {
-		d.err = newSyntaxError("expected '>' at the end of end element, got %q", b)
+		d.setSyntaxError("expected '>' at the end of end element, got %q", b)
 		return name, false
 	}
 
@@ -436,7 +438,7 @@ func (d *Decoder) readProcInst() ([]byte, []byte, bool) {
 		// there was no valid target name after <?.
 		// Set an error in this case.
 		if d.err == nil {
-			d.err = newSyntaxError("expected target name after <?")
+			d.setSyntaxError("expected target name after <?")
 		}
 		return nil, nil, false
 	}
@@ -511,7 +513,7 @@ func (d *Decoder) handleProcInstEncoding(data []byte) []byte {
 func (d *Decoder) readComment() ([]byte, bool) {
 	if !d.checkAndDiscardPrefix(commentStart) {
 		if d.err == nil {
-			d.err = newSyntaxError("invalid sequence <!- not part of <!--")
+			d.setSyntaxError("invalid sequence <!- not part of <!--")
 		}
 		return nil, false
 	}
@@ -538,7 +540,7 @@ func (d *Decoder) readComment() ([]byte, bool) {
 func (d *Decoder) readCData() ([]byte, bool) {
 	if !d.checkAndDiscardPrefix(cdataStart) {
 		if d.err == nil {
-			d.err = newSyntaxError("invalid sequence <![ not part of <![CDATA[")
+			d.setSyntaxError("invalid sequence <![ not part of <![CDATA[")
 		}
 		return nil, false
 	}
@@ -566,7 +568,7 @@ func (d *Decoder) readCData() ([]byte, bool) {
 func (d *Decoder) readDoctype() ([]byte, bool) {
 	if !d.checkAndDiscardPrefix(doctypeStart) {
 		if d.err == nil {
-			d.err = newSyntaxError("invalid sequence <! not part of <!DOCTYPE, <!--, or <![CDATA[")
+			d.setSyntaxError("invalid sequence <! not part of <!DOCTYPE, <!--, or <![CDATA[")
 		}
 		return nil, false
 	}
@@ -603,7 +605,7 @@ func (d *Decoder) readDoctype() ([]byte, bool) {
 			// We met a closing bracket.
 			// If we are not inside brackets, this is an error.
 			if !inBrackets {
-				d.err = newSyntaxError("unexpected ']' in directive")
+				d.setSyntaxError("unexpected ']' in directive")
 				return nil, false
 			}
 			// Otherwise, exit brackets mode.
@@ -613,7 +615,7 @@ func (d *Decoder) readDoctype() ([]byte, bool) {
 			// We met an opening bracket.
 			// If we are already inside brackets, this is an error.
 			if inBrackets {
-				d.err = newSyntaxError("nested '[' in directive")
+				d.setSyntaxError("nested '[' in directive")
 				return nil, false
 			}
 			// Otherwise, enter brackets mode.
@@ -624,7 +626,7 @@ func (d *Decoder) readDoctype() ([]byte, bool) {
 
 		case b == '<':
 			// Unexpected '<' outside quotes and brackets.
-			d.err = newSyntaxError("unexpected '<' in directive")
+			d.setSyntaxError("unexpected '<' in directive")
 			return nil, false
 
 		case b == '>':
@@ -732,6 +734,9 @@ func (d *Decoder) readByte() (byte, bool) {
 		d.err = err
 		return 0, false
 	}
+	if b == '\n' {
+		d.line++
+	}
 	return b, true
 }
 
@@ -742,7 +747,7 @@ func (d *Decoder) mustReadByte() (byte, bool) {
 	b, ok := d.readByte()
 	if !ok {
 		if d.err == io.EOF {
-			d.err = newSyntaxError("unexpected EOF")
+			d.setSyntaxError("unexpected EOF")
 		}
 	}
 	return b, ok
@@ -750,10 +755,13 @@ func (d *Decoder) mustReadByte() (byte, bool) {
 
 // unreadByte unreads the last byte read from the reader.
 // If an error occurs, it sets d.err and returns false.
-func (d *Decoder) unreadByte() bool {
+func (d *Decoder) unreadByte(b byte) bool {
 	if err := d.r.UnreadByte(); err != nil {
 		d.err = err
 		return false
+	}
+	if b == '\n' {
+		d.line--
 	}
 	return true
 }
@@ -839,7 +847,7 @@ func (d *Decoder) mustPeek(n int) ([]byte, bool) {
 	b, ok := d.peek(n)
 	if !ok {
 		if d.err == io.EOF {
-			d.err = newSyntaxError("unexpected EOF")
+			d.setSyntaxError("unexpected EOF")
 		}
 	}
 	return b, ok
@@ -864,10 +872,28 @@ func (d *Decoder) mustPeekBuffered() ([]byte, bool) {
 
 // discard discards the next n bytes from the reader.
 func (d *Decoder) discard(n int) bool {
+	// Peek bytes we want to discard to count new lines.
+	if b, err := d.r.Peek(n); err == nil {
+		// Somehow this is more efficient than bytes.Count...
+		for {
+			ind := bytes.IndexByte(b, '\n')
+			if ind < 0 {
+				break
+			}
+			d.line++
+			b = b[ind+1:]
+		}
+	}
+
 	_, err := d.r.Discard(n)
 	if err != nil {
 		d.err = err
 		return false
 	}
 	return true
+}
+
+func (d *Decoder) setSyntaxError(format string, a ...any) {
+	msg := fmt.Sprintf(format, a...)
+	d.err = newSyntaxError("%s (line %d)", msg, d.line)
 }
