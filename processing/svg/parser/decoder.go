@@ -206,29 +206,11 @@ func (d *Decoder) Token() (any, error) {
 func (d *Decoder) readText() []byte {
 	d.buf.Reset()
 
-	for {
-		b, ok := d.peekBuffered()
-		if !ok {
-			break
-		}
-
-		ind := bytes.IndexByte(b, '<')
-		if ind >= 0 {
-			// Found the start of a tag.
-			b = b[:ind]
-		}
-
-		d.buf.Write(b)
-
-		// Discard the bytes we've read.
-		if !d.discard(len(b)) {
-			break
-		}
-
-		if ind >= 0 {
-			// We've read up to the start of a tag, break the loop.
-			break
-		}
+	if d.readUntil('<') {
+		// Successful `readUntil` means we have read up to `<`,
+		// so we need to unread it for further processing and trim it from the buffer.
+		d.unreadByte('<')
+		d.buf.Remove(1)
 	}
 
 	// Return what we've read.
@@ -666,7 +648,7 @@ func isNameByte(c byte) bool {
 // skipSpaces skips whitespace characters.
 func (d *Decoder) skipSpaces() bool {
 	for {
-		b, ok := d.peekBuffered()
+		b, ok := d.mustPeekBuffered()
 		if !ok {
 			return false
 		}
@@ -751,34 +733,45 @@ func (d *Decoder) unreadByte(b byte) bool {
 	return true
 }
 
-// mustReadUntil reads bytes to the buffer until the specified delimiter byte is encountered.
+// readUntil reads bytes to the buffer until the specified delimiter byte is encountered.
 // The delimiter byte is included in the buffer.
-func (d *Decoder) mustReadUntil(delim byte) bool {
+// If an error occurs, it sets d.err and returns false.
+func (d *Decoder) readUntil(delim byte) bool {
 	for {
-		b, ok := d.mustPeekBuffered()
-		if !ok {
+		b, err := d.r.ReadSlice(delim)
+		if err != nil && err != bufio.ErrBufferFull && err != io.EOF {
+			d.err = err
 			return false
-		}
-
-		ind := bytes.IndexByte(b, delim)
-		if ind >= 0 {
-			// Found the delimiter byte.
-			// Trim the bytes up to and including the delimiter.
-			b = b[:ind+1]
 		}
 
 		d.buf.Write(b)
+		d.countNewLines(b)
 
-		// Discard the bytes we've read.
-		if !d.discard(len(b)) {
-			return false
-		}
-
-		if ind >= 0 {
+		if err == nil {
 			// We've read up to the delimiter byte, break the loop.
 			return true
 		}
+
+		if err == io.EOF {
+			// Reached EOF without finding the delimiter.
+			d.err = err
+			return false
+		}
 	}
+}
+
+// mustReadUntil reads bytes to the buffer until the specified delimiter byte is encountered.
+// The delimiter byte is included in the buffer.
+// If an error occurs, it sets d.err and returns false.
+// If io.EOF is encountered, it sets d.err to a more descriptive error.
+func (d *Decoder) mustReadUntil(delim byte) bool {
+	if !d.readUntil(delim) {
+		if d.err == io.EOF {
+			d.setSyntaxError("unexpected EOF")
+		}
+		return false
+	}
+	return true
 }
 
 // mustReadWhileFn reads bytes to the buffer while the provided function returns true.
@@ -816,6 +809,7 @@ func (d *Decoder) mustReadWhileFn(f func(byte) bool) bool {
 }
 
 // peek peeks at the next n bytes without advancing the reader.
+// If an error occurs, it sets d.err and returns false.
 func (d *Decoder) peek(n int) ([]byte, bool) {
 	b, err := d.r.Peek(n)
 	if err != nil {
@@ -838,14 +832,6 @@ func (d *Decoder) mustPeek(n int) ([]byte, bool) {
 	return b, ok
 }
 
-// peekBuffered peeks at all currently buffered bytes without advancing the reader.
-// If no bytes are buffered, it peeks at least 1 byte.
-// If an error occurs, it sets d.err and returns false.
-func (d *Decoder) peekBuffered() ([]byte, bool) {
-	toPeek := max(d.r.Buffered(), 1)
-	return d.peek(toPeek)
-}
-
 // mustPeekBuffered peeks at all currently buffered bytes without advancing the reader.
 // If no bytes are buffered, it peeks at least 1 byte.
 // If an error occurs, it sets d.err and returns false.
@@ -859,15 +845,7 @@ func (d *Decoder) mustPeekBuffered() ([]byte, bool) {
 func (d *Decoder) discard(n int) bool {
 	// Peek bytes we want to discard to count new lines.
 	if b, err := d.r.Peek(n); err == nil {
-		// Somehow this is more efficient than bytes.Count...
-		for {
-			ind := bytes.IndexByte(b, '\n')
-			if ind < 0 {
-				break
-			}
-			d.line++
-			b = b[ind+1:]
-		}
+		d.countNewLines(b)
 	}
 
 	_, err := d.r.Discard(n)
@@ -878,6 +856,21 @@ func (d *Decoder) discard(n int) bool {
 	return true
 }
 
+// countNewLines counts the number of new lines in the given byte slice
+// and increments the decoder's line counter accordingly.
+func (d *Decoder) countNewLines(b []byte) {
+	// Somehow this is more efficient than bytes.Count...
+	for {
+		ind := bytes.IndexByte(b, '\n')
+		if ind < 0 {
+			break
+		}
+		d.line++
+		b = b[ind+1:]
+	}
+}
+
+// setSyntaxError sets a syntax error with the current line number.
 func (d *Decoder) setSyntaxError(format string, a ...any) {
 	msg := fmt.Sprintf(format, a...)
 	d.err = newSyntaxError("%s (line %d)", msg, d.line)
