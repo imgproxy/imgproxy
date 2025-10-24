@@ -15,7 +15,7 @@
     },
     "mounts": [
         {
-            "source": "${localWorkspaceFolder}/testdata/test-images",
+            "source": "${localWorkspaceFolder}/.devcontainer/images",
             "target": "/images",
             "type": "bind"
         },
@@ -44,5 +44,9 @@
         }
     },
     "postCreateCommand": "lefthook install",
-    "initializeCommand": "mkdir -p ${localWorkspaceFolder}/.tmp/_dev-root/.cache ${localWorkspaceFolder}/.tmp/_dev-root/go/pkg/mod && touch ${localWorkspaceFolder}/.tmp/_dev-root/.bash_history",
+    "initializeCommand": {
+        "createCacheDirs": "mkdir -p ${localWorkspaceFolder}/.tmp/_dev-root/.cache ${localWorkspaceFolder}/.tmp/_dev-root/go/pkg/mod",
+        "createBashHistory": "touch ${localWorkspaceFolder}/.tmp/_dev-root/.bash_history",
+        "linkImagesDir": "if [ ! -e ${localWorkspaceFolder}/.devcontainer/images ]; then ln -s ${localWorkspaceFolder}/testdata/test-images ${localWorkspaceFolder}/.devcontainer/images; fi"
+    }
 }

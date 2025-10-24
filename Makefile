@@ -159,7 +159,7 @@ _lychee:
 
 .PHONY: devcontainer
 devcontainer:
-	devcontainer exec --workspace-folder $(MAKEFILE_DIR) --config .devcontainer/oss/devcontainer.json bash
+	devcontainer exec --workspace-folder $(MAKEFILE_DIR) bash
 
 
 # Make any unknown target do nothing to avoid "up to date" messages
