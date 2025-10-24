@@ -16,6 +16,7 @@ full_bin = "make run --"
 include_dir = []
 include_ext = ["go", "tpl", "tmpl", "html"]
 include_file = [
+  ".imgproxyrc",
   "vips/vips.c",
   "vips/vips.h",
   "vips/source.c",
