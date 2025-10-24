@@ -5,7 +5,7 @@ import (
 	"io"
 
 	"github.com/imgproxy/imgproxy/v3/bufreader"
-	svgparser "github.com/imgproxy/imgproxy/v3/processing/svg/parser"
+	xmlparser "github.com/imgproxy/imgproxy/v3/xmlparser"
 )
 
 func init() {
@@ -15,7 +15,7 @@ func init() {
 }
 
 func IsSVG(r bufreader.ReadPeeker, _, _ string) (Type, error) {
-	dec := svgparser.NewDecoder(r)
+	dec := xmlparser.NewDecoder(r)
 
 	for {
 		tok, err := dec.Token()
@@ -24,7 +24,7 @@ func IsSVG(r bufreader.ReadPeeker, _, _ string) (Type, error) {
 			return Unknown, nil
 		}
 		if err != nil {
-			var perr svgparser.SyntaxError
+			var perr xmlparser.SyntaxError
 			if errors.As(err, &perr) {
 				// If the error is a parse error, we can assume that the data is not SVG
 				return Unknown, nil
@@ -33,7 +33,7 @@ func IsSVG(r bufreader.ReadPeeker, _, _ string) (Type, error) {
 			return Unknown, err
 		}
 
-		if se, ok := tok.(svgparser.StartElement); ok && se.Name.Local == "svg" {
+		if se, ok := tok.(xmlparser.StartElement); ok && se.Name.Local == "svg" {
 			return SVG, nil
 		}
 	}

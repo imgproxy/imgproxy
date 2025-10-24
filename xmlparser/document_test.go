@@ -1,4 +1,4 @@
-package svgparser
+package xmlparser
 
 import (
 	"bytes"
@@ -10,7 +10,7 @@ import (
 )
 
 func TestDocumentParsing(t *testing.T) {
-	testImagesPath, err := filepath.Abs("../../../testdata/test-images/svg-test-suite")
+	testImagesPath, err := filepath.Abs("../testdata/test-images/svg-test-suite")
 	require.NoError(t, err)
 
 	err = filepath.Walk(testImagesPath, func(path string, info os.FileInfo, err error) error {

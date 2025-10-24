@@ -8,7 +8,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/options"
-	svgparser "github.com/imgproxy/imgproxy/v3/processing/svg/parser"
+	xmlparser "github.com/imgproxy/imgproxy/v3/xmlparser"
 )
 
 // pool represents temorary pool for svg sanitized data
@@ -53,7 +53,7 @@ func (p *Processor) sanitize(data imagedata.ImageData) (imagedata.ImageData, err
 		return data, nil
 	}
 
-	doc, err := svgparser.NewDocument(data.Reader())
+	doc, err := xmlparser.NewDocument(data.Reader())
 	if err != nil {
 		return nil, newSanitizeError(err)
 	}
@@ -88,7 +88,7 @@ func (p *Processor) sanitize(data imagedata.ImageData) (imagedata.ImageData, err
 }
 
 // sanitizeChildren sanitizes all child elements of the given element.
-func (p *Processor) sanitizeChildren(el *svgparser.Node) {
+func (p *Processor) sanitizeChildren(el *xmlparser.Node) {
 	if el == nil || len(el.Children) == 0 {
 		return
 	}
@@ -96,7 +96,7 @@ func (p *Processor) sanitizeChildren(el *svgparser.Node) {
 	// Filter children in place
 	filteredChildren := el.Children[:0]
 	for _, toc := range el.Children {
-		childEl, ok := toc.(*svgparser.Node)
+		childEl, ok := toc.(*xmlparser.Node)
 		if !ok {
 			// Keep non-element nodes (text, comments, etc.)
 			filteredChildren = append(filteredChildren, toc)
@@ -115,7 +115,7 @@ func (p *Processor) sanitizeChildren(el *svgparser.Node) {
 
 // sanitizeElement sanitizes a single SVG element.
 // It returns true if the element should be kept, false if it should be removed.
-func (p *Processor) sanitizeElement(el *svgparser.Node) bool {
+func (p *Processor) sanitizeElement(el *xmlparser.Node) bool {
 	if el == nil {
 		return false
 	}
@@ -126,14 +126,14 @@ func (p *Processor) sanitizeElement(el *svgparser.Node) bool {
 	}
 
 	// Filter out unsafe attributes (such as on* events)
-	el.Attrs = filterAttributes(el.Attrs, func(attr svgparser.Attr) bool {
+	el.Attrs = filterAttributes(el.Attrs, func(attr xmlparser.Attr) bool {
 		_, unsafe := unsafeAttrs[attr.Name.Local]
 		return !unsafe
 	})
 
 	// Special handling for <use> tags.
 	if el.Name.Local == "use" {
-		el.Attrs = filterAttributes(el.Attrs, func(attr svgparser.Attr) bool {
+		el.Attrs = filterAttributes(el.Attrs, func(attr xmlparser.Attr) bool {
 			// Keep non-href attributes
 			if attr.Name.Local != "href" {
 				return true
@@ -151,7 +151,7 @@ func (p *Processor) sanitizeElement(el *svgparser.Node) bool {
 }
 
 // filterAttributes filters attributes based on the given predicate function.
-func filterAttributes(attrs []svgparser.Attr, f func(attr svgparser.Attr) bool) []svgparser.Attr {
+func filterAttributes(attrs []xmlparser.Attr, f func(attr xmlparser.Attr) bool) []xmlparser.Attr {
 	filtered := attrs[:0]
 	for _, attr := range attrs {
 		if f(attr) {

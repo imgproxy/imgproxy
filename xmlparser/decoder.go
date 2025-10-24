@@ -1,4 +1,4 @@
-package svgparser
+package xmlparser
 
 import (
 	"bufio"
