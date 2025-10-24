@@ -10,3 +10,4 @@ docs/sitemap.txt
 .env
 .imgproxyrc
 k6/*.json
+.devcontainer/images
