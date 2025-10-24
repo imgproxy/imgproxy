@@ -2,10 +2,13 @@
     "image": "ghcr.io/imgproxy/imgproxy-base:v4-dev",
     "name": "imgproxy OSS",
     "forwardPorts": [
-        8081
+        8081, // imgproxy port
+        8091, // prometheus port
+        8071  // util port (ex. pprof)
     ],
     "containerEnv": {
         "IMGPROXY_PORT": "8081",
+        "IMGPROXY_PROMETHEUS_BIND": ":8091",
         "IMGPROXY_LOCAL_FILESYSTEM_ROOT": "/images",
         "IMGPROXY_ENABLE_VIDEO_THUMBNAILS": "true",
         "IMGPROXY_MAX_ANIMATION_FRAMES": "999",
