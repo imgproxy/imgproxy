@@ -477,9 +477,9 @@ func (s *ProcessingHandlerTestSuite) TestAlwaysRasterizeSvg() {
 	s.Require().Equal("image/png", res.Header.Get(httpheaders.ContentType))
 }
 
-func (s *ProcessingHandlerTestSuite) TestAlwaysRasterizeSvgWithEnforceAvif() {
+func (s *ProcessingHandlerTestSuite) TestAlwaysRasterizeSvgWithEnforceWebP() {
 	s.Config().Processing.AlwaysRasterizeSvg = true
-	s.Config().OptionsParser.EnforceWebp = true
+	s.Config().ClientFeatures.EnforceWebp = true
 
 	res := s.GET("/unsafe/plain/local:///test1.svg", http.Header{"Accept": []string{"image/webp"}})
 
@@ -489,7 +489,7 @@ func (s *ProcessingHandlerTestSuite) TestAlwaysRasterizeSvgWithEnforceAvif() {
 
 func (s *ProcessingHandlerTestSuite) TestAlwaysRasterizeSvgDisabled() {
 	s.Config().Processing.AlwaysRasterizeSvg = false
-	s.Config().OptionsParser.EnforceWebp = true
+	s.Config().ClientFeatures.EnforceWebp = true
 
 	res := s.GET("/unsafe/plain/local:///test1.svg")
 

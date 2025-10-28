@@ -2,6 +2,7 @@ package imgproxy
 
 import (
 	"github.com/imgproxy/imgproxy/v3/auximageprovider"
+	"github.com/imgproxy/imgproxy/v3/clientfeatures"
 	"github.com/imgproxy/imgproxy/v3/cookies"
 	"github.com/imgproxy/imgproxy/v3/ensure"
 	"github.com/imgproxy/imgproxy/v3/errorreport"
@@ -29,6 +30,7 @@ type Config struct {
 	FallbackImage  auximageprovider.StaticConfig
 	WatermarkImage auximageprovider.StaticConfig
 	Fetcher        fetcher.Config
+	ClientFeatures clientfeatures.Config
 	Handlers       HandlerConfigs
 	Server         server.Config
 	Security       security.Config
@@ -46,6 +48,7 @@ func NewDefaultConfig() Config {
 		FallbackImage:  auximageprovider.NewDefaultStaticConfig(),
 		WatermarkImage: auximageprovider.NewDefaultStaticConfig(),
 		Fetcher:        fetcher.NewDefaultConfig(),
+		ClientFeatures: clientfeatures.NewDefaultConfig(),
 		Handlers: HandlerConfigs{
 			Processing: processinghandler.NewDefaultConfig(),
 			Stream:     streamhandler.NewDefaultConfig(),
@@ -83,6 +86,10 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 	}
 
 	if _, err = fetcher.LoadConfigFromEnv(&c.Fetcher); err != nil {
+		return nil, err
+	}
+
+	if _, err = clientfeatures.LoadConfigFromEnv(&c.ClientFeatures); err != nil {
 		return nil, err
 	}
 

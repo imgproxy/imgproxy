@@ -6,6 +6,7 @@ import (
 	"net/url"
 
 	"github.com/imgproxy/imgproxy/v3/auximageprovider"
+	"github.com/imgproxy/imgproxy/v3/clientfeatures"
 	"github.com/imgproxy/imgproxy/v3/cookies"
 	"github.com/imgproxy/imgproxy/v3/errorreport"
 	"github.com/imgproxy/imgproxy/v3/handlers"
@@ -25,6 +26,7 @@ import (
 // HandlerContext provides access to shared handler dependencies
 type HandlerContext interface {
 	Workers() *workers.Workers
+	ClientFeaturesDetector() *clientfeatures.Detector
 	FallbackImage() auximageprovider.Provider
 	ImageDataFactory() *imagedata.Factory
 	Security() *security.Checker
@@ -116,7 +118,8 @@ func (h *Handler) newRequest(
 	}
 
 	// parse image url and processing options
-	o, imageURL, err := h.OptionsParser().ParsePath(path, req.Header)
+	features := h.ClientFeaturesDetector().Features(req.Header)
+	o, imageURL, err := h.OptionsParser().ParsePath(path, &features)
 	if err != nil {
 		return "", nil, nil, ierrors.Wrap(err, 0, ierrors.WithCategory(handlers.CategoryPathParsing))
 	}
