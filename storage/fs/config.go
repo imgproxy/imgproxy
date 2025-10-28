@@ -8,37 +8,44 @@ import (
 	"github.com/imgproxy/imgproxy/v3/env"
 )
 
-var (
-	IMGPROXY_LOCAL_FILESYSTEM_ROOT = env.Describe("IMGPROXY_LOCAL_FILESYSTEM_ROOT", "path")
-)
+// ConfigDesc holds the configuration descriptions for
+// local file system storage
+type ConfigDesc struct {
+	Root env.Desc
+}
 
 // Config holds the configuration for local file system transport
 type Config struct {
-	Root string // Root directory for the local file system transport
+	Root     string // Root directory for the local file system transport
+	ReadOnly bool   // Read-only access
+	desc     ConfigDesc
 }
 
 // NewDefaultConfig returns a new default configuration for local file system transport
 func NewDefaultConfig() Config {
 	return Config{
-		Root: "",
+		Root:     "",
+		ReadOnly: true,
 	}
 }
 
 // LoadConfigFromEnv loads configuration from the global config package
-func LoadConfigFromEnv(c *Config) (*Config, error) {
+func LoadConfigFromEnv(desc ConfigDesc, c *Config) (*Config, error) {
 	c = ensure.Ensure(c, NewDefaultConfig)
 
-	err := env.String(&c.Root, IMGPROXY_LOCAL_FILESYSTEM_ROOT)
+	err := env.String(&c.Root, desc.Root)
+
+	c.desc = desc
 
 	return c, err
 }
 
 // Validate checks if the configuration is valid
 func (c *Config) Validate() error {
-	e := IMGPROXY_LOCAL_FILESYSTEM_ROOT
+	e := c.desc.Root
 
 	if c.Root == "" {
-		return e.ErrorEmpty()
+		return nil
 	}
 
 	stat, err := os.Stat(c.Root)

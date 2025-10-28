@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/imgproxy/imgproxy/v3/fetcher/transport"
-	"github.com/imgproxy/imgproxy/v3/fetcher/transport/common"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 )
 
@@ -56,7 +55,7 @@ func (f *Fetcher) newHttpClient() *http.Client {
 
 // NewImageFetcherRequest creates a new ImageFetcherRequest with the provided context, URL, headers, and cookie jar
 func (f *Fetcher) BuildRequest(ctx context.Context, url string, header http.Header, jar http.CookieJar) (*Request, error) {
-	url = common.EscapeURL(url)
+	url = transport.EscapeURL(url)
 
 	// Set request timeout and get cancel function
 	ctx, cancel := context.WithTimeout(ctx, f.config.DownloadTimeout)

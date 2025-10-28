@@ -1,5 +1,9 @@
 # 📑 Changelog (version/4 dev)
 
+## 2021-10-29
+
+- Introduced `IMGPROXY_(ABS|GCS|S3|SWIFT)_(ALLOWED|DENIED)_BUCKETS` env var
+
 ## 2021-10-20
 
 ### 🆕 Added

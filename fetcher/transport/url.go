@@ -1,4 +1,4 @@
-package common
+package transport
 
 import (
 	"net/url"
@@ -26,6 +26,7 @@ func EscapeURL(u string) string {
 	return u
 }
 
+// GetBucketAndKey extracts bucket and key from the provided URL.
 func GetBucketAndKey(u *url.URL, sep string) (bucket, key, query string) {
 	bucket = u.Host
 

@@ -11,6 +11,8 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/imgproxy/imgproxy/v3/fetcher/transport/generichttp"
+	"github.com/imgproxy/imgproxy/v3/httpheaders"
+	"github.com/imgproxy/imgproxy/v3/storage"
 )
 
 const (
@@ -21,7 +23,7 @@ const (
 type SwiftTestSuite struct {
 	suite.Suite
 	server       *swifttest.SwiftServer
-	transport    http.RoundTripper
+	storage      storage.Reader
 	etag         string
 	lastModified time.Time
 }
@@ -38,14 +40,13 @@ func (s *SwiftTestSuite) SetupSuite() {
 
 	s.setupTestFile(&config)
 
-	tc := generichttp.NewDefaultConfig()
-	tc.IgnoreSslVerification = true
+	c := generichttp.NewDefaultConfig()
+	c.IgnoreSslVerification = true
 
-	trans, gerr := generichttp.New(false, &tc)
-	s.Require().NoError(gerr)
+	trans, err := generichttp.New(false, &c)
+	s.Require().NoError(err)
 
-	var err error
-	s.transport, err = New(&config, trans, "?")
+	s.storage, err = New(s.T().Context(), &config, trans)
 	s.Require().NoError(err, "failed to initialize swift transport")
 }
 
@@ -90,73 +91,101 @@ func (s *SwiftTestSuite) TearDownSuite() {
 }
 
 func (s *SwiftTestSuite) TestRoundTripReturns404WhenObjectNotFound() {
-	request, _ := http.NewRequest("GET", "swift://test/foo/not-here.png", nil)
+	ctx := s.T().Context()
+	reqHeader := make(http.Header)
 
-	response, err := s.transport.RoundTrip(request)
+	response, err := s.storage.GetObject(ctx, reqHeader, "test", "foo/not-here.png", "")
 	s.Require().NoError(err)
-	s.Require().Equal(404, response.StatusCode)
+	s.Require().Equal(404, response.Status)
 }
 
 func (s *SwiftTestSuite) TestRoundTripReturns404WhenContainerNotFound() {
-	request, _ := http.NewRequest("GET", "swift://invalid/foo/test.png", nil)
+	ctx := s.T().Context()
+	reqHeader := make(http.Header)
 
-	response, err := s.transport.RoundTrip(request)
+	response, err := s.storage.GetObject(ctx, reqHeader, "invalid", "foo/test.png", "")
 	s.Require().NoError(err)
-	s.Require().Equal(404, response.StatusCode)
+	s.Require().Equal(404, response.Status)
 }
 
 func (s *SwiftTestSuite) TestRoundTripWithETagEnabled() {
-	request, _ := http.NewRequest("GET", "swift://test/foo/test.png", nil)
+	ctx := s.T().Context()
+	reqHeader := make(http.Header)
 
-	response, err := s.transport.RoundTrip(request)
+	response, err := s.storage.GetObject(ctx, reqHeader, "test", "foo/test.png", "")
 	s.Require().NoError(err)
-	s.Require().Equal(200, response.StatusCode)
-	s.Require().Equal(s.etag, response.Header.Get("ETag"))
+	s.Require().Equal(200, response.Status)
+	s.Require().Equal(s.etag, response.Headers.Get(httpheaders.Etag))
+	s.Require().NotNil(response.Body)
+
+	response.Body.Close()
 }
 
 func (s *SwiftTestSuite) TestRoundTripWithIfNoneMatchReturns304() {
-	request, _ := http.NewRequest("GET", "swift://test/foo/test.png", nil)
-	request.Header.Set("If-None-Match", s.etag)
+	ctx := s.T().Context()
+	reqHeader := make(http.Header)
+	reqHeader.Set(httpheaders.IfNoneMatch, s.etag)
 
-	response, err := s.transport.RoundTrip(request)
+	response, err := s.storage.GetObject(ctx, reqHeader, "test", "foo/test.png", "")
 	s.Require().NoError(err)
-	s.Require().Equal(http.StatusNotModified, response.StatusCode)
+	s.Require().Equal(http.StatusNotModified, response.Status)
+
+	if response.Body != nil {
+		response.Body.Close()
+	}
 }
 
 func (s *SwiftTestSuite) TestRoundTripWithUpdatedETagReturns200() {
-	request, _ := http.NewRequest("GET", "swift://test/foo/test.png", nil)
-	request.Header.Set("If-None-Match", s.etag+"_wrong")
+	ctx := s.T().Context()
+	reqHeader := make(http.Header)
+	reqHeader.Set(httpheaders.IfNoneMatch, s.etag+"_wrong")
 
-	response, err := s.transport.RoundTrip(request)
+	response, err := s.storage.GetObject(ctx, reqHeader, "test", "foo/test.png", "")
 	s.Require().NoError(err)
-	s.Require().Equal(http.StatusOK, response.StatusCode)
+	s.Require().Equal(http.StatusOK, response.Status)
+	s.Require().NotNil(response.Body)
+
+	response.Body.Close()
 }
 
 func (s *SwiftTestSuite) TestRoundTripWithLastModifiedEnabled() {
-	request, _ := http.NewRequest("GET", "swift://test/foo/test.png", nil)
+	ctx := s.T().Context()
+	reqHeader := make(http.Header)
 
-	response, err := s.transport.RoundTrip(request)
+	response, err := s.storage.GetObject(ctx, reqHeader, "test", "foo/test.png", "")
 	s.Require().NoError(err)
-	s.Require().Equal(200, response.StatusCode)
-	s.Require().Equal(s.lastModified.Format(http.TimeFormat), response.Header.Get("Last-Modified"))
+	s.Require().Equal(200, response.Status)
+	s.Require().Equal(s.lastModified.Format(http.TimeFormat), response.Headers.Get(httpheaders.LastModified))
+	s.Require().NotNil(response.Body)
+
+	response.Body.Close()
 }
 
 func (s *SwiftTestSuite) TestRoundTripWithIfModifiedSinceReturns304() {
-	request, _ := http.NewRequest("GET", "swift://test/foo/test.png", nil)
-	request.Header.Set("If-Modified-Since", s.lastModified.Format(http.TimeFormat))
+	ctx := s.T().Context()
+	reqHeader := make(http.Header)
+	reqHeader.Set(httpheaders.IfModifiedSince, s.lastModified.Format(http.TimeFormat))
 
-	response, err := s.transport.RoundTrip(request)
+	response, err := s.storage.GetObject(ctx, reqHeader, "test", "foo/test.png", "")
 	s.Require().NoError(err)
-	s.Require().Equal(http.StatusNotModified, response.StatusCode)
+	s.Require().Equal(http.StatusNotModified, response.Status)
+
+	if response.Body != nil {
+		response.Body.Close()
+	}
 }
 
 func (s *SwiftTestSuite) TestRoundTripWithUpdatedLastModifiedReturns200() {
-	request, _ := http.NewRequest("GET", "swift://test/foo/test.png", nil)
-	request.Header.Set("If-Modified-Since", s.lastModified.Add(-24*time.Hour).Format(http.TimeFormat))
+	ctx := s.T().Context()
+	reqHeader := make(http.Header)
+	reqHeader.Set(httpheaders.IfModifiedSince, s.lastModified.Add(-24*time.Hour).Format(http.TimeFormat))
 
-	response, err := s.transport.RoundTrip(request)
+	response, err := s.storage.GetObject(ctx, reqHeader, "test", "foo/test.png", "")
 	s.Require().NoError(err)
-	s.Require().Equal(http.StatusOK, response.StatusCode)
+	s.Require().Equal(http.StatusOK, response.Status)
+	s.Require().NotNil(response.Body)
+
+	response.Body.Close()
 }
 
 func TestSwiftTransport(t *testing.T) {
