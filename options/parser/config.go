@@ -20,13 +20,6 @@ var (
 	IMGPROXY_ONLY_PRESETS                 = env.Describe("IMGPROXY_ONLY_PRESETS", "boolean")
 	IMGPROXY_ALLOWED_PROCESSING_OPTIONS   = env.Describe("IMGPROXY_ALLOWED_PROCESSING_OPTIONS", "comma-separated list of strings")
 	IMGPROXY_ALLOW_SECURITY_OPTIONS       = env.Describe("IMGPROXY_ALLOW_SECURITY_OPTIONS", "boolean")
-	IMGPROXY_AUTO_WEBP                    = env.Describe("IMGPROXY_AUTO_WEBP", "boolean")
-	IMGPROXY_ENFORCE_WEBP                 = env.Describe("IMGPROXY_ENFORCE_WEBP", "boolean")
-	IMGPROXY_AUTO_AVIF                    = env.Describe("IMGPROXY_AUTO_AVIF", "boolean")
-	IMGPROXY_ENFORCE_AVIF                 = env.Describe("IMGPROXY_ENFORCE_AVIF", "boolean")
-	IMGPROXY_AUTO_JXL                     = env.Describe("IMGPROXY_AUTO_JXL", "boolean")
-	IMGPROXY_ENFORCE_JXL                  = env.Describe("IMGPROXY_ENFORCE_JXL", "boolean")
-	IMGPROXY_ENABLE_CLIENT_HINTS          = env.Describe("IMGPROXY_ENABLE_CLIENT_HINTS", "boolean")
 	IMGPROXY_ARGUMENTS_SEPARATOR          = env.Describe("IMGPROXY_ARGUMENTS_SEPARATOR", "string")
 	IMGPROXY_BASE_URL                     = env.Describe("IMGPROXY_BASE_URL", "string")
 	IMGPROXY_URL_REPLACEMENTS             = env.Describe("IMGPROXY_URL_REPLACEMENTS", "comma-separated list of key=value pairs")
@@ -46,17 +39,6 @@ type Config struct {
 	AllowedProcessingOptions []string // List of allowed processing options
 	AllowSecurityOptions     bool     // Whether to allow security options in URLs
 
-	// Format preference and enforcement
-	AutoWebp    bool // Whether to automatically serve WebP when supported
-	EnforceWebp bool // Whether to enforce WebP format
-	AutoAvif    bool // Whether to automatically serve AVIF when supported
-	EnforceAvif bool // Whether to enforce AVIF format
-	AutoJxl     bool // Whether to automatically serve JXL when supported
-	EnforceJxl  bool // Whether to enforce JXL format
-
-	// Client hints
-	EnableClientHints bool // Whether to enable client hints support
-
 	// URL processing
 	ArgumentsSeparator        string           // Separator for URL arguments
 	BaseURL                   string           // Base URL for relative URLs
@@ -72,17 +54,6 @@ func NewDefaultConfig() Config {
 
 		// Security and validation
 		AllowSecurityOptions: false,
-
-		// Format preference and enforcement (copied from global config defaults)
-		AutoWebp:    false,
-		EnforceWebp: false,
-		AutoAvif:    false,
-		EnforceAvif: false,
-		AutoJxl:     false,
-		EnforceJxl:  false,
-
-		// Client hints
-		EnableClientHints: false,
 
 		// URL processing (copied from global config defaults)
 		ArgumentsSeparator:        ":",
@@ -119,17 +90,6 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 		// Security and validation
 		env.StringSlice(&c.AllowedProcessingOptions, IMGPROXY_ALLOWED_PROCESSING_OPTIONS),
 		env.Bool(&c.AllowSecurityOptions, IMGPROXY_ALLOW_SECURITY_OPTIONS),
-
-		// Format preference and enforcement
-		env.Bool(&c.AutoWebp, IMGPROXY_AUTO_WEBP),
-		env.Bool(&c.EnforceWebp, IMGPROXY_ENFORCE_WEBP),
-		env.Bool(&c.AutoAvif, IMGPROXY_AUTO_AVIF),
-		env.Bool(&c.EnforceAvif, IMGPROXY_ENFORCE_AVIF),
-		env.Bool(&c.AutoJxl, IMGPROXY_AUTO_JXL),
-		env.Bool(&c.EnforceJxl, IMGPROXY_ENFORCE_JXL),
-
-		// Client hints
-		env.Bool(&c.EnableClientHints, IMGPROXY_ENABLE_CLIENT_HINTS),
 
 		// URL processing
 		env.String(&c.ArgumentsSeparator, IMGPROXY_ARGUMENTS_SEPARATOR),

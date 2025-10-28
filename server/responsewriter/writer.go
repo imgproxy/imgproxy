@@ -75,13 +75,6 @@ func (w *Writer) SetExpires(expires time.Time) {
 	}
 }
 
-// SetVary sets the Vary header
-func (w *Writer) SetVary() {
-	if val := w.config.VaryValue; len(val) > 0 {
-		w.result.Set(httpheaders.Vary, val)
-	}
-}
-
 // SetContentDisposition sets the Content-Disposition header, passthrough to ContentDispositionValue
 func (w *Writer) SetContentDisposition(originURL, filename, ext, contentType string, returnAttachment bool) {
 	value := httpheaders.ContentDispositionValue(

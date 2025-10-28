@@ -183,7 +183,6 @@ func (r *request) writeDebugHeaders(result *processing.Result, originData imaged
 // respondWithNotModified writes not-modified response
 func (r *request) respondWithNotModified() error {
 	r.rw.SetExpires(r.opts.GetTime(keys.Expires))
-	r.rw.SetVary()
 
 	if r.config.LastModifiedEnabled {
 		r.rw.Passthrough(httpheaders.LastModified)
@@ -192,6 +191,8 @@ func (r *request) respondWithNotModified() error {
 	if r.config.ETagEnabled {
 		r.rw.Passthrough(httpheaders.Etag)
 	}
+
+	r.ClientFeaturesDetector().SetVary(r.rw.Header())
 
 	r.rw.WriteHeader(http.StatusNotModified)
 
@@ -223,8 +224,9 @@ func (r *request) respondWithImage(statusCode int, resultData imagedata.ImageDat
 		r.opts.GetBool(keys.ReturnAttachment, false),
 	)
 	r.rw.SetExpires(r.opts.GetTime(keys.Expires))
-	r.rw.SetVary()
 	r.rw.SetCanonical(r.imageURL)
+
+	r.ClientFeaturesDetector().SetVary(r.rw.Header())
 
 	if r.config.LastModifiedEnabled {
 		r.rw.Passthrough(httpheaders.LastModified)

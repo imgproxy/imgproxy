@@ -1,19 +1,16 @@
 package optionsparser
 
 import (
-	"net/http"
 	"slices"
-	"strconv"
 	"strings"
 
+	"github.com/imgproxy/imgproxy/v3/clientfeatures"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imath"
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/options/keys"
 	"github.com/imgproxy/imgproxy/v3/processing"
 )
-
-const maxClientHintDPR = 8
 
 func (p *Parser) applyURLOption(
 	o *options.Options,
@@ -138,57 +135,45 @@ func (p *Parser) applyURLOptions(
 	return nil
 }
 
-func (p *Parser) defaultProcessingOptions(headers http.Header) (*options.Options, error) {
+func (p *Parser) defaultProcessingOptions(
+	features *clientfeatures.Features,
+) (*options.Options, error) {
 	o := options.New()
 
-	headerAccept := headers.Get("Accept")
+	if features != nil {
+		if features.PreferWebP || features.EnforceWebP {
+			o.Set(keys.PreferWebP, true)
+		}
 
-	if (p.config.AutoWebp || p.config.EnforceWebp) && strings.Contains(headerAccept, "image/webp") {
-		o.Set(keys.PreferWebP, true)
-
-		if p.config.EnforceWebp {
+		if features.EnforceWebP {
 			o.Set(keys.EnforceWebP, true)
 		}
-	}
 
-	if (p.config.AutoAvif || p.config.EnforceAvif) && strings.Contains(headerAccept, "image/avif") {
-		o.Set(keys.PreferAvif, true)
+		if features.PreferAvif || features.EnforceAvif {
+			o.Set(keys.PreferAvif, true)
+		}
 
-		if p.config.EnforceAvif {
+		if features.EnforceAvif {
 			o.Set(keys.EnforceAvif, true)
 		}
-	}
 
-	if (p.config.AutoJxl || p.config.EnforceJxl) && strings.Contains(headerAccept, "image/jxl") {
-		o.Set(keys.PreferJxl, true)
+		if features.PreferJxl || features.EnforceJxl {
+			o.Set(keys.PreferJxl, true)
+		}
 
-		if p.config.EnforceJxl {
+		if features.EnforceJxl {
 			o.Set(keys.EnforceJxl, true)
 		}
-	}
 
-	if p.config.EnableClientHints {
 		dpr := 1.0
 
-		headerDPR := headers.Get("Sec-CH-DPR")
-		if len(headerDPR) == 0 {
-			headerDPR = headers.Get("DPR")
-		}
-		if len(headerDPR) > 0 {
-			if d, err := strconv.ParseFloat(headerDPR, 64); err == nil && (d > 0 && d <= maxClientHintDPR) {
-				dpr = d
-				o.Set(keys.Dpr, dpr)
-			}
+		if features.ClientHintsDPR > 0 {
+			o.Set(keys.Dpr, features.ClientHintsDPR)
+			dpr = features.ClientHintsDPR
 		}
 
-		headerWidth := headers.Get("Sec-CH-Width")
-		if len(headerWidth) == 0 {
-			headerWidth = headers.Get("Width")
-		}
-		if len(headerWidth) > 0 {
-			if w, err := strconv.Atoi(headerWidth); err == nil {
-				o.Set(keys.Width, imath.Shrink(w, dpr))
-			}
+		if features.ClientHintsWidth > 0 {
+			o.Set(keys.Width, imath.Shrink(features.ClientHintsWidth, dpr))
 		}
 	}
 
@@ -204,7 +189,7 @@ func (p *Parser) defaultProcessingOptions(headers http.Header) (*options.Options
 // ParsePath parses the given request path and returns the processing options and image URL
 func (p *Parser) ParsePath(
 	path string,
-	headers http.Header,
+	features *clientfeatures.Features,
 ) (o *options.Options, imageURL string, err error) {
 	if path == "" || path == "/" {
 		return nil, "", newInvalidURLError("invalid path: %s", path)
@@ -213,9 +198,9 @@ func (p *Parser) ParsePath(
 	parts := strings.Split(strings.TrimPrefix(path, "/"), "/")
 
 	if p.config.OnlyPresets {
-		o, imageURL, err = p.parsePathPresets(parts, headers)
+		o, imageURL, err = p.parsePathPresets(parts, features)
 	} else {
-		o, imageURL, err = p.parsePathOptions(parts, headers)
+		o, imageURL, err = p.parsePathOptions(parts, features)
 	}
 
 	if err != nil {
@@ -228,13 +213,13 @@ func (p *Parser) ParsePath(
 // parsePathOptions parses processing options from the URL path
 func (p *Parser) parsePathOptions(
 	parts []string,
-	headers http.Header,
+	features *clientfeatures.Features,
 ) (*options.Options, string, error) {
 	if _, ok := processing.ResizeTypes[parts[0]]; ok {
 		return nil, "", newInvalidURLError("It looks like you're using the deprecated basic URL format")
 	}
 
-	o, err := p.defaultProcessingOptions(headers)
+	o, err := p.defaultProcessingOptions(features)
 	if err != nil {
 		return nil, "", err
 	}
@@ -260,8 +245,11 @@ func (p *Parser) parsePathOptions(
 }
 
 // parsePathPresets parses presets from the URL path
-func (p *Parser) parsePathPresets(parts []string, headers http.Header) (*options.Options, string, error) {
-	o, err := p.defaultProcessingOptions(headers)
+func (p *Parser) parsePathPresets(
+	parts []string,
+	features *clientfeatures.Features,
+) (*options.Options, string, error) {
+	o, err := p.defaultProcessingOptions(features)
 	if err != nil {
 		return nil, "", err
 	}

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/imgproxy/imgproxy/v3/auximageprovider"
+	"github.com/imgproxy/imgproxy/v3/clientfeatures"
 	"github.com/imgproxy/imgproxy/v3/cookies"
 	"github.com/imgproxy/imgproxy/v3/errorreport"
 	"github.com/imgproxy/imgproxy/v3/fetcher"
@@ -38,19 +39,20 @@ type ImgproxyHandlers struct {
 
 // Imgproxy holds all the components needed for imgproxy to function
 type Imgproxy struct {
-	workers          *workers.Workers
-	fallbackImage    auximageprovider.Provider
-	watermarkImage   auximageprovider.Provider
-	fetcher          *fetcher.Fetcher
-	imageDataFactory *imagedata.Factory
-	handlers         ImgproxyHandlers
-	security         *security.Checker
-	optionsParser    *optionsparser.Parser
-	processor        *processing.Processor
-	cookies          *cookies.Cookies
-	monitoring       *monitoring.Monitoring
-	config           *Config
-	errorReporter    *errorreport.Reporter
+	workers                *workers.Workers
+	fallbackImage          auximageprovider.Provider
+	watermarkImage         auximageprovider.Provider
+	fetcher                *fetcher.Fetcher
+	imageDataFactory       *imagedata.Factory
+	clientFeaturesDetector *clientfeatures.Detector
+	handlers               ImgproxyHandlers
+	security               *security.Checker
+	optionsParser          *optionsparser.Parser
+	processor              *processing.Processor
+	cookies                *cookies.Cookies
+	monitoring             *monitoring.Monitoring
+	config                 *Config
+	errorReporter          *errorreport.Reporter
 }
 
 // New creates a new imgproxy instance
@@ -65,6 +67,8 @@ func New(ctx context.Context, config *Config) (*Imgproxy, error) {
 	}
 
 	idf := imagedata.NewFactory(fetcher)
+
+	clientFeaturesDetector := clientfeatures.NewDetector(&config.ClientFeatures)
 
 	fallbackImage, err := auximageprovider.NewStaticProvider(ctx, &config.FallbackImage, "fallback", idf)
 	if err != nil {
@@ -112,18 +116,19 @@ func New(ctx context.Context, config *Config) (*Imgproxy, error) {
 	}
 
 	imgproxy := &Imgproxy{
-		workers:          workers,
-		fallbackImage:    fallbackImage,
-		watermarkImage:   watermarkImage,
-		fetcher:          fetcher,
-		imageDataFactory: idf,
-		config:           config,
-		security:         security,
-		optionsParser:    optionsParser,
-		processor:        processor,
-		cookies:          cookies,
-		monitoring:       monitoring,
-		errorReporter:    errorReporter,
+		workers:                workers,
+		fallbackImage:          fallbackImage,
+		watermarkImage:         watermarkImage,
+		fetcher:                fetcher,
+		imageDataFactory:       idf,
+		clientFeaturesDetector: clientFeaturesDetector,
+		config:                 config,
+		security:               security,
+		optionsParser:          optionsParser,
+		processor:              processor,
+		cookies:                cookies,
+		monitoring:             monitoring,
+		errorReporter:          errorReporter,
 	}
 
 	imgproxy.handlers.Health = healthhandler.New()
@@ -247,6 +252,10 @@ func (i *Imgproxy) WatermarkImage() auximageprovider.Provider {
 
 func (i *Imgproxy) ImageDataFactory() *imagedata.Factory {
 	return i.imageDataFactory
+}
+
+func (i *Imgproxy) ClientFeaturesDetector() *clientfeatures.Detector {
+	return i.clientFeaturesDetector
 }
 
 func (i *Imgproxy) Security() *security.Checker {
