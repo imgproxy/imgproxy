@@ -1,7 +1,9 @@
 package gcs
 
 import (
+	"crypto/rand"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"testing"
@@ -36,6 +38,7 @@ type GCSTestSuite struct {
 	storage      storage.Reader
 	etag         string
 	lastModified time.Time
+	data         []byte
 }
 
 func (s *GCSTestSuite) SetupSuite() {
@@ -43,6 +46,10 @@ func (s *GCSTestSuite) SetupSuite() {
 	s.lastModified, _ = time.Parse(http.TimeFormat, "Wed, 21 Oct 2015 07:28:00 GMT")
 
 	port, err := getFreePort()
+	s.Require().NoError(err)
+
+	s.data = make([]byte, 32)
+	_, err = rand.Read(s.data)
 	s.Require().NoError(err)
 
 	s.server, err = fakestorage.NewServerWithOptions(fakestorage.Options{
@@ -57,7 +64,7 @@ func (s *GCSTestSuite) SetupSuite() {
 					// Etag:       s.etag,
 					Updated: s.lastModified,
 				},
-				Content: make([]byte, 32),
+				Content: s.data,
 			},
 		},
 	})
@@ -162,6 +169,30 @@ func (s *GCSTestSuite) TestRoundTripWithUpdatedLastModifiedReturns200() {
 
 	response.Body.Close()
 }
+
+func (s *GCSTestSuite) TestRoundTripWithRangeReturns206() {
+	ctx := s.T().Context()
+
+	reqHeader := make(http.Header)
+	reqHeader.Set(httpheaders.Range, "bytes=10-19")
+
+	response, err := s.storage.GetObject(ctx, reqHeader, "test", "foo/test.png", "")
+
+	s.Require().NoError(err)
+
+	s.Require().Equal(http.StatusPartialContent, response.Status)
+	s.Require().Equal(fmt.Sprintf("bytes 10-19/%d", 32), response.Headers.Get(httpheaders.ContentRange))
+	s.Require().Equal("10", response.Headers.Get(httpheaders.ContentLength))
+	s.Require().NotNil(response.Body)
+
+	defer response.Body.Close()
+
+	d, err := io.ReadAll(response.Body)
+	s.Require().NoError(err)
+
+	s.Require().Equal(d, s.data[10:20])
+}
+
 func TestGCSTransport(t *testing.T) {
 	suite.Run(t, new(GCSTestSuite))
 }

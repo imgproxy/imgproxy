@@ -22,17 +22,16 @@ import (
 
 // Storage represents fs file storage
 type Storage struct {
-	fs             http.Dir
-	querySeparator string
+	fs http.Dir
 }
 
 // New creates a new Storage instance.
-func New(config *Config, qsSeparator string) (*Storage, error) {
+func New(config *Config) (*Storage, error) {
 	if err := config.Validate(); err != nil {
 		return nil, err
 	}
 
-	return &Storage{fs: http.Dir(config.Root), querySeparator: qsSeparator}, nil
+	return &Storage{fs: http.Dir(config.Root)}, nil
 }
 
 // GetObject retrieves an object from file system.

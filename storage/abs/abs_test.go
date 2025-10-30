@@ -1,8 +1,13 @@
-package azure
+package abs
 
 import (
+	"crypto/rand"
+	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -14,17 +19,20 @@ import (
 	"github.com/imgproxy/imgproxy/v3/storage"
 )
 
-type AbsTest struct {
+type AbsTestSuite struct {
 	suite.Suite
 
 	server       *httptest.Server // TODO: use testutils.TestServer
 	storage      storage.Reader
 	etag         string
 	lastModified time.Time
+	data         []byte
 }
 
-func (s *AbsTest) SetupSuite() {
-	data := make([]byte, 32)
+func (s *AbsTestSuite) SetupSuite() {
+	s.data = make([]byte, 32)
+	_, err := rand.Read(s.data)
+	s.Require().NoError(err)
 
 	logger.Mute()
 
@@ -34,10 +42,32 @@ func (s *AbsTest) SetupSuite() {
 	s.server = httptest.NewTLSServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		s.Equal("/test/foo/test.png", r.URL.Path)
 
+		// Azure client transforms "Range" header to "X-Ms-Range"
+		rangeHeader := r.Header.Get("X-Ms-Range")
+		if rangeHeader != "" {
+			// Parse range header: "bytes=start-end"
+			rangeStr := strings.TrimPrefix(rangeHeader, "bytes=")
+			parts := strings.Split(rangeStr, "-")
+			if len(parts) == 2 {
+				start, _ := strconv.Atoi(parts[0])
+				end, _ := strconv.Atoi(parts[1])
+				if end >= len(s.data) {
+					end = len(s.data) - 1
+				}
+
+				rw.Header().Set(httpheaders.ContentRange, fmt.Sprintf("bytes %d-%d/%d", start, end, len(s.data)))
+				rw.Header().Set(httpheaders.ContentLength, fmt.Sprintf("%d", end-start+1))
+				rw.WriteHeader(http.StatusPartialContent)
+				rw.Write(s.data[start : end+1])
+				return
+			}
+		}
+
 		rw.Header().Set(httpheaders.Etag, s.etag)
 		rw.Header().Set(httpheaders.LastModified, s.lastModified.Format(http.TimeFormat))
+
 		rw.WriteHeader(200)
-		rw.Write(data)
+		rw.Write(s.data)
 	}))
 
 	config := NewDefaultConfig()
@@ -55,12 +85,12 @@ func (s *AbsTest) SetupSuite() {
 	s.Require().NoError(err)
 }
 
-func (s *AbsTest) TearDownSuite() {
+func (s *AbsTestSuite) TearDownSuite() {
 	s.server.Close()
 	logger.Unmute()
 }
 
-func (s *AbsTest) TestRoundTripWithETag() {
+func (s *AbsTestSuite) TestRoundTripWithETag() {
 	ctx := s.T().Context()
 	reqHeader := make(http.Header)
 
@@ -73,7 +103,7 @@ func (s *AbsTest) TestRoundTripWithETag() {
 	response.Body.Close()
 }
 
-func (s *AbsTest) TestRoundTripWithIfNoneMatchReturns304() {
+func (s *AbsTestSuite) TestRoundTripWithIfNoneMatchReturns304() {
 	ctx := s.T().Context()
 	reqHeader := make(http.Header)
 	reqHeader.Set(httpheaders.IfNoneMatch, s.etag)
@@ -87,7 +117,7 @@ func (s *AbsTest) TestRoundTripWithIfNoneMatchReturns304() {
 	}
 }
 
-func (s *AbsTest) TestRoundTripWithUpdatedETagReturns200() {
+func (s *AbsTestSuite) TestRoundTripWithUpdatedETagReturns200() {
 	ctx := s.T().Context()
 	reqHeader := make(http.Header)
 	reqHeader.Set(httpheaders.IfNoneMatch, s.etag+"_wrong")
@@ -100,7 +130,7 @@ func (s *AbsTest) TestRoundTripWithUpdatedETagReturns200() {
 	response.Body.Close()
 }
 
-func (s *AbsTest) TestRoundTripWithLastModifiedEnabled() {
+func (s *AbsTestSuite) TestRoundTripWithLastModifiedEnabled() {
 	ctx := s.T().Context()
 	reqHeader := make(http.Header)
 
@@ -113,7 +143,7 @@ func (s *AbsTest) TestRoundTripWithLastModifiedEnabled() {
 	response.Body.Close()
 }
 
-func (s *AbsTest) TestRoundTripWithIfModifiedSinceReturns304() {
+func (s *AbsTestSuite) TestRoundTripWithIfModifiedSinceReturns304() {
 	ctx := s.T().Context()
 	reqHeader := make(http.Header)
 	reqHeader.Set(httpheaders.IfModifiedSince, s.lastModified.Format(http.TimeFormat))
@@ -127,7 +157,7 @@ func (s *AbsTest) TestRoundTripWithIfModifiedSinceReturns304() {
 	}
 }
 
-func (s *AbsTest) TestRoundTripWithUpdatedLastModifiedReturns200() {
+func (s *AbsTestSuite) TestRoundTripWithUpdatedLastModifiedReturns200() {
 	ctx := s.T().Context()
 	reqHeader := make(http.Header)
 	reqHeader.Set(httpheaders.IfModifiedSince, s.lastModified.Add(-24*time.Hour).Format(http.TimeFormat))
@@ -140,6 +170,29 @@ func (s *AbsTest) TestRoundTripWithUpdatedLastModifiedReturns200() {
 	response.Body.Close()
 }
 
+func (s *AbsTestSuite) TestRoundTripWithRangeReturns206() {
+	ctx := s.T().Context()
+
+	reqHeader := make(http.Header)
+	reqHeader.Set(httpheaders.Range, "bytes=10-19")
+
+	response, err := s.storage.GetObject(ctx, reqHeader, "test", "foo/test.png", "")
+
+	s.Require().NoError(err)
+
+	s.Require().Equal(http.StatusPartialContent, response.Status)
+	s.Require().Equal(fmt.Sprintf("bytes 10-19/%d", 32), response.Headers.Get(httpheaders.ContentRange))
+	s.Require().Equal("10", response.Headers.Get(httpheaders.ContentLength))
+	s.Require().NotNil(response.Body)
+
+	defer response.Body.Close()
+
+	d, err := io.ReadAll(response.Body)
+	s.Require().NoError(err)
+
+	s.Require().Equal(d, s.data[10:20])
+}
+
 func TestAzureTransport(t *testing.T) {
-	suite.Run(t, new(AbsTest))
+	suite.Run(t, new(AbsTestSuite))
 }

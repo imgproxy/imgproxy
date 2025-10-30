@@ -82,7 +82,7 @@ func (t *Transport) registerAllProtocols() error {
 	}
 
 	if t.config.Local.Root != "" {
-		tr, err := fsStorage.New(&t.config.Local, sep)
+		tr, err := fsStorage.New(&t.config.Local)
 		if err != nil {
 			return err
 		}

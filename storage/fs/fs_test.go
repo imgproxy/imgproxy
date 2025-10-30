@@ -2,6 +2,7 @@ package fs
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -22,11 +23,12 @@ type FsTestSuite struct {
 	etag    string
 	modTime time.Time
 	size    int64
+	td      *testutil.TestDataProvider
 }
 
 func (s *FsTestSuite) SetupSuite() {
-	tdp := testutil.NewTestDataProvider(s.T)
-	fsRoot := tdp.Root()
+	s.td = testutil.NewTestDataProvider(s.T)
+	fsRoot := s.td.Root()
 
 	fi, err := os.Stat(filepath.Join(fsRoot, "test1.png"))
 	s.Require().NoError(err)
@@ -35,7 +37,7 @@ func (s *FsTestSuite) SetupSuite() {
 	s.modTime = fi.ModTime()
 	s.size = fi.Size()
 
-	s.storage, _ = New(&Config{Root: fsRoot}, "?")
+	s.storage, _ = New(&Config{Root: fsRoot})
 }
 
 func (s *FsTestSuite) TestRoundTripWithETagEnabled() {
@@ -130,7 +132,15 @@ func (s *FsTestSuite) TestRoundTripWithRangeReturns206() {
 	s.Require().Equal("10", response.Headers.Get(httpheaders.ContentLength))
 	s.Require().NotNil(response.Body)
 
-	response.Body.Close()
+	defer response.Body.Close()
+
+	f := s.td.Read("test1.png")
+	s.Require().NoError(err)
+
+	d, err := io.ReadAll(response.Body)
+	s.Require().NoError(err)
+
+	s.Require().Equal(d, f[10:20])
 }
 
 func TestFSTransport(t *testing.T) {

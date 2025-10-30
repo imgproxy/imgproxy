@@ -142,33 +142,5 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 }
 
 func (c *Config) Validate() error {
-	// Since all the subsequent configuration files are part of
-	// the base config, we need to forward validations downstream.
-	//
-	// We assume that transport is going to use all the transports
-	// at once when created so we make an exception here and move
-	// specific validator calls level up.
-	var err []error
-
-	if c.Local.Root != "" {
-		err = append(err, c.Local.Validate())
-	}
-
-	if c.ABSEnabled {
-		err = append(err, c.ABS.Validate())
-	}
-
-	if c.GCSEnabled {
-		err = append(err, c.GCS.Validate())
-	}
-
-	if c.S3Enabled {
-		err = append(err, c.S3.Validate())
-	}
-
-	if c.SwiftEnabled {
-		err = append(err, c.Swift.Validate())
-	}
-
-	return errors.Join(err...)
+	return nil
 }

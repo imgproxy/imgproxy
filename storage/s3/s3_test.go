@@ -3,6 +3,9 @@ package s3
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
+	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -27,11 +30,12 @@ type S3TestSuite struct {
 	storage      storage.Reader
 	etag         string
 	lastModified time.Time
+	data         []byte
 }
 
 func (s *S3TestSuite) SetupSuite() {
 	backend := s3mem.New()
-	faker := gofakes3.New(backend)
+	faker := gofakes3.New(backend, gofakes3.WithIntegrityCheck(false))
 	s.server = httptest.NewServer(faker.Server())
 
 	config := NewDefaultConfig()
@@ -59,8 +63,12 @@ func (s *S3TestSuite) SetupSuite() {
 
 	client := svc.(*s3.Client)
 
+	s.data = make([]byte, 32)
+	_, err = rand.Read(s.data)
+	s.Require().NoError(err)
+
 	_, err = client.PutObject(context.Background(), &s3.PutObjectInput{
-		Body:   bytes.NewReader(make([]byte, 32)),
+		Body:   bytes.NewReader(s.data),
 		Bucket: aws.String("test"),
 		Key:    aws.String("foo/test.png"),
 	})
@@ -159,6 +167,29 @@ func (s *S3TestSuite) TestRoundTripWithUpdatedLastModifiedReturns200() {
 	s.Require().NotNil(response.Body)
 
 	response.Body.Close()
+}
+
+func (s *S3TestSuite) TestRoundTripWithRangeReturns206() {
+	ctx := s.T().Context()
+
+	reqHeader := make(http.Header)
+	reqHeader.Set(httpheaders.Range, "bytes=10-19")
+
+	response, err := s.storage.GetObject(ctx, reqHeader, "test", "foo/test.png", "")
+
+	s.Require().NoError(err)
+
+	s.Require().Equal(http.StatusPartialContent, response.Status)
+	s.Require().Equal(fmt.Sprintf("bytes 10-19/%d", 32), response.Headers.Get(httpheaders.ContentRange))
+	s.Require().Equal("10", response.Headers.Get(httpheaders.ContentLength))
+	s.Require().NotNil(response.Body)
+
+	defer response.Body.Close()
+
+	// NOTE: err would contain CRC error, which is the limitation of s3 fake server
+	d, _ := io.ReadAll(response.Body)
+
+	s.Require().Equal(d, s.data[10:20])
 }
 
 func TestS3Transport(t *testing.T) {

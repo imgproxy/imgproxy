@@ -2,6 +2,8 @@ package swift
 
 import (
 	"context"
+	"crypto/rand"
+	"io"
 	"net/http"
 	"testing"
 	"time"
@@ -26,6 +28,7 @@ type SwiftTestSuite struct {
 	storage      storage.Reader
 	etag         string
 	lastModified time.Time
+	data         []byte
 }
 
 func (s *SwiftTestSuite) SetupSuite() {
@@ -71,13 +74,16 @@ func (s *SwiftTestSuite) setupTestFile(config *Config) {
 
 	defer f.Close()
 
-	data := make([]byte, 32)
+	s.data = make([]byte, 32)
+	_, err = rand.Read(s.data)
+	s.Require().NoError(err)
 
-	n, err := f.Write(data)
-	s.Require().Len(data, n)
+	n, err := f.Write(s.data)
+	s.Require().Len(s.data, n)
 	s.Require().NoError(err)
 
 	f.Close()
+
 	// The Etag is written on file close; but Last-Modified is only available when we get the object again.
 	_, h, err := c.Object(ctx, testContainer, testObject)
 	s.Require().NoError(err)
@@ -186,6 +192,32 @@ func (s *SwiftTestSuite) TestRoundTripWithUpdatedLastModifiedReturns200() {
 	s.Require().NotNil(response.Body)
 
 	response.Body.Close()
+}
+
+func (s *SwiftTestSuite) TestRoundTripWithRangeReturns206() {
+	ctx := s.T().Context()
+
+	reqHeader := make(http.Header)
+	reqHeader.Set(httpheaders.Range, "bytes=10-19")
+
+	response, err := s.storage.GetObject(ctx, reqHeader, "test", "foo/test.png", "")
+
+	s.Require().NoError(err)
+
+	// NOTE: swifttest returns invalid headers for partial content requests
+	//
+	// s.Require().Equal(http.StatusPartialContent, response.Status)
+	// s.Require().Equal(fmt.Sprintf("bytes 10-19/%d", 100), response.Headers.Get(httpheaders.ContentRange))
+
+	s.Require().Equal("10", response.Headers.Get(httpheaders.ContentLength))
+	s.Require().NotNil(response.Body)
+
+	defer response.Body.Close()
+
+	d, err := io.ReadAll(response.Body)
+	s.Require().NoError(err)
+
+	s.Require().Equal(d, s.data[10:20])
 }
 
 func TestSwiftTransport(t *testing.T) {
