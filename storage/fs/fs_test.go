@@ -1,6 +1,7 @@
 package fs
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -20,6 +21,7 @@ type FsTestSuite struct {
 	storage storage.Reader
 	etag    string
 	modTime time.Time
+	size    int64
 }
 
 func (s *FsTestSuite) SetupSuite() {
@@ -31,6 +33,7 @@ func (s *FsTestSuite) SetupSuite() {
 
 	s.etag = buildEtag("/test1.png", fi)
 	s.modTime = fi.ModTime()
+	s.size = fi.Size()
 
 	s.storage, _ = New(&Config{Root: fsRoot}, "?")
 }
@@ -109,6 +112,22 @@ func (s *FsTestSuite) TestRoundTripWithUpdatedLastModifiedReturns200() {
 	response, err := s.storage.GetObject(ctx, reqHeader, "", "test1.png", "")
 	s.Require().NoError(err)
 	s.Require().Equal(http.StatusOK, response.Status)
+	s.Require().NotNil(response.Body)
+
+	response.Body.Close()
+}
+
+func (s *FsTestSuite) TestRoundTripWithRangeReturns206() {
+	ctx := s.T().Context()
+	reqHeader := make(http.Header)
+	reqHeader.Set(httpheaders.Range, "bytes=10-19")
+
+	response, err := s.storage.GetObject(ctx, reqHeader, "", "test1.png", "")
+
+	s.Require().NoError(err)
+	s.Require().Equal(http.StatusPartialContent, response.Status)
+	s.Require().Equal(fmt.Sprintf("bytes 10-19/%d", s.size), response.Headers.Get(httpheaders.ContentRange))
+	s.Require().Equal("10", response.Headers.Get(httpheaders.ContentLength))
 	s.Require().NotNil(response.Body)
 
 	response.Body.Close()

@@ -85,12 +85,8 @@ func (s *Storage) GetObject(
 		header.Set(httpheaders.ContentType, mimetype)
 	}
 
-	// calculate Etag and Last-Modified date
-	etag := buildEtag(name, fi)
-	lastModified := fi.ModTime().Format(http.TimeFormat)
-
 	// try requested range
-	start, end, err := httprange.Parse(header.Get(httpheaders.Range))
+	start, end, err := httprange.Parse(reqHeader.Get(httpheaders.Range))
 	switch {
 	case err != nil:
 		f.Close()
@@ -106,17 +102,19 @@ func (s *Storage) GetObject(
 
 		size = end - start + 1
 		body = &fileLimiter{f: f, left: int(size)}
+
+		header.Set(httpheaders.ContentLength, strconv.Itoa(int(size)))
 		header.Set(httpheaders.ContentRange, fmt.Sprintf("bytes %d-%d/%d", start, end, fi.Size()))
 
 		return response.NewPartialContent(header, body), nil
 
 	// Full object requested
 	default:
-		header.Set(httpheaders.Etag, etag)
-		header.Set(httpheaders.LastModified, lastModified)
+		// Set Etag and Last-Modified date
+		header.Set(httpheaders.Etag, buildEtag(name, fi))
+		header.Set(httpheaders.LastModified, fi.ModTime().Format(http.TimeFormat))
 	}
 
-	// Either size of a partial or the total
 	header.Set(httpheaders.ContentLength, strconv.Itoa(int(size)))
 
 	// In case file was not modified, let's not return reader
