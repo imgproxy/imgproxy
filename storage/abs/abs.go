@@ -1,12 +1,11 @@
 package azure
 
 import (
+	"context"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"strconv"
-	"strings"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
@@ -15,28 +14,30 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/blob"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/blockblob"
 
-	"github.com/imgproxy/imgproxy/v3/fetcher/transport/common"
-	"github.com/imgproxy/imgproxy/v3/fetcher/transport/notmodified"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/httprange"
+	"github.com/imgproxy/imgproxy/v3/storage/common"
+	"github.com/imgproxy/imgproxy/v3/storage/response"
 )
 
-type transport struct {
-	client         *azblob.Client
-	querySeparator string
+// Storage represents Azure Storage
+type Storage struct {
+	config *Config
+	client *azblob.Client
 }
 
-func New(config *Config, trans *http.Transport, querySeparator string) (http.RoundTripper, error) {
-	if err := config.Validate(); err != nil {
-		return nil, err
-	}
-
+// New creates a new Azure Storage instance
+func New(config *Config, trans *http.Transport) (*Storage, error) {
 	var (
 		client                 *azblob.Client
 		sharedKeyCredential    *azblob.SharedKeyCredential
 		defaultAzureCredential *azidentity.DefaultAzureCredential
 		err                    error
 	)
+
+	if err = config.Validate(); err != nil {
+		return nil, err
+	}
 
 	endpoint := config.Endpoint
 	if len(endpoint) == 0 {
@@ -74,73 +75,47 @@ func New(config *Config, trans *http.Transport, querySeparator string) (http.Rou
 		return nil, err
 	}
 
-	return transport{client, querySeparator}, nil
+	return &Storage{config, client}, nil
 }
 
-func (t transport) RoundTrip(req *http.Request) (*http.Response, error) {
-	container, key, _ := common.GetBucketAndKey(req.URL, t.querySeparator)
-
+// GetObject retrieves an object from Azure cloud
+func (s *Storage) GetObject(
+	ctx context.Context,
+	reqHeader http.Header,
+	container, key, _ string,
+) (*response.Object, error) {
+	// If either container or object name is empty, return 404
 	if len(container) == 0 || len(key) == 0 {
-		body := strings.NewReader("Invalid ABS URL: container name or object key is empty")
-		return &http.Response{
-			StatusCode:    http.StatusNotFound,
-			Proto:         "HTTP/1.0",
-			ProtoMajor:    1,
-			ProtoMinor:    0,
-			Header:        http.Header{httpheaders.ContentType: {"text/plain"}},
-			ContentLength: int64(body.Len()),
-			Body:          io.NopCloser(body),
-			Close:         false,
-			Request:       req,
-		}, nil
+		return response.NewNotFound(
+			"invalid Azure Storage URL: container name or object key are empty",
+		), nil
 	}
 
-	statusCode := http.StatusOK
+	// Check if access to the container is allowed
+	if !common.IsBucketAllowed(container, s.config.AllowedBuckets, s.config.DeniedBuckets) {
+		return nil, fmt.Errorf("access to the Azure Storage container %s is denied", container)
+	}
 
 	header := make(http.Header)
 	opts := &blob.DownloadStreamOptions{}
 
-	if r := req.Header.Get(httpheaders.Range); len(r) != 0 {
-		start, end, err := httprange.Parse(r)
-		if err != nil {
-			return httprange.InvalidHTTPRangeResponse(req), nil
-		}
-
-		if end != 0 {
-			length := end - start + 1
-			if end <= 0 {
-				length = blockblob.CountToEnd
-			}
-
-			opts.Range = blob.HTTPRange{
-				Offset: start,
-				Count:  length,
-			}
-		}
-
-		statusCode = http.StatusPartialContent
+	// Check if this is partial request
+	partial, err := parseRangeHeader(opts, reqHeader)
+	if err != nil {
+		return response.NewInvalidRange(), nil
 	}
 
-	result, err := t.client.DownloadStream(req.Context(), container, key, opts)
+	// Open the object
+	result, err := s.client.DownloadStream(ctx, container, key, opts)
 	if err != nil {
 		if azError, ok := err.(*azcore.ResponseError); !ok || azError.StatusCode < 100 || azError.StatusCode == 301 {
 			return nil, err
 		} else {
-			body := strings.NewReader(azError.Error())
-			return &http.Response{
-				StatusCode:    azError.StatusCode,
-				Proto:         "HTTP/1.0",
-				ProtoMajor:    1,
-				ProtoMinor:    0,
-				Header:        http.Header{"Content-Type": {"text/plain"}},
-				ContentLength: int64(body.Len()),
-				Body:          io.NopCloser(body),
-				Close:         false,
-				Request:       req,
-			}, nil
+			return response.NewError(azError.StatusCode, azError.Error()), nil
 		}
 	}
 
+	// Pass through etag and last modified
 	if result.ETag != nil {
 		etag := string(*result.ETag)
 		header.Set(httpheaders.Etag, etag)
@@ -151,18 +126,19 @@ func (t transport) RoundTrip(req *http.Request) (*http.Response, error) {
 		header.Set(httpheaders.LastModified, lastModified)
 	}
 
-	if resp := notmodified.Response(req, header); resp != nil {
+	// Break early if response was not modified
+	if !partial && common.IsNotModified(reqHeader, header) {
 		if result.Body != nil {
 			result.Body.Close()
 		}
-		return resp, nil
+
+		return response.NewNotModified(header), nil
 	}
 
+	// Pass through important headers
 	header.Set(httpheaders.AcceptRanges, "bytes")
 
-	contentLength := int64(0)
 	if result.ContentLength != nil {
-		contentLength = *result.ContentLength
 		header.Set(httpheaders.ContentLength, strconv.FormatInt(*result.ContentLength, 10))
 	}
 
@@ -178,15 +154,38 @@ func (t transport) RoundTrip(req *http.Request) (*http.Response, error) {
 		header.Set(httpheaders.CacheControl, *result.CacheControl)
 	}
 
-	return &http.Response{
-		StatusCode:    statusCode,
-		Proto:         "HTTP/1.0",
-		ProtoMajor:    1,
-		ProtoMinor:    0,
-		Header:        header,
-		ContentLength: contentLength,
-		Body:          result.Body,
-		Close:         true,
-		Request:       req,
-	}, nil
+	// If the request was partial, let's respond with partial
+	if partial {
+		return response.NewPartialContent(header, result.Body), nil
+	}
+
+	return response.NewOK(header, result.Body), nil
+}
+
+func parseRangeHeader(opts *blob.DownloadStreamOptions, reqHeader http.Header) (bool, error) {
+	r := reqHeader.Get(httpheaders.Range)
+	if len(r) == 0 {
+		return false, nil
+	}
+
+	start, end, err := httprange.Parse(r)
+	if err != nil {
+		return false, err
+	}
+
+	if end == 0 {
+		return false, nil
+	}
+
+	length := end - start + 1
+	if end <= 0 {
+		length = blockblob.CountToEnd
+	}
+
+	opts.Range = blob.HTTPRange{
+		Offset: start,
+		Count:  length,
+	}
+
+	return true, nil
 }

@@ -3,15 +3,17 @@
 package transport
 
 import (
+	"context"
+	"log/slog"
 	"net/http"
 
 	"github.com/imgproxy/imgproxy/v3/fetcher/transport/generichttp"
 
-	azureTransport "github.com/imgproxy/imgproxy/v3/fetcher/transport/azure"
-	fsTransport "github.com/imgproxy/imgproxy/v3/fetcher/transport/fs"
-	gcsTransport "github.com/imgproxy/imgproxy/v3/fetcher/transport/gcs"
-	s3Transport "github.com/imgproxy/imgproxy/v3/fetcher/transport/s3"
-	swiftTransport "github.com/imgproxy/imgproxy/v3/fetcher/transport/swift"
+	absStorage "github.com/imgproxy/imgproxy/v3/storage/abs"
+	fsStorage "github.com/imgproxy/imgproxy/v3/storage/fs"
+	gcsStorage "github.com/imgproxy/imgproxy/v3/storage/gcs"
+	s3Storage "github.com/imgproxy/imgproxy/v3/storage/s3"
+	swiftStorage "github.com/imgproxy/imgproxy/v3/storage/swift"
 )
 
 // Transport is a wrapper around http.Transport which allows to track registered protocols
@@ -61,6 +63,7 @@ func (t *Transport) Transport() *http.Transport {
 func (t *Transport) RegisterProtocol(scheme string, rt http.RoundTripper) {
 	t.transport.RegisterProtocol(scheme, rt)
 	t.schemes[scheme] = struct{}{}
+	slog.Info("Scheme registered", "scheme", scheme)
 }
 
 // IsProtocolRegistered checks if a protocol is registered in the transport
@@ -79,43 +82,48 @@ func (t *Transport) registerAllProtocols() error {
 	}
 
 	if t.config.Local.Root != "" {
-		p, err := fsTransport.New(&t.config.Local, sep)
+		tr, err := fsStorage.New(&t.config.Local, sep)
 		if err != nil {
 			return err
 		}
-		t.RegisterProtocol("local", p)
+		t.RegisterProtocol("local", NewRoundTripper(tr, sep))
 	}
 
 	if t.config.S3Enabled {
-		tr, err := s3Transport.New(&t.config.S3, transp, sep)
+		tr, err := s3Storage.New(&t.config.S3, transp)
 		if err != nil {
 			return err
 		}
-		t.RegisterProtocol("s3", tr)
+		t.RegisterProtocol("s3", NewRoundTripper(tr, sep))
 	}
 
 	if t.config.GCSEnabled {
-		tr, err := gcsTransport.New(&t.config.GCS, transp, sep)
+		tr, err := gcsStorage.New(&t.config.GCS, transp, true)
 		if err != nil {
 			return err
 		}
-		t.RegisterProtocol("gs", tr)
+		t.RegisterProtocol("gs", NewRoundTripper(tr, sep))
 	}
 
 	if t.config.ABSEnabled {
-		tr, err := azureTransport.New(&t.config.ABS, transp, sep)
+		tr, err := absStorage.New(&t.config.ABS, transp)
 		if err != nil {
 			return err
 		}
-		t.RegisterProtocol("abs", tr)
+		t.RegisterProtocol("abs", NewRoundTripper(tr, sep))
 	}
 
 	if t.config.SwiftEnabled {
-		tr, err := swiftTransport.New(&t.config.Swift, transp, sep)
+		tr, err := swiftStorage.New(
+			context.Background(),
+			&t.config.Swift,
+			transp,
+		)
 		if err != nil {
 			return err
 		}
-		t.RegisterProtocol("swift", tr)
+
+		t.RegisterProtocol("swift", NewRoundTripper(tr, sep))
 	}
 
 	return nil

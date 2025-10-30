@@ -8,12 +8,12 @@ import (
 
 	"github.com/imgproxy/imgproxy/v3/ensure"
 	"github.com/imgproxy/imgproxy/v3/env"
-	"github.com/imgproxy/imgproxy/v3/fetcher/transport/azure"
-	"github.com/imgproxy/imgproxy/v3/fetcher/transport/fs"
-	"github.com/imgproxy/imgproxy/v3/fetcher/transport/gcs"
 	"github.com/imgproxy/imgproxy/v3/fetcher/transport/generichttp"
-	"github.com/imgproxy/imgproxy/v3/fetcher/transport/s3"
-	"github.com/imgproxy/imgproxy/v3/fetcher/transport/swift"
+	azure "github.com/imgproxy/imgproxy/v3/storage/abs"
+	"github.com/imgproxy/imgproxy/v3/storage/fs"
+	"github.com/imgproxy/imgproxy/v3/storage/gcs"
+	"github.com/imgproxy/imgproxy/v3/storage/s3"
+	"github.com/imgproxy/imgproxy/v3/storage/swift"
 )
 
 var (
@@ -22,6 +22,49 @@ var (
 	IMGPROXY_USE_S3                     = env.Describe("IMGPROXY_USE_S3", "boolean")
 	IMGPROXY_USE_SWIFT                  = env.Describe("IMGPROXY_USE_SWIFT", "boolean")
 	IMGPROXY_SOURCE_URL_QUERY_SEPARATOR = env.Describe("IMGPROXY_SOURCE_URL_QUERY_SEPARATOR", "string")
+
+	fsDesc = fs.ConfigDesc{
+		Root: env.Describe("IMGPROXY_LOCAL_FILESYSTEM_ROOT", "path"),
+	}
+
+	absConfigDesc = azure.ConfigDesc{
+		Name:           env.Describe("IMGPROXY_ABS_NAME", "string"),
+		Endpoint:       env.Describe("IMGPROXY_ABS_ENDPOINT", "string"),
+		Key:            env.Describe("IMGPROXY_ABS_KEY", "string"),
+		AllowedBuckets: env.Describe("IMGPROXY_ABS_ALLOWED_BUCKETS", "comma-separated list"),
+		DeniedBuckets:  env.Describe("IMGPROXY_ABS_DENIED_BUCKETS", "comma-separated list"),
+	}
+
+	gcsConfigDesc = gcs.ConfigDesc{
+		Key:            env.Describe("IMGPROXY_GCS_KEY", "string"),
+		Endpoint:       env.Describe("IMGPROXY_GCS_ENDPOINT", "string"),
+		AllowedBuckets: env.Describe("IMGPROXY_GCS_ALLOWED_BUCKETS", "comma-separated list"),
+		DeniedBuckets:  env.Describe("IMGPROXY_GCS_DENIED_BUCKETS", "comma-separated list"),
+	}
+
+	s3ConfigDesc = s3.ConfigDesc{
+		Region:                  env.Describe("IMGPROXY_S3_REGION", "string"),
+		Endpoint:                env.Describe("IMGPROXY_S3_ENDPOINT", "string"),
+		EndpointUsePathStyle:    env.Describe("IMGPROXY_S3_ENDPOINT_USE_PATH_STYLE", "boolean"),
+		AssumeRoleArn:           env.Describe("IMGPROXY_S3_ASSUME_ROLE_ARN", "string"),
+		AssumeRoleExternalID:    env.Describe("IMGPROXY_S3_ASSUME_ROLE_EXTERNAL_ID", "string"),
+		DecryptionClientEnabled: env.Describe("IMGPROXY_S3_DECRYPTION_CLIENT_ENABLED", "boolean"),
+		AllowedBuckets:          env.Describe("IMGPROXY_S3_ALLOWED_BUCKETS", "comma-separated list"),
+		DeniedBuckets:           env.Describe("IMGPROXY_S3_DENIED_BUCKETS", "comma-separated list"),
+	}
+
+	swiftConfigDesc = swift.ConfigDesc{
+		Username:       env.Describe("IMGPROXY_SWIFT_USERNAME", "string"),
+		APIKey:         env.Describe("IMGPROXY_SWIFT_API_KEY", "string"),
+		AuthURL:        env.Describe("IMGPROXY_SWIFT_AUTH_URL", "string"),
+		Domain:         env.Describe("IMGPROXY_SWIFT_DOMAIN", "string"),
+		Tenant:         env.Describe("IMGPROXY_SWIFT_TENANT", "string"),
+		AuthVersion:    env.Describe("IMGPROXY_SWIFT_AUTH_VERSION", "number"),
+		ConnectTimeout: env.Describe("IMGPROXY_SWIFT_CONNECT_TIMEOUT_SECONDS", "number"),
+		Timeout:        env.Describe("IMGPROXY_SWIFT_TIMEOUT_SECONDS", "number"),
+		AllowedBuckets: env.Describe("IMGPROXY_SWIFT_ALLOWED_BUCKETS", "comma-separated list"),
+		DeniedBuckets:  env.Describe("IMGPROXY_SWIFT_DENIED_BUCKETS", "comma-separated list"),
+	}
 )
 
 // Config represents configuration of the transport package
@@ -70,23 +113,23 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c = ensure.Ensure(c, NewDefaultConfig)
 
 	_, genericErr := generichttp.LoadConfigFromEnv(&c.HTTP)
-	_, localErr := fs.LoadConfigFromEnv(&c.Local)
-	_, azureErr := azure.LoadConfigFromEnv(&c.ABS)
-	_, gcsErr := gcs.LoadConfigFromEnv(&c.GCS)
-	_, s3Err := s3.LoadConfigFromEnv(&c.S3)
-	_, swiftErr := swift.LoadConfigFromEnv(&c.Swift)
+	_, localErr := fs.LoadConfigFromEnv(fsDesc, &c.Local)
+	_, absErr := azure.LoadConfigFromEnv(absConfigDesc, &c.ABS)
+	_, gcsErr := gcs.LoadConfigFromEnv(gcsConfigDesc, &c.GCS)
+	_, s3Err := s3.LoadConfigFromEnv(s3ConfigDesc, &c.S3)
+	_, swiftErr := swift.LoadConfigFromEnv(swiftConfigDesc, &c.Swift)
 
 	err := errors.Join(
-		genericErr,
-		localErr,
-		azureErr,
-		gcsErr,
-		s3Err,
-		swiftErr,
 		env.Bool(&c.ABSEnabled, IMGPROXY_USE_ABS),
 		env.Bool(&c.GCSEnabled, IMGPROXY_USE_GCS),
 		env.Bool(&c.S3Enabled, IMGPROXY_USE_S3),
 		env.Bool(&c.SwiftEnabled, IMGPROXY_USE_SWIFT),
+		genericErr,
+		localErr,
+		absErr,
+		gcsErr,
+		s3Err,
+		swiftErr,
 	)
 
 	// empty value is a valid value for this separator, we can't rely on env.String,
@@ -99,6 +142,33 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 }
 
 func (c *Config) Validate() error {
-	// We won't validate upstream config here: they might not be used
-	return nil
+	// Since all the subsequent configuration files are part of
+	// the base config, we need to forward validations downstream.
+	//
+	// We assume that transport is going to use all the transports
+	// at once when created so we make an exception here and move
+	// specific validator calls level up.
+	var err []error
+
+	if c.Local.Root != "" {
+		err = append(err, c.Local.Validate())
+	}
+
+	if c.ABSEnabled {
+		err = append(err, c.ABS.Validate())
+	}
+
+	if c.GCSEnabled {
+		err = append(err, c.GCS.Validate())
+	}
+
+	if c.S3Enabled {
+		err = append(err, c.S3.Validate())
+	}
+
+	if c.SwiftEnabled {
+		err = append(err, c.Swift.Validate())
+	}
+
+	return errors.Join(err...)
 }
