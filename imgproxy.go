@@ -62,6 +62,16 @@ func New(ctx context.Context, config *Config) (*Imgproxy, error) {
 		return nil, err
 	}
 
+	monitoring, err := monitoring.New(ctx, &config.Monitoring, config.Workers.WorkersNumber)
+	if err != nil {
+		return nil, err
+	}
+
+	errorReporter, err := errorreport.New(&config.ErrorReport)
+	if err != nil {
+		return nil, err
+	}
+
 	securityChecker, err := security.New(&config.Security)
 	if err != nil {
 		return nil, err
@@ -72,7 +82,7 @@ func New(ctx context.Context, config *Config) (*Imgproxy, error) {
 		return nil, err
 	}
 
-	idf := imagedata.NewFactory(fetcher)
+	idf := imagedata.NewFactory(fetcher, monitoring)
 
 	clientFeaturesDetector := clientfeatures.NewDetector(&config.ClientFeatures)
 
@@ -102,16 +112,6 @@ func New(ctx context.Context, config *Config) (*Imgproxy, error) {
 	}
 
 	cookies, err := cookies.New(&config.Cookies)
-	if err != nil {
-		return nil, err
-	}
-
-	monitoring, err := monitoring.New(ctx, &config.Monitoring, config.Workers.WorkersNumber)
-	if err != nil {
-		return nil, err
-	}
-
-	errorReporter, err := errorreport.New(&config.ErrorReport)
 	if err != nil {
 		return nil, err
 	}

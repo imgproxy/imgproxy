@@ -35,7 +35,7 @@ func (s *ImageProviderTestSuite) SetupSuite() {
 	f, err := fetcher.New(&fc)
 	s.Require().NoError(err)
 
-	s.idf = imagedata.NewFactory(f)
+	s.idf = imagedata.NewFactory(f, nil)
 
 	s.testServer, _ = testutil.NewLazySuiteTestServer(
 		s,
