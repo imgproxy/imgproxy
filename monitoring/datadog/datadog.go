@@ -15,14 +15,11 @@ import (
 	"github.com/DataDog/dd-trace-go/v2/ddtrace/tracer"
 	"github.com/felixge/httpsnoop"
 
-	"github.com/imgproxy/imgproxy/v3/monitoring/errformat"
+	"github.com/imgproxy/imgproxy/v3/monitoring/format"
 	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
 	"github.com/imgproxy/imgproxy/v3/version"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
-
-// spanCtxKey is the context key type for storing the root span in the request context
-type spanCtxKey struct{}
 
 // dataDogLogger is a custom logger for DataDog
 type dataDogLogger struct{}
@@ -103,7 +100,11 @@ func (dd *DataDog) Stop() {
 	}
 }
 
-func (dd *DataDog) StartRootSpan(ctx context.Context, rw http.ResponseWriter, r *http.Request) (context.Context, context.CancelFunc, http.ResponseWriter) {
+func (dd *DataDog) StartRequest(
+	ctx context.Context,
+	rw http.ResponseWriter,
+	r *http.Request,
+) (context.Context, context.CancelFunc, http.ResponseWriter) {
 	if !dd.Enabled() {
 		return ctx, func() {}, rw
 	}
@@ -126,7 +127,7 @@ func (dd *DataDog) StartRootSpan(ctx context.Context, rw http.ResponseWriter, r 
 		},
 	})
 
-	return context.WithValue(ctx, spanCtxKey{}, span), cancel, newRw
+	return tracer.ContextWithSpan(ctx, span), cancel, newRw
 }
 
 func setMetadata(span *tracer.Span, key string, value any) {
@@ -149,27 +150,33 @@ func (dd *DataDog) SetMetadata(ctx context.Context, key string, value any) {
 		return
 	}
 
-	if rootSpan, ok := ctx.Value(spanCtxKey{}).(*tracer.Span); ok {
-		setMetadata(rootSpan, key, value)
+	if span, ok := tracer.SpanFromContext(ctx); ok {
+		setMetadata(span, key, value)
 	}
 }
 
-func (dd *DataDog) StartSpan(ctx context.Context, name string, meta map[string]any) context.CancelFunc {
+func (dd *DataDog) StartSpan(
+	ctx context.Context,
+	name string,
+	meta map[string]any,
+) (context.Context, context.CancelFunc) {
 	if !dd.Enabled() {
-		return func() {}
+		return ctx, func() {}
 	}
 
-	if rootSpan, ok := ctx.Value(spanCtxKey{}).(*tracer.Span); ok {
-		span := rootSpan.StartChild(name, tracer.Measured())
+	if rootSpan, ok := tracer.SpanFromContext(ctx); ok {
+		span := rootSpan.StartChild(format.FormatSegmentName(name), tracer.Measured())
 
 		for k, v := range meta {
 			setMetadata(span, k, v)
 		}
 
-		return func() { span.Finish() }
+		ctx = tracer.ContextWithSpan(ctx, span)
+
+		return ctx, func() { span.Finish() }
 	}
 
-	return func() {}
+	return ctx, func() {}
 }
 
 func (dd *DataDog) SendError(ctx context.Context, errType string, err error) {
@@ -177,9 +184,9 @@ func (dd *DataDog) SendError(ctx context.Context, errType string, err error) {
 		return
 	}
 
-	if rootSpan, ok := ctx.Value(spanCtxKey{}).(*tracer.Span); ok {
-		rootSpan.SetTag(ext.Error, err)
-		rootSpan.SetTag(ext.ErrorType, errformat.FormatErrType(errType, err))
+	if span, ok := tracer.SpanFromContext(ctx); ok {
+		span.SetTag(ext.Error, err)
+		span.SetTag(ext.ErrorType, format.FormatErrType(errType, err))
 	}
 }
 

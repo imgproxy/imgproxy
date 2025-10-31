@@ -1,10 +1,14 @@
 # 📑 Changelog (version/4 dev)
 
-## 2021-10-29
+## 2025-10-31
+
+- Remove deprecated `download_duration_seconds` and `processing_duration_seconds` histograms from Prometheus metrics.
+
+## 2025-10-29
 
 - Introduced `IMGPROXY_(ABS|GCS|S3|SWIFT)_(ALLOWED|DENIED)_BUCKETS` env var
 
-## 2021-10-20
+## 2025-10-20
 
 ### 🆕 Added
 

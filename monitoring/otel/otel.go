@@ -30,7 +30,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/imgproxy/imgproxy/v3/ierrors"
-	"github.com/imgproxy/imgproxy/v3/monitoring/errformat"
+	"github.com/imgproxy/imgproxy/v3/monitoring/format"
 	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
 	"github.com/imgproxy/imgproxy/v3/version"
 	"github.com/imgproxy/imgproxy/v3/vips"
@@ -183,7 +183,11 @@ func (o *Otel) Stop(ctx context.Context) {
 	}
 }
 
-func (o *Otel) StartRootSpan(ctx context.Context, rw http.ResponseWriter, r *http.Request) (context.Context, context.CancelFunc, http.ResponseWriter) {
+func (o *Otel) StartRequest(
+	ctx context.Context,
+	rw http.ResponseWriter,
+	r *http.Request,
+) (context.Context, context.CancelFunc, http.ResponseWriter) {
 	if !o.Enabled() {
 		return ctx, func() {}, rw
 	}
@@ -266,22 +270,30 @@ func (o *Otel) SetMetadata(ctx context.Context, key string, value interface{}) {
 	}
 }
 
-func (o *Otel) StartSpan(ctx context.Context, name string, meta map[string]any) context.CancelFunc {
+func (o *Otel) StartSpan(
+	ctx context.Context,
+	name string,
+	meta map[string]any,
+) (context.Context, context.CancelFunc) {
 	if !o.Enabled() {
-		return func() {}
+		return ctx, func() {}
 	}
 
 	if ctx.Value(hasSpanCtxKey{}) != nil {
-		_, span := o.tracer.Start(ctx, name, trace.WithSpanKind(trace.SpanKindInternal))
+		var span trace.Span
+		ctx, span = o.tracer.Start(
+			ctx, format.FormatSegmentName(name),
+			trace.WithSpanKind(trace.SpanKindInternal),
+		)
 
 		for k, v := range meta {
 			setMetadata(span, k, v)
 		}
 
-		return func() { span.End() }
+		return ctx, func() { span.End() }
 	}
 
-	return func() {}
+	return ctx, func() {}
 }
 
 func (o *Otel) SendError(ctx context.Context, errType string, err error) {
@@ -292,7 +304,7 @@ func (o *Otel) SendError(ctx context.Context, errType string, err error) {
 	span := trace.SpanFromContext(ctx)
 
 	attributes := []attribute.KeyValue{
-		semconv.ExceptionTypeKey.String(errformat.FormatErrType(errType, err)),
+		semconv.ExceptionTypeKey.String(format.FormatErrType(errType, err)),
 		semconv.ExceptionMessageKey.String(err.Error()),
 	}
 

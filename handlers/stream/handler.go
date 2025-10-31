@@ -96,7 +96,9 @@ func (s *Handler) Execute(
 func (s *request) execute(ctx context.Context) error {
 	s.Monitoring().Stats().IncImagesInProgress()
 	defer s.Monitoring().Stats().DecImagesInProgress()
-	defer s.Monitoring().StartStreamingSegment(ctx)()
+
+	ctx, cancelSpan := s.Monitoring().StartSpan(ctx, "Streaming image", nil)
+	defer cancelSpan()
 
 	// Passthrough request headers from the original request
 	requestHeaders := s.getImageRequestHeaders()

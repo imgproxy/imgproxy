@@ -36,7 +36,8 @@ func (r *request) makeImageRequestHeaders() http.Header {
 
 // acquireWorker acquires the processing worker
 func (r *request) acquireWorker(ctx context.Context) (context.CancelFunc, error) {
-	defer r.Monitoring().StartQueueSegment(ctx)()
+	ctx, cancelSpan := r.Monitoring().StartSpan(ctx, "Queue", nil)
+	defer cancelSpan()
 
 	fn, err := r.Workers().Acquire(ctx)
 	if err != nil {
@@ -80,10 +81,11 @@ func (r *request) fetchImage(
 	ctx context.Context,
 	do imagedata.DownloadOptions,
 ) (imagedata.ImageData, http.Header, error) {
-	do.DownloadFinished = r.Monitoring().StartDownloadingSegment(ctx, r.monitoringMeta.Filter(
+	ctx, cancelSpan := r.Monitoring().StartSpan(ctx, "Downloading image", r.monitoringMeta.Filter(
 		monitoring.MetaSourceImageURL,
 		monitoring.MetaSourceImageOrigin,
 	))
+	do.DownloadFinished = cancelSpan
 
 	return r.ImageDataFactory().DownloadAsync(ctx, r.imageURL, "source image", do)
 }
@@ -159,7 +161,11 @@ func (r *request) getFallbackImage(ctx context.Context) (imagedata.ImageData, ht
 
 // processImage calls actual image processing
 func (r *request) processImage(ctx context.Context, originData imagedata.ImageData) (*processing.Result, error) {
-	defer r.Monitoring().StartProcessingSegment(ctx, r.monitoringMeta.Filter(monitoring.MetaOptions))()
+	ctx, cancelSpan := r.Monitoring().StartSpan(ctx, "Processing image", r.monitoringMeta.Filter(
+		monitoring.MetaOptions,
+	))
+	defer cancelSpan()
+
 	return r.Processor().ProcessImage(ctx, originData, r.opts)
 }
 
