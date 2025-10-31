@@ -76,11 +76,15 @@ func (m *Monitoring) StartPrometheus(cancel context.CancelFunc) error {
 	return m.prometheus.StartServer(cancel)
 }
 
-func (m *Monitoring) StartRequest(ctx context.Context, rw http.ResponseWriter, r *http.Request) (context.Context, context.CancelFunc, http.ResponseWriter) {
+func (m *Monitoring) StartRequest(
+	ctx context.Context,
+	rw http.ResponseWriter,
+	r *http.Request,
+) (context.Context, context.CancelFunc, http.ResponseWriter) {
 	promCancel, rw := m.prometheus.StartRequest(rw)
-	ctx, nrCancel, rw := m.newrelic.StartTransaction(ctx, rw, r)
-	ctx, ddCancel, rw := m.datadog.StartRootSpan(ctx, rw, r)
-	ctx, otelCancel, rw := m.otel.StartRootSpan(ctx, rw, r)
+	ctx, nrCancel, rw := m.newrelic.StartRequest(ctx, rw, r)
+	ctx, ddCancel, rw := m.datadog.StartRequest(ctx, rw, r)
+	ctx, otelCancel, rw := m.otel.StartRequest(ctx, rw, r)
 
 	cancel := func() {
 		promCancel()
@@ -100,11 +104,15 @@ func (m *Monitoring) SetMetadata(ctx context.Context, meta Meta) {
 	}
 }
 
-func (m *Monitoring) StartQueueSegment(ctx context.Context) context.CancelFunc {
-	promCancel := m.prometheus.StartQueueSegment()
-	nrCancel := m.newrelic.StartSegment(ctx, "Queue", nil)
-	ddCancel := m.datadog.StartSpan(ctx, "queue", nil)
-	otelCancel := m.otel.StartSpan(ctx, "queue", nil)
+func (m *Monitoring) StartSpan(
+	ctx context.Context,
+	name string,
+	meta Meta,
+) (context.Context, context.CancelFunc) {
+	promCancel := m.prometheus.StartSpan(name)
+	nrCancel := m.newrelic.StartSpan(ctx, name, meta)
+	ctx, ddCancel := m.datadog.StartSpan(ctx, name, meta)
+	ctx, otelCancel := m.otel.StartSpan(ctx, name, meta)
 
 	cancel := func() {
 		promCancel()
@@ -113,55 +121,7 @@ func (m *Monitoring) StartQueueSegment(ctx context.Context) context.CancelFunc {
 		otelCancel()
 	}
 
-	return cancel
-}
-
-func (m *Monitoring) StartDownloadingSegment(ctx context.Context, meta Meta) context.CancelFunc {
-	promCancel := m.prometheus.StartDownloadingSegment()
-	nrCancel := m.newrelic.StartSegment(ctx, "Downloading image", meta)
-	ddCancel := m.datadog.StartSpan(ctx, "downloading_image", meta)
-	otelCancel := m.otel.StartSpan(ctx, "downloading_image", meta)
-
-	cancel := func() {
-		promCancel()
-		nrCancel()
-		ddCancel()
-		otelCancel()
-	}
-
-	return cancel
-}
-
-func (m *Monitoring) StartProcessingSegment(ctx context.Context, meta Meta) context.CancelFunc {
-	promCancel := m.prometheus.StartProcessingSegment()
-	nrCancel := m.newrelic.StartSegment(ctx, "Processing image", meta)
-	ddCancel := m.datadog.StartSpan(ctx, "processing_image", meta)
-	otelCancel := m.otel.StartSpan(ctx, "processing_image", meta)
-
-	cancel := func() {
-		promCancel()
-		nrCancel()
-		ddCancel()
-		otelCancel()
-	}
-
-	return cancel
-}
-
-func (m *Monitoring) StartStreamingSegment(ctx context.Context) context.CancelFunc {
-	promCancel := m.prometheus.StartStreamingSegment()
-	nrCancel := m.newrelic.StartSegment(ctx, "Streaming image", nil)
-	ddCancel := m.datadog.StartSpan(ctx, "streaming_image", nil)
-	otelCancel := m.otel.StartSpan(ctx, "streaming_image", nil)
-
-	cancel := func() {
-		promCancel()
-		nrCancel()
-		ddCancel()
-		otelCancel()
-	}
-
-	return cancel
+	return ctx, cancel
 }
 
 func (m *Monitoring) SendError(ctx context.Context, errType string, err error) {

@@ -13,6 +13,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
+	"github.com/imgproxy/imgproxy/v3/monitoring/format"
 	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
@@ -28,8 +29,6 @@ type Prometheus struct {
 
 	requestDuration     prometheus.Histogram
 	requestSpanDuration *prometheus.HistogramVec
-	downloadDuration    prometheus.Histogram
-	processingDuration  prometheus.Histogram
 
 	workers prometheus.Gauge
 }
@@ -78,18 +77,6 @@ func New(config *Config, stats *stats.Stats) (*Prometheus, error) {
 		Name:      "request_span_duration_seconds",
 		Help:      "A histogram of the queue latency.",
 	}, []string{"span"})
-
-	p.downloadDuration = prometheus.NewHistogram(prometheus.HistogramOpts{
-		Namespace: config.Namespace,
-		Name:      "download_duration_seconds",
-		Help:      "A histogram of the source image downloading latency.",
-	})
-
-	p.processingDuration = prometheus.NewHistogram(prometheus.HistogramOpts{
-		Namespace: config.Namespace,
-		Name:      "processing_duration_seconds",
-		Help:      "A histogram of the image processing latency.",
-	})
 
 	p.workers = prometheus.NewGauge(prometheus.GaugeOpts{
 		Namespace: config.Namespace,
@@ -140,8 +127,6 @@ func New(config *Config, stats *stats.Stats) (*Prometheus, error) {
 		p.errorsTotal,
 		p.requestDuration,
 		p.requestSpanDuration,
-		p.downloadDuration,
-		p.processingDuration,
 		p.workers,
 		requestsInProgress,
 		imagesInProgress,
@@ -203,48 +188,14 @@ func (p *Prometheus) StartRequest(rw http.ResponseWriter) (context.CancelFunc, h
 	return p.startDuration(p.requestDuration), newRw
 }
 
-func (p *Prometheus) StartQueueSegment() context.CancelFunc {
+func (p *Prometheus) StartSpan(name string) context.CancelFunc {
 	if !p.Enabled() {
 		return func() {}
 	}
 
-	return p.startDuration(p.requestSpanDuration.With(prometheus.Labels{"span": "queue"}))
-}
-
-func (p *Prometheus) StartDownloadingSegment() context.CancelFunc {
-	if !p.Enabled() {
-		return func() {}
-	}
-
-	cancel := p.startDuration(p.requestSpanDuration.With(prometheus.Labels{"span": "downloading"}))
-	cancelLegacy := p.startDuration(p.downloadDuration)
-
-	return func() {
-		cancel()
-		cancelLegacy()
-	}
-}
-
-func (p *Prometheus) StartProcessingSegment() context.CancelFunc {
-	if !p.Enabled() {
-		return func() {}
-	}
-
-	cancel := p.startDuration(p.requestSpanDuration.With(prometheus.Labels{"span": "processing"}))
-	cancelLegacy := p.startDuration(p.processingDuration)
-
-	return func() {
-		cancel()
-		cancelLegacy()
-	}
-}
-
-func (p *Prometheus) StartStreamingSegment() context.CancelFunc {
-	if !p.Enabled() {
-		return func() {}
-	}
-
-	return p.startDuration(p.requestSpanDuration.With(prometheus.Labels{"span": "streaming"}))
+	return p.startDuration(
+		p.requestSpanDuration.With(prometheus.Labels{"span": format.FormatSegmentName(name)}),
+	)
 }
 
 func (p *Prometheus) startDuration(m prometheus.Observer) context.CancelFunc {

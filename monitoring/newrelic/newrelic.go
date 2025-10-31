@@ -9,13 +9,10 @@ import (
 
 	"github.com/newrelic/go-agent/v3/newrelic"
 
-	"github.com/imgproxy/imgproxy/v3/monitoring/errformat"
+	"github.com/imgproxy/imgproxy/v3/monitoring/format"
 	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
-
-// transactionCtxKey context key for storing New Relic transaction in context
-type transactionCtxKey struct{}
 
 // attributable is an interface for New Relic entities that can have attributes set on them
 type attributable interface {
@@ -81,7 +78,11 @@ func (nl *NewRelic) Stop(ctx context.Context) {
 	}
 }
 
-func (nl *NewRelic) StartTransaction(ctx context.Context, rw http.ResponseWriter, r *http.Request) (context.Context, context.CancelFunc, http.ResponseWriter) {
+func (nl *NewRelic) StartRequest(
+	ctx context.Context,
+	rw http.ResponseWriter,
+	r *http.Request,
+) (context.Context, context.CancelFunc, http.ResponseWriter) {
 	if !nl.Enabled() {
 		return ctx, func() {}, rw
 	}
@@ -90,7 +91,7 @@ func (nl *NewRelic) StartTransaction(ctx context.Context, rw http.ResponseWriter
 	txn.SetWebRequestHTTP(r)
 	newRw := txn.SetWebResponse(rw)
 	cancel := func() { txn.End() }
-	return context.WithValue(ctx, transactionCtxKey{}, txn), cancel, newRw
+	return newrelic.NewContext(ctx, txn), cancel, newRw
 }
 
 func setMetadata(span attributable, key string, value interface{}) {
@@ -127,17 +128,21 @@ func (nl *NewRelic) SetMetadata(ctx context.Context, key string, value interface
 		return
 	}
 
-	if txn, ok := ctx.Value(transactionCtxKey{}).(*newrelic.Transaction); ok {
+	if txn := newrelic.FromContext(ctx); txn != nil {
 		setMetadata(txn, key, value)
 	}
 }
 
-func (nl *NewRelic) StartSegment(ctx context.Context, name string, meta map[string]any) context.CancelFunc {
+func (nl *NewRelic) StartSpan(
+	ctx context.Context,
+	name string,
+	meta map[string]any,
+) context.CancelFunc {
 	if !nl.Enabled() {
 		return func() {}
 	}
 
-	if txn, ok := ctx.Value(transactionCtxKey{}).(*newrelic.Transaction); ok {
+	if txn := newrelic.FromContext(ctx); txn != nil {
 		segment := txn.NewGoroutine().StartSegment(name)
 
 		for k, v := range meta {
@@ -155,10 +160,10 @@ func (nl *NewRelic) SendError(ctx context.Context, errType string, err error) {
 		return
 	}
 
-	if txn, ok := ctx.Value(transactionCtxKey{}).(*newrelic.Transaction); ok {
+	if txn := newrelic.FromContext(ctx); txn != nil {
 		txn.NoticeError(newrelic.Error{
 			Message: err.Error(),
-			Class:   errformat.FormatErrType(errType, err),
+			Class:   format.FormatErrType(errType, err),
 		})
 	}
 }
