@@ -168,6 +168,16 @@ func (nl *NewRelic) SendError(ctx context.Context, errType string, err error) {
 	}
 }
 
+func (nl *NewRelic) InjectHeaders(ctx context.Context, headers http.Header) {
+	if !nl.Enabled() || !nl.config.PropagateExt {
+		return
+	}
+
+	if txn := newrelic.FromContext(ctx); txn != nil {
+		txn.InsertDistributedTraceHeaders(headers)
+	}
+}
+
 func (nl *NewRelic) runMetricsCollector() {
 	tick := time.NewTicker(nl.config.MetricsInterval)
 	defer tick.Stop()
