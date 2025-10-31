@@ -177,6 +177,10 @@ func (f *Factory) DownloadAsync(ctx context.Context, imageURL, desc string, opts
 		return nil, h, wrapDownloadError(err, desc)
 	}
 
+	// We successfully detected the image type, so we can release the pause
+	// and let the buffer read the rest of the data immediately.
+	b.ReleaseThreshold()
+
 	d := &imageDataAsyncBuffer{
 		b:      b,
 		format: format,

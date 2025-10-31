@@ -309,6 +309,12 @@ func (ab *AsyncBuffer) Wait() (int, error) {
 	}
 }
 
+// ReleaseThreshold releases the pause, allowing the buffer to immediately
+// read data beyond the pause threshold.
+func (ab *AsyncBuffer) ReleaseThreshold() {
+	ab.paused.Release()
+}
+
 // Error returns the error that occurred during reading data in background.
 func (ab *AsyncBuffer) Error() error {
 	err := ab.err.Load()
