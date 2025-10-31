@@ -14,17 +14,20 @@ import (
 	"github.com/imgproxy/imgproxy/v3/fetcher"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
+	"github.com/imgproxy/imgproxy/v3/monitoring"
 )
 
 // Factory represents ImageData factory
 type Factory struct {
-	fetcher *fetcher.Fetcher
+	fetcher    *fetcher.Fetcher
+	monitoring *monitoring.Monitoring
 }
 
 // NewFactory creates a new factory
-func NewFactory(fetcher *fetcher.Fetcher) *Factory {
+func NewFactory(fetcher *fetcher.Fetcher, monitoring *monitoring.Monitoring) *Factory {
 	return &Factory{
-		fetcher: fetcher,
+		fetcher:    fetcher,
+		monitoring: monitoring,
 	}
 }
 
@@ -116,11 +119,30 @@ func (f *Factory) sendRequest(ctx context.Context, url string, opts DownloadOpti
 	return req, res, h, nil
 }
 
-// DownloadSync downloads the image synchronously and returns the ImageData and HTTP headers.
-func (f *Factory) DownloadSync(ctx context.Context, imageURL, desc string, opts DownloadOptions) (ImageData, http.Header, error) {
-	if opts.DownloadFinished != nil {
-		defer opts.DownloadFinished()
+func (f *Factory) startMonitoringSpan(
+	ctx context.Context,
+	imageURL, desc string,
+) (context.Context, context.CancelFunc) {
+	if f.monitoring == nil {
+		return ctx, func() {}
 	}
+
+	meta := monitoring.Meta{
+		monitoring.MetaKey(desc + " URL"):    imageURL,
+		monitoring.MetaKey(desc + " Origin"): monitoring.MetaURLOrigin(imageURL),
+	}
+
+	return f.monitoring.StartSpan(ctx, "Downloading "+desc, meta)
+}
+
+// DownloadSync downloads the image synchronously and returns the ImageData and HTTP headers.
+func (f *Factory) DownloadSync(
+	ctx context.Context,
+	imageURL, desc string,
+	opts DownloadOptions,
+) (ImageData, http.Header, error) {
+	ctx, cancelSpan := f.startMonitoringSpan(ctx, imageURL, desc)
+	defer cancelSpan()
 
 	req, res, h, err := f.sendRequest(ctx, imageURL, opts)
 	if res != nil {
@@ -154,18 +176,22 @@ func (f *Factory) DownloadSync(ctx context.Context, imageURL, desc string, opts 
 
 // DownloadAsync downloads the image asynchronously and returns the ImageData
 // backed by AsyncBuffer and HTTP headers.
-func (f *Factory) DownloadAsync(ctx context.Context, imageURL, desc string, opts DownloadOptions) (ImageData, http.Header, error) {
+func (f *Factory) DownloadAsync(
+	ctx context.Context,
+	imageURL, desc string,
+	opts DownloadOptions,
+) (ImageData, http.Header, error) {
+	ctx, cancelSpan := f.startMonitoringSpan(ctx, imageURL, desc)
+
 	// We pass this responsibility to AsyncBuffer
 	//nolint:bodyclose
 	req, res, h, err := f.sendRequest(ctx, imageURL, opts)
 	if err != nil {
-		if opts.DownloadFinished != nil {
-			defer opts.DownloadFinished()
-		}
+		cancelSpan()
 		return nil, h, wrapDownloadError(err, desc)
 	}
 
-	b := asyncbuffer.New(res.Body, int(res.ContentLength), opts.DownloadFinished)
+	b := asyncbuffer.New(res.Body, int(res.ContentLength), cancelSpan)
 
 	ct := res.Header.Get(httpheaders.ContentType)
 	ext := strings.ToLower(filepath.Ext(res.Request.URL.Path))

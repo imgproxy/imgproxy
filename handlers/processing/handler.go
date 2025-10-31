@@ -3,7 +3,6 @@ package processing
 import (
 	"context"
 	"net/http"
-	"net/url"
 
 	"github.com/imgproxy/imgproxy/v3/auximageprovider"
 	"github.com/imgproxy/imgproxy/v3/clientfeatures"
@@ -116,7 +115,7 @@ func (h *Handler) newRequest(
 	}
 
 	// get image origin and create monitoring meta object
-	imageOrigin := imageOrigin(imageURL)
+	imageOrigin := monitoring.MetaURLOrigin(imageURL)
 
 	mm := monitoring.Meta{
 		monitoring.MetaSourceImageURL:    imageURL,
@@ -147,13 +146,4 @@ func (h *Handler) newRequest(
 		monitoringMeta: mm,
 		req:            req,
 	}, nil
-}
-
-// imageOrigin extracts image origin from URL
-func imageOrigin(imageURL string) string {
-	if u, uerr := url.Parse(imageURL); uerr == nil {
-		return u.Scheme + "://" + u.Host
-	}
-
-	return ""
 }

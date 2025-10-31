@@ -42,7 +42,7 @@ func (s *ProcessingTestSuite) SetupSuite() {
 			return nil, err
 		}
 
-		return imagedata.NewFactory(f), nil
+		return imagedata.NewFactory(f, nil), nil
 	})
 
 	s.securityConfig, _ = testutil.NewLazySuiteObj(s, func() (*security.Config, error) {

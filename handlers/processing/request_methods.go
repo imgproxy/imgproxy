@@ -81,12 +81,6 @@ func (r *request) fetchImage(
 	ctx context.Context,
 	do imagedata.DownloadOptions,
 ) (imagedata.ImageData, http.Header, error) {
-	ctx, cancelSpan := r.Monitoring().StartSpan(ctx, "Downloading image", r.monitoringMeta.Filter(
-		monitoring.MetaSourceImageURL,
-		monitoring.MetaSourceImageOrigin,
-	))
-	do.DownloadFinished = cancelSpan
-
 	return r.ImageDataFactory().DownloadAsync(ctx, r.imageURL, "source image", do)
 }
 

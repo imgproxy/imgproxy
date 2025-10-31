@@ -52,7 +52,7 @@ func (s *ImageDataTestSuite) SetupSuite() {
 				return nil, err
 			}
 
-			return NewFactory(fetcher), nil
+			return NewFactory(fetcher, nil), nil
 		},
 	)
 
