@@ -56,27 +56,34 @@ func (r *request) acquireWorker(ctx context.Context) (context.CancelFunc, error)
 }
 
 // makeDownloadOptions creates a new default download options
-func (r *request) makeDownloadOptions(ctx context.Context, h http.Header) imagedata.DownloadOptions {
-	downloadFinished := r.Monitoring().StartDownloadingSegment(ctx, r.monitoringMeta.Filter(
-		monitoring.MetaSourceImageURL,
-		monitoring.MetaSourceImageOrigin,
-	))
+func (r *request) makeDownloadOptions(
+	ctx context.Context,
+	h http.Header,
+) (imagedata.DownloadOptions, error) {
+	jar, err := r.Cookies().JarFromRequest(r.req)
+	if err != nil {
+		return imagedata.DownloadOptions{}, ierrors.Wrap(
+			err, 0,
+			ierrors.WithCategory(handlers.CategoryDownload),
+		)
+	}
 
 	return imagedata.DownloadOptions{
-		Header:           h,
-		MaxSrcFileSize:   r.secops.MaxSrcFileSize,
-		DownloadFinished: downloadFinished,
-	}
+		Header:         h,
+		MaxSrcFileSize: r.secops.MaxSrcFileSize,
+		CookieJar:      jar,
+	}, nil
 }
 
 // fetchImage downloads the source image asynchronously
-func (r *request) fetchImage(ctx context.Context, do imagedata.DownloadOptions) (imagedata.ImageData, http.Header, error) {
-	var err error
-
-	do.CookieJar, err = r.Cookies().JarFromRequest(r.req)
-	if err != nil {
-		return nil, nil, ierrors.Wrap(err, 0, ierrors.WithCategory(handlers.CategoryDownload))
-	}
+func (r *request) fetchImage(
+	ctx context.Context,
+	do imagedata.DownloadOptions,
+) (imagedata.ImageData, http.Header, error) {
+	do.DownloadFinished = r.Monitoring().StartDownloadingSegment(ctx, r.monitoringMeta.Filter(
+		monitoring.MetaSourceImageURL,
+		monitoring.MetaSourceImageOrigin,
+	))
 
 	return r.ImageDataFactory().DownloadAsync(ctx, r.imageURL, "source image", do)
 }
