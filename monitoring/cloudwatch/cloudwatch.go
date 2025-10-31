@@ -12,7 +12,7 @@ import (
 	cloudwatchTypes "github.com/aws/aws-sdk-go-v2/service/cloudwatch/types"
 
 	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
-	"github.com/imgproxy/imgproxy/v3/vips"
+	vipsstats "github.com/imgproxy/imgproxy/v3/vips/stats"
 )
 
 const (
@@ -155,21 +155,21 @@ func (cw *CloudWatch) runMetricsCollector() {
 				Dimensions: dimensions,
 				MetricName: metricNameVipsMemory,
 				Unit:       cloudwatchTypes.StandardUnitBytes,
-				Value:      aws.Float64(vips.GetMem()),
+				Value:      aws.Float64(vipsstats.Memory()),
 			})
 
 			metrics = append(metrics, cloudwatchTypes.MetricDatum{
 				Dimensions: dimensions,
 				MetricName: metricNameVipsMaxMemory,
 				Unit:       cloudwatchTypes.StandardUnitBytes,
-				Value:      aws.Float64(vips.GetMemHighwater()),
+				Value:      aws.Float64(vipsstats.MemoryHighwater()),
 			})
 
 			metrics = append(metrics, cloudwatchTypes.MetricDatum{
 				Dimensions: dimensions,
 				MetricName: metricNameVipsAllocs,
 				Unit:       cloudwatchTypes.StandardUnitCount,
-				Value:      aws.Float64(vips.GetAllocs()),
+				Value:      aws.Float64(vipsstats.Allocs()),
 			})
 
 			input := cloudwatch.PutMetricDataInput{

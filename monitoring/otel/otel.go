@@ -33,7 +33,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/monitoring/format"
 	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
 	"github.com/imgproxy/imgproxy/v3/version"
-	"github.com/imgproxy/imgproxy/v3/vips"
+	vipsstats "github.com/imgproxy/imgproxy/v3/vips/stats"
 )
 
 const (
@@ -475,9 +475,9 @@ func (o *Otel) addDefaultMetrics() error {
 			ob.ObserveFloat64(imagesInProgressGauge, o.stats.ImagesInProgress())
 			ob.ObserveFloat64(workersUtilizationGauge, o.stats.WorkersUtilization())
 
-			ob.ObserveFloat64(vipsMemory, vips.GetMem())
-			ob.ObserveFloat64(vipsMaxMemory, vips.GetMemHighwater())
-			ob.ObserveFloat64(vipsAllocs, vips.GetAllocs())
+			ob.ObserveFloat64(vipsMemory, vipsstats.Memory())
+			ob.ObserveFloat64(vipsMaxMemory, vipsstats.MemoryHighwater())
+			ob.ObserveFloat64(vipsAllocs, vipsstats.Allocs())
 
 			return nil
 		},

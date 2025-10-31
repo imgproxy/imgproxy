@@ -18,7 +18,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/monitoring/format"
 	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
 	"github.com/imgproxy/imgproxy/v3/version"
-	"github.com/imgproxy/imgproxy/v3/vips"
+	vipsstats "github.com/imgproxy/imgproxy/v3/vips/stats"
 )
 
 // dataDogLogger is a custom logger for DataDog
@@ -202,9 +202,9 @@ func (dd *DataDog) runMetricsCollector() {
 			dd.statsdClient.Gauge("imgproxy.images_in_progress", dd.stats.ImagesInProgress(), nil, 1)
 			dd.statsdClient.Gauge("imgproxy.workers_utilization", dd.stats.WorkersUtilization(), nil, 1)
 
-			dd.statsdClient.Gauge("imgproxy.vips.memory", vips.GetMem(), nil, 1)
-			dd.statsdClient.Gauge("imgproxy.vips.max_memory", vips.GetMemHighwater(), nil, 1)
-			dd.statsdClient.Gauge("imgproxy.vips.allocs", vips.GetAllocs(), nil, 1)
+			dd.statsdClient.Gauge("imgproxy.vips.memory", vipsstats.Memory(), nil, 1)
+			dd.statsdClient.Gauge("imgproxy.vips.max_memory", vipsstats.MemoryHighwater(), nil, 1)
+			dd.statsdClient.Gauge("imgproxy.vips.allocs", vipsstats.Allocs(), nil, 1)
 		case <-dd.statsdClientStop:
 			return
 		}

@@ -11,7 +11,7 @@ import (
 
 	"github.com/imgproxy/imgproxy/v3/monitoring/format"
 	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
-	"github.com/imgproxy/imgproxy/v3/vips"
+	vipsstats "github.com/imgproxy/imgproxy/v3/vips/stats"
 )
 
 // attributable is an interface for New Relic entities that can have attributes set on them
@@ -180,9 +180,9 @@ func (nl *NewRelic) runMetricsCollector() {
 			nl.app.RecordCustomMetric("imgproxy/images_in_progress", float64(nl.stats.ImagesInProgress()))
 			nl.app.RecordCustomMetric("imgproxy/workers_utilization", nl.stats.WorkersUtilization())
 
-			nl.app.RecordCustomMetric("imgproxy/vips/memory", float64(vips.GetMem()))
-			nl.app.RecordCustomMetric("imgproxy/vips/max_memory", float64(vips.GetMemHighwater()))
-			nl.app.RecordCustomMetric("imgproxy/vips/allocs", float64(vips.GetAllocs()))
+			nl.app.RecordCustomMetric("imgproxy/vips/memory", float64(vipsstats.Memory()))
+			nl.app.RecordCustomMetric("imgproxy/vips/max_memory", float64(vipsstats.MemoryHighwater()))
+			nl.app.RecordCustomMetric("imgproxy/vips/allocs", float64(vipsstats.Allocs()))
 		case <-nl.metricsCtx.Done():
 			return
 		}
