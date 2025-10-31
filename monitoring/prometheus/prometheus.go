@@ -15,7 +15,7 @@ import (
 
 	"github.com/imgproxy/imgproxy/v3/monitoring/format"
 	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
-	"github.com/imgproxy/imgproxy/v3/vips"
+	vipsstats "github.com/imgproxy/imgproxy/v3/vips/stats"
 )
 
 // Prometheus holds Prometheus metrics and configuration
@@ -107,19 +107,19 @@ func New(config *Config, stats *stats.Stats) (*Prometheus, error) {
 		Namespace: config.Namespace,
 		Name:      "vips_memory_bytes",
 		Help:      "A gauge of the vips tracked memory usage in bytes.",
-	}, vips.GetMem)
+	}, vipsstats.Memory)
 
 	vipsMaxMemoryBytes := prometheus.NewGaugeFunc(prometheus.GaugeOpts{
 		Namespace: config.Namespace,
 		Name:      "vips_max_memory_bytes",
 		Help:      "A gauge of the max vips tracked memory usage in bytes.",
-	}, vips.GetMemHighwater)
+	}, vipsstats.MemoryHighwater)
 
 	vipsAllocs := prometheus.NewGaugeFunc(prometheus.GaugeOpts{
 		Namespace: config.Namespace,
 		Name:      "vips_allocs",
 		Help:      "A gauge of the number of active vips allocations.",
-	}, vips.GetAllocs)
+	}, vipsstats.Allocs)
 
 	prometheus.MustRegister(
 		p.requestsTotal,

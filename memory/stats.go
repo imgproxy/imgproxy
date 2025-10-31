@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"runtime"
 
-	"github.com/imgproxy/imgproxy/v3/vips"
+	vipsstats "github.com/imgproxy/imgproxy/v3/vips/stats"
 )
 
 func LogStats() {
@@ -19,8 +19,8 @@ func LogStats() {
 
 	slog.Debug(
 		"VIPS MEMORY USAGE",
-		"cur", int(vips.GetMem())/1024/1024,
-		"max", int(vips.GetMemHighwater())/1024/1024,
-		"allocs", int(vips.GetAllocs()),
+		"cur", int(vipsstats.Memory())/1024/1024,
+		"max", int(vipsstats.MemoryHighwater())/1024/1024,
+		"allocs", int(vipsstats.Allocs()),
 	)
 }

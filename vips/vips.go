@@ -106,18 +106,6 @@ func Shutdown() {
 	C.vips_shutdown()
 }
 
-func GetMem() float64 {
-	return float64(C.vips_tracked_get_mem())
-}
-
-func GetMemHighwater() float64 {
-	return float64(C.vips_tracked_get_mem_highwater())
-}
-
-func GetAllocs() float64 {
-	return float64(C.vips_tracked_get_allocs())
-}
-
 func Health() error {
 	timer := time.NewTimer(5 * time.Second)
 	defer timer.Stop()
