@@ -88,7 +88,6 @@ func (h *Handler) Execute(
 	r.req = req
 	r.rw = rw
 	r.config = h.config
-	r.secops = h.Security().NewOptions(r.opts)
 
 	return r.execute(ctx)
 }

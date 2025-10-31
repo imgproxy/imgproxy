@@ -48,10 +48,10 @@ func (s *ProcessingTestSuite) SetupSuite() {
 	s.securityConfig, _ = testutil.NewLazySuiteObj(s, func() (*security.Config, error) {
 		c := security.NewDefaultConfig()
 
-		c.DefaultOptions.MaxSrcResolution = 10 * 1024 * 1024
-		c.DefaultOptions.MaxSrcFileSize = 10 * 1024 * 1024
-		c.DefaultOptions.MaxAnimationFrames = 100
-		c.DefaultOptions.MaxAnimationFrameResolution = 10 * 1024 * 1024
+		c.MaxSrcResolution = 10 * 1024 * 1024
+		c.MaxSrcFileSize = 10 * 1024 * 1024
+		c.MaxAnimationFrames = 100
+		c.MaxAnimationFrameResolution = 10 * 1024 * 1024
 
 		return &c, nil
 	})
@@ -66,7 +66,7 @@ func (s *ProcessingTestSuite) SetupSuite() {
 	})
 
 	s.processor, _ = testutil.NewLazySuiteObj(s, func() (*Processor, error) {
-		return New(s.config(), nil)
+		return New(s.config(), s.security(), nil)
 	})
 }
 
@@ -96,9 +96,7 @@ func (s *ProcessingTestSuite) processImageAndCheck(
 	o *options.Options,
 	expectedWidth, expectedHeight int,
 ) {
-	secops := s.security().NewOptions(o)
-
-	result, err := s.processor().ProcessImage(s.T().Context(), imgdata, o, secops)
+	result, err := s.processor().ProcessImage(s.T().Context(), imgdata, o)
 	s.Require().NoError(err)
 	s.Require().NotNil(result)
 
@@ -955,7 +953,7 @@ func (s *ProcessingTestSuite) TestImageResolutionTooLarge() {
 	o.Set(keys.MaxSrcResolution, 1)
 
 	imgdata := s.openFile("test2.jpg")
-	_, err := s.processor().ProcessImage(s.T().Context(), imgdata, o, s.security().NewOptions(o))
+	_, err := s.processor().ProcessImage(s.T().Context(), imgdata, o)
 
 	s.Require().Error(err)
 	s.Require().Equal(422, ierrors.Wrap(err, 0).StatusCode())

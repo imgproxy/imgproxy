@@ -32,21 +32,25 @@ type Config struct {
 	Salts                [][]byte         // List of the HMAC salts
 	SignatureSize        int              // Size of the HMAC signature in bytes
 	TrustedSignatures    []string         // List of trusted signature sources
-	DefaultOptions       Options          // Default security options
+
+	MaxSrcResolution            int // Maximum allowed source image resolution
+	MaxSrcFileSize              int // Maximum allowed source image file size in bytes
+	MaxAnimationFrames          int // Maximum allowed animation frames
+	MaxAnimationFrameResolution int // Maximum allowed resolution per animation frame
+	MaxResultDimension          int // Maximum allowed result image dimension (width or height)
 }
 
 // NewDefaultConfig returns a new Config instance with default values.
 func NewDefaultConfig() Config {
 	return Config{
-		DefaultOptions: Options{
-			MaxSrcResolution:            50_000_000,
-			MaxSrcFileSize:              0,
-			MaxAnimationFrames:          1,
-			MaxAnimationFrameResolution: 0,
-			MaxResultDimension:          0,
-		},
 		AllowSecurityOptions: false,
 		SignatureSize:        32,
+
+		MaxSrcResolution:            50_000_000,
+		MaxSrcFileSize:              0,
+		MaxAnimationFrames:          1,
+		MaxAnimationFrameResolution: 0,
+		MaxResultDimension:          0,
 	}
 }
 
@@ -60,11 +64,11 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 		env.Int(&c.SignatureSize, IMGPROXY_SIGNATURE_SIZE),
 		env.StringSlice(&c.TrustedSignatures, IMGPROXY_TRUSTED_SIGNATURES),
 
-		env.MegaInt(&c.DefaultOptions.MaxSrcResolution, IMGPROXY_MAX_SRC_RESOLUTION),
-		env.Int(&c.DefaultOptions.MaxSrcFileSize, IMGPROXY_MAX_SRC_FILE_SIZE),
-		env.Int(&c.DefaultOptions.MaxAnimationFrames, IMGPROXY_MAX_ANIMATION_FRAMES),
-		env.MegaInt(&c.DefaultOptions.MaxAnimationFrameResolution, IMGPROXY_MAX_ANIMATION_FRAME_RESOLUTION),
-		env.Int(&c.DefaultOptions.MaxResultDimension, IMGPROXY_MAX_RESULT_DIMENSION),
+		env.MegaInt(&c.MaxSrcResolution, IMGPROXY_MAX_SRC_RESOLUTION),
+		env.Int(&c.MaxSrcFileSize, IMGPROXY_MAX_SRC_FILE_SIZE),
+		env.Int(&c.MaxAnimationFrames, IMGPROXY_MAX_ANIMATION_FRAMES),
+		env.MegaInt(&c.MaxAnimationFrameResolution, IMGPROXY_MAX_ANIMATION_FRAME_RESOLUTION),
+		env.Int(&c.MaxResultDimension, IMGPROXY_MAX_RESULT_DIMENSION),
 
 		env.HexSlice(&c.Keys, IMGPROXY_KEYS),
 		env.HexSlice(&c.Salts, IMGPROXY_SALTS),
@@ -75,15 +79,15 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 
 // Validate validates the configuration
 func (c *Config) Validate() error {
-	if c.DefaultOptions.MaxSrcResolution <= 0 {
+	if c.MaxSrcResolution <= 0 {
 		return IMGPROXY_MAX_SRC_RESOLUTION.ErrorZeroOrNegative()
 	}
 
-	if c.DefaultOptions.MaxSrcFileSize < 0 {
+	if c.MaxSrcFileSize < 0 {
 		return IMGPROXY_MAX_SRC_FILE_SIZE.ErrorNegative()
 	}
 
-	if c.DefaultOptions.MaxAnimationFrames <= 0 {
+	if c.MaxAnimationFrames <= 0 {
 		return IMGPROXY_MAX_ANIMATION_FRAMES.ErrorZeroOrNegative()
 	}
 

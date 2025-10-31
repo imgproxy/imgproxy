@@ -70,7 +70,7 @@ func (r *request) makeDownloadOptions(
 
 	return imagedata.DownloadOptions{
 		Header:         h,
-		MaxSrcFileSize: r.secops.MaxSrcFileSize,
+		MaxSrcFileSize: r.Security().MaxSrcFileSize(r.opts),
 		CookieJar:      jar,
 	}, nil
 }
@@ -160,7 +160,7 @@ func (r *request) getFallbackImage(ctx context.Context) (imagedata.ImageData, ht
 // processImage calls actual image processing
 func (r *request) processImage(ctx context.Context, originData imagedata.ImageData) (*processing.Result, error) {
 	defer r.Monitoring().StartProcessingSegment(ctx, r.monitoringMeta.Filter(monitoring.MetaOptions))()
-	return r.Processor().ProcessImage(ctx, originData, r.opts, r.secops)
+	return r.Processor().ProcessImage(ctx, originData, r.opts)
 }
 
 // writeDebugHeaders writes debug headers (X-Origin-*, X-Result-*) to the response

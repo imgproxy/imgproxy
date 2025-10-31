@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/imgproxy/imgproxy/v3/imagedata"
-	"github.com/imgproxy/imgproxy/v3/security"
 	"github.com/imgproxy/imgproxy/v3/server"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
@@ -18,9 +17,6 @@ type Context struct {
 
 	// Processing options this pipeline runs with
 	PO ProcessingOptions
-
-	// Security options this pipeline runs with
-	SecOps security.Options
 
 	// Original image data
 	ImgData imagedata.ImageData
@@ -80,10 +76,9 @@ func (p Pipeline) Run(
 	ctx context.Context,
 	img *vips.Image,
 	po ProcessingOptions,
-	secops security.Options,
 	imgdata imagedata.ImageData,
 ) error {
-	pctx := p.newContext(ctx, img, po, secops, imgdata)
+	pctx := p.newContext(ctx, img, po, imgdata)
 	pctx.CalcParams()
 
 	for _, step := range p {
@@ -105,14 +100,12 @@ func (p Pipeline) newContext(
 	ctx context.Context,
 	img *vips.Image,
 	po ProcessingOptions,
-	secops security.Options,
 	imgdata imagedata.ImageData,
 ) Context {
 	pctx := Context{
 		Ctx:     ctx,
 		Img:     img,
 		PO:      po,
-		SecOps:  secops,
 		ImgData: imgdata,
 
 		WScale: 1.0,
