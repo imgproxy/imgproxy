@@ -62,7 +62,10 @@ func (r *request) execute(ctx context.Context) error {
 	imgRequestHeaders := r.makeImageRequestHeaders()
 
 	// create download options
-	do := r.makeDownloadOptions(ctx, imgRequestHeaders)
+	do, err := r.makeDownloadOptions(ctx, imgRequestHeaders)
+	if err != nil {
+		return err
+	}
 
 	// Fetch image actual
 	originData, originHeaders, err := r.fetchImage(ctx, do)
