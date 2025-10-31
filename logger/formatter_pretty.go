@@ -9,14 +9,15 @@ var (
 	prettyGroupOpenToken  = []byte("{")
 	prettyGroupCloseToken = []byte(" }")
 
-	prettyColorDebug     = []byte("\x1b[37m")   // Gray
-	prettyColorDebugBold = []byte("\x1b[1;37m") // Bold Gray
-	prettyColorInfo      = []byte("\x1b[36m")   // Cyan
-	prettyColorInfoBold  = []byte("\x1b[1;36m") // Bold Cyan
+	prettyColorDebug     = []byte("\x1b[34m")   // Blue
+	prettyColorDebugBold = []byte("\x1b[1;34m") // Bold Blue
+	prettyColorInfo      = []byte("\x1b[32m")   // Green
+	prettyColorInfoBold  = []byte("\x1b[1;32m") // Bold Green
 	prettyColorWarn      = []byte("\x1b[33m")   // Yellow
 	prettyColorWarnBold  = []byte("\x1b[1;33m") // Bold Yellow
 	prettyColorError     = []byte("\x1b[31m")   // Red
 	prettyColorErrorBold = []byte("\x1b[1;31m") // Bold Red
+	prettyColorStack     = []byte("\x1b[2m")    // Dimmed default
 	prettyColorReset     = []byte("\x1b[0m")
 )
 
@@ -85,7 +86,7 @@ func (s *formatterPretty) format(r slog.Record) {
 	}
 	if s.stack.Key != "" {
 		s.buf.append('\n')
-		s.buf.append(prettyColorDebug...)
+		s.buf.append(prettyColorStack...)
 		s.buf.appendStringRaw(s.stack.Value.String())
 		s.buf.append(prettyColorReset...)
 	}
