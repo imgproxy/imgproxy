@@ -44,7 +44,7 @@ func (s *MatrixTestSuite) SetupTest() {
 	s.testImagesPath = s.TestData.Path("test-images")
 	s.matcher = testutil.NewImageHashMatcher(s.TestData)
 
-	s.Config().Security.DefaultOptions.MaxAnimationFrames = 999
+	s.Config().Security.MaxAnimationFrames = 999
 	s.Config().Server.DevelopmentErrorsMode = true
 	s.Config().Fetcher.Transport.Local.Root = s.testImagesPath
 }

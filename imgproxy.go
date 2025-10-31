@@ -47,7 +47,7 @@ type Imgproxy struct {
 	imageDataFactory       *imagedata.Factory
 	clientFeaturesDetector *clientfeatures.Detector
 	handlers               ImgproxyHandlers
-	security               *security.Checker
+	securityChecker        *security.Checker
 	optionsParser          *optionsparser.Parser
 	processor              *processing.Processor
 	cookies                *cookies.Cookies
@@ -59,6 +59,11 @@ type Imgproxy struct {
 // New creates a new imgproxy instance
 func New(ctx context.Context, config *Config) (*Imgproxy, error) {
 	if err := config.Validate(); err != nil {
+		return nil, err
+	}
+
+	securityChecker, err := security.New(&config.Security)
+	if err != nil {
 		return nil, err
 	}
 
@@ -86,12 +91,7 @@ func New(ctx context.Context, config *Config) (*Imgproxy, error) {
 		return nil, err
 	}
 
-	security, err := security.New(&config.Security)
-	if err != nil {
-		return nil, err
-	}
-
-	processor, err := processing.New(&config.Processing, watermarkImage)
+	processor, err := processing.New(&config.Processing, securityChecker, watermarkImage)
 	if err != nil {
 		return nil, err
 	}
@@ -124,7 +124,7 @@ func New(ctx context.Context, config *Config) (*Imgproxy, error) {
 		imageDataFactory:       idf,
 		clientFeaturesDetector: clientFeaturesDetector,
 		config:                 config,
-		security:               security,
+		securityChecker:        securityChecker,
 		optionsParser:          optionsParser,
 		processor:              processor,
 		cookies:                cookies,
@@ -262,7 +262,7 @@ func (i *Imgproxy) ClientFeaturesDetector() *clientfeatures.Detector {
 }
 
 func (i *Imgproxy) Security() *security.Checker {
-	return i.security
+	return i.securityChecker
 }
 
 func (i *Imgproxy) OptionsParser() *optionsparser.Parser {

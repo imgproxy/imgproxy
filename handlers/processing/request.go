@@ -13,7 +13,6 @@ import (
 	"github.com/imgproxy/imgproxy/v3/monitoring"
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/options/keys"
-	"github.com/imgproxy/imgproxy/v3/security"
 	"github.com/imgproxy/imgproxy/v3/server"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
@@ -27,7 +26,6 @@ type request struct {
 	rw             server.ResponseWriter
 	config         *Config
 	opts           *options.Options
-	secops         security.Options
 	imageURL       string
 	path           string
 	monitoringMeta monitoring.Meta

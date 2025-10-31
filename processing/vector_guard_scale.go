@@ -11,8 +11,10 @@ func (p *Processor) vectorGuardScale(c *Context) error {
 		return nil
 	}
 
-	if resolution := c.Img.Width() * c.Img.Height(); resolution > c.SecOps.MaxSrcResolution {
-		shrink := math.Sqrt(float64(resolution) / float64(c.SecOps.MaxSrcResolution))
+	maxSrcRes := c.PO.MaxSrcResolution()
+
+	if resolution := c.Img.Width() * c.Img.Height(); resolution > maxSrcRes {
+		shrink := math.Sqrt(float64(resolution) / float64(maxSrcRes))
 		c.VectorBaseShrink = shrink
 
 		if err := c.Img.Load(c.ImgData, shrink, 0, 1); err != nil {
