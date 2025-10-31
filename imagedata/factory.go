@@ -88,7 +88,16 @@ func (f *Factory) sendRequest(ctx context.Context, url string, opts DownloadOpti
 		url = redirectAllRequestsTo
 	}
 
-	req, err := f.fetcher.BuildRequest(ctx, url, opts.Header, opts.CookieJar)
+	header := opts.Header
+
+	// Inject monitoring headers.
+	// Clone the headers to avoid modifying the original ones.
+	if f.monitoring != nil {
+		header = header.Clone()
+		f.monitoring.InjectHeaders(ctx, header)
+	}
+
+	req, err := f.fetcher.BuildRequest(ctx, url, header, opts.CookieJar)
 	if err != nil {
 		return req, nil, h, err
 	}

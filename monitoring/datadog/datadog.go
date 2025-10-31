@@ -190,6 +190,17 @@ func (dd *DataDog) SendError(ctx context.Context, errType string, err error) {
 	}
 }
 
+func (dd *DataDog) InjectHeaders(ctx context.Context, headers http.Header) {
+	if !dd.Enabled() || !dd.config.PropagateExt {
+		return
+	}
+
+	if span, ok := tracer.SpanFromContext(ctx); ok {
+		carrier := tracer.HTTPHeadersCarrier(headers)
+		tracer.Inject(span.Context(), carrier)
+	}
+}
+
 func (dd *DataDog) runMetricsCollector() {
 	tick := time.NewTicker(dd.config.MetricsInterval)
 	defer tick.Stop()

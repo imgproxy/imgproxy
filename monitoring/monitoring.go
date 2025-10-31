@@ -130,3 +130,11 @@ func (m *Monitoring) SendError(ctx context.Context, errType string, err error) {
 	m.datadog.SendError(ctx, errType, err)
 	m.otel.SendError(ctx, errType, err)
 }
+
+// InjectHeaders adds monitoring headers to the provided HTTP headers.
+// These headers can be used to correlate requests across different services.
+func (m *Monitoring) InjectHeaders(ctx context.Context, headers http.Header) {
+	m.newrelic.InjectHeaders(ctx, headers)
+	m.datadog.InjectHeaders(ctx, headers)
+	m.otel.InjectHeaders(ctx, headers)
+}

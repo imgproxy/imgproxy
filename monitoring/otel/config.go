@@ -16,6 +16,7 @@ var (
 	IMGPROXY_OPEN_TELEMETRY_CLIENT_CERT        = env.Describe("IMGPROXY_OPEN_TELEMETRY_CLIENT_CERT", "string")
 	IMGPROXY_OPEN_TELEMETRY_CLIENT_KEY         = env.Describe("IMGPROXY_OPEN_TELEMETRY_CLIENT_KEY", "string")
 	IMGPROXY_OPEN_TELEMETRY_TRACE_ID_GENERATOR = env.Describe("IMGPROXY_OPEN_TELEMETRY_TRACE_ID_GENERATOR", "xray|random")
+	IMGPROXY_OPEN_TELEMETRY_PROPAGATE_EXTERNAL = env.Describe("IMGPROXY_OPEN_TELEMETRY_PROPAGATE_EXTERNAL", "boolean")
 
 	// Those are OpenTelemetry SDK environment variables
 	OTEL_EXPORTER_OTLP_PROTOCOL        = env.Describe("OTEL_EXPORTER_OTLP_PROTOCOL", "grpc|http/protobuf|http|https")
@@ -34,6 +35,7 @@ type Config struct {
 	ClientCert       []byte // Client certificate for TLS connection
 	ClientKey        []byte // Client key for TLS connection
 	TraceIDGenerator string // Trace ID generator type (e.g., "xray", "random")
+	PropagateExt     bool   // Enable propagation of tracing headers for external services
 
 	Protocol           string        // Protocol to use for OTLP exporter (grpc, http/protobuf, http, https)
 	ConnTimeout        time.Duration // Connection timeout for OTLP exporter
@@ -53,6 +55,7 @@ func NewDefaultConfig() Config {
 		ClientCert:         nil,
 		ClientKey:          nil,
 		TraceIDGenerator:   "xray",
+		PropagateExt:       false,
 		Protocol:           "grpc",
 		ConnTimeout:        10_000 * time.Millisecond,
 		MetricsConnTimeout: 0,
@@ -75,6 +78,7 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 		env.String(&clientCert, IMGPROXY_OPEN_TELEMETRY_CLIENT_CERT),
 		env.String(&clientKey, IMGPROXY_OPEN_TELEMETRY_CLIENT_KEY),
 		env.String(&c.TraceIDGenerator, IMGPROXY_OPEN_TELEMETRY_TRACE_ID_GENERATOR),
+		env.Bool(&c.PropagateExt, IMGPROXY_OPEN_TELEMETRY_PROPAGATE_EXTERNAL),
 		env.String(&c.Protocol, OTEL_EXPORTER_OTLP_PROTOCOL),
 		env.DurationMils(&c.ConnTimeout, OTEL_EXPORTER_OTLP_TIMEOUT),
 		env.DurationMils(&c.TracesConnTimeout, OTEL_EXPORTER_OTLP_TRACES_TIMEOUT),

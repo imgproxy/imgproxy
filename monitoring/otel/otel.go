@@ -317,6 +317,16 @@ func (o *Otel) SendError(ctx context.Context, errType string, err error) {
 	span.AddEvent(semconv.ExceptionEventName, trace.WithAttributes(attributes...))
 }
 
+func (o *Otel) InjectHeaders(ctx context.Context, headers http.Header) {
+	if !o.Enabled() || !o.config.PropagateExt || o.propagator == nil {
+		return
+	}
+
+	if ctx.Value(hasSpanCtxKey{}) != nil {
+		o.propagator.Inject(ctx, propagation.HeaderCarrier(headers))
+	}
+}
+
 func (o *Otel) addDefaultMetrics() error {
 	proc, err := process.NewProcess(int32(os.Getpid()))
 	if err != nil {

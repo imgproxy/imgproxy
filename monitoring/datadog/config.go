@@ -11,6 +11,7 @@ import (
 var (
 	IMGPROXY_DATADOG_ENABLE                    = env.Describe("IMGPROXY_DATADOG_ENABLE", "boolean")
 	IMGPROXY_DATADOG_ENABLE_ADDITIONAL_METRICS = env.Describe("IMGPROXY_DATADOG_ENABLE_ADDITIONAL_METRICS", "boolean")
+	IMGPROXY_DATADOG_PROPAGATE_EXTERNAL        = env.Describe("IMGPROXY_DATADOG_PROPAGATE_EXTERNAL", "boolean")
 
 	DD_SERVICE            = env.Describe("DD_SERVICE", "string")
 	DD_TRACE_STARTUP_LOGS = env.Describe("DD_TRACE_STARTUP_LOGS", "boolean")
@@ -23,6 +24,7 @@ var (
 type Config struct {
 	Enable           bool          // Enable DataDog tracing
 	EnableMetrics    bool          // Enable DataDog metrics collection
+	PropagateExt     bool          // Enable propagation of tracing headers for external services
 	Service          string        // DataDog service name
 	TraceStartupLogs bool          // Enable trace startup logs
 	AgentHost        string        // DataDog agent host
@@ -36,6 +38,7 @@ func NewDefaultConfig() Config {
 	return Config{
 		Enable:           false,
 		EnableMetrics:    false,
+		PropagateExt:     false,
 		Service:          "imgproxy",
 		TraceStartupLogs: false,
 		AgentHost:        "localhost",
@@ -52,6 +55,7 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 	err := errors.Join(
 		env.Bool(&c.Enable, IMGPROXY_DATADOG_ENABLE),
 		env.Bool(&c.EnableMetrics, IMGPROXY_DATADOG_ENABLE_ADDITIONAL_METRICS),
+		env.Bool(&c.PropagateExt, IMGPROXY_DATADOG_PROPAGATE_EXTERNAL),
 		env.String(&c.Service, DD_SERVICE),
 		env.Bool(&c.TraceStartupLogs, DD_TRACE_STARTUP_LOGS),
 		env.String(&c.AgentHost, DD_AGENT_HOST),
