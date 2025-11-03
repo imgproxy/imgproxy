@@ -35,13 +35,13 @@ type Prometheus struct {
 
 // New creates a new Prometheus instance
 func New(config *Config, stats *stats.Stats) (*Prometheus, error) {
+	if !config.Enabled() {
+		return nil, nil
+	}
+
 	p := &Prometheus{
 		config: config,
 		stats:  stats,
-	}
-
-	if !config.Enabled() {
-		return p, nil
 	}
 
 	if err := config.Validate(); err != nil {
@@ -139,18 +139,13 @@ func New(config *Config, stats *stats.Stats) (*Prometheus, error) {
 	return p, nil
 }
 
-// Enabled returns true if Prometheus monitoring is enabled
-func (p *Prometheus) Enabled() bool {
-	return p.config.Enabled()
+// Stop stops the Prometheus monitoring
+func (p *Prometheus) Stop(ctx context.Context) {
+	// No-op
 }
 
 // StartServer starts the Prometheus metrics server
 func (p *Prometheus) StartServer(cancel context.CancelFunc) error {
-	// If not enabled, do nothing
-	if !p.Enabled() {
-		return nil
-	}
-
 	s := http.Server{Handler: promhttp.Handler()}
 
 	l, err := net.Listen("tcp", p.config.Bind)
@@ -169,11 +164,12 @@ func (p *Prometheus) StartServer(cancel context.CancelFunc) error {
 	return nil
 }
 
-func (p *Prometheus) StartRequest(rw http.ResponseWriter) (context.CancelFunc, http.ResponseWriter) {
-	if !p.Enabled() {
-		return func() {}, rw
-	}
-
+// StartRequest starts a new request for Prometheus monitoring
+func (p *Prometheus) StartRequest(
+	ctx context.Context,
+	rw http.ResponseWriter,
+	r *http.Request,
+) (context.Context, context.CancelFunc, http.ResponseWriter) {
 	p.requestsTotal.Inc()
 
 	newRw := httpsnoop.Wrap(rw, httpsnoop.Hooks{
@@ -185,19 +181,21 @@ func (p *Prometheus) StartRequest(rw http.ResponseWriter) (context.CancelFunc, h
 		},
 	})
 
-	return p.startDuration(p.requestDuration), newRw
+	return ctx, p.startDuration(p.requestDuration), newRw
 }
 
-func (p *Prometheus) StartSpan(name string) context.CancelFunc {
-	if !p.Enabled() {
-		return func() {}
-	}
-
-	return p.startDuration(
+// StartSpan starts a new span for Prometheus monitoring
+func (p *Prometheus) StartSpan(
+	ctx context.Context,
+	name string,
+	meta map[string]any,
+) (context.Context, context.CancelFunc) {
+	return ctx, p.startDuration(
 		p.requestSpanDuration.With(prometheus.Labels{"span": format.FormatSegmentName(name)}),
 	)
 }
 
+// startDuration starts a timer and returns a cancel function to record the duration
 func (p *Prometheus) startDuration(m prometheus.Observer) context.CancelFunc {
 	t := time.Now()
 	return func() {
@@ -205,10 +203,17 @@ func (p *Prometheus) startDuration(m prometheus.Observer) context.CancelFunc {
 	}
 }
 
-func (p *Prometheus) IncrementErrorsTotal(t string) {
-	if !p.Enabled() {
-		return
-	}
+// SetMetadata sets metadata for Prometheus monitoring
+func (p *Prometheus) SetMetadata(ctx context.Context, key string, value interface{}) {
+	// Prometheus does not support request tracing
+}
 
-	p.errorsTotal.With(prometheus.Labels{"type": t}).Inc()
+// SendError records an error occurrence in Prometheus metrics
+func (p *Prometheus) SendError(ctx context.Context, errType string, err error) {
+	p.errorsTotal.With(prometheus.Labels{"type": errType}).Inc()
+}
+
+// InjectHeaders adds monitoring headers to the provided HTTP headers.
+func (p *Prometheus) InjectHeaders(ctx context.Context, headers http.Header) {
+	// Prometheus does not support request tracing
 }

@@ -19,6 +19,7 @@ type attributable interface {
 	AddAttribute(key string, value any)
 }
 
+// NewRelic holds New Relic APM agent and configuration
 type NewRelic struct {
 	stats  *stats.Stats
 	config *Config
@@ -29,14 +30,15 @@ type NewRelic struct {
 	metricsCtxCancel context.CancelFunc
 }
 
+// New creates a new [NewRelic] instance
 func New(config *Config, stats *stats.Stats) (*NewRelic, error) {
+	if !config.Enabled() {
+		return nil, nil
+	}
+
 	nl := &NewRelic{
 		config: config,
 		stats:  stats,
-	}
-
-	if !config.Enabled() {
-		return nl, nil
 	}
 
 	var err error
@@ -62,11 +64,6 @@ func New(config *Config, stats *stats.Stats) (*NewRelic, error) {
 	return nl, nil
 }
 
-// Enabled returns true if New Relic is enabled
-func (nl *NewRelic) Enabled() bool {
-	return nl.config.Enabled()
-}
-
 // Stop stops the New Relic APM agent and Telemetry SDK harvester
 func (nl *NewRelic) Stop(ctx context.Context) {
 	if nl.metricsCtxCancel != nil {
@@ -78,15 +75,12 @@ func (nl *NewRelic) Stop(ctx context.Context) {
 	}
 }
 
+// StartRequest starts a new New Relic transaction for the incoming HTTP request
 func (nl *NewRelic) StartRequest(
 	ctx context.Context,
 	rw http.ResponseWriter,
 	r *http.Request,
 ) (context.Context, context.CancelFunc, http.ResponseWriter) {
-	if !nl.Enabled() {
-		return ctx, func() {}, rw
-	}
-
 	txn := nl.app.StartTransaction("request")
 	txn.SetWebRequestHTTP(r)
 	newRw := txn.SetWebResponse(rw)
@@ -94,6 +88,7 @@ func (nl *NewRelic) StartRequest(
 	return newrelic.NewContext(ctx, txn), cancel, newRw
 }
 
+// setMetadata sets metadata on the given New Relic attributable entity
 func setMetadata(span attributable, key string, value interface{}) {
 	if len(key) == 0 || value == nil {
 		return
@@ -123,25 +118,19 @@ func setMetadata(span attributable, key string, value interface{}) {
 	}
 }
 
+// SetMetadata sets metadata for the current transaction
 func (nl *NewRelic) SetMetadata(ctx context.Context, key string, value interface{}) {
-	if !nl.Enabled() {
-		return
-	}
-
 	if txn := newrelic.FromContext(ctx); txn != nil {
 		setMetadata(txn, key, value)
 	}
 }
 
+// StartSpan starts a new span for New Relic monitoring
 func (nl *NewRelic) StartSpan(
 	ctx context.Context,
 	name string,
 	meta map[string]any,
-) context.CancelFunc {
-	if !nl.Enabled() {
-		return func() {}
-	}
-
+) (context.Context, context.CancelFunc) {
 	if txn := newrelic.FromContext(ctx); txn != nil {
 		segment := txn.NewGoroutine().StartSegment(name)
 
@@ -149,17 +138,14 @@ func (nl *NewRelic) StartSpan(
 			setMetadata(segment, k, v)
 		}
 
-		return func() { segment.End() }
+		return ctx, func() { segment.End() }
 	}
 
-	return func() {}
+	return ctx, func() {}
 }
 
+// SendError sends an error to New Relic APM
 func (nl *NewRelic) SendError(ctx context.Context, errType string, err error) {
-	if !nl.Enabled() {
-		return
-	}
-
 	if txn := newrelic.FromContext(ctx); txn != nil {
 		txn.NoticeError(newrelic.Error{
 			Message: err.Error(),
@@ -168,8 +154,9 @@ func (nl *NewRelic) SendError(ctx context.Context, errType string, err error) {
 	}
 }
 
+// InjectHeaders adds monitoring headers to the provided HTTP headers.
 func (nl *NewRelic) InjectHeaders(ctx context.Context, headers http.Header) {
-	if !nl.Enabled() || !nl.config.PropagateExt {
+	if !nl.config.PropagateExt {
 		return
 	}
 
@@ -178,6 +165,7 @@ func (nl *NewRelic) InjectHeaders(ctx context.Context, headers http.Header) {
 	}
 }
 
+// runMetricsCollector periodically collects and sends custom metrics to New Relic
 func (nl *NewRelic) runMetricsCollector() {
 	tick := time.NewTicker(nl.config.MetricsInterval)
 	defer tick.Stop()
