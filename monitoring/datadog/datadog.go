@@ -109,12 +109,23 @@ func (dd *DataDog) StartRequest(
 		return ctx, func() {}, rw
 	}
 
+	// Extract parent span context from incoming request headers if any
+	parentSpanCtx, err := tracer.Extract(tracer.HTTPHeadersCarrier(r.Header))
+	if err != nil {
+		parentSpanCtx = nil
+	}
+
 	span := tracer.StartSpan(
 		"request",
 		tracer.Measured(),
 		tracer.SpanType("web"),
 		tracer.Tag(ext.HTTPMethod, r.Method),
 		tracer.Tag(ext.HTTPURL, r.RequestURI),
+		// ChildOf is deprecated, but there's no alternative yet,
+		// and DD devs recommend to keep using it:
+		// https://github.com/DataDog/dd-trace-go/issues/3598
+		//nolint:staticcheck
+		tracer.ChildOf(parentSpanCtx),
 	)
 	cancel := func() { span.Finish() }
 
