@@ -39,13 +39,13 @@ type DataDog struct {
 
 // New creates a new DataDog instance
 func New(config *Config, stats *stats.Stats) (*DataDog, error) {
+	if !config.Enabled() {
+		return nil, nil
+	}
+
 	dd := &DataDog{
 		stats:  stats,
 		config: config,
-	}
-
-	if !config.Enabled() {
-		return dd, nil
 	}
 
 	tracer.Start(
@@ -81,17 +81,8 @@ func New(config *Config, stats *stats.Stats) (*DataDog, error) {
 	return dd, nil
 }
 
-// Enabled returns true if DataDog is enabled
-func (dd *DataDog) Enabled() bool {
-	return dd.config.Enabled()
-}
-
 // Stop stops the DataDog tracer and metrics collection
-func (dd *DataDog) Stop() {
-	if !dd.Enabled() {
-		return
-	}
-
+func (dd *DataDog) Stop(ctx context.Context) {
 	tracer.Stop()
 
 	if dd.statsdClient != nil {
@@ -100,15 +91,12 @@ func (dd *DataDog) Stop() {
 	}
 }
 
+// StartRequest starts a new DataDog span for the incoming HTTP request
 func (dd *DataDog) StartRequest(
 	ctx context.Context,
 	rw http.ResponseWriter,
 	r *http.Request,
 ) (context.Context, context.CancelFunc, http.ResponseWriter) {
-	if !dd.Enabled() {
-		return ctx, func() {}, rw
-	}
-
 	// Extract parent span context from incoming request headers if any
 	parentSpanCtx, err := tracer.Extract(tracer.HTTPHeadersCarrier(r.Header))
 	if err != nil {
@@ -141,6 +129,7 @@ func (dd *DataDog) StartRequest(
 	return tracer.ContextWithSpan(ctx, span), cancel, newRw
 }
 
+// setMetadata sets metadata on the given DataDog span
 func setMetadata(span *tracer.Span, key string, value any) {
 	if len(key) == 0 || value == nil {
 		return
@@ -156,25 +145,19 @@ func setMetadata(span *tracer.Span, key string, value any) {
 	span.SetTag(key, value)
 }
 
+// SetMetadata sets metadata for the current span
 func (dd *DataDog) SetMetadata(ctx context.Context, key string, value any) {
-	if !dd.Enabled() {
-		return
-	}
-
 	if span, ok := tracer.SpanFromContext(ctx); ok {
 		setMetadata(span, key, value)
 	}
 }
 
+// StartSpan starts a new span for DataDog monitoring
 func (dd *DataDog) StartSpan(
 	ctx context.Context,
 	name string,
 	meta map[string]any,
 ) (context.Context, context.CancelFunc) {
-	if !dd.Enabled() {
-		return ctx, func() {}
-	}
-
 	if rootSpan, ok := tracer.SpanFromContext(ctx); ok {
 		span := rootSpan.StartChild(format.FormatSegmentName(name), tracer.Measured())
 
@@ -190,19 +173,17 @@ func (dd *DataDog) StartSpan(
 	return ctx, func() {}
 }
 
+// SendError sends an error to DataDog APM
 func (dd *DataDog) SendError(ctx context.Context, errType string, err error) {
-	if !dd.Enabled() {
-		return
-	}
-
 	if span, ok := tracer.SpanFromContext(ctx); ok {
 		span.SetTag(ext.Error, err)
 		span.SetTag(ext.ErrorType, format.FormatErrType(errType, err))
 	}
 }
 
+// InjectHeaders adds monitoring headers to the provided HTTP headers.
 func (dd *DataDog) InjectHeaders(ctx context.Context, headers http.Header) {
-	if !dd.Enabled() || !dd.config.PropagateExt {
+	if !dd.config.PropagateExt {
 		return
 	}
 
@@ -212,6 +193,7 @@ func (dd *DataDog) InjectHeaders(ctx context.Context, headers http.Header) {
 	}
 }
 
+// runMetricsCollector periodically collects and sends custom metrics to DataDog
 func (dd *DataDog) runMetricsCollector() {
 	tick := time.NewTicker(dd.config.MetricsInterval)
 	defer tick.Stop()

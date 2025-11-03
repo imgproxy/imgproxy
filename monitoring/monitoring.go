@@ -2,7 +2,6 @@ package monitoring
 
 import (
 	"context"
-	"errors"
 	"net/http"
 
 	"github.com/imgproxy/imgproxy/v3/monitoring/cloudwatch"
@@ -13,16 +12,30 @@ import (
 	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
 )
 
+// monitor is an interface for monitoring services
+type monitor interface {
+	Stop(ctx context.Context)
+	StartRequest(
+		ctx context.Context,
+		rw http.ResponseWriter,
+		r *http.Request,
+	) (context.Context, context.CancelFunc, http.ResponseWriter)
+	StartSpan(
+		ctx context.Context,
+		name string,
+		meta map[string]any,
+	) (context.Context, context.CancelFunc)
+	SetMetadata(ctx context.Context, key string, value any)
+	SendError(ctx context.Context, errType string, err error)
+	InjectHeaders(ctx context.Context, headers http.Header)
+}
+
 // Monitoring holds all monitoring service instances
 type Monitoring struct {
 	config *Config
 	stats  *stats.Stats
 
-	prometheus *prometheus.Prometheus
-	newrelic   *newrelic.NewRelic
-	datadog    *datadog.DataDog
-	otel       *otel.Otel
-	cloudwatch *cloudwatch.CloudWatch
+	monitors []monitor
 }
 
 // New creates a new Monitoring instance
@@ -31,31 +44,51 @@ func New(ctx context.Context, config *Config, workersNumber int) (*Monitoring, e
 		return nil, err
 	}
 
-	m := &Monitoring{
-		config: config,
-		stats:  stats.New(workersNumber),
+	st := stats.New(workersNumber)
+	monitors := make([]monitor, 0)
+
+	if m, err := prometheus.New(&config.Prometheus, st); err != nil {
+		return nil, err
+	} else if m != nil {
+		monitors = append(monitors, m)
 	}
 
-	var prErr, nlErr, ddErr, otelErr, cwErr error
+	if m, err := newrelic.New(&config.NewRelic, st); err != nil {
+		return nil, err
+	} else if m != nil {
+		monitors = append(monitors, m)
+	}
 
-	m.prometheus, prErr = prometheus.New(&config.Prometheus, m.stats)
-	m.newrelic, nlErr = newrelic.New(&config.NewRelic, m.stats)
-	m.datadog, ddErr = datadog.New(&config.DataDog, m.stats)
-	m.otel, otelErr = otel.New(&config.OpenTelemetry, m.stats)
-	m.cloudwatch, cwErr = cloudwatch.New(ctx, &config.CloudWatch, m.stats)
+	if m, err := datadog.New(&config.DataDog, st); err != nil {
+		return nil, err
+	} else if m != nil {
+		monitors = append(monitors, m)
+	}
 
-	err := errors.Join(prErr, nlErr, ddErr, otelErr, cwErr)
+	if m, err := otel.New(&config.OpenTelemetry, st); err != nil {
+		return nil, err
+	} else if m != nil {
+		monitors = append(monitors, m)
+	}
 
-	return m, err
+	if m, err := cloudwatch.New(ctx, &config.CloudWatch, st); err != nil {
+		return nil, err
+	} else if m != nil {
+		monitors = append(monitors, m)
+	}
+
+	m := &Monitoring{
+		config:   config,
+		stats:    st,
+		monitors: monitors,
+	}
+
+	return m, nil
 }
 
 // Enabled returns true if at least one monitoring service is enabled
 func (m *Monitoring) Enabled() bool {
-	return m.prometheus.Enabled() ||
-		m.newrelic.Enabled() ||
-		m.datadog.Enabled() ||
-		m.otel.Enabled() ||
-		m.cloudwatch.Enabled()
+	return len(m.monitors) > 0
 }
 
 // Stats returns the stats instance
@@ -65,76 +98,87 @@ func (m *Monitoring) Stats() *stats.Stats {
 
 // Stop stops all monitoring services
 func (m *Monitoring) Stop(ctx context.Context) {
-	m.newrelic.Stop(ctx)
-	m.datadog.Stop()
-	m.otel.Stop(ctx)
-	m.cloudwatch.Stop()
+	for _, monitor := range m.monitors {
+		monitor.Stop(ctx)
+	}
 }
 
 // StartPrometheus starts the Prometheus metrics server
 func (m *Monitoring) StartPrometheus(cancel context.CancelFunc) error {
-	return m.prometheus.StartServer(cancel)
+	for _, monitor := range m.monitors {
+		if prom, ok := monitor.(*prometheus.Prometheus); ok {
+			return prom.StartServer(cancel)
+		}
+	}
+	return nil
 }
 
+// StartRequest starts a new request span
 func (m *Monitoring) StartRequest(
 	ctx context.Context,
 	rw http.ResponseWriter,
 	r *http.Request,
 ) (context.Context, context.CancelFunc, http.ResponseWriter) {
-	promCancel, rw := m.prometheus.StartRequest(rw)
-	ctx, nrCancel, rw := m.newrelic.StartRequest(ctx, rw, r)
-	ctx, ddCancel, rw := m.datadog.StartRequest(ctx, rw, r)
-	ctx, otelCancel, rw := m.otel.StartRequest(ctx, rw, r)
+	cancels := make([]context.CancelFunc, 0, len(m.monitors))
+
+	for _, monitor := range m.monitors {
+		var cancel context.CancelFunc
+		ctx, cancel, rw = monitor.StartRequest(ctx, rw, r)
+		cancels = append(cancels, cancel)
+	}
 
 	cancel := func() {
-		promCancel()
-		nrCancel()
-		ddCancel()
-		otelCancel()
+		for _, c := range cancels {
+			c()
+		}
 	}
 
 	return ctx, cancel, rw
 }
 
+// SetMetadata sets metadata key-value pair for all monitoring services
 func (m *Monitoring) SetMetadata(ctx context.Context, meta Meta) {
-	for key, value := range meta {
-		m.newrelic.SetMetadata(ctx, key, value)
-		m.datadog.SetMetadata(ctx, key, value)
-		m.otel.SetMetadata(ctx, key, value)
+	for _, monitor := range m.monitors {
+		for key, value := range meta {
+			monitor.SetMetadata(ctx, key, value)
+		}
 	}
 }
 
+// StartSpan starts a new trace span as child of the current span
 func (m *Monitoring) StartSpan(
 	ctx context.Context,
 	name string,
 	meta Meta,
 ) (context.Context, context.CancelFunc) {
-	promCancel := m.prometheus.StartSpan(name)
-	nrCancel := m.newrelic.StartSpan(ctx, name, meta)
-	ctx, ddCancel := m.datadog.StartSpan(ctx, name, meta)
-	ctx, otelCancel := m.otel.StartSpan(ctx, name, meta)
+	cancels := make([]context.CancelFunc, 0, len(m.monitors))
+
+	for _, monitor := range m.monitors {
+		var cancel context.CancelFunc
+		ctx, cancel = monitor.StartSpan(ctx, name, meta)
+		cancels = append(cancels, cancel)
+	}
 
 	cancel := func() {
-		promCancel()
-		nrCancel()
-		ddCancel()
-		otelCancel()
+		for _, c := range cancels {
+			c()
+		}
 	}
 
 	return ctx, cancel
 }
 
+// SendError sends an error to all monitoring services
 func (m *Monitoring) SendError(ctx context.Context, errType string, err error) {
-	m.prometheus.IncrementErrorsTotal(errType)
-	m.newrelic.SendError(ctx, errType, err)
-	m.datadog.SendError(ctx, errType, err)
-	m.otel.SendError(ctx, errType, err)
+	for _, monitor := range m.monitors {
+		monitor.SendError(ctx, errType, err)
+	}
 }
 
 // InjectHeaders adds monitoring headers to the provided HTTP headers.
 // These headers can be used to correlate requests across different services.
 func (m *Monitoring) InjectHeaders(ctx context.Context, headers http.Header) {
-	m.newrelic.InjectHeaders(ctx, headers)
-	m.datadog.InjectHeaders(ctx, headers)
-	m.otel.InjectHeaders(ctx, headers)
+	for _, monitor := range m.monitors {
+		monitor.InjectHeaders(ctx, headers)
+	}
 }
