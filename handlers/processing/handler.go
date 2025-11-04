@@ -75,7 +75,7 @@ func (h *Handler) Execute(
 	ctx := req.Context()
 
 	// Verify URL signature and extract image url and processing options
-	imageURL, o, mm, err := h.newRequest(ctx, req)
+	imageURL, o, features, mm, err := h.newRequest(ctx, req)
 	if err != nil {
 		return err
 	}
@@ -96,6 +96,7 @@ func (h *Handler) Execute(
 		secops:         h.Security().NewOptions(o),
 		imageURL:       imageURL,
 		monitoringMeta: mm,
+		features:       features,
 	}
 
 	return hReq.execute(ctx)
@@ -105,23 +106,23 @@ func (h *Handler) Execute(
 func (h *Handler) newRequest(
 	ctx context.Context,
 	req *http.Request,
-) (string, *options.Options, monitoring.Meta, error) {
+) (string, *options.Options, *clientfeatures.Features, monitoring.Meta, error) {
 	// let's extract signature and valid request path from a request
 	path, signature, err := handlers.SplitPathSignature(req)
 	if err != nil {
-		return "", nil, nil, err
+		return "", nil, nil, nil, err
 	}
 
 	// verify the signature (if any)
 	if err = h.Security().VerifySignature(signature, path); err != nil {
-		return "", nil, nil, ierrors.Wrap(err, 0, ierrors.WithCategory(handlers.CategorySecurity))
+		return "", nil, nil, nil, ierrors.Wrap(err, 0, ierrors.WithCategory(handlers.CategorySecurity))
 	}
 
 	// parse image url and processing options
 	features := h.ClientFeaturesDetector().Features(req.Header)
 	o, imageURL, err := h.OptionsParser().ParsePath(path, &features)
 	if err != nil {
-		return "", nil, nil, ierrors.Wrap(err, 0, ierrors.WithCategory(handlers.CategoryPathParsing))
+		return "", nil, nil, nil, ierrors.Wrap(err, 0, ierrors.WithCategory(handlers.CategoryPathParsing))
 	}
 
 	// get image origin and create monitoring meta object
@@ -143,10 +144,10 @@ func (h *Handler) newRequest(
 	// verify that image URL came from the valid source
 	err = h.Security().VerifySourceURL(imageURL)
 	if err != nil {
-		return "", options.New(), mm, ierrors.Wrap(err, 0, ierrors.WithCategory(handlers.CategorySecurity))
+		return "", options.New(), nil, mm, ierrors.Wrap(err, 0, ierrors.WithCategory(handlers.CategorySecurity))
 	}
 
-	return imageURL, o, mm, nil
+	return imageURL, o, &features, mm, nil
 }
 
 // imageOrigin extracts image origin from URL

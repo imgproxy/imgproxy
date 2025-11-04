@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/imgproxy/imgproxy/v3/clientfeatures"
 	"github.com/imgproxy/imgproxy/v3/fetcher"
 	"github.com/imgproxy/imgproxy/v3/handlers"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
@@ -29,6 +30,7 @@ type request struct {
 	secops         security.Options
 	imageURL       string
 	monitoringMeta monitoring.Meta
+	features       *clientfeatures.Features
 }
 
 // execute handles the actual processing logic
