@@ -10,15 +10,15 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
-	"github.com/imgproxy/imgproxy/v3/storage/response"
+	"github.com/imgproxy/imgproxy/v3/storage"
 )
 
 // mockStorage is a simple mock implementation of storage.Reader
 type mockStorage struct {
-	getObject func(ctx context.Context, reqHeader http.Header, bucket, key, query string) (*response.Object, error)
+	getObject func(ctx context.Context, reqHeader http.Header, bucket, key, query string) (*storage.ObjectReader, error)
 }
 
-func (m *mockStorage) GetObject(ctx context.Context, reqHeader http.Header, bucket, key, query string) (*response.Object, error) {
+func (m *mockStorage) GetObject(ctx context.Context, reqHeader http.Header, bucket, key, query string) (*storage.ObjectReader, error) {
 	if m.getObject == nil {
 		return nil, nil
 	}
@@ -33,7 +33,7 @@ type RoundTripperTestSuite struct {
 func (s *RoundTripperTestSuite) TestRoundTripperSuccess() {
 	// Create mock storage that returns a successful response
 	mock := &mockStorage{
-		getObject: func(ctx context.Context, reqHeader http.Header, bucket, key, query string) (*response.Object, error) {
+		getObject: func(ctx context.Context, reqHeader http.Header, bucket, key, query string) (*storage.ObjectReader, error) {
 			s.Equal("test-bucket", bucket)
 			s.Equal("test-key", key)
 			s.Equal("version=123", query)
@@ -43,7 +43,7 @@ func (s *RoundTripperTestSuite) TestRoundTripperSuccess() {
 			headers.Set(httpheaders.Etag, "test-etag")
 
 			body := io.NopCloser(strings.NewReader("test data"))
-			return response.NewOK(headers, body), nil
+			return storage.NewObjectOK(headers, body), nil
 		},
 	}
 
@@ -73,8 +73,8 @@ func (s *RoundTripperTestSuite) TestRoundTripperSuccess() {
 func (s *RoundTripperTestSuite) TestRoundTripperNotFound() {
 	// Create mock storage that returns 404
 	mock := &mockStorage{
-		getObject: func(ctx context.Context, reqHeader http.Header, bucket, key, query string) (*response.Object, error) {
-			return response.NewNotFound("object not found"), nil
+		getObject: func(ctx context.Context, reqHeader http.Header, bucket, key, query string) (*storage.ObjectReader, error) {
+			return storage.NewObjectNotFound("object not found"), nil
 		},
 	}
 

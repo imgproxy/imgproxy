@@ -11,7 +11,8 @@ import (
 // ConfigDesc holds the configuration descriptions for
 // local file system storage
 type ConfigDesc struct {
-	Root env.Desc
+	Root   env.Desc
+	Config *Config
 }
 
 // Config holds the configuration for local file system transport

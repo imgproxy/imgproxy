@@ -23,6 +23,7 @@ type Config struct {
 	ReadOnly       bool     // Read-only access
 	AllowedBuckets []string // List of allowed buckets
 	DeniedBuckets  []string // List of denied buckets
+	TestNoAuth     bool     // disable authentication for tests
 	desc           ConfigDesc
 }
 
@@ -34,6 +35,7 @@ func NewDefaultConfig() Config {
 		ReadOnly:       true,
 		AllowedBuckets: nil,
 		DeniedBuckets:  nil,
+		TestNoAuth:     false,
 	}
 }
 

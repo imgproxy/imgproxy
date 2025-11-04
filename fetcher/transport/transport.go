@@ -98,7 +98,7 @@ func (t *Transport) registerAllProtocols() error {
 	}
 
 	if t.config.GCSEnabled {
-		tr, err := gcsStorage.New(&t.config.GCS, transp, true)
+		tr, err := gcsStorage.New(&t.config.GCS, transp)
 		if err != nil {
 			return err
 		}
