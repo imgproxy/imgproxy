@@ -16,34 +16,19 @@ import (
 
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/httprange"
+	"github.com/imgproxy/imgproxy/v3/storage"
 	"github.com/imgproxy/imgproxy/v3/storage/common"
-	"github.com/imgproxy/imgproxy/v3/storage/response"
 )
-
-// Storage represents fs file storage
-type Storage struct {
-	fs             http.Dir
-	querySeparator string
-}
-
-// New creates a new Storage instance.
-func New(config *Config, qsSeparator string) (*Storage, error) {
-	if err := config.Validate(); err != nil {
-		return nil, err
-	}
-
-	return &Storage{fs: http.Dir(config.Root), querySeparator: qsSeparator}, nil
-}
 
 // GetObject retrieves an object from file system.
 func (s *Storage) GetObject(
 	ctx context.Context,
 	reqHeader http.Header,
 	_, name, _ string,
-) (*response.Object, error) {
+) (*storage.ObjectReader, error) {
 	// If either container or object name is empty, return 404
 	if len(name) == 0 {
-		return response.NewNotFound(
+		return storage.NewObjectNotFound(
 			"invalid FS Storage URL: object name is empty",
 		), nil
 	}
@@ -54,7 +39,7 @@ func (s *Storage) GetObject(
 	f, err := s.fs.Open(name)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return response.NewNotFound(fmt.Sprintf("%s doesn't exist", name)), nil
+			return storage.NewObjectNotFound(fmt.Sprintf("%s doesn't exist", name)), nil
 		}
 
 		return nil, err
@@ -67,7 +52,7 @@ func (s *Storage) GetObject(
 	}
 
 	if fi.IsDir() {
-		return response.NewNotFound(fmt.Sprintf("%s is directory", name)), nil
+		return storage.NewObjectNotFound(fmt.Sprintf("%s is directory", name)), nil
 	}
 
 	// file basic properties
@@ -90,7 +75,7 @@ func (s *Storage) GetObject(
 	switch {
 	case err != nil:
 		f.Close()
-		return response.NewInvalidRange(), nil
+		return storage.NewObjectInvalidRange(), nil
 
 	// Range requested: partial content should be returned
 	case end != 0:
@@ -106,7 +91,7 @@ func (s *Storage) GetObject(
 		header.Set(httpheaders.ContentLength, strconv.Itoa(int(size)))
 		header.Set(httpheaders.ContentRange, fmt.Sprintf("bytes %d-%d/%d", start, end, fi.Size()))
 
-		return response.NewPartialContent(header, body), nil
+		return storage.NewObjectPartialContent(header, body), nil
 
 	// Full object requested
 	default:
@@ -120,10 +105,10 @@ func (s *Storage) GetObject(
 	// In case file was not modified, let's not return reader
 	if common.IsNotModified(reqHeader, header) {
 		f.Close()
-		return response.NewNotModified(header), nil
+		return storage.NewObjectNotModified(header), nil
 	}
 
-	return response.NewOK(header, body), nil
+	return storage.NewObjectOK(header, body), nil
 }
 
 func buildEtag(path string, fi fs.FileInfo) string {

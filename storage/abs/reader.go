@@ -1,92 +1,30 @@
-package azure
+package abs
 
 import (
 	"context"
 	"fmt"
 	"net/http"
-	"net/url"
 	"strconv"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
-	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
-	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/blob"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/blockblob"
 
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/httprange"
+	"github.com/imgproxy/imgproxy/v3/storage"
 	"github.com/imgproxy/imgproxy/v3/storage/common"
-	"github.com/imgproxy/imgproxy/v3/storage/response"
 )
-
-// Storage represents Azure Storage
-type Storage struct {
-	config *Config
-	client *azblob.Client
-}
-
-// New creates a new Azure Storage instance
-func New(config *Config, trans *http.Transport) (*Storage, error) {
-	var (
-		client                 *azblob.Client
-		sharedKeyCredential    *azblob.SharedKeyCredential
-		defaultAzureCredential *azidentity.DefaultAzureCredential
-		err                    error
-	)
-
-	if err = config.Validate(); err != nil {
-		return nil, err
-	}
-
-	endpoint := config.Endpoint
-	if len(endpoint) == 0 {
-		endpoint = fmt.Sprintf("https://%s.blob.core.windows.net", config.Name)
-	}
-
-	endpointURL, err := url.Parse(endpoint)
-	if err != nil {
-		return nil, err
-	}
-
-	opts := azblob.ClientOptions{
-		ClientOptions: policy.ClientOptions{
-			Transport: &http.Client{Transport: trans},
-		},
-	}
-
-	if len(config.Key) > 0 {
-		sharedKeyCredential, err = azblob.NewSharedKeyCredential(config.Name, config.Key)
-		if err != nil {
-			return nil, err
-		}
-
-		client, err = azblob.NewClientWithSharedKeyCredential(endpointURL.String(), sharedKeyCredential, &opts)
-	} else {
-		defaultAzureCredential, err = azidentity.NewDefaultAzureCredential(nil)
-		if err != nil {
-			return nil, err
-		}
-
-		client, err = azblob.NewClient(endpointURL.String(), defaultAzureCredential, &opts)
-	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	return &Storage{config, client}, nil
-}
 
 // GetObject retrieves an object from Azure cloud
 func (s *Storage) GetObject(
 	ctx context.Context,
 	reqHeader http.Header,
 	container, key, _ string,
-) (*response.Object, error) {
+) (*storage.ObjectReader, error) {
 	// If either container or object name is empty, return 404
 	if len(container) == 0 || len(key) == 0 {
-		return response.NewNotFound(
+		return storage.NewObjectNotFound(
 			"invalid Azure Storage URL: container name or object key are empty",
 		), nil
 	}
@@ -102,7 +40,7 @@ func (s *Storage) GetObject(
 	// Check if this is partial request
 	partial, err := parseRangeHeader(opts, reqHeader)
 	if err != nil {
-		return response.NewInvalidRange(), nil
+		return storage.NewObjectInvalidRange(), nil
 	}
 
 	// Open the object
@@ -111,7 +49,7 @@ func (s *Storage) GetObject(
 		if azError, ok := err.(*azcore.ResponseError); !ok || azError.StatusCode < 100 || azError.StatusCode == 301 {
 			return nil, err
 		} else {
-			return response.NewError(azError.StatusCode, azError.Error()), nil
+			return storage.NewObjectError(azError.StatusCode, azError.Error()), nil
 		}
 	}
 
@@ -132,7 +70,7 @@ func (s *Storage) GetObject(
 			result.Body.Close()
 		}
 
-		return response.NewNotModified(header), nil
+		return storage.NewObjectNotModified(header), nil
 	}
 
 	// Pass through important headers
@@ -156,10 +94,10 @@ func (s *Storage) GetObject(
 
 	// If the request was partial, let's respond with partial
 	if partial {
-		return response.NewPartialContent(header, result.Body), nil
+		return storage.NewObjectPartialContent(header, result.Body), nil
 	}
 
-	return response.NewOK(header, result.Body), nil
+	return storage.NewObjectOK(header, result.Body), nil
 }
 
 func parseRangeHeader(opts *blob.DownloadStreamOptions, reqHeader http.Header) (bool, error) {

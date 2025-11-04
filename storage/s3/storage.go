@@ -3,12 +3,9 @@ package s3
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
 	"sync"
-	"time"
 
 	s3Crypto "github.com/aws/amazon-s3-encryption-client-go/v3/client"
 	s3CryptoMaterials "github.com/aws/amazon-s3-encryption-client-go/v3/materials"
@@ -20,15 +17,9 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 
-	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
-	"github.com/imgproxy/imgproxy/v3/storage/common"
-	"github.com/imgproxy/imgproxy/v3/storage/response"
+	"github.com/imgproxy/imgproxy/v3/storage"
 )
-
-type s3Client interface {
-	GetObject(ctx context.Context, input *s3.GetObjectInput, opts ...func(*s3.Options)) (*s3.GetObjectOutput, error)
-}
 
 // Storage implements S3 Storage
 type Storage struct {
@@ -107,123 +98,6 @@ func New(config *Config, trans *http.Transport) (*Storage, error) {
 	}, nil
 }
 
-// GetObject retrieves an object from Azure cloud
-func (s *Storage) GetObject(
-	ctx context.Context,
-	reqHeader http.Header,
-	bucket, key, query string,
-) (*response.Object, error) {
-	// If either bucket or object key is empty, return 404
-	if len(bucket) == 0 || len(key) == 0 {
-		return response.NewNotFound(
-			"invalid S3 Storage URL: bucket name or object key are empty",
-		), nil
-	}
-
-	// Check if access to the container is allowed
-	if !common.IsBucketAllowed(bucket, s.config.AllowedBuckets, s.config.DeniedBuckets) {
-		return nil, fmt.Errorf("access to the S3 bucket %s is denied", bucket)
-	}
-
-	input := &s3.GetObjectInput{
-		Bucket: aws.String(bucket),
-		Key:    aws.String(key),
-	}
-
-	if len(query) > 0 {
-		input.VersionId = aws.String(query)
-	}
-
-	if r := reqHeader.Get(httpheaders.Range); len(r) != 0 {
-		input.Range = aws.String(r)
-	} else {
-		if ifNoneMatch := reqHeader.Get(httpheaders.IfNoneMatch); len(ifNoneMatch) > 0 {
-			input.IfNoneMatch = aws.String(ifNoneMatch)
-		}
-
-		if ifModifiedSince := reqHeader.Get(httpheaders.IfModifiedSince); len(ifModifiedSince) > 0 {
-			parsedIfModifiedSince, err := time.Parse(http.TimeFormat, ifModifiedSince)
-			if err == nil {
-				input.IfModifiedSince = &parsedIfModifiedSince
-			}
-		}
-	}
-
-	client := s.getBucketClient(bucket)
-
-	output, err := client.GetObject(ctx, input)
-
-	defer func() {
-		if err != nil && output != nil && output.Body != nil {
-			output.Body.Close()
-		}
-	}()
-
-	if err != nil {
-		// Check if the error is the region mismatch error.
-		// If so, create a new client with the correct region and retry the request.
-		if region := regionFromError(err); len(region) != 0 {
-			client, err = s.createBucketClient(bucket, region)
-			if err != nil {
-				return handleError(err)
-			}
-
-			output, err = client.GetObject(ctx, input)
-		}
-	}
-
-	if err != nil {
-		return handleError(err)
-	}
-
-	contentLength := int64(-1)
-	if output.ContentLength != nil {
-		contentLength = *output.ContentLength
-	}
-
-	if s.config.DecryptionClientEnabled {
-		if unencryptedContentLength := output.Metadata["X-Amz-Meta-X-Amz-Unencrypted-Content-Length"]; len(unencryptedContentLength) != 0 {
-			cl, err := strconv.ParseInt(unencryptedContentLength, 10, 64)
-			if err != nil {
-				return handleError(err)
-			}
-			contentLength = cl
-		}
-	}
-
-	header := make(http.Header)
-	if contentLength > 0 {
-		header.Set(httpheaders.ContentLength, strconv.FormatInt(contentLength, 10))
-	}
-	if output.ContentType != nil {
-		header.Set(httpheaders.ContentType, *output.ContentType)
-	}
-	if output.ContentEncoding != nil {
-		header.Set(httpheaders.ContentEncoding, *output.ContentEncoding)
-	}
-	if output.CacheControl != nil {
-		header.Set(httpheaders.CacheControl, *output.CacheControl)
-	}
-	if output.ExpiresString != nil {
-		header.Set(httpheaders.Expires, *output.ExpiresString)
-	}
-	if output.ETag != nil {
-		header.Set(httpheaders.Etag, *output.ETag)
-	}
-	if output.LastModified != nil {
-		header.Set(httpheaders.LastModified, output.LastModified.Format(http.TimeFormat))
-	}
-	if output.AcceptRanges != nil {
-		header.Set(httpheaders.AcceptRanges, *output.AcceptRanges)
-	}
-	if output.ContentRange != nil {
-		header.Set(httpheaders.ContentRange, *output.ContentRange)
-		return response.NewPartialContent(header, output.Body), nil
-	}
-
-	return response.NewOK(header, output.Body), nil
-}
-
 func (t *Storage) getBucketClient(bucket string) s3Client {
 	var client s3Client
 
@@ -299,7 +173,7 @@ func regionFromError(err error) string {
 	return rerr.Response.Header.Get("X-Amz-Bucket-Region")
 }
 
-func handleError(err error) (*response.Object, error) {
+func handleError(err error) (*storage.ObjectReader, error) {
 	var rerr *awsHttp.ResponseError
 	if !errors.As(err, &rerr) {
 		return nil, ierrors.Wrap(err, 0)
@@ -309,5 +183,32 @@ func handleError(err error) (*response.Object, error) {
 		return nil, ierrors.Wrap(err, 0)
 	}
 
-	return response.NewError(rerr.Response.StatusCode, err.Error()), nil
+	return storage.NewObjectError(rerr.Response.StatusCode, err.Error()), nil
+}
+
+// callWithClient is a helper function to call S3 client method with automatic region
+// error handling
+func callWithClient[T any](s *Storage, bucket string, fn func(client s3Client) (*T, error)) (*T, s3Client, error) {
+	client := s.getBucketClient(bucket)
+
+	r, err := fn(client)
+
+	if err != nil {
+		// Check if the error is the region mismatch error.
+		// If so, create a new client with the correct region and retry the request.
+		if region := regionFromError(err); len(region) != 0 {
+			client, err = s.createBucketClient(bucket, region)
+			if err != nil {
+				return nil, nil, err
+			}
+
+			r, err = fn(client)
+		}
+	}
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return r, client, nil
 }

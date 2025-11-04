@@ -3,87 +3,26 @@ package gcs
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"net/http"
 	"strconv"
 
-	"cloud.google.com/go/storage"
+	gcs "cloud.google.com/go/storage"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/httprange"
-	"github.com/imgproxy/imgproxy/v3/ierrors"
+	"github.com/imgproxy/imgproxy/v3/storage"
 	"github.com/imgproxy/imgproxy/v3/storage/common"
-	"github.com/imgproxy/imgproxy/v3/storage/response"
 	"github.com/pkg/errors"
-	"google.golang.org/api/option"
-	raw "google.golang.org/api/storage/v1"
-	htransport "google.golang.org/api/transport/http"
 )
-
-// Storage represents Google Cloud Storage implementation
-type Storage struct {
-	config *Config
-	client *storage.Client
-}
-
-// New creates a new Storage instance.
-func New(
-	config *Config,
-	trans *http.Transport,
-	auth bool, // use authentication, should be false in tests
-) (*Storage, error) {
-	var client *storage.Client
-
-	if err := config.Validate(); err != nil {
-		return nil, err
-	}
-
-	opts := []option.ClientOption{
-		option.WithScopes(raw.DevstorageReadOnlyScope),
-	}
-
-	if !config.ReadOnly {
-		opts = append(opts, option.WithScopes(raw.DevstorageReadWriteScope))
-	}
-
-	if len(config.Key) > 0 {
-		opts = append(opts, option.WithCredentialsJSON([]byte(config.Key)))
-	}
-
-	if len(config.Endpoint) > 0 {
-		opts = append(opts, option.WithEndpoint(config.Endpoint))
-	}
-
-	if !auth {
-		slog.Warn("GCS storage: authentication disabled")
-		opts = append(opts, option.WithoutAuthentication())
-	}
-
-	htrans, err := htransport.NewTransport(context.TODO(), trans, opts...)
-	if err != nil {
-		return nil, errors.Wrap(err, "error creating GCS transport")
-	}
-
-	httpClient := &http.Client{Transport: htrans}
-	opts = append(opts, option.WithHTTPClient(httpClient))
-
-	client, err = storage.NewClient(context.Background(), opts...)
-
-	if err != nil {
-		return nil, ierrors.Wrap(err, 0, ierrors.WithPrefix("Can't create GCS client"))
-	}
-
-	return &Storage{config, client}, nil
-}
 
 // GetObject retrieves an object from Azure cloud
 func (s *Storage) GetObject(
 	ctx context.Context,
 	reqHeader http.Header,
 	bucket, key, query string,
-) (*response.Object, error) {
+) (*storage.ObjectReader, error) {
 	// If either bucket or object key is empty, return 404
 	if len(bucket) == 0 || len(key) == 0 {
-		return response.NewNotFound(
+		return storage.NewObjectNotFound(
 			"invalid GCS Storage URL: bucket name or object key are empty",
 		), nil
 	}
@@ -94,7 +33,7 @@ func (s *Storage) GetObject(
 	}
 
 	var (
-		reader *storage.Reader
+		reader *gcs.Reader
 		size   int64
 	)
 
@@ -121,7 +60,7 @@ func (s *Storage) GetObject(
 	header.Set(httpheaders.LastModified, attrs.Updated.Format(http.TimeFormat))
 
 	if common.IsNotModified(reqHeader, header) {
-		return response.NewNotModified(header), nil
+		return storage.NewObjectNotModified(header), nil
 	}
 
 	var err error
@@ -133,17 +72,17 @@ func (s *Storage) GetObject(
 	size = reader.Attrs.Size
 	setHeadersFromReader(header, reader, size)
 
-	return response.NewOK(header, reader), nil
+	return storage.NewObjectOK(header, reader), nil
 }
 
 // tryRespondWithPartial tries to respond with a partial object
 // if the Range header is set.
 func (s *Storage) tryRespondWithPartial(
 	ctx context.Context,
-	obj *storage.ObjectHandle,
+	obj *gcs.ObjectHandle,
 	reqHeader http.Header,
 	header http.Header,
-) (*response.Object, error) {
+) (*storage.ObjectReader, error) {
 	r := reqHeader.Get(httpheaders.Range)
 	if len(r) == 0 {
 		return nil, nil
@@ -151,7 +90,7 @@ func (s *Storage) tryRespondWithPartial(
 
 	start, end, err := httprange.Parse(r)
 	if err != nil {
-		return response.NewInvalidRange(), nil
+		return storage.NewObjectInvalidRange(), nil
 	}
 
 	if end == 0 {
@@ -177,18 +116,18 @@ func (s *Storage) tryRespondWithPartial(
 	header.Set(httpheaders.ContentRange, fmt.Sprintf("bytes %d-%d/%d", reader.Attrs.StartOffset, end, reader.Attrs.Size))
 	setHeadersFromReader(header, reader, size)
 
-	return response.NewPartialContent(header, reader), nil
+	return storage.NewObjectPartialContent(header, reader), nil
 }
 
-func handleError(err error) (*response.Object, error) {
-	if err != storage.ErrBucketNotExist && err != storage.ErrObjectNotExist {
+func handleError(err error) (*storage.ObjectReader, error) {
+	if !errors.Is(err, gcs.ErrBucketNotExist) && !errors.Is(err, gcs.ErrObjectNotExist) {
 		return nil, err
 	}
 
-	return response.NewNotFound(err.Error()), nil
+	return storage.NewObjectNotFound(err.Error()), nil
 }
 
-func setHeadersFromReader(header http.Header, reader *storage.Reader, size int64) {
+func setHeadersFromReader(header http.Header, reader *gcs.Reader, size int64) {
 	header.Set(httpheaders.AcceptRanges, "bytes")
 	header.Set(httpheaders.ContentLength, strconv.Itoa(int(size)))
 	header.Set(httpheaders.ContentType, reader.Attrs.ContentType)
