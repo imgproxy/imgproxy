@@ -1,5 +1,4 @@
 //go:build (!linux && !darwin) || !go1.11
-// +build !linux,!darwin !go1.11
 
 package reuseport
 
