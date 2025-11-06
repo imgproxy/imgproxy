@@ -55,6 +55,8 @@ func (p *Parser) applyURLOption(
 		return p.applyAutoRotateOption(o, args)
 	case "rotate", "rot":
 		return p.applyRotateOption(o, args)
+	case "flip", "fl":
+		return p.applyFlipOption(o, args)
 	case "background", "bg":
 		return p.applyBackgroundOption(o, args)
 	case "blur", "bl":

@@ -643,6 +643,12 @@ vips_flip_horizontal_go(VipsImage *in, VipsImage **out)
 }
 
 int
+vips_flip_vertical_go(VipsImage *in, VipsImage **out)
+{
+  return vips_flip(in, out, VIPS_DIRECTION_VERTICAL, NULL);
+}
+
+int
 vips_smartcrop_go(VipsImage *in, VipsImage **out, int width, int height)
 {
   return vips_smartcrop(in, out, width, height, NULL);

@@ -89,6 +89,14 @@ func (po ProcessingOptions) Rotate() int {
 	return po.GetInt(keys.Rotate, 0)
 }
 
+func (po ProcessingOptions) FlipHorizontal() bool {
+	return po.GetBool(keys.FlipHorizontal, false)
+}
+
+func (po ProcessingOptions) FlipVertical() bool {
+	return po.GetBool(keys.FlipVertical, false)
+}
+
 func (po ProcessingOptions) AutoRotate() bool {
 	return po.GetBool(keys.AutoRotate, po.config.AutoRotate)
 }

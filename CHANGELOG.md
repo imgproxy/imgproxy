@@ -1,9 +1,15 @@
 # Changelog
 
 ## [Unreleased]
+### Added
+- Add [flip](https://docs.imgproxy.net/latest/usage/processing#flip) processing option.
+
 ### Changed
 - When image source responds with a 4xx status code, imgproxy now responds with the same status code instead of always responding with `404 Not Found`.
 - When image source responds with a 5xx status code, imgproxy now responds with `502 Bad Gateway` instead of `500 Internal Server Error`.
+
+### Fixed
+- Fix crop coordinates calculation when the image has an EXIF orientation different from `1` and the `rotate` processing option is used.
 
 ## [3.30.1] - 2025-10-10
 ### Changed

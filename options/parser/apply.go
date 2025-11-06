@@ -233,6 +233,26 @@ func (p *Parser) applyRotateOption(o *options.Options, args []string) error {
 	return nil
 }
 
+func (p *Parser) applyFlipOption(o *options.Options, args []string) error {
+	if err := p.ensureMaxArgs("flip", args, 2); err != nil {
+		return err
+	}
+
+	if len(args[0]) > 0 {
+		if err := p.parseBool(o, keys.FlipHorizontal, args[0]); err != nil {
+			return err
+		}
+	}
+
+	if len(args) > 1 && len(args[1]) > 0 {
+		if err := p.parseBool(o, keys.FlipVertical, args[1]); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (p *Parser) applyQualityOption(o *options.Options, args []string) error {
 	return p.parseQualityInt(o, keys.Quality, args...)
 }

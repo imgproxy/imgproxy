@@ -33,11 +33,25 @@ func cropImage(img *vips.Image, cropWidth, cropHeight int, gravity *GravityOptio
 func (p *Processor) crop(c *Context) error {
 	width, height := c.CropWidth, c.CropHeight
 	rotateAngle := c.PO.Rotate()
+	flipX := c.PO.FlipHorizontal()
+	flipY := c.PO.FlipVertical()
 
+	// Since we crop before rotating and flipping,
+	// we need to adjust gravity options accordingly.
+	// After rotation and flipping, we'll get the same result
+	// as if we cropped with the original gravity options after
+	// rotation and flipping.
+	//
+	// During rotation/flipping, we first apply the EXIF orientation,
+	// then the user-specified operations.
+	// So here we apply the adjustments in the reverse order.
 	opts := c.CropGravity
-	opts.RotateAndFlip(c.Angle, c.Flip)
-	opts.RotateAndFlip(rotateAngle, false)
+	opts.RotateAndFlip(rotateAngle, flipX, flipY)
+	opts.RotateAndFlip(c.Angle, c.Flip, false)
 
+	// If the final image is rotated by 90 or 270 degrees,
+	// we need to swap width and height for cropping.
+	// After rotation, we'll get the originally intended dimensions.
 	if (c.Angle+rotateAngle)%180 == 90 {
 		width, height = height, width
 	}

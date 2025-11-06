@@ -54,6 +54,9 @@ const (
 
 	Rotate = "rotate"
 
+	FlipHorizontal = "flip.horizontal"
+	FlipVertical   = "flip.vertical"
+
 	Quality = "quality"
 
 	MaxBytes = "max_bytes"
