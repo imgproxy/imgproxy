@@ -1,5 +1,10 @@
 # Changelog
 
+## [Unreleased]
+### Changed
+- When image source responds with a 4xx status code, imgproxy now responds with the same status code instead of always responding with `404 Not Found`.
+- When image source responds with a 5xx status code, imgproxy now responds with `502 Bad Gateway` instead of `500 Internal Server Error`.
+
 ## [3.30.1] - 2025-10-10
 ### Changed
 - Format New Relic and OpenTelemetry metadata values that implement the `fmt.Stringer` interface as strings.
