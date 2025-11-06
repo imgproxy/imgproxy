@@ -60,6 +60,11 @@ func (wo WatermarkOptions) ShouldReplicate() bool {
 	return wo.Position.Type == GravityReplicate
 }
 
+type FlipOptions struct {
+	Horizontal bool
+	Vertical   bool
+}
+
 type ProcessingOptions struct {
 	ResizingType      ResizeType
 	Width             int
@@ -77,6 +82,7 @@ type ProcessingOptions struct {
 	Padding           PaddingOptions
 	Trim              TrimOptions
 	Rotate            int
+	Flip              FlipOptions
 	Format            imagetype.Type
 	Quality           int
 	FormatQuality     map[imagetype.Type]int
@@ -133,6 +139,7 @@ func NewProcessingOptions() *ProcessingOptions {
 		Padding:           PaddingOptions{Enabled: false},
 		Trim:              TrimOptions{Enabled: false, Threshold: 10, Smart: true},
 		Rotate:            0,
+		Flip:              FlipOptions{Horizontal: false, Vertical: false},
 		Quality:           0,
 		MaxBytes:          0,
 		Format:            imagetype.Unknown,
@@ -544,6 +551,21 @@ func applyRotateOption(po *ProcessingOptions, args []string) error {
 		po.Rotate = r
 	} else {
 		return newOptionArgumentError("Invalid rotation angle: %s", args[0])
+	}
+
+	return nil
+}
+
+func applyFlipOption(po *ProcessingOptions, args []string) error {
+	if len(args) > 2 {
+		return newOptionArgumentError("Invalid flip arguments: %v", args)
+	}
+
+	if len(args[0]) > 0 {
+		po.Flip.Horizontal = parseBoolOption(args[0])
+	}
+	if len(args) > 1 && len(args[1]) > 0 {
+		po.Flip.Vertical = parseBoolOption(args[1])
 	}
 
 	return nil
@@ -1022,6 +1044,8 @@ func applyURLOption(po *ProcessingOptions, name string, args []string, usedPrese
 		return applyAutoRotateOption(po, args)
 	case "rotate", "rot":
 		return applyRotateOption(po, args)
+	case "flip", "fl":
+		return applyFlipOption(po, args)
 	case "background", "bg":
 		return applyBackgroundOption(po, args)
 	case "blur", "bl":

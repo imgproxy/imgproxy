@@ -685,7 +685,7 @@ func (img *Image) Rotate(angle int) error {
 	return nil
 }
 
-func (img *Image) Flip() error {
+func (img *Image) FlipHorizontal() error {
 	var tmp *C.VipsImage
 
 	if C.vips_flip_horizontal_go(img.VipsImage, &tmp) != 0 {
@@ -693,6 +693,33 @@ func (img *Image) Flip() error {
 	}
 
 	img.swapAndUnref(tmp)
+	return nil
+}
+
+func (img *Image) FlipVertical() error {
+	var tmp *C.VipsImage
+
+	if C.vips_flip_vertical_go(img.VipsImage, &tmp) != 0 {
+		return Error()
+	}
+
+	img.swapAndUnref(tmp)
+	return nil
+}
+
+func (img *Image) Flip(horizontal, vertical bool) error {
+	if horizontal {
+		if err := img.FlipHorizontal(); err != nil {
+			return err
+		}
+	}
+
+	if vertical {
+		if err := img.FlipVertical(); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
