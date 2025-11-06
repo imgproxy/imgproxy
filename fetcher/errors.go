@@ -79,8 +79,10 @@ func newImageResponseStatusError(status int, body string) error {
 	}
 
 	statusCode := 404
-	if status >= 500 {
-		statusCode = 500
+	if status >= 400 && status < 500 {
+		statusCode = status
+	} else if status >= 500 {
+		statusCode = http.StatusBadGateway
 	}
 
 	return ierrors.Wrap(

@@ -180,7 +180,7 @@ func (s *ImageDataTestSuite) TestDownloadStatusForbidden() {
 	imgdata, _, err := s.factory().DownloadSync(context.Background(), s.testServer().URL(), "Test image", DownloadOptions{})
 
 	s.Require().Error(err)
-	s.Require().Equal(404, ierrors.Wrap(err, 0).StatusCode())
+	s.Require().Equal(403, ierrors.Wrap(err, 0).StatusCode())
 	s.Require().Nil(imgdata)
 }
 
@@ -193,7 +193,7 @@ func (s *ImageDataTestSuite) TestDownloadStatusInternalServerError() {
 	imgdata, _, err := s.factory().DownloadSync(context.Background(), s.testServer().URL(), "Test image", DownloadOptions{})
 
 	s.Require().Error(err)
-	s.Require().Equal(500, ierrors.Wrap(err, 0).StatusCode())
+	s.Require().Equal(502, ierrors.Wrap(err, 0).StatusCode())
 	s.Require().Nil(imgdata)
 }
 
