@@ -3,6 +3,8 @@
 ## [Unreleased]
 ### Added
 - Add [flip](https://docs.imgproxy.net/latest/usage/processing#flip) processing option.
+- (pro) Add [IMGPROXY_AVIF_SUBSAMPLE](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_AVIF_SUBSAMPLE) config.
+- (pro) Add [avif_options](https://docs.imgproxy.net/latest/usage/processing#avif-options) processing option.
 
 ### Changed
 - When image source responds with a 4xx status code, imgproxy now responds with the same status code instead of always responding with `404 Not Found`.
