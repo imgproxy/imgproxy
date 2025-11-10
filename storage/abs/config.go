@@ -22,7 +22,6 @@ type Config struct {
 	Name           string   // Azure storage account name
 	Endpoint       string   // Azure Blob Storage endpoint URL
 	Key            string   // Azure storage account key
-	ReadOnly       bool     // Read-only access
 	AllowedBuckets []string // List of allowed buckets (containers)
 	DeniedBuckets  []string // List of denied buckets (containers)
 	desc           ConfigDesc
@@ -34,7 +33,6 @@ func NewDefaultConfig() Config {
 		Name:           "",
 		Endpoint:       "",
 		Key:            "",
-		ReadOnly:       true,
 		AllowedBuckets: nil,
 		DeniedBuckets:  nil,
 	}

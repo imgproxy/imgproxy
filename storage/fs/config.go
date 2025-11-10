@@ -17,16 +17,14 @@ type ConfigDesc struct {
 
 // Config holds the configuration for local file system transport
 type Config struct {
-	Root     string // Root directory for the local file system transport
-	ReadOnly bool   // Read-only access
-	desc     ConfigDesc
+	Root string // Root directory for the local file system transport
+	desc ConfigDesc
 }
 
 // NewDefaultConfig returns a new default configuration for local file system transport
 func NewDefaultConfig() Config {
 	return Config{
-		Root:     "",
-		ReadOnly: true,
+		Root: "",
 	}
 }
 
