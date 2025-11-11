@@ -109,6 +109,9 @@ func NewReadFull(r io.ReadCloser, dataLen int, finishFn ...context.CancelFunc) (
 		finishFn:  finishFn,
 	}
 
+	// Release the paused latch so that the reader can read all data immediately
+	ab.paused.Release()
+
 	// Read all data in foreground
 	ab.readChunks()
 
