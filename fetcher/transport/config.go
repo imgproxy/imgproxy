@@ -18,7 +18,7 @@ import (
 
 var (
 	IMGPROXY_USE_ABS                    = env.Describe("IMGPROXY_USE_ABS", "boolean")
-	IMGPROXY_USE_GCS                    = env.Describe("IMGPROXY_GCS_ENABLED", "boolean")
+	IMGPROXY_USE_GCS                    = env.Describe("IMGPROXY_USE_GCS", "boolean")
 	IMGPROXY_USE_S3                     = env.Describe("IMGPROXY_USE_S3", "boolean")
 	IMGPROXY_USE_SWIFT                  = env.Describe("IMGPROXY_USE_SWIFT", "boolean")
 	IMGPROXY_SOURCE_URL_QUERY_SEPARATOR = env.Describe("IMGPROXY_SOURCE_URL_QUERY_SEPARATOR", "string")
