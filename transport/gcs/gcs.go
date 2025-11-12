@@ -187,19 +187,19 @@ func (t transport) RoundTrip(req *http.Request) (*http.Response, error) {
 }
 
 func handleError(req *http.Request, err error) (*http.Response, error) {
-	if err != storage.ErrBucketNotExist && err != storage.ErrObjectNotExist {
-		return nil, err
+	if errors.Is(err, storage.ErrBucketNotExist) || errors.Is(err, storage.ErrObjectNotExist) {
+		return &http.Response{
+			StatusCode:    http.StatusNotFound,
+			Proto:         "HTTP/1.0",
+			ProtoMajor:    1,
+			ProtoMinor:    0,
+			Header:        http.Header{"Content-Type": {"text/plain"}},
+			ContentLength: int64(len(err.Error())),
+			Body:          io.NopCloser(strings.NewReader(err.Error())),
+			Close:         false,
+			Request:       req,
+		}, nil
 	}
 
-	return &http.Response{
-		StatusCode:    http.StatusNotFound,
-		Proto:         "HTTP/1.0",
-		ProtoMajor:    1,
-		ProtoMinor:    0,
-		Header:        http.Header{"Content-Type": {"text/plain"}},
-		ContentLength: int64(len(err.Error())),
-		Body:          io.NopCloser(strings.NewReader(err.Error())),
-		Close:         false,
-		Request:       req,
-	}, nil
+	return nil, err
 }
