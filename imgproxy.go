@@ -25,8 +25,9 @@ import (
 )
 
 const (
-	faviconPath = "/favicon.ico"
-	healthPath  = "/health"
+	faviconPath   = "/favicon.ico"
+	healthPath    = "/health"
+	wellKnownPath = "/.well-known/*"
 )
 
 // ImgproxyHandlers holds the handlers for imgproxy
@@ -161,6 +162,8 @@ func (i *Imgproxy) BuildRouter() (*server.Router, error) {
 
 	r.GET(faviconPath, r.NotFoundHandler).Silent()
 	r.GET(healthPath, i.handlers.Health.Execute).Silent()
+	r.GET(wellKnownPath, r.NotFoundHandler).Silent()
+
 	if i.config.Server.HealthCheckPath != "" {
 		r.GET(i.config.Server.HealthCheckPath, i.handlers.Health.Execute).Silent()
 	}

@@ -34,7 +34,7 @@ func New(verifyNetworks bool, config *Config) (*http.Transport, error) {
 		DialContext:           dialer.DialContext,
 		MaxIdleConns:          100,
 		MaxIdleConnsPerHost:   100,
-		IdleConnTimeout:       time.Duration(config.ClientKeepAliveTimeout) * time.Second,
+		IdleConnTimeout:       config.ClientKeepAliveTimeout,
 		TLSHandshakeTimeout:   10 * time.Second,
 		ExpectContinueTimeout: 1 * time.Second,
 		ForceAttemptHTTP2:     false,

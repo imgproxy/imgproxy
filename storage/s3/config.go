@@ -27,7 +27,6 @@ type Config struct {
 	AssumeRoleArn           string   // ARN for assuming an AWS role (default: "")
 	AssumeRoleExternalID    string   // External ID for assuming an AWS role (default: "")
 	DecryptionClientEnabled bool     // Enables S3 decryption client (default: false)
-	ReadOnly                bool     // Read-only access
 	AllowedBuckets          []string // List of allowed buckets (containers)
 	DeniedBuckets           []string // List of denied buckets (containers)
 	desc                    ConfigDesc
@@ -42,7 +41,6 @@ func NewDefaultConfig() Config {
 		AssumeRoleArn:           "",
 		AssumeRoleExternalID:    "",
 		DecryptionClientEnabled: false,
-		ReadOnly:                true,
 		AllowedBuckets:          nil,
 		DeniedBuckets:           nil,
 	}

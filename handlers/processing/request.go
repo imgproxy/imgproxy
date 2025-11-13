@@ -29,6 +29,7 @@ type request struct {
 	opts           *options.Options
 	secops         security.Options
 	imageURL       string
+	path           string
 	monitoringMeta monitoring.Meta
 	features       *clientfeatures.Features
 }

@@ -72,7 +72,7 @@ func duration(d *time.Duration, desc Desc, resolution time.Duration) error {
 	if err != nil {
 		return desc.ErrorParse(err)
 	}
-	*d = time.Duration(value) * time.Second
+	*d = time.Duration(value) * resolution
 
 	return nil
 }

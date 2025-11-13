@@ -32,7 +32,6 @@ type Config struct {
 	AuthVersion    int           // Authentication version for Swift
 	ConnectTimeout time.Duration // Connection timeout for Swift
 	Timeout        time.Duration // Request timeout for Swift
-	ReadOnly       bool          // Read-only access
 	AllowedBuckets []string      // List of allowed buckets (containers)
 	DeniedBuckets  []string      // List of denied buckets (containers)
 	desc           ConfigDesc

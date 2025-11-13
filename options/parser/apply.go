@@ -392,6 +392,11 @@ func (p *Parser) applyCacheBusterOption(o *options.Options, args []string) error
 		return err
 	}
 
+	if len(args[0]) == 0 {
+		o.Delete(keys.CacheBuster)
+		return nil
+	}
+
 	o.Set(keys.CacheBuster, args[0])
 
 	return nil
