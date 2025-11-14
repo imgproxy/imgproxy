@@ -8,7 +8,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/options"
-	xmlparser "github.com/imgproxy/imgproxy/v3/xmlparser"
+	"github.com/imgproxy/imgproxy/v3/xmlparser"
 )
 
 // pool represents temorary pool for svg sanitized data

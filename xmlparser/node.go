@@ -235,6 +235,26 @@ func (n *Node) writeChildrenTo(w *bufio.Writer) error {
 	return nil
 }
 
+func (n *Node) replaceEntities(em map[string][]byte) {
+	// Replace in attributes
+	for i := range n.Attrs {
+		n.Attrs[i].Value = replaceEntitiesString(n.Attrs[i].Value, em)
+	}
+
+	// Replace in children.
+	// Only Text nodes are processed, other Node children
+	// are processed recursively.
+	for _, child := range n.Children {
+		switch c := child.(type) {
+		case *Node:
+			c.replaceEntities(em)
+
+		case *Text:
+			c.Data = replaceEntitiesBytes(c.Data, em)
+		}
+	}
+}
+
 func fullName(name Name) string {
 	if len(name.Space) == 0 {
 		return name.Local

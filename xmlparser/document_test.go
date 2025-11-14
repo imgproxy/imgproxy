@@ -52,3 +52,38 @@ func TestDocumentParsing(t *testing.T) {
 
 	require.NoError(t, err)
 }
+
+func TestEntityReplacement(t *testing.T) {
+	svgData := []byte(`<?xml version="1.0"?>
+<!DOCTYPE svg [
+	<!ENTITY myEntity1 "EntityValue1">
+	<!ENTITY myEntity2 'EntityValue2'>
+]>
+<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
+	<text x="10" y="20" arg1="Value with &myEntity1;" arg2='&myEntity2;'>
+		&myEntity1; and &myEntity2;
+	</text>
+</svg>`)
+
+	expectedData := []byte(`<?xml version="1.0"?>
+<!DOCTYPE svg [
+	<!ENTITY myEntity1 "EntityValue1">
+	<!ENTITY myEntity2 'EntityValue2'>
+]>
+<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
+	<text x="10" y="20" arg1="Value with EntityValue1" arg2="EntityValue2">
+		EntityValue1 and EntityValue2
+	</text>
+</svg>`)
+
+	doc, err := NewDocument(bytes.NewReader(svgData))
+	require.NoError(t, err)
+
+	doc.ReplaceEntities()
+
+	var buf bytes.Buffer
+	_, err = doc.WriteTo(&buf)
+	require.NoError(t, err)
+
+	require.Equal(t, string(expectedData), buf.String())
+}

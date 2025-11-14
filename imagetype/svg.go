@@ -5,7 +5,7 @@ import (
 	"io"
 
 	"github.com/imgproxy/imgproxy/v3/bufreader"
-	xmlparser "github.com/imgproxy/imgproxy/v3/xmlparser"
+	"github.com/imgproxy/imgproxy/v3/xmlparser"
 )
 
 func init() {
