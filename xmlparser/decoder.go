@@ -132,7 +132,7 @@ func (d *Decoder) Token() (any, error) {
 		if d.err != nil && d.err != io.EOF {
 			return nil, d.err
 		}
-		return Text(text), nil
+		return &Text{text}, nil
 	}
 
 	// Read the next 3 byte to determine the type of the tag.
@@ -149,7 +149,7 @@ func (d *Decoder) Token() (any, error) {
 		if !nameOk {
 			return nil, d.err
 		}
-		return EndElement{Name: name}, nil
+		return &EndElement{Name: name}, nil
 
 	case bytes.HasPrefix(b, procInstStart):
 		// Processing instruction
@@ -157,7 +157,7 @@ func (d *Decoder) Token() (any, error) {
 		if !procInstOk {
 			return nil, d.err
 		}
-		return ProcInst{
+		return &ProcInst{
 			Target: target,
 			Inst:   data,
 		}, nil
@@ -169,7 +169,7 @@ func (d *Decoder) Token() (any, error) {
 		if !commentOk {
 			return nil, d.err
 		}
-		return Comment(data), nil
+		return &Comment{Data: data}, nil
 
 	// Check only the first 3 bytes for CDATA,
 	// we will check the full sequence in readCData.
@@ -178,7 +178,7 @@ func (d *Decoder) Token() (any, error) {
 		if !cdataOk {
 			return nil, d.err
 		}
-		return CData(data), nil
+		return &CData{Data: data}, nil
 
 	// Check only the first 2 bytes for doctype,
 	// we will check the full sequence in readDoctype.
@@ -189,7 +189,7 @@ func (d *Decoder) Token() (any, error) {
 		if !doctypeOk {
 			return nil, d.err
 		}
-		return Directive(data), nil
+		return &Directive{Data: data}, nil
 
 	// If none of other cases matched, this should be a start element.
 	default:
@@ -218,10 +218,10 @@ func (d *Decoder) readText() []byte {
 }
 
 // readStartTag reads a start tag.
-func (d *Decoder) readStartTag() (StartElement, bool) {
+func (d *Decoder) readStartTag() (*StartElement, bool) {
 	// Discard '<'
 	if !d.discard(1) {
-		return StartElement{}, false
+		return nil, false
 	}
 
 	name, ok := d.readNSName()
@@ -229,34 +229,37 @@ func (d *Decoder) readStartTag() (StartElement, bool) {
 		if d.err == nil {
 			d.setSyntaxError("expected name after <")
 		}
-		return StartElement{}, false
+		return nil, false
 	}
 
-	tag := StartElement{Name: name}
+	var (
+		attrs       []Attr
+		selfClosing bool
+	)
 
 	// Read attributes
 	for {
 		if !d.skipSpaces() {
-			return tag, false
+			return nil, false
 		}
 
 		b, ok := d.mustReadByte()
 		if !ok {
-			return tag, false
+			return nil, false
 		}
 
 		if b == '/' {
 			// Self-closing tag
 			b, ok = d.mustReadByte()
 			if !ok {
-				return tag, false
+				return nil, false
 			}
 			if b != '>' {
 				d.setSyntaxError("expected '>' at the end of self-closing tag, got %q", b)
-				return tag, false
+				return nil, false
 			}
 
-			tag.SelfClosing = true
+			selfClosing = true
 
 			break
 		}
@@ -275,16 +278,16 @@ func (d *Decoder) readStartTag() (StartElement, bool) {
 			if d.err == nil {
 				d.setSyntaxError("expected attribute name")
 			}
-			return tag, false
+			return nil, false
 		}
 
 		if !d.skipSpaces() {
-			return tag, false
+			return nil, false
 		}
 
 		b, ok = d.mustReadByte()
 		if !ok {
-			return tag, false
+			return nil, false
 		}
 
 		var attrValue string
@@ -294,7 +297,7 @@ func (d *Decoder) readStartTag() (StartElement, bool) {
 			d.unreadByte(b)
 		} else {
 			if !d.skipSpaces() {
-				return tag, false
+				return nil, false
 			}
 
 			// Read attribute value
@@ -303,18 +306,22 @@ func (d *Decoder) readStartTag() (StartElement, bool) {
 				if d.err == nil {
 					d.setSyntaxError("expected value for attribute %q", attrName.Local)
 				}
-				return tag, false
+				return nil, false
 			}
 			attrValue = string(val)
 		}
 
-		tag.Attr = append(tag.Attr, Attr{
+		attrs = append(attrs, Attr{
 			Name:  attrName,
 			Value: attrValue,
 		})
 	}
 
-	return tag, true
+	return &StartElement{
+		Name:        name,
+		Attr:        attrs,
+		SelfClosing: selfClosing,
+	}, true
 }
 
 // readAttrValue reads an attribute value.

@@ -36,7 +36,7 @@ func (n *Node) readFrom(r io.Reader) error {
 		}
 
 		switch t := tok.(type) {
-		case StartElement:
+		case *StartElement:
 			// An element is opened, create a node for it
 			el := &Node{
 				Parent: curNode,
@@ -50,7 +50,7 @@ func (n *Node) readFrom(r io.Reader) error {
 				curNode = el
 			}
 
-		case EndElement:
+		case *EndElement:
 			// If the current node has no parent, then we are at the root,
 			// which can't be closed.
 			if curNode.Parent == nil {
@@ -70,19 +70,19 @@ func (n *Node) readFrom(r io.Reader) error {
 			// The node is closed, return to its parent
 			curNode = curNode.Parent
 
-		case CData:
+		case *CData:
 			curNode.Children = append(curNode.Children, t.Clone())
 
-		case Text:
+		case *Text:
 			curNode.Children = append(curNode.Children, t.Clone())
 
-		case Directive:
+		case *Directive:
 			curNode.Children = append(curNode.Children, t.Clone())
 
-		case Comment:
+		case *Comment:
 			curNode.Children = append(curNode.Children, t.Clone())
 
-		case ProcInst:
+		case *ProcInst:
 			curNode.Children = append(curNode.Children, t.Clone())
 		}
 	}
@@ -168,45 +168,45 @@ func (n *Node) writeChildrenTo(w *bufio.Writer) error {
 				return err
 			}
 
-		case Text:
-			if _, err := w.Write([]byte(c)); err != nil {
+		case *Text:
+			if _, err := w.Write(c.Data); err != nil {
 				return err
 			}
 
-		case CData:
+		case *CData:
 			if _, err := w.WriteString("<![CDATA["); err != nil {
 				return err
 			}
-			if _, err := w.Write([]byte(c)); err != nil {
+			if _, err := w.Write(c.Data); err != nil {
 				return err
 			}
 			if _, err := w.WriteString("]]>"); err != nil {
 				return err
 			}
 
-		case Comment:
+		case *Comment:
 			if _, err := w.WriteString("<!--"); err != nil {
 				return err
 			}
-			if _, err := w.Write([]byte(c)); err != nil {
+			if _, err := w.Write(c.Data); err != nil {
 				return err
 			}
 			if _, err := w.WriteString("-->"); err != nil {
 				return err
 			}
 
-		case Directive:
+		case *Directive:
 			if _, err := w.WriteString("<!DOCTYPE"); err != nil {
 				return err
 			}
-			if _, err := w.Write([]byte(c)); err != nil {
+			if _, err := w.Write(c.Data); err != nil {
 				return err
 			}
 			if err := w.WriteByte('>'); err != nil {
 				return err
 			}
 
-		case ProcInst:
+		case *ProcInst:
 			if _, err := w.WriteString("<?"); err != nil {
 				return err
 			}
