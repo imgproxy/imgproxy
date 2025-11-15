@@ -51,17 +51,10 @@ func (p *ProcInst) Clone() *ProcInst {
 }
 
 type Text struct {
-	Data []byte
+	Data  []byte
+	CData bool
 }
 
 func (t *Text) Clone() *Text {
-	return &Text{bytes.Clone(t.Data)}
-}
-
-type CData struct {
-	Data []byte
-}
-
-func (c *CData) Clone() *CData {
-	return &CData{bytes.Clone(c.Data)}
+	return &Text{bytes.Clone(t.Data), t.CData}
 }

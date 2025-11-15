@@ -63,6 +63,11 @@ func TestEntityReplacement(t *testing.T) {
 	<text x="10" y="20" arg1="Value with &myEntity1;" arg2='&myEntity2;'>
 		&myEntity1; and &myEntity2;
 	</text>
+	<style>
+		<![CDATA[
+			.textClass { content: "&myEntity1;"; }
+		]]>
+	</style>
 </svg>`)
 
 	expectedData := []byte(`<?xml version="1.0"?>
@@ -74,6 +79,11 @@ func TestEntityReplacement(t *testing.T) {
 	<text x="10" y="20" arg1="Value with EntityValue1" arg2="EntityValue2">
 		EntityValue1 and EntityValue2
 	</text>
+	<style>
+		<![CDATA[
+			.textClass { content: "&myEntity1;"; }
+		]]>
+	</style>
 </svg>`)
 
 	doc, err := NewDocument(bytes.NewReader(svgData))

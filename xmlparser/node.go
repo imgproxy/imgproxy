@@ -70,9 +70,6 @@ func (n *Node) readFrom(r io.Reader) error {
 			// The node is closed, return to its parent
 			curNode = curNode.Parent
 
-		case *CData:
-			curNode.Children = append(curNode.Children, t.Clone())
-
 		case *Text:
 			curNode.Children = append(curNode.Children, t.Clone())
 
@@ -169,19 +166,18 @@ func (n *Node) writeChildrenTo(w *bufio.Writer) error {
 			}
 
 		case *Text:
-			if _, err := w.Write(c.Data); err != nil {
-				return err
-			}
-
-		case *CData:
-			if _, err := w.WriteString("<![CDATA["); err != nil {
-				return err
+			if c.CData {
+				if _, err := w.WriteString("<![CDATA["); err != nil {
+					return err
+				}
 			}
 			if _, err := w.Write(c.Data); err != nil {
 				return err
 			}
-			if _, err := w.WriteString("]]>"); err != nil {
-				return err
+			if c.CData {
+				if _, err := w.WriteString("]]>"); err != nil {
+					return err
+				}
 			}
 
 		case *Comment:
@@ -250,7 +246,9 @@ func (n *Node) replaceEntities(em map[string][]byte) {
 			c.replaceEntities(em)
 
 		case *Text:
-			c.Data = replaceEntitiesBytes(c.Data, em)
+			if !c.CData {
+				c.Data = replaceEntitiesBytes(c.Data, em)
+			}
 		}
 	}
 }

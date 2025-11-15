@@ -132,7 +132,7 @@ func (d *Decoder) Token() (any, error) {
 		if d.err != nil && d.err != io.EOF {
 			return nil, d.err
 		}
-		return &Text{text}, nil
+		return &Text{Data: text, CData: false}, nil
 	}
 
 	// Read the next 3 byte to determine the type of the tag.
@@ -178,7 +178,7 @@ func (d *Decoder) Token() (any, error) {
 		if !cdataOk {
 			return nil, d.err
 		}
-		return &CData{Data: data}, nil
+		return &Text{Data: data, CData: true}, nil
 
 	// Check only the first 2 bytes for doctype,
 	// we will check the full sequence in readDoctype.
