@@ -12,6 +12,9 @@ func TestParseEntityMap(t *testing.T) {
 		<!ENTITY entity1 "Value1">
 		<!ENTITY entity2 'Value2'>
 		<!ENTITY entity3 "Value with spaces">
+		<!--
+			<!ENTITY fake "ShouldNotBeParsed">
+		-->
 	]>`),
 	}
 
@@ -67,6 +70,24 @@ func TestReplaceEntities(t *testing.T) {
 		result = replaceEntitiesBytes([]byte(input2), em)
 		require.Equal(t, expected2, string(result))
 	})
+}
+
+func BenchmarkParseEntityMap(b *testing.B) {
+	directive := &Directive{
+		Data: []byte(`<!DOCTYPE svg [
+		<!ENTITY entity1 "Value1">
+		<!ENTITY entity2 'Value2'>
+		<!ENTITY entity3 "Value with spaces">
+	]>`),
+	}
+
+	nodes := []any{directive}
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		_ = parseEntityMap(nodes)
+	}
 }
 
 func BenchmarkReplaceEntitiesString(b *testing.B) {

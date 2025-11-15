@@ -7,6 +7,7 @@ import (
 )
 
 var entityDeclRe = regexp.MustCompile(`<!ENTITY\s+(\S+)\s+("[^"]+"|'[^']+')\s*>`)
+var entityCommentRe = regexp.MustCompile(`(?s)<!--.*?-->`)
 
 // parseEntityMap searches for a DOCTYPE directive in the given nodes
 // and extracts entity declarations into a map.
@@ -29,7 +30,14 @@ func parseEntityMap(nodes []any) map[string][]byte {
 		return nil
 	}
 
-	matches := entityDeclRe.FindAllSubmatch(doctype.Data[start:], -1)
+	data := doctype.Data[start:]
+
+	// Remove comments to avoid false positives
+	if bytes.Contains(data, commentStart) {
+		data = entityCommentRe.ReplaceAll(data, []byte{})
+	}
+
+	matches := entityDeclRe.FindAllSubmatch(data, -1)
 	if matches == nil {
 		return nil
 	}
