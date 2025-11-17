@@ -187,7 +187,7 @@ func (t transport) RoundTrip(req *http.Request) (*http.Response, error) {
 }
 
 func handleError(req *http.Request, err error) (*http.Response, error) {
-	if err != storage.ErrBucketNotExist && err != storage.ErrObjectNotExist {
+	if !errors.Is(err, storage.ErrBucketNotExist) && !errors.Is(err, storage.ErrObjectNotExist) {
 		return nil, err
 	}
 
