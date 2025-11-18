@@ -3,6 +3,7 @@ package s3
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 	"sync"
@@ -17,7 +18,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 
-	"github.com/imgproxy/imgproxy/v3/ierrors"
+	"github.com/imgproxy/imgproxy/v3/errctx"
 	"github.com/imgproxy/imgproxy/v3/storage"
 )
 
@@ -44,7 +45,7 @@ func New(config *Config, trans *http.Transport) (*Storage, error) {
 
 	conf, err := awsConfig.LoadDefaultConfig(context.Background())
 	if err != nil {
-		return nil, ierrors.Wrap(err, 0, ierrors.WithPrefix("can't load AWS S3 config"))
+		return nil, fmt.Errorf("can't load AWS S3 config: %w", err)
 	}
 
 	conf.HTTPClient = &http.Client{Transport: trans}
@@ -85,7 +86,7 @@ func New(config *Config, trans *http.Transport) (*Storage, error) {
 
 	client, err := createClient(conf, clientOptions, config)
 	if err != nil {
-		return nil, ierrors.Wrap(err, 0, ierrors.WithPrefix("can't create S3 client"))
+		return nil, fmt.Errorf("can't create S3 client: %w", err)
 	}
 
 	return &Storage{
@@ -133,7 +134,7 @@ func (t *Storage) createBucketClient(bucket, region string) (s3Client, error) {
 
 	client, err := createClient(conf, t.clientOptions, t.config)
 	if err != nil {
-		return nil, ierrors.Wrap(err, 0, ierrors.WithPrefix("can't create regional S3 client"))
+		return nil, errctx.Wrap(err, 0, errctx.WithPrefix("can't create regional S3 client"))
 	}
 
 	t.clientsByRegion[region] = client
@@ -176,11 +177,11 @@ func regionFromError(err error) string {
 func handleError(err error) (*storage.ObjectReader, error) {
 	var rerr *awsHttp.ResponseError
 	if !errors.As(err, &rerr) {
-		return nil, ierrors.Wrap(err, 0)
+		return nil, errctx.Wrap(err, 0)
 	}
 
 	if rerr.Response == nil || rerr.Response.StatusCode < 100 || rerr.Response.StatusCode == 301 {
-		return nil, ierrors.Wrap(err, 0)
+		return nil, errctx.Wrap(err, 0)
 	}
 
 	return storage.NewObjectError(rerr.Response.StatusCode, err.Error()), nil

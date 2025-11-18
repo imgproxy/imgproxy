@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/imgproxy/imgproxy/v3/clientfeatures"
-	"github.com/imgproxy/imgproxy/v3/ierrors"
+	"github.com/imgproxy/imgproxy/v3/errctx"
 	"github.com/imgproxy/imgproxy/v3/imath"
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/options/keys"
@@ -206,7 +206,7 @@ func (p *Parser) ParsePath(
 	}
 
 	if err != nil {
-		return nil, "", ierrors.Wrap(err, 0)
+		return nil, "", errctx.Wrap(err, 0)
 	}
 
 	return o, imageURL, nil

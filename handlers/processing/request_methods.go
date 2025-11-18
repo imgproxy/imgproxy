@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/imgproxy/imgproxy/v3/errctx"
 	"github.com/imgproxy/imgproxy/v3/handlers"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
-	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/monitoring"
 	"github.com/imgproxy/imgproxy/v3/options/keys"
@@ -45,12 +45,12 @@ func (r *request) acquireWorker(ctx context.Context) (context.CancelFunc, error)
 		// but it's an easy way to check if this is an actual timeout
 		// or the request was canceled
 		if terr := server.CheckTimeout(ctx); terr != nil {
-			return nil, ierrors.Wrap(terr, 0, ierrors.WithCategory(handlers.CategoryTimeout))
+			return nil, errctx.Wrap(terr, 0, errctx.WithCategory(handlers.CategoryTimeout))
 		}
 
 		// We should never reach this line as err could be only ctx.Err()
 		// and we've already checked for it. But beter safe than sorry
-		return nil, ierrors.Wrap(err, 0, ierrors.WithCategory(handlers.CategoryQueue))
+		return nil, errctx.Wrap(err, 0, errctx.WithCategory(handlers.CategoryQueue))
 	}
 
 	return fn, nil
@@ -63,9 +63,9 @@ func (r *request) makeDownloadOptions(
 ) (imagedata.DownloadOptions, error) {
 	jar, err := r.Cookies().JarFromRequest(r.req)
 	if err != nil {
-		return imagedata.DownloadOptions{}, ierrors.Wrap(
+		return imagedata.DownloadOptions{}, errctx.Wrap(
 			err, 0,
-			ierrors.WithCategory(handlers.CategoryDownload),
+			errctx.WithCategory(handlers.CategoryDownload),
 		)
 	}
 
@@ -179,7 +179,7 @@ func (r *request) writeDebugHeaders(result *processing.Result, originData imaged
 	// Try to read origin image size
 	size, err := originData.Size()
 	if err != nil {
-		return ierrors.Wrap(err, 0, ierrors.WithCategory(handlers.CategoryImageDataSize))
+		return errctx.Wrap(err, 0, errctx.WithCategory(handlers.CategoryImageDataSize))
 	}
 
 	r.rw.Header().Set(httpheaders.XOriginContentLength, strconv.Itoa(size))
@@ -218,7 +218,7 @@ func (r *request) respondWithImage(statusCode int, resultData imagedata.ImageDat
 	// errors happened.
 	resultSize, err := resultData.Size()
 	if err != nil {
-		return ierrors.Wrap(err, 0, ierrors.WithCategory(handlers.CategoryImageDataSize))
+		return errctx.Wrap(err, 0, errctx.WithCategory(handlers.CategoryImageDataSize))
 	}
 
 	r.rw.SetContentType(resultData.Format().Mime())
@@ -247,12 +247,16 @@ func (r *request) respondWithImage(statusCode int, resultData imagedata.ImageDat
 
 	_, err = io.Copy(r.rw, resultData.Reader())
 
-	var ierr *ierrors.Error
+	var ierr errctx.Error
 	if err != nil {
 		ierr = handlers.NewResponseWriteError(err)
 
 		if r.config.ReportIOErrors {
-			return ierrors.Wrap(ierr, 0, ierrors.WithCategory(handlers.CategoryIO), ierrors.WithShouldReport(true))
+			return errctx.Wrap(
+				ierr, 0,
+				errctx.WithCategory(handlers.CategoryIO),
+				errctx.WithShouldReport(true),
+			)
 		}
 	}
 
@@ -266,12 +270,12 @@ func (r *request) respondWithImage(statusCode int, resultData imagedata.ImageDat
 }
 
 // wrapDownloadingErr wraps original error to download error
-func (r *request) wrapDownloadingErr(originalErr error) *ierrors.Error {
-	err := ierrors.Wrap(originalErr, 0, ierrors.WithCategory(handlers.CategoryDownload))
+func (r *request) wrapDownloadingErr(originalErr error) errctx.Error {
+	err := errctx.Wrap(originalErr, 0, errctx.WithCategory(handlers.CategoryDownload))
 
 	// we report this error only if enabled
 	if r.config.ReportDownloadingErrors {
-		err = ierrors.Wrap(err, 0, ierrors.WithShouldReport(true))
+		err = errctx.Wrap(err, 0, errctx.WithShouldReport(true))
 	}
 
 	return err

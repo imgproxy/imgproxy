@@ -7,10 +7,10 @@ import (
 	"github.com/imgproxy/imgproxy/v3/auximageprovider"
 	"github.com/imgproxy/imgproxy/v3/clientfeatures"
 	"github.com/imgproxy/imgproxy/v3/cookies"
+	"github.com/imgproxy/imgproxy/v3/errctx"
 	"github.com/imgproxy/imgproxy/v3/errorreport"
 	"github.com/imgproxy/imgproxy/v3/handlers"
 	"github.com/imgproxy/imgproxy/v3/handlers/stream"
-	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/monitoring"
 	"github.com/imgproxy/imgproxy/v3/options/keys"
@@ -104,14 +104,14 @@ func (h *Handler) newRequest(
 
 	// verify the signature (if any)
 	if err = h.Security().VerifySignature(signature, path); err != nil {
-		return nil, ierrors.Wrap(err, 0, ierrors.WithCategory(handlers.CategorySecurity))
+		return nil, errctx.Wrap(err, 0, errctx.WithCategory(handlers.CategorySecurity))
 	}
 
 	// parse image url and processing options
 	features := h.ClientFeaturesDetector().Features(req.Header)
 	o, imageURL, err := h.OptionsParser().ParsePath(path, &features)
 	if err != nil {
-		return nil, ierrors.Wrap(err, 0, ierrors.WithCategory(handlers.CategoryPathParsing))
+		return nil, errctx.Wrap(err, 0, errctx.WithCategory(handlers.CategoryPathParsing))
 	}
 
 	// get image origin and create monitoring meta object
@@ -133,7 +133,7 @@ func (h *Handler) newRequest(
 	// verify that image URL came from the valid source
 	err = h.Security().VerifySourceURL(imageURL)
 	if err != nil {
-		return nil, ierrors.Wrap(err, 0, ierrors.WithCategory(handlers.CategorySecurity))
+		return nil, errctx.Wrap(err, 0, errctx.WithCategory(handlers.CategorySecurity))
 	}
 
 	return &request{

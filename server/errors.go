@@ -6,70 +6,62 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/imgproxy/imgproxy/v3/ierrors"
+	"github.com/imgproxy/imgproxy/v3/errctx"
 )
 
 type (
-	RouteNotDefinedError  string
-	RequestCancelledError string
-	RequestTimeoutError   string
-	InvalidSecretError    struct{}
+	RouteNotDefinedError  struct{ *errctx.TextError }
+	RequestCancelledError struct{ *errctx.TextError }
+	RequestTimeoutError   struct{ *errctx.TextError }
+	InvalidSecretError    struct{ *errctx.TextError }
 )
 
-func newRouteNotDefinedError(path string) *ierrors.Error {
-	return ierrors.Wrap(
-		RouteNotDefinedError(fmt.Sprintf("Route for %s is not defined", path)),
+func newRouteNotDefinedError(path string) errctx.Error {
+	return RouteNotDefinedError{errctx.NewTextError(
+		fmt.Sprintf("Route for %s is not defined", path),
 		1,
-		ierrors.WithStatusCode(http.StatusNotFound),
-		ierrors.WithPublicMessage("Not found"),
-		ierrors.WithShouldReport(false),
-	)
+		errctx.WithStatusCode(http.StatusNotFound),
+		errctx.WithPublicMessage("Not found"),
+		errctx.WithShouldReport(false),
+	)}
 }
 
-func (e RouteNotDefinedError) Error() string { return string(e) }
-
-func newRequestCancelledError(after time.Duration) *ierrors.Error {
-	return ierrors.Wrap(
-		RequestCancelledError(fmt.Sprintf("Request was cancelled after %v", after)),
+func newRequestCancelledError(after time.Duration) errctx.Error {
+	return RequestCancelledError{errctx.NewTextError(
+		fmt.Sprintf("Request was cancelled after %v", after),
 		1,
-		ierrors.WithStatusCode(499),
-		ierrors.WithPublicMessage("Cancelled"),
-		ierrors.WithShouldReport(false),
-		ierrors.WithCategory(categoryTimeout),
-	)
+		errctx.WithStatusCode(499),
+		errctx.WithPublicMessage("Cancelled"),
+		errctx.WithShouldReport(false),
+		errctx.WithCategory(categoryTimeout),
+	)}
 }
-
-func (e RequestCancelledError) Error() string { return string(e) }
 
 func (e RequestCancelledError) Unwrap() error {
 	return context.Canceled
 }
 
-func newRequestTimeoutError(after time.Duration) *ierrors.Error {
-	return ierrors.Wrap(
-		RequestTimeoutError(fmt.Sprintf("Request was timed out after %v", after)),
+func newRequestTimeoutError(after time.Duration) errctx.Error {
+	return RequestTimeoutError{errctx.NewTextError(
+		fmt.Sprintf("Request was timed out after %v", after),
 		1,
-		ierrors.WithStatusCode(http.StatusServiceUnavailable),
-		ierrors.WithPublicMessage("Gateway Timeout"),
-		ierrors.WithShouldReport(false),
-		ierrors.WithCategory(categoryTimeout),
-	)
+		errctx.WithStatusCode(http.StatusServiceUnavailable),
+		errctx.WithPublicMessage("Gateway Timeout"),
+		errctx.WithShouldReport(false),
+		errctx.WithCategory(categoryTimeout),
+	)}
 }
-
-func (e RequestTimeoutError) Error() string { return string(e) }
 
 func (e RequestTimeoutError) Unwrap() error {
 	return context.DeadlineExceeded
 }
 
 func newInvalidSecretError() error {
-	return ierrors.Wrap(
-		InvalidSecretError{},
+	return InvalidSecretError{errctx.NewTextError(
+		"Invalid secret",
 		1,
-		ierrors.WithStatusCode(http.StatusForbidden),
-		ierrors.WithPublicMessage("Forbidden"),
-		ierrors.WithShouldReport(false),
-	)
+		errctx.WithStatusCode(http.StatusForbidden),
+		errctx.WithPublicMessage("Forbidden"),
+		errctx.WithShouldReport(false),
+	)}
 }
-
-func (e InvalidSecretError) Error() string { return "Invalid secret" }

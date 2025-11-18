@@ -8,8 +8,8 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
+	"github.com/imgproxy/imgproxy/v3/errctx"
 	"github.com/imgproxy/imgproxy/v3/fetcher"
-	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/logger"
 	"github.com/imgproxy/imgproxy/v3/options"
@@ -956,7 +956,7 @@ func (s *ProcessingTestSuite) TestImageResolutionTooLarge() {
 	_, err := s.processor().ProcessImage(s.T().Context(), imgdata, o)
 
 	s.Require().Error(err)
-	s.Require().Equal(422, ierrors.Wrap(err, 0).StatusCode())
+	s.Require().Equal(422, errctx.Wrap(err, 0).StatusCode())
 }
 
 func TestProcessing(t *testing.T) {

@@ -8,9 +8,9 @@ import (
 	"sync"
 
 	"github.com/imgproxy/imgproxy/v3/cookies"
+	"github.com/imgproxy/imgproxy/v3/errctx"
 	"github.com/imgproxy/imgproxy/v3/fetcher"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
-	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/monitoring"
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/options/keys"
@@ -104,7 +104,7 @@ func (s *request) execute(ctx context.Context) error {
 	requestHeaders := s.getImageRequestHeaders()
 	cookieJar, err := s.getCookieJar()
 	if err != nil {
-		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryStreaming))
+		return errctx.Wrap(err, 0, errctx.WithCategory(categoryStreaming))
 	}
 
 	// Build the request to fetch the image
@@ -113,7 +113,7 @@ func (s *request) execute(ctx context.Context) error {
 		defer r.Cancel()
 	}
 	if err != nil {
-		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryStreaming))
+		return errctx.Wrap(err, 0, errctx.WithCategory(categoryStreaming))
 	}
 
 	// Send the request to fetch the image
@@ -122,7 +122,7 @@ func (s *request) execute(ctx context.Context) error {
 		defer res.Body.Close()
 	}
 	if err != nil {
-		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryStreaming))
+		return errctx.Wrap(err, 0, errctx.WithCategory(categoryStreaming))
 	}
 
 	// Output streaming response headers

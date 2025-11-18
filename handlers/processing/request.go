@@ -6,9 +6,9 @@ import (
 	"net/http"
 
 	"github.com/imgproxy/imgproxy/v3/clientfeatures"
+	"github.com/imgproxy/imgproxy/v3/errctx"
 	"github.com/imgproxy/imgproxy/v3/fetcher"
 	"github.com/imgproxy/imgproxy/v3/handlers"
-	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/monitoring"
 	"github.com/imgproxy/imgproxy/v3/options"
@@ -76,7 +76,7 @@ func (r *request) execute(ctx context.Context) error {
 
 	// Check that image detection didn't take too long
 	if terr := server.CheckTimeout(ctx); terr != nil {
-		return ierrors.Wrap(terr, 0, ierrors.WithCategory(handlers.CategoryTimeout))
+		return errctx.Wrap(terr, 0, errctx.WithCategory(handlers.CategoryTimeout))
 	}
 
 	// Respond with NotModified if image was not modified
@@ -119,7 +119,7 @@ func (r *request) execute(ctx context.Context) error {
 
 	// If it wasn't, than it was a processing error
 	if err != nil {
-		return ierrors.Wrap(err, 0, ierrors.WithCategory(handlers.CategoryProcessing))
+		return errctx.Wrap(err, 0, errctx.WithCategory(handlers.CategoryProcessing))
 	}
 
 	// Write debug headers. It seems unlogical to move they to responsewriter since they're

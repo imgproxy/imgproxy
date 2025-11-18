@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/imgproxy/imgproxy/v3/errctx"
 	"github.com/imgproxy/imgproxy/v3/errorreport"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
-	"github.com/imgproxy/imgproxy/v3/ierrors"
 )
 
 const (
@@ -86,7 +86,7 @@ func (r *Router) WithPanic(h RouteHandler) RouteHandler {
 				err = fmt.Errorf("panic: %v", err)
 			}
 
-			retErr = ierrors.Wrap(err, 1)
+			retErr = errctx.Wrap(err, 1)
 		}()
 
 		return h(reqID, rw, r)
@@ -108,8 +108,8 @@ func (r *Router) WithReportError(h RouteHandler) RouteHandler {
 			return nil
 		}
 
-		// Wrap a resulting error into ierrors.Error
-		ierr := ierrors.Wrap(err, 0)
+		// Wrap a resulting error into errctx.Error
+		ierr := errctx.Wrap(err, 0)
 
 		// Get the error category
 		errCat := ierr.Category()

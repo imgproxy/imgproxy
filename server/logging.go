@@ -7,7 +7,7 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/imgproxy/imgproxy/v3/ierrors"
+	"github.com/imgproxy/imgproxy/v3/errctx"
 )
 
 func LogRequest(reqID string, r *http.Request) {
@@ -23,7 +23,13 @@ func LogRequest(reqID string, r *http.Request) {
 	)
 }
 
-func LogResponse(reqID string, r *http.Request, status int, err *ierrors.Error, additional ...slog.Attr) {
+func LogResponse(
+	reqID string,
+	r *http.Request,
+	status int,
+	err errctx.Error,
+	additional ...slog.Attr,
+) {
 	var level slog.Level
 
 	switch {

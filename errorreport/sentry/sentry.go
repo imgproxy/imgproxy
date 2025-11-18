@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/getsentry/sentry-go"
+	"github.com/imgproxy/imgproxy/v3/errctx"
 )
 
 const (
@@ -50,19 +51,15 @@ func (r *reporter) Report(err error, req *http.Request, meta map[string]any) {
 		hub.Scope().SetContext("Processing context", meta)
 	}
 
-	// imgproxy wraps almost all errors into *ierrors.Error, so Sentry will show
-	// the same error type for all errors. We need to fix it.
+	// imgproxy may wrap errors using errctx.WrappedError to add context, so Sentry
+	// would report the error type as *errctx.WrappedError.
 	//
-	// Instead of using hub.CaptureException(err), we need to create an event
-	// manually and replace `*ierrors.Error` with the wrapped error type
-	// (which is the previous exception type in the exception chain).
+	// To avoid this, we create the event manually from the original error
+	// and set the correct error type.
 	if event := hub.Client().EventFromException(err, sentry.LevelError); event != nil {
-		for i := 1; i < len(event.Exception); i++ {
-			if event.Exception[i].Type == "*ierrors.Error" {
-				event.Exception[i].Type = event.Exception[i-1].Type
-			}
-		}
-
+		// Sentry reports errors in the reverse order: the last one is the outermost error.
+		// So we need to set the type on the last exception.
+		event.Exception[len(event.Exception)-1].Type = errctx.ErrorType(err)
 		hub.CaptureEvent(event)
 	}
 }

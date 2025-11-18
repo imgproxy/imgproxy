@@ -21,7 +21,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/imgproxy/imgproxy/v3/ierrors"
+	"github.com/imgproxy/imgproxy/v3/errctx"
 	"github.com/imgproxy/imgproxy/v3/ioutil"
 )
 
@@ -142,7 +142,7 @@ func (ab *AsyncBuffer) setErr(err error) {
 
 	// If the error is already set, we do not overwrite it
 	if ab.err.Load() == nil {
-		ab.err.Store(ierrors.Wrap(err, 1))
+		ab.err.Store(errctx.Wrap(err, 1))
 	}
 }
 

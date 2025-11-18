@@ -3,19 +3,17 @@ package workers
 import (
 	"net/http"
 
-	"github.com/imgproxy/imgproxy/v3/ierrors"
+	"github.com/imgproxy/imgproxy/v3/errctx"
 )
 
-type TooManyRequestsError struct{}
+type TooManyRequestsError struct{ *errctx.TextError }
 
 func newTooManyRequestsError() error {
-	return ierrors.Wrap(
-		TooManyRequestsError{},
+	return TooManyRequestsError{errctx.NewTextError(
+		"Too many requests",
 		1,
-		ierrors.WithStatusCode(http.StatusTooManyRequests),
-		ierrors.WithPublicMessage("Too many requests"),
-		ierrors.WithShouldReport(false),
-	)
+		errctx.WithStatusCode(http.StatusTooManyRequests),
+		errctx.WithPublicMessage("Too many requests"),
+		errctx.WithShouldReport(false),
+	)}
 }
-
-func (e TooManyRequestsError) Error() string { return "Too many requests" }

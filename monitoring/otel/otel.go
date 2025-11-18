@@ -29,7 +29,7 @@ import (
 	"go.opentelemetry.io/otel/semconv/v1.20.0/httpconv"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/imgproxy/imgproxy/v3/ierrors"
+	"github.com/imgproxy/imgproxy/v3/errctx"
 	"github.com/imgproxy/imgproxy/v3/monitoring/format"
 	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
 	"github.com/imgproxy/imgproxy/v3/version"
@@ -294,7 +294,7 @@ func (o *Otel) SendError(ctx context.Context, errType string, err error) {
 		semconv.ExceptionMessageKey.String(err.Error()),
 	}
 
-	if ierr, ok := err.(*ierrors.Error); ok {
+	if ierr, ok := err.(errctx.Error); ok {
 		if stack := ierr.FormatStack(); len(stack) != 0 {
 			attributes = append(attributes, semconv.ExceptionStacktraceKey.String(stack))
 		}

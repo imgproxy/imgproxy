@@ -3,8 +3,8 @@ package health
 import (
 	"net/http"
 
+	"github.com/imgproxy/imgproxy/v3/errctx"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
-	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/server"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
@@ -28,7 +28,7 @@ func (h *Handler) Execute(
 	var (
 		status int
 		msg    []byte
-		ierr   *ierrors.Error
+		ierr   errctx.Error
 	)
 
 	if err := vips.Health(); err == nil {
@@ -37,7 +37,7 @@ func (h *Handler) Execute(
 	} else {
 		status = http.StatusInternalServerError
 		msg = []byte("Error")
-		ierr = ierrors.Wrap(err, 1)
+		ierr = errctx.Wrap(err, 1)
 	}
 
 	if len(msg) == 0 {

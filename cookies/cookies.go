@@ -11,12 +11,12 @@ import (
 	"golang.org/x/net/publicsuffix"
 
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
-	"github.com/imgproxy/imgproxy/v3/ierrors"
 )
 
 // Cookies represents a cookies manager
 type Cookies struct {
-	config *Config
+	baseURL *url.URL
+	config  *Config
 }
 
 // cookieJar is a cookie jar that stores all cookies in memory
@@ -32,9 +32,17 @@ func New(config *Config) (*Cookies, error) {
 		return nil, err
 	}
 
-	cookies := &Cookies{config: config}
+	cookies := Cookies{config: config}
 
-	return cookies, nil
+	if len(config.CookieBaseURL) > 0 {
+		if u, err := url.Parse(config.CookieBaseURL); err == nil {
+			cookies.baseURL = u
+		} else {
+			return nil, fmt.Errorf("can't parse cookie base URL: %w", err)
+		}
+	}
+
+	return &cookies, nil
 }
 
 // SetCookies stores the cookies in the jar. For each source cookie it creates
@@ -82,15 +90,9 @@ func (c *Cookies) JarFromRequest(r *http.Request) (jar http.CookieJar, err error
 		return jar, nil
 	}
 
-	var cookieBase *url.URL
+	cookieBase := c.baseURL
 
 	if !c.config.CookiePassthroughAll {
-		if len(c.config.CookieBaseURL) > 0 {
-			if cookieBase, err = url.Parse(c.config.CookieBaseURL); err != nil {
-				return nil, ierrors.Wrap(cookieError(fmt.Sprintf("can't parse cookie base URL: %s", err)), 0)
-			}
-		}
-
 		if cookieBase == nil {
 			scheme := r.Header.Get(httpheaders.XForwardedProto)
 			if len(scheme) == 0 {
