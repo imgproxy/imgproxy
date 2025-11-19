@@ -13,16 +13,13 @@ import (
 	"fmt"
 	"log/slog"
 	"math"
-	"net/http"
 	"os"
-	"regexp"
 	"runtime"
 	"strings"
 	"sync"
 	"time"
 	"unsafe"
 
-	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/options"
@@ -44,13 +41,6 @@ var (
 
 // Global vips config. Can be set with [Init]
 var config *Config
-
-var badImageErrRe = []*regexp.Regexp{
-	regexp.MustCompile(`^(\S+)load_source: `),
-	regexp.MustCompile(`^VipsJpeg: `),
-	regexp.MustCompile(`^tiff2vips: `),
-	regexp.MustCompile(`^webp2vips: `),
-}
 
 func init() {
 	// Just get sure that we have some config
@@ -143,19 +133,7 @@ func Error() error {
 	defer C.vips_error_clear()
 
 	errstr := strings.TrimSpace(C.GoString(C.vips_error_buffer()))
-	err := newVipsError(errstr)
-
-	for _, re := range badImageErrRe {
-		if re.MatchString(errstr) {
-			return ierrors.Wrap(
-				err, 0,
-				ierrors.WithStatusCode(http.StatusUnprocessableEntity),
-				ierrors.WithPublicMessage("Broken or unsupported image"),
-			)
-		}
-	}
-
-	return err
+	return newVipsError(errstr)
 }
 
 func hasOperation(name string) bool {

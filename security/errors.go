@@ -4,47 +4,41 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/imgproxy/imgproxy/v3/ierrors"
+	"github.com/imgproxy/imgproxy/v3/errctx"
 )
 
 type (
-	SignatureError       string
-	ImageResolutionError string
-	SourceURLError       string
+	SignatureError       struct{ *errctx.TextError }
+	ImageResolutionError struct{ *errctx.TextError }
+	SourceURLError       struct{ *errctx.TextError }
 )
 
 func newSignatureError(msg string) error {
-	return ierrors.Wrap(
-		SignatureError(msg),
+	return SignatureError{errctx.NewTextError(
+		msg,
 		1,
-		ierrors.WithStatusCode(http.StatusForbidden),
-		ierrors.WithPublicMessage("Forbidden"),
-		ierrors.WithShouldReport(false),
-	)
+		errctx.WithStatusCode(http.StatusForbidden),
+		errctx.WithPublicMessage("Forbidden"),
+		errctx.WithShouldReport(false),
+	)}
 }
-
-func (e SignatureError) Error() string { return string(e) }
 
 func newImageResolutionError(msg string) error {
-	return ierrors.Wrap(
-		ImageResolutionError(msg),
+	return ImageResolutionError{errctx.NewTextError(
+		msg,
 		1,
-		ierrors.WithStatusCode(http.StatusUnprocessableEntity),
-		ierrors.WithPublicMessage("Invalid source image"),
-		ierrors.WithShouldReport(false),
-	)
+		errctx.WithStatusCode(http.StatusUnprocessableEntity),
+		errctx.WithPublicMessage("Invalid source image"),
+		errctx.WithShouldReport(false),
+	)}
 }
-
-func (e ImageResolutionError) Error() string { return string(e) }
 
 func newSourceURLError(imageURL string) error {
-	return ierrors.Wrap(
-		SourceURLError(fmt.Sprintf("Source URL is not allowed: %s", imageURL)),
+	return SourceURLError{errctx.NewTextError(
+		fmt.Sprintf("Source URL is not allowed: %s", imageURL),
 		1,
-		ierrors.WithStatusCode(http.StatusNotFound),
-		ierrors.WithPublicMessage("Invalid source URL"),
-		ierrors.WithShouldReport(false),
-	)
+		errctx.WithStatusCode(http.StatusNotFound),
+		errctx.WithPublicMessage("Invalid source URL"),
+		errctx.WithShouldReport(false),
+	)}
 }
-
-func (e SourceURLError) Error() string { return string(e) }

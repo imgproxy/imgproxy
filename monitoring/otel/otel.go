@@ -29,7 +29,7 @@ import (
 	"go.opentelemetry.io/otel/semconv/v1.20.0/httpconv"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/imgproxy/imgproxy/v3/ierrors"
+	"github.com/imgproxy/imgproxy/v3/errctx"
 	"github.com/imgproxy/imgproxy/v3/monitoring/format"
 	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
 	"github.com/imgproxy/imgproxy/v3/version"
@@ -286,19 +286,15 @@ func (o *Otel) StartSpan(
 }
 
 // SendError sends an error to OpenTelemetry
-func (o *Otel) SendError(ctx context.Context, errType string, err error) {
+func (o *Otel) SendError(ctx context.Context, errType string, err errctx.Error) {
 	span := trace.SpanFromContext(ctx)
 
 	attributes := []attribute.KeyValue{
 		semconv.ExceptionTypeKey.String(format.FormatErrType(errType, err)),
 		semconv.ExceptionMessageKey.String(err.Error()),
+		semconv.ExceptionStacktraceKey.String(err.FormatStack()),
 	}
 
-	if ierr, ok := err.(*ierrors.Error); ok {
-		if stack := ierr.FormatStack(); len(stack) != 0 {
-			attributes = append(attributes, semconv.ExceptionStacktraceKey.String(stack))
-		}
-	}
 	span.SetStatus(codes.Error, err.Error())
 	span.AddEvent(semconv.ExceptionEventName, trace.WithAttributes(attributes...))
 }

@@ -2,12 +2,11 @@ package gcs
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"net/http"
 
 	gcs "cloud.google.com/go/storage"
-	"github.com/imgproxy/imgproxy/v3/ierrors"
-	"github.com/pkg/errors"
 	"google.golang.org/api/option"
 	raw "google.golang.org/api/storage/v1"
 	htransport "google.golang.org/api/transport/http"
@@ -53,7 +52,7 @@ func New(
 
 	htrans, err := htransport.NewTransport(context.TODO(), trans, opts...)
 	if err != nil {
-		return nil, errors.Wrap(err, "error creating GCS transport")
+		return nil, fmt.Errorf("error creating GCS transport: %w", err)
 	}
 
 	httpClient := &http.Client{Transport: htrans}
@@ -62,7 +61,7 @@ func New(
 	client, err = gcs.NewClient(context.Background(), opts...)
 
 	if err != nil {
-		return nil, ierrors.Wrap(err, 0, ierrors.WithPrefix("Can't create GCS client"))
+		return nil, fmt.Errorf("can't create GCS client: %w", err)
 	}
 
 	return &Storage{config, client}, nil

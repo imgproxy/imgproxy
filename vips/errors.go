@@ -1,13 +1,33 @@
 package vips
 
 import (
-	"github.com/imgproxy/imgproxy/v3/ierrors"
+	"net/http"
+	"regexp"
+
+	"github.com/imgproxy/imgproxy/v3/errctx"
 )
 
-type VipsError string
-
-func newVipsError(msg string) error {
-	return ierrors.Wrap(VipsError(msg), 1)
+var badImageErrRe = []*regexp.Regexp{
+	regexp.MustCompile(`^(\S+)load_source: `),
+	regexp.MustCompile(`^VipsJpeg: `),
+	regexp.MustCompile(`^tiff2vips: `),
+	regexp.MustCompile(`^webp2vips: `),
 }
 
-func (e VipsError) Error() string { return string(e) }
+type VipsError struct{ *errctx.TextError }
+
+func newVipsError(msg string) error {
+	var opts []errctx.Option
+
+	for _, re := range badImageErrRe {
+		if re.MatchString(msg) {
+			opts = []errctx.Option{
+				errctx.WithStatusCode(http.StatusUnprocessableEntity),
+				errctx.WithPublicMessage("Broken or unsupported image"),
+			}
+			break
+		}
+	}
+
+	return VipsError{errctx.NewTextError(msg, 1, opts...)}
+}

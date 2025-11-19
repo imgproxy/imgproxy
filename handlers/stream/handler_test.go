@@ -161,7 +161,7 @@ func (s *HandlerTestSuite) execute(
 	rww := s.rwFactory().NewWriter(rw)
 
 	err := s.handler().Execute(ctx, req, imageURL, "test-req-id", o, rww)
-	s.Require().NoError(err)
+	s.Require().Nil(err)
 
 	return rw.Result()
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/imgproxy/imgproxy/v3/errctx"
 	"github.com/imgproxy/imgproxy/v3/monitoring/cloudwatch"
 	"github.com/imgproxy/imgproxy/v3/monitoring/datadog"
 	"github.com/imgproxy/imgproxy/v3/monitoring/newrelic"
@@ -26,7 +27,7 @@ type monitor interface {
 		meta map[string]any,
 	) (context.Context, context.CancelFunc)
 	SetMetadata(ctx context.Context, key string, value any)
-	SendError(ctx context.Context, errType string, err error)
+	SendError(ctx context.Context, errType string, err errctx.Error)
 	InjectHeaders(ctx context.Context, headers http.Header)
 }
 
@@ -169,7 +170,7 @@ func (m *Monitoring) StartSpan(
 }
 
 // SendError sends an error to all monitoring services
-func (m *Monitoring) SendError(ctx context.Context, errType string, err error) {
+func (m *Monitoring) SendError(ctx context.Context, errType string, err errctx.Error) {
 	for _, monitor := range m.monitors {
 		monitor.SendError(ctx, errType, err)
 	}

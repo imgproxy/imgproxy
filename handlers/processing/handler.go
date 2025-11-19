@@ -7,10 +7,10 @@ import (
 	"github.com/imgproxy/imgproxy/v3/auximageprovider"
 	"github.com/imgproxy/imgproxy/v3/clientfeatures"
 	"github.com/imgproxy/imgproxy/v3/cookies"
+	"github.com/imgproxy/imgproxy/v3/errctx"
 	"github.com/imgproxy/imgproxy/v3/errorreport"
 	"github.com/imgproxy/imgproxy/v3/handlers"
 	"github.com/imgproxy/imgproxy/v3/handlers/stream"
-	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/monitoring"
 	"github.com/imgproxy/imgproxy/v3/options/keys"
@@ -65,7 +65,7 @@ func (h *Handler) Execute(
 	reqID string,
 	rw server.ResponseWriter,
 	req *http.Request,
-) error {
+) *server.Error {
 	// Increment the number of requests in progress
 	h.Monitoring().Stats().IncRequestsInProgress()
 	defer h.Monitoring().Stats().DecRequestsInProgress()
@@ -95,23 +95,23 @@ func (h *Handler) Execute(
 func (h *Handler) newRequest(
 	ctx context.Context,
 	req *http.Request,
-) (*request, error) {
+) (*request, *server.Error) {
 	// let's extract signature and valid request path from a request
 	path, signature, err := handlers.SplitPathSignature(req)
 	if err != nil {
-		return nil, err
+		return nil, server.NewError(errctx.Wrap(err), handlers.ErrCategoryPathParsing)
 	}
 
 	// verify the signature (if any)
 	if err = h.Security().VerifySignature(signature, path); err != nil {
-		return nil, ierrors.Wrap(err, 0, ierrors.WithCategory(handlers.CategorySecurity))
+		return nil, server.NewError(errctx.Wrap(err), handlers.ErrCategorySecurity)
 	}
 
 	// parse image url and processing options
 	features := h.ClientFeaturesDetector().Features(req.Header)
 	o, imageURL, err := h.OptionsParser().ParsePath(path, &features)
 	if err != nil {
-		return nil, ierrors.Wrap(err, 0, ierrors.WithCategory(handlers.CategoryPathParsing))
+		return nil, server.NewError(errctx.Wrap(err), handlers.ErrCategoryPathParsing)
 	}
 
 	// get image origin and create monitoring meta object
@@ -133,7 +133,7 @@ func (h *Handler) newRequest(
 	// verify that image URL came from the valid source
 	err = h.Security().VerifySourceURL(imageURL)
 	if err != nil {
-		return nil, ierrors.Wrap(err, 0, ierrors.WithCategory(handlers.CategorySecurity))
+		return nil, server.NewError(errctx.Wrap(err), handlers.ErrCategorySecurity)
 	}
 
 	return &request{

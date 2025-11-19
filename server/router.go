@@ -29,7 +29,7 @@ var (
 type ResponseWriter = *responsewriter.Writer
 
 // RouteHandler is a function that handles HTTP requests.
-type RouteHandler func(string, ResponseWriter, *http.Request) error
+type RouteHandler func(string, ResponseWriter, *http.Request) *Error
 
 // Middleware is a function that wraps a RouteHandler with additional functionality.
 type Middleware func(next RouteHandler) RouteHandler
@@ -177,7 +177,7 @@ func (r *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 }
 
 // NotFoundHandler is default 404 handler
-func (r *Router) NotFoundHandler(reqID string, rw ResponseWriter, req *http.Request) error {
+func (r *Router) NotFoundHandler(reqID string, rw ResponseWriter, req *http.Request) *Error {
 	rw.Header().Set(httpheaders.ContentType, "text/plain")
 	rw.WriteHeader(http.StatusNotFound)
 	rw.Write([]byte{' '}) // Write a single byte to make AWS Lambda happy
@@ -186,7 +186,7 @@ func (r *Router) NotFoundHandler(reqID string, rw ResponseWriter, req *http.Requ
 }
 
 // OkHandler is a default 200 OK handler
-func (r *Router) OkHandler(reqID string, rw ResponseWriter, req *http.Request) error {
+func (r *Router) OkHandler(reqID string, rw ResponseWriter, req *http.Request) *Error {
 	rw.Header().Set(httpheaders.ContentType, "text/plain")
 	rw.WriteHeader(http.StatusOK)
 	rw.Write([]byte{' '}) // Write a single byte to make AWS Lambda happy

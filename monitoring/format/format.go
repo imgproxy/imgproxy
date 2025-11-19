@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/imgproxy/imgproxy/v3/ierrors"
+	"github.com/imgproxy/imgproxy/v3/errctx"
 )
 
 // FormatSegmentName formats segment name string
@@ -14,11 +14,5 @@ func FormatSegmentName(name string) string {
 
 // FormatErrType formats error type string with error concrete type
 func FormatErrType(errType string, err error) string {
-	errType += "_error"
-
-	if ierr, ok := err.(*ierrors.Error); ok {
-		err = ierr.Unwrap()
-	}
-
-	return fmt.Sprintf("%s (%T)", errType, err)
+	return fmt.Sprintf("%s_error (%s)", errType, errctx.ErrorType(err))
 }

@@ -13,9 +13,9 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
+	"github.com/imgproxy/imgproxy/v3/errctx"
 	"github.com/imgproxy/imgproxy/v3/fetcher"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
-	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/testutil"
 )
@@ -147,7 +147,7 @@ func (s *ImageDataTestSuite) TestDownloadStatusPartialContent() {
 
 			if tc.expectErr {
 				s.Require().Error(err)
-				s.Require().Equal(http.StatusNotFound, ierrors.Wrap(err, 0).StatusCode())
+				s.Require().Equal(http.StatusNotFound, errctx.Wrap(err).StatusCode())
 			} else {
 				s.Require().NoError(err)
 				s.Require().NotNil(imgdata)
@@ -167,7 +167,7 @@ func (s *ImageDataTestSuite) TestDownloadStatusNotFound() {
 	imgdata, _, err := s.factory().DownloadSync(context.Background(), s.testServer().URL(), "Test image", DownloadOptions{})
 
 	s.Require().Error(err)
-	s.Require().Equal(404, ierrors.Wrap(err, 0).StatusCode())
+	s.Require().Equal(404, errctx.Wrap(err).StatusCode())
 	s.Require().Nil(imgdata)
 }
 
@@ -180,7 +180,7 @@ func (s *ImageDataTestSuite) TestDownloadStatusForbidden() {
 	imgdata, _, err := s.factory().DownloadSync(context.Background(), s.testServer().URL(), "Test image", DownloadOptions{})
 
 	s.Require().Error(err)
-	s.Require().Equal(403, ierrors.Wrap(err, 0).StatusCode())
+	s.Require().Equal(403, errctx.Wrap(err).StatusCode())
 	s.Require().Nil(imgdata)
 }
 
@@ -193,7 +193,7 @@ func (s *ImageDataTestSuite) TestDownloadStatusInternalServerError() {
 	imgdata, _, err := s.factory().DownloadSync(context.Background(), s.testServer().URL(), "Test image", DownloadOptions{})
 
 	s.Require().Error(err)
-	s.Require().Equal(502, ierrors.Wrap(err, 0).StatusCode())
+	s.Require().Equal(502, errctx.Wrap(err).StatusCode())
 	s.Require().Nil(imgdata)
 }
 
@@ -207,7 +207,7 @@ func (s *ImageDataTestSuite) TestDownloadUnreachable() {
 	imgdata, _, err := s.factory().DownloadSync(context.Background(), serverURL, "Test image", DownloadOptions{})
 
 	s.Require().Error(err)
-	s.Require().Equal(500, ierrors.Wrap(err, 0).StatusCode())
+	s.Require().Equal(500, errctx.Wrap(err).StatusCode())
 	s.Require().Nil(imgdata)
 }
 
@@ -217,7 +217,7 @@ func (s *ImageDataTestSuite) TestDownloadInvalidImage() {
 	imgdata, _, err := s.factory().DownloadSync(context.Background(), s.testServer().URL(), "Test image", DownloadOptions{})
 
 	s.Require().Error(err)
-	s.Require().Equal(http.StatusUnprocessableEntity, ierrors.Wrap(err, 0).StatusCode())
+	s.Require().Equal(http.StatusUnprocessableEntity, errctx.Wrap(err).StatusCode())
 	s.Require().Nil(imgdata)
 }
 
@@ -227,7 +227,7 @@ func (s *ImageDataTestSuite) TestDownloadSourceAddressNotAllowed() {
 	imgdata, _, err := s.factory().DownloadSync(context.Background(), s.testServer().URL(), "Test image", DownloadOptions{})
 
 	s.Require().Error(err)
-	s.Require().Equal(404, ierrors.Wrap(err, 0).StatusCode())
+	s.Require().Equal(404, errctx.Wrap(err).StatusCode())
 	s.Require().Nil(imgdata)
 }
 
@@ -237,7 +237,7 @@ func (s *ImageDataTestSuite) TestDownloadImageFileTooLarge() {
 	})
 
 	s.Require().Error(err)
-	s.Require().Equal(422, ierrors.Wrap(err, 0).StatusCode())
+	s.Require().Equal(422, errctx.Wrap(err).StatusCode())
 	s.Require().Nil(imgdata)
 }
 

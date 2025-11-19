@@ -3,16 +3,16 @@ package options
 import (
 	"fmt"
 
-	"github.com/imgproxy/imgproxy/v3/ierrors"
+	"github.com/imgproxy/imgproxy/v3/errctx"
 )
 
 type (
-	TypeMismatchError struct{ error }
+	TypeMismatchError struct{ *errctx.TextError }
 )
 
 func newTypeMismatchError(key string, exp, got any) error {
-	return ierrors.Wrap(
-		TypeMismatchError{fmt.Errorf("option %s is %T, not %T", key, exp, got)},
+	return TypeMismatchError{errctx.NewTextError(
+		fmt.Sprintf("option %s is %T, not %T", key, exp, got),
 		1,
-	)
+	)}
 }

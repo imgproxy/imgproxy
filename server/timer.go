@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/imgproxy/imgproxy/v3/ierrors"
+	"github.com/imgproxy/imgproxy/v3/errctx"
 )
 
 // timerSinceCtxKey represents a context key for start time.
@@ -31,7 +31,7 @@ func requestStartedAt(ctx context.Context) time.Duration {
 
 // CheckTimeout checks if the request context has timed out or cancelled and returns
 // wrapped error.
-func CheckTimeout(ctx context.Context) error {
+func CheckTimeout(ctx context.Context) errctx.Error {
 	select {
 	case <-ctx.Done():
 		d := requestStartedAt(ctx)
@@ -43,7 +43,7 @@ func CheckTimeout(ctx context.Context) error {
 		case context.DeadlineExceeded:
 			return newRequestTimeoutError(d)
 		default:
-			return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryTimeout))
+			return errctx.Wrap(err)
 		}
 	default:
 		return nil

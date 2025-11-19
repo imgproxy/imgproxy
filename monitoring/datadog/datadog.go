@@ -15,6 +15,7 @@ import (
 	"github.com/DataDog/dd-trace-go/v2/ddtrace/tracer"
 	"github.com/felixge/httpsnoop"
 
+	"github.com/imgproxy/imgproxy/v3/errctx"
 	"github.com/imgproxy/imgproxy/v3/monitoring/format"
 	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
 	"github.com/imgproxy/imgproxy/v3/version"
@@ -174,10 +175,11 @@ func (dd *DataDog) StartSpan(
 }
 
 // SendError sends an error to DataDog APM
-func (dd *DataDog) SendError(ctx context.Context, errType string, err error) {
+func (dd *DataDog) SendError(ctx context.Context, errType string, err errctx.Error) {
 	if span, ok := tracer.SpanFromContext(ctx); ok {
 		span.SetTag(ext.Error, err)
 		span.SetTag(ext.ErrorType, format.FormatErrType(errType, err))
+		span.SetTag(ext.ErrorStack, err.FormatStack())
 	}
 }
 
