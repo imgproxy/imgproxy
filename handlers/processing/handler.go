@@ -99,19 +99,19 @@ func (h *Handler) newRequest(
 	// let's extract signature and valid request path from a request
 	path, signature, err := handlers.SplitPathSignature(req)
 	if err != nil {
-		return nil, server.NewError(errctx.Wrap(err, 0), handlers.ErrCategoryPathParsing)
+		return nil, server.NewError(errctx.Wrap(err), handlers.ErrCategoryPathParsing)
 	}
 
 	// verify the signature (if any)
 	if err = h.Security().VerifySignature(signature, path); err != nil {
-		return nil, server.NewError(errctx.Wrap(err, 0), handlers.ErrCategorySecurity)
+		return nil, server.NewError(errctx.Wrap(err), handlers.ErrCategorySecurity)
 	}
 
 	// parse image url and processing options
 	features := h.ClientFeaturesDetector().Features(req.Header)
 	o, imageURL, err := h.OptionsParser().ParsePath(path, &features)
 	if err != nil {
-		return nil, server.NewError(errctx.Wrap(err, 0), handlers.ErrCategoryPathParsing)
+		return nil, server.NewError(errctx.Wrap(err), handlers.ErrCategoryPathParsing)
 	}
 
 	// get image origin and create monitoring meta object
@@ -133,7 +133,7 @@ func (h *Handler) newRequest(
 	// verify that image URL came from the valid source
 	err = h.Security().VerifySourceURL(imageURL)
 	if err != nil {
-		return nil, server.NewError(errctx.Wrap(err, 0), handlers.ErrCategorySecurity)
+		return nil, server.NewError(errctx.Wrap(err), handlers.ErrCategorySecurity)
 	}
 
 	return &request{

@@ -82,7 +82,7 @@ func (r *Router) WithPanic(h RouteHandler) RouteHandler {
 				err = fmt.Errorf("panic: %v", err)
 			}
 
-			retErr = NewError(errctx.Wrap(err, 1), errCategoryUnexpected)
+			retErr = NewError(errctx.WrapWithStackSkip(err, 1), errCategoryUnexpected)
 		}()
 
 		return h(reqID, rw, r)

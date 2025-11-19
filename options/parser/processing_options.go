@@ -206,7 +206,7 @@ func (p *Parser) ParsePath(
 	}
 
 	if err != nil {
-		return nil, "", errctx.Wrap(err, 0)
+		return nil, "", errctx.Wrap(err)
 	}
 
 	return o, imageURL, nil

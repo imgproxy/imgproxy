@@ -43,7 +43,7 @@ func CheckTimeout(ctx context.Context) errctx.Error {
 		case context.DeadlineExceeded:
 			return newRequestTimeoutError(d)
 		default:
-			return errctx.Wrap(err, 0)
+			return errctx.Wrap(err)
 		}
 	default:
 		return nil

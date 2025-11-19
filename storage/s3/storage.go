@@ -134,7 +134,7 @@ func (t *Storage) createBucketClient(bucket, region string) (s3Client, error) {
 
 	client, err := createClient(conf, t.clientOptions, t.config)
 	if err != nil {
-		return nil, errctx.Wrap(err, 0, errctx.WithPrefix("can't create regional S3 client"))
+		return nil, errctx.Wrap(err, errctx.WithPrefix("can't create regional S3 client"))
 	}
 
 	t.clientsByRegion[region] = client
@@ -177,11 +177,11 @@ func regionFromError(err error) string {
 func handleError(err error) (*storage.ObjectReader, error) {
 	var rerr *awsHttp.ResponseError
 	if !errors.As(err, &rerr) {
-		return nil, errctx.Wrap(err, 0)
+		return nil, errctx.Wrap(err)
 	}
 
 	if rerr.Response == nil || rerr.Response.StatusCode < 100 || rerr.Response.StatusCode == 301 {
-		return nil, errctx.Wrap(err, 0)
+		return nil, errctx.Wrap(err)
 	}
 
 	return storage.NewObjectError(rerr.Response.StatusCode, err.Error()), nil

@@ -196,5 +196,5 @@ func (s *request) streamData(res *http.Response) {
 }
 
 func (s *request) wrapError(err error) *server.Error {
-	return server.NewError(errctx.Wrap(err, 1), errCategoryStreaming)
+	return server.NewError(errctx.WrapWithStackSkip(err, 1), errCategoryStreaming)
 }

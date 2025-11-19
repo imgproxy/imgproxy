@@ -23,11 +23,26 @@ func NewWrappedError(err error, stackSkip int, opts ...Option) *WrappedError {
 }
 
 // Wrap creates a new [WrappedError] with the given error and options.
+// It gets the stack trace from the call site.
+//
 // If the provided error already an [Error], it clones its context and applies
 // the new options to it.
+//
 // If the provided error is already an [WrappedError], it rewraps its inner error
 // to avoid double wrapping.
-func Wrap(err error, stackSkip int, opts ...Option) Error {
+func Wrap(err error, opts ...Option) Error {
+	return WrapWithStackSkip(err, 1, opts...)
+}
+
+// WrapWithStackSkip creates a new [WrappedError] with the given error and options.
+// It the first stackSkip frames from the call stack.
+//
+// If the provided error already an [Error], it clones its context and applies
+// the new options to it.
+//
+// If the provided error is already an [WrappedError], it rewraps its inner error
+// to avoid double wrapping.
+func WrapWithStackSkip(err error, stackSkip int, opts ...Option) Error {
 	if err == nil {
 		return nil
 	}

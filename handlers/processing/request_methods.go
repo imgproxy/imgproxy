@@ -50,7 +50,7 @@ func (r *request) acquireWorker(ctx context.Context) (context.CancelFunc, errctx
 
 		// We should never reach this line as err could be only ctx.Err()
 		// and we've already checked for it. But beter safe than sorry
-		return nil, errctx.Wrap(err, 0)
+		return nil, errctx.Wrap(err)
 	}
 
 	return fn, nil
@@ -160,7 +160,7 @@ func (r *request) processImage(
 	defer cancelSpan()
 
 	res, err := r.Processor().ProcessImage(ctx, originData, r.opts)
-	return res, errctx.Wrap(err, 0)
+	return res, errctx.Wrap(err)
 }
 
 // writeDebugHeaders writes debug headers (X-Origin-*, X-Result-*) to the response
@@ -182,7 +182,7 @@ func (r *request) writeDebugHeaders(
 	// Try to read origin image size
 	size, err := originData.Size()
 	if err != nil {
-		return server.NewError(errctx.Wrap(err, 0), handlers.ErrCategoryImageDataSize)
+		return server.NewError(errctx.Wrap(err), handlers.ErrCategoryImageDataSize)
 	}
 
 	r.rw.Header().Set(httpheaders.XOriginContentLength, strconv.Itoa(size))
@@ -221,7 +221,7 @@ func (r *request) respondWithImage(statusCode int, resultData imagedata.ImageDat
 	// errors happened.
 	resultSize, err := resultData.Size()
 	if err != nil {
-		return server.NewError(errctx.Wrap(err, 0), handlers.ErrCategoryImageDataSize)
+		return server.NewError(errctx.Wrap(err), handlers.ErrCategoryImageDataSize)
 	}
 
 	r.rw.SetContentType(resultData.Format().Mime())
@@ -280,5 +280,5 @@ func (r *request) wrapDownloadingErr(originalErr error) errctx.Error {
 		opts = []errctx.Option{errctx.WithShouldReport(true)}
 	}
 
-	return errctx.Wrap(originalErr, 1, opts...)
+	return errctx.WrapWithStackSkip(originalErr, 1, opts...)
 }

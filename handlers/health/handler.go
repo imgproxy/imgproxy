@@ -37,7 +37,7 @@ func (h *Handler) Execute(
 	} else {
 		status = http.StatusInternalServerError
 		msg = []byte("Error")
-		ierr = errctx.Wrap(err, 1)
+		ierr = errctx.Wrap(err)
 	}
 
 	if len(msg) == 0 {

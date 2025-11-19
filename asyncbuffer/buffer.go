@@ -142,7 +142,7 @@ func (ab *AsyncBuffer) setErr(err error) {
 
 	// If the error is already set, we do not overwrite it
 	if ab.err.Load() == nil {
-		ab.err.Store(errctx.Wrap(err, 1))
+		ab.err.Store(errctx.WrapWithStackSkip(err, 1))
 	}
 }
 

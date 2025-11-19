@@ -956,7 +956,7 @@ func (s *ProcessingTestSuite) TestImageResolutionTooLarge() {
 	_, err := s.processor().ProcessImage(s.T().Context(), imgdata, o)
 
 	s.Require().Error(err)
-	s.Require().Equal(422, errctx.Wrap(err, 0).StatusCode())
+	s.Require().Equal(422, errctx.Wrap(err).StatusCode())
 }
 
 func TestProcessing(t *testing.T) {

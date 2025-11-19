@@ -22,7 +22,7 @@ func newFileSizeError() error {
 
 func wrapDownloadError(err error, desc string) error {
 	return errctx.Wrap(
-		fetcher.WrapError(err, 1), 0,
+		fetcher.WrapError(err, 1),
 		errctx.WithPrefix(fmt.Sprintf("can't download %s", desc)),
 	)
 }

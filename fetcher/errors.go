@@ -161,5 +161,5 @@ func WrapError(err error, skipStack int) error {
 		}
 	}
 
-	return errctx.Wrap(err, skipStack+1)
+	return errctx.WrapWithStackSkip(err, skipStack+1)
 }
