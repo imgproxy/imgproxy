@@ -35,7 +35,7 @@ func (r *request) makeImageRequestHeaders() http.Header {
 }
 
 // acquireWorker acquires the processing worker
-func (r *request) acquireWorker(ctx context.Context) (context.CancelFunc, error) {
+func (r *request) acquireWorker(ctx context.Context) (context.CancelFunc, errctx.Error) {
 	ctx, cancelSpan := r.Monitoring().StartSpan(ctx, "Queue", nil)
 	defer cancelSpan()
 
@@ -45,12 +45,12 @@ func (r *request) acquireWorker(ctx context.Context) (context.CancelFunc, error)
 		// but it's an easy way to check if this is an actual timeout
 		// or the request was canceled
 		if terr := server.CheckTimeout(ctx); terr != nil {
-			return nil, errctx.Wrap(terr, 0, errctx.WithCategory(handlers.CategoryTimeout))
+			return nil, terr
 		}
 
 		// We should never reach this line as err could be only ctx.Err()
 		// and we've already checked for it. But beter safe than sorry
-		return nil, errctx.Wrap(err, 0, errctx.WithCategory(handlers.CategoryQueue))
+		return nil, errctx.Wrap(err, 0)
 	}
 
 	return fn, nil
@@ -60,13 +60,10 @@ func (r *request) acquireWorker(ctx context.Context) (context.CancelFunc, error)
 func (r *request) makeDownloadOptions(
 	ctx context.Context,
 	h http.Header,
-) (imagedata.DownloadOptions, error) {
+) (imagedata.DownloadOptions, errctx.Error) {
 	jar, err := r.Cookies().JarFromRequest(r.req)
 	if err != nil {
-		return imagedata.DownloadOptions{}, errctx.Wrap(
-			err, 0,
-			errctx.WithCategory(handlers.CategoryDownload),
-		)
+		return imagedata.DownloadOptions{}, r.wrapDownloadingErr(err)
 	}
 
 	return imagedata.DownloadOptions{
@@ -80,17 +77,16 @@ func (r *request) makeDownloadOptions(
 func (r *request) fetchImage(
 	ctx context.Context,
 	do imagedata.DownloadOptions,
-) (imagedata.ImageData, http.Header, error) {
-	return r.ImageDataFactory().DownloadAsync(ctx, r.imageURL, "source image", do)
+) (imagedata.ImageData, http.Header, errctx.Error) {
+	data, h, err := r.ImageDataFactory().DownloadAsync(ctx, r.imageURL, "source image", do)
+	return data, h, r.wrapDownloadingErr(err)
 }
 
 // handleDownloadError replaces the image data with fallback image if needed
 func (r *request) handleDownloadError(
 	ctx context.Context,
-	originalErr error,
-) (imagedata.ImageData, int, error) {
-	err := r.wrapDownloadingErr(originalErr)
-
+	err errctx.Error,
+) (imagedata.ImageData, int, errctx.Error) {
 	// If there is no fallback image configured, just return the error
 	data, headers := r.getFallbackImage(ctx)
 	if data == nil {
@@ -98,7 +94,7 @@ func (r *request) handleDownloadError(
 	}
 
 	// Just send error
-	r.Monitoring().SendError(ctx, handlers.CategoryDownload, err)
+	r.Monitoring().SendError(ctx, handlers.ErrCategoryDownload, err)
 
 	// We didn't return, so we have to report error
 	if err.ShouldReport() {
@@ -154,17 +150,24 @@ func (r *request) getFallbackImage(ctx context.Context) (imagedata.ImageData, ht
 }
 
 // processImage calls actual image processing
-func (r *request) processImage(ctx context.Context, originData imagedata.ImageData) (*processing.Result, error) {
+func (r *request) processImage(
+	ctx context.Context,
+	originData imagedata.ImageData,
+) (*processing.Result, errctx.Error) {
 	ctx, cancelSpan := r.Monitoring().StartSpan(ctx, "Processing image", r.monitoringMeta.Filter(
 		monitoring.MetaOptions,
 	))
 	defer cancelSpan()
 
-	return r.Processor().ProcessImage(ctx, originData, r.opts)
+	res, err := r.Processor().ProcessImage(ctx, originData, r.opts)
+	return res, errctx.Wrap(err, 0)
 }
 
 // writeDebugHeaders writes debug headers (X-Origin-*, X-Result-*) to the response
-func (r *request) writeDebugHeaders(result *processing.Result, originData imagedata.ImageData) error {
+func (r *request) writeDebugHeaders(
+	result *processing.Result,
+	originData imagedata.ImageData,
+) *server.Error {
 	if !r.config.EnableDebugHeaders {
 		return nil
 	}
@@ -179,7 +182,7 @@ func (r *request) writeDebugHeaders(result *processing.Result, originData imaged
 	// Try to read origin image size
 	size, err := originData.Size()
 	if err != nil {
-		return errctx.Wrap(err, 0, errctx.WithCategory(handlers.CategoryImageDataSize))
+		return server.NewError(errctx.Wrap(err, 0), handlers.ErrCategoryImageDataSize)
 	}
 
 	r.rw.Header().Set(httpheaders.XOriginContentLength, strconv.Itoa(size))
@@ -188,7 +191,7 @@ func (r *request) writeDebugHeaders(result *processing.Result, originData imaged
 }
 
 // respondWithNotModified writes not-modified response
-func (r *request) respondWithNotModified() error {
+func (r *request) respondWithNotModified() *server.Error {
 	r.rw.SetExpires(r.opts.GetTime(keys.Expires))
 
 	if r.config.LastModifiedEnabled {
@@ -212,13 +215,13 @@ func (r *request) respondWithNotModified() error {
 	return nil
 }
 
-func (r *request) respondWithImage(statusCode int, resultData imagedata.ImageData) error {
+func (r *request) respondWithImage(statusCode int, resultData imagedata.ImageData) *server.Error {
 	// We read the size of the image data here, so we can set Content-Length header.
 	// This indireclty ensures that the image data is fully read from the source, no
 	// errors happened.
 	resultSize, err := resultData.Size()
 	if err != nil {
-		return errctx.Wrap(err, 0, errctx.WithCategory(handlers.CategoryImageDataSize))
+		return server.NewError(errctx.Wrap(err, 0), handlers.ErrCategoryImageDataSize)
 	}
 
 	r.rw.SetContentType(resultData.Format().Mime())
@@ -252,11 +255,7 @@ func (r *request) respondWithImage(statusCode int, resultData imagedata.ImageDat
 		ierr = handlers.NewResponseWriteError(err)
 
 		if r.config.ReportIOErrors {
-			return errctx.Wrap(
-				ierr, 0,
-				errctx.WithCategory(handlers.CategoryIO),
-				errctx.WithShouldReport(true),
-			)
+			return server.NewError(ierr, handlers.ErrCategoryIO)
 		}
 	}
 
@@ -271,12 +270,15 @@ func (r *request) respondWithImage(statusCode int, resultData imagedata.ImageDat
 
 // wrapDownloadingErr wraps original error to download error
 func (r *request) wrapDownloadingErr(originalErr error) errctx.Error {
-	err := errctx.Wrap(originalErr, 0, errctx.WithCategory(handlers.CategoryDownload))
-
-	// we report this error only if enabled
-	if r.config.ReportDownloadingErrors {
-		err = errctx.Wrap(err, 0, errctx.WithShouldReport(true))
+	if originalErr == nil {
+		return nil
 	}
 
-	return err
+	var opts []errctx.Option
+	// we report this error only if enabled
+	if r.config.ReportDownloadingErrors {
+		opts = []errctx.Option{errctx.WithShouldReport(true)}
+	}
+
+	return errctx.Wrap(originalErr, 1, opts...)
 }

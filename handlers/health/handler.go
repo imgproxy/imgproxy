@@ -24,7 +24,7 @@ func (h *Handler) Execute(
 	reqID string,
 	rw server.ResponseWriter,
 	req *http.Request,
-) error {
+) *server.Error {
 	var (
 		status int
 		msg    []byte

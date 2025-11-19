@@ -29,9 +29,3 @@ func WithShouldReport(report bool) Option {
 		ec.shouldReport = report
 	}
 }
-
-func WithCategory(category string) Option {
-	return func(ec *ErrorContext) {
-		ec.category = category
-	}
-}

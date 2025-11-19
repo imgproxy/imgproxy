@@ -7,14 +7,11 @@ import (
 	"strings"
 )
 
-const defaultCategory = "default"
-
 type ErrorContext struct {
 	prefix       string
 	statusCode   int
 	publicMsg    string
 	shouldReport bool
-	category     string
 
 	stack []uintptr
 }
@@ -24,7 +21,6 @@ func newErrorContext(stackSkip int, opts ...Option) *ErrorContext {
 		statusCode:   http.StatusInternalServerError,
 		publicMsg:    "Internal error",
 		shouldReport: true,
-		category:     defaultCategory,
 
 		stack: callers(stackSkip + 1),
 	}
@@ -63,10 +59,6 @@ func (ec *ErrorContext) PublicMessage() string {
 
 func (ec *ErrorContext) ShouldReport() bool {
 	return ec.shouldReport
-}
-
-func (ec *ErrorContext) Category() string {
-	return ec.category
 }
 
 // StackTrace returns the stack trace associated with the error.

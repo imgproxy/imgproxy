@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -9,12 +10,47 @@ import (
 	"github.com/imgproxy/imgproxy/v3/errctx"
 )
 
+const (
+	errCategoryUnexpected = "unexpected"
+	errCategoryTimeout    = "timeout"
+	errCategorySecurity   = "security"
+)
+
 type (
+	// Error represents an error returned by RouteHandler with additional category information.
+	// It intentionally does not implement the error interface to avoid using it as a regular error.
+	Error struct {
+		Err      errctx.Error
+		Category string
+	}
+
 	RouteNotDefinedError  struct{ *errctx.TextError }
 	RequestCancelledError struct{ *errctx.TextError }
 	RequestTimeoutError   struct{ *errctx.TextError }
 	InvalidSecretError    struct{ *errctx.TextError }
 )
+
+// NewError creates a new [Error] instance wrapping the given errctx.Error and category.
+// If err is nil, it returns nil.
+//
+// If the error or any of its causes is [context.DeadlineExceeded] or [context.Canceled],
+// the category is set to "timeout" regardless of the provided category.
+func NewError(err errctx.Error, category string) *Error {
+	if err == nil {
+		return nil
+	}
+
+	// If the error or any of its causes is context.DeadlineExceeded or context.Canceled,
+	// enforce the timeout category.
+	if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
+		category = errCategoryTimeout
+	}
+
+	return &Error{
+		Err:      err,
+		Category: category,
+	}
+}
 
 func newRouteNotDefinedError(path string) errctx.Error {
 	return RouteNotDefinedError{errctx.NewTextError(
@@ -33,7 +69,6 @@ func newRequestCancelledError(after time.Duration) errctx.Error {
 		errctx.WithStatusCode(499),
 		errctx.WithPublicMessage("Cancelled"),
 		errctx.WithShouldReport(false),
-		errctx.WithCategory(categoryTimeout),
 	)}
 }
 
@@ -48,7 +83,6 @@ func newRequestTimeoutError(after time.Duration) errctx.Error {
 		errctx.WithStatusCode(http.StatusServiceUnavailable),
 		errctx.WithPublicMessage("Gateway Timeout"),
 		errctx.WithShouldReport(false),
-		errctx.WithCategory(categoryTimeout),
 	)}
 }
 
@@ -56,7 +90,7 @@ func (e RequestTimeoutError) Unwrap() error {
 	return context.DeadlineExceeded
 }
 
-func newInvalidSecretError() error {
+func newInvalidSecretError() errctx.Error {
 	return InvalidSecretError{errctx.NewTextError(
 		"Invalid secret",
 		1,

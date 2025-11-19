@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/imgproxy/imgproxy/v3/clientfeatures"
-	"github.com/imgproxy/imgproxy/v3/errctx"
 	"github.com/imgproxy/imgproxy/v3/fetcher"
 	"github.com/imgproxy/imgproxy/v3/handlers"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
@@ -33,7 +32,7 @@ type request struct {
 }
 
 // execute handles the actual processing logic
-func (r *request) execute(ctx context.Context) error {
+func (r *request) execute(ctx context.Context) *server.Error {
 	outFormat := options.Get(r.opts, keys.Format, imagetype.Unknown)
 
 	// Check if we can save the resulting image
@@ -42,13 +41,13 @@ func (r *request) execute(ctx context.Context) error {
 		outFormat == imagetype.SVG
 
 	if !canSave {
-		return handlers.NewCantSaveError(outFormat)
+		return server.NewError(handlers.NewCantSaveError(outFormat), handlers.ErrCategoryPathParsing)
 	}
 
 	// Acquire worker
 	releaseWorker, err := r.acquireWorker(ctx)
 	if err != nil {
-		return err
+		return server.NewError(err, handlers.ErrCategoryQueue)
 	}
 	defer releaseWorker()
 
@@ -65,7 +64,7 @@ func (r *request) execute(ctx context.Context) error {
 	// create download options
 	do, err := r.makeDownloadOptions(ctx, imgRequestHeaders)
 	if err != nil {
-		return err
+		return server.NewError(err, handlers.ErrCategoryDownload)
 	}
 
 	// Fetch image actual
@@ -76,7 +75,7 @@ func (r *request) execute(ctx context.Context) error {
 
 	// Check that image detection didn't take too long
 	if terr := server.CheckTimeout(ctx); terr != nil {
-		return errctx.Wrap(terr, 0, errctx.WithCategory(handlers.CategoryTimeout))
+		return server.NewError(terr, handlers.ErrCategoryTimeout)
 	}
 
 	// Respond with NotModified if image was not modified
@@ -95,13 +94,16 @@ func (r *request) execute(ctx context.Context) error {
 	if err != nil {
 		originData, statusCode, err = r.handleDownloadError(ctx, err)
 		if err != nil {
-			return err
+			return server.NewError(err, handlers.ErrCategoryDownload)
 		}
 	}
 
 	// Check if image supports load from origin format
 	if !vips.SupportsLoad(originData.Format()) {
-		return handlers.NewCantLoadError(originData.Format())
+		return server.NewError(
+			handlers.NewCantLoadError(originData.Format()),
+			handlers.ErrCategoryPathParsing,
+		)
 	}
 
 	// Actually process the image
@@ -114,26 +116,21 @@ func (r *request) execute(ctx context.Context) error {
 
 	// First, check if the processing error wasn't caused by an image data error
 	if derr := originData.Error(); derr != nil {
-		return r.wrapDownloadingErr(derr)
+		return server.NewError(r.wrapDownloadingErr(derr), handlers.ErrCategoryDownload)
 	}
 
 	// If it wasn't, than it was a processing error
 	if err != nil {
-		return errctx.Wrap(err, 0, errctx.WithCategory(handlers.CategoryProcessing))
+		return server.NewError(err, handlers.ErrCategoryProcessing)
 	}
 
 	// Write debug headers. It seems unlogical to move they to responsewriter since they're
 	// not used anywhere else.
-	err = r.writeDebugHeaders(result, originData)
-	if err != nil {
-		return err
+	dhErr := r.writeDebugHeaders(result, originData)
+	if dhErr != nil {
+		return dhErr
 	}
 
 	// Responde with actual image
-	err = r.respondWithImage(statusCode, result.OutData)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return r.respondWithImage(statusCode, result.OutData)
 }

@@ -18,8 +18,8 @@ import (
 )
 
 const (
-	streamBufferSize  = 4096        // Size of the buffer used for streaming
-	categoryStreaming = "streaming" // Streaming error category
+	streamBufferSize     = 4096        // Size of the buffer used for streaming
+	errCategoryStreaming = "streaming" // Streaming error category
 )
 
 var (
@@ -78,7 +78,7 @@ func (s *Handler) Execute(
 	reqID string,
 	o *options.Options,
 	rw server.ResponseWriter,
-) error {
+) *server.Error {
 	stream := &request{
 		HandlerContext: s.HandlerContext,
 		handler:        s,
@@ -93,7 +93,7 @@ func (s *Handler) Execute(
 }
 
 // execute handles the actual streaming logic
-func (s *request) execute(ctx context.Context) error {
+func (s *request) execute(ctx context.Context) *server.Error {
 	s.Monitoring().Stats().IncImagesInProgress()
 	defer s.Monitoring().Stats().DecImagesInProgress()
 
@@ -104,7 +104,7 @@ func (s *request) execute(ctx context.Context) error {
 	requestHeaders := s.getImageRequestHeaders()
 	cookieJar, err := s.getCookieJar()
 	if err != nil {
-		return errctx.Wrap(err, 0, errctx.WithCategory(categoryStreaming))
+		return s.wrapError(err)
 	}
 
 	// Build the request to fetch the image
@@ -113,7 +113,7 @@ func (s *request) execute(ctx context.Context) error {
 		defer r.Cancel()
 	}
 	if err != nil {
-		return errctx.Wrap(err, 0, errctx.WithCategory(categoryStreaming))
+		return s.wrapError(err)
 	}
 
 	// Send the request to fetch the image
@@ -122,7 +122,7 @@ func (s *request) execute(ctx context.Context) error {
 		defer res.Body.Close()
 	}
 	if err != nil {
-		return errctx.Wrap(err, 0, errctx.WithCategory(categoryStreaming))
+		return s.wrapError(err)
 	}
 
 	// Output streaming response headers
@@ -193,4 +193,8 @@ func (s *request) streamData(res *http.Response) {
 	if copyerr != nil {
 		panic(http.ErrAbortHandler)
 	}
+}
+
+func (s *request) wrapError(err error) *server.Error {
+	return server.NewError(errctx.Wrap(err, 1), errCategoryStreaming)
 }

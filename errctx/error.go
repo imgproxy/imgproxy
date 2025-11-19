@@ -13,8 +13,6 @@ type Error interface {
 	PublicMessage() string
 	// ShouldReport indicates whether the error should be reported.
 	ShouldReport() bool
-	// Category returns the category of the error.
-	Category() string
 
 	// StackTrace returns the stack trace associated with the error.
 	// This method is traditionally used to retrieve the stack trace

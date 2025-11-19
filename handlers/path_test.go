@@ -94,7 +94,6 @@ func (s *PathTestSuite) TestParsePath() {
 
 				s.Require().Error(err)
 				s.Require().ErrorAs(err, &ierr)
-				s.Require().Equal(CategoryPathParsing, ierr.Category())
 
 				return
 			}

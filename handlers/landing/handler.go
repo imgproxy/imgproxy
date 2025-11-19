@@ -24,7 +24,7 @@ func (h *Handler) Execute(
 	reqID string,
 	rw server.ResponseWriter,
 	req *http.Request,
-) error {
+) *server.Error {
 	rw.Header().Set(httpheaders.ContentType, "text/html")
 	rw.WriteHeader(http.StatusOK)
 	rw.Write(landingBody)
