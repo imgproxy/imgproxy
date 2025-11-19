@@ -13,16 +13,13 @@ import (
 	"fmt"
 	"log/slog"
 	"math"
-	"net/http"
 	"os"
-	"regexp"
 	"runtime"
 	"strings"
 	"sync"
 	"time"
 	"unsafe"
 
-	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/options"
@@ -44,13 +41,6 @@ var (
 
 // Global vips config. Can be set with [Init]
 var config *Config
-
-var badImageErrRe = []*regexp.Regexp{
-	regexp.MustCompile(`^(\S+)load_source: `),
-	regexp.MustCompile(`^VipsJpeg: `),
-	regexp.MustCompile(`^tiff2vips: `),
-	regexp.MustCompile(`^webp2vips: `),
-}
 
 func init() {
 	// Just get sure that we have some config
@@ -106,18 +96,6 @@ func Shutdown() {
 	C.vips_shutdown()
 }
 
-func GetMem() float64 {
-	return float64(C.vips_tracked_get_mem())
-}
-
-func GetMemHighwater() float64 {
-	return float64(C.vips_tracked_get_mem_highwater())
-}
-
-func GetAllocs() float64 {
-	return float64(C.vips_tracked_get_allocs())
-}
-
 func Health() error {
 	timer := time.NewTimer(5 * time.Second)
 	defer timer.Stop()
@@ -155,19 +133,7 @@ func Error() error {
 	defer C.vips_error_clear()
 
 	errstr := strings.TrimSpace(C.GoString(C.vips_error_buffer()))
-	err := newVipsError(errstr)
-
-	for _, re := range badImageErrRe {
-		if re.MatchString(errstr) {
-			return ierrors.Wrap(
-				err, 0,
-				ierrors.WithStatusCode(http.StatusUnprocessableEntity),
-				ierrors.WithPublicMessage("Broken or unsupported image"),
-			)
-		}
-	}
-
-	return err
+	return newVipsError(errstr)
 }
 
 func hasOperation(name string) bool {
@@ -656,7 +622,7 @@ func (img *Image) Rotate(angle int) error {
 	return nil
 }
 
-func (img *Image) Flip() error {
+func (img *Image) FlipHorizontal() error {
 	var tmp *C.VipsImage
 
 	if C.vips_flip_horizontal_go(img.VipsImage, &tmp) != 0 {
@@ -664,6 +630,33 @@ func (img *Image) Flip() error {
 	}
 
 	img.swapAndUnref(tmp)
+	return nil
+}
+
+func (img *Image) FlipVertical() error {
+	var tmp *C.VipsImage
+
+	if C.vips_flip_vertical_go(img.VipsImage, &tmp) != 0 {
+		return Error()
+	}
+
+	img.swapAndUnref(tmp)
+	return nil
+}
+
+func (img *Image) Flip(horizontal, vertical bool) error {
+	if horizontal {
+		if err := img.FlipHorizontal(); err != nil {
+			return err
+		}
+	}
+
+	if vertical {
+		if err := img.FlipVertical(); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 

@@ -3,21 +3,19 @@ package generichttp
 import (
 	"net/http"
 
-	"github.com/imgproxy/imgproxy/v3/ierrors"
+	"github.com/imgproxy/imgproxy/v3/errctx"
 )
 
 type (
-	SourceAddressError string
+	SourceAddressError struct{ *errctx.TextError }
 )
 
 func newSourceAddressError(msg string) error {
-	return ierrors.Wrap(
-		SourceAddressError(msg),
+	return SourceAddressError{errctx.NewTextError(
+		msg,
 		1,
-		ierrors.WithStatusCode(http.StatusNotFound),
-		ierrors.WithPublicMessage("Invalid source URL"),
-		ierrors.WithShouldReport(false),
-	)
+		errctx.WithStatusCode(http.StatusNotFound),
+		errctx.WithPublicMessage("Invalid source URL"),
+		errctx.WithShouldReport(false),
+	)}
 }
-
-func (e SourceAddressError) Error() string { return string(e) }

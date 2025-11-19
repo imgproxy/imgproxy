@@ -6,6 +6,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/options/keys"
+	"github.com/imgproxy/imgproxy/v3/security"
 	"github.com/imgproxy/imgproxy/v3/vips/color"
 )
 
@@ -16,12 +17,16 @@ type ProcessingOptions struct {
 
 	// Config that contains default values for some options.
 	config *Config
+
+	// Security checker to obtain security-related limits.
+	securityChecker *security.Checker
 }
 
 func (p *Processor) NewProcessingOptions(o *options.Options) ProcessingOptions {
 	return ProcessingOptions{
-		Options: o,
-		config:  p.config,
+		Options:         o,
+		config:          p.config,
+		securityChecker: p.securityChecker,
 	}
 }
 
@@ -87,6 +92,14 @@ func (po ProcessingOptions) ExtendAspectRatioGravity() GravityOptions {
 
 func (po ProcessingOptions) Rotate() int {
 	return po.GetInt(keys.Rotate, 0)
+}
+
+func (po ProcessingOptions) FlipHorizontal() bool {
+	return po.GetBool(keys.FlipHorizontal, false)
+}
+
+func (po ProcessingOptions) FlipVertical() bool {
+	return po.GetBool(keys.FlipVertical, false)
 }
 
 func (po ProcessingOptions) AutoRotate() bool {
@@ -278,4 +291,16 @@ func (po ProcessingOptions) KeepCopyright() bool {
 
 func (po ProcessingOptions) StripColorProfile() bool {
 	return po.Main().GetBool(keys.StripColorProfile, po.config.StripColorProfile)
+}
+
+func (po ProcessingOptions) MaxSrcResolution() int {
+	return po.securityChecker.MaxSrcResolution(po.Main())
+}
+
+func (po ProcessingOptions) MaxAnimationFrames() int {
+	return po.securityChecker.MaxAnimationFrames(po.Main())
+}
+
+func (po ProcessingOptions) MaxResultDimension() int {
+	return po.securityChecker.MaxResultDimension(po.Main())
 }

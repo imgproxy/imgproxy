@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/imgproxy/imgproxy/v3/errctx"
 	"github.com/imgproxy/imgproxy/v3/errorreport/airbrake"
 	"github.com/imgproxy/imgproxy/v3/errorreport/bugsnag"
 	"github.com/imgproxy/imgproxy/v3/errorreport/honeybadger"
@@ -13,7 +14,7 @@ import (
 // reporter is an interface that all error reporters must implement.
 // most of our reporters are singletons, so in most cases close is noop.
 type reporter interface {
-	Report(err error, req *http.Request, meta map[string]any)
+	Report(err errctx.Error, req *http.Request, meta map[string]any)
 	Close()
 }
 
@@ -79,7 +80,7 @@ func SetMetadata(req *http.Request, key string, value any) {
 }
 
 // Report reports an error to all configured reporters with the request and its metadata.
-func (r *Reporter) Report(err error, req *http.Request) {
+func (r *Reporter) Report(err errctx.Error, req *http.Request) {
 	meta, ok := req.Context().Value(metaCtxKey{}).(map[string]any)
 	if !ok {
 		meta = nil

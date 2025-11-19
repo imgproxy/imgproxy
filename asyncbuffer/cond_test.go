@@ -105,10 +105,14 @@ func (s *TestCondSuite) TestRapidTicksAndWaits() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
+
+		timeTicker := time.Tick(time.Microsecond)
+
 		for range iterations {
+			<-timeTicker
 			s.cond.Tick()
-			time.Sleep(time.Microsecond)
 		}
+
 		s.cond.Close() // Close after all ticks
 	}()
 

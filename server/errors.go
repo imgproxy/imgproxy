@@ -2,74 +2,100 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
 
-	"github.com/imgproxy/imgproxy/v3/ierrors"
+	"github.com/imgproxy/imgproxy/v3/errctx"
+)
+
+const (
+	errCategoryUnexpected = "unexpected"
+	errCategoryTimeout    = "timeout"
+	errCategorySecurity   = "security"
 )
 
 type (
-	RouteNotDefinedError  string
-	RequestCancelledError string
-	RequestTimeoutError   string
-	InvalidSecretError    struct{}
+	// Error represents an error returned by RouteHandler with additional category information.
+	// It intentionally does not implement the error interface to avoid using it as a regular error.
+	Error struct {
+		Err      errctx.Error
+		Category string
+	}
+
+	RouteNotDefinedError  struct{ *errctx.TextError }
+	RequestCancelledError struct{ *errctx.TextError }
+	RequestTimeoutError   struct{ *errctx.TextError }
+	InvalidSecretError    struct{ *errctx.TextError }
 )
 
-func newRouteNotDefinedError(path string) *ierrors.Error {
-	return ierrors.Wrap(
-		RouteNotDefinedError(fmt.Sprintf("Route for %s is not defined", path)),
-		1,
-		ierrors.WithStatusCode(http.StatusNotFound),
-		ierrors.WithPublicMessage("Not found"),
-		ierrors.WithShouldReport(false),
-	)
+// NewError creates a new [Error] instance wrapping the given errctx.Error and category.
+// If err is nil, it returns nil.
+//
+// If the error or any of its causes is [context.DeadlineExceeded] or [context.Canceled],
+// the category is set to "timeout" regardless of the provided category.
+func NewError(err errctx.Error, category string) *Error {
+	if err == nil {
+		return nil
+	}
+
+	// If the error or any of its causes is context.DeadlineExceeded or context.Canceled,
+	// enforce the timeout category.
+	if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
+		category = errCategoryTimeout
+	}
+
+	return &Error{
+		Err:      err,
+		Category: category,
+	}
 }
 
-func (e RouteNotDefinedError) Error() string { return string(e) }
-
-func newRequestCancelledError(after time.Duration) *ierrors.Error {
-	return ierrors.Wrap(
-		RequestCancelledError(fmt.Sprintf("Request was cancelled after %v", after)),
+func newRouteNotDefinedError(path string) errctx.Error {
+	return RouteNotDefinedError{errctx.NewTextError(
+		fmt.Sprintf("Route for %s is not defined", path),
 		1,
-		ierrors.WithStatusCode(499),
-		ierrors.WithPublicMessage("Cancelled"),
-		ierrors.WithShouldReport(false),
-		ierrors.WithCategory(categoryTimeout),
-	)
+		errctx.WithStatusCode(http.StatusNotFound),
+		errctx.WithPublicMessage("Not found"),
+		errctx.WithShouldReport(false),
+	)}
 }
 
-func (e RequestCancelledError) Error() string { return string(e) }
+func newRequestCancelledError(after time.Duration) errctx.Error {
+	return RequestCancelledError{errctx.NewTextError(
+		fmt.Sprintf("Request was cancelled after %v", after),
+		1,
+		errctx.WithStatusCode(499),
+		errctx.WithPublicMessage("Cancelled"),
+		errctx.WithShouldReport(false),
+	)}
+}
 
 func (e RequestCancelledError) Unwrap() error {
 	return context.Canceled
 }
 
-func newRequestTimeoutError(after time.Duration) *ierrors.Error {
-	return ierrors.Wrap(
-		RequestTimeoutError(fmt.Sprintf("Request was timed out after %v", after)),
+func newRequestTimeoutError(after time.Duration) errctx.Error {
+	return RequestTimeoutError{errctx.NewTextError(
+		fmt.Sprintf("Request was timed out after %v", after),
 		1,
-		ierrors.WithStatusCode(http.StatusServiceUnavailable),
-		ierrors.WithPublicMessage("Gateway Timeout"),
-		ierrors.WithShouldReport(false),
-		ierrors.WithCategory(categoryTimeout),
-	)
+		errctx.WithStatusCode(http.StatusServiceUnavailable),
+		errctx.WithPublicMessage("Gateway Timeout"),
+		errctx.WithShouldReport(false),
+	)}
 }
-
-func (e RequestTimeoutError) Error() string { return string(e) }
 
 func (e RequestTimeoutError) Unwrap() error {
 	return context.DeadlineExceeded
 }
 
-func newInvalidSecretError() error {
-	return ierrors.Wrap(
-		InvalidSecretError{},
+func newInvalidSecretError() errctx.Error {
+	return InvalidSecretError{errctx.NewTextError(
+		"Invalid secret",
 		1,
-		ierrors.WithStatusCode(http.StatusForbidden),
-		ierrors.WithPublicMessage("Forbidden"),
-		ierrors.WithShouldReport(false),
-	)
+		errctx.WithStatusCode(http.StatusForbidden),
+		errctx.WithPublicMessage("Forbidden"),
+		errctx.WithShouldReport(false),
+	)}
 }
-
-func (e InvalidSecretError) Error() string { return "Invalid secret" }

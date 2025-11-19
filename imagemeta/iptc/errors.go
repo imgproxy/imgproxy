@@ -2,20 +2,19 @@ package iptc
 
 import (
 	"fmt"
+	"net/http"
 
-	"github.com/imgproxy/imgproxy/v3/ierrors"
+	"github.com/imgproxy/imgproxy/v3/errctx"
 )
 
-type IptcError string
+type IptcError struct{ *errctx.TextError }
 
 func newIptcError(format string, args ...interface{}) error {
-	return ierrors.Wrap(
-		IptcError(fmt.Sprintf(format, args...)),
+	return IptcError{errctx.NewTextError(
+		fmt.Sprintf(format, args...),
 		1,
-		ierrors.WithStatusCode(422),
-		ierrors.WithPublicMessage("Invalid IPTC data"),
-		ierrors.WithShouldReport(false),
-	)
+		errctx.WithStatusCode(http.StatusUnprocessableEntity),
+		errctx.WithPublicMessage("Invalid IPTC data"),
+		errctx.WithShouldReport(false),
+	)}
 }
-
-func (e IptcError) Error() string { return string(e) }

@@ -8,9 +8,9 @@ import (
 	"sync"
 
 	"github.com/imgproxy/imgproxy/v3/cookies"
+	"github.com/imgproxy/imgproxy/v3/errctx"
 	"github.com/imgproxy/imgproxy/v3/fetcher"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
-	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/monitoring"
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/options/keys"
@@ -18,8 +18,8 @@ import (
 )
 
 const (
-	streamBufferSize  = 4096        // Size of the buffer used for streaming
-	categoryStreaming = "streaming" // Streaming error category
+	streamBufferSize     = 4096        // Size of the buffer used for streaming
+	errCategoryStreaming = "streaming" // Streaming error category
 )
 
 var (
@@ -78,7 +78,7 @@ func (s *Handler) Execute(
 	reqID string,
 	o *options.Options,
 	rw server.ResponseWriter,
-) error {
+) *server.Error {
 	stream := &request{
 		HandlerContext: s.HandlerContext,
 		handler:        s,
@@ -93,16 +93,18 @@ func (s *Handler) Execute(
 }
 
 // execute handles the actual streaming logic
-func (s *request) execute(ctx context.Context) error {
+func (s *request) execute(ctx context.Context) *server.Error {
 	s.Monitoring().Stats().IncImagesInProgress()
 	defer s.Monitoring().Stats().DecImagesInProgress()
-	defer s.Monitoring().StartStreamingSegment(ctx)()
+
+	ctx, cancelSpan := s.Monitoring().StartSpan(ctx, "Streaming image", nil)
+	defer cancelSpan()
 
 	// Passthrough request headers from the original request
 	requestHeaders := s.getImageRequestHeaders()
 	cookieJar, err := s.getCookieJar()
 	if err != nil {
-		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryStreaming))
+		return s.wrapError(err)
 	}
 
 	// Build the request to fetch the image
@@ -111,7 +113,7 @@ func (s *request) execute(ctx context.Context) error {
 		defer r.Cancel()
 	}
 	if err != nil {
-		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryStreaming))
+		return s.wrapError(err)
 	}
 
 	// Send the request to fetch the image
@@ -120,7 +122,7 @@ func (s *request) execute(ctx context.Context) error {
 		defer res.Body.Close()
 	}
 	if err != nil {
-		return ierrors.Wrap(err, 0, ierrors.WithCategory(categoryStreaming))
+		return s.wrapError(err)
 	}
 
 	// Output streaming response headers
@@ -191,4 +193,8 @@ func (s *request) streamData(res *http.Response) {
 	if copyerr != nil {
 		panic(http.ErrAbortHandler)
 	}
+}
+
+func (s *request) wrapError(err error) *server.Error {
+	return server.NewError(errctx.WrapWithStackSkip(err, 1), errCategoryStreaming)
 }

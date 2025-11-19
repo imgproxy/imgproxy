@@ -10,7 +10,6 @@ import (
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/options"
-	"github.com/imgproxy/imgproxy/v3/security"
 	"github.com/imgproxy/imgproxy/v3/server"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
@@ -63,7 +62,6 @@ func (p *Processor) ProcessImage(
 	ctx context.Context,
 	imgdata imagedata.ImageData,
 	o *options.Options,
-	secops security.Options,
 ) (*Result, error) {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
@@ -84,14 +82,13 @@ func (p *Processor) ProcessImage(
 
 	// Let's check if we should skip standard processing
 	if p.shouldSkipStandardProcessing(imgdata.Format(), po) {
-		return p.skipStandardProcessing(img, imgdata, po, secops)
+		return p.skipStandardProcessing(img, imgdata, po)
 	}
 
 	// Check if we expect image to be processed as animated.
 	// If MaxAnimationFrames is 1, we never process as animated since we can only
 	// process a single frame.
-	animated := secops.MaxAnimationFrames > 1 &&
-		img.IsAnimated()
+	animated := po.MaxAnimationFrames() > 1 && img.IsAnimated()
 
 	// Determine output format and check if it's supported.
 	// The determined format is stored in po[KeyFormat].
@@ -108,24 +105,24 @@ func (p *Processor) ProcessImage(
 	// and remove animation-related data if not animated.
 	// Don't reload if we initially loaded a thumbnail.
 	if !thumbnailLoaded {
-		if err = p.reloadImageForProcessing(img, imgdata, po, secops, animated); err != nil {
+		if err = p.reloadImageForProcessing(img, imgdata, po, animated); err != nil {
 			return nil, err
 		}
 	}
 
 	// Check image dimensions and number of frames for security reasons
-	originWidth, originHeight, err := p.checkImageSize(img, imgdata.Format(), secops)
+	originWidth, originHeight, err := p.checkImageSize(img, imgdata.Format(), po)
 	if err != nil {
 		return nil, err
 	}
 
 	// Transform the image (resize, crop, etc)
-	if err = p.transformImage(ctx, img, po, secops, imgdata, animated); err != nil {
+	if err = p.transformImage(ctx, img, po, imgdata, animated); err != nil {
 		return nil, err
 	}
 
 	// Finalize the image (colorspace conversion, metadata stripping, etc)
-	if err = p.finalizePipeline().Run(ctx, img, po, secops, imgdata); err != nil {
+	if err = p.finalizePipeline().Run(ctx, img, po, imgdata); err != nil {
 		return nil, err
 	}
 
@@ -170,13 +167,12 @@ func (p *Processor) reloadImageForProcessing(
 	img *vips.Image,
 	imgdata imagedata.ImageData,
 	po ProcessingOptions,
-	secops security.Options,
 	asAnimated bool,
 ) error {
 	// If we are going to process the image as animated, we need to load all frames
 	// up to MaxAnimationFrames
 	if asAnimated {
-		frames := min(img.Pages(), secops.MaxAnimationFrames)
+		frames := min(img.Pages(), po.MaxAnimationFrames())
 		return img.Load(imgdata, 1.0, 0, frames)
 	}
 
@@ -189,7 +185,7 @@ func (p *Processor) reloadImageForProcessing(
 func (p *Processor) checkImageSize(
 	img *vips.Image,
 	imgtype imagetype.Type,
-	secops security.Options,
+	po ProcessingOptions,
 ) (int, int, error) {
 	width, height, frames := p.getImageSize(img)
 
@@ -198,7 +194,7 @@ func (p *Processor) checkImageSize(
 		return width, height, nil
 	}
 
-	err := secops.CheckDimensions(width, height, frames)
+	err := p.securityChecker.CheckDimensions(po.Options, width, height, frames)
 
 	return width, height, err
 }
@@ -258,11 +254,10 @@ func (p *Processor) skipStandardProcessing(
 	img *vips.Image,
 	imgdata imagedata.ImageData,
 	po ProcessingOptions,
-	secops security.Options,
 ) (*Result, error) {
 	// Even if we skip standard processing, we still need to check image dimensions
 	// to not send an image bomb to the client
-	originWidth, originHeight, err := p.checkImageSize(img, imgdata.Format(), secops)
+	originWidth, originHeight, err := p.checkImageSize(img, imgdata.Format(), po)
 	if err != nil {
 		return nil, err
 	}
@@ -368,22 +363,20 @@ func (p *Processor) transformImage(
 	ctx context.Context,
 	img *vips.Image,
 	po ProcessingOptions,
-	secops security.Options,
 	imgdata imagedata.ImageData,
 	asAnimated bool,
 ) error {
 	if asAnimated {
-		return p.transformAnimated(ctx, img, po, secops)
+		return p.transformAnimated(ctx, img, po)
 	}
 
-	return p.mainPipeline().Run(ctx, img, po, secops, imgdata)
+	return p.mainPipeline().Run(ctx, img, po, imgdata)
 }
 
 func (p *Processor) transformAnimated(
 	ctx context.Context,
 	img *vips.Image,
 	po ProcessingOptions,
-	secops security.Options,
 ) error {
 	if po.TrimEnabled() {
 		slog.Warn("Trim is not supported for animated images")
@@ -440,7 +433,7 @@ func (p *Processor) transformAnimated(
 		// Transform the frame using the main pipeline.
 		// We don't provide imgdata here to prevent scale-on-load.
 		// Watermarking is disabled for individual frames (see above)
-		if err = p.mainPipeline().Run(ctx, frame, po, secops, nil); err != nil {
+		if err = p.mainPipeline().Run(ctx, frame, po, nil); err != nil {
 			return err
 		}
 
@@ -475,7 +468,7 @@ func (p *Processor) transformAnimated(
 		// Set watermark opacity back
 		po.SetWatermarkOpacity(watermarkOpacity)
 
-		if err = p.applyWatermark(ctx, img, po, secops, dprScale, framesCount); err != nil {
+		if err = p.applyWatermark(ctx, img, po, dprScale, framesCount); err != nil {
 			return err
 		}
 	}

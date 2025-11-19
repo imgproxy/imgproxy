@@ -71,6 +71,7 @@ int vips_colourspace_go(VipsImage *in, VipsImage **out, VipsInterpretation cs);
 
 int vips_rot_go(VipsImage *in, VipsImage **out, VipsAngle angle);
 int vips_flip_horizontal_go(VipsImage *in, VipsImage **out);
+int vips_flip_vertical_go(VipsImage *in, VipsImage **out);
 
 int vips_extract_area_go(VipsImage *in, VipsImage **out, int left, int top, int width, int height);
 int vips_smartcrop_go(VipsImage *in, VipsImage **out, int width, int height);

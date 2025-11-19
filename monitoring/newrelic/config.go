@@ -9,9 +9,10 @@ import (
 )
 
 var (
-	IMGPROXY_NEW_RELIC_APP_NAME = env.Describe("IMGPROXY_NEW_RELIC_APP_NAME", "string")
-	IMGPROXY_NEW_RELIC_KEY      = env.Describe("IMGPROXY_NEW_RELIC_KEY", "string")
-	IMGPROXY_NEW_RELIC_LABELS   = env.Describe("IMGPROXY_NEW_RELIC_LABELS", "semicolon-separated list of key=value pairs")
+	IMGPROXY_NEW_RELIC_APP_NAME           = env.Describe("IMGPROXY_NEW_RELIC_APP_NAME", "string")
+	IMGPROXY_NEW_RELIC_KEY                = env.Describe("IMGPROXY_NEW_RELIC_KEY", "string")
+	IMGPROXY_NEW_RELIC_LABELS             = env.Describe("IMGPROXY_NEW_RELIC_LABELS", "semicolon-separated list of key=value pairs")
+	IMGPROXY_NEW_RELIC_PROPAGATE_EXTERNAL = env.Describe("IMGPROXY_NEW_RELIC_PROPAGATE_EXTERNAL", "boolean")
 )
 
 // Config holds the configuration for New Relic monitoring
@@ -19,6 +20,7 @@ type Config struct {
 	AppName         string            // New Relic application name
 	Key             string            // New Relic license key (non-empty value enables New Relic)
 	Labels          map[string]string // New Relic labels/tags
+	PropagateExt    bool              // Enable propagation of tracing headers for external services
 	MetricsInterval time.Duration     // Interval for sending metrics to New Relic
 }
 
@@ -28,6 +30,7 @@ func NewDefaultConfig() Config {
 		AppName:         "imgproxy",
 		Key:             "",
 		Labels:          make(map[string]string),
+		PropagateExt:    false,
 		MetricsInterval: 10 * time.Second,
 	}
 }
@@ -40,6 +43,7 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 		env.String(&c.AppName, IMGPROXY_NEW_RELIC_APP_NAME),
 		env.String(&c.Key, IMGPROXY_NEW_RELIC_KEY),
 		env.StringMap(&c.Labels, IMGPROXY_NEW_RELIC_LABELS),
+		env.Bool(&c.PropagateExt, IMGPROXY_NEW_RELIC_PROPAGATE_EXTERNAL),
 	)
 
 	return c, err

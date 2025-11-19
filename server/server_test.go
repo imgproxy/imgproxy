@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/imgproxy/imgproxy/v3/errctx"
 	"github.com/imgproxy/imgproxy/v3/errorreport"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/monitoring"
@@ -44,7 +45,7 @@ func (s *ServerTestSuite) SetupTest() {
 	s.blankRouter = r
 }
 
-func (s *ServerTestSuite) mockHandler(reqID string, rw ResponseWriter, r *http.Request) error {
+func (s *ServerTestSuite) mockHandler(reqID string, rw ResponseWriter, r *http.Request) *Error {
 	return nil
 }
 
@@ -189,7 +190,9 @@ func (s *ServerTestSuite) TestWithSecret() {
 			}
 			rw := httptest.NewRecorder()
 
-			err = wrappedHandler("test-req-id", s.wrapRW(rw), req)
+			if serr := wrappedHandler("test-req-id", s.wrapRW(rw), req); serr != nil {
+				err = serr.Err
+			}
 
 			if tt.expectError {
 				s.Require().Error(err)
@@ -201,7 +204,7 @@ func (s *ServerTestSuite) TestWithSecret() {
 }
 
 func (s *ServerTestSuite) TestIntoSuccess() {
-	mockHandler := func(reqID string, rw ResponseWriter, r *http.Request) error {
+	mockHandler := func(reqID string, rw ResponseWriter, r *http.Request) *Error {
 		rw.WriteHeader(http.StatusOK)
 		return nil
 	}
@@ -217,9 +220,9 @@ func (s *ServerTestSuite) TestIntoSuccess() {
 }
 
 func (s *ServerTestSuite) TestIntoWithError() {
-	testError := errors.New("test error")
-	mockHandler := func(reqID string, rw ResponseWriter, r *http.Request) error {
-		return testError
+	testError := errctx.NewTextError("test error", 0)
+	mockHandler := func(reqID string, rw ResponseWriter, r *http.Request) *Error {
+		return NewError(testError, "test-category")
 	}
 
 	wrappedHandler := s.blankRouter.WithReportError(mockHandler)
@@ -235,7 +238,7 @@ func (s *ServerTestSuite) TestIntoWithError() {
 
 func (s *ServerTestSuite) TestIntoPanicWithError() {
 	testError := errors.New("panic error")
-	mockHandler := func(reqID string, rw ResponseWriter, r *http.Request) error {
+	mockHandler := func(reqID string, rw ResponseWriter, r *http.Request) *Error {
 		panic(testError)
 	}
 
@@ -246,14 +249,15 @@ func (s *ServerTestSuite) TestIntoPanicWithError() {
 
 	s.NotPanics(func() {
 		err := wrappedHandler("test-req-id", s.wrapRW(rw), req)
-		s.Require().Error(err, "panic error")
+		s.Require().NotNil(err)
+		s.Require().Error(err.Err, "panic error")
 	})
 
 	s.Equal(http.StatusOK, rw.Code)
 }
 
 func (s *ServerTestSuite) TestIntoPanicWithAbortHandler() {
-	mockHandler := func(reqID string, rw ResponseWriter, r *http.Request) error {
+	mockHandler := func(reqID string, rw ResponseWriter, r *http.Request) *Error {
 		panic(http.ErrAbortHandler)
 	}
 
@@ -269,7 +273,7 @@ func (s *ServerTestSuite) TestIntoPanicWithAbortHandler() {
 }
 
 func (s *ServerTestSuite) TestIntoPanicWithNonError() {
-	mockHandler := func(reqID string, rw ResponseWriter, r *http.Request) error {
+	mockHandler := func(reqID string, rw ResponseWriter, r *http.Request) *Error {
 		panic("string panic")
 	}
 
@@ -281,7 +285,8 @@ func (s *ServerTestSuite) TestIntoPanicWithNonError() {
 	// Should re-panic with non-error panics
 	s.NotPanics(func() {
 		err := wrappedHandler("test-req-id", s.wrapRW(rw), req)
-		s.Require().Error(err, "string panic")
+		s.Require().NotNil(err)
+		s.Require().Error(err.Err, "string panic")
 	})
 }
 

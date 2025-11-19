@@ -31,6 +31,10 @@ func DescribeByMap[T any](name string, m map[string]T) Desc {
 
 // Getenv returns the value of the env variable
 func (d Desc) Get() (string, bool) {
+	if len(d.Name) == 0 {
+		return "", false
+	}
+
 	value := os.Getenv(d.Name)
 	return value, len(value) > 0
 }

@@ -9,19 +9,18 @@ import (
 
 	"github.com/newrelic/go-agent/v3/newrelic"
 
-	"github.com/imgproxy/imgproxy/v3/monitoring/errformat"
+	"github.com/imgproxy/imgproxy/v3/errctx"
+	"github.com/imgproxy/imgproxy/v3/monitoring/format"
 	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
-	"github.com/imgproxy/imgproxy/v3/vips"
+	vipsstats "github.com/imgproxy/imgproxy/v3/vips/stats"
 )
-
-// transactionCtxKey context key for storing New Relic transaction in context
-type transactionCtxKey struct{}
 
 // attributable is an interface for New Relic entities that can have attributes set on them
 type attributable interface {
 	AddAttribute(key string, value any)
 }
 
+// NewRelic holds New Relic APM agent and configuration
 type NewRelic struct {
 	stats  *stats.Stats
 	config *Config
@@ -32,14 +31,15 @@ type NewRelic struct {
 	metricsCtxCancel context.CancelFunc
 }
 
+// New creates a new [NewRelic] instance
 func New(config *Config, stats *stats.Stats) (*NewRelic, error) {
+	if !config.Enabled() {
+		return nil, nil
+	}
+
 	nl := &NewRelic{
 		config: config,
 		stats:  stats,
-	}
-
-	if !config.Enabled() {
-		return nl, nil
 	}
 
 	var err error
@@ -65,11 +65,6 @@ func New(config *Config, stats *stats.Stats) (*NewRelic, error) {
 	return nl, nil
 }
 
-// Enabled returns true if New Relic is enabled
-func (nl *NewRelic) Enabled() bool {
-	return nl.config.Enabled()
-}
-
 // Stop stops the New Relic APM agent and Telemetry SDK harvester
 func (nl *NewRelic) Stop(ctx context.Context) {
 	if nl.metricsCtxCancel != nil {
@@ -81,18 +76,20 @@ func (nl *NewRelic) Stop(ctx context.Context) {
 	}
 }
 
-func (nl *NewRelic) StartTransaction(ctx context.Context, rw http.ResponseWriter, r *http.Request) (context.Context, context.CancelFunc, http.ResponseWriter) {
-	if !nl.Enabled() {
-		return ctx, func() {}, rw
-	}
-
+// StartRequest starts a new New Relic transaction for the incoming HTTP request
+func (nl *NewRelic) StartRequest(
+	ctx context.Context,
+	rw http.ResponseWriter,
+	r *http.Request,
+) (context.Context, context.CancelFunc, http.ResponseWriter) {
 	txn := nl.app.StartTransaction("request")
 	txn.SetWebRequestHTTP(r)
 	newRw := txn.SetWebResponse(rw)
 	cancel := func() { txn.End() }
-	return context.WithValue(ctx, transactionCtxKey{}, txn), cancel, newRw
+	return newrelic.NewContext(ctx, txn), cancel, newRw
 }
 
+// setMetadata sets metadata on the given New Relic attributable entity
 func setMetadata(span attributable, key string, value interface{}) {
 	if len(key) == 0 || value == nil {
 		return
@@ -122,47 +119,55 @@ func setMetadata(span attributable, key string, value interface{}) {
 	}
 }
 
+// SetMetadata sets metadata for the current transaction
 func (nl *NewRelic) SetMetadata(ctx context.Context, key string, value interface{}) {
-	if !nl.Enabled() {
-		return
-	}
-
-	if txn, ok := ctx.Value(transactionCtxKey{}).(*newrelic.Transaction); ok {
+	if txn := newrelic.FromContext(ctx); txn != nil {
 		setMetadata(txn, key, value)
 	}
 }
 
-func (nl *NewRelic) StartSegment(ctx context.Context, name string, meta map[string]any) context.CancelFunc {
-	if !nl.Enabled() {
-		return func() {}
-	}
-
-	if txn, ok := ctx.Value(transactionCtxKey{}).(*newrelic.Transaction); ok {
+// StartSpan starts a new span for New Relic monitoring
+func (nl *NewRelic) StartSpan(
+	ctx context.Context,
+	name string,
+	meta map[string]any,
+) (context.Context, context.CancelFunc) {
+	if txn := newrelic.FromContext(ctx); txn != nil {
 		segment := txn.NewGoroutine().StartSegment(name)
 
 		for k, v := range meta {
 			setMetadata(segment, k, v)
 		}
 
-		return func() { segment.End() }
+		return ctx, func() { segment.End() }
 	}
 
-	return func() {}
+	return ctx, func() {}
 }
 
-func (nl *NewRelic) SendError(ctx context.Context, errType string, err error) {
-	if !nl.Enabled() {
-		return
-	}
-
-	if txn, ok := ctx.Value(transactionCtxKey{}).(*newrelic.Transaction); ok {
+// SendError sends an error to New Relic APM
+func (nl *NewRelic) SendError(ctx context.Context, errType string, err errctx.Error) {
+	if txn := newrelic.FromContext(ctx); txn != nil {
 		txn.NoticeError(newrelic.Error{
 			Message: err.Error(),
-			Class:   errformat.FormatErrType(errType, err),
+			Class:   format.FormatErrType(errType, err),
+			Stack:   err.StackTrace(),
 		})
 	}
 }
 
+// InjectHeaders adds monitoring headers to the provided HTTP headers.
+func (nl *NewRelic) InjectHeaders(ctx context.Context, headers http.Header) {
+	if !nl.config.PropagateExt {
+		return
+	}
+
+	if txn := newrelic.FromContext(ctx); txn != nil {
+		txn.InsertDistributedTraceHeaders(headers)
+	}
+}
+
+// runMetricsCollector periodically collects and sends custom metrics to New Relic
 func (nl *NewRelic) runMetricsCollector() {
 	tick := time.NewTicker(nl.config.MetricsInterval)
 	defer tick.Stop()
@@ -175,9 +180,9 @@ func (nl *NewRelic) runMetricsCollector() {
 			nl.app.RecordCustomMetric("imgproxy/images_in_progress", float64(nl.stats.ImagesInProgress()))
 			nl.app.RecordCustomMetric("imgproxy/workers_utilization", nl.stats.WorkersUtilization())
 
-			nl.app.RecordCustomMetric("imgproxy/vips/memory", float64(vips.GetMem()))
-			nl.app.RecordCustomMetric("imgproxy/vips/max_memory", float64(vips.GetMemHighwater()))
-			nl.app.RecordCustomMetric("imgproxy/vips/allocs", float64(vips.GetAllocs()))
+			nl.app.RecordCustomMetric("imgproxy/vips/memory", float64(vipsstats.Memory()))
+			nl.app.RecordCustomMetric("imgproxy/vips/max_memory", float64(vipsstats.MemoryHighwater()))
+			nl.app.RecordCustomMetric("imgproxy/vips/allocs", float64(vipsstats.Allocs()))
 		case <-nl.metricsCtx.Done():
 			return
 		}

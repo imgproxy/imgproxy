@@ -13,8 +13,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
+	"github.com/imgproxy/imgproxy/v3/errctx"
+	"github.com/imgproxy/imgproxy/v3/monitoring/format"
 	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
-	"github.com/imgproxy/imgproxy/v3/vips"
+	vipsstats "github.com/imgproxy/imgproxy/v3/vips/stats"
 )
 
 // Prometheus holds Prometheus metrics and configuration
@@ -28,21 +30,19 @@ type Prometheus struct {
 
 	requestDuration     prometheus.Histogram
 	requestSpanDuration *prometheus.HistogramVec
-	downloadDuration    prometheus.Histogram
-	processingDuration  prometheus.Histogram
 
 	workers prometheus.Gauge
 }
 
 // New creates a new Prometheus instance
 func New(config *Config, stats *stats.Stats) (*Prometheus, error) {
+	if !config.Enabled() {
+		return nil, nil
+	}
+
 	p := &Prometheus{
 		config: config,
 		stats:  stats,
-	}
-
-	if !config.Enabled() {
-		return p, nil
 	}
 
 	if err := config.Validate(); err != nil {
@@ -79,18 +79,6 @@ func New(config *Config, stats *stats.Stats) (*Prometheus, error) {
 		Help:      "A histogram of the queue latency.",
 	}, []string{"span"})
 
-	p.downloadDuration = prometheus.NewHistogram(prometheus.HistogramOpts{
-		Namespace: config.Namespace,
-		Name:      "download_duration_seconds",
-		Help:      "A histogram of the source image downloading latency.",
-	})
-
-	p.processingDuration = prometheus.NewHistogram(prometheus.HistogramOpts{
-		Namespace: config.Namespace,
-		Name:      "processing_duration_seconds",
-		Help:      "A histogram of the image processing latency.",
-	})
-
 	p.workers = prometheus.NewGauge(prometheus.GaugeOpts{
 		Namespace: config.Namespace,
 		Name:      "workers",
@@ -120,19 +108,19 @@ func New(config *Config, stats *stats.Stats) (*Prometheus, error) {
 		Namespace: config.Namespace,
 		Name:      "vips_memory_bytes",
 		Help:      "A gauge of the vips tracked memory usage in bytes.",
-	}, vips.GetMem)
+	}, vipsstats.Memory)
 
 	vipsMaxMemoryBytes := prometheus.NewGaugeFunc(prometheus.GaugeOpts{
 		Namespace: config.Namespace,
 		Name:      "vips_max_memory_bytes",
 		Help:      "A gauge of the max vips tracked memory usage in bytes.",
-	}, vips.GetMemHighwater)
+	}, vipsstats.MemoryHighwater)
 
 	vipsAllocs := prometheus.NewGaugeFunc(prometheus.GaugeOpts{
 		Namespace: config.Namespace,
 		Name:      "vips_allocs",
 		Help:      "A gauge of the number of active vips allocations.",
-	}, vips.GetAllocs)
+	}, vipsstats.Allocs)
 
 	prometheus.MustRegister(
 		p.requestsTotal,
@@ -140,8 +128,6 @@ func New(config *Config, stats *stats.Stats) (*Prometheus, error) {
 		p.errorsTotal,
 		p.requestDuration,
 		p.requestSpanDuration,
-		p.downloadDuration,
-		p.processingDuration,
 		p.workers,
 		requestsInProgress,
 		imagesInProgress,
@@ -154,18 +140,13 @@ func New(config *Config, stats *stats.Stats) (*Prometheus, error) {
 	return p, nil
 }
 
-// Enabled returns true if Prometheus monitoring is enabled
-func (p *Prometheus) Enabled() bool {
-	return p.config.Enabled()
+// Stop stops the Prometheus monitoring
+func (p *Prometheus) Stop(ctx context.Context) {
+	// No-op
 }
 
 // StartServer starts the Prometheus metrics server
 func (p *Prometheus) StartServer(cancel context.CancelFunc) error {
-	// If not enabled, do nothing
-	if !p.Enabled() {
-		return nil
-	}
-
 	s := http.Server{Handler: promhttp.Handler()}
 
 	l, err := net.Listen("tcp", p.config.Bind)
@@ -184,11 +165,12 @@ func (p *Prometheus) StartServer(cancel context.CancelFunc) error {
 	return nil
 }
 
-func (p *Prometheus) StartRequest(rw http.ResponseWriter) (context.CancelFunc, http.ResponseWriter) {
-	if !p.Enabled() {
-		return func() {}, rw
-	}
-
+// StartRequest starts a new request for Prometheus monitoring
+func (p *Prometheus) StartRequest(
+	ctx context.Context,
+	rw http.ResponseWriter,
+	r *http.Request,
+) (context.Context, context.CancelFunc, http.ResponseWriter) {
 	p.requestsTotal.Inc()
 
 	newRw := httpsnoop.Wrap(rw, httpsnoop.Hooks{
@@ -200,53 +182,21 @@ func (p *Prometheus) StartRequest(rw http.ResponseWriter) (context.CancelFunc, h
 		},
 	})
 
-	return p.startDuration(p.requestDuration), newRw
+	return ctx, p.startDuration(p.requestDuration), newRw
 }
 
-func (p *Prometheus) StartQueueSegment() context.CancelFunc {
-	if !p.Enabled() {
-		return func() {}
-	}
-
-	return p.startDuration(p.requestSpanDuration.With(prometheus.Labels{"span": "queue"}))
+// StartSpan starts a new span for Prometheus monitoring
+func (p *Prometheus) StartSpan(
+	ctx context.Context,
+	name string,
+	meta map[string]any,
+) (context.Context, context.CancelFunc) {
+	return ctx, p.startDuration(
+		p.requestSpanDuration.With(prometheus.Labels{"span": format.FormatSegmentName(name)}),
+	)
 }
 
-func (p *Prometheus) StartDownloadingSegment() context.CancelFunc {
-	if !p.Enabled() {
-		return func() {}
-	}
-
-	cancel := p.startDuration(p.requestSpanDuration.With(prometheus.Labels{"span": "downloading"}))
-	cancelLegacy := p.startDuration(p.downloadDuration)
-
-	return func() {
-		cancel()
-		cancelLegacy()
-	}
-}
-
-func (p *Prometheus) StartProcessingSegment() context.CancelFunc {
-	if !p.Enabled() {
-		return func() {}
-	}
-
-	cancel := p.startDuration(p.requestSpanDuration.With(prometheus.Labels{"span": "processing"}))
-	cancelLegacy := p.startDuration(p.processingDuration)
-
-	return func() {
-		cancel()
-		cancelLegacy()
-	}
-}
-
-func (p *Prometheus) StartStreamingSegment() context.CancelFunc {
-	if !p.Enabled() {
-		return func() {}
-	}
-
-	return p.startDuration(p.requestSpanDuration.With(prometheus.Labels{"span": "streaming"}))
-}
-
+// startDuration starts a timer and returns a cancel function to record the duration
 func (p *Prometheus) startDuration(m prometheus.Observer) context.CancelFunc {
 	t := time.Now()
 	return func() {
@@ -254,10 +204,17 @@ func (p *Prometheus) startDuration(m prometheus.Observer) context.CancelFunc {
 	}
 }
 
-func (p *Prometheus) IncrementErrorsTotal(t string) {
-	if !p.Enabled() {
-		return
-	}
+// SetMetadata sets metadata for Prometheus monitoring
+func (p *Prometheus) SetMetadata(ctx context.Context, key string, value interface{}) {
+	// Prometheus does not support request tracing
+}
 
-	p.errorsTotal.With(prometheus.Labels{"type": t}).Inc()
+// SendError records an error occurrence in Prometheus metrics
+func (p *Prometheus) SendError(ctx context.Context, errType string, err errctx.Error) {
+	p.errorsTotal.With(prometheus.Labels{"type": errType}).Inc()
+}
+
+// InjectHeaders adds monitoring headers to the provided HTTP headers.
+func (p *Prometheus) InjectHeaders(ctx context.Context, headers http.Header) {
+	// Prometheus does not support request tracing
 }

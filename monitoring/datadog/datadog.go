@@ -15,14 +15,12 @@ import (
 	"github.com/DataDog/dd-trace-go/v2/ddtrace/tracer"
 	"github.com/felixge/httpsnoop"
 
-	"github.com/imgproxy/imgproxy/v3/monitoring/errformat"
+	"github.com/imgproxy/imgproxy/v3/errctx"
+	"github.com/imgproxy/imgproxy/v3/monitoring/format"
 	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
 	"github.com/imgproxy/imgproxy/v3/version"
-	"github.com/imgproxy/imgproxy/v3/vips"
+	vipsstats "github.com/imgproxy/imgproxy/v3/vips/stats"
 )
-
-// spanCtxKey is the context key type for storing the root span in the request context
-type spanCtxKey struct{}
 
 // dataDogLogger is a custom logger for DataDog
 type dataDogLogger struct{}
@@ -42,13 +40,13 @@ type DataDog struct {
 
 // New creates a new DataDog instance
 func New(config *Config, stats *stats.Stats) (*DataDog, error) {
+	if !config.Enabled() {
+		return nil, nil
+	}
+
 	dd := &DataDog{
 		stats:  stats,
 		config: config,
-	}
-
-	if !config.Enabled() {
-		return dd, nil
 	}
 
 	tracer.Start(
@@ -84,17 +82,8 @@ func New(config *Config, stats *stats.Stats) (*DataDog, error) {
 	return dd, nil
 }
 
-// Enabled returns true if DataDog is enabled
-func (dd *DataDog) Enabled() bool {
-	return dd.config.Enabled()
-}
-
 // Stop stops the DataDog tracer and metrics collection
-func (dd *DataDog) Stop() {
-	if !dd.Enabled() {
-		return
-	}
-
+func (dd *DataDog) Stop(ctx context.Context) {
 	tracer.Stop()
 
 	if dd.statsdClient != nil {
@@ -103,9 +92,16 @@ func (dd *DataDog) Stop() {
 	}
 }
 
-func (dd *DataDog) StartRootSpan(ctx context.Context, rw http.ResponseWriter, r *http.Request) (context.Context, context.CancelFunc, http.ResponseWriter) {
-	if !dd.Enabled() {
-		return ctx, func() {}, rw
+// StartRequest starts a new DataDog span for the incoming HTTP request
+func (dd *DataDog) StartRequest(
+	ctx context.Context,
+	rw http.ResponseWriter,
+	r *http.Request,
+) (context.Context, context.CancelFunc, http.ResponseWriter) {
+	// Extract parent span context from incoming request headers if any
+	parentSpanCtx, err := tracer.Extract(tracer.HTTPHeadersCarrier(r.Header))
+	if err != nil {
+		parentSpanCtx = nil
 	}
 
 	span := tracer.StartSpan(
@@ -114,6 +110,11 @@ func (dd *DataDog) StartRootSpan(ctx context.Context, rw http.ResponseWriter, r 
 		tracer.SpanType("web"),
 		tracer.Tag(ext.HTTPMethod, r.Method),
 		tracer.Tag(ext.HTTPURL, r.RequestURI),
+		// ChildOf is deprecated, but there's no alternative yet,
+		// and DD devs recommend to keep using it:
+		// https://github.com/DataDog/dd-trace-go/issues/3598
+		//nolint:staticcheck
+		tracer.ChildOf(parentSpanCtx),
 	)
 	cancel := func() { span.Finish() }
 
@@ -126,9 +127,10 @@ func (dd *DataDog) StartRootSpan(ctx context.Context, rw http.ResponseWriter, r 
 		},
 	})
 
-	return context.WithValue(ctx, spanCtxKey{}, span), cancel, newRw
+	return tracer.ContextWithSpan(ctx, span), cancel, newRw
 }
 
+// setMetadata sets metadata on the given DataDog span
 func setMetadata(span *tracer.Span, key string, value any) {
 	if len(key) == 0 || value == nil {
 		return
@@ -144,45 +146,56 @@ func setMetadata(span *tracer.Span, key string, value any) {
 	span.SetTag(key, value)
 }
 
+// SetMetadata sets metadata for the current span
 func (dd *DataDog) SetMetadata(ctx context.Context, key string, value any) {
-	if !dd.Enabled() {
-		return
-	}
-
-	if rootSpan, ok := ctx.Value(spanCtxKey{}).(*tracer.Span); ok {
-		setMetadata(rootSpan, key, value)
+	if span, ok := tracer.SpanFromContext(ctx); ok {
+		setMetadata(span, key, value)
 	}
 }
 
-func (dd *DataDog) StartSpan(ctx context.Context, name string, meta map[string]any) context.CancelFunc {
-	if !dd.Enabled() {
-		return func() {}
-	}
-
-	if rootSpan, ok := ctx.Value(spanCtxKey{}).(*tracer.Span); ok {
-		span := rootSpan.StartChild(name, tracer.Measured())
+// StartSpan starts a new span for DataDog monitoring
+func (dd *DataDog) StartSpan(
+	ctx context.Context,
+	name string,
+	meta map[string]any,
+) (context.Context, context.CancelFunc) {
+	if rootSpan, ok := tracer.SpanFromContext(ctx); ok {
+		span := rootSpan.StartChild(format.FormatSegmentName(name), tracer.Measured())
 
 		for k, v := range meta {
 			setMetadata(span, k, v)
 		}
 
-		return func() { span.Finish() }
+		ctx = tracer.ContextWithSpan(ctx, span)
+
+		return ctx, func() { span.Finish() }
 	}
 
-	return func() {}
+	return ctx, func() {}
 }
 
-func (dd *DataDog) SendError(ctx context.Context, errType string, err error) {
-	if !dd.Enabled() {
+// SendError sends an error to DataDog APM
+func (dd *DataDog) SendError(ctx context.Context, errType string, err errctx.Error) {
+	if span, ok := tracer.SpanFromContext(ctx); ok {
+		span.SetTag(ext.Error, err)
+		span.SetTag(ext.ErrorType, format.FormatErrType(errType, err))
+		span.SetTag(ext.ErrorStack, err.FormatStack())
+	}
+}
+
+// InjectHeaders adds monitoring headers to the provided HTTP headers.
+func (dd *DataDog) InjectHeaders(ctx context.Context, headers http.Header) {
+	if !dd.config.PropagateExt {
 		return
 	}
 
-	if rootSpan, ok := ctx.Value(spanCtxKey{}).(*tracer.Span); ok {
-		rootSpan.SetTag(ext.Error, err)
-		rootSpan.SetTag(ext.ErrorType, errformat.FormatErrType(errType, err))
+	if span, ok := tracer.SpanFromContext(ctx); ok {
+		carrier := tracer.HTTPHeadersCarrier(headers)
+		tracer.Inject(span.Context(), carrier)
 	}
 }
 
+// runMetricsCollector periodically collects and sends custom metrics to DataDog
 func (dd *DataDog) runMetricsCollector() {
 	tick := time.NewTicker(dd.config.MetricsInterval)
 	defer tick.Stop()
@@ -195,9 +208,9 @@ func (dd *DataDog) runMetricsCollector() {
 			dd.statsdClient.Gauge("imgproxy.images_in_progress", dd.stats.ImagesInProgress(), nil, 1)
 			dd.statsdClient.Gauge("imgproxy.workers_utilization", dd.stats.WorkersUtilization(), nil, 1)
 
-			dd.statsdClient.Gauge("imgproxy.vips.memory", vips.GetMem(), nil, 1)
-			dd.statsdClient.Gauge("imgproxy.vips.max_memory", vips.GetMemHighwater(), nil, 1)
-			dd.statsdClient.Gauge("imgproxy.vips.allocs", vips.GetAllocs(), nil, 1)
+			dd.statsdClient.Gauge("imgproxy.vips.memory", vipsstats.Memory(), nil, 1)
+			dd.statsdClient.Gauge("imgproxy.vips.max_memory", vipsstats.MemoryHighwater(), nil, 1)
+			dd.statsdClient.Gauge("imgproxy.vips.allocs", vipsstats.Allocs(), nil, 1)
 		case <-dd.statsdClientStop:
 			return
 		}

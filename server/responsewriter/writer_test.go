@@ -189,22 +189,6 @@ func (s *ResponseWriterSuite) TestHeaderCases() {
 			},
 		},
 		{
-			name: "SetVaryHeader",
-			req:  http.Header{},
-			res: http.Header{
-				httpheaders.Vary:                  []string{"Accept, Sec-CH-DPR, DPR, Sec-CH-Width, Width"},
-				httpheaders.CacheControl:          []string{"no-cache"},
-				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
-			},
-			config: Config{
-				VaryValue:            "Accept, Sec-CH-DPR, DPR, Sec-CH-Width, Width",
-				WriteResponseTimeout: writeResponseTimeout,
-			},
-			fn: func(w *Writer) {
-				w.SetVary()
-			},
-		},
-		{
 			name: "PassthroughHeaders",
 			req: http.Header{
 				"X-Test": []string{"foo", "bar"},

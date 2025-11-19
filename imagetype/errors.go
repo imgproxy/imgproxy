@@ -3,38 +3,31 @@ package imagetype
 import (
 	"net/http"
 
-	"github.com/imgproxy/imgproxy/v3/ierrors"
+	"github.com/imgproxy/imgproxy/v3/errctx"
 )
 
 type (
-	TypeDetectionError struct{ error }
-	UnknownFormatError struct{}
+	TypeDetectionError struct{ *errctx.WrappedError }
+	UnknownFormatError struct{ *errctx.TextError }
 )
 
 func newTypeDetectionError(err error) error {
-	return ierrors.Wrap(
-		TypeDetectionError{err},
+	return TypeDetectionError{errctx.NewWrappedError(
+		err,
 		1,
-		ierrors.WithStatusCode(http.StatusUnprocessableEntity),
-		ierrors.WithPublicMessage("Failed to detect source image type"),
-		ierrors.WithShouldReport(false),
-	)
+		errctx.WithPrefix("failed to detect image type"),
+		errctx.WithStatusCode(http.StatusUnprocessableEntity),
+		errctx.WithPublicMessage("Failed to detect source image type"),
+		errctx.WithShouldReport(false),
+	)}
 }
-
-func (e TypeDetectionError) Error() string {
-	return "Failed to detect image type: " + e.error.Error()
-}
-
-func (e TypeDetectionError) Unwrap() error { return e.error }
 
 func newUnknownFormatError() error {
-	return ierrors.Wrap(
-		UnknownFormatError{},
+	return UnknownFormatError{errctx.NewTextError(
+		"Source image type not supported",
 		1,
-		ierrors.WithStatusCode(http.StatusUnprocessableEntity),
-		ierrors.WithPublicMessage("Invalid source image"),
-		ierrors.WithShouldReport(false),
-	)
+		errctx.WithStatusCode(http.StatusUnprocessableEntity),
+		errctx.WithPublicMessage("Invalid source image"),
+		errctx.WithShouldReport(false),
+	)}
 }
-
-func (e UnknownFormatError) Error() string { return "Source image type not supported" }

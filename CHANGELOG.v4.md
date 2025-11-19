@@ -1,6 +1,15 @@
 # 📑 Changelog (version/4 dev)
 
-## 2021-10-20
+## 2025-10-31
+
+- Remove deprecated `download_duration_seconds` and `processing_duration_seconds` histograms from Prometheus metrics.
+- Add propagation of tracing headers to external requests. Introduced `IMGPROXY_(NEW_RELIC|DATADOG|OPEN_TELEMETRY)_PROPAGATE_EXTERNAL` env var to control this behavior.
+
+## 2025-10-29
+
+- Introduced `IMGPROXY_(ABS|GCS|S3|SWIFT)_(ALLOWED|DENIED)_BUCKETS` env var
+
+## 2025-10-20
 
 ### 🆕 Added
 

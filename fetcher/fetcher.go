@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/imgproxy/imgproxy/v3/fetcher/transport"
-	"github.com/imgproxy/imgproxy/v3/fetcher/transport/common"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 )
 
@@ -41,7 +40,7 @@ func New(config *Config) (*Fetcher, error) {
 func (f *Fetcher) checkRedirect(req *http.Request, via []*http.Request) error {
 	redirects := len(via)
 	if redirects >= f.config.MaxRedirects {
-		return newImageTooManyRedirectsError(redirects)
+		return newTooManyRedirectsError(redirects)
 	}
 	return nil
 }
@@ -56,7 +55,7 @@ func (f *Fetcher) newHttpClient() *http.Client {
 
 // NewImageFetcherRequest creates a new ImageFetcherRequest with the provided context, URL, headers, and cookie jar
 func (f *Fetcher) BuildRequest(ctx context.Context, url string, header http.Header, jar http.CookieJar) (*Request, error) {
-	url = common.EscapeURL(url)
+	url = transport.EscapeURL(url)
 
 	// Set request timeout and get cancel function
 	ctx, cancel := context.WithTimeout(ctx, f.config.DownloadTimeout)
@@ -64,13 +63,13 @@ func (f *Fetcher) BuildRequest(ctx context.Context, url string, header http.Head
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		cancel()
-		return nil, newImageRequestError(err)
+		return nil, newRequestError(err)
 	}
 
 	// Check if the URL scheme is supported
 	if !f.transport.IsProtocolRegistered(req.URL.Scheme) {
 		cancel()
-		return nil, newImageRequstSchemeError(req.URL.Scheme)
+		return nil, newRequestSchemeError(req.URL.Scheme)
 	}
 
 	// Add cookies from the jar to the request (if any)

@@ -5,7 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/imgproxy/imgproxy/v3/ierrors"
+	"github.com/imgproxy/imgproxy/v3/errctx"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -90,11 +90,10 @@ func (s *PathTestSuite) TestParsePath() {
 			path, signature, err := SplitPathSignature(req)
 
 			if tc.expectedError {
-				var ierr *ierrors.Error
+				var ierr errctx.Error
 
 				s.Require().Error(err)
 				s.Require().ErrorAs(err, &ierr)
-				s.Require().Equal(CategoryPathParsing, ierr.Category())
 
 				return
 			}

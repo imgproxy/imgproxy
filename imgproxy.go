@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/imgproxy/imgproxy/v3/auximageprovider"
+	"github.com/imgproxy/imgproxy/v3/clientfeatures"
 	"github.com/imgproxy/imgproxy/v3/cookies"
 	"github.com/imgproxy/imgproxy/v3/errorreport"
 	"github.com/imgproxy/imgproxy/v3/fetcher"
@@ -24,8 +25,9 @@ import (
 )
 
 const (
-	faviconPath = "/favicon.ico"
-	healthPath  = "/health"
+	faviconPath   = "/favicon.ico"
+	healthPath    = "/health"
+	wellKnownPath = "/.well-known/*"
 )
 
 // ImgproxyHandlers holds the handlers for imgproxy
@@ -38,19 +40,20 @@ type ImgproxyHandlers struct {
 
 // Imgproxy holds all the components needed for imgproxy to function
 type Imgproxy struct {
-	workers          *workers.Workers
-	fallbackImage    auximageprovider.Provider
-	watermarkImage   auximageprovider.Provider
-	fetcher          *fetcher.Fetcher
-	imageDataFactory *imagedata.Factory
-	handlers         ImgproxyHandlers
-	security         *security.Checker
-	optionsParser    *optionsparser.Parser
-	processor        *processing.Processor
-	cookies          *cookies.Cookies
-	monitoring       *monitoring.Monitoring
-	config           *Config
-	errorReporter    *errorreport.Reporter
+	workers                *workers.Workers
+	fallbackImage          auximageprovider.Provider
+	watermarkImage         auximageprovider.Provider
+	fetcher                *fetcher.Fetcher
+	imageDataFactory       *imagedata.Factory
+	clientFeaturesDetector *clientfeatures.Detector
+	handlers               ImgproxyHandlers
+	securityChecker        *security.Checker
+	optionsParser          *optionsparser.Parser
+	processor              *processing.Processor
+	cookies                *cookies.Cookies
+	monitoring             *monitoring.Monitoring
+	config                 *Config
+	errorReporter          *errorreport.Reporter
 }
 
 // New creates a new imgproxy instance
@@ -59,12 +62,29 @@ func New(ctx context.Context, config *Config) (*Imgproxy, error) {
 		return nil, err
 	}
 
+	monitoring, err := monitoring.New(ctx, &config.Monitoring, config.Workers.WorkersNumber)
+	if err != nil {
+		return nil, err
+	}
+
+	errorReporter, err := errorreport.New(&config.ErrorReport)
+	if err != nil {
+		return nil, err
+	}
+
+	securityChecker, err := security.New(&config.Security)
+	if err != nil {
+		return nil, err
+	}
+
 	fetcher, err := fetcher.New(&config.Fetcher)
 	if err != nil {
 		return nil, err
 	}
 
-	idf := imagedata.NewFactory(fetcher)
+	idf := imagedata.NewFactory(fetcher, monitoring)
+
+	clientFeaturesDetector := clientfeatures.NewDetector(&config.ClientFeatures)
 
 	fallbackImage, err := auximageprovider.NewStaticProvider(ctx, &config.FallbackImage, "fallback", idf)
 	if err != nil {
@@ -81,12 +101,7 @@ func New(ctx context.Context, config *Config) (*Imgproxy, error) {
 		return nil, err
 	}
 
-	security, err := security.New(&config.Security)
-	if err != nil {
-		return nil, err
-	}
-
-	processor, err := processing.New(&config.Processing, watermarkImage)
+	processor, err := processing.New(&config.Processing, securityChecker, watermarkImage)
 	if err != nil {
 		return nil, err
 	}
@@ -101,29 +116,20 @@ func New(ctx context.Context, config *Config) (*Imgproxy, error) {
 		return nil, err
 	}
 
-	monitoring, err := monitoring.New(ctx, &config.Monitoring, config.Workers.WorkersNumber)
-	if err != nil {
-		return nil, err
-	}
-
-	errorReporter, err := errorreport.New(&config.ErrorReport)
-	if err != nil {
-		return nil, err
-	}
-
 	imgproxy := &Imgproxy{
-		workers:          workers,
-		fallbackImage:    fallbackImage,
-		watermarkImage:   watermarkImage,
-		fetcher:          fetcher,
-		imageDataFactory: idf,
-		config:           config,
-		security:         security,
-		optionsParser:    optionsParser,
-		processor:        processor,
-		cookies:          cookies,
-		monitoring:       monitoring,
-		errorReporter:    errorReporter,
+		workers:                workers,
+		fallbackImage:          fallbackImage,
+		watermarkImage:         watermarkImage,
+		fetcher:                fetcher,
+		imageDataFactory:       idf,
+		clientFeaturesDetector: clientFeaturesDetector,
+		config:                 config,
+		securityChecker:        securityChecker,
+		optionsParser:          optionsParser,
+		processor:              processor,
+		cookies:                cookies,
+		monitoring:             monitoring,
+		errorReporter:          errorReporter,
 	}
 
 	imgproxy.handlers.Health = healthhandler.New()
@@ -156,6 +162,8 @@ func (i *Imgproxy) BuildRouter() (*server.Router, error) {
 
 	r.GET(faviconPath, r.NotFoundHandler).Silent()
 	r.GET(healthPath, i.handlers.Health.Execute).Silent()
+	r.GET(wellKnownPath, r.NotFoundHandler).Silent()
+
 	if i.config.Server.HealthCheckPath != "" {
 		r.GET(i.config.Server.HealthCheckPath, i.handlers.Health.Execute).Silent()
 	}
@@ -249,8 +257,12 @@ func (i *Imgproxy) ImageDataFactory() *imagedata.Factory {
 	return i.imageDataFactory
 }
 
+func (i *Imgproxy) ClientFeaturesDetector() *clientfeatures.Detector {
+	return i.clientFeaturesDetector
+}
+
 func (i *Imgproxy) Security() *security.Checker {
-	return i.security
+	return i.securityChecker
 }
 
 func (i *Imgproxy) OptionsParser() *optionsparser.Parser {

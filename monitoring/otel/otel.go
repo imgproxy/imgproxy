@@ -29,11 +29,11 @@ import (
 	"go.opentelemetry.io/otel/semconv/v1.20.0/httpconv"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/imgproxy/imgproxy/v3/ierrors"
-	"github.com/imgproxy/imgproxy/v3/monitoring/errformat"
+	"github.com/imgproxy/imgproxy/v3/errctx"
+	"github.com/imgproxy/imgproxy/v3/monitoring/format"
 	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
 	"github.com/imgproxy/imgproxy/v3/version"
-	"github.com/imgproxy/imgproxy/v3/vips"
+	vipsstats "github.com/imgproxy/imgproxy/v3/vips/stats"
 )
 
 const (
@@ -70,13 +70,13 @@ type Otel struct {
 
 // New creates a new Otel instance
 func New(config *Config, stats *stats.Stats) (*Otel, error) {
+	if !config.Enabled() {
+		return nil, nil
+	}
+
 	o := &Otel{
 		config: config,
 		stats:  stats,
-	}
-
-	if !config.Enabled() {
-		return o, nil
 	}
 
 	if err := config.Validate(); err != nil {
@@ -163,10 +163,7 @@ func New(config *Config, stats *stats.Stats) (*Otel, error) {
 	return o, nil
 }
 
-func (o *Otel) Enabled() bool {
-	return o.config.Enabled()
-}
-
+// Stop stops the Otel monitoring service
 func (o *Otel) Stop(ctx context.Context) {
 	if o.tracerProvider != nil {
 		trctx, trcancel := context.WithTimeout(ctx, stopTimeout)
@@ -183,11 +180,12 @@ func (o *Otel) Stop(ctx context.Context) {
 	}
 }
 
-func (o *Otel) StartRootSpan(ctx context.Context, rw http.ResponseWriter, r *http.Request) (context.Context, context.CancelFunc, http.ResponseWriter) {
-	if !o.Enabled() {
-		return ctx, func() {}, rw
-	}
-
+// StartRequest starts a new OpenTelemetry span for the incoming HTTP request
+func (o *Otel) StartRequest(
+	ctx context.Context,
+	rw http.ResponseWriter,
+	r *http.Request,
+) (context.Context, context.CancelFunc, http.ResponseWriter) {
 	if o.propagator != nil {
 		ctx = o.propagator.Extract(ctx, propagation.HeaderCarrier(r.Header))
 	}
@@ -220,6 +218,7 @@ func (o *Otel) StartRootSpan(ctx context.Context, rw http.ResponseWriter, r *htt
 	return ctx, cancel, newRw
 }
 
+// setMetadata sets metadata on the given OpenTelemetry span
 func setMetadata(span trace.Span, key string, value interface{}) {
 	if len(key) == 0 || value == nil {
 		return
@@ -254,11 +253,8 @@ func setMetadata(span trace.Span, key string, value interface{}) {
 	}
 }
 
+// SetMetadata sets metadata for the current span
 func (o *Otel) SetMetadata(ctx context.Context, key string, value interface{}) {
-	if !o.Enabled() {
-		return
-	}
-
 	if ctx.Value(hasSpanCtxKey{}) != nil {
 		if span := trace.SpanFromContext(ctx); span != nil {
 			setMetadata(span, key, value)
@@ -266,45 +262,55 @@ func (o *Otel) SetMetadata(ctx context.Context, key string, value interface{}) {
 	}
 }
 
-func (o *Otel) StartSpan(ctx context.Context, name string, meta map[string]any) context.CancelFunc {
-	if !o.Enabled() {
-		return func() {}
-	}
-
+// StartSpan starts a new span for OpenTelemetry monitoring
+func (o *Otel) StartSpan(
+	ctx context.Context,
+	name string,
+	meta map[string]any,
+) (context.Context, context.CancelFunc) {
 	if ctx.Value(hasSpanCtxKey{}) != nil {
-		_, span := o.tracer.Start(ctx, name, trace.WithSpanKind(trace.SpanKindInternal))
+		var span trace.Span
+		ctx, span = o.tracer.Start(
+			ctx, format.FormatSegmentName(name),
+			trace.WithSpanKind(trace.SpanKindInternal),
+		)
 
 		for k, v := range meta {
 			setMetadata(span, k, v)
 		}
 
-		return func() { span.End() }
+		return ctx, func() { span.End() }
 	}
 
-	return func() {}
+	return ctx, func() {}
 }
 
-func (o *Otel) SendError(ctx context.Context, errType string, err error) {
-	if !o.Enabled() {
-		return
-	}
-
+// SendError sends an error to OpenTelemetry
+func (o *Otel) SendError(ctx context.Context, errType string, err errctx.Error) {
 	span := trace.SpanFromContext(ctx)
 
 	attributes := []attribute.KeyValue{
-		semconv.ExceptionTypeKey.String(errformat.FormatErrType(errType, err)),
+		semconv.ExceptionTypeKey.String(format.FormatErrType(errType, err)),
 		semconv.ExceptionMessageKey.String(err.Error()),
+		semconv.ExceptionStacktraceKey.String(err.FormatStack()),
 	}
 
-	if ierr, ok := err.(*ierrors.Error); ok {
-		if stack := ierr.FormatStack(); len(stack) != 0 {
-			attributes = append(attributes, semconv.ExceptionStacktraceKey.String(stack))
-		}
-	}
 	span.SetStatus(codes.Error, err.Error())
 	span.AddEvent(semconv.ExceptionEventName, trace.WithAttributes(attributes...))
 }
 
+// InjectHeaders adds monitoring headers to the provided HTTP headers.
+func (o *Otel) InjectHeaders(ctx context.Context, headers http.Header) {
+	if !o.config.PropagateExt || o.propagator == nil {
+		return
+	}
+
+	if ctx.Value(hasSpanCtxKey{}) != nil {
+		o.propagator.Inject(ctx, propagation.HeaderCarrier(headers))
+	}
+}
+
+// addDefaultMetrics adds default system and application metrics to OpenTelemetry
 func (o *Otel) addDefaultMetrics() error {
 	proc, err := process.NewProcess(int32(os.Getpid()))
 	if err != nil {
@@ -463,9 +469,9 @@ func (o *Otel) addDefaultMetrics() error {
 			ob.ObserveFloat64(imagesInProgressGauge, o.stats.ImagesInProgress())
 			ob.ObserveFloat64(workersUtilizationGauge, o.stats.WorkersUtilization())
 
-			ob.ObserveFloat64(vipsMemory, vips.GetMem())
-			ob.ObserveFloat64(vipsMaxMemory, vips.GetMemHighwater())
-			ob.ObserveFloat64(vipsAllocs, vips.GetAllocs())
+			ob.ObserveFloat64(vipsMemory, vipsstats.Memory())
+			ob.ObserveFloat64(vipsMaxMemory, vipsstats.MemoryHighwater())
+			ob.ObserveFloat64(vipsAllocs, vipsstats.Allocs())
 
 			return nil
 		},

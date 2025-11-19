@@ -8,7 +8,6 @@ import (
 	"github.com/imgproxy/imgproxy/v3/imath"
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/options/keys"
-	"github.com/imgproxy/imgproxy/v3/security"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
@@ -34,7 +33,6 @@ func (p *Processor) prepareWatermark(
 	wm *vips.Image,
 	wmData imagedata.ImageData,
 	po ProcessingOptions,
-	secops security.Options,
 	imgWidth, imgHeight int,
 	offsetScale float64,
 	framesCount int,
@@ -80,7 +78,7 @@ func (p *Processor) prepareWatermark(
 		wmPo.Set(keys.PaddingBottom, padY-padY/2)
 	}
 
-	if err := p.watermarkPipeline().Run(ctx, wm, wmPo, secops, wmData); err != nil {
+	if err := p.watermarkPipeline().Run(ctx, wm, wmPo, wmData); err != nil {
 		return err
 	}
 
@@ -104,7 +102,6 @@ func (p *Processor) applyWatermark(
 	ctx context.Context,
 	img *vips.Image,
 	po ProcessingOptions,
-	secops security.Options,
 	offsetScale float64,
 	framesCount int,
 ) error {
@@ -129,7 +126,7 @@ func (p *Processor) applyWatermark(
 	frameHeight := height / framesCount
 
 	if err := p.prepareWatermark(
-		ctx, wm, wmData, po, secops, width, frameHeight, offsetScale, framesCount,
+		ctx, wm, wmData, po, width, frameHeight, offsetScale, framesCount,
 	); err != nil {
 		return err
 	}
@@ -216,5 +213,5 @@ func (p *Processor) watermark(c *Context) error {
 		return nil
 	}
 
-	return p.applyWatermark(c.Ctx, c.Img, c.PO, c.SecOps, c.DprScale, 1)
+	return p.applyWatermark(c.Ctx, c.Img, c.PO, c.DprScale, 1)
 }

@@ -221,7 +221,7 @@ func (c *Context) calcSizes(widthToScale, heightToScale int, po ProcessingOption
 }
 
 func (c *Context) limitScale(widthToScale, heightToScale int, po ProcessingOptions) {
-	maxresultDim := c.SecOps.MaxResultDimension
+	maxresultDim := c.PO.MaxResultDimension()
 
 	if maxresultDim <= 0 {
 		return

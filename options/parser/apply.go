@@ -233,6 +233,26 @@ func (p *Parser) applyRotateOption(o *options.Options, args []string) error {
 	return nil
 }
 
+func (p *Parser) applyFlipOption(o *options.Options, args []string) error {
+	if err := p.ensureMaxArgs("flip", args, 2); err != nil {
+		return err
+	}
+
+	if len(args[0]) > 0 {
+		if err := p.parseBool(o, keys.FlipHorizontal, args[0]); err != nil {
+			return err
+		}
+	}
+
+	if len(args) > 1 && len(args[1]) > 0 {
+		if err := p.parseBool(o, keys.FlipVertical, args[1]); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (p *Parser) applyQualityOption(o *options.Options, args []string) error {
 	return p.parseQualityInt(o, keys.Quality, args...)
 }
@@ -370,6 +390,11 @@ func (p *Parser) applyFormatOption(o *options.Options, args []string) error {
 func (p *Parser) applyCacheBusterOption(o *options.Options, args []string) error {
 	if err := p.ensureMaxArgs(keys.CacheBuster, args, 1); err != nil {
 		return err
+	}
+
+	if len(args[0]) == 0 {
+		o.Delete(keys.CacheBuster)
+		return nil
 	}
 
 	o.Set(keys.CacheBuster, args[0])

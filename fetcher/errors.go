@@ -7,189 +7,159 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/imgproxy/imgproxy/v3/errctx"
 	"github.com/imgproxy/imgproxy/v3/fetcher/transport/generichttp"
-	"github.com/imgproxy/imgproxy/v3/ierrors"
 )
 
-const msgSourceImageIsUnreachable = "Source image is unreachable"
+const msgSourceIsUnreachable = "Source is unreachable"
 
 type (
-	ImageRequestError          struct{ error }
-	ImageRequstSchemeError     string
-	ImagePartialResponseError  string
-	ImageResponseStatusError   string
-	ImageTooManyRedirectsError string
-	ImageRequestCanceledError  struct{ error }
-	ImageRequestTimeoutError   struct{ error }
+	RequestError          struct{ *errctx.WrappedError }
+	RequstSchemeError     struct{ *errctx.TextError }
+	PartialResponseError  struct{ *errctx.TextError }
+	ResponseStatusError   struct{ *errctx.TextError }
+	TooManyRedirectsError struct{ *errctx.TextError }
+	RequestCanceledError  struct{ *errctx.WrappedError }
+	RequestTimeoutError   struct{ *errctx.WrappedError }
 
 	NotModifiedError struct {
+		*errctx.TextError
 		headers http.Header
-	}
-
-	httpError interface {
-		Timeout() bool
 	}
 )
 
-func newImageRequestError(err error) error {
-	return ierrors.Wrap(
-		ImageRequestError{err},
+func newRequestError(err error) error {
+	return RequestError{errctx.NewWrappedError(
+		err,
 		1,
-		ierrors.WithStatusCode(http.StatusNotFound),
-		ierrors.WithPublicMessage(msgSourceImageIsUnreachable),
-		ierrors.WithShouldReport(false),
-	)
+		errctx.WithStatusCode(http.StatusNotFound),
+		errctx.WithPublicMessage(msgSourceIsUnreachable),
+		errctx.WithShouldReport(false),
+	)}
 }
 
-func (e ImageRequestError) Unwrap() error {
-	return e.error
-}
-
-func newImageRequstSchemeError(scheme string) error {
-	return ierrors.Wrap(
-		ImageRequstSchemeError(fmt.Sprintf("Unknown scheme: %s", scheme)),
+func newRequestSchemeError(scheme string) error {
+	return RequstSchemeError{errctx.NewTextError(
+		fmt.Sprintf("unknown scheme: %s", scheme),
 		1,
-		ierrors.WithStatusCode(http.StatusNotFound),
-		ierrors.WithPublicMessage(msgSourceImageIsUnreachable),
-		ierrors.WithShouldReport(false),
-	)
+		errctx.WithStatusCode(http.StatusNotFound),
+		errctx.WithPublicMessage(msgSourceIsUnreachable),
+		errctx.WithShouldReport(false),
+	)}
 }
 
-func (e ImageRequstSchemeError) Error() string { return string(e) }
-
-func newImagePartialResponseError(msg string) error {
-	return ierrors.Wrap(
-		ImagePartialResponseError(msg),
+func newPartialResponseError(msg string) error {
+	return PartialResponseError{errctx.NewTextError(
+		msg,
 		1,
-		ierrors.WithStatusCode(http.StatusNotFound),
-		ierrors.WithPublicMessage(msgSourceImageIsUnreachable),
-		ierrors.WithShouldReport(false),
-	)
+		errctx.WithStatusCode(http.StatusNotFound),
+		errctx.WithPublicMessage(msgSourceIsUnreachable),
+		errctx.WithShouldReport(false),
+	)}
 }
 
-func (e ImagePartialResponseError) Error() string { return string(e) }
-
-func newImageResponseStatusError(status int, body string) error {
+func newResponseStatusError(status int, body string) error {
 	var msg string
 
 	if len(body) > 0 {
-		msg = fmt.Sprintf("Status: %d; %s", status, body)
+		msg = fmt.Sprintf("status: %d; %s", status, body)
 	} else {
-		msg = fmt.Sprintf("Status: %d", status)
+		msg = fmt.Sprintf("status: %d", status)
 	}
 
 	statusCode := 404
-	if status >= 500 {
-		statusCode = 500
+	if status >= 400 && status < 500 {
+		statusCode = status
+	} else if status >= 500 {
+		statusCode = http.StatusBadGateway
 	}
 
-	return ierrors.Wrap(
-		ImageResponseStatusError(msg),
+	return ResponseStatusError{errctx.NewTextError(
+		msg,
 		1,
-		ierrors.WithStatusCode(statusCode),
-		ierrors.WithPublicMessage(msgSourceImageIsUnreachable),
-		ierrors.WithShouldReport(false),
-	)
+		errctx.WithStatusCode(statusCode),
+		errctx.WithPublicMessage(msgSourceIsUnreachable),
+		errctx.WithShouldReport(false),
+	)}
 }
 
-func (e ImageResponseStatusError) Error() string { return string(e) }
-
-func newImageTooManyRedirectsError(n int) error {
-	return ierrors.Wrap(
-		ImageTooManyRedirectsError(fmt.Sprintf("Stopped after %d redirects", n)),
+func newTooManyRedirectsError(n int) error {
+	return TooManyRedirectsError{errctx.NewTextError(
+		fmt.Sprintf("stopped after %d redirects", n),
 		1,
-		ierrors.WithStatusCode(http.StatusNotFound),
-		ierrors.WithPublicMessage(msgSourceImageIsUnreachable),
-		ierrors.WithShouldReport(false),
-	)
+		errctx.WithStatusCode(http.StatusNotFound),
+		errctx.WithPublicMessage(msgSourceIsUnreachable),
+		errctx.WithShouldReport(false),
+	)}
 }
 
-func (e ImageTooManyRedirectsError) Error() string { return string(e) }
-
-func newImageRequestCanceledError(err error) error {
-	return ierrors.Wrap(
-		ImageRequestCanceledError{err},
+func newRequestCanceledError(err error) error {
+	return RequestCanceledError{errctx.NewWrappedError(
+		err,
 		2,
-		ierrors.WithStatusCode(499),
-		ierrors.WithPublicMessage(msgSourceImageIsUnreachable),
-		ierrors.WithShouldReport(false),
-	)
+		errctx.WithPrefix("source request is cancelled"),
+		errctx.WithStatusCode(499),
+		errctx.WithPublicMessage(msgSourceIsUnreachable),
+		errctx.WithShouldReport(false),
+	)}
 }
 
-func (e ImageRequestCanceledError) Error() string {
-	return fmt.Sprintf("The image request is cancelled: %s", e.error)
-}
-
-func (e ImageRequestCanceledError) Unwrap() error { return e.error }
-
-func newImageRequestTimeoutError(err error) error {
-	return ierrors.Wrap(
-		ImageRequestTimeoutError{err},
+func newRequestTimeoutError(err error) error {
+	return RequestTimeoutError{errctx.NewWrappedError(
+		err,
 		2,
-		ierrors.WithStatusCode(http.StatusGatewayTimeout),
-		ierrors.WithPublicMessage(msgSourceImageIsUnreachable),
-		ierrors.WithShouldReport(false),
-	)
+		errctx.WithPrefix("source request timed out"),
+		errctx.WithStatusCode(http.StatusGatewayTimeout),
+		errctx.WithPublicMessage(msgSourceIsUnreachable),
+		errctx.WithShouldReport(false),
+	)}
 }
-
-func (e ImageRequestTimeoutError) Error() string {
-	return fmt.Sprintf("The image request timed out: %s", e.error)
-}
-
-func (e ImageRequestTimeoutError) Unwrap() error { return e.error }
 
 func newNotModifiedError(headers http.Header) error {
-	return ierrors.Wrap(
-		NotModifiedError{headers},
-		1,
-		ierrors.WithStatusCode(http.StatusNotModified),
-		ierrors.WithPublicMessage("Not modified"),
-		ierrors.WithShouldReport(false),
-	)
+	return NotModifiedError{
+		errctx.NewTextError(
+			"not modified",
+			1,
+			errctx.WithStatusCode(http.StatusNotModified),
+			errctx.WithPublicMessage("Not modified"),
+			errctx.WithShouldReport(false),
+		),
+		headers,
+	}
 }
-
-func (e NotModifiedError) Error() string { return "Not modified" }
 
 func (e NotModifiedError) Headers() http.Header {
 	return e.headers
 }
 
 // NOTE: make private when we remove download functions from imagedata package
-func WrapError(err error) error {
-	isTimeout := false
+func WrapError(err error, skipStack int) error {
+	type httpError interface {
+		Timeout() bool
+	}
 
-	var secArrdErr generichttp.SourceAddressError
+	var srcErr generichttp.SourceAddressError
 
 	switch {
 	case errors.Is(err, context.DeadlineExceeded):
-		isTimeout = true
+		return newRequestTimeoutError(err)
 	case errors.Is(err, context.Canceled):
-		return newImageRequestCanceledError(err)
+		return newRequestCanceledError(err)
 	case err == io.ErrUnexpectedEOF:
-		return ierrors.Wrap(
-			newImageRequestError(err),
+		return PartialResponseError{errctx.NewTextError(
+			"response is incomplete",
 			1,
-			ierrors.WithPublicMessage("source image is corrupted"),
-			ierrors.WithShouldReport(false),
-			ierrors.WithStatusCode(http.StatusUnprocessableEntity),
-		)
-	case errors.As(err, &secArrdErr):
-		return ierrors.Wrap(
-			err,
-			1,
-			ierrors.WithStatusCode(404),
-			ierrors.WithPublicMessage(msgSourceImageIsUnreachable),
-			ierrors.WithShouldReport(false),
-		)
+			errctx.WithStatusCode(http.StatusUnprocessableEntity),
+			errctx.WithPublicMessage("Source response is incomplete"),
+			errctx.WithShouldReport(false),
+		)}
+	case errors.As(err, &srcErr):
+		return srcErr
 	default:
-		if httpErr, ok := err.(httpError); ok {
-			isTimeout = httpErr.Timeout()
+		if httpErr, ok := err.(httpError); ok && httpErr.Timeout() {
+			return newRequestTimeoutError(err)
 		}
 	}
 
-	if isTimeout {
-		return newImageRequestTimeoutError(err)
-	}
-
-	return ierrors.Wrap(err, 1)
+	return errctx.WrapWithStackSkip(err, skipStack+1)
 }

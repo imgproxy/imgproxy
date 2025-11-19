@@ -21,30 +21,50 @@ func New(config *Config) (*Checker, error) {
 	}, nil
 }
 
-// NewOptions creates a new [security.Options] instance
-// filling it from [options.Options].
-// If opts is nil, it returns default [security.Options].
-func (s *Checker) NewOptions(opts *options.Options) (secops Options) {
-	secops = s.config.DefaultOptions
-	if opts == nil {
-		return
+// MaxSrcResolution returns the maximum allowed source image resolution
+func (s *Checker) MaxSrcResolution(o *options.Options) int {
+	return o.GetInt(keys.MaxSrcResolution, s.config.MaxSrcResolution)
+}
+
+// MaxSrcFileSize returns the maximum allowed source file size
+func (s *Checker) MaxSrcFileSize(o *options.Options) int {
+	return o.GetInt(keys.MaxSrcFileSize, s.config.MaxSrcFileSize)
+}
+
+// MaxAnimationFrames returns the maximum allowed animation frames
+func (s *Checker) MaxAnimationFrames(o *options.Options) int {
+	return o.GetInt(keys.MaxAnimationFrames, s.config.MaxAnimationFrames)
+}
+
+// MaxAnimationFrameResolution returns the maximum allowed animation frame resolution
+func (s *Checker) MaxAnimationFrameResolution(o *options.Options) int {
+	return o.GetInt(
+		keys.MaxAnimationFrameResolution,
+		s.config.MaxAnimationFrameResolution,
+	)
+}
+
+// MaxResultDimension returns the maximum allowed result image dimension
+func (s *Checker) MaxResultDimension(o *options.Options) int {
+	return o.GetInt(keys.MaxResultDimension, s.config.MaxResultDimension)
+}
+
+// CheckDimensions checks if the given dimensions are within the allowed limits
+func (s *Checker) CheckDimensions(o *options.Options, width, height, frames int) error {
+	frames = max(frames, 1)
+
+	maxFrameRes := s.MaxAnimationFrameResolution(o)
+
+	if frames > 1 && maxFrameRes > 0 {
+		if width*height > maxFrameRes {
+			return newImageResolutionError("Source image frame resolution is too big")
+		}
+		return nil
 	}
 
-	secops.MaxSrcResolution = opts.GetInt(
-		keys.MaxSrcResolution, secops.MaxSrcResolution,
-	)
-	secops.MaxSrcFileSize = opts.GetInt(
-		keys.MaxSrcFileSize, secops.MaxSrcFileSize,
-	)
-	secops.MaxAnimationFrames = opts.GetInt(
-		keys.MaxAnimationFrames, secops.MaxAnimationFrames,
-	)
-	secops.MaxAnimationFrameResolution = opts.GetInt(
-		keys.MaxAnimationFrameResolution, secops.MaxAnimationFrameResolution,
-	)
-	secops.MaxResultDimension = opts.GetInt(
-		keys.MaxResultDimension, secops.MaxResultDimension,
-	)
+	if width*height*frames > s.MaxSrcResolution(o) {
+		return newImageResolutionError("Source image resolution is too big")
+	}
 
-	return
+	return nil
 }

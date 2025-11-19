@@ -4,18 +4,18 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/imgproxy/imgproxy/v3/ierrors"
+	"github.com/imgproxy/imgproxy/v3/errctx"
 )
 
 type (
-	SyntaxError struct{ error }
+	SyntaxError struct{ *errctx.TextError }
 )
 
 func newSyntaxError(msg string, args ...any) error {
-	return ierrors.Wrap(
-		SyntaxError{fmt.Errorf(msg, args...)},
+	return SyntaxError{errctx.NewTextError(
+		fmt.Sprintf(msg, args...),
 		1,
-		ierrors.WithPublicMessage("SVG syntax error"),
-		ierrors.WithStatusCode(http.StatusUnprocessableEntity),
-	)
+		errctx.WithPublicMessage("SVG syntax error"),
+		errctx.WithStatusCode(http.StatusUnprocessableEntity),
+	)}
 }

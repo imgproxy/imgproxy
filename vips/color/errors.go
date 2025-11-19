@@ -3,17 +3,15 @@ package color
 import (
 	"fmt"
 
-	"github.com/imgproxy/imgproxy/v3/ierrors"
+	"github.com/imgproxy/imgproxy/v3/errctx"
 )
 
-type ColorError string
+type ColorError struct{ *errctx.TextError }
 
 func newColorError(format string, args ...interface{}) error {
-	return ierrors.Wrap(
-		ColorError(fmt.Sprintf(format, args...)),
+	return ColorError{errctx.NewTextError(
+		fmt.Sprintf(format, args...),
 		1,
-		ierrors.WithShouldReport(false),
-	)
+		errctx.WithShouldReport(false),
+	)}
 }
-
-func (e ColorError) Error() string { return string(e) }

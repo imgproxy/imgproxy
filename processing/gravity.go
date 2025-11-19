@@ -38,13 +38,22 @@ var gravityTypesRotationMap = map[int]map[GravityType]GravityType{
 	},
 }
 
-var gravityTypesFlipMap = map[GravityType]GravityType{
+var gravityTypesFlipXMap = map[GravityType]GravityType{
 	GravityEast:      GravityWest,
 	GravityWest:      GravityEast,
 	GravityNorthWest: GravityNorthEast,
 	GravityNorthEast: GravityNorthWest,
 	GravitySouthWest: GravitySouthEast,
 	GravitySouthEast: GravitySouthWest,
+}
+
+var gravityTypesFlipYMap = map[GravityType]GravityType{
+	GravityNorth:     GravitySouth,
+	GravitySouth:     GravityNorth,
+	GravityNorthWest: GravitySouthWest,
+	GravityNorthEast: GravitySouthEast,
+	GravitySouthWest: GravityNorthWest,
+	GravitySouthEast: GravityNorthEast,
 }
 
 type GravityOptions struct {
@@ -66,11 +75,21 @@ func NewGravityOptions(o *options.Options, prefix string, defType GravityType) G
 	return gr
 }
 
-func (g *GravityOptions) RotateAndFlip(angle int, flip bool) {
+// RotateAndFlip rotates and flips the gravity options so that they correspond
+// to the image before rotation and flipping.
+//
+// By design, rotation and flipping are applied before cropping.
+// But for performance reasons, we do cropping before rotation and flipping.
+// So we need to adjust gravity options accordingly.
+// As a result, cropping with the adjusted gravity options
+// and then rotating/flipping the cropped image gives the same result
+// as rotating/flipping the image first and then cropping
+// with the original gravity options.
+func (g *GravityOptions) RotateAndFlip(angle int, flipX, flipY bool) {
 	angle %= 360
 
-	if flip {
-		if gt, ok := gravityTypesFlipMap[g.Type]; ok {
+	if flipX {
+		if gt, ok := gravityTypesFlipXMap[g.Type]; ok {
 			g.Type = gt
 		}
 
@@ -79,6 +98,19 @@ func (g *GravityOptions) RotateAndFlip(angle int, flip bool) {
 			g.X = -g.X
 		case GravityFocusPoint:
 			g.X = 1.0 - g.X
+		}
+	}
+
+	if flipY {
+		if gt, ok := gravityTypesFlipYMap[g.Type]; ok {
+			g.Type = gt
+		}
+
+		switch g.Type {
+		case GravityCenter, GravityEast, GravityWest:
+			g.Y = -g.Y
+		case GravityFocusPoint:
+			g.Y = 1.0 - g.Y
 		}
 	}
 

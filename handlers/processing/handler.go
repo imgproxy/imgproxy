@@ -3,17 +3,16 @@ package processing
 import (
 	"context"
 	"net/http"
-	"net/url"
 
 	"github.com/imgproxy/imgproxy/v3/auximageprovider"
+	"github.com/imgproxy/imgproxy/v3/clientfeatures"
 	"github.com/imgproxy/imgproxy/v3/cookies"
+	"github.com/imgproxy/imgproxy/v3/errctx"
 	"github.com/imgproxy/imgproxy/v3/errorreport"
 	"github.com/imgproxy/imgproxy/v3/handlers"
 	"github.com/imgproxy/imgproxy/v3/handlers/stream"
-	"github.com/imgproxy/imgproxy/v3/ierrors"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/monitoring"
-	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/options/keys"
 	optionsparser "github.com/imgproxy/imgproxy/v3/options/parser"
 	"github.com/imgproxy/imgproxy/v3/processing"
@@ -25,6 +24,7 @@ import (
 // HandlerContext provides access to shared handler dependencies
 type HandlerContext interface {
 	Workers() *workers.Workers
+	ClientFeaturesDetector() *clientfeatures.Detector
 	FallbackImage() auximageprovider.Provider
 	ImageDataFactory() *imagedata.Factory
 	Security() *security.Checker
@@ -65,7 +65,7 @@ func (h *Handler) Execute(
 	reqID string,
 	rw server.ResponseWriter,
 	req *http.Request,
-) error {
+) *server.Error {
 	// Increment the number of requests in progress
 	h.Monitoring().Stats().IncRequestsInProgress()
 	defer h.Monitoring().Stats().DecRequestsInProgress()
@@ -73,56 +73,49 @@ func (h *Handler) Execute(
 	ctx := req.Context()
 
 	// Verify URL signature and extract image url and processing options
-	imageURL, o, mm, err := h.newRequest(ctx, req)
+	r, err := h.newRequest(ctx, req)
 	if err != nil {
 		return err
 	}
 
 	// if processing options indicate raw image streaming, stream it and return
-	if o.GetBool(keys.Raw, false) {
-		return h.stream.Execute(ctx, req, imageURL, reqID, o, rw)
+	if r.opts.GetBool(keys.Raw, false) {
+		return h.stream.Execute(ctx, req, r.imageURL, reqID, r.opts, rw)
 	}
 
-	hReq := &request{
-		HandlerContext: h,
+	r.reqID = reqID
+	r.req = req
+	r.rw = rw
+	r.config = h.config
 
-		reqID:          reqID,
-		req:            req,
-		rw:             rw,
-		config:         h.config,
-		opts:           o,
-		secops:         h.Security().NewOptions(o),
-		imageURL:       imageURL,
-		monitoringMeta: mm,
-	}
-
-	return hReq.execute(ctx)
+	return r.execute(ctx)
 }
 
 // newRequest extracts image url and processing options from request URL and verifies them
 func (h *Handler) newRequest(
 	ctx context.Context,
 	req *http.Request,
-) (string, *options.Options, monitoring.Meta, error) {
+) (*request, *server.Error) {
 	// let's extract signature and valid request path from a request
 	path, signature, err := handlers.SplitPathSignature(req)
 	if err != nil {
-		return "", nil, nil, err
+		return nil, server.NewError(errctx.Wrap(err), handlers.ErrCategoryPathParsing)
 	}
 
 	// verify the signature (if any)
 	if err = h.Security().VerifySignature(signature, path); err != nil {
-		return "", nil, nil, ierrors.Wrap(err, 0, ierrors.WithCategory(handlers.CategorySecurity))
+		return nil, server.NewError(errctx.Wrap(err), handlers.ErrCategorySecurity)
 	}
 
 	// parse image url and processing options
-	o, imageURL, err := h.OptionsParser().ParsePath(path, req.Header)
+	features := h.ClientFeaturesDetector().Features(req.Header)
+	o, imageURL, err := h.OptionsParser().ParsePath(path, &features)
 	if err != nil {
-		return "", nil, nil, ierrors.Wrap(err, 0, ierrors.WithCategory(handlers.CategoryPathParsing))
+		return nil, server.NewError(errctx.Wrap(err), handlers.ErrCategoryPathParsing)
 	}
 
 	// get image origin and create monitoring meta object
-	imageOrigin := imageOrigin(imageURL)
+	imageOrigin := monitoring.MetaURLOrigin(imageURL)
 
 	mm := monitoring.Meta{
 		monitoring.MetaSourceImageURL:    imageURL,
@@ -140,17 +133,17 @@ func (h *Handler) newRequest(
 	// verify that image URL came from the valid source
 	err = h.Security().VerifySourceURL(imageURL)
 	if err != nil {
-		return "", options.New(), mm, ierrors.Wrap(err, 0, ierrors.WithCategory(handlers.CategorySecurity))
+		return nil, server.NewError(errctx.Wrap(err), handlers.ErrCategorySecurity)
 	}
 
-	return imageURL, o, mm, nil
-}
+	return &request{
+		HandlerContext: h,
 
-// imageOrigin extracts image origin from URL
-func imageOrigin(imageURL string) string {
-	if u, uerr := url.Parse(imageURL); uerr == nil {
-		return u.Scheme + "://" + u.Host
-	}
-
-	return ""
+		imageURL:       imageURL,
+		path:           path,
+		opts:           o,
+		features:       &features,
+		monitoringMeta: mm,
+		req:            req,
+	}, nil
 }

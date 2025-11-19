@@ -1,8 +1,25 @@
 # Changelog
 
 ## [Unreleased]
+### Added
+- Add [flip](https://docs.imgproxy.net/latest/usage/processing#flip) processing option.
+- (pro) Add [IMGPROXY_AVIF_SUBSAMPLE](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_AVIF_SUBSAMPLE) config.
+- (pro) Add [avif_options](https://docs.imgproxy.net/latest/usage/processing#avif-options) processing option.
+
+### Changed
+- When image source responds with a 4xx status code, imgproxy now responds with the same status code instead of always responding with `404 Not Found`.
+- When image source responds with a 5xx status code, imgproxy now responds with `502 Bad Gateway` instead of `500 Internal Server Error`.
+
+### Fixed
+- Fix crop coordinates calculation when the image has an EXIF orientation different from `1` and the `rotate` processing option is used.
+- Fix responding with 404 when a GCS bucket or object is missing.
+
+## [3.30.1] - 2025-10-10
 ### Changed
 - Format New Relic and OpenTelemetry metadata values that implement the `fmt.Stringer` interface as strings.
+
+### Fixed
+- (pro) Fix memory leak during video thumbnail generation.
 
 ## [3.30.0] - 2025-09-17
 ### Added

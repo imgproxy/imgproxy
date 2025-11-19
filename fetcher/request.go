@@ -63,7 +63,7 @@ func (r *Request) Send() (*http.Response, error) {
 			}
 		}
 
-		return nil, WrapError(err)
+		return nil, WrapError(err, 0)
 	}
 }
 
@@ -94,7 +94,7 @@ func (r *Request) Fetch() (*http.Response, error) {
 	} else if res.StatusCode != http.StatusOK {
 		body := extractErraticBody(res)
 		res.Body.Close()
-		return nil, newImageResponseStatusError(res.StatusCode, body)
+		return nil, newResponseStatusError(res.StatusCode, body)
 	}
 
 	// If the response is gzip encoded, wrap it in a gzip reader
@@ -124,11 +124,11 @@ func checkPartialContentResponse(res *http.Response) error {
 	rangeParts := contentRangeRe.FindStringSubmatch(contentRange)
 
 	if len(rangeParts) == 0 {
-		return newImagePartialResponseError("Partial response with invalid Content-Range header")
+		return newPartialResponseError("Partial response with invalid Content-Range header")
 	}
 
 	if rangeParts[1] == "*" || rangeParts[2] != "0" {
-		return newImagePartialResponseError("Partial response with incomplete content")
+		return newPartialResponseError("Partial response with incomplete content")
 	}
 
 	contentLengthStr := rangeParts[4]
@@ -140,7 +140,7 @@ func checkPartialContentResponse(res *http.Response) error {
 	rangeEnd, _ := strconv.Atoi(rangeParts[3])
 
 	if contentLength <= 0 || rangeEnd != contentLength-1 {
-		return newImagePartialResponseError("Partial response with incomplete content")
+		return newPartialResponseError("Partial response with incomplete content")
 	}
 
 	return nil

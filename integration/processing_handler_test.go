@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/imgproxy/imgproxy/v3/config/configurators"
-	"github.com/imgproxy/imgproxy/v3/fetcher"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
@@ -205,14 +204,7 @@ func (s *ProcessingHandlerTestSuite) TestSkipProcessingSVG() {
 
 	s.Require().Equal(http.StatusOK, res.StatusCode)
 
-	c := fetcher.NewDefaultConfig()
-	f, err := fetcher.New(&c)
-	s.Require().NoError(err)
-
-	idf := imagedata.NewFactory(f)
-
-	data, err := idf.NewFromBytes(s.TestData.Read("test1.svg"))
-	s.Require().NoError(err)
+	data := imagedata.NewFromBytesWithFormat(imagetype.SVG, s.TestData.Read("test1.svg"))
 
 	cfg := svg.NewDefaultConfig()
 	svg := svg.New(&cfg)
@@ -477,9 +469,9 @@ func (s *ProcessingHandlerTestSuite) TestAlwaysRasterizeSvg() {
 	s.Require().Equal("image/png", res.Header.Get(httpheaders.ContentType))
 }
 
-func (s *ProcessingHandlerTestSuite) TestAlwaysRasterizeSvgWithEnforceAvif() {
+func (s *ProcessingHandlerTestSuite) TestAlwaysRasterizeSvgWithEnforceWebP() {
 	s.Config().Processing.AlwaysRasterizeSvg = true
-	s.Config().OptionsParser.EnforceWebp = true
+	s.Config().ClientFeatures.EnforceWebp = true
 
 	res := s.GET("/unsafe/plain/local:///test1.svg", http.Header{"Accept": []string{"image/webp"}})
 
@@ -489,7 +481,7 @@ func (s *ProcessingHandlerTestSuite) TestAlwaysRasterizeSvgWithEnforceAvif() {
 
 func (s *ProcessingHandlerTestSuite) TestAlwaysRasterizeSvgDisabled() {
 	s.Config().Processing.AlwaysRasterizeSvg = false
-	s.Config().OptionsParser.EnforceWebp = true
+	s.Config().ClientFeatures.EnforceWebp = true
 
 	res := s.GET("/unsafe/plain/local:///test1.svg")
 
@@ -508,7 +500,7 @@ func (s *ProcessingHandlerTestSuite) TestAlwaysRasterizeSvgWithFormat() {
 }
 
 func (s *ProcessingHandlerTestSuite) TestMaxSrcFileSizeGlobal() {
-	s.Config().Security.DefaultOptions.MaxSrcFileSize = 1
+	s.Config().Security.MaxSrcFileSize = 1
 
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		rw.WriteHeader(200)
