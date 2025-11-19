@@ -14,11 +14,5 @@ func FormatSegmentName(name string) string {
 
 // FormatErrType formats error type string with error concrete type
 func FormatErrType(errType string, err error) string {
-	errType += "_error"
-
-	if ierr, ok := err.(*errctx.WrappedError); ok {
-		err = ierr.Unwrap()
-	}
-
-	return fmt.Sprintf("%s (%T)", errType, err)
+	return fmt.Sprintf("%s_error (%s)", errType, errctx.ErrorType(err))
 }

@@ -34,7 +34,7 @@ func New(config *Config) (*reporter, error) {
 	return &reporter{notifier}, nil
 }
 
-func (r *reporter) Report(err error, req *http.Request, meta map[string]any) {
+func (r *reporter) Report(err errctx.Error, req *http.Request, meta map[string]any) {
 	notice := r.notifier.Notice(err, req, 2)
 
 	// imgproxy may wrap errors using errctx.WrappedError to add context, so Airbrake

@@ -121,7 +121,7 @@ func (r *Router) WithReportError(h RouteHandler) RouteHandler {
 
 		// We do not need to send any canceled context
 		if !errors.Is(ierr, context.Canceled) {
-			r.monitoring.SendError(ctx, errCat, err)
+			r.monitoring.SendError(ctx, errCat, ierr)
 		}
 
 		// Report error to error collectors

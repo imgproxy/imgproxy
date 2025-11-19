@@ -9,6 +9,7 @@ import (
 
 	"github.com/newrelic/go-agent/v3/newrelic"
 
+	"github.com/imgproxy/imgproxy/v3/errctx"
 	"github.com/imgproxy/imgproxy/v3/monitoring/format"
 	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
 	vipsstats "github.com/imgproxy/imgproxy/v3/vips/stats"
@@ -145,11 +146,12 @@ func (nl *NewRelic) StartSpan(
 }
 
 // SendError sends an error to New Relic APM
-func (nl *NewRelic) SendError(ctx context.Context, errType string, err error) {
+func (nl *NewRelic) SendError(ctx context.Context, errType string, err errctx.Error) {
 	if txn := newrelic.FromContext(ctx); txn != nil {
 		txn.NoticeError(newrelic.Error{
 			Message: err.Error(),
 			Class:   format.FormatErrType(errType, err),
+			Stack:   err.StackTrace(),
 		})
 	}
 }

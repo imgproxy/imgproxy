@@ -13,6 +13,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
+	"github.com/imgproxy/imgproxy/v3/errctx"
 	"github.com/imgproxy/imgproxy/v3/monitoring/format"
 	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
 	vipsstats "github.com/imgproxy/imgproxy/v3/vips/stats"
@@ -209,7 +210,7 @@ func (p *Prometheus) SetMetadata(ctx context.Context, key string, value interfac
 }
 
 // SendError records an error occurrence in Prometheus metrics
-func (p *Prometheus) SendError(ctx context.Context, errType string, err error) {
+func (p *Prometheus) SendError(ctx context.Context, errType string, err errctx.Error) {
 	p.errorsTotal.With(prometheus.Labels{"type": errType}).Inc()
 }
 

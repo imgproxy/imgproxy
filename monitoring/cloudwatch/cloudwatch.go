@@ -12,6 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatch"
 	cloudwatchTypes "github.com/aws/aws-sdk-go-v2/service/cloudwatch/types"
 
+	"github.com/imgproxy/imgproxy/v3/errctx"
 	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
 	vipsstats "github.com/imgproxy/imgproxy/v3/vips/stats"
 )
@@ -213,7 +214,7 @@ func (cw *CloudWatch) SetMetadata(ctx context.Context, key string, value any) {
 }
 
 // SetError records an error in the current span
-func (cw *CloudWatch) SendError(ctx context.Context, errType string, err error) {
+func (cw *CloudWatch) SendError(ctx context.Context, errType string, err errctx.Error) {
 	// CloudWatch does not support request tracing
 }
 

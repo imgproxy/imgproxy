@@ -42,7 +42,7 @@ func New(config *Config) (*reporter, error) {
 	return &reporter{hub: hub}, nil
 }
 
-func (r *reporter) Report(err error, req *http.Request, meta map[string]any) {
+func (r *reporter) Report(err errctx.Error, req *http.Request, meta map[string]any) {
 	hub := r.hub.Clone()
 	hub.Scope().SetRequest(req)
 	hub.Scope().SetLevel(sentry.LevelError)

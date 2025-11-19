@@ -286,19 +286,15 @@ func (o *Otel) StartSpan(
 }
 
 // SendError sends an error to OpenTelemetry
-func (o *Otel) SendError(ctx context.Context, errType string, err error) {
+func (o *Otel) SendError(ctx context.Context, errType string, err errctx.Error) {
 	span := trace.SpanFromContext(ctx)
 
 	attributes := []attribute.KeyValue{
 		semconv.ExceptionTypeKey.String(format.FormatErrType(errType, err)),
 		semconv.ExceptionMessageKey.String(err.Error()),
+		semconv.ExceptionStacktraceKey.String(err.FormatStack()),
 	}
 
-	if ierr, ok := err.(errctx.Error); ok {
-		if stack := ierr.FormatStack(); len(stack) != 0 {
-			attributes = append(attributes, semconv.ExceptionStacktraceKey.String(stack))
-		}
-	}
 	span.SetStatus(codes.Error, err.Error())
 	span.AddEvent(semconv.ExceptionEventName, trace.WithAttributes(attributes...))
 }

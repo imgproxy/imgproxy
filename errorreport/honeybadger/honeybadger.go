@@ -34,7 +34,7 @@ func New(config *Config) (*reporter, error) {
 	return &reporter{client: client}, nil
 }
 
-func (r *reporter) Report(err error, req *http.Request, meta map[string]any) {
+func (r *reporter) Report(err errctx.Error, req *http.Request, meta map[string]any) {
 	extra := make(honeybadger.CGIData, len(req.Header)+len(meta))
 
 	for k, v := range req.Header {

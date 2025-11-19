@@ -40,7 +40,7 @@ func New(config *Config) (*reporter, error) {
 	return &reporter{notifier: notifier}, nil
 }
 
-func (r *reporter) Report(err error, req *http.Request, meta map[string]any) {
+func (r *reporter) Report(err errctx.Error, req *http.Request, meta map[string]any) {
 	extra := make(bugsnag.MetaData)
 	for k, v := range meta {
 		extra.Add("Processing Context", k, v)
