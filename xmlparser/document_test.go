@@ -97,3 +97,52 @@ func TestEntityReplacement(t *testing.T) {
 
 	require.Equal(t, string(expectedData), buf.String())
 }
+
+func BenchmarkDocumentParsing(b *testing.B) {
+	testImagesPath, err := filepath.Abs("../testdata/test-images/svg-test-suite")
+	if err != nil {
+		b.Fatal(err)
+	}
+
+	samples := [][]byte{}
+
+	err = filepath.Walk(testImagesPath, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			b.Fatal(err)
+		}
+
+		// Skip directories
+		if info.IsDir() {
+			return nil
+		}
+
+		// Skip non-SVG files
+		if filepath.Ext(path) != ".svg" {
+			return nil
+		}
+
+		// Read SVG file
+		data, err := os.ReadFile(path)
+		if err != nil {
+			b.Fatal(err)
+		}
+
+		samples = append(samples, data)
+		return nil
+	})
+
+	if err != nil {
+		b.Fatal(err)
+	}
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		for _, sample := range samples {
+			_, err := NewDocument(bytes.NewReader(sample))
+			if err != nil {
+				b.Fatal(err)
+			}
+		}
+	}
+}
