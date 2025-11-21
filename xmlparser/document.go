@@ -10,7 +10,14 @@ type Document struct {
 }
 
 func NewDocument(r io.Reader) (*Document, error) {
-	doc := &Document{}
+	doc := &Document{
+		Node: Node{
+			// Attributes for document are always empty, but they are exposed,
+			// so we need to initialize them to avoid nil pointer dereference.
+			Attrs: NewAttributes(),
+		},
+	}
+
 	if err := doc.readFrom(r); err != nil {
 		return nil, err
 	}

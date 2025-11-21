@@ -29,8 +29,6 @@ var (
 	doctypeStart  = []byte("<!DOCTYPE")
 
 	targetXML = []byte("xml")
-
-	nameSep = []byte{':'}
 )
 
 var encodingRE = regexp.MustCompile(`(?s)^(.*encoding=)("[^"]+?"|'[^']+?')(.*)$`)
@@ -233,7 +231,7 @@ func (d *Decoder) readStartTag() (*StartElement, bool) {
 	}
 
 	var (
-		attrs       []Attr
+		attrs       []*Attribute
 		selfClosing bool
 	)
 
@@ -304,14 +302,14 @@ func (d *Decoder) readStartTag() (*StartElement, bool) {
 			val, ok := d.readAttrValue()
 			if !ok {
 				if d.err == nil {
-					d.setSyntaxError("expected value for attribute %q", attrName.Local)
+					d.setSyntaxError("expected value for attribute %q", attrName)
 				}
 				return nil, false
 			}
 			attrValue = string(val)
 		}
 
-		attrs = append(attrs, Attr{
+		attrs = append(attrs, &Attribute{
 			Name:  attrName,
 			Value: attrValue,
 		})
@@ -319,7 +317,7 @@ func (d *Decoder) readStartTag() (*StartElement, bool) {
 
 	return &StartElement{
 		Name:        name,
-		Attr:        attrs,
+		Attr:        NewAttributes(attrs...),
 		SelfClosing: selfClosing,
 	}, true
 }
@@ -367,7 +365,7 @@ func isValueByte(c byte) bool {
 func (d *Decoder) readEndTag() (Name, bool) {
 	// Discard '</'
 	if !d.discard(len(endTagStart)) {
-		return Name{}, false
+		return Name(""), false
 	}
 
 	name, ok := d.readNSName()
@@ -614,22 +612,11 @@ func (d *Decoder) readDoctype() ([]byte, bool) {
 
 // readNSName reads a name with optional namespace prefix (e.g., "svg:svg").
 func (d *Decoder) readNSName() (Name, bool) {
-	var name Name
-
 	if !d.readName() {
-		return name, false
+		return Name(""), false
 	}
 
-	nameBytes := d.buf.Bytes()
-
-	if space, local, ok := bytes.Cut(nameBytes, nameSep); ok && len(space) > 0 && len(local) > 0 {
-		name.Space = string(space)
-		name.Local = string(local)
-	} else {
-		name.Local = string(nameBytes)
-	}
-
-	return name, true
+	return Name(d.buf.Bytes()), true
 }
 
 // readName reads a name (tag or attribute) to the buffer until a non-name byte is encountered.

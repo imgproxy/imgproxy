@@ -121,21 +121,21 @@ func (p *Processor) sanitizeElement(el *xmlparser.Node) bool {
 	}
 
 	// Strip <script> tags
-	if el.Name.Local == "script" {
+	if el.Name.Local() == "script" {
 		return false
 	}
 
 	// Filter out unsafe attributes (such as on* events)
-	el.Attrs = filterAttributes(el.Attrs, func(attr xmlparser.Attr) bool {
-		_, unsafe := unsafeAttrs[attr.Name.Local]
+	el.Attrs.Filter(func(attr *xmlparser.Attribute) bool {
+		_, unsafe := unsafeAttrs[attr.Name.Local()]
 		return !unsafe
 	})
 
 	// Special handling for <use> tags.
-	if el.Name.Local == "use" {
-		el.Attrs = filterAttributes(el.Attrs, func(attr xmlparser.Attr) bool {
+	if el.Name.Local() == "use" {
+		el.Attrs.Filter(func(attr *xmlparser.Attribute) bool {
 			// Keep non-href attributes
-			if attr.Name.Local != "href" {
+			if attr.Name.Local() != "href" {
 				return true
 			}
 			// Strip hrefs that are not internal references
@@ -148,15 +148,4 @@ func (p *Processor) sanitizeElement(el *xmlparser.Node) bool {
 
 	// Keep this element
 	return true
-}
-
-// filterAttributes filters attributes based on the given predicate function.
-func filterAttributes(attrs []xmlparser.Attr, f func(attr xmlparser.Attr) bool) []xmlparser.Attr {
-	filtered := attrs[:0]
-	for _, attr := range attrs {
-		if f(attr) {
-			filtered = append(filtered, attr)
-		}
-	}
-	return filtered
 }

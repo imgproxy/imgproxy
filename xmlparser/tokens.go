@@ -2,19 +2,9 @@ package xmlparser
 
 import "bytes"
 
-type Name struct {
-	Space string
-	Local string
-}
-
-type Attr struct {
-	Name  Name
-	Value string
-}
-
 type StartElement struct {
 	Name        Name
-	Attr        []Attr
+	Attr        *Attributes
 	SelfClosing bool
 }
 

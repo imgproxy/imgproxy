@@ -33,7 +33,7 @@ func IsSVG(r bufreader.ReadPeeker, _, _ string) (Type, error) {
 			return Unknown, err
 		}
 
-		if se, ok := tok.(*xmlparser.StartElement); ok && se.Name.Local == "svg" {
+		if se, ok := tok.(*xmlparser.StartElement); ok && se.Name.Local() == "svg" {
 			return SVG, nil
 		}
 	}

@@ -11,7 +11,7 @@ import (
 type Node struct {
 	Parent   *Node
 	Name     Name
-	Attrs    []Attr
+	Attrs    *Attributes
 	Children []any
 }
 
@@ -56,15 +56,15 @@ func (n *Node) readFrom(r io.Reader) error {
 			if curNode.Parent == nil {
 				return fmt.Errorf(
 					"malformed XML: unexpected closing tag </%s> while no elements are opened",
-					fullName(t.Name),
+					t.Name,
 				)
 			}
 			// Closing tag name should match opened node name (which is current)
-			if curNode.Name.Local != t.Name.Local || curNode.Name.Space != t.Name.Space {
+			if curNode.Name != t.Name {
 				return fmt.Errorf(
 					"malformed XML: unexpected closing tag </%s> for opened <%s> element",
-					fullName(t.Name),
-					fullName(curNode.Name),
+					t.Name,
+					curNode.Name,
 				)
 			}
 			// The node is closed, return to its parent
@@ -91,7 +91,7 @@ func (n *Node) writeTo(w *bufio.Writer) error {
 	if err := w.WriteByte('<'); err != nil {
 		return err
 	}
-	if err := writeFullName(w, n.Name); err != nil {
+	if _, err := w.WriteString(n.Name.String()); err != nil {
 		return err
 	}
 
@@ -115,7 +115,7 @@ func (n *Node) writeTo(w *bufio.Writer) error {
 	if _, err := w.WriteString("</"); err != nil {
 		return err
 	}
-	if err := writeFullName(w, n.Name); err != nil {
+	if _, err := w.WriteString(n.Name.String()); err != nil {
 		return err
 	}
 	if err := w.WriteByte('>'); err != nil {
@@ -126,11 +126,11 @@ func (n *Node) writeTo(w *bufio.Writer) error {
 }
 
 func (n *Node) writeAttrsTo(w *bufio.Writer) error {
-	for _, attr := range n.Attrs {
+	for attr := range n.Attrs.Iter() {
 		if err := w.WriteByte(' '); err != nil {
 			return err
 		}
-		if err := writeFullName(w, attr.Name); err != nil {
+		if _, err := w.WriteString(attr.Name.String()); err != nil {
 			return err
 		}
 		if len(attr.Value) > 0 {
@@ -233,8 +233,8 @@ func (n *Node) writeChildrenTo(w *bufio.Writer) error {
 
 func (n *Node) replaceEntities(em map[string][]byte) {
 	// Replace in attributes
-	for i := range n.Attrs {
-		n.Attrs[i].Value = replaceEntitiesString(n.Attrs[i].Value, em)
+	for attr := range n.Attrs.Iter() {
+		attr.Value = replaceEntitiesString(attr.Value, em)
 	}
 
 	// Replace in children.
@@ -251,28 +251,4 @@ func (n *Node) replaceEntities(em map[string][]byte) {
 			}
 		}
 	}
-}
-
-func fullName(name Name) string {
-	if len(name.Space) == 0 {
-		return name.Local
-	}
-	return name.Space + ":" + name.Local
-}
-
-func writeFullName(w *bufio.Writer, name Name) error {
-	if len(name.Space) > 0 {
-		if _, err := w.WriteString(name.Space); err != nil {
-			return err
-		}
-		if err := w.WriteByte(':'); err != nil {
-			return err
-		}
-	}
-
-	if _, err := w.WriteString(name.Local); err != nil {
-		return err
-	}
-
-	return nil
 }
