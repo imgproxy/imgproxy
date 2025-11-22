@@ -39,7 +39,6 @@ require (
 	github.com/prometheus/client_golang v1.23.2
 	github.com/shirou/gopsutil v3.21.11+incompatible
 	github.com/stretchr/testify v1.11.1
-	github.com/tdewolff/parse/v2 v2.8.3
 	github.com/trimmer-io/go-xmp v1.0.0
 	github.com/urfave/cli/v3 v3.4.1
 	go.opentelemetry.io/contrib/detectors/aws/ec2/v2 v2.0.0
