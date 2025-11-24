@@ -112,15 +112,13 @@ func (a *Attributes) Iter() iter.Seq[*Attribute] {
 
 // Filter removes all attributes that do not satisfy the predicate function.
 func (a *Attributes) Filter(pred func(*Attribute) bool) {
-	filtered := a.s[:0]
-	for _, attr := range a.s {
-		if pred(attr) {
-			filtered = append(filtered, attr)
-		} else {
+	a.s = slices.DeleteFunc(a.s, func(attr *Attribute) bool {
+		del := !pred(attr)
+		if del {
 			delete(a.m, attr.Name)
 		}
-	}
-	a.s = filtered
+		return del
+	})
 }
 
 // Sort sorts the attributes according to the provided function.
