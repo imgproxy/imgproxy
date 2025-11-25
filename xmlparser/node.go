@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"iter"
 	"slices"
 	"strings"
 )
@@ -21,6 +22,21 @@ func (n *Node) FilterChildren(pred func(child any) bool) {
 	n.Children = slices.DeleteFunc(n.Children, func(child any) bool {
 		return !pred(child)
 	})
+}
+
+// ChildNodes returns an iterator over children of type *Node.
+func (n *Node) ChildNodes() iter.Seq[*Node] {
+	return func(yield func(*Node) bool) {
+		for _, child := range n.Children {
+			cn, ok := child.(*Node)
+			if !ok {
+				continue
+			}
+			if !yield(cn) {
+				return
+			}
+		}
+	}
 }
 
 // FilterChildNodes removes all child nodes of type *Node
