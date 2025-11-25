@@ -59,7 +59,7 @@ func (p *Processor) sanitize(data imagedata.ImageData) (imagedata.ImageData, err
 	}
 
 	// Sanitize the document's children
-	p.sanitizeChildren(&doc.Node)
+	doc.FilterChildNodes(p.sanitizeElement)
 
 	buf, ok := pool.Get().(*bytes.Buffer)
 	if !ok {
@@ -85,32 +85,6 @@ func (p *Processor) sanitize(data imagedata.ImageData) (imagedata.ImageData, err
 	newData.AddCancel(cancel)
 
 	return newData, nil
-}
-
-// sanitizeChildren sanitizes all child elements of the given element.
-func (p *Processor) sanitizeChildren(el *xmlparser.Node) {
-	if el == nil || len(el.Children) == 0 {
-		return
-	}
-
-	// Filter children in place
-	filteredChildren := el.Children[:0]
-	for _, toc := range el.Children {
-		childEl, ok := toc.(*xmlparser.Node)
-		if !ok {
-			// Keep non-element nodes (text, comments, etc.)
-			filteredChildren = append(filteredChildren, toc)
-			continue
-		}
-
-		// Sanitize the child element.
-		// Keep this child if sanitizeElement returned true.
-		if p.sanitizeElement(childEl) {
-			filteredChildren = append(filteredChildren, childEl)
-		}
-	}
-
-	el.Children = filteredChildren
 }
 
 // sanitizeElement sanitizes a single SVG element.
@@ -144,7 +118,7 @@ func (p *Processor) sanitizeElement(el *xmlparser.Node) bool {
 	}
 
 	// Recurse into children
-	p.sanitizeChildren(el)
+	el.FilterChildNodes(p.sanitizeElement)
 
 	// Keep this element
 	return true

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"slices"
 	"strings"
 )
 
@@ -13,6 +14,25 @@ type Node struct {
 	Name     Name
 	Attrs    *Attributes
 	Children []any
+}
+
+// FilterChildren removes all child nodes that do not satisfy the given predicate function.
+func (n *Node) FilterChildren(pred func(child any) bool) {
+	n.Children = slices.DeleteFunc(n.Children, func(child any) bool {
+		return !pred(child)
+	})
+}
+
+// FilterChildNodes removes all child nodes of type *Node
+// that do not satisfy the given predicate function.
+func (n *Node) FilterChildNodes(pred func(child *Node) bool) {
+	n.Children = slices.DeleteFunc(n.Children, func(child any) bool {
+		cn, ok := child.(*Node)
+		if !ok {
+			return false
+		}
+		return !pred(cn)
+	})
 }
 
 func (n *Node) readFrom(r io.Reader) error {

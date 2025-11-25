@@ -97,6 +97,17 @@ func (a *Attributes) DeleteByString(name string) {
 	a.Delete(Name(name))
 }
 
+// Has returns true if the attribute with the given name exists.
+func (a *Attributes) Has(name Name) bool {
+	_, exists := a.m[name]
+	return exists
+}
+
+// HasByString is like Has but accepts a string name.
+func (a *Attributes) HasByString(name string) bool {
+	return a.Has(Name(name))
+}
+
 // Len returns the number of attributes.
 func (a *Attributes) Len() int {
 	return len(a.s)
