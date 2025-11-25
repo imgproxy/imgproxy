@@ -1,6 +1,7 @@
 package options
 
 import (
+	"net/url"
 	"strings"
 
 	"github.com/imgproxy/imgproxy/v3/config"
@@ -18,6 +19,11 @@ func parseURLOptions(opts []string) (urlOptions, []string) {
 	urlStart := len(opts) + 1
 
 	for i, opt := range opts {
+		// URL-decode the option segment to support percent-encoded separators
+		if decoded, err := url.PathUnescape(opt); err == nil {
+			opt = decoded
+		}
+
 		args := strings.Split(opt, config.ArgumentsSeparator)
 
 		if len(args) == 1 {

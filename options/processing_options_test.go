@@ -164,6 +164,44 @@ func (s *ProcessingOptionsTestSuite) TestParseWithArgumentsSeparator() {
 	s.Require().True(po.Enlarge)
 }
 
+func (s *ProcessingOptionsTestSuite) TestParseWithEncodedArgumentsSeparator() {
+	// Test percent-encoded colon (%3A) in option arguments
+	path := "/size%3A100%3A100%3A1/plain/http://images.dev/lorem/ipsum.jpg"
+	po, _, err := ParsePath(path, make(http.Header))
+
+	s.Require().NoError(err)
+
+	s.Require().Equal(100, po.Width)
+	s.Require().Equal(100, po.Height)
+	s.Require().True(po.Enlarge)
+}
+
+func (s *ProcessingOptionsTestSuite) TestParseWithMixedEncodedSeparator() {
+	// Test mix of encoded and literal separators
+	path := "/size:100%3A100:1/plain/http://images.dev/lorem/ipsum.jpg"
+	po, _, err := ParsePath(path, make(http.Header))
+
+	s.Require().NoError(err)
+
+	s.Require().Equal(100, po.Width)
+	s.Require().Equal(100, po.Height)
+	s.Require().True(po.Enlarge)
+}
+
+func (s *ProcessingOptionsTestSuite) TestParseWithEncodedCustomSeparator() {
+	// Test percent-encoded custom separator
+	config.ArgumentsSeparator = ","
+
+	path := "/size%2C100%2C100%2C1/plain/http://images.dev/lorem/ipsum.jpg"
+	po, _, err := ParsePath(path, make(http.Header))
+
+	s.Require().NoError(err)
+
+	s.Require().Equal(100, po.Width)
+	s.Require().Equal(100, po.Height)
+	s.Require().True(po.Enlarge)
+}
+
 // func (s *ProcessingOptionsTestSuite) TestParseURLAllowedSource() {
 // 	config.AllowedSources = []string{"local://", "http://images.dev/"}
 
