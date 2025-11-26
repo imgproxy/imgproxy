@@ -3,15 +3,12 @@ package svg
 import (
 	"bytes"
 	"errors"
-	"io"
-	"strings"
 	"sync"
 
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/options"
-	"github.com/tdewolff/parse/v2"
-	"github.com/tdewolff/parse/v2/xml"
+	"github.com/imgproxy/imgproxy/v3/xmlparser"
 )
 
 // pool represents temorary pool for svg sanitized data
@@ -56,8 +53,13 @@ func (p *Processor) sanitize(data imagedata.ImageData) (imagedata.ImageData, err
 		return data, nil
 	}
 
-	r := data.Reader()
-	l := xml.NewLexer(parse.NewInput(r))
+	doc, err := xmlparser.NewDocument(data.Reader())
+	if err != nil {
+		return nil, newSanitizeError(err)
+	}
+
+	// Sanitize the document's children
+	doc.FilterChildNodes(p.sanitizeElement)
 
 	buf, ok := pool.Get().(*bytes.Buffer)
 	if !ok {
@@ -69,62 +71,13 @@ func (p *Processor) sanitize(data imagedata.ImageData) (imagedata.ImageData, err
 		pool.Put(buf)
 	}
 
-	ignoreTag := 0
-
-	var curTagName string
-
-	for {
-		tt, tdata := l.Next()
-
-		if tt == xml.ErrorToken {
-			if l.Err() != io.EOF {
-				cancel()
-				return nil, newSanitizeError(l.Err())
-			}
-			break
-		}
-
-		if ignoreTag > 0 {
-			switch tt {
-			case xml.EndTagToken, xml.StartTagCloseVoidToken:
-				ignoreTag--
-			case xml.StartTagToken:
-				ignoreTag++
-			}
-
-			continue
-		}
-
-		switch tt {
-		case xml.StartTagToken:
-			curTagName = strings.ToLower(string(l.Text()))
-
-			if curTagName == "script" {
-				ignoreTag++
-				continue
-			}
-
-			buf.Write(tdata)
-		case xml.AttributeToken:
-			attrName := strings.ToLower(string(l.Text()))
-
-			if _, unsafe := unsafeAttrs[attrName]; unsafe {
-				continue
-			}
-
-			if curTagName == "use" && (attrName == "href" || attrName == "xlink:href") {
-				val := strings.TrimSpace(strings.Trim(string(l.AttrVal()), `"'`))
-				if len(val) > 0 && val[0] != '#' {
-					continue
-				}
-			}
-
-			buf.Write(tdata)
-		default:
-			buf.Write(tdata)
-		}
+	// Write the sanitized document to the buffer
+	if _, err := doc.WriteTo(buf); err != nil {
+		cancel()
+		return nil, newSanitizeError(err)
 	}
 
+	// Create new ImageData from the sanitized buffer
 	newData := imagedata.NewFromBytesWithFormat(
 		imagetype.SVG,
 		buf.Bytes(),
@@ -132,4 +85,41 @@ func (p *Processor) sanitize(data imagedata.ImageData) (imagedata.ImageData, err
 	newData.AddCancel(cancel)
 
 	return newData, nil
+}
+
+// sanitizeElement sanitizes a single SVG element.
+// It returns true if the element should be kept, false if it should be removed.
+func (p *Processor) sanitizeElement(el *xmlparser.Node) bool {
+	if el == nil {
+		return false
+	}
+
+	// Strip <script> tags
+	if el.Name.Local() == "script" {
+		return false
+	}
+
+	// Filter out unsafe attributes (such as on* events)
+	el.Attrs.Filter(func(attr *xmlparser.Attribute) bool {
+		_, unsafe := unsafeAttrs[attr.Name.Local()]
+		return !unsafe
+	})
+
+	// Special handling for <use> tags.
+	if el.Name.Local() == "use" {
+		el.Attrs.Filter(func(attr *xmlparser.Attribute) bool {
+			// Keep non-href attributes
+			if attr.Name.Local() != "href" {
+				return true
+			}
+			// Strip hrefs that are not internal references
+			return len(attr.Value) == 0 || attr.Value[0] == '#'
+		})
+	}
+
+	// Recurse into children
+	el.FilterChildNodes(p.sanitizeElement)
+
+	// Keep this element
+	return true
 }

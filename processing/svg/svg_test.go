@@ -3,6 +3,8 @@ package svg
 import (
 	"bytes"
 	"io"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -57,4 +59,58 @@ func (s *SvgTestSuite) TestSanitize() {
 
 func TestSvg(t *testing.T) {
 	suite.Run(t, new(SvgTestSuite))
+}
+
+func BenchmarkSvgProcessing(b *testing.B) {
+	testImagesPath, err := filepath.Abs("../../testdata/test-images/svg-test-suite")
+	if err != nil {
+		b.Fatal(err)
+	}
+
+	samples := []imagedata.ImageData{}
+
+	err = filepath.Walk(testImagesPath, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			b.Fatal(err)
+		}
+
+		// Skip directories
+		if info.IsDir() {
+			return nil
+		}
+
+		// Skip non-SVG files
+		if filepath.Ext(path) != ".svg" {
+			return nil
+		}
+
+		// Read SVG file
+		data, err := os.ReadFile(path)
+		if err != nil {
+			b.Fatal(err)
+		}
+
+		samples = append(samples, imagedata.NewFromBytesWithFormat(imagetype.SVG, data))
+		return nil
+	})
+
+	if err != nil {
+		b.Fatal(err)
+	}
+
+	config := NewDefaultConfig()
+	svg := New(&config)
+
+	opts := options.New()
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		for _, sample := range samples {
+			_, err := svg.Process(opts, sample)
+			if err != nil {
+				b.Fatal(err)
+			}
+		}
+	}
 }
