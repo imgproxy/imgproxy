@@ -166,27 +166,26 @@ func (n *Node) writeAttrsTo(w *bufio.Writer) error {
 		if err := w.WriteByte(' '); err != nil {
 			return err
 		}
+
+		quote := byte('"')
+		if strings.IndexByte(attr.Value, quote) != -1 {
+			quote = '\''
+		}
+
 		if _, err := w.WriteString(attr.Name.String()); err != nil {
 			return err
 		}
-		if len(attr.Value) > 0 {
-			quote := byte('"')
-			if strings.IndexByte(attr.Value, quote) != -1 {
-				quote = '\''
-			}
-
-			if err := w.WriteByte('='); err != nil {
-				return err
-			}
-			if err := w.WriteByte(quote); err != nil {
-				return err
-			}
-			if _, err := w.WriteString(attr.Value); err != nil {
-				return err
-			}
-			if err := w.WriteByte(quote); err != nil {
-				return err
-			}
+		if err := w.WriteByte('='); err != nil {
+			return err
+		}
+		if err := w.WriteByte(quote); err != nil {
+			return err
+		}
+		if _, err := w.WriteString(attr.Value); err != nil {
+			return err
+		}
+		if err := w.WriteByte(quote); err != nil {
+			return err
 		}
 	}
 
