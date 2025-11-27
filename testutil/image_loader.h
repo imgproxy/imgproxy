@@ -3,8 +3,8 @@
 
 #include <vips/vips.h>
 
-#ifndef TESTUTIL_IMAGE_HASH_MATCHER_H
-#define TESTUTIL_IMAGE_HASH_MATCHER_H
+#ifndef TESTUTIL_IMAGE_LOADER_H
+#define TESTUTIL_IMAGE_LOADER_H
 
 // Function to read VipsImage as RGBA into memory buffer
 int vips_image_read_from_to_memory(

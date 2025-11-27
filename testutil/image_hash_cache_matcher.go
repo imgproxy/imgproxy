@@ -1,25 +1,12 @@
 package testutil
 
-/*
-#cgo pkg-config: vips
-#cgo CFLAGS: -O3
-#cgo LDFLAGS: -lm
-#include <vips/vips.h>
-#include "image_hash_matcher.h"
-*/
-import "C"
 import (
 	"bytes"
-	"fmt"
-	"image"
 	"io"
 	"os"
 	"path"
-	"strings"
 	"testing"
-	"unsafe"
 
-	"github.com/corona10/goimagehash"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/stretchr/testify/require"
 )
@@ -35,30 +22,46 @@ const (
 	saveTmpImagesPathEnv = "TEST_SAVE_TMP_IMAGES_PATH"
 )
 
-// ImageHashMatcher is a helper struct for image hash comparison in tests
-type ImageHashMatcher struct {
+// ImageHashCacheMatcher is a helper struct for image hash comparison in tests
+type ImageHashCacheMatcher struct {
 	hashesPath          string
 	createMissingHashes bool
 	saveTmpImagesPath   string
+	hashType            ImageHashType
 }
 
-// NewImageHashMatcher creates a new ImageHashMatcher instance
-func NewImageHashMatcher(testDataProvider *TestDataProvider) *ImageHashMatcher {
+// NewImageHashCacheMatcher creates a new ImageHashRegressionMatcher instance
+func NewImageHashCacheMatcher(testDataProvider *TestDataProvider, hashType ImageHashType) *ImageHashCacheMatcher {
 	hashesPath := testDataProvider.Path(hashPath)
 	createMissingHashes := len(os.Getenv(createMissingHashesEnv)) > 0
 	saveTmpImagesPath := os.Getenv(saveTmpImagesPathEnv)
 
-	return &ImageHashMatcher{
+	return &ImageHashCacheMatcher{
 		hashesPath:          hashesPath,
 		createMissingHashes: createMissingHashes,
 		saveTmpImagesPath:   saveTmpImagesPath,
+		hashType:            hashType,
 	}
 }
 
-// ImageHashMatches is a testing helper, which accepts image as reader, calculates
-// difference hash and compares it with a hash saved to testdata/test-hashes
-// folder.
-func (m *ImageHashMatcher) ImageMatches(t *testing.T, img io.Reader, key string, maxDistance int) {
+// calculateHash converts image data to RGBA using VIPS and calculates hash
+func (m *ImageHashCacheMatcher) calculateHash(t *testing.T, key string, buf []byte) *ImageHash {
+	t.Helper()
+
+	// Load image as RGBA
+	goImg, err := LoadImage(bytes.NewReader(buf))
+	require.NoError(t, err, "failed to load image for key %s", key)
+
+	// Calculate hash
+	hash, err := NewImageHash(goImg, m.hashType)
+	require.NoError(t, err)
+
+	return hash
+}
+
+// ImageMatches is a testing helper, which accepts image as reader, calculates
+// hash and compares it with a hash saved to testdata/test-hashes folder.
+func (m *ImageHashCacheMatcher) ImageMatches(t *testing.T, img io.Reader, key string, maxDistance int) {
 	t.Helper()
 
 	// Read image in memory
@@ -68,27 +71,8 @@ func (m *ImageHashMatcher) ImageMatches(t *testing.T, img io.Reader, key string,
 	// Save tmp image if requested
 	m.saveTmpImage(t, key, buf)
 
-	// Convert to RGBA and read into memory using VIPS
-	var data unsafe.Pointer
-	var size C.size_t
-	var width, height C.int
-
-	bufPtr := unsafe.Pointer(unsafe.SliceData(buf))
-
-	// no one knows why this triggers linter
-	//nolint:gocritic
-	readErr := C.vips_image_read_from_to_memory(bufPtr, C.size_t(len(buf)), &data, &size, &width, &height)
-	if readErr != 0 {
-		t.Fatalf("failed to read image from memory, key: %s, error: %s", key, vipsErrorMessage())
-	}
-	defer C.g_free(C.gpointer(data))
-
-	// Convert raw RGBA pixel data to Go image.Image
-	goImg, err := createRGBAFromRGBAPixels(int(width), int(height), data, size)
-	require.NoError(t, err)
-
-	sourceHash, err := goimagehash.DifferenceHash(goImg)
-	require.NoError(t, err)
+	// Calculate hash using shared helper
+	sourceHash := m.calculateHash(t, key, buf)
 
 	// Calculate image hash path (create folder if missing)
 	hashPath, err := m.makeTargetPath(t, m.hashesPath, t.Name(), key, "hash")
@@ -119,7 +103,7 @@ func (m *ImageHashMatcher) ImageMatches(t *testing.T, img io.Reader, key string,
 	require.NoError(t, err)
 
 	// Load image hash from hash file
-	targetHash, err := goimagehash.LoadImageHash(f)
+	targetHash, err := LoadImageHash(f)
 	require.NoError(t, err, "failed to load target hash from %s", hashPath)
 
 	// Ensure distance is OK
@@ -131,7 +115,7 @@ func (m *ImageHashMatcher) ImageMatches(t *testing.T, img io.Reader, key string,
 
 // makeTargetPath creates the target directory and returns file path for saving
 // the image or hash.
-func (m *ImageHashMatcher) makeTargetPath(t *testing.T, base, folder, filename, ext string) (string, error) {
+func (m *ImageHashCacheMatcher) makeTargetPath(t *testing.T, base, folder, filename, ext string) (string, error) {
 	// Create the target directory if it doesn't exist
 	targetDir := path.Join(base, folder)
 	err := os.MkdirAll(targetDir, 0755)
@@ -147,7 +131,7 @@ func (m *ImageHashMatcher) makeTargetPath(t *testing.T, base, folder, filename, 
 }
 
 // saveTmpImage saves the provided image data to a temporary file
-func (m *ImageHashMatcher) saveTmpImage(t *testing.T, key string, buf []byte) {
+func (m *ImageHashCacheMatcher) saveTmpImage(t *testing.T, key string, buf []byte) {
 	if m.saveTmpImagesPath == "" {
 		return
 	}
@@ -168,29 +152,4 @@ func (m *ImageHashMatcher) saveTmpImage(t *testing.T, key string, buf []byte) {
 	require.NoError(t, err, "failed to write to TEST_SAVE_TMP_IMAGES target file %s", targetPath)
 
 	t.Logf("Saved temporary image to %s", targetPath)
-}
-
-// createRGBAFromRGBAPixels creates a Go image.Image from raw RGBA VIPS pixel data
-func createRGBAFromRGBAPixels(width, height int, data unsafe.Pointer, size C.size_t) (*image.RGBA, error) {
-	// RGBA should have 4 bands
-	expectedSize := width * height * 4
-	if int(size) != expectedSize {
-		return nil, fmt.Errorf("size mismatch: expected %d bytes for RGBA, got %d", expectedSize, int(size))
-	}
-
-	pixels := unsafe.Slice((*byte)(data), int(size))
-
-	// Create RGBA image
-	img := image.NewRGBA(image.Rect(0, 0, width, height))
-
-	// Copy RGBA pixel data directly
-	copy(img.Pix, pixels)
-
-	return img, nil
-}
-
-// vipsErrorMessage reads VIPS error message
-func vipsErrorMessage() string {
-	defer C.vips_error_clear()
-	return strings.TrimSpace(C.GoString(C.vips_error_buffer()))
 }

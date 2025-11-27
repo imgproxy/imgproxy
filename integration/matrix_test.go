@@ -36,13 +36,13 @@ var formats = []imagetype.Type{
 type MatrixTestSuite struct {
 	Suite
 
-	matcher        *testutil.ImageHashMatcher
+	matcher        *testutil.ImageHashCacheMatcher
 	testImagesPath string
 }
 
 func (s *MatrixTestSuite) SetupTest() {
 	s.testImagesPath = s.TestData.Path("test-images")
-	s.matcher = testutil.NewImageHashMatcher(s.TestData)
+	s.matcher = testutil.NewImageHashCacheMatcher(s.TestData, testutil.HashTypeDifference)
 
 	s.Config().Security.MaxAnimationFrames = 999
 	s.Config().Server.DevelopmentErrorsMode = true

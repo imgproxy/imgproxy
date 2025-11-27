@@ -14,6 +14,7 @@ func TestMain(m *testing.M) {
 		panic(err)
 	}
 
-	os.Exit(m.Run())
+	r := m.Run()
 	imgproxy.Shutdown()
+	os.Exit(r)
 }
