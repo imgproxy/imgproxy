@@ -14,6 +14,7 @@
 ### Fixed
 - Fix crop coordinates calculation when the image has an EXIF orientation different from `1` and the `rotate` processing option is used.
 - Fix responding with 404 when a GCS bucket or object is missing.
+- Fix handling `:` encoded as `%3A` in processing/info options.
 
 ## [3.30.1] - 2025-10-10
 ### Changed
