@@ -8,7 +8,7 @@ import (
 )
 
 // fixPathRe is used in path re-denormalization
-var fixPathRe = regexp.MustCompile(`/plain/(\S+)\:/([^/])`)
+var fixPathRe = regexp.MustCompile(`^(\S+)\:/([^/])`)
 
 // SplitPathSignature splits signature and path components from the request URI
 func SplitPathSignature(r *http.Request) (string, string, error) {
@@ -39,14 +39,26 @@ func SplitPathSignature(r *http.Request) (string, string, error) {
 
 // redenormalizePath undoes path normalization done by some browsers and revers proxies
 func redenormalizePath(path string) string {
-	for _, match := range fixPathRe.FindAllStringSubmatch(path, -1) {
-		repl := fmt.Sprintf("/plain/%s://", match[1])
+	// Cut the path at the `/plain/` segment to process those parts separately
+	options, plainURL, hasPlain := strings.Cut(path, "/plain/")
+
+	// Some proxies/CDNs may encode `:` in options as `%3A`, so we need to unescape it first
+	path = strings.ReplaceAll(options, "%3A", ":")
+
+	if !hasPlain {
+		return path
+	}
+
+	// Some proxies/CDNs may "normalize" URLs by replacing `scheme://` with `scheme:/`
+	// in the plain URL part, so we need to fix it back.
+	if match := fixPathRe.FindStringSubmatch(plainURL); match != nil {
+		repl := fmt.Sprintf("%s://", match[1])
 		if match[1] == "local" {
 			repl += "/"
 		}
 		repl += match[2]
-		path = strings.Replace(path, match[0], repl, 1)
+		plainURL = strings.Replace(plainURL, match[0], repl, 1)
 	}
 
-	return path
+	return path + "/plain/" + plainURL
 }

@@ -1,9 +1,9 @@
 <p align="center">
   <a href="https://imgproxy.net">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="assets/logo-dark.svg?sanitize=true">
-      <source media="(prefers-color-scheme: light)" srcset="assets/logo-light.svg?sanitize=true">
-      <img alt="imgproxy logo" src="assets/logo-light.svg?sanitize=true">
+      <source media="(prefers-color-scheme: dark)" srcset="assets/logo-dark.svg?sanitize=true" />
+      <source media="(prefers-color-scheme: light)" srcset="assets/logo-light.svg?sanitize=true" />
+      <img alt="imgproxy logo" src="assets/logo-light.svg?sanitize=true" />
     </picture>
   </a>
 </p>
@@ -31,49 +31,102 @@
 
 ---
 
-[imgproxy](https://imgproxy.net) is a fast and secure standalone server for resizing, processing, and converting images. The guiding principles behind imgproxy are security, speed, and simplicity.
+[imgproxy](https://imgproxy.net) is a fast and secure standalone server for resizing, processing, and converting images. The guiding principles behind imgproxy are speed, security, and simplicity.
 
-imgproxy is able to quickly and easily resize images on the fly, and it's well-equipped to handle a large amount of image resizing. imgproxy is a fast, secure replacement for all the image resizing code inside your web application (such as resizing libraries, or code that calls ImageMagick or GraphicsMagic). It's also an indispensable tool for processing images from a remote source. With imgproxy, you don’t need to repeatedly prepare images to fit your design every time it changes.
+imgproxy is able to quickly and easily resize, process, and optimize images on the fly, and it's well-equipped to handle a large amount of image processing. imgproxy is a drop-in replacement for all the image processing code inside your web application (such as using image processing libraries or calling command-line tools). With imgproxy, you don’t need to repeatedly re-prepare images to fit your design every time it changes, as imgproxy does this on demand.
 
-To get an even better introduction, and to dive deeper into the nitty gritty details, check out this article: [imgproxy: Resize your images instantly and securely](https://evilmartians.com/chronicles/introducing-imgproxy)
+To get an even better introduction and to dive deeper into the nitty-gritty details, check out this article by Evil Martians: [imgproxy: Resize your images instantly and securely](https://evilmartians.com/chronicles/introducing-imgproxy)
 
-#### Simplicity
+![imgproxy demo](assets/demo.gif)
+*Photo by [Joshua Patton](https://unsplash.com/@joshuapat)*
 
-> "No code is better than no code."
+## ✨ Features
 
-imgproxy only includes the must-have features for image processing, fine-tuning, and security. Specifically,
+imgproxy is packed with features to the brim to cover all your image processing needs:
 
-* It would be great to be able to flip images, apply masks, or round corners, but in most cases, it is possible — and is much easier — to do that using CSS.
-* It may be great to have built-in HTTP caching of some kind, but it is way better to use a Content-Delivery Network or a caching proxy server for this, as you will have to do this sooner or later in the production environment.
-* It might be useful to have everything built in — such as HTTPS support — but, again, an easy way to solve that would be just to use a proxying HTTP server, a load balancer, or a CDN.
+| Feature | imgproxy OSS | [imgproxy Pro](https://imgproxy.net/#pro) |
+|---|---|---|
+| Image formats | Basic formats: JPEG, PNG, GIF, WebP, AVIF, JPEG XL, [and more](https://docs.imgproxy.net/image_formats_support) | Preview generation for video, PDF, and Photoshop documents |
+| Processing | Resizing, cropping, rotating, watermarking, filters | Getting image info, advanced watermarking, color adjustment |
+| Optimization | Color profile and metadata stripping, PNG quantization | Advanced compression settings, GIF to MP4 conversion, SVG minification |
+| Smart features | Simple smart cropping, auto-quality by file size | Object detection, advanced smart cropping, auto-quality by SSIM, best format selection |
 
-#### Speed
+Check out the [full feature list](https://imgproxy.net/features) for more details.
 
-imgproxy takes advantage of probably the most efficient image processing library out there – `libvips`. It’s scary fast and comes with a very low memory footprint. Thanks to libvips, we can readily and extemporaneously process a massive amount of images.
+## 🛠️ How it works
 
-imgproxy uses Go’s raw (no wrappers) native `net/http` package to omit any overhead while processing requests and provides the best possible HTTP support.
+imgproxy works as a standalone HTTP server. You provide it with a source image URL and a set of processing options via a specially crafted URL, and imgproxy fetches the image, processes it according to your specifications, and serves the resulting image back to you. You can use imgproxy URLs directly in your HTML, CSS, or JavaScript code, just like you would with any other image URL.
+
+This way, imgproxy offloads all the image processing work from your application. The only thing your application needs to do is to [generate imgproxy URLs](https://docs.imgproxy.net/usage/processing) with the desired processing options.
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/how-it-works-dark.png" />
+    <source media="(prefers-color-scheme: light)" srcset="assets/how-it-works-light.png" />
+    <img alt="How imgproxy works scheme" src="assets/how-it-works-light.png" />
+  </picture>
+</p>
+
+## ⚖️ Main principles
+
+### Simplicity
+
+> Keep it simple, stupid!
+
+We believe that software should be simple yet powerful. If your grandma can't get it up and running, you should make it simpler. That's why we designed imgproxy to be ready to use in a couple of minutes with minimal configuration. Check out the [Getting Started guide](https://docs.imgproxy.net/getting_started) to see how easy it is.
+
+> No code is better than no code.
+
+We believe in the single responsibility principle. If something can be done better outside of imgproxy, we won't reinvent the wheel. As a couple of examples:
+
+* HTTPS support sounds like a must-have feature for a web server. However, imgproxy will live behind a CDN, a load balancer, or a reverse proxy in a production environment anyway, so there is no need to implement HTTPS support inside imgproxy itself.
+* Rounding image corners or applying masks sounds useful, but doing this with CSS is way easier and more flexible.
+
+### Speed
+
+We strive to tune every little piece of imgproxy to make it as fast as possible.
+
+imgproxy takes advantage of probably the most efficient image processing library out there – [libvips](https://github.com/libvips/libvips). It’s scary fast and comes with a very low memory footprint. Our extensive experience with libvips has enabled us to optimize our image-processing pipeline to its maximum.
 
 You can take a look at some benchmarking results and compare imgproxy with some well-known alternatives in our [benchmark report](https://imgproxy.net/blog/image-processing-servers-benchmark/).
 
-#### Security
+### Security
 
-In terms of security, the massive processing of remote images is a potentially dangerous endeavor. There are a number of possible attack vectors, so it’s a good idea to take an approach that considers attack prevention measures as a priority. Here’s how imgproxy does this:
+Image processing is a wide attack surface. That's why we treat security very seriously. imgproxy offers several security measures that enable you to strike the optimal balance between security and usability for your specific use case. For example:
 
-* imgproxy checks the image type and its “real” dimensions when downloading. The image will not be fully downloaded if it has an unknown format or if the dimensions are too big (you can set the max allowed dimensions). This is how imgproxy protects from so-called "image bombs”, like those described in [this doc](https://www.bamsoftware.com/hacks/deflate.html).
+* imgproxy supports signing image URLs to prevent abusing your image processing server for denial-of-service attacks or simply using it for the attacker's own needs.
+* imgproxy checks the image type before fully downloading it to prevent unwanted resource consumption.
+* imgproxy checks the real image dimensions before decoding it to prevent so-called "image bombs", like those described in [this doc](https://www.bamsoftware.com/hacks/deflate.html).
+* imgproxy supports authorization by HTTP header to prevent direct access to it, bypassing your CDN or caching server.
+* imgproxy allows restricting image sources, maximum image file size, processing options, etc.
 
-* imgproxy protects image URLs with a signature, so an attacker cannot enact a denial-of-service attack by requesting multiple image resizes.
+Check out our documentation for more details on [security features](https://docs.imgproxy.net/configuration/options#security).
 
-* imgproxy supports authorization by HTTP header. This prevents imgproxy from being used directly by an attacker but allows it to be used via a CDN or a caching server — simply by adding a header to a proxy or CDN config.
+## 🚀 Getting started
 
-## Usage
+The easiest and recommended way to run imgproxy is using Docker. It's just a matter of a single command:
 
-Check out our 📑 [Documentation](https://docs.imgproxy.net).
+```bash
+docker run -p 8080:8080 -it ghcr.io/imgproxy/imgproxy:latest
+```
 
-## Author
+That's it! imgproxy is ready to accept [image processing requests](https://docs.imgproxy.net/usage/processing) at `http://localhost:8080`.
 
-Sergey "[DarthSim](https://github.com/DarthSim)" Alexandrovich
+Check out the [Getting Started guide](https://docs.imgproxy.net/getting_started) for a step-by-step tutorial on how to get your first image processed with imgproxy.
 
-## Special thanks
+## 📚 Documentation
+
+You can find the full documentation at [docs.imgproxy.net](https://docs.imgproxy.net).
+
+## 💙 Supporting imgproxy
+
+imgproxy is not a side project; it's what we do for a living. We work hard to make it better every day. If you find imgproxy useful and want to support its development, here are some ways you can do that:
+
+* **imgproxy Pro subscription.** [imgproxy Pro](https://imgproxy.net/#pro) is a more feature-rich version of imgproxy. By subscribing to imgproxy Pro, you not only support the development of imgproxy but also get access to advanced features and priority support.
+* **Sponsorship.** If you don't need the Pro features but still want to support the project, consider sponsoring us on [GitHub Sponsors](https://github.com/sponsors/imgproxy).
+* **Spread the word.** If you like imgproxy, give it a shoutout. We don't spend much on marketing, and imgproxy's popularity is primarily a result of our valued users sharing it on social media and blogs.
+
+## 🙏 Special thanks
 
 Many thanks to:
 
@@ -82,12 +135,12 @@ Many thanks to:
 * [John Cupitt](https://github.com/jcupitt) and [Kleis Auke Wolthuizen](https://github.com/kleisauke) for developing [libvips](https://github.com/libvips/libvips) and for helping me optimize its usage with imgproxy
 * [Kirill Kuznetsov](https://github.com/dragonsmith) for the [Helm chart](https://github.com/imgproxy/imgproxy-helm)
 
-## License
+## 📄 License
 
 imgproxy is licensed under the MIT license.
 
 See [LICENSE](https://github.com/imgproxy/imgproxy/blob/master/LICENSE) for the full license text.
 
-## Security Contact
+## ⚠️ Security Contact
 
 To report a security vulnerability, please contact us at security@imgproxy.net. We will coordinate the fix and disclosure.

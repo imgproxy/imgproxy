@@ -5,6 +5,7 @@
 - Add [flip](https://docs.imgproxy.net/latest/usage/processing#flip) processing option.
 - (pro) Add [IMGPROXY_AVIF_SUBSAMPLE](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_AVIF_SUBSAMPLE) config.
 - (pro) Add [avif_options](https://docs.imgproxy.net/latest/usage/processing#avif-options) processing option.
+- (pro) Return `orientation` field in the `/info` endpoint response when the [dimensions](https://docs.imgproxy.net/latest/usage/getting_info#dimensions) info option is enabled.
 
 ### Changed
 - When image source responds with a 4xx status code, imgproxy now responds with the same status code instead of always responding with `404 Not Found`.
@@ -13,6 +14,7 @@
 ### Fixed
 - Fix crop coordinates calculation when the image has an EXIF orientation different from `1` and the `rotate` processing option is used.
 - Fix responding with 404 when a GCS bucket or object is missing.
+- Fix handling `:` encoded as `%3A` in processing/info options.
 
 ## [3.30.1] - 2025-10-10
 ### Changed
