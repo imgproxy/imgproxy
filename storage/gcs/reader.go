@@ -2,6 +2,8 @@ package gcs
 
 import (
 	"context"
+	"encoding/binary"
+	"encoding/hex"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -52,21 +54,23 @@ func (s *Storage) GetObject(
 		return r, err
 	}
 
-	attrs, aerr := obj.Attrs(ctx)
-	if aerr != nil {
-		return handleError(aerr)
-	}
-	header.Set(httpheaders.Etag, attrs.Etag)
-	header.Set(httpheaders.LastModified, attrs.Updated.Format(http.TimeFormat))
-
-	if common.IsNotModified(reqHeader, header) {
-		return storage.NewObjectNotModified(header), nil
-	}
-
 	var err error
 	reader, err = obj.NewReader(ctx)
 	if err != nil {
 		return handleError(err)
+	}
+
+	// Generate artificial ETag from CRC32 and LastModified
+	var etag [12]byte
+	binary.LittleEndian.PutUint32(etag[:4], uint32(reader.Attrs.CRC32C))
+	binary.LittleEndian.PutUint64(etag[4:], uint64(reader.Attrs.LastModified.UnixNano()))
+
+	header.Set(httpheaders.Etag, hex.EncodeToString(etag[:]))
+	header.Set(httpheaders.LastModified, reader.Attrs.LastModified.Format(http.TimeFormat))
+
+	if common.IsNotModified(reqHeader, header) {
+		reader.Close()
+		return storage.NewObjectNotModified(header), nil
 	}
 
 	size = reader.Attrs.Size
