@@ -18,7 +18,7 @@ func TestParseEntityMap(t *testing.T) {
 	]>`),
 	}
 
-	nodes := []any{directive}
+	nodes := []Token{directive}
 
 	em := parseEntityMap(nodes)
 
@@ -81,7 +81,7 @@ func BenchmarkParseEntityMap(b *testing.B) {
 	]>`),
 	}
 
-	nodes := []any{directive}
+	nodes := []Token{directive}
 
 	b.ResetTimer()
 

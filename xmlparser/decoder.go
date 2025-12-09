@@ -114,7 +114,7 @@ func (d *Decoder) checkBOM() {
 	}
 }
 
-func (d *Decoder) Token() (any, error) {
+func (d *Decoder) Token() (Token, error) {
 	if d.err != nil {
 		return nil, d.err
 	}
@@ -317,7 +317,7 @@ func (d *Decoder) readStartTag() (*StartElement, bool) {
 
 	return &StartElement{
 		Name:        name,
-		Attr:        NewAttributes(attrs...),
+		Attrs:       NewAttributes(attrs...),
 		SelfClosing: selfClosing,
 	}, true
 }

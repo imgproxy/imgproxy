@@ -11,7 +11,7 @@ var entityCommentRe = regexp.MustCompile(`(?s)<!--.*?-->`)
 
 // parseEntityMap searches for a DOCTYPE directive in the given nodes
 // and extracts entity declarations into a map.
-func parseEntityMap(nodes []any) map[string][]byte {
+func parseEntityMap(nodes []Token) map[string][]byte {
 	// Find doctype
 	var doctype *Directive
 	for _, node := range nodes {

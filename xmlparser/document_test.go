@@ -37,7 +37,7 @@ func TestDocumentParsing(t *testing.T) {
 
 		// Write the document back to a buffer
 		buf := new(bytes.Buffer)
-		_, err = doc1.WriteTo(buf)
+		err = doc1.WriteTo(buf)
 		require.NoError(t, err, "Failed to write SVG: %s", path)
 
 		// Parse the document again from the written buffer
@@ -92,7 +92,7 @@ func TestEntityReplacement(t *testing.T) {
 	doc.ReplaceEntities()
 
 	var buf bytes.Buffer
-	_, err = doc.WriteTo(&buf)
+	err = doc.WriteTo(&buf)
 	require.NoError(t, err)
 
 	require.Equal(t, string(expectedData), buf.String())

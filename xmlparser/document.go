@@ -1,7 +1,6 @@
 package xmlparser
 
 import (
-	"bufio"
 	"io"
 )
 
@@ -23,18 +22,6 @@ func NewDocument(r io.Reader) (*Document, error) {
 	}
 
 	return doc, nil
-}
-
-func (doc *Document) WriteTo(w io.Writer) (int64, error) {
-	wc := writeCounter{Writer: w}
-	bw := bufio.NewWriter(&wc)
-	if err := doc.writeChildrenTo(bw); err != nil {
-		return 0, err
-	}
-	if err := bw.Flush(); err != nil {
-		return 0, err
-	}
-	return wc.Count, nil
 }
 
 // ReplaceEntities replaces XML entities in the document
