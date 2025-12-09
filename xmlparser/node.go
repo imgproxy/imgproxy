@@ -1,25 +1,24 @@
 package xmlparser
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
 	"io"
 	"iter"
 	"slices"
-	"strings"
 )
 
+// Node represents an XML node with a name, attributes, and child tokens.
 type Node struct {
 	Parent   *Node
 	Name     Name
 	Attrs    *Attributes
-	Children []any
+	Children []Token
 }
 
 // FilterChildren removes all child nodes that do not satisfy the given predicate function.
-func (n *Node) FilterChildren(pred func(child any) bool) {
-	n.Children = slices.DeleteFunc(n.Children, func(child any) bool {
+func (n *Node) FilterChildren(pred func(child Token) bool) {
+	n.Children = slices.DeleteFunc(n.Children, func(child Token) bool {
 		return !pred(child)
 	})
 }
@@ -42,7 +41,7 @@ func (n *Node) ChildNodes() iter.Seq[*Node] {
 // FilterChildNodes removes all child nodes of type *Node
 // that do not satisfy the given predicate function.
 func (n *Node) FilterChildNodes(pred func(child *Node) bool) {
-	n.Children = slices.DeleteFunc(n.Children, func(child any) bool {
+	n.Children = slices.DeleteFunc(n.Children, func(child Token) bool {
 		cn, ok := child.(*Node)
 		if !ok {
 			return false
@@ -51,6 +50,8 @@ func (n *Node) FilterChildNodes(pred func(child *Node) bool) {
 	})
 }
 
+// readFrom reads XML data from the provided reader
+// and populates the node and its children accordingly.
 func (n *Node) readFrom(r io.Reader) error {
 	if n.Parent != nil {
 		return errors.New("cannot read child node")
@@ -77,7 +78,7 @@ func (n *Node) readFrom(r io.Reader) error {
 			el := &Node{
 				Parent: curNode,
 				Name:   t.Name,
-				Attrs:  t.Attr,
+				Attrs:  t.Attrs,
 			}
 			// Append the node to the current node's children and make it current
 			curNode.Children = append(curNode.Children, el)
@@ -123,149 +124,57 @@ func (n *Node) readFrom(r io.Reader) error {
 	return nil
 }
 
-func (n *Node) writeTo(w *bufio.Writer) error {
-	if err := w.WriteByte('<'); err != nil {
-		return err
+// WriteTo writes the XML representation of the node and its children to the provided writer.
+func (n *Node) WriteTo(w TokenWriter) error {
+	if len(n.Name) == 0 {
+		// Document node or an unnamed node, write only children
+		return n.writeChildrenTo(w)
 	}
-	if _, err := w.WriteString(n.Name.String()); err != nil {
+
+	selfClosing := len(n.Children) == 0
+
+	se := StartElement{
+		Name:        n.Name,
+		Attrs:       n.Attrs,
+		SelfClosing: selfClosing,
+	}
+
+	if err := se.WriteTo(w); err != nil {
 		return err
 	}
 
-	n.writeAttrsTo(w)
-
-	if len(n.Children) == 0 {
-		if _, err := w.WriteString("/>"); err != nil {
-			return err
-		}
+	if selfClosing {
 		return nil
-	}
-
-	if err := w.WriteByte('>'); err != nil {
-		return err
 	}
 
 	if err := n.writeChildrenTo(w); err != nil {
 		return err
 	}
 
-	if _, err := w.WriteString("</"); err != nil {
-		return err
+	ee := EndElement{
+		Name: n.Name,
 	}
-	if _, err := w.WriteString(n.Name.String()); err != nil {
-		return err
-	}
-	if err := w.WriteByte('>'); err != nil {
+
+	if err := ee.WriteTo(w); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (n *Node) writeAttrsTo(w *bufio.Writer) error {
-	for attr := range n.Attrs.Iter() {
-		if err := w.WriteByte(' '); err != nil {
-			return err
-		}
-
-		quote := byte('"')
-		if strings.IndexByte(attr.Value, quote) != -1 {
-			quote = '\''
-		}
-
-		if _, err := w.WriteString(attr.Name.String()); err != nil {
-			return err
-		}
-		if err := w.WriteByte('='); err != nil {
-			return err
-		}
-		if err := w.WriteByte(quote); err != nil {
-			return err
-		}
-		if _, err := w.WriteString(attr.Value); err != nil {
-			return err
-		}
-		if err := w.WriteByte(quote); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (n *Node) writeChildrenTo(w *bufio.Writer) error {
+// writeChildrenTo writes all child tokens of the node to the provided writer.
+func (n *Node) writeChildrenTo(w TokenWriter) error {
 	for _, child := range n.Children {
-		switch c := child.(type) {
-		case *Node:
-			if err := c.writeTo(w); err != nil {
-				return err
-			}
-
-		case *Text:
-			if c.CData {
-				if _, err := w.WriteString("<![CDATA["); err != nil {
-					return err
-				}
-			}
-			if _, err := w.Write(c.Data); err != nil {
-				return err
-			}
-			if c.CData {
-				if _, err := w.WriteString("]]>"); err != nil {
-					return err
-				}
-			}
-
-		case *Comment:
-			if _, err := w.WriteString("<!--"); err != nil {
-				return err
-			}
-			if _, err := w.Write(c.Data); err != nil {
-				return err
-			}
-			if _, err := w.WriteString("-->"); err != nil {
-				return err
-			}
-
-		case *Directive:
-			if _, err := w.WriteString("<!DOCTYPE"); err != nil {
-				return err
-			}
-			if _, err := w.Write(c.Data); err != nil {
-				return err
-			}
-			if err := w.WriteByte('>'); err != nil {
-				return err
-			}
-
-		case *ProcInst:
-			if _, err := w.WriteString("<?"); err != nil {
-				return err
-			}
-			if _, err := w.Write(c.Target); err != nil {
-				return err
-			}
-			if len(c.Inst) > 0 {
-				if !isSpace(c.Inst[0]) {
-					if err := w.WriteByte(' '); err != nil {
-						return err
-					}
-				}
-				if _, err := w.Write([]byte(c.Inst)); err != nil {
-					return err
-				}
-			}
-			if _, err := w.WriteString("?>"); err != nil {
-				return err
-			}
-
-		default:
-			return fmt.Errorf("unknown child type: %T", c)
+		if err := child.WriteTo(w); err != nil {
+			return err
 		}
 	}
 
 	return nil
 }
 
+// replaceEntities replaces XML entities in the node
+// according to the provided entity map.
 func (n *Node) replaceEntities(em map[string][]byte) {
 	// Replace in attributes
 	for attr := range n.Attrs.Iter() {

@@ -72,7 +72,7 @@ func (p *Processor) sanitize(data imagedata.ImageData) (imagedata.ImageData, err
 	}
 
 	// Write the sanitized document to the buffer
-	if _, err := doc.WriteTo(buf); err != nil {
+	if err := doc.WriteTo(buf); err != nil {
 		cancel()
 		return nil, newSanitizeError(err)
 	}
