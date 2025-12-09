@@ -58,6 +58,30 @@ func (s *FormatterStructuredTestSuite) SetupSubTest() {
 	s.ResetLazyObjects()
 }
 
+func (s *FormatterStructuredTestSuite) checkNextEntry(lvl, msg string) {
+	str, err := s.buf().ReadString('\n')
+	s.Require().NoError(err)
+
+	const timeLen = 19 + 7  // +7 for key, separator, and quotes
+	lvlLen := len(lvl) + 10 // +10 for key, separator, quotes, and spaces
+	prefixLen := timeLen + lvlLen
+
+	s.Require().GreaterOrEqual(len(str), prefixLen)
+
+	timePart := str[:timeLen]
+	levelPart := str[timeLen:prefixLen]
+
+	now := time.Now()
+	t, err := time.ParseInLocation(time.DateTime, timePart[6:timeLen-1], now.Location())
+	s.Require().NoError(err)
+	s.Require().WithinDuration(time.Now(), t, time.Minute)
+
+	s.Equal(` level="`+lvl+`" `, levelPart)
+
+	// Check the message
+	s.Equal(msg+"\n", str[prefixLen:])
+}
+
 func (s *FormatterStructuredTestSuite) TestLevel() {
 	type testEntry struct {
 		level     slog.Level
@@ -268,30 +292,6 @@ func (s *FormatterStructuredTestSuite) TestSpecialFields() {
 			`stack="stack value\nwith new lines"`,
 		}, " "),
 	)
-}
-
-func (s *FormatterStructuredTestSuite) checkNextEntry(lvl, msg string) {
-	str, err := s.buf().ReadString('\n')
-	s.Require().NoError(err)
-
-	const timeLen = 19 + 7  // +7 for key, separator, and quotes
-	lvlLen := len(lvl) + 10 // +10 for key, separator, quotes, and spaces
-	prefixLen := timeLen + lvlLen
-
-	s.Require().GreaterOrEqual(len(str), prefixLen)
-
-	timePart := str[:timeLen]
-	levelPart := str[timeLen:prefixLen]
-
-	now := time.Now()
-	t, err := time.ParseInLocation(time.DateTime, timePart[6:timeLen-1], now.Location())
-	s.Require().NoError(err)
-	s.Require().WithinDuration(time.Now(), t, time.Minute)
-
-	s.Equal(` level="`+lvl+`" `, levelPart)
-
-	// Check the message
-	s.Equal(msg+"\n", str[prefixLen:])
 }
 
 func TestFormatterStructured(t *testing.T) {

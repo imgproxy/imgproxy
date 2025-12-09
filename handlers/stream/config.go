@@ -7,9 +7,10 @@ import (
 )
 
 var (
-	// IMGPROXY_COOKIE_PASSTHROUGH NOTE: processing handler has the similar variable. For now, we do not want
-	// to couple hanlders/processing and handlers/stream packages, so we duplicate it here.
-	// Discuss.
+	// Processing handler has the similar variable.
+	// For now, we do not want to couple hanlders/processing and handlers/stream packages,
+	// so we duplicate it here. Discuss.
+	//nolint:godoclint
 	IMGPROXY_COOKIE_PASSTHROUGH = env.Describe("IMGPROXY_COOKIE_PASSTHROUGH", "boolean")
 )
 

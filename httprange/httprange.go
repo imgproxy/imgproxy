@@ -18,7 +18,7 @@ func Parse(s string) (int64, int64, error) {
 		return 0, 0, errors.New("invalid range")
 	}
 
-	for _, ra := range strings.Split(s[len(b):], ",") {
+	for ra := range strings.SplitSeq(s[len(b):], ",") {
 		ra = textproto.TrimString(ra)
 		if ra == "" {
 			continue

@@ -34,7 +34,7 @@ func New(config *Config) (*Fetcher, error) {
 	return &Fetcher{transport, config}, nil
 }
 
-// BuildRequest creates a new ImageFetcherRequest with the provided context, URL, headers, and cookie jar
+// BuildRequest creates a new [Request] with the provided context, URL, headers, and cookie jar
 func (f *Fetcher) BuildRequest(
 	ctx context.Context, url string, header http.Header, jar http.CookieJar,
 ) (*Request, error) {

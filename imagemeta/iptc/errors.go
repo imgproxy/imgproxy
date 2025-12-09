@@ -9,7 +9,7 @@ import (
 
 type IptcError struct{ *errctx.TextError }
 
-func newIptcError(format string, args ...interface{}) error {
+func newIptcError(format string, args ...any) error {
 	return IptcError{errctx.NewTextError(
 		fmt.Sprintf(format, args...),
 		1,

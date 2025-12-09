@@ -29,6 +29,22 @@ func (s *ClientFeaturesDetectorSuite) TearDownSuite() {
 	logger.Unmute()
 }
 
+func (s *ClientFeaturesDetectorSuite) runTestCases(testCases []detectorTestCase) {
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			detector := NewDetector(&tc.config)
+
+			header := make(http.Header)
+			for k, v := range tc.header {
+				header.Set(k, v)
+			}
+
+			features := detector.Features(header)
+			s.Require().Equal(tc.expected, features)
+		})
+	}
+}
+
 func (s *ClientFeaturesDetectorSuite) TestFeaturesAutoFormats() {
 	s.runTestCases([]detectorTestCase{
 		{
@@ -411,22 +427,6 @@ func (s *ClientFeaturesDetectorSuite) TestSetVary() {
 			header := http.Header{}
 			detector.SetVary(header)
 			s.Require().Equal(tc.expected, header.Get(httpheaders.Vary))
-		})
-	}
-}
-
-func (s *ClientFeaturesDetectorSuite) runTestCases(testCases []detectorTestCase) {
-	for _, tc := range testCases {
-		s.Run(tc.name, func() {
-			detector := NewDetector(&tc.config)
-
-			header := make(http.Header)
-			for k, v := range tc.header {
-				header.Set(k, v)
-			}
-
-			features := detector.Features(header)
-			s.Require().Equal(tc.expected, features)
 		})
 	}
 }

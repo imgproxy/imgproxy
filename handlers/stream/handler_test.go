@@ -147,6 +147,25 @@ func (s *HandlerTestSuite) SetupSubTest() {
 	s.ResetLazyObjects()
 }
 
+func (s *HandlerTestSuite) execute(
+	imageURL string,
+	header http.Header,
+	o *options.Options,
+) *http.Response {
+	imageURL = s.testServer().URL() + imageURL
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	httpheaders.CopyAll(header, req.Header, true)
+
+	ctx := s.T().Context()
+	rw := httptest.NewRecorder()
+	rww := s.rwFactory().NewWriter(rw)
+
+	err := s.handler().Execute(ctx, req, imageURL, "test-req-id", o, rww)
+	s.Require().Nil(err)
+
+	return rw.Result()
+}
+
 // TestHandlerBasicRequest checks basic streaming request
 func (s *HandlerTestSuite) TestHandlerBasicRequest() {
 	data := s.testData.Read("test1.png")
@@ -478,25 +497,6 @@ func (s *HandlerTestSuite) maxAgeValue(res *http.Response) time.Duration {
 	var maxAge int
 	fmt.Sscanf(cacheControl, "max-age=%d", &maxAge)
 	return time.Duration(maxAge) * time.Second
-}
-
-func (s *HandlerTestSuite) execute(
-	imageURL string,
-	header http.Header,
-	o *options.Options,
-) *http.Response {
-	imageURL = s.testServer().URL() + imageURL
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	httpheaders.CopyAll(header, req.Header, true)
-
-	ctx := s.T().Context()
-	rw := httptest.NewRecorder()
-	rww := s.rwFactory().NewWriter(rw)
-
-	err := s.handler().Execute(ctx, req, imageURL, "test-req-id", o, rww)
-	s.Require().Nil(err)
-
-	return rw.Result()
 }
 
 func TestHandler(t *testing.T) {

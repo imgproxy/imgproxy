@@ -107,7 +107,11 @@ func Get[T any](o *Options, key string, def T) T {
 // If the option does not exist, it creates a new slice with the value.
 func AppendToSlice[T any](o *Options, key string, value ...T) {
 	if v, ok := o.m[key]; ok {
-		vt := v.([]T) //nolint:forcetypeassert
+		vt, ok := v.([]T)
+		if !ok {
+			panic(newTypeMismatchError(key, v, new([]T)))
+		}
+
 		o.m[key] = append(vt, value...)
 		return
 	}

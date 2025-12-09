@@ -34,7 +34,7 @@ func (m IptcMap) AddTag(key TagKey, data []byte) error {
 }
 
 func (m IptcMap) MarshalJSON() ([]byte, error) {
-	mm := make(map[string]interface{}, len(m))
+	mm := make(map[string]any, len(m))
 	for key, values := range m {
 		info, infoFound := tagInfoMap[key]
 		if !infoFound {

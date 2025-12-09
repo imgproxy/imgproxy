@@ -12,7 +12,7 @@ import (
 // logger is the logger forwarder for bugsnag
 type logger struct{}
 
-func (l logger) Printf(format string, v ...interface{}) {
+func (l logger) Printf(format string, v ...any) {
 	slog.Debug(fmt.Sprintf(format, v...), "source", "bugsnag")
 }
 

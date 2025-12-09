@@ -28,6 +28,32 @@ func (s *WorkersTestSuite) SetupSuite() {
 	})
 }
 
+func (s *WorkersTestSuite) acquire(ctx context.Context, n int, delay time.Duration) (int, error) {
+	errg := new(errgroup.Group)
+	acquired := int64(0)
+
+	// Get the workers instance before running goroutines
+	workers := s.workers()
+
+	for range n {
+		errg.Go(func() error {
+			release, err := workers.Acquire(ctx)
+
+			if err == nil {
+				time.Sleep(delay)
+
+				release()
+				atomic.AddInt64(&acquired, 1)
+			}
+
+			return err
+		})
+	}
+
+	err := errg.Wait()
+	return int(acquired), err
+}
+
 func (s *WorkersTestSuite) TestQueueDisabled() {
 	s.config().RequestsQueueSize = 0
 	s.config().WorkersNumber = 2
@@ -77,32 +103,6 @@ func (s *WorkersTestSuite) TestSemaphoresInvalidConfig() {
 
 	_, err = New(&Config{RequestsQueueSize: -1, WorkersNumber: 1})
 	s.Require().Error(err)
-}
-
-func (s *WorkersTestSuite) acquire(ctx context.Context, n int, delay time.Duration) (int, error) {
-	errg := new(errgroup.Group)
-	acquired := int64(0)
-
-	// Get the workers instance before running goroutines
-	workers := s.workers()
-
-	for range n {
-		errg.Go(func() error {
-			release, err := workers.Acquire(ctx)
-
-			if err == nil {
-				time.Sleep(delay)
-
-				release()
-				atomic.AddInt64(&acquired, 1)
-			}
-
-			return err
-		})
-	}
-
-	err := errg.Wait()
-	return int(acquired), err
 }
 
 func TestWorkers(t *testing.T) {

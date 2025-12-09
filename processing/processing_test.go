@@ -74,6 +74,36 @@ func (s *ProcessingTestSuite) TearDownSuite() {
 	logger.Unmute()
 }
 
+//nolint:unparam
+func (s *ProcessingTestSuite) openFile(name string) imagedata.ImageData {
+	wd, err := os.Getwd()
+	s.Require().NoError(err)
+	path := filepath.Join(wd, "..", "testdata", name)
+
+	imagedata, err := s.imageDataFactory().NewFromPath(path)
+	s.Require().NoError(err)
+
+	return imagedata
+}
+
+func (s *ProcessingTestSuite) checkSize(r *Result, width, height int) {
+	s.Require().NotNil(r)
+	s.Require().Equal(width, r.ResultWidth, "Width mismatch")
+	s.Require().Equal(height, r.ResultHeight, "Height mismatch")
+}
+
+func (s *ProcessingTestSuite) processImageAndCheck(
+	imgdata imagedata.ImageData,
+	o *options.Options,
+	expectedWidth, expectedHeight int,
+) {
+	result, err := s.processor().ProcessImage(s.T().Context(), imgdata, o)
+	s.Require().NoError(err)
+	s.Require().NotNil(result)
+
+	s.checkSize(result, expectedWidth, expectedHeight)
+}
+
 func (s *ProcessingTestSuite) TestResizeToFit() {
 	imgdata := s.openFile("test2.jpg")
 
@@ -930,35 +960,6 @@ func (s *ProcessingTestSuite) TestImageResolutionTooLarge() {
 	s.Require().Equal(422, errctx.Wrap(err).StatusCode())
 }
 
-//nolint:unparam
-func (s *ProcessingTestSuite) openFile(name string) imagedata.ImageData {
-	wd, err := os.Getwd()
-	s.Require().NoError(err)
-	path := filepath.Join(wd, "..", "testdata", name)
-
-	imagedata, err := s.imageDataFactory().NewFromPath(path)
-	s.Require().NoError(err)
-
-	return imagedata
-}
-
-func (s *ProcessingTestSuite) checkSize(r *Result, width, height int) {
-	s.Require().NotNil(r)
-	s.Require().Equal(width, r.ResultWidth, "Width mismatch")
-	s.Require().Equal(height, r.ResultHeight, "Height mismatch")
-}
-
-func (s *ProcessingTestSuite) processImageAndCheck(
-	imgdata imagedata.ImageData,
-	o *options.Options,
-	expectedWidth, expectedHeight int,
-) {
-	result, err := s.processor().ProcessImage(s.T().Context(), imgdata, o)
-	s.Require().NoError(err)
-	s.Require().NotNil(result)
-
-	s.checkSize(result, expectedWidth, expectedHeight)
-}
 func TestProcessing(t *testing.T) {
 	suite.Run(t, new(ProcessingTestSuite))
 }

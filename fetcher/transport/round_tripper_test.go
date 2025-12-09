@@ -16,12 +16,16 @@ import (
 // mockStorage is a simple mock implementation of storage.Reader
 type mockStorage struct {
 	getObject func(
-		ctx context.Context, reqHeader http.Header, bucket, key, query string,
+		ctx context.Context,
+		reqHeader http.Header,
+		bucket, key, query string,
 	) (*storage.ObjectReader, error)
 }
 
 func (m *mockStorage) GetObject(
-	ctx context.Context, reqHeader http.Header, bucket, key, query string,
+	ctx context.Context,
+	reqHeader http.Header,
+	bucket, key, query string,
 ) (*storage.ObjectReader, error) {
 	if m.getObject == nil {
 		return nil, nil
@@ -38,7 +42,9 @@ func (s *RoundTripperTestSuite) TestRoundTripperSuccess() {
 	// Create mock storage that returns a successful response
 	mock := &mockStorage{
 		getObject: func(
-			ctx context.Context, reqHeader http.Header, bucket, key, query string,
+			ctx context.Context,
+			reqHeader http.Header,
+			bucket, key, query string,
 		) (*storage.ObjectReader, error) {
 			s.Equal("test-bucket", bucket)
 			s.Equal("test-key", key)
@@ -80,7 +86,9 @@ func (s *RoundTripperTestSuite) TestRoundTripperNotFound() {
 	// Create mock storage that returns 404
 	mock := &mockStorage{
 		getObject: func(
-			ctx context.Context, reqHeader http.Header, bucket, key, query string,
+			ctx context.Context,
+			reqHeader http.Header,
+			bucket, key, query string,
 		) (*storage.ObjectReader, error) {
 			return storage.NewObjectNotFound("object not found"), nil
 		},

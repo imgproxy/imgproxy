@@ -115,6 +115,8 @@ func BenchmarkReplaceEntitiesBytes(b *testing.B) {
 
 	data := []byte("This is a test string with &entity1;, &entity2;, and &entity3; to be replaced.")
 
+	b.ResetTimer()
+
 	for b.Loop() {
 		_ = replaceEntitiesBytes(data, em)
 	}

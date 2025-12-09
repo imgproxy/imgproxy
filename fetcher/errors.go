@@ -133,7 +133,7 @@ func (e NotModifiedError) Headers() http.Header {
 	return e.headers
 }
 
-// WrapError NOTE: make private when we remove download functions from imagedata package
+// WrapError wraps generic error into fetcher-specific error types
 func WrapError(err error, skipStack int) error {
 	type httpError interface {
 		Timeout() bool

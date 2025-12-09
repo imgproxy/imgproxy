@@ -219,7 +219,7 @@ func (o *Otel) StartRequest(
 }
 
 // setMetadata sets metadata on the given OpenTelemetry span
-func setMetadata(span trace.Span, key string, value interface{}) {
+func setMetadata(span trace.Span, key string, value any) {
 	if len(key) == 0 || value == nil {
 		return
 	}
@@ -231,12 +231,11 @@ func setMetadata(span trace.Span, key string, value interface{}) {
 
 	rv := reflect.ValueOf(value)
 
-	//nolint:forcetypeassert
 	switch {
 	case rv.Kind() == reflect.String:
-		span.SetAttributes(attribute.String(key, value.(string)))
+		span.SetAttributes(attribute.String(key, value.(string))) //nolint:forcetypeassert
 	case rv.Kind() == reflect.Bool:
-		span.SetAttributes(attribute.Bool(key, value.(bool)))
+		span.SetAttributes(attribute.Bool(key, value.(bool))) //nolint:forcetypeassert
 	case rv.CanInt():
 		span.SetAttributes(attribute.Int64(key, rv.Int()))
 	case rv.CanUint():
@@ -255,7 +254,7 @@ func setMetadata(span trace.Span, key string, value interface{}) {
 }
 
 // SetMetadata sets metadata for the current span
-func (o *Otel) SetMetadata(ctx context.Context, key string, value interface{}) {
+func (o *Otel) SetMetadata(ctx context.Context, key string, value any) {
 	if ctx.Value(hasSpanCtxKey{}) != nil {
 		if span := trace.SpanFromContext(ctx); span != nil {
 			setMetadata(span, key, value)

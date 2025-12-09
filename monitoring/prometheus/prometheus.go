@@ -201,7 +201,7 @@ func (p *Prometheus) StartSpan(
 }
 
 // SetMetadata sets metadata for Prometheus monitoring
-func (p *Prometheus) SetMetadata(ctx context.Context, key string, value interface{}) {
+func (p *Prometheus) SetMetadata(ctx context.Context, key string, value any) {
 	// Prometheus does not support request tracing
 }
 

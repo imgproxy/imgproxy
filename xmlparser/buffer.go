@@ -8,7 +8,7 @@ import (
 )
 
 var bufPool = sync.Pool{
-	New: func() interface{} {
+	New: func() any {
 		// Reserve some capacity to not re-allocate on short strings.
 		buf := make(buffer, 0, 1024)
 		return &buf

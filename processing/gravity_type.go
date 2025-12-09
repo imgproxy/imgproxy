@@ -16,10 +16,10 @@ func (gt GravityType) String() string {
 func (gt GravityType) MarshalJSON() ([]byte, error) {
 	for k, v := range GravityTypes {
 		if v == gt {
-			return []byte(fmt.Sprintf("%q", k)), nil
+			return fmt.Appendf([]byte{}, "%q", k), nil
 		}
 	}
-	return []byte("null"), nil
+	return fmt.Appendf([]byte{}, "%s", "null"), nil
 }
 
 const (

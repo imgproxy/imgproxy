@@ -8,7 +8,7 @@ import (
 
 type ColorError struct{ *errctx.TextError }
 
-func newColorError(format string, args ...interface{}) error {
+func newColorError(format string, args ...any) error {
 	return ColorError{errctx.NewTextError(
 		fmt.Sprintf(format, args...),
 		1,
