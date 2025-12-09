@@ -27,7 +27,7 @@ type NewRelic struct {
 
 	app *newrelic.Application
 
-	metricsCtx       context.Context
+	metricsCtx       context.Context //nolint:containedctx
 	metricsCtxCancel context.CancelFunc
 }
 
@@ -56,7 +56,7 @@ func New(config *Config, stats *stats.Stats) (*NewRelic, error) {
 	)
 
 	if err != nil {
-		return nil, fmt.Errorf("can't init New Relic agent: %s", err)
+		return nil, fmt.Errorf("can't init New Relic agent: %w", err)
 	}
 
 	nl.metricsCtx, nl.metricsCtxCancel = context.WithCancel(context.Background())

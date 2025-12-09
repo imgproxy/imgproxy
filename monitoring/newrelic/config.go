@@ -11,7 +11,7 @@ import (
 var (
 	IMGPROXY_NEW_RELIC_APP_NAME           = env.Describe("IMGPROXY_NEW_RELIC_APP_NAME", "string")
 	IMGPROXY_NEW_RELIC_KEY                = env.Describe("IMGPROXY_NEW_RELIC_KEY", "string")
-	IMGPROXY_NEW_RELIC_LABELS             = env.Describe("IMGPROXY_NEW_RELIC_LABELS", "semicolon-separated list of key=value pairs")
+	IMGPROXY_NEW_RELIC_LABELS             = env.Describe("IMGPROXY_NEW_RELIC_LABELS", "semicolon-separated list of key=value pairs") //nolint:lll
 	IMGPROXY_NEW_RELIC_PROPAGATE_EXTERNAL = env.Describe("IMGPROXY_NEW_RELIC_PROPAGATE_EXTERNAL", "boolean")
 )
 

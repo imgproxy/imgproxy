@@ -49,7 +49,33 @@ func (s *MatrixTestSuite) SetupTest() {
 	s.Config().Fetcher.Transport.Local.Root = s.testImagesPath
 }
 
-// testLoadFolder fetches images iterates over images in the specified folder,
+func (s *MatrixTestSuite) TestMatrix() {
+	for _, source := range formats {
+		for _, target := range formats {
+			s.Run(fmt.Sprintf("%s/%s", source.String(), target.String()), func() {
+				if !source.IsVector() && target.IsVector() {
+					// we can not vectorize a raster image
+					s.T().Logf("Skipping %s -> %s conversion: we can not vectorize raster image", source.String(), target.String())
+					return
+				}
+
+				if !vips.SupportsLoad(source) {
+					s.T().Logf("Skipping %s -> %s conversion: source format not supported by VIPS", source.String(), target.String())
+					return
+				}
+
+				if !vips.SupportsSave(target) {
+					s.T().Logf("Skipping %s -> %s conversion: target format not supported by VIPS", source.String(), target.String())
+					return
+				}
+
+				s.testFormat(source, target)
+			})
+		}
+	}
+}
+
+// testFormat fetches images iterates over images in the specified folder,
 // runs imgproxy on each image, and compares the result with the reference image
 // which is expected to be in the `integration` folder with the same name
 // but with `.png` extension.
@@ -86,7 +112,13 @@ func (s *MatrixTestSuite) testFormat(source, target imagetype.Type) {
 		resp := s.GET(sourceUrl)
 		defer resp.Body.Close()
 
-		s.Require().Equal(http.StatusOK, resp.StatusCode, "expected status code 200 OK, got %d, url: %s", resp.StatusCode, sourceUrl)
+		s.Require().Equal(
+			http.StatusOK,
+			resp.StatusCode,
+			"expected status code 200 OK, got %d, url: %s",
+			resp.StatusCode,
+			sourceUrl,
+		)
 
 		// Match image to precalculated hash
 		s.matcher.ImageMatches(s.T(), resp.Body, baseName, maxDistance)
@@ -96,33 +128,6 @@ func (s *MatrixTestSuite) testFormat(source, target imagetype.Type) {
 
 	s.Require().NoError(err)
 }
-
-func (s *MatrixTestSuite) TestMatrix() {
-	for _, source := range formats {
-		for _, target := range formats {
-			s.Run(fmt.Sprintf("%s/%s", source.String(), target.String()), func() {
-				if !source.IsVector() && target.IsVector() {
-					// we can not vectorize a raster image
-					s.T().Logf("Skipping %s -> %s conversion: we can not vectorize raster image", source.String(), target.String())
-					return
-				}
-
-				if !vips.SupportsLoad(source) {
-					s.T().Logf("Skipping %s -> %s conversion: source format not supported by VIPS", source.String(), target.String())
-					return
-				}
-
-				if !vips.SupportsSave(target) {
-					s.T().Logf("Skipping %s -> %s conversion: target format not supported by VIPS", source.String(), target.String())
-					return
-				}
-
-				s.testFormat(source, target)
-			})
-		}
-	}
-}
-
 func TestMatrix(t *testing.T) {
 	suite.Run(t, new(MatrixTestSuite))
 }

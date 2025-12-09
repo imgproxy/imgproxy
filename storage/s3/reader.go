@@ -79,7 +79,7 @@ func (s *Storage) GetObject(
 	}
 
 	if s.config.DecryptionClientEnabled {
-		if unencryptedContentLength := output.Metadata["X-Amz-Meta-X-Amz-Unencrypted-Content-Length"]; len(unencryptedContentLength) != 0 {
+		if unencryptedContentLength := output.Metadata[httpheaders.XAmzMetaECL]; len(unencryptedContentLength) != 0 {
 			cl, err := strconv.ParseInt(unencryptedContentLength, 10, 64)
 			if err != nil {
 				return handleError(err)

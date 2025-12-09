@@ -1,6 +1,7 @@
 package imagetype
 
 import (
+	"errors"
 	"io"
 	"slices"
 
@@ -67,7 +68,7 @@ func GetTypeDesc(t Type) *TypeDesc {
 	return globalRegistry.GetTypeDesc(t)
 }
 
-// GetTypes returns all registered image types.
+// GetTypeByName returns all registered image types.
 func GetTypeByName(name string) (Type, bool) {
 	return globalRegistry.GetTypeByName(name)
 }
@@ -168,7 +169,7 @@ func (r *registry) Detect(re io.Reader, ct, ext string) (Type, error) {
 	for _, d := range r.detectors {
 		br.Rewind()
 		typ, err := d.fn(br, ct, ext)
-		if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
+		if err != nil && !errors.Is(err, io.EOF) && !errors.Is(err, io.ErrUnexpectedEOF) {
 			return Unknown, newTypeDetectionError(err)
 		}
 		if err == nil && typ != Unknown {

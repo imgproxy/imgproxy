@@ -27,7 +27,9 @@ func EscapeURL(u string) string {
 }
 
 // GetBucketAndKey extracts bucket and key from the provided URL.
-func GetBucketAndKey(u *url.URL, sep string) (bucket, key, query string) {
+func GetBucketAndKey(u *url.URL, sep string) (string, string, string) {
+	var bucket, key, query string
+
 	bucket = u.Host
 
 	// We can't use u.Path here because `url.Parse` unescapes the original URL's path.
@@ -63,5 +65,5 @@ func GetBucketAndKey(u *url.URL, sep string) (bucket, key, query string) {
 		key, query, _ = strings.Cut(key, sep)
 	}
 
-	return
+	return bucket, key, query
 }

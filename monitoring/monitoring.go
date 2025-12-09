@@ -124,6 +124,7 @@ func (m *Monitoring) StartRequest(
 
 	for _, monitor := range m.monitors {
 		var cancel context.CancelFunc
+		//nolint:fatcontext
 		ctx, cancel, rw = monitor.StartRequest(ctx, rw, r)
 		cancels = append(cancels, cancel)
 	}
@@ -156,6 +157,8 @@ func (m *Monitoring) StartSpan(
 
 	for _, monitor := range m.monitors {
 		var cancel context.CancelFunc
+
+		//nolint:fatcontext
 		ctx, cancel = monitor.StartSpan(ctx, name, meta)
 		cancels = append(cancels, cancel)
 	}

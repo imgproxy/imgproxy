@@ -84,7 +84,7 @@ func NewObjectNotModified(headers http.Header) *ObjectReader {
 	}
 }
 
-// NewInvalidRang creates a new Reader with a 416 Range Not Satisfiable status.
+// NewObjectInvalidRange creates a new Reader with a 416 Range Not Satisfiable status.
 func NewObjectInvalidRange() *ObjectReader {
 	return &ObjectReader{
 		Status:        http.StatusRequestedRangeNotSatisfiable,

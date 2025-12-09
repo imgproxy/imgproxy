@@ -62,6 +62,8 @@ func (s *ProcessingHandlerTestSuite) TestSignatureValidationFailure() {
 			s.Config().Security.Salts = [][]byte{[]byte("test-salt")}
 
 			res := s.GET(tc.url)
+			defer res.Body.Close()
+
 			s.Require().Equal(tc.statusCode, res.StatusCode)
 		})
 	}
@@ -114,6 +116,7 @@ func (s *ProcessingHandlerTestSuite) TestSourceValidation() {
 			}
 
 			res := s.GET(tc.requestPath)
+			defer res.Body.Close()
 
 			if tc.expectedError {
 				s.Require().Equal(http.StatusNotFound, res.StatusCode)
@@ -128,7 +131,7 @@ func (s *ProcessingHandlerTestSuite) TestSourceNetworkValidation() {
 	data := s.TestData.Read("test1.png")
 
 	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		rw.WriteHeader(200)
+		rw.WriteHeader(http.StatusOK)
 		rw.Write(data)
 	}))
 	defer server.Close()
@@ -139,12 +142,16 @@ func (s *ProcessingHandlerTestSuite) TestSourceNetworkValidation() {
 	s.Run("AllowLoopbackSourceAddressesTrue", func() {
 		s.Config().Fetcher.Transport.HTTP.AllowLoopbackSourceAddresses = true
 		res := s.GET(url)
+		defer res.Body.Close()
+
 		s.Require().Equal(http.StatusOK, res.StatusCode)
 	})
 
 	s.Run("AllowLoopbackSourceAddressesFalse", func() {
 		s.Config().Fetcher.Transport.HTTP.AllowLoopbackSourceAddresses = false
 		res := s.GET(url)
+		defer res.Body.Close()
+
 		s.Require().Equal(http.StatusNotFound, res.StatusCode)
 	})
 }
@@ -154,6 +161,8 @@ func (s *ProcessingHandlerTestSuite) TestSourceFormatNotSupported() {
 	defer vips.ResetLoadSupport()
 
 	res := s.GET("/unsafe/rs:fill:4:4/plain/local:///test1.png")
+	defer res.Body.Close()
+
 	s.Require().Equal(http.StatusUnprocessableEntity, res.StatusCode)
 }
 
@@ -162,6 +171,8 @@ func (s *ProcessingHandlerTestSuite) TestResultingFormatNotSupported() {
 	defer vips.ResetSaveSupport()
 
 	res := s.GET("/unsafe/rs:fill:4:4/plain/local:///test1.png@png")
+	defer res.Body.Close()
+
 	s.Require().Equal(http.StatusUnprocessableEntity, res.StatusCode)
 }
 
@@ -169,6 +180,7 @@ func (s *ProcessingHandlerTestSuite) TestSkipProcessingConfig() {
 	s.Config().Processing.SkipProcessingFormats = []imagetype.Type{imagetype.PNG}
 
 	res := s.GET("/unsafe/rs:fill:4:4/plain/local:///test1.png")
+	defer res.Body.Close()
 
 	s.Require().Equal(http.StatusOK, res.StatusCode)
 	s.Require().True(s.TestData.FileEqualsToReader("test1.png", res.Body))
@@ -176,6 +188,7 @@ func (s *ProcessingHandlerTestSuite) TestSkipProcessingConfig() {
 
 func (s *ProcessingHandlerTestSuite) TestSkipProcessingPO() {
 	res := s.GET("/unsafe/rs:fill:4:4/skp:png/plain/local:///test1.png")
+	defer res.Body.Close()
 
 	s.Require().Equal(http.StatusOK, res.StatusCode)
 	s.Require().True(s.TestData.FileEqualsToReader("test1.png", res.Body))
@@ -185,6 +198,7 @@ func (s *ProcessingHandlerTestSuite) TestSkipProcessingSameFormat() {
 	s.Config().Processing.SkipProcessingFormats = []imagetype.Type{imagetype.PNG}
 
 	res := s.GET("/unsafe/rs:fill:4:4/plain/local:///test1.png@png")
+	defer res.Body.Close()
 
 	s.Require().Equal(http.StatusOK, res.StatusCode)
 	s.Require().True(s.TestData.FileEqualsToReader("test1.png", res.Body))
@@ -194,6 +208,7 @@ func (s *ProcessingHandlerTestSuite) TestSkipProcessingDifferentFormat() {
 	s.Config().Processing.SkipProcessingFormats = []imagetype.Type{imagetype.PNG}
 
 	res := s.GET("/unsafe/rs:fill:4:4/plain/local:///test1.png@jpg")
+	defer res.Body.Close()
 
 	s.Require().Equal(http.StatusOK, res.StatusCode)
 	s.Require().False(s.TestData.FileEqualsToReader("test1.png", res.Body))
@@ -201,6 +216,7 @@ func (s *ProcessingHandlerTestSuite) TestSkipProcessingDifferentFormat() {
 
 func (s *ProcessingHandlerTestSuite) TestSkipProcessingSVG() {
 	res := s.GET("/unsafe/rs:fill:4:4/plain/local:///test1.svg")
+	defer res.Body.Close()
 
 	s.Require().Equal(http.StatusOK, res.StatusCode)
 
@@ -217,6 +233,7 @@ func (s *ProcessingHandlerTestSuite) TestSkipProcessingSVG() {
 
 func (s *ProcessingHandlerTestSuite) TestNotSkipProcessingSVGToJPG() {
 	res := s.GET("/unsafe/rs:fill:4:4/plain/local:///test1.svg@jpg")
+	defer res.Body.Close()
 
 	s.Require().Equal(http.StatusOK, res.StatusCode)
 	s.Require().False(s.TestData.FileEqualsToReader("test1.svg", res.Body))
@@ -224,6 +241,7 @@ func (s *ProcessingHandlerTestSuite) TestNotSkipProcessingSVGToJPG() {
 
 func (s *ProcessingHandlerTestSuite) TestErrorSavingToSVG() {
 	res := s.GET("/unsafe/rs:fill:4:4/plain/local:///test1.png@svg")
+	defer res.Body.Close()
 
 	s.Require().Equal(http.StatusUnprocessableEntity, res.StatusCode)
 }
@@ -234,12 +252,13 @@ func (s *ProcessingHandlerTestSuite) TestCacheControlPassthroughCacheControl() {
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		rw.Header().Set(httpheaders.CacheControl, "max-age=1234, public")
 		rw.Header().Set(httpheaders.Expires, time.Now().Add(time.Hour).UTC().Format(http.TimeFormat))
-		rw.WriteHeader(200)
+		rw.WriteHeader(http.StatusOK)
 		rw.Write(s.TestData.Read("test1.png"))
 	}))
 	defer ts.Close()
 
 	res := s.GET("/unsafe/rs:fill:4:4/plain/" + ts.URL)
+	defer res.Body.Close()
 
 	s.Require().Equal(http.StatusOK, res.StatusCode)
 	s.Require().Equal("max-age=1234, public", res.Header.Get(httpheaders.CacheControl))
@@ -251,12 +270,13 @@ func (s *ProcessingHandlerTestSuite) TestCacheControlPassthroughExpires() {
 
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		rw.Header().Set(httpheaders.Expires, time.Now().Add(1239*time.Second).UTC().Format(http.TimeFormat))
-		rw.WriteHeader(200)
+		rw.WriteHeader(http.StatusOK)
 		rw.Write(s.TestData.Read("test1.png"))
 	}))
 	defer ts.Close()
 
 	res := s.GET("/unsafe/rs:fill:4:4/plain/" + ts.URL)
+	defer res.Body.Close()
 
 	// Use regex to allow some delay
 	s.Require().Regexp("max-age=123[0-9], public", res.Header.Get(httpheaders.CacheControl))
@@ -269,12 +289,13 @@ func (s *ProcessingHandlerTestSuite) TestCacheControlPassthroughDisabled() {
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		rw.Header().Set(httpheaders.CacheControl, "max-age=1234, public")
 		rw.Header().Set(httpheaders.Expires, time.Now().Add(time.Hour).UTC().Format(http.TimeFormat))
-		rw.WriteHeader(200)
+		rw.WriteHeader(http.StatusOK)
 		rw.Write(s.TestData.Read("test1.png"))
 	}))
 	defer ts.Close()
 
 	res := s.GET("/unsafe/rs:fill:4:4/plain/" + ts.URL)
+	defer res.Body.Close()
 
 	s.Require().NotEqual("max-age=1234, public", res.Header.Get(httpheaders.CacheControl))
 	s.Require().Empty(res.Header.Get(httpheaders.Expires))
@@ -284,8 +305,9 @@ func (s *ProcessingHandlerTestSuite) TestETagDisabled() {
 	s.Config().Handlers.Processing.ETagEnabled = false
 
 	res := s.GET("/unsafe/rs:fill:4:4/plain/local:///test1.png")
+	defer res.Body.Close()
 
-	s.Require().Equal(200, res.StatusCode)
+	s.Require().Equal(http.StatusOK, res.StatusCode)
 	s.Require().Empty(res.Header.Get(httpheaders.Etag))
 }
 
@@ -306,8 +328,9 @@ func (s *ProcessingHandlerTestSuite) TestETagDataMatch() {
 	header.Set(httpheaders.IfNoneMatch, etag)
 
 	res := s.GET(fmt.Sprintf("/unsafe/plain/%s", ts.URL), header)
+	defer res.Body.Close()
 
-	s.Require().Equal(304, res.StatusCode)
+	s.Require().Equal(http.StatusNotModified, res.StatusCode)
 	s.Require().Equal(etag, res.Header.Get(httpheaders.Etag))
 }
 
@@ -316,12 +339,13 @@ func (s *ProcessingHandlerTestSuite) TestLastModifiedEnabled() {
 
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		rw.Header().Set(httpheaders.LastModified, "Wed, 21 Oct 2015 07:28:00 GMT")
-		rw.WriteHeader(200)
+		rw.WriteHeader(http.StatusOK)
 		rw.Write(s.TestData.Read("test1.png"))
 	}))
 	defer ts.Close()
 
 	res := s.GET("/unsafe/rs:fill:4:4/plain/" + ts.URL)
+	defer res.Body.Close()
 
 	s.Require().Equal("Wed, 21 Oct 2015 07:28:00 GMT", res.Header.Get(httpheaders.LastModified))
 }
@@ -330,12 +354,13 @@ func (s *ProcessingHandlerTestSuite) TestLastModifiedDisabled() {
 	s.Config().Handlers.Processing.LastModifiedEnabled = false
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		rw.Header().Set(httpheaders.LastModified, "Wed, 21 Oct 2015 07:28:00 GMT")
-		rw.WriteHeader(200)
+		rw.WriteHeader(http.StatusOK)
 		rw.Write(s.TestData.Read("test1.png"))
 	}))
 	defer ts.Close()
 
 	res := s.GET("/unsafe/rs:fill:4:4/plain/" + ts.URL)
+	defer res.Body.Close()
 
 	s.Require().Empty(res.Header.Get(httpheaders.LastModified))
 }
@@ -347,7 +372,7 @@ func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqExactMatchLastModifiedD
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		modifiedSince := r.Header.Get(httpheaders.IfModifiedSince)
 		s.Empty(modifiedSince)
-		rw.WriteHeader(200)
+		rw.WriteHeader(http.StatusOK)
 		rw.Write(data)
 	}))
 	defer ts.Close()
@@ -355,8 +380,9 @@ func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqExactMatchLastModifiedD
 	header := make(http.Header)
 	header.Set(httpheaders.IfModifiedSince, lastModified)
 	res := s.GET(fmt.Sprintf("/unsafe/plain/%s", ts.URL), header)
+	defer res.Body.Close()
 
-	s.Require().Equal(200, res.StatusCode)
+	s.Require().Equal(http.StatusOK, res.StatusCode)
 }
 
 func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqExactMatchLastModifiedEnabled() {
@@ -365,15 +391,16 @@ func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqExactMatchLastModifiedE
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		modifiedSince := r.Header.Get(httpheaders.IfModifiedSince)
 		s.Equal(lastModified, modifiedSince)
-		rw.WriteHeader(304)
+		rw.WriteHeader(http.StatusNotModified)
 	}))
 	defer ts.Close()
 
 	header := make(http.Header)
 	header.Set(httpheaders.IfModifiedSince, lastModified)
 	res := s.GET(fmt.Sprintf("/unsafe/plain/%s", ts.URL), header)
+	defer res.Body.Close()
 
-	s.Require().Equal(304, res.StatusCode)
+	s.Require().Equal(http.StatusNotModified, res.StatusCode)
 }
 
 func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqCompareMoreRecentLastModifiedDisabled() {
@@ -382,7 +409,7 @@ func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqCompareMoreRecentLastMo
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		modifiedSince := r.Header.Get(httpheaders.IfModifiedSince)
 		s.Empty(modifiedSince)
-		rw.WriteHeader(200)
+		rw.WriteHeader(http.StatusOK)
 		rw.Write(data)
 	}))
 	defer ts.Close()
@@ -393,7 +420,9 @@ func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqCompareMoreRecentLastMo
 	header.Set(httpheaders.IfModifiedSince, recentTimestamp)
 
 	res := s.GET(fmt.Sprintf("/unsafe/plain/%s", ts.URL), header)
-	s.Require().Equal(200, res.StatusCode)
+	defer res.Body.Close()
+
+	s.Require().Equal(http.StatusOK, res.StatusCode)
 }
 
 func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqCompareMoreRecentLastModifiedEnabled() {
@@ -404,7 +433,7 @@ func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqCompareMoreRecentLastMo
 		parsedModifiedSince, err := time.Parse(http.TimeFormat, modifiedSince)
 		s.NoError(err)
 		s.True(fileLastModified.Before(parsedModifiedSince))
-		rw.WriteHeader(304)
+		rw.WriteHeader(http.StatusNotModified)
 	}))
 	defer ts.Close()
 
@@ -413,8 +442,9 @@ func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqCompareMoreRecentLastMo
 	header := make(http.Header)
 	header.Set(httpheaders.IfModifiedSince, recentTimestamp)
 	res := s.GET(fmt.Sprintf("/unsafe/plain/%s", ts.URL), header)
+	defer res.Body.Close()
 
-	s.Require().Equal(304, res.StatusCode)
+	s.Require().Equal(http.StatusNotModified, res.StatusCode)
 }
 
 func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqCompareTooOldLastModifiedDisabled() {
@@ -423,7 +453,7 @@ func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqCompareTooOldLastModifi
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		modifiedSince := r.Header.Get(httpheaders.IfModifiedSince)
 		s.Empty(modifiedSince)
-		rw.WriteHeader(200)
+		rw.WriteHeader(http.StatusOK)
 		rw.Write(data)
 	}))
 	defer ts.Close()
@@ -433,8 +463,9 @@ func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqCompareTooOldLastModifi
 	header := make(http.Header)
 	header.Set(httpheaders.IfModifiedSince, oldTimestamp)
 	res := s.GET(fmt.Sprintf("/unsafe/plain/%s", ts.URL), header)
+	defer res.Body.Close()
 
-	s.Require().Equal(200, res.StatusCode)
+	s.Require().Equal(http.StatusOK, res.StatusCode)
 }
 
 func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqCompareTooOldLastModifiedEnabled() {
@@ -446,7 +477,7 @@ func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqCompareTooOldLastModifi
 		parsedModifiedSince, err := time.Parse(http.TimeFormat, modifiedSince)
 		s.NoError(err)
 		s.True(fileLastModified.After(parsedModifiedSince))
-		rw.WriteHeader(200)
+		rw.WriteHeader(http.StatusOK)
 		rw.Write(data)
 	}))
 	defer ts.Close()
@@ -456,16 +487,18 @@ func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqCompareTooOldLastModifi
 	header := make(http.Header)
 	header.Set(httpheaders.IfModifiedSince, oldTimestamp)
 	res := s.GET(fmt.Sprintf("/unsafe/plain/%s", ts.URL), header)
+	defer res.Body.Close()
 
-	s.Require().Equal(200, res.StatusCode)
+	s.Require().Equal(http.StatusOK, res.StatusCode)
 }
 
 func (s *ProcessingHandlerTestSuite) TestAlwaysRasterizeSvg() {
 	s.Config().Processing.AlwaysRasterizeSvg = true
 
 	res := s.GET("/unsafe/rs:fill:40:40/plain/local:///test1.svg")
+	defer res.Body.Close()
 
-	s.Require().Equal(200, res.StatusCode)
+	s.Require().Equal(http.StatusOK, res.StatusCode)
 	s.Require().Equal("image/png", res.Header.Get(httpheaders.ContentType))
 }
 
@@ -474,8 +507,9 @@ func (s *ProcessingHandlerTestSuite) TestAlwaysRasterizeSvgWithEnforceWebP() {
 	s.Config().ClientFeatures.EnforceWebp = true
 
 	res := s.GET("/unsafe/plain/local:///test1.svg", http.Header{"Accept": []string{"image/webp"}})
+	defer res.Body.Close()
 
-	s.Require().Equal(200, res.StatusCode)
+	s.Require().Equal(http.StatusOK, res.StatusCode)
 	s.Require().Equal("image/webp", res.Header.Get(httpheaders.ContentType))
 }
 
@@ -484,8 +518,9 @@ func (s *ProcessingHandlerTestSuite) TestAlwaysRasterizeSvgDisabled() {
 	s.Config().ClientFeatures.EnforceWebp = true
 
 	res := s.GET("/unsafe/plain/local:///test1.svg")
+	defer res.Body.Close()
 
-	s.Require().Equal(200, res.StatusCode)
+	s.Require().Equal(http.StatusOK, res.StatusCode)
 	s.Require().Equal("image/svg+xml", res.Header.Get(httpheaders.ContentType))
 }
 
@@ -494,8 +529,9 @@ func (s *ProcessingHandlerTestSuite) TestAlwaysRasterizeSvgWithFormat() {
 	s.Config().Processing.SkipProcessingFormats = []imagetype.Type{imagetype.SVG}
 
 	res := s.GET("/unsafe/plain/local:///test1.svg@svg")
+	defer res.Body.Close()
 
-	s.Require().Equal(200, res.StatusCode)
+	s.Require().Equal(http.StatusOK, res.StatusCode)
 	s.Require().Equal("image/svg+xml", res.Header.Get(httpheaders.ContentType))
 }
 
@@ -503,12 +539,13 @@ func (s *ProcessingHandlerTestSuite) TestMaxSrcFileSizeGlobal() {
 	s.Config().Security.MaxSrcFileSize = 1
 
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		rw.WriteHeader(200)
+		rw.WriteHeader(http.StatusOK)
 		rw.Write(s.TestData.Read("test1.png"))
 	}))
 	defer ts.Close()
 
 	res := s.GET("/unsafe/rs:fill:4:4/plain/" + ts.URL)
+	defer res.Body.Close()
 
 	s.Require().Equal(422, res.StatusCode)
 }

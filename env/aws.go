@@ -22,9 +22,9 @@ var (
 	IMGPROXY_ENV_AWS_SECRET_ID             = Describe("IMGPROXY_ENV_AWS_SECRET_ID", "string")
 	IMGPROXY_ENV_AWS_SECRET_VERSION_ID     = Describe("IMGPROXY_ENV_AWS_SECRET_VERSION_ID", "string")
 	IMGPROXY_ENV_AWS_SECRET_VERSION_STAGE  = Describe("IMGPROXY_ENV_AWS_SECRET_VERSION_STAGE", "string")
-	IMGPROXY_ENV_AWS_SECRET_REGION         = Describe("IMGPROXY_ENV_AWS_SECRET_REGION", "AWS region ("+defaultAWSRegion+")")
+	IMGPROXY_ENV_AWS_SECRET_REGION         = Describe("IMGPROXY_ENV_AWS_SECRET_REGION", "AWS region ("+defaultAWSRegion+")") //nolint:lll
 	IMGPROXY_ENV_AWS_SSM_PARAMETERS_PATH   = Describe("IMGPROXY_ENV_AWS_SSM_PARAMETERS_PATH", "string")
-	IMGPROXY_ENV_AWS_SSM_PARAMETERS_REGION = Describe("IMGPROXY_ENV_AWS_SSM_PARAMETERS_REGION", "AWS region ("+defaultAWSRegion+")")
+	IMGPROXY_ENV_AWS_SSM_PARAMETERS_REGION = Describe("IMGPROXY_ENV_AWS_SSM_PARAMETERS_REGION", "AWS region ("+defaultAWSRegion+")") //nolint:lll
 )
 
 func loadAWSSecret(ctx context.Context) error {
@@ -43,7 +43,7 @@ func loadAWSSecret(ctx context.Context) error {
 	// Let's form AWS default config
 	conf, err := awsConfig.LoadDefaultConfig(ctx)
 	if err != nil {
-		return fmt.Errorf("can't load AWS Secrets Manager config: %s", err)
+		return fmt.Errorf("can't load AWS Secrets Manager config: %w", err)
 	}
 
 	if len(secretRegion) > 0 {
@@ -69,7 +69,7 @@ func loadAWSSecret(ctx context.Context) error {
 
 	output, err := client.GetSecretValue(ctx, &input)
 	if err != nil {
-		return fmt.Errorf("can't retrieve config from AWS Secrets Manager: %s", err)
+		return fmt.Errorf("can't retrieve config from AWS Secrets Manager: %w", err)
 	}
 
 	// No secret string, failed to initialize secrets manager, return
@@ -94,7 +94,7 @@ func loadAWSSystemManagerParams(ctx context.Context) error {
 
 	conf, err := awsConfig.LoadDefaultConfig(ctx)
 	if err != nil {
-		return fmt.Errorf("can't load AWS SSM config: %s", err)
+		return fmt.Errorf("can't load AWS SSM config: %w", err)
 	}
 
 	conf.Region = defaultAWSRegion
@@ -119,7 +119,7 @@ func loadAWSSystemManagerParams(ctx context.Context) error {
 
 		output, err := client.GetParametersByPath(ctx, &input)
 		if err != nil {
-			return fmt.Errorf("can't retrieve parameters from AWS SSM: %s", err)
+			return fmt.Errorf("can't retrieve parameters from AWS SSM: %w", err)
 		}
 
 		for _, p := range output.Parameters {
@@ -139,7 +139,7 @@ func loadAWSSystemManagerParams(ctx context.Context) error {
 			)
 
 			if err = os.Setenv(env, *p.Value); err != nil {
-				return fmt.Errorf("can't set %s env variable from AWS SSM: %s", env, err)
+				return fmt.Errorf("can't set %s env variable from AWS SSM: %w", env, err)
 			}
 		}
 

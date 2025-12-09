@@ -348,7 +348,7 @@ func BenchmarkLogValue(b *testing.B) {
 
 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		_ = o.LogValue()
 	}
 }
@@ -358,7 +358,7 @@ func BenchmarkNestedMap(b *testing.B) {
 
 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		_ = o.NestedMap()
 	}
 }
@@ -368,7 +368,7 @@ func BenchmarkMap(b *testing.B) {
 
 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		_ = o.Map()
 	}
 }

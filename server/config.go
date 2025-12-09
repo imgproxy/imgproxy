@@ -12,7 +12,7 @@ import (
 
 var (
 	IMGPROXY_PORT                    = env.Describe("IMGPROXY_PORT", "port")
-	IMGPROXY_NETWORK                 = env.Describe("IMGPROXY_NETWORK", "tcp|tcp4|tcp6|udp|udp4|udp6|unix|unixgram|unixpacket")
+	IMGPROXY_NETWORK                 = env.Describe("IMGPROXY_NETWORK", "tcp|tcp4|tcp6|udp|udp4|udp6|unix|unixgram|unixpacket") //nolint:lll
 	IMGPROXY_BIND                    = env.Describe("IMGPROXY_BIND", "address:port, path to unix socket, etc")
 	IMGPROXY_PATH_PREFIX             = env.Describe("IMGPROXY_PATH_PREFIX", "string")
 	IMGPROXY_MAX_CLIENTS             = env.Describe("IMGPROXY_MAX_CLIENTS", "number, 0 means unlimited")

@@ -57,58 +57,6 @@ func (s *FormatterPrettyTestSuite) SetupSubTest() {
 	s.ResetLazyObjects()
 }
 
-func (s *FormatterPrettyTestSuite) removeColorCodes() {
-	p := s.buf().Bytes()
-	q := p[:0]
-
-	inEscape := false
-
-	for i := 0; i < len(p); i++ {
-		switch {
-		case p[i] == '\x1b':
-			// Skip ANSI escape codes
-			inEscape = true
-		case inEscape && p[i] == 'm':
-			inEscape = false
-		case !inEscape:
-			q = append(q, p[i])
-		}
-	}
-
-	s.buf().Truncate(len(q))
-}
-
-func (s *FormatterPrettyTestSuite) checkNextEntry(lvl, msg string) {
-	// Remove color codes from the log entry,
-	// we're not going to test coloring
-	s.removeColorCodes()
-
-	// Pretty level names are always 3 characters long
-	s.Require().Len(lvl, 3)
-
-	str, err := s.buf().ReadString('\n')
-	s.Require().NoError(err)
-
-	const timeLen = 19
-	const lvlLen = 3 + 4 // +4 for the space and brackets
-	const prefixLen = timeLen + lvlLen
-
-	s.Require().GreaterOrEqual(len(str), prefixLen)
-
-	timePart := str[:timeLen]
-	levelPart := str[timeLen:prefixLen]
-
-	now := time.Now()
-	t, err := time.ParseInLocation(time.DateTime, timePart, now.Location())
-	s.Require().NoError(err)
-	s.Require().WithinDuration(time.Now(), t, time.Minute)
-
-	s.Equal(" ["+lvl+"] ", levelPart)
-
-	// Check the message
-	s.Equal(msg+"\n", str[prefixLen:])
-}
-
 func (s *FormatterPrettyTestSuite) TestLevel() {
 	type testEntry struct {
 		level     slog.Level
@@ -338,6 +286,58 @@ func (s *FormatterPrettyTestSuite) TestSpecialFields() {
 	s.removeColorCodes()
 
 	s.Require().Equal("stack value\nwith new lines\n", s.buf().String())
+}
+
+func (s *FormatterPrettyTestSuite) removeColorCodes() {
+	p := s.buf().Bytes()
+	q := p[:0]
+
+	inEscape := false
+
+	for _, b := range p {
+		switch {
+		case b == '\x1b':
+			// Skip ANSI escape codes
+			inEscape = true
+		case inEscape && b == 'm':
+			inEscape = false
+		case !inEscape:
+			q = append(q, b)
+		}
+	}
+
+	s.buf().Truncate(len(q))
+}
+
+func (s *FormatterPrettyTestSuite) checkNextEntry(lvl, msg string) {
+	// Remove color codes from the log entry,
+	// we're not going to test coloring
+	s.removeColorCodes()
+
+	// Pretty level names are always 3 characters long
+	s.Require().Len(lvl, 3)
+
+	str, err := s.buf().ReadString('\n')
+	s.Require().NoError(err)
+
+	const timeLen = 19
+	const lvlLen = 3 + 4 // +4 for the space and brackets
+	const prefixLen = timeLen + lvlLen
+
+	s.Require().GreaterOrEqual(len(str), prefixLen)
+
+	timePart := str[:timeLen]
+	levelPart := str[timeLen:prefixLen]
+
+	now := time.Now()
+	t, err := time.ParseInLocation(time.DateTime, timePart, now.Location())
+	s.Require().NoError(err)
+	s.Require().WithinDuration(time.Now(), t, time.Minute)
+
+	s.Equal(" ["+lvl+"] ", levelPart)
+
+	// Check the message
+	s.Equal(msg+"\n", str[prefixLen:])
 }
 
 func TestFormatterPretty(t *testing.T) {

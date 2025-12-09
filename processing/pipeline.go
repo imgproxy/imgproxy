@@ -10,7 +10,7 @@ import (
 
 type Context struct {
 	// The context to check for timeouts and cancellations
-	Ctx context.Context
+	Ctx context.Context //nolint:containedctx
 
 	// Current image being processed
 	Img *vips.Image

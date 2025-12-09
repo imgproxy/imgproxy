@@ -18,7 +18,7 @@ type DownloadOptions struct {
 	DownloadFinished context.CancelFunc
 }
 
-// TODO: get rid of this global variable
+// RedirectAllRequestsTo TODO: get rid of this global variable
 func RedirectAllRequestsTo(u string) {
 	redirectAllRequestsTo = u
 }

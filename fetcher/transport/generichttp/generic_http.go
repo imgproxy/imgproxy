@@ -1,4 +1,4 @@
-// Generic HTTP transport for imgproxy
+// Package generichttp provides Generic HTTP transport for imgproxy
 package generichttp
 
 import (
@@ -51,7 +51,7 @@ func New(verifyNetworks bool, config *Config) (*http.Transport, error) {
 	}
 
 	if config.IgnoreSslVerification {
-		transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+		transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true} //nolint:gosec
 	}
 
 	transport2, err := http2.ConfigureTransports(transport)

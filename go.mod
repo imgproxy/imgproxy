@@ -231,6 +231,3 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.7.0 // indirect
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )
-
-// Freeze github.com/tdewolff/parse/v2 to v2.7.21
-replace github.com/tdewolff/parse/v2 => github.com/tdewolff/parse/v2 v2.7.21

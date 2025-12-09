@@ -71,15 +71,15 @@ func (r *Router) WithPanic(h RouteHandler) RouteHandler {
 			}
 
 			// abort handler is an exception of net/http, we should simply repanic it.
-			// it will supress the stack trace
-			if rerr == http.ErrAbortHandler {
+			// it will suppress the stack trace
+			if e, ok := rerr.(error); ok && errors.Is(e, http.ErrAbortHandler) {
 				panic(rerr)
 			}
 
 			// let's recover error value from panic if it has panicked with error
 			err, ok := rerr.(error)
 			if !ok {
-				err = fmt.Errorf("panic: %v", err)
+				err = fmt.Errorf("panic: %w", err)
 			}
 
 			retErr = NewError(errctx.WrapWithStackSkip(err, 1), errCategoryUnexpected)

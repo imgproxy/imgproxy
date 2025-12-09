@@ -1,58 +1,109 @@
 version: "2"
 linters:
-  default: none
-  enable:
-    - bodyclose
-    - gocritic
-    - govet
-    - ineffassign
-    - staticcheck
-    - testifylint
-    - unused
+  default: all
+  disable:
+    - depguard         # too restrictive for us
+    - errcheck         # sometimes we ignore errors intentionally
+    - err113           # we are OK with untyped errors
+    - exhaustive       # this is not Rust yet
+    - exhaustruct      # we often use partial struct literals
+    - gocritic         # mostly false positives
+    - godot            # too noisy
+    - godox            # we use TODOs intentionally
+    - gochecknoglobals # we use global pools
+    - gocyclo          # cyclo is enough
+    - gochecknoinits   # init() is still used
+    - ireturn          # return interface is normal
+    - mnd              # many false positives on things like SplitN
+    - noctx            # TODO: this should be considered valid, fix later
+    - nilnil           # we sometimes return nil, nil
+    - nonamedreturns   # we sometimes use named returns for clarity
+    - noinlineerr      # we use inline errors extensively
+    - paralleltest     # we can't always use t.Parallel()
+    - testpackage      # we often test private methods
+    - varnamelen       # that's not for linter to decide
+    - wrapcheck        # we are OK with some untyped errors
+    - wsl              # deprecated in favor of wsl_v5
+
+    # NOTE: this is legit, but too much conflicts with existing codebase
+    - perfsprint
+    - nlreturn
+    - nestif # too much noise for now, but needs fixing
+    - funlen # needs fixing
+    - wsl_v5
+    - contextcheck
+
   settings:
-    govet:
-      disable:
-        - fieldalignment
-      enable-all: true
+    gosec:
+      excludes:
+        - G104 # ignoring errors on Close is acceptable
+        - G304 # well...
+
+    funcorder:
+      alphabetical: false
+
+    revive:
+      rules:
+        - name: package-comments
+          disabled: true
+        - name: exported # should be reviewed at some point
+          disabled: true
+
   exclusions:
-    generated: lax
-    presets:
-      - comments
-      - common-false-positives
-      - legacy
-      - std-error-handling
     rules:
+      # can be used
+      - linters: sloglint
+        path: ^logger
+
+      # we use our own logic there
+      - linters: errorlint
+        path: ^errctx
+
+      # do not check test files extensively
       - linters:
-          - bodyclose
-        path: .*_test.go
+          - funlen
+          - forcetypeassert
+          - goconst
+          - gosec
+        path: _test.go$|^xmlparser|storage/test_server.go|test_storage.go
+
+      # these indicate complexity problems and should be refactored eventually
+      - linters: cyclop
+        path: ^xmlparser|^vips|^storage|^processing|^options|^monitoring
+
+      - linters: cyclop
+        path: asyncbuffer/buffer.go|cookies/cookies.go|fetcher/request.go|fetcher/transport/generichttp/generic_http.go
+
+      - linters: cyclop
+        path: fetcher/transport/transport.go|httprange/httprange.go|handlers/processing/request.go
+
+      - linters: cyclop
+        path: env/aws.go|imgproxy.go|testutil/equal_but_not_same.go|clientfeatures/detector.go
+
+      - linters: cyclop
+        path: processing/request.go,asyncbuffer/buffer.go
+
+      - linters: gocognit
+        path: ^processing|^storage|^xmlparser
+
+      # this test needs extensive refactoring anyways
       - linters:
-          - bodyclose
-        path: router/timeout_response.go
-      # False positives on CGO generated code
-      - linters:
-          - staticcheck
-        path: vips/.*
-        text: 'SA4000:'
-      # False positives on CGO generated code
-      - linters:
-          - gocritic
-        path: vips/.*
-        text: dupSubExpr
-      # False positives on CGO generated code
-      - linters:
-          - staticcheck
-        text: 'ST1005:'
+          - maintidx
+          - dupl
+        path: ^processing/processing_test.go
+
     paths:
       - .tmp
       - vendor
       - third_party$
       - builtin$
-      - examples$
+      - ^examples
+      - ^config # remove once we done with the config
+
 formatters:
   enable:
     - goimports
   exclusions:
-    generated: lax
     paths:
       - .tmp
       - vendor

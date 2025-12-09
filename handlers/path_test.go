@@ -17,10 +17,6 @@ func TestPathTestSuite(t *testing.T) {
 	suite.Run(t, new(PathTestSuite))
 }
 
-func (s *PathTestSuite) createRequest(path string) *http.Request {
-	return httptest.NewRequest("GET", path, nil)
-}
-
 func (s *PathTestSuite) TestParsePath() {
 	testCases := []struct {
 		name          string
@@ -98,7 +94,6 @@ func (s *PathTestSuite) TestParsePath() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-
 			req := s.createRequest(tc.requestPath)
 			req.Pattern = tc.pathPrefix
 			path, signature, err := SplitPathSignature(req)
@@ -188,4 +183,8 @@ func (s *PathTestSuite) TestRedenormalizePathHTTPProtocol() {
 			s.Equal(tc.expected, result)
 		})
 	}
+}
+
+func (s *PathTestSuite) createRequest(path string) *http.Request {
+	return httptest.NewRequest(http.MethodGet, path, nil)
 }

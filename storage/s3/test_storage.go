@@ -17,6 +17,18 @@ type TestServer struct {
 	backend *s3mem.Backend
 }
 
+// NewS3Server creates and starts a new mock S3 server
+func NewS3Server() *TestServer {
+	backend := s3mem.New()
+	faker := gofakes3.New(backend)
+	server := httptest.NewServer(faker.Server())
+
+	return &TestServer{
+		server:  server,
+		backend: backend,
+	}
+}
+
 // Backend returns the underlying s3mem.Backend for direct API access
 func (s *TestServer) Backend() *s3mem.Backend {
 	return s.backend
@@ -25,6 +37,7 @@ func (s *TestServer) Backend() *s3mem.Backend {
 // s3StorageWrapper wraps the storage and optionally holds a server for cleanup
 type s3StorageWrapper struct {
 	*Storage
+
 	server      *TestServer
 	shouldClose bool
 }
@@ -34,7 +47,7 @@ func (w *s3StorageWrapper) Server() *TestServer {
 	return w.server
 }
 
-// Sugar alias
+// LazySuiteStorage Sugar alias
 type LazySuiteStorage = testutil.LazyObj[*s3StorageWrapper]
 
 // NewLazySuiteStorage creates a lazy S3 Storage object for use in test suites
@@ -85,19 +98,7 @@ func NewLazySuiteStorage(
 	)
 }
 
-// NewS3Server creates and starts a new mock S3 server
-func NewS3Server() *TestServer {
-	backend := s3mem.New()
-	faker := gofakes3.New(backend)
-	server := httptest.NewServer(faker.Server())
-
-	return &TestServer{
-		server:  server,
-		backend: backend,
-	}
-}
-
-// Close stops the server
+// Close closes the TestServer
 func (s *TestServer) Close() {
 	s.server.Close()
 }

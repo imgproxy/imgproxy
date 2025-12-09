@@ -25,14 +25,14 @@ const (
 	defaultAwsRegion = "us-west-1"
 )
 
-// CloudWatch holds CloudWatch client and configuration
+// CloudWatch holds CloudWatch client and configuration.
 type CloudWatch struct {
 	config *Config
 	stats  *stats.Stats
 
 	client *cloudwatch.Client
 
-	collectorCtx       context.Context
+	collectorCtx       context.Context //nolint:containedctx
 	collectorCtxCancel context.CancelFunc
 }
 
@@ -53,7 +53,7 @@ func New(ctx context.Context, config *Config, stats *stats.Stats) (*CloudWatch, 
 
 	conf, err := awsConfig.LoadDefaultConfig(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("can't load CloudWatch config: %s", err)
+		return nil, fmt.Errorf("can't load CloudWatch config: %w", err)
 	}
 
 	if len(config.Region) > 0 {
@@ -77,6 +77,41 @@ func (cw *CloudWatch) Stop(ctx context.Context) {
 	if cw.collectorCtxCancel != nil {
 		cw.collectorCtxCancel()
 	}
+}
+
+// StartRequest starts a new request span
+func (cw *CloudWatch) StartRequest(
+	ctx context.Context,
+	rw http.ResponseWriter,
+	r *http.Request,
+) (context.Context, context.CancelFunc, http.ResponseWriter) {
+	// CloudWatch does not support request tracing
+	return ctx, func() {}, rw
+}
+
+// StartSpan starts a new span
+func (cw *CloudWatch) StartSpan(
+	ctx context.Context,
+	name string,
+	meta map[string]any,
+) (context.Context, context.CancelFunc) {
+	// CloudWatch does not support request tracing
+	return ctx, func() {}
+}
+
+// SetMetadata sets metadata for the current span
+func (cw *CloudWatch) SetMetadata(ctx context.Context, key string, value any) {
+	// CloudWatch does not support request tracing
+}
+
+// SendError records an error in the current span
+func (cw *CloudWatch) SendError(ctx context.Context, errType string, err errctx.Error) {
+	// CloudWatch does not support request tracing
+}
+
+// InjectHeaders adds monitoring headers to the provided HTTP headers.
+func (cw *CloudWatch) InjectHeaders(ctx context.Context, headers http.Header) {
+	// CloudWatch does not support request tracing
 }
 
 // runMetricsCollector collects and sends metrics to CloudWatch
@@ -186,39 +221,4 @@ func (cw *CloudWatch) runMetricsCollector() {
 			return
 		}
 	}
-}
-
-// StartRequest starts a new request span
-func (cw *CloudWatch) StartRequest(
-	ctx context.Context,
-	rw http.ResponseWriter,
-	r *http.Request,
-) (context.Context, context.CancelFunc, http.ResponseWriter) {
-	// CloudWatch does not support request tracing
-	return ctx, func() {}, rw
-}
-
-// StartSpan starts a new span
-func (cw *CloudWatch) StartSpan(
-	ctx context.Context,
-	name string,
-	meta map[string]any,
-) (context.Context, context.CancelFunc) {
-	// CloudWatch does not support request tracing
-	return ctx, func() {}
-}
-
-// SetMetadata sets metadata for the current span
-func (cw *CloudWatch) SetMetadata(ctx context.Context, key string, value any) {
-	// CloudWatch does not support request tracing
-}
-
-// SetError records an error in the current span
-func (cw *CloudWatch) SendError(ctx context.Context, errType string, err errctx.Error) {
-	// CloudWatch does not support request tracing
-}
-
-// InjectHeaders adds monitoring headers to the provided HTTP headers.
-func (cw *CloudWatch) InjectHeaders(ctx context.Context, headers http.Header) {
-	// CloudWatch does not support request tracing
 }

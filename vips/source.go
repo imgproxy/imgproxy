@@ -9,6 +9,7 @@ package vips
 */
 import "C"
 import (
+	"errors"
 	"io"
 	"runtime/cgo"
 	"unsafe"
@@ -59,7 +60,7 @@ func imgproxyReaderRead(handle C.uintptr_t, pointer unsafe.Pointer, size C.int64
 
 	buf := unsafe.Slice((*byte)(pointer), size)
 	n, err := r.Read(buf)
-	if err == io.EOF {
+	if errors.Is(err, io.EOF) {
 		return 0
 	} else if err != nil {
 		vipsError("imgproxyReaderRead", "error reading from imgproxy source: %v", err)

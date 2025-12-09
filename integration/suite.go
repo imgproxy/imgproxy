@@ -81,6 +81,26 @@ func (s *Suite) TearDownSuite() {
 	logger.Unmute()
 }
 
+// GET performs a GET request to the imageproxy real server
+func (s *Suite) GET(path string, header ...http.Header) *http.Response {
+	url := fmt.Sprintf("http://%s%s", s.Server().Addr, path)
+
+	// Perform GET request to an url
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	s.Require().NoError(err)
+
+	// Copy headers from the provided http.Header to the request
+	for _, h := range header {
+		httpheaders.CopyAll(h, req.Header, true)
+	}
+
+	// Do the request
+	resp, err := http.DefaultClient.Do(req)
+	s.Require().NoError(err)
+
+	return resp
+}
+
 // startServer starts imgproxy instance's server for the tests.
 // Returns [TestServer] that contains the server address and shutdown function
 func (s *Suite) startServer(ctx context.Context, i *imgproxy.Imgproxy) *TestServer {
@@ -99,24 +119,4 @@ func (s *Suite) startServer(ctx context.Context, i *imgproxy.Imgproxy) *TestServ
 		Addr:     <-addrCh,
 		Shutdown: cancel,
 	}
-}
-
-// GET performs a GET request to the imageproxy real server
-func (s *Suite) GET(path string, header ...http.Header) *http.Response {
-	url := fmt.Sprintf("http://%s%s", s.Server().Addr, path)
-
-	// Perform GET request to an url
-	req, err := http.NewRequest("GET", url, nil)
-	s.Require().NoError(err)
-
-	// Copy headers from the provided http.Header to the request
-	for _, h := range header {
-		httpheaders.CopyAll(h, req.Header, true)
-	}
-
-	// Do the request
-	resp, err := http.DefaultClient.Do(req)
-	s.Require().NoError(err)
-
-	return resp
 }

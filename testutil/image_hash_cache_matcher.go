@@ -44,21 +44,6 @@ func NewImageHashCacheMatcher(testDataProvider *TestDataProvider, hashType Image
 	}
 }
 
-// calculateHash converts image data to RGBA using VIPS and calculates hash
-func (m *ImageHashCacheMatcher) calculateHash(t *testing.T, key string, buf []byte) *ImageHash {
-	t.Helper()
-
-	// Load image as RGBA
-	goImg, err := LoadImage(bytes.NewReader(buf))
-	require.NoError(t, err, "failed to load image for key %s", key)
-
-	// Calculate hash
-	hash, err := NewImageHash(goImg, m.hashType)
-	require.NoError(t, err)
-
-	return hash
-}
-
 // ImageMatches is a testing helper, which accepts image as reader, calculates
 // hash and compares it with a hash saved to testdata/test-hashes folder.
 func (m *ImageHashCacheMatcher) ImageMatches(t *testing.T, img io.Reader, key string, maxDistance int) {
@@ -75,15 +60,19 @@ func (m *ImageHashCacheMatcher) ImageMatches(t *testing.T, img io.Reader, key st
 	sourceHash := m.calculateHash(t, key, buf)
 
 	// Calculate image hash path (create folder if missing)
-	hashPath, err := m.makeTargetPath(t, m.hashesPath, t.Name(), key, "hash")
-	require.NoError(t, err)
+	hashPath := m.makeTargetPath(t, m.hashesPath, t.Name(), key, "hash")
 
 	// Try to read or create the hash file
 	f, err := os.Open(hashPath)
 	if os.IsNotExist(err) {
 		// If the hash file does not exist, and we are not allowed to create it, fail
 		if !m.createMissingHashes {
-			require.NoError(t, err, "failed to read target hash from %s, use TEST_CREATE_MISSING_HASHES=true to create it, TEST_SAVE_TMP_IMAGES_PATH=/some/path to check resulting images", hashPath)
+			//nolint:lll
+			require.NoError(
+				t, err,
+				"failed to read target hash from %s, use TEST_CREATE_MISSING_HASHES=true to create it, TEST_SAVE_TMP_IMAGES_PATH=/some/path to check resulting images",
+				hashPath,
+			)
 		}
 
 		// Create missing hash file
@@ -113,12 +102,32 @@ func (m *ImageHashCacheMatcher) ImageMatches(t *testing.T, img io.Reader, key st
 	require.LessOrEqual(t, distance, maxDistance, "image hashes are too different for %s: distance %d", key, distance)
 }
 
+// calculateHash converts image data to RGBA using VIPS and calculates hash
+func (m *ImageHashCacheMatcher) calculateHash(t *testing.T, key string, buf []byte) *ImageHash {
+	t.Helper()
+
+	// Load image as RGBA
+	goImg, err := LoadImage(bytes.NewReader(buf))
+	require.NoError(t, err, "failed to load image for key %s", key)
+
+	// Calculate hash
+	hash, err := NewImageHash(goImg, m.hashType)
+	require.NoError(t, err)
+
+	return hash
+}
+
 // makeTargetPath creates the target directory and returns file path for saving
 // the image or hash.
-func (m *ImageHashCacheMatcher) makeTargetPath(t *testing.T, base, folder, filename, ext string) (string, error) {
+func (m *ImageHashCacheMatcher) makeTargetPath(
+	t *testing.T,
+	base, folder, filename, ext string,
+) string {
+	t.Helper()
+
 	// Create the target directory if it doesn't exist
 	targetDir := path.Join(base, folder)
-	err := os.MkdirAll(targetDir, 0755)
+	err := os.MkdirAll(targetDir, 0750)
 	require.NoError(t, err, "failed to create %s target directory", targetDir)
 
 	// Replace the extension with the detected one
@@ -127,11 +136,13 @@ func (m *ImageHashCacheMatcher) makeTargetPath(t *testing.T, base, folder, filen
 	// Create the target file
 	targetPath := path.Join(targetDir, filename)
 
-	return targetPath, nil
+	return targetPath
 }
 
 // saveTmpImage saves the provided image data to a temporary file
 func (m *ImageHashCacheMatcher) saveTmpImage(t *testing.T, key string, buf []byte) {
+	t.Helper()
+
 	if m.saveTmpImagesPath == "" {
 		return
 	}
@@ -140,8 +151,7 @@ func (m *ImageHashCacheMatcher) saveTmpImage(t *testing.T, key string, buf []byt
 	ext, err := imagetype.Detect(bytes.NewReader(buf), "", "")
 	require.NoError(t, err)
 
-	targetPath, err := m.makeTargetPath(t, m.saveTmpImagesPath, t.Name(), key, ext.String())
-	require.NoError(t, err, "failed to create TEST_SAVE_TMP_IMAGES target path for %s/%s", t.Name(), key)
+	targetPath := m.makeTargetPath(t, m.saveTmpImagesPath, t.Name(), key, ext.String())
 
 	targetFile, err := os.Create(targetPath)
 	require.NoError(t, err, "failed to create TEST_SAVE_TMP_IMAGES target file %s", targetPath)

@@ -231,6 +231,7 @@ func setMetadata(span trace.Span, key string, value interface{}) {
 
 	rv := reflect.ValueOf(value)
 
+	//nolint:forcetypeassert
 	switch {
 	case rv.Kind() == reflect.String:
 		span.SetAttributes(attribute.String(key, value.(string)))
@@ -239,7 +240,7 @@ func setMetadata(span trace.Span, key string, value interface{}) {
 	case rv.CanInt():
 		span.SetAttributes(attribute.Int64(key, rv.Int()))
 	case rv.CanUint():
-		span.SetAttributes(attribute.Int64(key, int64(rv.Uint())))
+		span.SetAttributes(attribute.Int64(key, int64(rv.Uint()))) //nolint:gosec
 	case rv.CanFloat():
 		span.SetAttributes(attribute.Float64(key, rv.Float()))
 	case rv.Kind() == reflect.Map && rv.Type().Key().Kind() == reflect.String:
@@ -312,9 +313,9 @@ func (o *Otel) InjectHeaders(ctx context.Context, headers http.Header) {
 
 // addDefaultMetrics adds default system and application metrics to OpenTelemetry
 func (o *Otel) addDefaultMetrics() error {
-	proc, err := process.NewProcess(int32(os.Getpid()))
+	proc, err := process.NewProcess(int32(os.Getpid())) //nolint:gosec
 	if err != nil {
-		return fmt.Errorf("can't initialize process data for OpenTelemetry: %s", err)
+		return fmt.Errorf("can't initialize process data for OpenTelemetry: %w", err)
 	}
 
 	processResidentMemory, err := o.meter.Int64ObservableGauge(
@@ -323,7 +324,7 @@ func (o *Otel) addDefaultMetrics() error {
 		metric.WithDescription("Resident memory size in bytes."),
 	)
 	if err != nil {
-		return fmt.Errorf("can't add process_resident_memory_bytes gauge to OpenTelemetry: %s", err)
+		return fmt.Errorf("can't add process_resident_memory_bytes gauge to OpenTelemetry: %w", err)
 	}
 
 	processVirtualMemory, err := o.meter.Int64ObservableGauge(
@@ -332,7 +333,7 @@ func (o *Otel) addDefaultMetrics() error {
 		metric.WithDescription("Virtual memory size in bytes."),
 	)
 	if err != nil {
-		return fmt.Errorf("can't add process_virtual_memory_bytes gauge to OpenTelemetry: %s", err)
+		return fmt.Errorf("can't add process_virtual_memory_bytes gauge to OpenTelemetry: %w", err)
 	}
 
 	goMemstatsSys, err := o.meter.Int64ObservableGauge(
@@ -341,7 +342,7 @@ func (o *Otel) addDefaultMetrics() error {
 		metric.WithDescription("Number of bytes obtained from system."),
 	)
 	if err != nil {
-		return fmt.Errorf("can't add go_memstats_sys_bytes gauge to OpenTelemetry: %s", err)
+		return fmt.Errorf("can't add go_memstats_sys_bytes gauge to OpenTelemetry: %w", err)
 	}
 
 	goMemstatsHeapIdle, err := o.meter.Int64ObservableGauge(
@@ -350,7 +351,7 @@ func (o *Otel) addDefaultMetrics() error {
 		metric.WithDescription("Number of heap bytes waiting to be used."),
 	)
 	if err != nil {
-		return fmt.Errorf("can't add go_memstats_heap_idle_bytes gauge to OpenTelemetry: %s", err)
+		return fmt.Errorf("can't add go_memstats_heap_idle_bytes gauge to OpenTelemetry: %w", err)
 	}
 
 	goMemstatsHeapInuse, err := o.meter.Int64ObservableGauge(
@@ -359,7 +360,7 @@ func (o *Otel) addDefaultMetrics() error {
 		metric.WithDescription("Number of heap bytes that are in use."),
 	)
 	if err != nil {
-		return fmt.Errorf("can't add go_memstats_heap_inuse_bytes gauge to OpenTelemetry: %s", err)
+		return fmt.Errorf("can't add go_memstats_heap_inuse_bytes gauge to OpenTelemetry: %w", err)
 	}
 
 	goGoroutines, err := o.meter.Int64ObservableGauge(
@@ -368,7 +369,7 @@ func (o *Otel) addDefaultMetrics() error {
 		metric.WithDescription("Number of goroutines that currently exist."),
 	)
 	if err != nil {
-		return fmt.Errorf("can't add go_goroutines gauge to OpenTelemetry: %s", err)
+		return fmt.Errorf("can't add go_goroutines gauge to OpenTelemetry: %w", err)
 	}
 
 	goThreads, err := o.meter.Int64ObservableGauge(
@@ -377,7 +378,7 @@ func (o *Otel) addDefaultMetrics() error {
 		metric.WithDescription("Number of OS threads created."),
 	)
 	if err != nil {
-		return fmt.Errorf("can't add go_threads gauge to OpenTelemetry: %s", err)
+		return fmt.Errorf("can't add go_threads gauge to OpenTelemetry: %w", err)
 	}
 
 	workersGauge, err := o.meter.Int64ObservableGauge(
@@ -386,7 +387,7 @@ func (o *Otel) addDefaultMetrics() error {
 		metric.WithDescription("A gauge of the number of running workers."),
 	)
 	if err != nil {
-		return fmt.Errorf("can't add workers gauge to OpenTelemetry: %s", err)
+		return fmt.Errorf("can't add workers gauge to OpenTelemetry: %w", err)
 	}
 
 	requestsInProgressGauge, err := o.meter.Float64ObservableGauge(
@@ -395,7 +396,7 @@ func (o *Otel) addDefaultMetrics() error {
 		metric.WithDescription("A gauge of the number of requests currently being in progress."),
 	)
 	if err != nil {
-		return fmt.Errorf("can't add requests_in_progress gauge to OpenTelemetry: %s", err)
+		return fmt.Errorf("can't add requests_in_progress gauge to OpenTelemetry: %w", err)
 	}
 
 	imagesInProgressGauge, err := o.meter.Float64ObservableGauge(
@@ -404,7 +405,7 @@ func (o *Otel) addDefaultMetrics() error {
 		metric.WithDescription("A gauge of the number of images currently being in progress."),
 	)
 	if err != nil {
-		return fmt.Errorf("can't add images_in_progress gauge to OpenTelemetry: %s", err)
+		return fmt.Errorf("can't add images_in_progress gauge to OpenTelemetry: %w", err)
 	}
 
 	workersUtilizationGauge, err := o.meter.Float64ObservableGauge(
@@ -413,7 +414,7 @@ func (o *Otel) addDefaultMetrics() error {
 		metric.WithDescription("A gauge of the workers utilization in percents."),
 	)
 	if err != nil {
-		return fmt.Errorf("can't add workers_utilization gauge to OpenTelemetry: %s", err)
+		return fmt.Errorf("can't add workers_utilization gauge to OpenTelemetry: %w", err)
 	}
 
 	vipsMemory, err := o.meter.Float64ObservableGauge(
@@ -422,7 +423,7 @@ func (o *Otel) addDefaultMetrics() error {
 		metric.WithDescription("A gauge of the vips tracked memory usage in bytes."),
 	)
 	if err != nil {
-		return fmt.Errorf("can't add vips_memory_bytes gauge to OpenTelemetry: %s", err)
+		return fmt.Errorf("can't add vips_memory_bytes gauge to OpenTelemetry: %w", err)
 	}
 
 	vipsMaxMemory, err := o.meter.Float64ObservableGauge(
@@ -431,7 +432,7 @@ func (o *Otel) addDefaultMetrics() error {
 		metric.WithDescription("A gauge of the max vips tracked memory usage in bytes."),
 	)
 	if err != nil {
-		return fmt.Errorf("can't add vips_max_memory_bytes gauge to OpenTelemetry: %s", err)
+		return fmt.Errorf("can't add vips_max_memory_bytes gauge to OpenTelemetry: %w", err)
 	}
 
 	vipsAllocs, err := o.meter.Float64ObservableGauge(
@@ -440,10 +441,11 @@ func (o *Otel) addDefaultMetrics() error {
 		metric.WithDescription("A gauge of the number of active vips allocations."),
 	)
 	if err != nil {
-		return fmt.Errorf("can't add vips_allocs gauge to OpenTelemetry: %s", err)
+		return fmt.Errorf("can't add vips_allocs gauge to OpenTelemetry: %w", err)
 	}
 
 	_, err = o.meter.RegisterCallback(
+		//nolint:gosec
 		func(ctx context.Context, ob metric.Observer) error {
 			memStats, merr := proc.MemoryInfo()
 			if merr != nil {
@@ -491,7 +493,7 @@ func (o *Otel) addDefaultMetrics() error {
 		vipsAllocs,
 	)
 	if err != nil {
-		return fmt.Errorf("can't register OpenTelemetry callbacks: %s", err)
+		return fmt.Errorf("can't register OpenTelemetry callbacks: %w", err)
 	}
 
 	return nil

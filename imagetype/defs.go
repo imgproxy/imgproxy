@@ -154,9 +154,27 @@ func init() {
 	// JPEG magic bytes
 	RegisterMagicBytes(JPEG, []byte("\xff\xd8"))
 
-	// JXL magic bytes
-	RegisterMagicBytes(JXL, []byte{0xff, 0x0a})                                                             // JXL codestream (can't use string due to 0x0a)
-	RegisterMagicBytes(JXL, []byte{0x00, 0x00, 0x00, 0x0C, 0x4A, 0x58, 0x4C, 0x20, 0x0D, 0x0A, 0x87, 0x0A}) // JXL container (has null bytes)
+	// JXL codestream (can't use string due to 0x0a)
+	RegisterMagicBytes(JXL, []byte{0xff, 0x0a})
+
+	// JXL container (has null bytes)
+	RegisterMagicBytes(
+		JXL,
+		[]byte{
+			0x00,
+			0x00,
+			0x00,
+			0x0C,
+			0x4A,
+			0x58,
+			0x4C,
+			0x20,
+			0x0D,
+			0x0A,
+			0x87,
+			0x0A,
+		},
+	)
 
 	// PNG magic bytes
 	RegisterMagicBytes(PNG, []byte("\x89PNG\r\n\x1a\n"))

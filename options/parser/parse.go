@@ -16,8 +16,8 @@ import (
 )
 
 // ensureMaxArgs checks if the number of arguments is as expected
-func (p *Parser) ensureMaxArgs(name string, args []string, max int) error {
-	if len(args) > max {
+func (p *Parser) ensureMaxArgs(name string, args []string, maxArgs int) error {
+	if len(args) > maxArgs {
 		return newInvalidArgsError(name, args)
 	}
 	return nil

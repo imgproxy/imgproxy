@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"context"
 	"os"
 	"testing"
 
@@ -9,7 +10,7 @@ import (
 
 // TestMain performs global setup/teardown for the integration tests.
 func TestMain(m *testing.M) {
-	err := imgproxy.Init()
+	err := imgproxy.Init(context.Background())
 	if err != nil {
 		panic(err)
 	}

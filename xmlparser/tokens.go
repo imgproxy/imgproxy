@@ -176,7 +176,7 @@ func (p *ProcInst) WriteTo(w TokenWriter) error {
 				return err
 			}
 		}
-		if _, err := w.Write([]byte(p.Inst)); err != nil {
+		if _, err := w.Write(p.Inst); err != nil {
 			return err
 		}
 	}

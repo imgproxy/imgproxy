@@ -12,13 +12,13 @@ import (
 
 var (
 	IMGPROXY_PREFERRED_FORMATS       = env.Describe("IMGPROXY_PREFERRED_FORMATS", "jpeg|png|gif|webp|avif|jxl|tiff|svg")
-	IMGPROXY_SKIP_PROCESSING_FORMATS = env.Describe("IMGPROXY_SKIP_PROCESSING_FORMATS", "jpeg|png|gif|webp|avif|jxl|tiff|svg")
+	IMGPROXY_SKIP_PROCESSING_FORMATS = env.Describe("IMGPROXY_SKIP_PROCESSING_FORMATS", "jpeg|png|gif|webp|avif|jxl|tiff|svg") //nolint:lll
 	IMGPROXY_WATERMARK_OPACITY       = env.Describe("IMGPROXY_WATERMARK_OPACITY", "number between 0..1")
 	IMGPROXY_DISABLE_SHRINK_ON_LOAD  = env.Describe("IMGPROXY_DISABLE_SHRINK_ON_LOAD", "boolean")
 	IMGPROXY_USE_LINEAR_COLORSPACE   = env.Describe("IMGPROXY_USE_LINEAR_COLORSPACE", "boolean")
 	IMGPROXY_ALWAYS_RASTERIZE_SVG    = env.Describe("IMGPROXY_ALWAYS_RASTERIZE_SVG", "boolean")
 	IMGPROXY_QUALITY                 = env.Describe("IMGPROXY_QUALITY", "number between 0..100")
-	IMGPROXY_FORMAT_QUALITY          = env.Describe("IMGPROXY_FORMAT_QUALITY", "comma-separated list of format=quality pairs where quality is between 0..100")
+	IMGPROXY_FORMAT_QUALITY          = env.Describe("IMGPROXY_FORMAT_QUALITY", "comma-separated list of format=quality pairs where quality is between 0..100") //nolint:lll
 	IMGPROXY_STRIP_METADATA          = env.Describe("IMGPROXY_STRIP_METADATA", "boolean")
 	IMGPROXY_KEEP_COPYRIGHT          = env.Describe("IMGPROXY_KEEP_COPYRIGHT", "boolean")
 	IMGPROXY_STRIP_COLOR_PROFILE     = env.Describe("IMGPROXY_STRIP_COLOR_PROFILE", "boolean")
@@ -45,7 +45,7 @@ type Config struct {
 	Svg svg.Config
 }
 
-// NewConfig creates a new Config instance with the given parameters.
+// NewDefaultConfig creates a new Config instance with the given parameters.
 func NewDefaultConfig() Config {
 	return Config{
 		WatermarkOpacity: 1,
@@ -70,7 +70,7 @@ func NewDefaultConfig() Config {
 	}
 }
 
-// NewConfig creates a new Config instance with the given parameters.
+// LoadConfigFromEnv creates a new Config instance with the given parameters.
 func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c = ensure.Ensure(c, NewDefaultConfig)
 

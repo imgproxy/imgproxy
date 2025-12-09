@@ -99,14 +99,6 @@ func (h *Handler) Enabled(ctx context.Context, level slog.Level) bool {
 	return false
 }
 
-// withGroup returns a new handler with the given attribute group added.
-func (h *Handler) withGroup(group attrGroup) *Handler {
-	h2 := *h
-	h2.groups = append(slices.Clip(h.groups), group)
-	h2.hooks = slices.Clip(h.hooks)
-	return &h2
-}
-
 // WithAttrs returns a new handler with the given attributes added.
 func (h *Handler) WithAttrs(attrs []slog.Attr) slog.Handler {
 	if len(attrs) == 0 {
@@ -222,4 +214,12 @@ func (h *Handler) writeError(err error) {
 	h.format(r, buf)
 
 	_, _ = os.Stderr.Write(*buf)
+}
+
+// withGroup returns a new handler with the given attribute group added.
+func (h *Handler) withGroup(group attrGroup) *Handler {
+	h2 := *h
+	h2.groups = append(slices.Clip(h.groups), group)
+	h2.hooks = slices.Clip(h.hooks)
+	return &h2
 }

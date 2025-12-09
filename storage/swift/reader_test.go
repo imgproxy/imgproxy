@@ -38,7 +38,9 @@ func (s *ReaderTestSuite) SetupSuite() {
 func (s *ReaderTestSuite) SetupTest() {
 	// Recreate Swift blob for each test
 	conn := s.swiftStorage().Connection()
-	f, err := conn.ObjectCreate(s.T().Context(), s.TestContainer, s.TestObjectKey, true, "", "application/octet-stream", nil)
+	f, err := conn.ObjectCreate(
+		s.T().Context(), s.TestContainer, s.TestObjectKey, true, "", "application/octet-stream", nil,
+	)
 	s.Require().NoError(err)
 	n, err := f.Write(s.TestData)
 	s.Require().Len(s.TestData, n)

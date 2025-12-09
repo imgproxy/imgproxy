@@ -30,7 +30,7 @@ func Start(cancel context.CancelFunc, router *Router) (*Server, error) {
 	l, err := reuseport.Listen(router.config.Network, router.config.Bind, router.config.SocketReusePort)
 	if err != nil {
 		cancel()
-		return nil, fmt.Errorf("can't start server: %s", err)
+		return nil, fmt.Errorf("can't start server: %w", err)
 	}
 
 	if router.config.MaxClients > 0 {
@@ -78,8 +78,8 @@ func Start(cancel context.CancelFunc, router *Router) (*Server, error) {
 func (s *Server) Shutdown(ctx context.Context) {
 	slog.Info("Shutting down the server...")
 
-	ctx, close := context.WithTimeout(ctx, s.router.config.GracefulStopTimeout)
-	defer close()
+	ctx, closeServer := context.WithTimeout(ctx, s.router.config.GracefulStopTimeout)
+	defer closeServer()
 
 	s.server.Shutdown(ctx)
 }

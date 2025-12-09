@@ -18,6 +18,7 @@ type TestServer struct {
 // gcsStorageWrapper wraps the storage and optionally holds a server for cleanup
 type gcsStorageWrapper struct {
 	*Storage
+
 	server      *TestServer
 	shouldClose bool
 }
@@ -27,7 +28,7 @@ func (w *gcsStorageWrapper) Server() *TestServer {
 	return w.server
 }
 
-// Sugar alias
+// LazySuiteStorage is a sugar alias
 type LazySuiteStorage = testutil.LazyObj[*gcsStorageWrapper]
 
 // NewTestServer creates and starts a new mock GCS server
@@ -63,6 +64,7 @@ func getFreePort() (int, error) {
 		return 0, err
 	}
 	defer l.Close()
+
 	return l.Addr().(*net.TCPAddr).Port, nil
 }
 

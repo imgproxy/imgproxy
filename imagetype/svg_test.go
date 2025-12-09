@@ -11,9 +11,9 @@ import (
 	"github.com/imgproxy/imgproxy/v3/bufreader"
 )
 
-type errReader struct{ error }
+type readerError struct{ error }
 
-func (r errReader) Read(p []byte) (n int, err error) { return 0, r.error }
+func (r readerError) Read(p []byte) (n int, err error) { return 0, r.error }
 
 func TestSVGDetectSuccess(t *testing.T) {
 	r := bufreader.New(strings.NewReader(`<svg xmlns="http://www.w3.org/2000/svg"></svg>`))
@@ -58,13 +58,13 @@ func TestSVGDetectNotSvg(t *testing.T) {
 
 func TestSVGDetectError(t *testing.T) {
 	// Should not return an error for io.EOF
-	r := bufreader.New(errReader{error: io.EOF})
+	r := bufreader.New(readerError{error: io.EOF})
 	typ, err := IsSVG(r, "", "")
 	require.NoError(t, err)
 	require.Equal(t, Unknown, typ)
 
 	// Should return an error for other read errors
-	r = bufreader.New(errReader{error: io.ErrClosedPipe})
+	r = bufreader.New(readerError{error: io.ErrClosedPipe})
 	typ, err = IsSVG(r, "", "")
 	require.ErrorIs(t, err, io.ErrClosedPipe)
 	require.Equal(t, Unknown, typ)

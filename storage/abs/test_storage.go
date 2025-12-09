@@ -14,6 +14,7 @@ import (
 // absStorageWrapper wraps the storage and optionally holds a server for cleanup
 type absStorageWrapper struct {
 	*Storage
+
 	server      *TestServer
 	client      *azblob.Client
 	shouldClose bool
@@ -29,7 +30,7 @@ func (w *absStorageWrapper) Client() *azblob.Client {
 	return w.client
 }
 
-// Sugar alias
+// LazySuiteStorage is a sugar alias
 type LazySuiteStorage = testutil.LazyObj[*absStorageWrapper]
 
 // NewLazySuiteStorage creates a lazy ABS Storage object for use in test suites

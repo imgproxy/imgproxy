@@ -10,12 +10,6 @@ type PresetsTestSuite struct {
 	suite.Suite
 }
 
-func (s *PresetsTestSuite) newParser(presets ...string) (*Parser, error) {
-	c := NewDefaultConfig()
-	c.Presets = presets
-	return New(&c)
-}
-
 func (s *PresetsTestSuite) TestParsePreset() {
 	f, err := s.newParser("test=resize:fit:100:200/sharpen:2")
 
@@ -79,6 +73,12 @@ func (s *PresetsTestSuite) TestValidatePresetsInvalid() {
 	_, err := s.newParser("test=resize:fit:-1:-2/sharpen:2")
 
 	s.Require().Error(err)
+}
+
+func (s *PresetsTestSuite) newParser(presets ...string) (*Parser, error) {
+	c := NewDefaultConfig()
+	c.Presets = presets
+	return New(&c)
 }
 
 func TestPresets(t *testing.T) {

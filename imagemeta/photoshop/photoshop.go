@@ -72,7 +72,7 @@ func (m PhotoshopMap) Dump() []byte {
 		buf.WriteString(id)
 		// Write empty name
 		buf.Write([]byte{0, 0})
-		binary.Write(buf, binary.BigEndian, uint32(len(data)))
+		binary.Write(buf, binary.BigEndian, uint32(len(data))) //nolint:gosec
 		buf.Write(data)
 	}
 

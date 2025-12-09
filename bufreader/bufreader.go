@@ -1,8 +1,7 @@
-// bufreader provides a buffered reader that reads from io.Reader, but caches
-// the data in a bytes.Buffer to allow peeking and discarding without re-reading.
 package bufreader
 
 import (
+	"errors"
 	"io"
 
 	"github.com/imgproxy/imgproxy/v3/ioutil"
@@ -76,7 +75,7 @@ func (br *Reader) fetch(need int) error {
 	b := make([]byte, need-len(br.buf))
 	n, err := ioutil.TryReadFull(br.r, b)
 
-	if err == io.EOF {
+	if errors.Is(err, io.EOF) {
 		// If we reached EOF, we mark the reader as finished
 		br.finished = true
 	} else if err != nil {

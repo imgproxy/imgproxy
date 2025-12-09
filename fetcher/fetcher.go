@@ -1,5 +1,3 @@
-// fetcher is responsible for downloading images using HTTP requests through various protocols
-// defined in transport package
 package fetcher
 
 import (
@@ -36,25 +34,10 @@ func New(config *Config) (*Fetcher, error) {
 	return &Fetcher{transport, config}, nil
 }
 
-// checkRedirect is a method that checks if the number of redirects exceeds the maximum allowed
-func (f *Fetcher) checkRedirect(req *http.Request, via []*http.Request) error {
-	redirects := len(via)
-	if redirects >= f.config.MaxRedirects {
-		return newTooManyRedirectsError(redirects)
-	}
-	return nil
-}
-
-// newHttpClient returns new HTTP client
-func (f *Fetcher) newHttpClient() *http.Client {
-	return &http.Client{
-		Transport:     f.transport.Transport(), // Connection pool is there
-		CheckRedirect: f.checkRedirect,
-	}
-}
-
-// NewImageFetcherRequest creates a new ImageFetcherRequest with the provided context, URL, headers, and cookie jar
-func (f *Fetcher) BuildRequest(ctx context.Context, url string, header http.Header, jar http.CookieJar) (*Request, error) {
+// BuildRequest creates a new ImageFetcherRequest with the provided context, URL, headers, and cookie jar
+func (f *Fetcher) BuildRequest(
+	ctx context.Context, url string, header http.Header, jar http.CookieJar,
+) (*Request, error) {
 	url = transport.EscapeURL(url)
 
 	// Set request timeout and get cancel function
@@ -86,4 +69,21 @@ func (f *Fetcher) BuildRequest(ctx context.Context, url string, header http.Head
 	httpheaders.CopyToRequest(header, req)
 
 	return &Request{f, req, cancel}, nil
+}
+
+// checkRedirect is a method that checks if the number of redirects exceeds the maximum allowed
+func (f *Fetcher) checkRedirect(req *http.Request, via []*http.Request) error {
+	redirects := len(via)
+	if redirects >= f.config.MaxRedirects {
+		return newTooManyRedirectsError(redirects)
+	}
+	return nil
+}
+
+// newHttpClient returns new HTTP client
+func (f *Fetcher) newHttpClient() *http.Client {
+	return &http.Client{
+		Transport:     f.transport.Transport(), // Connection pool is there
+		CheckRedirect: f.checkRedirect,
+	}
 }

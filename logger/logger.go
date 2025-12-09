@@ -34,7 +34,7 @@ func Init(config *Config) error {
 	if config.Syslog.Enabled {
 		slHook, err := syslog.NewHook(&config.Syslog)
 		if err != nil {
-			return fmt.Errorf("Unable to connect to syslog daemon: %s", err)
+			return fmt.Errorf("unable to connect to syslog daemon: %w", err)
 		}
 		if slHook != nil {
 			AddHook(slHook)

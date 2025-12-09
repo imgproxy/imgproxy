@@ -26,7 +26,7 @@ type Reporter struct {
 	reporters []reporter
 }
 
-// Init initializes all configured error reporters and returns a Reporter instance.
+// New initializes all configured error reporters and returns a Reporter instance.
 func New(config *Config) (*Reporter, error) {
 	if err := config.Validate(); err != nil {
 		return nil, err

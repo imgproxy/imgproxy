@@ -3,6 +3,7 @@ package xmlparser
 import (
 	"bufio"
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"regexp"
@@ -61,59 +62,6 @@ func (d *Decoder) Close() error {
 	return d.err
 }
 
-// setReader sets a new reader for the decoder, wrapping it in a bufio.Reader from the pool.
-func (d *Decoder) setReader(r io.Reader) {
-	d.r = bufreaderPool.Get().(*bufio.Reader)
-	d.r.Reset(r)
-}
-
-// setEncoding recreates the reader with the specified encoding.
-func (d *Decoder) setEncoding(encoding string) bool {
-	// Recreate the reader with the specified encoding.
-	// We are going to wrap bufio.Reader with bufio.Reader again,
-	// but non-UTF-8 encodings are rare, so this should be fine.
-	newr, err := charset.NewReaderLabel(encoding, d.r)
-	if err != nil {
-		d.err = fmt.Errorf("can't create reader for encoding %q: %w", encoding, err)
-		return false
-	}
-
-	d.setReader(newr)
-
-	return true
-}
-
-// checkBOM checks for a Byte Order Mark (BOM) at the start of the stream
-// and adjusts the reader accordingly.
-func (d *Decoder) checkBOM() {
-	b, err := d.r.Peek(4)
-	if err != nil {
-		return
-	}
-
-	switch {
-	case bytes.HasPrefix(b, []byte{0xEF, 0xBB, 0xBF}):
-		// It's UTF-8 BOM, nothing to do but skip it.
-		d.discard(3)
-	case bytes.HasPrefix(b, []byte{0x00, 0x00, 0xFE, 0xFF}):
-		// UTF-32 BE
-		d.discard(4)
-		d.setEncoding("utf-32be")
-	case bytes.HasPrefix(b, []byte{0xFF, 0xFE, 0x00, 0x00}):
-		// UTF-32 LE
-		d.discard(4)
-		d.setEncoding("utf-32le")
-	case bytes.HasPrefix(b, []byte{0xFE, 0xFF}):
-		// UTF-16 BE
-		d.discard(2)
-		d.setEncoding("utf-16be")
-	case bytes.HasPrefix(b, []byte{0xFF, 0xFE}):
-		// UTF-16 LE
-		d.discard(2)
-		d.setEncoding("utf-16le")
-	}
-}
-
 func (d *Decoder) Token() (Token, error) {
 	if d.err != nil {
 		return nil, d.err
@@ -127,7 +75,7 @@ func (d *Decoder) Token() (Token, error) {
 	// If the next byte is not '<', this is plain text.
 	if b[0] != '<' {
 		text := d.readText()
-		if d.err != nil && d.err != io.EOF {
+		if d.err != nil && !errors.Is(d.err, io.EOF) {
 			return nil, d.err
 		}
 		return &Text{Data: text, CData: false}, nil
@@ -206,6 +154,59 @@ func (d *Decoder) FlushTo(w io.Writer) error {
 	return err
 }
 
+// setReader sets a new reader for the decoder, wrapping it in a bufio.Reader from the pool.
+func (d *Decoder) setReader(r io.Reader) {
+	d.r = bufreaderPool.Get().(*bufio.Reader)
+	d.r.Reset(r)
+}
+
+// setEncoding recreates the reader with the specified encoding.
+func (d *Decoder) setEncoding(encoding string) bool {
+	// Recreate the reader with the specified encoding.
+	// We are going to wrap bufio.Reader with bufio.Reader again,
+	// but non-UTF-8 encodings are rare, so this should be fine.
+	newr, err := charset.NewReaderLabel(encoding, d.r)
+	if err != nil {
+		d.err = fmt.Errorf("can't create reader for encoding %q: %w", encoding, err)
+		return false
+	}
+
+	d.setReader(newr)
+
+	return true
+}
+
+// checkBOM checks for a Byte Order Mark (BOM) at the start of the stream
+// and adjusts the reader accordingly.
+func (d *Decoder) checkBOM() {
+	b, err := d.r.Peek(4)
+	if err != nil {
+		return
+	}
+
+	switch {
+	case bytes.HasPrefix(b, []byte{0xEF, 0xBB, 0xBF}):
+		// It's UTF-8 BOM, nothing to do but skip it.
+		d.discard(3)
+	case bytes.HasPrefix(b, []byte{0x00, 0x00, 0xFE, 0xFF}):
+		// UTF-32 BE
+		d.discard(4)
+		d.setEncoding("utf-32be")
+	case bytes.HasPrefix(b, []byte{0xFF, 0xFE, 0x00, 0x00}):
+		// UTF-32 LE
+		d.discard(4)
+		d.setEncoding("utf-32le")
+	case bytes.HasPrefix(b, []byte{0xFE, 0xFF}):
+		// UTF-16 BE
+		d.discard(2)
+		d.setEncoding("utf-16be")
+	case bytes.HasPrefix(b, []byte{0xFF, 0xFE}):
+		// UTF-16 LE
+		d.discard(2)
+		d.setEncoding("utf-16le")
+	}
+}
+
 // readText reads text until the `<` character or EOF.
 func (d *Decoder) readText() []byte {
 	d.buf.Reset()
@@ -231,7 +232,7 @@ func (d *Decoder) readStartTag() (*StartElement, bool) {
 	name, ok := d.readNSName()
 	if !ok {
 		if d.err == nil {
-			d.setSyntaxError("expected name after <")
+			d.setSyntaxErrorf("expected name after <")
 		}
 		return nil, false
 	}
@@ -259,7 +260,7 @@ func (d *Decoder) readStartTag() (*StartElement, bool) {
 				return nil, false
 			}
 			if b != '>' {
-				d.setSyntaxError("expected '>' at the end of self-closing tag, got %q", b)
+				d.setSyntaxErrorf("expected '>' at the end of self-closing tag, got %q", b)
 				return nil, false
 			}
 
@@ -280,7 +281,7 @@ func (d *Decoder) readStartTag() (*StartElement, bool) {
 		attrName, ok := d.readNSName()
 		if !ok {
 			if d.err == nil {
-				d.setSyntaxError("expected attribute name")
+				d.setSyntaxErrorf("expected attribute name")
 			}
 			return nil, false
 		}
@@ -308,7 +309,7 @@ func (d *Decoder) readStartTag() (*StartElement, bool) {
 			val, ok := d.readAttrValue()
 			if !ok {
 				if d.err == nil {
-					d.setSyntaxError("expected value for attribute %q", attrName)
+					d.setSyntaxErrorf("expected value for attribute %q", attrName)
 				}
 				return nil, false
 			}
@@ -377,7 +378,7 @@ func (d *Decoder) readEndTag() (Name, bool) {
 	name, ok := d.readNSName()
 	if !ok {
 		if d.err == nil {
-			d.setSyntaxError("expected name after </")
+			d.setSyntaxErrorf("expected name after </")
 		}
 		return name, false
 	}
@@ -393,7 +394,7 @@ func (d *Decoder) readEndTag() (Name, bool) {
 		return name, false
 	}
 	if b != '>' {
-		d.setSyntaxError("expected '>' at the end of end element, got %q", b)
+		d.setSyntaxErrorf("expected '>' at the end of end element, got %q", b)
 		return name, false
 	}
 
@@ -416,7 +417,7 @@ func (d *Decoder) readProcInst() ([]byte, []byte, bool) {
 		// there was no valid target name after <?.
 		// Set an error in this case.
 		if d.err == nil {
-			d.setSyntaxError("expected target name after <?")
+			d.setSyntaxErrorf("expected target name after <?")
 		}
 		return nil, nil, false
 	}
@@ -491,7 +492,7 @@ func (d *Decoder) handleProcInstEncoding(data []byte) []byte {
 func (d *Decoder) readComment() ([]byte, bool) {
 	if !d.checkAndDiscardPrefix(commentStart) {
 		if d.err == nil {
-			d.setSyntaxError("invalid sequence <!- not part of <!--")
+			d.setSyntaxErrorf("invalid sequence <!- not part of <!--")
 		}
 		return nil, false
 	}
@@ -518,7 +519,7 @@ func (d *Decoder) readComment() ([]byte, bool) {
 func (d *Decoder) readCData() ([]byte, bool) {
 	if !d.checkAndDiscardPrefix(cdataStart) {
 		if d.err == nil {
-			d.setSyntaxError("invalid sequence <![ not part of <![CDATA[")
+			d.setSyntaxErrorf("invalid sequence <![ not part of <![CDATA[")
 		}
 		return nil, false
 	}
@@ -546,7 +547,7 @@ func (d *Decoder) readCData() ([]byte, bool) {
 func (d *Decoder) readDoctype() ([]byte, bool) {
 	if !d.checkAndDiscardPrefix(doctypeStart) {
 		if d.err == nil {
-			d.setSyntaxError("invalid sequence <! not part of <!DOCTYPE, <!--, or <![CDATA[")
+			d.setSyntaxErrorf("invalid sequence <! not part of <!DOCTYPE, <!--, or <![CDATA[")
 		}
 		return nil, false
 	}
@@ -583,7 +584,7 @@ func (d *Decoder) readDoctype() ([]byte, bool) {
 			// We met a closing bracket.
 			// If we are not inside brackets, this is an error.
 			if !inBrackets {
-				d.setSyntaxError("unexpected ']' in directive")
+				d.setSyntaxErrorf("unexpected ']' in directive")
 				return nil, false
 			}
 			// Otherwise, exit brackets mode.
@@ -593,7 +594,7 @@ func (d *Decoder) readDoctype() ([]byte, bool) {
 			// We met an opening bracket.
 			// If we are already inside brackets, this is an error.
 			if inBrackets {
-				d.setSyntaxError("nested '[' in directive")
+				d.setSyntaxErrorf("nested '[' in directive")
 				return nil, false
 			}
 			// Otherwise, enter brackets mode.
@@ -604,7 +605,7 @@ func (d *Decoder) readDoctype() ([]byte, bool) {
 
 		case b == '<':
 			// Unexpected '<' outside quotes and brackets.
-			d.setSyntaxError("unexpected '<' in directive")
+			d.setSyntaxErrorf("unexpected '<' in directive")
 			return nil, false
 
 		case b == '>':
@@ -713,8 +714,8 @@ func (d *Decoder) readByte() (byte, bool) {
 func (d *Decoder) mustReadByte() (byte, bool) {
 	b, ok := d.readByte()
 	if !ok {
-		if d.err == io.EOF {
-			d.setSyntaxError("unexpected EOF")
+		if errors.Is(d.err, io.EOF) {
+			d.setSyntaxErrorf("unexpected EOF")
 		}
 	}
 	return b, ok
@@ -722,6 +723,8 @@ func (d *Decoder) mustReadByte() (byte, bool) {
 
 // unreadByte unreads the last byte read from the reader.
 // If an error occurs, it sets d.err and returns false.
+//
+//nolint:unparam
 func (d *Decoder) unreadByte(b byte) bool {
 	if err := d.r.UnreadByte(); err != nil {
 		d.err = err
@@ -739,7 +742,7 @@ func (d *Decoder) unreadByte(b byte) bool {
 func (d *Decoder) readUntil(delim byte) bool {
 	for {
 		b, err := d.r.ReadSlice(delim)
-		if err != nil && err != bufio.ErrBufferFull && err != io.EOF {
+		if err != nil && !errors.Is(err, bufio.ErrBufferFull) && !errors.Is(err, io.EOF) {
 			d.err = err
 			return false
 		}
@@ -766,8 +769,8 @@ func (d *Decoder) readUntil(delim byte) bool {
 // If io.EOF is encountered, it sets d.err to a more descriptive error.
 func (d *Decoder) mustReadUntil(delim byte) bool {
 	if !d.readUntil(delim) {
-		if d.err == io.EOF {
-			d.setSyntaxError("unexpected EOF")
+		if errors.Is(d.err, io.EOF) {
+			d.setSyntaxErrorf("unexpected EOF")
 		}
 		return false
 	}
@@ -825,8 +828,8 @@ func (d *Decoder) peek(n int) ([]byte, bool) {
 func (d *Decoder) mustPeek(n int) ([]byte, bool) {
 	b, ok := d.peek(n)
 	if !ok {
-		if d.err == io.EOF {
-			d.setSyntaxError("unexpected EOF")
+		if errors.Is(d.err, io.EOF) {
+			d.setSyntaxErrorf("unexpected EOF")
 		}
 	}
 	return b, ok
@@ -870,8 +873,8 @@ func (d *Decoder) countNewLines(b []byte) {
 	}
 }
 
-// setSyntaxError sets a syntax error with the current line number.
-func (d *Decoder) setSyntaxError(format string, a ...any) {
+// setSyntaxErrorf sets a syntax error with the current line number.
+func (d *Decoder) setSyntaxErrorf(format string, a ...any) {
 	msg := fmt.Sprintf(format, a...)
 	d.err = newSyntaxError("%s (line %d)", msg, d.line)
 }

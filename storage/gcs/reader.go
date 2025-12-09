@@ -62,8 +62,8 @@ func (s *Storage) GetObject(
 
 	// Generate artificial ETag from CRC32 and LastModified
 	var etag [12]byte
-	binary.LittleEndian.PutUint32(etag[:4], uint32(reader.Attrs.CRC32C))
-	binary.LittleEndian.PutUint64(etag[4:], uint64(reader.Attrs.LastModified.UnixNano()))
+	binary.LittleEndian.PutUint32(etag[:4], reader.Attrs.CRC32C)
+	binary.LittleEndian.PutUint64(etag[4:], uint64(reader.Attrs.LastModified.UnixNano())) //nolint:gosec
 
 	header.Set(httpheaders.Etag, hex.EncodeToString(etag[:]))
 	header.Set(httpheaders.LastModified, reader.Attrs.LastModified.Format(http.TimeFormat))
@@ -94,7 +94,7 @@ func (s *Storage) tryRespondWithPartial(
 
 	start, end, err := httprange.Parse(r)
 	if err != nil {
-		return storage.NewObjectInvalidRange(), nil
+		return storage.NewObjectInvalidRange(), nil //nolint:nilerr
 	}
 
 	if end == 0 {

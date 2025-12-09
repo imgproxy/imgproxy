@@ -1,7 +1,7 @@
 package abs
 
 import (
-	"crypto/md5"
+	"crypto/sha256"
 	"fmt"
 	"io"
 	"net/http"
@@ -38,6 +38,16 @@ func NewAbsServer() (*TestServer, error) {
 	abs.server = httptest.NewTLSServer(http.HandlerFunc(abs.handler))
 
 	return abs, nil
+}
+
+// Close stops the server
+func (s *TestServer) Close() {
+	s.server.Close()
+}
+
+// URL returns the server URL
+func (s *TestServer) URL() string {
+	return s.server.URL
 }
 
 // handler handles Azure Blob Storage API requests
@@ -116,7 +126,7 @@ func (s *TestServer) handler(rw http.ResponseWriter, r *http.Request) {
 
 		headers := make(http.Header)
 		headers.Set(httpheaders.ContentType, r.Header.Get(httpheaders.ContentType))
-		headers.Set(httpheaders.Etag, fmt.Sprintf(`"%x"`, md5.Sum(result)))
+		headers.Set(httpheaders.Etag, fmt.Sprintf(`"%x"`, sha256.Sum256(result)))
 		headers.Set(httpheaders.LastModified, lastMod.Format(http.TimeFormat))
 		headers.Set(httpheaders.ContentLength, fmt.Sprintf("%d", len(result)))
 
@@ -143,7 +153,7 @@ func (s *TestServer) handler(rw http.ResponseWriter, r *http.Request) {
 		lastMod := time.Now().UTC()
 
 		headers := make(http.Header)
-		etag := fmt.Sprintf(`"%x"`, md5.Sum(data))
+		etag := fmt.Sprintf(`"%x"`, sha256.Sum256(data))
 		headers.Set(httpheaders.Etag, etag)
 		headers.Set(httpheaders.LastModified, lastMod.Format(http.TimeFormat))
 		headers.Set(httpheaders.ContentType, r.Header.Get(httpheaders.ContentType))
@@ -181,7 +191,7 @@ func (s *TestServer) handler(rw http.ResponseWriter, r *http.Request) {
 		headers := s.headers[key].Clone()
 
 		// Handle range requests - Azure uses x-ms-range header
-		rangeHeader := r.Header.Get("x-ms-range")
+		rangeHeader := r.Header.Get(httpheaders.XMsRange)
 		if rangeHeader != "" {
 			headers.Del(httpheaders.ContentLength)
 		}
@@ -227,14 +237,4 @@ func (s *TestServer) handler(rw http.ResponseWriter, r *http.Request) {
 	default:
 		rw.WriteHeader(http.StatusNotImplemented)
 	}
-}
-
-// Close stops the server
-func (s *TestServer) Close() {
-	s.server.Close()
-}
-
-// URL returns the server URL
-func (s *TestServer) URL() string {
-	return s.server.URL
 }

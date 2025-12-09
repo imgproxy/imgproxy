@@ -92,7 +92,10 @@ func (c *Config) Validate() error {
 	}
 
 	if len(c.Keys) != len(c.Salts) {
-		return fmt.Errorf("number of keys and number of salts should be equal. Keys: %d, salts: %d", len(c.Keys), len(c.Salts))
+		return fmt.Errorf(
+			"number of keys and number of salts should be equal. Keys: %d, salts: %d",
+			len(c.Keys), len(c.Salts),
+		)
 	}
 
 	if len(c.Keys) == 0 {

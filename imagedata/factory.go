@@ -79,71 +79,6 @@ func (f *Factory) NewFromBase64(encoded string) (ImageData, error) {
 	return f.NewFromBytes(b)
 }
 
-// sendRequest is a common logic between sync and async download.
-func (f *Factory) sendRequest(ctx context.Context, url string, opts DownloadOptions) (*fetcher.Request, *http.Response, http.Header, error) {
-	h := make(http.Header)
-
-	// NOTE: This will be removed in the future when our test context gets better isolation
-	if len(redirectAllRequestsTo) > 0 {
-		url = redirectAllRequestsTo
-	}
-
-	header := opts.Header
-
-	// Inject monitoring headers.
-	// Clone the headers to avoid modifying the original ones.
-	if f.monitoring != nil {
-		header = header.Clone()
-		f.monitoring.InjectHeaders(ctx, header)
-	}
-
-	req, err := f.fetcher.BuildRequest(ctx, url, header, opts.CookieJar)
-	if err != nil {
-		return req, nil, h, err
-	}
-
-	res, err := req.Fetch()
-	if res != nil {
-		h = res.Header.Clone()
-	}
-	if err != nil {
-		if res != nil {
-			res.Body.Close()
-		}
-		req.Cancel()
-
-		return req, nil, h, err
-	}
-
-	res, err = limitResponseSize(res, opts.MaxSrcFileSize)
-	if err != nil {
-		if res != nil {
-			res.Body.Close()
-		}
-		req.Cancel()
-
-		return req, nil, h, err
-	}
-
-	return req, res, h, nil
-}
-
-func (f *Factory) startMonitoringSpan(
-	ctx context.Context,
-	imageURL, desc string,
-) (context.Context, context.CancelFunc) {
-	if f.monitoring == nil {
-		return ctx, func() {}
-	}
-
-	meta := monitoring.Meta{
-		monitoring.MetaKey(desc + " URL"):    imageURL,
-		monitoring.MetaKey(desc + " Origin"): monitoring.MetaURLOrigin(imageURL),
-	}
-
-	return f.monitoring.StartSpan(ctx, "Downloading "+desc, meta)
-}
-
 // DownloadSync downloads the image synchronously and returns the ImageData and HTTP headers.
 func (f *Factory) DownloadSync(
 	ctx context.Context,
@@ -225,4 +160,71 @@ func (f *Factory) DownloadAsync(
 	d.AddCancel(req.Cancel) // request will be closed when the image data is consumed
 
 	return d, h, nil
+}
+
+// sendRequest is a common logic between sync and async download.
+func (f *Factory) sendRequest(
+	ctx context.Context, url string, opts DownloadOptions,
+) (*fetcher.Request, *http.Response, http.Header, error) {
+	h := make(http.Header)
+
+	// NOTE: This will be removed in the future when our test context gets better isolation
+	if len(redirectAllRequestsTo) > 0 {
+		url = redirectAllRequestsTo
+	}
+
+	header := opts.Header
+
+	// Inject monitoring headers.
+	// Clone the headers to avoid modifying the original ones.
+	if f.monitoring != nil {
+		header = header.Clone()
+		f.monitoring.InjectHeaders(ctx, header)
+	}
+
+	req, err := f.fetcher.BuildRequest(ctx, url, header, opts.CookieJar)
+	if err != nil {
+		return req, nil, h, err
+	}
+
+	res, err := req.Fetch()
+	if res != nil {
+		h = res.Header.Clone()
+	}
+	if err != nil {
+		if res != nil {
+			res.Body.Close()
+		}
+		req.Cancel()
+
+		return req, nil, h, err
+	}
+
+	res, err = limitResponseSize(res, opts.MaxSrcFileSize)
+	if err != nil {
+		if res != nil {
+			res.Body.Close()
+		}
+		req.Cancel()
+
+		return req, nil, h, err
+	}
+
+	return req, res, h, nil
+}
+
+func (f *Factory) startMonitoringSpan(
+	ctx context.Context,
+	imageURL, desc string,
+) (context.Context, context.CancelFunc) {
+	if f.monitoring == nil {
+		return ctx, func() {}
+	}
+
+	meta := monitoring.Meta{
+		monitoring.MetaKey(desc + " URL"):    imageURL,
+		monitoring.MetaKey(desc + " Origin"): monitoring.MetaURLOrigin(imageURL),
+	}
+
+	return f.monitoring.StartSpan(ctx, "Downloading "+desc, meta)
 }

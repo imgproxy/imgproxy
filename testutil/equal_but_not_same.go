@@ -22,11 +22,13 @@ func EqualButNotSame(t *testing.T, expected, actual any) {
 // deepEqual recursively verifies that all values are equal but pointers are different
 // except for the Expires field which is explicitly allowed to be shared
 func deepEqual(t *testing.T, left, right reflect.Value, fieldPath string) {
+	t.Helper()
+
 	require.True(t, left.IsValid() && right.IsValid(), "invalid value at %s", fieldPath)
 	require.Equal(t, left.Type(), right.Type(), "types are not equal at %s", fieldPath)
 
 	switch left.Kind() {
-	case reflect.Ptr:
+	case reflect.Pointer:
 		// Pointers should not be nil and must point to different objects
 		require.False(t, left.IsNil(), "nil pointer at %s (left)", fieldPath)
 		require.False(t, right.IsNil(), "nil pointer at %s (right)", fieldPath)
@@ -42,7 +44,7 @@ func deepEqual(t *testing.T, left, right reflect.Value, fieldPath string) {
 		require.NotEqual(t, left.Pointer(), right.Pointer(), "shared slices at %s", fieldPath)
 
 		// Recursively verify slice elements
-		for i := 0; i < left.Len(); i++ {
+		for i := range left.Len() {
 			elemPath := buildPath(fieldPath, "[", anyToString(i), "]")
 			deepEqual(t, left.Index(i), right.Index(i), elemPath)
 		}
@@ -67,7 +69,7 @@ func deepEqual(t *testing.T, left, right reflect.Value, fieldPath string) {
 		require.Equal(t, left.Interface(), right.Interface(), "structs are not equal at %s", fieldPath)
 
 		// Fallback to recursive field-by-field comparison
-		for i := 0; i < left.NumField(); i++ {
+		for i := range left.NumField() {
 			field := left.Type().Field(i)
 			if !field.IsExported() {
 				continue // Skip unexported fields

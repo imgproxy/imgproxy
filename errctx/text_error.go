@@ -5,8 +5,9 @@ package errctx
 // When implementing a custom error type that does not wrap another error,
 // embed [TextError] to provide standard behavior.
 type TextError struct {
-	msg string
 	*ErrorContext
+
+	msg string
 }
 
 // NewTextError creates a new [TextError] with the given message and options.

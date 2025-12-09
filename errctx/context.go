@@ -28,14 +28,6 @@ func newErrorContext(stackSkip int, opts ...Option) *ErrorContext {
 	return ec.applyOptions(opts...)
 }
 
-func (ec *ErrorContext) applyOptions(opts ...Option) *ErrorContext {
-	for _, opt := range opts {
-		opt(ec)
-	}
-
-	return ec
-}
-
 func (ec *ErrorContext) CloneErrorContext(opts ...Option) *ErrorContext {
 	newEc := *ec
 	return newEc.applyOptions(opts...)
@@ -82,6 +74,14 @@ func (ec *ErrorContext) FormatStack() string {
 	}
 
 	return strings.Join(lines, "\n")
+}
+
+func (ec *ErrorContext) applyOptions(opts ...Option) *ErrorContext {
+	for _, opt := range opts {
+		opt(ec)
+	}
+
+	return ec
 }
 
 // callers returns the stack trace, skipping the specified number of frames.

@@ -16,13 +16,14 @@ import (
 
 // ver prints the imgproxy version and runs the main application
 func ver(ctx context.Context, c *cli.Command) error {
+	//nolint:forbidigo
 	fmt.Println(version.Version)
 	return nil
 }
 
 // run starts the imgproxy server
 func run(ctx context.Context, cmd *cli.Command) error {
-	if err := imgproxy.Init(); err != nil {
+	if err := imgproxy.Init(ctx); err != nil {
 		return err
 	}
 	defer imgproxy.Shutdown()

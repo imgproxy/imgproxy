@@ -34,7 +34,7 @@ func BenchmarkFormatterPretty(b *testing.B) {
 
 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		testLogger.Info(
 			handlerBenchmarkMsg,
 			handlerBenchmarkAttrs...,
@@ -51,7 +51,7 @@ func BenchmarkFormatterStructured(b *testing.B) {
 
 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		testLogger.Info(
 			handlerBenchmarkMsg,
 			handlerBenchmarkAttrs...,
@@ -68,7 +68,7 @@ func BenchmarkFormatterJSON(b *testing.B) {
 
 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		testLogger.Info(
 			handlerBenchmarkMsg,
 			handlerBenchmarkAttrs...,
@@ -82,7 +82,7 @@ func BenchmarkNativeText(b *testing.B) {
 
 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		testLogger.Info(
 			handlerBenchmarkMsg,
 			handlerBenchmarkAttrs...,
@@ -96,7 +96,7 @@ func BenchmarkNativeJSON(b *testing.B) {
 
 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		testLogger.Info(
 			handlerBenchmarkMsg,
 			handlerBenchmarkAttrs...,

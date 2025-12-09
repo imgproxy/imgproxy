@@ -6,7 +6,13 @@ import (
 	"github.com/imgproxy/imgproxy/v3/imath"
 )
 
-func calcPosition(width, height, innerWidth, innerHeight int, gravity *GravityOptions, dpr float64, allowOverflow bool) (left, top int) {
+func calcPosition(
+	width, height, innerWidth, innerHeight int,
+	gravity *GravityOptions, dpr float64, allowOverflow bool,
+) (int, int) {
+	var left, top int
+	var minX, maxX, minY, maxY int
+
 	if gravity.Type == GravityFocusPoint {
 		pointX := imath.ScaleToEven(width, gravity.X)
 		pointY := imath.ScaleToEven(height, gravity.Y)
@@ -48,8 +54,6 @@ func calcPosition(width, height, innerWidth, innerHeight int, gravity *GravityOp
 		}
 	}
 
-	var minX, maxX, minY, maxY int
-
 	if allowOverflow {
 		minX, maxX = -innerWidth+1, width-1
 		minY, maxY = -innerHeight+1, height-1
@@ -61,5 +65,5 @@ func calcPosition(width, height, innerWidth, innerHeight int, gravity *GravityOp
 	left = max(minX, min(left, maxX))
 	top = max(minY, min(top, maxY))
 
-	return
+	return left, top
 }

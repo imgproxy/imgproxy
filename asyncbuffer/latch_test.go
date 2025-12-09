@@ -80,7 +80,7 @@ func TestLatchMultipleWaiters(t *testing.T) {
 	waitersCompleted := make(chan int, numWaiters)
 
 	// Start multiple waiters
-	for i := 0; i < numWaiters; i++ {
+	for i := range numWaiters {
 		wg.Add(1)
 		go func(id int) {
 			defer wg.Done()

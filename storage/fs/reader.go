@@ -2,7 +2,7 @@ package fs
 
 import (
 	"context"
-	"crypto/md5"
+	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
 	"io"
@@ -75,7 +75,7 @@ func (s *Storage) GetObject(
 	switch {
 	case err != nil:
 		f.Close()
-		return storage.NewObjectInvalidRange(), nil
+		return storage.NewObjectInvalidRange(), nil //nolint:nilerr
 
 	// Range requested: partial content should be returned
 	case end != 0:
@@ -113,8 +113,8 @@ func (s *Storage) GetObject(
 
 func buildEtag(path string, fi fs.FileInfo) string {
 	tag := fmt.Sprintf("%s__%d__%d", path, fi.Size(), fi.ModTime().UnixNano())
-	hash := md5.Sum([]byte(tag))
-	return `"` + string(base64.RawURLEncoding.EncodeToString(hash[:])) + `"`
+	hash := sha256.Sum256([]byte(tag))
+	return `"` + base64.RawURLEncoding.EncodeToString(hash[:]) + `"`
 }
 
 // detectContentType detects the content type of a file by mime or extension
@@ -130,7 +130,9 @@ func detectContentType(f http.File, fi fs.FileInfo) string {
 
 	f.Seek(0, io.SeekStart) // rewind file position
 
-	if len(mimetype) == 0 || strings.HasPrefix(mimetype, "text/plain") || strings.HasPrefix(mimetype, "application/octet-stream") {
+	if len(mimetype) == 0 ||
+		strings.HasPrefix(mimetype, "text/plain") ||
+		strings.HasPrefix(mimetype, "application/octet-stream") {
 		if m := mime.TypeByExtension(filepath.Ext(fi.Name())); len(m) > 0 {
 			mimetype = m
 		}

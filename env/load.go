@@ -46,7 +46,7 @@ func loadLocalFile() error {
 	// Read the local environment file
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return fmt.Errorf("can't read local environment file: %s", err)
+		return fmt.Errorf("can't read local environment file: %w", err)
 	}
 
 	// If the file is empty, nothing to load
@@ -62,12 +62,12 @@ func unmarshalEnv(env, source string) error {
 	// Parse the secret string as env variables and set them
 	envmap, err := godotenv.Unmarshal(env)
 	if err != nil {
-		return fmt.Errorf("can't parse config from %s: %s", source, err)
+		return fmt.Errorf("can't parse config from %s: %w", source, err)
 	}
 
 	for k, v := range envmap {
 		if err = os.Setenv(k, v); err != nil {
-			return fmt.Errorf("can't set %s env variable from %s: %s", k, source, err)
+			return fmt.Errorf("can't set %s env variable from %s: %w", k, source, err)
 		}
 	}
 

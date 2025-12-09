@@ -39,7 +39,7 @@ func healthcheck(ctx context.Context, c *cli.Command) error {
 	msg, _ := io.ReadAll(res.Body)
 	fmt.Fprintln(os.Stderr, string(msg))
 
-	if res.StatusCode != 200 {
+	if res.StatusCode != http.StatusOK {
 		err := fmt.Errorf("healthcheck failed: %s", msg)
 		return cli.Exit(err, 1)
 	}

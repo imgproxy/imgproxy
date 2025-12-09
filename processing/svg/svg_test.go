@@ -25,6 +25,19 @@ func (s *SvgTestSuite) SetupSuite() {
 	s.testData = testutil.NewTestDataProvider(s.T)
 }
 
+func (s *SvgTestSuite) TestSanitize() {
+	origin := s.readTestFile("test1.svg")
+	expected := s.readTestFile("test1.sanitized.svg")
+
+	config := NewDefaultConfig()
+	svg := New(&config)
+
+	actual, err := svg.Process(options.New(), origin)
+	s.Require().NoError(err)
+
+	s.compare(expected, actual)
+}
+
 func (s *SvgTestSuite) readTestFile(name string) imagedata.ImageData {
 	data := s.testData.Read(name)
 	return imagedata.NewFromBytesWithFormat(imagetype.SVG, data)
@@ -42,19 +55,6 @@ func (s *SvgTestSuite) compare(expected, actual imagedata.ImageData) {
 	actualData = bytes.TrimSpace(actualData)
 
 	s.Require().Equal(expectedData, actualData)
-}
-
-func (s *SvgTestSuite) TestSanitize() {
-	origin := s.readTestFile("test1.svg")
-	expected := s.readTestFile("test1.sanitized.svg")
-
-	config := NewDefaultConfig()
-	svg := New(&config)
-
-	actual, err := svg.Process(options.New(), origin)
-	s.Require().NoError(err)
-
-	s.compare(expected, actual)
 }
 
 func TestSvg(t *testing.T) {
@@ -105,7 +105,7 @@ func BenchmarkSvgProcessing(b *testing.B) {
 
 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		for _, sample := range samples {
 			_, err := svg.Process(opts, sample)
 			if err != nil {

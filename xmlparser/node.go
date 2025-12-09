@@ -50,6 +50,44 @@ func (n *Node) FilterChildNodes(pred func(child *Node) bool) {
 	})
 }
 
+// WriteTo writes the XML representation of the node and its children to the provided writer.
+func (n *Node) WriteTo(w TokenWriter) error {
+	if len(n.Name) == 0 {
+		// Document node or an unnamed node, write only children
+		return n.writeChildrenTo(w)
+	}
+
+	selfClosing := len(n.Children) == 0
+
+	se := StartElement{
+		Name:        n.Name,
+		Attrs:       n.Attrs,
+		SelfClosing: selfClosing,
+	}
+
+	if err := se.WriteTo(w); err != nil {
+		return err
+	}
+
+	if selfClosing {
+		return nil
+	}
+
+	if err := n.writeChildrenTo(w); err != nil {
+		return err
+	}
+
+	ee := EndElement{
+		Name: n.Name,
+	}
+
+	if err := ee.WriteTo(w); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // readFrom reads XML data from the provided reader
 // and populates the node and its children accordingly.
 func (n *Node) readFrom(r io.Reader) error {
@@ -65,7 +103,7 @@ func (n *Node) readFrom(r io.Reader) error {
 	for {
 		// Read raw token so decoder doesn't mess with attributes and namespaces.
 		tok, err := dec.Token()
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break
 		}
 		if err != nil {
@@ -119,44 +157,6 @@ func (n *Node) readFrom(r io.Reader) error {
 		case *ProcInst:
 			curNode.Children = append(curNode.Children, t.Clone())
 		}
-	}
-
-	return nil
-}
-
-// WriteTo writes the XML representation of the node and its children to the provided writer.
-func (n *Node) WriteTo(w TokenWriter) error {
-	if len(n.Name) == 0 {
-		// Document node or an unnamed node, write only children
-		return n.writeChildrenTo(w)
-	}
-
-	selfClosing := len(n.Children) == 0
-
-	se := StartElement{
-		Name:        n.Name,
-		Attrs:       n.Attrs,
-		SelfClosing: selfClosing,
-	}
-
-	if err := se.WriteTo(w); err != nil {
-		return err
-	}
-
-	if selfClosing {
-		return nil
-	}
-
-	if err := n.writeChildrenTo(w); err != nil {
-		return err
-	}
-
-	ee := EndElement{
-		Name: n.Name,
-	}
-
-	if err := ee.WriteTo(w); err != nil {
-		return err
 	}
 
 	return nil

@@ -55,19 +55,6 @@ func (s *ImageProviderTestSuite) SetupSubTest() {
 	s.ResetLazyObjects()
 }
 
-// Helper function to read data from ImageData
-func (s *ImageProviderTestSuite) readImageData(provider Provider) []byte {
-	imgData, _, err := provider.Get(s.T().Context(), options.New())
-	s.Require().NoError(err)
-	s.Require().NotNil(imgData)
-	defer imgData.Close()
-
-	reader := imgData.Reader()
-	data, err := io.ReadAll(reader)
-	s.Require().NoError(err)
-	return data
-}
-
 func (s *ImageProviderTestSuite) TestNewProvider() {
 	tests := []struct {
 		name         string
@@ -173,6 +160,19 @@ func (s *ImageProviderTestSuite) TestNewProvider() {
 			}
 		})
 	}
+}
+
+// Helper function to read data from ImageData
+func (s *ImageProviderTestSuite) readImageData(provider Provider) []byte {
+	imgData, _, err := provider.Get(s.T().Context(), options.New())
+	s.Require().NoError(err)
+	s.Require().NotNil(imgData)
+	defer imgData.Close()
+
+	reader := imgData.Reader()
+	data, err := io.ReadAll(reader)
+	s.Require().NoError(err)
+	return data
 }
 
 func TestImageProvider(t *testing.T) {

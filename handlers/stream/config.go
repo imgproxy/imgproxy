@@ -7,13 +7,13 @@ import (
 )
 
 var (
-	// NOTE: processing handler has the similar variable. For now, we do not want
+	// IMGPROXY_COOKIE_PASSTHROUGH NOTE: processing handler has the similar variable. For now, we do not want
 	// to couple hanlders/processing and handlers/stream packages, so we duplicate it here.
 	// Discuss.
 	IMGPROXY_COOKIE_PASSTHROUGH = env.Describe("IMGPROXY_COOKIE_PASSTHROUGH", "boolean")
 )
 
-// Config represents the configuration for the image streamer
+// Config represents the configuration for the image streamer.
 type Config struct {
 	// PassthroughRequestHeaders specifies the request headers to include in the passthrough response
 	PassthroughRequestHeaders []string
@@ -42,13 +42,13 @@ func NewDefaultConfig() Config {
 	}
 }
 
-// LoadConfigFromEnv loads config variables from environment
+// LoadConfigFromEnv loads config variables from environment.
 func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c = ensure.Ensure(c, NewDefaultConfig)
 	return c, nil
 }
 
-// Validate checks config for errors
+// Validate checks config for errors.
 func (c *Config) Validate() error {
 	return nil
 }

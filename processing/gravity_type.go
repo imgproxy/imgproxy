@@ -36,7 +36,7 @@ const (
 	GravitySmart
 	GravityFocusPoint
 
-	// Watermark gravity types
+	// GravityReplicate and below: watermark gravity types
 	GravityReplicate
 )
 
@@ -46,7 +46,7 @@ var GravityTypes = map[string]GravityType{
 	"ea":   GravityEast,
 	"so":   GravitySouth,
 	"we":   GravityWest,
-	"nowe": GravityNorthWest,
+	"nowe": GravityNorthWest, //nolint:misspell
 	"noea": GravityNorthEast,
 	"sowe": GravitySouthWest,
 	"soea": GravitySouthEast,

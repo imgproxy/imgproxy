@@ -19,18 +19,8 @@ type buffer []byte
 
 // newBuffer creates a new buffer from the pool.
 func newBuffer() *buffer {
+	//nolint:forcetypeassert
 	return bufPool.Get().(*buffer)
-}
-
-// free truncates the buffer and returns it to the pool.
-func (b *buffer) free() {
-	// Don't keep large buffers around.
-	if len(*b) > 16*1024 {
-		return
-	}
-
-	*b = (*b)[:0]
-	bufPool.Put(b)
 }
 
 // Write writes data to the buffer.
@@ -42,6 +32,17 @@ func (b *buffer) Write(p []byte) (n int, err error) {
 // String returns the contents of the buffer as a string.
 func (b *buffer) String() string {
 	return string(*b)
+}
+
+// free truncates the buffer and returns it to the pool.
+func (b *buffer) free() {
+	// Don't keep large buffers around.
+	if len(*b) > 16*1024 {
+		return
+	}
+
+	*b = (*b)[:0]
+	bufPool.Put(b)
 }
 
 // len returns the number of bytes written to the buffer.
@@ -111,7 +112,7 @@ func (b *buffer) removeNewline() {
 
 // isStringQuoteSafe checks if a string is safe to append without quoting.
 func (b *buffer) isStringQuoteSafe(val string) bool {
-	for i := 0; i < len(val); i++ {
+	for i := range len(val) {
 		if b := val[i]; b >= utf8.RuneSelf || !quoteSafeSet[b] {
 			return false
 		}

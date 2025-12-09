@@ -52,7 +52,7 @@ func buildGRPCExporters(config *Config) (*otlptrace.Exporter, sdkmetric.Exporter
 
 	traceExporter, err := otlptracegrpc.New(trctx, tracerOpts...)
 	if err != nil {
-		err = fmt.Errorf("can't connect to OpenTelemetry collector: %s", err)
+		err = fmt.Errorf("can't connect to OpenTelemetry collector: %w", err)
 	}
 
 	if !config.EnableMetrics {
@@ -67,7 +67,7 @@ func buildGRPCExporters(config *Config) (*otlptrace.Exporter, sdkmetric.Exporter
 
 	metricExporter, err := otlpmetricgrpc.New(mtctx, meterOpts...)
 	if err != nil {
-		err = fmt.Errorf("can't connect to OpenTelemetry collector: %s", err)
+		err = fmt.Errorf("can't connect to OpenTelemetry collector: %w", err)
 	}
 
 	return traceExporter, metricExporter, err
@@ -93,7 +93,7 @@ func buildHTTPExporters(config *Config) (*otlptrace.Exporter, sdkmetric.Exporter
 
 	traceExporter, err := otlptracehttp.New(trctx, tracerOpts...)
 	if err != nil {
-		err = fmt.Errorf("can't connect to OpenTelemetry collector: %s", err)
+		err = fmt.Errorf("can't connect to OpenTelemetry collector: %w", err)
 	}
 
 	if !config.EnableMetrics {
@@ -108,7 +108,7 @@ func buildHTTPExporters(config *Config) (*otlptrace.Exporter, sdkmetric.Exporter
 
 	metricExporter, err := otlpmetrichttp.New(mtctx, meterOpts...)
 	if err != nil {
-		err = fmt.Errorf("can't connect to OpenTelemetry collector: %s", err)
+		err = fmt.Errorf("can't connect to OpenTelemetry collector: %w", err)
 	}
 
 	return traceExporter, metricExporter, err
@@ -127,6 +127,8 @@ func buildTLSConfig(config *Config) (*tls.Config, error) {
 		return nil, errors.New("can't load OpenTelemetry server cert")
 	}
 
+	// Package default is 1.2
+	//nolint:gosec
 	tlsConf := tls.Config{RootCAs: certPool}
 
 	// If there is not client cert or key, return the config with only root CAs
@@ -136,7 +138,7 @@ func buildTLSConfig(config *Config) (*tls.Config, error) {
 
 	cert, err := tls.X509KeyPair(config.ClientCert, config.ClientKey)
 	if err != nil {
-		return nil, fmt.Errorf("can't load OpenTelemetry client cert/key pair: %s", err)
+		return nil, fmt.Errorf("can't load OpenTelemetry client cert/key pair: %w", err)
 	}
 
 	tlsConf.Certificates = []tls.Certificate{cert}

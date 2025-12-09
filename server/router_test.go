@@ -14,6 +14,7 @@ import (
 
 type RouterTestSuite struct {
 	suite.Suite
+
 	router *Router
 }
 
@@ -43,7 +44,7 @@ func (s *RouterTestSuite) TestHTTPMethods() {
 	getHandler := func(reqID string, rw ResponseWriter, req *http.Request) *Error {
 		capturedMethod = req.Method
 		capturedPath = req.URL.Path
-		rw.WriteHeader(200)
+		rw.WriteHeader(http.StatusOK)
 		rw.Write([]byte("GET response"))
 		return nil
 	}
@@ -51,7 +52,7 @@ func (s *RouterTestSuite) TestHTTPMethods() {
 	optionsHandler := func(reqID string, rw ResponseWriter, req *http.Request) *Error {
 		capturedMethod = req.Method
 		capturedPath = req.URL.Path
-		rw.WriteHeader(200)
+		rw.WriteHeader(http.StatusOK)
 		rw.Write([]byte("OPTIONS response"))
 		return nil
 	}
@@ -59,7 +60,7 @@ func (s *RouterTestSuite) TestHTTPMethods() {
 	headHandler := func(reqID string, rw ResponseWriter, req *http.Request) *Error {
 		capturedMethod = req.Method
 		capturedPath = req.URL.Path
-		rw.WriteHeader(200)
+		rw.WriteHeader(http.StatusOK)
 		return nil
 	}
 
@@ -139,7 +140,7 @@ func (s *RouterTestSuite) TestMiddlewareOrder() {
 
 	handler := func(reqID string, rw ResponseWriter, req *http.Request) *Error {
 		order = append(order, "handler")
-		rw.WriteHeader(200)
+		rw.WriteHeader(http.StatusOK)
 		return nil
 	}
 
@@ -158,7 +159,7 @@ func (s *RouterTestSuite) TestMiddlewareOrder() {
 func (s *RouterTestSuite) TestServeHTTP() {
 	handler := func(reqID string, rw ResponseWriter, req *http.Request) *Error {
 		rw.Header().Set("Custom-Header", "test-value")
-		rw.WriteHeader(200)
+		rw.WriteHeader(http.StatusOK)
 		rw.Write([]byte("success"))
 		return nil
 	}
@@ -170,7 +171,7 @@ func (s *RouterTestSuite) TestServeHTTP() {
 
 	s.router.ServeHTTP(rw, req)
 
-	s.Require().Equal(200, rw.Code)
+	s.Require().Equal(http.StatusOK, rw.Code)
 	s.Require().Equal("success", rw.Body.String())
 	s.Require().Equal("test-value", rw.Header().Get("Custom-Header"))
 	s.Require().Equal(defaultServerName, rw.Header().Get(httpheaders.Server))
@@ -180,7 +181,7 @@ func (s *RouterTestSuite) TestServeHTTP() {
 // TestRequestID checks request ID generation and validation
 func (s *RouterTestSuite) TestRequestID() {
 	handler := func(reqID string, rw ResponseWriter, req *http.Request) *Error {
-		rw.WriteHeader(200)
+		rw.WriteHeader(http.StatusOK)
 		return nil
 	}
 
@@ -220,7 +221,7 @@ func (s *RouterTestSuite) TestRequestID() {
 // TestLambdaRequestIDExtraction checks AWS lambda request id extraction
 func (s *RouterTestSuite) TestLambdaRequestIDExtraction() {
 	handler := func(reqID string, rw ResponseWriter, req *http.Request) *Error {
-		rw.WriteHeader(200)
+		rw.WriteHeader(http.StatusOK)
 		return nil
 	}
 
@@ -241,7 +242,7 @@ func (s *RouterTestSuite) TestReplaceIP() {
 	var capturedRemoteAddr string
 	handler := func(reqID string, rw ResponseWriter, req *http.Request) *Error {
 		capturedRemoteAddr = req.RemoteAddr
-		rw.WriteHeader(200)
+		rw.WriteHeader(http.StatusOK)
 		return nil
 	}
 

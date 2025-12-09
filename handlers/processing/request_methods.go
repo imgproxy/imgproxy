@@ -58,7 +58,6 @@ func (r *request) acquireWorker(ctx context.Context) (context.CancelFunc, errctx
 
 // makeDownloadOptions creates a new default download options
 func (r *request) makeDownloadOptions(
-	ctx context.Context,
 	h http.Header,
 ) (imagedata.DownloadOptions, errctx.Error) {
 	jar, err := r.Cookies().JarFromRequest(r.req)
@@ -191,7 +190,7 @@ func (r *request) writeDebugHeaders(
 }
 
 // respondWithNotModified writes not-modified response
-func (r *request) respondWithNotModified() *server.Error {
+func (r *request) respondWithNotModified() {
 	r.rw.SetExpires(r.opts.GetTime(keys.Expires))
 
 	if r.config.LastModifiedEnabled {
@@ -211,13 +210,11 @@ func (r *request) respondWithNotModified() *server.Error {
 		slog.String("image_url", r.imageURL),
 		slog.Any("processing_options", r.opts),
 	)
-
-	return nil
 }
 
 func (r *request) respondWithImage(statusCode int, resultData imagedata.ImageData) *server.Error {
 	// We read the size of the image data here, so we can set Content-Length header.
-	// This indireclty ensures that the image data is fully read from the source, no
+	// This indirectly ensures that the image data is fully read from the source, no
 	// errors happened.
 	resultSize, err := resultData.Size()
 	if err != nil {

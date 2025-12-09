@@ -16,7 +16,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
-// request holds the parameters and state for a single request request
+// request holds the parameters and state for a single request
 type request struct {
 	HandlerContext
 
@@ -62,7 +62,7 @@ func (r *request) execute(ctx context.Context) *server.Error {
 	imgRequestHeaders := r.makeImageRequestHeaders()
 
 	// create download options
-	do, err := r.makeDownloadOptions(ctx, imgRequestHeaders)
+	do, err := r.makeDownloadOptions(imgRequestHeaders)
 	if err != nil {
 		return server.NewError(err, handlers.ErrCategoryDownload)
 	}
@@ -84,7 +84,9 @@ func (r *request) execute(ctx context.Context) *server.Error {
 	if errors.As(err, &nmErr) {
 		r.rw.SetOriginHeaders(nmErr.Headers())
 
-		return r.respondWithNotModified()
+		r.respondWithNotModified()
+
+		return nil
 	}
 
 	// Prepare to write image response headers

@@ -142,7 +142,7 @@ func hasOperation(name string) bool {
 
 func SupportsLoad(it imagetype.Type) bool {
 	if sup, ok := typeSupportLoad.Load(it); ok {
-		return sup.(bool)
+		return sup.(bool) //nolint:forcetypeassert
 	}
 
 	sup := false
@@ -177,7 +177,7 @@ func SupportsLoad(it imagetype.Type) bool {
 
 func SupportsSave(it imagetype.Type) bool {
 	if sup, ok := typeSupportSave.Load(it); ok {
-		return sup.(bool)
+		return sup.(bool) //nolint:forcetypeassert
 	}
 
 	sup := false
@@ -228,14 +228,7 @@ func cRGB(c color.RGB) C.RGB {
 }
 
 func ptrToBytes(ptr unsafe.Pointer, size int) []byte {
-	return (*[math.MaxInt32]byte)(ptr)[:int(size):int(size)]
-}
-
-func (img *Image) swapAndUnref(newImg *C.VipsImage) {
-	if img.VipsImage != nil {
-		C.unref_image(img.VipsImage)
-	}
-	img.VipsImage = newImg
+	return (*[math.MaxInt32]byte)(ptr)[:size:size]
 }
 
 func (img *Image) Width() int {
@@ -279,7 +272,7 @@ func (img *Image) Load(
 
 	lo := newLoadOptions(shrink, page, pages)
 
-	err := C.int(0)
+	err := C.int(0) //nolint:wastedassign
 
 	switch imgdata.Format() {
 	case imagetype.JPEG:
@@ -357,7 +350,7 @@ func (img *Image) Save(
 
 	so := newSaveOptions(o)
 
-	err := C.int(0)
+	err := C.int(0) //nolint:wastedassign
 	imgsize := C.size_t(0)
 
 	switch imgtype {
@@ -392,8 +385,7 @@ func (img *Image) Save(
 		return nil, Error()
 	}
 
-	var blob_ptr = C.vips_blob_get(target.blob, &imgsize)
-	var ptr unsafe.Pointer = unsafe.Pointer(blob_ptr)
+	var ptr = C.vips_blob_get(target.blob, &imgsize)
 
 	b := ptrToBytes(ptr, int(imgsize))
 
@@ -939,6 +931,13 @@ func (img *Image) StripAll() error {
 	img.swapAndUnref(tmp)
 
 	return nil
+}
+
+func (img *Image) swapAndUnref(newImg *C.VipsImage) {
+	if img.VipsImage != nil {
+		C.unref_image(img.VipsImage)
+	}
+	img.VipsImage = newImg
 }
 
 func vipsError(fn string, msg string, args ...any) {

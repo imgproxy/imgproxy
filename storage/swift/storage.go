@@ -38,7 +38,7 @@ func New(
 
 	err := c.Authenticate(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("swift authentication failed: %v", err)
+		return nil, fmt.Errorf("swift authentication failed: %w", err)
 	}
 
 	return &Storage{

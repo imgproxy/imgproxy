@@ -30,7 +30,7 @@ const (
 	wellKnownPath = "/.well-known/*"
 )
 
-// ImgproxyHandlers holds the handlers for imgproxy
+// ImgproxyHandlers holds the handlers for imgproxy.
 type ImgproxyHandlers struct {
 	Health     *healthhandler.Handler
 	Landing    *landinghandler.Handler
@@ -38,7 +38,7 @@ type ImgproxyHandlers struct {
 	Stream     *streamhandler.Handler
 }
 
-// Imgproxy holds all the components needed for imgproxy to function
+// Imgproxy holds all the components needed for imgproxy to function.
 type Imgproxy struct {
 	workers                *workers.Workers
 	fallbackImage          auximageprovider.Provider
@@ -56,7 +56,7 @@ type Imgproxy struct {
 	errorReporter          *errorreport.Reporter
 }
 
-// New creates a new imgproxy instance
+// New creates a new imgproxy instance.
 func New(ctx context.Context, config *Config) (*Imgproxy, error) {
 	if err := config.Validate(); err != nil {
 		return nil, err
@@ -179,7 +179,7 @@ func (i *Imgproxy) BuildRouter() (*server.Router, error) {
 	return r, nil
 }
 
-// Start runs the imgproxy server. This function blocks until the context is cancelled.
+// StartServer runs the imgproxy server. This function blocks until the context is cancelled.
 // If hasStarted is not nil, it will be notified with the server address once
 // the server is ready or about to be ready to accept requests.
 func (i *Imgproxy) StartServer(ctx context.Context, hasStarted chan net.Addr) error {
@@ -216,25 +216,6 @@ func (i *Imgproxy) StartServer(ctx context.Context, hasStarted chan net.Addr) er
 func (i *Imgproxy) Close(ctx context.Context) {
 	i.monitoring.Stop(ctx)
 	i.errorReporter.Close()
-}
-
-// startMemoryTicker starts a ticker that periodically frees memory and optionally logs memory stats
-func (i *Imgproxy) startMemoryTicker(ctx context.Context) {
-	ticker := time.NewTicker(i.config.Server.FreeMemoryInterval)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-ticker.C:
-			memory.Free()
-
-			if i.config.Server.LogMemStats {
-				memory.LogStats()
-			}
-		}
-	}
 }
 
 func (i *Imgproxy) Fetcher() *fetcher.Fetcher {
@@ -283,4 +264,23 @@ func (i *Imgproxy) Monitoring() *monitoring.Monitoring {
 
 func (i *Imgproxy) ErrorReporter() *errorreport.Reporter {
 	return i.errorReporter
+}
+
+// startMemoryTicker starts a ticker that periodically frees memory and optionally logs memory stats
+func (i *Imgproxy) startMemoryTicker(ctx context.Context) {
+	ticker := time.NewTicker(i.config.Server.FreeMemoryInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			memory.Free()
+
+			if i.config.Server.LogMemStats {
+				memory.LogStats()
+			}
+		}
+	}
 }

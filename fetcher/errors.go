@@ -24,6 +24,7 @@ type (
 
 	NotModifiedError struct {
 		*errctx.TextError
+
 		headers http.Header
 	}
 )
@@ -132,7 +133,7 @@ func (e NotModifiedError) Headers() http.Header {
 	return e.headers
 }
 
-// NOTE: make private when we remove download functions from imagedata package
+// WrapError NOTE: make private when we remove download functions from imagedata package
 func WrapError(err error, skipStack int) error {
 	type httpError interface {
 		Timeout() bool
@@ -145,7 +146,7 @@ func WrapError(err error, skipStack int) error {
 		return newRequestTimeoutError(err)
 	case errors.Is(err, context.Canceled):
 		return newRequestCanceledError(err)
-	case err == io.ErrUnexpectedEOF:
+	case errors.Is(err, io.ErrUnexpectedEOF):
 		return PartialResponseError{errctx.NewTextError(
 			"response is incomplete",
 			1,

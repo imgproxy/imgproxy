@@ -15,10 +15,14 @@ import (
 
 // mockStorage is a simple mock implementation of storage.Reader
 type mockStorage struct {
-	getObject func(ctx context.Context, reqHeader http.Header, bucket, key, query string) (*storage.ObjectReader, error)
+	getObject func(
+		ctx context.Context, reqHeader http.Header, bucket, key, query string,
+	) (*storage.ObjectReader, error)
 }
 
-func (m *mockStorage) GetObject(ctx context.Context, reqHeader http.Header, bucket, key, query string) (*storage.ObjectReader, error) {
+func (m *mockStorage) GetObject(
+	ctx context.Context, reqHeader http.Header, bucket, key, query string,
+) (*storage.ObjectReader, error) {
 	if m.getObject == nil {
 		return nil, nil
 	}
@@ -33,7 +37,9 @@ type RoundTripperTestSuite struct {
 func (s *RoundTripperTestSuite) TestRoundTripperSuccess() {
 	// Create mock storage that returns a successful response
 	mock := &mockStorage{
-		getObject: func(ctx context.Context, reqHeader http.Header, bucket, key, query string) (*storage.ObjectReader, error) {
+		getObject: func(
+			ctx context.Context, reqHeader http.Header, bucket, key, query string,
+		) (*storage.ObjectReader, error) {
 			s.Equal("test-bucket", bucket)
 			s.Equal("test-key", key)
 			s.Equal("version=123", query)
@@ -50,7 +56,7 @@ func (s *RoundTripperTestSuite) TestRoundTripperSuccess() {
 	rt := NewRoundTripper(mock, "?")
 
 	// Create a test request
-	req, err := http.NewRequest("GET", EscapeURL("s3://test-bucket/test-key?version=123"), nil)
+	req, err := http.NewRequest(http.MethodGet, EscapeURL("s3://test-bucket/test-key?version=123"), nil)
 	s.Require().NoError(err)
 
 	// Execute RoundTrip
@@ -73,14 +79,16 @@ func (s *RoundTripperTestSuite) TestRoundTripperSuccess() {
 func (s *RoundTripperTestSuite) TestRoundTripperNotFound() {
 	// Create mock storage that returns 404
 	mock := &mockStorage{
-		getObject: func(ctx context.Context, reqHeader http.Header, bucket, key, query string) (*storage.ObjectReader, error) {
+		getObject: func(
+			ctx context.Context, reqHeader http.Header, bucket, key, query string,
+		) (*storage.ObjectReader, error) {
 			return storage.NewObjectNotFound("object not found"), nil
 		},
 	}
 
 	rt := NewRoundTripper(mock, "?")
 
-	req, err := http.NewRequest("GET", "s3://bucket/key", nil)
+	req, err := http.NewRequest(http.MethodGet, "s3://bucket/key", nil)
 	s.Require().NoError(err)
 
 	resp, err := rt.RoundTrip(req)

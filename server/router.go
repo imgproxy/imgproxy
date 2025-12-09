@@ -84,43 +84,6 @@ func NewRouter(
 	}, nil
 }
 
-// add adds an abitary route to the router
-func (r *Router) add(method, path string, handler RouteHandler, middlewares ...Middleware) *route {
-	for _, m := range middlewares {
-		handler = m(handler)
-	}
-
-	exact := true
-	if strings.HasSuffix(path, "*") {
-		exact = false
-		path = strings.TrimSuffix(path, "*")
-	}
-
-	newRoute := &route{
-		method:  method,
-		path:    r.config.PathPrefix + path,
-		handler: handler,
-		exact:   exact,
-	}
-
-	r.routes = append(r.routes, newRoute)
-
-	// Sort routes by exact flag, exact routes go first in the
-	// same order they were added
-	slices.SortStableFunc(r.routes, func(a, b *route) int {
-		switch {
-		case a.exact == b.exact:
-			return 0
-		case a.exact:
-			return -1
-		default:
-			return 1
-		}
-	})
-
-	return newRoute
-}
-
 // GET adds GET route
 func (r *Router) GET(path string, handler RouteHandler, middlewares ...Middleware) *route {
 	return r.add(http.MethodGet, path, handler, middlewares...)
@@ -194,6 +157,43 @@ func (r *Router) OkHandler(reqID string, rw ResponseWriter, req *http.Request) *
 	return nil
 }
 
+// add adds an abitary route to the router
+func (r *Router) add(method, path string, handler RouteHandler, middlewares ...Middleware) *route {
+	for _, m := range middlewares {
+		handler = m(handler)
+	}
+
+	exact := true
+	if strings.HasSuffix(path, "*") {
+		exact = false
+		path = strings.TrimSuffix(path, "*")
+	}
+
+	newRoute := &route{
+		method:  method,
+		path:    r.config.PathPrefix + path,
+		handler: handler,
+		exact:   exact,
+	}
+
+	r.routes = append(r.routes, newRoute)
+
+	// Sort routes by exact flag, exact routes go first in the
+	// same order they were added
+	slices.SortStableFunc(r.routes, func(a, b *route) int {
+		switch {
+		case a.exact == b.exact:
+			return 0
+		case a.exact:
+			return -1
+		default:
+			return 1
+		}
+	})
+
+	return newRoute
+}
+
 // getRequestID tries to read request id from headers or from lambda
 // context or generates a new one if nothing found.
 func (r *Router) getRequestID(req *http.Request) string {
@@ -251,6 +251,13 @@ func replaceRemoteAddr(req *http.Request, ip string) {
 	req.RemoteAddr = net.JoinHostPort(strings.TrimSpace(ip), port)
 }
 
+// Silent sets Silent flag which suppresses logs to true. We do not need to log
+// requests like /health of /favicon.ico
+func (r *route) Silent() *route {
+	r.silent = true
+	return r
+}
+
 // isMatch checks that a request matches route
 func (r *route) isMatch(req *http.Request) bool {
 	methodMatches := r.method == req.Method
@@ -258,11 +265,4 @@ func (r *route) isMatch(req *http.Request) bool {
 	exactPathMatches := r.exact && req.URL.Path == r.path
 
 	return methodMatches && (notExactPathMathes || exactPathMatches)
-}
-
-// Silent sets Silent flag which supresses logs to true. We do not need to log
-// requests like /health of /favicon.ico
-func (r *route) Silent() *route {
-	r.silent = true
-	return r
 }

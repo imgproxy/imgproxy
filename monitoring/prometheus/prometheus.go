@@ -2,6 +2,7 @@ package prometheus
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net"
@@ -147,16 +148,19 @@ func (p *Prometheus) Stop(ctx context.Context) {
 
 // StartServer starts the Prometheus metrics server
 func (p *Prometheus) StartServer(cancel context.CancelFunc) error {
-	s := http.Server{Handler: promhttp.Handler()}
+	s := http.Server{
+		ReadHeaderTimeout: 5 * time.Second,
+		Handler:           promhttp.Handler(),
+	}
 
 	l, err := net.Listen("tcp", p.config.Bind)
 	if err != nil {
-		return fmt.Errorf("can't start Prometheus metrics server: %s", err)
+		return fmt.Errorf("can't start Prometheus metrics server: %w", err)
 	}
 
 	go func() {
 		slog.Info(fmt.Sprintf("Starting Prometheus server at %s", p.config.Bind))
-		if err := s.Serve(l); err != nil && err != http.ErrServerClosed {
+		if err := s.Serve(l); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			slog.Error(err.Error())
 		}
 		cancel()
@@ -196,14 +200,6 @@ func (p *Prometheus) StartSpan(
 	)
 }
 
-// startDuration starts a timer and returns a cancel function to record the duration
-func (p *Prometheus) startDuration(m prometheus.Observer) context.CancelFunc {
-	t := time.Now()
-	return func() {
-		m.Observe(time.Since(t).Seconds())
-	}
-}
-
 // SetMetadata sets metadata for Prometheus monitoring
 func (p *Prometheus) SetMetadata(ctx context.Context, key string, value interface{}) {
 	// Prometheus does not support request tracing
@@ -217,4 +213,12 @@ func (p *Prometheus) SendError(ctx context.Context, errType string, err errctx.E
 // InjectHeaders adds monitoring headers to the provided HTTP headers.
 func (p *Prometheus) InjectHeaders(ctx context.Context, headers http.Header) {
 	// Prometheus does not support request tracing
+}
+
+// startDuration starts a timer and returns a cancel function to record the duration
+func (p *Prometheus) startDuration(m prometheus.Observer) context.CancelFunc {
+	t := time.Now()
+	return func() {
+		m.Observe(time.Since(t).Seconds())
+	}
 }
