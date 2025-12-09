@@ -200,6 +200,12 @@ func (d *Decoder) Token() (Token, error) {
 	}
 }
 
+// FlushTo writes the remaining data from the reader to the provided writer.
+func (d *Decoder) FlushTo(w io.Writer) error {
+	_, err := d.r.WriteTo(w)
+	return err
+}
+
 // readText reads text until the `<` character or EOF.
 func (d *Decoder) readText() []byte {
 	d.buf.Reset()
