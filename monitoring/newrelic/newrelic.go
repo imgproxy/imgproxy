@@ -27,7 +27,7 @@ type NewRelic struct {
 
 	app *newrelic.Application
 
-	metricsCtx       context.Context
+	metricsCtx       context.Context //nolint:containedctx
 	metricsCtxCancel context.CancelFunc
 }
 
@@ -56,7 +56,7 @@ func New(config *Config, stats *stats.Stats) (*NewRelic, error) {
 	)
 
 	if err != nil {
-		return nil, fmt.Errorf("can't init New Relic agent: %s", err)
+		return nil, fmt.Errorf("can't init New Relic agent: %w", err)
 	}
 
 	nl.metricsCtx, nl.metricsCtxCancel = context.WithCancel(context.Background())
@@ -90,7 +90,7 @@ func (nl *NewRelic) StartRequest(
 }
 
 // setMetadata sets metadata on the given New Relic attributable entity
-func setMetadata(span attributable, key string, value interface{}) {
+func setMetadata(span attributable, key string, value any) {
 	if len(key) == 0 || value == nil {
 		return
 	}
@@ -120,7 +120,7 @@ func setMetadata(span attributable, key string, value interface{}) {
 }
 
 // SetMetadata sets metadata for the current transaction
-func (nl *NewRelic) SetMetadata(ctx context.Context, key string, value interface{}) {
+func (nl *NewRelic) SetMetadata(ctx context.Context, key string, value any) {
 	if txn := newrelic.FromContext(ctx); txn != nil {
 		setMetadata(txn, key, value)
 	}

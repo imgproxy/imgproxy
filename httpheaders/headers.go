@@ -1,4 +1,4 @@
-// Inspired by https://github.com/mattrobenolt/go-httpheaders
+// Package httpheaders inspired by https://github.com/mattrobenolt/go-httpheaders
 // Thanks, Matt Robenolt!
 package httpheaders
 
@@ -63,12 +63,14 @@ const (
 	Width                           = "Width"
 	WwwAuthenticate                 = "Www-Authenticate"
 	XAmznRequestContextHeader       = "x-amzn-request-context"
+	XAmzMetaECL                     = "X-Amz-Meta-X-Amz-Unencrypted-Content-Length"
 	XContentTypeOptions             = "X-Content-Type-Options"
 	XForwardedFor                   = "X-Forwarded-For"
 	XForwardedHost                  = "X-Forwarded-Host"
 	XForwardedPort                  = "X-Forwarded-Port"
 	XForwardedProto                 = "X-Forwarded-Proto"
 	XFrameOptions                   = "X-Frame-Options"
+	XMsRange                        = "X-MS-Range"
 	XOriginWidth                    = "X-Origin-Width"
 	XOriginHeight                   = "X-Origin-Height"
 	XRealIP                         = "X-Real-IP"

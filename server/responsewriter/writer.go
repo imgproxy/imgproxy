@@ -115,7 +115,7 @@ func (w *Writer) SetContentType(mime string) {
 	w.result.Set(httpheaders.ContentType, mime)
 }
 
-// writeCanonical sets the Link header with the canonical URL.
+// SetCanonical sets the Link header with the canonical URL.
 // It is mandatory for any response if enabled in the configuration.
 func (w *Writer) SetCanonical(url string) {
 	if !w.config.SetCanonicalHeader {
@@ -126,6 +126,24 @@ func (w *Writer) SetCanonical(url string) {
 		value := fmt.Sprintf(`<%s>; rel="canonical"`, url)
 		w.result.Set(httpheaders.Link, value)
 	}
+}
+
+// WriteHeader writes the HTTP response header.
+//
+// It ensures that all headers are flushed before writing the status code.
+func (w *Writer) WriteHeader(statusCode int) {
+	w.beforeWrite()
+
+	w.httpResponseWriter.WriteHeader(statusCode)
+}
+
+// Write writes the HTTP response body.
+//
+// It ensures that all headers are flushed before writing the body.
+func (w *Writer) Write(b []byte) (int, error) {
+	w.beforeWrite()
+
+	return w.httpResponseWriter.Write(b)
 }
 
 // setCacheControl sets the Cache-Control header with the specified value.
@@ -198,22 +216,4 @@ func (w *Writer) beforeWrite() {
 		// Flush headers before we write anything
 		w.flushHeaders()
 	})
-}
-
-// WriteHeader writes the HTTP response header.
-//
-// It ensures that all headers are flushed before writing the status code.
-func (w *Writer) WriteHeader(statusCode int) {
-	w.beforeWrite()
-
-	w.httpResponseWriter.WriteHeader(statusCode)
-}
-
-// Write writes the HTTP response body.
-//
-// It ensures that all headers are flushed before writing the body.
-func (w *Writer) Write(b []byte) (int, error) {
-	w.beforeWrite()
-
-	return w.httpResponseWriter.Write(b)
 }

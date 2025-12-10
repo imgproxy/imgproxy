@@ -59,11 +59,13 @@ func New(config *Config, trans *http.Transport) (*Storage, error) {
 	}
 
 	if len(config.AssumeRoleArn) != 0 {
-		creds := stscreds.NewAssumeRoleProvider(sts.NewFromConfig(conf), config.AssumeRoleArn, func(o *stscreds.AssumeRoleOptions) {
-			if len(config.AssumeRoleExternalID) != 0 {
-				o.ExternalID = aws.String(config.AssumeRoleExternalID)
-			}
-		})
+		creds := stscreds.NewAssumeRoleProvider(
+			sts.NewFromConfig(conf), config.AssumeRoleArn,
+			func(o *stscreds.AssumeRoleOptions) {
+				if len(config.AssumeRoleExternalID) != 0 {
+					o.ExternalID = aws.String(config.AssumeRoleExternalID)
+				}
+			})
 		conf.Credentials = creds
 	}
 
@@ -167,7 +169,7 @@ func regionFromError(err error) string {
 		return ""
 	}
 
-	if rerr.Response == nil || rerr.Response.StatusCode != 301 {
+	if rerr.Response == nil || rerr.Response.StatusCode != http.StatusMovedPermanently {
 		return ""
 	}
 
@@ -180,7 +182,7 @@ func handleError(err error) (*storage.ObjectReader, error) {
 		return nil, errctx.Wrap(err)
 	}
 
-	if rerr.Response == nil || rerr.Response.StatusCode < 100 || rerr.Response.StatusCode == 301 {
+	if rerr.Response == nil || rerr.Response.StatusCode < 100 || rerr.Response.StatusCode == http.StatusMovedPermanently {
 		return nil, errctx.Wrap(err)
 	}
 

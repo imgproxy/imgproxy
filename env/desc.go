@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-// Desc describes an environment variable
+// Desc describes an environment variable.
 type Desc struct {
 	Name   string
 	Format string
@@ -29,7 +29,7 @@ func DescribeByMap[T any](name string, m map[string]T) Desc {
 	return Describe(name, format)
 }
 
-// Getenv returns the value of the env variable
+// Get returns the value of the env variable
 func (d Desc) Get() (string, bool) {
 	if len(d.Name) == 0 {
 		return "", false
@@ -57,7 +57,7 @@ func (d Desc) Errorf(msg string, args ...any) error {
 	)
 }
 
-// WarnParseError logs a warning when an env var fails to parse
+// ErrorParse logs a warning when an env var fails to parse
 func (d Desc) ErrorParse(err error) error {
 	return d.Errorf("failed to parse: %s", err)
 }
@@ -72,7 +72,7 @@ func (d Desc) ErrorRange() error {
 	return d.Errorf("out of range")
 }
 
-// ErrorZeroOrLess formats an error message for zero or less env var
+// ErrorZeroOrNegative formats an error message for zero or less env var
 func (d Desc) ErrorZeroOrNegative() error {
 	return d.Errorf("cannot be zero or negative")
 }

@@ -66,17 +66,6 @@ func newBlockingReader(reader io.ReadCloser) *blockingReader {
 	return r
 }
 
-// flushNextChunk unlocks the reader, allowing it to return the next chunk of data
-func (r *blockingReader) flushNextChunk() {
-	r.mu.Unlock()
-}
-
-// flush unlocks the reader, allowing it to return all data as usual
-func (r *blockingReader) flush() {
-	r.unlocking.Store(true) // allow reading data without blocking
-	r.mu.Unlock()           // and continue
-}
-
 // Read reads data from the testReader, simulating a slow read and a potential failure
 func (r *blockingReader) Read(p []byte) (n int, err error) {
 	if !r.unlocking.Load() {
@@ -91,8 +80,21 @@ func (r *blockingReader) Close() error { // Close forwards closing to the underl
 	return r.reader.Close()
 }
 
+// flushNextChunk unlocks the reader, allowing it to return the next chunk of data
+func (r *blockingReader) flushNextChunk() {
+	r.mu.Unlock()
+}
+
+// flush unlocks the reader, allowing it to return all data as usual
+func (r *blockingReader) flush() {
+	r.unlocking.Store(true) // allow reading data without blocking
+	r.mu.Unlock()           // and continue
+}
+
 // generateSourceData generates a byte slice with 4.5 chunks of data
 func generateSourceData(t *testing.T, size int) ([]byte, io.ReadSeekCloser) {
+	t.Helper()
+
 	// We use small chunks for tests, let's check the ChunkSize just in case
 	assert.GreaterOrEqual(t, chunkSize, 20, "ChunkSize required for tests must be greater than 10 bytes")
 

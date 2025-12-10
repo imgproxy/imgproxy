@@ -38,9 +38,11 @@ func (s *ReaderTestSuite) SetupSuite() {
 func (s *ReaderTestSuite) SetupTest() {
 	// Prepare FS storage - write test file directly
 	testFile := filepath.Join(s.tmpDir(), s.TestObjectKey)
-	err := os.MkdirAll(filepath.Dir(testFile), 0755)
+
+	err := os.MkdirAll(filepath.Dir(testFile), 0750)
 	s.Require().NoError(err)
-	err = os.WriteFile(testFile, s.TestData, 0644)
+
+	err = os.WriteFile(testFile, s.TestData, 0600)
 	s.Require().NoError(err)
 }
 

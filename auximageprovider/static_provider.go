@@ -20,7 +20,7 @@ func (s *staticProvider) Get(_ context.Context, _ *options.Options) (imagedata.I
 	return s.data, s.headers.Clone(), nil
 }
 
-// NewStaticFromTriple creates a new ImageProvider from either a base64 string, file path, or URL
+// NewStaticProvider creates a new ImageProvider from either a base64 string, file path, or URL
 func NewStaticProvider(
 	ctx context.Context,
 	c *StaticConfig,

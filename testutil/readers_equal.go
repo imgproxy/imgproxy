@@ -1,6 +1,7 @@
 package testutil
 
 import (
+	"errors"
 	"io"
 	"testing"
 
@@ -10,7 +11,7 @@ import (
 
 const bufSize = 4096
 
-// RequireReadersEqual compares two io.Reader contents in a streaming manner.
+// ReadersEqual compares two io.Reader contents in a streaming manner.
 // It fails the test if contents differ or if reading fails.
 func ReadersEqual(t *testing.T, expected, actual io.Reader) bool {
 	// Marks this function as a test helper so in case failure happens here, location would
@@ -30,7 +31,7 @@ func ReadersEqual(t *testing.T, expected, actual io.Reader) bool {
 
 		require.Equal(t, buf1[:n1], buf2[:n1])
 
-		if err1 == io.EOF && err2 == io.EOF {
+		if errors.Is(err1, io.EOF) && errors.Is(err2, io.EOF) {
 			return true
 		}
 

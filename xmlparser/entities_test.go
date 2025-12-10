@@ -85,7 +85,7 @@ func BenchmarkParseEntityMap(b *testing.B) {
 
 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_ = parseEntityMap(nodes)
 	}
 }
@@ -101,7 +101,7 @@ func BenchmarkReplaceEntitiesString(b *testing.B) {
 
 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_ = replaceEntitiesString(data, em)
 	}
 }
@@ -117,7 +117,7 @@ func BenchmarkReplaceEntitiesBytes(b *testing.B) {
 
 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_ = replaceEntitiesBytes(data, em)
 	}
 }

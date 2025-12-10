@@ -40,13 +40,15 @@ func (s *Storage) GetObject(
 	// Check if this is partial request
 	partial, err := parseRangeHeader(opts, reqHeader)
 	if err != nil {
-		return storage.NewObjectInvalidRange(), nil
+		return storage.NewObjectInvalidRange(), nil //nolint:nilerr
 	}
 
 	// Open the object
 	result, err := s.client.DownloadStream(ctx, container, key, opts)
 	if err != nil {
-		if azError, ok := err.(*azcore.ResponseError); !ok || azError.StatusCode < 100 || azError.StatusCode == 301 {
+		//nolint:errorlint
+		azError, ok := err.(*azcore.ResponseError)
+		if !ok || azError.StatusCode < 100 || azError.StatusCode == http.StatusMovedPermanently {
 			return nil, err
 		} else {
 			return storage.NewObjectError(azError.StatusCode, azError.Error()), nil

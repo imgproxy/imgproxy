@@ -12,7 +12,7 @@ import (
 // TestServerHookFunc is a function type for in-request hooks
 type TestServerHookFunc func(r *http.Request, rw http.ResponseWriter)
 
-// Sugar alias
+// LazyTestServer is a sugar alias
 type LazyTestServer = LazyObj[*TestServer]
 
 // TestServer is a syntax sugar wrapper over httptest.Server
@@ -54,7 +54,7 @@ func NewLazySuiteTestServer(
 	)
 }
 
-// New creates and starts new http.TestServer
+// NewTestServer creates and starts new http.TestServer
 func NewTestServer() *TestServer {
 	ts := &TestServer{
 		status: http.StatusOK,
@@ -78,7 +78,7 @@ func (s *TestServer) SetBody(data []byte) *TestServer {
 	return s
 }
 
-// WithHeader adds headers that will be returned by the server.
+// SetHeaders adds headers that will be returned by the server.
 // Odd arguments are treated as keys, even arguments as values.
 func (s *TestServer) SetHeaders(kv ...string) *TestServer {
 	for i := 0; i+1 < len(kv); i += 2 {
@@ -97,7 +97,17 @@ func (s *TestServer) SetHook(f TestServerHookFunc) *TestServer {
 	return s
 }
 
-// Start starts the server
+// Close stops the server
+func (s *TestServer) Close() {
+	s.testServer.Close()
+}
+
+// URL returns the server URL
+func (s *TestServer) URL() string {
+	return s.testServer.URL
+}
+
+// start starts the server
 func (s *TestServer) start() *TestServer {
 	s.testServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		httpheaders.CopyAll(s.header, w.Header(), true)
@@ -109,14 +119,4 @@ func (s *TestServer) start() *TestServer {
 	}))
 
 	return s
-}
-
-// Close stops the server
-func (s *TestServer) Close() {
-	s.testServer.Close()
-}
-
-// URL returns the server URL
-func (s *TestServer) URL() string {
-	return s.testServer.URL
 }

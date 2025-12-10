@@ -7,7 +7,7 @@ var cStringsCache sync.Map
 
 func cachedCString(str string) *C.char {
 	if cstr, ok := cStringsCache.Load(str); ok {
-		return cstr.(*C.char)
+		return cstr.(*C.char) //nolint:forcetypeassert
 	}
 
 	cstr := C.CString(str)

@@ -70,7 +70,7 @@ func New(hCtx HandlerContext, config *Config) (*Handler, error) {
 	}, nil
 }
 
-// Stream handles the image passthrough request, streaming the image directly to the response writer
+// Execute handles the image passthrough request, streaming the image directly to the response writer
 func (s *Handler) Execute(
 	ctx context.Context,
 	userRequest *http.Request,
@@ -178,7 +178,7 @@ func (s *request) setContentDisposition(imagePath string, serverResponse *http.R
 
 // streamData copies the image data from the response body to the response writer
 func (s *request) streamData(res *http.Response) {
-	buf := streamBufPool.Get().(*[]byte)
+	buf := streamBufPool.Get().(*[]byte) //nolint:forcetypeassert
 	defer streamBufPool.Put(buf)
 
 	_, copyerr := io.CopyBuffer(s.rw, res.Body, *buf)

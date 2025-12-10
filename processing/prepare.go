@@ -264,7 +264,7 @@ func (c *Context) limitScale(widthToScale, heightToScale int, po ProcessingOptio
 	}
 }
 
-// Prepare calculates context image parameters based on the current image size.
+// CalcParams calculates context image parameters based on the current image size.
 // Some steps (like trim) must call this function when finished.
 func (c *Context) CalcParams() {
 	c.SrcWidth, c.SrcHeight, c.Angle, c.Flip = ExtractGeometry(c.Img, c.PO.Rotate(), c.PO.AutoRotate())

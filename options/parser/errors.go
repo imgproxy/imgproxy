@@ -16,7 +16,7 @@ type (
 	SecurityOptionsError struct{ *errctx.TextError }
 )
 
-func newInvalidURLError(format string, args ...interface{}) error {
+func newInvalidURLError(format string, args ...any) error {
 	return InvalidURLError{errctx.NewTextError(
 		fmt.Sprintf(format, args...),
 		1,
@@ -46,7 +46,7 @@ func newForbiddenOptionError(kind, opt string) error {
 	)}
 }
 
-func newOptionArgumentError(format string, args ...interface{}) error {
+func newOptionArgumentError(format string, args ...any) error {
 	return OptionArgumentError{errctx.NewTextError(
 		fmt.Sprintf(format, args...),
 		1,

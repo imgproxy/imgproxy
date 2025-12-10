@@ -24,7 +24,7 @@ type TestDataProvider struct {
 	t    TestDataProviderT
 }
 
-// New creates a new TestDataProvider
+// NewTestDataProvider creates a new TestDataProvider
 func NewTestDataProvider(t TestDataProviderT) *TestDataProvider {
 	t().Helper()
 
@@ -64,7 +64,6 @@ func findProjectRoot() (string, error) {
 		dir = parent
 	}
 	return "", os.ErrNotExist
-
 }
 
 // Root returns the absolute path to the testdata directory
@@ -87,7 +86,7 @@ func (p *TestDataProvider) Read(name string) []byte {
 	return data
 }
 
-// Data reads a test data file and returns it as imagedata.ImageData
+// Reader reads a test data file and returns it as imagedata.ImageData
 func (p *TestDataProvider) Reader(name string) *bytes.Reader {
 	return bytes.NewReader(p.Read(name))
 }

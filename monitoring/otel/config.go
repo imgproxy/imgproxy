@@ -18,7 +18,7 @@ var (
 	IMGPROXY_OPEN_TELEMETRY_TRACE_ID_GENERATOR = env.Describe("IMGPROXY_OPEN_TELEMETRY_TRACE_ID_GENERATOR", "xray|random")
 	IMGPROXY_OPEN_TELEMETRY_PROPAGATE_EXTERNAL = env.Describe("IMGPROXY_OPEN_TELEMETRY_PROPAGATE_EXTERNAL", "boolean")
 
-	// Those are OpenTelemetry SDK environment variables
+	// OTEL_EXPORTER_OTLP_PROTOCOL Those are OpenTelemetry SDK environment variables
 	OTEL_EXPORTER_OTLP_PROTOCOL        = env.Describe("OTEL_EXPORTER_OTLP_PROTOCOL", "grpc|http/protobuf|http|https")
 	OTEL_EXPORTER_OTLP_TIMEOUT         = env.Describe("OTEL_EXPORTER_OTLP_TIMEOUT", "milliseconds")
 	OTEL_EXPORTER_OTLP_TRACES_TIMEOUT  = env.Describe("OTEL_EXPORTER_OTLP_TRACES_TIMEOUT", "milliseconds")

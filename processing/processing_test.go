@@ -74,6 +74,7 @@ func (s *ProcessingTestSuite) TearDownSuite() {
 	logger.Unmute()
 }
 
+//nolint:unparam
 func (s *ProcessingTestSuite) openFile(name string) imagedata.ImageData {
 	wd, err := os.Getwd()
 	s.Require().NoError(err)

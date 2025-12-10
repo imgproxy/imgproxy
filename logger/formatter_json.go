@@ -174,7 +174,7 @@ func (s *formatterJSON) appendString(val string) {
 
 // isStringSafe checks if a string is safe to append without escaping.
 func (s *formatterJSON) isStringSafe(val string) bool {
-	for i := 0; i < len(val); i++ {
+	for i := range len(val) {
 		if b := val[i]; b >= utf8.RuneSelf || !jsonSafeSet[b] {
 			return false
 		}

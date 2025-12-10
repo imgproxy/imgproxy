@@ -13,14 +13,14 @@ import (
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 )
 
-// Cookies represents a cookies manager
+// Cookies represents a cookies manager.
 type Cookies struct {
 	baseURL *url.URL
 	config  *Config
 }
 
 // cookieJar is a cookie jar that stores all cookies in memory
-// and doesn't care about domains and paths
+// and doesn't care about domains and paths.
 type cookieJar struct {
 	entries []*http.Cookie
 	mu      sync.RWMutex

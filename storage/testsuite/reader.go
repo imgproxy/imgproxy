@@ -48,28 +48,7 @@ func (s *ReaderSuite) TestETagEnabled() {
 
 // TestIfNoneMatchReturns304 verifies that If-None-Match header causes 304 response when ETag matches
 func (s *ReaderSuite) TestIfNoneMatchReturns304() {
-	ctx := s.T().Context()
-
-	// First, get the ETag
-	reqHeader := make(http.Header)
-	response, err := s.Storage().GetObject(ctx, reqHeader, s.TestContainer, s.TestObjectKey, "")
-	s.Require().NoError(err)
-	s.Require().Equal(200, response.Status)
-	etag := response.Headers.Get(httpheaders.Etag)
-	s.Require().NotEmpty(etag)
-	response.Body.Close()
-
-	// Now request with If-None-Match
-	reqHeader = make(http.Header)
-	reqHeader.Set(httpheaders.IfNoneMatch, etag)
-
-	response, err = s.Storage().GetObject(ctx, reqHeader, s.TestContainer, s.TestObjectKey, "")
-	s.Require().NoError(err)
-	s.Require().Equal(http.StatusNotModified, response.Status)
-
-	if response.Body != nil {
-		response.Body.Close()
-	}
+	s.testConditionalHeaders(httpheaders.IfNoneMatch, httpheaders.Etag, http.StatusNotModified)
 }
 
 // TestUpdatedETagReturns200 verifies that a wrong If-None-Match header returns 200
@@ -113,28 +92,7 @@ func (s *ReaderSuite) TestLastModifiedEnabled() {
 
 // TestIfModifiedSinceReturns304 verifies that If-Modified-Since header causes 304 response when date matches
 func (s *ReaderSuite) TestIfModifiedSinceReturns304() {
-	ctx := s.T().Context()
-
-	// First, get the Last-Modified time
-	reqHeader := make(http.Header)
-	response, err := s.Storage().GetObject(ctx, reqHeader, s.TestContainer, s.TestObjectKey, "")
-	s.Require().NoError(err)
-	s.Require().Equal(200, response.Status)
-	lastModified := response.Headers.Get(httpheaders.LastModified)
-	s.Require().NotEmpty(lastModified)
-	response.Body.Close()
-
-	// Now request with If-Modified-Since
-	reqHeader = make(http.Header)
-	reqHeader.Set(httpheaders.IfModifiedSince, lastModified)
-
-	response, err = s.Storage().GetObject(ctx, reqHeader, s.TestContainer, s.TestObjectKey, "")
-	s.Require().NoError(err)
-	s.Require().Equal(http.StatusNotModified, response.Status)
-
-	if response.Body != nil {
-		response.Body.Close()
-	}
+	s.testConditionalHeaders(httpheaders.IfModifiedSince, httpheaders.LastModified, http.StatusNotModified)
 }
 
 // TestUpdatedLastModifiedReturns200 verifies that an older If-Modified-Since header returns 200
@@ -215,4 +173,29 @@ func (s *ReaderSuite) TestContainerNotFound() {
 	response, err := s.Storage().GetObject(ctx, reqHeader, "nonexistent-container", s.TestObjectKey, "")
 	s.Require().NoError(err)
 	s.Require().Equal(http.StatusNotFound, response.Status)
+}
+
+func (s *ReaderSuite) testConditionalHeaders(reqValue, resValue string, status int) {
+	ctx := s.T().Context()
+
+	// First, get the initial header value
+	reqHeader := make(http.Header)
+	response, err := s.Storage().GetObject(ctx, reqHeader, s.TestContainer, s.TestObjectKey, "")
+	s.Require().NoError(err)
+	s.Require().Equal(200, response.Status)
+	headerValue := response.Headers.Get(resValue)
+	s.Require().NotEmpty(headerValue)
+	response.Body.Close()
+
+	// Now request with conditional header
+	reqHeader = make(http.Header)
+	reqHeader.Set(reqValue, headerValue)
+
+	response, err = s.Storage().GetObject(ctx, reqHeader, s.TestContainer, s.TestObjectKey, "")
+	s.Require().NoError(err)
+	s.Require().Equal(status, response.Status)
+
+	if response.Body != nil {
+		response.Body.Close()
+	}
 }

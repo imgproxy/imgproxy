@@ -6,6 +6,7 @@ import (
 	"iter"
 	"log/slog"
 	"maps"
+	"math"
 	"slices"
 	"strconv"
 	"strings"
@@ -106,7 +107,11 @@ func Get[T any](o *Options, key string, def T) T {
 // If the option does not exist, it creates a new slice with the value.
 func AppendToSlice[T any](o *Options, key string, value ...T) {
 	if v, ok := o.m[key]; ok {
-		vt := v.([]T)
+		vt, ok := v.([]T)
+		if !ok {
+			panic(newTypeMismatchError(key, v, new([]T)))
+		}
+
 		o.m[key] = append(vt, value...)
 		return
 	}
@@ -199,8 +204,14 @@ func (o *Options) GetInt(key string, def int) int {
 	case int32:
 		return int(t)
 	case int64:
+		if t > int64(math.MaxInt) || t < int64(math.MinInt) {
+			panic(fmt.Errorf("value %d for key %q exceeds int range", t, key))
+		}
 		return int(t)
 	case uint:
+		if t > uint(math.MaxInt) {
+			panic(fmt.Errorf("value %d for key %q exceeds int range", t, key))
+		}
 		return int(t)
 	case uint8:
 		return int(t)
@@ -209,6 +220,9 @@ func (o *Options) GetInt(key string, def int) int {
 	case uint32:
 		return int(t)
 	case uint64:
+		if t > uint64(math.MaxInt) {
+			panic(fmt.Errorf("value %d for key %q exceeds int range", t, key))
+		}
 		return int(t)
 	default:
 		panic(newTypeMismatchError(key, v, def))
@@ -337,16 +351,6 @@ func (o *Options) NestedMap() map[string]any {
 	return result
 }
 
-func (o *Options) nestedMap() map[string]any {
-	nm := make(map[string]any)
-
-	for k, v := range o.m {
-		nestedMapSet(nm, k, v)
-	}
-
-	return nm
-}
-
 // String returns Options as a string representation of the map.
 func (o *Options) String() string {
 	return fmt.Sprintf("%v", o.Map())
@@ -360,6 +364,16 @@ func (o *Options) MarshalJSON() ([]byte, error) {
 // LogValue returns Options as [slog.Value]
 func (o *Options) LogValue() slog.Value {
 	return toSlogValue(o.NestedMap())
+}
+
+func (o *Options) nestedMap() map[string]any {
+	nm := make(map[string]any)
+
+	for k, v := range o.m {
+		nestedMapSet(nm, k, v)
+	}
+
+	return nm
 }
 
 // nestedMapSet sets a value in a nested map[string]any structure.

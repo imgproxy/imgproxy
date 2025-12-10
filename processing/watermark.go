@@ -35,7 +35,7 @@ func (p *Processor) prepareWatermark(
 	po ProcessingOptions,
 	imgWidth, imgHeight int,
 	offsetScale float64,
-	framesCount int,
+	framesCount int, //nolint:unparam
 ) error {
 	if err := wm.Load(wmData, 1.0, 0, 1); err != nil {
 		return err
@@ -198,7 +198,7 @@ func (p *Processor) applyWatermark(
 		}
 	}
 
-	for i := 0; i < framesCount; i++ {
+	for range framesCount {
 		if err := img.ApplyWatermark(wm, left, top, opacity); err != nil {
 			return err
 		}

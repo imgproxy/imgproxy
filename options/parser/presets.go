@@ -64,7 +64,7 @@ func (p *Parser) validatePresets() error {
 	for name, opts := range p.presets {
 		o := options.New()
 		if err := p.applyURLOptions(o, opts, true, name); err != nil {
-			return fmt.Errorf("Error in preset `%s`: %s", name, err)
+			return fmt.Errorf("error in preset `%s`: %w", name, err)
 		}
 	}
 

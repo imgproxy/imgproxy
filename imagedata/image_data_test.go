@@ -76,7 +76,9 @@ func (s *ImageDataTestSuite) SetupSubTest() {
 }
 
 func (s *ImageDataTestSuite) TestDownloadStatusOK() {
-	imgdata, _, err := s.factory().DownloadSync(context.Background(), s.testServer().URL(), "Test image", DownloadOptions{})
+	imgdata, _, err := s.factory().DownloadSync(
+		context.Background(), s.testServer().URL(), "Test image", DownloadOptions{},
+	)
 
 	s.Require().NoError(err)
 	s.Require().NotNil(imgdata)
@@ -143,7 +145,9 @@ func (s *ImageDataTestSuite) TestDownloadStatusPartialContent() {
 				SetHeaders(httpheaders.ContentRange, tc.contentRange).
 				SetStatusCode(http.StatusPartialContent)
 
-			imgdata, _, err := s.factory().DownloadSync(context.Background(), s.testServer().URL(), "Test image", DownloadOptions{})
+			imgdata, _, err := s.factory().DownloadSync(
+				context.Background(), s.testServer().URL(), "Test image", DownloadOptions{},
+			)
 
 			if tc.expectErr {
 				s.Require().Error(err)
@@ -164,7 +168,9 @@ func (s *ImageDataTestSuite) TestDownloadStatusNotFound() {
 		SetBody([]byte("Not Found")).
 		SetHeaders(httpheaders.ContentType, "text/plain")
 
-	imgdata, _, err := s.factory().DownloadSync(context.Background(), s.testServer().URL(), "Test image", DownloadOptions{})
+	imgdata, _, err := s.factory().DownloadSync(
+		context.Background(), s.testServer().URL(), "Test image", DownloadOptions{},
+	)
 
 	s.Require().Error(err)
 	s.Require().Equal(404, errctx.Wrap(err).StatusCode())
@@ -177,7 +183,9 @@ func (s *ImageDataTestSuite) TestDownloadStatusForbidden() {
 		SetBody([]byte("Forbidden")).
 		SetHeaders(httpheaders.ContentType, "text/plain")
 
-	imgdata, _, err := s.factory().DownloadSync(context.Background(), s.testServer().URL(), "Test image", DownloadOptions{})
+	imgdata, _, err := s.factory().DownloadSync(
+		context.Background(), s.testServer().URL(), "Test image", DownloadOptions{},
+	)
 
 	s.Require().Error(err)
 	s.Require().Equal(403, errctx.Wrap(err).StatusCode())
@@ -190,7 +198,9 @@ func (s *ImageDataTestSuite) TestDownloadStatusInternalServerError() {
 		SetBody([]byte("Internal Server Error")).
 		SetHeaders(httpheaders.ContentType, "text/plain")
 
-	imgdata, _, err := s.factory().DownloadSync(context.Background(), s.testServer().URL(), "Test image", DownloadOptions{})
+	imgdata, _, err := s.factory().DownloadSync(
+		context.Background(), s.testServer().URL(), "Test image", DownloadOptions{},
+	)
 
 	s.Require().Error(err)
 	s.Require().Equal(502, errctx.Wrap(err).StatusCode())
@@ -214,7 +224,9 @@ func (s *ImageDataTestSuite) TestDownloadUnreachable() {
 func (s *ImageDataTestSuite) TestDownloadInvalidImage() {
 	s.testServer().SetBody([]byte("invalid"))
 
-	imgdata, _, err := s.factory().DownloadSync(context.Background(), s.testServer().URL(), "Test image", DownloadOptions{})
+	imgdata, _, err := s.factory().DownloadSync(
+		context.Background(), s.testServer().URL(), "Test image", DownloadOptions{},
+	)
 
 	s.Require().Error(err)
 	s.Require().Equal(http.StatusUnprocessableEntity, errctx.Wrap(err).StatusCode())
@@ -224,7 +236,9 @@ func (s *ImageDataTestSuite) TestDownloadInvalidImage() {
 func (s *ImageDataTestSuite) TestDownloadSourceAddressNotAllowed() {
 	s.fetcherCfg().Transport.HTTP.AllowLoopbackSourceAddresses = false
 
-	imgdata, _, err := s.factory().DownloadSync(context.Background(), s.testServer().URL(), "Test image", DownloadOptions{})
+	imgdata, _, err := s.factory().DownloadSync(
+		context.Background(), s.testServer().URL(), "Test image", DownloadOptions{},
+	)
 
 	s.Require().Error(err)
 	s.Require().Equal(404, errctx.Wrap(err).StatusCode())
@@ -257,7 +271,9 @@ func (s *ImageDataTestSuite) TestDownloadGzip() {
 			httpheaders.ContentLength, strconv.Itoa(buf.Len()), // Update Content-Length
 		)
 
-	imgdata, _, err := s.factory().DownloadSync(context.Background(), s.testServer().URL(), "Test image", DownloadOptions{})
+	imgdata, _, err := s.factory().DownloadSync(
+		context.Background(), s.testServer().URL(), "Test image", DownloadOptions{},
+	)
 
 	s.Require().NoError(err)
 	s.Require().NotNil(imgdata)

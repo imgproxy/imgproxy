@@ -5,7 +5,7 @@ import (
 	"io"
 )
 
-// Underlying Reader that provides io.ReadSeeker interface for the actual data reading
+// Reader provides io.ReadSeeker interface for the actual data reading
 // What is the purpose of this Reader?
 type Reader struct {
 	ab  *AsyncBuffer

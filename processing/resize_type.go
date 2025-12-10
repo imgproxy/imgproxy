@@ -32,7 +32,7 @@ func (rt ResizeType) String() string {
 func (rt ResizeType) MarshalJSON() ([]byte, error) {
 	for k, v := range ResizeTypes {
 		if v == rt {
-			return []byte(fmt.Sprintf("%q", k)), nil
+			return fmt.Appendf([]byte{}, "%q", k), nil
 		}
 	}
 	return []byte("null"), nil

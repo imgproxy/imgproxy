@@ -34,7 +34,7 @@ func (m IptcMap) AddTag(key TagKey, data []byte) error {
 }
 
 func (m IptcMap) MarshalJSON() ([]byte, error) {
-	mm := make(map[string]interface{}, len(m))
+	mm := make(map[string]any, len(m))
 	for key, values := range m {
 		info, infoFound := tagInfoMap[key]
 		if !infoFound {
@@ -92,7 +92,7 @@ func Parse(data []byte, m IptcMap) error {
 				if err := binary.Read(buf, binary.BigEndian, &dataSize64); err != nil {
 					return newIptcError("invalid IPTC data size: %s", err)
 				}
-				dataSize = int(dataSize64)
+				dataSize = int(dataSize64) //nolint:gosec
 			default:
 				return newIptcError("invalid IPTC data size")
 			}

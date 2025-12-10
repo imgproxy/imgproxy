@@ -434,7 +434,7 @@ type TagValue struct {
 	Raw    []byte
 }
 
-func (v TagValue) Typecast() interface{} {
+func (v TagValue) Typecast() any {
 	switch v.Format {
 	case TagFormatByte, TagFormatShort, TagFormatLong:
 		return v.Int()

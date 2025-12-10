@@ -365,7 +365,7 @@ func (p *Parser) applyWatermarkOption(o *options.Options, args []string) error {
 	}
 
 	if len(args) > 4 && len(args[4]) > 0 {
-		if err := p.parsePositiveNonZeroFloat(o, keys.WatermarkScale, args[4]); err == nil {
+		if err := p.parsePositiveNonZeroFloat(o, keys.WatermarkScale, args[4]); err != nil {
 			return err
 		}
 	}

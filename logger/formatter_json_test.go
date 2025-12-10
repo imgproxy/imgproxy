@@ -58,32 +58,6 @@ func (s *FormatterJsonTestSuite) SetupSubTest() {
 	s.ResetLazyObjects()
 }
 
-func (s *FormatterJsonTestSuite) checkNextEntry(lvl string, msg map[string]any) {
-	str, err := s.buf().ReadString('\n')
-	s.Require().NoError(err)
-
-	var parsed map[string]any
-	err = json.Unmarshal([]byte(str), &parsed)
-	s.Require().NoError(err)
-
-	s.Require().IsType("", parsed["time"])
-	s.Require().IsType("", parsed["level"])
-
-	now := time.Now()
-	t, err := time.ParseInLocation(time.RFC3339, parsed["time"].(string), now.Location())
-	s.Require().NoError(err)
-	s.Require().WithinDuration(time.Now(), t, time.Minute)
-
-	s.Equal(lvl, parsed["level"].(string))
-
-	// Remove time and level as they are not included in `msg`
-	delete(parsed, "time")
-	delete(parsed, "level")
-
-	// Check the message
-	s.Equal(msg, parsed)
-}
-
 func (s *FormatterJsonTestSuite) TestLevel() {
 	type testEntry struct {
 		level     slog.Level
@@ -314,6 +288,32 @@ func (s *FormatterJsonTestSuite) TestSpecialFields() {
 	}, "")
 
 	s.Require().Contains(s.buf().String(), expectedJSON)
+}
+
+func (s *FormatterJsonTestSuite) checkNextEntry(lvl string, msg map[string]any) {
+	str, err := s.buf().ReadString('\n')
+	s.Require().NoError(err)
+
+	var parsed map[string]any
+	err = json.Unmarshal([]byte(str), &parsed)
+	s.Require().NoError(err)
+
+	s.Require().IsType("", parsed["time"])
+	s.Require().IsType("", parsed["level"])
+
+	now := time.Now()
+	t, err := time.ParseInLocation(time.RFC3339, parsed["time"].(string), now.Location())
+	s.Require().NoError(err)
+	s.Require().WithinDuration(time.Now(), t, time.Minute)
+
+	s.Equal(lvl, parsed["level"].(string))
+
+	// Remove time and level as they are not included in `msg`
+	delete(parsed, "time")
+	delete(parsed, "level")
+
+	// Check the message
+	s.Equal(msg, parsed)
 }
 
 func TestFormatterJson(t *testing.T) {

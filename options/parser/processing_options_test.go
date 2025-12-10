@@ -332,6 +332,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathCrop() {
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathCropGravity() {
+	//nolint:misspell
 	path := "/crop:100:200:nowe:10:20/plain/http://images.dev/lorem/ipsum.jpg"
 	o, _, err := s.parser().ParsePath(path, nil)
 

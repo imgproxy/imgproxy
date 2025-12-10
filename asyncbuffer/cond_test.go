@@ -11,6 +11,7 @@ import (
 
 type TestCondSuite struct {
 	suite.Suite
+
 	cond *Cond
 }
 

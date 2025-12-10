@@ -1,5 +1,3 @@
-// init_once.go contains global initialization/teardown functions that should be called exactly once
-// per process.
 package imgproxy
 
 import (
@@ -16,8 +14,8 @@ import (
 )
 
 // Init performs the global resources initialization. This should be done once per process.
-func Init() error {
-	if err := env.Load(context.TODO()); err != nil {
+func Init(ctx context.Context) error {
+	if err := env.Load(ctx); err != nil {
 		return err
 	}
 

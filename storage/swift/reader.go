@@ -64,7 +64,7 @@ func (s *Storage) GetObject(
 			return storage.NewObjectNotModified(header), nil
 		}
 
-		return nil, fmt.Errorf("error opening swift object: %v", err)
+		return nil, fmt.Errorf("error opening swift object: %w", err)
 	}
 
 	// Range header: means partial content

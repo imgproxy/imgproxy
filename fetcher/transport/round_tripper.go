@@ -14,7 +14,7 @@ type RoundTripper struct {
 	querySeparator string
 }
 
-// New creates a new RoundTripper
+// NewRoundTripper creates a new RoundTripper
 func NewRoundTripper(storage storage.Reader, querySeparator string) *RoundTripper {
 	return &RoundTripper{
 		storage:        storage,

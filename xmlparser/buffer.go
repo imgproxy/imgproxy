@@ -8,7 +8,7 @@ import (
 )
 
 var bufPool = sync.Pool{
-	New: func() interface{} {
+	New: func() any {
 		// Reserve some capacity to not re-allocate on short strings.
 		buf := make(buffer, 0, 1024)
 		return &buf
@@ -17,11 +17,6 @@ var bufPool = sync.Pool{
 
 // buffer is a slice of bytes with some additional convenience methods.
 type buffer []byte
-
-// newBuffer creates a new buffer from the pool.
-func newBuffer() *buffer {
-	return bufPool.Get().(*buffer)
-}
 
 // Free truncates the buffer and returns it to the pool.
 func (b *buffer) Free() {
@@ -56,15 +51,6 @@ func (b *buffer) WriteByte(p byte) error {
 	return nil
 }
 
-// grow ensures that the buffer has at least n free bytes of capacity.
-// It grows the buffer to the next power of two if necessary.
-func (b *buffer) grow(n int) {
-	if req := len(*b) + n; req > cap(*b) {
-		p := math.Ceil(math.Log2(float64(req)))
-		*b = slices.Grow(*b, 1<<int(p))
-	}
-}
-
 // HasSuffix reports whether the buffer ends with the given suffix.
 func (b *buffer) HasSuffix(suffix []byte) bool {
 	return bytes.HasSuffix(*b, suffix)
@@ -87,7 +73,21 @@ func (b *buffer) String() string {
 	return string(*b)
 }
 
-// len returns the number of bytes written to the buffer.
+// Len returns the number of bytes written to the buffer.
 func (b *buffer) Len() int {
 	return len(*b)
+}
+
+// grow ensures that the buffer has at least n free bytes of capacity.
+// It grows the buffer to the next power of two if necessary.
+func (b *buffer) grow(n int) {
+	if req := len(*b) + n; req > cap(*b) {
+		p := math.Ceil(math.Log2(float64(req)))
+		*b = slices.Grow(*b, 1<<int(p))
+	}
+}
+
+// newBuffer creates a new buffer from the pool.
+func newBuffer() *buffer {
+	return bufPool.Get().(*buffer)
 }

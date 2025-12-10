@@ -27,7 +27,7 @@ type ImageData interface {
 	// AddCancel attaches a cancel function to the image data.
 	// Please note that Cancel functions must be idempotent: for instance, an implementation
 	// could wrap cancel into sync.Once.
-	AddCancel(context.CancelFunc)
+	AddCancel(cancel context.CancelFunc)
 }
 
 // imageDataBytes represents image data stored in a byte slice in memory

@@ -35,7 +35,7 @@ func NewResponseWriteError(cause error) errctx.Error {
 	)}
 }
 
-func newInvalidURLErrorf(status int, format string, args ...interface{}) errctx.Error {
+func newInvalidURLErrorf(status int, format string, args ...any) errctx.Error {
 	return InvalidURLError{errctx.NewTextError(
 		fmt.Sprintf(format, args...),
 		2,

@@ -21,7 +21,7 @@ func (s *Checker) VerifySignature(signature, path string) error {
 		return newSignatureError("Invalid signature encoding")
 	}
 
-	for i := 0; i < len(s.config.Keys); i++ {
+	for i := range len(s.config.Keys) {
 		if hmac.Equal(messageMAC, signatureFor(path, s.config.Keys[i], s.config.Salts[i], s.config.SignatureSize)) {
 			return nil
 		}

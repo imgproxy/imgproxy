@@ -42,7 +42,7 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 	return c, err
 }
 
-// Validate checks if the configuration is valid
+// Validate checks if the configuration is valid.
 func (c *Config) Validate() error {
 	// No validation needed for cookie config currently
 	return nil

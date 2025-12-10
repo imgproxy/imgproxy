@@ -78,7 +78,7 @@ func TestCopyAll(t *testing.T) {
 }
 
 func TestCopyFromRequest(t *testing.T) {
-	req, err := http.NewRequest("GET", "http://example.com", nil)
+	req, err := http.NewRequest(http.MethodGet, "http://example.com", nil)
 	require.NoError(t, err)
 
 	req.Host = "example.com"
@@ -104,7 +104,7 @@ func TestCopyFromRequest(t *testing.T) {
 }
 
 func TestCopyToRequest(t *testing.T) {
-	req, err := http.NewRequest("GET", "http://example.com", nil)
+	req, err := http.NewRequest(http.MethodGet, "http://example.com", nil)
 	require.NoError(t, err)
 
 	req.Header = http.Header{

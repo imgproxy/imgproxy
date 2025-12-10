@@ -51,7 +51,7 @@ func loadGCPSecret(ctx context.Context) error {
 	client, err = secretmanager.NewClient(ctx, opts...)
 
 	if err != nil {
-		return fmt.Errorf("can't create Google Cloud Secret Manager client: %s", err)
+		return fmt.Errorf("can't create Google Cloud Secret Manager client: %w", err)
 	}
 
 	req := secretmanagerpb.AccessSecretVersionRequest{
@@ -60,7 +60,7 @@ func loadGCPSecret(ctx context.Context) error {
 
 	resp, err := client.AccessSecretVersion(ctx, &req)
 	if err != nil {
-		return fmt.Errorf("can't get Google Cloud Secret Manager secret: %s", err)
+		return fmt.Errorf("can't get Google Cloud Secret Manager secret: %w", err)
 	}
 
 	payload := resp.GetPayload()

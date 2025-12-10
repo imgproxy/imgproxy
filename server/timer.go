@@ -1,5 +1,3 @@
-// timer.go contains methods for storing, retrieving and checking
-// timer in a request context.
 package server
 
 import (

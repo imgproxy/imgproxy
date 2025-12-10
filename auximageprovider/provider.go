@@ -14,5 +14,5 @@ import (
 // Provider is an interface that provides image data and headers based
 // on options. It is used to retrieve WatermarkImage and FallbackImage.
 type Provider interface {
-	Get(context.Context, *options.Options) (imagedata.ImageData, http.Header, error)
+	Get(ctx context.Context, opts *options.Options) (imagedata.ImageData, http.Header, error)
 }

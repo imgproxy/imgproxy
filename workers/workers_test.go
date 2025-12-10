@@ -30,12 +30,12 @@ func (s *WorkersTestSuite) SetupSuite() {
 
 func (s *WorkersTestSuite) acquire(ctx context.Context, n int, delay time.Duration) (int, error) {
 	errg := new(errgroup.Group)
-	aquired := int64(0)
+	acquired := int64(0)
 
 	// Get the workers instance before running goroutines
 	workers := s.workers()
 
-	for i := 0; i < n; i++ {
+	for range n {
 		errg.Go(func() error {
 			release, err := workers.Acquire(ctx)
 
@@ -43,7 +43,7 @@ func (s *WorkersTestSuite) acquire(ctx context.Context, n int, delay time.Durati
 				time.Sleep(delay)
 
 				release()
-				atomic.AddInt64(&aquired, 1)
+				atomic.AddInt64(&acquired, 1)
 			}
 
 			return err
@@ -51,7 +51,7 @@ func (s *WorkersTestSuite) acquire(ctx context.Context, n int, delay time.Durati
 	}
 
 	err := errg.Wait()
-	return int(aquired), err
+	return int(acquired), err
 }
 
 func (s *WorkersTestSuite) TestQueueDisabled() {
@@ -59,8 +59,8 @@ func (s *WorkersTestSuite) TestQueueDisabled() {
 	s.config().WorkersNumber = 2
 
 	// Try to acquire workers that exceed allowed workers number
-	aquired, err := s.acquire(s.T().Context(), 4, 10*time.Millisecond)
-	s.Require().Equal(4, aquired, "All workers should be eventually acquired")
+	acquired, err := s.acquire(s.T().Context(), 4, 10*time.Millisecond)
+	s.Require().Equal(4, acquired, "All workers should be eventually acquired")
 	s.Require().NoError(err, "All workers should be acquired without error")
 }
 
@@ -69,13 +69,13 @@ func (s *WorkersTestSuite) TestQueueEnabled() {
 	s.config().WorkersNumber = 2
 
 	// Try to acquire workers that fit allowed workers number + queue size
-	aquired, err := s.acquire(s.T().Context(), 3, 10*time.Millisecond)
-	s.Require().Equal(3, aquired, "All workers should be eventually acquired")
+	acquired, err := s.acquire(s.T().Context(), 3, 10*time.Millisecond)
+	s.Require().Equal(3, acquired, "All workers should be eventually acquired")
 	s.Require().NoError(err, "All workers should be acquired without error")
 
 	// Try to acquire workers that exceed allowed workers number + queue size
-	aquired, err = s.acquire(s.T().Context(), 6, 10*time.Millisecond)
-	s.Require().Equal(3, aquired, "Only 4 workers should be acquired")
+	acquired, err = s.acquire(s.T().Context(), 6, 10*time.Millisecond)
+	s.Require().Equal(3, acquired, "Only 4 workers should be acquired")
 	s.Require().ErrorAs(err, new(TooManyRequestsError))
 }
 
@@ -83,8 +83,8 @@ func (s *WorkersTestSuite) TestContextTimeout() {
 	ctx, cancel := context.WithTimeout(s.T().Context(), 5*time.Millisecond)
 	defer cancel()
 
-	aquired, err := s.acquire(ctx, 2, 100*time.Millisecond)
-	s.Require().Equal(1, aquired, "Only 1 worker should be acquired")
+	acquired, err := s.acquire(ctx, 2, 100*time.Millisecond)
+	s.Require().Equal(1, acquired, "Only 1 worker should be acquired")
 	s.Require().ErrorIs(err, context.DeadlineExceeded, "Context deadline exceeded error expected")
 }
 
@@ -92,8 +92,8 @@ func (s *WorkersTestSuite) TestContextCanceled() {
 	ctx, cancel := context.WithCancel(s.T().Context())
 	cancel()
 
-	aquired, err := s.acquire(ctx, 2, 100*time.Millisecond)
-	s.Require().Equal(0, aquired, "No worker should be acquired")
+	acquired, err := s.acquire(ctx, 2, 100*time.Millisecond)
+	s.Require().Equal(0, acquired, "No worker should be acquired")
 	s.Require().ErrorIs(err, context.Canceled, "Context canceled error expected")
 }
 

@@ -2,7 +2,7 @@ package errctx
 
 import "reflect"
 
-// ErrorWithContext is an interface for errors that carry additional context information.
+// Error is an interface for errors that carry additional context information.
 type Error interface {
 	// Error returns the error message.
 	Error() string

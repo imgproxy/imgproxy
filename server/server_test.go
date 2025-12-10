@@ -18,6 +18,7 @@ import (
 
 type ServerTestSuite struct {
 	suite.Suite
+
 	config        *Config
 	monitoring    *monitoring.Monitoring
 	errorReporter *errorreport.Reporter
@@ -43,14 +44,6 @@ func (s *ServerTestSuite) SetupTest() {
 	r, err := NewRouter(s.config, m, er)
 	s.Require().NoError(err)
 	s.blankRouter = r
-}
-
-func (s *ServerTestSuite) mockHandler(reqID string, rw ResponseWriter, r *http.Request) *Error {
-	return nil
-}
-
-func (s *ServerTestSuite) wrapRW(rw http.ResponseWriter) ResponseWriter {
-	return s.blankRouter.rwFactory.NewWriter(rw)
 }
 
 func (s *ServerTestSuite) TestStartServerWithInvalidBind() {
@@ -138,7 +131,7 @@ func (s *ServerTestSuite) TestWithCORS() {
 
 			wrappedHandler := router.WithCORS(s.mockHandler)
 
-			req := httptest.NewRequest("GET", "/test", nil)
+			req := httptest.NewRequest(http.MethodGet, "/test", nil)
 			rw := httptest.NewRecorder()
 
 			wrappedHandler("test-req-id", s.wrapRW(rw), req)
@@ -184,7 +177,7 @@ func (s *ServerTestSuite) TestWithSecret() {
 
 			wrappedHandler := router.WithSecret(s.mockHandler)
 
-			req := httptest.NewRequest("GET", "/test", nil)
+			req := httptest.NewRequest(http.MethodGet, "/test", nil)
 			if tt.authHeader != "" {
 				req.Header.Set(httpheaders.Authorization, tt.authHeader)
 			}
@@ -211,7 +204,7 @@ func (s *ServerTestSuite) TestIntoSuccess() {
 
 	wrappedHandler := s.blankRouter.WithReportError(mockHandler)
 
-	req := httptest.NewRequest("GET", "/test", nil)
+	req := httptest.NewRequest(http.MethodGet, "/test", nil)
 	rw := httptest.NewRecorder()
 
 	wrappedHandler("test-req-id", s.wrapRW(rw), req)
@@ -227,7 +220,7 @@ func (s *ServerTestSuite) TestIntoWithError() {
 
 	wrappedHandler := s.blankRouter.WithReportError(mockHandler)
 
-	req := httptest.NewRequest("GET", "/test", nil)
+	req := httptest.NewRequest(http.MethodGet, "/test", nil)
 	rw := httptest.NewRecorder()
 
 	wrappedHandler("test-req-id", s.wrapRW(rw), req)
@@ -244,7 +237,7 @@ func (s *ServerTestSuite) TestIntoPanicWithError() {
 
 	wrappedHandler := s.blankRouter.WithPanic(mockHandler)
 
-	req := httptest.NewRequest("GET", "/test", nil)
+	req := httptest.NewRequest(http.MethodGet, "/test", nil)
 	rw := httptest.NewRecorder()
 
 	s.NotPanics(func() {
@@ -263,7 +256,7 @@ func (s *ServerTestSuite) TestIntoPanicWithAbortHandler() {
 
 	wrappedHandler := s.blankRouter.WithPanic(mockHandler)
 
-	req := httptest.NewRequest("GET", "/test", nil)
+	req := httptest.NewRequest(http.MethodGet, "/test", nil)
 	rw := httptest.NewRecorder()
 
 	// Should re-panic with ErrAbortHandler
@@ -279,7 +272,7 @@ func (s *ServerTestSuite) TestIntoPanicWithNonError() {
 
 	wrappedHandler := s.blankRouter.WithPanic(mockHandler)
 
-	req := httptest.NewRequest("GET", "/test", nil)
+	req := httptest.NewRequest(http.MethodGet, "/test", nil)
 	rw := httptest.NewRecorder()
 
 	// Should re-panic with non-error panics
@@ -288,6 +281,14 @@ func (s *ServerTestSuite) TestIntoPanicWithNonError() {
 		s.Require().NotNil(err)
 		s.Require().Error(err.Err, "string panic")
 	})
+}
+
+func (s *ServerTestSuite) mockHandler(reqID string, rw ResponseWriter, r *http.Request) *Error {
+	return nil
+}
+
+func (s *ServerTestSuite) wrapRW(rw http.ResponseWriter) ResponseWriter {
+	return s.blankRouter.rwFactory.NewWriter(rw)
 }
 
 func TestServerTestSuite(t *testing.T) {

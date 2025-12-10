@@ -1,5 +1,3 @@
-// config.go is just a shortcut for common.Config which helps to
-// avoid importing of the `common` package directly.
 package transport
 
 import (
@@ -104,7 +102,7 @@ func NewDefaultConfig() Config {
 		S3:                      s3.NewDefaultConfig(),
 		SwiftEnabled:            false,
 		Swift:                   swift.NewDefaultConfig(),
-		SourceURLQuerySeparator: "?", // default is ?, but can be overriden with empty
+		SourceURLQuerySeparator: "?", // default is ?, but can be overridden with empty
 	}
 }
 

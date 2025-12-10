@@ -42,7 +42,7 @@ func calcJpegShink(shrink float64) float64 {
 
 func (p *Processor) scaleOnLoad(c *Context) error {
 	// Get the preshrink value based on the requested scales.
-	// We calculate it based on the image dimentions that we would get
+	// We calculate it based on the image dimensions that we would get
 	// with the current scales.
 	// We can't just use c.WScale and c.HScale since this may lead to
 	// overshrinking when only one target dimension is set.

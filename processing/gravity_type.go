@@ -16,10 +16,10 @@ func (gt GravityType) String() string {
 func (gt GravityType) MarshalJSON() ([]byte, error) {
 	for k, v := range GravityTypes {
 		if v == gt {
-			return []byte(fmt.Sprintf("%q", k)), nil
+			return fmt.Appendf([]byte{}, "%q", k), nil
 		}
 	}
-	return []byte("null"), nil
+	return fmt.Appendf([]byte{}, "%s", "null"), nil
 }
 
 const (
@@ -36,7 +36,7 @@ const (
 	GravitySmart
 	GravityFocusPoint
 
-	// Watermark gravity types
+	// GravityReplicate and below: watermark gravity types
 	GravityReplicate
 )
 
@@ -46,7 +46,7 @@ var GravityTypes = map[string]GravityType{
 	"ea":   GravityEast,
 	"so":   GravitySouth,
 	"we":   GravityWest,
-	"nowe": GravityNorthWest,
+	"nowe": GravityNorthWest, //nolint:misspell
 	"noea": GravityNorthEast,
 	"sowe": GravitySouthWest,
 	"soea": GravitySouthEast,

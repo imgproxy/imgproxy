@@ -105,7 +105,7 @@ func BenchmarkSvgProcessing(b *testing.B) {
 
 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		for _, sample := range samples {
 			_, err := svg.Process(opts, sample)
 			if err != nil {

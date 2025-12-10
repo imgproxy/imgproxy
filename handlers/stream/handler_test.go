@@ -153,7 +153,7 @@ func (s *HandlerTestSuite) execute(
 	o *options.Options,
 ) *http.Response {
 	imageURL = s.testServer().URL() + imageURL
-	req := httptest.NewRequest("GET", "/", nil)
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	httpheaders.CopyAll(header, req.Header, true)
 
 	ctx := s.T().Context()
@@ -173,6 +173,7 @@ func (s *HandlerTestSuite) TestHandlerBasicRequest() {
 	s.testServer().SetHeaders(httpheaders.ContentType, "image/png").SetBody(data)
 
 	res := s.execute("", nil, options.New())
+	defer res.Body.Close()
 
 	s.Require().Equal(200, res.StatusCode)
 	s.Require().Equal("image/png", res.Header.Get(httpheaders.ContentType))
@@ -198,6 +199,7 @@ func (s *HandlerTestSuite) TestHandlerResponseHeadersPassthrough() {
 	).SetBody(data)
 
 	res := s.execute("", nil, options.New())
+	defer res.Body.Close()
 
 	s.Require().Equal(200, res.StatusCode)
 	s.Require().Equal("image/png", res.Header.Get(httpheaders.ContentType))
@@ -229,6 +231,7 @@ func (s *HandlerTestSuite) TestHandlerRequestHeadersPassthrough() {
 	h.Set(httpheaders.Range, "bytes=*")
 
 	res := s.execute("", h, options.New())
+	defer res.Body.Close()
 
 	s.Require().Equal(200, res.StatusCode)
 	s.Require().Equal(etag, res.Header.Get(httpheaders.Etag))
@@ -246,6 +249,7 @@ func (s *HandlerTestSuite) TestHandlerContentDisposition() {
 
 	// Use a URL with a .png extension to help content disposition logic
 	res := s.execute("/test.png", nil, o)
+	defer res.Body.Close()
 
 	s.Require().Equal(200, res.StatusCode)
 	s.Require().Contains(res.Header.Get(httpheaders.ContentDisposition), "custom_name.png")
@@ -260,7 +264,7 @@ func (s *HandlerTestSuite) TestHandlerCacheControl() {
 		setupOriginHeaders      func()
 		timestampOffset         *time.Duration // nil for no timestamp, otherwise the offset from now
 		expectedStatusCode      int
-		validate                func(*testing.T, *http.Response)
+		validate                func(*http.Response)
 	}
 
 	// Duration variables for test cases
@@ -283,7 +287,7 @@ func (s *HandlerTestSuite) TestHandlerCacheControl() {
 			},
 			timestampOffset:    nil,
 			expectedStatusCode: 200,
-			validate: func(t *testing.T, res *http.Response) {
+			validate: func(res *http.Response) {
 				s.Require().Equal("max-age=3600, public", res.Header.Get(httpheaders.CacheControl))
 			},
 		},
@@ -296,7 +300,7 @@ func (s *HandlerTestSuite) TestHandlerCacheControl() {
 			},
 			timestampOffset:    nil,
 			expectedStatusCode: 200,
-			validate: func(t *testing.T, res *http.Response) {
+			validate: func(res *http.Response) {
 				// When expires is converted to cache-control, the expires header should be empty
 				s.Require().Empty(res.Header.Get(httpheaders.Expires))
 				s.Require().InDelta(oneHour, s.maxAgeValue(res), oneMinuteDelta)
@@ -311,7 +315,7 @@ func (s *HandlerTestSuite) TestHandlerCacheControl() {
 			},
 			timestampOffset:    nil,
 			expectedStatusCode: 200,
-			validate: func(t *testing.T, res *http.Response) {
+			validate: func(res *http.Response) {
 				s.Require().Equal(s.maxAgeValue(res), time.Duration(defaultTTL)*time.Second)
 			},
 		},
@@ -321,7 +325,7 @@ func (s *HandlerTestSuite) TestHandlerCacheControl() {
 			cacheControlPassthrough: false,
 			timestampOffset:         &oneHour,
 			expectedStatusCode:      200,
-			validate: func(t *testing.T, res *http.Response) {
+			validate: func(res *http.Response) {
 				s.Require().InDelta(oneHour, s.maxAgeValue(res), oneMinuteDelta)
 			},
 		},
@@ -336,7 +340,7 @@ func (s *HandlerTestSuite) TestHandlerCacheControl() {
 			},
 			timestampOffset:    &thirtyMinutes,
 			expectedStatusCode: 200,
-			validate: func(t *testing.T, res *http.Response) {
+			validate: func(res *http.Response) {
 				s.Require().InDelta(thirtyMinutes, s.maxAgeValue(res), oneMinuteDelta)
 			},
 		},
@@ -352,7 +356,7 @@ func (s *HandlerTestSuite) TestHandlerCacheControl() {
 			},
 			timestampOffset:    nil,
 			expectedStatusCode: 200,
-			validate: func(t *testing.T, res *http.Response) {
+			validate: func(res *http.Response) {
 				// Cache-Control should take precedence over Expires when both are present
 				s.Require().InDelta(thirtyMinutes, s.maxAgeValue(res), oneMinuteDelta)
 				s.Require().Empty(res.Header.Get(httpheaders.Expires))
@@ -370,7 +374,7 @@ func (s *HandlerTestSuite) TestHandlerCacheControl() {
 			},
 			timestampOffset:    &fortyFiveMinutes, // Shorter than origin headers
 			expectedStatusCode: 200,
-			validate: func(t *testing.T, res *http.Response) {
+			validate: func(res *http.Response) {
 				s.Require().InDelta(fortyFiveMinutes, s.maxAgeValue(res), oneMinuteDelta)
 				s.Require().Empty(res.Header.Get(httpheaders.Expires))
 			},
@@ -381,7 +385,7 @@ func (s *HandlerTestSuite) TestHandlerCacheControl() {
 			cacheControlPassthrough: false,
 			timestampOffset:         nil,
 			expectedStatusCode:      200,
-			validate: func(t *testing.T, res *http.Response) {
+			validate: func(res *http.Response) {
 				s.Require().Equal(s.maxAgeValue(res), time.Duration(defaultTTL)*time.Second)
 			},
 		},
@@ -407,21 +411,11 @@ func (s *HandlerTestSuite) TestHandlerCacheControl() {
 			}
 
 			res := s.execute("", nil, o)
+			defer res.Body.Close()
 			s.Require().Equal(tc.expectedStatusCode, res.StatusCode)
-			tc.validate(s.T(), res)
+			tc.validate(res)
 		})
 	}
-}
-
-// maxAgeValue parses max-age from cache-control
-func (s *HandlerTestSuite) maxAgeValue(res *http.Response) time.Duration {
-	cacheControl := res.Header.Get(httpheaders.CacheControl)
-	if cacheControl == "" {
-		return 0
-	}
-	var maxAge int
-	fmt.Sscanf(cacheControl, "max-age=%d", &maxAge)
-	return time.Duration(maxAge) * time.Second
 }
 
 // TestHandlerSecurityHeaders tests the security headers set by the streaming service.
@@ -431,6 +425,7 @@ func (s *HandlerTestSuite) TestHandlerSecurityHeaders() {
 	s.testServer().SetHeaders(httpheaders.ContentType, "image/png").SetBody(data)
 
 	res := s.execute("", nil, options.New())
+	defer res.Body.Close()
 
 	s.Require().Equal(http.StatusOK, res.StatusCode)
 	s.Require().Equal("script-src 'none'", res.Header.Get(httpheaders.ContentSecurityPolicy))
@@ -441,6 +436,7 @@ func (s *HandlerTestSuite) TestHandlerErrorResponse() {
 	s.testServer().SetStatusCode(http.StatusNotFound).SetBody([]byte("Not Found"))
 
 	res := s.execute("", nil, options.New())
+	defer res.Body.Close()
 
 	s.Require().Equal(http.StatusNotFound, res.StatusCode)
 }
@@ -465,6 +461,7 @@ func (s *HandlerTestSuite) TestHandlerCookiePassthrough() {
 	h.Set(httpheaders.Cookie, "test_cookie=test_value")
 
 	res := s.execute("", h, options.New())
+	defer res.Body.Close()
 
 	s.Require().Equal(200, res.StatusCode)
 }
@@ -479,6 +476,7 @@ func (s *HandlerTestSuite) TestHandlerCanonicalHeader() {
 		s.rwConf().SetCanonicalHeader = sc
 
 		res := s.execute("", nil, options.New())
+		defer res.Body.Close()
 
 		s.Require().Equal(200, res.StatusCode)
 
@@ -488,6 +486,17 @@ func (s *HandlerTestSuite) TestHandlerCanonicalHeader() {
 			s.Require().Empty(res.Header.Get(httpheaders.Link))
 		}
 	}
+}
+
+// maxAgeValue parses max-age from cache-control
+func (s *HandlerTestSuite) maxAgeValue(res *http.Response) time.Duration {
+	cacheControl := res.Header.Get(httpheaders.CacheControl)
+	if cacheControl == "" {
+		return 0
+	}
+	var maxAge int
+	fmt.Sscanf(cacheControl, "max-age=%d", &maxAge)
+	return time.Duration(maxAge) * time.Second
 }
 
 func TestHandler(t *testing.T) {

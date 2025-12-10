@@ -16,16 +16,16 @@ const (
 
 var (
 	IMGPROXY_PRESETS_SEPARATOR            = env.Describe("IMGPROXY_PRESETS_SEPARATOR", "string")
-	IMGPROXY_PRESETS                      = env.Describe("IMGPROXY_PRESETS", "separated list of strings (see IMGPROXY_PRESETS_SEPARATOR)")
+	IMGPROXY_PRESETS                      = env.Describe("IMGPROXY_PRESETS", "separated list of strings (see IMGPROXY_PRESETS_SEPARATOR)") //nolint:lll
 	IMGPROXY_ONLY_PRESETS                 = env.Describe("IMGPROXY_ONLY_PRESETS", "boolean")
-	IMGPROXY_ALLOWED_PROCESSING_OPTIONS   = env.Describe("IMGPROXY_ALLOWED_PROCESSING_OPTIONS", "comma-separated list of strings")
+	IMGPROXY_ALLOWED_PROCESSING_OPTIONS   = env.Describe("IMGPROXY_ALLOWED_PROCESSING_OPTIONS", "comma-separated list of strings") //nolint:lll
 	IMGPROXY_ALLOW_SECURITY_OPTIONS       = env.Describe("IMGPROXY_ALLOW_SECURITY_OPTIONS", "boolean")
 	IMGPROXY_ARGUMENTS_SEPARATOR          = env.Describe("IMGPROXY_ARGUMENTS_SEPARATOR", "string")
 	IMGPROXY_BASE_URL                     = env.Describe("IMGPROXY_BASE_URL", "string")
-	IMGPROXY_URL_REPLACEMENTS             = env.Describe("IMGPROXY_URL_REPLACEMENTS", "comma-separated list of key=value pairs")
+	IMGPROXY_URL_REPLACEMENTS             = env.Describe("IMGPROXY_URL_REPLACEMENTS", "comma-separated list of key=value pairs") //nolint:lll
 	IMGPROXY_BASE64_URL_INCLUDES_FILENAME = env.Describe("IMGPROXY_BASE64_URL_INCLUDES_FILENAME", "boolean")
 
-	// Artificial env.desc for --presets flag
+	// PRESETS_PATH Artificial env.desc for --presets flag
 	PRESETS_PATH = env.Describe("--"+PresetsFlagName, "path to presets file")
 )
 

@@ -419,7 +419,7 @@ func (p *Processor) transformAnimated(
 		}
 	}()
 
-	for i := 0; i < framesCount; i++ {
+	for i := range framesCount {
 		frame := new(vips.Image)
 
 		// Extract an individual frame from the image.

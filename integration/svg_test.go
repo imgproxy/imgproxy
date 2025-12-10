@@ -32,15 +32,18 @@ var (
 
 // SvgTestSuite is a test suite for testing SVG processing
 type SvgTestSuite struct {
-	imagesDir string
-
 	Suite
+
+	imagesDir string
 }
 
 func (s *SvgTestSuite) SetupTest() {
 	path := os.Getenv("TEST_SVG_PATH")
 	if path == "" {
-		s.T().Skipf("Use TEST_SVG_PATH=/path/to/svgs to run SVG test suite. Download and extract %s to that folder. Skipping.", svgoTestSuiteURL)
+		s.T().Skipf(
+			"Use TEST_SVG_PATH=/path/to/svgs to run SVG test suite. Download and extract %s to that folder. Skipping.",
+			svgoTestSuiteURL,
+		)
 	}
 
 	var err error
@@ -49,7 +52,12 @@ func (s *SvgTestSuite) SetupTest() {
 	s.Require().NoError(err)
 
 	if _, err := os.Stat(s.imagesDir); err != nil {
-		s.T().Skipf("SVG test suite directory `%s` is empty or does not exist. Download and extract %s somewhere. Skipping.", s.imagesDir, svgoTestSuiteURL)
+		s.T().Skipf(
+			"SVG test suite directory `%s` is empty or does not exist. Download and extract %s somewhere. Skipping.",
+			s.imagesDir,
+			svgoTestSuiteURL,
+		)
+
 		return
 	}
 
@@ -102,7 +110,13 @@ func (s *SvgTestSuite) TestSvgSuite() {
 		resp := s.GET(sourceUrl)
 		defer resp.Body.Close()
 
-		s.Require().Equal(http.StatusOK, resp.StatusCode, "expected status code 200 OK, got %d, url: %s", resp.StatusCode, sourceUrl)
+		s.Require().Equal(
+			http.StatusOK,
+			resp.StatusCode,
+			"expected status code 200 OK, got %d, url: %s",
+			resp.StatusCode,
+			sourceUrl,
+		)
 
 		// Calculate hash of processed SVG
 		processedHash, err := testutil.NewImageHashFromReader(resp.Body, testutil.HashTypeSHA256)

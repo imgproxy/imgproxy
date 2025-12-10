@@ -137,7 +137,7 @@ func BenchmarkDocumentParsing(b *testing.B) {
 
 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		for _, sample := range samples {
 			_, err := NewDocument(bytes.NewReader(sample))
 			if err != nil {

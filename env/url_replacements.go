@@ -20,9 +20,9 @@ func URLReplacements(s *[]URLReplacement, desc Desc) error {
 
 	ss := []URLReplacement(nil)
 
-	keyvalues := strings.Split(value, ";")
+	keyvalues := strings.SplitSeq(value, ";")
 
-	for _, keyvalue := range keyvalues {
+	for keyvalue := range keyvalues {
 		parts := strings.SplitN(keyvalue, "=", 2)
 		if len(parts) != 2 {
 			return desc.Errorf("invalid key/value: %s", keyvalue)

@@ -18,7 +18,7 @@ func TestPathTestSuite(t *testing.T) {
 }
 
 func (s *PathTestSuite) createRequest(path string) *http.Request {
-	return httptest.NewRequest("GET", path, nil)
+	return httptest.NewRequest(http.MethodGet, path, nil)
 }
 
 func (s *PathTestSuite) TestParsePath() {
@@ -98,7 +98,6 @@ func (s *PathTestSuite) TestParsePath() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-
 			req := s.createRequest(tc.requestPath)
 			req.Pattern = tc.pathPrefix
 			path, signature, err := SplitPathSignature(req)

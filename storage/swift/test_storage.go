@@ -18,6 +18,7 @@ type TestServer struct {
 // swiftStorageWrapper wraps the storage and optionally holds a server for cleanup
 type swiftStorageWrapper struct {
 	*Storage
+
 	server      *TestServer
 	connection  *swift.Connection
 	shouldClose bool
@@ -33,7 +34,7 @@ func (w *swiftStorageWrapper) Connection() *swift.Connection {
 	return w.connection
 }
 
-// Sugar alias
+// LazySuiteStorage Sugar alias
 type LazySuiteStorage = testutil.LazyObj[*swiftStorageWrapper]
 
 // NewLazySuiteStorage creates a lazy Swift Storage object for use in test suites

@@ -19,7 +19,7 @@ func IsSVG(r bufreader.ReadPeeker, _, _ string) (Type, error) {
 
 	for {
 		tok, err := dec.Token()
-		if err == io.EOF || err == io.ErrUnexpectedEOF {
+		if errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) {
 			// EOF or unexpected EOF means we don't have enough data to determine the type
 			return Unknown, nil
 		}
