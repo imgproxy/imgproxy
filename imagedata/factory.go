@@ -9,13 +9,21 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/imgproxy/imgproxy/v3/asyncbuffer"
 	"github.com/imgproxy/imgproxy/v3/fetcher"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
+	"github.com/imgproxy/imgproxy/v3/imath"
 	"github.com/imgproxy/imgproxy/v3/monitoring"
 )
+
+var bufPool = sync.Pool{
+	New: func() any {
+		return new(bytes.Buffer)
+	},
+}
 
 // Factory represents ImageData factory
 type Factory struct {
@@ -101,20 +109,43 @@ func (f *Factory) DownloadSync(
 		return nil, h, wrapDownloadError(err, desc)
 	}
 
-	b, err := io.ReadAll(res.Body)
-	if err != nil {
-		return nil, h, wrapDownloadError(err, desc)
+	buf := bufPool.Get().(*bytes.Buffer) //nolint:forcetypeassert
+	buf.Reset()
+
+	cancel := func() {
+		bufPool.Put(buf)
 	}
+
+	// Create a TeeReader to write to buffer while reading.
+	tr := io.TeeReader(res.Body, buf)
 
 	ct := res.Header.Get(httpheaders.ContentType)
 	ext := strings.ToLower(filepath.Ext(res.Request.URL.Path))
 
-	format, err := imagetype.Detect(bytes.NewReader(b), ct, ext)
+	// Detect image type using the TeeReader.
+	format, err := imagetype.Detect(tr, ct, ext)
 	if err != nil {
+		cancel()
 		return nil, h, wrapDownloadError(err, desc)
 	}
 
-	d := NewFromBytesWithFormat(format, b)
+	// Preallocate buffer size if Content-Length is known.
+	growLen := imath.MinNonZero(int(res.ContentLength), opts.MaxSrcFileSize) - buf.Len()
+	if growLen > 0 {
+		buf.Grow(growLen)
+	}
+
+	// Read the rest of the data into the buffer
+	if _, err := buf.ReadFrom(res.Body); err != nil {
+		cancel()
+		return nil, h, wrapDownloadError(err, desc)
+	}
+
+	// Create ImageData from the buffer bytes and add the cancel function
+	// to return the buffer to the pool when done.
+	d := NewFromBytesWithFormat(format, buf.Bytes())
+	d.AddCancel(cancel)
+
 	return d, h, nil
 }
 
