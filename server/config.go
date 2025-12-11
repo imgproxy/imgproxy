@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	IMGPROXY_PORT                    = env.Describe("IMGPROXY_PORT", "port")
+	PORT                             = env.Describe("PORT", "port")
 	IMGPROXY_NETWORK                 = env.Describe("IMGPROXY_NETWORK", "tcp|tcp4|tcp6|udp|udp4|udp6|unix|unixgram|unixpacket") //nolint:lll
 	IMGPROXY_BIND                    = env.Describe("IMGPROXY_BIND", "address:port, path to unix socket, etc")
 	IMGPROXY_PATH_PREFIX             = env.Describe("IMGPROXY_PATH_PREFIX", "string")
@@ -80,7 +80,7 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c = ensure.Ensure(c, NewDefaultConfig)
 
 	var port string
-	if err := env.String(&port, IMGPROXY_PORT); err != nil {
+	if err := env.String(&port, PORT); err != nil {
 		return nil, err
 	}
 
