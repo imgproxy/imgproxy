@@ -7,7 +7,7 @@
         8071  // util port (ex. pprof)
     ],
     "containerEnv": {
-        "IMGPROXY_PORT": "8081",
+        "PORT": "8081",
         "IMGPROXY_PROMETHEUS_BIND": ":8091",
         "IMGPROXY_LOCAL_FILESYSTEM_ROOT": "/images",
         "IMGPROXY_ENABLE_VIDEO_THUMBNAILS": "true",
