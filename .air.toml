@@ -4,7 +4,7 @@ tmp_dir = "tmp"
 
 [build]
 args_bin = []
-bin = "./imgproxy"
+entrypoint = "./imgproxy"
 cmd = "make build"
 delay = 1000
 exclude_dir = ["assets", "tmp", "vendor", "testdata"]
