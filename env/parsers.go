@@ -1,7 +1,6 @@
 package env
 
 import (
-	"bufio"
 	"encoding/hex"
 	"fmt"
 	"os"
@@ -13,266 +12,211 @@ import (
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 )
 
-// Int parses an integer from the environment variable
-func Int(i *int, desc Desc) error {
-	env, ok := desc.Get()
-	if !ok {
-		return nil
-	}
-
-	value, err := strconv.Atoi(env)
-	if err != nil {
-		return desc.ErrorParse(err)
-	}
-	*i = value
-
-	return nil
+// parseString returns the environment variable value as-is.
+func parseString(env string) (string, error) {
+	return env, nil
 }
 
-// Float parses a float64 value from the environment variable
-func Float(i *float64, desc Desc) error {
-	env, ok := desc.Get()
-	if !ok {
-		return nil
-	}
-
-	value, err := strconv.ParseFloat(env, 64)
-	if err != nil {
-		return desc.ErrorParse(err)
-	}
-	*i = value
-
-	return nil
-}
-
-// MegaInt parses a "megascale" integer from the environment variable
-func MegaInt(f *int, desc Desc) error {
-	env, ok := desc.Get()
-	if !ok {
-		return nil
-	}
-
-	value, err := strconv.ParseFloat(env, 64)
-	if err != nil {
-		return desc.ErrorParse(err)
-	}
-	*f = int(value) * 1_000_000
-
-	return nil
-}
-
-// duration parses a duration (in resolution) from the environment variable
-func duration(d *time.Duration, desc Desc, resolution time.Duration) error {
-	env, ok := desc.Get()
-	if !ok {
-		return nil
-	}
-
-	value, err := strconv.Atoi(env)
-	if err != nil {
-		return desc.ErrorParse(err)
-	}
-	*d = time.Duration(value) * resolution
-
-	return nil
-}
-
-// Duration parses a duration (in seconds) from the environment variable
-func Duration(d *time.Duration, desc Desc) error {
-	return duration(d, desc, time.Second)
-}
-
-// DurationMils parses a duration (in milliseconds) from the environment variable
-func DurationMils(d *time.Duration, desc Desc) error {
-	return duration(d, desc, time.Millisecond)
-}
-
-// String sets the string from the environment variable. Empty value is allowed.
-func String(s *string, desc Desc) error {
-	if env, ok := desc.Get(); ok {
-		*s = env
-	}
-
-	return nil
-}
-
-// Bool parses a boolean from the environment variable
-func Bool(b *bool, desc Desc) error {
-	env, ok := desc.Get()
-	if !ok {
-		return nil
-	}
-
-	value, err := strconv.ParseBool(env)
-	if err != nil {
-		return desc.ErrorParse(err)
-	}
-	*b = value
-
-	return nil
-}
-
-// StringSliceSep parses a string slice from the environment variable, using the given separator
-func StringSliceSep(s *[]string, desc Desc, sep string) error {
-	env, ok := desc.Get()
-	if !ok {
-		return nil
-	}
-
-	parts := strings.Split(env, sep)
-
-	for i, p := range parts {
-		parts[i] = strings.TrimSpace(p)
-	}
-
-	*s = parts
-
-	return nil
-}
-
-// StringSliceFile parses a string slice from a file, one entry per line
-func StringSliceFile(s *[]string, desc Desc, path string) error {
-	if len(path) == 0 {
-		return nil
-	}
-
-	f, err := os.Open(path)
-	if err != nil {
-		return desc.Errorf("can't open file %s", path)
-	}
-	defer f.Close()
-
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		str := strings.TrimSpace(scanner.Text())
-		if len(str) == 0 || strings.HasPrefix(str, "#") {
-			continue
+// parseEnumValue returns a parser function that looks up the input value in a map.
+// The input value is trimmed before lookup. It assumes that m contains lowercase keys.
+func parseEnumValue[T any](m map[string]T) ParseFn[T] {
+	return func(env string) (T, error) {
+		var zero T
+		env = strings.ToLower(env)
+		if val, ok := m[env]; ok {
+			return val, nil
 		}
-
-		*s = append(*s, str)
+		return zero, fmt.Errorf("invalid value %q", env)
 	}
-
-	if err := scanner.Err(); err != nil {
-		return desc.Errorf("failed to read presets file: %s", err)
-	}
-
-	return nil
 }
 
-// StringSlice parses a string slice from the environment variable, using comma as a separator
-func StringSlice(s *[]string, desc Desc) error {
-	StringSliceSep(s, desc, ",")
-	return nil
+// parseFloat64 parses the environment variable value as a 64-bit float.
+func parseFloat64(env string) (float64, error) {
+	return strconv.ParseFloat(env, 64)
 }
 
-// URLPath parses and normalizes a URL path from the environment variable
-func URLPath(s *string, desc Desc) error {
-	env, ok := desc.Get()
-	if !ok {
-		return nil
+// parseMegaInt parses a float value and multiplies it by 1,000,000 to convert to an integer.
+// This is useful for environment variables that accept values like "1.5" to mean 1,500,000.
+func parseMegaInt(env string) (int, error) {
+	value, err := strconv.ParseFloat(env, 64)
+	if err != nil {
+		return 0, err
 	}
+	return int(value * 1_000_000), nil
+}
 
+// parseDuration parses an integer as seconds and returns a time.Duration.
+func parseDuration(env string) (time.Duration, error) {
+	value, err := strconv.Atoi(env)
+	if err != nil {
+		return 0, err
+	}
+	return time.Duration(value) * time.Second, nil
+}
+
+// parseDurationMillis parses an integer as milliseconds and returns a time.Duration.
+func parseDurationMillis(env string) (time.Duration, error) {
+	value, err := strconv.Atoi(env)
+	if err != nil {
+		return 0, err
+	}
+	return time.Duration(value) * time.Millisecond, nil
+}
+
+// parseStringSlice parses a comma-separated list of strings, trimming whitespace from each element.
+func parseStringSlice(env string) ([]string, error) {
+	parts := strings.Split(env, ",")
+	result := make([]string, len(parts))
+	for i, p := range parts {
+		result[i] = strings.TrimSpace(p)
+	}
+	return result, nil
+}
+
+// parseStringSliceSep returns a parser that splits by a custom separator.
+// The separator is obtained from the provided StringVar descriptor.
+func parseStringSliceSep(separatorDesc StringVar) ParseFn[[]string] {
+	return func(env string) ([]string, error) {
+		sep, ok := separatorDesc.GetEnv()
+		if !ok || sep == "" {
+			sep = "," // default to comma if separator not provided
+		}
+		parts := strings.Split(env, sep)
+		result := make([]string, len(parts))
+		for i, p := range parts {
+			result[i] = strings.TrimSpace(p)
+		}
+		return result, nil
+	}
+}
+
+// parseURLPath normalizes a URL path by removing query strings and fragments,
+// ensuring it has a leading slash and no trailing slash.
+func parseURLPath(env string) (string, error) {
+	// Remove query string
 	if i := strings.IndexByte(env, '?'); i >= 0 {
 		env = env[:i]
 	}
+	// Remove fragment
 	if i := strings.IndexByte(env, '#'); i >= 0 {
 		env = env[:i]
 	}
+	// Remove trailing slash
 	if len(env) > 0 && env[len(env)-1] == '/' {
 		env = env[:len(env)-1]
 	}
+	// Ensure leading slash
 	if len(env) > 0 && env[0] != '/' {
 		env = "/" + env
 	}
-
-	*s = env
-
-	return nil
+	return env, nil
 }
 
-// ImageTypes parses a slice of image types from the environment variable
-func ImageTypes(it *[]imagetype.Type, desc Desc) error {
-	// Get image types from environment variable
-	env, ok := desc.Get()
-	if !ok {
-		return nil
-	}
-
+// parseImageTypes parses a comma-separated list of image format names and returns
+// a slice of imagetype.Type values.
+func parseImageTypes(env string) ([]imagetype.Type, error) {
 	parts := strings.Split(env, ",")
-	*it = make([]imagetype.Type, 0, len(parts))
+	result := make([]imagetype.Type, 0, len(parts))
 
 	for _, p := range parts {
 		part := strings.TrimSpace(p)
-
-		// For every part passed through the environment variable,
-		// check if it matches any of the image types defined in
-		// the imagetype package or return error.
 		t, ok := imagetype.GetTypeByName(part)
 		if !ok {
-			return desc.Errorf("unknown image format: %s", part)
+			return nil, fmt.Errorf("unknown image format: %s", part)
 		}
-		*it = append(*it, t)
+		result = append(result, t)
 	}
 
-	return nil
+	return result, nil
 }
 
-// ImageTypesQuality parses a string of format=queality pairs
-func ImageTypesQuality(m map[imagetype.Type]int, desc Desc) error {
-	env, ok := desc.Get()
-	if !ok {
-		return nil
-	}
-
+// parseImageTypesQuality parses format=quality pairs (e.g., "jpg=80,webp=90") and returns
+// a map of image types to their quality values (1-100).
+func parseImageTypesQuality(env string) (map[imagetype.Type]int, error) {
+	result := make(map[imagetype.Type]int)
 	parts := strings.SplitSeq(env, ",")
 
 	for p := range parts {
+		p = strings.TrimSpace(p)
 		i := strings.Index(p, "=")
 		if i < 0 {
-			return desc.Errorf("invalid format quality string: %s", p)
+			return nil, fmt.Errorf("invalid format quality string: %s", p)
 		}
 
-		// Split the string into image type and quality
-		imgtypeStr, qStr := strings.TrimSpace(p[:i]), strings.TrimSpace(p[i+1:])
+		imgtypeStr := strings.TrimSpace(p[:i])
+		qStr := strings.TrimSpace(p[i+1:])
 
-		// Check if quality is a valid integer
 		q, err := strconv.Atoi(qStr)
 		if err != nil || q <= 0 || q > 100 {
-			return desc.Errorf("invalid quality: %s", p)
+			return nil, fmt.Errorf("invalid quality: %s", p)
 		}
 
 		t, ok := imagetype.GetTypeByName(imgtypeStr)
 		if !ok {
-			return desc.Errorf("unknown image format: %s", imgtypeStr)
+			return nil, fmt.Errorf("unknown image format: %s", imgtypeStr)
 		}
 
-		m[t] = q
+		result[t] = q
 	}
 
-	return nil
+	return result, nil
 }
 
-// Patterns parses a slice of regexps from the environment variable
-func Patterns(s *[]*regexp.Regexp, desc Desc) error {
-	env, ok := desc.Get()
-	if !ok {
-		return nil
-	}
-
+// parsePatterns parses a comma-separated list of wildcard patterns and converts them
+// to compiled regular expressions using regexpFromPattern.
+func parsePatterns(env string) ([]*regexp.Regexp, error) {
 	parts := strings.Split(env, ",")
 	result := make([]*regexp.Regexp, len(parts))
 
 	for i, p := range parts {
-		result[i] = RegexpFromPattern(strings.TrimSpace(p))
+		result[i] = regexpFromPattern(strings.TrimSpace(p))
 	}
 
-	*s = result
-
-	return nil
+	return result, nil
 }
 
-// RegexpFromPattern creates a regexp from a wildcard pattern
-func RegexpFromPattern(pattern string) *regexp.Regexp {
+// parseHexSlice parses a comma-separated list of hex-encoded strings and returns
+// a slice of byte slices.
+func parseHexSlice(env string) ([][]byte, error) {
+	parts := strings.Split(env, ",")
+	result := make([][]byte, len(parts))
+
+	for i, part := range parts {
+		b, err := hex.DecodeString(strings.TrimSpace(part))
+		if err != nil {
+			return nil, fmt.Errorf("%s expected to be hex-encoded string: %w", part, err)
+		}
+		result[i] = b
+	}
+
+	return result, nil
+}
+
+// parseStringMap parses semicolon-separated key=value pairs and returns a map.
+// Empty entries are skipped.
+func parseStringMap(env string) (map[string]string, error) {
+	result := make(map[string]string)
+	keyvalues := strings.SplitSeq(env, ";")
+
+	for kv := range keyvalues {
+		kv = strings.TrimSpace(kv)
+		if len(kv) == 0 {
+			continue
+		}
+
+		parts := strings.SplitN(kv, "=", 2)
+		if len(parts) != 2 {
+			return nil, fmt.Errorf("invalid key/value: %s", kv)
+		}
+		result[parts[0]] = parts[1]
+	}
+
+	return result, nil
+}
+
+// regexpFromPattern creates a regexp from a wildcard pattern.
+// Converts shell-style wildcards to regexp patterns.
+func regexpFromPattern(pattern string) *regexp.Regexp {
 	var result strings.Builder
 	// Perform prefix matching
 	result.WriteString("^")
@@ -281,7 +225,6 @@ func RegexpFromPattern(pattern string) *regexp.Regexp {
 		if i > 0 {
 			result.WriteString("([^/]*)")
 		}
-
 		// Quote other parts of the pattern
 		result.WriteString(regexp.QuoteMeta(part))
 	}
@@ -289,65 +232,29 @@ func RegexpFromPattern(pattern string) *regexp.Regexp {
 	return regexp.MustCompile(result.String())
 }
 
-// HexSlice parses a slice of hex-encoded byte slices from the environment variable
-func HexSlice(b *[][]byte, desc Desc) error {
-	var err error
-
-	env, ok := desc.Get()
-	if !ok {
-		return nil
+// parseStringSliceFile returns a parser that reads a string slice from a file.
+// It reads the file path from CLI args (--{cliArgName}) or falls back to the env var.
+// Each line in the file becomes an entry. Empty lines and lines starting with # are ignored.
+func parseStringSliceFile(env string) ([]string, error) {
+	// If no path provided, return empty slice
+	if env == "" {
+		return nil, nil
 	}
 
-	parts := strings.Split(env, ",")
-	keys := make([][]byte, len(parts))
+	content, err := os.ReadFile(env)
+	if err != nil {
+		return nil, fmt.Errorf("can't read file %s: %w", env, err)
+	}
 
-	for i, part := range parts {
-		if keys[i], err = hex.DecodeString(part); err != nil {
-			return desc.Errorf("%s expected to be hex-encoded string", part)
+	result := make([]string, 0)
+
+	for line := range strings.SplitSeq(string(content), "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
 		}
+		result = append(result, line)
 	}
 
-	*b = keys
-
-	return nil
-}
-
-// FromMap sets a value from a enum map based on the environment variable
-func FromMap[T any](v *T, m map[string]T, desc Desc) error {
-	env, ok := desc.Get()
-	if !ok {
-		return nil
-	}
-
-	if val, ok := m[env]; ok {
-		*v = val
-	} else {
-		return desc.Errorf("%s", env)
-	}
-
-	return nil
-}
-
-// StringMap parses a map of string key-value pairs from the environment variable
-func StringMap(m *map[string]string, desc Desc) error {
-	env, ok := desc.Get()
-	if !ok {
-		return nil
-	}
-
-	mm := make(map[string]string)
-
-	keyvalues := strings.SplitSeq(env, ";")
-
-	for keyvalue := range keyvalues {
-		parts := strings.SplitN(keyvalue, "=", 2)
-		if len(parts) != 2 {
-			return fmt.Errorf("invalid key/value: %s", keyvalue)
-		}
-		mm[parts[0]] = parts[1]
-	}
-
-	*m = mm
-
-	return nil
+	return result, nil
 }

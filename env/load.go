@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	IMGPROXY_ENV_LOCAL_FILE_PATH = Describe("IMGPROXY_ENV_LOCAL_FILE_PATH", "path")
+	IMGPROXY_ENV_LOCAL_FILE_PATH = String("IMGPROXY_ENV_LOCAL_FILE_PATH")
 )
 
 // Load loads environment variables from various sources
@@ -37,7 +37,7 @@ func Load(ctx context.Context) error {
 func loadLocalFile() error {
 	var path string
 
-	String(&path, IMGPROXY_ENV_LOCAL_FILE_PATH)
+	IMGPROXY_ENV_LOCAL_FILE_PATH.Parse(&path)
 
 	if len(path) == 0 {
 		return nil

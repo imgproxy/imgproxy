@@ -9,12 +9,12 @@ import (
 )
 
 var (
-	IMGPROXY_REPORT_DOWNLOADING_ERRORS = env.Describe("IMGPROXY_REPORT_DOWNLOADING_ERRORS", "boolean")
-	IMGPROXY_LAST_MODIFIED_ENABLED     = env.Describe("IMGPROXY_LAST_MODIFIED_ENABLED", "boolean")
-	IMGPROXY_ETAG_ENABLED              = env.Describe("IMGPROXY_ETAG_ENABLED", "boolean")
-	IMGPROXY_REPORT_IO_ERRORS          = env.Describe("IMGPROXY_REPORT_IO_ERRORS", "boolean")
-	IMGPROXY_FALLBACK_IMAGE_HTTP_CODE  = env.Describe("IMGPROXY_FALLBACK_IMAGE_HTTP_CODE", "HTTP code")
-	IMGPROXY_ENABLE_DEBUG_HEADERS      = env.Describe("IMGPROXY_ENABLE_DEBUG_HEADERS", "boolean")
+	IMGPROXY_REPORT_DOWNLOADING_ERRORS = env.Bool("IMGPROXY_REPORT_DOWNLOADING_ERRORS")
+	IMGPROXY_LAST_MODIFIED_ENABLED     = env.Bool("IMGPROXY_LAST_MODIFIED_ENABLED")
+	IMGPROXY_ETAG_ENABLED              = env.Bool("IMGPROXY_ETAG_ENABLED")
+	IMGPROXY_REPORT_IO_ERRORS          = env.Bool("IMGPROXY_REPORT_IO_ERRORS")
+	IMGPROXY_FALLBACK_IMAGE_HTTP_CODE  = env.Int("IMGPROXY_FALLBACK_IMAGE_HTTP_CODE")
+	IMGPROXY_ENABLE_DEBUG_HEADERS      = env.Bool("IMGPROXY_ENABLE_DEBUG_HEADERS")
 )
 
 // Config represents handler config
@@ -44,12 +44,12 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c = ensure.Ensure(c, NewDefaultConfig)
 
 	err := errors.Join(
-		env.Bool(&c.ReportDownloadingErrors, IMGPROXY_REPORT_DOWNLOADING_ERRORS),
-		env.Bool(&c.LastModifiedEnabled, IMGPROXY_LAST_MODIFIED_ENABLED),
-		env.Bool(&c.ETagEnabled, IMGPROXY_ETAG_ENABLED),
-		env.Bool(&c.ReportIOErrors, IMGPROXY_REPORT_IO_ERRORS),
-		env.Int(&c.FallbackImageHTTPCode, IMGPROXY_FALLBACK_IMAGE_HTTP_CODE),
-		env.Bool(&c.EnableDebugHeaders, IMGPROXY_ENABLE_DEBUG_HEADERS),
+		IMGPROXY_REPORT_DOWNLOADING_ERRORS.Parse(&c.ReportDownloadingErrors),
+		IMGPROXY_LAST_MODIFIED_ENABLED.Parse(&c.LastModifiedEnabled),
+		IMGPROXY_ETAG_ENABLED.Parse(&c.ETagEnabled),
+		IMGPROXY_REPORT_IO_ERRORS.Parse(&c.ReportIOErrors),
+		IMGPROXY_FALLBACK_IMAGE_HTTP_CODE.Parse(&c.FallbackImageHTTPCode),
+		IMGPROXY_ENABLE_DEBUG_HEADERS.Parse(&c.EnableDebugHeaders),
 	)
 
 	return c, err

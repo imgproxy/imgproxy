@@ -2,7 +2,6 @@ package optionsparser
 
 import (
 	"errors"
-	"os"
 
 	"github.com/imgproxy/imgproxy/v3/ensure"
 	"github.com/imgproxy/imgproxy/v3/env"
@@ -15,18 +14,15 @@ const (
 )
 
 var (
-	IMGPROXY_PRESETS_SEPARATOR            = env.Describe("IMGPROXY_PRESETS_SEPARATOR", "string")
-	IMGPROXY_PRESETS                      = env.Describe("IMGPROXY_PRESETS", "separated list of strings (see IMGPROXY_PRESETS_SEPARATOR)") //nolint:lll
-	IMGPROXY_ONLY_PRESETS                 = env.Describe("IMGPROXY_ONLY_PRESETS", "boolean")
-	IMGPROXY_ALLOWED_PROCESSING_OPTIONS   = env.Describe("IMGPROXY_ALLOWED_PROCESSING_OPTIONS", "comma-separated list of strings") //nolint:lll
-	IMGPROXY_ALLOW_SECURITY_OPTIONS       = env.Describe("IMGPROXY_ALLOW_SECURITY_OPTIONS", "boolean")
-	IMGPROXY_ARGUMENTS_SEPARATOR          = env.Describe("IMGPROXY_ARGUMENTS_SEPARATOR", "string")
-	IMGPROXY_BASE_URL                     = env.Describe("IMGPROXY_BASE_URL", "string")
-	IMGPROXY_URL_REPLACEMENTS             = env.Describe("IMGPROXY_URL_REPLACEMENTS", "comma-separated list of key=value pairs") //nolint:lll
-	IMGPROXY_BASE64_URL_INCLUDES_FILENAME = env.Describe("IMGPROXY_BASE64_URL_INCLUDES_FILENAME", "boolean")
-
-	// PRESETS_PATH Artificial env.desc for --presets flag
-	PRESETS_PATH = env.Describe("--"+PresetsFlagName, "path to presets file")
+	IMGPROXY_PRESETS_SEPARATOR            = env.String("IMGPROXY_PRESETS_SEPARATOR")
+	IMGPROXY_PRESETS                      = env.StringSliceSep("IMGPROXY_PRESETS", IMGPROXY_PRESETS_SEPARATOR).WithCliArg(PresetsFlagName) //nolint:lll
+	IMGPROXY_ONLY_PRESETS                 = env.Bool("IMGPROXY_ONLY_PRESETS")
+	IMGPROXY_ALLOWED_PROCESSING_OPTIONS   = env.StringSlice("IMGPROXY_ALLOWED_PROCESSING_OPTIONS")
+	IMGPROXY_ALLOW_SECURITY_OPTIONS       = env.Bool("IMGPROXY_ALLOW_SECURITY_OPTIONS")
+	IMGPROXY_ARGUMENTS_SEPARATOR          = env.String("IMGPROXY_ARGUMENTS_SEPARATOR")
+	IMGPROXY_BASE_URL                     = env.String("IMGPROXY_BASE_URL")
+	IMGPROXY_URL_REPLACEMENTS             = env.String("IMGPROXY_URL_REPLACEMENTS")
+	IMGPROXY_BASE64_URL_INCLUDES_FILENAME = env.Bool("IMGPROXY_BASE64_URL_INCLUDES_FILENAME")
 )
 
 // Config represents the configuration for options processing
@@ -66,38 +62,23 @@ func NewDefaultConfig() Config {
 func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c = ensure.Ensure(c, NewDefaultConfig)
 
-	sep := ","
-	var presetsPath string
-
-	// NOTE: Here is the workaround for reading --presets flag from CLI.
-	// Otherwise, we'd have to either store it in a global variable or
-	// pass cli.Command down the call stack.
-	for i, arg := range os.Args {
-		if arg == "--"+PresetsFlagName && i+1 < len(os.Args) {
-			presetsPath = os.Args[i+1]
-			break
-		}
-	}
-
 	c.Presets = make([]string, 0)
 	c.URLReplacements = make([]URLReplacement, 0)
 
 	err := errors.Join(
-		env.String(&sep, IMGPROXY_PRESETS_SEPARATOR),
-		env.StringSliceSep(&c.Presets, IMGPROXY_PRESETS, sep),
-		env.Bool(&c.OnlyPresets, IMGPROXY_ONLY_PRESETS),
+		IMGPROXY_ONLY_PRESETS.Parse(&c.OnlyPresets),
 
 		// Security and validation
-		env.StringSlice(&c.AllowedProcessingOptions, IMGPROXY_ALLOWED_PROCESSING_OPTIONS),
-		env.Bool(&c.AllowSecurityOptions, IMGPROXY_ALLOW_SECURITY_OPTIONS),
+		IMGPROXY_ALLOWED_PROCESSING_OPTIONS.Parse(&c.AllowedProcessingOptions),
+		IMGPROXY_ALLOW_SECURITY_OPTIONS.Parse(&c.AllowSecurityOptions),
 
 		// URL processing
-		env.String(&c.ArgumentsSeparator, IMGPROXY_ARGUMENTS_SEPARATOR),
-		env.String(&c.BaseURL, IMGPROXY_BASE_URL),
-		env.Bool(&c.Base64URLIncludesFilename, IMGPROXY_BASE64_URL_INCLUDES_FILENAME),
+		IMGPROXY_ARGUMENTS_SEPARATOR.Parse(&c.ArgumentsSeparator),
+		IMGPROXY_BASE_URL.Parse(&c.BaseURL),
+		IMGPROXY_BASE64_URL_INCLUDES_FILENAME.Parse(&c.Base64URLIncludesFilename),
 
-		env.StringSliceFile(&c.Presets, PRESETS_PATH, presetsPath),
-		env.URLReplacements(&c.URLReplacements, IMGPROXY_URL_REPLACEMENTS),
+		IMGPROXY_PRESETS.Parse(&c.Presets),
+		env.URLReplacements(&c.URLReplacements, &IMGPROXY_URL_REPLACEMENTS),
 	)
 
 	return c, err

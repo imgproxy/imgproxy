@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	IMGPROXY_SANITIZE_SVG = env.Describe("IMGPROXY_SANITIZE_SVG", "boolean")
+	IMGPROXY_SANITIZE_SVG = env.Bool("IMGPROXY_SANITIZE_SVG")
 )
 
 // Config holds SVG-specific configuration
@@ -25,7 +25,7 @@ func NewDefaultConfig() Config {
 func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c = ensure.Ensure(c, NewDefaultConfig)
 
-	err := env.Bool(&c.Sanitize, IMGPROXY_SANITIZE_SVG)
+	err := IMGPROXY_SANITIZE_SVG.Parse(&c.Sanitize)
 
 	return c, err
 }

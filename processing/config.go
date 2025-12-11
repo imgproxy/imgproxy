@@ -11,19 +11,19 @@ import (
 )
 
 var (
-	IMGPROXY_PREFERRED_FORMATS       = env.Describe("IMGPROXY_PREFERRED_FORMATS", "jpeg|png|gif|webp|avif|jxl|tiff|svg")
-	IMGPROXY_SKIP_PROCESSING_FORMATS = env.Describe("IMGPROXY_SKIP_PROCESSING_FORMATS", "jpeg|png|gif|webp|avif|jxl|tiff|svg") //nolint:lll
-	IMGPROXY_WATERMARK_OPACITY       = env.Describe("IMGPROXY_WATERMARK_OPACITY", "number between 0..1")
-	IMGPROXY_DISABLE_SHRINK_ON_LOAD  = env.Describe("IMGPROXY_DISABLE_SHRINK_ON_LOAD", "boolean")
-	IMGPROXY_USE_LINEAR_COLORSPACE   = env.Describe("IMGPROXY_USE_LINEAR_COLORSPACE", "boolean")
-	IMGPROXY_ALWAYS_RASTERIZE_SVG    = env.Describe("IMGPROXY_ALWAYS_RASTERIZE_SVG", "boolean")
-	IMGPROXY_QUALITY                 = env.Describe("IMGPROXY_QUALITY", "number between 0..100")
-	IMGPROXY_FORMAT_QUALITY          = env.Describe("IMGPROXY_FORMAT_QUALITY", "comma-separated list of format=quality pairs where quality is between 0..100") //nolint:lll
-	IMGPROXY_STRIP_METADATA          = env.Describe("IMGPROXY_STRIP_METADATA", "boolean")
-	IMGPROXY_KEEP_COPYRIGHT          = env.Describe("IMGPROXY_KEEP_COPYRIGHT", "boolean")
-	IMGPROXY_STRIP_COLOR_PROFILE     = env.Describe("IMGPROXY_STRIP_COLOR_PROFILE", "boolean")
-	IMGPROXY_AUTO_ROTATE             = env.Describe("IMGPROXY_AUTO_ROTATE", "boolean")
-	IMGPROXY_ENFORCE_THUMBNAIL       = env.Describe("IMGPROXY_ENFORCE_THUMBNAIL", "boolean")
+	IMGPROXY_PREFERRED_FORMATS       = env.ImageTypes("IMGPROXY_PREFERRED_FORMATS")
+	IMGPROXY_SKIP_PROCESSING_FORMATS = env.ImageTypes("IMGPROXY_SKIP_PROCESSING_FORMATS")
+	IMGPROXY_WATERMARK_OPACITY       = env.Float64("IMGPROXY_WATERMARK_OPACITY")
+	IMGPROXY_DISABLE_SHRINK_ON_LOAD  = env.Bool("IMGPROXY_DISABLE_SHRINK_ON_LOAD")
+	IMGPROXY_USE_LINEAR_COLORSPACE   = env.Bool("IMGPROXY_USE_LINEAR_COLORSPACE")
+	IMGPROXY_ALWAYS_RASTERIZE_SVG    = env.Bool("IMGPROXY_ALWAYS_RASTERIZE_SVG")
+	IMGPROXY_QUALITY                 = env.Int("IMGPROXY_QUALITY")
+	IMGPROXY_FORMAT_QUALITY          = env.ImageTypesQuality("IMGPROXY_FORMAT_QUALITY")
+	IMGPROXY_STRIP_METADATA          = env.Bool("IMGPROXY_STRIP_METADATA")
+	IMGPROXY_KEEP_COPYRIGHT          = env.Bool("IMGPROXY_KEEP_COPYRIGHT")
+	IMGPROXY_STRIP_COLOR_PROFILE     = env.Bool("IMGPROXY_STRIP_COLOR_PROFILE")
+	IMGPROXY_AUTO_ROTATE             = env.Bool("IMGPROXY_AUTO_ROTATE")
+	IMGPROXY_ENFORCE_THUMBNAIL       = env.Bool("IMGPROXY_ENFORCE_THUMBNAIL")
 )
 
 // Config holds pipeline-related configuration.
@@ -78,20 +78,20 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 
 	err := errors.Join(
 		svgErr,
-		env.Float(&c.WatermarkOpacity, IMGPROXY_WATERMARK_OPACITY),
-		env.Bool(&c.DisableShrinkOnLoad, IMGPROXY_DISABLE_SHRINK_ON_LOAD),
-		env.Bool(&c.UseLinearColorspace, IMGPROXY_USE_LINEAR_COLORSPACE),
-		env.Bool(&c.AlwaysRasterizeSvg, IMGPROXY_ALWAYS_RASTERIZE_SVG),
-		env.Int(&c.Quality, IMGPROXY_QUALITY),
-		env.ImageTypesQuality(c.FormatQuality, IMGPROXY_FORMAT_QUALITY),
-		env.Bool(&c.StripMetadata, IMGPROXY_STRIP_METADATA),
-		env.Bool(&c.KeepCopyright, IMGPROXY_KEEP_COPYRIGHT),
-		env.Bool(&c.StripColorProfile, IMGPROXY_STRIP_COLOR_PROFILE),
-		env.Bool(&c.AutoRotate, IMGPROXY_AUTO_ROTATE),
-		env.Bool(&c.EnforceThumbnail, IMGPROXY_ENFORCE_THUMBNAIL),
+		IMGPROXY_WATERMARK_OPACITY.Parse(&c.WatermarkOpacity),
+		IMGPROXY_DISABLE_SHRINK_ON_LOAD.Parse(&c.DisableShrinkOnLoad),
+		IMGPROXY_USE_LINEAR_COLORSPACE.Parse(&c.UseLinearColorspace),
+		IMGPROXY_ALWAYS_RASTERIZE_SVG.Parse(&c.AlwaysRasterizeSvg),
+		IMGPROXY_QUALITY.Parse(&c.Quality),
+		IMGPROXY_FORMAT_QUALITY.Parse(&c.FormatQuality),
+		IMGPROXY_STRIP_METADATA.Parse(&c.StripMetadata),
+		IMGPROXY_KEEP_COPYRIGHT.Parse(&c.KeepCopyright),
+		IMGPROXY_STRIP_COLOR_PROFILE.Parse(&c.StripColorProfile),
+		IMGPROXY_AUTO_ROTATE.Parse(&c.AutoRotate),
+		IMGPROXY_ENFORCE_THUMBNAIL.Parse(&c.EnforceThumbnail),
 
-		env.ImageTypes(&c.PreferredFormats, IMGPROXY_PREFERRED_FORMATS),
-		env.ImageTypes(&c.SkipProcessingFormats, IMGPROXY_SKIP_PROCESSING_FORMATS),
+		IMGPROXY_PREFERRED_FORMATS.Parse(&c.PreferredFormats),
+		IMGPROXY_SKIP_PROCESSING_FORMATS.Parse(&c.SkipProcessingFormats),
 	)
 
 	return c, err

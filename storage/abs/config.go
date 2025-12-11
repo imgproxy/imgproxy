@@ -10,11 +10,11 @@ import (
 // ConfigDesc holds the configuration descriptions for
 // Azure Blob Storage transport
 type ConfigDesc struct {
-	Name           env.Desc
-	Endpoint       env.Desc
-	Key            env.Desc
-	AllowedBuckets env.Desc
-	DeniedBuckets  env.Desc
+	Name           env.StringVar
+	Endpoint       env.StringVar
+	Key            env.StringVar
+	AllowedBuckets env.StringSliceVar
+	DeniedBuckets  env.StringSliceVar
 }
 
 // Config holds the configuration for Azure Blob Storage transport
@@ -43,11 +43,11 @@ func LoadConfigFromEnv(desc ConfigDesc, c *Config) (*Config, error) {
 	c = ensure.Ensure(c, NewDefaultConfig)
 
 	err := errors.Join(
-		env.String(&c.Name, desc.Name),
-		env.String(&c.Endpoint, desc.Endpoint),
-		env.String(&c.Key, desc.Key),
-		env.StringSlice(&c.AllowedBuckets, desc.AllowedBuckets),
-		env.StringSlice(&c.DeniedBuckets, desc.DeniedBuckets),
+		desc.Name.Parse(&c.Name),
+		desc.Endpoint.Parse(&c.Endpoint),
+		desc.Key.Parse(&c.Key),
+		desc.AllowedBuckets.Parse(&c.AllowedBuckets),
+		desc.DeniedBuckets.Parse(&c.DeniedBuckets),
 	)
 
 	c.desc = desc

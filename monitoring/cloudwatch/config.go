@@ -9,9 +9,9 @@ import (
 )
 
 var (
-	IMGPROXY_CLOUD_WATCH_SERVICE_NAME = env.Describe("IMGPROXY_CLOUD_WATCH_SERVICE_NAME", "string")
-	IMGPROXY_CLOUD_WATCH_NAMESPACE    = env.Describe("IMGPROXY_CLOUD_WATCH_NAMESPACE", "string")
-	IMGPROXY_CLOUD_WATCH_REGION       = env.Describe("IMGPROXY_CLOUD_WATCH_REGION", "string")
+	IMGPROXY_CLOUD_WATCH_SERVICE_NAME = env.String("IMGPROXY_CLOUD_WATCH_SERVICE_NAME")
+	IMGPROXY_CLOUD_WATCH_NAMESPACE    = env.String("IMGPROXY_CLOUD_WATCH_NAMESPACE")
+	IMGPROXY_CLOUD_WATCH_REGION       = env.String("IMGPROXY_CLOUD_WATCH_REGION")
 )
 
 // Config holds the configuration for CloudWatch monitoring
@@ -37,9 +37,9 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c = ensure.Ensure(c, NewDefaultConfig)
 
 	err := errors.Join(
-		env.String(&c.ServiceName, IMGPROXY_CLOUD_WATCH_SERVICE_NAME),
-		env.String(&c.Namespace, IMGPROXY_CLOUD_WATCH_NAMESPACE),
-		env.String(&c.Region, IMGPROXY_CLOUD_WATCH_REGION),
+		IMGPROXY_CLOUD_WATCH_SERVICE_NAME.Parse(&c.ServiceName),
+		IMGPROXY_CLOUD_WATCH_NAMESPACE.Parse(&c.Namespace),
+		IMGPROXY_CLOUD_WATCH_REGION.Parse(&c.Region),
 	)
 
 	return c, err
