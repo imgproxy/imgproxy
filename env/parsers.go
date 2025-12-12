@@ -30,8 +30,8 @@ func parseEnumValue[T any](m map[string]T) ParseFn[T] {
 	}
 }
 
-// parseFloat64 parses the environment variable value as a 64-bit float.
-func parseFloat64(env string) (float64, error) {
+// parseFloat parses the environment variable value as a 64-bit float.
+func parseFloat(env string) (float64, error) {
 	return strconv.ParseFloat(env, 64)
 }
 
@@ -138,17 +138,26 @@ func parseImageTypesQuality(env string) (map[imagetype.Type]int, error) {
 
 	for p := range parts {
 		p = strings.TrimSpace(p)
-		i := strings.Index(p, "=")
-		if i < 0 {
+
+		imgtypeStr, qStr, ok := strings.Cut(p, "=")
+		if !ok {
 			return nil, fmt.Errorf("invalid format quality string: %s", p)
 		}
 
-		imgtypeStr := strings.TrimSpace(p[:i])
-		qStr := strings.TrimSpace(p[i+1:])
+		imgtypeStr = strings.TrimSpace(imgtypeStr)
+		qStr = strings.TrimSpace(qStr)
+
+		if len(qStr) == 0 {
+			return nil, fmt.Errorf("missing quality for format: %s", imgtypeStr)
+		}
+
+		if len(imgtypeStr) == 0 {
+			return nil, fmt.Errorf("missing image format in: %s", p)
+		}
 
 		q, err := strconv.Atoi(qStr)
 		if err != nil || q <= 0 || q > 100 {
-			return nil, fmt.Errorf("invalid quality: %s", p)
+			return nil, fmt.Errorf("invalid quality: %s", qStr)
 		}
 
 		t, ok := imagetype.GetTypeByName(imgtypeStr)
@@ -162,9 +171,9 @@ func parseImageTypesQuality(env string) (map[imagetype.Type]int, error) {
 	return result, nil
 }
 
-// parsePatterns parses a comma-separated list of wildcard patterns and converts them
+// parseURLPatterns parses a comma-separated list of wildcard patterns and converts them
 // to compiled regular expressions using regexpFromPattern.
-func parsePatterns(env string) ([]*regexp.Regexp, error) {
+func parseURLPatterns(env string) ([]*regexp.Regexp, error) {
 	parts := strings.Split(env, ",")
 	result := make([]*regexp.Regexp, len(parts))
 

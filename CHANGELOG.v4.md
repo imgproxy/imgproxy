@@ -1,5 +1,9 @@
 # 📑 Changelog (version/4 dev)
 
+## 2025-12-12
+
+- Removed `--presets` CLI argument in favor of `IMGPROXY_PRESETS_PATH`.
+
 ## 2025-10-31
 
 - Remove deprecated `download_duration_seconds` and `processing_duration_seconds` histograms from Prometheus metrics.
