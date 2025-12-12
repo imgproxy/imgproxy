@@ -20,22 +20,12 @@ type Desc[V any, F ParseFn[V]] struct {
 	format          string
 	docsUrlOverride string
 	parseFn         F
-	cliArgName      string
 }
 
 // GetEnv returns the value of the env variable
 func (d *Desc[V, F]) GetEnv() (string, bool) {
 	if len(d.Name) == 0 {
 		return "", false
-	}
-
-	// First check CLI args if cliArgName is set
-	if d.cliArgName != "" {
-		for i, arg := range os.Args {
-			if arg == "--"+d.cliArgName && i+1 < len(os.Args) {
-				return os.Args[i+1], true
-			}
-		}
 	}
 
 	// Fall back to environment variable
@@ -68,12 +58,6 @@ func (d Desc[V, F]) WithDocsURL(url string) Desc[V, F] {
 // WithFormat sets a custom format description for the env var
 func (d Desc[V, F]) WithFormat(format string) Desc[V, F] {
 	d.format = format
-	return d
-}
-
-// WithCliArg sets a CLI argument name to check before the env var
-func (d Desc[V, F]) WithCliArg(cliArgName string) Desc[V, F] {
-	d.cliArgName = cliArgName
 	return d
 }
 

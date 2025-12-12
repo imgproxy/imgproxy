@@ -1,7 +1,6 @@
 package env
 
 import (
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -49,21 +48,6 @@ func TestParseFailure(t *testing.T) {
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "TEST_INT")
 	assert.Contains(t, err.Error(), docsUrl+"TEST_INT")
-}
-
-func TestCliArgTakesPrecedence(t *testing.T) {
-	t.Setenv("TEST_INT", "100")
-
-	originalArgs := os.Args
-	t.Cleanup(func() { os.Args = originalArgs })
-	os.Args = []string{"program", "--test-int", "200"}
-
-	desc := Int("TEST_INT").WithCliArg("test-int")
-	var result int
-	err := desc.Parse(&result)
-
-	require.NoError(t, err)
-	assert.Equal(t, 200, result) // CLI value should override env
 }
 
 func TestCustomFormatAndDocsURL(t *testing.T) {

@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	syslogLevelMap = map[string]slog.Level{
+	syslogLevelMap = map[string]slog.Leveler{
 		"debug": slog.LevelDebug,
 		"info":  slog.LevelInfo,
 		"warn":  slog.LevelWarn,
@@ -43,17 +43,13 @@ func NewDefaultConfig() Config {
 func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c = ensure.Ensure(c, NewDefaultConfig)
 
-	level := c.Level.Level()
-
 	err := errors.Join(
 		IMGPROXY_SYSLOG_ENABLE.Parse(&c.Enabled),
 		IMGPROXY_SYSLOG_NETWORK.Parse(&c.Network),
 		IMGPROXY_SYSLOG_ADDRESS.Parse(&c.Addr),
 		IMGPROXY_SYSLOG_TAG.Parse(&c.Tag),
-		IMGPROXY_SYSLOG_LEVEL.Parse(&level),
+		IMGPROXY_SYSLOG_LEVEL.Parse(&c.Level),
 	)
-
-	c.Level = level
 
 	return c, err
 }

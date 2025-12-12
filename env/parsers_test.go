@@ -81,7 +81,7 @@ func TestParseFloat64(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name(), func(t *testing.T) {
-			result, err := parseFloat64(tt.input)
+			result, err := parseFloat(tt.input)
 			tt.assert(t, result, err)
 		})
 	}
@@ -264,7 +264,7 @@ func TestParsePatterns(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.input, func(t *testing.T) {
-			result, err := parsePatterns(tt.input)
+			result, err := parseURLPatterns(tt.input)
 			require.NoError(t, err)
 			assert.Len(t, result, tt.wantLen)
 			if len(result) > 0 {

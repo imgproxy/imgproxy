@@ -2,6 +2,7 @@ package processing
 
 import (
 	"errors"
+	"maps"
 
 	"github.com/imgproxy/imgproxy/v3/ensure"
 	"github.com/imgproxy/imgproxy/v3/env"
@@ -13,7 +14,7 @@ import (
 var (
 	IMGPROXY_PREFERRED_FORMATS       = env.ImageTypes("IMGPROXY_PREFERRED_FORMATS")
 	IMGPROXY_SKIP_PROCESSING_FORMATS = env.ImageTypes("IMGPROXY_SKIP_PROCESSING_FORMATS")
-	IMGPROXY_WATERMARK_OPACITY       = env.Float64("IMGPROXY_WATERMARK_OPACITY")
+	IMGPROXY_WATERMARK_OPACITY       = env.Float("IMGPROXY_WATERMARK_OPACITY")
 	IMGPROXY_DISABLE_SHRINK_ON_LOAD  = env.Bool("IMGPROXY_DISABLE_SHRINK_ON_LOAD")
 	IMGPROXY_USE_LINEAR_COLORSPACE   = env.Bool("IMGPROXY_USE_LINEAR_COLORSPACE")
 	IMGPROXY_ALWAYS_RASTERIZE_SVG    = env.Bool("IMGPROXY_ALWAYS_RASTERIZE_SVG")
@@ -76,6 +77,8 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 
 	_, svgErr := svg.LoadConfigFromEnv(&c.Svg)
 
+	var fq map[imagetype.Type]int
+
 	err := errors.Join(
 		svgErr,
 		IMGPROXY_WATERMARK_OPACITY.Parse(&c.WatermarkOpacity),
@@ -83,7 +86,7 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 		IMGPROXY_USE_LINEAR_COLORSPACE.Parse(&c.UseLinearColorspace),
 		IMGPROXY_ALWAYS_RASTERIZE_SVG.Parse(&c.AlwaysRasterizeSvg),
 		IMGPROXY_QUALITY.Parse(&c.Quality),
-		IMGPROXY_FORMAT_QUALITY.Parse(&c.FormatQuality),
+		IMGPROXY_FORMAT_QUALITY.Parse(&fq),
 		IMGPROXY_STRIP_METADATA.Parse(&c.StripMetadata),
 		IMGPROXY_KEEP_COPYRIGHT.Parse(&c.KeepCopyright),
 		IMGPROXY_STRIP_COLOR_PROFILE.Parse(&c.StripColorProfile),
@@ -93,6 +96,8 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 		IMGPROXY_PREFERRED_FORMATS.Parse(&c.PreferredFormats),
 		IMGPROXY_SKIP_PROCESSING_FORMATS.Parse(&c.SkipProcessingFormats),
 	)
+
+	maps.Copy(c.FormatQuality, fq)
 
 	return c, err
 }

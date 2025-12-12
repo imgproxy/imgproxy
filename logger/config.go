@@ -20,7 +20,7 @@ var (
 		"gcp":        FormatGCP,
 	}
 
-	logLevelMap = map[string]slog.Level{
+	logLevelMap = map[string]slog.Leveler{
 		"debug": slog.LevelDebug,
 		"info":  slog.LevelInfo,
 		"warn":  slog.LevelWarn,
@@ -55,25 +55,13 @@ func NewDefaultConfig() Config {
 func LoadConfigFromEnv(o *Config) (*Config, error) {
 	o = ensure.Ensure(o, NewDefaultConfig)
 
-	var logFormat Format
-	var logLevel slog.Level
-
 	_, slErr := syslog.LoadConfigFromEnv(&o.Syslog)
 
 	err := errors.Join(
 		slErr,
-		IMGPROXY_LOG_FORMAT.Parse(&logFormat),
-		IMGPROXY_LOG_LEVEL.Parse(&logLevel),
+		IMGPROXY_LOG_FORMAT.Parse(&o.Format),
+		IMGPROXY_LOG_LEVEL.Parse(&o.Level),
 	)
-
-	// Override with parsed values if they are non-zero (meaning env var was set to valid value)
-	if logFormat != 0 {
-		o.Format = logFormat
-	}
-
-	if logLevel != 0 {
-		o.Level = logLevel
-	}
 
 	return o, err
 }

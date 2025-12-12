@@ -14,12 +14,12 @@ import (
 type StringVar = Desc[string, ParseFn[string]]
 type BoolVar = Desc[bool, ParseFn[bool]]
 type IntVar = Desc[int, ParseFn[int]]
-type Float64Var = Desc[float64, ParseFn[float64]]
+type FloatVar = Desc[float64, ParseFn[float64]]
 type DurationVar = Desc[time.Duration, ParseFn[time.Duration]]
 type StringSliceVar = Desc[[]string, ParseFn[[]string]]
 type ImageTypesVar = Desc[[]imagetype.Type, ParseFn[[]imagetype.Type]]
 type ImageTypesQualityVar = Desc[map[imagetype.Type]int, ParseFn[map[imagetype.Type]int]]
-type PatternsVar = Desc[[]*regexp.Regexp, ParseFn[[]*regexp.Regexp]]
+type URLPatternsVar = Desc[[]*regexp.Regexp, ParseFn[[]*regexp.Regexp]]
 type HexSliceVar = Desc[[][]byte, ParseFn[[][]byte]]
 type StringMapVar = Desc[map[string]string, ParseFn[map[string]string]]
 type EnumVar[T any] = Desc[T, ParseFn[T]]
@@ -54,12 +54,12 @@ func Bool(name string) BoolVar {
 	}
 }
 
-// Float64 defines float64 env var descriptor
-func Float64(name string) Float64Var {
-	return Float64Var{
+// Float defines float64 env var descriptor
+func Float(name string) FloatVar {
+	return FloatVar{
 		Name:    name,
-		format:  "float64",
-		parseFn: parseFloat64,
+		format:  "float",
+		parseFn: parseFloat,
 	}
 }
 
@@ -77,7 +77,7 @@ func Int(name string) IntVar {
 func MegaInt(name string) IntVar {
 	return IntVar{
 		Name:    name,
-		format:  "megaint (float*10^6)",
+		format:  "float, multiplied by 1,000,000 internally",
 		parseFn: parseMegaInt,
 	}
 }
@@ -142,13 +142,13 @@ func ImageTypesQuality(name string) ImageTypesQualityVar {
 	}
 }
 
-// Patterns defines regexp patterns slice env var descriptor.
+// URLPatterns defines regexp patterns slice env var descriptor.
 // Parses comma-separated wildcard patterns and converts them to regexps.
-func Patterns(name string) PatternsVar {
-	return PatternsVar{
+func URLPatterns(name string) URLPatternsVar {
+	return URLPatternsVar{
 		Name:    name,
 		format:  "comma-separated wildcard patterns",
-		parseFn: parsePatterns,
+		parseFn: parseURLPatterns,
 	}
 }
 
