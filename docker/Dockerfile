@@ -1,4 +1,4 @@
-ARG BASE_IMAGE_VERSION="v3.14.0.nobi.1"
+ARG BASE_IMAGE_VERSION="v3.14.0.nobi.4"
 
 FROM nobilife/imgproxy-base:${BASE_IMAGE_VERSION} AS build
 
