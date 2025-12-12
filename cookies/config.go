@@ -8,9 +8,9 @@ import (
 )
 
 var (
-	IMGPROXY_COOKIE_PASSTHROUGH     = env.Describe("IMGPROXY_COOKIE_PASSTHROUGH", "boolean")
-	IMGPROXY_COOKIE_PASSTHROUGH_ALL = env.Describe("IMGPROXY_COOKIE_PASSTHROUGH_ALL", "boolean")
-	IMGPROXY_COOKIE_BASE_URL        = env.Describe("IMGPROXY_COOKIE_BASE_URL", "string")
+	IMGPROXY_COOKIE_PASSTHROUGH     = env.Bool("IMGPROXY_COOKIE_PASSTHROUGH")
+	IMGPROXY_COOKIE_PASSTHROUGH_ALL = env.Bool("IMGPROXY_COOKIE_PASSTHROUGH_ALL")
+	IMGPROXY_COOKIE_BASE_URL        = env.String("IMGPROXY_COOKIE_BASE_URL")
 )
 
 // Config holds cookie-related configuration.
@@ -34,9 +34,9 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c = ensure.Ensure(c, NewDefaultConfig)
 
 	err := errors.Join(
-		env.Bool(&c.CookiePassthrough, IMGPROXY_COOKIE_PASSTHROUGH),
-		env.Bool(&c.CookiePassthroughAll, IMGPROXY_COOKIE_PASSTHROUGH_ALL),
-		env.String(&c.CookieBaseURL, IMGPROXY_COOKIE_BASE_URL),
+		IMGPROXY_COOKIE_PASSTHROUGH.Parse(&c.CookiePassthrough),
+		IMGPROXY_COOKIE_PASSTHROUGH_ALL.Parse(&c.CookiePassthroughAll),
+		IMGPROXY_COOKIE_BASE_URL.Parse(&c.CookieBaseURL),
 	)
 
 	return c, err

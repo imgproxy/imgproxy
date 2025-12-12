@@ -10,16 +10,16 @@ import (
 
 // ConfigDesc holds the configuration descriptions for Swift storage
 type ConfigDesc struct {
-	Username       env.Desc
-	APIKey         env.Desc
-	AuthURL        env.Desc
-	Domain         env.Desc
-	Tenant         env.Desc
-	AuthVersion    env.Desc
-	ConnectTimeout env.Desc
-	Timeout        env.Desc
-	AllowedBuckets env.Desc
-	DeniedBuckets  env.Desc
+	Username       env.StringVar
+	APIKey         env.StringVar
+	AuthURL        env.StringVar
+	Domain         env.StringVar
+	Tenant         env.StringVar
+	AuthVersion    env.IntVar
+	ConnectTimeout env.DurationVar
+	Timeout        env.DurationVar
+	AllowedBuckets env.StringSliceVar
+	DeniedBuckets  env.StringSliceVar
 }
 
 // Config holds the configuration for Swift storage
@@ -58,16 +58,16 @@ func LoadConfigFromEnv(desc ConfigDesc, c *Config) (*Config, error) {
 	c = ensure.Ensure(c, NewDefaultConfig)
 
 	err := errors.Join(
-		env.String(&c.Username, desc.Username),
-		env.String(&c.APIKey, desc.APIKey),
-		env.String(&c.AuthURL, desc.AuthURL),
-		env.String(&c.Domain, desc.Domain),
-		env.String(&c.Tenant, desc.Tenant),
-		env.Int(&c.AuthVersion, desc.AuthVersion),
-		env.Duration(&c.ConnectTimeout, desc.ConnectTimeout),
-		env.Duration(&c.Timeout, desc.Timeout),
-		env.StringSlice(&c.AllowedBuckets, desc.AllowedBuckets),
-		env.StringSlice(&c.DeniedBuckets, desc.DeniedBuckets),
+		desc.Username.Parse(&c.Username),
+		desc.APIKey.Parse(&c.APIKey),
+		desc.AuthURL.Parse(&c.AuthURL),
+		desc.Domain.Parse(&c.Domain),
+		desc.Tenant.Parse(&c.Tenant),
+		desc.AuthVersion.Parse(&c.AuthVersion),
+		desc.ConnectTimeout.Parse(&c.ConnectTimeout),
+		desc.Timeout.Parse(&c.Timeout),
+		desc.AllowedBuckets.Parse(&c.AllowedBuckets),
+		desc.DeniedBuckets.Parse(&c.DeniedBuckets),
 	)
 
 	c.desc = desc

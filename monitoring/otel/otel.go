@@ -91,7 +91,7 @@ func New(config *Config, stats *stats.Stats) (*Otel, error) {
 	}
 
 	// If no service name is set, use "imgproxy" as default, and write it into the environment
-	if n, _ := OTEL_SERVICE_NAME.Get(); len(n) == 0 {
+	if n, _ := OTEL_SERVICE_NAME.GetEnv(); len(n) == 0 {
 		os.Setenv(OTEL_SERVICE_NAME.Name, defaultOtelServiceName)
 	}
 

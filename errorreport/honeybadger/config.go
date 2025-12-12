@@ -8,8 +8,8 @@ import (
 )
 
 var (
-	IMGPROXY_HONEYBADGER_KEY = env.Describe("IMGPROXY_HONEYBADGER_KEY", "string")
-	IMGPROXY_HONEYBADGER_ENV = env.Describe("IMGPROXY_HONEYBADGER_ENV", "string")
+	IMGPROXY_HONEYBADGER_KEY = env.String("IMGPROXY_HONEYBADGER_KEY")
+	IMGPROXY_HONEYBADGER_ENV = env.String("IMGPROXY_HONEYBADGER_ENV")
 )
 
 // Config holds Honeybadger-related configuration.
@@ -31,8 +31,8 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c = ensure.Ensure(c, NewDefaultConfig)
 
 	err := errors.Join(
-		env.String(&c.Key, IMGPROXY_HONEYBADGER_KEY),
-		env.String(&c.Env, IMGPROXY_HONEYBADGER_ENV),
+		IMGPROXY_HONEYBADGER_KEY.Parse(&c.Key),
+		IMGPROXY_HONEYBADGER_ENV.Parse(&c.Env),
 	)
 
 	return c, err

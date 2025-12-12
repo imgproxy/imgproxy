@@ -12,8 +12,8 @@ type URLReplacement struct {
 }
 
 // URLReplacements parses URL replacements from the environment variable
-func URLReplacements(s *[]URLReplacement, desc Desc) error {
-	value, ok := desc.Get()
+func URLReplacements(s *[]URLReplacement, desc *StringVar) error {
+	value, ok := desc.GetEnv()
 	if !ok {
 		return nil
 	}
@@ -28,7 +28,7 @@ func URLReplacements(s *[]URLReplacement, desc Desc) error {
 			return desc.Errorf("invalid key/value: %s", keyvalue)
 		}
 		ss = append(ss, URLReplacement{
-			Regexp:      RegexpFromPattern(parts[0]),
+			Regexp:      regexpFromPattern(parts[0]),
 			Replacement: parts[1],
 		})
 	}

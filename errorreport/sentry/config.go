@@ -10,9 +10,9 @@ import (
 )
 
 var (
-	IMGPROXY_SENTRY_DSN         = env.Describe("IMGPROXY_SENTRY_DSN", "string")
-	IMGPROXY_SENTRY_RELEASE     = env.Describe("IMGPROXY_SENTRY_RELEASE", "string")
-	IMGPROXY_SENTRY_ENVIRONMENT = env.Describe("IMGPROXY_SENTRY_ENVIRONMENT", "string")
+	IMGPROXY_SENTRY_DSN         = env.String("IMGPROXY_SENTRY_DSN")
+	IMGPROXY_SENTRY_RELEASE     = env.String("IMGPROXY_SENTRY_RELEASE")
+	IMGPROXY_SENTRY_ENVIRONMENT = env.String("IMGPROXY_SENTRY_ENVIRONMENT")
 )
 
 // Config holds Sentry-related configuration.
@@ -36,9 +36,9 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c = ensure.Ensure(c, NewDefaultConfig)
 
 	err := errors.Join(
-		env.String(&c.DSN, IMGPROXY_SENTRY_DSN),
-		env.String(&c.Release, IMGPROXY_SENTRY_RELEASE),
-		env.String(&c.Environment, IMGPROXY_SENTRY_ENVIRONMENT),
+		IMGPROXY_SENTRY_DSN.Parse(&c.DSN),
+		IMGPROXY_SENTRY_RELEASE.Parse(&c.Release),
+		IMGPROXY_SENTRY_ENVIRONMENT.Parse(&c.Environment),
 	)
 
 	return c, err

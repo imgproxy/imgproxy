@@ -9,11 +9,11 @@ import (
 )
 
 var (
-	IMGPROXY_SET_CANONICAL_HEADER      = env.Describe("IMGPROXY_SET_CANONICAL_HEADER", "boolean")
-	IMGPROXY_TTL                       = env.Describe("IMGPROXY_TTL", "seconds >= 0")
-	IMGPROXY_FALLBACK_IMAGE_TTL        = env.Describe("IMGPROXY_FALLBACK_IMAGE_TTL", "seconds >= 0")
-	IMGPROXY_CACHE_CONTROL_PASSTHROUGH = env.Describe("IMGPROXY_CACHE_CONTROL_PASSTHROUGH", "boolean")
-	IMGPROXY_WRITE_RESPONSE_TIMEOUT    = env.Describe("IMGPROXY_WRITE_RESPONSE_TIMEOUT", "seconds > 0")
+	IMGPROXY_SET_CANONICAL_HEADER      = env.Bool("IMGPROXY_SET_CANONICAL_HEADER")
+	IMGPROXY_TTL                       = env.Int("IMGPROXY_TTL")
+	IMGPROXY_FALLBACK_IMAGE_TTL        = env.Int("IMGPROXY_FALLBACK_IMAGE_TTL")
+	IMGPROXY_CACHE_CONTROL_PASSTHROUGH = env.Bool("IMGPROXY_CACHE_CONTROL_PASSTHROUGH")
+	IMGPROXY_WRITE_RESPONSE_TIMEOUT    = env.Duration("IMGPROXY_WRITE_RESPONSE_TIMEOUT")
 )
 
 // Config holds configuration for response writer
@@ -41,11 +41,11 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c = ensure.Ensure(c, NewDefaultConfig)
 
 	err := errors.Join(
-		env.Bool(&c.SetCanonicalHeader, IMGPROXY_SET_CANONICAL_HEADER),
-		env.Int(&c.DefaultTTL, IMGPROXY_TTL),
-		env.Int(&c.FallbackImageTTL, IMGPROXY_FALLBACK_IMAGE_TTL),
-		env.Bool(&c.CacheControlPassthrough, IMGPROXY_CACHE_CONTROL_PASSTHROUGH),
-		env.Duration(&c.WriteResponseTimeout, IMGPROXY_WRITE_RESPONSE_TIMEOUT),
+		IMGPROXY_SET_CANONICAL_HEADER.Parse(&c.SetCanonicalHeader),
+		IMGPROXY_TTL.Parse(&c.DefaultTTL),
+		IMGPROXY_FALLBACK_IMAGE_TTL.Parse(&c.FallbackImageTTL),
+		IMGPROXY_CACHE_CONTROL_PASSTHROUGH.Parse(&c.CacheControlPassthrough),
+		IMGPROXY_WRITE_RESPONSE_TIMEOUT.Parse(&c.WriteResponseTimeout),
 	)
 
 	return c, err

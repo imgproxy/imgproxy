@@ -8,13 +8,13 @@ import (
 )
 
 var (
-	IMGPROXY_AUTO_WEBP           = env.Describe("IMGPROXY_AUTO_WEBP", "boolean")
-	IMGPROXY_AUTO_AVIF           = env.Describe("IMGPROXY_AUTO_AVIF", "boolean")
-	IMGPROXY_AUTO_JXL            = env.Describe("IMGPROXY_AUTO_JXL", "boolean")
-	IMGPROXY_ENFORCE_WEBP        = env.Describe("IMGPROXY_ENFORCE_WEBP", "boolean")
-	IMGPROXY_ENFORCE_AVIF        = env.Describe("IMGPROXY_ENFORCE_AVIF", "boolean")
-	IMGPROXY_ENFORCE_JXL         = env.Describe("IMGPROXY_ENFORCE_JXL", "boolean")
-	IMGPROXY_ENABLE_CLIENT_HINTS = env.Describe("IMGPROXY_ENABLE_CLIENT_HINTS", "boolean")
+	IMGPROXY_AUTO_WEBP           = env.Bool("IMGPROXY_AUTO_WEBP")
+	IMGPROXY_AUTO_AVIF           = env.Bool("IMGPROXY_AUTO_AVIF")
+	IMGPROXY_AUTO_JXL            = env.Bool("IMGPROXY_AUTO_JXL")
+	IMGPROXY_ENFORCE_WEBP        = env.Bool("IMGPROXY_ENFORCE_WEBP")
+	IMGPROXY_ENFORCE_AVIF        = env.Bool("IMGPROXY_ENFORCE_AVIF")
+	IMGPROXY_ENFORCE_JXL         = env.Bool("IMGPROXY_ENFORCE_JXL")
+	IMGPROXY_ENABLE_CLIENT_HINTS = env.Bool("IMGPROXY_ENABLE_CLIENT_HINTS")
 )
 
 // Config holds configuration for response writer
@@ -39,12 +39,12 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c = ensure.Ensure(c, NewDefaultConfig)
 
 	err := errors.Join(
-		env.Bool(&c.AutoWebp, IMGPROXY_AUTO_WEBP),
-		env.Bool(&c.EnforceWebp, IMGPROXY_ENFORCE_WEBP),
-		env.Bool(&c.AutoAvif, IMGPROXY_AUTO_AVIF),
-		env.Bool(&c.EnforceAvif, IMGPROXY_ENFORCE_AVIF),
-		env.Bool(&c.AutoJxl, IMGPROXY_AUTO_JXL),
-		env.Bool(&c.EnforceJxl, IMGPROXY_ENFORCE_JXL),
+		IMGPROXY_AUTO_WEBP.Parse(&c.AutoWebp),
+		IMGPROXY_ENFORCE_WEBP.Parse(&c.EnforceWebp),
+		IMGPROXY_AUTO_AVIF.Parse(&c.AutoAvif),
+		IMGPROXY_ENFORCE_AVIF.Parse(&c.EnforceAvif),
+		IMGPROXY_AUTO_JXL.Parse(&c.AutoJxl),
+		IMGPROXY_ENFORCE_JXL.Parse(&c.EnforceJxl),
 	)
 
 	return c, err

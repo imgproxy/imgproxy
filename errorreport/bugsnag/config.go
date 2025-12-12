@@ -8,8 +8,8 @@ import (
 )
 
 var (
-	IMGPROXY_BUGSNAG_KEY   = env.Describe("IMGPROXY_BUGSNAG_KEY", "string")
-	IMGPROXY_BUGSNAG_STAGE = env.Describe("IMGPROXY_BUGSNAG_STAGE", "string")
+	IMGPROXY_BUGSNAG_KEY   = env.String("IMGPROXY_BUGSNAG_KEY")
+	IMGPROXY_BUGSNAG_STAGE = env.String("IMGPROXY_BUGSNAG_STAGE")
 )
 
 // Config holds Bugsnag-related configuration.
@@ -31,8 +31,8 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c = ensure.Ensure(c, NewDefaultConfig)
 
 	err := errors.Join(
-		env.String(&c.Key, IMGPROXY_BUGSNAG_KEY),
-		env.String(&c.Stage, IMGPROXY_BUGSNAG_STAGE),
+		IMGPROXY_BUGSNAG_KEY.Parse(&c.Key),
+		IMGPROXY_BUGSNAG_STAGE.Parse(&c.Stage),
 	)
 
 	return c, err

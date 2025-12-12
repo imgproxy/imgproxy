@@ -12,19 +12,19 @@ import (
 )
 
 var (
-	IMGPROXY_ENV_GCP_SECRET_ID         = Describe("IMGPROXY_ENV_GCP_SECRET_ID", "string")
-	IMGPROXY_ENV_GCP_SECRET_VERSION_ID = Describe("IMGPROXY_ENV_GCP_SECRET_VERSION_ID", "string")
-	IMGPROXY_ENV_GCP_SECRET_PROJECT_ID = Describe("IMGPROXY_ENV_GCP_SECRET_PROJECT_ID", "string")
-	IMGPROXY_ENV_GCP_KEY               = Describe("IMGPROXY_ENV_GCP_KEY", "JSON string")
+	IMGPROXY_ENV_GCP_SECRET_ID         = String("IMGPROXY_ENV_GCP_SECRET_ID")
+	IMGPROXY_ENV_GCP_SECRET_VERSION_ID = String("IMGPROXY_ENV_GCP_SECRET_VERSION_ID")
+	IMGPROXY_ENV_GCP_SECRET_PROJECT_ID = String("IMGPROXY_ENV_GCP_SECRET_PROJECT_ID")
+	IMGPROXY_ENV_GCP_KEY               = String("IMGPROXY_ENV_GCP_KEY")
 )
 
 func loadGCPSecret(ctx context.Context) error {
 	var secretID, secretVersion, secretProject, secretKey string
 
-	String(&secretID, IMGPROXY_ENV_GCP_SECRET_ID)
-	String(&secretVersion, IMGPROXY_ENV_GCP_SECRET_VERSION_ID)
-	String(&secretProject, IMGPROXY_ENV_GCP_SECRET_PROJECT_ID)
-	String(&secretKey, IMGPROXY_ENV_GCP_KEY)
+	IMGPROXY_ENV_GCP_SECRET_ID.Parse(&secretID)
+	IMGPROXY_ENV_GCP_SECRET_VERSION_ID.Parse(&secretVersion)
+	IMGPROXY_ENV_GCP_SECRET_PROJECT_ID.Parse(&secretProject)
+	IMGPROXY_ENV_GCP_KEY.Parse(&secretKey)
 
 	if len(secretID) == 0 {
 		return nil

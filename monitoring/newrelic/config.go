@@ -9,10 +9,10 @@ import (
 )
 
 var (
-	IMGPROXY_NEW_RELIC_APP_NAME           = env.Describe("IMGPROXY_NEW_RELIC_APP_NAME", "string")
-	IMGPROXY_NEW_RELIC_KEY                = env.Describe("IMGPROXY_NEW_RELIC_KEY", "string")
-	IMGPROXY_NEW_RELIC_LABELS             = env.Describe("IMGPROXY_NEW_RELIC_LABELS", "semicolon-separated list of key=value pairs") //nolint:lll
-	IMGPROXY_NEW_RELIC_PROPAGATE_EXTERNAL = env.Describe("IMGPROXY_NEW_RELIC_PROPAGATE_EXTERNAL", "boolean")
+	IMGPROXY_NEW_RELIC_APP_NAME           = env.String("IMGPROXY_NEW_RELIC_APP_NAME")
+	IMGPROXY_NEW_RELIC_KEY                = env.String("IMGPROXY_NEW_RELIC_KEY")
+	IMGPROXY_NEW_RELIC_LABELS             = env.StringMap("IMGPROXY_NEW_RELIC_LABELS")
+	IMGPROXY_NEW_RELIC_PROPAGATE_EXTERNAL = env.Bool("IMGPROXY_NEW_RELIC_PROPAGATE_EXTERNAL")
 )
 
 // Config holds the configuration for New Relic monitoring
@@ -40,10 +40,10 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c = ensure.Ensure(c, NewDefaultConfig)
 
 	err := errors.Join(
-		env.String(&c.AppName, IMGPROXY_NEW_RELIC_APP_NAME),
-		env.String(&c.Key, IMGPROXY_NEW_RELIC_KEY),
-		env.StringMap(&c.Labels, IMGPROXY_NEW_RELIC_LABELS),
-		env.Bool(&c.PropagateExt, IMGPROXY_NEW_RELIC_PROPAGATE_EXTERNAL),
+		IMGPROXY_NEW_RELIC_APP_NAME.Parse(&c.AppName),
+		IMGPROXY_NEW_RELIC_KEY.Parse(&c.Key),
+		IMGPROXY_NEW_RELIC_LABELS.Parse(&c.Labels),
+		IMGPROXY_NEW_RELIC_PROPAGATE_EXTERNAL.Parse(&c.PropagateExt),
 	)
 
 	return c, err

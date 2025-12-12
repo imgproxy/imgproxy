@@ -9,22 +9,26 @@ import (
 	"github.com/imgproxy/imgproxy/v3/env"
 )
 
+const (
+	otelDocsUrl = "https://opentelemetry.io/docs/languages/sdk-configuration/otlp-exporter/"
+)
+
 var (
-	IMGPROXY_OPEN_TELEMETRY_ENABLE             = env.Describe("IMGPROXY_OPEN_TELEMETRY_ENABLE", "boolean")
-	IMGPROXY_OPEN_TELEMETRY_ENABLE_METRICS     = env.Describe("IMGPROXY_OPEN_TELEMETRY_ENABLE_METRICS", "boolean")
-	IMGPROXY_OPEN_TELEMETRY_SERVER_CERT        = env.Describe("IMGPROXY_OPEN_TELEMETRY_SERVER_CERT", "string")
-	IMGPROXY_OPEN_TELEMETRY_CLIENT_CERT        = env.Describe("IMGPROXY_OPEN_TELEMETRY_CLIENT_CERT", "string")
-	IMGPROXY_OPEN_TELEMETRY_CLIENT_KEY         = env.Describe("IMGPROXY_OPEN_TELEMETRY_CLIENT_KEY", "string")
-	IMGPROXY_OPEN_TELEMETRY_TRACE_ID_GENERATOR = env.Describe("IMGPROXY_OPEN_TELEMETRY_TRACE_ID_GENERATOR", "xray|random")
-	IMGPROXY_OPEN_TELEMETRY_PROPAGATE_EXTERNAL = env.Describe("IMGPROXY_OPEN_TELEMETRY_PROPAGATE_EXTERNAL", "boolean")
+	IMGPROXY_OPEN_TELEMETRY_ENABLE             = env.Bool("IMGPROXY_OPEN_TELEMETRY_ENABLE")
+	IMGPROXY_OPEN_TELEMETRY_ENABLE_METRICS     = env.Bool("IMGPROXY_OPEN_TELEMETRY_ENABLE_METRICS")
+	IMGPROXY_OPEN_TELEMETRY_SERVER_CERT        = env.String("IMGPROXY_OPEN_TELEMETRY_SERVER_CERT")
+	IMGPROXY_OPEN_TELEMETRY_CLIENT_CERT        = env.String("IMGPROXY_OPEN_TELEMETRY_CLIENT_CERT")
+	IMGPROXY_OPEN_TELEMETRY_CLIENT_KEY         = env.String("IMGPROXY_OPEN_TELEMETRY_CLIENT_KEY")
+	IMGPROXY_OPEN_TELEMETRY_TRACE_ID_GENERATOR = env.String("IMGPROXY_OPEN_TELEMETRY_TRACE_ID_GENERATOR")
+	IMGPROXY_OPEN_TELEMETRY_PROPAGATE_EXTERNAL = env.Bool("IMGPROXY_OPEN_TELEMETRY_PROPAGATE_EXTERNAL")
 
 	// OTEL_EXPORTER_OTLP_PROTOCOL Those are OpenTelemetry SDK environment variables
-	OTEL_EXPORTER_OTLP_PROTOCOL        = env.Describe("OTEL_EXPORTER_OTLP_PROTOCOL", "grpc|http/protobuf|http|https")
-	OTEL_EXPORTER_OTLP_TIMEOUT         = env.Describe("OTEL_EXPORTER_OTLP_TIMEOUT", "milliseconds")
-	OTEL_EXPORTER_OTLP_TRACES_TIMEOUT  = env.Describe("OTEL_EXPORTER_OTLP_TRACES_TIMEOUT", "milliseconds")
-	OTEL_EXPORTER_OTLP_METRICS_TIMEOUT = env.Describe("OTEL_EXPORTER_OTLP_METRICS_TIMEOUT", "milliseconds")
-	OTEL_PROPAGATORS                   = env.Describe("OTEL_PROPAGATORS", "comma-separated list of propagators")
-	OTEL_SERVICE_NAME                  = env.Describe("OTEL_SERVICE_NAME", "string") // This is used during initialization
+	OTEL_EXPORTER_OTLP_PROTOCOL        = env.String("OTEL_EXPORTER_OTLP_PROTOCOL").WithDocsURL(otelDocsUrl)
+	OTEL_EXPORTER_OTLP_TIMEOUT         = env.DurationMillis("OTEL_EXPORTER_OTLP_TIMEOUT").WithDocsURL(otelDocsUrl)
+	OTEL_EXPORTER_OTLP_TRACES_TIMEOUT  = env.DurationMillis("OTEL_EXPORTER_OTLP_TRACES_TIMEOUT").WithDocsURL(otelDocsUrl)
+	OTEL_EXPORTER_OTLP_METRICS_TIMEOUT = env.DurationMillis("OTEL_EXPORTER_OTLP_METRICS_TIMEOUT").WithDocsURL(otelDocsUrl)
+	OTEL_PROPAGATORS                   = env.StringSlice("OTEL_PROPAGATORS").WithDocsURL(otelDocsUrl)
+	OTEL_SERVICE_NAME                  = env.String("OTEL_SERVICE_NAME").WithDocsURL(otelDocsUrl)
 )
 
 // Config holds the configuration for OpenTelemetry monitoring
@@ -72,18 +76,18 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 	var serverCert, clientCert, clientKey string
 
 	err := errors.Join(
-		env.Bool(&c.Enable, IMGPROXY_OPEN_TELEMETRY_ENABLE),
-		env.Bool(&c.EnableMetrics, IMGPROXY_OPEN_TELEMETRY_ENABLE_METRICS),
-		env.String(&serverCert, IMGPROXY_OPEN_TELEMETRY_SERVER_CERT),
-		env.String(&clientCert, IMGPROXY_OPEN_TELEMETRY_CLIENT_CERT),
-		env.String(&clientKey, IMGPROXY_OPEN_TELEMETRY_CLIENT_KEY),
-		env.String(&c.TraceIDGenerator, IMGPROXY_OPEN_TELEMETRY_TRACE_ID_GENERATOR),
-		env.Bool(&c.PropagateExt, IMGPROXY_OPEN_TELEMETRY_PROPAGATE_EXTERNAL),
-		env.String(&c.Protocol, OTEL_EXPORTER_OTLP_PROTOCOL),
-		env.DurationMils(&c.ConnTimeout, OTEL_EXPORTER_OTLP_TIMEOUT),
-		env.DurationMils(&c.TracesConnTimeout, OTEL_EXPORTER_OTLP_TRACES_TIMEOUT),
-		env.DurationMils(&c.MetricsConnTimeout, OTEL_EXPORTER_OTLP_METRICS_TIMEOUT),
-		env.StringSlice(&c.Propagators, OTEL_PROPAGATORS),
+		IMGPROXY_OPEN_TELEMETRY_ENABLE.Parse(&c.Enable),
+		IMGPROXY_OPEN_TELEMETRY_ENABLE_METRICS.Parse(&c.EnableMetrics),
+		IMGPROXY_OPEN_TELEMETRY_SERVER_CERT.Parse(&serverCert),
+		IMGPROXY_OPEN_TELEMETRY_CLIENT_CERT.Parse(&clientCert),
+		IMGPROXY_OPEN_TELEMETRY_CLIENT_KEY.Parse(&clientKey),
+		IMGPROXY_OPEN_TELEMETRY_TRACE_ID_GENERATOR.Parse(&c.TraceIDGenerator),
+		IMGPROXY_OPEN_TELEMETRY_PROPAGATE_EXTERNAL.Parse(&c.PropagateExt),
+		OTEL_EXPORTER_OTLP_PROTOCOL.Parse(&c.Protocol),
+		OTEL_EXPORTER_OTLP_TIMEOUT.Parse(&c.ConnTimeout),
+		OTEL_EXPORTER_OTLP_TRACES_TIMEOUT.Parse(&c.TracesConnTimeout),
+		OTEL_EXPORTER_OTLP_METRICS_TIMEOUT.Parse(&c.MetricsConnTimeout),
+		OTEL_PROPAGATORS.Parse(&c.Propagators),
 	)
 
 	c.ServerCert = prepareKeyCert(serverCert)

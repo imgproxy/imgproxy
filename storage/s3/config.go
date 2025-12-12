@@ -9,14 +9,14 @@ import (
 
 // ConfigDesc holds the configuration descriptions for S3 storage
 type ConfigDesc struct {
-	Region                  env.Desc
-	Endpoint                env.Desc
-	EndpointUsePathStyle    env.Desc
-	AssumeRoleArn           env.Desc
-	AssumeRoleExternalID    env.Desc
-	DecryptionClientEnabled env.Desc
-	AllowedBuckets          env.Desc
-	DeniedBuckets           env.Desc
+	Region                  env.StringVar
+	Endpoint                env.StringVar
+	EndpointUsePathStyle    env.BoolVar
+	AssumeRoleArn           env.StringVar
+	AssumeRoleExternalID    env.StringVar
+	DecryptionClientEnabled env.BoolVar
+	AllowedBuckets          env.StringSliceVar
+	DeniedBuckets           env.StringSliceVar
 }
 
 // Config holds the configuration for S3 transport
@@ -51,14 +51,14 @@ func LoadConfigFromEnv(desc ConfigDesc, c *Config) (*Config, error) {
 	c = ensure.Ensure(c, NewDefaultConfig)
 
 	err := errors.Join(
-		env.String(&c.Region, desc.Region),
-		env.String(&c.Endpoint, desc.Endpoint),
-		env.Bool(&c.EndpointUsePathStyle, desc.EndpointUsePathStyle),
-		env.String(&c.AssumeRoleArn, desc.AssumeRoleArn),
-		env.String(&c.AssumeRoleExternalID, desc.AssumeRoleExternalID),
-		env.Bool(&c.DecryptionClientEnabled, desc.DecryptionClientEnabled),
-		env.StringSlice(&c.AllowedBuckets, desc.AllowedBuckets),
-		env.StringSlice(&c.DeniedBuckets, desc.DeniedBuckets),
+		desc.Region.Parse(&c.Region),
+		desc.Endpoint.Parse(&c.Endpoint),
+		desc.EndpointUsePathStyle.Parse(&c.EndpointUsePathStyle),
+		desc.AssumeRoleArn.Parse(&c.AssumeRoleArn),
+		desc.AssumeRoleExternalID.Parse(&c.AssumeRoleExternalID),
+		desc.DecryptionClientEnabled.Parse(&c.DecryptionClientEnabled),
+		desc.AllowedBuckets.Parse(&c.AllowedBuckets),
+		desc.DeniedBuckets.Parse(&c.DeniedBuckets),
 	)
 
 	c.desc = desc

@@ -11,7 +11,7 @@ import (
 // ConfigDesc holds the configuration descriptions for
 // local file system storage
 type ConfigDesc struct {
-	Root   env.Desc
+	Root   env.StringVar
 	Config *Config
 }
 
@@ -32,7 +32,7 @@ func NewDefaultConfig() Config {
 func LoadConfigFromEnv(desc ConfigDesc, c *Config) (*Config, error) {
 	c = ensure.Ensure(c, NewDefaultConfig)
 
-	err := env.String(&c.Root, desc.Root)
+	err := desc.Root.Parse(&c.Root)
 
 	c.desc = desc
 

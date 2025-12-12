@@ -19,21 +19,21 @@ const (
 )
 
 var (
-	IMGPROXY_ENV_AWS_SECRET_ID             = Describe("IMGPROXY_ENV_AWS_SECRET_ID", "string")
-	IMGPROXY_ENV_AWS_SECRET_VERSION_ID     = Describe("IMGPROXY_ENV_AWS_SECRET_VERSION_ID", "string")
-	IMGPROXY_ENV_AWS_SECRET_VERSION_STAGE  = Describe("IMGPROXY_ENV_AWS_SECRET_VERSION_STAGE", "string")
-	IMGPROXY_ENV_AWS_SECRET_REGION         = Describe("IMGPROXY_ENV_AWS_SECRET_REGION", "AWS region ("+defaultAWSRegion+")") //nolint:lll
-	IMGPROXY_ENV_AWS_SSM_PARAMETERS_PATH   = Describe("IMGPROXY_ENV_AWS_SSM_PARAMETERS_PATH", "string")
-	IMGPROXY_ENV_AWS_SSM_PARAMETERS_REGION = Describe("IMGPROXY_ENV_AWS_SSM_PARAMETERS_REGION", "AWS region ("+defaultAWSRegion+")") //nolint:lll
+	IMGPROXY_ENV_AWS_SECRET_ID             = String("IMGPROXY_ENV_AWS_SECRET_ID")
+	IMGPROXY_ENV_AWS_SECRET_VERSION_ID     = String("IMGPROXY_ENV_AWS_SECRET_VERSION_ID")
+	IMGPROXY_ENV_AWS_SECRET_VERSION_STAGE  = String("IMGPROXY_ENV_AWS_SECRET_VERSION_STAGE")
+	IMGPROXY_ENV_AWS_SECRET_REGION         = String("IMGPROXY_ENV_AWS_SECRET_REGION")
+	IMGPROXY_ENV_AWS_SSM_PARAMETERS_PATH   = String("IMGPROXY_ENV_AWS_SSM_PARAMETERS_PATH")
+	IMGPROXY_ENV_AWS_SSM_PARAMETERS_REGION = String("IMGPROXY_ENV_AWS_SSM_PARAMETERS_REGION")
 )
 
 func loadAWSSecret(ctx context.Context) error {
 	var secretID, secretVersionID, secretVersionStage, secretRegion string
 
-	String(&secretID, IMGPROXY_ENV_AWS_SECRET_ID)
-	String(&secretVersionID, IMGPROXY_ENV_AWS_SECRET_VERSION_ID)
-	String(&secretVersionStage, IMGPROXY_ENV_AWS_SECRET_VERSION_STAGE)
-	String(&secretRegion, IMGPROXY_ENV_AWS_SECRET_REGION)
+	IMGPROXY_ENV_AWS_SECRET_ID.Parse(&secretID)
+	IMGPROXY_ENV_AWS_SECRET_VERSION_ID.Parse(&secretVersionID)
+	IMGPROXY_ENV_AWS_SECRET_VERSION_STAGE.Parse(&secretVersionStage)
+	IMGPROXY_ENV_AWS_SECRET_REGION.Parse(&secretRegion)
 
 	// No secret ID, no aws
 	if len(secretID) == 0 {
@@ -84,8 +84,8 @@ func loadAWSSecret(ctx context.Context) error {
 func loadAWSSystemManagerParams(ctx context.Context) error {
 	var paramsPath, paramsRegion string
 
-	String(&paramsPath, IMGPROXY_ENV_AWS_SSM_PARAMETERS_PATH)
-	String(&paramsRegion, IMGPROXY_ENV_AWS_SSM_PARAMETERS_REGION)
+	IMGPROXY_ENV_AWS_SSM_PARAMETERS_PATH.Parse(&paramsPath)
+	IMGPROXY_ENV_AWS_SSM_PARAMETERS_REGION.Parse(&paramsRegion)
 
 	// Path is not set: can't use SSM
 	if len(paramsPath) == 0 {

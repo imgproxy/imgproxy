@@ -2,13 +2,13 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net"
 	"net/http"
 	"os"
 
-	"github.com/imgproxy/imgproxy/v3/env"
 	"github.com/imgproxy/imgproxy/v3/server"
 	"github.com/urfave/cli/v3"
 )
@@ -17,9 +17,14 @@ import (
 func healthcheck(ctx context.Context, c *cli.Command) error {
 	var network, bind, pathprefix string
 
-	env.String(&network, server.IMGPROXY_NETWORK)
-	env.String(&bind, server.IMGPROXY_BIND)
-	env.String(&pathprefix, server.IMGPROXY_PATH_PREFIX)
+	err := errors.Join(
+		server.IMGPROXY_NETWORK.Parse(&network),
+		server.IMGPROXY_BIND.Parse(&bind),
+		server.IMGPROXY_PATH_PREFIX.Parse(&pathprefix),
+	)
+	if err != nil {
+		return err
+	}
 
 	httpc := http.Client{
 		Transport: &http.Transport{

@@ -12,18 +12,18 @@ import (
 )
 
 var (
-	IMGPROXY_JPEG_PROGRESSIVE        = env.Describe("IMGPROXY_JPEG_PROGRESSIVE", "boolean")
-	IMGPROXY_PNG_INTERLACED          = env.Describe("IMGPROXY_PNG_INTERLACED", "boolean")
-	IMGPROXY_PNG_QUANTIZE            = env.Describe("IMGPROXY_PNG_QUANTIZE", "boolean")
-	IMGPROXY_PNG_QUANTIZATION_COLORS = env.Describe("IMGPROXY_PNG_QUANTIZATION_COLORS", "number between 2 and 256")
-	IMGPROXY_WEBP_PRESET             = env.DescribeByMap("IMGPROXY_WEBP_PRESET", WebpPresets)
-	IMGPROXY_AVIF_SPEED              = env.Describe("IMGPROXY_AVIF_SPEED", "number between 0 and 9")
-	IMGPROXY_WEBP_EFFORT             = env.Describe("IMGPROXY_WEBP_EFFORT", "number between 1 and 6")
-	IMGPROXY_JXL_EFFORT              = env.Describe("IMGPROXY_JXL_EFFORT", "number between 1 and 9")
-	IMGPROXY_PNG_UNLIMITED           = env.Describe("IMGPROXY_PNG_UNLIMITED", "boolean")
-	IMGPROXY_SVG_UNLIMITED           = env.Describe("IMGPROXY_SVG_UNLIMITED", "boolean")
-	IMGPROXY_VIPS_LEAK_CHECK         = env.Describe("IMGPROXY_VIPS_LEAK_CHECK", "boolean")
-	IMGPROXY_VIPS_CACHE_TRACE        = env.Describe("IMGPROXY_VIPS_CACHE_TRACE", "boolean")
+	IMGPROXY_JPEG_PROGRESSIVE        = env.Bool("IMGPROXY_JPEG_PROGRESSIVE")
+	IMGPROXY_PNG_INTERLACED          = env.Bool("IMGPROXY_PNG_INTERLACED")
+	IMGPROXY_PNG_QUANTIZE            = env.Bool("IMGPROXY_PNG_QUANTIZE")
+	IMGPROXY_PNG_QUANTIZATION_COLORS = env.Int("IMGPROXY_PNG_QUANTIZATION_COLORS")
+	IMGPROXY_WEBP_PRESET             = env.Enum("IMGPROXY_WEBP_PRESET", WebpPresets)
+	IMGPROXY_AVIF_SPEED              = env.Int("IMGPROXY_AVIF_SPEED")
+	IMGPROXY_WEBP_EFFORT             = env.Int("IMGPROXY_WEBP_EFFORT")
+	IMGPROXY_JXL_EFFORT              = env.Int("IMGPROXY_JXL_EFFORT")
+	IMGPROXY_PNG_UNLIMITED           = env.Bool("IMGPROXY_PNG_UNLIMITED")
+	IMGPROXY_SVG_UNLIMITED           = env.Bool("IMGPROXY_SVG_UNLIMITED")
+	IMGPROXY_VIPS_LEAK_CHECK         = env.Bool("IMGPROXY_VIPS_LEAK_CHECK")
+	IMGPROXY_VIPS_CACHE_TRACE        = env.Bool("IMGPROXY_VIPS_CACHE_TRACE")
 )
 
 type Config struct {
@@ -84,19 +84,19 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c = ensure.Ensure(c, NewDefaultConfig)
 
 	err := errors.Join(
-		env.Bool(&c.JpegProgressive, IMGPROXY_JPEG_PROGRESSIVE),
-		env.Bool(&c.PngInterlaced, IMGPROXY_PNG_INTERLACED),
-		env.Bool(&c.PngQuantize, IMGPROXY_PNG_QUANTIZE),
-		env.Int(&c.PngQuantizationColors, IMGPROXY_PNG_QUANTIZATION_COLORS),
-		env.Int(&c.AvifSpeed, IMGPROXY_AVIF_SPEED),
-		env.Int(&c.WebpEffort, IMGPROXY_WEBP_EFFORT),
-		env.Int(&c.JxlEffort, IMGPROXY_JXL_EFFORT),
-		env.Bool(&c.PngUnlimited, IMGPROXY_PNG_UNLIMITED),
-		env.Bool(&c.SvgUnlimited, IMGPROXY_SVG_UNLIMITED),
+		IMGPROXY_JPEG_PROGRESSIVE.Parse(&c.JpegProgressive),
+		IMGPROXY_PNG_INTERLACED.Parse(&c.PngInterlaced),
+		IMGPROXY_PNG_QUANTIZE.Parse(&c.PngQuantize),
+		IMGPROXY_PNG_QUANTIZATION_COLORS.Parse(&c.PngQuantizationColors),
+		IMGPROXY_AVIF_SPEED.Parse(&c.AvifSpeed),
+		IMGPROXY_WEBP_EFFORT.Parse(&c.WebpEffort),
+		IMGPROXY_JXL_EFFORT.Parse(&c.JxlEffort),
+		IMGPROXY_PNG_UNLIMITED.Parse(&c.PngUnlimited),
+		IMGPROXY_SVG_UNLIMITED.Parse(&c.SvgUnlimited),
 
-		env.FromMap(&c.WebpPreset, WebpPresets, IMGPROXY_WEBP_PRESET),
-		env.Bool(&c.LeakCheck, IMGPROXY_VIPS_LEAK_CHECK),
-		env.Bool(&c.CacheTrace, IMGPROXY_VIPS_CACHE_TRACE),
+		IMGPROXY_WEBP_PRESET.Parse(&c.WebpPreset),
+		IMGPROXY_VIPS_LEAK_CHECK.Parse(&c.LeakCheck),
+		IMGPROXY_VIPS_CACHE_TRACE.Parse(&c.CacheTrace),
 	)
 
 	return c, err
