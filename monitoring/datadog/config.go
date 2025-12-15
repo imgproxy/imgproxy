@@ -8,16 +8,20 @@ import (
 	"github.com/imgproxy/imgproxy/v3/env"
 )
 
-var (
-	IMGPROXY_DATADOG_ENABLE                    = env.Describe("IMGPROXY_DATADOG_ENABLE", "boolean")
-	IMGPROXY_DATADOG_ENABLE_ADDITIONAL_METRICS = env.Describe("IMGPROXY_DATADOG_ENABLE_ADDITIONAL_METRICS", "boolean")
-	IMGPROXY_DATADOG_PROPAGATE_EXTERNAL        = env.Describe("IMGPROXY_DATADOG_PROPAGATE_EXTERNAL", "boolean")
+const (
+	ddDocsUrl = "https://docs.datadoghq.com/tracing/trace_collection/library_config/go"
+)
 
-	DD_SERVICE            = env.Describe("DD_SERVICE", "string")
-	DD_TRACE_STARTUP_LOGS = env.Describe("DD_TRACE_STARTUP_LOGS", "boolean")
-	DD_AGENT_HOST         = env.Describe("DD_AGENT_HOST", "host")
-	DD_TRACE_AGENT_PORT   = env.Describe("DD_TRACE_AGENT_PORT", "port")
-	DD_DOGSTATSD_PORT     = env.Describe("DD_DOGSTATSD_PORT", "port")
+var (
+	IMGPROXY_DATADOG_ENABLE                    = env.Bool("IMGPROXY_DATADOG_ENABLE")
+	IMGPROXY_DATADOG_ENABLE_ADDITIONAL_METRICS = env.Bool("IMGPROXY_DATADOG_ENABLE_ADDITIONAL_METRICS")
+	IMGPROXY_DATADOG_PROPAGATE_EXTERNAL        = env.Bool("IMGPROXY_DATADOG_PROPAGATE_EXTERNAL")
+
+	DD_SERVICE            = env.String("DD_SERVICE").WithDocsURL(ddDocsUrl)
+	DD_TRACE_STARTUP_LOGS = env.Bool("DD_TRACE_STARTUP_LOGS").WithDocsURL(ddDocsUrl)
+	DD_AGENT_HOST         = env.String("DD_AGENT_HOST").WithDocsURL(ddDocsUrl)
+	DD_TRACE_AGENT_PORT   = env.Int("DD_TRACE_AGENT_PORT").WithDocsURL(ddDocsUrl)
+	DD_DOGSTATSD_PORT     = env.Int("DD_DOGSTATSD_PORT").WithDocsURL(ddDocsUrl)
 )
 
 // Config holds the configuration for DataDog monitoring
@@ -53,14 +57,14 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c = ensure.Ensure(c, NewDefaultConfig)
 
 	err := errors.Join(
-		env.Bool(&c.Enable, IMGPROXY_DATADOG_ENABLE),
-		env.Bool(&c.EnableMetrics, IMGPROXY_DATADOG_ENABLE_ADDITIONAL_METRICS),
-		env.Bool(&c.PropagateExt, IMGPROXY_DATADOG_PROPAGATE_EXTERNAL),
-		env.String(&c.Service, DD_SERVICE),
-		env.Bool(&c.TraceStartupLogs, DD_TRACE_STARTUP_LOGS),
-		env.String(&c.AgentHost, DD_AGENT_HOST),
-		env.Int(&c.TracePort, DD_TRACE_AGENT_PORT),
-		env.Int(&c.StatsDPort, DD_DOGSTATSD_PORT),
+		IMGPROXY_DATADOG_ENABLE.Parse(&c.Enable),
+		IMGPROXY_DATADOG_ENABLE_ADDITIONAL_METRICS.Parse(&c.EnableMetrics),
+		IMGPROXY_DATADOG_PROPAGATE_EXTERNAL.Parse(&c.PropagateExt),
+		DD_SERVICE.Parse(&c.Service),
+		DD_TRACE_STARTUP_LOGS.Parse(&c.TraceStartupLogs),
+		DD_AGENT_HOST.Parse(&c.AgentHost),
+		DD_TRACE_AGENT_PORT.Parse(&c.TracePort),
+		DD_DOGSTATSD_PORT.Parse(&c.StatsDPort),
 	)
 
 	return c, err

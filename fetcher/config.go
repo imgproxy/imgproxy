@@ -12,9 +12,9 @@ import (
 )
 
 var (
-	IMGPROXY_USER_AGENT       = env.Describe("IMGPROXY_USER_AGENT", "non-empty string")
-	IMGPROXY_DOWNLOAD_TIMEOUT = env.Describe("IMGPROXY_DOWNLOAD_TIMEOUT", "seconds => 0")
-	IMGPROXY_MAX_REDIRECTS    = env.Describe("IMGPROXY_MAX_REDIRECTS", "integer > 0")
+	IMGPROXY_USER_AGENT       = env.String("IMGPROXY_USER_AGENT")
+	IMGPROXY_DOWNLOAD_TIMEOUT = env.Duration("IMGPROXY_DOWNLOAD_TIMEOUT")
+	IMGPROXY_MAX_REDIRECTS    = env.Int("IMGPROXY_MAX_REDIRECTS")
 )
 
 // Config holds the configuration for the image fetcher.
@@ -50,9 +50,9 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 
 	err := errors.Join(
 		trErr,
-		env.String(&c.UserAgent, IMGPROXY_USER_AGENT),
-		env.Duration(&c.DownloadTimeout, IMGPROXY_DOWNLOAD_TIMEOUT),
-		env.Int(&c.MaxRedirects, IMGPROXY_MAX_REDIRECTS),
+		IMGPROXY_USER_AGENT.Parse(&c.UserAgent),
+		IMGPROXY_DOWNLOAD_TIMEOUT.Parse(&c.DownloadTimeout),
+		IMGPROXY_MAX_REDIRECTS.Parse(&c.MaxRedirects),
 	)
 
 	// Set the current version in the User-Agent string

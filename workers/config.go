@@ -9,8 +9,8 @@ import (
 )
 
 var (
-	IMGPROXY_REQUESTS_QUEUE_SIZE = env.Describe("IMGPROXY_REQUESTS_QUEUE_SIZE", "number > 0")
-	IMGPROXY_WORKERS_NUMBER      = env.Describe("IMGPROXY_WORKERS_NUMBER", "number > 0")
+	IMGPROXY_REQUESTS_QUEUE_SIZE = env.Int("IMGPROXY_REQUESTS_QUEUE_SIZE")
+	IMGPROXY_WORKERS_NUMBER      = env.Int("IMGPROXY_WORKERS_NUMBER")
 )
 
 // Config represents [Workers] config
@@ -32,8 +32,8 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c = ensure.Ensure(c, NewDefaultConfig)
 
 	err := errors.Join(
-		env.Int(&c.RequestsQueueSize, IMGPROXY_REQUESTS_QUEUE_SIZE),
-		env.Int(&c.WorkersNumber, IMGPROXY_WORKERS_NUMBER),
+		IMGPROXY_REQUESTS_QUEUE_SIZE.Parse(&c.RequestsQueueSize),
+		IMGPROXY_WORKERS_NUMBER.Parse(&c.WorkersNumber),
 	)
 
 	return c, err

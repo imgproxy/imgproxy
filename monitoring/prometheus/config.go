@@ -8,8 +8,8 @@ import (
 )
 
 var (
-	IMGPROXY_PROMETHEUS_BIND      = env.Describe("IMGPROXY_PROMETHEUS_BIND", "string")
-	IMGPROXY_PROMETHEUS_NAMESPACE = env.Describe("IMGPROXY_PROMETHEUS_NAMESPACE", "string")
+	IMGPROXY_PROMETHEUS_BIND      = env.String("IMGPROXY_PROMETHEUS_BIND")
+	IMGPROXY_PROMETHEUS_NAMESPACE = env.String("IMGPROXY_PROMETHEUS_NAMESPACE")
 )
 
 // Config holds the configuration for Prometheus monitoring
@@ -31,8 +31,8 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c = ensure.Ensure(c, NewDefaultConfig)
 
 	err := errors.Join(
-		env.String(&c.Bind, IMGPROXY_PROMETHEUS_BIND),
-		env.String(&c.Namespace, IMGPROXY_PROMETHEUS_NAMESPACE),
+		IMGPROXY_PROMETHEUS_BIND.Parse(&c.Bind),
+		IMGPROXY_PROMETHEUS_NAMESPACE.Parse(&c.Namespace),
 	)
 
 	return c, err

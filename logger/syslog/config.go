@@ -2,20 +2,26 @@ package syslog
 
 import (
 	"errors"
-	"fmt"
 	"log/slog"
-	"strings"
 
 	"github.com/imgproxy/imgproxy/v3/ensure"
 	"github.com/imgproxy/imgproxy/v3/env"
 )
 
 var (
-	IMGPROXY_SYSLOG_ENABLE  = env.Describe("IMGPROXY_SYSLOG_ENABLE", "boolean")
-	IMGPROXY_SYSLOG_LEVEL   = env.Describe("IMGPROXY_SYSLOG_LEVEL", "debug|info|warn|error|crit")
-	IMGPROXY_SYSLOG_NETWORK = env.Describe("IMGPROXY_SYSLOG_NETWORK", "string")
-	IMGPROXY_SYSLOG_ADDRESS = env.Describe("IMGPROXY_SYSLOG_ADDRESS", "string")
-	IMGPROXY_SYSLOG_TAG     = env.Describe("IMGPROXY_SYSLOG_TAG", "string")
+	syslogLevelMap = map[string]slog.Leveler{
+		"debug": slog.LevelDebug,
+		"info":  slog.LevelInfo,
+		"warn":  slog.LevelWarn,
+		"error": slog.LevelError,
+		"crit":  slog.LevelError + 8,
+	}
+
+	IMGPROXY_SYSLOG_ENABLE  = env.Bool("IMGPROXY_SYSLOG_ENABLE")
+	IMGPROXY_SYSLOG_LEVEL   = env.Enum("IMGPROXY_SYSLOG_LEVEL", syslogLevelMap)
+	IMGPROXY_SYSLOG_NETWORK = env.String("IMGPROXY_SYSLOG_NETWORK")
+	IMGPROXY_SYSLOG_ADDRESS = env.String("IMGPROXY_SYSLOG_ADDRESS")
+	IMGPROXY_SYSLOG_TAG     = env.String("IMGPROXY_SYSLOG_TAG")
 )
 
 type Config struct {
@@ -37,19 +43,13 @@ func NewDefaultConfig() Config {
 func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c = ensure.Ensure(c, NewDefaultConfig)
 
-	var levelStr string
-
 	err := errors.Join(
-		env.Bool(&c.Enabled, IMGPROXY_SYSLOG_ENABLE),
-		env.String(&c.Network, IMGPROXY_SYSLOG_NETWORK),
-		env.String(&c.Addr, IMGPROXY_SYSLOG_ADDRESS),
-		env.String(&c.Tag, IMGPROXY_SYSLOG_TAG),
-		env.String(&levelStr, IMGPROXY_SYSLOG_LEVEL),
+		IMGPROXY_SYSLOG_ENABLE.Parse(&c.Enabled),
+		IMGPROXY_SYSLOG_NETWORK.Parse(&c.Network),
+		IMGPROXY_SYSLOG_ADDRESS.Parse(&c.Addr),
+		IMGPROXY_SYSLOG_TAG.Parse(&c.Tag),
+		IMGPROXY_SYSLOG_LEVEL.Parse(&c.Level),
 	)
-
-	if levelStr != "" {
-		c.Level = parseLevel(levelStr)
-	}
 
 	return c, err
 }
@@ -64,22 +64,4 @@ func (c *Config) Validate() error {
 	}
 
 	return nil
-}
-
-func parseLevel(str string) slog.Level {
-	switch strings.ToLower(str) {
-	case "debug":
-		return slog.LevelDebug
-	case "info":
-		return slog.LevelInfo
-	case "warn":
-		return slog.LevelWarn
-	case "error":
-		return slog.LevelError
-	case "crit":
-		return slog.LevelError + 8
-	default:
-		slog.Warn(fmt.Sprintf("Syslog level '%s' is invalid, 'info' is used", str))
-		return slog.LevelInfo
-	}
 }

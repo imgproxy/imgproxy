@@ -10,18 +10,18 @@ import (
 )
 
 var (
-	IMGPROXY_ALLOW_SECURITY_OPTIONS = env.Describe("IMGPROXY_ALLOW_SECURITY_OPTIONS", "boolean")
-	IMGPROXY_ALLOWED_SOURCES        = env.Describe("IMGPROXY_ALLOWED_SOURCES", "comma-separated lists of regexes")
-	IMGPROXY_KEYS                   = env.Describe("IMGPROXY_KEYS", "comma-separated list of hex strings")
-	IMGPROXY_SALTS                  = env.Describe("IMGPROXY_SALTS", "comma-separated list of hex strings")
-	IMGPROXY_SIGNATURE_SIZE         = env.Describe("IMGPROXY_SIGNATURE_SIZE", "number between 1 and 32")
-	IMGPROXY_TRUSTED_SIGNATURES     = env.Describe("IMGPROXY_TRUSTED_SIGNATURES", "comma-separated list of strings")
+	IMGPROXY_ALLOW_SECURITY_OPTIONS = env.Bool("IMGPROXY_ALLOW_SECURITY_OPTIONS")
+	IMGPROXY_ALLOWED_SOURCES        = env.URLPatterns("IMGPROXY_ALLOWED_SOURCES")
+	IMGPROXY_KEYS                   = env.HexSlice("IMGPROXY_KEYS")
+	IMGPROXY_SALTS                  = env.HexSlice("IMGPROXY_SALTS")
+	IMGPROXY_SIGNATURE_SIZE         = env.Int("IMGPROXY_SIGNATURE_SIZE")
+	IMGPROXY_TRUSTED_SIGNATURES     = env.StringSlice("IMGPROXY_TRUSTED_SIGNATURES")
 
-	IMGPROXY_MAX_SRC_RESOLUTION             = env.Describe("IMGPROXY_MAX_SRC_RESOLUTION", "number > 0")
-	IMGPROXY_MAX_SRC_FILE_SIZE              = env.Describe("IMGPROXY_MAX_SRC_FILE_SIZE", "number >= 0")
-	IMGPROXY_MAX_ANIMATION_FRAMES           = env.Describe("IMGPROXY_MAX_ANIMATION_FRAMES", "number > 0")
-	IMGPROXY_MAX_ANIMATION_FRAME_RESOLUTION = env.Describe("IMGPROXY_MAX_ANIMATION_FRAME_RESOLUTION", "number > 0")
-	IMGPROXY_MAX_RESULT_DIMENSION           = env.Describe("IMGPROXY_MAX_RESULT_DIMENSION", "number > 0")
+	IMGPROXY_MAX_SRC_RESOLUTION             = env.MegaInt("IMGPROXY_MAX_SRC_RESOLUTION")
+	IMGPROXY_MAX_SRC_FILE_SIZE              = env.Int("IMGPROXY_MAX_SRC_FILE_SIZE")
+	IMGPROXY_MAX_ANIMATION_FRAMES           = env.Int("IMGPROXY_MAX_ANIMATION_FRAMES")
+	IMGPROXY_MAX_ANIMATION_FRAME_RESOLUTION = env.MegaInt("IMGPROXY_MAX_ANIMATION_FRAME_RESOLUTION")
+	IMGPROXY_MAX_RESULT_DIMENSION           = env.Int("IMGPROXY_MAX_RESULT_DIMENSION")
 )
 
 // Config is the package-local configuration
@@ -59,19 +59,19 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c = ensure.Ensure(c, NewDefaultConfig)
 
 	err := errors.Join(
-		env.Bool(&c.AllowSecurityOptions, IMGPROXY_ALLOW_SECURITY_OPTIONS),
-		env.Patterns(&c.AllowedSources, IMGPROXY_ALLOWED_SOURCES),
-		env.Int(&c.SignatureSize, IMGPROXY_SIGNATURE_SIZE),
-		env.StringSlice(&c.TrustedSignatures, IMGPROXY_TRUSTED_SIGNATURES),
+		IMGPROXY_ALLOW_SECURITY_OPTIONS.Parse(&c.AllowSecurityOptions),
+		IMGPROXY_ALLOWED_SOURCES.Parse(&c.AllowedSources),
+		IMGPROXY_SIGNATURE_SIZE.Parse(&c.SignatureSize),
+		IMGPROXY_TRUSTED_SIGNATURES.Parse(&c.TrustedSignatures),
 
-		env.MegaInt(&c.MaxSrcResolution, IMGPROXY_MAX_SRC_RESOLUTION),
-		env.Int(&c.MaxSrcFileSize, IMGPROXY_MAX_SRC_FILE_SIZE),
-		env.Int(&c.MaxAnimationFrames, IMGPROXY_MAX_ANIMATION_FRAMES),
-		env.MegaInt(&c.MaxAnimationFrameResolution, IMGPROXY_MAX_ANIMATION_FRAME_RESOLUTION),
-		env.Int(&c.MaxResultDimension, IMGPROXY_MAX_RESULT_DIMENSION),
+		IMGPROXY_MAX_SRC_RESOLUTION.Parse(&c.MaxSrcResolution),
+		IMGPROXY_MAX_SRC_FILE_SIZE.Parse(&c.MaxSrcFileSize),
+		IMGPROXY_MAX_ANIMATION_FRAMES.Parse(&c.MaxAnimationFrames),
+		IMGPROXY_MAX_ANIMATION_FRAME_RESOLUTION.Parse(&c.MaxAnimationFrameResolution),
+		IMGPROXY_MAX_RESULT_DIMENSION.Parse(&c.MaxResultDimension),
 
-		env.HexSlice(&c.Keys, IMGPROXY_KEYS),
-		env.HexSlice(&c.Salts, IMGPROXY_SALTS),
+		IMGPROXY_KEYS.Parse(&c.Keys),
+		IMGPROXY_SALTS.Parse(&c.Salts),
 	)
 
 	return c, err

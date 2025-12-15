@@ -2,16 +2,7 @@ package stream
 
 import (
 	"github.com/imgproxy/imgproxy/v3/ensure"
-	"github.com/imgproxy/imgproxy/v3/env"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
-)
-
-var (
-	// Processing handler has the similar variable.
-	// For now, we do not want to couple hanlders/processing and handlers/stream packages,
-	// so we duplicate it here. Discuss.
-	//nolint:godoclint
-	IMGPROXY_COOKIE_PASSTHROUGH = env.Describe("IMGPROXY_COOKIE_PASSTHROUGH", "boolean")
 )
 
 // Config represents the configuration for the image streamer.

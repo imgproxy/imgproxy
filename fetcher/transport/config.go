@@ -15,53 +15,53 @@ import (
 )
 
 var (
-	IMGPROXY_USE_ABS                    = env.Describe("IMGPROXY_USE_ABS", "boolean")
-	IMGPROXY_USE_GCS                    = env.Describe("IMGPROXY_USE_GCS", "boolean")
-	IMGPROXY_USE_S3                     = env.Describe("IMGPROXY_USE_S3", "boolean")
-	IMGPROXY_USE_SWIFT                  = env.Describe("IMGPROXY_USE_SWIFT", "boolean")
-	IMGPROXY_SOURCE_URL_QUERY_SEPARATOR = env.Describe("IMGPROXY_SOURCE_URL_QUERY_SEPARATOR", "string")
+	IMGPROXY_USE_ABS                    = env.Bool("IMGPROXY_USE_ABS")
+	IMGPROXY_USE_GCS                    = env.Bool("IMGPROXY_USE_GCS")
+	IMGPROXY_USE_S3                     = env.Bool("IMGPROXY_USE_S3")
+	IMGPROXY_USE_SWIFT                  = env.Bool("IMGPROXY_USE_SWIFT")
+	IMGPROXY_SOURCE_URL_QUERY_SEPARATOR = env.String("IMGPROXY_SOURCE_URL_QUERY_SEPARATOR")
 
 	fsDesc = fs.ConfigDesc{
-		Root: env.Describe("IMGPROXY_LOCAL_FILESYSTEM_ROOT", "path"),
+		Root: env.String("IMGPROXY_LOCAL_FILESYSTEM_ROOT"),
 	}
 
 	absConfigDesc = azure.ConfigDesc{
-		Name:           env.Describe("IMGPROXY_ABS_NAME", "string"),
-		Endpoint:       env.Describe("IMGPROXY_ABS_ENDPOINT", "string"),
-		Key:            env.Describe("IMGPROXY_ABS_KEY", "string"),
-		AllowedBuckets: env.Describe("IMGPROXY_ABS_ALLOWED_BUCKETS", "comma-separated list"),
-		DeniedBuckets:  env.Describe("IMGPROXY_ABS_DENIED_BUCKETS", "comma-separated list"),
+		Name:           env.String("IMGPROXY_ABS_NAME"),
+		Endpoint:       env.String("IMGPROXY_ABS_ENDPOINT"),
+		Key:            env.String("IMGPROXY_ABS_KEY"),
+		AllowedBuckets: env.StringSlice("IMGPROXY_ABS_ALLOWED_BUCKETS"),
+		DeniedBuckets:  env.StringSlice("IMGPROXY_ABS_DENIED_BUCKETS"),
 	}
 
 	gcsConfigDesc = gcs.ConfigDesc{
-		Key:            env.Describe("IMGPROXY_GCS_KEY", "string"),
-		Endpoint:       env.Describe("IMGPROXY_GCS_ENDPOINT", "string"),
-		AllowedBuckets: env.Describe("IMGPROXY_GCS_ALLOWED_BUCKETS", "comma-separated list"),
-		DeniedBuckets:  env.Describe("IMGPROXY_GCS_DENIED_BUCKETS", "comma-separated list"),
+		Key:            env.String("IMGPROXY_GCS_KEY"),
+		Endpoint:       env.String("IMGPROXY_GCS_ENDPOINT"),
+		AllowedBuckets: env.StringSlice("IMGPROXY_GCS_ALLOWED_BUCKETS"),
+		DeniedBuckets:  env.StringSlice("IMGPROXY_GCS_DENIED_BUCKETS"),
 	}
 
 	s3ConfigDesc = s3.ConfigDesc{
-		Region:                  env.Describe("IMGPROXY_S3_REGION", "string"),
-		Endpoint:                env.Describe("IMGPROXY_S3_ENDPOINT", "string"),
-		EndpointUsePathStyle:    env.Describe("IMGPROXY_S3_ENDPOINT_USE_PATH_STYLE", "boolean"),
-		AssumeRoleArn:           env.Describe("IMGPROXY_S3_ASSUME_ROLE_ARN", "string"),
-		AssumeRoleExternalID:    env.Describe("IMGPROXY_S3_ASSUME_ROLE_EXTERNAL_ID", "string"),
-		DecryptionClientEnabled: env.Describe("IMGPROXY_S3_DECRYPTION_CLIENT_ENABLED", "boolean"),
-		AllowedBuckets:          env.Describe("IMGPROXY_S3_ALLOWED_BUCKETS", "comma-separated list"),
-		DeniedBuckets:           env.Describe("IMGPROXY_S3_DENIED_BUCKETS", "comma-separated list"),
+		Region:                  env.String("IMGPROXY_S3_REGION"),
+		Endpoint:                env.String("IMGPROXY_S3_ENDPOINT"),
+		EndpointUsePathStyle:    env.Bool("IMGPROXY_S3_ENDPOINT_USE_PATH_STYLE"),
+		AssumeRoleArn:           env.String("IMGPROXY_S3_ASSUME_ROLE_ARN"),
+		AssumeRoleExternalID:    env.String("IMGPROXY_S3_ASSUME_ROLE_EXTERNAL_ID"),
+		DecryptionClientEnabled: env.Bool("IMGPROXY_S3_DECRYPTION_CLIENT_ENABLED"),
+		AllowedBuckets:          env.StringSlice("IMGPROXY_S3_ALLOWED_BUCKETS"),
+		DeniedBuckets:           env.StringSlice("IMGPROXY_S3_DENIED_BUCKETS"),
 	}
 
 	swiftConfigDesc = swift.ConfigDesc{
-		Username:       env.Describe("IMGPROXY_SWIFT_USERNAME", "string"),
-		APIKey:         env.Describe("IMGPROXY_SWIFT_API_KEY", "string"),
-		AuthURL:        env.Describe("IMGPROXY_SWIFT_AUTH_URL", "string"),
-		Domain:         env.Describe("IMGPROXY_SWIFT_DOMAIN", "string"),
-		Tenant:         env.Describe("IMGPROXY_SWIFT_TENANT", "string"),
-		AuthVersion:    env.Describe("IMGPROXY_SWIFT_AUTH_VERSION", "number"),
-		ConnectTimeout: env.Describe("IMGPROXY_SWIFT_CONNECT_TIMEOUT_SECONDS", "number"),
-		Timeout:        env.Describe("IMGPROXY_SWIFT_TIMEOUT_SECONDS", "number"),
-		AllowedBuckets: env.Describe("IMGPROXY_SWIFT_ALLOWED_BUCKETS", "comma-separated list"),
-		DeniedBuckets:  env.Describe("IMGPROXY_SWIFT_DENIED_BUCKETS", "comma-separated list"),
+		Username:       env.String("IMGPROXY_SWIFT_USERNAME"),
+		APIKey:         env.String("IMGPROXY_SWIFT_API_KEY"),
+		AuthURL:        env.String("IMGPROXY_SWIFT_AUTH_URL"),
+		Domain:         env.String("IMGPROXY_SWIFT_DOMAIN"),
+		Tenant:         env.String("IMGPROXY_SWIFT_TENANT"),
+		AuthVersion:    env.Int("IMGPROXY_SWIFT_AUTH_VERSION"),
+		ConnectTimeout: env.Duration("IMGPROXY_SWIFT_CONNECT_TIMEOUT_SECONDS"),
+		Timeout:        env.Duration("IMGPROXY_SWIFT_TIMEOUT_SECONDS"),
+		AllowedBuckets: env.StringSlice("IMGPROXY_SWIFT_ALLOWED_BUCKETS"),
+		DeniedBuckets:  env.StringSlice("IMGPROXY_SWIFT_DENIED_BUCKETS"),
 	}
 )
 
@@ -118,10 +118,10 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 	_, swiftErr := swift.LoadConfigFromEnv(swiftConfigDesc, &c.Swift)
 
 	err := errors.Join(
-		env.Bool(&c.ABSEnabled, IMGPROXY_USE_ABS),
-		env.Bool(&c.GCSEnabled, IMGPROXY_USE_GCS),
-		env.Bool(&c.S3Enabled, IMGPROXY_USE_S3),
-		env.Bool(&c.SwiftEnabled, IMGPROXY_USE_SWIFT),
+		IMGPROXY_USE_ABS.Parse(&c.ABSEnabled),
+		IMGPROXY_USE_GCS.Parse(&c.GCSEnabled),
+		IMGPROXY_USE_S3.Parse(&c.S3Enabled),
+		IMGPROXY_USE_SWIFT.Parse(&c.SwiftEnabled),
 		genericErr,
 		localErr,
 		absErr,
