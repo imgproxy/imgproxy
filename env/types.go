@@ -23,6 +23,7 @@ type URLPatternsVar = Desc[[]*regexp.Regexp, ParseFn[[]*regexp.Regexp]]
 type HexSliceVar = Desc[[][]byte, ParseFn[[][]byte]]
 type StringMapVar = Desc[map[string]string, ParseFn[map[string]string]]
 type EnumVar[T any] = Desc[T, ParseFn[T]]
+type URLReplacementVar = Desc[[]URLReplacement, ParseFn[[]URLReplacement]]
 
 // String defines string env var descriptor
 func String(name string) StringVar {
@@ -190,5 +191,14 @@ func StringSliceFile(name string) StringSliceVar {
 		Name:    name,
 		format:  "path to file with one entry per line",
 		parseFn: parseStringSliceFile,
+	}
+}
+
+// URLReplacements parses URL replacements from the environment variable
+func URLReplacements(name string) URLReplacementVar {
+	return URLReplacementVar{
+		Name:    name,
+		format:  "semicolon-separated key=value pairs where key is a wildcard pattern",
+		parseFn: parseURLReplacements,
 	}
 }

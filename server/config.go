@@ -59,8 +59,6 @@ type Config struct {
 	// TODO: We are not sure where to put it yet
 	FreeMemoryInterval time.Duration // Interval for freeing memory
 	LogMemStats        bool          // Log memory stats
-
-	port int // Port number (from PORT env var)
 }
 
 // NewDefaultConfig returns default config values
@@ -83,8 +81,6 @@ func NewDefaultConfig() Config {
 		LogMemStats:           false,
 
 		ResponseWriter: responsewriter.NewDefaultConfig(),
-
-		port: -1,
 	}
 }
 
@@ -94,11 +90,14 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 
 	_, rwErr := responsewriter.LoadConfigFromEnv(&c.ResponseWriter)
 
+	port := -1
+	bind := ""
+
 	err := errors.Join(
 		rwErr,
-		PORT.Parse(&c.port),
+		PORT.Parse(&port),
+		IMGPROXY_BIND.Parse(&bind),
 		IMGPROXY_NETWORK.Parse(&c.Network),
-		IMGPROXY_BIND.Parse(&c.Bind),
 		IMGPROXY_PATH_PREFIX.Parse(&c.PathPrefix),
 		IMGPROXY_MAX_CLIENTS.Parse(&c.MaxClients),
 		IMGPROXY_TIMEOUT.Parse(&c.RequestTimeout),
@@ -114,19 +113,18 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 		IMGPROXY_LOG_MEM_STATS.Parse(&c.LogMemStats),
 	)
 
+	switch {
+	case len(bind) > 0:
+		c.Bind = bind
+	case port > -1:
+		c.Bind = fmt.Sprintf(":%d", port)
+	}
+
 	return c, err
 }
 
 // Validate checks that the config values are valid
 func (c *Config) Validate() error {
-	if c.port > -1 {
-		c.Bind = fmt.Sprintf(":%d", c.port)
-	}
-
-	if c.port < -1 {
-		return PORT.ErrorNegative()
-	}
-
 	if len(c.Bind) == 0 {
 		return IMGPROXY_BIND.ErrorEmpty()
 	}

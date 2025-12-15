@@ -22,7 +22,7 @@ var (
 	IMGPROXY_ALLOW_SECURITY_OPTIONS       = env.Bool("IMGPROXY_ALLOW_SECURITY_OPTIONS")
 	IMGPROXY_ARGUMENTS_SEPARATOR          = env.String("IMGPROXY_ARGUMENTS_SEPARATOR")
 	IMGPROXY_BASE_URL                     = env.String("IMGPROXY_BASE_URL")
-	IMGPROXY_URL_REPLACEMENTS             = env.String("IMGPROXY_URL_REPLACEMENTS")
+	IMGPROXY_URL_REPLACEMENTS             = env.URLReplacements("IMGPROXY_URL_REPLACEMENTS")
 	IMGPROXY_BASE64_URL_INCLUDES_FILENAME = env.Bool("IMGPROXY_BASE64_URL_INCLUDES_FILENAME")
 )
 
@@ -82,7 +82,7 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 		IMGPROXY_BASE_URL.Parse(&c.BaseURL),
 		IMGPROXY_BASE64_URL_INCLUDES_FILENAME.Parse(&c.Base64URLIncludesFilename),
 
-		env.URLReplacements(&c.URLReplacements, &IMGPROXY_URL_REPLACEMENTS),
+		IMGPROXY_URL_REPLACEMENTS.Parse(&c.URLReplacements),
 	)
 
 	c.Presets = append(c.Presets, presetsFromFile...)

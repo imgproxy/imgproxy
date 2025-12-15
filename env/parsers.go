@@ -12,6 +12,12 @@ import (
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 )
 
+// URLReplacement represents a URL replacement configuration
+type URLReplacement struct {
+	Regexp      *regexp.Regexp
+	Replacement string
+}
+
 // parseString returns the environment variable value as-is.
 func parseString(env string) (string, error) {
 	return env, nil
@@ -266,4 +272,24 @@ func parseStringSliceFile(env string) ([]string, error) {
 	}
 
 	return result, nil
+}
+
+// parseURLReplacements parses URL replacements from the environment variable
+func parseURLReplacements(env string) ([]URLReplacement, error) {
+	s := []URLReplacement(nil)
+
+	keyvalues := strings.SplitSeq(env, ";")
+
+	for keyvalue := range keyvalues {
+		parts := strings.SplitN(keyvalue, "=", 2)
+		if len(parts) != 2 {
+			return nil, fmt.Errorf("invalid key/value: %s", keyvalue)
+		}
+		s = append(s, URLReplacement{
+			Regexp:      regexpFromPattern(parts[0]),
+			Replacement: parts[1],
+		})
+	}
+
+	return s, nil
 }
