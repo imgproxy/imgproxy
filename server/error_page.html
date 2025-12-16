@@ -5,372 +5,182 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Error {{.StatusCode}} - imgproxy</title>
-</head>
-
-<body style="background: #0d0f15; margin: 0; padding: 20px">
     <style>
+        :root {
+            --background-color: oklch(0.17 0.0138 270.49);
+            --text-primary: oklch(0.98 0.008252 271.3302);
+            --text-secondary: oklch(0.87 0.0082 286.23);
+            --text-tertiary: oklch(0.76 0.0174 301.13);
+            --neon-a-fg: oklch(0.81 0.1271 225.99);
+            --neon-a-bg-surface: oklch(0.42 0.0755 219.7 / 16%);
+            --neon-c-fg: oklch(0.83 0.1097 322.37);
+            --surface-1: oklch(0.21 0.0141 272.63 / 85%);
+
+            --gray-universal-12: oklch(0.7 0.0207 298.9 / 12%);
+
+            --pad: 24px;
+            --pad-sm: 12px;
+        }
+
+        @media (max-width: 768px) {
+            :root {
+                --pad: 16px;
+                --pad-sm: 8px;
+            }
+        }
+
         * {
-            color: #fff;
-            font-family: Helvetica, Arial, sans-serif;
             box-sizing: border-box;
         }
 
-        a {
-            color: #53D1FF;
-            text-decoration: none;
+        @media (max-width: 768px) {
+            * {
+                font-size: 14px;
+            }
         }
 
-        a:hover {
-            text-decoration: underline;
+        html, body {
+            background: var(--background-color);
+            color: var(--text-primary);
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            font-size: 16px;
+            line-height: 1.25;
+            margin: 0;
+        }
+
+        html {
+            padding: 0;
+        }
+
+        body {
+            padding: var(--pad);
         }
 
         .container {
+            display: flex;
+            flex-direction: column;
+            gap: var(--pad);
             max-width: 900px;
             margin: 0 auto;
         }
 
         .logo {
-            display: block;
-            width: 100px;
-            margin: 0 5px;
+            padding: 0 var(--pad-sm);
         }
 
-        .error-box {
-            background: #1a1d26;
-            border-left: 4px solid #53D1FF;
-            padding: 20px;
-            margin-bottom: 20px;
-            border-radius: 4px;
+        .logo svg {
+            width: 250px;
+            max-width: 90%;
+            height: auto;
         }
 
-        .error-title {
-            font-size: 28px;
-            margin: 0 0 10px 0;
-            color: #53D1FF;
-        }
-
-        .error-subtitle {
-            font-size: 16px;
-            margin: 0 0 15px 0;
-            color: #888;
-        }
-
-        .error-info {
-            margin-bottom: 20px;
-        }
-
-        .error-info-item {
-            margin: 8px 0;
-            font-size: 14px;
-        }
-
-        .error-info-label {
-            display: inline-block;
-            min-width: 120px;
-            color: #888;
-        }
-
-        .error-info-value {
-            color: #fff;
-            font-family: 'Courier New', monospace;
-        }
-
-        .section {
-            background: #1a1d26;
-            padding: 20px;
-            margin-bottom: 20px;
-            border-radius: 4px;
-        }
-
-        .section-title {
-            font-size: 18px;
-            margin: 0 0 15px 0;
-            color: #53D1FF;
-            border-bottom: 1px solid #2a2d36;
-            padding-bottom: 10px;
-        }
-
-        .error-chain {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .error-chain-item {
+        .summary {
             display: flex;
-            background: #0d0f15;
-            padding: 12px;
-            margin-bottom: 10px;
-            border-radius: 4px;
-            border-left: 3px solid #667eea;
+            flex-direction: column;
+            gap: var(--pad);
+            background: var(--neon-a-bg-surface);
+            padding: var(--pad);
+            border-radius: var(--pad-sm);
         }
 
-        .error-chain-item:last-child {
-            border-left-color: #e74c3c;
+        .summary-title {
+            font-size: 32px;
+            font-weight: bold;
+            margin: 0;
+            padding: 0;
         }
 
-        .error-chain-number {
-            display: inline-block;
-            background: #667eea;
-            color: #fff;
-            padding: 2px 8px;
-            border-radius: 3px;
-            font-size: 12px;
-            margin-right: 12px;
-            flex-shrink: 0;
-            height: fit-content;
+        @media (max-width: 768px) {
+            .summary-title {
+                font-size: 24px;
+            }
         }
 
-        .error-chain-item:last-child .error-chain-number {
-            background: #e74c3c;
+        .summary-fields {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: var(--pad-sm) var(--pad);
         }
 
-        .error-chain-content {
-            flex: 1;
-            min-width: 0;
+        @media (max-width: 768px) {
+            .summary-fields {
+                grid-template-columns: 1fr;
+            }
         }
 
-        .error-chain-type {
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            color: #888;
-            margin-bottom: 5px;
+        .summary-field-label {
+            font-weight: bold;
+            color: var(--text-tertiary);
         }
 
-        .error-chain-message {
-            font-family: 'Courier New', monospace;
-            font-size: 14px;
-            word-break: break-word;
+        .error {
+            display: flex;
+            flex-direction: column;
+            gap: var(--pad);
+            background: var(--surface-1);
+            padding: var(--pad);
+            border-radius: var(--pad-sm);
+        }
+
+        .error-type {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 0;
+            padding: 0;
+        }
+
+        @media (max-width: 768px) {
+            .error-type {
+                font-size: 18px;
+            }
+        }
+
+        .error-message {
+            color: var(--text-secondary);
         }
 
         .stack-trace {
-            background: #0d0f15;
-            padding: 15px;
-            border-radius: 4px;
-            overflow-x: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            font-family: "Consolas", "Bitstream Vera Sans Mono", "Courier New", "Courier", monospace;
         }
 
         .stack-frame {
             display: flex;
-            margin-bottom: 15px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #2a2d36;
-        }
-
-        .stack-frame:last-child {
-            margin-bottom: 0;
-            padding-bottom: 10px;
-        }
-
-        .stack-frame-error-marker {
-            display: inline-block;
-            background: #667eea;
-            color: #fff;
-            padding: 2px 8px;
-            border-radius: 3px;
-            font-size: 12px;
-            margin-right: 12px;
-            font-family: Helvetica, Arial, sans-serif;
-            flex-shrink: 0;
-            height: fit-content;
-        }
-
-        .stack-frame[data-is-last="true"] .stack-frame-error-marker {
-            background: #e74c3c;
-        }
-
-        .stack-frame-content {
-            flex: 1;
-            min-width: 0;
+            flex-direction: column;
+            gap: 4px;
+            padding: var(--pad-sm);
+            background: var(--gray-universal-12);
+            border-radius: 5px;
         }
 
         .stack-frame-function {
-            font-family: 'Courier New', monospace;
-            font-size: 13px;
-            color: #53D1FF;
-            margin-bottom: 5px;
+            color: var(--neon-a-fg);
         }
 
         .stack-frame-location {
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            color: #888;
-        }
-
-        .stack-frame-file {
-            color: #aaa;
+            color: var(--text-secondary);
         }
 
         .stack-frame-line {
-            color: #667eea;
-        }
-
-        .stack-frame-link {
-            color: inherit;
-            text-decoration: none;
-        }
-
-        .stack-frame-link:hover .stack-frame-file {
-            text-decoration: underline;
+            color: var(--neon-c-fg);
         }
 
         .links {
-            text-align: center;
-            padding: 20px;
-            font-size: 14px;
-        }
-
-        .links a {
-            margin: 0 15px;
-            display: inline-block;
-        }
-
-        .url-format-description {
-            background: #0d0f15;
-            padding: 20px;
-            border-radius: 4px;
-            margin-bottom: 20px;
-        }
-
-        .url-format-description p {
-            margin: 0 0 10px 0;
-            color: #aaa;
-            font-size: 14px;
-        }
-
-        .url-format-label {
-            margin-top: 15px !important;
-            font-weight: bold;
-        }
-
-        .url-format-example {
-            display: block;
-            background: #1a1d26;
-            padding: 10px 15px;
-            border-radius: 4px;
-            font-family: 'Courier New', monospace;
-            font-size: 13px;
-            color: #53D1FF;
-            margin-bottom: 8px;
-            overflow-x: auto;
-            white-space: nowrap;
-        }
-
-        .url-format-docs {
-            margin-top: 15px !important;
-            padding-top: 15px;
-            border-top: 1px solid #2a2d36;
-        }
-
-        .url-format-docs a {
-            color: #53D1FF;
-            text-decoration: none;
-        }
-
-        .url-format-docs a:hover {
-            text-decoration: underline;
-        }
-
-        .options-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-        }
-
-        .option-category {
-            background: #0d0f15;
-            padding: 15px;
-            border-radius: 4px;
-        }
-
-        .option-category-title {
-            font-size: 14px;
-            font-weight: bold;
-            color: #667eea;
-            margin: 0 0 10px 0;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .option-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .option-item {
-            padding: 8px 0;
-            font-size: 13px;
-            border-bottom: 1px solid #1a1d26;
             display: flex;
-            align-items: baseline;
-            gap: 8px;
-        }
-
-        .option-item:last-child {
-            border-bottom: none;
-        }
-
-        .option-main {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .option-name-link {
-            text-decoration: none;
-        }
-
-        .option-name-link:hover .option-name {
-            background: #2a2d36;
-        }
-
-        .option-name {
-            font-family: 'Courier New', monospace;
-            color: #53D1FF;
-            background: #1a1d26;
-            padding: 2px 6px;
-            border-radius: 3px;
-            cursor: pointer;
-            text-decoration: underline;
-        }
-
-        .option-name:hover {
-            text-decoration: none;
-        }
-
-        .option-aliases {
-            font-size: 11px;
-            color: #888;
-            margin-left: 5px;
-        }
-
-        .option-arguments {
-            font-size: 12px;
-            color: #aaa;
-            font-family: 'Courier New', monospace;
-            margin-left: 8px;
+            flex-direction: row;
+            flex-wrap: wrap;
+            gap: var(--pad);
+            justify-content: center;
+            align-items: center;
+            padding: var(--pad-sm) 0;
         }
 
         @media (max-width: 768px) {
-            body {
-                padding: 10px;
-            }
-
-            .error-title {
-                font-size: 24px;
-            }
-
-            .section {
-                padding: 15px;
-            }
-
-            .links a {
-                display: block;
-                margin: 10px 0;
-            }
-
-            .options-grid {
-                grid-template-columns: 1fr;
+            .links {
+                flex-direction: column;
+                gap: var(--pad-sm);
             }
 
             .doc-sections {
@@ -378,182 +188,65 @@
             }
         }
 
-        .doc-sections {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 12px;
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .doc-section-item {
-            display: block;
-            padding: 12px 16px;
-            background: #0d0f15;
-            border: 2px solid #53D1FF;
-            border-radius: 4px;
-            color: #53D1FF;
+        .links a {
             text-decoration: none;
-            font-size: 14px;
-            transition: all 0.2s ease;
-            text-align: center;
+            color: var(--neon-a-fg);
+            cursor: pointer;
         }
 
-        .doc-section-item:hover {
-            background: #1a1d26;
-            border-color: #7dd4ff;
-            color: #7dd4ff;
-        }
-
-        .doc-section-pro {
-            border-color: #ff6b6b;
-            color: #ff6b6b;
-            position: relative;
-        }
-
-        .doc-section-pro:hover {
-            background: #1a1d26;
-            border-color: #ff8585;
-            color: #ff8585;
-        }
-
-        .pro-badge {
-            display: inline-block;
-            background: #ff6b6b;
-            color: #fff;
-            font-size: 10px;
-            padding: 2px 6px;
-            border-radius: 3px;
-            margin-left: 6px;
-            font-weight: bold;
+        .links a:hover {
+            text-decoration: underline;
         }
     </style>
+</head>
+
+<body>
     <div class="container">
-        <a href="https://imgproxy.net/" target="_blank" class="logo">
-            <svg xmlns="http://www.w3.org/2000/svg" overflow="visible" fill="none" style="width: 100%; height: 98px">
-                <path fill="#005568" fill-opacity=".5"
-                    d="M72 20H20v6h52v-6Zm0 62H20v6h52v-6ZM0 40h6v28H0V40Zm92 0h-6v28h6V40Z" />
-                <path fill="#53D1FF"
-                    d="M8 20h14v6H8a2 2 0 0 0-2 2v14H0V28a8 8 0 0 1 8-8Zm62 0v6h14a2 2 0 0 1 2 2v14h6V28a8 8 0 0 0-8-8H70Zm14 62H70v6h14a8 8 0 0 0 8-8V66h-6v14a2 2 0 0 1-2 2ZM6 80V66H0v14a8 8 0 0 0 8 8h14v-6H8a2 2 0 0 1-2-2Zm43-38h-6v9h-9v6h9v9h6v-9h9v-6h-9v-9Zm43.608 48.229 4.578 16.787c.306 1.121 1.807 1.328 2.405.332L104 100l7.348-4.409c.996-.598.789-2.099-.332-2.405l-16.787-4.578a1.32 1.32 0 0 0-1.621 1.62ZM311.948 44.4l6.3 16.2h2.628l-1.188 3.6h-4.356l-7.74-19.8h4.356Zm8.82 24.696c-.528 1.488-1.296 2.64-2.304 3.456a5.34 5.34 0 0 1-3.456 1.224c-1.92 0-3.444-.516-4.572-1.548-1.128-1.008-1.764-2.46-1.908-4.356h3.6c.36.84.732 1.428 1.116 1.764.408.36.924.54 1.548.54.576 0 1.044-.18 1.404-.54.384-.36.744-.948 1.08-1.764l8.172-23.472h4.032l-8.712 24.696Zm-32.58-13.356-7.38-11.34h4.752l5.4 8.28.396 1.044h.36l.396-1.044 5.652-8.28h4.428l-7.452 10.98L301.76 66h-4.824l-4.968-7.488-.396-1.044h-.36l-.396 1.044-5.04 7.488h-4.536l6.948-10.26ZM264.5 66.576c-2.112 0-3.972-.468-5.58-1.404-1.584-.96-2.82-2.292-3.708-3.996-.888-1.728-1.332-3.72-1.332-5.976s.444-4.236 1.332-5.94c.888-1.728 2.124-3.06 3.708-3.996 1.608-.96 3.468-1.44 5.58-1.44s3.96.48 5.544 1.44c1.608.936 2.856 2.268 3.744 3.996.888 1.704 1.332 3.684 1.332 5.94 0 2.256-.444 4.248-1.332 5.976-.888 1.704-2.136 3.036-3.744 3.996-1.584.936-3.432 1.404-5.544 1.404Zm0-3.744c2.064 0 3.684-.684 4.86-2.052 1.2-1.368 1.8-3.228 1.8-5.58s-.6-4.212-1.8-5.58c-1.176-1.368-2.796-2.052-4.86-2.052-2.064 0-3.696.684-4.896 2.052-1.176 1.368-1.764 3.228-1.764 5.58s.588 4.212 1.764 5.58c1.2 1.368 2.832 2.052 4.896 2.052ZM236.528 44.4v1.656h1.08c.456-.72 1.092-1.272 1.908-1.656.816-.384 1.74-.576 2.772-.576 1.92 0 3.432.636 4.536 1.908 1.104 1.248 1.656 2.964 1.656 5.148v2.88h-4.104v-2.304c0-1.272-.288-2.232-.864-2.88-.576-.672-1.416-1.008-2.52-1.008-1.392 0-2.436.588-3.132 1.764-.696 1.152-1.044 2.868-1.044 5.148v7.776h7.488V66H228.32v-3.744h4.536V48.144H227.6V44.4h8.928Zm-35.568 0h3.96v2.16H206c.504-.816 1.296-1.476 2.376-1.98 1.104-.504 2.304-.756 3.6-.756 1.92 0 3.612.48 5.076 1.44 1.488.936 2.628 2.268 3.42 3.996.816 1.704 1.224 3.684 1.224 5.94 0 2.256-.408 4.248-1.224 5.976-.792 1.704-1.932 3.036-3.42 3.996-1.464.936-3.156 1.404-5.076 1.404-1.296 0-2.496-.252-3.6-.756-1.08-.504-1.872-1.164-2.376-1.98h-1.08v9.36h-3.96V44.4Zm10.296 18.432c2.016 0 3.6-.684 4.752-2.052 1.152-1.368 1.728-3.228 1.728-5.58s-.576-4.212-1.728-5.58c-1.152-1.368-2.736-2.052-4.752-2.052-2.016 0-3.6.684-4.752 2.052-1.152 1.368-1.728 3.228-1.728 5.58s.576 4.212 1.728 5.58c1.152 1.368 2.736 2.052 4.752 2.052Zm-18 2.448c0 1.704-.408 3.192-1.224 4.464-.816 1.272-1.992 2.256-3.528 2.952-1.536.72-3.336 1.08-5.4 1.08-1.92 0-3.636-.3-5.148-.9-1.488-.576-2.664-1.404-3.528-2.484-.864-1.056-1.332-2.28-1.404-3.672h3.888c.408 1.08 1.152 1.92 2.232 2.52 1.104.624 2.424.936 3.96.936 1.944 0 3.456-.468 4.536-1.404 1.104-.912 1.656-2.196 1.656-3.852v-2.304h-1.08c-.528.72-1.32 1.296-2.376 1.728a8.49 8.49 0 0 1-3.312.648c-1.872 0-3.528-.432-4.968-1.296-1.44-.888-2.556-2.124-3.348-3.708-.792-1.584-1.188-3.42-1.188-5.508 0-2.112.396-3.972 1.188-5.58.792-1.608 1.908-2.856 3.348-3.744 1.44-.888 3.096-1.332 4.968-1.332 1.2 0 2.316.228 3.348.684 1.056.456 1.836 1.068 2.34 1.836h1.08V44.4h3.96v20.88Zm-16.272-10.8c0 2.136.552 3.828 1.656 5.076 1.128 1.224 2.664 1.836 4.608 1.836 1.944 0 3.468-.612 4.572-1.836 1.128-1.248 1.692-2.94 1.692-5.076 0-2.136-.564-3.816-1.692-5.04-1.104-1.248-2.628-1.872-4.572-1.872s-3.48.624-4.608 1.872c-1.104 1.224-1.656 2.904-1.656 5.04ZM149.84 44.4v1.728h2.844l-2.34 1.44c.072-1.152.456-2.064 1.152-2.736.696-.672 1.608-1.008 2.736-1.008 1.032 0 1.908.396 2.628 1.188.72.768 1.164 1.788 1.332 3.06l-2.34-1.728h4.608l-2.16 1.224c.072-1.128.492-2.028 1.26-2.7.792-.696 1.776-1.044 2.952-1.044 1.416 0 2.556.564 3.42 1.692.888 1.128 1.332 2.604 1.332 4.428V66h-3.96V51.6c0-1.104-.204-1.932-.612-2.484-.384-.552-.972-.828-1.764-.828s-1.392.276-1.8.828c-.384.552-.576 1.38-.576 2.484V66h-3.96V51.6c0-1.104-.204-1.932-.612-2.484-.384-.552-.972-.828-1.764-.828s-1.392.276-1.8.828c-.384.552-.576 1.38-.576 2.484V66h-3.96V44.4h3.96Zm-17.1 0v17.856h7.2V66h-18.36v-3.744h7.2V48.144h-7.2V44.4h11.16Zm-2.268-3.312c-.984 0-1.764-.24-2.34-.72-.552-.504-.828-1.2-.828-2.088 0-.888.276-1.572.828-2.052.576-.504 1.356-.756 2.34-.756.984 0 1.752.252 2.304.756.576.48.864 1.164.864 2.052 0 .888-.288 1.584-.864 2.088-.552.48-1.32.72-2.304.72Z" />
-            </svg>
-        </a>
+        <div class="logo">
+            <a href="https://imgproxy.net/" target="_blank">
+                <svg xmlns="http://www.w3.org/2000/svg" overflow="visible" viewbox="0 0 330 108" fill="none">
+                    <path fill="#005568" fill-opacity=".5"
+                        d="M72 20H20v6h52v-6Zm0 62H20v6h52v-6ZM0 40h6v28H0V40Zm92 0h-6v28h6V40Z" />
+                    <path fill="#53D1FF"
+                        d="M8 20h14v6H8a2 2 0 0 0-2 2v14H0V28a8 8 0 0 1 8-8Zm62 0v6h14a2 2 0 0 1 2 2v14h6V28a8 8 0 0 0-8-8H70Zm14 62H70v6h14a8 8 0 0 0 8-8V66h-6v14a2 2 0 0 1-2 2ZM6 80V66H0v14a8 8 0 0 0 8 8h14v-6H8a2 2 0 0 1-2-2Zm43-38h-6v9h-9v6h9v9h6v-9h9v-6h-9v-9Zm43.608 48.229 4.578 16.787c.306 1.121 1.807 1.328 2.405.332L104 100l7.348-4.409c.996-.598.789-2.099-.332-2.405l-16.787-4.578a1.32 1.32 0 0 0-1.621 1.62ZM311.948 44.4l6.3 16.2h2.628l-1.188 3.6h-4.356l-7.74-19.8h4.356Zm8.82 24.696c-.528 1.488-1.296 2.64-2.304 3.456a5.34 5.34 0 0 1-3.456 1.224c-1.92 0-3.444-.516-4.572-1.548-1.128-1.008-1.764-2.46-1.908-4.356h3.6c.36.84.732 1.428 1.116 1.764.408.36.924.54 1.548.54.576 0 1.044-.18 1.404-.54.384-.36.744-.948 1.08-1.764l8.172-23.472h4.032l-8.712 24.696Zm-32.58-13.356-7.38-11.34h4.752l5.4 8.28.396 1.044h.36l.396-1.044 5.652-8.28h4.428l-7.452 10.98L301.76 66h-4.824l-4.968-7.488-.396-1.044h-.36l-.396 1.044-5.04 7.488h-4.536l6.948-10.26ZM264.5 66.576c-2.112 0-3.972-.468-5.58-1.404-1.584-.96-2.82-2.292-3.708-3.996-.888-1.728-1.332-3.72-1.332-5.976s.444-4.236 1.332-5.94c.888-1.728 2.124-3.06 3.708-3.996 1.608-.96 3.468-1.44 5.58-1.44s3.96.48 5.544 1.44c1.608.936 2.856 2.268 3.744 3.996.888 1.704 1.332 3.684 1.332 5.94 0 2.256-.444 4.248-1.332 5.976-.888 1.704-2.136 3.036-3.744 3.996-1.584.936-3.432 1.404-5.544 1.404Zm0-3.744c2.064 0 3.684-.684 4.86-2.052 1.2-1.368 1.8-3.228 1.8-5.58s-.6-4.212-1.8-5.58c-1.176-1.368-2.796-2.052-4.86-2.052-2.064 0-3.696.684-4.896 2.052-1.176 1.368-1.764 3.228-1.764 5.58s.588 4.212 1.764 5.58c1.2 1.368 2.832 2.052 4.896 2.052ZM236.528 44.4v1.656h1.08c.456-.72 1.092-1.272 1.908-1.656.816-.384 1.74-.576 2.772-.576 1.92 0 3.432.636 4.536 1.908 1.104 1.248 1.656 2.964 1.656 5.148v2.88h-4.104v-2.304c0-1.272-.288-2.232-.864-2.88-.576-.672-1.416-1.008-2.52-1.008-1.392 0-2.436.588-3.132 1.764-.696 1.152-1.044 2.868-1.044 5.148v7.776h7.488V66H228.32v-3.744h4.536V48.144H227.6V44.4h8.928Zm-35.568 0h3.96v2.16H206c.504-.816 1.296-1.476 2.376-1.98 1.104-.504 2.304-.756 3.6-.756 1.92 0 3.612.48 5.076 1.44 1.488.936 2.628 2.268 3.42 3.996.816 1.704 1.224 3.684 1.224 5.94 0 2.256-.408 4.248-1.224 5.976-.792 1.704-1.932 3.036-3.42 3.996-1.464.936-3.156 1.404-5.076 1.404-1.296 0-2.496-.252-3.6-.756-1.08-.504-1.872-1.164-2.376-1.98h-1.08v9.36h-3.96V44.4Zm10.296 18.432c2.016 0 3.6-.684 4.752-2.052 1.152-1.368 1.728-3.228 1.728-5.58s-.576-4.212-1.728-5.58c-1.152-1.368-2.736-2.052-4.752-2.052-2.016 0-3.6.684-4.752 2.052-1.152 1.368-1.728 3.228-1.728 5.58s.576 4.212 1.728 5.58c1.152 1.368 2.736 2.052 4.752 2.052Zm-18 2.448c0 1.704-.408 3.192-1.224 4.464-.816 1.272-1.992 2.256-3.528 2.952-1.536.72-3.336 1.08-5.4 1.08-1.92 0-3.636-.3-5.148-.9-1.488-.576-2.664-1.404-3.528-2.484-.864-1.056-1.332-2.28-1.404-3.672h3.888c.408 1.08 1.152 1.92 2.232 2.52 1.104.624 2.424.936 3.96.936 1.944 0 3.456-.468 4.536-1.404 1.104-.912 1.656-2.196 1.656-3.852v-2.304h-1.08c-.528.72-1.32 1.296-2.376 1.728a8.49 8.49 0 0 1-3.312.648c-1.872 0-3.528-.432-4.968-1.296-1.44-.888-2.556-2.124-3.348-3.708-.792-1.584-1.188-3.42-1.188-5.508 0-2.112.396-3.972 1.188-5.58.792-1.608 1.908-2.856 3.348-3.744 1.44-.888 3.096-1.332 4.968-1.332 1.2 0 2.316.228 3.348.684 1.056.456 1.836 1.068 2.34 1.836h1.08V44.4h3.96v20.88Zm-16.272-10.8c0 2.136.552 3.828 1.656 5.076 1.128 1.224 2.664 1.836 4.608 1.836 1.944 0 3.468-.612 4.572-1.836 1.128-1.248 1.692-2.94 1.692-5.076 0-2.136-.564-3.816-1.692-5.04-1.104-1.248-2.628-1.872-4.572-1.872s-3.48.624-4.608 1.872c-1.104 1.224-1.656 2.904-1.656 5.04ZM149.84 44.4v1.728h2.844l-2.34 1.44c.072-1.152.456-2.064 1.152-2.736.696-.672 1.608-1.008 2.736-1.008 1.032 0 1.908.396 2.628 1.188.72.768 1.164 1.788 1.332 3.06l-2.34-1.728h4.608l-2.16 1.224c.072-1.128.492-2.028 1.26-2.7.792-.696 1.776-1.044 2.952-1.044 1.416 0 2.556.564 3.42 1.692.888 1.128 1.332 2.604 1.332 4.428V66h-3.96V51.6c0-1.104-.204-1.932-.612-2.484-.384-.552-.972-.828-1.764-.828s-1.392.276-1.8.828c-.384.552-.576 1.38-.576 2.484V66h-3.96V51.6c0-1.104-.204-1.932-.612-2.484-.384-.552-.972-.828-1.764-.828s-1.392.276-1.8.828c-.384.552-.576 1.38-.576 2.484V66h-3.96V44.4h3.96Zm-17.1 0v17.856h7.2V66h-18.36v-3.744h7.2V48.144h-7.2V44.4h11.16Zm-2.268-3.312c-.984 0-1.764-.24-2.34-.72-.552-.504-.828-1.2-.828-2.088 0-.888.276-1.572.828-2.052.576-.504 1.356-.756 2.34-.756.984 0 1.752.252 2.304.756.576.48.864 1.164.864 2.052 0 .888-.288 1.584-.864 2.088-.552.48-1.32.72-2.304.72Z" />
+                </svg>
+            </a>
+        </div>
 
-        <div class="error-box">
-            <h1 class="error-title">{{.ErrorType}}</h1>
-            <p class="error-subtitle">{{.PublicMessage}}</p>
-            <div class="error-info">
-                <div class="error-info-item">
-                    <span class="error-info-label">HTTP Status:</span>
-                    <span class="error-info-value">{{.StatusCode}}</span>
-                </div>
-                <div class="error-info-item">
-                    <span class="error-info-label">Request ID:</span>
-                    <span class="error-info-value">{{.RequestID}}</span>
-                </div>
+        <div class="summary">
+            <h1 class="summary-title">{{.PublicMessage}}</h1>
+            <div class="summary-fields">
+                <span class="summary-field-label">HTTP Status:</span>
+                <span class="summary-field-value">{{.StatusCode}}</span>
+                <span class="summary-field-label">Request ID:</span>
+                <span class="summary-field-value">{{.RequestID}}</span>
+                <span class="summary-field-label">imgproxy Version:</span>
+                <span class="summary-field-value">{{.Version}}</span>
+                <span class="summary-field-label">Git Commit:</span>
+                <span class="summary-field-value">{{.Commit}}</span>
+                <span class="summary-field-label">Go Version:</span>
+                <span class="summary-field-value">{{.GoVersion}}</span>
             </div>
         </div>
 
-        {{if .ErrorChain}}
-        <div class="section">
-            <h2 class="section-title">Error Chain</h2>
-            <ol class="error-chain">
-                {{range $index, $err := .ErrorChain}}
-                <li class="error-chain-item">
-                    <span class="error-chain-number">{{add $index 1}}</span>
-                    <div class="error-chain-content">
-                        <div class="error-chain-type">{{$err.Type}}</div>
-                        <div class="error-chain-message">{{$err.Message}}</div>
-                    </div>
-                </li>
-                {{end}}
-            </ol>
-        </div>
-        {{end}}
-
-        {{if .StackTrace}}
-        <div class="section">
-            <h2 class="section-title">Stack Trace</h2>
+        {{range $err := .ErrorChain}}
+        <div class="error">
+            <h2 class="error-type">{{$err.Type}}</h2>
+            <div class="error-message">{{$err.Message}}</div>
+            {{if $err.StackTrace}}
             <div class="stack-trace">
-                {{range $index, $frame := .StackTrace}}
-                <div class="stack-frame" data-error-index="{{$frame.ErrorIndex}}" data-is-last="{{$frame.IsLast}}">
-                    <span class="stack-frame-error-marker">{{add $frame.ErrorIndex 1}}</span>
-                    <div class="stack-frame-content">
-                        <div class="stack-frame-function">{{$frame.Function}}</div>
-                        <div class="stack-frame-location">
-                            <a href="https://github.com/imgproxy/imgproxy/blob/v{{$.Version}}/{{$frame.File}}#L{{$frame.Line}}"
-                                target="_blank" class="stack-frame-link">
-                                <span class="stack-frame-file">{{$frame.File}}</span>:<span
-                                    class="stack-frame-line">{{$frame.Line}}</span>
-                            </a>
-                        </div>
+                {{range $frame := $err.StackTrace}}
+                <div class="stack-frame">
+                    <div class="stack-frame-function">{{$frame.Function}}</div>
+                    <div class="stack-frame-location">
+                        {{ $frame.File }}:<span class="stack-frame-line">{{ $frame.Line }}</span>
                     </div>
                 </div>
                 {{end}}
             </div>
+            {{end}}
         </div>
         {{end}}
-
-        <div class="section">
-            <h2 class="section-title">URL Format</h2>
-
-            <div class="url-format-description">
-                <p>imgproxy URLs follow this format:</p>
-                <code
-                    class="url-format-example">http://imgproxy.example.com/&lt;signature&gt;/&lt;processing_options&gt;/&lt;source_url&gt;</code>
-
-                <p class="url-format-label">Examples:</p>
-                <code
-                    class="url-format-example">/sig/resize:fill:300:400/gravity:sm/plain/https://example.com/image.jpg</code>
-                <code class="url-format-example">/sig/w:500/h:300/format:webp/plain/s3://bucket/image.png</code>
-                <code
-                    class="url-format-example">/sig/rs:fit:800:600/q:80/bg:ffffff/plain/https://cdn.com/photo.jpg</code>
-            </div>
-        </div>
-
-        <div class="section">
-            <h2 class="section-title">Documentation</h2>
-            <ul class="doc-sections">
-                <li><a href="https://docs.imgproxy.net/usage/processing#resize" target="_blank"
-                        class="doc-section-item">Resize</a></li>
-                <li><a href="https://docs.imgproxy.net/usage/processing#crop" target="_blank"
-                        class="doc-section-item">Crop</a></li>
-                <li><a href="https://docs.imgproxy.net/usage/processing#gravity" target="_blank"
-                        class="doc-section-item">Gravity</a></li>
-                <li><a href="https://docs.imgproxy.net/usage/processing#rotate" target="_blank"
-                        class="doc-section-item">Rotate</a></li>
-                <li><a href="https://docs.imgproxy.net/usage/processing#quality" target="_blank"
-                        class="doc-section-item">Quality</a></li>
-                <li><a href="https://docs.imgproxy.net/usage/processing#format" target="_blank"
-                        class="doc-section-item">Format</a></li>
-                <li><a href="https://docs.imgproxy.net/usage/processing#watermark" target="_blank"
-                        class="doc-section-item">Watermark</a></li>
-                <li><a href="https://docs.imgproxy.net/usage/presets" target="_blank"
-                        class="doc-section-item">Presets</a></li>
-                <li><a href="https://docs.imgproxy.net/configuration" target="_blank"
-                        class="doc-section-item">Configuration</a></li>
-                <li><a href="https://docs.imgproxy.net/features/smart_crop" target="_blank"
-                        class="doc-section-item">Smart Crop</a></li>
-                <li><a href="https://docs.imgproxy.net/usage/getting_info" target="_blank"
-                        class="doc-section-item doc-section-pro">Getting Image Info <span
-                            class="pro-badge">PRO</span></a></li>
-                <li><a href="https://docs.imgproxy.net/usage/processing#blur-detections" target="_blank"
-                        class="doc-section-item doc-section-pro">Blur Detections <span class="pro-badge">PRO</span></a>
-                </li>
-                <li><a href="https://docs.imgproxy.net/usage/processing#colorize" target="_blank"
-                        class="doc-section-item doc-section-pro">Colorize <span class="pro-badge">PRO</span></a></li>
-                <li><a href="https://docs.imgproxy.net/usage/processing#autoquality" target="_blank"
-                        class="doc-section-item doc-section-pro">Autoquality <span class="pro-badge">PRO</span></a></li>
-                <li><a href="https://docs.imgproxy.net/features/object_detection" target="_blank"
-                        class="doc-section-item doc-section-pro">Object Detection <span class="pro-badge">PRO</span></a>
-                </li>
-                <li><a href="https://docs.imgproxy.net/features/best_format" target="_blank"
-                        class="doc-section-item doc-section-pro">Best Format <span class="pro-badge">PRO</span></a></li>
-                <li><a href="https://docs.imgproxy.net/features/gif_to_video" target="_blank"
-                        class="doc-section-item doc-section-pro">GIF to Video <span class="pro-badge">PRO</span></a>
-                </li>
-            </ul>
-        </div>
 
         <div class="links">
             <a href="https://imgproxy.net/" target="_blank">Website</a>
