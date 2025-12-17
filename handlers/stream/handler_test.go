@@ -11,7 +11,6 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/cookies"
 	"github.com/imgproxy/imgproxy/v3/fetcher"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
@@ -60,8 +59,6 @@ type HandlerTestSuite struct {
 }
 
 func (s *HandlerTestSuite) SetupSuite() {
-	config.Reset()
-
 	s.testData = testutil.NewTestDataProvider(s.T)
 
 	s.rwConf, _ = testutil.NewLazySuiteObj(

@@ -184,7 +184,7 @@ func parseURLPatterns(env string) ([]*regexp.Regexp, error) {
 	result := make([]*regexp.Regexp, len(parts))
 
 	for i, p := range parts {
-		result[i] = regexpFromPattern(strings.TrimSpace(p))
+		result[i] = RegexpFromPattern(strings.TrimSpace(p))
 	}
 
 	return result, nil
@@ -229,9 +229,9 @@ func parseStringMap(env string) (map[string]string, error) {
 	return result, nil
 }
 
-// regexpFromPattern creates a regexp from a wildcard pattern.
+// RegexpFromPattern creates a regexp from a wildcard pattern.
 // Converts shell-style wildcards to regexp patterns.
-func regexpFromPattern(pattern string) *regexp.Regexp {
+func RegexpFromPattern(pattern string) *regexp.Regexp {
 	var result strings.Builder
 	// Perform prefix matching
 	result.WriteString("^")
@@ -286,7 +286,7 @@ func parseURLReplacements(env string) ([]URLReplacement, error) {
 			return nil, fmt.Errorf("invalid key/value: %s", keyvalue)
 		}
 		s = append(s, URLReplacement{
-			Regexp:      regexpFromPattern(parts[0]),
+			Regexp:      RegexpFromPattern(parts[0]),
 			Replacement: parts[1],
 		})
 	}

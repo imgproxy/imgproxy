@@ -332,7 +332,7 @@ func TestRegexpFromPattern(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.pattern, func(t *testing.T) {
-			re := regexpFromPattern(tt.pattern)
+			re := RegexpFromPattern(tt.pattern)
 			for _, match := range tt.shouldMatch {
 				assert.True(t, re.MatchString(match))
 			}

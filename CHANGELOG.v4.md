@@ -2,12 +2,37 @@
 
 ## 2025-12-12
 
-- Removed `--presets` CLI argument in favor of `IMGPROXY_PRESETS_PATH`.
+### ❌ Removed
+
+- `--presets` CLI argument in favor of `IMGPROXY_PRESETS_PATH`.
+
+## 2025-12-09
+
+### 🔄 Changed
+
+- [Pro] Improved SVG minification compression (>x2) and speed.
+
+## 2025-12-02
+
+### 🔄 Changed
+
+- [Pro] SVG injected styles are wrapped in <![CDATA[]]>
+
+## 2025-11-05
+
+### 🆕 Added
+
+- [Pro] Introduced local cache. Please, check the docs for the available configuration options.
 
 ## 2025-10-31
 
-- Remove deprecated `download_duration_seconds` and `processing_duration_seconds` histograms from Prometheus metrics.
-- Add propagation of tracing headers to external requests. Introduced `IMGPROXY_(NEW_RELIC|DATADOG|OPEN_TELEMETRY)_PROPAGATE_EXTERNAL` env var to control this behavior.
+### ❌ Removed
+
+- Deprecated `download_duration_seconds` and `processing_duration_seconds` histograms from Prometheus metrics.
+
+### 🆕 Added
+
+- Propagation of tracing headers to external requests. Introduced `IMGPROXY_(NEW_RELIC|DATADOG|OPEN_TELEMETRY)_PROPAGATE_EXTERNAL` env var to control this behavior.
 
 ## 2025-10-29
 
@@ -57,6 +82,12 @@
 ### 🔄 Changed
 
 - `IMGPROXY_USE_GCS` is not automatically set if gcs key is present anymore.
+
+## 2025-09-11
+
+### ❌ Removed
+
+- Deprecated `IMGPROXY_CONCURRENCY` removed.
 
 ## ✨ 2025-08-27
 
