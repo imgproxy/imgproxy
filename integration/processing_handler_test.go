@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/imgproxy/imgproxy/v3/config/configurators"
+	"github.com/imgproxy/imgproxy/v3/env"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
@@ -112,7 +112,7 @@ func (s *ProcessingHandlerTestSuite) TestSourceValidation() {
 		s.Run(tc.name, func() {
 			s.Config().Security.AllowedSources = make([]*regexp.Regexp, len(tc.allowedSources))
 			for i, pattern := range tc.allowedSources {
-				s.Config().Security.AllowedSources[i] = configurators.RegexpFromPattern(pattern)
+				s.Config().Security.AllowedSources[i] = env.RegexpFromPattern(pattern)
 			}
 
 			res := s.GET(tc.requestPath)

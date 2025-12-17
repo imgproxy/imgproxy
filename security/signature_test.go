@@ -5,7 +5,6 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/testutil"
 )
 
@@ -34,8 +33,6 @@ func (s *SignatureTestSuite) SetupSuite() {
 }
 
 func (s *SignatureTestSuite) SetupTest() {
-	config.Reset()
-
 	s.config().Keys = [][]byte{[]byte("test-key")}
 	s.config().Salts = [][]byte{[]byte("test-salt")}
 }
