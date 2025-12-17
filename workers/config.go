@@ -2,6 +2,7 @@ package workers
 
 import (
 	"errors"
+	"log/slog"
 	"runtime"
 
 	"github.com/imgproxy/imgproxy/v3/ensure"
@@ -11,6 +12,7 @@ import (
 var (
 	IMGPROXY_REQUESTS_QUEUE_SIZE = env.Int("IMGPROXY_REQUESTS_QUEUE_SIZE")
 	IMGPROXY_WORKERS             = env.Int("IMGPROXY_WORKERS")
+	AWS_LAMBDA_FUNCTION_NAME     = env.String("AWS_LAMBDA_FUNCTION_NAME")
 )
 
 // Config represents [Workers] config
@@ -30,6 +32,16 @@ func NewDefaultConfig() Config {
 // LoadConfigFromEnv loads config from environment variables
 func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c = ensure.Ensure(c, NewDefaultConfig)
+
+	// AWS Lambda environment detected: no queues and single worker
+	if fnName, _ := AWS_LAMBDA_FUNCTION_NAME.GetEnv(); len(fnName) > 0 {
+		c.WorkersNumber = 1
+		c.RequestsQueueSize = 0
+
+		slog.Info("AWS Lambda environment detected, setting workers to 1")
+
+		return c, nil
+	}
 
 	err := errors.Join(
 		IMGPROXY_REQUESTS_QUEUE_SIZE.Parse(&c.RequestsQueueSize),
