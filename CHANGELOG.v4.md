@@ -83,11 +83,29 @@
 
 - `IMGPROXY_USE_GCS` is not automatically set if gcs key is present anymore.
 
+## 2025-09-16
+
+### ❌ Removed
+
+- `IMGPROXY_UNSHARPENING_MODE`, `IMGPROXY_UNSHARPENING_WEIGHT`, `IMGPROXY_UNSHARPENING_DIVIDER` configs. Use `IMGPROXY_UNSHARP_MASKING_MODE`, `IMGPROXY_UNSHARP_MASKING_WEIGHT`, `IMGPROXY_UNSHARP_MASKING_DIVIDER` instead.
+
+## 2025-09-18
+
+### ❌ Removed
+
+- `gif_options` processing option
+
 ## 2025-09-11
 
 ### ❌ Removed
 
 - Deprecated `IMGPROXY_CONCURRENCY` removed.
+
+## 2025-09-09
+
+### ❌ Removed
+
+- `--keys`, `--salts` CLI args
 
 ## ✨ 2025-08-27
 
@@ -101,9 +119,3 @@ if `IMGPROXY_USE_ETAG` is true.
 ### ❌ Removed
 
 - `Etag` calculations on the imgproxy side
-
-## 2025-09-09
-
-### ❌ Removed
-
-- `--keys`, `--salts` CLI args
