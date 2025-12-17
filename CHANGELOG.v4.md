@@ -83,6 +83,12 @@
 
 - `IMGPROXY_USE_GCS` is not automatically set if gcs key is present anymore.
 
+## 2025-09-11
+
+### ❌ Removed
+
+- Deprecated `IMGPROXY_CONCURRENCY` removed.
+
 ## ✨ 2025-08-27
 
 ### 🔄 Changed

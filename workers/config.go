@@ -10,7 +10,7 @@ import (
 
 var (
 	IMGPROXY_REQUESTS_QUEUE_SIZE = env.Int("IMGPROXY_REQUESTS_QUEUE_SIZE")
-	IMGPROXY_WORKERS_NUMBER      = env.Int("IMGPROXY_WORKERS_NUMBER")
+	IMGPROXY_WORKERS             = env.Int("IMGPROXY_WORKERS")
 )
 
 // Config represents [Workers] config
@@ -33,7 +33,7 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 
 	err := errors.Join(
 		IMGPROXY_REQUESTS_QUEUE_SIZE.Parse(&c.RequestsQueueSize),
-		IMGPROXY_WORKERS_NUMBER.Parse(&c.WorkersNumber),
+		IMGPROXY_WORKERS.Parse(&c.WorkersNumber),
 	)
 
 	return c, err
@@ -46,7 +46,7 @@ func (c *Config) Validate() error {
 	}
 
 	if c.WorkersNumber <= 0 {
-		return IMGPROXY_WORKERS_NUMBER.ErrorZeroOrNegative()
+		return IMGPROXY_WORKERS.ErrorZeroOrNegative()
 	}
 
 	return nil
