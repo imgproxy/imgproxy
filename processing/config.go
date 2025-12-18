@@ -108,8 +108,14 @@ func (c *Config) Validate() error {
 		return IMGPROXY_WATERMARK_OPACITY.Errorf("must be between 0 and 1")
 	}
 
-	if c.Quality <= 0 || c.Quality > 100 {
-		return IMGPROXY_QUALITY.Errorf("must be between 0 and 100")
+	if c.Quality < 1 || c.Quality > 100 {
+		return IMGPROXY_QUALITY.Errorf("must be between 1 and 100")
+	}
+
+	for imgtype, minQ := range c.FormatQuality {
+		if minQ < 1 || minQ > 100 {
+			return IMGPROXY_FORMAT_QUALITY.Errorf("format %s: must be between 1 and 100", imgtype.String())
+		}
 	}
 
 	filtered := c.PreferredFormats[:0]
