@@ -227,10 +227,6 @@ func cRGB(c color.RGB) C.RGB {
 	}
 }
 
-func ptrToBytes(ptr unsafe.Pointer, size int) []byte {
-	return (*[math.MaxInt32]byte)(ptr)[:size:size]
-}
-
 func (img *Image) Width() int {
 	return int(img.VipsImage.Xsize)
 }
@@ -387,7 +383,7 @@ func (img *Image) Save(
 
 	var ptr = C.vips_blob_get(target.blob, &imgsize)
 
-	b := ptrToBytes(ptr, int(imgsize))
+	b := unsafe.Slice((*byte)(ptr), int(imgsize))
 
 	i := imagedata.NewFromBytesWithFormat(imgtype, b)
 	i.AddCancel(cancel)
