@@ -5,6 +5,8 @@ import (
 	"io"
 	"os"
 	"path"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/imgproxy/imgproxy/v3/imagetype"
@@ -151,7 +153,11 @@ func (m *ImageHashCacheMatcher) saveTmpImage(t *testing.T, key string, buf []byt
 	ext, err := imagetype.Detect(bytes.NewReader(buf), "", "")
 	require.NoError(t, err)
 
-	targetPath := m.makeTargetPath(t, m.saveTmpImagesPath, t.Name(), key, ext.String())
+	// Put all the test images into the same folder regardless of
+	// the test structure (hierarchy).
+	tmpImageFileName := strings.ReplaceAll(filepath.Join(t.Name(), key), "/", "_")
+
+	targetPath := m.makeTargetPath(t, m.saveTmpImagesPath, "", tmpImageFileName, ext.String())
 
 	targetFile, err := os.Create(targetPath)
 	require.NoError(t, err, "failed to create TEST_SAVE_TMP_IMAGES target file %s", targetPath)

@@ -1,6 +1,7 @@
 package testutil
 
 import (
+	"bytes"
 	"errors"
 	"io"
 	"testing"
@@ -29,7 +30,9 @@ func ReadersEqual(t *testing.T, expected, actual io.Reader) bool {
 			return false
 		}
 
-		require.Equal(t, buf1[:n1], buf2[:n1])
+		if !bytes.Equal(buf1[:n1], buf2[:n1]) {
+			return false
+		}
 
 		if errors.Is(err1, io.EOF) && errors.Is(err2, io.EOF) {
 			return true
