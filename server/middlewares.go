@@ -118,14 +118,20 @@ func (r *Router) WithReportError(h RouteHandler) RouteHandler {
 		LogResponse(reqID, req, err.Err.StatusCode(), err.Err)
 
 		// Error message: either is public message or full development error
+		if r.config.DevelopmentErrorsMode {
+			// Generate and serve HTML error page
+			html, contentType := generateErrorHTML(err.Err, reqID)
+
+			rw.Header().Set(httpheaders.ContentType, contentType)
+			rw.WriteHeader(err.Err.StatusCode())
+			rw.Write(html)
+
+			return nil
+		}
+
 		rw.Header().Set(httpheaders.ContentType, "text/plain")
 		rw.WriteHeader(err.Err.StatusCode())
-
-		if r.config.DevelopmentErrorsMode {
-			rw.Write([]byte(err.Err.Error()))
-		} else {
-			rw.Write([]byte(err.Err.PublicMessage()))
-		}
+		rw.Write([]byte(err.Err.PublicMessage()))
 
 		return nil
 	}
