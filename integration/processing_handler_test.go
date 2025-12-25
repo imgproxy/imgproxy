@@ -1,7 +1,9 @@
 package integration
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"regexp"
@@ -548,6 +550,95 @@ func (s *ProcessingHandlerTestSuite) TestMaxSrcFileSizeGlobal() {
 	defer res.Body.Close()
 
 	s.Require().Equal(422, res.StatusCode)
+}
+
+func (s *ProcessingHandlerTestSuite) TestRawOption() {
+	res := s.GET("/unsafe/raw:1/plain/local:///test1.png")
+	defer res.Body.Close()
+
+	s.Require().Equal(http.StatusOK, res.StatusCode)
+	s.Require().True(s.TestData.FileEqualsToReader("test1.png", res.Body))
+}
+
+func (s *ProcessingHandlerTestSuite) computeDist(url string, sourceHash *testutil.ImageHash) int {
+	res := s.GET(url)
+	defer res.Body.Close()
+
+	s.Require().Equal(http.StatusOK, res.StatusCode)
+
+	body, err := io.ReadAll(res.Body)
+	s.Require().NoError(err)
+
+	processedImg, err := testutil.LoadImage(bytes.NewReader(body))
+	s.Require().NoError(err)
+
+	processedHash, err := testutil.NewImageHash(processedImg, testutil.HashTypePerception)
+	s.Require().NoError(err)
+
+	dist, err := sourceHash.Distance(processedHash)
+	s.Require().NoError(err)
+
+	return dist
+}
+
+func (s *ProcessingHandlerTestSuite) TestMaxBytes() {
+	sourceData := s.TestData.Read("test-images/jpg/jpg.jpg")
+	sourceSize := len(sourceData)
+
+	mb := sourceSize / 2
+	s.Require().Greater(sourceSize, mb, "Source image must be larger than mb for the test")
+
+	res := s.GET(fmt.Sprintf("/unsafe/mb:%d/plain/local:///test-images/jpg/jpg.jpg@jpg", mb))
+	defer res.Body.Close()
+
+	s.Require().Equal(http.StatusOK, res.StatusCode)
+	body, err := io.ReadAll(res.Body)
+
+	s.Require().NoError(err)
+	s.Require().LessOrEqual(len(body), mb)
+}
+
+func (s *ProcessingHandlerTestSuite) TestQualitySettings() {
+	// Load source image and compute its hash
+	sourceImg, err := testutil.LoadImage(bytes.NewReader(s.TestData.Read("test-images/jpg/jpg.jpg")))
+	s.Require().NoError(err)
+
+	sourceHash, err := testutil.NewImageHash(sourceImg, testutil.HashTypePerception)
+	s.Require().NoError(err)
+
+	// Set config quality to 99
+	s.Config().Processing.Quality = 99
+
+	// Test that high quality (99) or bypassed quality results in identical image
+	s.Run("q_99", func() {
+		dist := s.computeDist("/unsafe/q:99/plain/local:///test-images/jpg/jpg.jpg@jpg", sourceHash)
+		s.Require().Equal(0, dist)
+	})
+
+	s.Run("no_q", func() {
+		dist := s.computeDist("/unsafe/plain/local:///test-images/jpg/jpg.jpg@jpg", sourceHash)
+		s.Require().Equal(0, dist)
+	})
+
+	s.Run("q_1_fq_1", func() {
+		dist := s.computeDist("/unsafe/q:1/plain/local:///test-images/jpg/jpg.jpg@jpg", sourceHash)
+		s.Require().NotEqual(0, dist)
+
+		dist = s.computeDist("/unsafe/fq:jpg:1/plain/local:///test-images/jpg/jpg.jpg@jpg", sourceHash)
+		s.Require().NotEqual(0, dist)
+	})
+}
+
+func (s *ProcessingHandlerTestSuite) TestPresetUsage() {
+	s.Config().OptionsParser.Presets = []string{
+		"default=pixelate:10",
+	}
+
+	res := s.GET("/unsafe/preset:default/plain/local:///geometry.png")
+	defer res.Body.Close()
+
+	s.Require().Equal(http.StatusOK, res.StatusCode)
+	s.Require().False(s.TestData.FileEqualsToReader("geometry.png", res.Body))
 }
 
 func TestProcessingHandler(t *testing.T) {
