@@ -23,6 +23,19 @@ func newSignatureError(msg string) error {
 	)}
 }
 
+func newMalformedSignatureError() error {
+	//nolint:lll
+	msg := "The signature appears to be a processing option. The signature section should always be present in the URL. See: https://docs.imgproxy.net/usage/processing"
+
+	return SignatureError{errctx.NewTextError(
+		msg,
+		1,
+		errctx.WithStatusCode(http.StatusForbidden),
+		errctx.WithPublicMessage(msg),
+		errctx.WithShouldReport(false),
+	)}
+}
+
 func newImageResolutionError(msg string) error {
 	return ImageResolutionError{errctx.NewTextError(
 		msg,
