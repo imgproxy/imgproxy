@@ -5,10 +5,15 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"slices"
+	"strings"
 )
 
 func (s *Checker) VerifySignature(signature, path string) error {
 	if len(s.config.Keys) == 0 || len(s.config.Salts) == 0 {
+		if strings.Contains(signature, ":") {
+			return newMalformedSignatureError()
+		}
+
 		return nil
 	}
 
