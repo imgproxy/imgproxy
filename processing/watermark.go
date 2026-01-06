@@ -131,16 +131,6 @@ func (p *Processor) applyWatermark(
 		return err
 	}
 
-	if !img.ColourProfileImported() {
-		if err := img.ImportColourProfile(); err != nil {
-			return err
-		}
-	}
-
-	if err := img.RgbColourspace(); err != nil {
-		return err
-	}
-
 	opacity := po.WatermarkOpacity() * p.config.WatermarkOpacity
 
 	position := po.WatermarkPosition()

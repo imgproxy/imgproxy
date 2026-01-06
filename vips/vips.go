@@ -716,6 +716,16 @@ func (img *Image) ApplyFilters(blurSigma, sharpSigma float64, pixelatePixels int
 	return nil
 }
 
+// Type returns the current colorspace interpretation of the image.
+func (img *Image) Type() Interpretation {
+	return Interpretation(img.VipsImage.Type)
+}
+
+// GuessInterpretation returns the guessed colorspace interpretation of the image.
+func (img *Image) GuessInterpretation() Interpretation {
+	return Interpretation(C.vips_image_guess_interpretation(img.VipsImage))
+}
+
 func (img *Image) IsRGB() bool {
 	format := C.vips_image_guess_interpretation(img.VipsImage)
 	return format == C.VIPS_INTERPRETATION_sRGB ||
@@ -852,15 +862,17 @@ func (img *Image) RgbColourspace() error {
 	return img.Colorspace(C.VIPS_INTERPRETATION_sRGB)
 }
 
-func (img *Image) Colorspace(colorspace C.VipsInterpretation) error {
-	if img.VipsImage.Type != colorspace {
-		var tmp *C.VipsImage
-
-		if C.vips_colourspace_go(img.VipsImage, &tmp, colorspace) != 0 {
-			return Error()
-		}
-		img.swapAndUnref(tmp)
+func (img *Image) Colorspace(colorspace Interpretation) error {
+	if img.Type() == colorspace {
+		return nil
 	}
+
+	var tmp *C.VipsImage
+
+	if C.vips_colourspace_go(img.VipsImage, &tmp, C.VipsInterpretation(colorspace)) != 0 {
+		return Error()
+	}
+	img.swapAndUnref(tmp)
 
 	return nil
 }

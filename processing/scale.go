@@ -11,5 +11,30 @@ func (p *Processor) scale(c *Context) error {
 		wscale, hscale = hscale, wscale
 	}
 
-	return c.Img.Resize(wscale, hscale)
+	// Save current colorspace
+	cs := c.Img.Type()
+
+	// Convert to linear colorspace if needed
+	if p.config.UseLinearColorspace {
+		// We need this to keep colors consistent after processing
+		if err := c.Img.ImportColourProfile(); err != nil {
+			return err
+		}
+
+		// Convert to linear colorspace
+		if err := c.Img.LinearColourspace(); err != nil {
+			return err
+		}
+	}
+
+	if err := c.Img.Resize(wscale, hscale); err != nil {
+		return err
+	}
+
+	// Convert back to original colorspace if we used linear during processing
+	if p.config.UseLinearColorspace {
+		return c.Img.Colorspace(cs)
+	}
+
+	return nil
 }

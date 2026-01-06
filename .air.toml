@@ -14,20 +14,8 @@ exclude_unchanged = false
 follow_symlink = false
 full_bin = "make run --"
 include_dir = []
-include_ext = ["go", "tpl", "tmpl", "html"]
-include_file = [
-  ".imgproxyrc",
-  "vips/vips.c",
-  "vips/vips.h",
-  "vips/source.c",
-  "vips/source.h",
-  "vips/icoload.c",
-  "vips/icosave.c",
-  "vips/ico.h",
-  "vips/bmpload.c",
-  "vips/bmpload.h",
-  "vips/bmp.h",
-]
+include_ext = ["go", "tpl", "tmpl", "html", "c", "h"]
+include_file = [".imgproxyrc"]
 kill_delay = "4s"
 log = "build-errors.log"
 poll = false
