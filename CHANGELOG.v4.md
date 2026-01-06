@@ -1,5 +1,9 @@
 # 📑 Changelog (version/4 dev)
 
+## 2025-01-09
+
+- `IMGPROXY_PRESERVE_HDR`. BPP/colorspace of source image is kept when possible.
+
 ## 2025-12-12
 
 ### ❌ Removed

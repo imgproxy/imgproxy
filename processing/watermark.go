@@ -131,14 +131,20 @@ func (p *Processor) applyWatermark(
 		return err
 	}
 
-	if !img.ColourProfileImported() {
-		if err := img.ImportColourProfile(); err != nil {
+	// If image is black-and-white and watermark is not, convert image to RGB
+	if img.IsBW() && !wm.IsBW() {
+		cs := img.Type()
+
+		switch cs {
+		case vips.InterpretationBW:
+			cs = vips.InterpretationSRGB
+		case vips.InterpretationGrey16:
+			cs = vips.InterpretationRGB16
+		}
+
+		if err := img.Colorspace(cs); err != nil {
 			return err
 		}
-	}
-
-	if err := img.RgbColourspace(); err != nil {
-		return err
 	}
 
 	opacity := po.WatermarkOpacity() * p.config.WatermarkOpacity
