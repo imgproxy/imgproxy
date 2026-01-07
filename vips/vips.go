@@ -59,9 +59,9 @@ var vipsConf struct {
 
 var badImageErrRe = []*regexp.Regexp{
 	regexp.MustCompile(`^(\S+)load_buffer: `),
+	regexp.MustCompile(`^(\S+)2vips: `),
 	regexp.MustCompile(`^VipsJpeg: `),
-	regexp.MustCompile(`^tiff2vips: `),
-	regexp.MustCompile(`^webp2vips: `),
+	regexp.MustCompile(`XML parse error: `),
 }
 
 func Init() error {
