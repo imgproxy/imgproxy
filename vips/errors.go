@@ -9,9 +9,9 @@ import (
 
 var badImageErrRe = []*regexp.Regexp{
 	regexp.MustCompile(`^(\S+)load_source: `),
+	regexp.MustCompile(`^(\S+)2vips: `),
 	regexp.MustCompile(`^VipsJpeg: `),
-	regexp.MustCompile(`^tiff2vips: `),
-	regexp.MustCompile(`^webp2vips: `),
+	regexp.MustCompile(`XML parse error: `),
 }
 
 type VipsError struct{ *errctx.TextError }
