@@ -25,6 +25,7 @@ var (
 	IMGPROXY_STRIP_COLOR_PROFILE     = env.Bool("IMGPROXY_STRIP_COLOR_PROFILE")
 	IMGPROXY_AUTO_ROTATE             = env.Bool("IMGPROXY_AUTO_ROTATE")
 	IMGPROXY_ENFORCE_THUMBNAIL       = env.Bool("IMGPROXY_ENFORCE_THUMBNAIL")
+	IMGPROXY_PRESERVE_HDR            = env.Bool("IMGPROXY_PRESERVE_HDR")
 )
 
 // Config holds pipeline-related configuration.
@@ -42,6 +43,7 @@ type Config struct {
 	StripColorProfile     bool
 	AutoRotate            bool
 	EnforceThumbnail      bool
+	PreserveHDR           bool
 
 	Svg svg.Config
 }
@@ -66,6 +68,7 @@ func NewDefaultConfig() Config {
 		StripColorProfile: true,
 		AutoRotate:        true,
 		EnforceThumbnail:  false,
+		PreserveHDR:       false,
 
 		Svg: svg.NewDefaultConfig(),
 	}
@@ -92,6 +95,7 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 		IMGPROXY_STRIP_COLOR_PROFILE.Parse(&c.StripColorProfile),
 		IMGPROXY_AUTO_ROTATE.Parse(&c.AutoRotate),
 		IMGPROXY_ENFORCE_THUMBNAIL.Parse(&c.EnforceThumbnail),
+		IMGPROXY_PRESERVE_HDR.Parse(&c.PreserveHDR),
 
 		IMGPROXY_PREFERRED_FORMATS.Parse(&c.PreferredFormats),
 		IMGPROXY_SKIP_PROCESSING_FORMATS.Parse(&c.SkipProcessingFormats),

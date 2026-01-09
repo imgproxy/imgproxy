@@ -12,6 +12,7 @@ var (
 		SupportsAnimationLoad: false,
 		SupportsAnimationSave: false,
 		SupportsThumbnail:     false,
+		SupportsHDR:           false,
 	})
 
 	JXL = RegisterType(&TypeDesc{
@@ -25,6 +26,7 @@ var (
 		SupportsAnimationLoad: true,
 		SupportsAnimationSave: false,
 		SupportsThumbnail:     false,
+		SupportsHDR:           true,
 	})
 
 	PNG = RegisterType(&TypeDesc{
@@ -38,6 +40,7 @@ var (
 		SupportsAnimationLoad: false,
 		SupportsAnimationSave: false,
 		SupportsThumbnail:     false,
+		SupportsHDR:           true,
 	})
 
 	WEBP = RegisterType(&TypeDesc{
@@ -51,6 +54,7 @@ var (
 		SupportsAnimationLoad: true,
 		SupportsAnimationSave: true,
 		SupportsThumbnail:     false,
+		SupportsHDR:           false,
 	})
 
 	GIF = RegisterType(&TypeDesc{
@@ -64,6 +68,7 @@ var (
 		SupportsAnimationLoad: true,
 		SupportsAnimationSave: true,
 		SupportsThumbnail:     false,
+		SupportsHDR:           false,
 	})
 
 	ICO = RegisterType(&TypeDesc{
@@ -77,6 +82,7 @@ var (
 		SupportsAnimationLoad: false,
 		SupportsAnimationSave: false,
 		SupportsThumbnail:     false,
+		SupportsHDR:           false,
 	})
 
 	SVG = RegisterType(&TypeDesc{
@@ -90,6 +96,7 @@ var (
 		SupportsAnimationLoad: false,
 		SupportsAnimationSave: false,
 		SupportsThumbnail:     false,
+		SupportsHDR:           false,
 	})
 
 	HEIC = RegisterType(&TypeDesc{
@@ -103,6 +110,7 @@ var (
 		SupportsAnimationLoad: false,
 		SupportsAnimationSave: false,
 		SupportsThumbnail:     true,
+		SupportsHDR:           false,
 	})
 
 	AVIF = RegisterType(&TypeDesc{
@@ -116,6 +124,7 @@ var (
 		SupportsAnimationLoad: false,
 		SupportsAnimationSave: false,
 		SupportsThumbnail:     true,
+		SupportsHDR:           true,
 	})
 
 	BMP = RegisterType(&TypeDesc{
@@ -129,6 +138,7 @@ var (
 		SupportsAnimationLoad: false,
 		SupportsAnimationSave: false,
 		SupportsThumbnail:     false,
+		SupportsHDR:           false,
 	})
 
 	TIFF = RegisterType(&TypeDesc{
@@ -142,6 +152,7 @@ var (
 		SupportsAnimationLoad: false,
 		SupportsAnimationSave: false,
 		SupportsThumbnail:     false,
+		SupportsHDR:           true,
 	})
 )
 

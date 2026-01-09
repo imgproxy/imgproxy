@@ -24,6 +24,7 @@ type testSuite struct {
 	SecurityConfig    testutil.LazyObj[*security.Config]
 	Security          testutil.LazyObj[*security.Checker]
 	Config            testutil.LazyObj[*Config]
+	WatermarkConfig   testutil.LazyObj[*auximageprovider.StaticConfig]
 	WatermarkProvider testutil.LazyObj[auximageprovider.Provider]
 	Processor         testutil.LazyObj[*Processor]
 }
@@ -90,12 +91,16 @@ func (s *testSuite) SetupSuite() {
 		return &c, nil
 	})
 
+	s.WatermarkConfig, _ = testutil.NewLazySuiteObj(s, func() (*auximageprovider.StaticConfig, error) {
+		return &auximageprovider.StaticConfig{
+			Path: s.TestData.Path("geometry.png"),
+		}, nil
+	})
+
 	s.WatermarkProvider, _ = testutil.NewLazySuiteObj(s, func() (auximageprovider.Provider, error) {
 		return auximageprovider.NewStaticProvider(
 			s.T().Context(),
-			&auximageprovider.StaticConfig{
-				Path: s.TestData.Path("geometry.png"),
-			},
+			s.WatermarkConfig(),
 			"watermark",
 			s.ImageDataFactory(),
 		)

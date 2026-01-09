@@ -3,12 +3,6 @@ package processing
 func (p *Processor) colorspaceToResult(c *Context) error {
 	keepProfile := !c.PO.StripColorProfile() && c.PO.Format().SupportsColourProfile()
 
-	if c.Img.IsLinear() {
-		if err := c.Img.RgbColourspace(); err != nil {
-			return err
-		}
-	}
-
 	// vips 8.15+ tends to lose the colour profile during some color conversions.
 	// We probably have a backup of the colour profile, so we need to restore it.
 	c.Img.RestoreColourProfile()
