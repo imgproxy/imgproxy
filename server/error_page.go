@@ -40,6 +40,7 @@ type errorPageData struct {
 	Commit        string
 	GoVersion     string
 	ErrorChain    []errorChainItem
+	DocsURL       string
 }
 
 // errorChainItem represents a single item in the error chain.
@@ -47,6 +48,7 @@ type errorChainItem struct {
 	Type       string
 	Message    string
 	StackTrace []stackFrame
+	DocsURL    string
 }
 
 // stackFrame represents a single frame in the stack trace.
@@ -62,10 +64,18 @@ func unwrapErrorChain(err error) []errorChainItem {
 	var chain []errorChainItem
 
 	for err != nil {
+		var url string
+
+		//nolint:errorlint
+		if e, ok := err.(errctx.Error); ok {
+			url = e.DocsURL()
+		}
+
 		chain = append(chain, errorChainItem{
 			Type:       errorTypeReplacer.Replace(errctx.ErrorType(err)),
 			Message:    err.Error(),
 			StackTrace: buildStackTrace(err),
+			DocsURL:    url,
 		})
 
 		err = errors.Unwrap(err)

@@ -56,7 +56,12 @@ func (s *formatterStructured) format(r slog.Record) {
 	// Append error, source, and stack if present
 	if s.error.Key != "" {
 		s.appendKey(s.error.Key)
-		s.appendValue(s.error.Value, false)
+		s.appendValue(s.error.Value, true)
+
+		if docsURL := s.errorDocsURL(); docsURL != nil {
+			s.appendKey(docsURL.Key)
+			s.appendValue(docsURL.Value, true)
+		}
 	}
 	if s.source.Key != "" {
 		s.appendKey(s.source.Key)

@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/imgproxy/imgproxy/v3/errctx"
 	"github.com/imgproxy/imgproxy/v3/testutil"
 	"github.com/stretchr/testify/suite"
 )
@@ -254,7 +255,9 @@ func (s *FormatterPrettyTestSuite) TestSpecialFields() {
 		"Test message",
 		"stack", "stack value\nwith new lines",
 		"key1", "value1",
-		"error", errors.New("error value"),
+		"error", errctx.NewTextError(
+			"test", 0, errctx.WithDocsURL("http://example.com"),
+		),
 		"key2", "value2",
 		"source", "source value",
 		"key3", "value3",
@@ -278,7 +281,8 @@ func (s *FormatterPrettyTestSuite) TestSpecialFields() {
 			`error="error in group"`,
 			`source="source in group"`,
 			"}",
-			`error="error value"`,
+			`error=test`,
+			`error_docs_url="http://example.com"`,
 			`source="source value"`,
 		}, " "),
 	)

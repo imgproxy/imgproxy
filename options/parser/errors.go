@@ -8,6 +8,8 @@ import (
 	"github.com/imgproxy/imgproxy/v3/errctx"
 )
 
+const processingDocsUrl = "https://docs.imgproxy.net/usage/processing"
+
 type (
 	InvalidURLError      struct{ *errctx.TextError }
 	UnknownOptionError   struct{ *errctx.TextError }
@@ -22,6 +24,7 @@ func newInvalidURLError(format string, args ...any) error {
 		1,
 		errctx.WithStatusCode(http.StatusNotFound),
 		errctx.WithPublicMessage("Invalid URL"),
+		errctx.WithDocsURL(processingDocsUrl),
 		errctx.WithShouldReport(false),
 	)}
 }
@@ -32,6 +35,7 @@ func newUnknownOptionError(kind, opt string) error {
 		1,
 		errctx.WithStatusCode(http.StatusNotFound),
 		errctx.WithPublicMessage("Invalid URL"),
+		errctx.WithDocsURL(processingDocsUrl),
 		errctx.WithShouldReport(false),
 	)}
 }
@@ -43,15 +47,22 @@ func newForbiddenOptionError(kind, opt string) error {
 		errctx.WithStatusCode(http.StatusNotFound),
 		errctx.WithPublicMessage("Invalid URL"),
 		errctx.WithShouldReport(false),
+		errctx.WithDocsURL(processingDocsUrl),
 	)}
 }
 
-func newOptionArgumentError(format string, args ...any) error {
+func newOptionArgumentError(key, format string, args ...any) error {
+	url := processingDocsUrl
+	if key != "" {
+		url = url + "#" + errorKey(key)
+	}
+
 	return OptionArgumentError{errctx.NewTextError(
 		fmt.Sprintf(format, args...),
 		1,
 		errctx.WithStatusCode(http.StatusNotFound),
 		errctx.WithPublicMessage("Invalid URL"),
+		errctx.WithDocsURL(url),
 		errctx.WithShouldReport(false),
 	)}
 }
@@ -62,13 +73,14 @@ func newSecurityOptionsError() error {
 		1,
 		errctx.WithStatusCode(http.StatusForbidden),
 		errctx.WithPublicMessage("Invalid URL"),
+		errctx.WithDocsURL(processingDocsUrl),
 		errctx.WithShouldReport(false),
 	)}
 }
 
 // newInvalidArgsError creates a standardized error for invalid arguments
-func newInvalidArgsError(name string, args []string) error {
-	return newOptionArgumentError("Invalid %s arguments: %s", name, args)
+func newInvalidArgsError(key string, args []string) error {
+	return newOptionArgumentError(key, "Invalid %s arguments: %s", key, args)
 }
 
 // newInvalidArgumentError creates a standardized error for an invalid single argument
@@ -78,5 +90,10 @@ func newInvalidArgumentError(key, arg string, expected ...string) error {
 		msg += " (expected " + strings.Join(expected, ", ") + ")"
 	}
 
-	return newOptionArgumentError(msg, key, arg)
+	return newOptionArgumentError(key, msg, key, arg)
+}
+
+func errorKey(key string) string {
+	k, _, _ := strings.Cut(strings.ReplaceAll(key, "_", "-"), ".")
+	return k
 }

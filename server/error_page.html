@@ -39,7 +39,8 @@
             }
         }
 
-        html, body {
+        html,
+        body {
             background: var(--background-color);
             color: var(--text-primary);
             font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -188,13 +189,22 @@
             }
         }
 
-        .links a {
+        .docs-url {
+            border-radius: 5px;
+            color: var(--text-secondary);
+        }
+
+        .links a,
+        .summary a,
+        .error a {
             text-decoration: none;
             color: var(--neon-a-fg);
             cursor: pointer;
         }
 
-        .links a:hover {
+        .links a:hover,
+        .summary a:hover,
+        .error a:hover {
             text-decoration: underline;
         }
     </style>
@@ -215,7 +225,18 @@
 
         <div class="summary">
             <h1 class="summary-title">{{.PublicMessage}}</h1>
+
             <div class="summary-fields">
+                {{with index .ErrorChain 0}}
+                <span class="summary-field-label">Error type:</span>
+                <span class="summary-field-value">{{.Type}}</span>
+                <span class="summary-field-label">Error message:</span>
+                <span class="summary-field-value">{{.Message}}</span>
+                <span class="summary-field-label">Documentation:</span>
+                <span class="summary-field-value">
+                    <a href="{{.DocsURL}}" target="_blank">{{.DocsURL}}</a>
+                </span>
+                {{end}}
                 <span class="summary-field-label">HTTP Status:</span>
                 <span class="summary-field-value">{{.StatusCode}}</span>
                 <span class="summary-field-label">Request ID:</span>
@@ -233,6 +254,13 @@
         <div class="error">
             <h2 class="error-type">{{$err.Type}}</h2>
             <div class="error-message">{{$err.Message}}</div>
+
+            {{if .DocsURL}}
+            <div class="docs-url">
+                Documentation: <a href="{{.DocsURL}}" target="_blank">{{.DocsURL}}</a>
+            </div>
+            {{end}}
+
             {{if $err.StackTrace}}
             <div class="stack-trace">
                 {{range $frame := $err.StackTrace}}

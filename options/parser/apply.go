@@ -227,7 +227,7 @@ func (p *Parser) applyRotateOption(o *options.Options, args []string) error {
 	}
 
 	if options.Get(o, keys.Rotate, 0)%90 != 0 {
-		return newOptionArgumentError("Rotation angle must be a multiple of 90")
+		return newOptionArgumentError(keys.Rotate, "Rotation angle must be a multiple of 90")
 	}
 
 	return nil
@@ -260,13 +260,18 @@ func (p *Parser) applyQualityOption(o *options.Options, args []string) error {
 func (p *Parser) applyFormatQualityOption(o *options.Options, args []string) error {
 	argsLen := len(args)
 	if len(args)%2 != 0 {
-		return newOptionArgumentError("Missing %s for: %s", keys.PrefixFormatQuality, args[argsLen-1])
+		return newOptionArgumentError(
+			keys.PrefixFormatQuality,
+			"Missing %s for: %s",
+			keys.PrefixFormatQuality,
+			args[argsLen-1],
+		)
 	}
 
 	for i := 0; i < argsLen; i += 2 {
 		f, ok := imagetype.GetTypeByName(args[i])
 		if !ok {
-			return newOptionArgumentError("Invalid image format: %s", args[i])
+			return newInvalidArgumentError(keys.PrefixFormatQuality, "Invalid image format: %s", args[i])
 		}
 
 		if err := p.parseQualityInt(o, keys.FormatQuality(f), args[i+1]); err != nil {
@@ -407,7 +412,7 @@ func (p *Parser) applySkipProcessingFormatsOption(o *options.Options, args []str
 		if f, ok := imagetype.GetTypeByName(format); ok {
 			options.AppendToSlice(o, keys.SkipProcessing, f)
 		} else {
-			return newOptionArgumentError("Invalid image format in %s: %s", keys.SkipProcessing, format)
+			return newOptionArgumentError(keys.SkipProcessing, "Invalid image format in %s: %s", keys.SkipProcessing, format)
 		}
 	}
 
@@ -445,7 +450,7 @@ func (p *Parser) applyExpiresOption(o *options.Options, args []string) error {
 	}
 
 	if timestamp > 0 && timestamp < time.Now().Unix() {
-		return newOptionArgumentError("Expired URL")
+		return newOptionArgumentError(keys.Expires, "Expired URL")
 	}
 
 	o.Set(keys.Expires, time.Unix(timestamp, 0))
@@ -531,7 +536,7 @@ func (p *Parser) applyPresetOption(o *options.Options, args []string, usedPreset
 				return err
 			}
 		} else {
-			return newOptionArgumentError("Unknown preset: %s", preset)
+			return newOptionArgumentError("preset", "Unknown preset: %s", preset)
 		}
 	}
 

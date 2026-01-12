@@ -79,6 +79,11 @@ func (s *formatterPretty) format(r slog.Record) {
 	if s.error.Key != "" {
 		s.appendKey(s.error.Key)
 		s.appendValue(s.error.Value, false)
+
+		if docsURL := s.errorDocsURL(); docsURL != nil {
+			s.appendKey(docsURL.Key)
+			s.appendValue(docsURL.Value, false)
+		}
 	}
 	if s.source.Key != "" {
 		s.appendKey(s.source.Key)

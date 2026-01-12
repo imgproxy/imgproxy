@@ -51,7 +51,7 @@ func LogResponse(
 	}
 
 	if err != nil {
-		attrs = append(attrs, slog.String("error", err.Error()))
+		attrs = append(attrs, slog.Any("error", err))
 
 		if level >= slog.LevelError {
 			if stack := err.FormatStack(); len(stack) > 0 {

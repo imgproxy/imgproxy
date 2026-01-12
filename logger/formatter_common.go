@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log/slog"
 	"time"
+
+	"github.com/imgproxy/imgproxy/v3/errctx"
 )
 
 // formatterCommon holds the common logic for both pretty and structured formatting.
@@ -116,4 +118,14 @@ func (s *formatterCommon) appendAny(val any, forceQuote bool) {
 	}
 	// Fallback to default string representation
 	s.appendString(fmt.Sprintf("%+v", val), forceQuote)
+}
+
+func (s *formatterCommon) errorDocsURL() *slog.Attr {
+	if v, ok := s.error.Value.Any().(errctx.Error); ok {
+		if url := v.DocsURL(); url != "" {
+			return &slog.Attr{Key: s.error.Key + "_docs_url", Value: slog.StringValue(url)}
+		}
+	}
+
+	return nil
 }
