@@ -29,3 +29,9 @@ func WithShouldReport(report bool) Option {
 		ec.shouldReport = report
 	}
 }
+
+func WithDocsURL(url string) Option {
+	return func(ec *ErrorContext) {
+		ec.docsUrl = url
+	}
+}

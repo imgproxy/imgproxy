@@ -7,6 +7,10 @@ import (
 	"github.com/imgproxy/imgproxy/v3/errctx"
 )
 
+const (
+	processingDocsUrl = "https://imgproxy.net/docs/processing/"
+)
+
 type (
 	SignatureError       struct{ *errctx.TextError }
 	ImageResolutionError struct{ *errctx.TextError }
@@ -20,12 +24,12 @@ func newSignatureError(msg string) error {
 		errctx.WithStatusCode(http.StatusForbidden),
 		errctx.WithPublicMessage("Forbidden"),
 		errctx.WithShouldReport(false),
+		errctx.WithDocsURL(processingDocsUrl),
 	)}
 }
 
 func newMalformedSignatureError() error {
-	//nolint:lll
-	msg := "The signature appears to be a processing option. The signature section should always be present in the URL. See: https://docs.imgproxy.net/usage/processing"
+	msg := "The signature appears to be a processing option. The signature section should always be present in the URL."
 
 	return SignatureError{errctx.NewTextError(
 		msg,
@@ -33,6 +37,7 @@ func newMalformedSignatureError() error {
 		errctx.WithStatusCode(http.StatusForbidden),
 		errctx.WithPublicMessage(msg),
 		errctx.WithShouldReport(false),
+		errctx.WithDocsURL(processingDocsUrl),
 	)}
 }
 
@@ -43,6 +48,7 @@ func newImageResolutionError(msg string) error {
 		errctx.WithStatusCode(http.StatusUnprocessableEntity),
 		errctx.WithPublicMessage("Invalid source image"),
 		errctx.WithShouldReport(false),
+		errctx.WithDocsURL("https://docs.imgproxy.net/configuration/options#security"),
 	)}
 }
 
@@ -53,5 +59,6 @@ func newSourceURLError(imageURL string) error {
 		errctx.WithStatusCode(http.StatusNotFound),
 		errctx.WithPublicMessage("Invalid source URL"),
 		errctx.WithShouldReport(false),
+		errctx.WithDocsURL("https://docs.imgproxy.net/configuration/options#IMGPROXY_ALLOWED_SOURCES"),
 	)}
 }

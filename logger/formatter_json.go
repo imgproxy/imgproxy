@@ -87,6 +87,11 @@ func (s *formatterJSON) format(r slog.Record) {
 	if s.error.Key != "" {
 		s.appendKey(s.error.Key)
 		s.appendValue(s.error.Value)
+
+		if docsURL := s.errorDocsURL(); docsURL != nil {
+			s.appendKey(docsURL.Key)
+			s.appendValue(docsURL.Value)
+		}
 	}
 	if s.source.Key != "" {
 		s.appendKey(s.source.Key)

@@ -12,6 +12,7 @@ type ErrorContext struct {
 	statusCode   int
 	publicMsg    string
 	shouldReport bool
+	docsUrl      string
 
 	stack []uintptr
 }
@@ -51,6 +52,10 @@ func (ec *ErrorContext) PublicMessage() string {
 
 func (ec *ErrorContext) ShouldReport() bool {
 	return ec.shouldReport
+}
+
+func (ec *ErrorContext) DocsURL() string {
+	return ec.docsUrl
 }
 
 // StackTrace returns the stack trace associated with the error.

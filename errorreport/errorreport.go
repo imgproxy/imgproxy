@@ -2,6 +2,7 @@ package errorreport
 
 import (
 	"context"
+	"maps"
 	"net/http"
 
 	"github.com/imgproxy/imgproxy/v3/errctx"
@@ -84,6 +85,11 @@ func (r *Reporter) Report(err errctx.Error, req *http.Request) {
 	meta, ok := req.Context().Value(metaCtxKey{}).(map[string]any)
 	if !ok {
 		meta = nil
+	}
+
+	if url := err.DocsURL(); url != "" {
+		meta = maps.Clone(meta)
+		meta["Documentation URL"] = url
 	}
 
 	for _, reporter := range r.reporters {
