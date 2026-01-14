@@ -1,6 +1,7 @@
 package optionsparser
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"net/url"
@@ -21,7 +22,7 @@ func (p *Parser) preprocessURL(u string) string {
 	return fmt.Sprintf("%s%s", p.config.BaseURL, u)
 }
 
-func (p *Parser) decodeBase64URL(parts []string) (string, string, error) {
+func (p *Parser) decodeBase64URL(ctx context.Context, parts []string) (string, string, error) {
 	var format string
 
 	if len(parts) > 1 && p.config.Base64URLIncludesFilename {
@@ -32,11 +33,11 @@ func (p *Parser) decodeBase64URL(parts []string) (string, string, error) {
 	urlParts := strings.Split(encoded, ".")
 
 	if len(urlParts[0]) == 0 {
-		return "", "", newInvalidURLError("Image URL is empty")
+		return "", "", newInvalidURLError(ctx, "Image URL is empty")
 	}
 
 	if len(urlParts) > 2 {
-		return "", "", newInvalidURLError("Multiple formats are specified: %s", encoded)
+		return "", "", newInvalidURLError(ctx, "Multiple formats are specified: %s", encoded)
 	}
 
 	if len(urlParts) == 2 && len(urlParts[1]) > 0 {
@@ -45,24 +46,24 @@ func (p *Parser) decodeBase64URL(parts []string) (string, string, error) {
 
 	imageURL, err := base64.RawURLEncoding.DecodeString(strings.TrimRight(urlParts[0], "="))
 	if err != nil {
-		return "", "", newInvalidURLError("Invalid url encoding: %s", encoded)
+		return "", "", newInvalidURLError(ctx, "Invalid url encoding: %s", encoded)
 	}
 
 	return p.preprocessURL(string(imageURL)), format, nil
 }
 
-func (p *Parser) decodePlainURL(parts []string) (string, string, error) {
+func (p *Parser) decodePlainURL(ctx context.Context, parts []string) (string, string, error) {
 	var format string
 
 	encoded := strings.Join(parts, "/")
 	urlParts := strings.Split(encoded, "@")
 
 	if len(urlParts[0]) == 0 {
-		return "", "", newInvalidURLError("Image URL is empty")
+		return "", "", newInvalidURLError(ctx, "Image URL is empty")
 	}
 
 	if len(urlParts) > 2 {
-		return "", "", newInvalidURLError("Multiple formats are specified: %s", encoded)
+		return "", "", newInvalidURLError(ctx, "Multiple formats are specified: %s", encoded)
 	}
 
 	if len(urlParts) == 2 && len(urlParts[1]) > 0 {
@@ -71,20 +72,23 @@ func (p *Parser) decodePlainURL(parts []string) (string, string, error) {
 
 	unescaped, err := url.PathUnescape(urlParts[0])
 	if err != nil {
-		return "", "", newInvalidURLError("Invalid url encoding: %s", encoded)
+		return "", "", newInvalidURLError(ctx, "Invalid url encoding: %s", encoded)
 	}
 
 	return p.preprocessURL(unescaped), format, nil
 }
 
-func (p *Parser) DecodeURL(parts []string) (string, string, error) {
+func (p *Parser) DecodeURL(
+	ctx context.Context,
+	parts []string,
+) (string, string, error) {
 	if len(parts) == 0 {
-		return "", "", newInvalidURLError("Image URL is empty")
+		return "", "", newInvalidURLError(ctx, "Image URL is empty")
 	}
 
 	if parts[0] == urlTokenPlain && len(parts) > 1 {
-		return p.decodePlainURL(parts[1:])
+		return p.decodePlainURL(ctx, parts[1:])
 	}
 
-	return p.decodeBase64URL(parts)
+	return p.decodeBase64URL(ctx, parts)
 }

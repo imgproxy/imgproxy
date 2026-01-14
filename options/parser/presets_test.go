@@ -78,7 +78,7 @@ func (s *PresetsTestSuite) TestValidatePresetsInvalid() {
 func (s *PresetsTestSuite) newParser(presets ...string) (*Parser, error) {
 	c := NewDefaultConfig()
 	c.Presets = presets
-	return New(&c)
+	return New(s.T().Context(), &c)
 }
 
 func TestPresets(t *testing.T) {

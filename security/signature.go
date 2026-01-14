@@ -1,6 +1,7 @@
 package security
 
 import (
+	"context"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
@@ -8,10 +9,10 @@ import (
 	"strings"
 )
 
-func (s *Checker) VerifySignature(signature, path string) error {
+func (s *Checker) VerifySignature(ctx context.Context, signature, path string) error {
 	if len(s.config.Keys) == 0 || len(s.config.Salts) == 0 {
 		if strings.Contains(signature, ":") {
-			return newMalformedSignatureError()
+			return newMalformedSignatureError(ctx)
 		}
 
 		return nil

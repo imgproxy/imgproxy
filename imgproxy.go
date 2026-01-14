@@ -106,7 +106,7 @@ func New(ctx context.Context, config *Config) (*Imgproxy, error) {
 		return nil, err
 	}
 
-	optionsParser, err := optionsparser.New(&config.OptionsParser)
+	optionsParser, err := optionsparser.New(ctx, &config.OptionsParser)
 	if err != nil {
 		return nil, err
 	}

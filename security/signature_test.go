@@ -38,19 +38,19 @@ func (s *SignatureTestSuite) SetupTest() {
 }
 
 func (s *SignatureTestSuite) TestVerifySignature() {
-	err := s.security().VerifySignature("oWaL7QoW5TsgbuiS9-5-DI8S3Ibbo1gdB2SteJh3a20", "asd")
+	err := s.security().VerifySignature(s.T().Context(), "oWaL7QoW5TsgbuiS9-5-DI8S3Ibbo1gdB2SteJh3a20", "asd")
 	s.Require().NoError(err)
 }
 
 func (s *SignatureTestSuite) TestVerifySignatureTruncated() {
 	s.config().SignatureSize = 8
 
-	err := s.security().VerifySignature("oWaL7QoW5Ts", "asd")
+	err := s.security().VerifySignature(s.T().Context(), "oWaL7QoW5Ts", "asd")
 	s.Require().NoError(err)
 }
 
 func (s *SignatureTestSuite) TestVerifySignatureInvalid() {
-	err := s.security().VerifySignature("oWaL7QoW5Ts", "asd")
+	err := s.security().VerifySignature(s.T().Context(), "oWaL7QoW5Ts", "asd")
 	s.Require().Error(err)
 }
 
@@ -58,23 +58,23 @@ func (s *SignatureTestSuite) TestVerifySignatureMultiplePairs() {
 	s.config().Keys = append(s.config().Keys, []byte("test-key2"))
 	s.config().Salts = append(s.config().Salts, []byte("test-salt2"))
 
-	err := s.security().VerifySignature("jYz1UZ7j1BCdSzH3pZhaYf0iuz0vusoOTdqJsUT6WXI", "asd")
+	err := s.security().VerifySignature(s.T().Context(), "jYz1UZ7j1BCdSzH3pZhaYf0iuz0vusoOTdqJsUT6WXI", "asd")
 	s.Require().NoError(err)
 
-	err = s.security().VerifySignature("oWaL7QoW5TsgbuiS9-5-DI8S3Ibbo1gdB2SteJh3a20", "asd")
+	err = s.security().VerifySignature(s.T().Context(), "oWaL7QoW5TsgbuiS9-5-DI8S3Ibbo1gdB2SteJh3a20", "asd")
 	s.Require().NoError(err)
 
-	err = s.security().VerifySignature("dtLwhdnPPis", "asd")
+	err = s.security().VerifySignature(s.T().Context(), "dtLwhdnPPis", "asd")
 	s.Require().Error(err)
 }
 
 func (s *SignatureTestSuite) TestVerifySignatureTrusted() {
 	s.config().TrustedSignatures = []string{"truested"}
 
-	err := s.security().VerifySignature("truested", "asd")
+	err := s.security().VerifySignature(s.T().Context(), "truested", "asd")
 	s.Require().NoError(err)
 
-	err = s.security().VerifySignature("untrusted", "asd")
+	err = s.security().VerifySignature(s.T().Context(), "untrusted", "asd")
 	s.Require().Error(err)
 }
 

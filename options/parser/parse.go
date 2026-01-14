@@ -1,6 +1,7 @@
 package optionsparser
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"log/slog"
@@ -16,16 +17,26 @@ import (
 )
 
 // ensureMaxArgs checks if the number of arguments is as expected
-func (p *Parser) ensureMaxArgs(name string, args []string, maxArgs int) error {
+func (p *Parser) ensureMaxArgs(
+	ctx context.Context,
+	name string,
+	args []string,
+	maxArgs int,
+) error {
 	if len(args) > maxArgs {
-		return newInvalidArgsError(name, args)
+		return newInvalidArgsError(ctx, name, args)
 	}
 	return nil
 }
 
 // parseBool parses a boolean option value and warns if the value is invalid
-func (p *Parser) parseBool(o *options.Options, key string, args ...string) error {
-	if err := p.ensureMaxArgs(key, args, 1); err != nil {
+func (p *Parser) parseBool(
+	ctx context.Context,
+	o *options.Options,
+	key string,
+	args ...string,
+) error {
+	if err := p.ensureMaxArgs(ctx, key, args, 1); err != nil {
 		return err
 	}
 
@@ -41,14 +52,19 @@ func (p *Parser) parseBool(o *options.Options, key string, args ...string) error
 }
 
 // parseFloat parses a float64 option value
-func (p *Parser) parseFloat(o *options.Options, key string, args ...string) error {
-	if err := p.ensureMaxArgs(key, args, 1); err != nil {
+func (p *Parser) parseFloat(
+	ctx context.Context,
+	o *options.Options,
+	key string,
+	args ...string,
+) error {
+	if err := p.ensureMaxArgs(ctx, key, args, 1); err != nil {
 		return err
 	}
 
 	f, err := strconv.ParseFloat(args[0], 64)
 	if err != nil {
-		return newInvalidArgsError(key, args)
+		return newInvalidArgsError(ctx, key, args)
 	}
 
 	o.Set(key, f)
@@ -57,14 +73,19 @@ func (p *Parser) parseFloat(o *options.Options, key string, args ...string) erro
 }
 
 // parsePositiveFloat parses a positive float64 option value
-func (p *Parser) parsePositiveFloat(o *options.Options, key string, args ...string) error {
-	if err := p.ensureMaxArgs(key, args, 1); err != nil {
+func (p *Parser) parsePositiveFloat(
+	ctx context.Context,
+	o *options.Options,
+	key string,
+	args ...string,
+) error {
+	if err := p.ensureMaxArgs(ctx, key, args, 1); err != nil {
 		return err
 	}
 
 	f, err := strconv.ParseFloat(args[0], 64)
 	if err != nil || f < 0 {
-		return newInvalidArgumentError(key, args[0], "positive number or 0")
+		return newInvalidArgumentError(ctx, key, args[0], "positive number or 0")
 	}
 
 	o.Set(key, f)
@@ -73,14 +94,19 @@ func (p *Parser) parsePositiveFloat(o *options.Options, key string, args ...stri
 }
 
 // parsePositiveNonZeroFloat parses a positive non-zero float64 option value
-func (p *Parser) parsePositiveNonZeroFloat(o *options.Options, key string, args ...string) error {
-	if err := p.ensureMaxArgs(key, args, 1); err != nil {
+func (p *Parser) parsePositiveNonZeroFloat(
+	ctx context.Context,
+	o *options.Options,
+	key string,
+	args ...string,
+) error {
+	if err := p.ensureMaxArgs(ctx, key, args, 1); err != nil {
 		return err
 	}
 
 	f, err := strconv.ParseFloat(args[0], 64)
 	if err != nil || f <= 0 {
-		return newInvalidArgumentError(key, args[0], "positive number")
+		return newInvalidArgumentError(ctx, key, args[0], "positive number")
 	}
 
 	o.Set(key, f)
@@ -89,14 +115,19 @@ func (p *Parser) parsePositiveNonZeroFloat(o *options.Options, key string, args 
 }
 
 // parseInt parses a positive integer option value
-func (p *Parser) parseInt(o *options.Options, key string, args ...string) error {
-	if err := p.ensureMaxArgs(key, args, 1); err != nil {
+func (p *Parser) parseInt(
+	ctx context.Context,
+	o *options.Options,
+	key string,
+	args ...string,
+) error {
+	if err := p.ensureMaxArgs(ctx, key, args, 1); err != nil {
 		return err
 	}
 
 	i, err := strconv.Atoi(args[0])
 	if err != nil {
-		return newInvalidArgumentError(key, args[0], "integer number")
+		return newInvalidArgumentError(ctx, key, args[0], "integer number")
 	}
 
 	o.Set(key, i)
@@ -105,14 +136,19 @@ func (p *Parser) parseInt(o *options.Options, key string, args ...string) error 
 }
 
 // parsePositiveNonZeroInt parses a positive non-zero integer option value
-func (p *Parser) parsePositiveNonZeroInt(o *options.Options, key string, args ...string) error {
-	if err := p.ensureMaxArgs(key, args, 1); err != nil {
+func (p *Parser) parsePositiveNonZeroInt(
+	ctx context.Context,
+	o *options.Options,
+	key string,
+	args ...string,
+) error {
+	if err := p.ensureMaxArgs(ctx, key, args, 1); err != nil {
 		return err
 	}
 
 	i, err := strconv.Atoi(args[0])
 	if err != nil || i <= 0 {
-		return newInvalidArgumentError(key, args[0], "positive number")
+		return newInvalidArgumentError(ctx, key, args[0], "positive number")
 	}
 
 	o.Set(key, i)
@@ -121,14 +157,19 @@ func (p *Parser) parsePositiveNonZeroInt(o *options.Options, key string, args ..
 }
 
 // parsePositiveInt parses a positive integer option value
-func (p *Parser) parsePositiveInt(o *options.Options, key string, args ...string) error {
-	if err := p.ensureMaxArgs(key, args, 1); err != nil {
+func (p *Parser) parsePositiveInt(
+	ctx context.Context,
+	o *options.Options,
+	key string,
+	args ...string,
+) error {
+	if err := p.ensureMaxArgs(ctx, key, args, 1); err != nil {
 		return err
 	}
 
 	i, err := strconv.Atoi(args[0])
 	if err != nil || i < 0 {
-		return newInvalidArgumentError(key, args[0], "positive number or 0")
+		return newInvalidArgumentError(ctx, key, args[0], "positive number or 0")
 	}
 
 	o.Set(key, i)
@@ -137,14 +178,19 @@ func (p *Parser) parsePositiveInt(o *options.Options, key string, args ...string
 }
 
 // parseQualityInt parses a quality integer option value (1-100)
-func (p *Parser) parseQualityInt(o *options.Options, key string, args ...string) error {
-	if err := p.ensureMaxArgs(key, args, 1); err != nil {
+func (p *Parser) parseQualityInt(
+	ctx context.Context,
+	o *options.Options,
+	key string,
+	args ...string,
+) error {
+	if err := p.ensureMaxArgs(ctx, key, args, 1); err != nil {
 		return err
 	}
 
 	i, err := strconv.Atoi(args[0])
 	if err != nil || i < 1 || i > 100 {
-		return newInvalidArgumentError(key, args[0], "number in range 1-100")
+		return newInvalidArgumentError(ctx, key, args[0], "number in range 1-100")
 	}
 
 	o.Set(key, i)
@@ -153,14 +199,19 @@ func (p *Parser) parseQualityInt(o *options.Options, key string, args ...string)
 }
 
 // parseOpacityFloat parses an opacity float option value (0-1)
-func (p *Parser) parseOpacityFloat(o *options.Options, key string, args ...string) error {
-	if err := p.ensureMaxArgs(key, args, 1); err != nil {
+func (p *Parser) parseOpacityFloat(
+	ctx context.Context,
+	o *options.Options,
+	key string,
+	args ...string,
+) error {
+	if err := p.ensureMaxArgs(ctx, key, args, 1); err != nil {
 		return err
 	}
 
 	f, err := strconv.ParseFloat(args[0], 64)
 	if err != nil || f < 0 || f > 1 {
-		return newInvalidArgumentError(key, args[0], "number in range 0-1")
+		return newInvalidArgumentError(ctx, key, args[0], "number in range 0-1")
 	}
 
 	o.Set(key, f)
@@ -169,14 +220,19 @@ func (p *Parser) parseOpacityFloat(o *options.Options, key string, args ...strin
 }
 
 // parseResolution parses a resolution option value in megapixels and stores it as pixels
-func (p *Parser) parseResolution(o *options.Options, key string, args ...string) error {
-	if err := p.ensureMaxArgs(key, args, 1); err != nil {
+func (p *Parser) parseResolution(
+	ctx context.Context,
+	o *options.Options,
+	key string,
+	args ...string,
+) error {
+	if err := p.ensureMaxArgs(ctx, key, args, 1); err != nil {
 		return err
 	}
 
 	f, err := strconv.ParseFloat(args[0], 64)
 	if err != nil || f < 0 {
-		return newInvalidArgumentError(key, args[0], "positive number or 0")
+		return newInvalidArgumentError(ctx, key, args[0], "positive number or 0")
 	}
 
 	// Resolution is defined as megapixels but stored as pixels
@@ -186,14 +242,19 @@ func (p *Parser) parseResolution(o *options.Options, key string, args ...string)
 }
 
 // parseBase64String parses a base64-encoded string option value
-func (p *Parser) parseBase64String(o *options.Options, key string, args ...string) error {
-	if err := p.ensureMaxArgs(key, args, 1); err != nil {
+func (p *Parser) parseBase64String(
+	ctx context.Context,
+	o *options.Options,
+	key string,
+	args ...string,
+) error {
+	if err := p.ensureMaxArgs(ctx, key, args, 1); err != nil {
 		return err
 	}
 
 	b, err := base64.RawURLEncoding.DecodeString(strings.TrimRight(args[0], "="))
 	if err != nil {
-		return newInvalidArgumentError(key, args[0], "URL-safe base64-encoded string")
+		return newInvalidArgumentError(ctx, key, args[0], "URL-safe base64-encoded string")
 	}
 
 	o.Set(key, string(b))
@@ -202,14 +263,19 @@ func (p *Parser) parseBase64String(o *options.Options, key string, args ...strin
 }
 
 // parseHexRGBColor parses a hex-encoded RGB color option value
-func (p *Parser) parseHexRGBColor(o *options.Options, key string, args ...string) error {
-	if err := p.ensureMaxArgs(key, args, 1); err != nil {
+func (p *Parser) parseHexRGBColor(
+	ctx context.Context,
+	o *options.Options,
+	key string,
+	args ...string,
+) error {
+	if err := p.ensureMaxArgs(ctx, key, args, 1); err != nil {
 		return err
 	}
 
 	c, err := color.RGBFromHex(args[0])
 	if err != nil {
-		return newInvalidArgumentError(key, args[0], "hex-encoded color")
+		return newInvalidArgumentError(ctx, key, args[0], "hex-encoded color")
 	}
 
 	o.Set(key, c)
@@ -219,19 +285,20 @@ func (p *Parser) parseHexRGBColor(o *options.Options, key string, args ...string
 
 // parseFromMap parses an option value from a map of allowed values
 func parseFromMap[T comparable](
+	ctx context.Context,
 	p *Parser,
 	o *options.Options,
 	key string,
 	m map[string]T,
 	args ...string,
 ) error {
-	if err := p.ensureMaxArgs(key, args, 1); err != nil {
+	if err := p.ensureMaxArgs(ctx, key, args, 1); err != nil {
 		return err
 	}
 
 	v, ok := m[args[0]]
 	if !ok {
-		return newInvalidArgumentError(key, args[0], slices.Collect(maps.Keys(m))...)
+		return newInvalidArgumentError(ctx, key, args[0], slices.Collect(maps.Keys(m))...)
 	}
 
 	o.Set(key, v)
@@ -240,12 +307,13 @@ func parseFromMap[T comparable](
 }
 
 func (p *Parser) parseGravityType(
+	ctx context.Context,
 	o *options.Options,
 	key string,
 	allowedTypes []processing.GravityType,
 	args ...string,
 ) (processing.GravityType, error) {
-	if err := p.ensureMaxArgs(key, args, 1); err != nil {
+	if err := p.ensureMaxArgs(ctx, key, args, 1); err != nil {
 		return processing.GravityUnknown, err
 	}
 
@@ -255,7 +323,7 @@ func (p *Parser) parseGravityType(
 		for i, at := range allowedTypes {
 			types[i] = at.String()
 		}
-		return processing.GravityUnknown, newInvalidArgumentError(key, args[0], types...)
+		return processing.GravityUnknown, newInvalidArgumentError(ctx, key, args[0], types...)
 	}
 
 	o.Set(key, gType)
@@ -263,11 +331,15 @@ func (p *Parser) parseGravityType(
 	return gType, nil
 }
 
-func (p *Parser) isGravityOffsetValid(gravity processing.GravityType, offset float64) bool {
+func (p *Parser) isGravityOffsetValid(
+	gravity processing.GravityType,
+	offset float64,
+) bool {
 	return gravity != processing.GravityFocusPoint || (offset >= 0 && offset <= 1)
 }
 
 func (p *Parser) parseGravity(
+	ctx context.Context,
 	o *options.Options,
 	key string,
 	allowedTypes []processing.GravityType,
@@ -279,7 +351,7 @@ func (p *Parser) parseGravity(
 	keyXOffset := key + keys.SuffixXOffset
 	keyYOffset := key + keys.SuffixYOffset
 
-	gType, err := p.parseGravityType(o, keyType, allowedTypes, args[0])
+	gType, err := p.parseGravityType(ctx, o, keyType, allowedTypes, args[0])
 	if err != nil {
 		return err
 	}
@@ -287,27 +359,27 @@ func (p *Parser) parseGravity(
 	switch gType {
 	case processing.GravitySmart:
 		if nArgs > 1 {
-			return newInvalidArgsError(key, args)
+			return newInvalidArgsError(ctx, key, args)
 		}
 		o.Delete(keyXOffset)
 		o.Delete(keyYOffset)
 
 	case processing.GravityFocusPoint:
 		if nArgs != 3 {
-			return newInvalidArgsError(key, args)
+			return newInvalidArgsError(ctx, key, args)
 		}
 		fallthrough
 
 	default:
 		if nArgs > 3 {
-			return newInvalidArgsError(key, args)
+			return newInvalidArgsError(ctx, key, args)
 		}
 
 		if nArgs > 1 {
 			if x, err := strconv.ParseFloat(args[1], 64); err == nil && p.isGravityOffsetValid(gType, x) {
 				o.Set(keyXOffset, x)
 			} else {
-				return newInvalidArgumentError(keyXOffset, args[1])
+				return newInvalidArgumentError(ctx, keyXOffset, args[1])
 			}
 		}
 
@@ -315,7 +387,7 @@ func (p *Parser) parseGravity(
 			if y, err := strconv.ParseFloat(args[2], 64); err == nil && p.isGravityOffsetValid(gType, y) {
 				o.Set(keyYOffset, y)
 			} else {
-				return newInvalidArgumentError(keyYOffset, args[2])
+				return newInvalidArgumentError(ctx, keyYOffset, args[2])
 			}
 		}
 	}
@@ -323,17 +395,22 @@ func (p *Parser) parseGravity(
 	return nil
 }
 
-func (p *Parser) parseExtend(o *options.Options, key string, args []string) error {
-	if err := p.ensureMaxArgs(key, args, 4); err != nil {
+func (p *Parser) parseExtend(
+	ctx context.Context,
+	o *options.Options,
+	key string,
+	args []string,
+) error {
+	if err := p.ensureMaxArgs(ctx, key, args, 4); err != nil {
 		return err
 	}
 
-	if err := p.parseBool(o, key+keys.SuffixEnabled, args[0]); err != nil {
+	if err := p.parseBool(ctx, o, key+keys.SuffixEnabled, args[0]); err != nil {
 		return err
 	}
 
 	if len(args) > 1 {
-		return p.parseGravity(o, key+keys.SuffixGravity, processing.ExtendGravityTypes, args[1:]...)
+		return p.parseGravity(ctx, o, key+keys.SuffixGravity, processing.ExtendGravityTypes, args[1:]...)
 	}
 
 	return nil

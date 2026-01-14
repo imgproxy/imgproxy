@@ -1,6 +1,8 @@
 package errctx
 
-import "reflect"
+import (
+	"reflect"
+)
 
 // Error is an interface for errors that carry additional context information.
 type Error interface {

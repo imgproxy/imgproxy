@@ -1,6 +1,7 @@
 package optionsparser
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -60,10 +61,10 @@ func (p *Parser) parsePreset(presetStr string) error {
 }
 
 // validatePresets validates all presets by applying them to a new Options instance
-func (p *Parser) validatePresets() error {
+func (p *Parser) validatePresets(ctx context.Context) error {
 	for name, opts := range p.presets {
 		o := options.New()
-		if err := p.applyURLOptions(o, opts, true, name); err != nil {
+		if err := p.applyURLOptions(ctx, o, opts, true, name); err != nil {
 			return fmt.Errorf("error in preset `%s`: %w", name, err)
 		}
 	}

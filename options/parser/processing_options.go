@@ -1,6 +1,7 @@
 package optionsparser
 
 import (
+	"context"
 	"slices"
 	"strings"
 
@@ -13,6 +14,7 @@ import (
 )
 
 func (p *Parser) applyURLOption(
+	ctx context.Context,
 	o *options.Options,
 	name string,
 	args []string,
@@ -20,103 +22,104 @@ func (p *Parser) applyURLOption(
 ) error {
 	switch name {
 	case "resize", "rs":
-		return p.applyResizeOption(o, args)
+		return p.applyResizeOption(ctx, o, args)
 	case "size", "s":
-		return p.applySizeOption(o, args)
+		return p.applySizeOption(ctx, o, args)
 	case "resizing_type", "rt":
-		return p.applyResizingTypeOption(o, args)
+		return p.applyResizingTypeOption(ctx, o, args)
 	case "width", "w":
-		return p.applyWidthOption(o, args)
+		return p.applyWidthOption(ctx, o, args)
 	case "height", "h":
-		return p.applyHeightOption(o, args)
+		return p.applyHeightOption(ctx, o, args)
 	case "min-width", "mw":
-		return p.applyMinWidthOption(o, args)
+		return p.applyMinWidthOption(ctx, o, args)
 	case "min-height", "mh":
-		return p.applyMinHeightOption(o, args)
+		return p.applyMinHeightOption(ctx, o, args)
 	case "zoom", "z":
-		return p.applyZoomOption(o, args)
+		return p.applyZoomOption(ctx, o, args)
 	case "dpr":
-		return p.applyDprOption(o, args)
+		return p.applyDprOption(ctx, o, args)
 	case "enlarge", "el":
-		return p.applyEnlargeOption(o, args)
+		return p.applyEnlargeOption(ctx, o, args)
 	case "extend", "ex":
-		return p.applyExtendOption(o, args)
+		return p.applyExtendOption(ctx, o, args)
 	case "extend_aspect_ratio", "extend_ar", "exar":
-		return p.applyExtendAspectRatioOption(o, args)
+		return p.applyExtendAspectRatioOption(ctx, o, args)
 	case "gravity", "g":
-		return p.applyGravityOption(o, args)
+		return p.applyGravityOption(ctx, o, args)
 	case "crop", "c":
-		return p.applyCropOption(o, args)
+		return p.applyCropOption(ctx, o, args)
 	case "trim", "t":
-		return p.applyTrimOption(o, args)
+		return p.applyTrimOption(ctx, o, args)
 	case "padding", "pd":
-		return p.applyPaddingOption(o, args)
+		return p.applyPaddingOption(ctx, o, args)
 	case "auto_rotate", "ar":
-		return p.applyAutoRotateOption(o, args)
+		return p.applyAutoRotateOption(ctx, o, args)
 	case "rotate", "rot":
-		return p.applyRotateOption(o, args)
+		return p.applyRotateOption(ctx, o, args)
 	case "flip", "fl":
-		return p.applyFlipOption(o, args)
+		return p.applyFlipOption(ctx, o, args)
 	case "background", "bg":
-		return p.applyBackgroundOption(o, args)
+		return p.applyBackgroundOption(ctx, o, args)
 	case "blur", "bl":
-		return p.applyBlurOption(o, args)
+		return p.applyBlurOption(ctx, o, args)
 	case "sharpen", "sh":
-		return p.applySharpenOption(o, args)
+		return p.applySharpenOption(ctx, o, args)
 	case "pixelate", "pix":
-		return p.applyPixelateOption(o, args)
+		return p.applyPixelateOption(ctx, o, args)
 	case "watermark", "wm":
-		return p.applyWatermarkOption(o, args)
+		return p.applyWatermarkOption(ctx, o, args)
 	case "strip_metadata", "sm":
-		return p.applyStripMetadataOption(o.Main(), args)
+		return p.applyStripMetadataOption(ctx, o.Main(), args)
 	case "keep_copyright", "kcr":
-		return p.applyKeepCopyrightOption(o.Main(), args)
+		return p.applyKeepCopyrightOption(ctx, o.Main(), args)
 	case "strip_color_profile", "scp":
-		return p.applyStripColorProfileOption(o.Main(), args)
+		return p.applyStripColorProfileOption(ctx, o.Main(), args)
 	case "enforce_thumbnail", "eth":
-		return p.applyEnforceThumbnailOption(o.Main(), args)
+		return p.applyEnforceThumbnailOption(ctx, o.Main(), args)
 	// Saving options
 	case "quality", "q":
-		return p.applyQualityOption(o.Main(), args)
+		return p.applyQualityOption(ctx, o.Main(), args)
 	case "format_quality", "fq":
-		return p.applyFormatQualityOption(o.Main(), args)
+		return p.applyFormatQualityOption(ctx, o.Main(), args)
 	case "max_bytes", "mb":
-		return p.applyMaxBytesOption(o.Main(), args)
+		return p.applyMaxBytesOption(ctx, o.Main(), args)
 	case "format", "f", "ext":
-		return p.applyFormatOption(o.Main(), args)
+		return p.applyFormatOption(ctx, o.Main(), args)
 	// Handling options
 	case "skip_processing", "skp":
-		return p.applySkipProcessingFormatsOption(o.Main(), args)
+		return p.applySkipProcessingFormatsOption(ctx, o.Main(), args)
 	case "raw":
-		return p.applyRawOption(o.Main(), args)
+		return p.applyRawOption(ctx, o.Main(), args)
 	case "cachebuster", "cb":
-		return p.applyCacheBusterOption(o.Main(), args)
+		return p.applyCacheBusterOption(ctx, o.Main(), args)
 	case "expires", "exp":
-		return p.applyExpiresOption(o.Main(), args)
+		return p.applyExpiresOption(ctx, o.Main(), args)
 	case "filename", "fn":
-		return p.applyFilenameOption(o.Main(), args)
+		return p.applyFilenameOption(ctx, o.Main(), args)
 	case "return_attachment", "att":
-		return p.applyReturnAttachmentOption(o.Main(), args)
+		return p.applyReturnAttachmentOption(ctx, o.Main(), args)
 	// Presets
 	case "preset", "pr":
-		return p.applyPresetOption(o, args, usedPresets...)
+		return p.applyPresetOption(ctx, o, args, usedPresets...)
 	// Security
 	case "max_src_resolution", "msr":
-		return p.applyMaxSrcResolutionOption(o, args)
+		return p.applyMaxSrcResolutionOption(ctx, o, args)
 	case "max_src_file_size", "msfs":
-		return p.applyMaxSrcFileSizeOption(o, args)
+		return p.applyMaxSrcFileSizeOption(ctx, o, args)
 	case "max_animation_frames", "maf":
-		return p.applyMaxAnimationFramesOption(o.Main(), args)
+		return p.applyMaxAnimationFramesOption(ctx, o.Main(), args)
 	case "max_animation_frame_resolution", "mafr":
-		return p.applyMaxAnimationFrameResolutionOption(o.Main(), args)
+		return p.applyMaxAnimationFrameResolutionOption(ctx, o.Main(), args)
 	case "max_result_dimension", "mrd":
-		return p.applyMaxResultDimensionOption(o.Main(), args)
+		return p.applyMaxResultDimensionOption(ctx, o.Main(), args)
 	}
 
-	return newUnknownOptionError("processing", name)
+	return newUnknownOptionError(ctx, "processing", name)
 }
 
 func (p *Parser) applyURLOptions(
+	ctx context.Context,
 	o *options.Options,
 	options urlOptions,
 	allowAll bool,
@@ -126,10 +129,10 @@ func (p *Parser) applyURLOptions(
 
 	for _, opt := range options {
 		if !allowAll && !slices.Contains(p.config.AllowedProcessingOptions, opt.Name) {
-			return newForbiddenOptionError("processing", opt.Name)
+			return newForbiddenOptionError(ctx, "processing", opt.Name)
 		}
 
-		if err := p.applyURLOption(o, opt.Name, opt.Args, usedPresets...); err != nil {
+		if err := p.applyURLOption(ctx, o, opt.Name, opt.Args, usedPresets...); err != nil {
 			return err
 		}
 	}
@@ -138,6 +141,7 @@ func (p *Parser) applyURLOptions(
 }
 
 func (p *Parser) defaultProcessingOptions(
+	ctx context.Context,
 	features *clientfeatures.Features,
 ) (*options.Options, error) {
 	o := options.New()
@@ -180,7 +184,7 @@ func (p *Parser) defaultProcessingOptions(
 	}
 
 	if _, ok := p.presets["default"]; ok {
-		if err := p.applyPresetOption(o, []string{"default"}); err != nil {
+		if err := p.applyPresetOption(ctx, o, []string{"default"}); err != nil {
 			return o, err
 		}
 	}
@@ -190,19 +194,20 @@ func (p *Parser) defaultProcessingOptions(
 
 // ParsePath parses the given request path and returns the processing options and image URL
 func (p *Parser) ParsePath(
+	ctx context.Context,
 	path string,
 	features *clientfeatures.Features,
 ) (o *options.Options, imageURL string, err error) {
 	if path == "" || path == "/" {
-		return nil, "", newInvalidURLError("invalid path: %s", path)
+		return nil, "", newInvalidURLError(ctx, "invalid path: %s", path)
 	}
 
 	parts := strings.Split(strings.TrimPrefix(path, "/"), "/")
 
 	if p.config.OnlyPresets {
-		o, imageURL, err = p.parsePathPresets(parts, features)
+		o, imageURL, err = p.parsePathPresets(ctx, parts, features)
 	} else {
-		o, imageURL, err = p.parsePathOptions(parts, features)
+		o, imageURL, err = p.parsePathOptions(ctx, parts, features)
 	}
 
 	if err != nil {
@@ -214,31 +219,32 @@ func (p *Parser) ParsePath(
 
 // parsePathOptions parses processing options from the URL path
 func (p *Parser) parsePathOptions(
+	ctx context.Context,
 	parts []string,
 	features *clientfeatures.Features,
 ) (*options.Options, string, error) {
 	if _, ok := processing.ResizeTypes[parts[0]]; ok {
-		return nil, "", newInvalidURLError("It looks like you're using the deprecated basic URL format")
+		return nil, "", newInvalidURLError(ctx, "It looks like you're using the deprecated basic URL format")
 	}
 
-	o, err := p.defaultProcessingOptions(features)
+	o, err := p.defaultProcessingOptions(ctx, features)
 	if err != nil {
 		return nil, "", err
 	}
 
 	urlOpts, urlParts := p.parseURLOptions(parts)
 
-	if err = p.applyURLOptions(o, urlOpts, false); err != nil {
+	if err = p.applyURLOptions(ctx, o, urlOpts, false); err != nil {
 		return nil, "", err
 	}
 
-	url, extension, err := p.DecodeURL(urlParts)
+	url, extension, err := p.DecodeURL(ctx, urlParts)
 	if err != nil {
 		return nil, "", err
 	}
 
 	if !options.Get(o, keys.Raw, false) && len(extension) > 0 {
-		if err = p.applyFormatOption(o, []string{extension}); err != nil {
+		if err = p.applyFormatOption(ctx, o, []string{extension}); err != nil {
 			return nil, "", err
 		}
 	}
@@ -248,10 +254,11 @@ func (p *Parser) parsePathOptions(
 
 // parsePathPresets parses presets from the URL path
 func (p *Parser) parsePathPresets(
+	ctx context.Context,
 	parts []string,
 	features *clientfeatures.Features,
 ) (*options.Options, string, error) {
-	o, err := p.defaultProcessingOptions(features)
+	o, err := p.defaultProcessingOptions(ctx, features)
 	if err != nil {
 		return nil, "", err
 	}
@@ -259,17 +266,17 @@ func (p *Parser) parsePathPresets(
 	presets := strings.Split(parts[0], p.config.ArgumentsSeparator)
 	urlParts := parts[1:]
 
-	if err = p.applyPresetOption(o, presets); err != nil {
+	if err = p.applyPresetOption(ctx, o, presets); err != nil {
 		return nil, "", err
 	}
 
-	url, extension, err := p.DecodeURL(urlParts)
+	url, extension, err := p.DecodeURL(ctx, urlParts)
 	if err != nil {
 		return nil, "", err
 	}
 
 	if !options.Get(o, keys.Raw, false) && len(extension) > 0 {
-		if err = p.applyFormatOption(o, []string{extension}); err != nil {
+		if err = p.applyFormatOption(ctx, o, []string{extension}); err != nil {
 			return nil, "", err
 		}
 	}

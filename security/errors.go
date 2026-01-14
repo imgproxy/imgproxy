@@ -1,14 +1,11 @@
 package security
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
 	"github.com/imgproxy/imgproxy/v3/errctx"
-)
-
-const (
-	processingDocsUrl = "https://imgproxy.net/docs/processing/"
 )
 
 type (
@@ -24,11 +21,11 @@ func newSignatureError(msg string) error {
 		errctx.WithStatusCode(http.StatusForbidden),
 		errctx.WithPublicMessage("Forbidden"),
 		errctx.WithShouldReport(false),
-		errctx.WithDocsURL(processingDocsUrl),
+		errctx.WithDocsURL("https://docs.imgproxy.net/usage/signing_url"),
 	)}
 }
 
-func newMalformedSignatureError() error {
+func newMalformedSignatureError(ctx context.Context) error {
 	msg := "The signature appears to be a processing option. The signature section should always be present in the URL."
 
 	return SignatureError{errctx.NewTextError(
@@ -37,7 +34,7 @@ func newMalformedSignatureError() error {
 		errctx.WithStatusCode(http.StatusForbidden),
 		errctx.WithPublicMessage(msg),
 		errctx.WithShouldReport(false),
-		errctx.WithDocsURL(processingDocsUrl),
+		errctx.WithDocsURL(errctx.DocsBaseURL(ctx, "https://docs.imgproxy.net/usage/processing")),
 	)}
 }
 

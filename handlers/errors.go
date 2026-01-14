@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -19,6 +20,8 @@ const (
 	ErrCategoryProcessing    = "processing"
 	ErrCategoryIO            = "IO"
 	ErrCategoryConfig        = "config(tmp)" // NOTE: THIS IS TEMPORARY
+
+	defaultDocsUrl = "https://docs.imgproxy.net/usage/processing"
 )
 
 type (
@@ -35,19 +38,21 @@ func NewResponseWriteError(cause error) errctx.Error {
 	)}
 }
 
-func newInvalidURLErrorf(status int, format string, args ...any) errctx.Error {
+func newInvalidURLErrorf(docsUrl string, status int, format string, args ...any) errctx.Error {
 	return InvalidURLError{errctx.NewTextError(
 		fmt.Sprintf(format, args...),
 		2,
 		errctx.WithStatusCode(status),
 		errctx.WithPublicMessage("Invalid URL"),
 		errctx.WithShouldReport(false),
+		errctx.WithDocsURL(docsUrl),
 	)}
 }
 
 // NewInvalidPathError creates "invalid path" error
-func NewInvalidPathError(path string) errctx.Error {
+func NewInvalidPathError(ctx context.Context, path string) errctx.Error {
 	return newInvalidURLErrorf(
+		errctx.DocsBaseURL(ctx, defaultDocsUrl),
 		http.StatusNotFound,
 		"Invalid path: %s", path,
 	)
@@ -56,14 +61,16 @@ func NewInvalidPathError(path string) errctx.Error {
 // NewCantSaveError creates "resulting image not supported" error
 func NewCantSaveError(format imagetype.Type) errctx.Error {
 	return newInvalidURLErrorf(
+		"https://docs.imgproxy.net/image_formats_support",
 		http.StatusUnprocessableEntity,
 		"Resulting image format is not supported: %s", format,
 	)
 }
 
 // NewCantLoadError creates "source image not supported" error
-func NewCantLoadError(format imagetype.Type) errctx.Error {
+func NewCantLoadError(ctx context.Context, format imagetype.Type) errctx.Error {
 	return newInvalidURLErrorf(
+		"https://docs.imgproxy.net/image_formats_support",
 		http.StatusUnprocessableEntity,
 		"Source image format is not supported: %s", format,
 	)

@@ -38,7 +38,7 @@ func (s *ProcessingOptionsTestSuite) SetupSuite() {
 	s.parser, _ = testutil.NewLazySuiteObj(
 		s,
 		func() (*Parser, error) {
-			return New(s.config())
+			return New(s.T().Context(), s.config())
 		},
 	)
 }
@@ -50,7 +50,7 @@ func (s *ProcessingOptionsTestSuite) SetupSubTest() {
 func (s *ProcessingOptionsTestSuite) TestParseBase64URL() {
 	originURL := "http://images.dev/lorem/ipsum.jpg?param=value"
 	path := fmt.Sprintf("/size:100:100/%s.png", base64.RawURLEncoding.EncodeToString([]byte(originURL)))
-	o, imageURL, err := s.parser().ParsePath(path, nil)
+	o, imageURL, err := s.parser().ParsePath(s.T().Context(), path, nil)
 
 	s.Require().NoError(err)
 	s.Require().Equal(originURL, imageURL)
@@ -62,7 +62,7 @@ func (s *ProcessingOptionsTestSuite) TestParseBase64URLWithFilename() {
 
 	originURL := "http://images.dev/lorem/ipsum.jpg?param=value"
 	path := fmt.Sprintf("/size:100:100/%s.png/puppy.jpg", base64.RawURLEncoding.EncodeToString([]byte(originURL)))
-	o, imageURL, err := s.parser().ParsePath(path, nil)
+	o, imageURL, err := s.parser().ParsePath(s.T().Context(), path, nil)
 
 	s.Require().NoError(err)
 	s.Require().Equal(originURL, imageURL)
@@ -72,7 +72,7 @@ func (s *ProcessingOptionsTestSuite) TestParseBase64URLWithFilename() {
 func (s *ProcessingOptionsTestSuite) TestParseBase64URLWithoutExtension() {
 	originURL := "http://images.dev/lorem/ipsum.jpg?param=value"
 	path := fmt.Sprintf("/size:100:100/%s", base64.RawURLEncoding.EncodeToString([]byte(originURL)))
-	o, imageURL, err := s.parser().ParsePath(path, nil)
+	o, imageURL, err := s.parser().ParsePath(s.T().Context(), path, nil)
 
 	s.Require().NoError(err)
 	s.Require().Equal(originURL, imageURL)
@@ -84,7 +84,7 @@ func (s *ProcessingOptionsTestSuite) TestParseBase64URLWithBase() {
 
 	originURL := "lorem/ipsum.jpg?param=value"
 	path := fmt.Sprintf("/size:100:100/%s.png", base64.RawURLEncoding.EncodeToString([]byte(originURL)))
-	o, imageURL, err := s.parser().ParsePath(path, nil)
+	o, imageURL, err := s.parser().ParsePath(s.T().Context(), path, nil)
 
 	s.Require().NoError(err)
 	s.Require().Equal(fmt.Sprintf("%s%s", s.config().BaseURL, originURL), imageURL)
@@ -99,7 +99,7 @@ func (s *ProcessingOptionsTestSuite) TestParseBase64URLWithReplacement() {
 
 	originURL := "test://lorem/ipsum.jpg?param=value"
 	path := fmt.Sprintf("/size:100:100/%s.png", base64.RawURLEncoding.EncodeToString([]byte(originURL)))
-	o, imageURL, err := s.parser().ParsePath(path, nil)
+	o, imageURL, err := s.parser().ParsePath(s.T().Context(), path, nil)
 
 	s.Require().NoError(err)
 	s.Require().Equal("http://images.dev/lorem/dolor/ipsum.jpg?param=value", imageURL)
@@ -109,7 +109,7 @@ func (s *ProcessingOptionsTestSuite) TestParseBase64URLWithReplacement() {
 func (s *ProcessingOptionsTestSuite) TestParsePlainURL() {
 	originURL := "http://images.dev/lorem/ipsum.jpg"
 	path := fmt.Sprintf("/size:100:100/plain/%s@png", originURL)
-	o, imageURL, err := s.parser().ParsePath(path, nil)
+	o, imageURL, err := s.parser().ParsePath(s.T().Context(), path, nil)
 
 	s.Require().NoError(err)
 	s.Require().Equal(originURL, imageURL)
@@ -120,7 +120,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePlainURLWithoutExtension() {
 	originURL := "http://images.dev/lorem/ipsum.jpg"
 	path := fmt.Sprintf("/size:100:100/plain/%s", originURL)
 
-	o, imageURL, err := s.parser().ParsePath(path, nil)
+	o, imageURL, err := s.parser().ParsePath(s.T().Context(), path, nil)
 
 	s.Require().NoError(err)
 	s.Require().Equal(originURL, imageURL)
@@ -129,7 +129,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePlainURLWithoutExtension() {
 func (s *ProcessingOptionsTestSuite) TestParsePlainURLEscaped() {
 	originURL := "http://images.dev/lorem/ipsum.jpg?param=value"
 	path := fmt.Sprintf("/size:100:100/plain/%s@png", url.PathEscape(originURL))
-	o, imageURL, err := s.parser().ParsePath(path, nil)
+	o, imageURL, err := s.parser().ParsePath(s.T().Context(), path, nil)
 
 	s.Require().NoError(err)
 	s.Require().Equal(originURL, imageURL)
@@ -141,7 +141,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePlainURLWithBase() {
 
 	originURL := "lorem/ipsum.jpg"
 	path := fmt.Sprintf("/size:100:100/plain/%s@png", originURL)
-	o, imageURL, err := s.parser().ParsePath(path, nil)
+	o, imageURL, err := s.parser().ParsePath(s.T().Context(), path, nil)
 
 	s.Require().NoError(err)
 	s.Require().Equal(fmt.Sprintf("%s%s", s.config().BaseURL, originURL), imageURL)
@@ -156,7 +156,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePlainURLWithReplacement() {
 
 	originURL := "test://lorem/ipsum.jpg"
 	path := fmt.Sprintf("/size:100:100/plain/%s@png", originURL)
-	o, imageURL, err := s.parser().ParsePath(path, nil)
+	o, imageURL, err := s.parser().ParsePath(s.T().Context(), path, nil)
 
 	s.Require().NoError(err)
 	s.Require().Equal("http://images.dev/lorem/dolor/ipsum.jpg", imageURL)
@@ -168,7 +168,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePlainURLEscapedWithBase() {
 
 	originURL := "lorem/ipsum.jpg?param=value"
 	path := fmt.Sprintf("/size:100:100/plain/%s@png", url.PathEscape(originURL))
-	o, imageURL, err := s.parser().ParsePath(path, nil)
+	o, imageURL, err := s.parser().ParsePath(s.T().Context(), path, nil)
 
 	s.Require().NoError(err)
 	s.Require().Equal(fmt.Sprintf("%s%s", s.config().BaseURL, originURL), imageURL)
@@ -179,7 +179,7 @@ func (s *ProcessingOptionsTestSuite) TestParseWithArgumentsSeparator() {
 	s.config().ArgumentsSeparator = ","
 
 	path := "/size,100,100,1/plain/http://images.dev/lorem/ipsum.jpg"
-	o, _, err := s.parser().ParsePath(path, nil)
+	o, _, err := s.parser().ParsePath(s.T().Context(), path, nil)
 
 	s.Require().NoError(err)
 
@@ -190,7 +190,7 @@ func (s *ProcessingOptionsTestSuite) TestParseWithArgumentsSeparator() {
 
 func (s *ProcessingOptionsTestSuite) TestParsePathFormat() {
 	path := "/format:webp/plain/http://images.dev/lorem/ipsum.jpg"
-	o, _, err := s.parser().ParsePath(path, nil)
+	o, _, err := s.parser().ParsePath(s.T().Context(), path, nil)
 
 	s.Require().NoError(err)
 
@@ -199,7 +199,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathFormat() {
 
 func (s *ProcessingOptionsTestSuite) TestParsePathResize() {
 	path := "/resize:fill:100:200:1/plain/http://images.dev/lorem/ipsum.jpg"
-	o, _, err := s.parser().ParsePath(path, nil)
+	o, _, err := s.parser().ParsePath(s.T().Context(), path, nil)
 
 	s.Require().NoError(err)
 
@@ -211,7 +211,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathResize() {
 
 func (s *ProcessingOptionsTestSuite) TestParsePathResizingType() {
 	path := "/resizing_type:fill/plain/http://images.dev/lorem/ipsum.jpg"
-	o, _, err := s.parser().ParsePath(path, nil)
+	o, _, err := s.parser().ParsePath(s.T().Context(), path, nil)
 
 	s.Require().NoError(err)
 
@@ -220,7 +220,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathResizingType() {
 
 func (s *ProcessingOptionsTestSuite) TestParsePathSize() {
 	path := "/size:100:200:1/plain/http://images.dev/lorem/ipsum.jpg"
-	o, _, err := s.parser().ParsePath(path, nil)
+	o, _, err := s.parser().ParsePath(s.T().Context(), path, nil)
 
 	s.Require().NoError(err)
 
@@ -231,7 +231,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathSize() {
 
 func (s *ProcessingOptionsTestSuite) TestParsePathWidth() {
 	path := "/width:100/plain/http://images.dev/lorem/ipsum.jpg"
-	o, _, err := s.parser().ParsePath(path, nil)
+	o, _, err := s.parser().ParsePath(s.T().Context(), path, nil)
 
 	s.Require().NoError(err)
 
@@ -240,7 +240,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathWidth() {
 
 func (s *ProcessingOptionsTestSuite) TestParsePathHeight() {
 	path := "/height:100/plain/http://images.dev/lorem/ipsum.jpg"
-	o, _, err := s.parser().ParsePath(path, nil)
+	o, _, err := s.parser().ParsePath(s.T().Context(), path, nil)
 
 	s.Require().NoError(err)
 
@@ -249,7 +249,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathHeight() {
 
 func (s *ProcessingOptionsTestSuite) TestParsePathEnlarge() {
 	path := "/enlarge:1/plain/http://images.dev/lorem/ipsum.jpg"
-	o, _, err := s.parser().ParsePath(path, nil)
+	o, _, err := s.parser().ParsePath(s.T().Context(), path, nil)
 
 	s.Require().NoError(err)
 
@@ -258,7 +258,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathEnlarge() {
 
 func (s *ProcessingOptionsTestSuite) TestParsePathExtend() {
 	path := "/extend:1:so:10:20/plain/http://images.dev/lorem/ipsum.jpg"
-	o, _, err := s.parser().ParsePath(path, nil)
+	o, _, err := s.parser().ParsePath(s.T().Context(), path, nil)
 
 	s.Require().NoError(err)
 
@@ -273,21 +273,21 @@ func (s *ProcessingOptionsTestSuite) TestParsePathExtend() {
 
 func (s *ProcessingOptionsTestSuite) TestParsePathExtendSmartGravity() {
 	path := "/extend:1:sm/plain/http://images.dev/lorem/ipsum.jpg"
-	_, _, err := s.parser().ParsePath(path, nil)
+	_, _, err := s.parser().ParsePath(s.T().Context(), path, nil)
 
 	s.Require().Error(err)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathExtendReplicateGravity() {
 	path := "/extend:1:re/plain/http://images.dev/lorem/ipsum.jpg"
-	_, _, err := s.parser().ParsePath(path, nil)
+	_, _, err := s.parser().ParsePath(s.T().Context(), path, nil)
 
 	s.Require().Error(err)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathGravity() {
 	path := "/gravity:soea/plain/http://images.dev/lorem/ipsum.jpg"
-	o, _, err := s.parser().ParsePath(path, nil)
+	o, _, err := s.parser().ParsePath(s.T().Context(), path, nil)
 
 	s.Require().NoError(err)
 
@@ -299,7 +299,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathGravity() {
 
 func (s *ProcessingOptionsTestSuite) TestParsePathGravityFocusPoint() {
 	path := "/gravity:fp:0.5:0.75/plain/http://images.dev/lorem/ipsum.jpg"
-	o, _, err := s.parser().ParsePath(path, nil)
+	o, _, err := s.parser().ParsePath(s.T().Context(), path, nil)
 
 	s.Require().NoError(err)
 
@@ -310,14 +310,14 @@ func (s *ProcessingOptionsTestSuite) TestParsePathGravityFocusPoint() {
 
 func (s *ProcessingOptionsTestSuite) TestParsePathGravityReplicate() {
 	path := "/gravity:re/plain/http://images.dev/lorem/ipsum.jpg"
-	_, _, err := s.parser().ParsePath(path, nil)
+	_, _, err := s.parser().ParsePath(s.T().Context(), path, nil)
 
 	s.Require().Error(err)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathCrop() {
 	path := "/crop:100:200/plain/http://images.dev/lorem/ipsum.jpg"
-	o, _, err := s.parser().ParsePath(path, nil)
+	o, _, err := s.parser().ParsePath(s.T().Context(), path, nil)
 
 	s.Require().NoError(err)
 
@@ -334,7 +334,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathCrop() {
 func (s *ProcessingOptionsTestSuite) TestParsePathCropGravity() {
 	//nolint:misspell
 	path := "/crop:100:200:nowe:10:20/plain/http://images.dev/lorem/ipsum.jpg"
-	o, _, err := s.parser().ParsePath(path, nil)
+	o, _, err := s.parser().ParsePath(s.T().Context(), path, nil)
 
 	s.Require().NoError(err)
 
@@ -350,14 +350,14 @@ func (s *ProcessingOptionsTestSuite) TestParsePathCropGravity() {
 
 func (s *ProcessingOptionsTestSuite) TestParsePathCropGravityReplicate() {
 	path := "/crop:100:200:re/plain/http://images.dev/lorem/ipsum.jpg"
-	_, _, err := s.parser().ParsePath(path, nil)
+	_, _, err := s.parser().ParsePath(s.T().Context(), path, nil)
 
 	s.Require().Error(err)
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathQuality() {
 	path := "/quality:55/plain/http://images.dev/lorem/ipsum.jpg"
-	o, _, err := s.parser().ParsePath(path, nil)
+	o, _, err := s.parser().ParsePath(s.T().Context(), path, nil)
 
 	s.Require().NoError(err)
 
@@ -366,7 +366,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathQuality() {
 
 func (s *ProcessingOptionsTestSuite) TestParsePathBackground() {
 	path := "/background:128:129:130/plain/http://images.dev/lorem/ipsum.jpg"
-	o, _, err := s.parser().ParsePath(path, nil)
+	o, _, err := s.parser().ParsePath(s.T().Context(), path, nil)
 
 	s.Require().NoError(err)
 
@@ -378,7 +378,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathBackground() {
 
 func (s *ProcessingOptionsTestSuite) TestParsePathBackgroundHex() {
 	path := "/background:ffddee/plain/http://images.dev/lorem/ipsum.jpg"
-	o, _, err := s.parser().ParsePath(path, nil)
+	o, _, err := s.parser().ParsePath(s.T().Context(), path, nil)
 
 	s.Require().NoError(err)
 
@@ -390,7 +390,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathBackgroundHex() {
 
 func (s *ProcessingOptionsTestSuite) TestParsePathBackgroundDisable() {
 	path := "/background:fff/background:/plain/http://images.dev/lorem/ipsum.jpg"
-	o, _, err := s.parser().ParsePath(path, nil)
+	o, _, err := s.parser().ParsePath(s.T().Context(), path, nil)
 
 	s.Require().NoError(err)
 
@@ -399,7 +399,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathBackgroundDisable() {
 
 func (s *ProcessingOptionsTestSuite) TestParsePathBlur() {
 	path := "/blur:0.2/plain/http://images.dev/lorem/ipsum.jpg"
-	o, _, err := s.parser().ParsePath(path, nil)
+	o, _, err := s.parser().ParsePath(s.T().Context(), path, nil)
 
 	s.Require().NoError(err)
 
@@ -408,7 +408,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathBlur() {
 
 func (s *ProcessingOptionsTestSuite) TestParsePathSharpen() {
 	path := "/sharpen:0.2/plain/http://images.dev/lorem/ipsum.jpg"
-	o, _, err := s.parser().ParsePath(path, nil)
+	o, _, err := s.parser().ParsePath(s.T().Context(), path, nil)
 
 	s.Require().NoError(err)
 
@@ -417,7 +417,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathSharpen() {
 
 func (s *ProcessingOptionsTestSuite) TestParsePathDpr() {
 	path := "/dpr:2/plain/http://images.dev/lorem/ipsum.jpg"
-	o, _, err := s.parser().ParsePath(path, nil)
+	o, _, err := s.parser().ParsePath(s.T().Context(), path, nil)
 
 	s.Require().NoError(err)
 
@@ -426,7 +426,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathDpr() {
 
 func (s *ProcessingOptionsTestSuite) TestParsePathWatermark() {
 	path := "/watermark:0.5:soea:10:20:0.6/plain/http://images.dev/lorem/ipsum.jpg"
-	o, _, err := s.parser().ParsePath(path, nil)
+	o, _, err := s.parser().ParsePath(s.T().Context(), path, nil)
 
 	s.Require().NoError(err)
 
@@ -447,7 +447,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathPreset() {
 	}
 
 	path := "/preset:test1:test2/plain/http://images.dev/lorem/ipsum.jpg"
-	o, _, err := s.parser().ParsePath(path, nil)
+	o, _, err := s.parser().ParsePath(s.T().Context(), path, nil)
 
 	s.Require().NoError(err)
 
@@ -463,7 +463,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathPresetDefault() {
 	}
 
 	path := "/quality:70/plain/http://images.dev/lorem/ipsum.jpg"
-	o, _, err := s.parser().ParsePath(path, nil)
+	o, _, err := s.parser().ParsePath(s.T().Context(), path, nil)
 
 	s.Require().NoError(err)
 
@@ -480,7 +480,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathPresetLoopDetection() {
 	}
 
 	path := "/preset:test1/plain/http://images.dev/lorem/ipsum.jpg"
-	o, _, err := s.parser().ParsePath(path, nil)
+	o, _, err := s.parser().ParsePath(s.T().Context(), path, nil)
 
 	s.Require().NoError(err)
 
@@ -489,7 +489,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathPresetLoopDetection() {
 
 func (s *ProcessingOptionsTestSuite) TestParsePathCachebuster() {
 	path := "/cachebuster:123/plain/http://images.dev/lorem/ipsum.jpg"
-	o, _, err := s.parser().ParsePath(path, nil)
+	o, _, err := s.parser().ParsePath(s.T().Context(), path, nil)
 
 	s.Require().NoError(err)
 
@@ -498,7 +498,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathCachebuster() {
 
 func (s *ProcessingOptionsTestSuite) TestParsePathStripMetadata() {
 	path := "/strip_metadata:true/plain/http://images.dev/lorem/ipsum.jpg"
-	o, _, err := s.parser().ParsePath(path, nil)
+	o, _, err := s.parser().ParsePath(s.T().Context(), path, nil)
 
 	s.Require().NoError(err)
 
@@ -508,7 +508,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathStripMetadata() {
 func (s *ProcessingOptionsTestSuite) TestParsePathWebpDetection() {
 	path := "/plain/http://images.dev/lorem/ipsum.jpg"
 	features := clientfeatures.Features{PreferWebP: true}
-	o, _, err := s.parser().ParsePath(path, &features)
+	o, _, err := s.parser().ParsePath(s.T().Context(), path, &features)
 
 	s.Require().NoError(err)
 
@@ -523,7 +523,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathWebpDetection() {
 func (s *ProcessingOptionsTestSuite) TestParsePathWebpEnforce() {
 	path := "/plain/http://images.dev/lorem/ipsum.jpg@png"
 	features := clientfeatures.Features{EnforceWebP: true}
-	o, _, err := s.parser().ParsePath(path, &features)
+	o, _, err := s.parser().ParsePath(s.T().Context(), path, &features)
 
 	s.Require().NoError(err)
 
@@ -538,7 +538,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathWebpEnforce() {
 func (s *ProcessingOptionsTestSuite) TestParsePathAvifDetection() {
 	path := "/plain/http://images.dev/lorem/ipsum.jpg"
 	features := clientfeatures.Features{PreferAvif: true}
-	o, _, err := s.parser().ParsePath(path, &features)
+	o, _, err := s.parser().ParsePath(s.T().Context(), path, &features)
 
 	s.Require().NoError(err)
 
@@ -553,7 +553,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathAvifDetection() {
 func (s *ProcessingOptionsTestSuite) TestParsePathAvifEnforce() {
 	path := "/plain/http://images.dev/lorem/ipsum.jpg@png"
 	features := clientfeatures.Features{EnforceAvif: true}
-	o, _, err := s.parser().ParsePath(path, &features)
+	o, _, err := s.parser().ParsePath(s.T().Context(), path, &features)
 
 	s.Require().NoError(err)
 
@@ -568,7 +568,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathAvifEnforce() {
 func (s *ProcessingOptionsTestSuite) TestParsePathJxlDetection() {
 	path := "/plain/http://images.dev/lorem/ipsum.jpg"
 	features := clientfeatures.Features{PreferJxl: true}
-	o, _, err := s.parser().ParsePath(path, &features)
+	o, _, err := s.parser().ParsePath(s.T().Context(), path, &features)
 
 	s.Require().NoError(err)
 
@@ -583,7 +583,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathJxlDetection() {
 func (s *ProcessingOptionsTestSuite) TestParsePathJxlEnforce() {
 	path := "/plain/http://images.dev/lorem/ipsum.jpg@png"
 	features := clientfeatures.Features{EnforceJxl: true}
-	o, _, err := s.parser().ParsePath(path, &features)
+	o, _, err := s.parser().ParsePath(s.T().Context(), path, &features)
 
 	s.Require().NoError(err)
 
@@ -632,7 +632,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathClientHints() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			o, _, err := s.parser().ParsePath(path, &tc.features)
+			o, _, err := s.parser().ParsePath(s.T().Context(), path, &tc.features)
 
 			s.Require().NoError(err)
 			s.Require().Equal(tc.width, o.GetInt(keys.Width, 0))
@@ -647,7 +647,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathClientHintsRedefine() {
 		ClientHintsWidth: 100,
 		ClientHintsDPR:   2.0,
 	}
-	o, _, err := s.parser().ParsePath(path, &features)
+	o, _, err := s.parser().ParsePath(s.T().Context(), path, &features)
 
 	s.Require().NoError(err)
 
@@ -658,7 +658,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathClientHintsRedefine() {
 func (s *ProcessingOptionsTestSuite) TestParseSkipProcessing() {
 	path := "/skp:jpg:png/plain/http://images.dev/lorem/ipsum.jpg"
 
-	o, _, err := s.parser().ParsePath(path, nil)
+	o, _, err := s.parser().ParsePath(s.T().Context(), path, nil)
 
 	s.Require().NoError(err)
 
@@ -671,7 +671,7 @@ func (s *ProcessingOptionsTestSuite) TestParseSkipProcessing() {
 func (s *ProcessingOptionsTestSuite) TestParseSkipProcessingInvalid() {
 	path := "/skp:jpg:png:bad_format/plain/http://images.dev/lorem/ipsum.jpg"
 
-	_, _, err := s.parser().ParsePath(path, nil)
+	_, _, err := s.parser().ParsePath(s.T().Context(), path, nil)
 
 	s.Require().Error(err)
 	s.Require().Equal("Invalid image format in skip_processing: bad_format", err.Error())
@@ -679,7 +679,7 @@ func (s *ProcessingOptionsTestSuite) TestParseSkipProcessingInvalid() {
 
 func (s *ProcessingOptionsTestSuite) TestParseExpires() {
 	path := "/exp:32503669200/plain/http://images.dev/lorem/ipsum.jpg"
-	o, _, err := s.parser().ParsePath(path, nil)
+	o, _, err := s.parser().ParsePath(s.T().Context(), path, nil)
 
 	s.Require().NoError(err)
 	s.Require().Equal(time.Unix(32503669200, 0), o.GetTime(keys.Expires))
@@ -687,7 +687,7 @@ func (s *ProcessingOptionsTestSuite) TestParseExpires() {
 
 func (s *ProcessingOptionsTestSuite) TestParseExpiresExpired() {
 	path := "/exp:1609448400/plain/http://images.dev/lorem/ipsum.jpg"
-	_, _, err := s.parser().ParsePath(path, nil)
+	_, _, err := s.parser().ParsePath(s.T().Context(), path, nil)
 
 	s.Require().Error(err, "Expired URL")
 }
@@ -702,7 +702,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathOnlyPresets() {
 	originURL := "http://images.dev/lorem/ipsum.jpg"
 	path := "/test1:test2/plain/" + originURL + "@png"
 
-	o, imageURL, err := s.parser().ParsePath(path, nil)
+	o, imageURL, err := s.parser().ParsePath(s.T().Context(), path, nil)
 
 	s.Require().NoError(err)
 
@@ -722,7 +722,7 @@ func (s *ProcessingOptionsTestSuite) TestParseBase64URLOnlyPresets() {
 	originURL := "http://images.dev/lorem/ipsum.jpg?param=value"
 	path := fmt.Sprintf("/test1:test2/%s.png", base64.RawURLEncoding.EncodeToString([]byte(originURL)))
 
-	o, imageURL, err := s.parser().ParsePath(path, nil)
+	o, imageURL, err := s.parser().ParsePath(s.T().Context(), path, nil)
 
 	s.Require().NoError(err)
 
@@ -753,7 +753,7 @@ func (s *ProcessingOptionsTestSuite) TestParseAllowedOptions() {
 			}
 
 			path := fmt.Sprintf("/%s/%s.png", tc.options, base64.RawURLEncoding.EncodeToString([]byte(originURL)))
-			_, _, err := s.parser().ParsePath(path, nil)
+			_, _, err := s.parser().ParsePath(s.T().Context(), path, nil)
 
 			if len(tc.expectedError) > 0 {
 				s.Require().Error(err)
