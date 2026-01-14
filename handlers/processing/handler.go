@@ -103,13 +103,13 @@ func (h *Handler) newRequest(
 	}
 
 	// verify the signature (if any)
-	if err = h.Security().VerifySignature(signature, path); err != nil {
+	if err = h.Security().VerifySignature(ctx, signature, path); err != nil {
 		return nil, server.NewError(errctx.Wrap(err), handlers.ErrCategorySecurity)
 	}
 
 	// parse image url and processing options
 	features := h.ClientFeaturesDetector().Features(req.Header)
-	o, imageURL, err := h.OptionsParser().ParsePath(path, &features)
+	o, imageURL, err := h.OptionsParser().ParsePath(ctx, path, &features)
 	if err != nil {
 		return nil, server.NewError(errctx.Wrap(err), handlers.ErrCategoryPathParsing)
 	}

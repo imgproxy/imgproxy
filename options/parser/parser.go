@@ -1,5 +1,7 @@
 package optionsparser
 
+import "context"
+
 // Presets is a map of preset names to their corresponding urlOptions
 type Presets = map[string]urlOptions
 
@@ -10,7 +12,7 @@ type Parser struct {
 }
 
 // New creates new Parser instance
-func New(config *Config) (*Parser, error) {
+func New(ctx context.Context, config *Config) (*Parser, error) {
 	if err := config.Validate(); err != nil {
 		return nil, err
 	}
@@ -24,17 +26,17 @@ func New(config *Config) (*Parser, error) {
 		return nil, err
 	}
 
-	if err := p.validatePresets(); err != nil {
+	if err := p.validatePresets(ctx); err != nil {
 		return nil, err
 	}
 
 	return p, nil
 }
 
-func (p *Parser) IsSecurityOptionsAllowed() error {
+func (p *Parser) IsSecurityOptionsAllowed(ctx context.Context) error {
 	if p.config.AllowSecurityOptions {
 		return nil
 	}
 
-	return newSecurityOptionsError()
+	return newSecurityOptionsError(ctx)
 }

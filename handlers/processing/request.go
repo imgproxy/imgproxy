@@ -103,7 +103,7 @@ func (r *request) execute(ctx context.Context) *server.Error {
 	// Check if image supports load from origin format
 	if !vips.SupportsLoad(originData.Format()) {
 		return server.NewError(
-			handlers.NewCantLoadError(originData.Format()),
+			handlers.NewCantLoadError(ctx, originData.Format()),
 			handlers.ErrCategoryPathParsing,
 		)
 	}

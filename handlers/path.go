@@ -28,7 +28,7 @@ func SplitPathSignature(r *http.Request) (string, string, error) {
 
 	signature, path, _ := strings.Cut(uri, "/")
 	if len(signature) == 0 || len(path) == 0 {
-		return "", "", NewInvalidPathError(path)
+		return "", "", NewInvalidPathError(r.Context(), path)
 	}
 
 	// restore broken slashes in the path
