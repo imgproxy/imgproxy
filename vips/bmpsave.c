@@ -54,12 +54,19 @@ vips_foreign_save_bmp_block(VipsRegion *region, VipsRect *area, void *a)
     VipsPel *dst = bmp->line_buffer;
 
     for (int x = 0; x < source_row_size; x += bmp->bands) {
-      dst[0] = src[2]; // B
-      dst[1] = src[1]; // G
-      dst[2] = src[0]; // R
+      if (bmp->bands == 1) {
+        // Grayscale
+        dst[0] = src[0];
+      }
+      else {
+        // RGB/RGBA
+        dst[0] = src[2]; // B
+        dst[1] = src[1]; // G
+        dst[2] = src[0]; // R
 
-      if (bmp->bands == 4) {
-        dst[3] = src[3]; // A
+        if (bmp->bands == 4) {
+          dst[3] = src[3]; // A
+        }
       }
 
       dst += bmp->bands;
@@ -88,11 +95,14 @@ vips_foreign_save_bmp_build(VipsObject *object)
 
   in = save->ready; // shortcut
 
-  // bands (3 or 4) * 8 bits
+  // bands (1, 3 or 4) * 8 bits
   int bands = vips_image_get_bands(in);
 
-  if ((bands < 3) || (bands > 4)) {
-    vips_error("vips_foreign_save_bmp_build", "BMP source file must have 3 or 4 bands (RGB or RGBA)");
+  if (bands != 1 && bands != 3 && bands != 4) {
+    vips_error(
+        "vips_foreign_save_bmp_build",
+        "BMP source file must have 1, 3 or 4 bands: Grayscale, RGB or RGBA (has %i)",
+        bands);
     return -1;
   }
 
@@ -102,17 +112,33 @@ vips_foreign_save_bmp_build(VipsObject *object)
   uint32_t line_size = (in->Xsize * bands + 3) & (~3);
   uint32_t image_size = in->Ysize * line_size;
 
+  // Default to V5 header length
+  uint32_t file_header_len = BMP_V5_INFO_HEADER_LEN;
+
   // pix_offset = header size + file size
-  uint32_t pix_offset = BMP_FILE_HEADER_LEN + BMP_V5_INFO_HEADER_LEN;
+  uint32_t pix_offset = BMP_FILE_HEADER_LEN + file_header_len;
+  uint32_t num_colors = 0; // always 0 for now, but we may come to palette later
+
+  // grayscale image
+  if (bands == 1) {
+    // V3 header length
+    file_header_len = BMP_BITMAP_INFO_HEADER_LEN;
+
+    // + grayscale palette
+    pix_offset = BMP_FILE_HEADER_LEN + file_header_len + BMP_GS_PALETTE_SIZE;
+    num_colors = 256; // 256 gray colors
+  }
+
+  uint32_t file_size = pix_offset + image_size;
 
   // Format BMP file header. We write 24/32 bpp BMP files only with no compression.
   BmpFileHeader file_header;
   memset(&file_header, 0, sizeof(file_header));
   file_header.sig[0] = 'B';
   file_header.sig[1] = 'M';
-  file_header.size = GUINT32_TO_LE(pix_offset + image_size);
+  file_header.size = GUINT32_TO_LE(file_size);
   file_header.offset = GUINT32_TO_LE(pix_offset);
-  file_header.info_header_len = GUINT32_TO_LE(BMP_V5_INFO_HEADER_LEN);
+  file_header.info_header_len = GUINT32_TO_LE(file_header_len);
 
   if (vips_target_write(bmp->target, &file_header, sizeof(file_header)) < 0) {
     vips_error("vips_foreign_save_bmp_build", "unable to write BMP header to target");
@@ -129,8 +155,10 @@ vips_foreign_save_bmp_build(VipsObject *object)
   header.image_size = GUINT32_TO_LE(image_size);
   header.x_ppm = 0; // GUINT32_TO_LE(2835);
   header.y_ppm = 0; // GUINT32_TO_LE(2835);
-  header.num_colors = 0;
+  header.num_colors = GUINT32_TO_LE(num_colors);
   header.num_important_colors = 0;
+
+  // V4 and V5 fields, they won't be written in case of grayscale image
   header.rmask = GUINT32_TO_LE(0x00FF0000); // Standard says that masks are in BE order
   header.gmask = GUINT32_TO_LE(0x0000FF00);
   header.bmask = GUINT32_TO_LE(0x000000FF);
@@ -147,9 +175,26 @@ vips_foreign_save_bmp_build(VipsObject *object)
   header.profile_size = 0;
   header.reserved_5 = 0;
 
-  if (vips_target_write(bmp->target, &header, sizeof(header)) < 0) {
+  // Header size field belongs to DIB header, but we use it in BITMAPHEADER for convenience.
+  // Here we write -size of that field.
+  file_header_len -= sizeof(file_header.info_header_len);
+  if (vips_target_write(bmp->target, &header, file_header_len) < 0) {
     vips_error("vips_foreign_save_bmp_build", "unable to write BMP header to target");
     return -1;
+  }
+
+  // write grayscale palette
+  if (bands == 1) {
+    char gs_palette[BMP_GS_PALETTE_SIZE];
+
+    for (int i = 0; i < 256; i += 1) {
+      gs_palette[i * BMP_PALETTE_ITEM_SIZE + 0] = (char) i; // B
+      gs_palette[i * BMP_PALETTE_ITEM_SIZE + 1] = (char) i; // G
+      gs_palette[i * BMP_PALETTE_ITEM_SIZE + 2] = (char) i; // R
+      gs_palette[i * BMP_PALETTE_ITEM_SIZE + 3] = 0;        // not used
+    }
+
+    vips_target_write(bmp->target, gs_palette, BMP_GS_PALETTE_SIZE);
   }
 
   // Allocate a line buffer for the target image
@@ -186,8 +231,9 @@ vips_foreign_save_bmp_class_init(VipsForeignSaveBmpClass *class)
   // We do not support saving monochrome images yet (VIPS_FOREIGN_SAVEABLE_MONO)
   // In v4 we will support it, so we leave it here commented out
   save_class->saveable =
-      VIPS_SAVEABLE_RGB | // latest vips: VIPS_FOREIGN_SAVEABLE_RGB
-      VIPS_SAVEABLE_RGBA; // latest vips: VIPS_FOREIGN_SAVEABLE_ALPHA
+      VIPS_SAVEABLE_MONO | // latest vips: VIPS_FOREIGN_SAVEABLE_MONO
+      VIPS_SAVEABLE_RGB |  // latest vips: VIPS_FOREIGN_SAVEABLE_RGB
+      VIPS_SAVEABLE_RGBA;  // latest vips: VIPS_FOREIGN_SAVEABLE_ALPHA
 
   save_class->format_table = bandfmt_bmp;
 }

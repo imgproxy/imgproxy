@@ -15,7 +15,8 @@
 #define COMPRESSION_BI_BITFIELDS 3       // Has RGB bit masks
 #define COMPRESSION_BI_BITFIELDS_ALPHA 6 // Has RGBA bit masks
 
-#define BMP_PALETTE_ITEM_SIZE 4 // 4 bytes per palette item (BGR + padding)
+#define BMP_PALETTE_ITEM_SIZE 4                         // 4 bytes per palette item (BGR + padding)
+#define BMP_GS_PALETTE_SIZE 256 * BMP_PALETTE_ITEM_SIZE // grayscale palette size
 
 #define BMP_RLE_EOL 0     // end of line
 #define BMP_RLE_EOF 1     // end of file

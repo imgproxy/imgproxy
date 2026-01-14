@@ -27,6 +27,7 @@ type TypeDesc struct {
 	SupportsAnimationLoad bool
 	SupportsAnimationSave bool
 	SupportsThumbnail     bool
+	SupportsHDR           bool
 }
 
 // DetectFunc is a function that detects the image type from byte data

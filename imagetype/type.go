@@ -119,3 +119,12 @@ func (t Type) SupportsThumbnail() bool {
 	}
 	return false
 }
+
+// SupportsHDR checks if the image type supports 16-bit targets.
+func (t Type) SupportsHDR() bool {
+	desc := GetTypeDesc(t)
+	if desc != nil {
+		return desc.SupportsHDR
+	}
+	return false
+}

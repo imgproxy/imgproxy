@@ -7,6 +7,7 @@
 #define VIPS_META_PALETTE_BITS_DEPTH "palette-bit-depth"
 
 #define IMGPROXY_META_ICC_NAME "imgproxy-icc-profile"
+#define IMGPROXY_ICC_IMPORTED "imgproxy-icc-imported"
 
 int
 vips_initialize()
@@ -543,6 +544,9 @@ vips_icc_restore(VipsImage *in, VipsImage **out)
 int
 vips_icc_import_go(VipsImage *in, VipsImage **out)
 {
+  if (vips_image_get_typeof(in, IMGPROXY_ICC_IMPORTED) != 0)
+    return vips_copy(in, out, NULL);
+
   VipsImage *base = vips_image_new();
   VipsImage **t = (VipsImage **) vips_object_local_array(VIPS_OBJECT(base), 5);
 
@@ -584,7 +588,7 @@ vips_icc_import_go(VipsImage *in, VipsImage **out)
     }
   }
 
-  vips_image_set_int(*out, "imgproxy-icc-imported", 1);
+  vips_image_set_int(*out, IMGPROXY_ICC_IMPORTED, 1);
 
   VIPS_UNREF(base);
 
@@ -592,21 +596,49 @@ vips_icc_import_go(VipsImage *in, VipsImage **out)
 }
 
 int
+image_depth(VipsImage *in)
+{
+  switch (in->Type) {
+  case VIPS_INTERPRETATION_GREY16:
+  case VIPS_INTERPRETATION_RGB16:
+  case VIPS_INTERPRETATION_scRGB:
+    return 16;
+  default:
+    return 8;
+  }
+}
+
+int
 vips_icc_export_go(VipsImage *in, VipsImage **out)
 {
-  return vips_icc_export(in, out, "pcs", vips_icc_get_pcs(in), NULL);
+  return vips_icc_export(
+      in, out,
+      "pcs", vips_icc_get_pcs(in),
+      "depth", image_depth(in),
+      NULL);
 }
 
 int
 vips_icc_export_srgb(VipsImage *in, VipsImage **out)
 {
-  return vips_icc_export(in, out, "output_profile", "sRGB", "pcs", vips_icc_get_pcs(in), NULL);
+  return vips_icc_export(
+      in, out,
+      "output_profile", "sRGB",
+      "pcs", vips_icc_get_pcs(in),
+      "depth", image_depth(in),
+      NULL);
 }
 
 int
 vips_icc_transform_srgb(VipsImage *in, VipsImage **out)
 {
-  return vips_icc_transform(in, out, "sRGB", "embedded", TRUE, "pcs", vips_icc_get_pcs(in), NULL);
+  return vips_icc_transform(
+      in, out,
+      "sRGB",
+      "embedded", TRUE,
+      "pcs", vips_icc_get_pcs(in),
+      "depth", image_depth(in),
+      NULL);
 }
 
 int
@@ -934,10 +966,19 @@ vips_apply_watermark(VipsImage *in, VipsImage *watermark, VipsImage **out, int l
 
   int had_alpha = vips_image_hasalpha(in);
 
+  VipsInterpretation cs = in->Type;
+
+  // Image is black and white but watermark is not: we need to convert image to colored
+  if ((cs == VIPS_INTERPRETATION_B_W || cs == VIPS_INTERPRETATION_GREY16) &&
+      (watermark->Type != VIPS_INTERPRETATION_B_W && watermark->Type != VIPS_INTERPRETATION_GREY16)) {
+
+    cs = (cs == VIPS_INTERPRETATION_B_W) ? VIPS_INTERPRETATION_sRGB : VIPS_INTERPRETATION_RGB16;
+  }
+
   if (
       vips_composite2(
           in, watermark, &t[5], VIPS_BLEND_MODE_OVER,
-          "x", left, "y", top, "compositing_space", in->Type,
+          "x", left, "y", top, "compositing_space", cs,
           NULL) ||
       vips_cast(t[5], &t[6], vips_image_get_format(in), NULL)) {
     VIPS_UNREF(base);
@@ -1161,6 +1202,7 @@ vips_heifsave_go(VipsImage *in, VipsTarget *target, int quality, ImgproxySaveOpt
   return vips_heifsave_target(
       in, target,
       "Q", quality,
+      "bitdepth", 8, // Despite what docs say, >8 bit is not supported
       "compression", VIPS_FOREIGN_HEIF_COMPRESSION_HEVC,
       NULL);
 }
