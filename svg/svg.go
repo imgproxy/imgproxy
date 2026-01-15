@@ -60,7 +60,7 @@ func Sanitize(data *imagedata.ImageData) (*imagedata.ImageData, error) {
 		case xml.StartTagToken:
 			curTagName = strings.ToLower(string(l.Text()))
 
-			if curTagName == "script" {
+			if curTagName == "script" || curTagName == "iframe" {
 				ignoreTag++
 				continue
 			}
