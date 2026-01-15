@@ -14,8 +14,17 @@ const (
 )
 
 var (
+	protocolMap = map[string]string{
+		"grpc":          "grpc",
+		"http/protobuf": "http/protobuf",
+		"http":          "http",
+		"https":         "https",
+	}
+
 	IMGPROXY_OPEN_TELEMETRY_ENABLE             = env.Bool("IMGPROXY_OPEN_TELEMETRY_ENABLE")
 	IMGPROXY_OPEN_TELEMETRY_ENABLE_METRICS     = env.Bool("IMGPROXY_OPEN_TELEMETRY_ENABLE_METRICS")
+	IMGPROXY_OPEN_TELEMETRY_ENABLE_LOGS        = env.Bool("IMGPROXY_OPEN_TELEMETRY_ENABLE_LOGS")
+	IMGPROXY_OPEN_TELEMETRY_LOGGER_NAME        = env.String("IMGPROXY_OPEN_TELEMETRY_LOGGER_NAME")
 	IMGPROXY_OPEN_TELEMETRY_SERVER_CERT        = env.String("IMGPROXY_OPEN_TELEMETRY_SERVER_CERT")
 	IMGPROXY_OPEN_TELEMETRY_CLIENT_CERT        = env.String("IMGPROXY_OPEN_TELEMETRY_CLIENT_CERT")
 	IMGPROXY_OPEN_TELEMETRY_CLIENT_KEY         = env.String("IMGPROXY_OPEN_TELEMETRY_CLIENT_KEY")
@@ -23,10 +32,11 @@ var (
 	IMGPROXY_OPEN_TELEMETRY_PROPAGATE_EXTERNAL = env.Bool("IMGPROXY_OPEN_TELEMETRY_PROPAGATE_EXTERNAL")
 
 	// OTEL_EXPORTER_OTLP_PROTOCOL Those are OpenTelemetry SDK environment variables
-	OTEL_EXPORTER_OTLP_PROTOCOL        = env.String("OTEL_EXPORTER_OTLP_PROTOCOL").WithDocsURL(otelDocsUrl)
+	OTEL_EXPORTER_OTLP_PROTOCOL        = env.Enum("OTEL_EXPORTER_OTLP_PROTOCOL", protocolMap).WithDocsURL(otelDocsUrl)
 	OTEL_EXPORTER_OTLP_TIMEOUT         = env.DurationMillis("OTEL_EXPORTER_OTLP_TIMEOUT").WithDocsURL(otelDocsUrl)
 	OTEL_EXPORTER_OTLP_TRACES_TIMEOUT  = env.DurationMillis("OTEL_EXPORTER_OTLP_TRACES_TIMEOUT").WithDocsURL(otelDocsUrl)
 	OTEL_EXPORTER_OTLP_METRICS_TIMEOUT = env.DurationMillis("OTEL_EXPORTER_OTLP_METRICS_TIMEOUT").WithDocsURL(otelDocsUrl)
+	OTEL_EXPORTER_OTLP_LOGS_TIMEOUT    = env.DurationMillis("OTEL_EXPORTER_OTLP_LOGS_TIMEOUT").WithDocsURL(otelDocsUrl)
 	OTEL_PROPAGATORS                   = env.StringSlice("OTEL_PROPAGATORS").WithDocsURL(otelDocsUrl)
 	OTEL_SERVICE_NAME                  = env.String("OTEL_SERVICE_NAME").WithDocsURL(otelDocsUrl)
 )
@@ -35,6 +45,8 @@ var (
 type Config struct {
 	Enable           bool   // Enable OpenTelemetry tracing and metrics
 	EnableMetrics    bool   // Enable OpenTelemetry metrics collection
+	EnableLogs       bool   // Enable OpenTelemetry log export
+	LoggerName       string // Instrumentation scope name for logs
 	ServerCert       []byte // Server certificate for TLS connection
 	ClientCert       []byte // Client certificate for TLS connection
 	ClientKey        []byte // Client key for TLS connection
@@ -45,6 +57,7 @@ type Config struct {
 	ConnTimeout        time.Duration // Connection timeout for OTLP exporter
 	MetricsConnTimeout time.Duration // Connection timeout for metrics exporter
 	TracesConnTimeout  time.Duration // Connection timeout for traces exporter
+	LogsConnTimeout    time.Duration // Connection timeout for logs exporter
 	Propagators        []string      // List of propagators to use
 
 	MetricsInterval time.Duration // Interval for sending metrics to OpenTelemetry collector
@@ -55,6 +68,8 @@ func NewDefaultConfig() Config {
 	return Config{
 		Enable:             false,
 		EnableMetrics:      false,
+		EnableLogs:         false,
+		LoggerName:         "imgproxy",
 		ServerCert:         nil,
 		ClientCert:         nil,
 		ClientKey:          nil,
@@ -64,7 +79,8 @@ func NewDefaultConfig() Config {
 		ConnTimeout:        10_000 * time.Millisecond,
 		MetricsConnTimeout: 0,
 		TracesConnTimeout:  0,
-		Propagators:        []string{},
+		LogsConnTimeout:    0,
+		Propagators:        []string{"tracecontext", "baggage"},
 		MetricsInterval:    10 * time.Second,
 	}
 }
@@ -78,6 +94,8 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 	err := errors.Join(
 		IMGPROXY_OPEN_TELEMETRY_ENABLE.Parse(&c.Enable),
 		IMGPROXY_OPEN_TELEMETRY_ENABLE_METRICS.Parse(&c.EnableMetrics),
+		IMGPROXY_OPEN_TELEMETRY_ENABLE_LOGS.Parse(&c.EnableLogs),
+		IMGPROXY_OPEN_TELEMETRY_LOGGER_NAME.Parse(&c.LoggerName),
 		IMGPROXY_OPEN_TELEMETRY_SERVER_CERT.Parse(&serverCert),
 		IMGPROXY_OPEN_TELEMETRY_CLIENT_CERT.Parse(&clientCert),
 		IMGPROXY_OPEN_TELEMETRY_CLIENT_KEY.Parse(&clientKey),
@@ -87,6 +105,7 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 		OTEL_EXPORTER_OTLP_TIMEOUT.Parse(&c.ConnTimeout),
 		OTEL_EXPORTER_OTLP_TRACES_TIMEOUT.Parse(&c.TracesConnTimeout),
 		OTEL_EXPORTER_OTLP_METRICS_TIMEOUT.Parse(&c.MetricsConnTimeout),
+		OTEL_EXPORTER_OTLP_LOGS_TIMEOUT.Parse(&c.LogsConnTimeout),
 		OTEL_PROPAGATORS.Parse(&c.Propagators),
 	)
 

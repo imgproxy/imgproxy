@@ -50,6 +50,14 @@ func AddHook(hook Hook) {
 	}
 }
 
+// Level returns the current logger's minimum log level.
+func Level() slog.Leveler {
+	if handler != nil {
+		return handler.Level()
+	}
+	return slog.LevelInfo
+}
+
 func Fatal(msg string, args ...any) {
 	slog.Log(context.Background(), LevelCritical, msg, args...)
 	os.Exit(1)

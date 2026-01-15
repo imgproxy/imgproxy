@@ -8,11 +8,14 @@ import (
 	"fmt"
 	"time"
 
+	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc"
+	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
+	sdklog "go.opentelemetry.io/otel/sdk/log"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	"google.golang.org/grpc/credentials"
 )
@@ -153,4 +156,69 @@ func withDefaultTimeout(config *Config, timeout time.Duration) time.Duration {
 		return config.ConnTimeout
 	}
 	return timeout
+}
+
+// buildGRPCLogExporter builds a GRPC log exporter based on the provided configuration.
+func buildGRPCLogExporter(config *Config) (sdklog.Exporter, error) {
+	opts := []otlploggrpc.Option{}
+
+	if tlsConf, err := buildTLSConfig(config); tlsConf != nil && err == nil {
+		creds := credentials.NewTLS(tlsConf)
+		opts = append(opts, otlploggrpc.WithTLSCredentials(creds))
+	} else if err != nil {
+		return nil, err
+	}
+
+	// This context limits connect timeout, not the whole lifetime of the exporter
+	ctx, cancel := context.WithTimeout(
+		context.Background(), withDefaultTimeout(config, config.LogsConnTimeout),
+	)
+	defer cancel()
+
+	logExporter, err := otlploggrpc.New(ctx, opts...)
+	if err != nil {
+		return nil, fmt.Errorf("can't connect to OpenTelemetry collector for logs: %w", err)
+	}
+
+	return logExporter, nil
+}
+
+// buildHTTPLogExporter builds an HTTP log exporter based on the provided configuration.
+func buildHTTPLogExporter(config *Config) (sdklog.Exporter, error) {
+	opts := []otlploghttp.Option{}
+
+	if tlsConf, err := buildTLSConfig(config); tlsConf != nil && err == nil {
+		opts = append(opts, otlploghttp.WithTLSClientConfig(tlsConf))
+	} else if err != nil {
+		return nil, err
+	}
+
+	// This context limits connect timeout, not the whole lifetime of the exporter
+	ctx, cancel := context.WithTimeout(
+		context.Background(), withDefaultTimeout(config, config.LogsConnTimeout),
+	)
+	defer cancel()
+
+	logExporter, err := otlploghttp.New(ctx, opts...)
+	if err != nil {
+		return nil, fmt.Errorf("can't connect to OpenTelemetry collector for logs: %w", err)
+	}
+
+	return logExporter, nil
+}
+
+// buildLogExporter builds a log exporter based on the protocol in the configuration.
+func buildLogExporter(config *Config) (sdklog.Exporter, error) {
+	if !config.EnableLogs {
+		return nil, nil
+	}
+
+	switch config.Protocol {
+	case "grpc":
+		return buildGRPCLogExporter(config)
+	case "http/protobuf", "http", "https":
+		return buildHTTPLogExporter(config)
+	default:
+		return nil, fmt.Errorf("unsupported OpenTelemetry protocol for logs: %s", config.Protocol)
+	}
 }
