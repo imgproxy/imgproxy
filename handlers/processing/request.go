@@ -1,7 +1,6 @@
 package processing
 
 import (
-	"context"
 	"errors"
 	"net/http"
 
@@ -32,7 +31,7 @@ type request struct {
 }
 
 // execute handles the actual processing logic
-func (r *request) execute(ctx context.Context) *server.Error {
+func (r *request) execute() *server.Error {
 	outFormat := options.Get(r.opts, keys.Format, imagetype.Unknown)
 
 	// Check if we can save the resulting image
@@ -44,8 +43,10 @@ func (r *request) execute(ctx context.Context) *server.Error {
 		return server.NewError(handlers.NewCantSaveError(outFormat), handlers.ErrCategoryPathParsing)
 	}
 
+	ctx := r.req.Context()
+
 	// Acquire worker
-	releaseWorker, err := r.acquireWorker(ctx)
+	releaseWorker, err := r.acquireWorker()
 	if err != nil {
 		return server.NewError(err, handlers.ErrCategoryQueue)
 	}
@@ -68,7 +69,7 @@ func (r *request) execute(ctx context.Context) *server.Error {
 	}
 
 	// Fetch image actual
-	originData, originHeaders, err := r.fetchImage(ctx, do)
+	originData, originHeaders, err := r.fetchImage(do)
 	if err == nil {
 		defer originData.Close() // if any originData has been opened, we need to close it
 	}
@@ -94,7 +95,7 @@ func (r *request) execute(ctx context.Context) *server.Error {
 
 	// If error is not related to NotModified, respond with fallback image and replace image data
 	if err != nil {
-		originData, statusCode, err = r.handleDownloadError(ctx, err)
+		originData, statusCode, err = r.handleDownloadError(err)
 		if err != nil {
 			return server.NewError(err, handlers.ErrCategoryDownload)
 		}
@@ -109,7 +110,7 @@ func (r *request) execute(ctx context.Context) *server.Error {
 	}
 
 	// Actually process the image
-	result, err := r.processImage(ctx, originData)
+	result, err := r.processImage(originData)
 
 	// Let's close resulting image data only if it differs from the source image data
 	if result != nil && result.OutData != nil && result.OutData != originData {

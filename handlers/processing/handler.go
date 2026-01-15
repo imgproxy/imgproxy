@@ -1,7 +1,6 @@
 package processing
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/imgproxy/imgproxy/v3/auximageprovider"
@@ -70,17 +69,15 @@ func (h *Handler) Execute(
 	h.Monitoring().Stats().IncRequestsInProgress()
 	defer h.Monitoring().Stats().DecRequestsInProgress()
 
-	ctx := req.Context()
-
 	// Verify URL signature and extract image url and processing options
-	r, err := h.newRequest(ctx, req)
+	r, err := h.newRequest(req)
 	if err != nil {
 		return err
 	}
 
 	// if processing options indicate raw image streaming, stream it and return
 	if r.opts.GetBool(keys.Raw, false) {
-		return h.stream.Execute(ctx, req, r.imageURL, reqID, r.opts, rw)
+		return h.stream.Execute(req, r.imageURL, reqID, r.opts, rw)
 	}
 
 	r.reqID = reqID
@@ -88,14 +85,11 @@ func (h *Handler) Execute(
 	r.rw = rw
 	r.config = h.config
 
-	return r.execute(ctx)
+	return r.execute()
 }
 
 // newRequest extracts image url and processing options from request URL and verifies them
-func (h *Handler) newRequest(
-	ctx context.Context,
-	req *http.Request,
-) (*request, *server.Error) {
+func (h *Handler) newRequest(req *http.Request) (*request, *server.Error) {
 	// let's extract signature and valid request path from a request
 	path, signature, err := handlers.SplitPathSignature(req)
 	if err != nil {
@@ -103,13 +97,13 @@ func (h *Handler) newRequest(
 	}
 
 	// verify the signature (if any)
-	if err = h.Security().VerifySignature(ctx, signature, path); err != nil {
+	if err = h.Security().VerifySignature(req.Context(), signature, path); err != nil {
 		return nil, server.NewError(errctx.Wrap(err), handlers.ErrCategorySecurity)
 	}
 
 	// parse image url and processing options
 	features := h.ClientFeaturesDetector().Features(req.Header)
-	o, imageURL, err := h.OptionsParser().ParsePath(ctx, path, &features)
+	o, imageURL, err := h.OptionsParser().ParsePath(req.Context(), path, &features)
 	if err != nil {
 		return nil, server.NewError(errctx.Wrap(err), handlers.ErrCategoryPathParsing)
 	}
@@ -128,7 +122,7 @@ func (h *Handler) newRequest(
 	errorreport.SetMetadata(req, "Source Image Origin", imageOrigin)
 	errorreport.SetMetadata(req, "Options", o.NestedMap())
 
-	h.Monitoring().SetMetadata(ctx, mm)
+	h.Monitoring().SetMetadata(req.Context(), mm)
 
 	// verify that image URL came from the valid source
 	err = h.Security().VerifySourceURL(imageURL)

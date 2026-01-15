@@ -150,14 +150,13 @@ func (s *HandlerTestSuite) execute(
 	o *options.Options,
 ) *http.Response {
 	imageURL = s.testServer().URL() + imageURL
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req := httptest.NewRequest(http.MethodGet, "/", nil).WithContext(s.T().Context())
 	httpheaders.CopyAll(header, req.Header, true)
 
-	ctx := s.T().Context()
 	rw := httptest.NewRecorder()
 	rww := s.rwFactory().NewWriter(rw)
 
-	err := s.handler().Execute(ctx, req, imageURL, "test-req-id", o, rww)
+	err := s.handler().Execute(req, imageURL, "test-req-id", o, rww)
 	s.Require().Nil(err)
 
 	return rw.Result()
