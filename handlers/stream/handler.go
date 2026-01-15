@@ -1,7 +1,6 @@
 package stream
 
 import (
-	"context"
 	"io"
 	"log/slog"
 	"net/http"
@@ -72,7 +71,6 @@ func New(hCtx HandlerContext, config *Config) (*Handler, error) {
 
 // Execute handles the image passthrough request, streaming the image directly to the response writer
 func (s *Handler) Execute(
-	ctx context.Context,
 	userRequest *http.Request,
 	imageURL string,
 	reqID string,
@@ -89,15 +87,15 @@ func (s *Handler) Execute(
 		rw:             rw,
 	}
 
-	return stream.execute(ctx)
+	return stream.execute()
 }
 
 // execute handles the actual streaming logic
-func (s *request) execute(ctx context.Context) *server.Error {
+func (s *request) execute() *server.Error {
 	s.Monitoring().Stats().IncImagesInProgress()
 	defer s.Monitoring().Stats().DecImagesInProgress()
 
-	ctx, cancelSpan := s.Monitoring().StartSpan(ctx, "Streaming image", nil)
+	ctx, cancelSpan := s.Monitoring().StartSpan(s.imageRequest.Context(), "Streaming image", nil)
 	defer cancelSpan()
 
 	// Passthrough request headers from the original request

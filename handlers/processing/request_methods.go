@@ -35,8 +35,8 @@ func (r *request) makeImageRequestHeaders() http.Header {
 }
 
 // acquireWorker acquires the processing worker
-func (r *request) acquireWorker(ctx context.Context) (context.CancelFunc, errctx.Error) {
-	ctx, cancelSpan := r.Monitoring().StartSpan(ctx, "Queue", nil)
+func (r *request) acquireWorker() (context.CancelFunc, errctx.Error) {
+	ctx, cancelSpan := r.Monitoring().StartSpan(r.req.Context(), "Queue", nil)
 	defer cancelSpan()
 
 	fn, err := r.Workers().Acquire(ctx)
@@ -74,26 +74,29 @@ func (r *request) makeDownloadOptions(
 
 // fetchImage downloads the source image asynchronously
 func (r *request) fetchImage(
-	ctx context.Context,
 	do imagedata.DownloadOptions,
 ) (imagedata.ImageData, http.Header, errctx.Error) {
-	data, h, err := r.ImageDataFactory().DownloadAsync(ctx, r.imageURL, "source image", do)
+	data, h, err := r.ImageDataFactory().DownloadAsync(
+		r.req.Context(),
+		r.imageURL,
+		"source image",
+		do,
+	)
 	return data, h, r.wrapDownloadingErr(err)
 }
 
 // handleDownloadError replaces the image data with fallback image if needed
 func (r *request) handleDownloadError(
-	ctx context.Context,
 	err errctx.Error,
 ) (imagedata.ImageData, int, errctx.Error) {
 	// If there is no fallback image configured, just return the error
-	data, headers := r.getFallbackImage(ctx)
+	data, headers := r.getFallbackImage()
 	if data == nil {
 		return nil, 0, err
 	}
 
 	// Just send error
-	r.Monitoring().SendError(ctx, handlers.ErrCategoryDownload, err)
+	r.Monitoring().SendError(r.req.Context(), handlers.ErrCategoryDownload, err)
 
 	// We didn't return, so we have to report error
 	if err.ShouldReport() {
@@ -127,14 +130,14 @@ func (r *request) handleDownloadError(
 }
 
 // getFallbackImage returns fallback image if any
-func (r *request) getFallbackImage(ctx context.Context) (imagedata.ImageData, http.Header) {
+func (r *request) getFallbackImage() (imagedata.ImageData, http.Header) {
 	fbi := r.FallbackImage()
 
 	if fbi == nil {
 		return nil, nil
 	}
 
-	data, h, err := fbi.Get(ctx, r.opts)
+	data, h, err := fbi.Get(r.req.Context(), r.opts)
 	if err != nil {
 		slog.Warn(err.Error())
 
@@ -150,12 +153,15 @@ func (r *request) getFallbackImage(ctx context.Context) (imagedata.ImageData, ht
 
 // processImage calls actual image processing
 func (r *request) processImage(
-	ctx context.Context,
 	originData imagedata.ImageData,
 ) (*processing.Result, errctx.Error) {
-	ctx, cancelSpan := r.Monitoring().StartSpan(ctx, "Processing image", r.monitoringMeta.Filter(
-		monitoring.MetaOptions,
-	))
+	ctx, cancelSpan := r.Monitoring().StartSpan(
+		r.req.Context(),
+		"Processing image",
+		r.monitoringMeta.Filter(
+			monitoring.MetaOptions,
+		),
+	)
 	defer cancelSpan()
 
 	res, err := r.Processor().ProcessImage(ctx, originData, r.opts)
