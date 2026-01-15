@@ -3,6 +3,7 @@ package logger
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	logrus "github.com/sirupsen/logrus"
 
@@ -58,4 +59,24 @@ func Init() error {
 	}
 
 	return nil
+}
+
+// Deprecated prints a deprecation warning message.
+// If the IMGPROXY_FAIL_ON_DEPRECATION environment variable is truthy,
+// it prints an error message and exits the program.
+func Deprecated(deprecation, replacement string, additional ...string) {
+	msg := fmt.Sprintf("%s is deprecated, use %s instead", deprecation, replacement)
+
+	if len(additional) > 0 {
+		msg += ". " + strings.Join(additional, ". ")
+	}
+
+	shouldFail := false
+	configurators.Bool(&shouldFail, "IMGPROXY_FAIL_ON_DEPRECATION")
+
+	if shouldFail {
+		logrus.Fatal(msg)
+	} else {
+		logrus.Warning(msg)
+	}
 }
