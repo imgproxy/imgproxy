@@ -44,6 +44,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/config"
 	"github.com/imgproxy/imgproxy/v3/config/configurators"
 	"github.com/imgproxy/imgproxy/v3/ierrors"
+	"github.com/imgproxy/imgproxy/v3/logger"
 	"github.com/imgproxy/imgproxy/v3/metrics/errformat"
 	"github.com/imgproxy/imgproxy/v3/metrics/stats"
 	"github.com/imgproxy/imgproxy/v3/version"
@@ -185,7 +186,11 @@ func Init() error {
 func mapDeprecatedConfig() {
 	endpoint := os.Getenv("IMGPROXY_OPEN_TELEMETRY_ENDPOINT")
 	if len(endpoint) > 0 {
-		logrus.Warn("The IMGPROXY_OPEN_TELEMETRY_ENDPOINT config is deprecated. Use IMGPROXY_OPEN_TELEMETRY_ENABLE and OTEL_EXPORTER_OTLP_ENDPOINT instead. See https://docs.imgproxy.net/latest/monitoring/open_telemetry#deprecated-environment-variables")
+		logger.Deprecated(
+			"IMGPROXY_OPEN_TELEMETRY_ENDPOINT",
+			"IMGPROXY_OPEN_TELEMETRY_ENABLE and OTEL_EXPORTER_OTLP_ENDPOINT",
+			"See https://docs.imgproxy.net/latest/monitoring/open_telemetry#deprecated-environment-variables",
+		)
 		config.OpenTelemetryEnable = true
 	}
 
@@ -196,7 +201,11 @@ func mapDeprecatedConfig() {
 	protocol := "grpc"
 
 	if prot := os.Getenv("IMGPROXY_OPEN_TELEMETRY_PROTOCOL"); len(prot) > 0 {
-		logrus.Warn("The IMGPROXY_OPEN_TELEMETRY_PROTOCOL config is deprecated. Use OTEL_EXPORTER_OTLP_PROTOCOL instead. See https://docs.imgproxy.net/latest/monitoring/open_telemetry#deprecated-environment-variables")
+		logger.Deprecated(
+			"IMGPROXY_OPEN_TELEMETRY_PROTOCOL",
+			"OTEL_EXPORTER_OTLP_PROTOCOL",
+			"See https://docs.imgproxy.net/latest/monitoring/open_telemetry#deprecated-environment-variables",
+		)
 		protocol = prot
 		os.Setenv("OTEL_EXPORTER_OTLP_PROTOCOL", protocol)
 	}
@@ -207,7 +216,11 @@ func mapDeprecatedConfig() {
 		switch protocol {
 		case "grpc":
 			if insecure, _ := strconv.ParseBool(os.Getenv("IMGPROXY_OPEN_TELEMETRY_GRPC_INSECURE")); insecure {
-				logrus.Warn("The IMGPROXY_OPEN_TELEMETRY_GRPC_INSECURE config is deprecated. Use OTEL_EXPORTER_OTLP_ENDPOINT with the `http://` schema instead. See https://docs.imgproxy.net/latest/monitoring/open_telemetry#deprecated-environment-variables")
+				logger.Deprecated(
+					"IMGPROXY_OPEN_TELEMETRY_GRPC_INSECURE",
+					"OTEL_EXPORTER_OTLP_ENDPOINT with the `http://` schema",
+					"See https://docs.imgproxy.net/latest/monitoring/open_telemetry#deprecated-environment-variables",
+				)
 				schema = "http"
 			}
 		case "http":
@@ -218,18 +231,29 @@ func mapDeprecatedConfig() {
 	}
 
 	if serviceName := os.Getenv("IMGPROXY_OPEN_TELEMETRY_SERVICE_NAME"); len(serviceName) > 0 {
-		logrus.Warn("The IMGPROXY_OPEN_TELEMETRY_SERVICE_NAME config is deprecated. Use OTEL_SERVICE_NAME instead. See https://docs.imgproxy.net/latest/monitoring/open_telemetry#deprecated-environment-variables")
+		logger.Deprecated(
+			"IMGPROXY_OPEN_TELEMETRY_SERVICE_NAME",
+			"OTEL_SERVICE_NAME",
+			"See https://docs.imgproxy.net/latest/monitoring/open_telemetry#deprecated-environment-variables",
+		)
 		os.Setenv("OTEL_SERVICE_NAME", serviceName)
 	}
 
 	if propagators := os.Getenv("IMGPROXY_OPEN_TELEMETRY_PROPAGATORS"); len(propagators) > 0 {
-		logrus.Warn("The IMGPROXY_OPEN_TELEMETRY_PROPAGATORS config is deprecated. Use OTEL_PROPAGATORS instead. See https://docs.imgproxy.net/latest/monitoring/open_telemetry#deprecated-environment-variables")
+		logger.Deprecated(
+			"IMGPROXY_OPEN_TELEMETRY_PROPAGATORS",
+			"OTEL_PROPAGATORS",
+			"See https://docs.imgproxy.net/latest/monitoring/open_telemetry#deprecated-environment-variables",
+		)
 		os.Setenv("OTEL_PROPAGATORS", propagators)
 	}
 
 	if timeout := os.Getenv("IMGPROXY_OPEN_TELEMETRY_CONNECTION_TIMEOUT"); len(timeout) > 0 {
-		logrus.Warn("The IMGPROXY_OPEN_TELEMETRY_CONNECTION_TIMEOUT config is deprecated. Use OTEL_EXPORTER_OTLP_TIMEOUT instead. See https://docs.imgproxy.net/latest/monitoring/open_telemetry#deprecated-environment-variables")
-
+		logger.Deprecated(
+			"IMGPROXY_OPEN_TELEMETRY_CONNECTION_TIMEOUT",
+			"OTEL_EXPORTER_OTLP_TIMEOUT",
+			"See https://docs.imgproxy.net/latest/monitoring/open_telemetry#deprecated-environment-variables",
+		)
 		if to, _ := strconv.Atoi(timeout); to > 0 {
 			os.Setenv("OTEL_EXPORTER_OTLP_TIMEOUT", strconv.Itoa(to*1000))
 		}
