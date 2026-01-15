@@ -14,6 +14,7 @@ import (
 
 	"github.com/imgproxy/imgproxy/v3/config/configurators"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
+	"github.com/imgproxy/imgproxy/v3/logger"
 	"github.com/imgproxy/imgproxy/v3/version"
 )
 
@@ -435,7 +436,7 @@ func Configure() error {
 	configurators.String(&Bind, "IMGPROXY_BIND")
 
 	if _, ok := os.LookupEnv("IMGPROXY_WRITE_TIMEOUT"); ok {
-		log.Warning("IMGPROXY_WRITE_TIMEOUT is deprecated, use IMGPROXY_TIMEOUT instead")
+		logger.Deprecated("IMGPROXY_WRITE_TIMEOUT", "IMGPROXY_TIMEOUT")
 		configurators.Int(&Timeout, "IMGPROXY_WRITE_TIMEOUT")
 	}
 	configurators.Int(&Timeout, "IMGPROXY_TIMEOUT")
@@ -444,7 +445,7 @@ func Configure() error {
 	configurators.Int(&GracefulStopTimeout, "IMGPROXY_GRACEFUL_STOP_TIMEOUT")
 
 	if _, ok := os.LookupEnv("IMGPROXY_READ_TIMEOUT"); ok {
-		log.Warning("IMGPROXY_READ_TIMEOUT is deprecated, use IMGPROXY_READ_REQUEST_TIMEOUT instead")
+		logger.Deprecated("IMGPROXY_READ_TIMEOUT", "IMGPROXY_READ_REQUEST_TIMEOUT")
 		configurators.Int(&ReadRequestTimeout, "IMGPROXY_READ_TIMEOUT")
 	}
 	configurators.Int(&ReadRequestTimeout, "IMGPROXY_READ_REQUEST_TIMEOUT")
@@ -460,7 +461,10 @@ func Configure() error {
 		Workers = 1
 		log.Info("AWS Lambda environment detected, setting workers to 1")
 	} else {
-		configurators.Int(&Workers, "IMGPROXY_CONCURRENCY")
+		if _, ok := os.LookupEnv("IMGPROXY_CONCURRENCY"); ok {
+			logger.Deprecated("IMGPROXY_CONCURRENCY", "IMGPROXY_WORKERS")
+			configurators.Int(&Workers, "IMGPROXY_CONCURRENCY")
+		}
 		configurators.Int(&Workers, "IMGPROXY_WORKERS")
 	}
 
@@ -522,11 +526,11 @@ func Configure() error {
 	configurators.Bool(&ReturnAttachment, "IMGPROXY_RETURN_ATTACHMENT")
 
 	if _, ok := os.LookupEnv("IMGPROXY_ENABLE_WEBP_DETECTION"); ok {
-		log.Warning("IMGPROXY_ENABLE_WEBP_DETECTION is deprecated, use IMGPROXY_AUTO_WEBP instead")
+		logger.Deprecated("IMGPROXY_ENABLE_WEBP_DETECTION", "IMGPROXY_AUTO_WEBP")
 		configurators.Bool(&AutoWebp, "IMGPROXY_ENABLE_WEBP_DETECTION")
 	}
 	if _, ok := os.LookupEnv("IMGPROXY_ENABLE_AVIF_DETECTION"); ok {
-		log.Warning("IMGPROXY_ENABLE_AVIF_DETECTION is deprecated, use IMGPROXY_AUTO_AVIF instead")
+		logger.Deprecated("IMGPROXY_ENABLE_AVIF_DETECTION", "IMGPROXY_AUTO_AVIF")
 		configurators.Bool(&AutoAvif, "IMGPROXY_ENABLE_AVIF_DETECTION")
 	}
 
@@ -805,7 +809,7 @@ func Configure() error {
 	}
 
 	if _, ok := os.LookupEnv("IMGPROXY_USE_GCS"); !ok && len(GCSKey) > 0 {
-		log.Warning("Set IMGPROXY_USE_GCS to true since it may be required by future versions to enable GCS support")
+		logger.Deprecated("Using IMGPROXY_GCS_KEY without IMGPROXY_USE_GCS", "IMGPROXY_USE_GCS=true with IMGPROXY_GCS_KEY")
 		GCSEnabled = true
 	}
 
