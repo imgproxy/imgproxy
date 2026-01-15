@@ -94,8 +94,10 @@ func (p *Processor) sanitizeElement(el *xmlparser.Node) bool {
 		return false
 	}
 
-	// Strip <script> tags
-	if el.Name.Local() == "script" {
+	tagName := el.Name.Local()
+
+	// Strip <script> and <iframe> tags
+	if tagName == "script" || tagName == "iframe" {
 		return false
 	}
 
@@ -106,7 +108,7 @@ func (p *Processor) sanitizeElement(el *xmlparser.Node) bool {
 	})
 
 	// Special handling for <use> tags.
-	if el.Name.Local() == "use" {
+	if tagName == "use" {
 		el.Attrs.Filter(func(attr *xmlparser.Attribute) bool {
 			// Keep non-href attributes
 			if attr.Name.Local() != "href" {
