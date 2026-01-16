@@ -84,6 +84,11 @@ func (h *Handler) AddHook(hook Hook) {
 	h.hooks = append(h.hooks, hook)
 }
 
+// Level returns the minimum log level for the handler.
+func (h *Handler) Level() slog.Leveler {
+	return h.config.Level
+}
+
 // Enabled checks if the given log level is enabled.
 func (h *Handler) Enabled(ctx context.Context, level slog.Level) bool {
 	if level >= h.config.Level.Level() {
