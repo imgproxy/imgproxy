@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"strings"
 
+	"github.com/imgproxy/imgproxy/v3/config/configurators"
 	"github.com/imgproxy/imgproxy/v3/logger/gliblog"
 	"github.com/imgproxy/imgproxy/v3/logger/syslog"
 )
@@ -53,6 +55,26 @@ func AddHook(hook Hook) {
 func Fatal(msg string, args ...any) {
 	slog.Log(context.Background(), LevelCritical, msg, args...)
 	os.Exit(1)
+}
+
+// Deprecated prints a deprecation warning message.
+// If the IMGPROXY_FAIL_ON_DEPRECATION environment variable is truthy,
+// it prints an error message and exits the program.
+func Deprecated(deprecation, replacement string, additional ...string) {
+	msg := fmt.Sprintf("%s is deprecated, use %s instead", deprecation, replacement)
+
+	if len(additional) > 0 {
+		msg += ". " + strings.Join(additional, ". ")
+	}
+
+	shouldFail := false
+	configurators.Bool(&shouldFail, "IMGPROXY_FAIL_ON_DEPRECATION")
+
+	if shouldFail {
+		Fatal(msg)
+	} else {
+		slog.Warn(msg)
+	}
 }
 
 // Mute sets the default logger to a discard logger muting all log output

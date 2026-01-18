@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 ### Added
+- Add [IMGPROXY_FAIL_ON_DEPRECATION](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_FAIL_ON_DEPRECATION) config. When set to `true`, imgproxy will exit with a fatal error if a deprecated config option is used.
 - Add [flip](https://docs.imgproxy.net/latest/usage/processing#flip) processing option.
 - (pro) Add [IMGPROXY_AVIF_SUBSAMPLE](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_AVIF_SUBSAMPLE) config.
 - (pro) Add [avif_options](https://docs.imgproxy.net/latest/usage/processing#avif-options) processing option.
