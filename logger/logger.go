@@ -7,7 +7,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/imgproxy/imgproxy/v3/config/configurators"
 	"github.com/imgproxy/imgproxy/v3/logger/gliblog"
 	"github.com/imgproxy/imgproxy/v3/logger/syslog"
 )
@@ -68,7 +67,7 @@ func Deprecated(deprecation, replacement string, additional ...string) {
 	}
 
 	shouldFail := false
-	configurators.Bool(&shouldFail, "IMGPROXY_FAIL_ON_DEPRECATION")
+	IMGPROXY_FAIL_ON_DEPRECATION.Parse(&shouldFail)
 
 	if shouldFail {
 		Fatal(msg)

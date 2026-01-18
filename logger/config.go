@@ -29,6 +29,8 @@ var (
 
 	IMGPROXY_LOG_FORMAT = env.Enum("IMGPROXY_LOG_FORMAT", logFormatMap)
 	IMGPROXY_LOG_LEVEL  = env.Enum("IMGPROXY_LOG_LEVEL", logLevelMap)
+
+	IMGPROXY_FAIL_ON_DEPRECATION = env.Bool("IMGPROXY_FAIL_ON_DEPRECATION")
 )
 
 type Config struct {
