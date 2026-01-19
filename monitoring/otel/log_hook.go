@@ -33,7 +33,7 @@ func (h *logHook) Enabled(level slog.Level) bool {
 }
 
 // Fire processes a log event and exports it to OpenTelemetry.
-func (h *logHook) Fire(t time.Time, lvl slog.Level, msg []byte) error {
+func (h *logHook) Fire(ctx context.Context, t time.Time, lvl slog.Level, msg []byte) error {
 	// Create log record
 	var logRecord log.Record
 	logRecord.SetTimestamp(t)
@@ -42,7 +42,15 @@ func (h *logHook) Fire(t time.Time, lvl slog.Level, msg []byte) error {
 	logRecord.SetSeverityText(lvl.String())
 
 	// Emit the log record
-	h.logger.Emit(context.Background(), logRecord)
+	h.logger.Emit(ctx, logRecord)
+
+	if lvl >= imgproxylogger.LevelCritical {
+		// Ensure logs are flushed for critical errors
+		flushCtx, cancel := context.WithTimeout(ctx, stopTimeout)
+		defer cancel()
+
+		return h.provider.ForceFlush(flushCtx)
+	}
 
 	return nil
 }

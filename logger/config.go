@@ -55,15 +55,18 @@ func NewDefaultConfig() Config {
 func LoadConfigFromEnv(o *Config) (*Config, error) {
 	o = ensure.Ensure(o, NewDefaultConfig)
 
-	_, slErr := syslog.LoadConfigFromEnv(&o.Syslog)
-
-	err := errors.Join(
-		slErr,
+	errs := errors.Join(
 		IMGPROXY_LOG_FORMAT.Parse(&o.Format),
 		IMGPROXY_LOG_LEVEL.Parse(&o.Level),
 	)
 
-	return o, err
+	o.Syslog.Level = o.Level
+
+	if _, err := syslog.LoadConfigFromEnv(&o.Syslog); err != nil {
+		errs = errors.Join(errs, err)
+	}
+
+	return o, errs
 }
 
 func (c *Config) Validate() error {

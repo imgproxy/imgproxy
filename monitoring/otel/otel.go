@@ -97,7 +97,7 @@ func New(config *Config, stats *stats.Stats) (*Otel, error) {
 
 	otel.SetErrorHandler(errorHandler{})
 
-	traceExporter, metricExporter, err := buildProtocolExporter(config)
+	traceExporter, metricExporter, logExporter, err := buildExporters(config)
 	if err != nil {
 		return nil, err
 	}
@@ -153,18 +153,19 @@ func New(config *Config, stats *stats.Stats) (*Otel, error) {
 	}
 
 	// Initialize log exporter if enabled
-	logExporter, err := buildLogExporter(config)
-	if err != nil {
-		return nil, err
-	}
-
 	if logExporter != nil {
 		logProcessor := sdklog.NewBatchProcessor(logExporter)
 		o.loggerProvider = sdklog.NewLoggerProvider(
 			sdklog.WithResource(res),
 			sdklog.WithProcessor(logProcessor),
 		)
-		o.logHook = newLogHook(o.loggerProvider, config.LoggerName, logger.Level())
+
+		logLevel := config.LogLevel
+		if logLevel == nil {
+			logLevel = logger.Level()
+		}
+
+		o.logHook = newLogHook(o.loggerProvider, config.LoggerName, logLevel)
 		logger.AddHook(o.logHook)
 	}
 
