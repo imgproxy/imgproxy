@@ -41,6 +41,11 @@ func (p *Processor) prepareWatermark(
 		return err
 	}
 
+	_, _, err := p.checkImageSize(wm, wmData.Format(), po)
+	if err != nil {
+		return err
+	}
+
 	wmPo := p.NewProcessingOptions(options.New())
 	wmPo.Set(keys.ResizingType, ResizeFit)
 	wmPo.Set(keys.Dpr, 1)
