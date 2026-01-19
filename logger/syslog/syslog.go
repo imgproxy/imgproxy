@@ -1,6 +1,7 @@
 package syslog
 
 import (
+	"context"
 	"log/slog"
 	"log/syslog"
 	"time"
@@ -38,7 +39,7 @@ func (hook *Hook) Enabled(level slog.Level) bool {
 	return level >= hook.level.Level()
 }
 
-func (hook *Hook) Fire(time time.Time, lvl slog.Level, msg []byte) error {
+func (hook *Hook) Fire(ctx context.Context, time time.Time, lvl slog.Level, msg []byte) error {
 	msgStr := string(msg)
 
 	switch {

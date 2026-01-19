@@ -22,6 +22,7 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/propagation"
+	sdklog "go.opentelemetry.io/otel/sdk/log"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
@@ -30,6 +31,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/imgproxy/imgproxy/v3/errctx"
+	"github.com/imgproxy/imgproxy/v3/logger"
 	"github.com/imgproxy/imgproxy/v3/monitoring/format"
 	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
 	"github.com/imgproxy/imgproxy/v3/version"
@@ -65,11 +67,21 @@ type Otel struct {
 	meterProvider *sdkmetric.MeterProvider
 	meter         metric.Meter
 
+	loggerProvider *sdklog.LoggerProvider
+	logHook        *logHook
+
 	propagator propagation.TextMapPropagator
 }
 
 // New creates a new Otel instance
 func New(config *Config, stats *stats.Stats) (*Otel, error) {
+	slog.Info(
+		"OpenTelemetry monitoring",
+		"enabled", config.Enable,
+		"logs", config.EnableLogs,
+		"metrics", config.EnableMetrics,
+	)
+
 	if !config.Enabled() {
 		return nil, nil
 	}
@@ -85,7 +97,7 @@ func New(config *Config, stats *stats.Stats) (*Otel, error) {
 
 	otel.SetErrorHandler(errorHandler{})
 
-	traceExporter, metricExporter, err := buildProtocolExporter(config)
+	traceExporter, metricExporter, logExporter, err := buildExporters(config)
 	if err != nil {
 		return nil, err
 	}
@@ -140,6 +152,23 @@ func New(config *Config, stats *stats.Stats) (*Otel, error) {
 		}
 	}
 
+	// Initialize log exporter if enabled
+	if logExporter != nil {
+		logProcessor := sdklog.NewBatchProcessor(logExporter)
+		o.loggerProvider = sdklog.NewLoggerProvider(
+			sdklog.WithResource(res),
+			sdklog.WithProcessor(logProcessor),
+		)
+
+		logLevel := config.LogLevel
+		if logLevel == nil {
+			logLevel = logger.Level()
+		}
+
+		o.logHook = newLogHook(o.loggerProvider, config.LoggerName, logLevel)
+		logger.AddHook(o.logHook)
+	}
+
 	if metricExporter == nil {
 		return o, nil
 	}
@@ -177,6 +206,13 @@ func (o *Otel) Stop(ctx context.Context) {
 		defer mtcancel()
 
 		o.meterProvider.Shutdown(mtctx)
+	}
+
+	if o.loggerProvider != nil {
+		logctx, logcancel := context.WithTimeout(ctx, stopTimeout)
+		defer logcancel()
+
+		o.loggerProvider.Shutdown(logctx)
 	}
 }
 

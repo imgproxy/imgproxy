@@ -48,7 +48,7 @@ type Hook interface {
 	// followed by a newline character.
 	// It is guaranteed to be available for the duration of the hook call.
 	// The hook should not modify the contents of the msg slice except for appending.
-	Fire(time time.Time, lvl slog.Level, msg []byte) error
+	Fire(ctx context.Context, time time.Time, lvl slog.Level, msg []byte) error
 }
 
 // Handler is an implementation of [slog.Handler] with support for hooks.
@@ -82,6 +82,11 @@ func (h *Handler) AddHook(hook Hook) {
 	defer h.mu.Unlock()
 
 	h.hooks = append(h.hooks, hook)
+}
+
+// Level returns the minimum log level for the handler.
+func (h *Handler) Level() slog.Leveler {
+	return h.config.Level
 }
 
 // Enabled checks if the given log level is enabled.
@@ -138,9 +143,11 @@ func (h *Handler) Handle(ctx context.Context, r slog.Record) error {
 	var errs []error
 
 	// Write log entry to output
-	_, err := h.out.Write(*buf)
-	if err != nil {
-		errs = append(errs, err)
+	if r.Level >= h.config.Level.Level() {
+		_, err := h.out.Write(*buf)
+		if err != nil {
+			errs = append(errs, err)
+		}
 	}
 
 	// Fire hooks
@@ -148,14 +155,14 @@ func (h *Handler) Handle(ctx context.Context, r slog.Record) error {
 		if !hook.Enabled(r.Level) {
 			continue
 		}
-		if err = hook.Fire(r.Time, r.Level, slices.Clip(*buf)); err != nil {
+		if err := hook.Fire(ctx, r.Time, r.Level, slices.Clip(*buf)); err != nil {
 			errs = append(errs, err)
 		}
 	}
 
 	// If writing to output or firing hooks returned errors,
 	// join them, write to STDERR, and return
-	if err = h.joinErrors(errs); err != nil {
+	if err := h.joinErrors(errs); err != nil {
 		h.writeError(err)
 		return err
 	}
