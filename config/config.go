@@ -566,6 +566,14 @@ func Configure() error {
 	configurators.Int(&SignatureSize, "IMGPROXY_SIGNATURE_SIZE")
 	configurators.StringSlice(&TrustedSignatures, "IMGPROXY_TRUSTED_SIGNATURES")
 
+	if len(keyPath) > 0 {
+		logger.Deprecated("--keypath", "IMGPROXY_KEY")
+	}
+
+	if len(saltPath) > 0 {
+		logger.Deprecated("--saltpath", "IMGPROXY_SALT")
+	}
+
 	if err := configurators.HexSliceFile(&Keys, keyPath); err != nil {
 		return err
 	}
