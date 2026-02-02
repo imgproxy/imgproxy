@@ -1,6 +1,6 @@
-ARG BASE_IMAGE_VERSION="v3.14.0.nobi.4"
+ARG BASE_IMAGE_VERSION="v3.15.2"
 
-FROM nobilife/imgproxy-base:${BASE_IMAGE_VERSION} AS build
+FROM ghcr.io/imgproxy/imgproxy-base:${BASE_IMAGE_VERSION} AS build
 
 ENV CGO_ENABLED=1
 
