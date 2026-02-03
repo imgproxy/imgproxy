@@ -34,7 +34,7 @@ func (s *RotateAndFlipTestSuite) processImg(imgIndex int, o *options.Options) *t
 		o.GetBool(keys.AutoRotate, false),
 	)
 
-	s.ImageMatcher.ImageMatches(s.T(), result.OutData.Reader(), key, 0)
+	s.ImageMatcher().ImageMatches(s.T(), result.OutData.Reader(), key, 0)
 
 	return hash
 }
