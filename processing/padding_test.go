@@ -96,7 +96,7 @@ func (s *PaddingTestSuite) TestPadding() {
 		s.Run(tc.opts.String(), func() {
 			tc.opts.Set(o)
 
-			s.processImageAndCheck(s.img, o, tc.outSize)
+			s.processImageAndCheck(s.img, o, tc)
 		})
 	}
 }

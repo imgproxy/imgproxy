@@ -1,9 +1,6 @@
 package processing
 
 import (
-	"fmt"
-	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/imgproxy/imgproxy/v3/imagetype"
@@ -18,40 +15,16 @@ type ColorspaceTestSuite struct {
 	testSuite
 }
 
+var colorspaceTestOutSize = testSize{100, 100}
+
 type colorspaceTestCase struct {
-	sourceFile             string
-	watermarkFile          string
-	outFormat              imagetype.Type
-	expectedInterpretation vips.Interpretation
+	name          string
+	sourceFile    string
+	watermarkFile string
+	outFormat     imagetype.Type
 }
 
-func (tc colorspaceTestCase) testName() string {
-	fileName := strings.ReplaceAll(filepath.Base(tc.sourceFile), ".", "_")
-	name := fmt.Sprintf("%s_%s_%d", fileName, tc.outFormat, tc.expectedInterpretation)
-	if tc.watermarkFile != "" {
-		watermarkName := strings.ReplaceAll(filepath.Base(tc.watermarkFile), ".", "_")
-		name = fmt.Sprintf("%s_wm_%s", name, watermarkName)
-	}
-	return name
-}
-
-func (s *ColorspaceTestSuite) SetupSubTest() {
-	s.ResetLazyObjects()
-}
-
-func (s *ColorspaceTestSuite) runTestCase(
-	tc colorspaceTestCase,
-	imageMatcher *testutil.ImageHashCacheMatcher,
-	distance int,
-) {
-	// Load source image
-	img, err := s.ImageDataFactory().NewFromPath(
-		s.TestData.Path(tc.sourceFile),
-	)
-	s.Require().NoError(err)
-
-	// Create options with resize to 100x100 and enlarge enabled
-	o := options.New()
+func (tc colorspaceTestCase) Set(o *options.Options) {
 	o.Set(keys.ResizingType, ResizeFill)
 	o.Set(keys.Width, 100)
 	o.Set(keys.Height, 100)
@@ -60,219 +33,332 @@ func (s *ColorspaceTestSuite) runTestCase(
 
 	if tc.watermarkFile != "" {
 		o.Set(keys.WatermarkOpacity, 0.5)
-		s.WatermarkConfig().Path = s.TestData.Path(tc.watermarkFile)
+	}
+}
+
+func (tc colorspaceTestCase) String() string {
+	return tc.name
+}
+
+func (s *ColorspaceTestSuite) SetupSubTest() {
+	s.ResetLazyObjects()
+}
+
+func (s *ColorspaceTestSuite) runTestCase(tc testCase[colorspaceTestCase]) {
+	if tc.opts.watermarkFile != "" {
+		s.WatermarkConfig().Path = s.TestData.Path(tc.opts.watermarkFile)
 	}
 
-	// Process the image
-	result, err := s.Processor().ProcessImage(s.T().Context(), img, o)
-	s.Require().NoError(err)
-	s.Require().NotNil(result)
-
-	// Load the result image to check its interpretation
-	resultImg := new(vips.Image)
-	defer resultImg.Clear()
-
-	err = resultImg.Load(result.OutData, 1, 1.0, 1)
+	img, err := s.ImageDataFactory().NewFromPath(s.TestData.Path(tc.opts.sourceFile))
 	s.Require().NoError(err)
 
-	// Check the interpretation
-	actualInterpretation := resultImg.Type()
-	s.Require().Equal(tc.expectedInterpretation, actualInterpretation)
+	o := options.New()
+	tc.opts.Set(o)
 
-	// Match against stored hash
-	imageMatcher.ImageMatches(s.T(), result.OutData.Reader(), "hash", distance)
+	s.processImageAndCheck(img, o, tc)
 }
 
 func (s *ColorspaceTestSuite) TestColorspace() {
-	testCases := []colorspaceTestCase{
+	testCases := []testCase[colorspaceTestCase]{
 		{
-			sourceFile:             "test-images/png/8-bpp.png",
-			outFormat:              imagetype.PNG,
-			expectedInterpretation: vips.InterpretationSRGB,
+			opts: colorspaceTestCase{
+				name:       "8-bpp-png-srgb",
+				sourceFile: "test-images/png/8-bpp.png",
+				outFormat:  imagetype.PNG,
+			},
+			outSize:           colorspaceTestOutSize,
+			outInterpretation: vips.InterpretationSRGB,
 		},
 		{
-			sourceFile:             "test-images/png/16-bpp.png",
-			outFormat:              imagetype.PNG,
-			expectedInterpretation: vips.InterpretationRGB16,
+			opts: colorspaceTestCase{
+				name:       "16-bpp-png-rgb16",
+				sourceFile: "test-images/png/16-bpp.png",
+				outFormat:  imagetype.PNG,
+			},
+			outSize:           colorspaceTestOutSize,
+			outInterpretation: vips.InterpretationRGB16,
 		},
 		{
-			sourceFile:             "test-images/png/16-bpp.png",
-			outFormat:              imagetype.JPEG,
-			expectedInterpretation: vips.InterpretationSRGB,
+			opts: colorspaceTestCase{
+				name:       "16-bpp-png-jpeg-srgb",
+				sourceFile: "test-images/png/16-bpp.png",
+				outFormat:  imagetype.JPEG,
+			},
+			outSize:           colorspaceTestOutSize,
+			outInterpretation: vips.InterpretationSRGB,
 		},
 		{
-			sourceFile:             "test-images/tiff/8-bpp.tiff",
-			outFormat:              imagetype.PNG,
-			expectedInterpretation: vips.InterpretationSRGB,
+			opts: colorspaceTestCase{
+				name:       "8-bpp-tiff-srgb",
+				sourceFile: "test-images/tiff/8-bpp.tiff",
+				outFormat:  imagetype.PNG,
+			},
+			outSize:           colorspaceTestOutSize,
+			outInterpretation: vips.InterpretationSRGB,
 		},
 		{
-			sourceFile:             "test-images/tiff/16-bpp.tiff",
-			outFormat:              imagetype.PNG,
-			expectedInterpretation: vips.InterpretationRGB16,
+			opts: colorspaceTestCase{
+				name:       "16-bpp-tiff-rgb16",
+				sourceFile: "test-images/tiff/16-bpp.tiff",
+				outFormat:  imagetype.PNG,
+			},
+			outSize:           colorspaceTestOutSize,
+			outInterpretation: vips.InterpretationRGB16,
 		},
 		{
-			sourceFile:             "test-images/png/8-bpp-grayscale.png",
-			outFormat:              imagetype.PNG,
-			expectedInterpretation: vips.InterpretationBW,
+			opts: colorspaceTestCase{
+				name:       "8-bpp-grayscale-png-bw",
+				sourceFile: "test-images/png/8-bpp-grayscale.png",
+				outFormat:  imagetype.PNG,
+			},
+			outSize:           colorspaceTestOutSize,
+			outInterpretation: vips.InterpretationBW,
 		},
 		{
-			sourceFile:             "test-images/png/16-bpp-grayscale.png",
-			outFormat:              imagetype.PNG,
-			expectedInterpretation: vips.InterpretationGrey16,
+			opts: colorspaceTestCase{
+				name:       "16-bpp-grayscale-png-grey16",
+				sourceFile: "test-images/png/16-bpp-grayscale.png",
+				outFormat:  imagetype.PNG,
+			},
+			outSize:           colorspaceTestOutSize,
+			outInterpretation: vips.InterpretationGrey16,
 		},
 		{
-			sourceFile:             "test-images/png/16-bpp-grayscale.png",
-			outFormat:              imagetype.JPEG,
-			expectedInterpretation: vips.InterpretationBW,
+			opts: colorspaceTestCase{
+				name:       "16-bpp-grayscale-png-jpeg-bw",
+				sourceFile: "test-images/png/16-bpp-grayscale.png",
+				outFormat:  imagetype.JPEG,
+			},
+			outSize:           colorspaceTestOutSize,
+			outInterpretation: vips.InterpretationBW,
 		},
 		{
-			sourceFile:             "test-images/tiff/8-bpp-grayscale.tiff",
-			outFormat:              imagetype.PNG,
-			expectedInterpretation: vips.InterpretationBW,
+			opts: colorspaceTestCase{
+				name:       "8-bpp-grayscale-tiff-bw",
+				sourceFile: "test-images/tiff/8-bpp-grayscale.tiff",
+				outFormat:  imagetype.PNG,
+			},
+			outSize:           colorspaceTestOutSize,
+			outInterpretation: vips.InterpretationBW,
 		},
 		{
-			sourceFile:             "test-images/tiff/16-bpp-grayscale.tiff",
-			outFormat:              imagetype.PNG,
-			expectedInterpretation: vips.InterpretationGrey16,
+			opts: colorspaceTestCase{
+				name:       "16-bpp-grayscale-tiff-grey16",
+				sourceFile: "test-images/tiff/16-bpp-grayscale.tiff",
+				outFormat:  imagetype.PNG,
+			},
+			outSize:           colorspaceTestOutSize,
+			outInterpretation: vips.InterpretationGrey16,
 		},
 		{
-			sourceFile:             "test-images/jxl/jxl.jxl",
-			outFormat:              imagetype.PNG,
-			expectedInterpretation: vips.InterpretationRGB16,
+			opts: colorspaceTestCase{
+				name:       "jxl-png-rgb16",
+				sourceFile: "test-images/jxl/jxl.jxl",
+				outFormat:  imagetype.PNG,
+			},
+			outSize:           colorspaceTestOutSize,
+			outInterpretation: vips.InterpretationRGB16,
 		},
 		{
-			sourceFile:             "test-images/jxl/jxl.jxl",
-			outFormat:              imagetype.JPEG,
-			expectedInterpretation: vips.InterpretationSRGB,
+			opts: colorspaceTestCase{
+				name:       "jxl-jpeg-srgb",
+				sourceFile: "test-images/jxl/jxl.jxl",
+				outFormat:  imagetype.JPEG,
+			},
+			outSize:           colorspaceTestOutSize,
+			outInterpretation: vips.InterpretationSRGB,
 		},
 	}
 
 	for _, tc := range testCases {
-		s.Run(tc.testName(), func() {
+		s.Run(tc.opts.String(), func() {
 			s.Config().PreserveHDR = true
-			s.runTestCase(tc, s.ImageMatcher, 0)
+			s.runTestCase(tc)
 		})
 	}
 }
 
 func (s *ColorspaceTestSuite) TestLinearColorspace() {
-	imageMatcher := testutil.NewImageHashCacheMatcher(s.TestData, testutil.HashTypeDifference)
-
-	testCases := []colorspaceTestCase{
+	testCases := []testCase[colorspaceTestCase]{
 		{
-			sourceFile:             "test-images/png/16-bpp-linear.png",
-			outFormat:              imagetype.PNG,
-			expectedInterpretation: vips.InterpretationRGB16,
+			opts: colorspaceTestCase{
+				name:       "16-bpp-linear-png-rgb16",
+				sourceFile: "test-images/png/16-bpp-linear.png",
+				outFormat:  imagetype.PNG,
+			},
+			outSize:           colorspaceTestOutSize,
+			outInterpretation: vips.InterpretationRGB16,
 		},
 		{
-			sourceFile:             "test-images/tiff/32-bpp-linear.tiff",
-			outFormat:              imagetype.PNG,
-			expectedInterpretation: vips.InterpretationRGB16,
+			opts: colorspaceTestCase{
+				name:       "32-bpp-linear-tiff-rgb16",
+				sourceFile: "test-images/tiff/32-bpp-linear.tiff",
+				outFormat:  imagetype.PNG,
+			},
+			outSize:           colorspaceTestOutSize,
+			outInterpretation: vips.InterpretationRGB16,
 		},
 		{
-			sourceFile:             "test-images/png/16-bpp-linear.png",
-			outFormat:              imagetype.JPEG,
-			expectedInterpretation: vips.InterpretationSRGB,
+			opts: colorspaceTestCase{
+				name:       "16-bpp-linear-png-jpeg-srgb",
+				sourceFile: "test-images/png/16-bpp-linear.png",
+				outFormat:  imagetype.JPEG,
+			},
+			outSize:           colorspaceTestOutSize,
+			outInterpretation: vips.InterpretationSRGB,
 		},
 		{
-			sourceFile:             "test-images/png/8-bpp.png",
-			outFormat:              imagetype.JPEG,
-			expectedInterpretation: vips.InterpretationSRGB,
+			opts: colorspaceTestCase{
+				name:       "8-bpp-png-jpeg-srgb",
+				sourceFile: "test-images/png/8-bpp.png",
+				outFormat:  imagetype.JPEG,
+			},
+			outSize:           colorspaceTestOutSize,
+			outInterpretation: vips.InterpretationSRGB,
 		},
 	}
 
 	for _, tc := range testCases {
-		s.Run(tc.testName()+"_linear", func() {
+		s.Run(tc.opts.String()+"_linear", func() {
+			s.ImageMatcher, _ = testutil.NewLazySuiteObj(s, func() (*testutil.ImageHashCacheMatcher, error) {
+				return testutil.NewImageHashCacheMatcher(s.TestData, testutil.HashTypeDifference), nil
+			})
 			s.Config().PreserveHDR = true
 			s.Config().UseLinearColorspace = true
-			s.runTestCase(tc, imageMatcher, 1)
+			s.runTestCase(tc)
 		})
 	}
 }
 
 func (s *ColorspaceTestSuite) TestDownscaleHDR() {
-	testCases := []colorspaceTestCase{
+	testCases := []testCase[colorspaceTestCase]{
 		{
-			sourceFile:             "test-images/png/16-bpp.png",
-			outFormat:              imagetype.PNG,
-			expectedInterpretation: vips.InterpretationSRGB,
+			opts: colorspaceTestCase{
+				name:       "16-bpp-png-srgb",
+				sourceFile: "test-images/png/16-bpp.png",
+				outFormat:  imagetype.PNG,
+			},
+			outSize:           colorspaceTestOutSize,
+			outInterpretation: vips.InterpretationSRGB,
 		},
 		{
-			sourceFile:             "test-images/tiff/16-bpp.tiff",
-			outFormat:              imagetype.PNG,
-			expectedInterpretation: vips.InterpretationSRGB,
+			opts: colorspaceTestCase{
+				name:       "16-bpp-tiff-srgb",
+				sourceFile: "test-images/tiff/16-bpp.tiff",
+				outFormat:  imagetype.PNG,
+			},
+			outSize:           colorspaceTestOutSize,
+			outInterpretation: vips.InterpretationSRGB,
 		},
 		{
-			sourceFile:             "test-images/png/16-bpp-grayscale.png",
-			outFormat:              imagetype.PNG,
-			expectedInterpretation: vips.InterpretationBW,
+			opts: colorspaceTestCase{
+				name:       "16-bpp-grayscale-png-bw",
+				sourceFile: "test-images/png/16-bpp-grayscale.png",
+				outFormat:  imagetype.PNG,
+			},
+			outSize:           colorspaceTestOutSize,
+			outInterpretation: vips.InterpretationBW,
 		},
 		{
-			sourceFile:             "test-images/tiff/16-bpp-grayscale.tiff",
-			outFormat:              imagetype.PNG,
-			expectedInterpretation: vips.InterpretationBW,
+			opts: colorspaceTestCase{
+				name:       "16-bpp-grayscale-tiff-bw",
+				sourceFile: "test-images/tiff/16-bpp-grayscale.tiff",
+				outFormat:  imagetype.PNG,
+			},
+			outSize:           colorspaceTestOutSize,
+			outInterpretation: vips.InterpretationBW,
 		},
 		{
-			sourceFile:             "test-images/jxl/jxl.jxl",
-			outFormat:              imagetype.PNG,
-			expectedInterpretation: vips.InterpretationSRGB,
+			opts: colorspaceTestCase{
+				name:       "jxl-png-srgb",
+				sourceFile: "test-images/jxl/jxl.jxl",
+				outFormat:  imagetype.PNG,
+			},
+			outSize:           colorspaceTestOutSize,
+			outInterpretation: vips.InterpretationSRGB,
 		},
 	}
 
 	for _, tc := range testCases {
-		s.Run(tc.testName()+"_no_preserve_hdr", func() {
+		s.Run(tc.opts.String()+"_no_preserve_hdr", func() {
 			s.Config().PreserveHDR = false
-			s.runTestCase(tc, s.ImageMatcher, 0)
+			s.runTestCase(tc)
 		})
 	}
 }
 
 func (s *ColorspaceTestSuite) TestWatermarkColorspace() {
-	imageMatcher := testutil.NewImageHashCacheMatcher(s.TestData, testutil.HashTypePerception)
-
-	testCases := []colorspaceTestCase{
+	testCases := []testCase[colorspaceTestCase]{
 		{
-			sourceFile:             "test-images/png/8-bpp.png",
-			watermarkFile:          "test-images/png/16-bpp.png",
-			outFormat:              imagetype.PNG,
-			expectedInterpretation: vips.InterpretationSRGB,
+			opts: colorspaceTestCase{
+				name:          "8-bpp-wm-16-bpp-srgb",
+				sourceFile:    "test-images/png/8-bpp.png",
+				watermarkFile: "test-images/png/16-bpp.png",
+				outFormat:     imagetype.PNG,
+			},
+			outSize:           colorspaceTestOutSize,
+			outInterpretation: vips.InterpretationSRGB,
 		},
 		{
-			sourceFile:             "test-images/png/8-bpp.png",
-			watermarkFile:          "test-images/png/16-bpp-grayscale.png",
-			outFormat:              imagetype.PNG,
-			expectedInterpretation: vips.InterpretationSRGB,
+			opts: colorspaceTestCase{
+				name:          "8-bpp-wm-16-bpp-grayscale-srgb",
+				sourceFile:    "test-images/png/8-bpp.png",
+				watermarkFile: "test-images/png/16-bpp-grayscale.png",
+				outFormat:     imagetype.PNG,
+			},
+			outSize:           colorspaceTestOutSize,
+			outInterpretation: vips.InterpretationSRGB,
 		},
 		{
-			sourceFile:             "test-images/png/8-bpp-grayscale.png",
-			watermarkFile:          "test-images/png/16-bpp-grayscale.png",
-			outFormat:              imagetype.PNG,
-			expectedInterpretation: vips.InterpretationBW,
+			opts: colorspaceTestCase{
+				name:          "8-bpp-grayscale-wm-16-bpp-grayscale-bw",
+				sourceFile:    "test-images/png/8-bpp-grayscale.png",
+				watermarkFile: "test-images/png/16-bpp-grayscale.png",
+				outFormat:     imagetype.PNG,
+			},
+			outSize:           colorspaceTestOutSize,
+			outInterpretation: vips.InterpretationBW,
 		},
 		{
-			sourceFile:             "test-images/png/16-bpp-grayscale.png",
-			watermarkFile:          "test-images/png/8-bpp-grayscale.png",
-			outFormat:              imagetype.PNG,
-			expectedInterpretation: vips.InterpretationGrey16,
+			opts: colorspaceTestCase{
+				name:          "16-bpp-grayscale-wm-8-bpp-grayscale-grey16",
+				sourceFile:    "test-images/png/16-bpp-grayscale.png",
+				watermarkFile: "test-images/png/8-bpp-grayscale.png",
+				outFormat:     imagetype.PNG,
+			},
+			outSize:           colorspaceTestOutSize,
+			outInterpretation: vips.InterpretationGrey16,
 		},
 		{
-			sourceFile:             "test-images/png/16-bpp-grayscale.png",
-			watermarkFile:          "test-images/png/16-bpp.png",
-			outFormat:              imagetype.PNG,
-			expectedInterpretation: vips.InterpretationRGB16,
+			opts: colorspaceTestCase{
+				name:          "16-bpp-grayscale-wm-16-bpp-rgb16",
+				sourceFile:    "test-images/png/16-bpp-grayscale.png",
+				watermarkFile: "test-images/png/16-bpp.png",
+				outFormat:     imagetype.PNG,
+			},
+			outSize:           colorspaceTestOutSize,
+			outInterpretation: vips.InterpretationRGB16,
 		},
 		{
-			sourceFile:             "test-images/png/16-bpp-grayscale.png",
-			watermarkFile:          "test-images/png/8-bpp.png",
-			outFormat:              imagetype.PNG,
-			expectedInterpretation: vips.InterpretationRGB16,
+			opts: colorspaceTestCase{
+				name:          "16-bpp-grayscale-wm-8-bpp-rgb16",
+				sourceFile:    "test-images/png/16-bpp-grayscale.png",
+				watermarkFile: "test-images/png/8-bpp.png",
+				outFormat:     imagetype.PNG,
+			},
+			outSize:           colorspaceTestOutSize,
+			outInterpretation: vips.InterpretationRGB16,
 		},
 	}
 
 	for _, tc := range testCases {
-		s.Run(tc.testName(), func() {
+		s.Run(tc.opts.String(), func() {
+			s.ImageMatcher, _ = testutil.NewLazySuiteObj(s, func() (*testutil.ImageHashCacheMatcher, error) {
+				return testutil.NewImageHashCacheMatcher(s.TestData, testutil.HashTypePerception), nil
+			})
+
 			s.Config().PreserveHDR = true
-			s.runTestCase(tc, imageMatcher, 1)
+			s.runTestCase(tc)
 		})
 	}
 }

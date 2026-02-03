@@ -17,10 +17,8 @@ import (
 type testSuite struct {
 	testutil.LazySuite
 
-	TestData     *testutil.TestDataProvider
-	ImageMatcher *testutil.ImageHashCacheMatcher
+	TestData *testutil.TestDataProvider
 
-	ImageHashType     testutil.LazyObj[testutil.ImageHashType]
 	ImageDataFactory  testutil.LazyObj[*imagedata.Factory]
 	SecurityConfig    testutil.LazyObj[*security.Config]
 	Security          testutil.LazyObj[*security.Checker]
@@ -28,6 +26,7 @@ type testSuite struct {
 	WatermarkConfig   testutil.LazyObj[*auximageprovider.StaticConfig]
 	WatermarkProvider testutil.LazyObj[auximageprovider.Provider]
 	Processor         testutil.LazyObj[*Processor]
+	ImageMatcher      testutil.LazyObj[*testutil.ImageHashCacheMatcher]
 }
 
 type optsFactory interface {
@@ -36,8 +35,22 @@ type optsFactory interface {
 }
 
 type testCase[T optsFactory] struct {
-	opts    T
-	outSize testSize
+	opts              T
+	outSize           testSize
+	outInterpretation vips.Interpretation
+}
+
+type testCaseParams interface {
+	OutSize() testSize
+	OutInterpretation() vips.Interpretation
+}
+
+func (c testCase[T]) OutSize() testSize {
+	return c.outSize
+}
+
+func (c testCase[T]) OutInterpretation() vips.Interpretation {
+	return c.outInterpretation
 }
 
 type testSize struct {
@@ -111,11 +124,9 @@ func (s *testSuite) SetupSuite() {
 		return New(s.Config(), s.Security(), s.WatermarkProvider())
 	})
 
-	s.ImageHashType, _ = testutil.NewLazySuiteObj(s, func() (testutil.ImageHashType, error) {
-		return testutil.HashTypeSHA256, nil
+	s.ImageMatcher, _ = testutil.NewLazySuiteObj(s, func() (*testutil.ImageHashCacheMatcher, error) {
+		return testutil.NewImageHashCacheMatcher(s.TestData, testutil.HashTypeSHA256), nil
 	})
-
-	s.ImageMatcher = testutil.NewImageHashCacheMatcher(s.TestData, testutil.HashTypeSHA256)
 }
 
 func (s *testSuite) TearDownSuite() {
@@ -125,14 +136,32 @@ func (s *testSuite) TearDownSuite() {
 func (s *testSuite) processImageAndCheck(
 	imgdata imagedata.ImageData,
 	o *options.Options,
-	outSize testSize,
+	tc testCaseParams,
 ) {
 	result, err := s.Processor().ProcessImage(s.T().Context(), imgdata, o)
 	s.Require().NoError(err)
 	s.Require().NotNil(result)
 
+	outSize := tc.OutSize()
+	outInterpretation := tc.OutInterpretation()
+
 	s.Require().Equal(result.ResultWidth, outSize.width, "Width mismatch")
 	s.Require().Equal(result.ResultHeight, outSize.height, "Height mismatch")
 
-	s.ImageMatcher.ImageMatches(s.T(), result.OutData.Reader(), "test", 0)
+	s.ImageMatcher().ImageMatches(s.T(), result.OutData.Reader(), "test", 0)
+
+	if outInterpretation == vips.InterpretationMultiBand {
+		return
+	}
+
+	// Load the result image to check its interpretation
+	resultImg := new(vips.Image)
+	defer resultImg.Clear()
+
+	err = resultImg.Load(result.OutData, 1, 1.0, 1)
+	s.Require().NoError(err)
+
+	// Check the interpretation
+	actualInterpretation := resultImg.Type()
+	s.Require().Equal(outInterpretation, actualInterpretation)
 }

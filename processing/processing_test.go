@@ -109,7 +109,7 @@ func (s *ProcessingTestSuite) TestResizeToFit() {
 		s.Run(tc.opts.String(), func() {
 			tc.opts.Set(o)
 
-			s.processImageAndCheck(s.img, o, tc.outSize)
+			s.processImageAndCheck(s.img, o, tc)
 		})
 	}
 }
@@ -136,7 +136,7 @@ func (s *ProcessingTestSuite) TestResizeToFitEnlarge() {
 		s.Run(tc.opts.String(), func() {
 			tc.opts.Set(o)
 
-			s.processImageAndCheck(s.img, o, tc.outSize)
+			s.processImageAndCheck(s.img, o, tc)
 		})
 	}
 }
@@ -163,7 +163,7 @@ func (s *ProcessingTestSuite) TestResizeToFitExtend() {
 		s.Run(tc.opts.String(), func() {
 			tc.opts.Set(o)
 
-			s.processImageAndCheck(s.img, o, tc.outSize)
+			s.processImageAndCheck(s.img, o, tc)
 		})
 	}
 }
@@ -190,7 +190,7 @@ func (s *ProcessingTestSuite) TestResizeToFitExtendAR() {
 		s.Run(tc.opts.String(), func() {
 			tc.opts.Set(o)
 
-			s.processImageAndCheck(s.img, o, tc.outSize)
+			s.processImageAndCheck(s.img, o, tc)
 		})
 	}
 }
@@ -216,7 +216,7 @@ func (s *ProcessingTestSuite) TestResizeToFill() {
 		s.Run(tc.opts.String(), func() {
 			tc.opts.Set(o)
 
-			s.processImageAndCheck(s.img, o, tc.outSize)
+			s.processImageAndCheck(s.img, o, tc)
 		})
 	}
 }
@@ -243,7 +243,7 @@ func (s *ProcessingTestSuite) TestResizeToFillEnlarge() {
 		s.Run(tc.opts.String(), func() {
 			tc.opts.Set(o)
 
-			s.processImageAndCheck(s.img, o, tc.outSize)
+			s.processImageAndCheck(s.img, o, tc)
 		})
 	}
 }
@@ -272,7 +272,7 @@ func (s *ProcessingTestSuite) TestResizeToFillExtend() {
 		s.Run(tc.opts.String(), func() {
 			tc.opts.Set(o)
 
-			s.processImageAndCheck(s.img, o, tc.outSize)
+			s.processImageAndCheck(s.img, o, tc)
 		})
 	}
 }
@@ -302,7 +302,7 @@ func (s *ProcessingTestSuite) TestResizeToFillExtendAR() {
 		s.Run(tc.opts.String(), func() {
 			tc.opts.Set(o)
 
-			s.processImageAndCheck(s.img, o, tc.outSize)
+			s.processImageAndCheck(s.img, o, tc)
 		})
 	}
 }
@@ -328,7 +328,7 @@ func (s *ProcessingTestSuite) TestResizeToFillDown() {
 		s.Run(tc.opts.String(), func() {
 			tc.opts.Set(o)
 
-			s.processImageAndCheck(s.img, o, tc.outSize)
+			s.processImageAndCheck(s.img, o, tc)
 		})
 	}
 }
@@ -355,7 +355,7 @@ func (s *ProcessingTestSuite) TestResizeToFillDownEnlarge() {
 		s.Run(tc.opts.String(), func() {
 			tc.opts.Set(o)
 
-			s.processImageAndCheck(s.img, o, tc.outSize)
+			s.processImageAndCheck(s.img, o, tc)
 		})
 	}
 }
@@ -384,7 +384,7 @@ func (s *ProcessingTestSuite) TestResizeToFillDownExtend() {
 		s.Run(tc.opts.String(), func() {
 			tc.opts.Set(o)
 
-			s.processImageAndCheck(s.img, o, tc.outSize)
+			s.processImageAndCheck(s.img, o, tc)
 		})
 	}
 }
@@ -411,7 +411,7 @@ func (s *ProcessingTestSuite) TestResizeToFillDownExtendAR() {
 		s.Run(tc.opts.String(), func() {
 			tc.opts.Set(o)
 
-			s.processImageAndCheck(s.img, o, tc.outSize)
+			s.processImageAndCheck(s.img, o, tc)
 		})
 	}
 }
@@ -825,7 +825,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 			o := options.New()
 			tc.opts.Set(o)
 
-			s.processImageAndCheck(s.img, o, tc.outSize)
+			s.processImageAndCheck(s.img, o, tc)
 		})
 	}
 }

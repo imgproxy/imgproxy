@@ -292,7 +292,7 @@ func (s *ExtendTestSuite) TestExtend() {
 		s.Run(tc.opts.String(), func() {
 			tc.opts.Set(o)
 
-			s.processImageAndCheck(s.img, o, tc.outSize)
+			s.processImageAndCheck(s.img, o, tc)
 		})
 	}
 }
@@ -456,7 +456,7 @@ func (s *ExtendTestSuite) TestExtendAspectRatio() {
 		s.Run(tc.opts.String(), func() {
 			tc.opts.Set(o)
 
-			s.processImageAndCheck(s.img, o, tc.outSize)
+			s.processImageAndCheck(s.img, o, tc)
 		})
 	}
 }

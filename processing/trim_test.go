@@ -123,7 +123,7 @@ func (s *TrimTestSuite) TestThreshold() {
 		s.Run(tc.opts.String(), func() {
 			tc.opts.Set(o)
 
-			s.processImageAndCheck(s.imgThreshold, o, tc.outSize)
+			s.processImageAndCheck(s.imgThreshold, o, tc)
 		})
 	}
 }
@@ -163,7 +163,7 @@ func (s *TrimTestSuite) TestColor() {
 		s.Run(tc.opts.String(), func() {
 			tc.opts.Set(o)
 
-			s.processImageAndCheck(s.imgColor, o, tc.outSize)
+			s.processImageAndCheck(s.imgColor, o, tc)
 		})
 	}
 }
@@ -185,7 +185,7 @@ func (s *TrimTestSuite) TestAlpha() {
 		s.Run(tc.opts.String(), func() {
 			tc.opts.Set(o)
 
-			s.processImageAndCheck(s.imgAlpha, o, tc.outSize)
+			s.processImageAndCheck(s.imgAlpha, o, tc)
 		})
 	}
 }

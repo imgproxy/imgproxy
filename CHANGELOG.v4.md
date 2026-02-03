@@ -1,6 +1,14 @@
 # 📑 Changelog (version/4 dev)
 
-## 2025-01-09
+## 2026-02-03
+
+### 🔄 Changed
+
+- Fixed flatten behaviour. Black and white source images are now converted to color if background is non-grey.
+
+## 2026-01-09
+
+### 🆕 Added
 
 - `IMGPROXY_PRESERVE_HDR`. BPP/colorspace of source image is kept when possible.
 

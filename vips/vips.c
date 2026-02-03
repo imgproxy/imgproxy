@@ -608,6 +608,57 @@ image_depth(VipsImage *in)
   }
 }
 
+// vips_guard_colorspace ensures that the image is in a suitable colorspace
+// (sRGB, RGB16, B_W or GREY16) we know of and can process. If mustOutputRGB
+// is true, a grayscale image will be converted to colorful version.
+int
+vips_guard_colorspace(VipsImage *in, VipsImage **out, gboolean mustOutputRGB)
+{
+  VipsInterpretation interp = vips_image_guess_interpretation(in);
+  VipsInterpretation out_interp = interp;
+  VipsBandFormat fmt;
+
+  switch (interp) {
+  case VIPS_INTERPRETATION_B_W:
+    if (mustOutputRGB) {
+      out_interp = VIPS_INTERPRETATION_sRGB;
+    }
+    break; // otherwise keep B_W
+
+  case VIPS_INTERPRETATION_GREY16:
+    if (mustOutputRGB) {
+      out_interp = VIPS_INTERPRETATION_RGB16;
+    }
+    break; // otherwise keep GREY16
+
+  // formally, this could be handled by default case, but
+  // the probability of scRGB is high enough so let's save
+  // vips_image_get_format call
+  case VIPS_INTERPRETATION_scRGB:
+    out_interp = VIPS_INTERPRETATION_RGB16;
+    break;
+
+  // keep as is
+  case VIPS_INTERPRETATION_sRGB:
+  case VIPS_INTERPRETATION_RGB16:
+    break;
+
+  // 8 bit anything becomes sRGB, 16+ bit anything becomes RGB16
+  default:
+    fmt = vips_image_get_format(in);
+
+    if ((fmt == VIPS_FORMAT_UCHAR) || (fmt == VIPS_FORMAT_CHAR)) {
+      out_interp = VIPS_INTERPRETATION_sRGB;
+    }
+    else {
+      out_interp = VIPS_INTERPRETATION_RGB16;
+    }
+    break;
+  }
+
+  return vips_colourspace(in, out, out_interp, NULL);
+}
+
 int
 vips_icc_export_go(VipsImage *in, VipsImage **out)
 {
@@ -791,9 +842,33 @@ vips_flatten_go(VipsImage *in, VipsImage **out, RGB bg)
   if (!vips_image_hasalpha(in))
     return vips_copy(in, out, NULL);
 
+  // When color is specified and it is not gray, we need
+  // to convert the image to RGB first.
+  VipsImage *base = vips_image_new();
+  VipsImage **t = (VipsImage **) vips_object_local_array(VIPS_OBJECT(base), 2);
+
+  gboolean isBWColor = (bg.r == bg.g && bg.r == bg.b);
+
+  if (vips_guard_colorspace(in, &t[0], !isBWColor)) {
+    VIPS_UNREF(base);
+    return 1;
+  }
+
+  in = t[0];
+
+  // If the image is 16-bit, scale the background color accordingly
+  if (image_depth(in) == 16) {
+    bg.r = bg.r * 257.0;
+    bg.g = bg.g * 257.0;
+    bg.b = bg.b * 257.0;
+  }
+
   VipsArrayDouble *bga = vips_array_double_newv(3, bg.r, bg.g, bg.b);
   int res = vips_flatten(in, out, "background", bga, NULL);
   vips_area_unref((VipsArea *) bga);
+
+  VIPS_UNREF(base);
+
   return res;
 }
 
