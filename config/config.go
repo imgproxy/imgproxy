@@ -634,6 +634,17 @@ func Configure() error {
 	presetsSep := ","
 	configurators.String(&presetsSep, "IMGPROXY_PRESETS_SEPARATOR")
 	configurators.StringSliceSep(&Presets, "IMGPROXY_PRESETS", presetsSep)
+
+	var ppEnv string
+
+	configurators.String(&ppEnv, "IMGPROXY_PRESETS_PATH")
+
+	if len(presetsPath) > 0 {
+		logger.Deprecated("--presets", "IMGPROXY_PRESETS_PATH environment variable")
+	} else if len(ppEnv) > 0 {
+		presetsPath = ppEnv
+	}
+
 	if err := configurators.StringSliceFile(&Presets, presetsPath); err != nil {
 		return err
 	}
