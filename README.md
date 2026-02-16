@@ -31,6 +31,13 @@
 
 ---
 
+> [!NOTE]
+> **imgproxy v4 is getting close!**
+>
+> We’re opening early access for the Pro version and looking for testers. If you want to try v4 before everyone else and help shape the release — sign up here: https://imgproxy.net/v4-early-access/.
+>
+> Access will roll out once the builds are ready.
+
 [imgproxy](https://imgproxy.net) is a fast and secure standalone server for resizing, processing, and converting images. The guiding principles behind imgproxy are speed, security, and simplicity.
 
 imgproxy is able to quickly and easily resize, process, and optimize images on the fly, and it's well-equipped to handle a large amount of image processing. imgproxy is a drop-in replacement for all the image processing code inside your web application (such as using image processing libraries or calling command-line tools). With imgproxy, you don’t need to repeatedly re-prepare images to fit your design every time it changes, as imgproxy does this on demand.
