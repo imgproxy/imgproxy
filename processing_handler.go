@@ -167,6 +167,7 @@ func respondWithImage(reqID string, r *http.Request, rw http.ResponseWriter, sta
 		log.Fields{
 			"image_url":          originURL,
 			"processing_options": po,
+			"response_size":      len(resultData.Data),
 		},
 	)
 }
@@ -181,6 +182,7 @@ func respondWithNotModified(reqID string, r *http.Request, rw http.ResponseWrite
 		log.Fields{
 			"image_url":          originURL,
 			"processing_options": po,
+			"response_size":      0,
 		},
 	)
 }
