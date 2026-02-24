@@ -22,8 +22,8 @@
 
 ### Deprecated
 
-- Deprecate `--keypath` and `--saltpath` CLI arguments. Use `IMGPROXY_KEY` and `IMGPROXY_SALT` environment variables instead.
-- Deprecate `--presets` CLI argument. Use `IMGPROXY_PRESETS_PATH` environment variable instead.
+- Deprecate `-keypath` and `-saltpath` CLI arguments. Use `IMGPROXY_KEY` and `IMGPROXY_SALT` environment variables instead.
+- Deprecate `-presets` CLI argument. Use `IMGPROXY_PRESETS_PATH` environment variable instead.
 
 ## [3.30.1] - 2025-10-10
 ### Changed
