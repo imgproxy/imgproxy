@@ -566,6 +566,14 @@ func Configure() error {
 	configurators.Int(&SignatureSize, "IMGPROXY_SIGNATURE_SIZE")
 	configurators.StringSlice(&TrustedSignatures, "IMGPROXY_TRUSTED_SIGNATURES")
 
+	if len(keyPath) > 0 {
+		logger.Deprecated("--keypath CLI argument", "IMGPROXY_KEY environment variable")
+	}
+
+	if len(saltPath) > 0 {
+		logger.Deprecated("--saltpath CLI argument", "IMGPROXY_SALT environment variable")
+	}
+
 	if err := configurators.HexSliceFile(&Keys, keyPath); err != nil {
 		return err
 	}
@@ -631,9 +639,14 @@ func Configure() error {
 	}
 	configurators.Bool(&Base64URLIncludesFilename, "IMGPROXY_BASE64_URL_INCLUDES_FILENAME")
 
+	if len(presetsPath) > 0 {
+		logger.Deprecated("--presets CLI argument", "IMGPROXY_PRESETS_PATH environment variable")
+	}
+
 	presetsSep := ","
 	configurators.String(&presetsSep, "IMGPROXY_PRESETS_SEPARATOR")
 	configurators.StringSliceSep(&Presets, "IMGPROXY_PRESETS", presetsSep)
+	configurators.String(&presetsPath, "IMGPROXY_PRESETS_PATH")
 	if err := configurators.StringSliceFile(&Presets, presetsPath); err != nil {
 		return err
 	}
