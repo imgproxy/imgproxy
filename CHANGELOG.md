@@ -5,6 +5,7 @@
 - Add [IMGPROXY_FAIL_ON_DEPRECATION](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_FAIL_ON_DEPRECATION) config. When set to `true`, imgproxy will exit with a fatal error if a deprecated config option is used.
 - Add [flip](https://docs.imgproxy.net/latest/usage/processing#flip) processing option.
 - Add [IMGPROXY_PRESETS_PATH](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_PRESETS_PATH) config.
+- (pro) Add [IMGPROXY_INFO_PRESETS_PATH](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_INFO_PRESETS_PATH) config.
 - (pro) Add [IMGPROXY_AVIF_SUBSAMPLE](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_AVIF_SUBSAMPLE) config.
 - (pro) Add [avif_options](https://docs.imgproxy.net/latest/usage/processing#avif-options) processing option.
 - (pro) Return `orientation` field in the `/info` endpoint response when the [dimensions](https://docs.imgproxy.net/latest/usage/getting_info#dimensions) info option is enabled.
@@ -24,6 +25,8 @@
 
 - Deprecate `-keypath` and `-saltpath` CLI arguments. Use `IMGPROXY_KEY` and `IMGPROXY_SALT` environment variables instead.
 - Deprecate `-presets` CLI argument. Use `IMGPROXY_PRESETS_PATH` environment variable instead.
+- (pro) Deprecate `-info-presets` CLI argument. Use `IMGPROXY_INFO_PRESETS_PATH` environment variable instead.
+- (pro) Deprecate support for object detection models in DarkNet format. Use ONNX format instead.
 
 ## [3.30.1] - 2025-10-10
 ### Changed
