@@ -24,6 +24,7 @@ type HexSliceVar = Desc[[][]byte, ParseFn[[][]byte]]
 type StringMapVar = Desc[map[string]string, ParseFn[map[string]string]]
 type EnumVar[T any] = Desc[T, ParseFn[T]]
 type URLReplacementVar = Desc[[]URLReplacement, ParseFn[[]URLReplacement]]
+type DateTimeVar = Desc[time.Time, ParseFn[time.Time]]
 
 // String defines string env var descriptor
 func String(name string) StringVar {
@@ -200,5 +201,13 @@ func URLReplacements(name string) URLReplacementVar {
 		Name:    name,
 		format:  "semicolon-separated key=value pairs where key is a wildcard pattern",
 		parseFn: parseURLReplacements,
+	}
+}
+
+func DateTime(name string) DateTimeVar {
+	return DateTimeVar{
+		Name:    name,
+		format:  "RFC3339 date-time string",
+		parseFn: parseDateTime,
 	}
 }

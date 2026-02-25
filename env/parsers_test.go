@@ -396,3 +396,18 @@ func TestParseStringSliceFile(t *testing.T) {
 		assert.Contains(t, err.Error(), "can't read file")
 	})
 }
+
+func TestParseDateTime(t *testing.T) {
+	tests := []testCase[time.Time]{
+		{input: "", want: time.Time{}},
+		{input: "Mon, 02 Jan 2006 15:04:05 GMT", want: time.Date(2006, 1, 2, 15, 4, 5, 0, time.UTC)},
+		{input: "invalid-date", wantErr: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name(), func(t *testing.T) {
+			result, err := parseDateTime(tt.input)
+			tt.assert(t, result, err)
+		})
+	}
+}
