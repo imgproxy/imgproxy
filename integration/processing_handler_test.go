@@ -405,6 +405,25 @@ func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqExactMatchLastModifiedE
 	s.Require().Equal(http.StatusNotModified, res.StatusCode)
 }
 
+func (s *ProcessingHandlerTestSuite) TestLastModifiedBuster() {
+	buster := time.Now()
+
+	s.Config().Handlers.Processing.LastModifiedEnabled = true
+	s.Config().Handlers.Processing.LastModifiedBuster = buster
+
+	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		rw.Header().Set(httpheaders.LastModified, "Wed, 21 Oct 2015 07:28:00 GMT")
+		rw.WriteHeader(http.StatusOK)
+		rw.Write(s.TestData.Read("test1.png"))
+	}))
+	defer ts.Close()
+
+	res := s.GET("/unsafe/rs:fill:4:4/plain/" + ts.URL)
+	defer res.Body.Close()
+
+	s.Require().Equal(buster.Format(http.TimeFormat), res.Header.Get(httpheaders.LastModified))
+}
+
 func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqCompareMoreRecentLastModifiedDisabled() {
 	data := s.TestData.Read("test1.png")
 	s.Config().Handlers.Processing.LastModifiedEnabled = false

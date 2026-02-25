@@ -200,7 +200,7 @@ func (r *request) respondWithNotModified() {
 	r.rw.SetExpires(r.opts.GetTime(keys.Expires))
 
 	if r.config.LastModifiedEnabled {
-		r.rw.Passthrough(httpheaders.LastModified)
+		r.rw.PassthroughLastModified(r.config.LastModifiedBuster)
 	}
 
 	if r.config.ETagEnabled {
@@ -242,7 +242,7 @@ func (r *request) respondWithImage(statusCode int, resultData imagedata.ImageDat
 	r.ClientFeaturesDetector().SetVary(r.rw.Header())
 
 	if r.config.LastModifiedEnabled {
-		r.rw.Passthrough(httpheaders.LastModified)
+		r.rw.PassthroughLastModified(r.config.LastModifiedBuster)
 	}
 
 	if r.config.ETagEnabled {

@@ -3,6 +3,7 @@ package env
 import (
 	"encoding/hex"
 	"fmt"
+	"net/http"
 	"os"
 	"regexp"
 	"strconv"
@@ -292,4 +293,13 @@ func parseURLReplacements(env string) ([]URLReplacement, error) {
 	}
 
 	return s, nil
+}
+
+// parseDateTime parses a date-time string in RFC3339 format and returns a time.Time value.
+func parseDateTime(env string) (time.Time, error) {
+	if env == "" {
+		return time.Time{}, nil
+	}
+
+	return time.Parse(http.TimeFormat, env)
 }
