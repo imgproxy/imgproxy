@@ -14,6 +14,7 @@ var (
 	IMGPROXY_LAST_MODIFIED_ENABLED     = env.Bool("IMGPROXY_LAST_MODIFIED_ENABLED")
 	IMGPROXY_LAST_MODIFIED_BUSTER      = env.DateTime("IMGPROXY_LAST_MODIFIED_BUSTER")
 	IMGPROXY_ETAG_ENABLED              = env.Bool("IMGPROXY_ETAG_ENABLED")
+	IMGPROXY_ETAG_BUSTER               = env.String("IMGPROXY_ETAG_BUSTER")
 	IMGPROXY_REPORT_IO_ERRORS          = env.Bool("IMGPROXY_REPORT_IO_ERRORS")
 	IMGPROXY_FALLBACK_IMAGE_HTTP_CODE  = env.Int("IMGPROXY_FALLBACK_IMAGE_HTTP_CODE")
 	IMGPROXY_ENABLE_DEBUG_HEADERS      = env.Bool("IMGPROXY_ENABLE_DEBUG_HEADERS")
@@ -21,12 +22,13 @@ var (
 
 // Config represents handler config
 type Config struct {
-	ReportDownloadingErrors bool // Whether to report downloading errors
-	LastModifiedEnabled     bool // Whether to enable Last-Modified
-	ETagEnabled             bool // Whether to enable ETag
-	ReportIOErrors          bool // Whether to report IO errors
-	FallbackImageHTTPCode   int  // Fallback image HTTP status code
-	EnableDebugHeaders      bool // Whether to enable debug headers
+	ReportDownloadingErrors bool   // Whether to report downloading errors
+	LastModifiedEnabled     bool   // Whether to enable Last-Modified
+	ETagEnabled             bool   // Whether to enable ETag
+	ETagBuster              string // ETag buster
+	ReportIOErrors          bool   // Whether to report IO errors
+	FallbackImageHTTPCode   int    // Fallback image HTTP status code
+	EnableDebugHeaders      bool   // Whether to enable debug headers
 	LastModifiedBuster      time.Time
 }
 
@@ -36,6 +38,7 @@ func NewDefaultConfig() Config {
 		ReportDownloadingErrors: true,
 		LastModifiedEnabled:     true,
 		ETagEnabled:             true,
+		ETagBuster:              "",
 		ReportIOErrors:          false,
 		FallbackImageHTTPCode:   http.StatusOK,
 		EnableDebugHeaders:      false,
@@ -55,6 +58,7 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 		IMGPROXY_FALLBACK_IMAGE_HTTP_CODE.Parse(&c.FallbackImageHTTPCode),
 		IMGPROXY_ENABLE_DEBUG_HEADERS.Parse(&c.EnableDebugHeaders),
 		IMGPROXY_LAST_MODIFIED_BUSTER.Parse(&c.LastModifiedBuster),
+		IMGPROXY_ETAG_BUSTER.Parse(&c.ETagBuster),
 	)
 
 	return c, err

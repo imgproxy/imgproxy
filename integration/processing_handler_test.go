@@ -424,6 +424,23 @@ func (s *ProcessingHandlerTestSuite) TestLastModifiedBuster() {
 	s.Require().Equal(buster.Format(http.TimeFormat), res.Header.Get(httpheaders.LastModified))
 }
 
+func (s *ProcessingHandlerTestSuite) EtagBusterTest() {
+	s.Config().Handlers.Processing.ETagEnabled = true
+	s.Config().Handlers.Processing.ETagBuster = "buster"
+
+	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		rw.Header().Set(httpheaders.Etag, `"loremipsumdolor"`)
+		rw.WriteHeader(http.StatusOK)
+		rw.Write(s.TestData.Read("test1.png"))
+	}))
+	defer ts.Close()
+
+	res := s.GET("/unsafe/rs:fill:4:4/plain/" + ts.URL)
+	defer res.Body.Close()
+
+	s.Require().Equal(`"buster/bG9yZW1pcHN1bWRvbG9y"`, res.Header.Get(httpheaders.Etag))
+}
+
 func (s *ProcessingHandlerTestSuite) TestModifiedSinceReqCompareMoreRecentLastModifiedDisabled() {
 	data := s.TestData.Read("test1.png")
 	s.Config().Handlers.Processing.LastModifiedEnabled = false

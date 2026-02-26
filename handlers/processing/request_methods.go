@@ -21,15 +21,8 @@ import (
 func (r *request) makeImageRequestHeaders() http.Header {
 	h := make(http.Header)
 
-	// If ETag is enabled, we forward If-None-Match header
-	if r.config.ETagEnabled {
-		h.Set(httpheaders.IfNoneMatch, r.req.Header.Get(httpheaders.IfNoneMatch))
-	}
-
-	// If LastModified is enabled, we forward If-Modified-Since header
-	if r.config.LastModifiedEnabled {
-		h.Set(httpheaders.IfModifiedSince, r.req.Header.Get(httpheaders.IfModifiedSince))
-	}
+	// Handle conditional headers (If-Modified-Since, If-None-Match)
+	r.ch.InjectImageRequestHeaders(h)
 
 	return h
 }
@@ -198,14 +191,7 @@ func (r *request) writeDebugHeaders(
 // respondWithNotModified writes not-modified response
 func (r *request) respondWithNotModified() {
 	r.rw.SetExpires(r.opts.GetTime(keys.Expires))
-
-	if r.config.LastModifiedEnabled {
-		r.rw.PassthroughLastModified(r.config.LastModifiedBuster)
-	}
-
-	if r.config.ETagEnabled {
-		r.rw.Passthrough(httpheaders.Etag)
-	}
+	r.ch.InjectUserResponseHeaders(r.rw)
 
 	r.ClientFeaturesDetector().SetVary(r.rw.Header())
 
@@ -240,14 +226,7 @@ func (r *request) respondWithImage(statusCode int, resultData imagedata.ImageDat
 	r.rw.SetCanonical(r.imageURL)
 
 	r.ClientFeaturesDetector().SetVary(r.rw.Header())
-
-	if r.config.LastModifiedEnabled {
-		r.rw.PassthroughLastModified(r.config.LastModifiedBuster)
-	}
-
-	if r.config.ETagEnabled {
-		r.rw.Passthrough(httpheaders.Etag)
-	}
+	r.ch.InjectUserResponseHeaders(r.rw)
 
 	r.rw.WriteHeader(statusCode)
 
