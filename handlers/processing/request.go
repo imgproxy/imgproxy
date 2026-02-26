@@ -28,6 +28,7 @@ type request struct {
 	path           string
 	monitoringMeta monitoring.Meta
 	features       *clientfeatures.Features
+	ch             *ConditionalHeaders
 }
 
 // execute handles the actual processing logic
@@ -84,6 +85,7 @@ func (r *request) execute() *server.Error {
 
 	if errors.As(err, &nmErr) {
 		r.rw.SetOriginHeaders(nmErr.Headers())
+		r.ch.SetOriginHeaders(nmErr.Headers())
 
 		r.respondWithNotModified()
 
@@ -92,6 +94,7 @@ func (r *request) execute() *server.Error {
 
 	// Prepare to write image response headers
 	r.rw.SetOriginHeaders(originHeaders)
+	r.ch.SetOriginHeaders(originHeaders)
 
 	// If error is not related to NotModified, respond with fallback image and replace image data
 	if err != nil {

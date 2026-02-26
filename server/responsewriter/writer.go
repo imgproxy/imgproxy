@@ -95,28 +95,6 @@ func (w *Writer) Passthrough(only ...string) {
 	httpheaders.Copy(w.originHeaders, w.result, only)
 }
 
-// PassthroughLastModified copies the Last-Modified header from the original response
-// headers to the response headers if it exists. It takes buster into account.
-func (w *Writer) PassthroughLastModified(buster time.Time) {
-	val := w.originHeaders.Get(httpheaders.LastModified)
-	if len(val) == 0 {
-		return
-	}
-
-	t, err := time.Parse(http.TimeFormat, val)
-
-	// Passthrough if:
-	// - We don't have buster
-	// - We have buster, but failed to parse header value
-	// - We have buster, but header value is newer than buster
-	if buster.IsZero() || err != nil || buster.Before(t) {
-		w.result.Set(httpheaders.LastModified, val)
-		return
-	}
-
-	w.result.Set(httpheaders.LastModified, buster.Format(http.TimeFormat))
-}
-
 // CopyFrom copies specified headers from the headers object. Please note that
 // all the past operations may overwrite those values.
 func (w *Writer) CopyFrom(headers http.Header, only []string) {

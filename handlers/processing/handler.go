@@ -84,6 +84,7 @@ func (h *Handler) Execute(
 	r.req = req
 	r.rw = rw
 	r.config = h.config
+	r.ch = NewConditionalHeadersFromRequest(r.config, r.req)
 
 	return r.execute()
 }
