@@ -273,7 +273,7 @@ func (p *Parser) applyFormatQualityOption(ctx context.Context, o *options.Option
 	for i := 0; i < argsLen; i += 2 {
 		f, ok := imagetype.GetTypeByName(args[i])
 		if !ok {
-			return newInvalidArgumentError(ctx, keys.PrefixFormatQuality, "Invalid image format: %s", args[i])
+			return newOptionArgumentError(ctx, keys.PrefixFormatQuality, "Invalid image format: %s", args[i])
 		}
 
 		if err := p.parseQualityInt(ctx, o, keys.FormatQuality(f), args[i+1]); err != nil {
