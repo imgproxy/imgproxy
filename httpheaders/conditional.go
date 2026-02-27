@@ -13,17 +13,16 @@ import (
 // - The second boolean indicates that the ETag matches the If-None-Match value,
 // meaning the resource has not been modified.
 func CompareEtag(reqHeader, respHeader http.Header) (bool, bool) {
-	ifNoneMatch := reqHeader.Get(IfNoneMatch)
-	if ifNoneMatch == "" {
-		return false, false
-	}
-
-	return CompareEtagValue(ifNoneMatch, respHeader)
+	return CompareEtagValue(reqHeader.Get(IfNoneMatch), respHeader)
 }
 
 // CompareEtagValue same method as above, but accepts the raw If-None-Match value
 // instead of the request header.
 func CompareEtagValue(ifNoneMatch string, respHeader http.Header) (bool, bool) {
+	if ifNoneMatch == "" {
+		return false, false
+	}
+
 	etag := respHeader.Get(Etag)
 	if etag == "" {
 		return false, false
@@ -48,16 +47,15 @@ func UnquoteEtag(etag string) string {
 // - The second boolean indicates that the resource has not been modified since the time specified
 // in the If-Modified-Since header.
 func CompareLastModified(reqHeader, respHeader http.Header) (bool, bool) {
-	ifModifiedSinceStr := reqHeader.Get(IfModifiedSince)
-	if ifModifiedSinceStr == "" {
-		return false, false
-	}
-
-	return CompareLastModifiedValue(ifModifiedSinceStr, respHeader)
+	return CompareLastModifiedValue(reqHeader.Get(IfModifiedSince), respHeader)
 }
 
 // CompareLastModifiedValue same as above, but accepts the raw If-Modified-Since value
 func CompareLastModifiedValue(ifModifiedSinceStr string, respHeader http.Header) (bool, bool) {
+	if ifModifiedSinceStr == "" {
+		return false, false
+	}
+
 	ifModifiedSince, err := http.ParseTime(ifModifiedSinceStr)
 	if err != nil {
 		return false, false
