@@ -7,6 +7,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/clientfeatures"
 	"github.com/imgproxy/imgproxy/v3/fetcher"
 	"github.com/imgproxy/imgproxy/v3/handlers"
+	"github.com/imgproxy/imgproxy/v3/httpheaders/conditionalheaders"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/monitoring"
 	"github.com/imgproxy/imgproxy/v3/options"
@@ -28,7 +29,7 @@ type request struct {
 	path           string
 	monitoringMeta monitoring.Meta
 	features       *clientfeatures.Features
-	ch             *ConditionalHeaders
+	ch             *conditionalheaders.Request
 }
 
 // execute handles the actual processing logic

@@ -1,4 +1,4 @@
-package processing
+package conditionalheaders
 
 import (
 	"encoding/base64"
@@ -8,20 +8,21 @@ import (
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 )
 
-type ConditionalHeaders struct {
-	config *Config // just a shortcut to the config
+// Request represents a request with conditional headers information.
+type Request struct {
+	config *Config
 
 	ifModifiedSince string // raw value of the If-Modified-Since header from the user request
 	ifNoneMatch     string // raw value of the If-None-Match header from the user request
 	originHeaders   http.Header
 }
 
-// NewConditionalHeadersFromRequest creates a new ConditionalHeaders instance from the given request.
-func NewConditionalHeadersFromRequest(c *Config, req *http.Request) *ConditionalHeaders {
+// newFromRequest creates a new ConditionalHeaders instance from the given HTTP request.
+func newFromRequest(c *Config, req *http.Request) *Request {
 	ifModifiedSince := req.Header.Get(httpheaders.IfModifiedSince)
 	ifNoneMatch := req.Header.Get(httpheaders.IfNoneMatch)
 
-	return &ConditionalHeaders{
+	return &Request{
 		config:          c,
 		ifModifiedSince: ifModifiedSince,
 		ifNoneMatch:     ifNoneMatch,
@@ -30,13 +31,13 @@ func NewConditionalHeadersFromRequest(c *Config, req *http.Request) *Conditional
 }
 
 // SetOriginHeaders sets the origin headers for the request.
-func (c *ConditionalHeaders) SetOriginHeaders(h http.Header) {
+func (c *Request) SetOriginHeaders(h http.Header) {
 	c.originHeaders = h
 }
 
 // InjectImageRequestHeaders injects conditional headers into the source
 // image request if needed.
-func (c *ConditionalHeaders) InjectImageRequestHeaders(imageReqHeaders http.Header) {
+func (c *Request) InjectImageRequestHeaders(imageReqHeaders http.Header) {
 	var abort bool
 
 	etag, abort := c.computeEtag()
@@ -56,14 +57,14 @@ func (c *ConditionalHeaders) InjectImageRequestHeaders(imageReqHeaders http.Head
 }
 
 // InjectUserResponseHeaders injects conditional headers into the user response
-func (c *ConditionalHeaders) InjectUserResponseHeaders(rw http.ResponseWriter) {
+func (c *Request) InjectUserResponseHeaders(rw http.ResponseWriter) {
 	c.injectLastModifiedHeader(rw)
 	c.injectEtagHeader(rw)
 }
 
 // computeIfModifiedSince determines whether the If-Modified-Since header should
 // be sent to the source image server. It returns value to be set (if any)
-func (c *ConditionalHeaders) computeIfModifiedSince() string {
+func (c *Request) computeIfModifiedSince() string {
 	// If the feature is disabled or no header is present, we shouldn't
 	// send the header, but that should not affect other headers
 	if !c.config.LastModifiedEnabled || len(c.ifModifiedSince) == 0 {
@@ -91,7 +92,7 @@ func (c *ConditionalHeaders) computeIfModifiedSince() string {
 // computeEtag determines whether the If-None-Match header should be sent to the
 // source image server. It returns etag value to be set and boolean indicating
 // whether the conditional headers should be sent at all.
-func (c *ConditionalHeaders) computeEtag() (string, bool) {
+func (c *Request) computeEtag() (string, bool) {
 	// If the feature is disabled or no header is present,
 	// we shouldn't send the header at all, but it should not affect other headers
 	if !c.config.ETagEnabled || len(c.ifNoneMatch) == 0 {
@@ -124,7 +125,7 @@ func (c *ConditionalHeaders) computeEtag() (string, bool) {
 }
 
 // injectLastModifiedHeader injects the Last-Modified header into the user response
-func (c *ConditionalHeaders) injectLastModifiedHeader(rw http.ResponseWriter) {
+func (c *Request) injectLastModifiedHeader(rw http.ResponseWriter) {
 	// If the feature is disabled, we shouldn't send the header at all
 	if !c.config.LastModifiedEnabled {
 		return
@@ -151,7 +152,7 @@ func (c *ConditionalHeaders) injectLastModifiedHeader(rw http.ResponseWriter) {
 }
 
 // injectEtagHeader injects the ETag header into the user response
-func (c *ConditionalHeaders) injectEtagHeader(rw http.ResponseWriter) {
+func (c *Request) injectEtagHeader(rw http.ResponseWriter) {
 	if !c.config.ETagEnabled {
 		return
 	}

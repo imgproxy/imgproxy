@@ -9,6 +9,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/fetcher"
 	processinghandler "github.com/imgproxy/imgproxy/v3/handlers/processing"
 	streamhandler "github.com/imgproxy/imgproxy/v3/handlers/stream"
+	"github.com/imgproxy/imgproxy/v3/httpheaders/conditionalheaders"
 	"github.com/imgproxy/imgproxy/v3/monitoring"
 	"github.com/imgproxy/imgproxy/v3/monitoring/prometheus"
 	optionsparser "github.com/imgproxy/imgproxy/v3/options/parser"
@@ -26,19 +27,20 @@ type HandlerConfigs struct {
 
 // Config represents an instance configuration
 type Config struct {
-	Workers        workers.Config
-	FallbackImage  auximageprovider.StaticConfig
-	WatermarkImage auximageprovider.StaticConfig
-	Fetcher        fetcher.Config
-	ClientFeatures clientfeatures.Config
-	Handlers       HandlerConfigs
-	Server         server.Config
-	Security       security.Config
-	Processing     processing.Config
-	OptionsParser  optionsparser.Config
-	Cookies        cookies.Config
-	Monitoring     monitoring.Config
-	ErrorReport    errorreport.Config
+	Workers            workers.Config
+	FallbackImage      auximageprovider.StaticConfig
+	WatermarkImage     auximageprovider.StaticConfig
+	Fetcher            fetcher.Config
+	ClientFeatures     clientfeatures.Config
+	Handlers           HandlerConfigs
+	Server             server.Config
+	Security           security.Config
+	Processing         processing.Config
+	OptionsParser      optionsparser.Config
+	Cookies            cookies.Config
+	Monitoring         monitoring.Config
+	ErrorReport        errorreport.Config
+	ConditionalHeaders conditionalheaders.Config
 }
 
 // NewDefaultConfig creates a new default configuration
@@ -53,13 +55,14 @@ func NewDefaultConfig() Config {
 			Processing: processinghandler.NewDefaultConfig(),
 			Stream:     streamhandler.NewDefaultConfig(),
 		},
-		Server:        server.NewDefaultConfig(),
-		Security:      security.NewDefaultConfig(),
-		Processing:    processing.NewDefaultConfig(),
-		OptionsParser: optionsparser.NewDefaultConfig(),
-		Cookies:       cookies.NewDefaultConfig(),
-		Monitoring:    monitoring.NewDefaultConfig(),
-		ErrorReport:   errorreport.NewDefaultConfig(),
+		Server:             server.NewDefaultConfig(),
+		Security:           security.NewDefaultConfig(),
+		Processing:         processing.NewDefaultConfig(),
+		OptionsParser:      optionsparser.NewDefaultConfig(),
+		Cookies:            cookies.NewDefaultConfig(),
+		Monitoring:         monitoring.NewDefaultConfig(),
+		ErrorReport:        errorreport.NewDefaultConfig(),
+		ConditionalHeaders: conditionalheaders.NewDefaultConfig(),
 	}
 }
 
@@ -122,6 +125,10 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 	}
 
 	if _, err = errorreport.LoadConfigFromEnv(&c.ErrorReport); err != nil {
+		return nil, err
+	}
+
+	if _, err = conditionalheaders.LoadConfigFromEnv(&c.ConditionalHeaders); err != nil {
 		return nil, err
 	}
 
