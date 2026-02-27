@@ -9,6 +9,7 @@
 - (pro) Add [IMGPROXY_AVIF_SUBSAMPLE](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_AVIF_SUBSAMPLE) config.
 - (pro) Add [avif_options](https://docs.imgproxy.net/latest/usage/processing#avif-options) processing option.
 - (pro) Add [blur_areas](https://docs.imgproxy.net/latest/usage/processing#blur-areas) processing option.
+- (pro) Add `canonical_names` argument to the [exif](https://docs.imgproxy.net/latest/usage/getting_info#exif) info option.
 - (pro) Return `orientation` field in the `/info` endpoint response when the [dimensions](https://docs.imgproxy.net/latest/usage/getting_info#dimensions) info option is enabled.
 
 ### Changed
