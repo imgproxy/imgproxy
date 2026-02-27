@@ -10,6 +10,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/errorreport"
 	"github.com/imgproxy/imgproxy/v3/handlers"
 	"github.com/imgproxy/imgproxy/v3/handlers/stream"
+	"github.com/imgproxy/imgproxy/v3/httpheaders/conditionalheaders"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/monitoring"
 	"github.com/imgproxy/imgproxy/v3/options/keys"
@@ -21,6 +22,8 @@ import (
 )
 
 // HandlerContext provides access to shared handler dependencies
+//
+//nolint:interfacebloat
 type HandlerContext interface {
 	Workers() *workers.Workers
 	ClientFeaturesDetector() *clientfeatures.Detector
@@ -32,6 +35,7 @@ type HandlerContext interface {
 	Cookies() *cookies.Cookies
 	Monitoring() *monitoring.Monitoring
 	ErrorReporter() *errorreport.Reporter
+	ConditionalHeaders() *conditionalheaders.Factory
 }
 
 // Handler handles image processing requests
@@ -84,7 +88,7 @@ func (h *Handler) Execute(
 	r.req = req
 	r.rw = rw
 	r.config = h.config
-	r.ch = NewConditionalHeadersFromRequest(r.config, r.req)
+	r.ch = h.ConditionalHeaders().NewRequest(r.req)
 
 	return r.execute()
 }

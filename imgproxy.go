@@ -14,6 +14,7 @@ import (
 	landinghandler "github.com/imgproxy/imgproxy/v3/handlers/landing"
 	processinghandler "github.com/imgproxy/imgproxy/v3/handlers/processing"
 	streamhandler "github.com/imgproxy/imgproxy/v3/handlers/stream"
+	"github.com/imgproxy/imgproxy/v3/httpheaders/conditionalheaders"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/memory"
 	"github.com/imgproxy/imgproxy/v3/monitoring"
@@ -54,6 +55,7 @@ type Imgproxy struct {
 	monitoring             *monitoring.Monitoring
 	config                 *Config
 	errorReporter          *errorreport.Reporter
+	conditionalHeaders     *conditionalheaders.Factory
 }
 
 // New creates a new imgproxy instance.
@@ -116,6 +118,11 @@ func New(ctx context.Context, config *Config) (*Imgproxy, error) {
 		return nil, err
 	}
 
+	conditionalHeaders, err := conditionalheaders.NewFactory(&config.ConditionalHeaders)
+	if err != nil {
+		return nil, err
+	}
+
 	imgproxy := &Imgproxy{
 		workers:                workers,
 		fallbackImage:          fallbackImage,
@@ -130,6 +137,7 @@ func New(ctx context.Context, config *Config) (*Imgproxy, error) {
 		cookies:                cookies,
 		monitoring:             monitoring,
 		errorReporter:          errorReporter,
+		conditionalHeaders:     conditionalHeaders,
 	}
 
 	imgproxy.handlers.Health = healthhandler.New()
@@ -264,6 +272,10 @@ func (i *Imgproxy) Monitoring() *monitoring.Monitoring {
 
 func (i *Imgproxy) ErrorReporter() *errorreport.Reporter {
 	return i.errorReporter
+}
+
+func (i *Imgproxy) ConditionalHeaders() *conditionalheaders.Factory {
+	return i.conditionalHeaders
 }
 
 // startMemoryTicker starts a ticker that periodically frees memory and optionally logs memory stats

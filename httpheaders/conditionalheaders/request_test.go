@@ -1,4 +1,4 @@
-package processing
+package conditionalheaders
 
 import (
 	"encoding/base64"
@@ -12,25 +12,30 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type ConditionalHeadersSuite struct {
+type RequestSuite struct {
 	testutil.LazySuite
 
-	Config testutil.LazyObj[*Config]
+	Factory testutil.LazyObj[*Factory]
+	Config  testutil.LazyObj[*Config]
 }
 
-func (s *ConditionalHeadersSuite) SetupSuite() {
+func (s *RequestSuite) SetupSuite() {
 	s.Config, _ = testutil.NewLazySuiteObj(s, func() (*Config, error) {
 		cfg := NewDefaultConfig()
 		return &cfg, nil
 	})
+
+	s.Factory, _ = testutil.NewLazySuiteObj(s, func() (*Factory, error) {
+		return NewFactory(s.Config())
+	})
 }
 
-func (s *ConditionalHeadersSuite) SetupSubTest() {
+func (s *RequestSuite) SetupSubTest() {
 	s.ResetLazyObjects()
 }
 
 // helper creates a minimal request object with given config and optional headers
-func (s *ConditionalHeadersSuite) makeReq(ifMod, ifNone string) *http.Request {
+func (s *RequestSuite) makeReq(ifMod, ifNone string) *http.Request {
 	req := &http.Request{Header: make(http.Header)}
 
 	if len(ifMod) > 0 {
@@ -44,19 +49,19 @@ func (s *ConditionalHeadersSuite) makeReq(ifMod, ifNone string) *http.Request {
 	return req
 }
 
-func (s *ConditionalHeadersSuite) TestNewFromRequest() {
+func (s *RequestSuite) TestNewFromRequest() {
 	inMod := "Mon, 02 Jan 2006 15:04:05 GMT"
 	inNone := `"etag"`
 
 	r := s.makeReq(inMod, inNone)
-	c := NewConditionalHeadersFromRequest(s.Config(), r)
+	c := s.Factory().NewRequest(r)
 
 	req := s.Require()
 	req.Equal(inMod, c.ifModifiedSince)
 	req.Equal(inNone, c.ifNoneMatch)
 }
 
-func (s *ConditionalHeadersSuite) TestInjectImageRequestHeaders() {
+func (s *RequestSuite) TestInjectImageRequestHeaders() {
 	buster := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
 	inModAfterBuster := buster.Add(+time.Hour).Format(http.TimeFormat)
 	inModBeforeBuster := buster.Add(-time.Hour).Format(http.TimeFormat)
@@ -185,7 +190,7 @@ func (s *ConditionalHeadersSuite) TestInjectImageRequestHeaders() {
 			s.Config().ETagBuster = c.etagBuster
 
 			r := s.makeReq(c.ifModifiedSince, c.ifNoneMatch)
-			ch := NewConditionalHeadersFromRequest(s.Config(), r)
+			ch := s.Factory().NewRequest(r)
 			h := make(http.Header)
 			ch.InjectImageRequestHeaders(h)
 
@@ -203,7 +208,7 @@ func (s *ConditionalHeadersSuite) TestInjectImageRequestHeaders() {
 	}
 }
 
-func (s *ConditionalHeadersSuite) TestInjectUserResponseHeaders() {
+func (s *RequestSuite) TestInjectUserResponseHeaders() {
 	buster := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
 	busterFmt := buster.Format(http.TimeFormat)
 	lastModAfterBuster := buster.Add(time.Hour).Format(http.TimeFormat)
@@ -294,7 +299,7 @@ func (s *ConditionalHeadersSuite) TestInjectUserResponseHeaders() {
 			r := s.makeReq("", "")
 			rec := httptest.NewRecorder()
 
-			ch := NewConditionalHeadersFromRequest(s.Config(), r)
+			ch := s.Factory().NewRequest(r)
 			ch.SetOriginHeaders(imageRes)
 			ch.InjectUserResponseHeaders(rec)
 
@@ -318,5 +323,5 @@ func (s *ConditionalHeadersSuite) TestInjectUserResponseHeaders() {
 }
 
 func TestConditionalHeadersSuite(t *testing.T) {
-	suite.Run(t, new(ConditionalHeadersSuite))
+	suite.Run(t, new(RequestSuite))
 }
