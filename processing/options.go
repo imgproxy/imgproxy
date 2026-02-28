@@ -136,7 +136,7 @@ func (po ProcessingOptions) ShouldFlatten() bool {
 }
 
 func (po ProcessingOptions) Background() color.RGB {
-	return options.Get(po.Options, keys.Background, color.RGB{R: 255, G: 255, B: 255})
+	return options.Get(po.Options, keys.Background, color.White)
 }
 
 func (po ProcessingOptions) PaddingEnabled() bool {
@@ -215,7 +215,7 @@ func (po ProcessingOptions) TrimSmart() bool {
 }
 
 func (po ProcessingOptions) TrimColor() color.RGB {
-	return options.Get(po.Options, keys.TrimColor, color.RGB{})
+	return options.Get(po.Options, keys.TrimColor, color.Black)
 }
 
 func (po ProcessingOptions) TrimEqualHor() bool {

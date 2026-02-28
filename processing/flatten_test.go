@@ -61,18 +61,13 @@ func (s *FlattenTestSuite) SetupSuite() {
 }
 
 func (s *FlattenTestSuite) TestBackground() {
-	var (
-		grayColor = &color.RGB{R: 127, G: 127, B: 127}
-		redColor  = &color.RGB{R: 255, G: 0, B: 0}
-	)
-
 	testCases := []testCase[flattenTestCase]{
 		// Basic background tests with 32-bpp-with-alpha.bmp
 		{
 			opts: flattenTestCase{
 				name:       "32-bpp-red-jpeg",
 				sourceFile: "test-images/bmp/32-bpp-with-alpha.bmp",
-				background: redColor,
+				background: &color.Red,
 				format:     imagetype.JPEG,
 			},
 			outSize: flattenTestOutSize,
@@ -81,7 +76,7 @@ func (s *FlattenTestSuite) TestBackground() {
 			opts: flattenTestCase{
 				name:       "32-bpp-red-png",
 				sourceFile: "test-images/bmp/32-bpp-with-alpha.bmp",
-				background: redColor,
+				background: &color.Red,
 				format:     imagetype.PNG,
 			},
 			outSize: flattenTestOutSize,
@@ -109,7 +104,7 @@ func (s *FlattenTestSuite) TestBackground() {
 			opts: flattenTestCase{
 				name:       "16-bpp-gray-rgb16",
 				sourceFile: "test-images/png/16-bpp.png",
-				background: grayColor,
+				background: &color.Gray,
 				format:     imagetype.PNG,
 			},
 			outSize:           flattenTestOutSize,
@@ -119,7 +114,7 @@ func (s *FlattenTestSuite) TestBackground() {
 			opts: flattenTestCase{
 				name:       "16-bpp-red-rgb16",
 				sourceFile: "test-images/png/16-bpp.png",
-				background: redColor,
+				background: &color.Red,
 				format:     imagetype.PNG,
 			},
 			outSize:           flattenTestOutSize,
@@ -130,7 +125,7 @@ func (s *FlattenTestSuite) TestBackground() {
 			opts: flattenTestCase{
 				name:       "8-bpp-grayscale-gray-bw",
 				sourceFile: "test-images/png/8-bpp-grayscale.png",
-				background: grayColor,
+				background: &color.Gray,
 				format:     imagetype.PNG,
 			},
 			outSize:           flattenTestOutSize,
@@ -140,7 +135,7 @@ func (s *FlattenTestSuite) TestBackground() {
 			opts: flattenTestCase{
 				name:       "8-bpp-grayscale-red-srgb",
 				sourceFile: "test-images/png/8-bpp-grayscale.png",
-				background: redColor,
+				background: &color.Red,
 				format:     imagetype.PNG,
 			},
 			outSize:           flattenTestOutSize,
@@ -151,7 +146,7 @@ func (s *FlattenTestSuite) TestBackground() {
 			opts: flattenTestCase{
 				name:       "16-bpp-grayscale-gray-grey16",
 				sourceFile: "test-images/png/16-bpp-grayscale.png",
-				background: grayColor,
+				background: &color.Gray,
 				format:     imagetype.PNG,
 			},
 			outSize:           flattenTestOutSize,
@@ -161,7 +156,7 @@ func (s *FlattenTestSuite) TestBackground() {
 			opts: flattenTestCase{
 				name:       "16-bpp-grayscale-red-rgb16",
 				sourceFile: "test-images/png/16-bpp-grayscale.png",
-				background: redColor,
+				background: &color.Red,
 				format:     imagetype.PNG,
 			},
 			outSize:           flattenTestOutSize,
@@ -172,7 +167,7 @@ func (s *FlattenTestSuite) TestBackground() {
 			opts: flattenTestCase{
 				name:       "8-bpp-gray-srgb",
 				sourceFile: "test-images/png/8-bpp.png",
-				background: grayColor,
+				background: &color.Gray,
 				format:     imagetype.PNG,
 			},
 			outSize:           flattenTestOutSize,
@@ -182,7 +177,7 @@ func (s *FlattenTestSuite) TestBackground() {
 			opts: flattenTestCase{
 				name:       "8-bpp-red-srgb",
 				sourceFile: "test-images/png/8-bpp.png",
-				background: redColor,
+				background: &color.Red,
 				format:     imagetype.PNG,
 			},
 			outSize:           flattenTestOutSize,

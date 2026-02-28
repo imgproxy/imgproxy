@@ -15,6 +15,18 @@ const (
 
 type RGB struct{ R, G, B uint8 }
 
+var (
+	Black   = RGB{0, 0, 0}
+	White   = RGB{255, 255, 255}
+	Gray    = RGB{127, 127, 127}
+	Red     = RGB{255, 0, 0}
+	Green   = RGB{0, 255, 0}
+	Blue    = RGB{0, 0, 255}
+	Cyan    = RGB{0, 255, 255}
+	Yellow  = RGB{255, 255, 0}
+	Magenta = RGB{255, 0, 255}
+)
+
 func RGBFromHex(hexcolor string) (RGB, error) {
 	c := RGB{}
 

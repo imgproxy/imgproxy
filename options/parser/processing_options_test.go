@@ -372,7 +372,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathBackground() {
 
 	s.Require().Equal(
 		color.RGB{R: 128, G: 129, B: 130},
-		options.Get(o, keys.Background, color.RGB{}),
+		options.Get(o, keys.Background, color.Black),
 	)
 }
 
@@ -384,7 +384,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePathBackgroundHex() {
 
 	s.Require().Equal(
 		color.RGB{R: 0xff, G: 0xdd, B: 0xee},
-		options.Get(o, keys.Background, color.RGB{}),
+		options.Get(o, keys.Background, color.Black),
 	)
 }
 

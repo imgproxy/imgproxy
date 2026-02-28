@@ -102,7 +102,7 @@ func (s *TrimTestSuite) TestThreshold() {
 		{opts: trimTestCase{threshold: 200}, outSize: testSize{230, 130}},
 		{opts: trimTestCase{threshold: 220}, outSize: testSize{200, 100}},
 		{
-			opts:    trimTestCase{color: &color.RGB{R: 255, G: 0, B: 0}},
+			opts:    trimTestCase{color: &color.Red},
 			outSize: testSize{350, 250},
 		},
 		{
@@ -139,21 +139,21 @@ func (s *TrimTestSuite) TestColor() {
 		{
 			opts: trimTestCase{
 				threshold: 1,
-				color:     &color.RGB{R: 255, G: 0, B: 0},
+				color:     &color.Red,
 			},
 			outSize: testSize{200, 170},
 		},
 		{
 			opts: trimTestCase{
 				threshold: 1,
-				color:     &color.RGB{R: 0, G: 0, B: 255},
+				color:     &color.Blue,
 			},
 			outSize: testSize{200, 130},
 		},
 		{
 			opts: trimTestCase{
 				threshold: 1,
-				color:     &color.RGB{R: 255, G: 255, B: 255},
+				color:     &color.White,
 			},
 			outSize: testSize{200, 200},
 		},
@@ -175,7 +175,7 @@ func (s *TrimTestSuite) TestAlpha() {
 		{
 			opts: trimTestCase{
 				threshold: 1,
-				color:     &color.RGB{R: 255, G: 0, B: 255},
+				color:     &color.Magenta,
 			},
 			outSize: testSize{200, 130},
 		},

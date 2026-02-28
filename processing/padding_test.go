@@ -32,7 +32,7 @@ func (r paddingTestCase) Set(o *options.Options) {
 	o.Set(keys.PaddingTop, r.paddingTop)
 	o.Set(keys.PaddingRight, r.paddingRight)
 	o.Set(keys.PaddingBottom, r.paddingBottom)
-	o.Set(keys.Background, color.RGB{R: 255, G: 0, B: 0})
+	o.Set(keys.Background, color.Red)
 	o.Set(keys.Enlarge, true) // for drp > 1
 }
 
