@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 
 	"github.com/imgproxy/imgproxy/v3/errctx"
 	"github.com/imgproxy/imgproxy/v3/fetcher/transport/generichttp"
@@ -159,6 +160,11 @@ func WrapError(err error, skipStack int) error {
 	default:
 		if httpErr, ok := err.(httpError); ok && httpErr.Timeout() {
 			return newRequestTimeoutError(err)
+		}
+
+		//nolint:errorlint // Check for *url.Error itself, not wrapped error
+		if _, ok := err.(*url.Error); ok {
+			return newRequestError(err)
 		}
 	}
 

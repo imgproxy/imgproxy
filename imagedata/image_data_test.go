@@ -217,7 +217,7 @@ func (s *ImageDataTestSuite) TestDownloadUnreachable() {
 	imgdata, _, err := s.factory().DownloadSync(context.Background(), serverURL, "Test image", DownloadOptions{})
 
 	s.Require().Error(err)
-	s.Require().Equal(500, errctx.Wrap(err).StatusCode())
+	s.Require().Equal(404, errctx.Wrap(err).StatusCode())
 	s.Require().Nil(imgdata)
 }
 
