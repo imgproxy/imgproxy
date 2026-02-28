@@ -22,6 +22,7 @@
 - Fix responding with 404 when a GCS bucket or object is missing.
 - Fix handling `:` encoded as `%3A` in processing/info options.
 - (pro) Fix generating video thumbnails when the server doesn't include the `Accept-Ranges` header in the response but includes the `Content-Range: bytes ...` header.
+- (pro) Fix [watermark_size](https://docs.imgproxy.net/latest/usage/processing#watermark-size) processing option behavior when one of the dimensions is zero.
 
 ### Deprecated
 
