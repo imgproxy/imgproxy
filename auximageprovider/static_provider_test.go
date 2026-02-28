@@ -127,6 +127,17 @@ func (s *ImageProviderTestSuite) TestNewProvider() {
 			},
 		},
 		{
+			name: "PathPreferenceOverURL",
+			config: &StaticConfig{
+				Path: "../testdata/test1.jpg",
+				URL:  "http://invalid-url-that-does-not-exist.invalid", // This should be ignored
+			},
+			validateFunc: func(provider Provider) {
+				actualData := s.readImageData(provider)
+				s.Equal(s.testData, actualData)
+			},
+		},
+		{
 			name:   "HeadersPassedThrough",
 			config: &StaticConfig{URL: s.testServer().URL()},
 			setupFunc: func() {
