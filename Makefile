@@ -150,7 +150,7 @@ upgrade:
 lychee: DOCKERCMD := _lychee
 lychee: _run-in-docker
 _lychee:
-	lychee docs README.md CHANGELOG.md \
+	@lychee docs README.md CHANGELOG.md \
 		--exclude localhost \
 		--exclude twitter.com \
 		--exclude x.com \
