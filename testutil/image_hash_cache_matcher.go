@@ -69,11 +69,12 @@ func (m *ImageHashCacheMatcher) ImageMatches(t *testing.T, img io.Reader, key st
 	if os.IsNotExist(err) {
 		// If the hash file does not exist, and we are not allowed to create it, fail
 		if !m.createMissingHashes {
-			//nolint:lll
 			require.NoError(
 				t, err,
-				"failed to read target hash from %s, use TEST_CREATE_MISSING_HASHES=true to create it, TEST_SAVE_TMP_IMAGES_PATH=/some/path to check resulting images",
+				"failed to read target hash from %s, use %s=true to create it, %s=/some/path to check resulting images",
 				hashPath,
+				createMissingHashesEnv,
+				saveTmpImagesPathEnv,
 			)
 		}
 
@@ -160,12 +161,12 @@ func (m *ImageHashCacheMatcher) saveTmpImage(t *testing.T, key string, buf []byt
 	targetPath := m.makeTargetPath(t, m.saveTmpImagesPath, "", tmpImageFileName, ext.String())
 
 	targetFile, err := os.Create(targetPath)
-	require.NoError(t, err, "failed to create TEST_SAVE_TMP_IMAGES target file %s", targetPath)
+	require.NoError(t, err, "failed to create %s target file %s", saveTmpImagesPathEnv, targetPath)
 	defer targetFile.Close()
 
 	// Write the image data to the file
 	_, err = io.Copy(targetFile, bytes.NewReader(buf))
-	require.NoError(t, err, "failed to write to TEST_SAVE_TMP_IMAGES target file %s", targetPath)
+	require.NoError(t, err, "failed to write to %s target file %s", saveTmpImagesPathEnv, targetPath)
 
 	t.Logf("Saved temporary image to %s", targetPath)
 }
