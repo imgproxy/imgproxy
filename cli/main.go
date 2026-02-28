@@ -9,7 +9,6 @@ import (
 
 	"github.com/imgproxy/imgproxy/v3"
 	"github.com/imgproxy/imgproxy/v3/logger"
-	optionsparser "github.com/imgproxy/imgproxy/v3/options/parser"
 	"github.com/imgproxy/imgproxy/v3/version"
 	"github.com/urfave/cli/v3"
 )
@@ -50,14 +49,8 @@ func run(ctx context.Context, cmd *cli.Command) error {
 
 func main() {
 	cmd := &cli.Command{
-		Name:  "imgproxy",
-		Usage: "Fast and secure standalone server for resizing and converting remote images",
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:  optionsparser.PresetsFlagName,
-				Usage: "path of the file with presets",
-			},
-		},
+		Name:   "imgproxy",
+		Usage:  "Fast and secure standalone server for resizing and converting remote images",
 		Action: run,
 		Commands: []*cli.Command{
 			{

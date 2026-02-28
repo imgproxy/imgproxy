@@ -9,10 +9,6 @@ import (
 
 type URLReplacement = env.URLReplacement
 
-const (
-	PresetsFlagName = "presets" // --presets flag name
-)
-
 var (
 	IMGPROXY_PRESETS_SEPARATOR            = env.String("IMGPROXY_PRESETS_SEPARATOR")
 	IMGPROXY_PRESETS                      = env.StringSliceSep("IMGPROXY_PRESETS", IMGPROXY_PRESETS_SEPARATOR)
