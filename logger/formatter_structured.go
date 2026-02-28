@@ -56,20 +56,20 @@ func (s *formatterStructured) format(r slog.Record) {
 	// Append error, source, and stack if present
 	if s.error.Key != "" {
 		s.appendKey(s.error.Key)
-		s.appendValue(s.error.Value, true)
+		s.appendValue(s.error.Value)
 
 		if docsURL := s.errorDocsURL(); docsURL != nil {
 			s.appendKey(docsURL.Key)
-			s.appendValue(docsURL.Value, true)
+			s.appendValue(docsURL.Value)
 		}
 	}
 	if s.source.Key != "" {
 		s.appendKey(s.source.Key)
-		s.appendValue(s.source.Value, false)
+		s.appendValue(s.source.Value)
 	}
 	if s.stack.Key != "" {
 		s.appendKey(s.stack.Key)
-		s.appendValue(s.stack.Value, false)
+		s.appendValue(s.stack.Value)
 	}
 }
 
@@ -97,7 +97,7 @@ func (s *formatterStructured) appendAttribute(attr slog.Attr) {
 	}
 
 	s.appendKey(attr.Key)
-	s.appendValue(attr.Value, true)
+	s.appendValue(attr.Value)
 }
 
 // appendKey appends an attribute key to the buffer.
@@ -108,6 +108,11 @@ func (s *formatterStructured) appendKey(key string) {
 
 	s.buf.appendString(s.prefix.String() + key)
 	s.buf.append('=')
+}
+
+// appendValue appends an attribute value to the buffer, applying quoting.
+func (s *formatterStructured) appendValue(val slog.Value) {
+	s.formatterCommon.appendValue(val, true)
 }
 
 // appendGroup appends a group of attributes to the buffer.

@@ -78,16 +78,16 @@ func (s *formatterPretty) format(r slog.Record) {
 	// Append error, source, and stack if present
 	if s.error.Key != "" {
 		s.appendKey(s.error.Key)
-		s.appendValue(s.error.Value, false)
+		s.appendValue(s.error.Value)
 
 		if docsURL := s.errorDocsURL(); docsURL != nil {
 			s.appendKey(docsURL.Key)
-			s.appendValue(docsURL.Value, false)
+			s.appendValue(docsURL.Value)
 		}
 	}
 	if s.source.Key != "" {
 		s.appendKey(s.source.Key)
-		s.appendValue(s.source.Value, false)
+		s.appendValue(s.source.Value)
 	}
 	if s.stack.Key != "" {
 		s.buf.append('\n')
@@ -151,7 +151,7 @@ func (s *formatterPretty) appendAttribute(attr slog.Attr) {
 	}
 
 	s.appendKey(attr.Key)
-	s.appendValue(attr.Value, false)
+	s.appendValue(attr.Value)
 }
 
 // appendKey appends an attribute key to the buffer.
@@ -161,6 +161,11 @@ func (s *formatterPretty) appendKey(key string) {
 	s.buf.appendString(key)
 	s.buf.append(prettyColorReset...)
 	s.buf.append('=')
+}
+
+// appendValue appends an attribute value to the buffer, applying quoting rules as necessary.
+func (s *formatterPretty) appendValue(val slog.Value) {
+	s.formatterCommon.appendValue(val, false)
 }
 
 // appendGroup appends a group of attributes to the buffer.

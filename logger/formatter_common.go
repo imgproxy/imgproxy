@@ -120,6 +120,8 @@ func (s *formatterCommon) appendAny(val any, forceQuote bool) {
 	s.appendString(fmt.Sprintf("%+v", val), forceQuote)
 }
 
+// errorDocsURL checks if the error value implements [errctx.Error] and has a non-empty DocsURL.
+// If so, it returns a slog.Attr containing the docs URL; otherwise, it returns nil.
 func (s *formatterCommon) errorDocsURL() *slog.Attr {
 	if v, ok := s.error.Value.Any().(errctx.Error); ok {
 		if url := v.DocsURL(); url != "" {
