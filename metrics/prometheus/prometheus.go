@@ -71,7 +71,7 @@ func Init() {
 	requestSpanDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: config.PrometheusNamespace,
 		Name:      "request_span_duration_seconds",
-		Help:      "A histogram of the queue latency.",
+		Help:      "A histogram of the request spans duration separated by span name.",
 	}, []string{"span"})
 
 	downloadDuration = prometheus.NewHistogram(prometheus.HistogramOpts{
