@@ -7,6 +7,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/imath"
 	"github.com/imgproxy/imgproxy/v3/options"
+	"github.com/imgproxy/imgproxy/v3/options/keys"
 	"github.com/imgproxy/imgproxy/v3/server"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
@@ -39,6 +40,8 @@ func saveImageToFitBytes(
 		if err := server.CheckTimeout(ctx); err != nil {
 			return nil, err
 		}
+
+		o.Set(keys.Quality, quality)
 
 		imgdata, err := img.Save(format, quality, o)
 		if err != nil {
