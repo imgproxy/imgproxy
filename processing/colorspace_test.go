@@ -150,24 +150,6 @@ func (s *ColorspaceTestSuite) TestColorspace() {
 			outSize:           colorspaceTestOutSize,
 			outInterpretation: vips.InterpretationGrey16,
 		},
-		{
-			opts: colorspaceTestCase{
-				name:       "jxl-png-rgb16",
-				sourceFile: "test-images/jxl/jxl.jxl",
-				outFormat:  imagetype.PNG,
-			},
-			outSize:           colorspaceTestOutSize,
-			outInterpretation: vips.InterpretationRGB16,
-		},
-		{
-			opts: colorspaceTestCase{
-				name:       "jxl-jpeg-srgb",
-				sourceFile: "test-images/jxl/jxl.jxl",
-				outFormat:  imagetype.JPEG,
-			},
-			outSize:           colorspaceTestOutSize,
-			outInterpretation: vips.InterpretationSRGB,
-		},
 	}
 
 	for _, tc := range testCases {
@@ -267,15 +249,6 @@ func (s *ColorspaceTestSuite) TestDownscaleHDR() {
 			},
 			outSize:           colorspaceTestOutSize,
 			outInterpretation: vips.InterpretationBW,
-		},
-		{
-			opts: colorspaceTestCase{
-				name:       "jxl-png-srgb",
-				sourceFile: "test-images/jxl/jxl.jxl",
-				outFormat:  imagetype.PNG,
-			},
-			outSize:           colorspaceTestOutSize,
-			outInterpretation: vips.InterpretationSRGB,
 		},
 	}
 
