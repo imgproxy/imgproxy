@@ -806,24 +806,7 @@ func (img *Image) ExportColourProfile() error {
 	return nil
 }
 
-func (img *Image) ExportColourProfileToSRGB() error {
-	var tmp *C.VipsImage
-
-	// Don't export is there's no embedded profile or embedded profile is sRGB
-	if C.vips_has_embedded_icc(img.VipsImage) == 0 || C.vips_icc_is_srgb_iec61966(img.VipsImage) == 1 {
-		return nil
-	}
-
-	if C.vips_icc_export_srgb(img.VipsImage, &tmp) == 0 {
-		img.swapAndUnref(tmp)
-	} else {
-		slog.Warn("Can't export ICC profile", "error", Error())
-	}
-
-	return nil
-}
-
-func (img *Image) TransformColourProfileToSRGB() error {
+func (img *Image) TransformColourProfileToStandard() error {
 	var tmp *C.VipsImage
 
 	// Don't transform is there's no embedded profile or embedded profile is sRGB
@@ -833,10 +816,10 @@ func (img *Image) TransformColourProfileToSRGB() error {
 		return nil
 	}
 
-	if C.vips_icc_transform_srgb(img.VipsImage, &tmp) == 0 {
+	if C.vips_icc_transform_standard(img.VipsImage, &tmp) == 0 {
 		img.swapAndUnref(tmp)
 	} else {
-		slog.Warn("Can't transform ICC profile to sRGB", "error", Error())
+		slog.Warn("Can't transform ICC profile", "error", Error())
 	}
 
 	return nil

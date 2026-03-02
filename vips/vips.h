@@ -64,8 +64,7 @@ int vips_icc_backup(VipsImage *in, VipsImage **out);
 int vips_icc_restore(VipsImage *in, VipsImage **out);
 int vips_icc_import_go(VipsImage *in, VipsImage **out);
 int vips_icc_export_go(VipsImage *in, VipsImage **out);
-int vips_icc_export_srgb(VipsImage *in, VipsImage **out);
-int vips_icc_transform_srgb(VipsImage *in, VipsImage **out);
+int vips_icc_transform_standard(VipsImage *in, VipsImage **out);
 int vips_icc_remove(VipsImage *in, VipsImage **out);
 int vips_colourspace_go(VipsImage *in, VipsImage **out, VipsInterpretation cs);
 

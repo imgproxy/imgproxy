@@ -2,29 +2,29 @@ package processing
 
 func (p *Processor) colorspaceToResult(c *Context) error {
 	keepProfile := !c.PO.StripColorProfile() && c.PO.Format().SupportsColourProfile()
+	profileImported := c.Img.ColourProfileImported()
 
 	// vips 8.15+ tends to lose the colour profile during some color conversions.
 	// We probably have a backup of the colour profile, so we need to restore it.
 	c.Img.RestoreColourProfile()
 
-	if c.Img.ColourProfileImported() {
-		if keepProfile {
-			// We imported ICC profile and want to keep it,
-			// so we need to export it
-			if err := c.Img.ExportColourProfile(); err != nil {
-				return err
-			}
-		} else {
-			// We imported ICC profile but don't want to keep it,
-			// so we need to export image to sRGB for maximum compatibility
-			if err := c.Img.ExportColourProfileToSRGB(); err != nil {
-				return err
-			}
+	// NOTE:
+	// If we imported ICC but don't want to keep it, we can just remove it without transforming,
+	// because the image is already in a standard color space.
+	// If we didn't import ICC but want to keep it, we can just keep it without exporting,
+	// because the image is still in the ICC's color space.
+
+	switch {
+	case keepProfile && profileImported:
+		// We imported ICC profile and want to keep it,
+		// so we need to export it
+		if err := c.Img.ExportColourProfile(); err != nil {
+			return err
 		}
-	} else if !keepProfile {
-		// We don't import ICC profile and don't want to keep it,
-		// so we need to transform it to sRGB for maximum compatibility
-		if err := c.Img.TransformColourProfileToSRGB(); err != nil {
+	case !keepProfile && !profileImported:
+		// We didn't import ICC profile and don't want to keep it,
+		// so we need to transform it to sRGB/sGray for maximum compatibility
+		if err := c.Img.TransformColourProfileToStandard(); err != nil {
 			return err
 		}
 	}

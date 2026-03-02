@@ -670,22 +670,16 @@ vips_icc_export_go(VipsImage *in, VipsImage **out)
 }
 
 int
-vips_icc_export_srgb(VipsImage *in, VipsImage **out)
+vips_icc_transform_standard(VipsImage *in, VipsImage **out)
 {
-  return vips_icc_export(
-      in, out,
-      "output_profile", "sRGB",
-      "pcs", vips_icc_get_pcs(in),
-      "depth", image_depth(in),
-      NULL);
-}
+  const char *profile =
+      (in->Type == VIPS_INTERPRETATION_B_W || in->Type == VIPS_INTERPRETATION_GREY16)
+      ? "sGrey"
+      : "sRGB";
 
-int
-vips_icc_transform_srgb(VipsImage *in, VipsImage **out)
-{
   return vips_icc_transform(
       in, out,
-      "sRGB",
+      profile,
       "embedded", TRUE,
       "pcs", vips_icc_get_pcs(in),
       "depth", image_depth(in),
