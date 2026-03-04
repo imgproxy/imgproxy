@@ -1,5 +1,11 @@
 # 📑 Changelog (version/4 dev)
 
+## 2026-03-04
+
+### 🔄 Changed
+
+- Changed SVG rendering DPI to 96 (from 72) to match W3C recommendations.
+
 ## 2026-02-03
 
 ### 🔄 Changed

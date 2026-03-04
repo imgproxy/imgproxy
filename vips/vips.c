@@ -142,13 +142,12 @@ vips_svgload_source_go(VipsImgproxySource *source, VipsImage **out, ImgproxyLoad
 
   double scale = 1.0 / lo.Shrink;
 
-  // libvips limits the minimal scale to 0.001, so we have to scale down dpi
-  // for lower scale values
-  double dpi = 72.0;
-  if (scale < 0.001) {
-    dpi *= VIPS_MAX(scale / 0.001, 0.001);
-    scale = 0.001;
-  }
+  /* libvips uses default DPI of 72, but W3C recommends 96.
+   */
+  double dpi = 96.0;
+  /* Adjust the scale to account for the difference in DPI so that the output size is correct.
+   */
+  scale = scale * 72.0 / dpi;
 
   return vips_svgload_source(
       VIPS_SOURCE(source), out,
