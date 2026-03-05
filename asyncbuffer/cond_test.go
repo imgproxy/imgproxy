@@ -103,10 +103,7 @@ func (s *TestCondSuite) TestRapidTicksAndWaits() {
 	var wg sync.WaitGroup
 
 	// Start a goroutine that will rapidly tick
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-
+	wg.Go(func() {
 		timeTicker := time.Tick(time.Microsecond)
 
 		for range iterations {
@@ -115,17 +112,15 @@ func (s *TestCondSuite) TestRapidTicksAndWaits() {
 		}
 
 		s.cond.Close() // Close after all ticks
-	}()
+	})
 
 	// Start multiple waiters
 	for range 10 {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			for range iterations / 10 {
 				s.cond.Wait()
 			}
-		}()
+		})
 	}
 
 	var done atomic.Bool
