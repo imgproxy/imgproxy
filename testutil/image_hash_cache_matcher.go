@@ -48,7 +48,7 @@ func NewImageHashCacheMatcher(testDataProvider *TestDataProvider, hashType Image
 
 // ImageMatches is a testing helper, which accepts image as reader, calculates
 // hash and compares it with a hash saved to testdata/test-hashes folder.
-func (m *ImageHashCacheMatcher) ImageMatches(t *testing.T, img io.Reader, key string, maxDistance int) {
+func (m *ImageHashCacheMatcher) ImageMatches(t *testing.T, img io.Reader, key string, maxDistance float32) {
 	t.Helper()
 
 	// Read image in memory
@@ -59,7 +59,7 @@ func (m *ImageHashCacheMatcher) ImageMatches(t *testing.T, img io.Reader, key st
 	m.saveTmpImage(t, key, buf)
 
 	// Calculate hash using shared helper
-	sourceHash := m.calculateHash(t, key, buf)
+	sourceHash := m.calculateHash(t, buf)
 
 	// Calculate image hash path (create folder if missing)
 	hashPath := m.makeTargetPath(t, m.hashesPath, t.Name(), key, "hash")
@@ -102,19 +102,15 @@ func (m *ImageHashCacheMatcher) ImageMatches(t *testing.T, img io.Reader, key st
 	distance, err := sourceHash.Distance(targetHash)
 	require.NoError(t, err, "failed to calculate hash distance for %s", key)
 
-	require.LessOrEqual(t, distance, maxDistance, "image hashes are too different for %s: distance %d", key, distance)
+	require.LessOrEqual(t, distance, maxDistance, "image hashes are too different for %s: distance %f", key, distance)
 }
 
 // calculateHash converts image data to RGBA using VIPS and calculates hash
-func (m *ImageHashCacheMatcher) calculateHash(t *testing.T, key string, buf []byte) *ImageHash {
+func (m *ImageHashCacheMatcher) calculateHash(t *testing.T, buf []byte) *ImageHash {
 	t.Helper()
 
-	// Load image as RGBA
-	goImg, err := LoadImage(bytes.NewReader(buf))
-	require.NoError(t, err, "failed to load image for key %s", key)
-
 	// Calculate hash
-	hash, err := NewImageHash(goImg, m.hashType)
+	hash, err := NewImageHash(bytes.NewReader(buf), m.hashType)
 	require.NoError(t, err)
 
 	return hash

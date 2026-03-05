@@ -22,7 +22,7 @@ func (s *RotateAndFlipTestSuite) processImg(imgIndex int, o *options.Options) *t
 	s.Require().NoError(err)
 	defer result.OutData.Close()
 
-	hash, err := testutil.NewImageHashFromReader(result.OutData.Reader(), testutil.HashTypeSHA256)
+	hash, err := testutil.NewImageHash(result.OutData.Reader(), testutil.HashTypeSHA256)
 	s.Require().NoError(err)
 
 	key := fmt.Sprintf(

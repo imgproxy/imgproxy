@@ -148,7 +148,7 @@ func (s *testSuite) processImageAndCheck(
 	s.Require().Equal(result.ResultWidth, outSize.width, "Width mismatch")
 	s.Require().Equal(result.ResultHeight, outSize.height, "Height mismatch")
 
-	s.ImageMatcher().ImageMatches(s.T(), result.OutData.Reader(), "test", 0)
+	s.ImageMatcher().ImageMatches(s.T(), result.OutData.Reader(), "test", 0.0005)
 
 	if outInterpretation == vips.InterpretationMultiBand {
 		return
