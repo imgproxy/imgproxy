@@ -60,6 +60,7 @@ jobs:
         with:
           version: v2.7.2
           args: --timeout 10m0s
+          install-mode: goinstall # NOT RECOMMENED, remove after updating from 2.7.2
         env:
           PKG_CONFIG_LIBDIR: /opt/imgproxy/lib/pkgconfig
           GOFLAGS: -buildvcs=false
