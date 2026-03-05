@@ -203,7 +203,7 @@ func (s *ColorspaceTestSuite) TestLinearColorspace() {
 	for _, tc := range testCases {
 		s.Run(tc.opts.String()+"_linear", func() {
 			s.ImageMatcher, _ = testutil.NewLazySuiteObj(s, func() (*testutil.ImageHashCacheMatcher, error) {
-				return testutil.NewImageHashCacheMatcher(s.TestData, testutil.HashTypeDifference), nil
+				return testutil.NewImageHashCacheMatcher(s.TestData, testutil.HashTypeDct), nil
 			})
 			s.Config().PreserveHDR = true
 			s.Config().UseLinearColorspace = true
@@ -327,7 +327,7 @@ func (s *ColorspaceTestSuite) TestWatermarkColorspace() {
 	for _, tc := range testCases {
 		s.Run(tc.opts.String(), func() {
 			s.ImageMatcher, _ = testutil.NewLazySuiteObj(s, func() (*testutil.ImageHashCacheMatcher, error) {
-				return testutil.NewImageHashCacheMatcher(s.TestData, testutil.HashTypePerception), nil
+				return testutil.NewImageHashCacheMatcher(s.TestData, testutil.HashTypeDct), nil
 			})
 
 			s.Config().PreserveHDR = true

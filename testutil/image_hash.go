@@ -1,12 +1,20 @@
 package testutil
 
+/*
+#cgo pkg-config: vips
+#cgo CFLAGS: -O3
+#cgo LDFLAGS: -lm
+#include "dct2.h"
+*/
+import "C"
 import (
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
-	"image"
 	"io"
+	"math"
 	"os"
+	"unsafe"
 
 	"github.com/corona10/goimagehash"
 )
@@ -15,9 +23,8 @@ import (
 type ImageHashType byte
 
 const (
-	HashTypeDifference ImageHashType = iota // dHash
-	HashTypePerception                      // pHash
-	HashTypeSHA256                          // SHA256 of pixel data
+	HashTypeSHA256 = iota // SHA256 of pixel data
+	HashTypeDct           // DCT-based hash
 )
 
 // ImageHash wraps different hash types with a unified interface
@@ -25,28 +32,50 @@ type ImageHash struct {
 	hashType   ImageHashType
 	imageHash  *goimagehash.ImageHash // for dHash/pHash
 	sha256Hash [32]byte               // for SHA256
+	dctHash    []float32              // for DCT hash
 }
 
-// NewImageHash creates a new hash from an image
-func NewImageHash(img *image.RGBA, hashType ImageHashType) (*ImageHash, error) {
+// NewImageHash creates a new hash from an image reader
+func NewImageHash(r io.Reader, hashType ImageHashType) (*ImageHash, error) {
 	h := &ImageHash{hashType: hashType}
 
 	switch hashType {
-	case HashTypeDifference:
-		hash, err := goimagehash.DifferenceHash(img)
+	case HashTypeDct:
+		buf, err := io.ReadAll(r)
 		if err != nil {
-			return nil, fmt.Errorf("failed to calculate difference hash: %w", err)
+			return nil, fmt.Errorf("failed to read image data: %w", err)
 		}
-		h.imageHash = hash
 
-	case HashTypePerception:
-		hash, err := goimagehash.PerceptionHash(img)
-		if err != nil {
-			return nil, fmt.Errorf("failed to calculate perception hash: %w", err)
+		bufPtr := unsafe.Pointer(unsafe.SliceData(buf))
+		var dctArray *C.float
+		var length C.size_t
+
+		//nolint:gocritic
+		result := C.vips_dct2_hash(bufPtr, C.size_t(len(buf)), &dctArray, &length)
+		if dctArray != nil {
+			defer C.free(unsafe.Pointer(dctArray))
 		}
-		h.imageHash = hash
+
+		if result != 0 {
+			return nil, fmt.Errorf("failed to calculate DCT hash")
+		}
+
+		dctHash := make([]float32, int(length))
+
+		// Convert C array to Go slice safely
+		cSlice := unsafe.Slice(dctArray, int(length))
+		for i, v := range cSlice {
+			dctHash[i] = float32(v)
+		}
+
+		h.dctHash = dctHash
 
 	case HashTypeSHA256:
+		img, err := LoadImage(r)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load image: %w", err)
+		}
+
 		h.sha256Hash = sha256.Sum256(img.Pix)
 
 	default:
@@ -54,16 +83,6 @@ func NewImageHash(img *image.RGBA, hashType ImageHashType) (*ImageHash, error) {
 	}
 
 	return h, nil
-}
-
-// NewImageHashFromReader loads an image from a reader and calculates its hash
-func NewImageHashFromReader(r io.Reader, hashType ImageHashType) (*ImageHash, error) {
-	img, err := LoadImage(r)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load image: %w", err)
-	}
-
-	return NewImageHash(img, hashType)
 }
 
 // NewImageHashFromPath loads an image from a file path and calculates its hash
@@ -74,25 +93,36 @@ func NewImageHashFromPath(path string, hashType ImageHashType) (*ImageHash, erro
 	}
 	defer file.Close()
 
-	return NewImageHashFromReader(file, hashType)
+	return NewImageHash(file, hashType)
 }
 
 // Distance calculates the distance between two hashes
 // Returns error if hash types don't match
-func (h *ImageHash) Distance(other *ImageHash) (int, error) {
+func (h *ImageHash) Distance(other *ImageHash) (float32, error) {
 	if h.hashType != other.hashType {
 		return 0, fmt.Errorf("cannot compare hash type %d with %d", h.hashType, other.hashType)
 	}
 
 	switch h.hashType {
-	case HashTypeDifference, HashTypePerception:
-		return h.imageHash.Distance(other.imageHash)
-
 	case HashTypeSHA256:
 		if h.sha256Hash == other.sha256Hash {
 			return 0, nil
 		}
 		return 1, nil
+
+	case HashTypeDct:
+		if len(h.dctHash) != len(other.dctHash) {
+			return math.MaxFloat32, nil
+		}
+
+		var sumSquaredDiff float32
+		for i := range h.dctHash {
+			diff := h.dctHash[i] - other.dctHash[i]
+			sumSquaredDiff += diff * diff
+		}
+		mse := sumSquaredDiff / float32(len(h.dctHash))
+
+		return mse, nil
 
 	default:
 		return 0, fmt.Errorf("unsupported hash type: %d", h.hashType)
@@ -108,14 +138,21 @@ func (h *ImageHash) Dump(w io.Writer) error {
 	}
 
 	switch h.hashType {
-	case HashTypeDifference, HashTypePerception:
-		if err := h.imageHash.Dump(w); err != nil {
-			return fmt.Errorf("failed to dump perceptual hash: %w", err)
-		}
-
 	case HashTypeSHA256:
 		if _, err := w.Write(h.sha256Hash[:]); err != nil {
 			return fmt.Errorf("failed to write SHA256 hash: %w", err)
+		}
+
+	case HashTypeDct:
+		// Write length
+		if err := binary.Write(w, binary.LittleEndian, uint16(len(h.dctHash))); err != nil {
+			return fmt.Errorf("failed to write DCT hash length: %w", err)
+		}
+		// Write array
+		for _, v := range h.dctHash {
+			if err := binary.Write(w, binary.LittleEndian, v); err != nil {
+				return fmt.Errorf("failed to write DCT hash value: %w", err)
+			}
 		}
 
 	default:
@@ -135,16 +172,21 @@ func LoadImageHash(r io.Reader) (*ImageHash, error) {
 	}
 
 	switch h.hashType {
-	case HashTypeDifference, HashTypePerception:
-		hash, err := goimagehash.LoadImageHash(r)
-		if err != nil {
-			return nil, fmt.Errorf("failed to load perceptual hash: %w", err)
-		}
-		h.imageHash = hash
-
 	case HashTypeSHA256:
 		if _, err := io.ReadFull(r, h.sha256Hash[:]); err != nil {
 			return nil, fmt.Errorf("failed to read SHA256 hash: %w", err)
+		}
+
+	case HashTypeDct:
+		var length uint16
+		if err := binary.Read(r, binary.LittleEndian, &length); err != nil {
+			return nil, fmt.Errorf("failed to read DCT hash length: %w", err)
+		}
+		h.dctHash = make([]float32, length)
+		for i := range h.dctHash {
+			if err := binary.Read(r, binary.LittleEndian, &h.dctHash[i]); err != nil {
+				return nil, fmt.Errorf("failed to read DCT hash value: %w", err)
+			}
 		}
 
 	default:
@@ -157,12 +199,10 @@ func LoadImageHash(r io.Reader) (*ImageHash, error) {
 // String returns a string representation of the hash
 func (h *ImageHash) String() string {
 	switch h.hashType {
-	case HashTypeDifference:
-		return fmt.Sprintf("dHash:%s", h.imageHash.ToString())
-	case HashTypePerception:
-		return fmt.Sprintf("pHash:%s", h.imageHash.ToString())
 	case HashTypeSHA256:
 		return fmt.Sprintf("SHA256:%x", h.sha256Hash)
+	case HashTypeDct:
+		return fmt.Sprintf("DctHash:%v", h.dctHash)
 	default:
 		return fmt.Sprintf("unknown(%d)", h.hashType)
 	}

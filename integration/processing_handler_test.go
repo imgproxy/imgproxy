@@ -596,7 +596,7 @@ func (s *ProcessingHandlerTestSuite) TestRawOption() {
 	s.Require().True(s.TestData.FileEqualsToReader("test1.png", res.Body))
 }
 
-func (s *ProcessingHandlerTestSuite) computeDist(url string, sourceHash *testutil.ImageHash) int {
+func (s *ProcessingHandlerTestSuite) computeDist(url string, sourceHash *testutil.ImageHash) float32 {
 	res := s.GET(url)
 	defer res.Body.Close()
 
@@ -605,10 +605,7 @@ func (s *ProcessingHandlerTestSuite) computeDist(url string, sourceHash *testuti
 	body, err := io.ReadAll(res.Body)
 	s.Require().NoError(err)
 
-	processedImg, err := testutil.LoadImage(bytes.NewReader(body))
-	s.Require().NoError(err)
-
-	processedHash, err := testutil.NewImageHash(processedImg, testutil.HashTypePerception)
+	processedHash, err := testutil.NewImageHash(bytes.NewReader(body), testutil.HashTypeDct)
 	s.Require().NoError(err)
 
 	dist, err := sourceHash.Distance(processedHash)
@@ -636,10 +633,10 @@ func (s *ProcessingHandlerTestSuite) TestMaxBytes() {
 
 func (s *ProcessingHandlerTestSuite) TestQualitySettings() {
 	// Load source image and compute its hash
-	sourceImg, err := testutil.LoadImage(bytes.NewReader(s.TestData.Read("test-images/jpg/jpg.jpg")))
-	s.Require().NoError(err)
-
-	sourceHash, err := testutil.NewImageHash(sourceImg, testutil.HashTypePerception)
+	sourceHash, err := testutil.NewImageHash(
+		bytes.NewReader(s.TestData.Read("test-images/jpg/jpg.jpg")),
+		testutil.HashTypeDct,
+	)
 	s.Require().NoError(err)
 
 	// Set config quality to 99
@@ -648,20 +645,20 @@ func (s *ProcessingHandlerTestSuite) TestQualitySettings() {
 	// Test that high quality (99) or bypassed quality results in identical image
 	s.Run("q_99", func() {
 		dist := s.computeDist("/unsafe/q:99/plain/local:///test-images/jpg/jpg.jpg@jpg", sourceHash)
-		s.Require().Equal(0, dist)
+		s.Require().InDelta(0.0001, dist, 0.0001)
 	})
 
 	s.Run("no_q", func() {
 		dist := s.computeDist("/unsafe/plain/local:///test-images/jpg/jpg.jpg@jpg", sourceHash)
-		s.Require().Equal(0, dist)
+		s.Require().InDelta(0.005, dist, 0.001)
 	})
 
 	s.Run("q_1_fq_1", func() {
 		dist := s.computeDist("/unsafe/q:1/plain/local:///test-images/jpg/jpg.jpg@jpg", sourceHash)
-		s.Require().NotEqual(0, dist)
+		s.Require().InDelta(304.0, dist, 1)
 
 		dist = s.computeDist("/unsafe/fq:jpg:1/plain/local:///test-images/jpg/jpg.jpg@jpg", sourceHash)
-		s.Require().NotEqual(0, dist)
+		s.Require().InDelta(304.0, dist, 1)
 	})
 }
 

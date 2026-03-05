@@ -15,9 +15,9 @@ import (
 )
 
 const (
-	// maximum Hamming distance between the source and destination hash
-	// NOTE: 2 here is because HEIC works a bit differently over the platforms, investigate
-	maxDistance = 2
+	// maximum MSE between the source and destination hash
+	// HEIC and JXL work a bit differently over the platforms
+	maxDistance = 0.5
 )
 
 // formats to test
@@ -42,7 +42,7 @@ type MatrixTestSuite struct {
 
 func (s *MatrixTestSuite) SetupTest() {
 	s.testImagesPath = s.TestData.Path("test-images")
-	s.matcher = testutil.NewImageHashCacheMatcher(s.TestData, testutil.HashTypeDifference)
+	s.matcher = testutil.NewImageHashCacheMatcher(s.TestData, testutil.HashTypeDct)
 
 	s.Config().Security.MaxAnimationFrames = 999
 	s.Config().Server.DevelopmentErrorsMode = true

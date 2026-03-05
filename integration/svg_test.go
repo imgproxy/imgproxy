@@ -119,14 +119,14 @@ func (s *SvgTestSuite) TestSvgSuite() {
 		)
 
 		// Calculate hash of processed SVG
-		processedHash, err := testutil.NewImageHashFromReader(resp.Body, testutil.HashTypeSHA256)
+		processedHash, err := testutil.NewImageHash(resp.Body, testutil.HashTypeSHA256)
 		s.Require().NoError(err)
 
 		// Compare hashes
 		distance, err := sourceHash.Distance(processedHash)
 		s.Require().NoError(err)
 
-		s.Require().Equal(0, distance, "SVG hashes are too different for %s: distance %d", relPath, distance)
+		s.Require().InEpsilon(0, distance, 0.000001, "SVG hashes are too different for %s: distance %d", relPath, distance)
 
 		return nil
 	})
