@@ -13,7 +13,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/imgproxy/imgproxy-base:latest
+      image: ghcr.io/imgproxy/imgproxy-base:v4-dev
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -38,7 +38,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/imgproxy/imgproxy-base:latest
+      image: ghcr.io/imgproxy/imgproxy-base:v4-dev
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -58,8 +58,8 @@ jobs:
       - name: Lint
         uses: golangci/golangci-lint-action@v7
         with:
-          version: v2.10.1
           args: --timeout 10m0s
+          install-mode: none
         env:
           PKG_CONFIG_LIBDIR: /opt/imgproxy/lib/pkgconfig
           GOFLAGS: -buildvcs=false
