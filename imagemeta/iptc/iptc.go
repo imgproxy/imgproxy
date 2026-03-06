@@ -121,12 +121,9 @@ func (m IptcMap) Dump() []byte {
 			buf.WriteByte(key.TagID)
 
 			if dataSize < (1 << 15) {
-				//nolint:gosec // we check data size here
 				binary.Write(buf, binary.BigEndian, uint16(dataSize))
 			} else {
 				binary.Write(buf, binary.BigEndian, uint16(4+(1<<15)))
-
-				//nolint:gosec
 				binary.Write(buf, binary.BigEndian, uint32(dataSize))
 			}
 

@@ -23,8 +23,6 @@ type ConfigDesc struct {
 }
 
 // Config holds the configuration for Swift storage
-//
-//nolint:gosec // We export APIKey here.
 type Config struct {
 	Username       string        // Username for Swift authentication
 	APIKey         string        // API key for Swift authentication

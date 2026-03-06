@@ -15,7 +15,7 @@ type timerSinceCtxKey struct{}
 func startRequestTimer(r *http.Request, timeout time.Duration) (*http.Request, context.CancelFunc) {
 	ctx := r.Context()
 	ctx = context.WithValue(ctx, timerSinceCtxKey{}, time.Now())
-	ctx, cancel := context.WithTimeout(ctx, timeout)
+	ctx, cancel := context.WithTimeout(ctx, timeout) //nolint:gosec // cancel is called
 	return r.WithContext(ctx), cancel
 }
 

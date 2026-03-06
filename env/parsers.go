@@ -257,7 +257,6 @@ func parseStringSliceFile(env string) ([]string, error) {
 		return nil, nil
 	}
 
-	//nolint:gosec
 	content, err := os.ReadFile(env)
 	if err != nil {
 		return nil, fmt.Errorf("can't read file %s: %w", env, err)

@@ -43,8 +43,6 @@ func (r *Request) Send() (*http.Response, error) {
 
 	for {
 		// Try request
-		//
-		//nolint:gosec //  we restrict hosts using our security settings
 		res, err := client.Do(r.request)
 		if err == nil {
 			return res, nil // Return successful response
