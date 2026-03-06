@@ -63,7 +63,7 @@ func (s *Storage) GetObject(
 	// Generate artificial ETag from CRC32 and LastModified
 	var etag [12]byte
 	binary.LittleEndian.PutUint32(etag[:4], reader.Attrs.CRC32C)
-	binary.LittleEndian.PutUint64(etag[4:], uint64(reader.Attrs.LastModified.UnixNano())) //nolint:gosec
+	binary.LittleEndian.PutUint64(etag[4:], uint64(reader.Attrs.LastModified.UnixNano()))
 
 	header.Set(httpheaders.Etag, hex.EncodeToString(etag[:]))
 	header.Set(httpheaders.LastModified, reader.Attrs.LastModified.Format(http.TimeFormat))

@@ -39,6 +39,8 @@ var (
 )
 
 // Config represents HTTP server config
+//
+//nolint:gosec // We export Secret here.
 type Config struct {
 	Network               string        // Network type (tcp, unix)
 	Bind                  string        // Bind address

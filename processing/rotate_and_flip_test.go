@@ -43,7 +43,7 @@ func (s *RotateAndFlipTestSuite) collectRotationsFlips(imgIndex int, o *options.
 	rotates := []int{0, 90, 180, 270}
 	flips := []bool{false, true}
 
-	var hashes []*testutil.ImageHash
+	hashes := make([]*testutil.ImageHash, 0, len(rotates)*len(flips)*len(flips))
 
 	for _, rotate := range rotates {
 		for _, flipH := range flips {
@@ -87,7 +87,7 @@ func (s *RotateAndFlipTestSuite) TestOrientationAutoRotate() {
 	o.Set(keys.AutoRotate, false)
 
 	// Test with auto_rotate:false - all outputs should be the same
-	hashes := []*testutil.ImageHash{}
+	hashes := make([]*testutil.ImageHash, 0, len(s.imgs))
 	for i := range s.imgs {
 		hashes = append(hashes, s.processImg(i, o))
 	}
@@ -102,7 +102,7 @@ func (s *RotateAndFlipTestSuite) TestOrientationAutoRotate() {
 	// Test with auto_rotate:true - each subsequent output should differ from the previous
 	o.Set(keys.AutoRotate, true)
 
-	hashesAr := []*testutil.ImageHash{}
+	hashesAr := make([]*testutil.ImageHash, 0, len(s.imgs))
 	for i := range s.imgs {
 		hashesAr = append(hashesAr, s.processImg(i, o))
 	}
@@ -119,7 +119,7 @@ func (s *RotateAndFlipTestSuite) TestRotateFlip() {
 	o := options.New()
 	o.Set(keys.AutoRotate, false)
 
-	hashes := [][]*testutil.ImageHash{}
+	hashes := make([][]*testutil.ImageHash, 0, len(s.imgs))
 
 	for i := range s.imgs {
 		hashes = append(hashes, s.collectRotationsFlips(i, o))
@@ -149,7 +149,7 @@ func (s *RotateAndFlipTestSuite) TestRotateFlipAutoRotate() {
 	o := options.New()
 	o.Set(keys.AutoRotate, true)
 
-	hashes := [][]*testutil.ImageHash{}
+	hashes := make([][]*testutil.ImageHash, 0, len(s.imgs))
 
 	for i := range s.imgs {
 		hashes = append(hashes, s.collectRotationsFlips(i, o))

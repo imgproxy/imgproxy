@@ -95,6 +95,7 @@ func (s *Suite) GET(path string, header ...http.Header) *http.Response {
 	}
 
 	// Do the request
+	//nolint:gosec
 	resp, err := http.DefaultClient.Do(req)
 	s.Require().NoError(err)
 

@@ -19,7 +19,7 @@ func Listen(network, address string, reuse bool) (net.Listener, error) {
 		Control: func(_, _ string, c syscall.RawConn) error {
 			var cerr error
 			err := c.Control(func(fd uintptr) {
-				cerr = unix.SetsockoptInt(int(fd), unix.SOL_SOCKET, unix.SO_REUSEPORT, 1)
+				cerr = unix.SetsockoptInt(int(fd), unix.SOL_SOCKET, unix.SO_REUSEPORT, 1) //nolint:gosec
 			})
 			if err != nil {
 				return err
