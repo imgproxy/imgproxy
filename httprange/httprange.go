@@ -24,20 +24,19 @@ func Parse(s string) (int64, int64, error) {
 			continue
 		}
 
-		i := strings.Index(ra, "-")
-		if i < 0 {
+		before, after, ok := strings.Cut(ra, "-")
+		if !ok {
 			return 0, 0, errors.New("invalid range")
 		}
 
-		start, end := textproto.TrimString(ra[:i]), textproto.TrimString(ra[i+1:])
-
+		start, end := textproto.TrimString(before), textproto.TrimString(after)
 		if start == "" {
 			// Don't support ranges without start since it looks like FFmpeg doesn't use ones
 			return 0, 0, errors.New("invalid range")
 		}
 
 		istart, err := strconv.ParseInt(start, 10, 64)
-		if err != nil || i < 0 {
+		if err != nil {
 			return 0, 0, errors.New("invalid range")
 		}
 

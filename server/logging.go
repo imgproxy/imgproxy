@@ -15,6 +15,7 @@ func LogRequest(reqID string, r *http.Request) {
 
 	clientIP, _, _ := net.SplitHostPort(r.RemoteAddr)
 
+	//nolint:gosec
 	slog.Info(
 		fmt.Sprintf("Started %s", path),
 		"request_id", reqID,

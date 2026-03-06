@@ -213,7 +213,6 @@ func buildTLSConfig(config *Config) (*tls.Config, error) {
 	}
 
 	// Package default is 1.2
-	//nolint:gosec
 	tlsConf := tls.Config{RootCAs: certPool}
 
 	// If there is not client cert or key, return the config with only root CAs

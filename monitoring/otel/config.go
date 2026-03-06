@@ -54,6 +54,8 @@ var (
 )
 
 // Config holds the configuration for OpenTelemetry monitoring
+//
+//nolint:gosec // We export ClientKey/ClientCert here.
 type Config struct {
 	Enable           bool         // Enable OpenTelemetry tracing and metrics
 	EnableMetrics    bool         // Enable OpenTelemetry metrics collection

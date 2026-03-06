@@ -92,7 +92,7 @@ func Parse(data []byte, m IptcMap) error {
 				if err := binary.Read(buf, binary.BigEndian, &dataSize64); err != nil {
 					return newIptcError("invalid IPTC data size: %s", err)
 				}
-				dataSize = int(dataSize64) //nolint:gosec
+				dataSize = int(dataSize64)
 			default:
 				return newIptcError("invalid IPTC data size")
 			}
@@ -121,9 +121,12 @@ func (m IptcMap) Dump() []byte {
 			buf.WriteByte(key.TagID)
 
 			if dataSize < (1 << 15) {
+				//nolint:gosec // we check data size here
 				binary.Write(buf, binary.BigEndian, uint16(dataSize))
 			} else {
 				binary.Write(buf, binary.BigEndian, uint16(4+(1<<15)))
+
+				//nolint:gosec
 				binary.Write(buf, binary.BigEndian, uint32(dataSize))
 			}
 

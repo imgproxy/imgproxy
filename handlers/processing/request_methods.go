@@ -132,6 +132,7 @@ func (r *request) getFallbackImage() (imagedata.ImageData, http.Header) {
 
 	data, h, err := fbi.Get(r.req.Context(), r.opts)
 	if err != nil {
+		//nolint:gosec
 		slog.Warn(err.Error())
 
 		if ierr := r.wrapDownloadingErr(err); ierr.ShouldReport() {
