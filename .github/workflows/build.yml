@@ -66,9 +66,11 @@ jobs:
           file: ./docker/Dockerfile
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          annotations: ${{ steps.meta.outputs.annotations }}
           platforms: ${{ matrix.build.dockerPlatform }}
           provenance: false
           push: true
+          outputs: type=image,oci-mediatypes=true
 
   push_manifests:
     needs: build
@@ -86,7 +88,7 @@ jobs:
           flavor: |
             latest=false
         env:
-          DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
+          DOCKER_METADATA_ANNOTATIONS_LEVELS: index
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
