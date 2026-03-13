@@ -13,6 +13,7 @@
 - (pro) Return `orientation` field in the `/info` endpoint response when the [dimensions](https://docs.imgproxy.net/latest/usage/getting_info#dimensions) info option is enabled.
 
 ### Changed
+- For security reasons, imgproxy now accepts only service account keys for Google Cloud Storage integration and Google Cloud Secret Manager integration.
 - When image source responds with a 4xx status code, imgproxy now responds with the same status code instead of always responding with `404 Not Found`.
 - When image source responds with a 5xx status code, imgproxy now responds with `502 Bad Gateway` instead of `500 Internal Server Error`.
 - Remove `iframe` elements from SVGs during sanitization.

@@ -52,7 +52,7 @@ func New() (http.RoundTripper, error) {
 	}
 
 	if len(config.GCSKey) > 0 {
-		opts = append(opts, option.WithCredentialsJSON([]byte(config.GCSKey)))
+		opts = append(opts, option.WithAuthCredentialsJSON(option.ServiceAccount, []byte(config.GCSKey)))
 	}
 
 	if len(config.GCSEndpoint) > 0 {
