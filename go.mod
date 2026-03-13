@@ -12,7 +12,7 @@ require (
 	github.com/DataDog/datadog-go/v5 v5.8.3
 	github.com/DataDog/dd-trace-go/v2 v2.6.0
 	github.com/airbrake/gobrake/v5 v5.6.2
-	github.com/aws/amazon-s3-encryption-client-go/v3 v3.2.0
+	github.com/aws/amazon-s3-encryption-client-go/v4 v4.0.0
 	github.com/aws/aws-sdk-go-v2 v1.41.3
 	github.com/aws/aws-sdk-go-v2/config v1.32.11
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.11

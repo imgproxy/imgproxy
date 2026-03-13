@@ -93,8 +93,8 @@ github.com/Microsoft/go-winio v0.6.2 h1:F2VQgta7ecxGYO8k3ZZz3RS8fVIXVxONVUPlNERo
 github.com/Microsoft/go-winio v0.6.2/go.mod h1:yd8OoFMLzJbo9gZq8j5qaps8bJ9aShtEA8Ipt1oGCvU=
 github.com/airbrake/gobrake/v5 v5.6.2 h1:/LLjm0B3Jy3gqg17VpeGEnSTRqiIElGDy3RZy9s7+MU=
 github.com/airbrake/gobrake/v5 v5.6.2/go.mod h1:7lOWiGlpBnOnmWdz7BJzY/shByCkuAIL4LvHbGBKeZs=
-github.com/aws/amazon-s3-encryption-client-go/v3 v3.2.0 h1:C2eHgyRaUec5DhYBaAjXPipw8IA8FpndfzcubOgk6H0=
-github.com/aws/amazon-s3-encryption-client-go/v3 v3.2.0/go.mod h1:k/WQiWAouhMQHIuaTsgn/STAkEVHusoKdo9DdFe1dw4=
+github.com/aws/amazon-s3-encryption-client-go/v4 v4.0.0 h1:gdFJg71fskemybk9xbfw+/ioUg4tIB+Cm0oCMLxJESg=
+github.com/aws/amazon-s3-encryption-client-go/v4 v4.0.0/go.mod h1:ffiGxpvnBTnr7l4evAkZ+Qtsoi2Ll9pj4qc3okZsvM0=
 github.com/aws/aws-sdk-go-v2 v1.41.3 h1:4kQ/fa22KjDt13QCy1+bYADvdgcxpfH18f0zP542kZA=
 github.com/aws/aws-sdk-go-v2 v1.41.3/go.mod h1:mwsPRE8ceUUpiTgF7QmQIJ7lgsKUPQOUl3o72QBrE1o=
 github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.6 h1:N4lRUXZpZ1KVEUn6hxtco/1d2lgYhNn1fHkkl8WhlyQ=
