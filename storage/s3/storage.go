@@ -8,8 +8,9 @@ import (
 	"strings"
 	"sync"
 
-	s3Crypto "github.com/aws/amazon-s3-encryption-client-go/v3/client"
-	s3CryptoMaterials "github.com/aws/amazon-s3-encryption-client-go/v3/materials"
+	s3Crypto "github.com/aws/amazon-s3-encryption-client-go/v4/client"
+	s3CryptoCommitment "github.com/aws/amazon-s3-encryption-client-go/v4/commitment"
+	s3CryptoMaterials "github.com/aws/amazon-s3-encryption-client-go/v4/materials"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsHttp "github.com/aws/aws-sdk-go-v2/aws/transport/http"
 	awsConfig "github.com/aws/aws-sdk-go-v2/config"
@@ -157,7 +158,9 @@ func createClient(conf aws.Config, opts []func(*s3.Options), config *Config) (s3
 			return nil, err
 		}
 
-		return s3Crypto.New(client, cmm)
+		return s3Crypto.New(client, cmm, func(options *s3Crypto.EncryptionClientOptions) {
+			options.CommitmentPolicy = s3CryptoCommitment.FORBID_ENCRYPT_ALLOW_DECRYPT
+		})
 	} else {
 		return client, nil
 	}

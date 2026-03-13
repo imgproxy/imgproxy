@@ -150,12 +150,12 @@ upgrade:
 lychee: DOCKERCMD := _lychee
 lychee: _run-in-docker
 _lychee:
-	@lychee docs README.md CHANGELOG.md \
+	@lychee README.md CHANGELOG.md \
 		--exclude localhost \
 		--exclude twitter.com \
 		--exclude x.com \
-		--exclude-path docs/index.html \
-		--max-concurrency 50
+		--max-concurrency 50 \
+		--accept 200,429
 
 .PHONY: devcontainer
 devcontainer:

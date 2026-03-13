@@ -45,7 +45,7 @@ func loadGCPSecret(ctx context.Context) error {
 	opts := []option.ClientOption{}
 
 	if len(secretKey) > 0 {
-		opts = append(opts, option.WithCredentialsJSON([]byte(secretKey)))
+		opts = append(opts, option.WithAuthCredentialsJSON(option.ServiceAccount, []byte(secretKey)))
 	}
 
 	client, err = secretmanager.NewClient(ctx, opts...)

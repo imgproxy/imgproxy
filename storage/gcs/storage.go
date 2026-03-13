@@ -38,7 +38,7 @@ func New(
 	}
 
 	if len(config.Key) > 0 {
-		opts = append(opts, option.WithCredentialsJSON([]byte(config.Key)))
+		opts = append(opts, option.WithAuthCredentialsJSON(option.ServiceAccount, []byte(config.Key)))
 	}
 
 	if len(config.Endpoint) > 0 {
