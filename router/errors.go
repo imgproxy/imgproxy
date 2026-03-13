@@ -43,7 +43,7 @@ func newRequestTimeoutError(after time.Duration) *ierrors.Error {
 		RequestTimeoutError(fmt.Sprintf("Request was timed out after %v", after)),
 		1,
 		ierrors.WithStatusCode(http.StatusServiceUnavailable),
-		ierrors.WithPublicMessage("Gateway Timeout"),
+		ierrors.WithPublicMessage("Timeout"),
 		ierrors.WithShouldReport(false),
 	)
 }
