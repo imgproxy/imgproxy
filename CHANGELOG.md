@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [3.31.0] - 2026-03-13
 ### Added
 - Add [IMGPROXY_FAIL_ON_DEPRECATION](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_FAIL_ON_DEPRECATION) config. When set to `true`, imgproxy will exit with a fatal error if a deprecated config option is used.
 - Add [flip](https://docs.imgproxy.net/latest/usage/processing#flip) processing option.
