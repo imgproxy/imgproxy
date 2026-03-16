@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	nanoid "github.com/matoous/go-nanoid/v2"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/imgproxy/imgproxy/v3/config"
 )
@@ -157,7 +158,9 @@ func (r *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	LogResponse(reqID, req, 404, newRouteNotDefinedError(req.URL.Path))
+	LogResponse(reqID, req, 404, newRouteNotDefinedError(req.URL.Path),
+		log.Fields{"response_size": 1},
+	)
 
 	rw.Header().Set("Content-Type", "text/plain")
 	rw.WriteHeader(404)
