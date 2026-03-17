@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [3.31.1] - 2026-03-17
 ### Fixed
 - Fix memory leak when saving HEIC/AVIF images with alpha channel.
 
