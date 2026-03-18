@@ -1,4 +1,4 @@
-package optionsparser
+package optionsparser_test
 
 import (
 	"encoding/base64"
@@ -13,6 +13,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/options/keys"
+	optionsparser "github.com/imgproxy/imgproxy/v3/options/parser"
 	"github.com/imgproxy/imgproxy/v3/processing"
 	"github.com/imgproxy/imgproxy/v3/testutil"
 	"github.com/imgproxy/imgproxy/v3/vips/color"
@@ -22,23 +23,23 @@ import (
 type ProcessingOptionsTestSuite struct {
 	testutil.LazySuite
 
-	config testutil.LazyObj[*Config]
-	parser testutil.LazyObj[*Parser]
+	config testutil.LazyObj[*optionsparser.Config]
+	parser testutil.LazyObj[*optionsparser.Parser]
 }
 
 func (s *ProcessingOptionsTestSuite) SetupSuite() {
 	s.config, _ = testutil.NewLazySuiteObj(
 		s,
-		func() (*Config, error) {
-			c := NewDefaultConfig()
+		func() (*optionsparser.Config, error) {
+			c := optionsparser.NewDefaultConfig()
 			return &c, nil
 		},
 	)
 
 	s.parser, _ = testutil.NewLazySuiteObj(
 		s,
-		func() (*Parser, error) {
-			return New(s.T().Context(), s.config())
+		func() (*optionsparser.Parser, error) {
+			return optionsparser.New(s.T().Context(), s.config())
 		},
 	)
 }
@@ -92,7 +93,7 @@ func (s *ProcessingOptionsTestSuite) TestParseBase64URLWithBase() {
 }
 
 func (s *ProcessingOptionsTestSuite) TestParseBase64URLWithReplacement() {
-	s.config().URLReplacements = []URLReplacement{
+	s.config().URLReplacements = []optionsparser.URLReplacement{
 		{Regexp: regexp.MustCompile("^test://([^/]*)/"), Replacement: "test2://images.dev/${1}/dolor/"},
 		{Regexp: regexp.MustCompile("^test2://"), Replacement: "http://"},
 	}
@@ -149,7 +150,7 @@ func (s *ProcessingOptionsTestSuite) TestParsePlainURLWithBase() {
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePlainURLWithReplacement() {
-	s.config().URLReplacements = []URLReplacement{
+	s.config().URLReplacements = []optionsparser.URLReplacement{
 		{Regexp: regexp.MustCompile("^test://([^/]*)/"), Replacement: "test2://images.dev/${1}/dolor/"},
 		{Regexp: regexp.MustCompile("^test2://"), Replacement: "http://"},
 	}

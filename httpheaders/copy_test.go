@@ -1,10 +1,11 @@
-package httpheaders
+package httpheaders_test
 
 import (
 	"fmt"
 	"net/http"
 	"testing"
 
+	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/stretchr/testify/require"
 )
 
@@ -22,7 +23,7 @@ func TestCopy(t *testing.T) {
 		"X-Test-5": {"value6"},
 	}
 
-	Copy(from, to, []string{"X-Test-1", "x-test-3", "X-Non-Existent"})
+	httpheaders.Copy(from, to, []string{"X-Test-1", "x-test-3", "X-Non-Existent"})
 
 	require.Equal(t, []string{"value1", "value2"}, to.Values("X-Test-1"))
 	require.Equal(t, []string{"value4"}, to.Values("X-Test-3"))
@@ -71,7 +72,7 @@ func TestCopyAll(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("overwrite=%v", tc.overwrite), func(t *testing.T) {
 			toCopy := to.Clone() // Clone to avoid modifying the original 'to' header
-			CopyAll(from, toCopy, tc.overwrite)
+			httpheaders.CopyAll(from, toCopy, tc.overwrite)
 			require.Equal(t, tc.expected, toCopy)
 		})
 	}
@@ -94,7 +95,7 @@ func TestCopyFromRequest(t *testing.T) {
 		"X-Test-4": {"value5"},
 	}
 
-	CopyFromRequest(req, header, []string{"X-Test-1", "x-test-2", "host", "X-Non-Existent"})
+	httpheaders.CopyFromRequest(req, header, []string{"X-Test-1", "x-test-2", "host", "X-Non-Existent"})
 
 	require.Equal(t, []string{"value1", "value2"}, header.Values("X-Test-1"))
 	require.Equal(t, []string{"value3"}, header.Values("X-Test-2"))
@@ -120,7 +121,7 @@ func TestCopyToRequest(t *testing.T) {
 		"Host":     {"newhost.com"},
 	}
 
-	CopyToRequest(header, req)
+	httpheaders.CopyToRequest(header, req)
 
 	require.Equal(t, []string{"value1", "value2"}, req.Header.Values("X-Test-1"))
 	require.Equal(t, []string{"value3"}, req.Header.Values("X-Test-2"))

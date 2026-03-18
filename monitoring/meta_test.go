@@ -1,14 +1,15 @@
-package monitoring
+package monitoring_test
 
 import (
 	"testing"
 
+	"github.com/imgproxy/imgproxy/v3/monitoring"
 	"github.com/stretchr/testify/require"
 )
 
 func TestMetaFilter(t *testing.T) {
 	// Create a Meta with some test data
-	meta := Meta{
+	meta := monitoring.Meta{
 		"key1": "value1",
 		"key2": "value2",
 		"key3": "value3",

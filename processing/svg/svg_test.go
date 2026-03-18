@@ -1,4 +1,4 @@
-package svg
+package svg_test
 
 import (
 	"bytes"
@@ -12,6 +12,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/options"
+	"github.com/imgproxy/imgproxy/v3/processing/svg"
 	"github.com/imgproxy/imgproxy/v3/testutil"
 )
 
@@ -48,10 +49,10 @@ func (s *SvgTestSuite) TestSanitize() {
 	origin := s.readTestFile("test1.svg")
 	expected := s.readTestFile("test1.sanitized.svg")
 
-	config := NewDefaultConfig()
-	svg := New(&config)
+	config := svg.NewDefaultConfig()
+	svgProc := svg.New(&config)
 
-	actual, err := svg.Process(options.New(), origin)
+	actual, err := svgProc.Process(options.New(), origin)
 	s.Require().NoError(err)
 
 	s.compare(expected, actual)
@@ -98,8 +99,8 @@ func BenchmarkSvgProcessing(b *testing.B) {
 		b.Fatal(err)
 	}
 
-	config := NewDefaultConfig()
-	svg := New(&config)
+	config := svg.NewDefaultConfig()
+	svgProc := svg.New(&config)
 
 	opts := options.New()
 
@@ -107,7 +108,7 @@ func BenchmarkSvgProcessing(b *testing.B) {
 
 	for b.Loop() {
 		for _, sample := range samples {
-			_, err := svg.Process(opts, sample)
+			_, err := svgProc.Process(opts, sample)
 			if err != nil {
 				b.Fatal(err)
 			}

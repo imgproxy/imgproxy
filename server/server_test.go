@@ -1,4 +1,4 @@
-package server
+package server_test
 
 import (
 	"context"
@@ -9,41 +9,49 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/suite"
+
 	"github.com/imgproxy/imgproxy/v3/errctx"
 	"github.com/imgproxy/imgproxy/v3/errorreport"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/monitoring"
-	"github.com/stretchr/testify/suite"
+	"github.com/imgproxy/imgproxy/v3/server"
+	"github.com/imgproxy/imgproxy/v3/testutil"
 )
 
 type ServerTestSuite struct {
-	suite.Suite
+	testutil.LazySuite
 
-	config        *Config
-	monitoring    *monitoring.Monitoring
-	errorReporter *errorreport.Reporter
-	blankRouter   *Router
+	config testutil.LazyObj[*server.Config]
+	router testutil.LazyObj[*server.Router]
 }
 
-func (s *ServerTestSuite) SetupTest() {
-	c := NewDefaultConfig()
+func (s *ServerTestSuite) SetupSuite() {
+	s.config, _ = testutil.NewLazySuiteObj(s, func() (*server.Config, error) {
+		c := server.NewDefaultConfig()
+		c.Bind = "127.0.0.1:0" // Use port 0 for auto-assignment
+		return &c, nil
+	})
 
-	s.config = &c
-	s.config.Bind = "127.0.0.1:0" // Use port 0 for auto-assignment
+	s.router, _ = testutil.NewLazySuiteObj(s, func() (*server.Router, error) {
+		mc := monitoring.NewDefaultConfig()
+		m, err := monitoring.New(s.T().Context(), &mc, 1)
+		if err != nil {
+			return nil, err
+		}
 
-	mc := monitoring.NewDefaultConfig()
-	m, err := monitoring.New(s.T().Context(), &mc, 1)
-	s.Require().NoError(err)
-	s.monitoring = m
+		erCfg := errorreport.NewDefaultConfig()
+		er, err := errorreport.New(&erCfg)
+		if err != nil {
+			return nil, err
+		}
 
-	erCfg := errorreport.NewDefaultConfig()
-	er, err := errorreport.New(&erCfg)
-	s.Require().NoError(err)
-	s.errorReporter = er
+		return server.NewRouter(s.config(), m, er)
+	})
+}
 
-	r, err := NewRouter(s.config, m, er)
-	s.Require().NoError(err)
-	s.blankRouter = r
+func (s *ServerTestSuite) SetupSubTest() {
+	s.ResetLazyObjects()
 }
 
 func (s *ServerTestSuite) TestStartServerWithInvalidBind() {
@@ -56,16 +64,12 @@ func (s *ServerTestSuite) TestStartServerWithInvalidBind() {
 		cancelCalled.Store(true)
 	}
 
-	invalidConfig := NewDefaultConfig()
-	invalidConfig.Bind = "-1.-1.-1.-1" // Invalid address
+	s.config().Bind = "-1.-1.-1.-1" // Invalid address
 
-	r, err := NewRouter(&invalidConfig, s.monitoring, s.errorReporter)
-	s.Require().NoError(err)
-
-	server, err := Start(cancelWrapper, r)
+	srv, err := server.Start(cancelWrapper, s.router())
 
 	s.Require().Error(err)
-	s.Nil(server)
+	s.Nil(srv)
 	s.Contains(err.Error(), "can't start server")
 
 	// Check if cancel was called using Eventually
@@ -86,9 +90,9 @@ func (s *ServerTestSuite) TestShutdown() {
 	_, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	server, err := Start(cancel, s.blankRouter)
+	srv, err := server.Start(cancel, s.router())
 	s.Require().NoError(err)
-	s.NotNil(server)
+	s.NotNil(srv)
 
 	// Test graceful shutdown
 	shutdownCtx, shutdownCancel := context.WithTimeout(s.T().Context(), 10*time.Second)
@@ -96,7 +100,7 @@ func (s *ServerTestSuite) TestShutdown() {
 
 	// Should not panic or hang
 	s.NotPanics(func() {
-		server.Shutdown(shutdownCtx)
+		srv.Shutdown(shutdownCtx)
 	})
 }
 
@@ -123,18 +127,14 @@ func (s *ServerTestSuite) TestWithCORS() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			config := NewDefaultConfig()
-			config.CORSAllowOrigin = tt.corsAllowOrigin
+			s.config().CORSAllowOrigin = tt.corsAllowOrigin
 
-			router, err := NewRouter(&config, s.monitoring, s.errorReporter)
-			s.Require().NoError(err)
-
-			wrappedHandler := router.WithCORS(s.mockHandler)
+			s.router().GET("/test", s.router().WithCORS(s.mockHandler))
 
 			req := httptest.NewRequest(http.MethodGet, "/test", nil)
 			rw := httptest.NewRecorder()
 
-			wrappedHandler("test-req-id", s.wrapRW(rw), req)
+			s.router().ServeHTTP(rw, req)
 
 			s.Equal(tt.expectedOrigin, rw.Header().Get(httpheaders.AccessControlAllowOrigin))
 			s.Equal(tt.expectedMethods, rw.Header().Get(httpheaders.AccessControlAllowMethods))
@@ -144,38 +144,36 @@ func (s *ServerTestSuite) TestWithCORS() {
 
 func (s *ServerTestSuite) TestWithSecret() {
 	tests := []struct {
-		name        string
-		secret      string
-		authHeader  string
-		expectError bool
+		name         string
+		secret       string
+		authHeader   string
+		expectStatus int
 	}{
 		{
-			name:       "ValidSecret",
-			secret:     "test-secret",
-			authHeader: "Bearer test-secret",
+			name:         "ValidSecret",
+			secret:       "test-secret",
+			authHeader:   "Bearer test-secret",
+			expectStatus: http.StatusOK,
 		},
 		{
-			name:        "InvalidSecret",
-			secret:      "foo-secret",
-			authHeader:  "Bearer wrong-secret",
-			expectError: true,
+			name:         "InvalidSecret",
+			secret:       "foo-secret",
+			authHeader:   "Bearer wrong-secret",
+			expectStatus: http.StatusForbidden,
 		},
 		{
-			name:       "NoSecretConfigured",
-			secret:     "",
-			authHeader: "",
+			name:         "NoSecretConfigured",
+			secret:       "",
+			authHeader:   "",
+			expectStatus: http.StatusOK,
 		},
 	}
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			config := NewDefaultConfig()
-			config.Secret = tt.secret
+			s.config().Secret = tt.secret
 
-			router, err := NewRouter(&config, s.monitoring, s.errorReporter)
-			s.Require().NoError(err)
-
-			wrappedHandler := router.WithSecret(s.mockHandler)
+			s.router().GET("/test", s.router().WithReportError(s.router().WithSecret(s.mockHandler)))
 
 			req := httptest.NewRequest(http.MethodGet, "/test", nil)
 			if tt.authHeader != "" {
@@ -183,47 +181,41 @@ func (s *ServerTestSuite) TestWithSecret() {
 			}
 			rw := httptest.NewRecorder()
 
-			if serr := wrappedHandler("test-req-id", s.wrapRW(rw), req); serr != nil {
-				err = serr.Err
-			}
+			s.router().ServeHTTP(rw, req)
 
-			if tt.expectError {
-				s.Require().Error(err)
-			} else {
-				s.Require().NoError(err)
-			}
+			s.Equal(tt.expectStatus, rw.Code)
 		})
 	}
 }
 
 func (s *ServerTestSuite) TestIntoSuccess() {
-	mockHandler := func(reqID string, rw ResponseWriter, r *http.Request) *Error {
+	mockHandler := func(reqID string, rw server.ResponseWriter, r *http.Request) *server.Error {
 		rw.WriteHeader(http.StatusOK)
 		return nil
 	}
 
-	wrappedHandler := s.blankRouter.WithReportError(mockHandler)
+	s.router().GET("/test", s.router().WithReportError(mockHandler))
 
 	req := httptest.NewRequest(http.MethodGet, "/test", nil)
 	rw := httptest.NewRecorder()
 
-	wrappedHandler("test-req-id", s.wrapRW(rw), req)
+	s.router().ServeHTTP(rw, req)
 
 	s.Equal(http.StatusOK, rw.Code)
 }
 
 func (s *ServerTestSuite) TestIntoWithError() {
 	testError := errctx.NewTextError("test error", 0)
-	mockHandler := func(reqID string, rw ResponseWriter, r *http.Request) *Error {
-		return NewError(testError, "test-category")
+	mockHandler := func(reqID string, rw server.ResponseWriter, r *http.Request) *server.Error {
+		return server.NewError(testError, "test-category")
 	}
 
-	wrappedHandler := s.blankRouter.WithReportError(mockHandler)
+	s.router().GET("/test", s.router().WithReportError(mockHandler))
 
 	req := httptest.NewRequest(http.MethodGet, "/test", nil)
 	rw := httptest.NewRecorder()
 
-	wrappedHandler("test-req-id", s.wrapRW(rw), req)
+	s.router().ServeHTTP(rw, req)
 
 	s.Equal(http.StatusInternalServerError, rw.Code)
 	s.Equal("text/plain", rw.Header().Get(httpheaders.ContentType))
@@ -231,64 +223,57 @@ func (s *ServerTestSuite) TestIntoWithError() {
 
 func (s *ServerTestSuite) TestIntoPanicWithError() {
 	testError := errors.New("panic error")
-	mockHandler := func(reqID string, rw ResponseWriter, r *http.Request) *Error {
+	mockHandler := func(reqID string, rw server.ResponseWriter, r *http.Request) *server.Error {
 		panic(testError)
 	}
 
-	wrappedHandler := s.blankRouter.WithPanic(mockHandler)
+	s.router().GET("/test", s.router().WithReportError(s.router().WithPanic(mockHandler)))
 
 	req := httptest.NewRequest(http.MethodGet, "/test", nil)
 	rw := httptest.NewRecorder()
 
 	s.NotPanics(func() {
-		err := wrappedHandler("test-req-id", s.wrapRW(rw), req)
-		s.Require().NotNil(err)
-		s.Require().Error(err.Err, "panic error")
+		s.router().ServeHTTP(rw, req)
 	})
 
-	s.Equal(http.StatusOK, rw.Code)
+	s.Equal(http.StatusInternalServerError, rw.Code)
 }
 
 func (s *ServerTestSuite) TestIntoPanicWithAbortHandler() {
-	mockHandler := func(reqID string, rw ResponseWriter, r *http.Request) *Error {
+	mockHandler := func(reqID string, rw server.ResponseWriter, r *http.Request) *server.Error {
 		panic(http.ErrAbortHandler)
 	}
 
-	wrappedHandler := s.blankRouter.WithPanic(mockHandler)
+	s.router().GET("/test", s.router().WithPanic(mockHandler))
 
 	req := httptest.NewRequest(http.MethodGet, "/test", nil)
 	rw := httptest.NewRecorder()
 
 	// Should re-panic with ErrAbortHandler
 	s.Panics(func() {
-		wrappedHandler("test-req-id", s.wrapRW(rw), req)
+		s.router().ServeHTTP(rw, req)
 	})
 }
 
 func (s *ServerTestSuite) TestIntoPanicWithNonError() {
-	mockHandler := func(reqID string, rw ResponseWriter, r *http.Request) *Error {
+	mockHandler := func(reqID string, rw server.ResponseWriter, r *http.Request) *server.Error {
 		panic("string panic")
 	}
 
-	wrappedHandler := s.blankRouter.WithPanic(mockHandler)
+	s.router().GET("/test", s.router().WithReportError(s.router().WithPanic(mockHandler)))
 
 	req := httptest.NewRequest(http.MethodGet, "/test", nil)
 	rw := httptest.NewRecorder()
 
-	// Should re-panic with non-error panics
 	s.NotPanics(func() {
-		err := wrappedHandler("test-req-id", s.wrapRW(rw), req)
-		s.Require().NotNil(err)
-		s.Require().Error(err.Err, "string panic")
+		s.router().ServeHTTP(rw, req)
 	})
+
+	s.Equal(http.StatusInternalServerError, rw.Code)
 }
 
-func (s *ServerTestSuite) mockHandler(reqID string, rw ResponseWriter, r *http.Request) *Error {
+func (s *ServerTestSuite) mockHandler(reqID string, rw server.ResponseWriter, r *http.Request) *server.Error {
 	return nil
-}
-
-func (s *ServerTestSuite) wrapRW(rw http.ResponseWriter) ResponseWriter {
-	return s.blankRouter.rwFactory.NewWriter(rw)
 }
 
 func TestServerTestSuite(t *testing.T) {

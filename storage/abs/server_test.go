@@ -1,4 +1,4 @@
-package abs
+package abs_test
 
 import (
 	"crypto/sha256"

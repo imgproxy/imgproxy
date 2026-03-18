@@ -1,4 +1,4 @@
-package processing
+package processing_test
 
 import (
 	"fmt"
@@ -9,6 +9,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/logger"
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/options/keys"
+	"github.com/imgproxy/imgproxy/v3/processing"
 	"github.com/imgproxy/imgproxy/v3/security"
 	"github.com/imgproxy/imgproxy/v3/testutil"
 	"github.com/imgproxy/imgproxy/v3/vips"
@@ -22,10 +23,10 @@ type testSuite struct {
 	ImageDataFactory  testutil.LazyObj[*imagedata.Factory]
 	SecurityConfig    testutil.LazyObj[*security.Config]
 	Security          testutil.LazyObj[*security.Checker]
-	Config            testutil.LazyObj[*Config]
+	Config            testutil.LazyObj[*processing.Config]
 	WatermarkConfig   testutil.LazyObj[*auximageprovider.StaticConfig]
 	WatermarkProvider testutil.LazyObj[auximageprovider.Provider]
-	Processor         testutil.LazyObj[*Processor]
+	Processor         testutil.LazyObj[*processing.Processor]
 	ImageMatcher      testutil.LazyObj[*testutil.ImageHashCacheMatcher]
 }
 
@@ -100,8 +101,8 @@ func (s *testSuite) SetupSuite() {
 		return security.New(s.SecurityConfig())
 	})
 
-	s.Config, _ = testutil.NewLazySuiteObj(s, func() (*Config, error) {
-		c := NewDefaultConfig()
+	s.Config, _ = testutil.NewLazySuiteObj(s, func() (*processing.Config, error) {
+		c := processing.NewDefaultConfig()
 		return &c, nil
 	})
 
@@ -120,8 +121,8 @@ func (s *testSuite) SetupSuite() {
 		)
 	})
 
-	s.Processor, _ = testutil.NewLazySuiteObj(s, func() (*Processor, error) {
-		return New(s.Config(), s.Security(), s.WatermarkProvider())
+	s.Processor, _ = testutil.NewLazySuiteObj(s, func() (*processing.Processor, error) {
+		return processing.New(s.Config(), s.Security(), s.WatermarkProvider())
 	})
 
 	s.ImageMatcher, _ = testutil.NewLazySuiteObj(s, func() (*testutil.ImageHashCacheMatcher, error) {

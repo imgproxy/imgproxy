@@ -1,8 +1,9 @@
-package generichttp
+package generichttp_test
 
 import (
 	"testing"
 
+	"github.com/imgproxy/imgproxy/v3/fetcher/transport/generichttp"
 	"github.com/stretchr/testify/require"
 )
 
@@ -99,14 +100,14 @@ func TestVerifySourceNetwork(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			config := NewDefaultConfig()
+			config := generichttp.NewDefaultConfig()
 
 			// Override config for the test
 			config.AllowLoopbackSourceAddresses = tc.allowLoopback
 			config.AllowLinkLocalSourceAddresses = tc.allowLinkLocal
 			config.AllowPrivateSourceAddresses = tc.allowPrivate
 
-			err := verifySourceNetwork(tc.addr, &config)
+			err := generichttp.VerifySourceNetwork(tc.addr, &config)
 
 			if tc.expectErr {
 				require.Error(t, err)

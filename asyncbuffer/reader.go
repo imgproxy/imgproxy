@@ -14,7 +14,7 @@ type Reader struct {
 
 // Read reads data from the AsyncBuffer.
 func (r *Reader) Read(p []byte) (int, error) {
-	n, err := r.ab.readAt(p, r.pos)
+	n, err := r.ab.ReadAt(p, r.pos)
 	if err == nil {
 		r.pos += int64(n)
 	}

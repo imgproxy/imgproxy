@@ -1,9 +1,11 @@
-package options
+package options_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+
+	"github.com/imgproxy/imgproxy/v3/options"
 )
 
 type OptionsTestSuite struct {
@@ -11,64 +13,64 @@ type OptionsTestSuite struct {
 }
 
 func (s *OptionsTestSuite) TestGet() {
-	o := New()
+	o := options.New()
 	o.Set("string_key", "string_value")
 	o.Set("bool_key", true)
 
 	// Existing keys
-	s.Require().Equal("string_value", Get(o, "string_key", "default_value"))
-	s.Require().True(Get(o, "bool_key", false))
+	s.Require().Equal("string_value", options.Get(o, "string_key", "default_value"))
+	s.Require().True(options.Get(o, "bool_key", false))
 
 	// Non-existing keys
-	s.Require().Equal("default_value", Get(o, "non_existing_key", "default_value"))
-	s.Require().False(Get(o, "another_non_existing_key", false))
+	s.Require().Equal("default_value", options.Get(o, "non_existing_key", "default_value"))
+	s.Require().False(options.Get(o, "another_non_existing_key", false))
 
 	// Type mismatch
 	s.Require().Panics(func() {
-		_ = Get(o, "string_key", 42)
+		_ = options.Get(o, "string_key", 42)
 	})
 	s.Require().Panics(func() {
-		_ = Get(o, "bool_key", "not_a_bool")
+		_ = options.Get(o, "bool_key", "not_a_bool")
 	})
 }
 
 func (s *OptionsTestSuite) TestAppendToSlice() {
-	o := New()
+	o := options.New()
 	o.Set("slice", []int{1, 2, 3})
 
 	// Append to existing slice
-	AppendToSlice(o, "slice", 4, 5)
-	s.Require().Equal([]int{1, 2, 3, 4, 5}, Get(o, "slice", []int{}))
+	options.AppendToSlice(o, "slice", 4, 5)
+	s.Require().Equal([]int{1, 2, 3, 4, 5}, options.Get(o, "slice", []int{}))
 
 	// Append to non-existing slice
-	AppendToSlice(o, "new_slice", 10, 20)
-	s.Require().Equal([]int{10, 20}, Get(o, "new_slice", []int{}))
+	options.AppendToSlice(o, "new_slice", 10, 20)
+	s.Require().Equal([]int{10, 20}, options.Get(o, "new_slice", []int{}))
 
 	// Type mismatch
 	s.Require().Panics(func() {
-		AppendToSlice(o, "slice", "not_an_int")
+		options.AppendToSlice(o, "slice", "not_an_int")
 	})
 }
 
 func (s *OptionsTestSuite) TestSliceContains() {
-	o := New()
+	o := options.New()
 	o.Set("slice", []string{"apple", "banana", "cherry"})
 
 	// Existing values
-	s.Require().True(SliceContains(o, "slice", "banana"))
-	s.Require().False(SliceContains(o, "slice", "date"))
+	s.Require().True(options.SliceContains(o, "slice", "banana"))
+	s.Require().False(options.SliceContains(o, "slice", "date"))
 
 	// Non-existing slice
-	s.Require().False(SliceContains(o, "non_existing_slice", "anything"))
+	s.Require().False(options.SliceContains(o, "non_existing_slice", "anything"))
 
 	// Type mismatch
 	s.Require().Panics(func() {
-		SliceContains(o, "slice", 42)
+		options.SliceContains(o, "slice", 42)
 	})
 }
 
 func (s *OptionsTestSuite) TestPropagate() {
-	o := New()
+	o := options.New()
 	o.Set("key1", "value1")
 	o.Set("key2", 100)
 	o.Set("key3", false)
@@ -83,17 +85,17 @@ func (s *OptionsTestSuite) TestPropagate() {
 	o.Propagate("key1")
 	o.Propagate("key2")
 
-	s.Require().Equal("value1", Get(child, "key1", ""))
-	s.Require().Equal(100, Get(child, "key2", 0))
-	s.Require().True(Get(child, "key3", false))
+	s.Require().Equal("value1", options.Get(child, "key1", ""))
+	s.Require().Equal(100, options.Get(child, "key2", 0))
+	s.Require().True(options.Get(child, "key3", false))
 
-	s.Require().Equal("value1", Get(grandChild, "key1", ""))
-	s.Require().Equal(100, Get(grandChild, "key2", 0))
+	s.Require().Equal("value1", options.Get(grandChild, "key1", ""))
+	s.Require().Equal(100, options.Get(grandChild, "key2", 0))
 	s.Require().False(grandChild.Has("key3"))
 }
 
 func (s *OptionsTestSuite) TestDeleteFromDescendants() {
-	o := New()
+	o := options.New()
 	o.Set("key1", "value1")
 
 	child := o.AddChild()
@@ -106,28 +108,28 @@ func (s *OptionsTestSuite) TestDeleteFromDescendants() {
 
 	o.DeleteFromDescendants("key1")
 
-	s.Require().Equal("value1", Get(o, "key1", ""))
+	s.Require().Equal("value1", options.Get(o, "key1", ""))
 
 	s.Require().False(child.Has("key1"))
-	s.Require().Equal(200, Get(child, "key2", 0))
+	s.Require().Equal(200, options.Get(child, "key2", 0))
 
 	s.Require().False(grandChild.Has("key1"))
-	s.Require().Equal(300, Get(grandChild, "key2", 0))
+	s.Require().Equal(300, options.Get(grandChild, "key2", 0))
 }
 
 func (s *OptionsTestSuite) TestCopyValue() {
-	o := New()
+	o := options.New()
 	o.Set("key1", 100)
 	o.Set("key2", 200)
 	o.Set("key3", 200)
 
 	// Existing to existing
 	o.CopyValue("key1", "key2")
-	s.Require().Equal(100, Get(o, "key2", 0))
+	s.Require().Equal(100, options.Get(o, "key2", 0))
 
 	// Existing to new
 	o.CopyValue("key1", "key4")
-	s.Require().Equal(100, Get(o, "key4", 0))
+	s.Require().Equal(100, options.Get(o, "key4", 0))
 
 	// Non-existing to new
 	o.CopyValue("non_existing_key", "key5")
@@ -135,11 +137,11 @@ func (s *OptionsTestSuite) TestCopyValue() {
 
 	// Non-existing to existing
 	o.CopyValue("another_non_existing_key", "key3")
-	s.Require().Equal(200, Get(o, "key3", 0))
+	s.Require().Equal(200, options.Get(o, "key3", 0))
 }
 
 func (s *OptionsTestSuite) TestGetInt() {
-	o := New()
+	o := options.New()
 	o.Set("int", 42)
 	o.Set("int32", int32(32))
 	o.Set("int16", int16(16))
@@ -166,7 +168,7 @@ func (s *OptionsTestSuite) TestGetInt() {
 }
 
 func (s *OptionsTestSuite) TestGetFloat() {
-	o := New()
+	o := options.New()
 	o.Set("float64", 3.14)
 	o.Set("float32", float32(2.71))
 	o.Set("int", 42)
@@ -190,8 +192,8 @@ func (s *OptionsTestSuite) TestGetFloat() {
 	})
 }
 
-func testOptions() *Options {
-	o := New()
+func testOptions() *options.Options {
+	o := options.New()
 	o.Set("string_key", "string_value")
 	o.Set("int_key", 42)
 	o.Set("float_key", 3.14)
@@ -205,7 +207,7 @@ func testOptions() *Options {
 	return o
 }
 
-func testNestedOptions() *Options {
+func testNestedOptions() *options.Options {
 	o := testOptions()
 
 	child := o.AddChild()

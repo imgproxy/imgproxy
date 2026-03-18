@@ -1,4 +1,4 @@
-package xmlparser
+package xmlparser_test
 
 import (
 	"bytes"
@@ -7,6 +7,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/imgproxy/imgproxy/v3/xmlparser"
 )
 
 func TestDocumentParsing(t *testing.T) {
@@ -32,7 +34,7 @@ func TestDocumentParsing(t *testing.T) {
 		defer file.Close()
 
 		// Parse the document
-		doc1, err := NewDocument(file)
+		doc1, err := xmlparser.NewDocument(file)
 		require.NoError(t, err, "Failed to parse SVG: %s", path)
 
 		// Write the document back to a buffer
@@ -41,7 +43,7 @@ func TestDocumentParsing(t *testing.T) {
 		require.NoError(t, err, "Failed to write SVG: %s", path)
 
 		// Parse the document again from the written buffer
-		doc2, err := NewDocument(buf)
+		doc2, err := xmlparser.NewDocument(buf)
 		require.NoError(t, err, "Failed to re-parse SVG: %s", path)
 
 		// Ensure that the two documents are equivalent
@@ -86,7 +88,7 @@ func TestEntityReplacement(t *testing.T) {
 	</style>
 </svg>`)
 
-	doc, err := NewDocument(bytes.NewReader(svgData))
+	doc, err := xmlparser.NewDocument(bytes.NewReader(svgData))
 	require.NoError(t, err)
 
 	doc.ReplaceEntities()
@@ -139,7 +141,7 @@ func BenchmarkDocumentParsing(b *testing.B) {
 
 	for b.Loop() {
 		for _, sample := range samples {
-			_, err := NewDocument(bytes.NewReader(sample))
+			_, err := xmlparser.NewDocument(bytes.NewReader(sample))
 			if err != nil {
 				b.Fatal(err)
 			}

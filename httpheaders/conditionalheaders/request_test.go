@@ -1,4 +1,4 @@
-package conditionalheaders
+package conditionalheaders_test
 
 import (
 	"encoding/base64"
@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
+	"github.com/imgproxy/imgproxy/v3/httpheaders/conditionalheaders"
 	"github.com/imgproxy/imgproxy/v3/testutil"
 	"github.com/stretchr/testify/suite"
 )
@@ -15,18 +16,18 @@ import (
 type RequestSuite struct {
 	testutil.LazySuite
 
-	Factory testutil.LazyObj[*Factory]
-	Config  testutil.LazyObj[*Config]
+	Factory testutil.LazyObj[*conditionalheaders.Factory]
+	Config  testutil.LazyObj[*conditionalheaders.Config]
 }
 
 func (s *RequestSuite) SetupSuite() {
-	s.Config, _ = testutil.NewLazySuiteObj(s, func() (*Config, error) {
-		cfg := NewDefaultConfig()
+	s.Config, _ = testutil.NewLazySuiteObj(s, func() (*conditionalheaders.Config, error) {
+		cfg := conditionalheaders.NewDefaultConfig()
 		return &cfg, nil
 	})
 
-	s.Factory, _ = testutil.NewLazySuiteObj(s, func() (*Factory, error) {
-		return NewFactory(s.Config())
+	s.Factory, _ = testutil.NewLazySuiteObj(s, func() (*conditionalheaders.Factory, error) {
+		return conditionalheaders.NewFactory(s.Config())
 	})
 }
 
@@ -47,18 +48,6 @@ func (s *RequestSuite) makeReq(ifMod, ifNone string) *http.Request {
 	}
 
 	return req
-}
-
-func (s *RequestSuite) TestNewFromRequest() {
-	inMod := "Mon, 02 Jan 2006 15:04:05 GMT"
-	inNone := `"etag"`
-
-	r := s.makeReq(inMod, inNone)
-	c := s.Factory().NewRequest(r)
-
-	req := s.Require()
-	req.Equal(inMod, c.ifModifiedSince)
-	req.Equal(inNone, c.ifNoneMatch)
 }
 
 func (s *RequestSuite) TestInjectImageRequestHeaders() {

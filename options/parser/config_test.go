@@ -1,10 +1,11 @@
-package optionsparser
+package optionsparser_test
 
 import (
 	"os"
 	"path/filepath"
 	"testing"
 
+	optionsparser "github.com/imgproxy/imgproxy/v3/options/parser"
 	"github.com/stretchr/testify/require"
 )
 
@@ -14,7 +15,7 @@ func TestPresetsPresent(t *testing.T) {
 	t.Setenv("IMGPROXY_PRESETS", "preset1,preset2,preset3")
 
 	// Load config
-	cfg, err := LoadConfigFromEnv(nil)
+	cfg, err := optionsparser.LoadConfigFromEnv(nil)
 
 	// Verify
 	require.NoError(t, err)
@@ -28,7 +29,7 @@ func TestPresetsEmpty(t *testing.T) {
 	t.Setenv("IMGPROXY_PRESETS", "")
 
 	// Load config
-	cfg, err := LoadConfigFromEnv(nil)
+	cfg, err := optionsparser.LoadConfigFromEnv(nil)
 
 	// Verify
 	require.NoError(t, err)
@@ -52,7 +53,7 @@ func TestPresetsFromFile(t *testing.T) {
 	t.Setenv("IMGPROXY_PRESETS", "")
 
 	// Load config
-	cfg, err := LoadConfigFromEnv(nil)
+	cfg, err := optionsparser.LoadConfigFromEnv(nil)
 
 	// Verify
 	require.NoError(t, err)
@@ -72,7 +73,7 @@ func TestPresetsFileEmpty(t *testing.T) {
 	t.Setenv("IMGPROXY_PRESETS", "")
 
 	// Load config
-	cfg, err := LoadConfigFromEnv(nil)
+	cfg, err := optionsparser.LoadConfigFromEnv(nil)
 
 	// Verify
 	require.NoError(t, err)
@@ -89,7 +90,7 @@ func TestPresetsFileNotFound(t *testing.T) {
 	t.Setenv("IMGPROXY_PRESETS", "")
 
 	// Load config - should error because file doesn't exist
-	_, err := LoadConfigFromEnv(nil)
+	_, err := optionsparser.LoadConfigFromEnv(nil)
 
 	// Verify that error occurred due to missing file
 	require.Error(t, err)
@@ -112,7 +113,7 @@ func TestPresetsFromBothSources(t *testing.T) {
 	t.Setenv("IMGPROXY_PRESETS_PATH", tmpFile.Name())
 
 	// Load config
-	cfg, err := LoadConfigFromEnv(nil)
+	cfg, err := optionsparser.LoadConfigFromEnv(nil)
 
 	// Verify both presets are loaded
 	require.NoError(t, err)

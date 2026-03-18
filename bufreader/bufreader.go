@@ -66,6 +66,11 @@ func (br *Reader) Rewind() {
 	br.pos = 0
 }
 
+// Pos returns the current read position.
+func (br *Reader) Pos() int {
+	return br.pos
+}
+
 // fetch ensures the buffer contains at least 'need' bytes
 func (br *Reader) fetch(need int) error {
 	if br.finished || need <= len(br.buf) {

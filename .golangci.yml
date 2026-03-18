@@ -19,7 +19,6 @@ linters:
     - nonamedreturns # we sometimes use named returns for clarity
     - noinlineerr # we use inline errors extensively
     - paralleltest # we can't always use t.Parallel()
-    - testpackage # we often test private methods
     - varnamelen # that's not for linter to decide
     - wsl # deprecated
 

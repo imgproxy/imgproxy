@@ -1,4 +1,4 @@
-package abs
+package abs_test
 
 import (
 	"crypto/rand"
@@ -42,8 +42,12 @@ func (s *ReaderTestSuite) SetupSuite() {
 
 func (s *ReaderTestSuite) SetupTest() {
 	// Recreate ABS blob for each test
-	abs := s.absStorage().Client().ServiceClient().NewContainerClient(s.TestContainer).NewBlockBlobClient(s.TestObjectKey)
-	_, err := abs.UploadBuffer(s.T().Context(), s.TestData, nil)
+	absBlob := s.absStorage().
+		Client().
+		ServiceClient().
+		NewContainerClient(s.TestContainer).
+		NewBlockBlobClient(s.TestObjectKey)
+	_, err := absBlob.UploadBuffer(s.T().Context(), s.TestData, nil)
 	s.Require().NoError(err)
 }
 

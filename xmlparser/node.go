@@ -178,7 +178,7 @@ func (n *Node) writeChildrenTo(w TokenWriter) error {
 func (n *Node) replaceEntities(em map[string][]byte) {
 	// Replace in attributes
 	for attr := range n.Attrs.Iter() {
-		attr.Value = replaceEntitiesString(attr.Value, em)
+		attr.Value = ReplaceEntitiesString(attr.Value, em)
 	}
 
 	// Replace in children.
@@ -191,7 +191,7 @@ func (n *Node) replaceEntities(em map[string][]byte) {
 
 		case *Text:
 			if !c.CData {
-				c.Data = replaceEntitiesBytes(c.Data, em)
+				c.Data = ReplaceEntitiesBytes(c.Data, em)
 			}
 		}
 	}

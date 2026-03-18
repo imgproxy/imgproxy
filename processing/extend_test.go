@@ -1,4 +1,4 @@
-package processing
+package processing_test
 
 import (
 	"bytes"
@@ -8,6 +8,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/options/keys"
+	"github.com/imgproxy/imgproxy/v3/processing"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -18,7 +19,7 @@ type ExtendTestSuite struct {
 }
 
 type extendTestCase struct {
-	gravity GravityType
+	gravity processing.GravityType
 	size    testSize
 	xOffset float64
 	yOffset float64
@@ -71,7 +72,7 @@ func (e extendTestCase) String() string {
 }
 
 type extendArTestCase struct {
-	gravity GravityType
+	gravity processing.GravityType
 	size    testSize
 	xOffset float64
 	yOffset float64
@@ -143,63 +144,63 @@ func (s *ExtendTestSuite) TestExtend() {
 	testCases := []testCase[extendTestCase]{
 		{
 			opts: extendTestCase{
-				gravity: GravityCenter,
+				gravity: processing.GravityCenter,
 				size:    extendSize,
 			},
 			outSize: extendSize,
 		},
 		{
 			opts: extendTestCase{
-				gravity: GravityNorth,
+				gravity: processing.GravityNorth,
 				size:    extendSize,
 			},
 			outSize: extendSize,
 		},
 		{
 			opts: extendTestCase{
-				gravity: GravitySouth,
+				gravity: processing.GravitySouth,
 				size:    extendSize,
 			},
 			outSize: extendSize,
 		},
 		{
 			opts: extendTestCase{
-				gravity: GravityEast,
+				gravity: processing.GravityEast,
 				size:    extendSize,
 			},
 			outSize: extendSize,
 		},
 		{
 			opts: extendTestCase{
-				gravity: GravityWest,
+				gravity: processing.GravityWest,
 				size:    extendSize,
 			},
 			outSize: extendSize,
 		},
 		{
 			opts: extendTestCase{
-				gravity: GravityNorthEast,
+				gravity: processing.GravityNorthEast,
 				size:    extendSize,
 			},
 			outSize: extendSize,
 		},
 		{
 			opts: extendTestCase{
-				gravity: GravitySouthEast,
+				gravity: processing.GravitySouthEast,
 				size:    extendSize,
 			},
 			outSize: extendSize,
 		},
 		{
 			opts: extendTestCase{
-				gravity: GravitySouthWest,
+				gravity: processing.GravitySouthWest,
 				size:    extendSize,
 			},
 			outSize: extendSize,
 		},
 		{
 			opts: extendTestCase{
-				gravity: GravityNorthWest,
+				gravity: processing.GravityNorthWest,
 				size:    extendSize,
 			},
 			outSize: extendSize,
@@ -208,7 +209,7 @@ func (s *ExtendTestSuite) TestExtend() {
 		// With offsets
 		{
 			opts: extendTestCase{
-				gravity: GravityNorth,
+				gravity: processing.GravityNorth,
 				size:    extendSize,
 				yOffset: 5,
 			},
@@ -216,7 +217,7 @@ func (s *ExtendTestSuite) TestExtend() {
 		},
 		{
 			opts: extendTestCase{
-				gravity: GravityNorth,
+				gravity: processing.GravityNorth,
 				size:    extendSize,
 				yOffset: 5,
 				dpr:     0.5,
@@ -225,7 +226,7 @@ func (s *ExtendTestSuite) TestExtend() {
 		},
 		{
 			opts: extendTestCase{
-				gravity: GravityNorth,
+				gravity: processing.GravityNorth,
 				size:    extendSize,
 				yOffset: 5,
 				dpr:     2,
@@ -234,7 +235,7 @@ func (s *ExtendTestSuite) TestExtend() {
 		},
 		{
 			opts: extendTestCase{
-				gravity: GravityEast,
+				gravity: processing.GravityEast,
 				size:    extendSize,
 				xOffset: 5,
 			},
@@ -242,7 +243,7 @@ func (s *ExtendTestSuite) TestExtend() {
 		},
 		{
 			opts: extendTestCase{
-				gravity: GravityEast,
+				gravity: processing.GravityEast,
 				size:    extendSize,
 				xOffset: 5,
 				dpr:     0.5,
@@ -251,7 +252,7 @@ func (s *ExtendTestSuite) TestExtend() {
 		},
 		{
 			opts: extendTestCase{
-				gravity: GravityEast,
+				gravity: processing.GravityEast,
 				size:    extendSize,
 				xOffset: 5,
 				dpr:     2,
@@ -262,7 +263,7 @@ func (s *ExtendTestSuite) TestExtend() {
 		// With relative offsets
 		{
 			opts: extendTestCase{
-				gravity: GravityNorth,
+				gravity: processing.GravityNorth,
 				size:    extendSize,
 				yOffset: 0.1,
 			},
@@ -270,7 +271,7 @@ func (s *ExtendTestSuite) TestExtend() {
 		},
 		{
 			opts: extendTestCase{
-				gravity: GravityNorth,
+				gravity: processing.GravityNorth,
 				size:    extendSize,
 				yOffset: 0.1,
 				dpr:     0.5,
@@ -279,7 +280,7 @@ func (s *ExtendTestSuite) TestExtend() {
 		},
 		{
 			opts: extendTestCase{
-				gravity: GravityNorth,
+				gravity: processing.GravityNorth,
 				size:    extendSize,
 				yOffset: 0.1,
 				dpr:     2,
@@ -307,63 +308,63 @@ func (s *ExtendTestSuite) TestExtendAspectRatio() {
 	testCases := []testCase[extendArTestCase]{
 		{
 			opts: extendArTestCase{
-				gravity: GravityCenter,
+				gravity: processing.GravityCenter,
 				size:    targetSize,
 			},
 			outSize: expectedSize,
 		},
 		{
 			opts: extendArTestCase{
-				gravity: GravityNorth,
+				gravity: processing.GravityNorth,
 				size:    targetSize,
 			},
 			outSize: expectedSize,
 		},
 		{
 			opts: extendArTestCase{
-				gravity: GravitySouth,
+				gravity: processing.GravitySouth,
 				size:    targetSize,
 			},
 			outSize: expectedSize,
 		},
 		{
 			opts: extendArTestCase{
-				gravity: GravityEast,
+				gravity: processing.GravityEast,
 				size:    targetSize,
 			},
 			outSize: expectedSize,
 		},
 		{
 			opts: extendArTestCase{
-				gravity: GravityWest,
+				gravity: processing.GravityWest,
 				size:    targetSize,
 			},
 			outSize: expectedSize,
 		},
 		{
 			opts: extendArTestCase{
-				gravity: GravityNorthEast,
+				gravity: processing.GravityNorthEast,
 				size:    targetSize,
 			},
 			outSize: expectedSize,
 		},
 		{
 			opts: extendArTestCase{
-				gravity: GravitySouthEast,
+				gravity: processing.GravitySouthEast,
 				size:    targetSize,
 			},
 			outSize: expectedSize,
 		},
 		{
 			opts: extendArTestCase{
-				gravity: GravitySouthWest,
+				gravity: processing.GravitySouthWest,
 				size:    targetSize,
 			},
 			outSize: expectedSize,
 		},
 		{
 			opts: extendArTestCase{
-				gravity: GravityNorthWest,
+				gravity: processing.GravityNorthWest,
 				size:    targetSize,
 			},
 			outSize: expectedSize,
@@ -372,7 +373,7 @@ func (s *ExtendTestSuite) TestExtendAspectRatio() {
 		// With offsets
 		{
 			opts: extendArTestCase{
-				gravity: GravityNorth,
+				gravity: processing.GravityNorth,
 				size:    targetSize,
 				yOffset: 5,
 			},
@@ -380,7 +381,7 @@ func (s *ExtendTestSuite) TestExtendAspectRatio() {
 		},
 		{
 			opts: extendArTestCase{
-				gravity: GravityNorth,
+				gravity: processing.GravityNorth,
 				size:    targetSize,
 				yOffset: 5,
 				dpr:     0.5,
@@ -389,7 +390,7 @@ func (s *ExtendTestSuite) TestExtendAspectRatio() {
 		},
 		{
 			opts: extendArTestCase{
-				gravity: GravityNorth,
+				gravity: processing.GravityNorth,
 				size:    targetSize,
 				yOffset: 5,
 				dpr:     2,
@@ -398,7 +399,7 @@ func (s *ExtendTestSuite) TestExtendAspectRatio() {
 		},
 		{
 			opts: extendArTestCase{
-				gravity: GravityEast,
+				gravity: processing.GravityEast,
 				size:    targetSize,
 				xOffset: 5,
 			},
@@ -406,7 +407,7 @@ func (s *ExtendTestSuite) TestExtendAspectRatio() {
 		},
 		{
 			opts: extendArTestCase{
-				gravity: GravityEast,
+				gravity: processing.GravityEast,
 				size:    targetSize,
 				xOffset: 5,
 				dpr:     0.5,
@@ -415,7 +416,7 @@ func (s *ExtendTestSuite) TestExtendAspectRatio() {
 		},
 		{
 			opts: extendArTestCase{
-				gravity: GravityEast,
+				gravity: processing.GravityEast,
 				size:    targetSize,
 				xOffset: 5,
 				dpr:     2,
@@ -426,7 +427,7 @@ func (s *ExtendTestSuite) TestExtendAspectRatio() {
 		// With relative offsets
 		{
 			opts: extendArTestCase{
-				gravity: GravityNorth,
+				gravity: processing.GravityNorth,
 				size:    targetSize,
 				yOffset: 0.1,
 			},
@@ -434,7 +435,7 @@ func (s *ExtendTestSuite) TestExtendAspectRatio() {
 		},
 		{
 			opts: extendArTestCase{
-				gravity: GravityNorth,
+				gravity: processing.GravityNorth,
 				size:    targetSize,
 				yOffset: 0.1,
 				dpr:     0.5,
@@ -443,7 +444,7 @@ func (s *ExtendTestSuite) TestExtendAspectRatio() {
 		},
 		{
 			opts: extendArTestCase{
-				gravity: GravityNorth,
+				gravity: processing.GravityNorth,
 				size:    targetSize,
 				yOffset: 0.1,
 				dpr:     2,

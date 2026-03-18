@@ -1,26 +1,27 @@
-package swift
+package swift_test
 
 import (
 	"context"
 	"net/http"
 
+	"github.com/imgproxy/imgproxy/v3/storage/swift"
 	"github.com/imgproxy/imgproxy/v3/testutil"
-	"github.com/ncw/swift/v2"
+	ncwswift "github.com/ncw/swift/v2"
 	"github.com/ncw/swift/v2/swifttest"
 )
 
 // TestServer is a mock Swift server for testing
 type TestServer struct {
 	server     *swifttest.SwiftServer
-	connection *swift.Connection
+	connection *ncwswift.Connection
 }
 
 // swiftStorageWrapper wraps the storage and optionally holds a server for cleanup
 type swiftStorageWrapper struct {
-	*Storage
+	*swift.Storage
 
 	server      *TestServer
-	connection  *swift.Connection
+	connection  *ncwswift.Connection
 	shouldClose bool
 }
 
@@ -30,7 +31,7 @@ func (w *swiftStorageWrapper) Server() *TestServer {
 }
 
 // Connection returns the Swift connection for direct API access
-func (w *swiftStorageWrapper) Connection() *swift.Connection {
+func (w *swiftStorageWrapper) Connection() *ncwswift.Connection {
 	return w.connection
 }
 
@@ -61,13 +62,13 @@ func NewLazySuiteStorage(
 				return nil, err
 			}
 
-			config := NewDefaultConfig()
+			config := swift.NewDefaultConfig()
 			config.AuthURL = swiftServer.server.AuthURL
 			config.Username = swifttest.TEST_ACCOUNT
 			config.APIKey = swifttest.TEST_ACCOUNT
 			config.AuthVersion = 1
 
-			storage, err := New(l.Lazy().T().Context(), &config, http.DefaultTransport.(*http.Transport))
+			storage, err := swift.New(l.Lazy().T().Context(), &config, http.DefaultTransport.(*http.Transport))
 			if err != nil {
 				return nil, err
 			}
@@ -94,7 +95,7 @@ func NewSwiftServer() (*TestServer, error) {
 	}
 
 	// Create connection
-	conn := &swift.Connection{
+	conn := &ncwswift.Connection{
 		UserName:    swifttest.TEST_ACCOUNT,
 		ApiKey:      swifttest.TEST_ACCOUNT,
 		AuthUrl:     server.AuthURL,
@@ -115,7 +116,7 @@ func NewSwiftServer() (*TestServer, error) {
 }
 
 // Connection returns the Swift connection
-func (s *TestServer) Connection() *swift.Connection {
+func (s *TestServer) Connection() *ncwswift.Connection {
 	return s.connection
 }
 

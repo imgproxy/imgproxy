@@ -1,4 +1,4 @@
-package logger
+package logger_test
 
 import (
 	"errors"
@@ -6,6 +6,8 @@ import (
 	"log/slog"
 	"testing"
 	"time"
+
+	"github.com/imgproxy/imgproxy/v3/logger"
 )
 
 var handlerBenchmarkMsg = "test message"
@@ -26,9 +28,9 @@ var handlerBenchmarkAttrs = []any{
 }
 
 func BenchmarkFormatterPretty(b *testing.B) {
-	testHandler := NewHandler(io.Discard, &Config{
+	testHandler := logger.NewHandler(io.Discard, &logger.Config{
 		Level:  slog.LevelDebug,
-		Format: FormatPretty,
+		Format: logger.FormatPretty,
 	})
 	testLogger := slog.New(testHandler)
 
@@ -43,9 +45,9 @@ func BenchmarkFormatterPretty(b *testing.B) {
 }
 
 func BenchmarkFormatterStructured(b *testing.B) {
-	testHandler := NewHandler(io.Discard, &Config{
+	testHandler := logger.NewHandler(io.Discard, &logger.Config{
 		Level:  slog.LevelDebug,
-		Format: FormatStructured,
+		Format: logger.FormatStructured,
 	})
 	testLogger := slog.New(testHandler)
 
@@ -60,9 +62,9 @@ func BenchmarkFormatterStructured(b *testing.B) {
 }
 
 func BenchmarkFormatterJSON(b *testing.B) {
-	testHandler := NewHandler(io.Discard, &Config{
+	testHandler := logger.NewHandler(io.Discard, &logger.Config{
 		Level:  slog.LevelDebug,
-		Format: FormatJSON,
+		Format: logger.FormatJSON,
 	})
 	testLogger := slog.New(testHandler)
 

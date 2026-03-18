@@ -1,4 +1,4 @@
-package handlers
+package handlers_test
 
 import (
 	"net/http"
@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/imgproxy/imgproxy/v3/errctx"
+	"github.com/imgproxy/imgproxy/v3/handlers"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -100,7 +101,7 @@ func (s *PathTestSuite) TestParsePath() {
 		s.Run(tc.name, func() {
 			req := s.createRequest(tc.requestPath)
 			req.Pattern = tc.pathPrefix
-			path, signature, err := SplitPathSignature(req)
+			path, signature, err := handlers.SplitPathSignature(req)
 
 			if tc.expectedError {
 				var ierr errctx.Error
@@ -183,7 +184,7 @@ func (s *PathTestSuite) TestRedenormalizePathHTTPProtocol() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			result := redenormalizePath(tc.input)
+			result := handlers.RedenormalizePath(tc.input)
 			s.Equal(tc.expected, result)
 		})
 	}

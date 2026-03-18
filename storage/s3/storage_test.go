@@ -1,4 +1,4 @@
-package s3
+package s3_test
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"os"
 
+	"github.com/imgproxy/imgproxy/v3/storage/s3"
 	"github.com/imgproxy/imgproxy/v3/testutil"
 	"github.com/johannesboyne/gofakes3"
 	"github.com/johannesboyne/gofakes3/backend/s3mem"
@@ -36,7 +37,7 @@ func (s *TestServer) Backend() *s3mem.Backend {
 
 // s3StorageWrapper wraps the storage and optionally holds a server for cleanup
 type s3StorageWrapper struct {
-	*Storage
+	*s3.Storage
 
 	server      *TestServer
 	shouldClose bool
@@ -75,12 +76,12 @@ func NewLazySuiteStorage(
 			os.Setenv("AWS_SECRET_ACCESS_KEY", "TEST")
 			os.Setenv("AWS_REGION", "us-east-1")
 
-			config := NewDefaultConfig()
+			config := s3.NewDefaultConfig()
 			config.Endpoint = s3Server.URL()
 			config.Region = "us-east-1"
 			config.EndpointUsePathStyle = true
 
-			storage, err := New(&config, http.DefaultTransport.(*http.Transport))
+			storage, err := s3.New(&config, http.DefaultTransport.(*http.Transport))
 			if err != nil {
 				return nil, err
 			}

@@ -1,4 +1,4 @@
-package health
+package health_test
 
 import (
 	"net/http"
@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/imgproxy/imgproxy/v3/handlers/health"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/server/responsewriter"
 )
@@ -22,7 +23,7 @@ func TestHealthHandler(t *testing.T) {
 	rr := httptest.NewRecorder()
 
 	// Create a new health handler
-	h := New()
+	h := health.New()
 
 	// Call the handler function directly (no need for actual HTTP request)
 	h.Execute("test-req-id", rwf.NewWriter(rr), nil)

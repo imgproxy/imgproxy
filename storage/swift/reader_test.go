@@ -1,4 +1,4 @@
-package swift
+package swift_test
 
 import (
 	"testing"

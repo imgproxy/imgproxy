@@ -1,4 +1,4 @@
-package processing
+package processing_test
 
 import (
 	"fmt"

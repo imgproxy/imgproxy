@@ -52,7 +52,7 @@ func (p *Parser) parsePreset(presetStr string) error {
 	}
 
 	if p.presets == nil {
-		p.presets = make(Presets)
+		p.presets = make(map[string][]urlOption)
 	}
 
 	p.presets[name] = opts

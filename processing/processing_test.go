@@ -1,4 +1,4 @@
-package processing
+package processing_test
 
 import (
 	"bytes"
@@ -9,6 +9,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/options/keys"
+	"github.com/imgproxy/imgproxy/v3/processing"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -22,7 +23,7 @@ type sizeLimitTestCase struct {
 	limit         int
 	width         int
 	height        int
-	resizingType  ResizeType
+	resizingType  processing.ResizeType
 	enlarge       bool
 	extend        bool
 	extendAR      bool
@@ -90,7 +91,7 @@ func (s *ProcessingTestSuite) SetupSuite() {
 
 func (s *ProcessingTestSuite) TestResizeToFit() {
 	o := options.New()
-	o.Set(keys.ResizingType, ResizeFit)
+	o.Set(keys.ResizingType, processing.ResizeFit)
 
 	testCases := []testCase[testSize]{
 		{opts: testSize{50, 50}, outSize: testSize{50, 25}},
@@ -116,7 +117,7 @@ func (s *ProcessingTestSuite) TestResizeToFit() {
 
 func (s *ProcessingTestSuite) TestResizeToFitEnlarge() {
 	o := options.New()
-	o.Set(keys.ResizingType, ResizeFit)
+	o.Set(keys.ResizingType, processing.ResizeFit)
 	o.Set(keys.Enlarge, true)
 
 	testCases := []testCase[testSize]{
@@ -143,7 +144,7 @@ func (s *ProcessingTestSuite) TestResizeToFitEnlarge() {
 
 func (s *ProcessingTestSuite) TestResizeToFitExtend() {
 	o := options.New()
-	o.Set(keys.ResizingType, ResizeFit)
+	o.Set(keys.ResizingType, processing.ResizeFit)
 	o.Set(keys.ExtendEnabled, true)
 
 	testCases := []testCase[testSize]{
@@ -170,7 +171,7 @@ func (s *ProcessingTestSuite) TestResizeToFitExtend() {
 
 func (s *ProcessingTestSuite) TestResizeToFitExtendAR() {
 	o := options.New()
-	o.Set(keys.ResizingType, ResizeFit)
+	o.Set(keys.ResizingType, processing.ResizeFit)
 	o.Set(keys.ExtendAspectRatioEnabled, true)
 
 	testCases := []testCase[testSize]{
@@ -197,7 +198,7 @@ func (s *ProcessingTestSuite) TestResizeToFitExtendAR() {
 
 func (s *ProcessingTestSuite) TestResizeToFill() {
 	o := options.New()
-	o.Set(keys.ResizingType, ResizeFill)
+	o.Set(keys.ResizingType, processing.ResizeFill)
 
 	testCases := []testCase[testSize]{
 		{opts: testSize{50, 50}, outSize: testSize{50, 50}},
@@ -223,7 +224,7 @@ func (s *ProcessingTestSuite) TestResizeToFill() {
 
 func (s *ProcessingTestSuite) TestResizeToFillEnlarge() {
 	o := options.New()
-	o.Set(keys.ResizingType, ResizeFill)
+	o.Set(keys.ResizingType, processing.ResizeFill)
 	o.Set(keys.Enlarge, true)
 
 	testCases := []testCase[testSize]{
@@ -250,7 +251,7 @@ func (s *ProcessingTestSuite) TestResizeToFillEnlarge() {
 
 func (s *ProcessingTestSuite) TestResizeToFillExtend() {
 	o := options.New()
-	o.Set(keys.ResizingType, ResizeFill)
+	o.Set(keys.ResizingType, processing.ResizeFill)
 	o.Set(keys.ExtendEnabled, true)
 
 	testCases := []testCase[testSize]{
@@ -279,9 +280,9 @@ func (s *ProcessingTestSuite) TestResizeToFillExtend() {
 
 func (s *ProcessingTestSuite) TestResizeToFillExtendAR() {
 	o := options.New()
-	o.Set(keys.ResizingType, ResizeFill)
+	o.Set(keys.ResizingType, processing.ResizeFill)
 	o.Set(keys.ExtendAspectRatioEnabled, true)
-	o.Set(keys.ExtendAspectRatioGravityType, GravityCenter)
+	o.Set(keys.ExtendAspectRatioGravityType, processing.GravityCenter)
 
 	testCases := []testCase[testSize]{
 		{opts: testSize{50, 50}, outSize: testSize{50, 50}},
@@ -309,7 +310,7 @@ func (s *ProcessingTestSuite) TestResizeToFillExtendAR() {
 
 func (s *ProcessingTestSuite) TestResizeToFillDown() {
 	o := options.New()
-	o.Set(keys.ResizingType, ResizeFillDown)
+	o.Set(keys.ResizingType, processing.ResizeFillDown)
 
 	testCases := []testCase[testSize]{
 		{opts: testSize{50, 50}, outSize: testSize{50, 50}},
@@ -335,7 +336,7 @@ func (s *ProcessingTestSuite) TestResizeToFillDown() {
 
 func (s *ProcessingTestSuite) TestResizeToFillDownEnlarge() {
 	o := options.New()
-	o.Set(keys.ResizingType, ResizeFillDown)
+	o.Set(keys.ResizingType, processing.ResizeFillDown)
 	o.Set(keys.Enlarge, true)
 
 	testCases := []testCase[testSize]{
@@ -362,7 +363,7 @@ func (s *ProcessingTestSuite) TestResizeToFillDownEnlarge() {
 
 func (s *ProcessingTestSuite) TestResizeToFillDownExtend() {
 	o := options.New()
-	o.Set(keys.ResizingType, ResizeFillDown)
+	o.Set(keys.ResizingType, processing.ResizeFillDown)
 	o.Set(keys.ExtendEnabled, true)
 
 	testCases := []testCase[testSize]{
@@ -391,7 +392,7 @@ func (s *ProcessingTestSuite) TestResizeToFillDownExtend() {
 
 func (s *ProcessingTestSuite) TestResizeToFillDownExtendAR() {
 	o := options.New()
-	o.Set(keys.ResizingType, ResizeFillDown)
+	o.Set(keys.ResizingType, processing.ResizeFillDown)
 	o.Set(keys.ExtendAspectRatioEnabled, true)
 
 	testCases := []testCase[testSize]{
@@ -423,7 +424,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 				limit:        1000,
 				width:        100,
 				height:       100,
-				resizingType: ResizeFit,
+				resizingType: processing.ResizeFit,
 			},
 			outSize: testSize{100, 50},
 		},
@@ -432,7 +433,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 				limit:        50,
 				width:        100,
 				height:       100,
-				resizingType: ResizeFit,
+				resizingType: processing.ResizeFit,
 			},
 			outSize: testSize{50, 25},
 		},
@@ -441,7 +442,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 				limit:        50,
 				width:        0,
 				height:       0,
-				resizingType: ResizeFit,
+				resizingType: processing.ResizeFit,
 			},
 			outSize: testSize{50, 25},
 		},
@@ -450,7 +451,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 				limit:        100,
 				width:        0,
 				height:       100,
-				resizingType: ResizeFit,
+				resizingType: processing.ResizeFit,
 			},
 			outSize: testSize{100, 50},
 		},
@@ -459,7 +460,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 				limit:        50,
 				width:        150,
 				height:       0,
-				resizingType: ResizeFit,
+				resizingType: processing.ResizeFit,
 			},
 			outSize: testSize{50, 25},
 		},
@@ -468,7 +469,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 				limit:        100,
 				width:        1000,
 				height:       1000,
-				resizingType: ResizeFit,
+				resizingType: processing.ResizeFit,
 			},
 			outSize: testSize{100, 50},
 		},
@@ -477,7 +478,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 				limit:        100,
 				width:        1000,
 				height:       1000,
-				resizingType: ResizeFit,
+				resizingType: processing.ResizeFit,
 				enlarge:      true,
 			},
 			outSize: testSize{100, 50},
@@ -487,7 +488,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 				limit:        100,
 				width:        1000,
 				height:       2000,
-				resizingType: ResizeFit,
+				resizingType: processing.ResizeFit,
 				extend:       true,
 			},
 			outSize: testSize{50, 100},
@@ -497,7 +498,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 				limit:        100,
 				width:        1000,
 				height:       2000,
-				resizingType: ResizeFit,
+				resizingType: processing.ResizeFit,
 				extendAR:     true,
 			},
 			outSize: testSize{50, 100},
@@ -507,7 +508,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 				limit:        100,
 				width:        100,
 				height:       150,
-				resizingType: ResizeFit,
+				resizingType: processing.ResizeFit,
 				rotate:       90,
 			},
 			outSize: testSize{50, 100},
@@ -517,7 +518,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 				limit:        100,
 				width:        0,
 				height:       0,
-				resizingType: ResizeFit,
+				resizingType: processing.ResizeFit,
 				rotate:       90,
 			},
 			outSize: testSize{50, 100},
@@ -527,7 +528,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 				limit:         200,
 				width:         100,
 				height:        100,
-				resizingType:  ResizeFit,
+				resizingType:  processing.ResizeFit,
 				paddingTop:    100,
 				paddingRight:  200,
 				paddingBottom: 300,
@@ -540,7 +541,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 				limit:        1000,
 				width:        100,
 				height:       100,
-				resizingType: ResizeFill,
+				resizingType: processing.ResizeFill,
 			},
 			outSize: testSize{100, 100},
 		},
@@ -549,7 +550,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 				limit:        50,
 				width:        100,
 				height:       100,
-				resizingType: ResizeFill,
+				resizingType: processing.ResizeFill,
 			},
 			outSize: testSize{50, 50},
 		},
@@ -558,7 +559,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 				limit:        50,
 				width:        1000,
 				height:       50,
-				resizingType: ResizeFill,
+				resizingType: processing.ResizeFill,
 			},
 			outSize: testSize{50, 13},
 		},
@@ -567,7 +568,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 				limit:        50,
 				width:        100,
 				height:       1000,
-				resizingType: ResizeFill,
+				resizingType: processing.ResizeFill,
 			},
 			outSize: testSize{50, 50},
 		},
@@ -576,7 +577,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 				limit:        50,
 				width:        0,
 				height:       0,
-				resizingType: ResizeFill,
+				resizingType: processing.ResizeFill,
 			},
 			outSize: testSize{50, 25},
 		},
@@ -585,7 +586,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 				limit:        100,
 				width:        0,
 				height:       100,
-				resizingType: ResizeFill,
+				resizingType: processing.ResizeFill,
 			},
 			outSize: testSize{100, 50},
 		},
@@ -594,7 +595,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 				limit:        50,
 				width:        150,
 				height:       0,
-				resizingType: ResizeFill,
+				resizingType: processing.ResizeFill,
 			},
 			outSize: testSize{50, 25},
 		},
@@ -603,7 +604,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 				limit:        100,
 				width:        1000,
 				height:       1000,
-				resizingType: ResizeFill,
+				resizingType: processing.ResizeFill,
 			},
 			outSize: testSize{100, 50},
 		},
@@ -612,7 +613,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 				limit:        100,
 				width:        1000,
 				height:       1000,
-				resizingType: ResizeFill,
+				resizingType: processing.ResizeFill,
 				enlarge:      true,
 			},
 			outSize: testSize{100, 100},
@@ -622,7 +623,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 				limit:        100,
 				width:        1000,
 				height:       2000,
-				resizingType: ResizeFill,
+				resizingType: processing.ResizeFill,
 				extend:       true,
 			},
 			outSize: testSize{50, 100},
@@ -632,7 +633,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 				limit:        100,
 				width:        1000,
 				height:       2000,
-				resizingType: ResizeFill,
+				resizingType: processing.ResizeFill,
 				extendAR:     true,
 			},
 			outSize: testSize{50, 100},
@@ -642,7 +643,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 				limit:        100,
 				width:        100,
 				height:       150,
-				resizingType: ResizeFill,
+				resizingType: processing.ResizeFill,
 				rotate:       90,
 			},
 			outSize: testSize{67, 100},
@@ -652,7 +653,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 				limit:        100,
 				width:        0,
 				height:       0,
-				resizingType: ResizeFill,
+				resizingType: processing.ResizeFill,
 				rotate:       90,
 			},
 			outSize: testSize{50, 100},
@@ -662,7 +663,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 				limit:         200,
 				width:         100,
 				height:        100,
-				resizingType:  ResizeFill,
+				resizingType:  processing.ResizeFill,
 				paddingTop:    100,
 				paddingRight:  200,
 				paddingBottom: 300,
@@ -675,7 +676,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 				limit:        1000,
 				width:        100,
 				height:       100,
-				resizingType: ResizeFillDown,
+				resizingType: processing.ResizeFillDown,
 			},
 			outSize: testSize{100, 100},
 		},
@@ -684,7 +685,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 				limit:        50,
 				width:        100,
 				height:       100,
-				resizingType: ResizeFillDown,
+				resizingType: processing.ResizeFillDown,
 			},
 			outSize: testSize{50, 50},
 		},
@@ -693,7 +694,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 				limit:        50,
 				width:        1000,
 				height:       50,
-				resizingType: ResizeFillDown,
+				resizingType: processing.ResizeFillDown,
 			},
 			outSize: testSize{50, 3},
 		},
@@ -702,7 +703,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 				limit:        50,
 				width:        100,
 				height:       1000,
-				resizingType: ResizeFillDown,
+				resizingType: processing.ResizeFillDown,
 			},
 			outSize: testSize{5, 50},
 		},
@@ -711,7 +712,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 				limit:        50,
 				width:        0,
 				height:       0,
-				resizingType: ResizeFillDown,
+				resizingType: processing.ResizeFillDown,
 			},
 			outSize: testSize{50, 25},
 		},
@@ -720,7 +721,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 				limit:        100,
 				width:        0,
 				height:       100,
-				resizingType: ResizeFillDown,
+				resizingType: processing.ResizeFillDown,
 			},
 			outSize: testSize{100, 50},
 		},
@@ -729,7 +730,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 				limit:        50,
 				width:        150,
 				height:       0,
-				resizingType: ResizeFillDown,
+				resizingType: processing.ResizeFillDown,
 			},
 			outSize: testSize{50, 25},
 		},
@@ -738,7 +739,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 				limit:        100,
 				width:        1000,
 				height:       1000,
-				resizingType: ResizeFillDown,
+				resizingType: processing.ResizeFillDown,
 			},
 			outSize: testSize{100, 100},
 		},
@@ -747,7 +748,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 				limit:        100,
 				width:        1000,
 				height:       1000,
-				resizingType: ResizeFillDown,
+				resizingType: processing.ResizeFillDown,
 				enlarge:      true,
 			},
 			outSize: testSize{100, 100},
@@ -757,7 +758,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 				limit:        100,
 				width:        1000,
 				height:       2000,
-				resizingType: ResizeFillDown,
+				resizingType: processing.ResizeFillDown,
 				extend:       true,
 			},
 			outSize: testSize{50, 100},
@@ -767,7 +768,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 				limit:        100,
 				width:        1000,
 				height:       2000,
-				resizingType: ResizeFillDown,
+				resizingType: processing.ResizeFillDown,
 				extendAR:     true,
 			},
 			outSize: testSize{50, 100},
@@ -777,7 +778,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 				limit:        100,
 				width:        1000,
 				height:       1500,
-				resizingType: ResizeFillDown,
+				resizingType: processing.ResizeFillDown,
 				rotate:       90,
 			},
 			outSize: testSize{67, 100},
@@ -787,7 +788,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 				limit:        100,
 				width:        0,
 				height:       0,
-				resizingType: ResizeFillDown,
+				resizingType: processing.ResizeFillDown,
 				rotate:       90,
 			},
 			outSize: testSize{50, 100},
@@ -797,7 +798,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 				limit:         200,
 				width:         100,
 				height:        100,
-				resizingType:  ResizeFillDown,
+				resizingType:  processing.ResizeFillDown,
 				paddingTop:    100,
 				paddingRight:  200,
 				paddingBottom: 300,
@@ -810,7 +811,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 				limit:         200,
 				width:         1000,
 				height:        1000,
-				resizingType:  ResizeFillDown,
+				resizingType:  processing.ResizeFillDown,
 				paddingTop:    100,
 				paddingRight:  200,
 				paddingBottom: 300,

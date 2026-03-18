@@ -8,7 +8,7 @@ import (
 	"go.opentelemetry.io/otel/log"
 	sdklog "go.opentelemetry.io/otel/sdk/log"
 
-	imgproxylogger "github.com/imgproxy/imgproxy/v3/logger"
+	"github.com/imgproxy/imgproxy/v3/logger"
 )
 
 // logHook is a logger.Hook that exports logs to OpenTelemetry.
@@ -44,7 +44,7 @@ func (h *logHook) Fire(ctx context.Context, t time.Time, lvl slog.Level, msg []b
 	// Emit the log record
 	h.logger.Emit(ctx, logRecord)
 
-	if lvl >= imgproxylogger.LevelCritical {
+	if lvl >= logger.LevelCritical {
 		// Ensure logs are flushed for critical errors
 		flushCtx, cancel := context.WithTimeout(ctx, stopTimeout)
 		defer cancel()
@@ -64,7 +64,7 @@ func mapSeverity(level slog.Level) log.Severity {
 		return log.SeverityInfo
 	case level < slog.LevelError:
 		return log.SeverityWarn
-	case level < imgproxylogger.LevelCritical:
+	case level < logger.LevelCritical:
 		return log.SeverityError
 	default:
 		return log.SeverityFatal

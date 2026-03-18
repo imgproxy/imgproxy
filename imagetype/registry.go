@@ -33,13 +33,13 @@ type TypeDesc struct {
 // DetectFunc is a function that detects the image type from byte data
 type DetectFunc func(r bufreader.ReadPeeker, ct, ext string) (Type, error)
 
-// detector is a struct that holds a detection function and its priority
+// detector holds a detection function and its priority.
 type detector struct {
-	priority int        // priority of the detector, lower is better
-	fn       DetectFunc // function that detects the image type
+	Priority int        // priority of the detector, lower is better
+	Fn       DetectFunc // function that detects the image type
 }
 
-// Registry holds the type registry
+// registry holds the type registry
 type registry struct {
 	detectors   []detector
 	types       []*TypeDesc
@@ -47,10 +47,10 @@ type registry struct {
 }
 
 // globalRegistry is the default registry instance
-var globalRegistry = NewRegistry()
+var globalRegistry = newRegistry()
 
-// NewRegistry creates a new image type registry.
-func NewRegistry() *registry {
+// newRegistry creates a new image type registry.
+func newRegistry() *registry {
 	return &registry{
 		types:       nil,
 		typesByName: make(map[string]Type),
@@ -134,14 +134,14 @@ func Detect(r io.Reader, ct, ext string) (Type, error) {
 // RegisterDetector registers a custom detector function on this registry instance
 func (r *registry) RegisterDetector(priority int, fn DetectFunc) {
 	r.detectors = append(r.detectors, detector{
-		priority: priority,
-		fn:       fn,
+		Priority: priority,
+		Fn:       fn,
 	})
 	// Sort detectors by priority.
 	// We don't expect a huge number of detectors, and detectors should be registered at startup,
 	// so sorting them at each registration is okay.
 	slices.SortStableFunc(r.detectors, func(a, b detector) int {
-		return a.priority - b.priority
+		return a.Priority - b.Priority
 	})
 }
 
@@ -169,7 +169,7 @@ func (r *registry) Detect(re io.Reader, ct, ext string) (Type, error) {
 
 	for _, d := range r.detectors {
 		br.Rewind()
-		typ, err := d.fn(br, ct, ext)
+		typ, err := d.Fn(br, ct, ext)
 		if err != nil && !errors.Is(err, io.EOF) && !errors.Is(err, io.ErrUnexpectedEOF) {
 			return Unknown, newTypeDetectionError(err)
 		}

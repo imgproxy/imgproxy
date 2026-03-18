@@ -1,4 +1,4 @@
-package auximageprovider
+package auximageprovider_test
 
 import (
 	"encoding/base64"
@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
+	"github.com/imgproxy/imgproxy/v3/auximageprovider"
 	"github.com/imgproxy/imgproxy/v3/fetcher"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
@@ -56,7 +57,7 @@ func (s *ImageProviderTestSuite) SetupSubTest() {
 }
 
 // Helper function to read data from ImageData
-func (s *ImageProviderTestSuite) readImageData(provider Provider) []byte {
+func (s *ImageProviderTestSuite) readImageData(provider auximageprovider.Provider) []byte {
 	imgData, _, err := provider.Get(s.T().Context(), options.New())
 	s.Require().NoError(err)
 	s.Require().NotNil(imgData)
@@ -71,82 +72,82 @@ func (s *ImageProviderTestSuite) readImageData(provider Provider) []byte {
 func (s *ImageProviderTestSuite) TestNewProvider() {
 	tests := []struct {
 		name         string
-		config       *StaticConfig
+		config       *auximageprovider.StaticConfig
 		setupFunc    func()
 		expectError  bool
 		expectNil    bool
-		validateFunc func(provider Provider)
+		validateFunc func(provider auximageprovider.Provider)
 	}{
 		{
 			name:   "B64",
-			config: &StaticConfig{Base64Data: s.testDataB64},
-			validateFunc: func(provider Provider) {
+			config: &auximageprovider.StaticConfig{Base64Data: s.testDataB64},
+			validateFunc: func(provider auximageprovider.Provider) {
 				s.Equal(s.testData, s.readImageData(provider))
 			},
 		},
 		{
 			name:   "Path",
-			config: &StaticConfig{Path: "../testdata/test1.jpg"},
-			validateFunc: func(provider Provider) {
+			config: &auximageprovider.StaticConfig{Path: "../testdata/test1.jpg"},
+			validateFunc: func(provider auximageprovider.Provider) {
 				s.Equal(s.testData, s.readImageData(provider))
 			},
 		},
 		{
 			name:   "URL",
-			config: &StaticConfig{URL: s.testServer().URL()},
-			validateFunc: func(provider Provider) {
+			config: &auximageprovider.StaticConfig{URL: s.testServer().URL()},
+			validateFunc: func(provider auximageprovider.Provider) {
 				s.Equal(s.testData, s.readImageData(provider))
 			},
 		},
 		{
 			name:      "EmptyConfig",
-			config:    &StaticConfig{},
+			config:    &auximageprovider.StaticConfig{},
 			expectNil: true,
 		},
 		{
 			name:        "InvalidURL",
-			config:      &StaticConfig{URL: "http://invalid-url-that-does-not-exist.invalid"},
+			config:      &auximageprovider.StaticConfig{URL: "http://invalid-url-that-does-not-exist.invalid"},
 			expectError: true,
 			expectNil:   true,
 		},
 		{
 			name:        "InvalidBase64",
-			config:      &StaticConfig{Base64Data: "invalid-base64-data!!!"},
+			config:      &auximageprovider.StaticConfig{Base64Data: "invalid-base64-data!!!"},
 			expectError: true,
 			expectNil:   true,
 		},
 		{
 			name: "Base64PreferenceOverPath",
-			config: &StaticConfig{
+			config: &auximageprovider.StaticConfig{
 				Base64Data: base64.StdEncoding.EncodeToString(s.testData),
 				Path:       "../testdata/test2.jpg", // This should be ignored
 			},
-			validateFunc: func(provider Provider) {
+			validateFunc: func(provider auximageprovider.Provider) {
 				actualData := s.readImageData(provider)
 				s.Equal(s.testData, actualData)
 			},
 		},
 		{
 			name: "PathPreferenceOverURL",
-			config: &StaticConfig{
+			config: &auximageprovider.StaticConfig{
 				Path: "../testdata/test1.jpg",
 				URL:  "http://invalid-url-that-does-not-exist.invalid", // This should be ignored
 			},
-			validateFunc: func(provider Provider) {
+			validateFunc: func(provider auximageprovider.Provider) {
 				actualData := s.readImageData(provider)
 				s.Equal(s.testData, actualData)
 			},
 		},
 		{
 			name:   "HeadersPassedThrough",
-			config: &StaticConfig{URL: s.testServer().URL()},
+			config: &auximageprovider.StaticConfig{URL: s.testServer().URL()},
 			setupFunc: func() {
 				s.testServer().SetHeaders(
 					"X-Custom-Header", "test-value",
 					httpheaders.CacheControl, "max-age=3600",
 				)
 			},
-			validateFunc: func(provider Provider) {
+			validateFunc: func(provider auximageprovider.Provider) {
 				imgData, headers, err := provider.Get(s.T().Context(), options.New())
 				s.Require().NoError(err)
 				s.Require().NotNil(imgData)
@@ -165,7 +166,7 @@ func (s *ImageProviderTestSuite) TestNewProvider() {
 				tt.setupFunc()
 			}
 
-			provider, err := NewStaticProvider(s.T().Context(), tt.config, "test image", s.idf)
+			provider, err := auximageprovider.NewStaticProvider(s.T().Context(), tt.config, "test image", s.idf)
 
 			if tt.expectError {
 				s.Require().Error(err)
