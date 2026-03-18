@@ -1,4 +1,4 @@
-package integration
+package integration_test
 
 import (
 	"bytes"
@@ -225,9 +225,9 @@ func (s *ProcessingHandlerTestSuite) TestSkipProcessingSVG() {
 	data := imagedata.NewFromBytesWithFormat(imagetype.SVG, s.TestData.Read("test1.svg"))
 
 	cfg := svg.NewDefaultConfig()
-	svg := svg.New(&cfg)
+	svgProc := svg.New(&cfg)
 
-	expected, err := svg.Process(&options.Options{}, data)
+	expected, err := svgProc.Process(&options.Options{}, data)
 	s.Require().NoError(err)
 
 	s.Require().True(testutil.ReadersEqual(s.T(), expected.Reader(), res.Body))

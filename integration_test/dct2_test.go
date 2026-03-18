@@ -1,4 +1,4 @@
-package integration
+package integration_test
 
 // This file contains tests for DCT2 image hashing functionality.
 // Unfortunately, Cgo can not be called from tests so we have to rely on

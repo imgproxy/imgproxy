@@ -1,4 +1,4 @@
-package fs
+package fs_test
 
 import (
 	"os"
@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/imgproxy/imgproxy/v3/storage"
+	"github.com/imgproxy/imgproxy/v3/storage/fs"
 	"github.com/imgproxy/imgproxy/v3/storage/testsuite"
 	"github.com/imgproxy/imgproxy/v3/testutil"
 	"github.com/stretchr/testify/suite"
@@ -14,7 +15,7 @@ import (
 type ReaderTestSuite struct {
 	testsuite.ReaderSuite
 
-	fsStorage testutil.LazyObj[*Storage]
+	fsStorage testutil.LazyObj[*fs.Storage]
 	tmpDir    testutil.LazyObj[string]
 }
 

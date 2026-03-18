@@ -1,4 +1,4 @@
-package server
+package server_test
 
 import (
 	"net/http"
@@ -10,16 +10,17 @@ import (
 	"github.com/imgproxy/imgproxy/v3/errorreport"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/monitoring"
+	"github.com/imgproxy/imgproxy/v3/server"
 )
 
 type RouterTestSuite struct {
 	suite.Suite
 
-	router *Router
+	router *server.Router
 }
 
 func (s *RouterTestSuite) SetupTest() {
-	c := NewDefaultConfig()
+	c := server.NewDefaultConfig()
 
 	mc := monitoring.NewDefaultConfig()
 	m, err := monitoring.New(s.T().Context(), &mc, 1)
@@ -30,7 +31,7 @@ func (s *RouterTestSuite) SetupTest() {
 	s.Require().NoError(err)
 
 	c.PathPrefix = "/api"
-	r, err := NewRouter(&c, m, er)
+	r, err := server.NewRouter(&c, m, er)
 	s.Require().NoError(err)
 
 	s.router = r
@@ -41,7 +42,7 @@ func (s *RouterTestSuite) TestHTTPMethods() {
 	var capturedMethod string
 	var capturedPath string
 
-	getHandler := func(reqID string, rw ResponseWriter, req *http.Request) *Error {
+	getHandler := func(reqID string, rw server.ResponseWriter, req *http.Request) *server.Error {
 		capturedMethod = req.Method
 		capturedPath = req.URL.Path
 		rw.WriteHeader(http.StatusOK)
@@ -49,7 +50,7 @@ func (s *RouterTestSuite) TestHTTPMethods() {
 		return nil
 	}
 
-	optionsHandler := func(reqID string, rw ResponseWriter, req *http.Request) *Error {
+	optionsHandler := func(reqID string, rw server.ResponseWriter, req *http.Request) *server.Error {
 		capturedMethod = req.Method
 		capturedPath = req.URL.Path
 		rw.WriteHeader(http.StatusOK)
@@ -57,7 +58,7 @@ func (s *RouterTestSuite) TestHTTPMethods() {
 		return nil
 	}
 
-	headHandler := func(reqID string, rw ResponseWriter, req *http.Request) *Error {
+	headHandler := func(reqID string, rw server.ResponseWriter, req *http.Request) *server.Error {
 		capturedMethod = req.Method
 		capturedPath = req.URL.Path
 		rw.WriteHeader(http.StatusOK)
@@ -124,21 +125,21 @@ func (s *RouterTestSuite) TestHTTPMethods() {
 func (s *RouterTestSuite) TestMiddlewareOrder() {
 	var order []string
 
-	middleware1 := func(next RouteHandler) RouteHandler {
-		return func(reqID string, rw ResponseWriter, req *http.Request) *Error {
+	middleware1 := func(next server.RouteHandler) server.RouteHandler {
+		return func(reqID string, rw server.ResponseWriter, req *http.Request) *server.Error {
 			order = append(order, "middleware1")
 			return next(reqID, rw, req)
 		}
 	}
 
-	middleware2 := func(next RouteHandler) RouteHandler {
-		return func(reqID string, rw ResponseWriter, req *http.Request) *Error {
+	middleware2 := func(next server.RouteHandler) server.RouteHandler {
+		return func(reqID string, rw server.ResponseWriter, req *http.Request) *server.Error {
 			order = append(order, "middleware2")
 			return next(reqID, rw, req)
 		}
 	}
 
-	handler := func(reqID string, rw ResponseWriter, req *http.Request) *Error {
+	handler := func(reqID string, rw server.ResponseWriter, req *http.Request) *server.Error {
 		order = append(order, "handler")
 		rw.WriteHeader(http.StatusOK)
 		return nil
@@ -157,7 +158,7 @@ func (s *RouterTestSuite) TestMiddlewareOrder() {
 
 // TestServeHTTP tests ServeHTTP method
 func (s *RouterTestSuite) TestServeHTTP() {
-	handler := func(reqID string, rw ResponseWriter, req *http.Request) *Error {
+	handler := func(reqID string, rw server.ResponseWriter, req *http.Request) *server.Error {
 		rw.Header().Set("Custom-Header", "test-value")
 		rw.WriteHeader(http.StatusOK)
 		rw.Write([]byte("success"))
@@ -174,13 +175,13 @@ func (s *RouterTestSuite) TestServeHTTP() {
 	s.Require().Equal(http.StatusOK, rw.Code)
 	s.Require().Equal("success", rw.Body.String())
 	s.Require().Equal("test-value", rw.Header().Get("Custom-Header"))
-	s.Require().Equal(defaultServerName, rw.Header().Get(httpheaders.Server))
+	s.Require().Equal(server.DefaultServerName, rw.Header().Get(httpheaders.Server))
 	s.Require().NotEmpty(rw.Header().Get(httpheaders.XRequestID))
 }
 
 // TestRequestID checks request ID generation and validation
 func (s *RouterTestSuite) TestRequestID() {
-	handler := func(reqID string, rw ResponseWriter, req *http.Request) *Error {
+	handler := func(reqID string, rw server.ResponseWriter, req *http.Request) *server.Error {
 		rw.WriteHeader(http.StatusOK)
 		return nil
 	}
@@ -220,7 +221,7 @@ func (s *RouterTestSuite) TestRequestID() {
 
 // TestLambdaRequestIDExtraction checks AWS lambda request id extraction
 func (s *RouterTestSuite) TestLambdaRequestIDExtraction() {
-	handler := func(reqID string, rw ResponseWriter, req *http.Request) *Error {
+	handler := func(reqID string, rw server.ResponseWriter, req *http.Request) *server.Error {
 		rw.WriteHeader(http.StatusOK)
 		return nil
 	}
@@ -240,7 +241,7 @@ func (s *RouterTestSuite) TestLambdaRequestIDExtraction() {
 // Test IP address handling
 func (s *RouterTestSuite) TestReplaceIP() {
 	var capturedRemoteAddr string
-	handler := func(reqID string, rw ResponseWriter, req *http.Request) *Error {
+	handler := func(reqID string, rw server.ResponseWriter, req *http.Request) *server.Error {
 		capturedRemoteAddr = req.RemoteAddr
 		rw.WriteHeader(http.StatusOK)
 		return nil
@@ -308,7 +309,7 @@ func (s *RouterTestSuite) TestReplaceIP() {
 
 // TestRouteOrder checks exact/non-exact insertion order
 func (s *RouterTestSuite) TestRouteOrder() {
-	h := func(reqID string, rw ResponseWriter, req *http.Request) *Error {
+	h := func(reqID string, rw server.ResponseWriter, req *http.Request) *server.Error {
 		return nil
 	}
 
@@ -316,9 +317,10 @@ func (s *RouterTestSuite) TestRouteOrder() {
 	s.router.GET("/test/path", h)
 	s.router.GET("/test/path/nested", h)
 
-	s.Require().Equal("/api/test/path", s.router.routes[0].path)
-	s.Require().Equal("/api/test/path/nested", s.router.routes[1].path)
-	s.Require().Equal("/api/test", s.router.routes[2].path)
+	paths := s.router.Paths()
+	s.Require().Equal("/api/test/path", paths[0])
+	s.Require().Equal("/api/test/path/nested", paths[1])
+	s.Require().Equal("/api/test", paths[2])
 }
 
 func TestRouterSuite(t *testing.T) {

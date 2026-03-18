@@ -1,4 +1,4 @@
-package server
+package server_test
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/imgproxy/imgproxy/v3/server"
 	"github.com/stretchr/testify/require"
 )
 
@@ -25,7 +26,7 @@ func TestCheckTimeout(t *testing.T) {
 			name: "ActiveTimerContext",
 			setup: func() context.Context {
 				req := httptest.NewRequest(http.MethodGet, "/test", nil)
-				newReq, _ := startRequestTimer(req, 10*time.Second)
+				newReq, _ := server.StartRequestTimer(req, 10*time.Second)
 				return newReq.Context()
 			},
 			fail: false,
@@ -34,7 +35,7 @@ func TestCheckTimeout(t *testing.T) {
 			name: "CancelledContext",
 			setup: func() context.Context {
 				req := httptest.NewRequest(http.MethodGet, "/test", nil)
-				newReq, cancel := startRequestTimer(req, 10*time.Second)
+				newReq, cancel := server.StartRequestTimer(req, 10*time.Second)
 				cancel() // Cancel immediately
 				return newReq.Context()
 			},
@@ -55,7 +56,7 @@ func TestCheckTimeout(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := tt.setup()
-			err := CheckTimeout(ctx)
+			err := server.CheckTimeout(ctx)
 
 			if tt.fail {
 				require.Error(t, err)

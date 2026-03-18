@@ -1,4 +1,4 @@
-package responsewriter
+package responsewriter_test
 
 import (
 	"fmt"
@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
+	"github.com/imgproxy/imgproxy/v3/server/responsewriter"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -21,10 +22,11 @@ type writerTestCase struct {
 	name   string
 	req    http.Header
 	res    http.Header
-	config Config
-	fn     func(*Writer)
+	config responsewriter.Config
+	fn     func(*responsewriter.Writer)
 }
 
+//nolint:maintidx
 func (s *ResponseWriterSuite) TestHeaderCases() {
 	expires := time.Date(2030, 8, 1, 0, 0, 0, 0, time.UTC)
 	expiresSeconds := strconv.Itoa(int(time.Until(expires).Seconds()))
@@ -42,7 +44,7 @@ func (s *ResponseWriterSuite) TestHeaderCases() {
 				httpheaders.CacheControl:          []string{"no-cache"},
 				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
 			},
-			config: Config{
+			config: responsewriter.Config{
 				SetCanonicalHeader:      false,
 				DefaultTTL:              0,
 				CacheControlPassthrough: false,
@@ -58,7 +60,7 @@ func (s *ResponseWriterSuite) TestHeaderCases() {
 				httpheaders.CacheControl:          []string{"no-cache, no-store, must-revalidate"},
 				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
 			},
-			config: Config{
+			config: responsewriter.Config{
 				CacheControlPassthrough: true,
 				DefaultTTL:              3600,
 				WriteResponseTimeout:    writeResponseTimeout,
@@ -73,7 +75,7 @@ func (s *ResponseWriterSuite) TestHeaderCases() {
 				httpheaders.CacheControl:          []string{fmt.Sprintf("max-age=%s, public", expiresSeconds)},
 				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
 			},
-			config: Config{
+			config: responsewriter.Config{
 				CacheControlPassthrough: true,
 				DefaultTTL:              3600,
 				WriteResponseTimeout:    writeResponseTimeout,
@@ -88,7 +90,7 @@ func (s *ResponseWriterSuite) TestHeaderCases() {
 				httpheaders.CacheControl:          []string{"max-age=3600, public"},
 				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
 			},
-			config: Config{
+			config: responsewriter.Config{
 				CacheControlPassthrough: true,
 				DefaultTTL:              3600,
 				WriteResponseTimeout:    writeResponseTimeout,
@@ -102,12 +104,12 @@ func (s *ResponseWriterSuite) TestHeaderCases() {
 				httpheaders.CacheControl:          []string{"max-age=3600, public"},
 				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
 			},
-			config: Config{
+			config: responsewriter.Config{
 				SetCanonicalHeader:   true,
 				DefaultTTL:           3600,
 				WriteResponseTimeout: writeResponseTimeout,
 			},
-			fn: func(w *Writer) {
+			fn: func(w *responsewriter.Writer) {
 				w.SetCanonical("https://example.com/image.jpg")
 			},
 		},
@@ -118,7 +120,7 @@ func (s *ResponseWriterSuite) TestHeaderCases() {
 				httpheaders.CacheControl:          []string{"max-age=3600, public"},
 				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
 			},
-			config: Config{
+			config: responsewriter.Config{
 				SetCanonicalHeader:   true,
 				DefaultTTL:           3600,
 				WriteResponseTimeout: writeResponseTimeout,
@@ -131,12 +133,12 @@ func (s *ResponseWriterSuite) TestHeaderCases() {
 				httpheaders.CacheControl:          []string{"max-age=3600, public"},
 				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
 			},
-			config: Config{
+			config: responsewriter.Config{
 				SetCanonicalHeader:   false,
 				DefaultTTL:           3600,
 				WriteResponseTimeout: writeResponseTimeout,
 			},
-			fn: func(w *Writer) {
+			fn: func(w *responsewriter.Writer) {
 				w.SetCanonical("https://example.com/image.jpg")
 			},
 		},
@@ -147,12 +149,12 @@ func (s *ResponseWriterSuite) TestHeaderCases() {
 				httpheaders.CacheControl:          []string{"max-age=1, public"},
 				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
 			},
-			config: Config{
+			config: responsewriter.Config{
 				DefaultTTL:           3600,
 				FallbackImageTTL:     1,
 				WriteResponseTimeout: writeResponseTimeout,
 			},
-			fn: func(w *Writer) {
+			fn: func(w *responsewriter.Writer) {
 				w.SetIsFallbackImage()
 			},
 		},
@@ -163,11 +165,11 @@ func (s *ResponseWriterSuite) TestHeaderCases() {
 				httpheaders.CacheControl:          []string{fmt.Sprintf("max-age=%s, public", expiresSeconds)},
 				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
 			},
-			config: Config{
+			config: responsewriter.Config{
 				DefaultTTL:           math.MaxInt32,
 				WriteResponseTimeout: writeResponseTimeout,
 			},
-			fn: func(w *Writer) {
+			fn: func(w *responsewriter.Writer) {
 				w.SetExpires(expires)
 			},
 		},
@@ -178,12 +180,12 @@ func (s *ResponseWriterSuite) TestHeaderCases() {
 				httpheaders.CacheControl:          []string{fmt.Sprintf("max-age=%s, public", shortExpiresSeconds)},
 				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
 			},
-			config: Config{
+			config: responsewriter.Config{
 				DefaultTTL:           math.MaxInt32,
 				FallbackImageTTL:     600,
 				WriteResponseTimeout: writeResponseTimeout,
 			},
-			fn: func(w *Writer) {
+			fn: func(w *responsewriter.Writer) {
 				w.SetIsFallbackImage()
 				w.SetExpires(shortExpires)
 			},
@@ -198,10 +200,10 @@ func (s *ResponseWriterSuite) TestHeaderCases() {
 				httpheaders.CacheControl:          []string{"no-cache"},
 				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
 			},
-			config: Config{
+			config: responsewriter.Config{
 				WriteResponseTimeout: writeResponseTimeout,
 			},
-			fn: func(w *Writer) {
+			fn: func(w *responsewriter.Writer) {
 				w.Passthrough("X-Test")
 			},
 		},
@@ -213,10 +215,10 @@ func (s *ResponseWriterSuite) TestHeaderCases() {
 				httpheaders.CacheControl:          []string{"no-cache"},
 				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
 			},
-			config: Config{
+			config: responsewriter.Config{
 				WriteResponseTimeout: writeResponseTimeout,
 			},
-			fn: func(w *Writer) {
+			fn: func(w *responsewriter.Writer) {
 				h := http.Header{}
 				h.Set("X-From", "baz")
 				w.CopyFrom(h, []string{"X-From"})
@@ -230,10 +232,10 @@ func (s *ResponseWriterSuite) TestHeaderCases() {
 				httpheaders.CacheControl:          []string{"no-cache"},
 				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
 			},
-			config: Config{
+			config: responsewriter.Config{
 				WriteResponseTimeout: writeResponseTimeout,
 			},
-			fn: func(w *Writer) {
+			fn: func(w *responsewriter.Writer) {
 				w.SetContentLength(123)
 			},
 		},
@@ -245,10 +247,10 @@ func (s *ResponseWriterSuite) TestHeaderCases() {
 				httpheaders.CacheControl:          []string{"no-cache"},
 				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
 			},
-			config: Config{
+			config: responsewriter.Config{
 				WriteResponseTimeout: writeResponseTimeout,
 			},
-			fn: func(w *Writer) {
+			fn: func(w *responsewriter.Writer) {
 				w.SetContentType("image/png")
 			},
 		},
@@ -259,11 +261,11 @@ func (s *ResponseWriterSuite) TestHeaderCases() {
 				httpheaders.CacheControl:          []string{"max-age=3600, public"},
 				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
 			},
-			config: Config{
+			config: responsewriter.Config{
 				DefaultTTL:           3600,
 				WriteResponseTimeout: writeResponseTimeout,
 			},
-			fn: func(w *Writer) {
+			fn: func(w *responsewriter.Writer) {
 				w.SetExpires(time.Time{})
 			},
 		},
@@ -271,7 +273,7 @@ func (s *ResponseWriterSuite) TestHeaderCases() {
 
 	for _, tc := range tt {
 		s.Run(tc.name, func() {
-			factory, err := NewFactory(&tc.config)
+			factory, err := responsewriter.NewFactory(&tc.config)
 			s.Require().NoError(err)
 
 			r := httptest.NewRecorder()

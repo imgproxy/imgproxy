@@ -1,4 +1,4 @@
-package integration
+package integration_test
 
 import (
 	"context"
@@ -104,7 +104,6 @@ func (s *Suite) GET(path string, header ...http.Header) *http.Response {
 // startServer starts imgproxy instance's server for the tests.
 // Returns [TestServer] that contains the server address and shutdown function
 func (s *Suite) startServer(ctx context.Context, i *imgproxy.Imgproxy) *TestServer {
-	//nolint:gosec // cancel is called in TestServer.Shutdown, so it's not a problemserver/timer.go
 	ctx, cancel := context.WithCancel(ctx)
 
 	addrCh := make(chan net.Addr)

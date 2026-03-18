@@ -25,7 +25,7 @@ func New(verifyNetworks bool, config *Config) (*http.Transport, error) {
 
 	if verifyNetworks {
 		dialer.Control = func(network, address string, c syscall.RawConn) error {
-			return verifySourceNetwork(address, config)
+			return VerifySourceNetwork(address, config)
 		}
 	}
 
@@ -67,7 +67,7 @@ func New(verifyNetworks bool, config *Config) (*http.Transport, error) {
 	return transport, nil
 }
 
-func verifySourceNetwork(addr string, config *Config) error {
+func VerifySourceNetwork(addr string, config *Config) error {
 	host, _, err := net.SplitHostPort(addr)
 	if err != nil {
 		host = addr

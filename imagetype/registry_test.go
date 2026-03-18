@@ -1,4 +1,4 @@
-package imagetype
+package imagetype_test
 
 import (
 	"bytes"
@@ -9,15 +9,16 @@ import (
 	"testing"
 
 	"github.com/imgproxy/imgproxy/v3/bufreader"
+	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/stretchr/testify/require"
 )
 
 func TestRegisterType(t *testing.T) {
 	// Create a separate registry for testing to avoid conflicts with global registry
-	testRegistry := NewRegistry()
+	testRegistry := imagetype.NewRegistry()
 
 	// Register a custom type
-	customDesc := &TypeDesc{
+	customDesc := &imagetype.TypeDesc{
 		String:                "custom",
 		Ext:                   ".custom",
 		Mime:                  "image/custom",
@@ -43,7 +44,7 @@ func TestTypeProperties(t *testing.T) {
 	// Test that Type methods use TypeDesc fields correctly
 	tests := []struct {
 		name                string
-		typ                 Type
+		typ                 imagetype.Type
 		expectVector        bool
 		expectAlpha         bool
 		expectColourProfile bool
@@ -54,7 +55,7 @@ func TestTypeProperties(t *testing.T) {
 	}{
 		{
 			name:                "JPEG",
-			typ:                 JPEG,
+			typ:                 imagetype.JPEG,
 			expectVector:        false,
 			expectAlpha:         false,
 			expectColourProfile: true,
@@ -65,7 +66,7 @@ func TestTypeProperties(t *testing.T) {
 		},
 		{
 			name:                "PNG",
-			typ:                 PNG,
+			typ:                 imagetype.PNG,
 			expectVector:        false,
 			expectAlpha:         true,
 			expectColourProfile: true,
@@ -76,7 +77,7 @@ func TestTypeProperties(t *testing.T) {
 		},
 		{
 			name:                "WEBP",
-			typ:                 WEBP,
+			typ:                 imagetype.WEBP,
 			expectVector:        false,
 			expectAlpha:         true,
 			expectColourProfile: true,
@@ -87,7 +88,7 @@ func TestTypeProperties(t *testing.T) {
 		},
 		{
 			name:                "SVG",
-			typ:                 SVG,
+			typ:                 imagetype.SVG,
 			expectVector:        true,
 			expectAlpha:         true,
 			expectColourProfile: false,
@@ -98,7 +99,7 @@ func TestTypeProperties(t *testing.T) {
 		},
 		{
 			name:                "GIF",
-			typ:                 GIF,
+			typ:                 imagetype.GIF,
 			expectVector:        false,
 			expectAlpha:         true,
 			expectColourProfile: false,
@@ -109,7 +110,7 @@ func TestTypeProperties(t *testing.T) {
 		},
 		{
 			name:                "HEIC",
-			typ:                 HEIC,
+			typ:                 imagetype.HEIC,
 			expectVector:        false,
 			expectAlpha:         true,
 			expectColourProfile: true,
@@ -120,7 +121,7 @@ func TestTypeProperties(t *testing.T) {
 		},
 		{
 			name:                "AVIF",
-			typ:                 AVIF,
+			typ:                 imagetype.AVIF,
 			expectVector:        false,
 			expectAlpha:         true,
 			expectColourProfile: true,
@@ -146,9 +147,9 @@ func TestTypeProperties(t *testing.T) {
 
 func TestRegisterDetector(t *testing.T) {
 	// Create a test registry to avoid interfering with global state
-	testRegistry := NewRegistry()
+	testRegistry := imagetype.NewRegistry()
 
-	functionsEqual := func(fn1, fn2 DetectFunc) {
+	functionsEqual := func(fn1, fn2 imagetype.DetectFunc) {
 		// Compare function names to check if they are the same
 		fnName1 := runtime.FuncForPC(reflect.ValueOf(fn1).Pointer()).Name()
 		fnName2 := runtime.FuncForPC(reflect.ValueOf(fn2).Pointer()).Name()
@@ -156,10 +157,10 @@ func TestRegisterDetector(t *testing.T) {
 	}
 
 	// Create a test detector functions
-	testDetector1 := func(r bufreader.ReadPeeker, _, _ string) (Type, error) { return JPEG, nil }
-	testDetector2 := func(r bufreader.ReadPeeker, _, _ string) (Type, error) { return PNG, nil }
-	testDetector3 := func(r bufreader.ReadPeeker, _, _ string) (Type, error) { return GIF, nil }
-	testDetector4 := func(r bufreader.ReadPeeker, _, _ string) (Type, error) { return SVG, nil }
+	testDetector1 := func(r bufreader.ReadPeeker, _, _ string) (imagetype.Type, error) { return imagetype.JPEG, nil }
+	testDetector2 := func(r bufreader.ReadPeeker, _, _ string) (imagetype.Type, error) { return imagetype.PNG, nil }
+	testDetector3 := func(r bufreader.ReadPeeker, _, _ string) (imagetype.Type, error) { return imagetype.GIF, nil }
+	testDetector4 := func(r bufreader.ReadPeeker, _, _ string) (imagetype.Type, error) { return imagetype.SVG, nil }
 
 	// Register the detectors using the method
 	testRegistry.RegisterDetector(0, testDetector1)
@@ -168,52 +169,54 @@ func TestRegisterDetector(t *testing.T) {
 	testRegistry.RegisterDetector(5, testDetector4)
 
 	// Verify the detectors are registered
-	require.Len(t, testRegistry.detectors, 4)
+	detectors := testRegistry.Detectors()
+	require.Len(t, detectors, 4)
 
 	// Verify the order of detectors based on priority
-	require.Equal(t, 0, testRegistry.detectors[0].priority)
-	functionsEqual(testDetector1, testRegistry.detectors[0].fn)
-	require.Equal(t, 0, testRegistry.detectors[1].priority)
-	functionsEqual(testDetector2, testRegistry.detectors[1].fn)
-	require.Equal(t, 5, testRegistry.detectors[2].priority)
-	functionsEqual(testDetector4, testRegistry.detectors[2].fn)
-	require.Equal(t, 10, testRegistry.detectors[3].priority)
-	functionsEqual(testDetector3, testRegistry.detectors[3].fn)
+	require.Equal(t, 0, detectors[0].Priority)
+	functionsEqual(testDetector1, detectors[0].Fn)
+	require.Equal(t, 0, detectors[1].Priority)
+	functionsEqual(testDetector2, detectors[1].Fn)
+	require.Equal(t, 5, detectors[2].Priority)
+	functionsEqual(testDetector4, detectors[2].Fn)
+	require.Equal(t, 10, detectors[3].Priority)
+	functionsEqual(testDetector3, detectors[3].Fn)
 }
 
 func TestRegisterMagicBytes(t *testing.T) {
 	// Create a test registry to avoid interfering with global state
-	testRegistry := NewRegistry()
+	testRegistry := imagetype.NewRegistry()
 
-	require.Empty(t, testRegistry.detectors)
+	require.Empty(t, testRegistry.Detectors())
 
 	// Register magic bytes for JPEG using the method
 	jpegMagic := []byte{0xFF, 0xD8}
-	testRegistry.RegisterMagicBytes(JPEG, jpegMagic)
+	testRegistry.RegisterMagicBytes(imagetype.JPEG, jpegMagic)
 
 	// Verify the magic bytes are registered
-	require.Len(t, testRegistry.detectors, 1)
-	require.Equal(t, -1, testRegistry.detectors[0].priority)
+	detectors := testRegistry.Detectors()
+	require.Len(t, detectors, 1)
+	require.Equal(t, -1, detectors[0].Priority)
 
 	typ, err := testRegistry.Detect(bufreader.New(bytes.NewReader(jpegMagic)), "", "")
 	require.NoError(t, err)
-	require.Equal(t, JPEG, typ)
+	require.Equal(t, imagetype.JPEG, typ)
 }
 
 func TestDetectionErrorReturns(t *testing.T) {
 	// Create a test registry to avoid interfering with global state
-	testRegistry := NewRegistry()
+	testRegistry := imagetype.NewRegistry()
 
 	detErr := error(nil)
 
 	// The first detector will fail with detErr
-	testRegistry.RegisterDetector(0, func(r bufreader.ReadPeeker, _, _ string) (Type, error) {
-		return Unknown, detErr
+	testRegistry.RegisterDetector(0, func(r bufreader.ReadPeeker, _, _ string) (imagetype.Type, error) {
+		return imagetype.Unknown, detErr
 	})
 
 	// The second detector will succeed
-	testRegistry.RegisterDetector(1, func(r bufreader.ReadPeeker, _, _ string) (Type, error) {
-		return JPEG, nil
+	testRegistry.RegisterDetector(1, func(r bufreader.ReadPeeker, _, _ string) (imagetype.Type, error) {
+		return imagetype.JPEG, nil
 	})
 
 	// We don't actually need to read anything, just create a reader
@@ -222,20 +225,20 @@ func TestDetectionErrorReturns(t *testing.T) {
 	// Should not fail with io.EOF
 	detErr = io.EOF
 	typ, err := testRegistry.Detect(r, "", "")
-	require.Equal(t, JPEG, typ)
+	require.Equal(t, imagetype.JPEG, typ)
 	require.NoError(t, err)
 
 	// Should not fail with io.ErrUnexpectedEOF
 	detErr = io.ErrUnexpectedEOF
 	typ, err = testRegistry.Detect(r, "", "")
-	require.Equal(t, JPEG, typ)
+	require.Equal(t, imagetype.JPEG, typ)
 	require.NoError(t, err)
 
 	// Should fail with other read errors
 	detErr = io.ErrClosedPipe
 	typ, err = testRegistry.Detect(r, "", "")
-	require.Equal(t, Unknown, typ)
+	require.Equal(t, imagetype.Unknown, typ)
 	require.Error(t, err)
-	require.ErrorAs(t, err, &TypeDetectionError{})
+	require.ErrorAs(t, err, &imagetype.TypeDetectionError{})
 	require.ErrorIs(t, err, io.ErrClosedPipe)
 }

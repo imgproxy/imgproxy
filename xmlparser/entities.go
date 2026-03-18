@@ -9,9 +9,9 @@ import (
 var entityDeclRe = regexp.MustCompile(`<!ENTITY\s+(\S+)\s+("[^"]+"|'[^']+')\s*>`)
 var entityCommentRe = regexp.MustCompile(`(?s)<!--.*?-->`)
 
-// parseEntityMap searches for a DOCTYPE directive in the given nodes
+// ParseEntityMap searches for a DOCTYPE directive in the given nodes
 // and extracts entity declarations into a map.
-func parseEntityMap(nodes []Token) map[string][]byte {
+func ParseEntityMap(nodes []Token) map[string][]byte {
 	// Find doctype
 	var doctype *Directive
 	for _, node := range nodes {
@@ -52,15 +52,15 @@ func parseEntityMap(nodes []Token) map[string][]byte {
 	return em
 }
 
-// replaceEntitiesBytes replaces XML entities in the given byte slice
+// ReplaceEntitiesBytes replaces XML entities in the given byte slice
 // according to the provided entity map.
-func replaceEntitiesBytes(data []byte, em map[string][]byte) []byte {
+func ReplaceEntitiesBytes(data []byte, em map[string][]byte) []byte {
 	return replaceEntities(data, em, bytes.IndexByte)
 }
 
-// replaceEntitiesString replaces XML entities in the given string
+// ReplaceEntitiesString replaces XML entities in the given string
 // according to the provided entity map.
-func replaceEntitiesString(data string, em map[string][]byte) string {
+func ReplaceEntitiesString(data string, em map[string][]byte) string {
 	return replaceEntities(data, em, strings.IndexByte)
 }
 

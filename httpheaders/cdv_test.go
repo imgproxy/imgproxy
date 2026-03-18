@@ -1,8 +1,9 @@
-package httpheaders
+package httpheaders_test
 
 import (
 	"testing"
 
+	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/stretchr/testify/require"
 )
 
@@ -120,7 +121,7 @@ func TestContentDispositionValue(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			result := ContentDispositionValue(tc.url, tc.filename, tc.ext, tc.contentType, tc.returnAttachment)
+			result := httpheaders.ContentDispositionValue(tc.url, tc.filename, tc.ext, tc.contentType, tc.returnAttachment)
 			require.Equal(t, tc.expected, result)
 		})
 	}

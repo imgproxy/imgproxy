@@ -1,4 +1,4 @@
-package imagetype
+package imagetype_test
 
 import (
 	"os"
@@ -6,17 +6,20 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/imgproxy/imgproxy/v3/imagetype"
 )
 
 func TestDefaultTypesRegistered(t *testing.T) {
 	// Test that all default types are properly registered by init()
-	defaultTypes := []Type{
-		JPEG, JXL, PNG, WEBP, GIF, ICO, SVG, HEIC, AVIF, BMP, TIFF,
+	defaultTypes := []imagetype.Type{
+		imagetype.JPEG, imagetype.JXL, imagetype.PNG, imagetype.WEBP, imagetype.GIF,
+		imagetype.ICO, imagetype.SVG, imagetype.HEIC, imagetype.AVIF, imagetype.BMP, imagetype.TIFF,
 	}
 
 	for _, typ := range defaultTypes {
 		t.Run(typ.String(), func(t *testing.T) {
-			desc := GetTypeDesc(typ)
+			desc := imagetype.GetTypeDesc(typ)
 			require.NotNil(t, desc)
 
 			// Verify that the description has non-empty fields
@@ -31,20 +34,20 @@ func TestDetect(t *testing.T) {
 	tests := []struct {
 		name string
 		file string
-		want Type
+		want imagetype.Type
 	}{
-		{"JPEG", "../testdata/test-images/jpg/jpg.jpg", JPEG},
-		{"JXL", "../testdata/test-images/jxl/jxl.jxl", JXL},
-		{"PNG", "../testdata/test-images/png/png.png", PNG},
-		{"WEBP", "../testdata/test-images/webp/webp.webp", WEBP},
-		{"GIF", "../testdata/test-images/gif/gif.gif", GIF},
-		{"ICO", "../testdata/test-images/ico/png-256x256.ico", ICO},
-		{"SVG", "../testdata/test-images/svg/svg.svg", SVG},
-		{"HEIC", "../testdata/test-images/heif/heif.heif", HEIC},
-		{"BMP", "../testdata/test-images/bmp/24-bpp.bmp", BMP},
-		{"TIFF", "../testdata/test-images/tiff/tiff.tiff", TIFF},
-		{"SVG", "../testdata/test-images/svg/svg.svg", SVG},
-		{"RAW", "../testdata/test-images/raw/RAW_CANON_1DM2.CR2", Unknown}, // RAW is not supported
+		{"JPEG", "../testdata/test-images/jpg/jpg.jpg", imagetype.JPEG},
+		{"JXL", "../testdata/test-images/jxl/jxl.jxl", imagetype.JXL},
+		{"PNG", "../testdata/test-images/png/png.png", imagetype.PNG},
+		{"WEBP", "../testdata/test-images/webp/webp.webp", imagetype.WEBP},
+		{"GIF", "../testdata/test-images/gif/gif.gif", imagetype.GIF},
+		{"ICO", "../testdata/test-images/ico/png-256x256.ico", imagetype.ICO},
+		{"SVG", "../testdata/test-images/svg/svg.svg", imagetype.SVG},
+		{"HEIC", "../testdata/test-images/heif/heif.heif", imagetype.HEIC},
+		{"BMP", "../testdata/test-images/bmp/24-bpp.bmp", imagetype.BMP},
+		{"TIFF", "../testdata/test-images/tiff/tiff.tiff", imagetype.TIFF},
+		{"SVG", "../testdata/test-images/svg/svg.svg", imagetype.SVG},
+		{"RAW", "../testdata/test-images/raw/RAW_CANON_1DM2.CR2", imagetype.Unknown}, // RAW is not supported
 	}
 
 	for _, tt := range tests {
@@ -53,8 +56,8 @@ func TestDetect(t *testing.T) {
 			require.NoError(t, err)
 			defer f.Close()
 
-			got, err := Detect(f, "", path.Ext(tt.file))
-			if tt.want == Unknown {
+			got, err := imagetype.Detect(f, "", path.Ext(tt.file))
+			if tt.want == imagetype.Unknown {
 				require.Error(t, err)
 			} else {
 				require.NoError(t, err)

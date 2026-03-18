@@ -17,8 +17,8 @@ import (
 )
 
 const (
-	// defaultServerName is the default name of the server
-	defaultServerName = "imgproxy"
+	// DefaultServerName is the default name of the server
+	DefaultServerName = "imgproxy"
 )
 
 var (
@@ -99,10 +99,19 @@ func (r *Router) HEAD(path string, handler RouteHandler, middlewares ...Middlewa
 	return r.add(http.MethodHead, path, handler, middlewares...)
 }
 
+// Paths returns the paths of all routes in the router, in order.
+func (r *Router) Paths() []string {
+	paths := make([]string, len(r.routes))
+	for i, route := range r.routes {
+		paths[i] = route.path
+	}
+	return paths
+}
+
 // ServeHTTP serves routes
 func (r *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	// Attach timer to the context
-	req, timeoutCancel := startRequestTimer(req, r.config.RequestTimeout)
+	req, timeoutCancel := StartRequestTimer(req, r.config.RequestTimeout)
 	defer timeoutCancel()
 
 	// Create the [ResponseWriter]
@@ -114,7 +123,7 @@ func (r *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	// Replace request IP from headers
 	r.replaceRemoteAddr(req)
 
-	rww.Header().Set(httpheaders.Server, defaultServerName)
+	rww.Header().Set(httpheaders.Server, DefaultServerName)
 	rww.Header().Set(httpheaders.XRequestID, reqID)
 
 	for _, rr := range r.routes {

@@ -1,4 +1,4 @@
-package processing
+package processing_test
 
 import (
 	"bytes"
@@ -9,6 +9,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/options/keys"
+	"github.com/imgproxy/imgproxy/v3/processing"
 	"github.com/imgproxy/imgproxy/v3/testutil"
 	"github.com/stretchr/testify/suite"
 )
@@ -20,7 +21,7 @@ type CropTestSuite struct {
 }
 
 type resizeFillGravityTestCase struct {
-	gravity GravityType
+	gravity processing.GravityType
 	size    testSize
 	xOffset float64
 	yOffset float64
@@ -28,7 +29,7 @@ type resizeFillGravityTestCase struct {
 }
 
 func (r resizeFillGravityTestCase) Set(o *options.Options) {
-	o.Set(keys.ResizingType, ResizeFill)
+	o.Set(keys.ResizingType, processing.ResizeFill)
 	o.Set(keys.GravityType, r.gravity)
 	o.Set(keys.Width, r.size.width)
 	o.Set(keys.Height, r.size.height)
@@ -73,8 +74,8 @@ func (r resizeFillGravityTestCase) String() string {
 }
 
 type cropTestCase struct {
-	gravity     GravityType
-	cropGravity GravityType
+	gravity     processing.GravityType
+	cropGravity processing.GravityType
 	cropSize    testSize
 	xOffset     float64
 	yOffset     float64
@@ -153,49 +154,49 @@ func (s *CropTestSuite) TestResizeFill() {
 		// When target has less vertical space
 		{
 			opts: resizeFillGravityTestCase{
-				gravity: GravityCenter,
+				gravity: processing.GravityCenter,
 				size:    widerSize,
 			},
 			outSize: widerSize,
 		},
 		{
 			opts: resizeFillGravityTestCase{
-				gravity: GravityNorth,
+				gravity: processing.GravityNorth,
 				size:    widerSize,
 			},
 			outSize: widerSize,
 		},
 		{
 			opts: resizeFillGravityTestCase{
-				gravity: GravitySouth,
+				gravity: processing.GravitySouth,
 				size:    widerSize,
 			},
 			outSize: widerSize,
 		},
 		{
 			opts: resizeFillGravityTestCase{
-				gravity: GravityNorthEast,
+				gravity: processing.GravityNorthEast,
 				size:    widerSize,
 			},
 			outSize: widerSize,
 		},
 		{
 			opts: resizeFillGravityTestCase{
-				gravity: GravitySouthEast,
+				gravity: processing.GravitySouthEast,
 				size:    widerSize,
 			},
 			outSize: widerSize,
 		},
 		{
 			opts: resizeFillGravityTestCase{
-				gravity: GravitySouthWest,
+				gravity: processing.GravitySouthWest,
 				size:    widerSize,
 			},
 			outSize: widerSize,
 		},
 		{
 			opts: resizeFillGravityTestCase{
-				gravity: GravityNorthWest,
+				gravity: processing.GravityNorthWest,
 				size:    widerSize,
 			},
 			outSize: widerSize,
@@ -204,49 +205,49 @@ func (s *CropTestSuite) TestResizeFill() {
 		// When target has less horizontal space
 		{
 			opts: resizeFillGravityTestCase{
-				gravity: GravityCenter,
+				gravity: processing.GravityCenter,
 				size:    tallerSize,
 			},
 			outSize: tallerSize,
 		},
 		{
 			opts: resizeFillGravityTestCase{
-				gravity: GravityEast,
+				gravity: processing.GravityEast,
 				size:    tallerSize,
 			},
 			outSize: tallerSize,
 		},
 		{
 			opts: resizeFillGravityTestCase{
-				gravity: GravityWest,
+				gravity: processing.GravityWest,
 				size:    tallerSize,
 			},
 			outSize: tallerSize,
 		},
 		{
 			opts: resizeFillGravityTestCase{
-				gravity: GravityNorthEast,
+				gravity: processing.GravityNorthEast,
 				size:    tallerSize,
 			},
 			outSize: tallerSize,
 		},
 		{
 			opts: resizeFillGravityTestCase{
-				gravity: GravitySouthEast,
+				gravity: processing.GravitySouthEast,
 				size:    tallerSize,
 			},
 			outSize: tallerSize,
 		},
 		{
 			opts: resizeFillGravityTestCase{
-				gravity: GravitySouthWest,
+				gravity: processing.GravitySouthWest,
 				size:    tallerSize,
 			},
 			outSize: tallerSize,
 		},
 		{
 			opts: resizeFillGravityTestCase{
-				gravity: GravityNorthWest,
+				gravity: processing.GravityNorthWest,
 				size:    tallerSize,
 			},
 			outSize: tallerSize,
@@ -255,7 +256,7 @@ func (s *CropTestSuite) TestResizeFill() {
 		// With DPR
 		{
 			opts: resizeFillGravityTestCase{
-				gravity: GravityCenter,
+				gravity: processing.GravityCenter,
 				size:    widerSize,
 				dpr:     2,
 			},
@@ -265,7 +266,7 @@ func (s *CropTestSuite) TestResizeFill() {
 		// With offsets
 		{
 			opts: resizeFillGravityTestCase{
-				gravity: GravityNorth,
+				gravity: processing.GravityNorth,
 				size:    widerSize,
 				yOffset: 5,
 			},
@@ -273,7 +274,7 @@ func (s *CropTestSuite) TestResizeFill() {
 		},
 		{
 			opts: resizeFillGravityTestCase{
-				gravity: GravityNorth,
+				gravity: processing.GravityNorth,
 				size:    widerSize,
 				yOffset: 5,
 				dpr:     0.5,
@@ -282,7 +283,7 @@ func (s *CropTestSuite) TestResizeFill() {
 		},
 		{
 			opts: resizeFillGravityTestCase{
-				gravity: GravityNorth,
+				gravity: processing.GravityNorth,
 				size:    widerSize,
 				yOffset: 5,
 				dpr:     2,
@@ -291,7 +292,7 @@ func (s *CropTestSuite) TestResizeFill() {
 		},
 		{
 			opts: resizeFillGravityTestCase{
-				gravity: GravityNorth,
+				gravity: processing.GravityNorth,
 				size:    tallerSize,
 				xOffset: 5,
 			},
@@ -299,7 +300,7 @@ func (s *CropTestSuite) TestResizeFill() {
 		},
 		{
 			opts: resizeFillGravityTestCase{
-				gravity: GravityNorth,
+				gravity: processing.GravityNorth,
 				size:    tallerSize,
 				xOffset: 5,
 				dpr:     0.5,
@@ -308,7 +309,7 @@ func (s *CropTestSuite) TestResizeFill() {
 		},
 		{
 			opts: resizeFillGravityTestCase{
-				gravity: GravityNorth,
+				gravity: processing.GravityNorth,
 				size:    tallerSize,
 				xOffset: 5,
 				dpr:     2,
@@ -319,7 +320,7 @@ func (s *CropTestSuite) TestResizeFill() {
 		// With relative offsets
 		{
 			opts: resizeFillGravityTestCase{
-				gravity: GravityNorth,
+				gravity: processing.GravityNorth,
 				size:    widerSize,
 				yOffset: 0.1,
 			},
@@ -327,7 +328,7 @@ func (s *CropTestSuite) TestResizeFill() {
 		},
 		{
 			opts: resizeFillGravityTestCase{
-				gravity: GravityNorth,
+				gravity: processing.GravityNorth,
 				size:    widerSize,
 				yOffset: 0.1,
 				dpr:     0.5,
@@ -336,7 +337,7 @@ func (s *CropTestSuite) TestResizeFill() {
 		},
 		{
 			opts: resizeFillGravityTestCase{
-				gravity: GravityNorth,
+				gravity: processing.GravityNorth,
 				size:    widerSize,
 				yOffset: 0.1,
 				dpr:     2,
@@ -362,63 +363,63 @@ func (s *CropTestSuite) TestCrop() {
 	testCases := []testCase[cropTestCase]{
 		{
 			opts: cropTestCase{
-				cropGravity: GravityCenter,
+				cropGravity: processing.GravityCenter,
 				cropSize:    cropSize,
 			},
 			outSize: cropSize,
 		},
 		{
 			opts: cropTestCase{
-				cropGravity: GravityNorth,
+				cropGravity: processing.GravityNorth,
 				cropSize:    cropSize,
 			},
 			outSize: cropSize,
 		},
 		{
 			opts: cropTestCase{
-				cropGravity: GravitySouth,
+				cropGravity: processing.GravitySouth,
 				cropSize:    cropSize,
 			},
 			outSize: cropSize,
 		},
 		{
 			opts: cropTestCase{
-				cropGravity: GravityEast,
+				cropGravity: processing.GravityEast,
 				cropSize:    cropSize,
 			},
 			outSize: cropSize,
 		},
 		{
 			opts: cropTestCase{
-				cropGravity: GravityWest,
+				cropGravity: processing.GravityWest,
 				cropSize:    cropSize,
 			},
 			outSize: cropSize,
 		},
 		{
 			opts: cropTestCase{
-				cropGravity: GravityNorthEast,
+				cropGravity: processing.GravityNorthEast,
 				cropSize:    cropSize,
 			},
 			outSize: cropSize,
 		},
 		{
 			opts: cropTestCase{
-				cropGravity: GravityNorthWest,
+				cropGravity: processing.GravityNorthWest,
 				cropSize:    cropSize,
 			},
 			outSize: cropSize,
 		},
 		{
 			opts: cropTestCase{
-				cropGravity: GravitySouthEast,
+				cropGravity: processing.GravitySouthEast,
 				cropSize:    cropSize,
 			},
 			outSize: cropSize,
 		},
 		{
 			opts: cropTestCase{
-				cropGravity: GravitySouthWest,
+				cropGravity: processing.GravitySouthWest,
 				cropSize:    cropSize,
 			},
 			outSize: cropSize,
@@ -427,7 +428,7 @@ func (s *CropTestSuite) TestCrop() {
 		// Crop with offsets
 		{
 			opts: cropTestCase{
-				cropGravity: GravityCenter,
+				cropGravity: processing.GravityCenter,
 				cropSize:    cropSize,
 				xOffset:     10,
 			},
@@ -435,7 +436,7 @@ func (s *CropTestSuite) TestCrop() {
 		},
 		{
 			opts: cropTestCase{
-				cropGravity: GravityCenter,
+				cropGravity: processing.GravityCenter,
 				cropSize:    cropSize,
 				yOffset:     10,
 			},
@@ -443,7 +444,7 @@ func (s *CropTestSuite) TestCrop() {
 		},
 		{
 			opts: cropTestCase{
-				cropGravity: GravityCenter,
+				cropGravity: processing.GravityCenter,
 				cropSize:    cropSize,
 				xOffset:     10,
 				yOffset:     10,
@@ -454,7 +455,7 @@ func (s *CropTestSuite) TestCrop() {
 		// Relative offsets
 		{
 			opts: cropTestCase{
-				cropGravity: GravityCenter,
+				cropGravity: processing.GravityCenter,
 				cropSize:    cropSize,
 				xOffset:     0.1,
 			},
@@ -462,7 +463,7 @@ func (s *CropTestSuite) TestCrop() {
 		},
 		{
 			opts: cropTestCase{
-				cropGravity: GravityCenter,
+				cropGravity: processing.GravityCenter,
 				cropSize:    cropSize,
 				yOffset:     0.1,
 			},
@@ -470,7 +471,7 @@ func (s *CropTestSuite) TestCrop() {
 		},
 		{
 			opts: cropTestCase{
-				cropGravity: GravityCenter,
+				cropGravity: processing.GravityCenter,
 				cropSize:    cropSize,
 				xOffset:     0.1,
 				yOffset:     0.1,
@@ -481,7 +482,7 @@ func (s *CropTestSuite) TestCrop() {
 		// Dpr
 		{
 			opts: cropTestCase{
-				cropGravity: GravityCenter,
+				cropGravity: processing.GravityCenter,
 				cropSize:    cropSize,
 				xOffset:     10,
 				yOffset:     10,
@@ -515,17 +516,17 @@ func (s *CropTestSuite) TestCropGravityPriority() {
 	cropSize := testSize{50, 50}
 
 	r1 := s.getCropGravityResult(cropTestCase{
-		gravity: GravityNorth, cropSize: cropSize,
+		gravity: processing.GravityNorth, cropSize: cropSize,
 	})
 	defer r1.Close()
 
 	r2 := s.getCropGravityResult(cropTestCase{
-		cropGravity: GravityNorth, cropSize: cropSize,
+		cropGravity: processing.GravityNorth, cropSize: cropSize,
 	})
 	defer r2.Close()
 
 	r3 := s.getCropGravityResult(cropTestCase{
-		gravity: GravitySouth, cropGravity: GravityNorth, cropSize: cropSize,
+		gravity: processing.GravitySouth, cropGravity: processing.GravityNorth, cropSize: cropSize,
 	})
 	defer r3.Close()
 

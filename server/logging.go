@@ -66,7 +66,7 @@ func LogResponse(
 	slog.LogAttrs(
 		context.Background(),
 		level,
-		fmt.Sprintf("Completed in %s %s", requestStartedAt(r.Context()), r.RequestURI),
+		fmt.Sprintf("Completed in %s %s", RequestDuration(r.Context()), r.RequestURI),
 		attrs...,
 	)
 }

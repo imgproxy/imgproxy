@@ -2,13 +2,10 @@ package optionsparser
 
 import "context"
 
-// Presets is a map of preset names to their corresponding urlOptions
-type Presets = map[string]urlOptions
-
 // Parser creates Options instances
 type Parser struct {
-	config  *Config // Parser configuration
-	presets Presets // Parsed presets
+	config  *Config                // Parser configuration
+	presets map[string][]urlOption // Parsed presets
 }
 
 // New creates new Parser instance
@@ -19,7 +16,7 @@ func New(ctx context.Context, config *Config) (*Parser, error) {
 
 	p := &Parser{
 		config:  config,
-		presets: make(map[string]urlOptions),
+		presets: make(map[string][]urlOption),
 	}
 
 	if err := p.parsePresets(); err != nil {

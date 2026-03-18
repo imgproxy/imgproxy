@@ -31,7 +31,7 @@ func NewDocument(r io.Reader) (*Document, error) {
 // Entities are replaced only once to avoid attacks like the
 // "Billion Laughs" XML entity expansion attack.
 func (doc *Document) ReplaceEntities() {
-	if em := parseEntityMap(doc.Children); em != nil {
+	if em := ParseEntityMap(doc.Children); em != nil {
 		doc.replaceEntities(em)
 	}
 }
