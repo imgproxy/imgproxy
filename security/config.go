@@ -10,12 +10,11 @@ import (
 )
 
 var (
-	IMGPROXY_ALLOW_SECURITY_OPTIONS = env.Bool("IMGPROXY_ALLOW_SECURITY_OPTIONS")
-	IMGPROXY_ALLOWED_SOURCES        = env.URLPatterns("IMGPROXY_ALLOWED_SOURCES")
-	IMGPROXY_KEYS                   = env.HexSlice("IMGPROXY_KEYS")
-	IMGPROXY_SALTS                  = env.HexSlice("IMGPROXY_SALTS")
-	IMGPROXY_SIGNATURE_SIZE         = env.Int("IMGPROXY_SIGNATURE_SIZE")
-	IMGPROXY_TRUSTED_SIGNATURES     = env.StringSlice("IMGPROXY_TRUSTED_SIGNATURES")
+	IMGPROXY_ALLOWED_SOURCES    = env.URLPatterns("IMGPROXY_ALLOWED_SOURCES")
+	IMGPROXY_KEYS               = env.HexSlice("IMGPROXY_KEYS")
+	IMGPROXY_SALTS              = env.HexSlice("IMGPROXY_SALTS")
+	IMGPROXY_SIGNATURE_SIZE     = env.Int("IMGPROXY_SIGNATURE_SIZE")
+	IMGPROXY_TRUSTED_SIGNATURES = env.StringSlice("IMGPROXY_TRUSTED_SIGNATURES")
 
 	IMGPROXY_MAX_SRC_RESOLUTION             = env.MegaInt("IMGPROXY_MAX_SRC_RESOLUTION")
 	IMGPROXY_MAX_SRC_FILE_SIZE              = env.Int("IMGPROXY_MAX_SRC_FILE_SIZE")
@@ -26,12 +25,11 @@ var (
 
 // Config is the package-local configuration
 type Config struct {
-	AllowSecurityOptions bool             // Whether to allow security-related processing options in URLs
-	AllowedSources       []*regexp.Regexp // List of allowed source URL patterns (empty = allow all)
-	Keys                 [][]byte         // List of the HMAC keys
-	Salts                [][]byte         // List of the HMAC salts
-	SignatureSize        int              // Size of the HMAC signature in bytes
-	TrustedSignatures    []string         // List of trusted signature sources
+	AllowedSources    []*regexp.Regexp // List of allowed source URL patterns (empty = allow all)
+	Keys              [][]byte         // List of the HMAC keys
+	Salts             [][]byte         // List of the HMAC salts
+	SignatureSize     int              // Size of the HMAC signature in bytes
+	TrustedSignatures []string         // List of trusted signature sources
 
 	MaxSrcResolution            int // Maximum allowed source image resolution
 	MaxSrcFileSize              int // Maximum allowed source image file size in bytes
@@ -43,8 +41,7 @@ type Config struct {
 // NewDefaultConfig returns a new Config instance with default values.
 func NewDefaultConfig() Config {
 	return Config{
-		AllowSecurityOptions: false,
-		SignatureSize:        32,
+		SignatureSize: 32,
 
 		MaxSrcResolution:            50_000_000,
 		MaxSrcFileSize:              0,
@@ -59,7 +56,6 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c = ensure.Ensure(c, NewDefaultConfig)
 
 	err := errors.Join(
-		IMGPROXY_ALLOW_SECURITY_OPTIONS.Parse(&c.AllowSecurityOptions),
 		IMGPROXY_ALLOWED_SOURCES.Parse(&c.AllowedSources),
 		IMGPROXY_SIGNATURE_SIZE.Parse(&c.SignatureSize),
 		IMGPROXY_TRUSTED_SIGNATURES.Parse(&c.TrustedSignatures),

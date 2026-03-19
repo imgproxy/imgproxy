@@ -5,21 +5,52 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
-	"github.com/imgproxy/imgproxy/v3/options"
-	"github.com/imgproxy/imgproxy/v3/options/keys"
 	"github.com/imgproxy/imgproxy/v3/processing"
+	"github.com/imgproxy/imgproxy/v3/testutil"
 	"github.com/stretchr/testify/suite"
 )
 
 type watermarkTestCase struct {
-	position processing.GravityType
-	opacity  float64
-	xOffset  float64
-	yOffset  float64
-	scale    float64
-	dpr      float64
+	sourceFile string
+	position   processing.GravityType
+	opacity    float64
+	xOffset    float64
+	yOffset    float64
+	scale      float64
+	dpr        float64
+	format     imagetype.Type
+}
+
+func (w watermarkTestCase) ImagePath() string {
+	return w.sourceFile
+}
+
+func (w watermarkTestCase) URLOptions() string {
+	opts := testutil.NewOptionsBuilder()
+
+	wmArgs := opts.Add("watermark")
+	wmArgs.Set(0, w.opacity).Set(1, w.position)
+
+	if w.xOffset != 0 {
+		wmArgs.Set(2, w.xOffset)
+	}
+	if w.yOffset != 0 {
+		wmArgs.Set(3, w.yOffset)
+	}
+	if w.scale != 0 {
+		wmArgs.Set(4, w.scale)
+	}
+
+	if w.dpr != 0 {
+		opts.Add("dpr").Set(0, w.dpr)
+	}
+
+	if w.format != imagetype.Unknown {
+		opts.Add("format").Set(0, w.format)
+	}
+
+	return opts.String()
 }
 
 func (w watermarkTestCase) String() string {
@@ -43,67 +74,15 @@ func (w watermarkTestCase) String() string {
 	return b.String()
 }
 
-func (w watermarkTestCase) Set(o *options.Options) {
-	o.Set(keys.WatermarkPosition, w.position)
-
-	if w.opacity != 0 {
-		o.Set(keys.WatermarkOpacity, w.opacity)
-	} else {
-		o.Delete(keys.WatermarkOpacity)
-	}
-
-	if w.xOffset != 0 {
-		o.Set(keys.WatermarkXOffset, w.xOffset)
-	} else {
-		o.Delete(keys.WatermarkXOffset)
-	}
-
-	if w.yOffset != 0 {
-		o.Set(keys.WatermarkYOffset, w.yOffset)
-	} else {
-		o.Delete(keys.WatermarkYOffset)
-	}
-
-	if w.scale != 0 {
-		o.Set(keys.WatermarkScale, w.scale)
-	} else {
-		o.Delete(keys.WatermarkScale)
-	}
-
-	if w.dpr != 0 {
-		o.Set(keys.Dpr, w.dpr)
-	} else {
-		o.Delete(keys.Dpr)
-	}
-}
-
 type WatermarkTestSuite struct {
 	testSuite
-
-	img     imagedata.ImageData
-	imgAnim imagedata.ImageData
 }
 
-func (s *WatermarkTestSuite) SetupSuite() {
-	s.testSuite.SetupSuite()
-
-	var err error
-
-	s.img, err = s.ImageDataFactory().NewFromPath(
-		s.TestData.Path("test-images/bmp/24-bpp.bmp"),
-	)
-	s.Require().NoError(err)
-
-	s.imgAnim, err = s.ImageDataFactory().NewFromPath(
-		s.TestData.Path("test-images/gif/gif.gif"),
-	)
-	s.Require().NoError(err)
+func (s *WatermarkTestSuite) SetupSubTest() {
+	s.Config().WatermarkImage.Path = s.TestData.Path("geometry.png")
 }
 
 func (s *WatermarkTestSuite) TestWatermark() {
-	o := options.New()
-	o.Set(keys.Format, imagetype.PNG)
-
 	outSize := testSize{1080, 902}
 
 	testCases := []testCase[watermarkTestCase]{
@@ -278,16 +257,15 @@ func (s *WatermarkTestSuite) TestWatermark() {
 
 	for _, tc := range testCases {
 		s.Run(tc.opts.String(), func() {
-			tc.opts.Set(o)
+			tc.opts.sourceFile = "test-images/bmp/24-bpp.bmp"
+			tc.opts.format = imagetype.PNG
 
-			s.processImageAndCheck(s.img, o, tc)
+			s.processImageAndCheck(tc)
 		})
 	}
 }
 
 func (s *WatermarkTestSuite) TestWatermarkAnimation() {
-	o := options.New()
-
 	testCases := []testCase[watermarkTestCase]{
 		{
 			opts: watermarkTestCase{
@@ -313,9 +291,9 @@ func (s *WatermarkTestSuite) TestWatermarkAnimation() {
 
 	for _, tc := range testCases {
 		s.Run(tc.opts.String(), func() {
-			tc.opts.Set(o)
+			tc.opts.sourceFile = "test-images/gif/gif.gif"
 
-			s.processImageAndCheck(s.imgAnim, o, tc)
+			s.processImageAndCheck(tc)
 		})
 	}
 }

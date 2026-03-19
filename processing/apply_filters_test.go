@@ -6,16 +6,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/imgproxy/imgproxy/v3/imagedata"
-	"github.com/imgproxy/imgproxy/v3/options"
-	"github.com/imgproxy/imgproxy/v3/options/keys"
 	"github.com/stretchr/testify/suite"
 )
 
 type ApplyFiltersTestSuite struct {
 	testSuite
-
-	img imagedata.ImageData
 }
 
 type effectTestCase struct {
@@ -24,10 +19,12 @@ type effectTestCase struct {
 	pixelate int
 }
 
-func (r effectTestCase) Set(o *options.Options) {
-	o.Set(keys.Blur, r.blur)
-	o.Set(keys.Sharpen, r.sharpen)
-	o.Set(keys.Pixelate, r.pixelate)
+func (r effectTestCase) ImagePath() string {
+	return "test-images/png/png.png"
+}
+
+func (r effectTestCase) URLOptions() string {
+	return fmt.Sprintf("blur:%f/sharpen:%f/pixelate:%d", r.blur, r.sharpen, r.pixelate)
 }
 
 func (r effectTestCase) String() string {
@@ -49,21 +46,7 @@ func (r effectTestCase) String() string {
 	return name
 }
 
-func (s *ApplyFiltersTestSuite) SetupSuite() {
-	s.testSuite.SetupSuite()
-
-	var err error
-
-	s.img, err = s.ImageDataFactory().NewFromPath(
-		s.TestData.Path("test-images/png/png.png"),
-	)
-
-	s.Require().NoError(err)
-}
-
 func (s *ApplyFiltersTestSuite) TestEffects() {
-	o := options.New()
-
 	outSize := testSize{400, 400}
 
 	testCases := []testCase[effectTestCase]{
@@ -75,9 +58,7 @@ func (s *ApplyFiltersTestSuite) TestEffects() {
 
 	for _, tc := range testCases {
 		s.Run(tc.opts.String(), func() {
-			tc.opts.Set(o)
-
-			s.processImageAndCheck(s.img, o, tc)
+			s.processImageAndCheck(tc)
 		})
 	}
 }

@@ -4,9 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/imgproxy/imgproxy/v3/imagedata"
-	"github.com/imgproxy/imgproxy/v3/options"
-	"github.com/imgproxy/imgproxy/v3/options/keys"
 	"github.com/imgproxy/imgproxy/v3/testutil"
 	"github.com/stretchr/testify/suite"
 )
@@ -14,32 +11,69 @@ import (
 type RotateAndFlipTestSuite struct {
 	testSuite
 
-	imgs []imagedata.ImageData
+	imgs []string
 }
 
-func (s *RotateAndFlipTestSuite) processImg(imgIndex int, o *options.Options) *testutil.ImageHash {
-	result, err := s.Processor().ProcessImage(s.T().Context(), s.imgs[imgIndex], o)
-	s.Require().NoError(err)
-	defer result.OutData.Close()
+type rotateAndFlipTestCase struct {
+	sourceFile string
+	rotate     int
+	flipH      bool
+	flipV      bool
+	autoRotate bool
+}
 
-	hash, err := testutil.NewImageHash(result.OutData.Reader(), testutil.HashTypeSHA256)
+func (c rotateAndFlipTestCase) ImagePath() string {
+	return c.sourceFile
+}
+
+func (r rotateAndFlipTestCase) URLOptions() string {
+	opts := testutil.NewOptionsBuilder()
+
+	if r.rotate != 0 {
+		opts.Add("rotate").Set(0, r.rotate)
+	}
+
+	if r.flipH {
+		opts.Add("flip").Set(0, 1)
+	}
+	if r.flipV {
+		opts.Add("flip").Set(1, 1)
+	}
+
+	if !r.autoRotate {
+		opts.Add("auto_rotate").Set(0, 0)
+	}
+
+	return opts.String()
+}
+
+func (s *RotateAndFlipTestSuite) processImg(
+	imgIndex int,
+	opts rotateAndFlipTestCase,
+) *testutil.ImageHash {
+	opts.sourceFile = s.imgs[imgIndex]
+
+	resultData := s.processImage(opts)
+	defer resultData.Close()
+
+	hash, err := testutil.NewImageHash(resultData.Reader(), testutil.HashTypeSHA256)
 	s.Require().NoError(err)
 
 	key := fmt.Sprintf(
 		"img-%d_rotate-%v_flip-%v_%v_ar-%v",
 		imgIndex,
-		o.GetInt(keys.Rotate, 0),
-		o.GetBool(keys.FlipHorizontal, false),
-		o.GetBool(keys.FlipVertical, false),
-		o.GetBool(keys.AutoRotate, false),
+		opts.rotate,
+		opts.flipH,
+		opts.flipV,
+		opts.autoRotate,
 	)
 
-	s.ImageMatcher().ImageMatches(s.T(), result.OutData.Reader(), key, 0)
+	s.ImageMatcher().ImageMatches(s.T(), resultData.Reader(), key, 0)
 
 	return hash
 }
 
-func (s *RotateAndFlipTestSuite) collectRotationsFlips(imgIndex int, o *options.Options) []*testutil.ImageHash {
+func (s *RotateAndFlipTestSuite) collectRotationsFlips(imgIndex int, autoRotate bool) []*testutil.ImageHash {
 	rotates := []int{0, 90, 180, 270}
 	flips := []bool{false, true}
 
@@ -48,21 +82,15 @@ func (s *RotateAndFlipTestSuite) collectRotationsFlips(imgIndex int, o *options.
 	for _, rotate := range rotates {
 		for _, flipH := range flips {
 			for _, flipV := range flips {
-				o.Set(keys.Rotate, rotate)
-
-				if flipH {
-					o.Set(keys.FlipHorizontal, true)
-				} else {
-					o.Delete(keys.FlipHorizontal)
+				opts := rotateAndFlipTestCase{
+					sourceFile: s.imgs[imgIndex],
+					rotate:     rotate,
+					flipH:      flipH,
+					flipV:      flipV,
+					autoRotate: autoRotate,
 				}
 
-				if flipV {
-					o.Set(keys.FlipVertical, true)
-				} else {
-					o.Delete(keys.FlipVertical)
-				}
-
-				hashes = append(hashes, s.processImg(imgIndex, o))
+				hashes = append(hashes, s.processImg(imgIndex, opts))
 			}
 		}
 	}
@@ -74,22 +102,17 @@ func (s *RotateAndFlipTestSuite) SetupSuite() {
 	s.testSuite.SetupSuite()
 
 	for i := range 8 {
-		img, err := s.ImageDataFactory().NewFromPath(
-			s.TestData.Path(fmt.Sprintf("orientation-%d.png", i)),
-		)
-		s.Require().NoError(err)
-		s.imgs = append(s.imgs, img)
+		s.imgs = append(s.imgs, fmt.Sprintf("orientation-%d.png", i))
 	}
 }
 
 func (s *RotateAndFlipTestSuite) TestOrientationAutoRotate() {
-	o := options.New()
-	o.Set(keys.AutoRotate, false)
+	opts := rotateAndFlipTestCase{autoRotate: false}
 
 	// Test with auto_rotate:false - all outputs should be the same
 	hashes := make([]*testutil.ImageHash, 0, len(s.imgs))
 	for i := range s.imgs {
-		hashes = append(hashes, s.processImg(i, o))
+		hashes = append(hashes, s.processImg(i, opts))
 	}
 
 	for i := 1; i < len(hashes); i++ {
@@ -100,11 +123,11 @@ func (s *RotateAndFlipTestSuite) TestOrientationAutoRotate() {
 	}
 
 	// Test with auto_rotate:true - each subsequent output should differ from the previous
-	o.Set(keys.AutoRotate, true)
+	opts.autoRotate = true
 
 	hashesAr := make([]*testutil.ImageHash, 0, len(s.imgs))
 	for i := range s.imgs {
-		hashesAr = append(hashesAr, s.processImg(i, o))
+		hashesAr = append(hashesAr, s.processImg(i, opts))
 	}
 
 	for i := 1; i < len(hashesAr); i++ {
@@ -114,15 +137,11 @@ func (s *RotateAndFlipTestSuite) TestOrientationAutoRotate() {
 	}
 }
 
-//nolint:dupl
 func (s *RotateAndFlipTestSuite) TestRotateFlip() {
-	o := options.New()
-	o.Set(keys.AutoRotate, false)
-
 	hashes := make([][]*testutil.ImageHash, 0, len(s.imgs))
 
 	for i := range s.imgs {
-		hashes = append(hashes, s.collectRotationsFlips(i, o))
+		hashes = append(hashes, s.collectRotationsFlips(i, false))
 	}
 
 	// Ensure all hashes of img[0] and other imgs are equal
@@ -144,15 +163,11 @@ func (s *RotateAndFlipTestSuite) TestRotateFlip() {
 	}
 }
 
-//nolint:dupl
 func (s *RotateAndFlipTestSuite) TestRotateFlipAutoRotate() {
-	o := options.New()
-	o.Set(keys.AutoRotate, true)
-
 	hashes := make([][]*testutil.ImageHash, 0, len(s.imgs))
 
 	for i := range s.imgs {
-		hashes = append(hashes, s.collectRotationsFlips(i, o))
+		hashes = append(hashes, s.collectRotationsFlips(i, true))
 	}
 
 	// Ensure all hashes of img[0] and other imgs are NOT equal

@@ -2,37 +2,31 @@ package processing_test
 
 import (
 	"fmt"
+	"io"
+	"net/http"
 
-	"github.com/imgproxy/imgproxy/v3/auximageprovider"
-	"github.com/imgproxy/imgproxy/v3/fetcher"
 	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/logger"
-	"github.com/imgproxy/imgproxy/v3/options"
-	"github.com/imgproxy/imgproxy/v3/options/keys"
-	"github.com/imgproxy/imgproxy/v3/processing"
-	"github.com/imgproxy/imgproxy/v3/security"
 	"github.com/imgproxy/imgproxy/v3/testutil"
+	"github.com/imgproxy/imgproxy/v3/testutil/servertest"
 	"github.com/imgproxy/imgproxy/v3/vips"
 )
 
 type testSuite struct {
-	testutil.LazySuite
+	servertest.Suite
 
-	TestData *testutil.TestDataProvider
-
-	ImageDataFactory  testutil.LazyObj[*imagedata.Factory]
-	SecurityConfig    testutil.LazyObj[*security.Config]
-	Security          testutil.LazyObj[*security.Checker]
-	Config            testutil.LazyObj[*processing.Config]
-	WatermarkConfig   testutil.LazyObj[*auximageprovider.StaticConfig]
-	WatermarkProvider testutil.LazyObj[auximageprovider.Provider]
-	Processor         testutil.LazyObj[*processing.Processor]
-	ImageMatcher      testutil.LazyObj[*testutil.ImageHashCacheMatcher]
+	ImageMatcher testutil.LazyObj[*testutil.ImageHashCacheMatcher]
 }
 
 type optsFactory interface {
-	Set(o *options.Options)
-	String() string
+	URLOptions() string
+	ImagePath() string
+}
+
+type testCaseParams interface {
+	Options() optsFactory
+	OutSize() testSize
+	OutInterpretation() vips.Interpretation
 }
 
 type testCase[T optsFactory] struct {
@@ -41,9 +35,16 @@ type testCase[T optsFactory] struct {
 	outInterpretation vips.Interpretation
 }
 
-type testCaseParams interface {
-	OutSize() testSize
-	OutInterpretation() vips.Interpretation
+func (c testCase[T]) Options() optsFactory {
+	return c.opts
+}
+
+func (c testCase[T]) URLOptions() string {
+	return c.opts.URLOptions()
+}
+
+func (c testCase[T]) ImagePath() string {
+	return c.opts.ImagePath()
 }
 
 func (c testCase[T]) OutSize() testSize {
@@ -59,71 +60,12 @@ type testSize struct {
 	height int
 }
 
-func (c testSize) Set(o *options.Options) {
-	o.Set(keys.Width, c.width)
-	o.Set(keys.Height, c.height)
-}
-
 func (c testSize) String() string {
 	return fmt.Sprintf("%dx%d", c.width, c.height)
 }
 
 func (s *testSuite) SetupSuite() {
-	vipsCfg := vips.NewDefaultConfig()
-	s.Require().NoError(vips.Init(&vipsCfg))
-
-	logger.Mute()
-
-	s.TestData = testutil.NewTestDataProvider(s.T)
-
-	s.ImageDataFactory, _ = testutil.NewLazySuiteObj(s, func() (*imagedata.Factory, error) {
-		c := fetcher.NewDefaultConfig()
-		f, err := fetcher.New(&c)
-		if err != nil {
-			return nil, err
-		}
-
-		return imagedata.NewFactory(f, nil), nil
-	})
-
-	s.SecurityConfig, _ = testutil.NewLazySuiteObj(s, func() (*security.Config, error) {
-		c := security.NewDefaultConfig()
-
-		c.MaxSrcResolution = 10 * 1024 * 1024
-		c.MaxSrcFileSize = 10 * 1024 * 1024
-		c.MaxAnimationFrames = 100
-		c.MaxAnimationFrameResolution = 10 * 1024 * 1024
-
-		return &c, nil
-	})
-
-	s.Security, _ = testutil.NewLazySuiteObj(s, func() (*security.Checker, error) {
-		return security.New(s.SecurityConfig())
-	})
-
-	s.Config, _ = testutil.NewLazySuiteObj(s, func() (*processing.Config, error) {
-		c := processing.NewDefaultConfig()
-		return &c, nil
-	})
-
-	s.WatermarkConfig, _ = testutil.NewLazySuiteObj(s, func() (*auximageprovider.StaticConfig, error) {
-		return &auximageprovider.StaticConfig{
-			Path: s.TestData.Path("geometry.png"),
-		}, nil
-	})
-
-	s.WatermarkProvider, _ = testutil.NewLazySuiteObj(s, func() (auximageprovider.Provider, error) {
-		return auximageprovider.NewStaticProvider(
-			s.T().Context(),
-			s.WatermarkConfig(),
-			"watermark",
-			s.ImageDataFactory(),
-		)
-	})
-
-	s.Processor, _ = testutil.NewLazySuiteObj(s, func() (*processing.Processor, error) {
-		return processing.New(s.Config(), s.Security(), s.WatermarkProvider())
-	})
+	s.Suite.SetupSuite()
 
 	s.ImageMatcher, _ = testutil.NewLazySuiteObj(s, func() (*testutil.ImageHashCacheMatcher, error) {
 		return testutil.NewImageHashCacheMatcher(s.TestData, testutil.HashTypeSHA256), nil
@@ -134,35 +76,55 @@ func (s *testSuite) TearDownSuite() {
 	logger.Unmute()
 }
 
-func (s *testSuite) processImageAndCheck(
-	imgdata imagedata.ImageData,
-	o *options.Options,
-	tc testCaseParams,
-) {
-	result, err := s.Processor().ProcessImage(s.T().Context(), imgdata, o)
+func (s *testSuite) processImage(opts optsFactory) imagedata.ImageData {
+	s.T().Helper()
+
+	reqPath := "/unsafe/" + opts.URLOptions() + "/plain/local:///" + opts.ImagePath()
+	resp := s.GET(reqPath)
+
+	resultBytes, err := io.ReadAll(resp.Body)
 	s.Require().NoError(err)
-	s.Require().NotNil(result)
+	defer resp.Body.Close()
+
+	s.Require().Equal(
+		http.StatusOK,
+		resp.StatusCode,
+		"Expected status code 200, got %d; Path: %s; Body: %s",
+		resp.StatusCode,
+		reqPath,
+		string(resultBytes),
+	)
+
+	resultData, err := s.Imgproxy().ImageDataFactory().NewFromBytes(resultBytes)
+	s.Require().NoError(err)
+
+	return resultData
+}
+
+func (s *testSuite) processImageAndCheck(tc testCaseParams) {
+	s.T().Helper()
+
+	resultData := s.processImage(tc.Options())
+	defer resultData.Close()
+
+	// Load the result image to check its size and interpretation
+	resultImg := new(vips.Image)
+	defer resultImg.Clear()
+
+	err := resultImg.Load(resultData, 1.0, 0, 1)
+	s.Require().NoError(err)
 
 	outSize := tc.OutSize()
 	outInterpretation := tc.OutInterpretation()
 
-	s.Require().Equal(result.ResultWidth, outSize.width, "Width mismatch")
-	s.Require().Equal(result.ResultHeight, outSize.height, "Height mismatch")
+	s.Require().Equal(resultImg.Width(), outSize.width, "Width mismatch")
+	s.Require().Equal(resultImg.Height(), outSize.height, "Height mismatch")
 
-	s.ImageMatcher().ImageMatches(s.T(), result.OutData.Reader(), "test", 0.0005)
-
-	if outInterpretation == vips.InterpretationMultiBand {
-		return
+	if outInterpretation != vips.InterpretationMultiBand {
+		// Check the interpretation
+		actualInterpretation := resultImg.Type()
+		s.Require().Equal(outInterpretation, actualInterpretation)
 	}
 
-	// Load the result image to check its interpretation
-	resultImg := new(vips.Image)
-	defer resultImg.Clear()
-
-	err = resultImg.Load(result.OutData, 1, 1.0, 1)
-	s.Require().NoError(err)
-
-	// Check the interpretation
-	actualInterpretation := resultImg.Type()
-	s.Require().Equal(outInterpretation, actualInterpretation)
+	s.ImageMatcher().ImageMatches(s.T(), resultData.Reader(), "test", 0.0005)
 }

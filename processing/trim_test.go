@@ -2,45 +2,51 @@ package processing_test
 
 import (
 	"bytes"
+	"fmt"
 	"strconv"
 	"strings"
 	"testing"
 
-	"github.com/imgproxy/imgproxy/v3/imagedata"
-	"github.com/imgproxy/imgproxy/v3/options"
-	"github.com/imgproxy/imgproxy/v3/options/keys"
+	"github.com/imgproxy/imgproxy/v3/testutil"
 	"github.com/imgproxy/imgproxy/v3/vips/color"
 	"github.com/stretchr/testify/suite"
 )
 
 type TrimTestSuite struct {
 	testSuite
-
-	imgThreshold imagedata.ImageData
-	imgColor     imagedata.ImageData
-	imgAlpha     imagedata.ImageData
 }
 
 type trimTestCase struct {
-	threshold int
-	color     *color.RGB
-	equalHor  bool
-	equalVer  bool
+	sourceFile string
+	threshold  int
+	color      *color.RGB
+	equalHor   bool
+	equalVer   bool
 }
 
-func (r trimTestCase) Set(o *options.Options) {
-	if r.threshold > 0 {
-		o.Set(keys.TrimThreshold, r.threshold)
-	}
+func (r trimTestCase) ImagePath() string {
+	return r.sourceFile
+}
+
+func (r trimTestCase) URLOptions() string {
+	opts := testutil.NewOptionsBuilder()
+
+	args := opts.Add("trim")
+	args.Set(0, r.threshold)
 
 	if r.color != nil {
-		o.Set(keys.TrimColor, *r.color)
-	} else {
-		o.Delete(keys.TrimColor)
+		args.Set(1, fmt.Sprintf("%02x%02x%02x", r.color.R, r.color.G, r.color.B))
 	}
 
-	o.Set(keys.TrimEqualHor, r.equalHor)
-	o.Set(keys.TrimEqualVer, r.equalVer)
+	if r.equalHor {
+		args.Set(2, 1)
+	}
+
+	if r.equalVer {
+		args.Set(3, 1)
+	}
+
+	return opts.String()
 }
 
 func (r trimTestCase) String() string {
@@ -71,30 +77,7 @@ func (r trimTestCase) String() string {
 	return n
 }
 
-func (s *TrimTestSuite) SetupSuite() {
-	s.testSuite.SetupSuite()
-
-	var err error
-
-	s.imgThreshold, err = s.ImageDataFactory().NewFromPath(
-		s.TestData.Path("trim1.png"),
-	)
-	s.Require().NoError(err)
-
-	s.imgColor, err = s.ImageDataFactory().NewFromPath(
-		s.TestData.Path("trim2.png"),
-	)
-	s.Require().NoError(err)
-
-	s.imgAlpha, err = s.ImageDataFactory().NewFromPath(
-		s.TestData.Path("trim3.png"),
-	)
-	s.Require().NoError(err)
-}
-
 func (s *TrimTestSuite) TestThreshold() {
-	o := options.New()
-
 	testCases := []testCase[trimTestCase]{
 		{opts: trimTestCase{threshold: 5}, outSize: testSize{320, 220}},
 		{opts: trimTestCase{threshold: 100}, outSize: testSize{290, 190}},
@@ -121,16 +104,13 @@ func (s *TrimTestSuite) TestThreshold() {
 
 	for _, tc := range testCases {
 		s.Run(tc.opts.String(), func() {
-			tc.opts.Set(o)
-
-			s.processImageAndCheck(s.imgThreshold, o, tc)
+			tc.opts.sourceFile = "trim1.png"
+			s.processImageAndCheck(tc)
 		})
 	}
 }
 
 func (s *TrimTestSuite) TestColor() {
-	o := options.New()
-
 	testCases := []testCase[trimTestCase]{
 		{
 			opts:    trimTestCase{threshold: 1},
@@ -161,16 +141,13 @@ func (s *TrimTestSuite) TestColor() {
 
 	for _, tc := range testCases {
 		s.Run(tc.opts.String(), func() {
-			tc.opts.Set(o)
-
-			s.processImageAndCheck(s.imgColor, o, tc)
+			tc.opts.sourceFile = "trim2.png"
+			s.processImageAndCheck(tc)
 		})
 	}
 }
 
 func (s *TrimTestSuite) TestAlpha() {
-	o := options.New()
-
 	testCases := []testCase[trimTestCase]{
 		{
 			opts: trimTestCase{
@@ -183,9 +160,8 @@ func (s *TrimTestSuite) TestAlpha() {
 
 	for _, tc := range testCases {
 		s.Run(tc.opts.String(), func() {
-			tc.opts.Set(o)
-
-			s.processImageAndCheck(s.imgAlpha, o, tc)
+			tc.opts.sourceFile = "trim3.png"
+			s.processImageAndCheck(tc)
 		})
 	}
 }

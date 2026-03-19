@@ -120,7 +120,7 @@ func (r *Router) WithReportError(h RouteHandler) RouteHandler {
 		// Error message: either is public message or full development error
 		if r.config.DevelopmentErrorsMode {
 			// Generate and serve HTML error page
-			html, contentType := generateErrorHTML(err.Err, reqID)
+			html, contentType := generateErrorHTML(err.Err, reqID, req.Header)
 
 			rw.Header().Set(httpheaders.ContentType, contentType)
 			rw.WriteHeader(err.Err.StatusCode())
