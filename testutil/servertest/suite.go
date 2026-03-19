@@ -1,4 +1,4 @@
-package integration_test
+package servertest
 
 import (
 	"context"
@@ -47,9 +47,17 @@ func (s *Suite) SetupSuite() {
 		c := imgproxy.NewDefaultConfig()
 
 		c.Server.Bind = ":0"
+		c.Server.DevelopmentErrorsMode = true
 
 		c.Fetcher.Transport.Local.Root = s.TestData.Root()
 		c.Fetcher.Transport.HTTP.ClientKeepAliveTimeout = 0
+
+		c.OptionsParser.AllowSecurityOptions = true
+
+		c.Security.MaxSrcResolution = 10 * 1024 * 1024
+		c.Security.MaxSrcFileSize = 10 * 1024 * 1024
+		c.Security.MaxAnimationFrames = 100
+		c.Security.MaxAnimationFrameResolution = 10 * 1024 * 1024
 
 		return &c, nil
 	})
@@ -104,6 +112,7 @@ func (s *Suite) GET(path string, header ...http.Header) *http.Response {
 // startServer starts imgproxy instance's server for the tests.
 // Returns [TestServer] that contains the server address and shutdown function
 func (s *Suite) startServer(ctx context.Context, i *imgproxy.Imgproxy) *TestServer {
+	//nolint:gosec // TestServer will deal with cancellation
 	ctx, cancel := context.WithCancel(ctx)
 
 	addrCh := make(chan net.Addr)

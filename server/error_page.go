@@ -6,11 +6,13 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
+	"net/http"
 	"runtime"
 	"runtime/debug"
 	"strings"
 
 	"github.com/imgproxy/imgproxy/v3/errctx"
+	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/version"
 )
 
@@ -142,7 +144,14 @@ func getBuildInfo() (string, string) {
 
 // generateErrorHTML renders the error page template with the given error information.
 // It returns the generated HTML as a byte slice and a Content-Type string.
-func generateErrorHTML(err errctx.Error, reqID string) ([]byte, string) {
+//
+// If there is an error during template execution or if the client does not accept HTML,
+// it falls back to generating a plain text error message with the error message and stack trace.
+func generateErrorHTML(err errctx.Error, reqID string, h http.Header) ([]byte, string) {
+	if !strings.Contains(h.Get(httpheaders.Accept), "text/html") {
+		return generateErrorText(err)
+	}
+
 	errorChain := unwrapErrorChain(err)
 	gover, commit := getBuildInfo()
 
@@ -159,9 +168,13 @@ func generateErrorHTML(err errctx.Error, reqID string) ([]byte, string) {
 	var buf bytes.Buffer
 	if errorPageTemplate.Execute(&buf, data) != nil {
 		// In case of template execution error, return the error message and stack trace as plain text.
-		body := fmt.Appendf([]byte{}, "%s\n\n%s", err.Error(), err.FormatStack())
-		return body, "text/plain; charset=utf-8"
+		return generateErrorText(err)
 	}
 
 	return buf.Bytes(), "text/html; charset=utf-8"
+}
+
+func generateErrorText(err errctx.Error) ([]byte, string) {
+	body := fmt.Appendf([]byte{}, "%s\n\n%s", err.Error(), err.FormatStack())
+	return body, "text/plain; charset=utf-8"
 }

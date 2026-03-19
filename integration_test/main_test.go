@@ -1,21 +1,12 @@
 package integration_test
 
 import (
-	"context"
-	"os"
 	"testing"
 
-	"github.com/imgproxy/imgproxy/v3"
+	"github.com/imgproxy/imgproxy/v3/testutil/servertest"
 )
 
 // TestMain performs global setup/teardown for the integration tests.
 func TestMain(m *testing.M) {
-	err := imgproxy.Init(context.Background())
-	if err != nil {
-		panic(err)
-	}
-
-	r := m.Run()
-	imgproxy.Shutdown()
-	os.Exit(r)
+	servertest.TestMain(m)
 }

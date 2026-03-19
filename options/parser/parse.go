@@ -375,7 +375,7 @@ func (p *Parser) parseGravity(
 			return newInvalidArgsError(ctx, key, args)
 		}
 
-		if nArgs > 1 {
+		if nArgs > 1 && len(args[1]) > 0 {
 			if x, err := strconv.ParseFloat(args[1], 64); err == nil && p.isGravityOffsetValid(gType, x) {
 				o.Set(keyXOffset, x)
 			} else {
@@ -383,7 +383,7 @@ func (p *Parser) parseGravity(
 			}
 		}
 
-		if nArgs > 2 {
+		if nArgs > 2 && len(args[2]) > 0 {
 			if y, err := strconv.ParseFloat(args[2], 64); err == nil && p.isGravityOffsetValid(gType, y) {
 				o.Set(keyYOffset, y)
 			} else {
