@@ -121,7 +121,7 @@ func (p *Parser) applyURLOption(
 func (p *Parser) applyURLOptions(
 	ctx context.Context,
 	o *options.Options,
-	options urlOptions,
+	options []urlOption,
 	allowAll bool,
 	usedPresets ...string,
 ) error {

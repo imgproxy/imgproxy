@@ -1,4 +1,4 @@
-package bufreader
+package bufreader_test
 
 import (
 	"io"
@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+
+	"github.com/imgproxy/imgproxy/v3/bufreader"
 )
 
 // BufferedReaderTestSuite defines the test suite for the buffered reader
@@ -15,7 +17,7 @@ type BufferedReaderTestSuite struct {
 
 func (s *BufferedReaderTestSuite) TestRead() {
 	data := "hello world"
-	br := New(strings.NewReader(data))
+	br := bufreader.New(strings.NewReader(data))
 
 	// First read
 	p1 := make([]byte, 5)
@@ -32,12 +34,12 @@ func (s *BufferedReaderTestSuite) TestRead() {
 	s.Equal(" world", string(p2))
 
 	// Verify position
-	s.Equal(11, br.pos)
+	s.Equal(11, br.Pos())
 }
 
 func (s *BufferedReaderTestSuite) TestEOF() {
 	data := "hello"
-	br := New(strings.NewReader(data))
+	br := bufreader.New(strings.NewReader(data))
 
 	// Read all data
 	p1 := make([]byte, 5)
@@ -55,7 +57,7 @@ func (s *BufferedReaderTestSuite) TestEOF() {
 
 func (s *BufferedReaderTestSuite) TestEOF_WhenDataExhausted() {
 	data := "hello"
-	br := New(strings.NewReader(data))
+	br := bufreader.New(strings.NewReader(data))
 
 	// Try to read more than available
 	p := make([]byte, 10)
@@ -77,13 +79,13 @@ func (s *BufferedReaderTestSuite) TestEOF_WhenDataExhausted() {
 
 func (s *BufferedReaderTestSuite) TestPeek() {
 	data := "hello world"
-	br := New(strings.NewReader(data))
+	br := bufreader.New(strings.NewReader(data))
 
 	// Peek at first 5 bytes
 	peeked, err := br.Peek(5)
 	s.Require().NoError(err)
 	s.Equal("hello", string(peeked))
-	s.Equal(0, br.pos) // Position should not change
+	s.Equal(0, br.Pos()) // Position should not change
 
 	// Read the same data to verify peek didn't consume it
 	p := make([]byte, 5)
@@ -91,13 +93,13 @@ func (s *BufferedReaderTestSuite) TestPeek() {
 	s.Require().NoError(err)
 	s.Equal(5, n)
 	s.Equal("hello", string(p))
-	s.Equal(5, br.pos) // Position should now be updated
+	s.Equal(5, br.Pos()) // Position should now be updated
 
 	// Peek at the next 7 bytes (which are beyond the EOF)
 	peeked2, err := br.Peek(7)
 	s.Require().NoError(err)
 	s.Equal(" world", string(peeked2))
-	s.Equal(5, br.pos) // Position should still be 5
+	s.Equal(5, br.Pos()) // Position should still be 5
 }
 
 // TestBufferedReaderSuite runs the test suite

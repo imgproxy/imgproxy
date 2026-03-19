@@ -1,4 +1,4 @@
-package imagedata
+package imagedata_test
 
 import (
 	"bytes"
@@ -16,6 +16,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/errctx"
 	"github.com/imgproxy/imgproxy/v3/fetcher"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
+	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/testutil"
 )
@@ -24,7 +25,7 @@ type ImageDataTestSuite struct {
 	testutil.LazySuite
 
 	fetcherCfg testutil.LazyObj[*fetcher.Config]
-	factory    testutil.LazyObj[*Factory]
+	factory    testutil.LazyObj[*imagedata.Factory]
 	testServer testutil.LazyTestServer
 
 	data []byte
@@ -46,13 +47,13 @@ func (s *ImageDataTestSuite) SetupSuite() {
 
 	s.factory, _ = testutil.NewLazySuiteObj(
 		s,
-		func() (*Factory, error) {
-			fetcher, err := fetcher.New(s.fetcherCfg())
+		func() (*imagedata.Factory, error) {
+			f, err := fetcher.New(s.fetcherCfg())
 			if err != nil {
 				return nil, err
 			}
 
-			return NewFactory(fetcher, nil), nil
+			return imagedata.NewFactory(f, nil), nil
 		},
 	)
 
@@ -77,7 +78,7 @@ func (s *ImageDataTestSuite) SetupSubTest() {
 
 func (s *ImageDataTestSuite) TestDownloadStatusOK() {
 	imgdata, _, err := s.factory().DownloadSync(
-		context.Background(), s.testServer().URL(), "Test image", DownloadOptions{},
+		context.Background(), s.testServer().URL(), "Test image", imagedata.DownloadOptions{},
 	)
 
 	s.Require().NoError(err)
@@ -146,7 +147,7 @@ func (s *ImageDataTestSuite) TestDownloadStatusPartialContent() {
 				SetStatusCode(http.StatusPartialContent)
 
 			imgdata, _, err := s.factory().DownloadSync(
-				context.Background(), s.testServer().URL(), "Test image", DownloadOptions{},
+				context.Background(), s.testServer().URL(), "Test image", imagedata.DownloadOptions{},
 			)
 
 			if tc.expectErr {
@@ -169,7 +170,7 @@ func (s *ImageDataTestSuite) TestDownloadStatusNotFound() {
 		SetHeaders(httpheaders.ContentType, "text/plain")
 
 	imgdata, _, err := s.factory().DownloadSync(
-		context.Background(), s.testServer().URL(), "Test image", DownloadOptions{},
+		context.Background(), s.testServer().URL(), "Test image", imagedata.DownloadOptions{},
 	)
 
 	s.Require().Error(err)
@@ -184,7 +185,7 @@ func (s *ImageDataTestSuite) TestDownloadStatusForbidden() {
 		SetHeaders(httpheaders.ContentType, "text/plain")
 
 	imgdata, _, err := s.factory().DownloadSync(
-		context.Background(), s.testServer().URL(), "Test image", DownloadOptions{},
+		context.Background(), s.testServer().URL(), "Test image", imagedata.DownloadOptions{},
 	)
 
 	s.Require().Error(err)
@@ -199,7 +200,7 @@ func (s *ImageDataTestSuite) TestDownloadStatusInternalServerError() {
 		SetHeaders(httpheaders.ContentType, "text/plain")
 
 	imgdata, _, err := s.factory().DownloadSync(
-		context.Background(), s.testServer().URL(), "Test image", DownloadOptions{},
+		context.Background(), s.testServer().URL(), "Test image", imagedata.DownloadOptions{},
 	)
 
 	s.Require().Error(err)
@@ -214,7 +215,7 @@ func (s *ImageDataTestSuite) TestDownloadUnreachable() {
 
 	serverURL := fmt.Sprintf("http://%s", l.Addr().String())
 
-	imgdata, _, err := s.factory().DownloadSync(context.Background(), serverURL, "Test image", DownloadOptions{})
+	imgdata, _, err := s.factory().DownloadSync(context.Background(), serverURL, "Test image", imagedata.DownloadOptions{})
 
 	s.Require().Error(err)
 	s.Require().Equal(404, errctx.Wrap(err).StatusCode())
@@ -225,7 +226,7 @@ func (s *ImageDataTestSuite) TestDownloadInvalidImage() {
 	s.testServer().SetBody([]byte("invalid"))
 
 	imgdata, _, err := s.factory().DownloadSync(
-		context.Background(), s.testServer().URL(), "Test image", DownloadOptions{},
+		context.Background(), s.testServer().URL(), "Test image", imagedata.DownloadOptions{},
 	)
 
 	s.Require().Error(err)
@@ -237,7 +238,7 @@ func (s *ImageDataTestSuite) TestDownloadSourceAddressNotAllowed() {
 	s.fetcherCfg().Transport.HTTP.AllowLoopbackSourceAddresses = false
 
 	imgdata, _, err := s.factory().DownloadSync(
-		context.Background(), s.testServer().URL(), "Test image", DownloadOptions{},
+		context.Background(), s.testServer().URL(), "Test image", imagedata.DownloadOptions{},
 	)
 
 	s.Require().Error(err)
@@ -246,9 +247,12 @@ func (s *ImageDataTestSuite) TestDownloadSourceAddressNotAllowed() {
 }
 
 func (s *ImageDataTestSuite) TestDownloadImageFileTooLarge() {
-	imgdata, _, err := s.factory().DownloadSync(context.Background(), s.testServer().URL(), "Test image", DownloadOptions{
-		MaxSrcFileSize: 1,
-	})
+	imgdata, _, err := s.factory().DownloadSync(
+		context.Background(),
+		s.testServer().URL(),
+		"Test image",
+		imagedata.DownloadOptions{MaxSrcFileSize: 1},
+	)
 
 	s.Require().Error(err)
 	s.Require().Equal(422, errctx.Wrap(err).StatusCode())
@@ -272,7 +276,7 @@ func (s *ImageDataTestSuite) TestDownloadGzip() {
 		)
 
 	imgdata, _, err := s.factory().DownloadSync(
-		context.Background(), s.testServer().URL(), "Test image", DownloadOptions{},
+		context.Background(), s.testServer().URL(), "Test image", imagedata.DownloadOptions{},
 	)
 
 	s.Require().NoError(err)

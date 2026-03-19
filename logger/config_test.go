@@ -1,10 +1,12 @@
-package logger
+package logger_test
 
 import (
 	"log/slog"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/imgproxy/imgproxy/v3/logger"
 )
 
 func TestSyslogConfigLevel(t *testing.T) {
@@ -54,8 +56,8 @@ func TestSyslogConfigLevel(t *testing.T) {
 				t.Setenv("IMGPROXY_SYSLOG_LEVEL", tt.syslogLvl)
 			}
 
-			cfg := NewDefaultConfig()
-			LoadConfigFromEnv(&cfg)
+			cfg := logger.NewDefaultConfig()
+			logger.LoadConfigFromEnv(&cfg)
 
 			require.Equal(t, tt.expectedLoggerLvl, cfg.Level)
 			require.Equal(t, tt.expectedSyslogLvl, cfg.Syslog.Level)

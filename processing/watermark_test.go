@@ -1,4 +1,4 @@
-package processing
+package processing_test
 
 import (
 	"bytes"
@@ -9,11 +9,12 @@ import (
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/options/keys"
+	"github.com/imgproxy/imgproxy/v3/processing"
 	"github.com/stretchr/testify/suite"
 )
 
 type watermarkTestCase struct {
-	position GravityType
+	position processing.GravityType
 	opacity  float64
 	xOffset  float64
 	yOffset  float64
@@ -108,50 +109,50 @@ func (s *WatermarkTestSuite) TestWatermark() {
 	testCases := []testCase[watermarkTestCase]{
 		// All positions
 		{
-			opts:    watermarkTestCase{position: GravityCenter, opacity: 1},
+			opts:    watermarkTestCase{position: processing.GravityCenter, opacity: 1},
 			outSize: outSize,
 		},
 		{
-			opts:    watermarkTestCase{position: GravityNorth, opacity: 1},
+			opts:    watermarkTestCase{position: processing.GravityNorth, opacity: 1},
 			outSize: outSize,
 		},
 		{
-			opts:    watermarkTestCase{position: GravityEast, opacity: 1},
+			opts:    watermarkTestCase{position: processing.GravityEast, opacity: 1},
 			outSize: outSize,
 		},
 		{
-			opts:    watermarkTestCase{position: GravitySouth, opacity: 1},
+			opts:    watermarkTestCase{position: processing.GravitySouth, opacity: 1},
 			outSize: outSize,
 		},
 		{
-			opts:    watermarkTestCase{position: GravityWest, opacity: 1},
+			opts:    watermarkTestCase{position: processing.GravityWest, opacity: 1},
 			outSize: outSize,
 		},
 		{
-			opts:    watermarkTestCase{position: GravityNorthWest, opacity: 1},
+			opts:    watermarkTestCase{position: processing.GravityNorthWest, opacity: 1},
 			outSize: outSize,
 		},
 		{
-			opts:    watermarkTestCase{position: GravityNorthEast, opacity: 1},
+			opts:    watermarkTestCase{position: processing.GravityNorthEast, opacity: 1},
 			outSize: outSize,
 		},
 		{
-			opts:    watermarkTestCase{position: GravitySouthWest, opacity: 1},
+			opts:    watermarkTestCase{position: processing.GravitySouthWest, opacity: 1},
 			outSize: outSize,
 		},
 		{
-			opts:    watermarkTestCase{position: GravitySouthEast, opacity: 1},
+			opts:    watermarkTestCase{position: processing.GravitySouthEast, opacity: 1},
 			outSize: outSize,
 		},
 		{
-			opts:    watermarkTestCase{position: GravityReplicate, opacity: 1},
+			opts:    watermarkTestCase{position: processing.GravityReplicate, opacity: 1},
 			outSize: outSize,
 		},
 
 		// Offset
 		{
 			opts: watermarkTestCase{
-				position: GravityNorth,
+				position: processing.GravityNorth,
 				xOffset:  50,
 				opacity:  1,
 			},
@@ -159,7 +160,7 @@ func (s *WatermarkTestSuite) TestWatermark() {
 		},
 		{
 			opts: watermarkTestCase{
-				position: GravityNorth,
+				position: processing.GravityNorth,
 				yOffset:  50,
 				opacity:  1,
 			},
@@ -167,7 +168,7 @@ func (s *WatermarkTestSuite) TestWatermark() {
 		},
 		{
 			opts: watermarkTestCase{
-				position: GravityNorth,
+				position: processing.GravityNorth,
 				xOffset:  50,
 				yOffset:  50,
 				opacity:  1,
@@ -176,7 +177,7 @@ func (s *WatermarkTestSuite) TestWatermark() {
 		},
 		{
 			opts: watermarkTestCase{
-				position: GravityNorth,
+				position: processing.GravityNorth,
 				xOffset:  50,
 				yOffset:  50,
 				opacity:  1,
@@ -186,7 +187,7 @@ func (s *WatermarkTestSuite) TestWatermark() {
 		},
 		{
 			opts: watermarkTestCase{
-				position: GravityNorth,
+				position: processing.GravityNorth,
 				xOffset:  50,
 				yOffset:  50,
 				opacity:  1,
@@ -196,7 +197,7 @@ func (s *WatermarkTestSuite) TestWatermark() {
 		},
 		{
 			opts: watermarkTestCase{
-				position: GravityReplicate,
+				position: processing.GravityReplicate,
 				xOffset:  50,
 				opacity:  1,
 			},
@@ -204,7 +205,7 @@ func (s *WatermarkTestSuite) TestWatermark() {
 		},
 		{
 			opts: watermarkTestCase{
-				position: GravityReplicate,
+				position: processing.GravityReplicate,
 				yOffset:  50,
 				opacity:  1,
 			},
@@ -212,7 +213,7 @@ func (s *WatermarkTestSuite) TestWatermark() {
 		},
 		{
 			opts: watermarkTestCase{
-				position: GravityReplicate,
+				position: processing.GravityReplicate,
 				xOffset:  50,
 				yOffset:  50,
 				opacity:  1,
@@ -221,7 +222,7 @@ func (s *WatermarkTestSuite) TestWatermark() {
 		},
 		{
 			opts: watermarkTestCase{
-				position: GravityReplicate,
+				position: processing.GravityReplicate,
 				xOffset:  50,
 				yOffset:  50,
 				opacity:  1,
@@ -231,7 +232,7 @@ func (s *WatermarkTestSuite) TestWatermark() {
 		},
 		{
 			opts: watermarkTestCase{
-				position: GravityReplicate,
+				position: processing.GravityReplicate,
 				xOffset:  50,
 				yOffset:  50,
 				opacity:  1,
@@ -243,14 +244,14 @@ func (s *WatermarkTestSuite) TestWatermark() {
 		// Opacity
 		{
 			opts: watermarkTestCase{
-				position: GravityReplicate,
+				position: processing.GravityReplicate,
 				opacity:  0,
 			},
 			outSize: outSize,
 		},
 		{
 			opts: watermarkTestCase{
-				position: GravityReplicate,
+				position: processing.GravityReplicate,
 				opacity:  0.5,
 			},
 			outSize: outSize,
@@ -259,7 +260,7 @@ func (s *WatermarkTestSuite) TestWatermark() {
 		// Scale
 		{
 			opts: watermarkTestCase{
-				position: GravityReplicate,
+				position: processing.GravityReplicate,
 				opacity:  1,
 				scale:    0,
 			},
@@ -267,7 +268,7 @@ func (s *WatermarkTestSuite) TestWatermark() {
 		},
 		{
 			opts: watermarkTestCase{
-				position: GravityReplicate,
+				position: processing.GravityReplicate,
 				opacity:  1,
 				scale:    0.5,
 			},
@@ -290,7 +291,7 @@ func (s *WatermarkTestSuite) TestWatermarkAnimation() {
 	testCases := []testCase[watermarkTestCase]{
 		{
 			opts: watermarkTestCase{
-				position: GravityNorthWest,
+				position: processing.GravityNorthWest,
 				xOffset:  10,
 				yOffset:  20,
 				dpr:      0.5,
@@ -300,7 +301,7 @@ func (s *WatermarkTestSuite) TestWatermarkAnimation() {
 		},
 		{
 			opts: watermarkTestCase{
-				position: GravityNorthWest,
+				position: processing.GravityNorthWest,
 				xOffset:  10,
 				yOffset:  20,
 				dpr:      2,

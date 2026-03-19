@@ -1,4 +1,4 @@
-package workers
+package workers_test
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/imgproxy/imgproxy/v3/testutil"
+	"github.com/imgproxy/imgproxy/v3/workers"
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/sync/errgroup"
 )
@@ -14,17 +15,17 @@ import (
 type WorkersTestSuite struct {
 	testutil.LazySuite
 
-	config  testutil.LazyObj[*Config]
-	workers testutil.LazyObj[*Workers]
+	config testutil.LazyObj[*workers.Config]
+	wks    testutil.LazyObj[*workers.Workers]
 }
 
 func (s *WorkersTestSuite) SetupSuite() {
-	s.config, _ = testutil.NewLazySuiteObj(s, func() (*Config, error) {
-		return &Config{RequestsQueueSize: 0, WorkersNumber: 1}, nil
+	s.config, _ = testutil.NewLazySuiteObj(s, func() (*workers.Config, error) {
+		return &workers.Config{RequestsQueueSize: 0, WorkersNumber: 1}, nil
 	})
 
-	s.workers, _ = testutil.NewLazySuiteObj(s, func() (*Workers, error) {
-		return New(s.config())
+	s.wks, _ = testutil.NewLazySuiteObj(s, func() (*workers.Workers, error) {
+		return workers.New(s.config())
 	})
 }
 
@@ -33,11 +34,11 @@ func (s *WorkersTestSuite) acquire(ctx context.Context, n int, delay time.Durati
 	acquired := int64(0)
 
 	// Get the workers instance before running goroutines
-	workers := s.workers()
+	wks := s.wks()
 
 	for range n {
 		errg.Go(func() error {
-			release, err := workers.Acquire(ctx)
+			release, err := wks.Acquire(ctx)
 
 			if err == nil {
 				time.Sleep(delay)
@@ -76,7 +77,7 @@ func (s *WorkersTestSuite) TestQueueEnabled() {
 	// Try to acquire workers that exceed allowed workers number + queue size
 	acquired, err = s.acquire(s.T().Context(), 6, 10*time.Millisecond)
 	s.Require().Equal(3, acquired, "Only 4 workers should be acquired")
-	s.Require().ErrorAs(err, new(TooManyRequestsError))
+	s.Require().ErrorAs(err, new(workers.TooManyRequestsError))
 }
 
 func (s *WorkersTestSuite) TestContextTimeout() {
@@ -98,10 +99,10 @@ func (s *WorkersTestSuite) TestContextCanceled() {
 }
 
 func (s *WorkersTestSuite) TestSemaphoresInvalidConfig() {
-	_, err := New(&Config{RequestsQueueSize: 0, WorkersNumber: 0})
+	_, err := workers.New(&workers.Config{RequestsQueueSize: 0, WorkersNumber: 0})
 	s.Require().Error(err)
 
-	_, err = New(&Config{RequestsQueueSize: -1, WorkersNumber: 1})
+	_, err = workers.New(&workers.Config{RequestsQueueSize: -1, WorkersNumber: 1})
 	s.Require().Error(err)
 }
 

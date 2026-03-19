@@ -1,4 +1,4 @@
-package processing
+package processing_test
 
 import (
 	"testing"
@@ -6,6 +6,7 @@ import (
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/options/keys"
+	"github.com/imgproxy/imgproxy/v3/processing"
 	"github.com/imgproxy/imgproxy/v3/testutil"
 	"github.com/imgproxy/imgproxy/v3/vips"
 	"github.com/stretchr/testify/suite"
@@ -25,7 +26,7 @@ type colorspaceTestCase struct {
 }
 
 func (tc colorspaceTestCase) Set(o *options.Options) {
-	o.Set(keys.ResizingType, ResizeFill)
+	o.Set(keys.ResizingType, processing.ResizeFill)
 	o.Set(keys.Width, 100)
 	o.Set(keys.Height, 100)
 	o.Set(keys.Enlarge, true)

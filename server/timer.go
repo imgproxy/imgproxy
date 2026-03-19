@@ -11,16 +11,16 @@ import (
 // timerSinceCtxKey represents a context key for start time.
 type timerSinceCtxKey struct{}
 
-// startRequestTimer starts a new request timer.
-func startRequestTimer(r *http.Request, timeout time.Duration) (*http.Request, context.CancelFunc) {
+// StartRequestTimer starts a new request timer.
+func StartRequestTimer(r *http.Request, timeout time.Duration) (*http.Request, context.CancelFunc) {
 	ctx := r.Context()
 	ctx = context.WithValue(ctx, timerSinceCtxKey{}, time.Now())
 	ctx, cancel := context.WithTimeout(ctx, timeout) //nolint:gosec // cancel is called
 	return r.WithContext(ctx), cancel
 }
 
-// requestStartedAt returns the duration since the timer started in the context.
-func requestStartedAt(ctx context.Context) time.Duration {
+// RequestDuration returns the duration since the timer started in the context.
+func RequestDuration(ctx context.Context) time.Duration {
 	if t, ok := ctx.Value(timerSinceCtxKey{}).(time.Time); ok {
 		return time.Since(t)
 	}
@@ -32,7 +32,7 @@ func requestStartedAt(ctx context.Context) time.Duration {
 func CheckTimeout(ctx context.Context) errctx.Error {
 	select {
 	case <-ctx.Done():
-		d := requestStartedAt(ctx)
+		d := RequestDuration(ctx)
 
 		err := ctx.Err()
 		switch err {

@@ -1,4 +1,4 @@
-package abs
+package abs_test
 
 import (
 	"context"
@@ -8,12 +8,13 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
 
 	"github.com/imgproxy/imgproxy/v3/fetcher/transport/generichttp"
+	"github.com/imgproxy/imgproxy/v3/storage/abs"
 	"github.com/imgproxy/imgproxy/v3/testutil"
 )
 
 // absStorageWrapper wraps the storage and optionally holds a server for cleanup
 type absStorageWrapper struct {
-	*Storage
+	*abs.Storage
 
 	server      *TestServer
 	client      *azblob.Client
@@ -51,7 +52,7 @@ func NewLazySuiteStorage(
 			wrapper.server = absServer
 			wrapper.shouldClose = true
 
-			config := NewDefaultConfig()
+			config := abs.NewDefaultConfig()
 			config.Endpoint = absServer.URL()
 			config.Name = "testaccount"
 			config.Key = "dGVzdGtleQ=="
@@ -64,7 +65,7 @@ func NewLazySuiteStorage(
 				return nil, err
 			}
 
-			storage, err := New(&config, trans)
+			storage, err := abs.New(&config, trans)
 			if err != nil {
 				return nil, err
 			}

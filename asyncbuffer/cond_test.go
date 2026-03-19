@@ -1,4 +1,4 @@
-package asyncbuffer
+package asyncbuffer_test
 
 import (
 	"sync"
@@ -7,16 +7,18 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/suite"
+
+	"github.com/imgproxy/imgproxy/v3/asyncbuffer"
 )
 
 type TestCondSuite struct {
 	suite.Suite
 
-	cond *Cond
+	cond *asyncbuffer.Cond
 }
 
 func (s *TestCondSuite) SetupTest() {
-	s.cond = NewCond()
+	s.cond = asyncbuffer.NewCond()
 }
 
 func (s *TestCondSuite) TearDownTest() {
@@ -27,7 +29,7 @@ func (s *TestCondSuite) TearDownTest() {
 
 // TestBasicWaitAndTick tests the basic functionality of the Cond
 func (s *TestCondSuite) TestBasicWaitAndTick() {
-	ch := s.cond.ch
+	ch := asyncbuffer.CondCh(s.cond)
 
 	// Start a goroutine that will tick after a short delay
 	go func() {
@@ -45,7 +47,7 @@ func (s *TestCondSuite) TestBasicWaitAndTick() {
 	s.Require().Eventually(done.Load, 200*time.Millisecond, 10*time.Millisecond)
 
 	// Means that and old channel was closed and a new one has been created
-	s.Require().NotEqual(ch, s.cond.ch)
+	s.Require().NotEqual(ch, asyncbuffer.CondCh(s.cond))
 }
 
 // TestWaitMultipleWaiters tests that multiple waiters can be unblocked by a single tick
@@ -94,7 +96,7 @@ func (s *TestCondSuite) TestClose() {
 	s.cond.Wait()  // Should eventually return
 	s.cond.Tick()  // Should not panic
 
-	s.Require().Nil(s.cond.ch)
+	s.Require().Nil(asyncbuffer.CondCh(s.cond))
 }
 
 func (s *TestCondSuite) TestRapidTicksAndWaits() {

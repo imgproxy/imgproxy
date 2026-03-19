@@ -1,27 +1,28 @@
-package fs
+package fs_test
 
 import (
 	"context"
 
+	"github.com/imgproxy/imgproxy/v3/storage/fs"
 	"github.com/imgproxy/imgproxy/v3/testutil"
 )
 
 // LazySuiteStorage is a lazy object that provides FS storage for tests
-type LazySuiteStorage = testutil.LazyObj[*Storage]
+type LazySuiteStorage = testutil.LazyObj[*fs.Storage]
 
 // NewLazySuiteStorage creates a lazy FS Storage object for use in test suites
 // The tmpDir parameter specifies the root directory for the filesystem storage
 func NewLazySuiteStorage(
 	l testutil.LazySuiteFrom,
 	tmpDir string,
-) (testutil.LazyObj[*Storage], context.CancelFunc) {
+) (testutil.LazyObj[*fs.Storage], context.CancelFunc) {
 	return testutil.NewLazySuiteObj(
 		l,
-		func() (*Storage, error) {
-			config := NewDefaultConfig()
+		func() (*fs.Storage, error) {
+			config := fs.NewDefaultConfig()
 			config.Root = tmpDir
 
-			storage, err := New(&config)
+			storage, err := fs.New(&config)
 			if err != nil {
 				return nil, err
 			}

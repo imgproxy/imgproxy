@@ -1,13 +1,15 @@
-package xmlparser
+package xmlparser_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/imgproxy/imgproxy/v3/xmlparser"
 )
 
 func TestParseEntityMap(t *testing.T) {
-	directive := &Directive{
+	directive := &xmlparser.Directive{
 		Data: []byte(`<!DOCTYPE svg [
 		<!ENTITY entity1 "Value1">
 		<!ENTITY entity2 'Value2'>
@@ -18,9 +20,9 @@ func TestParseEntityMap(t *testing.T) {
 	]>`),
 	}
 
-	nodes := []Token{directive}
+	nodes := []xmlparser.Token{directive}
 
-	em := parseEntityMap(nodes)
+	em := xmlparser.ParseEntityMap(nodes)
 
 	expected := map[string][]byte{
 		"entity1": []byte("Value1"),
@@ -56,24 +58,24 @@ func TestReplaceEntities(t *testing.T) {
 	expected2 := `Value1`
 
 	t.Run("string", func(t *testing.T) {
-		result := replaceEntitiesString(input1, em)
+		result := xmlparser.ReplaceEntitiesString(input1, em)
 		require.Equal(t, expected1, result)
 
-		result = replaceEntitiesString(input2, em)
+		result = xmlparser.ReplaceEntitiesString(input2, em)
 		require.Equal(t, expected2, result)
 	})
 
 	t.Run("bytes", func(t *testing.T) {
-		result := replaceEntitiesBytes([]byte(input1), em)
+		result := xmlparser.ReplaceEntitiesBytes([]byte(input1), em)
 		require.Equal(t, expected1, string(result))
 
-		result = replaceEntitiesBytes([]byte(input2), em)
+		result = xmlparser.ReplaceEntitiesBytes([]byte(input2), em)
 		require.Equal(t, expected2, string(result))
 	})
 }
 
 func BenchmarkParseEntityMap(b *testing.B) {
-	directive := &Directive{
+	directive := &xmlparser.Directive{
 		Data: []byte(`<!DOCTYPE svg [
 		<!ENTITY entity1 "Value1">
 		<!ENTITY entity2 'Value2'>
@@ -81,12 +83,12 @@ func BenchmarkParseEntityMap(b *testing.B) {
 	]>`),
 	}
 
-	nodes := []Token{directive}
+	nodes := []xmlparser.Token{directive}
 
 	b.ResetTimer()
 
 	for b.Loop() {
-		_ = parseEntityMap(nodes)
+		_ = xmlparser.ParseEntityMap(nodes)
 	}
 }
 
@@ -102,7 +104,7 @@ func BenchmarkReplaceEntitiesString(b *testing.B) {
 	b.ResetTimer()
 
 	for b.Loop() {
-		_ = replaceEntitiesString(data, em)
+		_ = xmlparser.ReplaceEntitiesString(data, em)
 	}
 }
 
@@ -118,6 +120,6 @@ func BenchmarkReplaceEntitiesBytes(b *testing.B) {
 	b.ResetTimer()
 
 	for b.Loop() {
-		_ = replaceEntitiesBytes(data, em)
+		_ = xmlparser.ReplaceEntitiesBytes(data, em)
 	}
 }

@@ -1,4 +1,4 @@
-package transport
+package transport_test
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
+	"github.com/imgproxy/imgproxy/v3/fetcher/transport"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/storage"
 )
@@ -59,10 +60,10 @@ func (s *RoundTripperTestSuite) TestRoundTripperSuccess() {
 		},
 	}
 
-	rt := NewRoundTripper(mock, "?")
+	rt := transport.NewRoundTripper(mock, "?")
 
 	// Create a test request
-	req, err := http.NewRequest(http.MethodGet, EscapeURL("s3://test-bucket/test-key?version=123"), nil)
+	req, err := http.NewRequest(http.MethodGet, transport.EscapeURL("s3://test-bucket/test-key?version=123"), nil)
 	s.Require().NoError(err)
 
 	// Execute RoundTrip
@@ -94,7 +95,7 @@ func (s *RoundTripperTestSuite) TestRoundTripperNotFound() {
 		},
 	}
 
-	rt := NewRoundTripper(mock, "?")
+	rt := transport.NewRoundTripper(mock, "?")
 
 	req, err := http.NewRequest(http.MethodGet, "s3://bucket/key", nil)
 	s.Require().NoError(err)

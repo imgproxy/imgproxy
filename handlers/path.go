@@ -32,13 +32,13 @@ func SplitPathSignature(r *http.Request) (string, string, error) {
 	}
 
 	// restore broken slashes in the path
-	path = redenormalizePath(path)
+	path = RedenormalizePath(path)
 
 	return path, signature, nil
 }
 
-// redenormalizePath undoes path normalization done by some browsers and revers proxies
-func redenormalizePath(path string) string {
+// RedenormalizePath undoes path normalization done by some browsers and revers proxies
+func RedenormalizePath(path string) string {
 	// Cut the path at the `/plain/` segment to process those parts separately
 	options, plainURL, hasPlain := strings.Cut(path, "/plain/")
 

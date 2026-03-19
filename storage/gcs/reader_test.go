@@ -1,4 +1,4 @@
-package gcs
+package gcs_test
 
 import (
 	"testing"

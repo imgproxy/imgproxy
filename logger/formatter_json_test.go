@@ -1,4 +1,4 @@
-package logger
+package logger_test
 
 import (
 	"bytes"
@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/imgproxy/imgproxy/v3/errctx"
+	"github.com/imgproxy/imgproxy/v3/logger"
 	"github.com/imgproxy/imgproxy/v3/testutil"
 	"github.com/stretchr/testify/suite"
 )
@@ -18,8 +19,8 @@ type FormatterJsonTestSuite struct {
 	testutil.LazySuite
 
 	buf     testutil.LazyObj[*bytes.Buffer]
-	config  testutil.LazyObj[*Config]
-	handler testutil.LazyObj[*Handler]
+	config  testutil.LazyObj[*logger.Config]
+	handler testutil.LazyObj[*logger.Handler]
 	logger  testutil.LazyObj[*slog.Logger]
 }
 
@@ -33,17 +34,17 @@ func (s *FormatterJsonTestSuite) SetupTest() {
 
 	s.config, _ = testutil.NewLazySuiteObj(
 		s,
-		func() (*Config, error) {
-			cfg := NewDefaultConfig()
-			cfg.Format = FormatJSON
+		func() (*logger.Config, error) {
+			cfg := logger.NewDefaultConfig()
+			cfg.Format = logger.FormatJSON
 			return &cfg, nil
 		},
 	)
 
 	s.handler, _ = testutil.NewLazySuiteObj(
 		s,
-		func() (*Handler, error) {
-			return NewHandler(s.buf(), s.config()), nil
+		func() (*logger.Handler, error) {
+			return logger.NewHandler(s.buf(), s.config()), nil
 		},
 	)
 
@@ -71,7 +72,7 @@ func (s *FormatterJsonTestSuite) TestLevel() {
 		{level: slog.LevelInfo, levelName: "INFO", message: "Info message"},
 		{level: slog.LevelWarn, levelName: "WARNING", message: "Warning message"},
 		{level: slog.LevelError, levelName: "ERROR", message: "Error message"},
-		{level: LevelCritical, levelName: "CRITICAL", message: "Critical message"},
+		{level: logger.LevelCritical, levelName: "CRITICAL", message: "Critical message"},
 	}
 
 	testCases := []struct {
@@ -82,7 +83,7 @@ func (s *FormatterJsonTestSuite) TestLevel() {
 		{level: slog.LevelInfo, entries: testEntries[1:]},
 		{level: slog.LevelWarn, entries: testEntries[2:]},
 		{level: slog.LevelError, entries: testEntries[3:]},
-		{level: LevelCritical, entries: testEntries[4:]},
+		{level: logger.LevelCritical, entries: testEntries[4:]},
 	}
 
 	for _, tc := range testCases {

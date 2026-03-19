@@ -1,4 +1,4 @@
-package stream
+package stream_test
 
 import (
 	"fmt"
@@ -13,6 +13,7 @@ import (
 
 	"github.com/imgproxy/imgproxy/v3/cookies"
 	"github.com/imgproxy/imgproxy/v3/fetcher"
+	"github.com/imgproxy/imgproxy/v3/handlers/stream"
 	"github.com/imgproxy/imgproxy/v3/httpheaders"
 	"github.com/imgproxy/imgproxy/v3/logger"
 	"github.com/imgproxy/imgproxy/v3/monitoring"
@@ -52,8 +53,8 @@ type HandlerTestSuite struct {
 
 	ctx testutil.LazyObj[*Ctx]
 
-	config  testutil.LazyObj[*Config]
-	handler testutil.LazyObj[*Handler]
+	config  testutil.LazyObj[*stream.Config]
+	handler testutil.LazyObj[*stream.Handler]
 
 	testServer testutil.LazyTestServer
 }
@@ -116,16 +117,16 @@ func (s *HandlerTestSuite) SetupSuite() {
 
 	s.config, _ = testutil.NewLazySuiteObj(
 		s,
-		func() (*Config, error) {
-			c := NewDefaultConfig()
+		func() (*stream.Config, error) {
+			c := stream.NewDefaultConfig()
 			return &c, nil
 		},
 	)
 
 	s.handler, _ = testutil.NewLazySuiteObj(
 		s,
-		func() (*Handler, error) {
-			return New(s.ctx(), s.config())
+		func() (*stream.Handler, error) {
+			return stream.New(s.ctx(), s.config())
 		},
 	)
 

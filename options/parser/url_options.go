@@ -9,10 +9,8 @@ type urlOption struct {
 	Args []string
 }
 
-type urlOptions []urlOption
-
-func (p *Parser) parseURLOptions(opts []string) (urlOptions, []string) {
-	parsed := make(urlOptions, 0, len(opts))
+func (p *Parser) parseURLOptions(opts []string) ([]urlOption, []string) {
+	parsed := make([]urlOption, 0, len(opts))
 	urlStart := len(opts) + 1
 
 	for i, opt := range opts {

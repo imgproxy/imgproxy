@@ -1,4 +1,4 @@
-package gcs
+package gcs_test
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/fsouza/fake-gcs-server/fakestorage"
+	"github.com/imgproxy/imgproxy/v3/storage/gcs"
 	"github.com/imgproxy/imgproxy/v3/testutil"
 )
 
@@ -17,7 +18,7 @@ type TestServer struct {
 
 // gcsStorageWrapper wraps the storage and optionally holds a server for cleanup
 type gcsStorageWrapper struct {
-	*Storage
+	*gcs.Storage
 
 	server      *TestServer
 	shouldClose bool
@@ -121,11 +122,11 @@ func NewLazySuiteStorage(
 			wrapper.server = gcsServer
 			wrapper.shouldClose = true
 
-			config := NewDefaultConfig()
+			config := gcs.NewDefaultConfig()
 			config.Endpoint = gcsServer.PublicURL() + "/storage/v1/"
 			config.TestNoAuth = true
 
-			storage, err := New(&config, http.DefaultTransport.(*http.Transport))
+			storage, err := gcs.New(&config, http.DefaultTransport.(*http.Transport))
 			if err != nil {
 				return nil, err
 			}

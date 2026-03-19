@@ -1,4 +1,4 @@
-package asyncbuffer
+package asyncbuffer_test
 
 import (
 	"sync"
@@ -7,17 +7,19 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/imgproxy/imgproxy/v3/asyncbuffer"
 )
 
 func TestNewLatch(t *testing.T) {
-	latch := NewLatch()
+	latch := asyncbuffer.NewLatch()
 
 	require.NotNil(t, latch)
-	require.NotNil(t, latch.done)
+	require.NotNil(t, asyncbuffer.LatchDone(latch))
 
 	// Channel should be open (not closed) initially
 	select {
-	case <-latch.done:
+	case <-asyncbuffer.LatchDone(latch):
 		t.Fatal("Latch should not be released initially")
 	default:
 		// Expected - channel is not ready
@@ -25,14 +27,14 @@ func TestNewLatch(t *testing.T) {
 }
 
 func TestLatchRelease(t *testing.T) {
-	latch := NewLatch()
+	latch := asyncbuffer.NewLatch()
 
 	// Release the latch
 	latch.Release()
 
 	// Channel should now be closed/ready
 	select {
-	case <-latch.done:
+	case <-asyncbuffer.LatchDone(latch):
 		// Expected - channel is ready after release
 	default:
 		t.Fatal("Latch should be released after Release() call")
@@ -40,7 +42,7 @@ func TestLatchRelease(t *testing.T) {
 }
 
 func TestLatchWait(t *testing.T) {
-	latch := NewLatch()
+	latch := asyncbuffer.NewLatch()
 
 	// Start a goroutine that will wait
 	waitCompleted := make(chan bool, 1)
@@ -73,7 +75,7 @@ func TestLatchWait(t *testing.T) {
 }
 
 func TestLatchMultipleWaiters(t *testing.T) {
-	latch := NewLatch()
+	latch := asyncbuffer.NewLatch()
 	const numWaiters = 10
 
 	var wg sync.WaitGroup
@@ -111,7 +113,7 @@ func TestLatchMultipleWaiters(t *testing.T) {
 }
 
 func TestLatchMultipleReleases(t *testing.T) {
-	latch := NewLatch()
+	latch := asyncbuffer.NewLatch()
 
 	// Release multiple times should be safe
 	latch.Release()
@@ -120,7 +122,7 @@ func TestLatchMultipleReleases(t *testing.T) {
 
 	// Should still be able to wait
 	select {
-	case <-latch.done:
+	case <-asyncbuffer.LatchDone(latch):
 		// Expected - channel should be ready
 	default:
 		t.Fatal("Latch should be released")
