@@ -3,11 +3,8 @@ package processing_test
 import (
 	"testing"
 
-	"github.com/imgproxy/imgproxy/v3/imagedata"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
-	"github.com/imgproxy/imgproxy/v3/options"
-	"github.com/imgproxy/imgproxy/v3/options/keys"
-	"github.com/imgproxy/imgproxy/v3/processing"
+	"github.com/imgproxy/imgproxy/v3/testutil"
 	"github.com/imgproxy/imgproxy/v3/vips"
 	"github.com/imgproxy/imgproxy/v3/vips/color"
 	"github.com/stretchr/testify/suite"
@@ -15,8 +12,6 @@ import (
 
 type FlattenTestSuite struct {
 	testSuite
-
-	img imagedata.ImageData
 }
 
 var flattenTestOutSize = testSize{500, 500}
@@ -28,37 +23,26 @@ type flattenTestCase struct {
 	format     imagetype.Type
 }
 
-func (r flattenTestCase) Set(o *options.Options) {
-	if r.background != nil {
-		o.Set(keys.Background, *r.background)
-	} else {
-		o.Delete(keys.Background)
+func (c flattenTestCase) ImagePath() string {
+	return c.sourceFile
+}
+
+func (c flattenTestCase) URLOptions() string {
+	opts := testutil.NewOptionsBuilder()
+
+	opts.Add("resize").Set(0, "fill").Set(1, 300).Set(2, 300)
+	opts.Add("enlarge").Set(0, 1)
+	opts.Add("padding").Set(0, 100)
+	opts.Add("format").Set(0, c.format)
+
+	if c.background != nil {
+		opts.Add("background").
+			Set(0, c.background.R).
+			Set(1, c.background.G).
+			Set(2, c.background.B)
 	}
 
-	o.Set(keys.Format, r.format)
-	o.Set(keys.ResizingType, processing.ResizeFill)
-	o.Set(keys.Width, 300)
-	o.Set(keys.Height, 300)
-	o.Set(keys.Enlarge, true)
-	o.Set(keys.PaddingLeft, 100)
-	o.Set(keys.PaddingRight, 100)
-	o.Set(keys.PaddingTop, 100)
-	o.Set(keys.PaddingBottom, 100)
-}
-
-func (r flattenTestCase) String() string {
-	return r.name
-}
-
-func (s *FlattenTestSuite) SetupSuite() {
-	s.testSuite.SetupSuite()
-
-	var err error
-
-	s.img, err = s.ImageDataFactory().NewFromPath(
-		s.TestData.Path("test-images/bmp/32-bpp-with-alpha.bmp"),
-	)
-	s.Require().NoError(err)
+	return opts.String()
 }
 
 func (s *FlattenTestSuite) TestBackground() {
@@ -187,16 +171,10 @@ func (s *FlattenTestSuite) TestBackground() {
 	}
 
 	for _, tc := range testCases {
-		s.Run(tc.opts.String(), func() {
-			s.Config().PreserveHDR = true
+		s.Run(tc.opts.name, func() {
+			s.Config().Processing.PreserveHDR = true
 
-			img, err := s.ImageDataFactory().NewFromPath(s.TestData.Path(tc.opts.sourceFile))
-			s.Require().NoError(err)
-
-			o := options.New()
-			tc.opts.Set(o)
-
-			s.processImageAndCheck(img, o, tc)
+			s.processImageAndCheck(tc)
 		})
 	}
 }

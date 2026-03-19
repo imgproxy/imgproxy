@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/imgproxy/imgproxy/v3/testutil"
+	"github.com/imgproxy/imgproxy/v3/testutil/servertest"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -32,7 +33,7 @@ var (
 
 // SvgTestSuite is a test suite for testing SVG processing
 type SvgTestSuite struct {
-	Suite
+	servertest.Suite
 
 	imagesDir string
 }

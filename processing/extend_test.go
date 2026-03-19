@@ -1,21 +1,17 @@
 package processing_test
 
 import (
-	"bytes"
 	"fmt"
+	"strings"
 	"testing"
 
-	"github.com/imgproxy/imgproxy/v3/imagedata"
-	"github.com/imgproxy/imgproxy/v3/options"
-	"github.com/imgproxy/imgproxy/v3/options/keys"
 	"github.com/imgproxy/imgproxy/v3/processing"
+	"github.com/imgproxy/imgproxy/v3/testutil"
 	"github.com/stretchr/testify/suite"
 )
 
 type ExtendTestSuite struct {
 	testSuite
-
-	img imagedata.ImageData
 }
 
 type extendTestCase struct {
@@ -26,33 +22,38 @@ type extendTestCase struct {
 	dpr     float64
 }
 
-func (e extendTestCase) Set(o *options.Options) {
-	o.Set(keys.ExtendEnabled, true)
-	o.Set(keys.ExtendGravityType, e.gravity)
-	o.Set(keys.Width, e.size.width)
-	o.Set(keys.Height, e.size.height)
+func (e extendTestCase) ImagePath() string {
+	return "geometry.png"
+}
 
-	if e.xOffset != 0 {
-		o.Set(keys.ExtendGravityXOffset, e.xOffset)
-	} else {
-		o.Delete(keys.ExtendGravityXOffset)
-	}
+func (e extendTestCase) URLOptions() string {
+	opts := testutil.NewOptionsBuilder()
 
-	if e.yOffset != 0 {
-		o.Set(keys.ExtendGravityYOffset, e.yOffset)
-	} else {
-		o.Delete(keys.ExtendGravityYOffset)
+	opts.Add("width").Set(0, e.size.width)
+	opts.Add("height").Set(0, e.size.height)
+
+	args := opts.Add("extend").Set(0, 1)
+
+	if e.gravity != processing.GravityUnknown {
+		args.Set(1, e.gravity)
+
+		if e.xOffset != 0 {
+			args.Set(2, e.xOffset)
+		}
+		if e.yOffset != 0 {
+			args.Set(3, e.yOffset)
+		}
 	}
 
 	if e.dpr != 0 {
-		o.Set(keys.Dpr, e.dpr)
-	} else {
-		o.Delete(keys.Dpr)
+		opts.Add("dpr").Set(0, e.dpr)
 	}
+
+	return opts.String()
 }
 
 func (e extendTestCase) String() string {
-	var b bytes.Buffer
+	var b strings.Builder
 
 	fmt.Fprintf(&b, "extend_%dx%d", e.size.width, e.size.height)
 
@@ -79,33 +80,38 @@ type extendArTestCase struct {
 	dpr     float64
 }
 
-func (e extendArTestCase) Set(o *options.Options) {
-	o.Set(keys.ExtendAspectRatioEnabled, true)
-	o.Set(keys.ExtendAspectRatioGravityType, e.gravity)
-	o.Set(keys.Width, e.size.width)
-	o.Set(keys.Height, e.size.height)
+func (e extendArTestCase) ImagePath() string {
+	return "geometry.png"
+}
 
-	if e.xOffset != 0 {
-		o.Set(keys.ExtendAspectRatioGravityXOffset, e.xOffset)
-	} else {
-		o.Delete(keys.ExtendAspectRatioGravityXOffset)
-	}
+func (e extendArTestCase) URLOptions() string {
+	opts := testutil.NewOptionsBuilder()
 
-	if e.yOffset != 0 {
-		o.Set(keys.ExtendAspectRatioGravityYOffset, e.yOffset)
-	} else {
-		o.Delete(keys.ExtendAspectRatioGravityYOffset)
+	opts.Add("width").Set(0, e.size.width)
+	opts.Add("height").Set(0, e.size.height)
+
+	args := opts.Add("extend_aspect_ratio").Set(0, 1)
+
+	if e.gravity != processing.GravityUnknown {
+		args.Set(1, e.gravity)
+
+		if e.xOffset != 0 {
+			args.Set(2, e.xOffset)
+		}
+		if e.yOffset != 0 {
+			args.Set(3, e.yOffset)
+		}
 	}
 
 	if e.dpr != 0 {
-		o.Set(keys.Dpr, e.dpr)
-	} else {
-		o.Delete(keys.Dpr)
+		opts.Add("dpr").Set(0, e.dpr)
 	}
+
+	return opts.String()
 }
 
 func (e extendArTestCase) String() string {
-	var b bytes.Buffer
+	var b strings.Builder
 
 	fmt.Fprintf(&b, "extendAr_%dx%d", e.size.width, e.size.height)
 
@@ -124,20 +130,7 @@ func (e extendArTestCase) String() string {
 	return b.String()
 }
 
-func (s *ExtendTestSuite) SetupSuite() {
-	s.testSuite.SetupSuite()
-
-	var err error
-
-	s.img, err = s.ImageDataFactory().NewFromPath(
-		s.TestData.Path("geometry.png"),
-	)
-	s.Require().NoError(err)
-}
-
 func (s *ExtendTestSuite) TestExtend() {
-	o := options.New()
-
 	extendSize := testSize{500, 500}
 
 	//nolint:dupl
@@ -291,16 +284,12 @@ func (s *ExtendTestSuite) TestExtend() {
 
 	for _, tc := range testCases {
 		s.Run(tc.opts.String(), func() {
-			tc.opts.Set(o)
-
-			s.processImageAndCheck(s.img, o, tc)
+			s.processImageAndCheck(tc)
 		})
 	}
 }
 
 func (s *ExtendTestSuite) TestExtendAspectRatio() {
-	o := options.New()
-
 	targetSize := testSize{300, 600}
 	expectedSize := testSize{200, 400}
 
@@ -455,9 +444,7 @@ func (s *ExtendTestSuite) TestExtendAspectRatio() {
 
 	for _, tc := range testCases {
 		s.Run(tc.opts.String(), func() {
-			tc.opts.Set(o)
-
-			s.processImageAndCheck(s.img, o, tc)
+			s.processImageAndCheck(tc)
 		})
 	}
 }
