@@ -42,9 +42,14 @@ func (e ImageRequestError) Unwrap() error {
 	return e.error
 }
 
-func newImageRequstSchemeError(scheme string) error {
+func newImageRequstSchemeError(scheme, hint string) error {
+	msg := fmt.Sprintf("Unknown scheme: %s", scheme)
+	if hint != "" {
+		msg = fmt.Sprintf("%s (%s)", msg, hint)
+	}
+
 	return ierrors.Wrap(
-		ImageRequstSchemeError(fmt.Sprintf("Unknown scheme: %s", scheme)),
+		ImageRequstSchemeError(msg),
 		1,
 		ierrors.WithStatusCode(http.StatusNotFound),
 		ierrors.WithPublicMessage(msgSourceImageIsUnreachable),

@@ -52,6 +52,21 @@ type DownloadOptions struct {
 	CookieJar http.CookieJar
 }
 
+var disabledSchemeHints = map[string]string{
+	"local": "set IMGPROXY_LOCAL_FILESYSTEM_ROOT to enable local file access",
+	"s3":    "set IMGPROXY_USE_S3 to enable S3 access",
+	"gs":    "set IMGPROXY_USE_GCS to enable Google Cloud Storage access",
+	"abs":   "set IMGPROXY_USE_ABS to enable Azure Blob Storage access",
+	"swift": "set IMGPROXY_USE_SWIFT to enable OpenStack Swift access",
+}
+
+func disabledSchemeHint(scheme string) string {
+	if hint, ok := disabledSchemeHints[scheme]; ok {
+		return hint
+	}
+	return ""
+}
+
 func initDownloading() error {
 	transport, err := defaultTransport.New(true)
 	if err != nil {
@@ -138,7 +153,7 @@ func BuildImageRequest(ctx context.Context, imageURL string, header http.Header,
 
 	if _, ok := enabledSchemes[req.URL.Scheme]; !ok {
 		reqCancel()
-		return nil, func() {}, newImageRequstSchemeError(req.URL.Scheme)
+		return nil, func() {}, newImageRequstSchemeError(req.URL.Scheme, disabledSchemeHint(req.URL.Scheme))
 	}
 
 	if jar != nil {
