@@ -17,13 +17,14 @@ import (
 	"github.com/imgproxy/imgproxy/v3/options"
 	"github.com/imgproxy/imgproxy/v3/processing/svg"
 	"github.com/imgproxy/imgproxy/v3/testutil"
+	"github.com/imgproxy/imgproxy/v3/testutil/servertest"
 	"github.com/imgproxy/imgproxy/v3/vips"
 	"github.com/stretchr/testify/suite"
 )
 
 // ProcessingHandlerTestSuite is a test suite for testing image processing handler
 type ProcessingHandlerTestSuite struct {
-	Suite
+	servertest.Suite
 }
 
 func (s *ProcessingHandlerTestSuite) SetupTest() {

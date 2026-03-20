@@ -6,9 +6,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/imgproxy/imgproxy/v3/imagedata"
-	"github.com/imgproxy/imgproxy/v3/options"
-	"github.com/imgproxy/imgproxy/v3/options/keys"
 	"github.com/imgproxy/imgproxy/v3/processing"
 	"github.com/imgproxy/imgproxy/v3/testutil"
 	"github.com/stretchr/testify/suite"
@@ -16,8 +13,6 @@ import (
 
 type CropTestSuite struct {
 	testSuite
-
-	img imagedata.ImageData
 }
 
 type resizeFillGravityTestCase struct {
@@ -28,33 +23,38 @@ type resizeFillGravityTestCase struct {
 	dpr     float64
 }
 
-func (r resizeFillGravityTestCase) Set(o *options.Options) {
-	o.Set(keys.ResizingType, processing.ResizeFill)
-	o.Set(keys.GravityType, r.gravity)
-	o.Set(keys.Width, r.size.width)
-	o.Set(keys.Height, r.size.height)
+func (r resizeFillGravityTestCase) ImagePath() string {
+	return "geometry.png"
+}
 
-	if r.xOffset != 0 {
-		o.Set(keys.GravityXOffset, r.xOffset)
-	} else {
-		o.Delete(keys.GravityXOffset)
-	}
+func (r resizeFillGravityTestCase) URLOptions() string {
+	opts := testutil.NewOptionsBuilder()
 
-	if r.yOffset != 0 {
-		o.Set(keys.GravityYOffset, r.yOffset)
-	} else {
-		o.Delete(keys.GravityYOffset)
+	opts.Add("rs").
+		Set(0, "fill").
+		Set(1, r.size.width).
+		Set(2, r.size.height)
+
+	if r.gravity != processing.GravityUnknown {
+		args := opts.Add("g").Set(0, r.gravity)
+
+		if r.xOffset != 0 {
+			args.Set(1, r.xOffset)
+		}
+		if r.yOffset != 0 {
+			args.Set(2, r.yOffset)
+		}
 	}
 
 	if r.dpr != 0 {
-		o.Set(keys.Dpr, r.dpr)
-	} else {
-		o.Delete(keys.Dpr)
+		opts.Add("dpr").Set(0, r.dpr)
 	}
+
+	return opts.String()
 }
 
 func (r resizeFillGravityTestCase) String() string {
-	var b bytes.Buffer
+	var b strings.Builder
 
 	fmt.Fprintf(&b, "resizeFill_%dx%d", r.size.width, r.size.height)
 
@@ -82,29 +82,37 @@ type cropTestCase struct {
 	dpr         float64
 }
 
-func (c cropTestCase) Set(o *options.Options) {
-	o.Set(keys.GravityType, c.gravity)
-	o.Set(keys.CropGravityType, c.cropGravity)
-	o.Set(keys.CropWidth, c.cropSize.width)
-	o.Set(keys.CropHeight, c.cropSize.height)
+func (c cropTestCase) ImagePath() string {
+	return "geometry.png"
+}
 
-	if c.xOffset != 0 {
-		o.Set(keys.CropGravityXOffset, c.xOffset)
-	} else {
-		o.Delete(keys.CropGravityXOffset)
+func (c cropTestCase) URLOptions() string {
+	opts := testutil.NewOptionsBuilder()
+
+	args := opts.Add("crop").
+		Set(0, c.cropSize.width).
+		Set(1, c.cropSize.height)
+
+	if c.cropGravity != processing.GravityUnknown {
+		args.Set(2, c.cropGravity)
+
+		if c.xOffset != 0 {
+			args.Set(3, c.xOffset)
+		}
+		if c.yOffset != 0 {
+			args.Set(4, c.yOffset)
+		}
 	}
 
-	if c.yOffset != 0 {
-		o.Set(keys.CropGravityYOffset, c.yOffset)
-	} else {
-		o.Delete(keys.CropGravityYOffset)
+	if c.gravity != processing.GravityUnknown {
+		opts.Add("gravity").Set(0, c.gravity)
 	}
 
 	if c.dpr != 0 {
-		o.Set(keys.Dpr, c.dpr)
-	} else {
-		o.Delete(keys.Dpr)
+		opts.Add("dpr").Set(0, c.dpr)
 	}
+
+	return opts.String()
 }
 
 func (c cropTestCase) String() string {
@@ -134,19 +142,7 @@ func (c cropTestCase) String() string {
 	return n
 }
 
-func (s *CropTestSuite) SetupSuite() {
-	s.testSuite.SetupSuite()
-
-	var err error
-
-	s.img, err = s.ImageDataFactory().NewFromPath(
-		s.TestData.Path("geometry.png"),
-	)
-	s.Require().NoError(err)
-}
 func (s *CropTestSuite) TestResizeFill() {
-	o := options.New()
-
 	widerSize := testSize{100, 26}
 	tallerSize := testSize{26, 100}
 
@@ -348,16 +344,12 @@ func (s *CropTestSuite) TestResizeFill() {
 
 	for _, tc := range testCases {
 		s.Run(tc.opts.String(), func() {
-			tc.opts.Set(o)
-
-			s.processImageAndCheck(s.img, o, tc)
+			s.processImageAndCheck(tc)
 		})
 	}
 }
 
 func (s *CropTestSuite) TestCrop() {
-	o := options.New()
-
 	cropSize := testSize{50, 50}
 
 	testCases := []testCase[cropTestCase]{
@@ -494,38 +486,25 @@ func (s *CropTestSuite) TestCrop() {
 
 	for _, tc := range testCases {
 		s.Run(tc.opts.String(), func() {
-			tc.opts.Set(o)
-
-			s.processImageAndCheck(s.img, o, tc)
+			s.processImageAndCheck(tc)
 		})
 	}
-}
-
-func (s *CropTestSuite) getCropGravityResult(c cropTestCase) imagedata.ImageData {
-	o := options.New()
-	c.Set(o)
-
-	result, err := s.Processor().ProcessImage(s.T().Context(), s.img, o)
-	s.Require().NoError(err)
-	s.Require().NotNil(result)
-
-	return result.OutData
 }
 
 func (s *CropTestSuite) TestCropGravityPriority() {
 	cropSize := testSize{50, 50}
 
-	r1 := s.getCropGravityResult(cropTestCase{
+	r1 := s.processImage(cropTestCase{
 		gravity: processing.GravityNorth, cropSize: cropSize,
 	})
 	defer r1.Close()
 
-	r2 := s.getCropGravityResult(cropTestCase{
+	r2 := s.processImage(cropTestCase{
 		cropGravity: processing.GravityNorth, cropSize: cropSize,
 	})
 	defer r2.Close()
 
-	r3 := s.getCropGravityResult(cropTestCase{
+	r3 := s.processImage(cropTestCase{
 		gravity: processing.GravitySouth, cropGravity: processing.GravityNorth, cropSize: cropSize,
 	})
 	defer r3.Close()

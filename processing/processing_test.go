@@ -5,21 +5,17 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/imgproxy/imgproxy/v3/errctx"
-	"github.com/imgproxy/imgproxy/v3/imagedata"
-	"github.com/imgproxy/imgproxy/v3/options"
-	"github.com/imgproxy/imgproxy/v3/options/keys"
 	"github.com/imgproxy/imgproxy/v3/processing"
+	"github.com/imgproxy/imgproxy/v3/testutil"
+	"github.com/imgproxy/imgproxy/v3/testutil/servertest"
 	"github.com/stretchr/testify/suite"
 )
 
 type ProcessingTestSuite struct {
 	testSuite
-
-	img imagedata.ImageData
 }
 
-type sizeLimitTestCase struct {
+type sizeTestCase struct {
 	limit         int
 	width         int
 	height        int
@@ -34,25 +30,57 @@ type sizeLimitTestCase struct {
 	rotate        int
 }
 
-func (r sizeLimitTestCase) Set(o *options.Options) {
-	o.Set(keys.MaxResultDimension, r.limit)
-	o.Set(keys.Width, r.width)
-	o.Set(keys.Height, r.height)
-	o.Set(keys.ResizingType, r.resizingType)
-	o.Set(keys.Enlarge, r.enlarge)
-	o.Set(keys.ExtendEnabled, r.extend)
-	o.Set(keys.ExtendAspectRatioEnabled, r.extendAR)
-	o.Set(keys.Rotate, r.rotate)
-	o.Set(keys.PaddingTop, r.paddingTop)
-	o.Set(keys.PaddingRight, r.paddingRight)
-	o.Set(keys.PaddingBottom, r.paddingBottom)
-	o.Set(keys.PaddingLeft, r.paddingLeft)
+func (r sizeTestCase) ImagePath() string {
+	return "geometry.png"
 }
 
-func (r sizeLimitTestCase) String() string {
+func (r sizeTestCase) URLOptions() string {
+	opts := testutil.NewOptionsBuilder()
+
+	if r.limit > 0 {
+		opts.Add("max_result_dimension").Set(0, r.limit)
+	}
+
+	opts.Add("resize").
+		Set(0, r.resizingType).
+		Set(1, r.width).
+		Set(2, r.height)
+
+	if r.enlarge {
+		opts.Add("enlarge").Set(0, 1)
+	}
+
+	if r.extend {
+		opts.Add("extend").Set(0, 1)
+	}
+
+	if r.extendAR {
+		opts.Add("extend_aspect_ratio").Set(0, 1)
+	}
+
+	if r.rotate != 0 {
+		opts.Add("rotate").Set(0, r.rotate)
+	}
+
+	if r.paddingTop > 0 || r.paddingRight > 0 || r.paddingBottom > 0 || r.paddingLeft > 0 {
+		opts.Add("padding").
+			Set(0, r.paddingTop).
+			Set(1, r.paddingRight).
+			Set(2, r.paddingBottom).
+			Set(3, r.paddingLeft)
+	}
+
+	return opts.String()
+}
+
+func (r sizeTestCase) String() string {
 	b := bytes.NewBuffer(nil)
 
-	fmt.Fprintf(b, "%s:%dx%d:limit:%d", r.resizingType, r.width, r.height, r.limit)
+	fmt.Fprintf(b, "%s:%dx%d", r.resizingType, r.width, r.height)
+
+	if r.limit > 0 {
+		fmt.Fprintf(b, ":limit:%d", r.limit)
+	}
 
 	if r.enlarge {
 		fmt.Fprintf(b, "_en:%t", r.enlarge)
@@ -80,347 +108,305 @@ func (r sizeLimitTestCase) String() string {
 	return b.String()
 }
 
-func (s *ProcessingTestSuite) SetupSuite() {
-	s.testSuite.SetupSuite()
-
-	var err error
-
-	s.img, err = s.ImageDataFactory().NewFromPath(s.TestData.Path("geometry.png"))
-	s.Require().NoError(err)
+func (r sizeTestCase) ShortName() string {
+	return fmt.Sprintf("%dx%d", r.width, r.height)
 }
 
 func (s *ProcessingTestSuite) TestResizeToFit() {
-	o := options.New()
-	o.Set(keys.ResizingType, processing.ResizeFit)
-
-	testCases := []testCase[testSize]{
-		{opts: testSize{50, 50}, outSize: testSize{50, 25}},
-		{opts: testSize{50, 20}, outSize: testSize{40, 20}},
-		{opts: testSize{20, 50}, outSize: testSize{20, 10}},
-		{opts: testSize{300, 300}, outSize: testSize{200, 100}},
-		{opts: testSize{300, 50}, outSize: testSize{100, 50}},
-		{opts: testSize{100, 300}, outSize: testSize{100, 50}},
-		{opts: testSize{0, 50}, outSize: testSize{100, 50}},
-		{opts: testSize{50, 0}, outSize: testSize{50, 25}},
-		{opts: testSize{0, 200}, outSize: testSize{200, 100}},
-		{opts: testSize{300, 0}, outSize: testSize{200, 100}},
+	testCases := []testCase[sizeTestCase]{
+		{opts: sizeTestCase{width: 50, height: 50}, outSize: testSize{50, 25}},
+		{opts: sizeTestCase{width: 50, height: 20}, outSize: testSize{40, 20}},
+		{opts: sizeTestCase{width: 20, height: 50}, outSize: testSize{20, 10}},
+		{opts: sizeTestCase{width: 300, height: 300}, outSize: testSize{200, 100}},
+		{opts: sizeTestCase{width: 300, height: 50}, outSize: testSize{100, 50}},
+		{opts: sizeTestCase{width: 100, height: 300}, outSize: testSize{100, 50}},
+		{opts: sizeTestCase{width: 0, height: 50}, outSize: testSize{100, 50}},
+		{opts: sizeTestCase{width: 50, height: 0}, outSize: testSize{50, 25}},
+		{opts: sizeTestCase{width: 0, height: 200}, outSize: testSize{200, 100}},
+		{opts: sizeTestCase{width: 300, height: 0}, outSize: testSize{200, 100}},
 	}
 
 	for _, tc := range testCases {
-		s.Run(tc.opts.String(), func() {
-			tc.opts.Set(o)
+		s.Run(tc.opts.ShortName(), func() {
+			tc.opts.resizingType = processing.ResizeFit
 
-			s.processImageAndCheck(s.img, o, tc)
+			s.processImageAndCheck(tc)
 		})
 	}
 }
 
 func (s *ProcessingTestSuite) TestResizeToFitEnlarge() {
-	o := options.New()
-	o.Set(keys.ResizingType, processing.ResizeFit)
-	o.Set(keys.Enlarge, true)
-
-	testCases := []testCase[testSize]{
-		{opts: testSize{50, 50}, outSize: testSize{50, 25}},
-		{opts: testSize{50, 20}, outSize: testSize{40, 20}},
-		{opts: testSize{20, 50}, outSize: testSize{20, 10}},
-		{opts: testSize{300, 300}, outSize: testSize{300, 150}},
-		{opts: testSize{300, 125}, outSize: testSize{250, 125}},
-		{opts: testSize{250, 300}, outSize: testSize{250, 125}},
-		{opts: testSize{0, 50}, outSize: testSize{100, 50}},
-		{opts: testSize{50, 0}, outSize: testSize{50, 25}},
-		{opts: testSize{0, 200}, outSize: testSize{400, 200}},
-		{opts: testSize{300, 0}, outSize: testSize{300, 150}},
+	testCases := []testCase[sizeTestCase]{
+		{opts: sizeTestCase{width: 50, height: 50}, outSize: testSize{50, 25}},
+		{opts: sizeTestCase{width: 50, height: 20}, outSize: testSize{40, 20}},
+		{opts: sizeTestCase{width: 20, height: 50}, outSize: testSize{20, 10}},
+		{opts: sizeTestCase{width: 300, height: 300}, outSize: testSize{300, 150}},
+		{opts: sizeTestCase{width: 300, height: 125}, outSize: testSize{250, 125}},
+		{opts: sizeTestCase{width: 250, height: 300}, outSize: testSize{250, 125}},
+		{opts: sizeTestCase{width: 0, height: 50}, outSize: testSize{100, 50}},
+		{opts: sizeTestCase{width: 50, height: 0}, outSize: testSize{50, 25}},
+		{opts: sizeTestCase{width: 0, height: 200}, outSize: testSize{400, 200}},
+		{opts: sizeTestCase{width: 300, height: 0}, outSize: testSize{300, 150}},
 	}
 
 	for _, tc := range testCases {
-		s.Run(tc.opts.String(), func() {
-			tc.opts.Set(o)
+		s.Run(tc.opts.ShortName(), func() {
+			tc.opts.resizingType = processing.ResizeFit
+			tc.opts.enlarge = true
 
-			s.processImageAndCheck(s.img, o, tc)
+			s.processImageAndCheck(tc)
 		})
 	}
 }
 
 func (s *ProcessingTestSuite) TestResizeToFitExtend() {
-	o := options.New()
-	o.Set(keys.ResizingType, processing.ResizeFit)
-	o.Set(keys.ExtendEnabled, true)
-
-	testCases := []testCase[testSize]{
-		{opts: testSize{50, 50}, outSize: testSize{50, 50}},
-		{opts: testSize{50, 20}, outSize: testSize{50, 20}},
-		{opts: testSize{20, 50}, outSize: testSize{20, 50}},
-		{opts: testSize{300, 300}, outSize: testSize{300, 300}},
-		{opts: testSize{300, 125}, outSize: testSize{300, 125}},
-		{opts: testSize{250, 300}, outSize: testSize{250, 300}},
-		{opts: testSize{0, 50}, outSize: testSize{100, 50}},
-		{opts: testSize{50, 0}, outSize: testSize{50, 25}},
-		{opts: testSize{0, 200}, outSize: testSize{200, 200}},
-		{opts: testSize{300, 0}, outSize: testSize{300, 100}},
+	testCases := []testCase[sizeTestCase]{
+		{opts: sizeTestCase{width: 50, height: 50}, outSize: testSize{50, 50}},
+		{opts: sizeTestCase{width: 50, height: 20}, outSize: testSize{50, 20}},
+		{opts: sizeTestCase{width: 20, height: 50}, outSize: testSize{20, 50}},
+		{opts: sizeTestCase{width: 300, height: 300}, outSize: testSize{300, 300}},
+		{opts: sizeTestCase{width: 300, height: 125}, outSize: testSize{300, 125}},
+		{opts: sizeTestCase{width: 250, height: 300}, outSize: testSize{250, 300}},
+		{opts: sizeTestCase{width: 0, height: 50}, outSize: testSize{100, 50}},
+		{opts: sizeTestCase{width: 50, height: 0}, outSize: testSize{50, 25}},
+		{opts: sizeTestCase{width: 0, height: 200}, outSize: testSize{200, 200}},
+		{opts: sizeTestCase{width: 300, height: 0}, outSize: testSize{300, 100}},
 	}
 
 	for _, tc := range testCases {
-		s.Run(tc.opts.String(), func() {
-			tc.opts.Set(o)
+		s.Run(tc.opts.ShortName(), func() {
+			tc.opts.resizingType = processing.ResizeFit
+			tc.opts.extend = true
 
-			s.processImageAndCheck(s.img, o, tc)
+			s.processImageAndCheck(tc)
 		})
 	}
 }
 
 func (s *ProcessingTestSuite) TestResizeToFitExtendAR() {
-	o := options.New()
-	o.Set(keys.ResizingType, processing.ResizeFit)
-	o.Set(keys.ExtendAspectRatioEnabled, true)
-
-	testCases := []testCase[testSize]{
-		{opts: testSize{50, 50}, outSize: testSize{50, 50}},
-		{opts: testSize{50, 20}, outSize: testSize{50, 20}},
-		{opts: testSize{20, 50}, outSize: testSize{20, 50}},
-		{opts: testSize{300, 300}, outSize: testSize{200, 200}},
-		{opts: testSize{300, 125}, outSize: testSize{240, 100}},
-		{opts: testSize{250, 500}, outSize: testSize{200, 400}},
-		{opts: testSize{0, 50}, outSize: testSize{100, 50}},
-		{opts: testSize{50, 0}, outSize: testSize{50, 25}},
-		{opts: testSize{0, 200}, outSize: testSize{200, 100}},
-		{opts: testSize{300, 0}, outSize: testSize{200, 100}},
+	testCases := []testCase[sizeTestCase]{
+		{opts: sizeTestCase{width: 50, height: 50}, outSize: testSize{50, 50}},
+		{opts: sizeTestCase{width: 50, height: 20}, outSize: testSize{50, 20}},
+		{opts: sizeTestCase{width: 20, height: 50}, outSize: testSize{20, 50}},
+		{opts: sizeTestCase{width: 300, height: 300}, outSize: testSize{200, 200}},
+		{opts: sizeTestCase{width: 300, height: 125}, outSize: testSize{240, 100}},
+		{opts: sizeTestCase{width: 250, height: 500}, outSize: testSize{200, 400}},
+		{opts: sizeTestCase{width: 0, height: 50}, outSize: testSize{100, 50}},
+		{opts: sizeTestCase{width: 50, height: 0}, outSize: testSize{50, 25}},
+		{opts: sizeTestCase{width: 0, height: 200}, outSize: testSize{200, 100}},
+		{opts: sizeTestCase{width: 300, height: 0}, outSize: testSize{200, 100}},
 	}
 
 	for _, tc := range testCases {
-		s.Run(tc.opts.String(), func() {
-			tc.opts.Set(o)
+		s.Run(tc.opts.ShortName(), func() {
+			tc.opts.resizingType = processing.ResizeFit
+			tc.opts.extendAR = true
 
-			s.processImageAndCheck(s.img, o, tc)
+			s.processImageAndCheck(tc)
 		})
 	}
 }
 
 func (s *ProcessingTestSuite) TestResizeToFill() {
-	o := options.New()
-	o.Set(keys.ResizingType, processing.ResizeFill)
-
-	testCases := []testCase[testSize]{
-		{opts: testSize{50, 50}, outSize: testSize{50, 50}},
-		{opts: testSize{50, 20}, outSize: testSize{50, 20}},
-		{opts: testSize{20, 50}, outSize: testSize{20, 50}},
-		{opts: testSize{300, 300}, outSize: testSize{200, 100}},
-		{opts: testSize{300, 50}, outSize: testSize{200, 50}},
-		{opts: testSize{100, 300}, outSize: testSize{100, 100}},
-		{opts: testSize{0, 50}, outSize: testSize{100, 50}},
-		{opts: testSize{50, 0}, outSize: testSize{50, 25}},
-		{opts: testSize{0, 200}, outSize: testSize{200, 100}},
-		{opts: testSize{300, 0}, outSize: testSize{200, 100}},
+	testCases := []testCase[sizeTestCase]{
+		{opts: sizeTestCase{width: 50, height: 50}, outSize: testSize{50, 50}},
+		{opts: sizeTestCase{width: 50, height: 20}, outSize: testSize{50, 20}},
+		{opts: sizeTestCase{width: 20, height: 50}, outSize: testSize{20, 50}},
+		{opts: sizeTestCase{width: 300, height: 300}, outSize: testSize{200, 100}},
+		{opts: sizeTestCase{width: 300, height: 50}, outSize: testSize{200, 50}},
+		{opts: sizeTestCase{width: 100, height: 300}, outSize: testSize{100, 100}},
+		{opts: sizeTestCase{width: 0, height: 50}, outSize: testSize{100, 50}},
+		{opts: sizeTestCase{width: 50, height: 0}, outSize: testSize{50, 25}},
+		{opts: sizeTestCase{width: 0, height: 200}, outSize: testSize{200, 100}},
+		{opts: sizeTestCase{width: 300, height: 0}, outSize: testSize{200, 100}},
 	}
 
 	for _, tc := range testCases {
-		s.Run(tc.opts.String(), func() {
-			tc.opts.Set(o)
+		s.Run(tc.opts.ShortName(), func() {
+			tc.opts.resizingType = processing.ResizeFill
 
-			s.processImageAndCheck(s.img, o, tc)
+			s.processImageAndCheck(tc)
 		})
 	}
 }
 
 func (s *ProcessingTestSuite) TestResizeToFillEnlarge() {
-	o := options.New()
-	o.Set(keys.ResizingType, processing.ResizeFill)
-	o.Set(keys.Enlarge, true)
-
-	testCases := []testCase[testSize]{
-		{opts: testSize{50, 50}, outSize: testSize{50, 50}},
-		{opts: testSize{50, 20}, outSize: testSize{50, 20}},
-		{opts: testSize{20, 50}, outSize: testSize{20, 50}},
-		{opts: testSize{300, 300}, outSize: testSize{300, 300}},
-		{opts: testSize{300, 125}, outSize: testSize{300, 125}},
-		{opts: testSize{250, 300}, outSize: testSize{250, 300}},
-		{opts: testSize{0, 50}, outSize: testSize{100, 50}},
-		{opts: testSize{50, 0}, outSize: testSize{50, 25}},
-		{opts: testSize{0, 200}, outSize: testSize{400, 200}},
-		{opts: testSize{300, 0}, outSize: testSize{300, 150}},
+	testCases := []testCase[sizeTestCase]{
+		{opts: sizeTestCase{width: 50, height: 50}, outSize: testSize{50, 50}},
+		{opts: sizeTestCase{width: 50, height: 20}, outSize: testSize{50, 20}},
+		{opts: sizeTestCase{width: 20, height: 50}, outSize: testSize{20, 50}},
+		{opts: sizeTestCase{width: 300, height: 300}, outSize: testSize{300, 300}},
+		{opts: sizeTestCase{width: 300, height: 125}, outSize: testSize{300, 125}},
+		{opts: sizeTestCase{width: 250, height: 300}, outSize: testSize{250, 300}},
+		{opts: sizeTestCase{width: 0, height: 50}, outSize: testSize{100, 50}},
+		{opts: sizeTestCase{width: 50, height: 0}, outSize: testSize{50, 25}},
+		{opts: sizeTestCase{width: 0, height: 200}, outSize: testSize{400, 200}},
+		{opts: sizeTestCase{width: 300, height: 0}, outSize: testSize{300, 150}},
 	}
 
 	for _, tc := range testCases {
-		s.Run(tc.opts.String(), func() {
-			tc.opts.Set(o)
+		s.Run(tc.opts.ShortName(), func() {
+			tc.opts.resizingType = processing.ResizeFill
+			tc.opts.enlarge = true
 
-			s.processImageAndCheck(s.img, o, tc)
+			s.processImageAndCheck(tc)
 		})
 	}
 }
 
 func (s *ProcessingTestSuite) TestResizeToFillExtend() {
-	o := options.New()
-	o.Set(keys.ResizingType, processing.ResizeFill)
-	o.Set(keys.ExtendEnabled, true)
-
-	testCases := []testCase[testSize]{
-		{opts: testSize{50, 50}, outSize: testSize{50, 50}},
-		{opts: testSize{50, 20}, outSize: testSize{50, 20}},
-		{opts: testSize{20, 50}, outSize: testSize{20, 50}},
-		{opts: testSize{300, 300}, outSize: testSize{300, 300}},
-		{opts: testSize{300, 125}, outSize: testSize{300, 125}},
-		{opts: testSize{250, 300}, outSize: testSize{250, 300}},
-		{opts: testSize{300, 50}, outSize: testSize{300, 50}},
-		{opts: testSize{100, 300}, outSize: testSize{100, 300}},
-		{opts: testSize{0, 50}, outSize: testSize{100, 50}},
-		{opts: testSize{50, 0}, outSize: testSize{50, 25}},
-		{opts: testSize{0, 200}, outSize: testSize{200, 200}},
-		{opts: testSize{300, 0}, outSize: testSize{300, 100}},
+	testCases := []testCase[sizeTestCase]{
+		{opts: sizeTestCase{width: 50, height: 50}, outSize: testSize{50, 50}},
+		{opts: sizeTestCase{width: 50, height: 20}, outSize: testSize{50, 20}},
+		{opts: sizeTestCase{width: 20, height: 50}, outSize: testSize{20, 50}},
+		{opts: sizeTestCase{width: 300, height: 300}, outSize: testSize{300, 300}},
+		{opts: sizeTestCase{width: 300, height: 125}, outSize: testSize{300, 125}},
+		{opts: sizeTestCase{width: 250, height: 300}, outSize: testSize{250, 300}},
+		{opts: sizeTestCase{width: 300, height: 50}, outSize: testSize{300, 50}},
+		{opts: sizeTestCase{width: 100, height: 300}, outSize: testSize{100, 300}},
+		{opts: sizeTestCase{width: 0, height: 50}, outSize: testSize{100, 50}},
+		{opts: sizeTestCase{width: 50, height: 0}, outSize: testSize{50, 25}},
+		{opts: sizeTestCase{width: 0, height: 200}, outSize: testSize{200, 200}},
+		{opts: sizeTestCase{width: 300, height: 0}, outSize: testSize{300, 100}},
 	}
 
 	for _, tc := range testCases {
-		s.Run(tc.opts.String(), func() {
-			tc.opts.Set(o)
+		s.Run(tc.opts.ShortName(), func() {
+			tc.opts.resizingType = processing.ResizeFill
+			tc.opts.extend = true
 
-			s.processImageAndCheck(s.img, o, tc)
+			s.processImageAndCheck(tc)
 		})
 	}
 }
 
 func (s *ProcessingTestSuite) TestResizeToFillExtendAR() {
-	o := options.New()
-	o.Set(keys.ResizingType, processing.ResizeFill)
-	o.Set(keys.ExtendAspectRatioEnabled, true)
-	o.Set(keys.ExtendAspectRatioGravityType, processing.GravityCenter)
-
-	testCases := []testCase[testSize]{
-		{opts: testSize{50, 50}, outSize: testSize{50, 50}},
-		{opts: testSize{50, 20}, outSize: testSize{50, 20}},
-		{opts: testSize{20, 50}, outSize: testSize{20, 50}},
-		{opts: testSize{300, 300}, outSize: testSize{200, 200}},
-		{opts: testSize{300, 125}, outSize: testSize{240, 100}},
-		{opts: testSize{250, 500}, outSize: testSize{200, 400}},
-		{opts: testSize{300, 50}, outSize: testSize{300, 50}},
-		{opts: testSize{100, 300}, outSize: testSize{100, 300}},
-		{opts: testSize{0, 50}, outSize: testSize{100, 50}},
-		{opts: testSize{50, 0}, outSize: testSize{50, 25}},
-		{opts: testSize{0, 200}, outSize: testSize{200, 100}},
-		{opts: testSize{300, 0}, outSize: testSize{200, 100}},
+	testCases := []testCase[sizeTestCase]{
+		{opts: sizeTestCase{width: 50, height: 50}, outSize: testSize{50, 50}},
+		{opts: sizeTestCase{width: 50, height: 20}, outSize: testSize{50, 20}},
+		{opts: sizeTestCase{width: 20, height: 50}, outSize: testSize{20, 50}},
+		{opts: sizeTestCase{width: 300, height: 300}, outSize: testSize{200, 200}},
+		{opts: sizeTestCase{width: 300, height: 125}, outSize: testSize{240, 100}},
+		{opts: sizeTestCase{width: 250, height: 500}, outSize: testSize{200, 400}},
+		{opts: sizeTestCase{width: 300, height: 50}, outSize: testSize{300, 50}},
+		{opts: sizeTestCase{width: 100, height: 300}, outSize: testSize{100, 300}},
+		{opts: sizeTestCase{width: 0, height: 50}, outSize: testSize{100, 50}},
+		{opts: sizeTestCase{width: 50, height: 0}, outSize: testSize{50, 25}},
+		{opts: sizeTestCase{width: 0, height: 200}, outSize: testSize{200, 100}},
+		{opts: sizeTestCase{width: 300, height: 0}, outSize: testSize{200, 100}},
 	}
 
 	for _, tc := range testCases {
-		s.Run(tc.opts.String(), func() {
-			tc.opts.Set(o)
+		s.Run(tc.opts.ShortName(), func() {
+			tc.opts.resizingType = processing.ResizeFill
+			tc.opts.extendAR = true
 
-			s.processImageAndCheck(s.img, o, tc)
+			s.processImageAndCheck(tc)
 		})
 	}
 }
 
 func (s *ProcessingTestSuite) TestResizeToFillDown() {
-	o := options.New()
-	o.Set(keys.ResizingType, processing.ResizeFillDown)
-
-	testCases := []testCase[testSize]{
-		{opts: testSize{50, 50}, outSize: testSize{50, 50}},
-		{opts: testSize{50, 20}, outSize: testSize{50, 20}},
-		{opts: testSize{20, 50}, outSize: testSize{20, 50}},
-		{opts: testSize{300, 300}, outSize: testSize{100, 100}},
-		{opts: testSize{300, 125}, outSize: testSize{200, 83}},
-		{opts: testSize{250, 300}, outSize: testSize{83, 100}},
-		{opts: testSize{0, 50}, outSize: testSize{100, 50}},
-		{opts: testSize{50, 0}, outSize: testSize{50, 25}},
-		{opts: testSize{0, 200}, outSize: testSize{200, 100}},
-		{opts: testSize{300, 0}, outSize: testSize{200, 100}},
+	testCases := []testCase[sizeTestCase]{
+		{opts: sizeTestCase{width: 50, height: 50}, outSize: testSize{50, 50}},
+		{opts: sizeTestCase{width: 50, height: 20}, outSize: testSize{50, 20}},
+		{opts: sizeTestCase{width: 20, height: 50}, outSize: testSize{20, 50}},
+		{opts: sizeTestCase{width: 300, height: 300}, outSize: testSize{100, 100}},
+		{opts: sizeTestCase{width: 300, height: 125}, outSize: testSize{200, 83}},
+		{opts: sizeTestCase{width: 250, height: 300}, outSize: testSize{83, 100}},
+		{opts: sizeTestCase{width: 0, height: 50}, outSize: testSize{100, 50}},
+		{opts: sizeTestCase{width: 50, height: 0}, outSize: testSize{50, 25}},
+		{opts: sizeTestCase{width: 0, height: 200}, outSize: testSize{200, 100}},
+		{opts: sizeTestCase{width: 300, height: 0}, outSize: testSize{200, 100}},
 	}
 
 	for _, tc := range testCases {
-		s.Run(tc.opts.String(), func() {
-			tc.opts.Set(o)
+		s.Run(tc.opts.ShortName(), func() {
+			tc.opts.resizingType = processing.ResizeFillDown
 
-			s.processImageAndCheck(s.img, o, tc)
+			s.processImageAndCheck(tc)
 		})
 	}
 }
 
 func (s *ProcessingTestSuite) TestResizeToFillDownEnlarge() {
-	o := options.New()
-	o.Set(keys.ResizingType, processing.ResizeFillDown)
-	o.Set(keys.Enlarge, true)
-
-	testCases := []testCase[testSize]{
-		{opts: testSize{50, 50}, outSize: testSize{50, 50}},
-		{opts: testSize{50, 20}, outSize: testSize{50, 20}},
-		{opts: testSize{20, 50}, outSize: testSize{20, 50}},
-		{opts: testSize{300, 300}, outSize: testSize{300, 300}},
-		{opts: testSize{300, 125}, outSize: testSize{300, 125}},
-		{opts: testSize{250, 300}, outSize: testSize{250, 300}},
-		{opts: testSize{0, 50}, outSize: testSize{100, 50}},
-		{opts: testSize{50, 0}, outSize: testSize{50, 25}},
-		{opts: testSize{0, 200}, outSize: testSize{400, 200}},
-		{opts: testSize{300, 0}, outSize: testSize{300, 150}},
+	testCases := []testCase[sizeTestCase]{
+		{opts: sizeTestCase{width: 50, height: 50}, outSize: testSize{50, 50}},
+		{opts: sizeTestCase{width: 50, height: 20}, outSize: testSize{50, 20}},
+		{opts: sizeTestCase{width: 20, height: 50}, outSize: testSize{20, 50}},
+		{opts: sizeTestCase{width: 300, height: 300}, outSize: testSize{300, 300}},
+		{opts: sizeTestCase{width: 300, height: 125}, outSize: testSize{300, 125}},
+		{opts: sizeTestCase{width: 250, height: 300}, outSize: testSize{250, 300}},
+		{opts: sizeTestCase{width: 0, height: 50}, outSize: testSize{100, 50}},
+		{opts: sizeTestCase{width: 50, height: 0}, outSize: testSize{50, 25}},
+		{opts: sizeTestCase{width: 0, height: 200}, outSize: testSize{400, 200}},
+		{opts: sizeTestCase{width: 300, height: 0}, outSize: testSize{300, 150}},
 	}
 
 	for _, tc := range testCases {
-		s.Run(tc.opts.String(), func() {
-			tc.opts.Set(o)
+		s.Run(tc.opts.ShortName(), func() {
+			tc.opts.resizingType = processing.ResizeFillDown
+			tc.opts.enlarge = true
 
-			s.processImageAndCheck(s.img, o, tc)
+			s.processImageAndCheck(tc)
 		})
 	}
 }
 
 func (s *ProcessingTestSuite) TestResizeToFillDownExtend() {
-	o := options.New()
-	o.Set(keys.ResizingType, processing.ResizeFillDown)
-	o.Set(keys.ExtendEnabled, true)
-
-	testCases := []testCase[testSize]{
-		{opts: testSize{50, 50}, outSize: testSize{50, 50}},
-		{opts: testSize{50, 20}, outSize: testSize{50, 20}},
-		{opts: testSize{20, 50}, outSize: testSize{20, 50}},
-		{opts: testSize{300, 300}, outSize: testSize{300, 300}},
-		{opts: testSize{300, 125}, outSize: testSize{300, 125}},
-		{opts: testSize{250, 300}, outSize: testSize{250, 300}},
-		{opts: testSize{300, 50}, outSize: testSize{300, 50}},
-		{opts: testSize{100, 300}, outSize: testSize{100, 300}},
-		{opts: testSize{0, 50}, outSize: testSize{100, 50}},
-		{opts: testSize{50, 0}, outSize: testSize{50, 25}},
-		{opts: testSize{0, 200}, outSize: testSize{200, 200}},
-		{opts: testSize{300, 0}, outSize: testSize{300, 100}},
+	testCases := []testCase[sizeTestCase]{
+		{opts: sizeTestCase{width: 50, height: 50}, outSize: testSize{50, 50}},
+		{opts: sizeTestCase{width: 50, height: 20}, outSize: testSize{50, 20}},
+		{opts: sizeTestCase{width: 20, height: 50}, outSize: testSize{20, 50}},
+		{opts: sizeTestCase{width: 300, height: 300}, outSize: testSize{300, 300}},
+		{opts: sizeTestCase{width: 300, height: 125}, outSize: testSize{300, 125}},
+		{opts: sizeTestCase{width: 250, height: 300}, outSize: testSize{250, 300}},
+		{opts: sizeTestCase{width: 300, height: 50}, outSize: testSize{300, 50}},
+		{opts: sizeTestCase{width: 100, height: 300}, outSize: testSize{100, 300}},
+		{opts: sizeTestCase{width: 0, height: 50}, outSize: testSize{100, 50}},
+		{opts: sizeTestCase{width: 50, height: 0}, outSize: testSize{50, 25}},
+		{opts: sizeTestCase{width: 0, height: 200}, outSize: testSize{200, 200}},
+		{opts: sizeTestCase{width: 300, height: 0}, outSize: testSize{300, 100}},
 	}
 
 	for _, tc := range testCases {
-		s.Run(tc.opts.String(), func() {
-			tc.opts.Set(o)
+		s.Run(tc.opts.ShortName(), func() {
+			tc.opts.resizingType = processing.ResizeFillDown
+			tc.opts.extend = true
 
-			s.processImageAndCheck(s.img, o, tc)
+			s.processImageAndCheck(tc)
 		})
 	}
 }
 
 func (s *ProcessingTestSuite) TestResizeToFillDownExtendAR() {
-	o := options.New()
-	o.Set(keys.ResizingType, processing.ResizeFillDown)
-	o.Set(keys.ExtendAspectRatioEnabled, true)
-
-	testCases := []testCase[testSize]{
-		{opts: testSize{50, 50}, outSize: testSize{50, 50}},
-		{opts: testSize{50, 20}, outSize: testSize{50, 20}},
-		{opts: testSize{20, 50}, outSize: testSize{20, 50}},
-		{opts: testSize{300, 300}, outSize: testSize{100, 100}},
-		{opts: testSize{300, 125}, outSize: testSize{200, 83}},
-		{opts: testSize{250, 300}, outSize: testSize{83, 100}},
-		{opts: testSize{0, 50}, outSize: testSize{100, 50}},
-		{opts: testSize{50, 0}, outSize: testSize{50, 25}},
-		{opts: testSize{0, 200}, outSize: testSize{200, 100}},
-		{opts: testSize{300, 0}, outSize: testSize{200, 100}},
+	testCases := []testCase[sizeTestCase]{
+		{opts: sizeTestCase{width: 50, height: 50}, outSize: testSize{50, 50}},
+		{opts: sizeTestCase{width: 50, height: 20}, outSize: testSize{50, 20}},
+		{opts: sizeTestCase{width: 20, height: 50}, outSize: testSize{20, 50}},
+		{opts: sizeTestCase{width: 300, height: 300}, outSize: testSize{100, 100}},
+		{opts: sizeTestCase{width: 300, height: 125}, outSize: testSize{200, 83}},
+		{opts: sizeTestCase{width: 250, height: 300}, outSize: testSize{83, 100}},
+		{opts: sizeTestCase{width: 0, height: 50}, outSize: testSize{100, 50}},
+		{opts: sizeTestCase{width: 50, height: 0}, outSize: testSize{50, 25}},
+		{opts: sizeTestCase{width: 0, height: 200}, outSize: testSize{200, 100}},
+		{opts: sizeTestCase{width: 300, height: 0}, outSize: testSize{200, 100}},
 	}
 
 	for _, tc := range testCases {
-		s.Run(tc.opts.String(), func() {
-			tc.opts.Set(o)
+		s.Run(tc.opts.ShortName(), func() {
+			tc.opts.resizingType = processing.ResizeFillDown
+			tc.opts.extendAR = true
 
-			s.processImageAndCheck(s.img, o, tc)
+			s.processImageAndCheck(tc)
 		})
 	}
 }
 
 func (s *ProcessingTestSuite) TestResultSizeLimit() {
-	testCases := []testCase[sizeLimitTestCase]{
+	testCases := []testCase[sizeTestCase]{
 		{
-			opts: sizeLimitTestCase{
+			opts: sizeTestCase{
 				limit:        1000,
 				width:        100,
 				height:       100,
@@ -429,7 +415,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 			outSize: testSize{100, 50},
 		},
 		{
-			opts: sizeLimitTestCase{
+			opts: sizeTestCase{
 				limit:        50,
 				width:        100,
 				height:       100,
@@ -438,7 +424,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 			outSize: testSize{50, 25},
 		},
 		{
-			opts: sizeLimitTestCase{
+			opts: sizeTestCase{
 				limit:        50,
 				width:        0,
 				height:       0,
@@ -447,7 +433,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 			outSize: testSize{50, 25},
 		},
 		{
-			opts: sizeLimitTestCase{
+			opts: sizeTestCase{
 				limit:        100,
 				width:        0,
 				height:       100,
@@ -456,7 +442,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 			outSize: testSize{100, 50},
 		},
 		{
-			opts: sizeLimitTestCase{
+			opts: sizeTestCase{
 				limit:        50,
 				width:        150,
 				height:       0,
@@ -465,7 +451,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 			outSize: testSize{50, 25},
 		},
 		{
-			opts: sizeLimitTestCase{
+			opts: sizeTestCase{
 				limit:        100,
 				width:        1000,
 				height:       1000,
@@ -474,7 +460,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 			outSize: testSize{100, 50},
 		},
 		{
-			opts: sizeLimitTestCase{
+			opts: sizeTestCase{
 				limit:        100,
 				width:        1000,
 				height:       1000,
@@ -484,7 +470,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 			outSize: testSize{100, 50},
 		},
 		{
-			opts: sizeLimitTestCase{
+			opts: sizeTestCase{
 				limit:        100,
 				width:        1000,
 				height:       2000,
@@ -494,7 +480,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 			outSize: testSize{50, 100},
 		},
 		{
-			opts: sizeLimitTestCase{
+			opts: sizeTestCase{
 				limit:        100,
 				width:        1000,
 				height:       2000,
@@ -504,7 +490,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 			outSize: testSize{50, 100},
 		},
 		{
-			opts: sizeLimitTestCase{
+			opts: sizeTestCase{
 				limit:        100,
 				width:        100,
 				height:       150,
@@ -514,7 +500,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 			outSize: testSize{50, 100},
 		},
 		{
-			opts: sizeLimitTestCase{
+			opts: sizeTestCase{
 				limit:        100,
 				width:        0,
 				height:       0,
@@ -524,7 +510,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 			outSize: testSize{50, 100},
 		},
 		{
-			opts: sizeLimitTestCase{
+			opts: sizeTestCase{
 				limit:         200,
 				width:         100,
 				height:        100,
@@ -537,7 +523,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 			outSize: testSize{200, 129},
 		},
 		{
-			opts: sizeLimitTestCase{
+			opts: sizeTestCase{
 				limit:        1000,
 				width:        100,
 				height:       100,
@@ -546,7 +532,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 			outSize: testSize{100, 100},
 		},
 		{
-			opts: sizeLimitTestCase{
+			opts: sizeTestCase{
 				limit:        50,
 				width:        100,
 				height:       100,
@@ -555,7 +541,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 			outSize: testSize{50, 50},
 		},
 		{
-			opts: sizeLimitTestCase{
+			opts: sizeTestCase{
 				limit:        50,
 				width:        1000,
 				height:       50,
@@ -564,7 +550,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 			outSize: testSize{50, 13},
 		},
 		{
-			opts: sizeLimitTestCase{
+			opts: sizeTestCase{
 				limit:        50,
 				width:        100,
 				height:       1000,
@@ -573,7 +559,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 			outSize: testSize{50, 50},
 		},
 		{
-			opts: sizeLimitTestCase{
+			opts: sizeTestCase{
 				limit:        50,
 				width:        0,
 				height:       0,
@@ -582,7 +568,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 			outSize: testSize{50, 25},
 		},
 		{
-			opts: sizeLimitTestCase{
+			opts: sizeTestCase{
 				limit:        100,
 				width:        0,
 				height:       100,
@@ -591,7 +577,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 			outSize: testSize{100, 50},
 		},
 		{
-			opts: sizeLimitTestCase{
+			opts: sizeTestCase{
 				limit:        50,
 				width:        150,
 				height:       0,
@@ -600,7 +586,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 			outSize: testSize{50, 25},
 		},
 		{
-			opts: sizeLimitTestCase{
+			opts: sizeTestCase{
 				limit:        100,
 				width:        1000,
 				height:       1000,
@@ -609,7 +595,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 			outSize: testSize{100, 50},
 		},
 		{
-			opts: sizeLimitTestCase{
+			opts: sizeTestCase{
 				limit:        100,
 				width:        1000,
 				height:       1000,
@@ -619,7 +605,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 			outSize: testSize{100, 100},
 		},
 		{
-			opts: sizeLimitTestCase{
+			opts: sizeTestCase{
 				limit:        100,
 				width:        1000,
 				height:       2000,
@@ -629,7 +615,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 			outSize: testSize{50, 100},
 		},
 		{
-			opts: sizeLimitTestCase{
+			opts: sizeTestCase{
 				limit:        100,
 				width:        1000,
 				height:       2000,
@@ -639,7 +625,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 			outSize: testSize{50, 100},
 		},
 		{
-			opts: sizeLimitTestCase{
+			opts: sizeTestCase{
 				limit:        100,
 				width:        100,
 				height:       150,
@@ -649,7 +635,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 			outSize: testSize{67, 100},
 		},
 		{
-			opts: sizeLimitTestCase{
+			opts: sizeTestCase{
 				limit:        100,
 				width:        0,
 				height:       0,
@@ -659,7 +645,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 			outSize: testSize{50, 100},
 		},
 		{
-			opts: sizeLimitTestCase{
+			opts: sizeTestCase{
 				limit:         200,
 				width:         100,
 				height:        100,
@@ -672,7 +658,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 			outSize: testSize{200, 144},
 		},
 		{
-			opts: sizeLimitTestCase{
+			opts: sizeTestCase{
 				limit:        1000,
 				width:        100,
 				height:       100,
@@ -681,7 +667,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 			outSize: testSize{100, 100},
 		},
 		{
-			opts: sizeLimitTestCase{
+			opts: sizeTestCase{
 				limit:        50,
 				width:        100,
 				height:       100,
@@ -690,7 +676,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 			outSize: testSize{50, 50},
 		},
 		{
-			opts: sizeLimitTestCase{
+			opts: sizeTestCase{
 				limit:        50,
 				width:        1000,
 				height:       50,
@@ -699,7 +685,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 			outSize: testSize{50, 3},
 		},
 		{
-			opts: sizeLimitTestCase{
+			opts: sizeTestCase{
 				limit:        50,
 				width:        100,
 				height:       1000,
@@ -708,7 +694,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 			outSize: testSize{5, 50},
 		},
 		{
-			opts: sizeLimitTestCase{
+			opts: sizeTestCase{
 				limit:        50,
 				width:        0,
 				height:       0,
@@ -717,7 +703,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 			outSize: testSize{50, 25},
 		},
 		{
-			opts: sizeLimitTestCase{
+			opts: sizeTestCase{
 				limit:        100,
 				width:        0,
 				height:       100,
@@ -726,7 +712,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 			outSize: testSize{100, 50},
 		},
 		{
-			opts: sizeLimitTestCase{
+			opts: sizeTestCase{
 				limit:        50,
 				width:        150,
 				height:       0,
@@ -735,7 +721,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 			outSize: testSize{50, 25},
 		},
 		{
-			opts: sizeLimitTestCase{
+			opts: sizeTestCase{
 				limit:        100,
 				width:        1000,
 				height:       1000,
@@ -744,7 +730,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 			outSize: testSize{100, 100},
 		},
 		{
-			opts: sizeLimitTestCase{
+			opts: sizeTestCase{
 				limit:        100,
 				width:        1000,
 				height:       1000,
@@ -754,7 +740,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 			outSize: testSize{100, 100},
 		},
 		{
-			opts: sizeLimitTestCase{
+			opts: sizeTestCase{
 				limit:        100,
 				width:        1000,
 				height:       2000,
@@ -764,7 +750,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 			outSize: testSize{50, 100},
 		},
 		{
-			opts: sizeLimitTestCase{
+			opts: sizeTestCase{
 				limit:        100,
 				width:        1000,
 				height:       2000,
@@ -774,7 +760,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 			outSize: testSize{50, 100},
 		},
 		{
-			opts: sizeLimitTestCase{
+			opts: sizeTestCase{
 				limit:        100,
 				width:        1000,
 				height:       1500,
@@ -784,7 +770,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 			outSize: testSize{67, 100},
 		},
 		{
-			opts: sizeLimitTestCase{
+			opts: sizeTestCase{
 				limit:        100,
 				width:        0,
 				height:       0,
@@ -794,7 +780,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 			outSize: testSize{50, 100},
 		},
 		{
-			opts: sizeLimitTestCase{
+			opts: sizeTestCase{
 				limit:         200,
 				width:         100,
 				height:        100,
@@ -807,7 +793,7 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 			outSize: testSize{200, 144},
 		},
 		{
-			opts: sizeLimitTestCase{
+			opts: sizeTestCase{
 				limit:         200,
 				width:         1000,
 				height:        1000,
@@ -823,24 +809,25 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 
 	for _, tc := range testCases {
 		s.Run(tc.opts.String(), func() {
-			o := options.New()
-			tc.opts.Set(o)
-
-			s.processImageAndCheck(s.img, o, tc)
+			s.processImageAndCheck(tc)
 		})
 	}
 }
 
 func (s *ProcessingTestSuite) TestImageResolutionTooLarge() {
-	o := options.New()
-	o.Set(keys.MaxSrcResolution, 1)
+	resp := s.GET("/unsafe/max_src_resolution:0.00001/plain/local:///geometry.png")
+	defer resp.Body.Close()
 
-	_, err := s.Processor().ProcessImage(s.T().Context(), s.img, o)
-
-	s.Require().Error(err)
-	s.Require().Equal(422, errctx.Wrap(err).StatusCode())
+	s.Require().Equal(
+		422, resp.StatusCode,
+		"Expected status code 422 for too large image resolution",
+	)
 }
 
 func TestProcessing(t *testing.T) {
 	suite.Run(t, new(ProcessingTestSuite))
+}
+
+func TestMain(m *testing.M) {
+	servertest.TestMain(m)
 }

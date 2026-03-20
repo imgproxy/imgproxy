@@ -1,12 +1,10 @@
 package processing_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/imgproxy/imgproxy/v3/imagetype"
-	"github.com/imgproxy/imgproxy/v3/options"
-	"github.com/imgproxy/imgproxy/v3/options/keys"
-	"github.com/imgproxy/imgproxy/v3/processing"
 	"github.com/imgproxy/imgproxy/v3/testutil"
 	"github.com/imgproxy/imgproxy/v3/vips"
 	"github.com/stretchr/testify/suite"
@@ -25,20 +23,21 @@ type colorspaceTestCase struct {
 	outFormat     imagetype.Type
 }
 
-func (tc colorspaceTestCase) Set(o *options.Options) {
-	o.Set(keys.ResizingType, processing.ResizeFill)
-	o.Set(keys.Width, 100)
-	o.Set(keys.Height, 100)
-	o.Set(keys.Enlarge, true)
-	o.Set(keys.Format, tc.outFormat)
-
-	if tc.watermarkFile != "" {
-		o.Set(keys.WatermarkOpacity, 0.5)
-	}
+func (tc colorspaceTestCase) ImagePath() string {
+	return tc.sourceFile
 }
 
-func (tc colorspaceTestCase) String() string {
-	return tc.name
+func (tc colorspaceTestCase) URLOptions() string {
+	opts := fmt.Sprintf(
+		"resize:fill:%d:%d/enlarge:1/format:%s",
+		colorspaceTestOutSize.width,
+		colorspaceTestOutSize.height,
+		tc.outFormat,
+	)
+	if tc.watermarkFile != "" {
+		opts += "/watermark:0.5"
+	}
+	return opts
 }
 
 func (s *ColorspaceTestSuite) SetupSubTest() {
@@ -47,16 +46,10 @@ func (s *ColorspaceTestSuite) SetupSubTest() {
 
 func (s *ColorspaceTestSuite) runTestCase(tc testCase[colorspaceTestCase]) {
 	if tc.opts.watermarkFile != "" {
-		s.WatermarkConfig().Path = s.TestData.Path(tc.opts.watermarkFile)
+		s.Config().WatermarkImage.Path = s.TestData.Path(tc.opts.watermarkFile)
 	}
 
-	img, err := s.ImageDataFactory().NewFromPath(s.TestData.Path(tc.opts.sourceFile))
-	s.Require().NoError(err)
-
-	o := options.New()
-	tc.opts.Set(o)
-
-	s.processImageAndCheck(img, o, tc)
+	s.processImageAndCheck(tc)
 }
 
 func (s *ColorspaceTestSuite) TestColorspace() {
@@ -154,8 +147,8 @@ func (s *ColorspaceTestSuite) TestColorspace() {
 	}
 
 	for _, tc := range testCases {
-		s.Run(tc.opts.String(), func() {
-			s.Config().PreserveHDR = true
+		s.Run(tc.opts.name, func() {
+			s.Config().Processing.PreserveHDR = true
 			s.runTestCase(tc)
 		})
 	}
@@ -202,12 +195,12 @@ func (s *ColorspaceTestSuite) TestLinearColorspace() {
 	}
 
 	for _, tc := range testCases {
-		s.Run(tc.opts.String()+"_linear", func() {
+		s.Run(tc.opts.name+"_linear", func() {
 			s.ImageMatcher, _ = testutil.NewLazySuiteObj(s, func() (*testutil.ImageHashCacheMatcher, error) {
 				return testutil.NewImageHashCacheMatcher(s.TestData, testutil.HashTypeDct), nil
 			})
-			s.Config().PreserveHDR = true
-			s.Config().UseLinearColorspace = true
+			s.Config().Processing.PreserveHDR = true
+			s.Config().Processing.UseLinearColorspace = true
 			s.runTestCase(tc)
 		})
 	}
@@ -254,8 +247,8 @@ func (s *ColorspaceTestSuite) TestDownscaleHDR() {
 	}
 
 	for _, tc := range testCases {
-		s.Run(tc.opts.String()+"_no_preserve_hdr", func() {
-			s.Config().PreserveHDR = false
+		s.Run(tc.opts.name+"_no_preserve_hdr", func() {
+			s.Config().Processing.PreserveHDR = false
 			s.runTestCase(tc)
 		})
 	}
@@ -326,12 +319,12 @@ func (s *ColorspaceTestSuite) TestWatermarkColorspace() {
 	}
 
 	for _, tc := range testCases {
-		s.Run(tc.opts.String(), func() {
+		s.Run(tc.opts.name, func() {
 			s.ImageMatcher, _ = testutil.NewLazySuiteObj(s, func() (*testutil.ImageHashCacheMatcher, error) {
 				return testutil.NewImageHashCacheMatcher(s.TestData, testutil.HashTypeDct), nil
 			})
 
-			s.Config().PreserveHDR = true
+			s.Config().Processing.PreserveHDR = true
 			s.runTestCase(tc)
 		})
 	}

@@ -10,6 +10,7 @@ import (
 
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 	"github.com/imgproxy/imgproxy/v3/testutil"
+	"github.com/imgproxy/imgproxy/v3/testutil/servertest"
 	"github.com/imgproxy/imgproxy/v3/vips"
 	"github.com/stretchr/testify/suite"
 )
@@ -34,7 +35,7 @@ var formats = []imagetype.Type{
 }
 
 type MatrixTestSuite struct {
-	Suite
+	servertest.Suite
 
 	matcher        *testutil.ImageHashCacheMatcher
 	testImagesPath string

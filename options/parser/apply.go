@@ -331,11 +331,11 @@ func (p *Parser) applyBackgroundOption(ctx context.Context, o *options.Options, 
 }
 
 func (p *Parser) applyBlurOption(ctx context.Context, o *options.Options, args []string) error {
-	return p.parsePositiveNonZeroFloat(ctx, o, keys.Blur, args...)
+	return p.parsePositiveFloat(ctx, o, keys.Blur, args...)
 }
 
 func (p *Parser) applySharpenOption(ctx context.Context, o *options.Options, args []string) error {
-	return p.parsePositiveNonZeroFloat(ctx, o, keys.Sharpen, args...)
+	return p.parsePositiveFloat(ctx, o, keys.Sharpen, args...)
 }
 
 func (p *Parser) applyPixelateOption(ctx context.Context, o *options.Options, args []string) error {
