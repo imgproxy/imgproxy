@@ -126,7 +126,7 @@ func (s *SvgTestSuite) TestSvgSuite() {
 		distance, err := sourceHash.Distance(processedHash)
 		s.Require().NoError(err)
 
-		s.Require().InEpsilon(0, distance, 0.000001, "SVG hashes are too different for %s: distance %d", relPath, distance)
+		s.Require().InDelta(0, distance, 0.000001, "SVG hashes are too different for %s: distance %f", relPath, distance)
 
 		return nil
 	})
