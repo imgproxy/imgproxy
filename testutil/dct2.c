@@ -1,4 +1,4 @@
-#include <vips/vips.h>
+#include "dct2.h"
 
 #define DCT_SIZE 8
 #define TARGET_SIZE 64
@@ -41,7 +41,7 @@ vips_dct2_hash(void *in_buf, size_t in_buf_size, float **dct_array, size_t *leng
   VipsImage **t = (VipsImage **) vips_object_local_array(VIPS_OBJECT(base), 6);
 
   // Load image from buffer
-  t[0] = vips_image_new_from_buffer(in_buf, in_buf_size, "", NULL);
+  VIPS_LOAD_IMAGE(t[0], in_buf, in_buf_size);
   if (t[0] == NULL) {
     VIPS_UNREF(base);
     return -1;

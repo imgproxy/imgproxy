@@ -1,7 +1,6 @@
 package integration
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"net/http"
@@ -602,10 +601,7 @@ func (s *ProcessingHandlerTestSuite) computeDist(url string, sourceHash *testuti
 
 	s.Require().Equal(http.StatusOK, res.StatusCode)
 
-	body, err := io.ReadAll(res.Body)
-	s.Require().NoError(err)
-
-	processedHash, err := testutil.NewImageHash(bytes.NewReader(body), testutil.HashTypeDct)
+	processedHash, err := testutil.NewImageHash(res.Body, testutil.HashTypeDct)
 	s.Require().NoError(err)
 
 	dist, err := sourceHash.Distance(processedHash)
@@ -634,7 +630,7 @@ func (s *ProcessingHandlerTestSuite) TestMaxBytes() {
 func (s *ProcessingHandlerTestSuite) TestQualitySettings() {
 	// Load source image and compute its hash
 	sourceHash, err := testutil.NewImageHash(
-		bytes.NewReader(s.TestData.Read("test-images/jpg/jpg.jpg")),
+		s.TestData.Reader("test-images/jpg/jpg.jpg"),
 		testutil.HashTypeDct,
 	)
 	s.Require().NoError(err)

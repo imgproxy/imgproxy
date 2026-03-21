@@ -110,7 +110,7 @@ func (m *ImageHashCacheMatcher) calculateHash(t *testing.T, buf []byte) *ImageHa
 	t.Helper()
 
 	// Calculate hash
-	hash, err := NewImageHash(bytes.NewReader(buf), m.hashType)
+	hash, err := NewImageHashFromBytes(buf, m.hashType)
 	require.NoError(t, err)
 
 	return hash
