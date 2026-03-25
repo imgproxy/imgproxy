@@ -40,14 +40,31 @@ func newRequestError(err error) error {
 	)}
 }
 
+var schemeEnvVars = map[string]string{
+	"local": "IMGPROXY_LOCAL_FILESYSTEM_ROOT",
+	"s3":    "IMGPROXY_USE_S3",
+	"gs":    "IMGPROXY_USE_GCS",
+	"abs":   "IMGPROXY_USE_ABS",
+	"swift": "IMGPROXY_USE_SWIFT",
+}
+
+const schemeDocsUrl = "https://docs.imgproxy.net/configuration/options#"
+
 func newRequestSchemeError(scheme string) error {
-	return RequstSchemeError{errctx.NewTextError(
-		fmt.Sprintf("unknown scheme: %s", scheme),
-		1,
+	msg := fmt.Sprintf("unknown scheme: %s", scheme)
+
+	opts := []errctx.Option{
 		errctx.WithStatusCode(http.StatusNotFound),
 		errctx.WithPublicMessage(msgSourceIsUnreachable),
 		errctx.WithShouldReport(false),
-	)}
+	}
+
+	if envVar, ok := schemeEnvVars[scheme]; ok {
+		msg = fmt.Sprintf("unknown scheme: %s (set %s to enable)", scheme, envVar)
+		opts = append(opts, errctx.WithDocsURL(schemeDocsUrl+envVar))
+	}
+
+	return RequstSchemeError{errctx.NewTextError(msg, 1, opts...)}
 }
 
 func newPartialResponseError(msg string) error {
