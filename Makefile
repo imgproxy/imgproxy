@@ -154,6 +154,7 @@ _lychee:
 		--exclude localhost \
 		--exclude twitter.com \
 		--exclude x.com \
+		--exclude unsplash.com \
 		--max-concurrency 50 \
 		--accept 200,429
 

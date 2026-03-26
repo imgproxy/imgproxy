@@ -1,5 +1,9 @@
 # Changelog
 
+## [3.31.1] - 2026-03-17
+### Fixed
+- Fix memory leak when saving HEIC/AVIF images with alpha channel.
+
 ## [3.31.0] - 2026-03-13
 ### Added
 - Add [IMGPROXY_FAIL_ON_DEPRECATION](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_FAIL_ON_DEPRECATION) config. When set to `true`, imgproxy will exit with a fatal error if a deprecated config option is used.
