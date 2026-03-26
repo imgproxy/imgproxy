@@ -295,14 +295,26 @@ vips_foreign_load_bmp_header(VipsForeignLoad *load)
 
   // BMP images with 1, 2, 4 or 8 bits per pixel
   if (bpp <= 8) {
+    uint32_t max_colors = 1U << bpp;
+
     // They could not have num_colors == 0, this is a bug in the BMP file.
     if (num_colors == 0) {
-      num_colors = 1 << bpp;
+      num_colors = max_colors;
+    }
+    // Check that the number of colors is not more than the maximum for the given bpp,
+    // otherwise, this is a malformed file
+    // and we might have an overflow when allocating the palette
+    else if (num_colors > max_colors) {
+      vips_error("vips_foreign_load_bmp_header",
+          "unsupported BMP image: num_colors exceeds maximum for the given bpp");
+      return -1;
     }
 
+    // Allocate palette.
+    // We allocalte the maximum possible size to not check the indexes during the decoding loop.
     // Please note, that BMP images are stored in BGR order rather than RGB order.
     // Every 4th byte is padding.
-    bmp->palette = VIPS_MALLOC(load, num_colors * BMP_PALETTE_ITEM_SIZE);
+    bmp->palette = VIPS_MALLOC(load, max_colors * BMP_PALETTE_ITEM_SIZE);
 
     if (vips_foreign_load_read_full(bmp->source, bmp->palette, num_colors * BMP_PALETTE_ITEM_SIZE) <= 0) {
       vips_error("vips_foreign_load_bmp_header", "unable to read BMP palette");
