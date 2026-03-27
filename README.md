@@ -1,3 +1,7 @@
+**Fork Addition:** This fork adds a `page` processing option to extract specific frames from animated images (GIF, WebP, APNG, etc.) and convert them to static images.
+
+---
+
 <p align="center">
   <a href="https://imgproxy.net">
     <picture>

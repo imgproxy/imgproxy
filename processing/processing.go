@@ -283,6 +283,27 @@ func ProcessImage(ctx context.Context, imgdata *imagedata.ImageData, po *options
 	originWidth, originHeight := getImageSize(img)
 
 	animated := img.IsAnimated()
+
+	if po.Page >= 0 && animated {
+		if po.Page >= img.Pages() {
+			po.Page = img.Pages() - 1
+		}
+
+		frameHeight := img.PageHeight()
+		imgWidth := img.Width()
+
+		frame := new(vips.Image)
+		if err := img.Extract(frame, 0, po.Page*frameHeight, imgWidth, frameHeight); err != nil {
+			return nil, err
+		}
+
+		// Swap extracted frame into `img` so deferred Clear() will free it,
+		// and clear the temporary holder which now contains the original image.
+		img.Swap(frame)
+		frame.Clear()
+		animated = false
+	}
+
 	expectAlpha := !po.Flatten && (img.HasAlpha() || po.Padding.Enabled || po.Extend.Enabled)
 
 	switch {

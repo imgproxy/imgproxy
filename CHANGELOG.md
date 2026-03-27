@@ -1,23 +1,14 @@
 # Changelog
 
-## [3.31.1] - 2026-03-17
-### Fixed
-- Fix memory leak when saving HEIC/AVIF images with alpha channel.
-
-## [3.31.0] - 2026-03-13
+## [Unreleased]
 ### Added
 - Add [IMGPROXY_FAIL_ON_DEPRECATION](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_FAIL_ON_DEPRECATION) config. When set to `true`, imgproxy will exit with a fatal error if a deprecated config option is used.
 - Add [flip](https://docs.imgproxy.net/latest/usage/processing#flip) processing option.
-- Add [IMGPROXY_PRESETS_PATH](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_PRESETS_PATH) config.
-- (pro) Add [IMGPROXY_INFO_PRESETS_PATH](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_INFO_PRESETS_PATH) config.
 - (pro) Add [IMGPROXY_AVIF_SUBSAMPLE](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_AVIF_SUBSAMPLE) config.
 - (pro) Add [avif_options](https://docs.imgproxy.net/latest/usage/processing#avif-options) processing option.
-- (pro) Add [blur_areas](https://docs.imgproxy.net/latest/usage/processing#blur-areas) processing option.
-- (pro) Add `canonical_names` argument to the [exif](https://docs.imgproxy.net/latest/usage/getting_info#exif) info option.
 - (pro) Return `orientation` field in the `/info` endpoint response when the [dimensions](https://docs.imgproxy.net/latest/usage/getting_info#dimensions) info option is enabled.
 
 ### Changed
-- For security reasons, imgproxy now accepts only service account keys for Google Cloud Storage integration and Google Cloud Secret Manager integration.
 - When image source responds with a 4xx status code, imgproxy now responds with the same status code instead of always responding with `404 Not Found`.
 - When image source responds with a 5xx status code, imgproxy now responds with `502 Bad Gateway` instead of `500 Internal Server Error`.
 - Remove `iframe` elements from SVGs during sanitization.
@@ -26,16 +17,7 @@
 - Fix crop coordinates calculation when the image has an EXIF orientation different from `1` and the `rotate` processing option is used.
 - Fix responding with 404 when a GCS bucket or object is missing.
 - Fix handling `:` encoded as `%3A` in processing/info options.
-- (pro) Fix memory leak in ML features.
 - (pro) Fix generating video thumbnails when the server doesn't include the `Accept-Ranges` header in the response but includes the `Content-Range: bytes ...` header.
-- (pro) Fix [watermark_size](https://docs.imgproxy.net/latest/usage/processing#watermark-size) processing option behavior when one of the dimensions is zero.
-
-### Deprecated
-
-- Deprecate `-keypath` and `-saltpath` CLI arguments. Use `IMGPROXY_KEY` and `IMGPROXY_SALT` environment variables instead.
-- Deprecate `-presets` CLI argument. Use `IMGPROXY_PRESETS_PATH` environment variable instead.
-- (pro) Deprecate `-info-presets` CLI argument. Use `IMGPROXY_INFO_PRESETS_PATH` environment variable instead.
-- (pro) Deprecate support for object detection models in DarkNet format. Use ONNX format instead.
 
 ## [3.30.1] - 2025-10-10
 ### Changed

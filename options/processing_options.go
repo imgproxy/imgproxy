@@ -74,6 +74,7 @@ type ProcessingOptions struct {
 	ZoomWidth         float64
 	ZoomHeight        float64
 	Dpr               float64
+	Page              int
 	Gravity           GravityOptions
 	Enlarge           bool
 	Extend            ExtendOptions
@@ -159,6 +160,7 @@ func NewProcessingOptions() *ProcessingOptions {
 		UsedPresets:           make([]string, 0, len(config.Presets)),
 
 		SecurityOptions: security.DefaultOptions(),
+		Page:            -1,
 
 		// Basically, we need this to update ETag when `IMGPROXY_QUALITY` is changed
 		defaultQuality: config.Quality,
@@ -807,6 +809,20 @@ func applySkipProcessingFormatsOption(po *ProcessingOptions, args []string) erro
 	return nil
 }
 
+func applyPageOption(po *ProcessingOptions, args []string) error {
+	if len(args) > 1 {
+		return newOptionArgumentError("Invalid page arguments: %v", args)
+	}
+
+	if p, err := strconv.Atoi(args[0]); err == nil && p >= 0 {
+		po.Page = p
+	} else {
+		return newOptionArgumentError("Invalid page: %s", args[0])
+	}
+
+	return nil
+}
+
 func applyRawOption(po *ProcessingOptions, args []string) error {
 	if len(args) > 1 {
 		return newOptionArgumentError("Invalid return_attachment arguments: %v", args)
@@ -1100,6 +1116,8 @@ func applyURLOption(po *ProcessingOptions, name string, args []string, usedPrese
 		return applyMaxAnimationFrameResolutionOption(po, args)
 	case "max_result_dimension", "mrd":
 		return applyMaxResultDimensionOption(po, args)
+	case "page":
+		return applyPageOption(po, args)
 	}
 
 	return newUnknownOptionError("processing", name)
