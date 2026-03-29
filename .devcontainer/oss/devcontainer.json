@@ -1,11 +1,20 @@
 {
     "image": "ghcr.io/imgproxy/imgproxy-base:v4-dev",
     "name": "imgproxy OSS",
-    "forwardPorts": [
-        8081, // imgproxy port
-        8091, // prometheus port
-        8071  // util port (ex. pprof)
-    ],
+    "portsAttributes": {
+        "8081": {
+            "label": "imgproxy",
+            "onAutoForward": "notify"
+        },
+        "8091": {
+            "label": "Prometheus metrics",
+            "onAutoForward": "silent"
+        },
+        "8071": {
+            "label": "Utilities (pprof, etc.)",
+            "onAutoForward": "silent"
+        }
+    },
     "containerEnv": {
         "PORT": "8081",
         "IMGPROXY_PROMETHEUS_BIND": ":8091",
