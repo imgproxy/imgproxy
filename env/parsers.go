@@ -303,3 +303,21 @@ func parseDateTime(env string) (time.Time, error) {
 
 	return time.Parse(http.TimeFormat, env)
 }
+
+// parseExistingFilePath checks if the provided path points to an existing file and returns the path if valid.
+func parseExistingFilePath(env string) (string, error) {
+	if env == "" {
+		return "", nil
+	}
+
+	info, err := os.Stat(env)
+	if err != nil {
+		return "", fmt.Errorf("cannot access file %s: %w", env, err)
+	}
+
+	if info.IsDir() {
+		return "", fmt.Errorf("%s is a directory, expected a file", env)
+	}
+
+	return env, nil
+}
