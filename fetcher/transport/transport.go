@@ -4,6 +4,7 @@ package transport
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"net/http"
 
@@ -63,7 +64,7 @@ func (t *Transport) Transport() *http.Transport {
 func (t *Transport) RegisterProtocol(scheme string, rt http.RoundTripper) {
 	t.transport.RegisterProtocol(scheme, rt)
 	t.schemes[scheme] = struct{}{}
-	slog.Info("Scheme registered", "scheme", scheme)
+	slog.Info(fmt.Sprintf("Source url scheme registered, you can now use %s:// prefix", scheme), "scheme", scheme)
 }
 
 // IsProtocolRegistered checks if a protocol is registered in the transport
