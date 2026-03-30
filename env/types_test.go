@@ -9,6 +9,7 @@ import (
 
 	"github.com/imgproxy/imgproxy/v3/env"
 	"github.com/imgproxy/imgproxy/v3/imagetype"
+	"github.com/imgproxy/imgproxy/v3/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -669,6 +670,41 @@ func TestRegexpFromPattern(t *testing.T) {
 			}
 			for _, noMatch := range tt.shouldntMatch {
 				assert.False(t, re.MatchString(noMatch))
+			}
+		})
+	}
+}
+
+func TestParseExistingFile(t *testing.T) {
+	d := testutil.NewTestDataProvider(func() *testing.T { return t })
+
+	tests := []struct {
+		input     string
+		want      string
+		wantErr   bool
+		errSubstr string
+	}{
+		{input: "", want: ""},
+		{input: d.Path("test1.jpg"), want: d.Path("test1.jpg")},
+		{input: d.Path("nonexistent.jpg"), wantErr: true, errSubstr: "no such file"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			t.Setenv(testVar, tt.input)
+			desc := env.ExistingFilePath(testVar)
+
+			var result string
+			err := desc.Parse(&result)
+
+			if tt.wantErr {
+				require.Error(t, err)
+				if tt.errSubstr != "" {
+					assert.Contains(t, err.Error(), tt.errSubstr)
+				}
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tt.want, result)
 			}
 		})
 	}

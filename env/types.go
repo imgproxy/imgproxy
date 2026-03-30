@@ -11,20 +11,21 @@ import (
 	"github.com/imgproxy/imgproxy/v3/imagetype"
 )
 
-type StringVar = Desc[string, ParseFn[string]]
-type BoolVar = Desc[bool, ParseFn[bool]]
-type IntVar = Desc[int, ParseFn[int]]
-type FloatVar = Desc[float64, ParseFn[float64]]
-type DurationVar = Desc[time.Duration, ParseFn[time.Duration]]
-type StringSliceVar = Desc[[]string, ParseFn[[]string]]
-type ImageTypesVar = Desc[[]imagetype.Type, ParseFn[[]imagetype.Type]]
-type ImageTypesQualityVar = Desc[map[imagetype.Type]int, ParseFn[map[imagetype.Type]int]]
-type URLPatternsVar = Desc[[]*regexp.Regexp, ParseFn[[]*regexp.Regexp]]
-type HexSliceVar = Desc[[][]byte, ParseFn[[][]byte]]
-type StringMapVar = Desc[map[string]string, ParseFn[map[string]string]]
-type EnumVar[T any] = Desc[T, ParseFn[T]]
-type URLReplacementVar = Desc[[]URLReplacement, ParseFn[[]URLReplacement]]
-type DateTimeVar = Desc[time.Time, ParseFn[time.Time]]
+type StringVar = Desc[string]
+type BoolVar = Desc[bool]
+type IntVar = Desc[int]
+type FloatVar = Desc[float64]
+type DurationVar = Desc[time.Duration]
+type StringSliceVar = Desc[[]string]
+type ImageTypesVar = Desc[[]imagetype.Type]
+type ImageTypesQualityVar = Desc[map[imagetype.Type]int]
+type URLPatternsVar = Desc[[]*regexp.Regexp]
+type HexSliceVar = Desc[[][]byte]
+type StringMapVar = Desc[map[string]string]
+type EnumVar[T any] = Desc[T]
+type URLReplacementVar = Desc[[]URLReplacement]
+type DateTimeVar = Desc[time.Time]
+type ExistingFilePathVar = Desc[string]
 
 // String defines string env var descriptor
 func String(name string) StringVar {
@@ -204,10 +205,20 @@ func URLReplacements(name string) URLReplacementVar {
 	}
 }
 
+// DateTime defines date-time env var descriptor.
 func DateTime(name string) DateTimeVar {
 	return DateTimeVar{
 		Name:    name,
 		format:  "RFC3339 date-time string",
 		parseFn: parseDateTime,
+	}
+}
+
+// ExistingFilePath defines env var descriptor for a path to an existing file.
+func ExistingFilePath(name string) ExistingFilePathVar {
+	return ExistingFilePathVar{
+		Name:    name,
+		format:  "path to an existing file",
+		parseFn: parseExistingFilePath,
 	}
 }

@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	IMGPROXY_ENV_LOCAL_FILE_PATH = String("IMGPROXY_ENV_LOCAL_FILE_PATH")
+	IMGPROXY_ENV_LOCAL_FILE_PATH = ExistingFilePath("IMGPROXY_ENV_LOCAL_FILE_PATH")
 )
 
 // Load loads environment variables from various sources

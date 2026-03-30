@@ -15,15 +15,15 @@ const (
 type ParseFn[V any] func(string) (V, error)
 
 // Desc describes an environment variable with a specific type and parser
-type Desc[V any, F ParseFn[V]] struct {
+type Desc[V any] struct {
 	Name            string
 	format          string
 	docsUrlOverride string
-	parseFn         F
+	parseFn         ParseFn[V]
 }
 
 // GetEnv returns the value of the env variable
-func (d *Desc[V, F]) GetEnv() (string, bool) {
+func (d *Desc[V]) GetEnv() (string, bool) {
 	if len(d.Name) == 0 {
 		return "", false
 	}
@@ -34,7 +34,7 @@ func (d *Desc[V, F]) GetEnv() (string, bool) {
 }
 
 // Parse parses the environment variable and sets the value
-func (d *Desc[V, F]) Parse(value *V) error {
+func (d *Desc[V]) Parse(value *V) error {
 	env, ok := d.GetEnv()
 	if !ok || strings.TrimSpace(env) == "" {
 		return nil
@@ -50,44 +50,44 @@ func (d *Desc[V, F]) Parse(value *V) error {
 }
 
 // WithDocsURL sets a custom documentation URL for the env var
-func (d Desc[V, F]) WithDocsURL(url string) Desc[V, F] {
+func (d Desc[F]) WithDocsURL(url string) Desc[F] {
 	d.docsUrlOverride = url
 	return d
 }
 
 // WithFormat sets a custom format description for the env var
-func (d Desc[V, F]) WithFormat(format string) Desc[V, F] {
+func (d Desc[F]) WithFormat(format string) Desc[F] {
 	d.format = format
 	return d
 }
 
 // ErrorParse logs a warning when an env var fails to parse
-func (d *Desc[V, F]) ErrorParse(err error) error {
+func (d *Desc[F]) ErrorParse(err error) error {
 	return d.Errorf("failed to parse: %w", err)
 }
 
 // ErrorEmpty formats an error message for empty env var
-func (d *Desc[V, F]) ErrorEmpty() error {
+func (d *Desc[F]) ErrorEmpty() error {
 	return d.Errorf("cannot be empty")
 }
 
 // ErrorRange formats an error message for out of range env var
-func (d *Desc[V, F]) ErrorRange() error {
+func (d *Desc[F]) ErrorRange() error {
 	return d.Errorf("out of range")
 }
 
 // ErrorZeroOrNegative formats an error message for zero or less env var
-func (d *Desc[V, F]) ErrorZeroOrNegative() error {
+func (d *Desc[F]) ErrorZeroOrNegative() error {
 	return d.Errorf("cannot be zero or negative")
 }
 
 // ErrorNegative formats an error message for negative env var
-func (d *Desc[V, F]) ErrorNegative() error {
+func (d *Desc[F]) ErrorNegative() error {
 	return d.Errorf("cannot be negative")
 }
 
 // Warn logs a warning with the env var details
-func (d *Desc[V, F]) Warn(msg string, args ...any) {
+func (d *Desc[F]) Warn(msg string, args ...any) {
 	v, _ := d.GetEnv()
 	args = append(args, "name", d.Name, "format", d.format, "value", v)
 
@@ -95,7 +95,7 @@ func (d *Desc[V, F]) Warn(msg string, args ...any) {
 }
 
 // Errorf formats an error message for invalid env var
-func (d *Desc[V, F]) Errorf(msg string, args ...any) error {
+func (d *Desc[F]) Errorf(msg string, args ...any) error {
 	return fmt.Errorf(
 		"invalid %s value (format: %s): %w, see %s",
 		d.Name,
@@ -106,7 +106,7 @@ func (d *Desc[V, F]) Errorf(msg string, args ...any) error {
 }
 
 // docsUrl returns the documentation URL for the env var
-func (d *Desc[V, F]) docsUrl() string {
+func (d *Desc[F]) docsUrl() string {
 	if len(d.docsUrlOverride) > 0 {
 		return d.docsUrlOverride
 	}
