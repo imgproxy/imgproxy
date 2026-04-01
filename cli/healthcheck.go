@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -15,13 +14,7 @@ import (
 
 // healthcheck performs a healthcheck on a running imgproxy instance
 func healthcheck(ctx context.Context, c *cli.Command) error {
-	var network, bind, pathprefix string
-
-	err := errors.Join(
-		server.IMGPROXY_NETWORK.Parse(&network),
-		server.IMGPROXY_BIND.Parse(&bind),
-		server.IMGPROXY_PATH_PREFIX.Parse(&pathprefix),
-	)
+	config, err := server.LoadConfigFromEnv(nil)
 	if err != nil {
 		return err
 	}
@@ -29,12 +22,12 @@ func healthcheck(ctx context.Context, c *cli.Command) error {
 	httpc := http.Client{
 		Transport: &http.Transport{
 			DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
-				return net.Dial(network, bind)
+				return net.Dial(config.Network, config.Bind)
 			},
 		},
 	}
 
-	res, err := httpc.Get(fmt.Sprintf("http://imgproxy%s/health", pathprefix))
+	res, err := httpc.Get(fmt.Sprintf("http://imgproxy%s/health", config.PathPrefix))
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
 		return cli.Exit(err, 1)
