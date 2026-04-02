@@ -8,6 +8,7 @@ _TODO: add links to the docs when they are ready_
 - (pro) Add internal cache for processed images.
 - (pro) Add digital camera raw formats support (loading only).
 - (pro) Add `crop_objects` processing option to crop the image to detected objects.
+- (pro) Add `thumb_hash` info option to calculate [ThumbHash](https://evanw.github.io/thumbhash/) of the source image.
 - (pro) Add `phash` info option to calculate perceptual hash of the source image.
 - (pro) Add `classify_objects` info option to classify objects in the source image using a classification model.
 - Add `IMGPROXY_PRESERVE_HDR` config. When set to `true`, imgproxy will try to keep the image's bits per pixel when possible.
