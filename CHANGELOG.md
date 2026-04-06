@@ -10,7 +10,7 @@ _TODO: add links to the docs when they are ready_
 - (pro) Add `crop_objects` processing option to crop the image to detected objects.
 - (pro) Add `thumb_hash` info option to calculate [ThumbHash](https://evanw.github.io/thumbhash/) of the source image.
 - (pro) Add `phash` info option to calculate perceptual hash of the source image.
-- (pro) Add `classify_objects` info option to classify objects in the source image using a classification model.
+- (pro) Add `classify` info option to classify objects in the source image using a classification model.
 - Add `IMGPROXY_PRESERVE_HDR` config. When set to `true`, imgproxy will try to keep the image's bits per pixel when possible.
 - Add `IMGPROXY_OPEN_TELEMETRY_ENABLE_LOGS` config to control whether to send logs to OpenTelemetry.
 - Add `IMGPROXY_NEW_RELIC_PROPAGATE_EXTERNAL`, `IMGPROXY_DATADOG_PROPAGATE_EXTERNAL`, and `IMGPROXY_OPEN_TELEMETRY_PROPAGATE_EXTERNAL` configs to control propagation of tracing headers to external requests.
