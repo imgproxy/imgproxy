@@ -610,7 +610,7 @@ func TestDateTime(t *testing.T) {
 	}{
 		{input: "", want: time.Time{}},
 		{
-			input: "Mon, 02 Jan 2006 15:04:05 GMT",
+			input: "2006-01-02T15:04:05Z",
 			want:  time.Date(2006, 1, 2, 15, 4, 5, 0, time.UTC),
 		},
 		{input: "invalid-date", wantErr: true},

@@ -3,7 +3,6 @@ package env
 import (
 	"encoding/hex"
 	"fmt"
-	"net/http"
 	"os"
 	"regexp"
 	"strconv"
@@ -301,7 +300,7 @@ func parseDateTime(env string) (time.Time, error) {
 		return time.Time{}, nil
 	}
 
-	return time.Parse(http.TimeFormat, env)
+	return time.Parse(time.RFC3339, env)
 }
 
 // parseExistingFilePath checks if the provided path points to an existing file and returns the path if valid.
