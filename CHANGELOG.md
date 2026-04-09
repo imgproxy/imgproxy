@@ -54,6 +54,10 @@ _TODO: add links to the docs when they are ready_
 - Removed deprecated `download_duration_seconds` and `processing_duration_seconds` histograms from Prometheus metrics. Use `request_span_duration_seconds` histogram with `span` label instead.
 - Removed obsolete `IMGPROXY_DOWNLOAD_BUFFER_SIZE` and `IMGPROXY_BUFFER_POOL_CALIBRATION_THRESHOLD` configs.
 
+## [3.31.2] - 2026-04-09
+
+This is a maintenance release with updated dependencies
+
 ## [3.31.1] - 2026-03-17
 ### Fixed
 - Fix memory leak when saving HEIC/AVIF images with alpha channel.
