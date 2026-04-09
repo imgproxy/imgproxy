@@ -153,16 +153,20 @@ func withPanicHandler(h router.RouteHandler) router.RouteHandler {
 					errorreport.Report(err, r)
 				}
 
-				router.LogResponse(reqID, r, ierr.StatusCode(), ierr)
+				var body []byte
+				if config.DevelopmentErrorsMode {
+					body = []byte(ierr.Error())
+				} else {
+					body = []byte(ierr.PublicMessage())
+				}
+
+				router.LogResponse(reqID, r, ierr.StatusCode(), ierr,
+					log.Fields{"response_size": len(body)},
+				)
 
 				rw.Header().Set("Content-Type", "text/plain")
 				rw.WriteHeader(ierr.StatusCode())
-
-				if config.DevelopmentErrorsMode {
-					rw.Write([]byte(ierr.Error()))
-				} else {
-					rw.Write([]byte(ierr.PublicMessage()))
-				}
+				rw.Write(body)
 			}
 		}()
 
@@ -192,7 +196,9 @@ func handleHealth(reqID string, rw http.ResponseWriter, r *http.Request) {
 
 	// Log response only if something went wrong
 	if ierr != nil {
-		router.LogResponse(reqID, r, status, ierr)
+		router.LogResponse(reqID, r, status, ierr,
+			log.Fields{"response_size": len(msg)},
+		)
 	}
 
 	rw.Header().Set("Content-Type", "text/plain")
@@ -202,6 +208,8 @@ func handleHealth(reqID string, rw http.ResponseWriter, r *http.Request) {
 }
 
 func handleHead(reqID string, rw http.ResponseWriter, r *http.Request) {
-	router.LogResponse(reqID, r, 200, nil)
+	router.LogResponse(reqID, r, 200, nil,
+		log.Fields{"response_size": 0},
+	)
 	rw.WriteHeader(200)
 }

@@ -126,7 +126,7 @@ func streamOriginImage(ctx context.Context, reqID string, r *http.Request, rw ht
 	buf := streamBufPool.Get().(*[]byte)
 	defer streamBufPool.Put(buf)
 
-	_, copyerr := io.CopyBuffer(rw, res.Body, *buf)
+	written, copyerr := io.CopyBuffer(rw, res.Body, *buf)
 	if copyerr == http.ErrBodyNotAllowed {
 		// We can hit this for some statuses like 304 Not Modified.
 		// We can ignore this error.
@@ -138,6 +138,7 @@ func streamOriginImage(ctx context.Context, reqID string, r *http.Request, rw ht
 		log.Fields{
 			"image_url":          imageURL,
 			"processing_options": po,
+			"response_size":      written,
 		},
 	)
 
