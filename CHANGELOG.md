@@ -2,7 +2,7 @@
 
 ## [3.31.2] - 2026-04-09
 
-This is a maintanance release with updated dependencies
+This is a maintenance release with updated dependencies
 
 ## [3.31.1] - 2026-03-17
 ### Fixed
