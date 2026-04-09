@@ -52,6 +52,7 @@ _TODO: add links to the docs when they are ready_
 - Removed deprecated `IMGPROXY_OPEN_TELEMETRY_CONNECTION_TIMEOUT` config. Use `OTEL_EXPORTER_OTLP_TIMEOUT` instead.
 - Removed deprecated `IMGPROXY_UNSHARPENING_MODE`, `IMGPROXY_UNSHARPENING_WEIGHT`, `IMGPROXY_UNSHARPENING_DIVIDER` configs. Use `IMGPROXY_UNSHARP_MASKING_MODE`, `IMGPROXY_UNSHARP_MASKING_WEIGHT`, `IMGPROXY_UNSHARP_MASKING_DIVIDER` instead.
 - Removed deprecated `download_duration_seconds` and `processing_duration_seconds` histograms from Prometheus metrics. Use `request_span_duration_seconds` histogram with `span` label instead.
+- Removed obsolete `IMGPROXY_DOWNLOAD_BUFFER_SIZE` and `IMGPROXY_BUFFER_POOL_CALIBRATION_THRESHOLD` configs.
 
 ## [3.31.1] - 2026-03-17
 ### Fixed
