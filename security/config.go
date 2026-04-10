@@ -11,8 +11,8 @@ import (
 
 var (
 	IMGPROXY_ALLOWED_SOURCES    = env.URLPatterns("IMGPROXY_ALLOWED_SOURCES")
-	IMGPROXY_KEYS               = env.HexSlice("IMGPROXY_KEYS")
-	IMGPROXY_SALTS              = env.HexSlice("IMGPROXY_SALTS")
+	IMGPROXY_KEY                = env.HexSlice("IMGPROXY_KEY")
+	IMGPROXY_SALT               = env.HexSlice("IMGPROXY_SALT")
 	IMGPROXY_SIGNATURE_SIZE     = env.Int("IMGPROXY_SIGNATURE_SIZE")
 	IMGPROXY_TRUSTED_SIGNATURES = env.StringSlice("IMGPROXY_TRUSTED_SIGNATURES")
 
@@ -66,8 +66,8 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 		IMGPROXY_MAX_ANIMATION_FRAME_RESOLUTION.Parse(&c.MaxAnimationFrameResolution),
 		IMGPROXY_MAX_RESULT_DIMENSION.Parse(&c.MaxResultDimension),
 
-		IMGPROXY_KEYS.Parse(&c.Keys),
-		IMGPROXY_SALTS.Parse(&c.Salts),
+		IMGPROXY_KEY.Parse(&c.Keys),
+		IMGPROXY_SALT.Parse(&c.Salts),
 	)
 
 	return c, err
@@ -95,11 +95,11 @@ func (c *Config) Validate() error {
 	}
 
 	if len(c.Keys) == 0 {
-		IMGPROXY_KEYS.Warn("No keys defined, signature checking is disabled")
+		IMGPROXY_KEY.Warn("No keys defined, signature checking is disabled")
 	}
 
 	if len(c.Salts) == 0 {
-		IMGPROXY_SALTS.Warn("No salts defined, signature checking is disabled")
+		IMGPROXY_SALT.Warn("No salts defined, signature checking is disabled")
 	}
 
 	if c.SignatureSize < 1 || c.SignatureSize > 32 {
