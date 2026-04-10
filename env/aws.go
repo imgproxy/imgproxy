@@ -97,9 +97,12 @@ func loadAWSSystemManagerParams(ctx context.Context) error {
 		return fmt.Errorf("can't load AWS SSM config: %w", err)
 	}
 
-	conf.Region = defaultAWSRegion
-	if len(paramsRegion) != 0 {
+	if len(paramsRegion) > 0 {
 		conf.Region = paramsRegion
+	}
+
+	if len(conf.Region) == 0 {
+		conf.Region = defaultAWSRegion
 	}
 
 	// Let's create SSM client
