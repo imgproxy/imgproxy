@@ -214,7 +214,7 @@ func (r *Router) getRequestID(req *http.Request) string {
 
 		if len(lambdaContextVal) > 0 {
 			var lambdaContext struct {
-				RequestID string `json:"requestId"`
+				RequestID string `json:"requestId"` //nolint:tagliatelle
 			}
 
 			err := json.Unmarshal([]byte(lambdaContextVal), &lambdaContext)
