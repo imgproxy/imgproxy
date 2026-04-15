@@ -75,6 +75,8 @@ func (p *Parser) applyURLOption(
 		return p.applyKeepCopyrightOption(ctx, o.Main(), args)
 	case "strip_color_profile", "scp":
 		return p.applyStripColorProfileOption(ctx, o.Main(), args)
+	case "preserve_hdr", "ph":
+		return p.applyPreserveHDROption(ctx, o.Main(), args)
 	case "enforce_thumbnail", "eth":
 		return p.applyEnforceThumbnailOption(ctx, o.Main(), args)
 	// Saving options

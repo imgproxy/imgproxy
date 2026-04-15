@@ -478,6 +478,10 @@ func (p *Parser) applyStripColorProfileOption(ctx context.Context, o *options.Op
 	return p.parseBool(ctx, o, keys.StripColorProfile, args...)
 }
 
+func (p *Parser) applyPreserveHDROption(ctx context.Context, o *options.Options, args []string) error {
+	return p.parseBool(ctx, o, keys.PreserveHDR, args...)
+}
+
 func (p *Parser) applyAutoRotateOption(ctx context.Context, o *options.Options, args []string) error {
 	return p.parseBool(ctx, o, keys.AutoRotate, args...)
 }

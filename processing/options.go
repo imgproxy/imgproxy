@@ -254,6 +254,10 @@ func (po ProcessingOptions) WatermarkScale() float64 {
 	return po.GetFloat(keys.WatermarkScale, 0.0)
 }
 
+func (po ProcessingOptions) PreserveHDR() bool {
+	return po.Main().GetBool(keys.PreserveHDR, po.config.PreserveHDR)
+}
+
 // Quality retrieves the quality setting for a given image format.
 // It first checks for a general quality setting, then for a format-specific setting,
 // and finally falls back to the configured default quality.

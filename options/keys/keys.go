@@ -89,6 +89,8 @@ const (
 	KeepCopyright     = "keep_copyright"
 	StripColorProfile = "strip_color_profile"
 
+	PreserveHDR = "preserve_hdr"
+
 	AutoRotate = "auto_rotate"
 
 	EnforceThumbnail = "enforce_thumbnail"
