@@ -9,7 +9,7 @@ func (p *Processor) colorspaceToProcessing(c *Context) error {
 		return err
 	}
 
-	supportsHDR := c.PO.Format().SupportsHDR() && p.config.PreserveHDR
+	supportsHDR := c.PO.Format().SupportsHDR() && c.PO.PreserveHDR()
 	cs := guessTargetColorspace(c.Img, supportsHDR)
 
 	if c.Img.IsLinear() {

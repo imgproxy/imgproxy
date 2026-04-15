@@ -40,6 +40,27 @@ func (tc colorspaceTestCase) URLOptions() string {
 	return opts
 }
 
+type preserveHDRTestCase struct {
+	name        string
+	sourceFile  string
+	outFormat   imagetype.Type
+	preserveHDR bool // URL option value
+}
+
+func (tc preserveHDRTestCase) ImagePath() string {
+	return tc.sourceFile
+}
+
+func (tc preserveHDRTestCase) URLOptions() string {
+	return fmt.Sprintf(
+		"resize:fill:%d:%d/enlarge:1/format:%s/preserve_hdr:%t",
+		colorspaceTestOutSize.width,
+		colorspaceTestOutSize.height,
+		tc.outFormat,
+		tc.preserveHDR,
+	)
+}
+
 func (s *ColorspaceTestSuite) SetupSubTest() {
 	s.ResetLazyObjects()
 }
@@ -326,6 +347,52 @@ func (s *ColorspaceTestSuite) TestWatermarkColorspace() {
 
 			s.Config().Processing.PreserveHDR = true
 			s.runTestCase(tc)
+		})
+	}
+}
+
+func (s *ColorspaceTestSuite) TestPreserveHDROptionOverride() {
+	testCases := []struct {
+		opts              preserveHDRTestCase
+		configValue       bool
+		outSize           testSize
+		outInterpretation vips.Interpretation
+	}{
+		{
+			opts: preserveHDRTestCase{
+				name:        "option-true-overrides-config-false",
+				sourceFile:  "test-images/png/16-bpp.png",
+				outFormat:   imagetype.PNG,
+				preserveHDR: true,
+			},
+			configValue:       false,
+			outSize:           colorspaceTestOutSize,
+			outInterpretation: vips.InterpretationRGB16,
+		},
+		{
+			opts: preserveHDRTestCase{
+				name:        "option-false-overrides-config-true",
+				sourceFile:  "test-images/png/16-bpp.png",
+				outFormat:   imagetype.PNG,
+				preserveHDR: false,
+			},
+			configValue:       true,
+			outSize:           colorspaceTestOutSize,
+			outInterpretation: vips.InterpretationSRGB,
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.opts.name, func() {
+			s.Config().Processing.PreserveHDR = tc.configValue
+
+			testCase := testCase[preserveHDRTestCase]{
+				opts:              tc.opts,
+				outSize:           tc.outSize,
+				outInterpretation: tc.outInterpretation,
+			}
+
+			s.processImageAndCheck(testCase)
 		})
 	}
 }

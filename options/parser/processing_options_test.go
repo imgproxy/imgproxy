@@ -502,8 +502,16 @@ func (s *ProcessingOptionsTestSuite) TestParsePathStripMetadata() {
 	o, _, err := s.parser().ParsePath(s.T().Context(), path, nil)
 
 	s.Require().NoError(err)
-
 	s.Require().True(o.GetBool(keys.StripMetadata, false))
+}
+
+func (s *ProcessingOptionsTestSuite) TestParsePathPreserveHDR() {
+	path := "/ph:1/plain/http://images.dev/lorem/ipsum.jpg"
+	o, _, err := s.parser().ParsePath(s.T().Context(), path, nil)
+
+	s.Require().NoError(err)
+
+	s.Require().True(o.GetBool(keys.PreserveHDR, false))
 }
 
 func (s *ProcessingOptionsTestSuite) TestParsePathWebpDetection() {
