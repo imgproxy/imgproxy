@@ -48,6 +48,12 @@ linters:
         - name: exported # should be reviewed at some point
           disabled: true
 
+    tagliatelle:
+      case:
+        rules:
+          json: snake
+
+
   exclusions:
     rules:
       # can be used
