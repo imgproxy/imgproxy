@@ -1,8 +1,6 @@
 module github.com/imgproxy/imgproxy/v3
 
-go 1.24.0
-
-toolchain go1.24.3
+go 1.25.0
 
 require (
 	cloud.google.com/go/secretmanager v1.15.0
@@ -46,21 +44,21 @@ require (
 	go.opentelemetry.io/contrib/detectors/aws/eks v1.38.0
 	go.opentelemetry.io/contrib/propagators/autoprop v0.63.0
 	go.opentelemetry.io/contrib/propagators/aws v1.38.0
-	go.opentelemetry.io/otel v1.40.0
+	go.opentelemetry.io/otel v1.43.0
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc v1.38.0
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp v1.38.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.38.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.38.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.38.0
-	go.opentelemetry.io/otel/metric v1.40.0
-	go.opentelemetry.io/otel/sdk v1.40.0
-	go.opentelemetry.io/otel/sdk/metric v1.40.0
-	go.opentelemetry.io/otel/trace v1.40.0
+	go.opentelemetry.io/otel/metric v1.43.0
+	go.opentelemetry.io/otel/sdk v1.43.0
+	go.opentelemetry.io/otel/sdk/metric v1.43.0
+	go.opentelemetry.io/otel/trace v1.43.0
 	go.uber.org/automaxprocs v1.6.0
 	golang.org/x/image v0.31.0
 	golang.org/x/net v0.44.0
 	golang.org/x/sync v0.17.0
-	golang.org/x/sys v0.40.0
+	golang.org/x/sys v0.42.0
 	google.golang.org/api v0.249.0
 	google.golang.org/grpc v1.75.1
 )
