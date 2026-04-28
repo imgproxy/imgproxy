@@ -1,7 +1,14 @@
 # Changelog
 
-## [4.0.0-beta.0] - 2026-04-10
+## [4.0.0-beta.1] - 2026-04-28
+### Added
+- Add [preserve_hdr](https://docs.imgproxy.net/4-pre/usage/processing#preserve-hdr) processing option to override the `IMGPROXY_PRESERVE_HDR` config on a per-request basis.
+- (pro) Add [IMGPROXY_ENABLE_RAW_FORMATS](https://docs.imgproxy.net/4-pre/configuration/options#IMGPROXY_ENABLE_RAW_FORMATS) config to enable support for digital camera raw formats.
 
+### Changed
+- (pro) Digital camera raw formats support is disabled by default. Enable it with the [IMGPROXY_ENABLE_RAW_FORMATS](https://docs.imgproxy.net/4-pre/configuration/options#IMGPROXY_ENABLE_RAW_FORMATS) config.
+
+## [4.0.0-beta.0] - 2026-04-10
 ### Added
 - (pro) Add [internal cache](https://docs.imgproxy.net/4-pre/cache/internal) for processed images.
 - (pro) Add [digital camera raw](https://docs.imgproxy.net/4-pre/image_formats_support#raw-support) formats support (loading only).
