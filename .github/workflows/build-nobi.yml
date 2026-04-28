@@ -1,0 +1,86 @@
+name: Build Nobi
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - '*nobi*'
+
+env:
+  DOCKER_META_IMAGES: ghcr.io/${{ github.repository }}
+  DOCKER_META_TAGS: |
+    type=ref,event=tag
+    type=sha,enable=${{ github.event_name == 'workflow_dispatch' }}
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        build:
+          - arch: amd64
+            dockerPlatform: linux/amd64
+            runner: ubuntu-latest
+          - arch: arm64
+            dockerPlatform: linux/arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.build.runner }}
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.DOCKER_META_IMAGES }}
+          tags: ${{ env.DOCKER_META_TAGS }}
+          flavor: |
+            suffix=-${{ matrix.build.arch }},onlatest=true
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7.1.0
+        with:
+          context: .
+          platforms: ${{ matrix.build.dockerPlatform }}
+          push: true
+          provenance: false
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  push-manifests:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.DOCKER_META_IMAGES }}
+          tags: ${{ env.DOCKER_META_TAGS }}
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push multi-arch manifests
+        run: |
+          for tag in ${{ join(fromJSON(steps.meta.outputs.json).tags, ' ') }}; do
+            docker buildx imagetools create -t "$tag" "${tag}-amd64" "${tag}-arm64"
+          done

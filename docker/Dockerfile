@@ -1,6 +1,6 @@
-ARG BASE_IMAGE_VERSION="v3.15.2.nobi.3"
+ARG BASE_IMAGE_VERSION="v3.15.2.nobi.6"
 
-FROM nobilife/imgproxy-base:${BASE_IMAGE_VERSION} AS build
+FROM ghcr.io/nobi-bv/imgproxy-docker-base:${BASE_IMAGE_VERSION} AS build
 
 ENV CGO_ENABLED=1
 
