@@ -1,5 +1,9 @@
 # Changelog
 
+## [3.31.3] - 2026-04-28
+
+This is a maintenance release with updated dependencies
+
 ## [3.31.2] - 2026-04-09
 
 This is a maintenance release with updated dependencies
