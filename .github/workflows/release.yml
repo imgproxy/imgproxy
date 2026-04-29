@@ -25,7 +25,7 @@ jobs:
       contents: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Prepare notes
         id: notes
@@ -43,7 +43,7 @@ jobs:
           fi
 
       - name: Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
         with:
           body_path: RELEASE_NOTES.txt
           prerelease: ${{ fromJSON(steps.notes.outputs.prerelease) }}
@@ -53,7 +53,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Repository Dispatch
-        uses: peter-evans/repository-dispatch@v2
+        uses: peter-evans/repository-dispatch@28959ce8df70de7be546dd1250a005dd32156697 # v4.0.1
         with:
           token: ${{ secrets.WORKFLOW_DISPATCH_TOKEN }}
           repository: imgproxy/imgproxy-helm
