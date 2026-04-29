@@ -144,7 +144,7 @@ Many thanks to:
 
 ## 📄 License
 
-imgproxy is licensed under the MIT license.
+imgproxy is licensed under the Apache License 2.0.
 
 See [LICENSE](https://github.com/imgproxy/imgproxy/blob/master/LICENSE) for the full license text.
 
