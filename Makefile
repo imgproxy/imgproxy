@@ -110,6 +110,14 @@ upgrade:
 	@$(GOCMD) get $$($(GOCMD) list -f '{{if not (or .Main .Indirect)}}{{.Path}}{{end}}' -m all)
 	@$(GOCMD) mod tidy
 
+.PHONY: update-gh-actions
+update-gh-actions:
+ifneq ($(shell which pinact),)
+	@pinact run -u --min-age 7
+else
+	$(error pinact is not installed. See installation instructions at https://github.com/suzuki-shunsuke/pinact/blob/main/INSTALL.md)
+endif
+
 # Make any unknown target do nothing to avoid "up to date" messages
 .PHONY: FORCE
 %: FORCE
