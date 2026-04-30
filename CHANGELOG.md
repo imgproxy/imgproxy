@@ -1,5 +1,9 @@
 # Changelog
 
+## [4.0.0-rc.0] - TBA
+### Fixed
+- Allow `0` as a valid value for `quality` and `format_quality` options.
+
 ## [4.0.0-beta.1] - 2026-04-28
 ### Added
 - Add [preserve_hdr](https://docs.imgproxy.net/4-pre/usage/processing#preserve-hdr) processing option to override the `IMGPROXY_PRESERVE_HDR` config on a per-request basis.

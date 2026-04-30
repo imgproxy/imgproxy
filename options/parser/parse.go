@@ -177,11 +177,12 @@ func (p *Parser) parsePositiveInt(
 	return nil
 }
 
-// parseQualityInt parses a quality integer option value (1-100)
+// parseQualityInt parses a quality integer option value (minQ-100)
 func (p *Parser) parseQualityInt(
 	ctx context.Context,
 	o *options.Options,
 	key string,
+	minQ int,
 	args ...string,
 ) error {
 	if err := p.ensureMaxArgs(ctx, key, args, 1); err != nil {
@@ -189,8 +190,8 @@ func (p *Parser) parseQualityInt(
 	}
 
 	i, err := strconv.Atoi(args[0])
-	if err != nil || i < 1 || i > 100 {
-		return newInvalidArgumentError(ctx, key, args[0], "number in range 1-100")
+	if err != nil || i < minQ || i > 100 {
+		return newInvalidArgumentError(ctx, key, args[0], fmt.Sprintf("number in range %d-100", minQ))
 	}
 
 	o.Set(key, i)

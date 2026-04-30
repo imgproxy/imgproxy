@@ -255,7 +255,7 @@ func (p *Parser) applyFlipOption(ctx context.Context, o *options.Options, args [
 }
 
 func (p *Parser) applyQualityOption(ctx context.Context, o *options.Options, args []string) error {
-	return p.parseQualityInt(ctx, o, keys.Quality, args...)
+	return p.parseQualityInt(ctx, o, keys.Quality, 0, args...)
 }
 
 func (p *Parser) applyFormatQualityOption(ctx context.Context, o *options.Options, args []string) error {
@@ -276,7 +276,7 @@ func (p *Parser) applyFormatQualityOption(ctx context.Context, o *options.Option
 			return newOptionArgumentError(ctx, keys.PrefixFormatQuality, "Invalid image format: %s", args[i])
 		}
 
-		if err := p.parseQualityInt(ctx, o, keys.FormatQuality(f), args[i+1]); err != nil {
+		if err := p.parseQualityInt(ctx, o, keys.FormatQuality(f), 0, args[i+1]); err != nil {
 			return err
 		}
 	}
