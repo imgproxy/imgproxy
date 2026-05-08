@@ -13,3 +13,4 @@ docs/sitemap.txt
 k6/*.json
 .devcontainer/images
 .claude
+.lycheecache

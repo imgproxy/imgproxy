@@ -1,0 +1,14 @@
+exclude = [
+  "localhost",
+  "twitter.com",
+  "x.com",
+  "unsplash.com",
+]
+
+accept = [200, 429]
+
+user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:150.0) Gecko/20100101 Firefox/150.0"
+header = { "accept" = "*/*" }
+
+cache = true
+max_cache_age = "7d"
