@@ -72,7 +72,7 @@ func (r *request) execute() *server.Error {
 
 	// Fetch image actual
 	originData, originHeaders, err := r.fetchImage(do)
-	if err == nil {
+	if originData != nil {
 		defer originData.Close() // if any originData has been opened, we need to close it
 	}
 
@@ -103,6 +103,7 @@ func (r *request) execute() *server.Error {
 		if err != nil {
 			return server.NewError(err, handlers.ErrCategoryDownload)
 		}
+		defer originData.Close() // if we got a fallback image, we also need to close it
 	}
 
 	// Check if image supports load from origin format

@@ -3,6 +3,7 @@
 ## [4.0.0-rc.0] - TBA
 ### Fixed
 - Allow `0` as a valid value for `quality` and `format_quality` options.
+- Fix closing of shared watermark image data when the `IMGPROXY_WATERMARK_URL` config is used.
 
 ## [4.0.0-beta.1] - 2026-04-28
 ### Added
