@@ -11,3 +11,4 @@ docs/sitemap.txt
 .imgproxyrc
 .devcontainer/*
 k6/*.json
+.lycheecache
