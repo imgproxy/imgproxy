@@ -30,27 +30,30 @@ func New(config *Config) *Processor {
 	}
 }
 
-// Process processes the given image data
+// Process processes the given image data.
+// It always returns a value that the caller owns independently (either a new
+// ImageData or a Ref() of the original), so the caller can Close() it without
+// worrying about whether it is the same object as the input.
 func (p *Processor) Process(o *options.Options, data imagedata.ImageData) (imagedata.ImageData, error) {
 	if data.Format() != imagetype.SVG {
-		return data, nil
+		return data.Ref(), nil
 	}
 
-	var err error
-
-	data, err = p.sanitize(data)
+	processed, err := p.sanitize(data)
 	if err != nil {
-		return data, err
+		return nil, err
 	}
 
-	return data, nil
+	return processed, nil
 }
 
 // sanitize sanitizes the SVG data.
 // It strips <script> and unsafe attributes (on* events).
+// When no transformation is needed, it returns a Ref() of the input so the
+// caller always gets independent ownership.
 func (p *Processor) sanitize(data imagedata.ImageData) (imagedata.ImageData, error) {
 	if !p.config.Sanitize {
-		return data, nil
+		return data.Ref(), nil
 	}
 
 	doc, err := xmlparser.NewDocument(data.Reader())

@@ -117,8 +117,10 @@ func (r *request) execute() *server.Error {
 	// Actually process the image
 	result, err := r.processImage(originData)
 
-	// Let's close resulting image data only if it differs from the source image data
-	if result != nil && result.OutData != nil && result.OutData != originData {
+	// result.OutData always owns its own reference (via Ref() for the skip-processing
+	// path, or a freshly created ImageData for the normal processing path), so we
+	// can unconditionally defer its close here.
+	if result != nil && result.OutData != nil {
 		defer result.OutData.Close()
 	}
 
