@@ -11,8 +11,7 @@ import (
 // Please note that this interface can be backed by any reader, including lazy AsyncBuffer.
 // There is no other way to guarantee that the data is read without errors except reading it till EOF.
 type Provider interface {
-	io.Closer
-
+	Close() error          // Close releases any resources held by the provider
 	Reader() io.ReadSeeker // Reader returns a new ReadSeeker for the image data
 	Size() (int, error)    // Size returns the size of the image data in bytes
 	Error() error          // Error returns any error that occurred during reading data from source
