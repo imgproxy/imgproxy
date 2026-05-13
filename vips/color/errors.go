@@ -3,7 +3,7 @@ package color
 import (
 	"fmt"
 
-	"github.com/imgproxy/imgproxy/v3/errctx"
+	"github.com/imgproxy/imgproxy/v4/errctx"
 )
 
 type ColorError struct{ *errctx.TextError }

@@ -4,9 +4,9 @@ import (
 	"crypto/rand"
 	"testing"
 
-	"github.com/imgproxy/imgproxy/v3/storage"
-	"github.com/imgproxy/imgproxy/v3/storage/testsuite"
-	"github.com/imgproxy/imgproxy/v3/testutil"
+	"github.com/imgproxy/imgproxy/v4/storage"
+	"github.com/imgproxy/imgproxy/v4/storage/testsuite"
+	"github.com/imgproxy/imgproxy/v4/testutil"
 	"github.com/stretchr/testify/suite"
 )
 

@@ -10,10 +10,10 @@ import (
 
 	nanoid "github.com/matoous/go-nanoid/v2"
 
-	"github.com/imgproxy/imgproxy/v3/errorreport"
-	"github.com/imgproxy/imgproxy/v3/httpheaders"
-	"github.com/imgproxy/imgproxy/v3/monitoring"
-	"github.com/imgproxy/imgproxy/v3/server/responsewriter"
+	"github.com/imgproxy/imgproxy/v4/errorreport"
+	"github.com/imgproxy/imgproxy/v4/httpheaders"
+	"github.com/imgproxy/imgproxy/v4/monitoring"
+	"github.com/imgproxy/imgproxy/v4/server/responsewriter"
 )
 
 const (

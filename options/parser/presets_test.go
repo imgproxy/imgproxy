@@ -3,7 +3,7 @@ package optionsparser_test
 import (
 	"testing"
 
-	optionsparser "github.com/imgproxy/imgproxy/v3/options/parser"
+	optionsparser "github.com/imgproxy/imgproxy/v4/options/parser"
 	"github.com/stretchr/testify/suite"
 )
 

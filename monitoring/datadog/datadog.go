@@ -15,11 +15,11 @@ import (
 	"github.com/DataDog/dd-trace-go/v2/ddtrace/tracer"
 	"github.com/felixge/httpsnoop"
 
-	"github.com/imgproxy/imgproxy/v3/errctx"
-	"github.com/imgproxy/imgproxy/v3/monitoring/format"
-	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
-	"github.com/imgproxy/imgproxy/v3/version"
-	vipsstats "github.com/imgproxy/imgproxy/v3/vips/stats"
+	"github.com/imgproxy/imgproxy/v4/errctx"
+	"github.com/imgproxy/imgproxy/v4/monitoring/format"
+	"github.com/imgproxy/imgproxy/v4/monitoring/stats"
+	"github.com/imgproxy/imgproxy/v4/version"
+	vipsstats "github.com/imgproxy/imgproxy/v4/vips/stats"
 )
 
 // dataDogLogger is a custom logger for DataDog

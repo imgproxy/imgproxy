@@ -7,9 +7,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/imgproxy/imgproxy/v3"
-	"github.com/imgproxy/imgproxy/v3/logger"
-	"github.com/imgproxy/imgproxy/v3/version"
+	"github.com/imgproxy/imgproxy/v4"
+	"github.com/imgproxy/imgproxy/v4/logger"
+	"github.com/imgproxy/imgproxy/v4/version"
 	"github.com/urfave/cli/v3"
 )
 

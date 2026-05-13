@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/airbrake/gobrake/v5"
-	"github.com/imgproxy/imgproxy/v3/errctx"
+	"github.com/imgproxy/imgproxy/v4/errctx"
 )
 
 var (

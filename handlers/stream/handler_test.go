@@ -11,16 +11,16 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/imgproxy/imgproxy/v3/cookies"
-	"github.com/imgproxy/imgproxy/v3/fetcher"
-	"github.com/imgproxy/imgproxy/v3/handlers/stream"
-	"github.com/imgproxy/imgproxy/v3/httpheaders"
-	"github.com/imgproxy/imgproxy/v3/logger"
-	"github.com/imgproxy/imgproxy/v3/monitoring"
-	"github.com/imgproxy/imgproxy/v3/options"
-	"github.com/imgproxy/imgproxy/v3/options/keys"
-	"github.com/imgproxy/imgproxy/v3/server/responsewriter"
-	"github.com/imgproxy/imgproxy/v3/testutil"
+	"github.com/imgproxy/imgproxy/v4/cookies"
+	"github.com/imgproxy/imgproxy/v4/fetcher"
+	"github.com/imgproxy/imgproxy/v4/handlers/stream"
+	"github.com/imgproxy/imgproxy/v4/httpheaders"
+	"github.com/imgproxy/imgproxy/v4/logger"
+	"github.com/imgproxy/imgproxy/v4/monitoring"
+	"github.com/imgproxy/imgproxy/v4/options"
+	"github.com/imgproxy/imgproxy/v4/options/keys"
+	"github.com/imgproxy/imgproxy/v4/server/responsewriter"
+	"github.com/imgproxy/imgproxy/v4/testutil"
 )
 
 type Ctx struct {

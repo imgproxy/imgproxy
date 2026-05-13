@@ -5,8 +5,8 @@ import (
 	"log/slog"
 	"runtime"
 
-	"github.com/imgproxy/imgproxy/v3/ensure"
-	"github.com/imgproxy/imgproxy/v3/env"
+	"github.com/imgproxy/imgproxy/v4/ensure"
+	"github.com/imgproxy/imgproxy/v4/env"
 )
 
 var (

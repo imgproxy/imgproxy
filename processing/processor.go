@@ -1,9 +1,9 @@
 package processing
 
 import (
-	"github.com/imgproxy/imgproxy/v3/auximageprovider"
-	"github.com/imgproxy/imgproxy/v3/processing/svg"
-	"github.com/imgproxy/imgproxy/v3/security"
+	"github.com/imgproxy/imgproxy/v4/auximageprovider"
+	"github.com/imgproxy/imgproxy/v4/processing/svg"
+	"github.com/imgproxy/imgproxy/v4/security"
 )
 
 // Processor is responsible for processing images according to the given configuration.

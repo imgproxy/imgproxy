@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/imgproxy/imgproxy/v3/asyncbuffer"
+	"github.com/imgproxy/imgproxy/v4/asyncbuffer"
 )
 
 const (

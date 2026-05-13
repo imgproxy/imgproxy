@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/imgproxy/imgproxy/v3/httpheaders"
+	"github.com/imgproxy/imgproxy/v4/httpheaders"
 )
 
 // Request represents a request with conditional headers information.

@@ -12,9 +12,9 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatch"
 	cloudwatchTypes "github.com/aws/aws-sdk-go-v2/service/cloudwatch/types"
 
-	"github.com/imgproxy/imgproxy/v3/errctx"
-	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
-	vipsstats "github.com/imgproxy/imgproxy/v3/vips/stats"
+	"github.com/imgproxy/imgproxy/v4/errctx"
+	"github.com/imgproxy/imgproxy/v4/monitoring/stats"
+	vipsstats "github.com/imgproxy/imgproxy/v4/vips/stats"
 )
 
 const (

@@ -7,7 +7,7 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/imgproxy/imgproxy/v3/errctx"
+	"github.com/imgproxy/imgproxy/v4/errctx"
 )
 
 func LogRequest(reqID string, r *http.Request) {

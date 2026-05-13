@@ -3,8 +3,8 @@ package processing
 import (
 	"math"
 
-	"github.com/imgproxy/imgproxy/v3/imath"
-	"github.com/imgproxy/imgproxy/v3/vips"
+	"github.com/imgproxy/imgproxy/v4/imath"
+	"github.com/imgproxy/imgproxy/v4/vips"
 )
 
 // ExtractGeometry extracts image width, height, orientation angle and flip flag from the image metadata.

@@ -3,12 +3,12 @@ package monitoring
 import (
 	"errors"
 
-	"github.com/imgproxy/imgproxy/v3/ensure"
-	"github.com/imgproxy/imgproxy/v3/monitoring/cloudwatch"
-	"github.com/imgproxy/imgproxy/v3/monitoring/datadog"
-	"github.com/imgproxy/imgproxy/v3/monitoring/newrelic"
-	"github.com/imgproxy/imgproxy/v3/monitoring/otel"
-	"github.com/imgproxy/imgproxy/v3/monitoring/prometheus"
+	"github.com/imgproxy/imgproxy/v4/ensure"
+	"github.com/imgproxy/imgproxy/v4/monitoring/cloudwatch"
+	"github.com/imgproxy/imgproxy/v4/monitoring/datadog"
+	"github.com/imgproxy/imgproxy/v4/monitoring/newrelic"
+	"github.com/imgproxy/imgproxy/v4/monitoring/otel"
+	"github.com/imgproxy/imgproxy/v4/monitoring/prometheus"
 )
 
 // Config holds the configuration for all monitoring services

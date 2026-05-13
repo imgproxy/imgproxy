@@ -5,11 +5,11 @@ import (
 	"maps"
 	"net/http"
 
-	"github.com/imgproxy/imgproxy/v3/errctx"
-	"github.com/imgproxy/imgproxy/v3/errorreport/airbrake"
-	"github.com/imgproxy/imgproxy/v3/errorreport/bugsnag"
-	"github.com/imgproxy/imgproxy/v3/errorreport/honeybadger"
-	"github.com/imgproxy/imgproxy/v3/errorreport/sentry"
+	"github.com/imgproxy/imgproxy/v4/errctx"
+	"github.com/imgproxy/imgproxy/v4/errorreport/airbrake"
+	"github.com/imgproxy/imgproxy/v4/errorreport/bugsnag"
+	"github.com/imgproxy/imgproxy/v4/errorreport/honeybadger"
+	"github.com/imgproxy/imgproxy/v4/errorreport/sentry"
 )
 
 // reporter is an interface that all error reporters must implement.

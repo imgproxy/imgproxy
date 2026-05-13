@@ -3,10 +3,10 @@ package processing_test
 import (
 	"testing"
 
-	"github.com/imgproxy/imgproxy/v3/imagetype"
-	"github.com/imgproxy/imgproxy/v3/testutil"
-	"github.com/imgproxy/imgproxy/v3/vips"
-	"github.com/imgproxy/imgproxy/v3/vips/color"
+	"github.com/imgproxy/imgproxy/v4/imagetype"
+	"github.com/imgproxy/imgproxy/v4/testutil"
+	"github.com/imgproxy/imgproxy/v4/vips"
+	"github.com/imgproxy/imgproxy/v4/vips/color"
 	"github.com/stretchr/testify/suite"
 )
 

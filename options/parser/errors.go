@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/imgproxy/imgproxy/v3/errctx"
+	"github.com/imgproxy/imgproxy/v4/errctx"
 )
 
 const defaultDocsUrl = "https://docs.imgproxy.net/usage/processing"

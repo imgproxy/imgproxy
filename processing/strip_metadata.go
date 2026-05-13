@@ -5,9 +5,9 @@ import (
 
 	"github.com/trimmer-io/go-xmp/xmp"
 
-	"github.com/imgproxy/imgproxy/v3/imagemeta/iptc"
-	"github.com/imgproxy/imgproxy/v3/imagemeta/photoshop"
-	"github.com/imgproxy/imgproxy/v3/vips"
+	"github.com/imgproxy/imgproxy/v4/imagemeta/iptc"
+	"github.com/imgproxy/imgproxy/v4/imagemeta/photoshop"
+	"github.com/imgproxy/imgproxy/v4/vips"
 )
 
 func stripPS3(img *vips.Image) []byte {

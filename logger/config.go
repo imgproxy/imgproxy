@@ -7,9 +7,9 @@ import (
 
 	"github.com/mattn/go-isatty"
 
-	"github.com/imgproxy/imgproxy/v3/ensure"
-	"github.com/imgproxy/imgproxy/v3/env"
-	"github.com/imgproxy/imgproxy/v3/logger/syslog"
+	"github.com/imgproxy/imgproxy/v4/ensure"
+	"github.com/imgproxy/imgproxy/v4/env"
+	"github.com/imgproxy/imgproxy/v4/logger/syslog"
 )
 
 var (

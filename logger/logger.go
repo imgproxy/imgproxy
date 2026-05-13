@@ -7,8 +7,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/imgproxy/imgproxy/v3/logger/gliblog"
-	"github.com/imgproxy/imgproxy/v3/logger/syslog"
+	"github.com/imgproxy/imgproxy/v4/logger/gliblog"
+	"github.com/imgproxy/imgproxy/v4/logger/syslog"
 )
 
 // We store a [Handler] instance here so that we can restore it in [Unmute]

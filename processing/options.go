@@ -3,11 +3,11 @@ package processing
 import (
 	"slices"
 
-	"github.com/imgproxy/imgproxy/v3/imagetype"
-	"github.com/imgproxy/imgproxy/v3/options"
-	"github.com/imgproxy/imgproxy/v3/options/keys"
-	"github.com/imgproxy/imgproxy/v3/security"
-	"github.com/imgproxy/imgproxy/v3/vips/color"
+	"github.com/imgproxy/imgproxy/v4/imagetype"
+	"github.com/imgproxy/imgproxy/v4/options"
+	"github.com/imgproxy/imgproxy/v4/options/keys"
+	"github.com/imgproxy/imgproxy/v4/security"
+	"github.com/imgproxy/imgproxy/v4/vips/color"
 )
 
 // ProcessingOptions is a thin wrapper around options.Options that provides

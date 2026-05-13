@@ -6,9 +6,9 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/imgproxy/imgproxy/v3/clientfeatures"
-	"github.com/imgproxy/imgproxy/v3/httpheaders"
-	"github.com/imgproxy/imgproxy/v3/logger"
+	"github.com/imgproxy/imgproxy/v4/clientfeatures"
+	"github.com/imgproxy/imgproxy/v4/httpheaders"
+	"github.com/imgproxy/imgproxy/v4/logger"
 )
 
 type detectorTestCase struct {

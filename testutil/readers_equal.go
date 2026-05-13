@@ -6,7 +6,7 @@ import (
 	"io"
 	"testing"
 
-	"github.com/imgproxy/imgproxy/v3/ioutil"
+	"github.com/imgproxy/imgproxy/v4/ioutil"
 	"github.com/stretchr/testify/require"
 )
 

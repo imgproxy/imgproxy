@@ -9,7 +9,7 @@ import (
 
 	"golang.org/x/net/netutil"
 
-	"github.com/imgproxy/imgproxy/v3/reuseport"
+	"github.com/imgproxy/imgproxy/v4/reuseport"
 )
 
 const (

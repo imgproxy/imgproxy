@@ -14,10 +14,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
-	"github.com/imgproxy/imgproxy/v3/errctx"
-	"github.com/imgproxy/imgproxy/v3/monitoring/format"
-	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
-	vipsstats "github.com/imgproxy/imgproxy/v3/vips/stats"
+	"github.com/imgproxy/imgproxy/v4/errctx"
+	"github.com/imgproxy/imgproxy/v4/monitoring/format"
+	"github.com/imgproxy/imgproxy/v4/monitoring/stats"
+	vipsstats "github.com/imgproxy/imgproxy/v4/vips/stats"
 )
 
 // Prometheus holds Prometheus metrics and configuration

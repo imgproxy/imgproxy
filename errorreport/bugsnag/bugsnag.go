@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/bugsnag/bugsnag-go/v2"
-	"github.com/imgproxy/imgproxy/v3/errctx"
+	"github.com/imgproxy/imgproxy/v4/errctx"
 )
 
 // logger is the logger forwarder for bugsnag

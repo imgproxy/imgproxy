@@ -14,10 +14,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/imgproxy/imgproxy/v3/httpheaders"
-	"github.com/imgproxy/imgproxy/v3/httprange"
-	"github.com/imgproxy/imgproxy/v3/storage"
-	"github.com/imgproxy/imgproxy/v3/storage/common"
+	"github.com/imgproxy/imgproxy/v4/httpheaders"
+	"github.com/imgproxy/imgproxy/v4/httprange"
+	"github.com/imgproxy/imgproxy/v4/storage"
+	"github.com/imgproxy/imgproxy/v4/storage/common"
 )
 
 // GetObject retrieves an object from file system.

@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/imgproxy/imgproxy/v3/httpheaders"
-	"github.com/imgproxy/imgproxy/v3/server/responsewriter"
+	"github.com/imgproxy/imgproxy/v4/httpheaders"
+	"github.com/imgproxy/imgproxy/v4/server/responsewriter"
 	"github.com/stretchr/testify/suite"
 )
 

@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/imgproxy/imgproxy/v3/httpheaders"
+	"github.com/imgproxy/imgproxy/v4/httpheaders"
 )
 
 // Maximum supported DPR from client hints

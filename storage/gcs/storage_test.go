@@ -7,8 +7,8 @@ import (
 	"net/http"
 
 	"github.com/fsouza/fake-gcs-server/fakestorage"
-	"github.com/imgproxy/imgproxy/v3/storage/gcs"
-	"github.com/imgproxy/imgproxy/v3/testutil"
+	"github.com/imgproxy/imgproxy/v4/storage/gcs"
+	"github.com/imgproxy/imgproxy/v4/testutil"
 )
 
 // TestServer is a mock Google Cloud Storage server for testing

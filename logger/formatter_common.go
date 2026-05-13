@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/imgproxy/imgproxy/v3/errctx"
+	"github.com/imgproxy/imgproxy/v4/errctx"
 )
 
 // formatterCommon holds the common logic for both pretty and structured formatting.

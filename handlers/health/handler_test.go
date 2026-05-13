@@ -8,9 +8,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/imgproxy/imgproxy/v3/handlers/health"
-	"github.com/imgproxy/imgproxy/v3/httpheaders"
-	"github.com/imgproxy/imgproxy/v3/server/responsewriter"
+	"github.com/imgproxy/imgproxy/v4/handlers/health"
+	"github.com/imgproxy/imgproxy/v4/httpheaders"
+	"github.com/imgproxy/imgproxy/v4/server/responsewriter"
 )
 
 func TestHealthHandler(t *testing.T) {

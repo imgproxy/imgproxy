@@ -3,8 +3,8 @@ package fs_test
 import (
 	"context"
 
-	"github.com/imgproxy/imgproxy/v3/storage/fs"
-	"github.com/imgproxy/imgproxy/v3/testutil"
+	"github.com/imgproxy/imgproxy/v4/storage/fs"
+	"github.com/imgproxy/imgproxy/v4/testutil"
 )
 
 // LazySuiteStorage is a lazy object that provides FS storage for tests

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/imgproxy/imgproxy/v3/options"
+	"github.com/imgproxy/imgproxy/v4/options"
 )
 
 // parsePresets parses presets from the config and fills the presets map

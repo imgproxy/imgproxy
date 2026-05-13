@@ -3,7 +3,7 @@ package common
 import (
 	"net/http"
 
-	"github.com/imgproxy/imgproxy/v3/httpheaders"
+	"github.com/imgproxy/imgproxy/v4/httpheaders"
 )
 
 // IsNotModified returns true if a file was not modified according to

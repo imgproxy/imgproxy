@@ -3,7 +3,7 @@ package processing
 import (
 	"math"
 
-	"github.com/imgproxy/imgproxy/v3/imath"
+	"github.com/imgproxy/imgproxy/v4/imath"
 )
 
 func calcPosition(

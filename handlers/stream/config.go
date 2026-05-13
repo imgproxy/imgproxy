@@ -1,8 +1,8 @@
 package stream
 
 import (
-	"github.com/imgproxy/imgproxy/v3/ensure"
-	"github.com/imgproxy/imgproxy/v3/httpheaders"
+	"github.com/imgproxy/imgproxy/v4/ensure"
+	"github.com/imgproxy/imgproxy/v4/httpheaders"
 )
 
 // Config represents the configuration for the image streamer.

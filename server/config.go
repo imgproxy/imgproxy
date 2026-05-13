@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/imgproxy/imgproxy/v3/ensure"
-	"github.com/imgproxy/imgproxy/v3/env"
-	"github.com/imgproxy/imgproxy/v3/server/responsewriter"
+	"github.com/imgproxy/imgproxy/v4/ensure"
+	"github.com/imgproxy/imgproxy/v4/env"
+	"github.com/imgproxy/imgproxy/v4/server/responsewriter"
 )
 
 var (

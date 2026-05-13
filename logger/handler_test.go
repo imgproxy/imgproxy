@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/imgproxy/imgproxy/v3/logger"
+	"github.com/imgproxy/imgproxy/v4/logger"
 )
 
 var handlerBenchmarkMsg = "test message"

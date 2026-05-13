@@ -8,13 +8,13 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/imgproxy/imgproxy/v3/fetcher/transport/generichttp"
+	"github.com/imgproxy/imgproxy/v4/fetcher/transport/generichttp"
 
-	absStorage "github.com/imgproxy/imgproxy/v3/storage/abs"
-	fsStorage "github.com/imgproxy/imgproxy/v3/storage/fs"
-	gcsStorage "github.com/imgproxy/imgproxy/v3/storage/gcs"
-	s3Storage "github.com/imgproxy/imgproxy/v3/storage/s3"
-	swiftStorage "github.com/imgproxy/imgproxy/v3/storage/swift"
+	absStorage "github.com/imgproxy/imgproxy/v4/storage/abs"
+	fsStorage "github.com/imgproxy/imgproxy/v4/storage/fs"
+	gcsStorage "github.com/imgproxy/imgproxy/v4/storage/gcs"
+	s3Storage "github.com/imgproxy/imgproxy/v4/storage/s3"
+	swiftStorage "github.com/imgproxy/imgproxy/v4/storage/swift"
 )
 
 // Transport is a wrapper around http.Transport which allows to track registered protocols

@@ -8,10 +8,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/imgproxy/imgproxy/v3/imagetype"
-	"github.com/imgproxy/imgproxy/v3/testutil"
-	"github.com/imgproxy/imgproxy/v3/testutil/servertest"
-	"github.com/imgproxy/imgproxy/v3/vips"
+	"github.com/imgproxy/imgproxy/v4/imagetype"
+	"github.com/imgproxy/imgproxy/v4/testutil"
+	"github.com/imgproxy/imgproxy/v4/testutil/servertest"
+	"github.com/imgproxy/imgproxy/v4/vips"
 	"github.com/stretchr/testify/suite"
 )
 

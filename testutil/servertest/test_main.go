@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/imgproxy/imgproxy/v3"
+	"github.com/imgproxy/imgproxy/v4"
 )
 
 // TestMain performs global setup/teardown for the integration tests.

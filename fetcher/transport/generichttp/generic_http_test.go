@@ -3,7 +3,7 @@ package generichttp_test
 import (
 	"testing"
 
-	"github.com/imgproxy/imgproxy/v3/fetcher/transport/generichttp"
+	"github.com/imgproxy/imgproxy/v4/fetcher/transport/generichttp"
 	"github.com/stretchr/testify/require"
 )
 

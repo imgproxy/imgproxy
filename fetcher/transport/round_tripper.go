@@ -3,7 +3,7 @@ package transport
 import (
 	"net/http"
 
-	"github.com/imgproxy/imgproxy/v3/storage"
+	"github.com/imgproxy/imgproxy/v4/storage"
 )
 
 // RoundTripper wraps storage with http.RoundTripper

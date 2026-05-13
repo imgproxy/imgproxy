@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/imgproxy/imgproxy/v3/server"
+	"github.com/imgproxy/imgproxy/v4/server"
 	"github.com/stretchr/testify/require"
 )
 

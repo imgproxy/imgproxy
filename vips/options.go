@@ -5,7 +5,7 @@ package vips
 */
 import "C"
 import (
-	"github.com/imgproxy/imgproxy/v3/options"
+	"github.com/imgproxy/imgproxy/v4/options"
 )
 
 func newLoadOptions(shrink float64, page, pages int) C.ImgproxyLoadOptions {

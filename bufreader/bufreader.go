@@ -4,7 +4,7 @@ import (
 	"errors"
 	"io"
 
-	"github.com/imgproxy/imgproxy/v3/ioutil"
+	"github.com/imgproxy/imgproxy/v4/ioutil"
 )
 
 // ReadPeeker is an interface that combines io.Reader and a method to peek at the next n bytes

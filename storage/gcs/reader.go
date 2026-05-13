@@ -9,10 +9,10 @@ import (
 	"strconv"
 
 	gcs "cloud.google.com/go/storage"
-	"github.com/imgproxy/imgproxy/v3/httpheaders"
-	"github.com/imgproxy/imgproxy/v3/httprange"
-	"github.com/imgproxy/imgproxy/v3/storage"
-	"github.com/imgproxy/imgproxy/v3/storage/common"
+	"github.com/imgproxy/imgproxy/v4/httpheaders"
+	"github.com/imgproxy/imgproxy/v4/httprange"
+	"github.com/imgproxy/imgproxy/v4/storage"
+	"github.com/imgproxy/imgproxy/v4/storage/common"
 	"github.com/pkg/errors"
 )
 

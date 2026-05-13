@@ -4,8 +4,8 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/imgproxy/imgproxy/v3/imagedata"
-	"github.com/imgproxy/imgproxy/v3/options"
+	"github.com/imgproxy/imgproxy/v4/imagedata"
+	"github.com/imgproxy/imgproxy/v4/options"
 )
 
 // staticProvider is a simple implementation of ImageProvider, which returns

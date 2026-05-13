@@ -9,8 +9,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/imgproxy/imgproxy/v3/testutil"
-	"github.com/imgproxy/imgproxy/v3/testutil/servertest"
+	"github.com/imgproxy/imgproxy/v4/testutil"
+	"github.com/imgproxy/imgproxy/v4/testutil/servertest"
 	"github.com/stretchr/testify/suite"
 )
 

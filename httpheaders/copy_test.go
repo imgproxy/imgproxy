@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/imgproxy/imgproxy/v3/httpheaders"
+	"github.com/imgproxy/imgproxy/v4/httpheaders"
 	"github.com/stretchr/testify/require"
 )
 

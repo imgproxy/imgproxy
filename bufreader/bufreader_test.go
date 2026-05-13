@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/imgproxy/imgproxy/v3/bufreader"
+	"github.com/imgproxy/imgproxy/v4/bufreader"
 )
 
 // BufferedReaderTestSuite defines the test suite for the buffered reader

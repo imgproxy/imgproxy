@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/imgproxy/imgproxy/v3/imagetype"
+	"github.com/imgproxy/imgproxy/v4/imagetype"
 )
 
 type StringVar = Desc[string]

@@ -10,9 +10,9 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 
-	"github.com/imgproxy/imgproxy/v3/httpheaders"
-	"github.com/imgproxy/imgproxy/v3/storage"
-	"github.com/imgproxy/imgproxy/v3/storage/common"
+	"github.com/imgproxy/imgproxy/v4/httpheaders"
+	"github.com/imgproxy/imgproxy/v4/storage"
+	"github.com/imgproxy/imgproxy/v4/storage/common"
 )
 
 // GetObject retrieves an object from Azure cloud

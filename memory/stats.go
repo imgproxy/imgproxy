@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"runtime"
 
-	vipsstats "github.com/imgproxy/imgproxy/v3/vips/stats"
+	vipsstats "github.com/imgproxy/imgproxy/v4/vips/stats"
 )
 
 func LogStats() {

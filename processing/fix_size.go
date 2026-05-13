@@ -5,8 +5,8 @@ import (
 	"log/slog"
 	"math"
 
-	"github.com/imgproxy/imgproxy/v3/imagetype"
-	"github.com/imgproxy/imgproxy/v3/vips"
+	"github.com/imgproxy/imgproxy/v4/imagetype"
+	"github.com/imgproxy/imgproxy/v4/vips"
 )
 
 const (

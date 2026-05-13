@@ -3,7 +3,7 @@ package httpheaders_test
 import (
 	"testing"
 
-	"github.com/imgproxy/imgproxy/v3/httpheaders"
+	"github.com/imgproxy/imgproxy/v4/httpheaders"
 	"github.com/stretchr/testify/require"
 )
 

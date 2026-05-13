@@ -4,8 +4,8 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/imgproxy/imgproxy/v3/storage/swift"
-	"github.com/imgproxy/imgproxy/v3/testutil"
+	"github.com/imgproxy/imgproxy/v4/storage/swift"
+	"github.com/imgproxy/imgproxy/v4/testutil"
 	ncwswift "github.com/ncw/swift/v2"
 	"github.com/ncw/swift/v2/swifttest"
 )

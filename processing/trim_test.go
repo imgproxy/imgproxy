@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/imgproxy/imgproxy/v3/testutil"
-	"github.com/imgproxy/imgproxy/v3/vips/color"
+	"github.com/imgproxy/imgproxy/v4/testutil"
+	"github.com/imgproxy/imgproxy/v4/vips/color"
 	"github.com/stretchr/testify/suite"
 )
 

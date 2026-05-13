@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/imgproxy/imgproxy/v3/env"
+	"github.com/imgproxy/imgproxy/v4/env"
 )
 
 func TestVariableReadCorrectly(t *testing.T) {

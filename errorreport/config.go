@@ -3,11 +3,11 @@ package errorreport
 import (
 	"errors"
 
-	"github.com/imgproxy/imgproxy/v3/ensure"
-	"github.com/imgproxy/imgproxy/v3/errorreport/airbrake"
-	"github.com/imgproxy/imgproxy/v3/errorreport/bugsnag"
-	"github.com/imgproxy/imgproxy/v3/errorreport/honeybadger"
-	"github.com/imgproxy/imgproxy/v3/errorreport/sentry"
+	"github.com/imgproxy/imgproxy/v4/ensure"
+	"github.com/imgproxy/imgproxy/v4/errorreport/airbrake"
+	"github.com/imgproxy/imgproxy/v4/errorreport/bugsnag"
+	"github.com/imgproxy/imgproxy/v4/errorreport/honeybadger"
+	"github.com/imgproxy/imgproxy/v4/errorreport/sentry"
 )
 
 // Config holds error reporting-related configuration for all providers.

@@ -8,11 +8,11 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/imgproxy/imgproxy/v3/imagetype"
-	"github.com/imgproxy/imgproxy/v3/options"
-	"github.com/imgproxy/imgproxy/v3/options/keys"
-	"github.com/imgproxy/imgproxy/v3/processing"
-	"github.com/imgproxy/imgproxy/v3/vips/color"
+	"github.com/imgproxy/imgproxy/v4/imagetype"
+	"github.com/imgproxy/imgproxy/v4/options"
+	"github.com/imgproxy/imgproxy/v4/options/keys"
+	"github.com/imgproxy/imgproxy/v4/processing"
+	"github.com/imgproxy/imgproxy/v4/vips/color"
 )
 
 func (p *Parser) applyWidthOption(ctx context.Context, o *options.Options, args []string) error {

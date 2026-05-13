@@ -3,7 +3,7 @@ package integration_test
 import (
 	"testing"
 
-	"github.com/imgproxy/imgproxy/v3/testutil/servertest"
+	"github.com/imgproxy/imgproxy/v4/testutil/servertest"
 )
 
 // TestMain performs global setup/teardown for the integration tests.

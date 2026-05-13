@@ -5,7 +5,7 @@ import (
 	"io"
 	"slices"
 
-	"github.com/imgproxy/imgproxy/v3/bufreader"
+	"github.com/imgproxy/imgproxy/v4/bufreader"
 )
 
 const (

@@ -8,7 +8,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/imgproxy/imgproxy/v3/xmlparser"
+	"github.com/imgproxy/imgproxy/v4/xmlparser"
 )
 
 func TestDocumentParsing(t *testing.T) {

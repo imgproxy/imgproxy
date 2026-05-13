@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/imgproxy/imgproxy/v3/testutil"
-	"github.com/imgproxy/imgproxy/v3/workers"
+	"github.com/imgproxy/imgproxy/v4/testutil"
+	"github.com/imgproxy/imgproxy/v4/workers"
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/sync/errgroup"
 )

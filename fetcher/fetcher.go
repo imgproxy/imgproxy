@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/imgproxy/imgproxy/v3/fetcher/transport"
-	"github.com/imgproxy/imgproxy/v3/httpheaders"
+	"github.com/imgproxy/imgproxy/v4/fetcher/transport"
+	"github.com/imgproxy/imgproxy/v4/httpheaders"
 )
 
 const (

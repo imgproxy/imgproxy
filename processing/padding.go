@@ -1,7 +1,7 @@
 package processing
 
 import (
-	"github.com/imgproxy/imgproxy/v3/imath"
+	"github.com/imgproxy/imgproxy/v4/imath"
 )
 
 func (p *Processor) padding(c *Context) error {

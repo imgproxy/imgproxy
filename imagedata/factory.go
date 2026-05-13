@@ -11,12 +11,12 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/imgproxy/imgproxy/v3/asyncbuffer"
-	"github.com/imgproxy/imgproxy/v3/fetcher"
-	"github.com/imgproxy/imgproxy/v3/httpheaders"
-	"github.com/imgproxy/imgproxy/v3/imagetype"
-	"github.com/imgproxy/imgproxy/v3/imath"
-	"github.com/imgproxy/imgproxy/v3/monitoring"
+	"github.com/imgproxy/imgproxy/v4/asyncbuffer"
+	"github.com/imgproxy/imgproxy/v4/fetcher"
+	"github.com/imgproxy/imgproxy/v4/httpheaders"
+	"github.com/imgproxy/imgproxy/v4/imagetype"
+	"github.com/imgproxy/imgproxy/v4/imath"
+	"github.com/imgproxy/imgproxy/v4/monitoring"
 )
 
 var bufPool = sync.Pool{

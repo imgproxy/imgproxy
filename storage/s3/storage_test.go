@@ -6,8 +6,8 @@ import (
 	"net/http/httptest"
 	"os"
 
-	"github.com/imgproxy/imgproxy/v3/storage/s3"
-	"github.com/imgproxy/imgproxy/v3/testutil"
+	"github.com/imgproxy/imgproxy/v4/storage/s3"
+	"github.com/imgproxy/imgproxy/v4/testutil"
 	"github.com/johannesboyne/gofakes3"
 	"github.com/johannesboyne/gofakes3/backend/s3mem"
 )

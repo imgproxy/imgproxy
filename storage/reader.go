@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/imgproxy/imgproxy/v3/httpheaders"
+	"github.com/imgproxy/imgproxy/v4/httpheaders"
 )
 
 // Reader represents a generic storage interface, which can read

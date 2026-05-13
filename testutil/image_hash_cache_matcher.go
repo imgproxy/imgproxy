@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/imgproxy/imgproxy/v3/imagetype"
+	"github.com/imgproxy/imgproxy/v4/imagetype"
 	"github.com/stretchr/testify/require"
 )
 

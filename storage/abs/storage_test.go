@@ -7,9 +7,9 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
 
-	"github.com/imgproxy/imgproxy/v3/fetcher/transport/generichttp"
-	"github.com/imgproxy/imgproxy/v3/storage/abs"
-	"github.com/imgproxy/imgproxy/v3/testutil"
+	"github.com/imgproxy/imgproxy/v4/fetcher/transport/generichttp"
+	"github.com/imgproxy/imgproxy/v4/storage/abs"
+	"github.com/imgproxy/imgproxy/v4/testutil"
 )
 
 // absStorageWrapper wraps the storage and optionally holds a server for cleanup

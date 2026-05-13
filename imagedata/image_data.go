@@ -6,8 +6,8 @@ import (
 	"io"
 	"sync"
 
-	"github.com/imgproxy/imgproxy/v3/asyncbuffer"
-	"github.com/imgproxy/imgproxy/v3/imagetype"
+	"github.com/imgproxy/imgproxy/v4/asyncbuffer"
+	"github.com/imgproxy/imgproxy/v4/imagetype"
 )
 
 var (

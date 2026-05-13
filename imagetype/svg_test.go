@@ -8,8 +8,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/imgproxy/imgproxy/v3/bufreader"
-	"github.com/imgproxy/imgproxy/v3/imagetype"
+	"github.com/imgproxy/imgproxy/v4/bufreader"
+	"github.com/imgproxy/imgproxy/v4/imagetype"
 )
 
 type readerError struct{ error }

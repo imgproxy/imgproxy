@@ -4,14 +4,14 @@ import (
 	"errors"
 	"os"
 
-	"github.com/imgproxy/imgproxy/v3/ensure"
-	"github.com/imgproxy/imgproxy/v3/env"
-	"github.com/imgproxy/imgproxy/v3/fetcher/transport/generichttp"
-	azure "github.com/imgproxy/imgproxy/v3/storage/abs"
-	"github.com/imgproxy/imgproxy/v3/storage/fs"
-	"github.com/imgproxy/imgproxy/v3/storage/gcs"
-	"github.com/imgproxy/imgproxy/v3/storage/s3"
-	"github.com/imgproxy/imgproxy/v3/storage/swift"
+	"github.com/imgproxy/imgproxy/v4/ensure"
+	"github.com/imgproxy/imgproxy/v4/env"
+	"github.com/imgproxy/imgproxy/v4/fetcher/transport/generichttp"
+	azure "github.com/imgproxy/imgproxy/v4/storage/abs"
+	"github.com/imgproxy/imgproxy/v4/storage/fs"
+	"github.com/imgproxy/imgproxy/v4/storage/gcs"
+	"github.com/imgproxy/imgproxy/v4/storage/s3"
+	"github.com/imgproxy/imgproxy/v4/storage/swift"
 )
 
 var (

@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/imgproxy/imgproxy/v3/imagetype"
-	"github.com/imgproxy/imgproxy/v3/processing"
-	"github.com/imgproxy/imgproxy/v3/testutil"
+	"github.com/imgproxy/imgproxy/v4/imagetype"
+	"github.com/imgproxy/imgproxy/v4/processing"
+	"github.com/imgproxy/imgproxy/v4/testutil"
 	"github.com/stretchr/testify/suite"
 )
 

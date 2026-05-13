@@ -3,7 +3,7 @@ package generichttp
 import (
 	"net/http"
 
-	"github.com/imgproxy/imgproxy/v3/errctx"
+	"github.com/imgproxy/imgproxy/v4/errctx"
 )
 
 type (

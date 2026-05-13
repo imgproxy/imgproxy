@@ -1,22 +1,22 @@
 package imgproxy
 
 import (
-	"github.com/imgproxy/imgproxy/v3/auximageprovider"
-	"github.com/imgproxy/imgproxy/v3/clientfeatures"
-	"github.com/imgproxy/imgproxy/v3/cookies"
-	"github.com/imgproxy/imgproxy/v3/ensure"
-	"github.com/imgproxy/imgproxy/v3/errorreport"
-	"github.com/imgproxy/imgproxy/v3/fetcher"
-	processinghandler "github.com/imgproxy/imgproxy/v3/handlers/processing"
-	streamhandler "github.com/imgproxy/imgproxy/v3/handlers/stream"
-	"github.com/imgproxy/imgproxy/v3/httpheaders/conditionalheaders"
-	"github.com/imgproxy/imgproxy/v3/monitoring"
-	"github.com/imgproxy/imgproxy/v3/monitoring/prometheus"
-	optionsparser "github.com/imgproxy/imgproxy/v3/options/parser"
-	"github.com/imgproxy/imgproxy/v3/processing"
-	"github.com/imgproxy/imgproxy/v3/security"
-	"github.com/imgproxy/imgproxy/v3/server"
-	"github.com/imgproxy/imgproxy/v3/workers"
+	"github.com/imgproxy/imgproxy/v4/auximageprovider"
+	"github.com/imgproxy/imgproxy/v4/clientfeatures"
+	"github.com/imgproxy/imgproxy/v4/cookies"
+	"github.com/imgproxy/imgproxy/v4/ensure"
+	"github.com/imgproxy/imgproxy/v4/errorreport"
+	"github.com/imgproxy/imgproxy/v4/fetcher"
+	processinghandler "github.com/imgproxy/imgproxy/v4/handlers/processing"
+	streamhandler "github.com/imgproxy/imgproxy/v4/handlers/stream"
+	"github.com/imgproxy/imgproxy/v4/httpheaders/conditionalheaders"
+	"github.com/imgproxy/imgproxy/v4/monitoring"
+	"github.com/imgproxy/imgproxy/v4/monitoring/prometheus"
+	optionsparser "github.com/imgproxy/imgproxy/v4/options/parser"
+	"github.com/imgproxy/imgproxy/v4/processing"
+	"github.com/imgproxy/imgproxy/v4/security"
+	"github.com/imgproxy/imgproxy/v4/server"
+	"github.com/imgproxy/imgproxy/v4/workers"
 )
 
 // HandlerConfigs holds the configurations for imgproxy handlers

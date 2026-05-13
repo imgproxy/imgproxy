@@ -4,8 +4,8 @@ import (
 	"errors"
 	"io"
 
-	"github.com/imgproxy/imgproxy/v3/bufreader"
-	"github.com/imgproxy/imgproxy/v3/xmlparser"
+	"github.com/imgproxy/imgproxy/v4/bufreader"
+	"github.com/imgproxy/imgproxy/v4/xmlparser"
 )
 
 func init() {

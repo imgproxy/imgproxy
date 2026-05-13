@@ -30,12 +30,12 @@ import (
 	"go.opentelemetry.io/otel/semconv/v1.20.0/httpconv"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/imgproxy/imgproxy/v3/errctx"
-	"github.com/imgproxy/imgproxy/v3/logger"
-	"github.com/imgproxy/imgproxy/v3/monitoring/format"
-	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
-	"github.com/imgproxy/imgproxy/v3/version"
-	vipsstats "github.com/imgproxy/imgproxy/v3/vips/stats"
+	"github.com/imgproxy/imgproxy/v4/errctx"
+	"github.com/imgproxy/imgproxy/v4/logger"
+	"github.com/imgproxy/imgproxy/v4/monitoring/format"
+	"github.com/imgproxy/imgproxy/v4/monitoring/stats"
+	"github.com/imgproxy/imgproxy/v4/version"
+	vipsstats "github.com/imgproxy/imgproxy/v4/vips/stats"
 )
 
 const (

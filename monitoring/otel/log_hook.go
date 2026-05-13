@@ -8,7 +8,7 @@ import (
 	"go.opentelemetry.io/otel/log"
 	sdklog "go.opentelemetry.io/otel/sdk/log"
 
-	"github.com/imgproxy/imgproxy/v3/logger"
+	"github.com/imgproxy/imgproxy/v4/logger"
 )
 
 // logHook is a logger.Hook that exports logs to OpenTelemetry.

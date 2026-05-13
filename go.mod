@@ -1,4 +1,4 @@
-module github.com/imgproxy/imgproxy/v3
+module github.com/imgproxy/imgproxy/v4
 
 go 1.26.0
 

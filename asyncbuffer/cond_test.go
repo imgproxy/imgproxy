@@ -8,7 +8,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/imgproxy/imgproxy/v3/asyncbuffer"
+	"github.com/imgproxy/imgproxy/v4/asyncbuffer"
 )
 
 type TestCondSuite struct {

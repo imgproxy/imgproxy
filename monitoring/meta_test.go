@@ -3,7 +3,7 @@ package monitoring_test
 import (
 	"testing"
 
-	"github.com/imgproxy/imgproxy/v3/monitoring"
+	"github.com/imgproxy/imgproxy/v4/monitoring"
 	"github.com/stretchr/testify/require"
 )
 

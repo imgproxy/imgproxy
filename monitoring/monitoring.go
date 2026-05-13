@@ -4,13 +4,13 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/imgproxy/imgproxy/v3/errctx"
-	"github.com/imgproxy/imgproxy/v3/monitoring/cloudwatch"
-	"github.com/imgproxy/imgproxy/v3/monitoring/datadog"
-	"github.com/imgproxy/imgproxy/v3/monitoring/newrelic"
-	"github.com/imgproxy/imgproxy/v3/monitoring/otel"
-	"github.com/imgproxy/imgproxy/v3/monitoring/prometheus"
-	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
+	"github.com/imgproxy/imgproxy/v4/errctx"
+	"github.com/imgproxy/imgproxy/v4/monitoring/cloudwatch"
+	"github.com/imgproxy/imgproxy/v4/monitoring/datadog"
+	"github.com/imgproxy/imgproxy/v4/monitoring/newrelic"
+	"github.com/imgproxy/imgproxy/v4/monitoring/otel"
+	"github.com/imgproxy/imgproxy/v4/monitoring/prometheus"
+	"github.com/imgproxy/imgproxy/v4/monitoring/stats"
 )
 
 // monitor is an interface for monitoring services

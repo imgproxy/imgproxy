@@ -4,8 +4,8 @@ import (
 	_ "embed"
 	"net/http"
 
-	"github.com/imgproxy/imgproxy/v3/httpheaders"
-	"github.com/imgproxy/imgproxy/v3/server"
+	"github.com/imgproxy/imgproxy/v4/httpheaders"
+	"github.com/imgproxy/imgproxy/v4/server"
 )
 
 //go:embed body.html

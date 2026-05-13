@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/imgproxy/imgproxy/v3/server"
+	"github.com/imgproxy/imgproxy/v4/server"
 	"github.com/urfave/cli/v3"
 )
 

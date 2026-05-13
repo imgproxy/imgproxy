@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/imgproxy/imgproxy/v3/options"
+	"github.com/imgproxy/imgproxy/v4/options"
 )
 
 type OptionsTestSuite struct {

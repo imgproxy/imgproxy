@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/imgproxy/imgproxy/v3/imagetype"
+	"github.com/imgproxy/imgproxy/v4/imagetype"
 )
 
 // URLReplacement represents a URL replacement configuration

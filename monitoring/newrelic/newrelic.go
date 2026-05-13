@@ -9,10 +9,10 @@ import (
 
 	"github.com/newrelic/go-agent/v3/newrelic"
 
-	"github.com/imgproxy/imgproxy/v3/errctx"
-	"github.com/imgproxy/imgproxy/v3/monitoring/format"
-	"github.com/imgproxy/imgproxy/v3/monitoring/stats"
-	vipsstats "github.com/imgproxy/imgproxy/v3/vips/stats"
+	"github.com/imgproxy/imgproxy/v4/errctx"
+	"github.com/imgproxy/imgproxy/v4/monitoring/format"
+	"github.com/imgproxy/imgproxy/v4/monitoring/stats"
+	vipsstats "github.com/imgproxy/imgproxy/v4/vips/stats"
 )
 
 // attributable is an interface for New Relic entities that can have attributes set on them

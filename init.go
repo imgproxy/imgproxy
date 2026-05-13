@@ -7,9 +7,9 @@ import (
 
 	"go.uber.org/automaxprocs/maxprocs"
 
-	"github.com/imgproxy/imgproxy/v3/env"
-	"github.com/imgproxy/imgproxy/v3/logger"
-	"github.com/imgproxy/imgproxy/v3/vips"
+	"github.com/imgproxy/imgproxy/v4/env"
+	"github.com/imgproxy/imgproxy/v4/logger"
+	"github.com/imgproxy/imgproxy/v4/vips"
 )
 
 // Init performs the global resources initialization. This should be done once per process.

@@ -1,7 +1,7 @@
 package processing
 
 import (
-	"github.com/imgproxy/imgproxy/v3/vips"
+	"github.com/imgproxy/imgproxy/v4/vips"
 )
 
 func (p *Processor) colorspaceToProcessing(c *Context) error {
