@@ -9,6 +9,8 @@ import (
 	"net"
 	"net/http"
 	"strconv"
+	"sync"
+	"sync/atomic"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -303,6 +305,69 @@ func (s *ImageDataTestSuite) TestFromBase64() {
 	s.Require().NotNil(imgdata)
 	s.Require().True(testutil.ReadersEqual(s.T(), bytes.NewReader(s.data), imgdata.Reader()))
 	s.Require().Equal(imagetype.JPEG, imgdata.Format())
+}
+
+func (s *ImageDataTestSuite) TestCloseRunsCancelOnLastRef() {
+	called := 0
+	imgdata := imagedata.NewFromBytesWithFormat(imagetype.JPEG, s.data)
+	imgdata.AddCancel(func() { called++ })
+	imgdata.AddCancel(func() { called++ })
+
+	ref := imgdata.Ref()
+
+	imgdata.Close()
+	s.Require().Equal(0, called)
+
+	ref.Close()
+	s.Require().Equal(2, called)
+}
+
+func (s *ImageDataTestSuite) TestRefPanicsOnClosedImageData() {
+	imgdata := imagedata.NewFromBytesWithFormat(imagetype.JPEG, s.data)
+	imgdata.Close()
+
+	s.Require().Panics(func() { imgdata.Ref() })
+}
+
+func (s *ImageDataTestSuite) TestDoubleClosePanics() {
+	imgdata := imagedata.NewFromBytesWithFormat(imagetype.JPEG, s.data)
+	imgdata.Close()
+
+	s.Require().Panics(func() { imgdata.Close() })
+}
+
+func (s *ImageDataTestSuite) TestRefDataStaysAccessible() {
+	imgdata := imagedata.NewFromBytesWithFormat(imagetype.JPEG, s.data)
+	ref := imgdata.Ref()
+	imgdata.Close()
+
+	s.Require().True(testutil.ReadersEqual(s.T(), bytes.NewReader(s.data), ref.Reader()))
+	s.Require().Equal(imagetype.JPEG, ref.Format())
+	ref.Close()
+}
+
+func (s *ImageDataTestSuite) TestConcurrentRefAndClose() {
+	const n = 200
+
+	imgdata := imagedata.NewFromBytesWithFormat(imagetype.JPEG, s.data)
+	for range n - 1 {
+		imgdata.Ref()
+	}
+
+	var cancelCount atomic.Int32
+	imgdata.AddCancel(func() { cancelCount.Add(1) })
+
+	var wg sync.WaitGroup
+	wg.Add(n)
+	for range n {
+		go func() {
+			defer wg.Done()
+			imgdata.Close()
+		}()
+	}
+
+	wg.Wait()
+	s.Require().Equal(int32(1), cancelCount.Load())
 }
 
 func TestImageData(t *testing.T) {
