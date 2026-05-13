@@ -1,44 +1,91 @@
 # Changelog
 
-## [4.0.0-rc.0] - TBA
-### Fixed
-- Allow `0` as a valid value for `quality` and `format_quality` options.
-- Fix closing of shared watermark image data when the `IMGPROXY_WATERMARK_URL` config is used.
-
-## [4.0.0-beta.1] - 2026-04-28
+## [4.0.0] - 2026-05-13
 ### Added
-- Add [preserve_hdr](https://docs.imgproxy.net/4-pre/usage/processing#preserve-hdr) processing option to override the `IMGPROXY_PRESERVE_HDR` config on a per-request basis.
-- (pro) Add [IMGPROXY_ENABLE_RAW_FORMATS](https://docs.imgproxy.net/4-pre/configuration/options#IMGPROXY_ENABLE_RAW_FORMATS) config to enable support for digital camera raw formats.
-
-### Changed
-- (pro) Digital camera raw formats support is disabled by default. Enable it with the [IMGPROXY_ENABLE_RAW_FORMATS](https://docs.imgproxy.net/4-pre/configuration/options#IMGPROXY_ENABLE_RAW_FORMATS) config.
-
-## [4.0.0-beta.0] - 2026-04-10
-### Added
-- (pro) Add [internal cache](https://docs.imgproxy.net/4-pre/cache/internal) for processed images.
-- (pro) Add [digital camera raw](https://docs.imgproxy.net/4-pre/image_formats_support#raw-support) formats support (loading only).
-- (pro) Add [crop_objects](https://docs.imgproxy.net/4-pre/usage/processing#crop-objects) processing option to crop the image to detected objects.
-- (pro) Add [thumb_hash](https://docs.imgproxy.net/4-pre/usage/getting_info#thumb-hash) info option to calculate [ThumbHash](https://evanw.github.io/thumbhash/) of the source image.
-- (pro) Add [phash](https://docs.imgproxy.net/4-pre/usage/getting_info#perceptual-hash) info option to calculate perceptual hash of the source image.
-- (pro) Add [classify](https://docs.imgproxy.net/4-pre/usage/getting_info#classify) info option to classify objects in the source image using a classification model.
-- Add [IMGPROXY_PRESERVE_HDR](https://docs.imgproxy.net/4-pre/configuration/options#IMGPROXY_PRESERVE_HDR) config. When set to `true`, imgproxy will try to keep the image's bits per pixel when possible.
-- Add [IMGPROXY_OPEN_TELEMETRY_ENABLE_LOGS](https://docs.imgproxy.net/4-pre/configuration/options#IMGPROXY_OPEN_TELEMETRY_ENABLE_LOGS) config to control whether to send logs to OpenTelemetry.
-- Add [IMGPROXY_NEW_RELIC_PROPAGATE_EXTERNAL](https://docs.imgproxy.net/4-pre/configuration/options#IMGPROXY_NEW_RELIC_PROPAGATE_EXTERNAL), [IMGPROXY_DATADOG_PROPAGATE_EXTERNAL](https://docs.imgproxy.net/4-pre/configuration/options#IMGPROXY_DATADOG_PROPAGATE_EXTERNAL), and [IMGPROXY_OPEN_TELEMETRY_PROPAGATE_EXTERNAL](https://docs.imgproxy.net/4-pre/configuration/options#IMGPROXY_OPEN_TELEMETRY_PROPAGATE_EXTERNAL) configs to control propagation of tracing headers to external requests.
-- Add [IMGPROXY_S3_ALLOWED_BUCKETS](https://docs.imgproxy.net/4-pre/configuration/options#IMGPROXY_S3_ALLOWED_BUCKETS), [IMGPROXY_GCS_ALLOWED_BUCKETS](https://docs.imgproxy.net/4-pre/configuration/options#IMGPROXY_GCS_ALLOWED_BUCKETS), [IMGPROXY_ABS_ALLOWED_BUCKETS](https://docs.imgproxy.net/4-pre/configuration/options#IMGPROXY_ABS_ALLOWED_BUCKETS), and [IMGPROXY_SWIFT_ALLOWED_BUCKETS](https://docs.imgproxy.net/4-pre/configuration/options#IMGPROXY_SWIFT_ALLOWED_BUCKETS) configs to allowlist buckets/containers that imgproxy can read source images from.
-- Add [IMGPROXY_S3_DENIED_BUCKETS](https://docs.imgproxy.net/4-pre/configuration/options#IMGPROXY_S3_DENIED_BUCKETS), [IMGPROXY_GCS_DENIED_BUCKETS](https://docs.imgproxy.net/4-pre/configuration/options#IMGPROXY_GCS_DENIED_BUCKETS), [IMGPROXY_ABS_DENIED_BUCKETS](https://docs.imgproxy.net/4-pre/configuration/options#IMGPROXY_ABS_DENIED_BUCKETS), and [IMGPROXY_SWIFT_DENIED_BUCKETS](https://docs.imgproxy.net/4-pre/configuration/options#IMGPROXY_SWIFT_DENIED_BUCKETS) configs to denylist buckets/containers that imgproxy can read source images from.
-- Add pretty error pages when [IMGPROXY_DEVELOPMENT_ERRORS_MODE](https://docs.imgproxy.net/4-pre/configuration/options#IMGPROXY_DEVELOPMENT_ERRORS_MODE) is enabled.
+- (pro) Add [internal cache](https://docs.imgproxy.net/cache/internal) for processed images.
+- (pro) Add [digital camera raw](https://docs.imgproxy.net/image_formats_support#raw-support) formats support (loading only).
+- (pro) Add [crop_objects](https://docs.imgproxy.net/usage/processing#crop-objects) processing option to crop the image to detected objects.
+- (pro) Add [thumb_hash](https://docs.imgproxy.net/usage/getting_info#thumb-hash) info option to calculate [ThumbHash](https://evanw.github.io/thumbhash/) of the source image.
+- (pro) Add [phash](https://docs.imgproxy.net/usage/getting_info#perceptual-hash) info option to calculate perceptual hash of the source image.
+- (pro) Add [classify](https://docs.imgproxy.net/usage/getting_info#classify) info option to classify objects in the source image using a classification model.
+- Add [IMGPROXY_PRESERVE_HDR](https://docs.imgproxy.net/configuration/options#IMGPROXY_PRESERVE_HDR) config. When set to `true`, imgproxy will try to keep the image's bits per pixel when possible.
+- Add [preserve_hdr](https://docs.imgproxy.net/usage/processing#preserve-hdr) processing option to override the `IMGPROXY_PRESERVE_HDR` config on a per-request basis.
+- Add [IMGPROXY_OPEN_TELEMETRY_ENABLE_LOGS](https://docs.imgproxy.net/configuration/options#IMGPROXY_OPEN_TELEMETRY_ENABLE_LOGS) config to control whether to send logs to OpenTelemetry.
+- Add [IMGPROXY_NEW_RELIC_PROPAGATE_EXTERNAL](https://docs.imgproxy.net/configuration/options#IMGPROXY_NEW_RELIC_PROPAGATE_EXTERNAL), [IMGPROXY_DATADOG_PROPAGATE_EXTERNAL](https://docs.imgproxy.net/configuration/options#IMGPROXY_DATADOG_PROPAGATE_EXTERNAL), and [IMGPROXY_OPEN_TELEMETRY_PROPAGATE_EXTERNAL](https://docs.imgproxy.net/configuration/options#IMGPROXY_OPEN_TELEMETRY_PROPAGATE_EXTERNAL) configs to control propagation of tracing headers to external requests.
+- Add [IMGPROXY_S3_ALLOWED_BUCKETS](https://docs.imgproxy.net/configuration/options#IMGPROXY_S3_ALLOWED_BUCKETS), [IMGPROXY_GCS_ALLOWED_BUCKETS](https://docs.imgproxy.net/configuration/options#IMGPROXY_GCS_ALLOWED_BUCKETS), [IMGPROXY_ABS_ALLOWED_BUCKETS](https://docs.imgproxy.net/configuration/options#IMGPROXY_ABS_ALLOWED_BUCKETS), and [IMGPROXY_SWIFT_ALLOWED_BUCKETS](https://docs.imgproxy.net/configuration/options#IMGPROXY_SWIFT_ALLOWED_BUCKETS) configs to allowlist buckets/containers that imgproxy can read source images from.
+- Add [IMGPROXY_S3_DENIED_BUCKETS](https://docs.imgproxy.net/configuration/options#IMGPROXY_S3_DENIED_BUCKETS), [IMGPROXY_GCS_DENIED_BUCKETS](https://docs.imgproxy.net/configuration/options#IMGPROXY_GCS_DENIED_BUCKETS), [IMGPROXY_ABS_DENIED_BUCKETS](https://docs.imgproxy.net/configuration/options#IMGPROXY_ABS_DENIED_BUCKETS), and [IMGPROXY_SWIFT_DENIED_BUCKETS](https://docs.imgproxy.net/configuration/options#IMGPROXY_SWIFT_DENIED_BUCKETS) configs to denylist buckets/containers that imgproxy can read source images from.
+- Add pretty error pages when [IMGPROXY_DEVELOPMENT_ERRORS_MODE](https://docs.imgproxy.net/configuration/options#IMGPROXY_DEVELOPMENT_ERRORS_MODE) is enabled.
 - Add documentation links to errors. They will be visible in logs and error reports.
-- Add [IMGPROXY_LAST_MODIFIED_BUSTER](https://docs.imgproxy.net/4-pre/configuration/options#IMGPROXY_LAST_MODIFIED_BUSTER) config to control whether to pass through the `If-Modified-Since` header to the image source.
+- Add [IMGPROXY_LAST_MODIFIED_BUSTER](https://docs.imgproxy.net/configuration/options#IMGPROXY_LAST_MODIFIED_BUSTER) config to control whether to pass through the `If-Modified-Since` header to the image source.
 
 ### Changed
 - Most of the code base is refactored to improve maintainability and extensibility.
 - Implemented asynchronous downloading and processing of images. This improves performance when the source image is slow to download or when processing is slow.
 - Source image colorspace is now preserved when possible.
 - (pro) Improved SVG minification. It is now much faster and more efficient.
-- (pro) Improved [autoquality](https://docs.imgproxy.net/4-pre/features/autoquality). Implemented weighted DSSIM calculation and trained new ML models for JPEG, WebP, AVIF, and JPEG XL.
-- [IMGPROXY_USE_ETAG](https://docs.imgproxy.net/4-pre/configuration/options#IMGPROXY_USE_ETAG) and [IMGPROXY_USE_LAST_MODIFIED](https://docs.imgproxy.net/4-pre/configuration/options#IMGPROXY_USE_LAST_MODIFIED) are now enabled by default.
-- Etag generation is now based only on Etag received from the image source and [IMGPROXY_ETAG_BUSTER](https://docs.imgproxy.net/4-pre/configuration/options#IMGPROXY_ETAG_BUSTER) config.
-- [IMGPROXY_USE_GCS](https://docs.imgproxy.net/4-pre/configuration/options#IMGPROXY_USE_GCS) is not automatically set if the GCS key is present anymore. It should be set explicitly to enable loading images from Google Cloud Storage.
+- (pro) Improved [autoquality](https://docs.imgproxy.net/features/autoquality). Implemented weighted DSSIM calculation and trained new ML models for JPEG, WebP, AVIF, and JPEG XL.
+- [IMGPROXY_USE_ETAG](https://docs.imgproxy.net/configuration/options#IMGPROXY_USE_ETAG) and [IMGPROXY_USE_LAST_MODIFIED](https://docs.imgproxy.net/configuration/options#IMGPROXY_USE_LAST_MODIFIED) are now enabled by default.
+- Etag generation is now based only on Etag received from the image source and [IMGPROXY_ETAG_BUSTER](https://docs.imgproxy.net/configuration/options#IMGPROXY_ETAG_BUSTER) config.
+- [IMGPROXY_USE_GCS](https://docs.imgproxy.net/configuration/options#IMGPROXY_USE_GCS) is not automatically set if the GCS key is present anymore. It should be set explicitly to enable loading images from Google Cloud Storage.
+- SVG rendering DPI is changed from 72 to 96 to match W3C recommendations.
+- (pro) Improved behavior of `IMGPROXY_OBJECT_DETECTION_GRAVITY_MODE=one_best_centermost`.
+- Custom New Relic metrics are now reported as [timescales](https://docs.newrelic.com/docs/apm/agents/manage-apm-agents/agent-data/collect-custom-metrics/). Metric names have been changed from `imgproxy.X` to `Custom/imgproxy/X`.
+- Changed log formats. Option and argument names now match those in the documentation.
+- (docker) imgproxy and its dependencies are now built on Ubuntu 22.04. Linux packages exported from Docker images now require a minimum libc version of 2.35.
+
+### Removed
+- Removed deprecated `IMGPROXY_CONCURRENCY` config. Use `IMGPROXY_WORKERS` instead.
+- Removed deprecated `--keypath` and `--saltpath` CLI arguments. Use `IMGPROXY_KEY` and `IMGPROXY_SALT` environment variables instead.
+- Removed deprecated `--presets` CLI argument. Use `IMGPROXY_PRESETS_PATH` environment variable instead.
+- (pro) Removed deprecated `--info-presets` CLI argument. Use `IMGPROXY_INFO_PRESETS_PATH` environment variable instead.
+- Removed `gif_options` processing option, as it does nothing since v3.
+- Removed deprecated `IMGPROXY_WRITE_TIMEOUT` config. Use `IMGPROXY_TIMEOUT` instead.
+- Removed deprecated `IMGPROXY_READ_TIMEOUT` config. Use `IMGPROXY_READ_REQUEST_TIMEOUT` instead.
+- Removed obsolete `IMGPROXY_MAX_SVG_CHECK_BYTES` config.
+- Removed deprecated `IMGPROXY_OPEN_TELEMETRY_ENDPOINT` config. Use `OTEL_EXPORTER_OTLP_ENDPOINT` instead. Unlike `IMGPROXY_OPEN_TELEMETRY_ENDPOINT`, `OTEL_EXPORTER_OTLP_ENDPOINT` should contain a URL scheme (`http://` or `https://`).
+- Removed deprecated `IMGPROXY_OPEN_TELEMETRY_PROTOCOL` config. Use `OTEL_EXPORTER_OTLP_PROTOCOL` instead.
+- Removed deprecated `IMGPROXY_OPEN_TELEMETRY_GRPC_INSECURE` config. Use `OTEL_EXPORTER_OTLP_ENDPOINT` with `http://` scheme instead.
+- Removed deprecated `IMGPROXY_OPEN_TELEMETRY_SERVICE_NAME` config. Use `OTEL_SERVICE_NAME` instead.
+- Removed deprecated `IMGPROXY_OPEN_TELEMETRY_PROPAGATORS` config. Use `OTEL_PROPAGATORS` instead.
+- Removed deprecated `IMGPROXY_OPEN_TELEMETRY_CONNECTION_TIMEOUT` config. Use `OTEL_EXPORTER_OTLP_TIMEOUT` instead.
+- Removed deprecated `IMGPROXY_UNSHARPENING_MODE`, `IMGPROXY_UNSHARPENING_WEIGHT`, `IMGPROXY_UNSHARPENING_DIVIDER` configs. Use `IMGPROXY_UNSHARP_MASKING_MODE`, `IMGPROXY_UNSHARP_MASKING_WEIGHT`, `IMGPROXY_UNSHARP_MASKING_DIVIDER` instead.
+- Removed deprecated `download_duration_seconds` and `processing_duration_seconds` histograms from Prometheus metrics. Use `request_span_duration_seconds` histogram with `span` label instead.
+- Removed obsolete `IMGPROXY_DOWNLOAD_BUFFER_SIZE` and `IMGPROXY_BUFFER_POOL_CALIBRATION_THRESHOLD` configs.
+
+## [4.0.0-beta.1] - 2026-04-28
+### Added
+- Add [preserve_hdr](https://docs.imgproxy.net/usage/processing#preserve-hdr) processing option to override the `IMGPROXY_PRESERVE_HDR` config on a per-request basis.
+- (pro) Add [IMGPROXY_ENABLE_RAW_FORMATS](https://docs.imgproxy.net/configuration/options#IMGPROXY_ENABLE_RAW_FORMATS) config to enable support for digital camera raw formats.
+
+### Changed
+- (pro) Digital camera raw formats support is disabled by default. Enable it with the [IMGPROXY_ENABLE_RAW_FORMATS](https://docs.imgproxy.net/configuration/options#IMGPROXY_ENABLE_RAW_FORMATS) config.
+
+## [4.0.0-beta.0] - 2026-04-10
+### Added
+- (pro) Add [internal cache](https://docs.imgproxy.net/cache/internal) for processed images.
+- (pro) Add [digital camera raw](https://docs.imgproxy.net/image_formats_support#raw-support) formats support (loading only).
+- (pro) Add [crop_objects](https://docs.imgproxy.net/usage/processing#crop-objects) processing option to crop the image to detected objects.
+- (pro) Add [thumb_hash](https://docs.imgproxy.net/usage/getting_info#thumb-hash) info option to calculate [ThumbHash](https://evanw.github.io/thumbhash/) of the source image.
+- (pro) Add [phash](https://docs.imgproxy.net/usage/getting_info#perceptual-hash) info option to calculate perceptual hash of the source image.
+- (pro) Add [classify](https://docs.imgproxy.net/usage/getting_info#classify) info option to classify objects in the source image using a classification model.
+- Add [IMGPROXY_PRESERVE_HDR](https://docs.imgproxy.net/configuration/options#IMGPROXY_PRESERVE_HDR) config. When set to `true`, imgproxy will try to keep the image's bits per pixel when possible.
+- Add [IMGPROXY_OPEN_TELEMETRY_ENABLE_LOGS](https://docs.imgproxy.net/configuration/options#IMGPROXY_OPEN_TELEMETRY_ENABLE_LOGS) config to control whether to send logs to OpenTelemetry.
+- Add [IMGPROXY_NEW_RELIC_PROPAGATE_EXTERNAL](https://docs.imgproxy.net/configuration/options#IMGPROXY_NEW_RELIC_PROPAGATE_EXTERNAL), [IMGPROXY_DATADOG_PROPAGATE_EXTERNAL](https://docs.imgproxy.net/configuration/options#IMGPROXY_DATADOG_PROPAGATE_EXTERNAL), and [IMGPROXY_OPEN_TELEMETRY_PROPAGATE_EXTERNAL](https://docs.imgproxy.net/configuration/options#IMGPROXY_OPEN_TELEMETRY_PROPAGATE_EXTERNAL) configs to control propagation of tracing headers to external requests.
+- Add [IMGPROXY_S3_ALLOWED_BUCKETS](https://docs.imgproxy.net/configuration/options#IMGPROXY_S3_ALLOWED_BUCKETS), [IMGPROXY_GCS_ALLOWED_BUCKETS](https://docs.imgproxy.net/configuration/options#IMGPROXY_GCS_ALLOWED_BUCKETS), [IMGPROXY_ABS_ALLOWED_BUCKETS](https://docs.imgproxy.net/configuration/options#IMGPROXY_ABS_ALLOWED_BUCKETS), and [IMGPROXY_SWIFT_ALLOWED_BUCKETS](https://docs.imgproxy.net/configuration/options#IMGPROXY_SWIFT_ALLOWED_BUCKETS) configs to allowlist buckets/containers that imgproxy can read source images from.
+- Add [IMGPROXY_S3_DENIED_BUCKETS](https://docs.imgproxy.net/configuration/options#IMGPROXY_S3_DENIED_BUCKETS), [IMGPROXY_GCS_DENIED_BUCKETS](https://docs.imgproxy.net/configuration/options#IMGPROXY_GCS_DENIED_BUCKETS), [IMGPROXY_ABS_DENIED_BUCKETS](https://docs.imgproxy.net/configuration/options#IMGPROXY_ABS_DENIED_BUCKETS), and [IMGPROXY_SWIFT_DENIED_BUCKETS](https://docs.imgproxy.net/configuration/options#IMGPROXY_SWIFT_DENIED_BUCKETS) configs to denylist buckets/containers that imgproxy can read source images from.
+- Add pretty error pages when [IMGPROXY_DEVELOPMENT_ERRORS_MODE](https://docs.imgproxy.net/configuration/options#IMGPROXY_DEVELOPMENT_ERRORS_MODE) is enabled.
+- Add documentation links to errors. They will be visible in logs and error reports.
+- Add [IMGPROXY_LAST_MODIFIED_BUSTER](https://docs.imgproxy.net/configuration/options#IMGPROXY_LAST_MODIFIED_BUSTER) config to control whether to pass through the `If-Modified-Since` header to the image source.
+
+### Changed
+- Most of the code base is refactored to improve maintainability and extensibility.
+- Implemented asynchronous downloading and processing of images. This improves performance when the source image is slow to download or when processing is slow.
+- Source image colorspace is now preserved when possible.
+- (pro) Improved SVG minification. It is now much faster and more efficient.
+- (pro) Improved [autoquality](https://docs.imgproxy.net/features/autoquality). Implemented weighted DSSIM calculation and trained new ML models for JPEG, WebP, AVIF, and JPEG XL.
+- [IMGPROXY_USE_ETAG](https://docs.imgproxy.net/configuration/options#IMGPROXY_USE_ETAG) and [IMGPROXY_USE_LAST_MODIFIED](https://docs.imgproxy.net/configuration/options#IMGPROXY_USE_LAST_MODIFIED) are now enabled by default.
+- Etag generation is now based only on Etag received from the image source and [IMGPROXY_ETAG_BUSTER](https://docs.imgproxy.net/configuration/options#IMGPROXY_ETAG_BUSTER) config.
+- [IMGPROXY_USE_GCS](https://docs.imgproxy.net/configuration/options#IMGPROXY_USE_GCS) is not automatically set if the GCS key is present anymore. It should be set explicitly to enable loading images from Google Cloud Storage.
 - SVG rendering DPI is changed from 72 to 96 to match W3C recommendations.
 - (pro) Improved behavior of `IMGPROXY_OBJECT_DETECTION_GRAVITY_MODE=one_best_centermost`.
 - Custom New Relic metrics are now reported as [timescales](https://docs.newrelic.com/docs/apm/agents/manage-apm-agents/agent-data/collect-custom-metrics/). Metric names have been changed from `imgproxy.X` to `Custom/imgproxy/X`.
