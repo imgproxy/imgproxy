@@ -262,14 +262,15 @@ func (p *Processor) skipStandardProcessing(
 		return nil, err
 	}
 
-	imgdata, err = p.svg.Process(po.Options, imgdata)
+	// svg.Process always returns an independently-owned reference, so we can
+	// use it directly as OutData without any identity checks.
+	processedData, err := p.svg.Process(po.Options, imgdata)
 	if err != nil {
 		return nil, err
 	}
 
-	// Return the original image
 	return &Result{
-		OutData:      imgdata,
+		OutData:      processedData,
 		OriginWidth:  originWidth,
 		OriginHeight: originHeight,
 		ResultWidth:  originWidth,

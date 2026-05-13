@@ -42,11 +42,7 @@ func NewFactory(fetcher *fetcher.Fetcher, monitoring *monitoring.Monitoring) *Fa
 // NewFromBytesWithFormat creates a new ImageData instance from the provided format
 // and byte slice.
 func NewFromBytesWithFormat(format imagetype.Type, b []byte) ImageData {
-	return &imageDataBytes{
-		data:   b,
-		format: format,
-		cancel: nil,
-	}
+	return newImageData(&bytesProvider{data: b}, format)
 }
 
 // NewFromBytes creates a new ImageData instance from the provided byte slice.
@@ -182,12 +178,8 @@ func (f *Factory) DownloadAsync(
 	// and let the buffer read the rest of the data immediately.
 	b.ReleaseThreshold()
 
-	d := &imageDataAsyncBuffer{
-		b:      b,
-		format: format,
-		desc:   desc,
-		cancel: nil,
-	}
+	p := &asyncBufferProvider{b: b, desc: desc}
+	d := newImageData(p, format)
 	d.AddCancel(req.Cancel) // request will be closed when the image data is consumed
 
 	return d, h, nil

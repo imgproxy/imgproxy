@@ -17,8 +17,9 @@ type staticProvider struct {
 
 // Get returns the static image data and headers stored in the provider.
 func (s *staticProvider) Get(_ context.Context, _ *options.Options) (imagedata.ImageData, http.Header, error) {
-	// We return a nopCloser to prevent the caller from closing the shared image data.
-	return imagedata.NopCloser(s.data), s.headers.Clone(), nil
+	// Ref() increments the ref count so the caller can Close() independently
+	// without releasing the shared underlying data.
+	return s.data.Ref(), s.headers.Clone(), nil
 }
 
 // NewStaticProvider creates a new ImageProvider from either a base64 string, file path, or URL
