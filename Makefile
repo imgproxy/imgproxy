@@ -15,7 +15,7 @@ SRCDIR := ./cli
 RCFILE := ./.imgproxyrc
 BREW_PREFIX :=
 DEVROOT_TMP_DIR ?= $(MAKEFILE_DIR).tmp/_dev-root
-BASE_IMAGE ?= ghcr.io/imgproxy/imgproxy-base:v4.1.0
+BASE_IMAGE ?= ghcr.io/imgproxy/imgproxy-base:v4.0.2
 
 # Common environment setup for CGO builds
 ifneq ($(shell which brew),)
