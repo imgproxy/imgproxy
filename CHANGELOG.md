@@ -1,5 +1,9 @@
 # Changelog
 
+## [4.0.1] - 2026-05-18
+
+This is a maintenance release with updated dependencies
+
 ## [4.0.0] - 2026-05-13
 ### Added
 - (pro) Add [internal cache](https://docs.imgproxy.net/cache/internal) for processed images.
