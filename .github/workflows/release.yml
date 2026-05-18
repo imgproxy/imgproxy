@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+*'
+      - "v[0-9]+.[0-9]+.[0-9]+*"
 
 jobs:
   ci:
@@ -59,4 +59,3 @@ jobs:
           repository: imgproxy/imgproxy-helm
           event-type: imgproxy-version-updated
           client-payload: '{"tag": "${{ github.ref_name }}"}'
-
