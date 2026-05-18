@@ -21,6 +21,7 @@ var (
 	IMGPROXY_MAX_ANIMATION_FRAMES           = env.Int("IMGPROXY_MAX_ANIMATION_FRAMES")
 	IMGPROXY_MAX_ANIMATION_FRAME_RESOLUTION = env.MegaInt("IMGPROXY_MAX_ANIMATION_FRAME_RESOLUTION")
 	IMGPROXY_MAX_RESULT_DIMENSION           = env.Int("IMGPROXY_MAX_RESULT_DIMENSION")
+	IMGPROXY_MAX_RESULT_WIDTH               = env.Int("IMGPROXY_MAX_RESULT_WIDTH")
 )
 
 // Config is the package-local configuration
@@ -36,6 +37,7 @@ type Config struct {
 	MaxAnimationFrames          int // Maximum allowed animation frames
 	MaxAnimationFrameResolution int // Maximum allowed resolution per animation frame
 	MaxResultDimension          int // Maximum allowed result image dimension (width or height)
+	MaxResultWidth              int // Maximum allowed result image width
 }
 
 // NewDefaultConfig returns a new Config instance with default values.
@@ -48,6 +50,7 @@ func NewDefaultConfig() Config {
 		MaxAnimationFrames:          1,
 		MaxAnimationFrameResolution: 0,
 		MaxResultDimension:          0,
+		MaxResultWidth:              0,
 	}
 }
 
@@ -65,6 +68,7 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 		IMGPROXY_MAX_ANIMATION_FRAMES.Parse(&c.MaxAnimationFrames),
 		IMGPROXY_MAX_ANIMATION_FRAME_RESOLUTION.Parse(&c.MaxAnimationFrameResolution),
 		IMGPROXY_MAX_RESULT_DIMENSION.Parse(&c.MaxResultDimension),
+		IMGPROXY_MAX_RESULT_WIDTH.Parse(&c.MaxResultWidth),
 
 		IMGPROXY_KEY.Parse(&c.Keys),
 		IMGPROXY_SALT.Parse(&c.Salts),

@@ -222,8 +222,9 @@ func (c *Context) calcSizes(widthToScale, heightToScale int, po ProcessingOption
 
 func (c *Context) limitScale(widthToScale, heightToScale int, po ProcessingOptions) {
 	maxresultDim := c.PO.MaxResultDimension()
+	maxresultWidth := c.PO.MaxResultWidth()
 
-	if maxresultDim <= 0 {
+	if maxresultDim <= 0 && maxresultWidth <= 0 {
 		return
 	}
 
@@ -243,25 +244,37 @@ func (c *Context) limitScale(widthToScale, heightToScale int, po ProcessingOptio
 	outHeight += imath.ScaleToEven(po.PaddingTop(), c.DprScale)
 	outHeight += imath.ScaleToEven(po.PaddingBottom(), c.DprScale)
 
+	downScale := 1.0
+
 	if maxresultDim > 0 && (outWidth > maxresultDim || outHeight > maxresultDim) {
-		downScale := float64(maxresultDim) / float64(max(outWidth, outHeight))
-
-		c.WScale *= downScale
-		c.HScale *= downScale
-
-		// Prevent scaling below 1px
-		if minWScale := 1.0 / float64(widthToScale); c.WScale < minWScale {
-			c.WScale = minWScale
-		}
-		if minHScale := 1.0 / float64(heightToScale); c.HScale < minHScale {
-			c.HScale = minHScale
-		}
-
-		c.DprScale *= downScale
-
-		// Recalculate the sizes after changing the scales
-		c.calcSizes(widthToScale, heightToScale, po)
+		downScale = float64(maxresultDim) / float64(max(outWidth, outHeight))
 	}
+
+	if maxresultWidth > 0 && outWidth > maxresultWidth {
+		if widthScale := float64(maxresultWidth) / float64(outWidth); widthScale < downScale {
+			downScale = widthScale
+		}
+	}
+
+	if downScale >= 1.0 {
+		return
+	}
+
+	c.WScale *= downScale
+	c.HScale *= downScale
+
+	// Prevent scaling below 1px
+	if minWScale := 1.0 / float64(widthToScale); c.WScale < minWScale {
+		c.WScale = minWScale
+	}
+	if minHScale := 1.0 / float64(heightToScale); c.HScale < minHScale {
+		c.HScale = minHScale
+	}
+
+	c.DprScale *= downScale
+
+	// Recalculate the sizes after changing the scales
+	c.calcSizes(widthToScale, heightToScale, po)
 }
 
 // CalcParams calculates context image parameters based on the current image size.

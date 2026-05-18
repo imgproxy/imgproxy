@@ -17,6 +17,7 @@ type ProcessingTestSuite struct {
 
 type sizeTestCase struct {
 	limit         int
+	widthLimit    int
 	width         int
 	height        int
 	resizingType  processing.ResizeType
@@ -39,6 +40,10 @@ func (r sizeTestCase) URLOptions() string {
 
 	if r.limit > 0 {
 		opts.Add("max_result_dimension").Set(0, r.limit)
+	}
+
+	if r.widthLimit > 0 {
+		opts.Add("max_result_width").Set(0, r.widthLimit)
 	}
 
 	opts.Add("resize").
@@ -80,6 +85,10 @@ func (r sizeTestCase) String() string {
 
 	if r.limit > 0 {
 		fmt.Fprintf(b, ":limit:%d", r.limit)
+	}
+
+	if r.widthLimit > 0 {
+		fmt.Fprintf(b, ":wlimit:%d", r.widthLimit)
 	}
 
 	if r.enlarge {
@@ -804,6 +813,64 @@ func (s *ProcessingTestSuite) TestResultSizeLimit() {
 				paddingLeft:   400,
 			},
 			outSize: testSize{200, 144},
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.opts.String(), func() {
+			s.processImageAndCheck(tc)
+		})
+	}
+}
+
+func (s *ProcessingTestSuite) TestResultWidthLimit() {
+	testCases := []testCase[sizeTestCase]{
+		{
+			opts: sizeTestCase{
+				widthLimit:   300,
+				resizingType: processing.ResizeFit,
+			},
+			outSize: testSize{200, 100},
+		},
+		{
+			opts: sizeTestCase{
+				widthLimit:   100,
+				resizingType: processing.ResizeFit,
+			},
+			outSize: testSize{100, 50},
+		},
+		{
+			opts: sizeTestCase{
+				widthLimit:   50,
+				width:        100,
+				height:       100,
+				resizingType: processing.ResizeFit,
+			},
+			outSize: testSize{50, 25},
+		},
+		{
+			opts: sizeTestCase{
+				widthLimit:   100,
+				resizingType: processing.ResizeFit,
+				rotate:       90,
+			},
+			outSize: testSize{100, 200},
+		},
+		{
+			opts: sizeTestCase{
+				limit:        150,
+				widthLimit:   50,
+				resizingType: processing.ResizeFit,
+			},
+			outSize: testSize{50, 25},
+		},
+		{
+			opts: sizeTestCase{
+				limit:        50,
+				widthLimit:   150,
+				resizingType: processing.ResizeFit,
+			},
+			outSize: testSize{50, 25},
 		},
 	}
 

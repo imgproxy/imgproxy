@@ -49,6 +49,11 @@ func (s *Checker) MaxResultDimension(o *options.Options) int {
 	return o.GetInt(keys.MaxResultDimension, s.config.MaxResultDimension)
 }
 
+// MaxResultWidth returns the maximum allowed result image width
+func (s *Checker) MaxResultWidth(o *options.Options) int {
+	return o.GetInt(keys.MaxResultWidth, s.config.MaxResultWidth)
+}
+
 // CheckDimensions checks if the given dimensions are within the allowed limits
 func (s *Checker) CheckDimensions(o *options.Options, width, height, frames int) error {
 	frames = max(frames, 1)

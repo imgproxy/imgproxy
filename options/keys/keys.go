@@ -102,6 +102,7 @@ const (
 	MaxAnimationFrames          = "max_animation_frames"
 	MaxAnimationFrameResolution = "max_animation_frame_resolution"
 	MaxResultDimension          = "max_result_dimension"
+	MaxResultWidth              = "max_result_width"
 
 	PreferWebP  = "prefer_webp"
 	EnforceWebP = "enforce_webp"

@@ -538,6 +538,18 @@ func (p *Parser) applyMaxResultDimensionOption(
 	return p.parseInt(ctx, o, keys.MaxResultDimension, args...)
 }
 
+func (p *Parser) applyMaxResultWidthOption(
+	ctx context.Context,
+	o *options.Options,
+	args []string,
+) error {
+	if err := p.IsSecurityOptionsAllowed(ctx); err != nil {
+		return err
+	}
+
+	return p.parseInt(ctx, o, keys.MaxResultWidth, args...)
+}
+
 func (p *Parser) applyPresetOption(
 	ctx context.Context,
 	o *options.Options,

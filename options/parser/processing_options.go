@@ -115,6 +115,8 @@ func (p *Parser) applyURLOption(
 		return p.applyMaxAnimationFrameResolutionOption(ctx, o.Main(), args)
 	case "max_result_dimension", "mrd":
 		return p.applyMaxResultDimensionOption(ctx, o.Main(), args)
+	case "max_result_width", "mrw":
+		return p.applyMaxResultWidthOption(ctx, o.Main(), args)
 	}
 
 	return newUnknownOptionError(ctx, "processing", name)

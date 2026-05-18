@@ -308,3 +308,7 @@ func (po ProcessingOptions) MaxAnimationFrames() int {
 func (po ProcessingOptions) MaxResultDimension() int {
 	return po.securityChecker.MaxResultDimension(po.Main())
 }
+
+func (po ProcessingOptions) MaxResultWidth() int {
+	return po.securityChecker.MaxResultWidth(po.Main())
+}
