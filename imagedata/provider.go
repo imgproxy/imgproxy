@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"io"
 
-	"github.com/imgproxy/imgproxy/v3/asyncbuffer"
+	"github.com/imgproxy/imgproxy/v4/asyncbuffer"
 )
 
 // Provider represents the data of an image that can be read from a source.
