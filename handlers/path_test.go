@@ -127,28 +127,33 @@ func (s *PathTestSuite) TestRedenormalizePathHTTPProtocol() {
 	}{
 		{
 			name:     "HTTP",
-			input:    "/plain/http:/example.com/image.jpg",
-			expected: "/plain/http://example.com/image.jpg",
+			input:    "plain/http:/example.com/image.jpg",
+			expected: "plain/http://example.com/image.jpg",
 		},
 		{
 			name:     "HTTPS",
-			input:    "/plain/https:/example.com/image.jpg",
-			expected: "/plain/https://example.com/image.jpg",
+			input:    "plain/https:/example.com/image.jpg",
+			expected: "plain/https://example.com/image.jpg",
 		},
 		{
 			name:     "Local",
-			input:    "/plain/local:/image.jpg",
-			expected: "/plain/local:///image.jpg",
+			input:    "plain/local:/image.jpg",
+			expected: "plain/local:///image.jpg",
+		},
+		{
+			name:     "WithOptions",
+			input:    "/rs:fill:300:200/plain/http:/example.com/image.jpg",
+			expected: "rs:fill:300:200/plain/http://example.com/image.jpg",
 		},
 		{
 			name:     "NormalizedPath",
 			input:    "/plain/http://example.com/image.jpg",
-			expected: "/plain/http://example.com/image.jpg",
+			expected: "plain/http://example.com/image.jpg",
 		},
 		{
 			name:     "ProtocolMissing",
 			input:    "/rs:fill:300:200/plain/example.com/image.jpg",
-			expected: "/rs:fill:300:200/plain/example.com/image.jpg",
+			expected: "rs:fill:300:200/plain/example.com/image.jpg",
 		},
 		{
 			name:     "EmptyString",
@@ -158,27 +163,27 @@ func (s *PathTestSuite) TestRedenormalizePathHTTPProtocol() {
 		{
 			name:     "SingleSlash",
 			input:    "/",
-			expected: "/",
+			expected: "",
 		},
 		{
 			name:     "NoPlainPrefix",
 			input:    "/http:/example.com/image.jpg",
-			expected: "/http:/example.com/image.jpg",
+			expected: "http:/example.com/image.jpg",
 		},
 		{
 			name:     "NoProtocol",
 			input:    "/plain/example.com/image.jpg",
-			expected: "/plain/example.com/image.jpg",
+			expected: "plain/example.com/image.jpg",
 		},
 		{
 			name:     "EndsWithProtocol",
 			input:    "/plain/http:",
-			expected: "/plain/http:",
+			expected: "plain/http:",
 		},
 		{
 			name:     "OnlyProtocol",
 			input:    "/plain/http:/test",
-			expected: "/plain/http://test",
+			expected: "plain/http://test",
 		},
 	}
 

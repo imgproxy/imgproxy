@@ -6,6 +6,7 @@
 
 ### Fixed
 - Fixed a rare deadlock during image downloading.
+- Fix normalized URL path parsing when it doesn't contain any options.
 
 ## [4.0.1] - 2026-05-18
 
