@@ -40,7 +40,8 @@ func (s *TestCondSuite) TestBasicWaitAndTick() {
 	// Start a goroutine that will wait for the tick
 	var done atomic.Bool
 	go func() {
-		s.cond.Wait()
+		cursor := s.cond.Cursor()
+		s.cond.Wait(cursor)
 		done.Store(true)
 	}()
 
@@ -58,6 +59,9 @@ func (s *TestCondSuite) TestWaitMultipleWaiters() {
 	var startWg sync.WaitGroup
 	results := make([]bool, numWaiters)
 
+	// Capture cursor before starting waiters
+	cursor := s.cond.Cursor()
+
 	// Start multiple waiters
 	for i := range numWaiters {
 		wg.Add(1)
@@ -65,7 +69,7 @@ func (s *TestCondSuite) TestWaitMultipleWaiters() {
 		go func(index int) {
 			defer wg.Done()
 			startWg.Done() // Signal that this goroutine is ready
-			s.cond.Wait()
+			s.cond.Wait(cursor)
 			results[index] = true
 		}(i)
 	}
@@ -91,10 +95,11 @@ func (s *TestCondSuite) TestWaitMultipleWaiters() {
 
 // TestClose tests the behavior of the Cond when closed
 func (s *TestCondSuite) TestClose() {
+	cursor := s.cond.Cursor()
 	s.cond.Close()
-	s.cond.Close() // Should not panic
-	s.cond.Wait()  // Should eventually return
-	s.cond.Tick()  // Should not panic
+	s.cond.Close()      // Should not panic
+	s.cond.Wait(cursor) // Should eventually return
+	s.cond.Tick()       // Should not panic
 
 	s.Require().Nil(asyncbuffer.CondCh(s.cond))
 }
@@ -119,8 +124,9 @@ func (s *TestCondSuite) TestRapidTicksAndWaits() {
 	// Start multiple waiters
 	for range 10 {
 		wg.Go(func() {
+			cursor := s.cond.Cursor()
 			for range iterations / 10 {
-				s.cond.Wait()
+				cursor = s.cond.Wait(cursor)
 			}
 		})
 	}
