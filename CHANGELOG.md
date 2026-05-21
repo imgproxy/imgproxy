@@ -1,6 +1,6 @@
 # Changelog
 
-## [4.0.2] - TBA
+## [4.0.2] - 2026-04-21
 ### Changed
 - (pro) [`expires`](https://docs.imgproxy.net/usage/processing#expires) processing option is removed from the cache key.
 
