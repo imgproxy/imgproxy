@@ -37,16 +37,29 @@ func SplitPathSignature(r *http.Request) (string, string, error) {
 	return path, signature, nil
 }
 
-// RedenormalizePath undoes path normalization done by some browsers and revers proxies
+// RedenormalizePath undoes path normalization done by some browsers and revers proxies.
+// Also trims leading slash if it is present.
 func RedenormalizePath(path string) string {
-	// Cut the path at the `/plain/` segment to process those parts separately
-	options, plainURL, hasPlain := strings.Cut(path, "/plain/")
+	// Split path into options and plain URL parts
+	var (
+		options, plainURL string
+		hasPlain          bool
+	)
+	if strings.HasPrefix(path, "plain/") {
+		// If the path starts with `plain/`, it means that there are no options
+		// and the entire path is a plain URL
+		options = ""
+		plainURL = path[6:]
+		hasPlain = true
+	} else {
+		options, plainURL, hasPlain = strings.Cut(path, "/plain/")
+	}
 
 	// Some proxies/CDNs may encode `:` in options as `%3A`, so we need to unescape it first
 	path = strings.ReplaceAll(options, "%3A", ":")
 
 	if !hasPlain {
-		return path
+		return strings.TrimPrefix(path, "/")
 	}
 
 	// Some proxies/CDNs may "normalize" URLs by replacing `scheme://` with `scheme:/`
@@ -60,5 +73,5 @@ func RedenormalizePath(path string) string {
 		plainURL = strings.Replace(plainURL, match[0], repl, 1)
 	}
 
-	return path + "/plain/" + plainURL
+	return strings.TrimPrefix(path+"/plain/"+plainURL, "/")
 }

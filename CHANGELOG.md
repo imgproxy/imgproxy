@@ -1,5 +1,13 @@
 # Changelog
 
+## [4.0.2] - 2026-04-21
+### Changed
+- (pro) [`expires`](https://docs.imgproxy.net/usage/processing#expires) processing option is removed from the cache key.
+
+### Fixed
+- Fixed a rare deadlock during image downloading.
+- Fix normalized URL path parsing when it doesn't contain any options.
+
 ## [4.0.1] - 2026-05-18
 
 This is a maintenance release with updated dependencies

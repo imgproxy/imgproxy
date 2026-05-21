@@ -127,6 +127,9 @@ func NewReadFull(r io.ReadCloser, dataLen int, finishFn ...context.CancelFunc) (
 // WaitFor waits for the data to be ready at the given offset. nil means ok.
 // It guarantees that the chunk at the given offset is ready to be read.
 func (ab *AsyncBuffer) WaitFor(off int64) error {
+	// Get initial cursor before first check
+	cursor := ab.chunkCond.Cursor()
+
 	// In case we are trying to read data which would potentially hit the pause threshold,
 	// we need to unpause the reader ASAP.
 	if off >= PauseThreshold {
@@ -139,7 +142,10 @@ func (ab *AsyncBuffer) WaitFor(off int64) error {
 			return err
 		}
 
-		ab.chunkCond.Wait()
+		// Wait for a Tick() to occur after our cursor.
+		// If a Tick() happened between offsetAvailable() and here, Wait() returns immediately.
+		// This prevents the deadlock where we miss a signal.
+		cursor = ab.chunkCond.Wait(cursor)
 	}
 }
 
@@ -148,6 +154,9 @@ func (ab *AsyncBuffer) WaitFor(off int64) error {
 func (ab *AsyncBuffer) Wait() (int, error) {
 	// Wait ends till the end of the stream: unpause the reader
 	ab.paused.Release()
+
+	// Get initial cursor before first check
+	cursor := ab.chunkCond.Cursor()
 
 	for {
 		// We can not read data from the closed reader
@@ -161,7 +170,7 @@ func (ab *AsyncBuffer) Wait() (int, error) {
 		}
 
 		// Lock until the next chunk is ready
-		ab.chunkCond.Wait()
+		cursor = ab.chunkCond.Wait(cursor)
 	}
 }
 
