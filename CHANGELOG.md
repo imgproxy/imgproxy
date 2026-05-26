@@ -3,6 +3,7 @@
 ## [4.1.0] - TBA
 ### Added
 - `requests_total`, `status_codes_total`, `errors_total`, `request_duration_seconds`, `request_span_duration_seconds` metrics to OpenTelemetry.
+- [IMGPROXY_S3_ACCESS_POINTS](https://docs.imgproxy.net/configuration/options#IMGPROXY_S3_ACCESS_POINTS) config to configure S3 access points.
 - (pro) [progressive_blur](https://docs.imgproxy.net/usage/processing#progressive-blur) processing option.
 - (pro) [IMGPROXY_MAX_ML_CONCURRENCY](https://docs.imgproxy.net/configuration/options#IMGPROXY_MAX_ML_CONCURRENCY) config to limit the number of concurrent ML tasks.
 

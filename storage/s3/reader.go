@@ -33,6 +33,11 @@ func (s *Storage) GetObject(
 		return nil, fmt.Errorf("access to the S3 bucket %s is denied", bucket)
 	}
 
+	// If an access point ARN is configured for the bucket, use it instead of the bucket name
+	if arn, ok := s.config.AccessPoints[bucket]; ok && len(arn) > 0 {
+		bucket = arn
+	}
+
 	input := &s3.GetObjectInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(key),

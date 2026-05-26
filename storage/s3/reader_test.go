@@ -46,6 +46,18 @@ func (s *ReaderTestSuite) SetupTest() {
 	s.Require().NoError(err)
 }
 
+func (s *ReaderTestSuite) TestGetObjectAccessPoint() {
+	ctx := s.T().Context()
+	reqHeader := make(http.Header)
+
+	response, err := s.Storage().GetObject(ctx, reqHeader, "test-access-point", s.TestObjectKey, "")
+	s.Require().NoError(err)
+	defer response.Body.Close()
+
+	s.Require().Equal(200, response.Status)
+	s.Require().NotNil(response.Body)
+}
+
 func TestReader(t *testing.T) {
 	suite.Run(t, new(ReaderTestSuite))
 }
