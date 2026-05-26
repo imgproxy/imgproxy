@@ -81,6 +81,13 @@ func NewLazySuiteStorage(
 			config.Region = "us-east-1"
 			config.EndpointUsePathStyle = true
 
+			// Configure access point for the bucket.
+			// The access point ARN is used as a bucket name in the storage and is
+			// not validated, so we can use an existing bucket name as an ARN for testing.
+			config.AccessPoints = map[string]string{
+				"test-access-point": "test-container",
+			}
+
 			storage, err := s3.New(&config, http.DefaultTransport.(*http.Transport))
 			if err != nil {
 				return nil, err

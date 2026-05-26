@@ -35,6 +35,15 @@ func (d *Desc[V]) GetEnv() (string, bool) {
 
 // Parse parses the environment variable and sets the value
 func (d *Desc[V]) Parse(value *V) error {
+	// Empty parse function means that this is a zero value descriptor,
+	// so we should skip parsing and just return nil.
+	// This allows us to use zero value descriptors in config descriptions
+	// (for example, [s3.ConfigDesc]) without having to check if the descriptor
+	// is set before parsing.
+	if d.parseFn == nil {
+		return nil
+	}
+
 	env, ok := d.GetEnv()
 	if !ok || strings.TrimSpace(env) == "" {
 		return nil

@@ -49,6 +49,7 @@ var (
 		DecryptionClientEnabled: env.Bool("IMGPROXY_S3_DECRYPTION_CLIENT_ENABLED"),
 		AllowedBuckets:          env.StringSlice("IMGPROXY_S3_ALLOWED_BUCKETS"),
 		DeniedBuckets:           env.StringSlice("IMGPROXY_S3_DENIED_BUCKETS"),
+		AccessPoints:            env.StringMap("IMGPROXY_S3_ACCESS_POINTS"),
 	}
 
 	swiftConfigDesc = swift.ConfigDesc{
