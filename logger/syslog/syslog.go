@@ -4,7 +4,6 @@ import (
 	"context"
 	"log/slog"
 	"log/syslog"
-	"time"
 )
 
 // Hook is a [logger.Hook] implementation for syslog.
@@ -39,7 +38,8 @@ func (hook *Hook) Enabled(level slog.Level) bool {
 	return level >= hook.level.Level()
 }
 
-func (hook *Hook) Fire(ctx context.Context, time time.Time, lvl slog.Level, msg []byte) error {
+func (hook *Hook) Fire(ctx context.Context, r slog.Record, groups []slog.Attr, msg []byte) error {
+	lvl := r.Level
 	msgStr := string(msg)
 
 	switch {

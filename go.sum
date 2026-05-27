@@ -517,6 +517,8 @@ go.opentelemetry.io/collector/processor/processortest v0.145.0 h1:RDGBmyZnHk7XVK
 go.opentelemetry.io/collector/processor/processortest v0.145.0/go.mod h1:WAvxAzSojkdoZB915Z1lsVHCPDJBb2fepjJBjenrzjg=
 go.opentelemetry.io/collector/processor/xprocessor v0.145.0 h1:DaIE7MxRlg0OL1o2P0GQZtmZeExAmVso3qWv8S0RLps=
 go.opentelemetry.io/collector/processor/xprocessor v0.145.0/go.mod h1:kUwRyKBU/kjCmXodd+0z7CpvcP0A9G9/QL+MaJt4U2o=
+go.opentelemetry.io/contrib/bridges/otelslog v0.18.0 h1:hhPGP3zvvy1xWT9RTy970wlniSxFttBIsAK1gvMguJM=
+go.opentelemetry.io/contrib/bridges/otelslog v0.18.0/go.mod h1:twJF7inoMza6kxMcF8JOdL3mPmtOZu7GEr34CUNE6Dg=
 go.opentelemetry.io/contrib/detectors/aws/ec2/v2 v2.5.0 h1:pC+kRpB9AEbQ70MN6YQwMpLzVNP4NA3Dn6MujZaPaew=
 go.opentelemetry.io/contrib/detectors/aws/ec2/v2 v2.5.0/go.mod h1:WN02Ocn6WGtcHJihX6YuINcUS4ACjTE7gttukHK4J8M=
 go.opentelemetry.io/contrib/detectors/aws/ecs v1.43.0 h1:OCm09tiRM3B9FRz+VyhsvxlLc2C6sL2St7NuK8gufis=
