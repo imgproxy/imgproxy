@@ -3,9 +3,8 @@ package otel
 import (
 	"context"
 	"log/slog"
-	"time"
 
-	"go.opentelemetry.io/otel/log"
+	"go.opentelemetry.io/contrib/bridges/otelslog"
 	sdklog "go.opentelemetry.io/otel/sdk/log"
 
 	"github.com/imgproxy/imgproxy/v4/logger"
@@ -14,38 +13,51 @@ import (
 // logHook is a logger.Hook that exports logs to OpenTelemetry.
 type logHook struct {
 	provider *sdklog.LoggerProvider
-	logger   log.Logger
+	handler  slog.Handler
 	level    slog.Level
 }
 
 // newLogHook creates a new OpenTelemetry log hook.
 func newLogHook(provider *sdklog.LoggerProvider, loggerName string, minLevel slog.Leveler) *logHook {
+	handler := otelslog.NewHandler(
+		loggerName,
+		otelslog.WithLoggerProvider(provider),
+	)
+
 	return &logHook{
 		provider: provider,
-		logger:   provider.Logger(loggerName),
+		handler:  handler,
 		level:    minLevel.Level(),
 	}
 }
 
 // Enabled reports whether the hook handles records at the given level.
 func (h *logHook) Enabled(level slog.Level) bool {
+	// We use [sdklog.BatchProcessor] in the OpenTelemetry logger provider,
+	// which accepts all log records no matter their severity,
+	// so we can't rely on [h.handler.Enabled] here.
+	// Instead, we check the log level against the minimum level configured for the hook.
 	return level >= h.level
 }
 
 // Fire processes a log event and exports it to OpenTelemetry.
-func (h *logHook) Fire(ctx context.Context, t time.Time, lvl slog.Level, msg []byte) error {
-	// Create log record
-	var logRecord log.Record
-	logRecord.SetTimestamp(t)
-	logRecord.SetBody(log.StringValue(string(msg)))
-	logRecord.SetSeverity(mapSeverity(lvl))
-	logRecord.SetSeverityText(lvl.String())
+func (h *logHook) Fire(ctx context.Context, r slog.Record, groups []slog.Attr, msg []byte) error {
+	handler := h.handler
+
+	// Apply groups and attrs added with [Handler.WithAttrs] and [Handler.WithGroup]
+	logger.ProcessGroups(
+		groups,
+		func(name string) { handler = handler.WithGroup(name) },
+		func(attrs []slog.Attr) { handler = handler.WithAttrs(attrs) },
+	)
 
 	// Emit the log record
-	h.logger.Emit(ctx, logRecord)
+	if err := handler.Handle(ctx, r); err != nil {
+		return err
+	}
 
-	if lvl >= logger.LevelCritical {
-		// Ensure logs are flushed for critical errors
+	// Ensure logs are flushed for critical errors
+	if r.Level >= logger.LevelCritical {
 		flushCtx, cancel := context.WithTimeout(ctx, stopTimeout)
 		defer cancel()
 
@@ -53,20 +65,4 @@ func (h *logHook) Fire(ctx context.Context, t time.Time, lvl slog.Level, msg []b
 	}
 
 	return nil
-}
-
-// mapSeverity converts slog.Level to OpenTelemetry log.Severity.
-func mapSeverity(level slog.Level) log.Severity {
-	switch {
-	case level < slog.LevelInfo:
-		return log.SeverityDebug
-	case level < slog.LevelWarn:
-		return log.SeverityInfo
-	case level < slog.LevelError:
-		return log.SeverityWarn
-	case level < logger.LevelCritical:
-		return log.SeverityError
-	default:
-		return log.SeverityFatal
-	}
 }

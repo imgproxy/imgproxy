@@ -13,7 +13,11 @@ import (
 type formatterCommon struct {
 	buf *buffer
 
-	groups []attrGroup
+	// groups is a list of attribute groups added with [Handler.WithAttrs] and [Handler.WithGroup].
+	// Every next group is a child of the previous one.
+	// If a group has an empty name, its attributes are added to the parent group (if any)
+	// or to the root if there is no parent.
+	groups []slog.Attr
 
 	// Attributes that should be handled specially
 	error  slog.Attr
@@ -22,7 +26,7 @@ type formatterCommon struct {
 }
 
 // newHandlerFormatterCommon creates a new formatterCommon instance.
-func newFormatterCommon(groups []attrGroup, buf *buffer) formatterCommon {
+func newFormatterCommon(groups []slog.Attr, buf *buffer) formatterCommon {
 	return formatterCommon{
 		buf:    buf,
 		groups: groups,

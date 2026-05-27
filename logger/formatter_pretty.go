@@ -32,7 +32,7 @@ type formatterPretty struct {
 }
 
 // newFormatterPretty creates a new instance of formatterPretty.
-func newFormatterPretty(groups []attrGroup, buf *buffer) *formatterPretty {
+func newFormatterPretty(groups []slog.Attr, buf *buffer) *formatterPretty {
 	return &formatterPretty{
 		formatterCommon: newFormatterCommon(groups, buf),
 	}
@@ -56,13 +56,7 @@ func (s *formatterPretty) format(r slog.Record) {
 	s.buf.appendStringRaw(r.Message)
 
 	// Append groups added with [Handler.WithAttrs] and [Handler.WithGroup]
-	for _, g := range s.groups {
-		if g.name != "" {
-			s.openGroup(g.name)
-		}
-
-		s.appendAttributes(g.attrs)
-	}
+	ProcessGroups(s.groups, s.openGroup, s.appendAttributes)
 
 	// Append attributes from the record
 	r.Attrs(func(attr slog.Attr) bool {

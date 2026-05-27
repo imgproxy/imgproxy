@@ -13,7 +13,7 @@ type formatterStructured struct {
 }
 
 // newFormatterStructured creates a new formatterStructured instance.
-func newFormatterStructured(groups []attrGroup, buf *buffer) *formatterStructured {
+func newFormatterStructured(groups []slog.Attr, buf *buffer) *formatterStructured {
 	return &formatterStructured{
 		formatterCommon: newFormatterCommon(groups, buf),
 	}
@@ -39,13 +39,7 @@ func (s *formatterStructured) format(r slog.Record) {
 	s.appendString(r.Message, true)
 
 	// Append groups added with [Handler.WithAttrs] and [Handler.WithGroup]
-	for _, g := range s.groups {
-		if g.name != "" {
-			s.openGroup(g.name)
-		}
-
-		s.appendAttributes(g.attrs)
-	}
+	ProcessGroups(s.groups, s.openGroup, s.appendAttributes)
 
 	// Append attributes from the record
 	r.Attrs(func(attr slog.Attr) bool {

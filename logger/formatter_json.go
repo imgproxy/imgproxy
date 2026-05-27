@@ -26,7 +26,7 @@ type formatterJSON struct {
 }
 
 // newFormatterJSON creates a new formatterJSON instance.
-func newFormatterJSON(groups []attrGroup, buf *buffer, gcpStyle bool) *formatterJSON {
+func newFormatterJSON(groups []slog.Attr, buf *buffer, gcpStyle bool) *formatterJSON {
 	f := &formatterJSON{
 		formatterCommon: newFormatterCommon(groups, buf),
 	}
@@ -64,13 +64,7 @@ func (s *formatterJSON) format(r slog.Record) {
 	s.appendString(r.Message)
 
 	// Append groups added with [Handler.WithAttrs] and [Handler.WithGroup]
-	for _, g := range s.groups {
-		if g.name != "" {
-			s.openGroup(g.name)
-		}
-
-		s.appendAttributes(g.attrs)
-	}
+	ProcessGroups(s.groups, s.openGroup, s.appendAttributes)
 
 	// Append attributes from the record
 	r.Attrs(func(attr slog.Attr) bool {

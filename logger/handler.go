@@ -28,15 +28,6 @@ const (
 	FormatGCP
 )
 
-// attrGroup represents a named group of attributes.
-//
-// Both the group name and the attributes are optional.
-// Non-empty name means new nested group.
-type attrGroup struct {
-	name  string
-	attrs []slog.Attr
-}
-
 // Hook is an interface that defines a log hook.
 type Hook interface {
 	// Enabled checks if the hook is enabled for the given log level.
@@ -44,11 +35,17 @@ type Hook interface {
 
 	// Fire is a function that gets called on log events.
 	//
-	// The slice provided in the msg parameter contains the formatted log message,
-	// followed by a newline character.
-	// It is guaranteed to be available for the duration of the hook call.
-	// The hook should not modify the contents of the msg slice except for appending.
-	Fire(ctx context.Context, time time.Time, lvl slog.Level, msg []byte) error
+	// Parameters:
+	//   - ctx: the context of the log event
+	//   - r: the log record containing the log message and attributes
+	//   - groups: a slice of slog.Attr representing the attribute groups added
+	//     with [Handler.WithAttrs] and [Handler.WithGroup].
+	//     Use [ProcessGroups] to process them.
+	//   - formatted: a byte slice containing the formatted log message as it will
+	//     be written to the output. The content of this slice is guaranteed to be
+	//     valid for the duration of the hook call, but should not be modified by
+	//     the hook except for appending.
+	Fire(ctx context.Context, r slog.Record, groups []slog.Attr, formatted []byte) error
 }
 
 // Handler is an implementation of [slog.Handler] with support for hooks.
@@ -58,7 +55,11 @@ type Handler struct {
 
 	mu *sync.Mutex // Mutex is shared between all instances
 
-	groups []attrGroup
+	// groups is a list of attribute groups added with [Handler.WithAttrs] and [Handler.WithGroup].
+	// Every next group is a child of the previous one.
+	// If a group has an empty name, its attributes are added to the parent group (if any)
+	// or to the root if there is no parent.
+	groups []slog.Attr
 
 	hooks []Hook
 }
@@ -110,10 +111,7 @@ func (h *Handler) WithAttrs(attrs []slog.Attr) slog.Handler {
 		return h
 	}
 
-	return h.withGroup(attrGroup{
-		name:  "",
-		attrs: attrs,
-	})
+	return h.withGroup(slog.GroupAttrs("", attrs...))
 }
 
 // WithGroup returns a new handler with the given group name added.
@@ -122,10 +120,7 @@ func (h *Handler) WithGroup(name string) slog.Handler {
 		return h
 	}
 
-	return h.withGroup(attrGroup{
-		name:  name,
-		attrs: nil,
-	})
+	return h.withGroup(slog.GroupAttrs(name))
 }
 
 // Handle processes a log record.
@@ -155,7 +150,7 @@ func (h *Handler) Handle(ctx context.Context, r slog.Record) error {
 		if !hook.Enabled(r.Level) {
 			continue
 		}
-		if err := hook.Fire(ctx, r.Time, r.Level, slices.Clip(*buf)); err != nil {
+		if err := hook.Fire(ctx, r, slices.Clip(h.groups), slices.Clip(*buf)); err != nil {
 			errs = append(errs, err)
 		}
 	}
@@ -177,7 +172,7 @@ func (h *Handler) format(r slog.Record, buf *buffer) {
 	// If there are no attributes in the record itself,
 	// remove empty groups from the end
 	if r.NumAttrs() == 0 {
-		for len(groups) > 0 && len(groups[len(groups)-1].attrs) == 0 {
+		for len(groups) > 0 && len(groups[len(groups)-1].Value.Group()) == 0 {
 			groups = groups[:len(groups)-1]
 		}
 	}
@@ -224,9 +219,27 @@ func (h *Handler) writeError(err error) {
 }
 
 // withGroup returns a new handler with the given attribute group added.
-func (h *Handler) withGroup(group attrGroup) *Handler {
+func (h *Handler) withGroup(group slog.Attr) *Handler {
 	h2 := *h
 	h2.groups = append(slices.Clip(h.groups), group)
 	h2.hooks = slices.Clip(h.hooks)
 	return &h2
+}
+
+// ProcessGroups processes a slice of slog.Attr groups passed to hooks or formatters.
+// It calls onGroup for each opened group and onAttrs for each attributes in last opened group.
+func ProcessGroups(
+	groups []slog.Attr,
+	onGroup func(name string),
+	onAttrs func(attrs []slog.Attr),
+) {
+	for _, g := range groups {
+		if len(g.Key) > 0 {
+			onGroup(g.Key)
+		}
+
+		if attrs := g.Value.Group(); len(attrs) > 0 {
+			onAttrs(attrs)
+		}
+	}
 }

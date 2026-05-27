@@ -8,6 +8,7 @@
 - (pro) [IMGPROXY_MAX_ML_CONCURRENCY](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_MAX_ML_CONCURRENCY) config to limit the number of concurrent ML tasks.
 
 ### Changed
+- OpenTelemetry logs exporter now exports logs in OpenTelemetry Log Data Model format instead of formatted strings.
 - (pro) Improved advanced smart crop.
 
 ## [4.0.3] - 2026-04-21
