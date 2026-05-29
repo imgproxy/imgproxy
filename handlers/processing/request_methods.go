@@ -29,7 +29,9 @@ func (r *request) makeImageRequestHeaders() http.Header {
 
 // acquireWorker acquires the processing worker
 func (r *request) acquireWorker() (context.CancelFunc, errctx.Error) {
-	ctx, cancelSpan := r.Monitoring().StartSpan(r.req.Context(), "Queue", nil)
+	ctx, cancelSpan := r.Monitoring().StartSpan(r.req.Context(), "Queue",
+		r.monitoringMeta.Filter(monitoring.MetaPreset),
+	)
 	defer cancelSpan()
 
 	fn, err := r.Workers().Acquire(ctx)
@@ -155,6 +157,7 @@ func (r *request) processImage(
 		"Processing image",
 		r.monitoringMeta.Filter(
 			monitoring.MetaOptions,
+			monitoring.MetaPreset,
 		),
 	)
 	defer cancelSpan()

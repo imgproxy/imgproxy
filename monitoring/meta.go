@@ -11,6 +11,7 @@ const (
 	MetaSourceImageURL    = MetaPrefix + "source_image_url"
 	MetaSourceImageOrigin = MetaPrefix + "source_image_origin"
 	MetaOptions           = MetaPrefix + "options"
+	MetaPreset            = MetaPrefix + "preset"
 )
 
 // Meta represents a set of metadata key-value pairs.

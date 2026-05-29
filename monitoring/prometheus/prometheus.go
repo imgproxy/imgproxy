@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/felixge/httpsnoop"
+	"github.com/imgproxy/imgproxy/v4/monitoring"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
@@ -78,7 +79,7 @@ func New(config *Config, stats *stats.Stats) (*Prometheus, error) {
 		Namespace: config.Namespace,
 		Name:      "request_span_duration_seconds",
 		Help:      "A histogram of the request spans duration separated by span name.",
-	}, []string{"span"})
+	}, []string{"span", "preset"})
 
 	p.workers = prometheus.NewGauge(prometheus.GaugeOpts{
 		Namespace: config.Namespace,
@@ -195,8 +196,18 @@ func (p *Prometheus) StartSpan(
 	name string,
 	meta map[string]any,
 ) (context.Context, context.CancelFunc) {
+	var preset string
+	if meta != nil {
+		if v, ok := meta[monitoring.MetaPreset]; ok {
+			preset, _ = v.(string)
+		}
+	}
+
 	return ctx, p.startDuration(
-		p.requestSpanDuration.With(prometheus.Labels{"span": format.FormatSegmentName(name)}),
+		p.requestSpanDuration.With(prometheus.Labels{
+			"span":   format.FormatSegmentName(name),
+			"preset": preset,
+		}),
 	)
 }
 

@@ -2,6 +2,7 @@ package processing
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/imgproxy/imgproxy/v4/auximageprovider"
 	"github.com/imgproxy/imgproxy/v4/clientfeatures"
@@ -13,6 +14,7 @@ import (
 	"github.com/imgproxy/imgproxy/v4/httpheaders/conditionalheaders"
 	"github.com/imgproxy/imgproxy/v4/imagedata"
 	"github.com/imgproxy/imgproxy/v4/monitoring"
+	"github.com/imgproxy/imgproxy/v4/options"
 	"github.com/imgproxy/imgproxy/v4/options/keys"
 	optionsparser "github.com/imgproxy/imgproxy/v4/options/parser"
 	"github.com/imgproxy/imgproxy/v4/processing"
@@ -116,10 +118,13 @@ func (h *Handler) newRequest(req *http.Request) (*request, *server.Error) {
 	// get image origin and create monitoring meta object
 	imageOrigin := monitoring.MetaURLOrigin(imageURL)
 
+	preset := strings.Join(options.Get(o, keys.UsedPresets, []string{}), ",")
+
 	mm := monitoring.Meta{
 		monitoring.MetaSourceImageURL:    imageURL,
 		monitoring.MetaSourceImageOrigin: imageOrigin,
 		monitoring.MetaOptions:           o.Map(),
+		monitoring.MetaPreset:            preset,
 	}
 
 	// set error reporting and monitoring context
