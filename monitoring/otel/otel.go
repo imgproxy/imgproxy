@@ -8,6 +8,7 @@ import (
 	"os"
 	"reflect"
 	"runtime"
+	"strconv"
 	"time"
 
 	"github.com/felixge/httpsnoop"
@@ -32,6 +33,7 @@ import (
 
 	"github.com/imgproxy/imgproxy/v4/errctx"
 	"github.com/imgproxy/imgproxy/v4/logger"
+	"github.com/imgproxy/imgproxy/v4/monitoring/defs"
 	"github.com/imgproxy/imgproxy/v4/monitoring/format"
 	"github.com/imgproxy/imgproxy/v4/monitoring/stats"
 	"github.com/imgproxy/imgproxy/v4/version"
@@ -71,6 +73,12 @@ type Otel struct {
 	logHook        *logHook
 
 	propagator propagation.TextMapPropagator
+
+	requestsTotal       metric.Int64Counter
+	statusCodesTotal    metric.Int64Counter
+	errorsTotal         metric.Int64Counter
+	requestDuration     metric.Float64Histogram
+	requestSpanDuration metric.Float64Histogram
 }
 
 // New creates a new Otel instance
@@ -239,18 +247,31 @@ func (o *Otel) StartRequest(
 	)
 	ctx = context.WithValue(ctx, hasSpanCtxKey{}, struct{}{})
 
+	if o.requestsTotal != nil {
+		o.requestsTotal.Add(ctx, 1)
+	}
+
 	newRw := httpsnoop.Wrap(rw, httpsnoop.Hooks{
 		WriteHeader: func(next httpsnoop.WriteHeaderFunc) httpsnoop.WriteHeaderFunc {
 			return func(statusCode int) {
 				span.SetStatus(httpconv.ServerStatus(statusCode))
 				span.SetAttributes(semconv.HTTPStatusCode(statusCode))
-
+				if o.statusCodesTotal != nil {
+					o.statusCodesTotal.Add(ctx, 1, metric.WithAttributes(attribute.String("status", strconv.Itoa(statusCode))))
+				}
 				next(statusCode)
 			}
 		},
 	})
 
-	cancel := func() { span.End() }
+	t := time.Now()
+	cancel := func() {
+		span.End()
+		if o.requestDuration == nil {
+			return
+		}
+		o.requestDuration.Record(ctx, time.Since(t).Seconds())
+	}
 	return ctx, cancel, newRw
 }
 
@@ -304,21 +325,32 @@ func (o *Otel) StartSpan(
 	name string,
 	meta map[string]any,
 ) (context.Context, context.CancelFunc) {
-	if ctx.Value(hasSpanCtxKey{}) != nil {
-		var span trace.Span
-		ctx, span = o.tracer.Start(
-			ctx, format.FormatSegmentName(name),
-			trace.WithSpanKind(trace.SpanKindInternal),
-		)
-
-		for k, v := range meta {
-			setMetadata(span, k, v)
-		}
-
-		return ctx, func() { span.End() }
+	if ctx.Value(hasSpanCtxKey{}) == nil {
+		return ctx, func() {}
 	}
 
-	return ctx, func() {}
+	var span trace.Span
+	spanName := format.FormatSegmentName(name)
+	ctx, span = o.tracer.Start(
+		ctx, spanName,
+		trace.WithSpanKind(trace.SpanKindInternal),
+	)
+
+	for k, v := range meta {
+		setMetadata(span, k, v)
+	}
+
+	start := time.Now()
+	return ctx, func() {
+		span.End()
+		if o.requestSpanDuration == nil {
+			return
+		}
+
+		o.requestSpanDuration.Record(
+			ctx, time.Since(start).Seconds(), metric.WithAttributes(attribute.String("span", spanName)),
+		)
+	}
 }
 
 // SendError sends an error to OpenTelemetry
@@ -333,6 +365,10 @@ func (o *Otel) SendError(ctx context.Context, errType string, err errctx.Error) 
 
 	span.SetStatus(codes.Error, err.Error())
 	span.AddEvent(semconv.ExceptionEventName, trace.WithAttributes(attributes...))
+
+	if o.errorsTotal != nil {
+		o.errorsTotal.Add(ctx, 1, metric.WithAttributes(attribute.String("type", errType)))
+	}
 }
 
 // InjectHeaders adds monitoring headers to the provided HTTP headers.
@@ -347,136 +383,185 @@ func (o *Otel) InjectHeaders(ctx context.Context, headers http.Header) {
 }
 
 // addDefaultMetrics adds default system and application metrics to OpenTelemetry
+//
+//nolint:maintidx
 func (o *Otel) addDefaultMetrics() error {
+	var err error
+
+	o.requestsTotal, err = o.meter.Int64Counter(
+		defs.RequestsTotal,
+		metric.WithUnit("1"),
+		metric.WithDescription("A counter of the total number of HTTP requests imgproxy processed."),
+	)
+	if err != nil {
+		return fmt.Errorf("can't add %s counter to OpenTelemetry: %w", defs.RequestsTotal, err)
+	}
+
+	o.statusCodesTotal, err = o.meter.Int64Counter(
+		defs.StatusCodesTotal,
+		metric.WithUnit("1"),
+		metric.WithDescription("A counter of the response status codes."),
+	)
+	if err != nil {
+		return fmt.Errorf("can't add %s counter to OpenTelemetry: %w", defs.StatusCodesTotal, err)
+	}
+
+	o.errorsTotal, err = o.meter.Int64Counter(
+		defs.ErrorsTotal,
+		metric.WithUnit("1"),
+		metric.WithDescription("A counter of the occurred errors separated by type."),
+	)
+	if err != nil {
+		return fmt.Errorf("can't add %s counter to OpenTelemetry: %w", defs.ErrorsTotal, err)
+	}
+
+	o.requestDuration, err = o.meter.Float64Histogram(
+		defs.RequestDurationSeconds,
+		metric.WithUnit("s"),
+		metric.WithDescription("A histogram of the response latency."),
+	)
+	if err != nil {
+		return fmt.Errorf("can't add %s histogram to OpenTelemetry: %w", defs.RequestDurationSeconds, err)
+	}
+
+	o.requestSpanDuration, err = o.meter.Float64Histogram(
+		defs.RequestSpanDurationSeconds,
+		metric.WithUnit("s"),
+		metric.WithDescription("A histogram of the request spans duration separated by span name."),
+	)
+	if err != nil {
+		return fmt.Errorf("can't add %s histogram to OpenTelemetry: %w", defs.RequestSpanDurationSeconds, err)
+	}
+
 	proc, err := process.NewProcess(int32(os.Getpid())) //nolint:gosec
 	if err != nil {
 		return fmt.Errorf("can't initialize process data for OpenTelemetry: %w", err)
 	}
 
 	processResidentMemory, err := o.meter.Int64ObservableGauge(
-		"process_resident_memory_bytes",
+		defs.ProcessResidentMemoryBytes,
 		metric.WithUnit("By"),
 		metric.WithDescription("Resident memory size in bytes."),
 	)
 	if err != nil {
-		return fmt.Errorf("can't add process_resident_memory_bytes gauge to OpenTelemetry: %w", err)
+		return fmt.Errorf("can't add %s gauge to OpenTelemetry: %w", defs.ProcessResidentMemoryBytes, err)
 	}
 
 	processVirtualMemory, err := o.meter.Int64ObservableGauge(
-		"process_virtual_memory_bytes",
+		defs.ProcessVirtualMemoryBytes,
 		metric.WithUnit("By"),
 		metric.WithDescription("Virtual memory size in bytes."),
 	)
 	if err != nil {
-		return fmt.Errorf("can't add process_virtual_memory_bytes gauge to OpenTelemetry: %w", err)
+		return fmt.Errorf("can't add %s gauge to OpenTelemetry: %w", defs.ProcessVirtualMemoryBytes, err)
 	}
 
 	goMemstatsSys, err := o.meter.Int64ObservableGauge(
-		"go_memstats_sys_bytes",
+		defs.GoMemstatsSysBytes,
 		metric.WithUnit("By"),
 		metric.WithDescription("Number of bytes obtained from system."),
 	)
 	if err != nil {
-		return fmt.Errorf("can't add go_memstats_sys_bytes gauge to OpenTelemetry: %w", err)
+		return fmt.Errorf("can't add %s gauge to OpenTelemetry: %w", defs.GoMemstatsSysBytes, err)
 	}
 
 	goMemstatsHeapIdle, err := o.meter.Int64ObservableGauge(
-		"go_memstats_heap_idle_bytes",
+		defs.GoMemstatsHeapIdleBytes,
 		metric.WithUnit("By"),
 		metric.WithDescription("Number of heap bytes waiting to be used."),
 	)
 	if err != nil {
-		return fmt.Errorf("can't add go_memstats_heap_idle_bytes gauge to OpenTelemetry: %w", err)
+		return fmt.Errorf("can't add %s gauge to OpenTelemetry: %w", defs.GoMemstatsHeapIdleBytes, err)
 	}
 
 	goMemstatsHeapInuse, err := o.meter.Int64ObservableGauge(
-		"go_memstats_heap_inuse_bytes",
+		defs.GoMemstatsHeapInuseBytes,
 		metric.WithUnit("By"),
 		metric.WithDescription("Number of heap bytes that are in use."),
 	)
 	if err != nil {
-		return fmt.Errorf("can't add go_memstats_heap_inuse_bytes gauge to OpenTelemetry: %w", err)
+		return fmt.Errorf("can't add %s gauge to OpenTelemetry: %w", defs.GoMemstatsHeapInuseBytes, err)
 	}
 
 	goGoroutines, err := o.meter.Int64ObservableGauge(
-		"go_goroutines",
+		defs.GoGoroutines,
 		metric.WithUnit("1"),
 		metric.WithDescription("Number of goroutines that currently exist."),
 	)
 	if err != nil {
-		return fmt.Errorf("can't add go_goroutines gauge to OpenTelemetry: %w", err)
+		return fmt.Errorf("can't add %s gauge to OpenTelemetry: %w", defs.GoGoroutines, err)
 	}
 
 	goThreads, err := o.meter.Int64ObservableGauge(
-		"go_threads",
+		defs.GoThreads,
 		metric.WithUnit("1"),
 		metric.WithDescription("Number of OS threads created."),
 	)
 	if err != nil {
-		return fmt.Errorf("can't add go_threads gauge to OpenTelemetry: %w", err)
+		return fmt.Errorf("can't add %s gauge to OpenTelemetry: %w", defs.GoThreads, err)
 	}
 
 	workersGauge, err := o.meter.Int64ObservableGauge(
-		"workers",
+		defs.Workers,
 		metric.WithUnit("1"),
 		metric.WithDescription("A gauge of the number of running workers."),
 	)
 	if err != nil {
-		return fmt.Errorf("can't add workers gauge to OpenTelemetry: %w", err)
+		return fmt.Errorf("can't add %s gauge to OpenTelemetry: %w", defs.Workers, err)
 	}
 
 	requestsInProgressGauge, err := o.meter.Float64ObservableGauge(
-		"requests_in_progress",
+		defs.RequestsInProgress,
 		metric.WithUnit("1"),
 		metric.WithDescription("A gauge of the number of requests currently being in progress."),
 	)
 	if err != nil {
-		return fmt.Errorf("can't add requests_in_progress gauge to OpenTelemetry: %w", err)
+		return fmt.Errorf("can't add %s gauge to OpenTelemetry: %w", defs.RequestsInProgress, err)
 	}
 
 	imagesInProgressGauge, err := o.meter.Float64ObservableGauge(
-		"images_in_progress",
+		defs.ImagesInProgress,
 		metric.WithUnit("1"),
 		metric.WithDescription("A gauge of the number of images currently being in progress."),
 	)
 	if err != nil {
-		return fmt.Errorf("can't add images_in_progress gauge to OpenTelemetry: %w", err)
+		return fmt.Errorf("can't add %s gauge to OpenTelemetry: %w", defs.ImagesInProgress, err)
 	}
 
 	workersUtilizationGauge, err := o.meter.Float64ObservableGauge(
-		"workers_utilization",
+		defs.WorkersUtilization,
 		metric.WithUnit("%"),
 		metric.WithDescription("A gauge of the workers utilization in percents."),
 	)
 	if err != nil {
-		return fmt.Errorf("can't add workers_utilization gauge to OpenTelemetry: %w", err)
+		return fmt.Errorf("can't add %s gauge to OpenTelemetry: %w", defs.WorkersUtilization, err)
 	}
 
 	vipsMemory, err := o.meter.Float64ObservableGauge(
-		"vips_memory_bytes",
+		defs.VipsMemoryBytes,
 		metric.WithUnit("By"),
 		metric.WithDescription("A gauge of the vips tracked memory usage in bytes."),
 	)
 	if err != nil {
-		return fmt.Errorf("can't add vips_memory_bytes gauge to OpenTelemetry: %w", err)
+		return fmt.Errorf("can't add %s gauge to OpenTelemetry: %w", defs.VipsMemoryBytes, err)
 	}
 
 	vipsMaxMemory, err := o.meter.Float64ObservableGauge(
-		"vips_max_memory_bytes",
+		defs.VipsMaxMemoryBytes,
 		metric.WithUnit("By"),
 		metric.WithDescription("A gauge of the max vips tracked memory usage in bytes."),
 	)
 	if err != nil {
-		return fmt.Errorf("can't add vips_max_memory_bytes gauge to OpenTelemetry: %w", err)
+		return fmt.Errorf("can't add %s gauge to OpenTelemetry: %w", defs.VipsMaxMemoryBytes, err)
 	}
 
 	vipsAllocs, err := o.meter.Float64ObservableGauge(
-		"vips_allocs",
+		defs.VipsAllocs,
 		metric.WithUnit("1"),
 		metric.WithDescription("A gauge of the number of active vips allocations."),
 	)
 	if err != nil {
-		return fmt.Errorf("can't add vips_allocs gauge to OpenTelemetry: %w", err)
+		return fmt.Errorf("can't add %s gauge to OpenTelemetry: %w", defs.VipsAllocs, err)
 	}
 
 	_, err = o.meter.RegisterCallback(

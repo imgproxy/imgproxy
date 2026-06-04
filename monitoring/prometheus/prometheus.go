@@ -15,6 +15,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/imgproxy/imgproxy/v4/errctx"
+	"github.com/imgproxy/imgproxy/v4/monitoring/defs"
 	"github.com/imgproxy/imgproxy/v4/monitoring/format"
 	"github.com/imgproxy/imgproxy/v4/monitoring/stats"
 	vipsstats "github.com/imgproxy/imgproxy/v4/vips/stats"
@@ -52,74 +53,74 @@ func New(config *Config, stats *stats.Stats) (*Prometheus, error) {
 
 	p.requestsTotal = prometheus.NewCounter(prometheus.CounterOpts{
 		Namespace: config.Namespace,
-		Name:      "requests_total",
+		Name:      defs.RequestsTotal,
 		Help:      "A counter of the total number of HTTP requests imgproxy processed.",
 	})
 
 	p.statusCodesTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: config.Namespace,
-		Name:      "status_codes_total",
+		Name:      defs.StatusCodesTotal,
 		Help:      "A counter of the response status codes.",
 	}, []string{"status"})
 
 	p.errorsTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: config.Namespace,
-		Name:      "errors_total",
+		Name:      defs.ErrorsTotal,
 		Help:      "A counter of the occurred errors separated by type.",
 	}, []string{"type"})
 
 	p.requestDuration = prometheus.NewHistogram(prometheus.HistogramOpts{
 		Namespace: config.Namespace,
-		Name:      "request_duration_seconds",
+		Name:      defs.RequestDurationSeconds,
 		Help:      "A histogram of the response latency.",
 	})
 
 	p.requestSpanDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: config.Namespace,
-		Name:      "request_span_duration_seconds",
+		Name:      defs.RequestSpanDurationSeconds,
 		Help:      "A histogram of the request spans duration separated by span name.",
 	}, []string{"span"})
 
 	p.workers = prometheus.NewGauge(prometheus.GaugeOpts{
 		Namespace: config.Namespace,
-		Name:      "workers",
+		Name:      defs.Workers,
 		Help:      "A gauge of the number of running workers.",
 	})
 	p.workers.Set(float64(stats.WorkersNumber))
 
 	requestsInProgress := prometheus.NewGaugeFunc(prometheus.GaugeOpts{
 		Namespace: config.Namespace,
-		Name:      "requests_in_progress",
+		Name:      defs.RequestsInProgress,
 		Help:      "A gauge of the number of requests currently being in progress.",
 	}, stats.RequestsInProgress)
 
 	imagesInProgress := prometheus.NewGaugeFunc(prometheus.GaugeOpts{
 		Namespace: config.Namespace,
-		Name:      "images_in_progress",
+		Name:      defs.ImagesInProgress,
 		Help:      "A gauge of the number of images currently being in progress.",
 	}, stats.ImagesInProgress)
 
 	workersUtilization := prometheus.NewGaugeFunc(prometheus.GaugeOpts{
 		Namespace: config.Namespace,
-		Name:      "workers_utilization",
+		Name:      defs.WorkersUtilization,
 		Help:      "A gauge of the workers utilization in percents.",
 	}, stats.WorkersUtilization)
 
 	vipsMemoryBytes := prometheus.NewGaugeFunc(prometheus.GaugeOpts{
 		Namespace: config.Namespace,
-		Name:      "vips_memory_bytes",
+		Name:      defs.VipsMemoryBytes,
 		Help:      "A gauge of the vips tracked memory usage in bytes.",
 	}, vipsstats.Memory)
 
 	vipsMaxMemoryBytes := prometheus.NewGaugeFunc(prometheus.GaugeOpts{
 		Namespace: config.Namespace,
-		Name:      "vips_max_memory_bytes",
+		Name:      defs.VipsMaxMemoryBytes,
 		Help:      "A gauge of the max vips tracked memory usage in bytes.",
 	}, vipsstats.MemoryHighwater)
 
 	vipsAllocs := prometheus.NewGaugeFunc(prometheus.GaugeOpts{
 		Namespace: config.Namespace,
-		Name:      "vips_allocs",
+		Name:      defs.VipsAllocs,
 		Help:      "A gauge of the number of active vips allocations.",
 	}, vipsstats.Allocs)
 
