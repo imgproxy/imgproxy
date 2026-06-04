@@ -54,74 +54,74 @@ func New(config *Config, stats *stats.Stats) (*Prometheus, error) {
 	p.requestsTotal = prometheus.NewCounter(prometheus.CounterOpts{
 		Namespace: config.Namespace,
 		Name:      defs.RequestsTotal,
-		Help:      "A counter of the total number of HTTP requests imgproxy processed.",
+		Help:      defs.RequestsTotalDesc,
 	})
 
 	p.statusCodesTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: config.Namespace,
 		Name:      defs.StatusCodesTotal,
-		Help:      "A counter of the response status codes.",
+		Help:      defs.StatusCodesTotalDesc,
 	}, []string{"status"})
 
 	p.errorsTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: config.Namespace,
 		Name:      defs.ErrorsTotal,
-		Help:      "A counter of the occurred errors separated by type.",
+		Help:      defs.ErrorsTotalDesc,
 	}, []string{"type"})
 
 	p.requestDuration = prometheus.NewHistogram(prometheus.HistogramOpts{
 		Namespace: config.Namespace,
 		Name:      defs.RequestDurationSeconds,
-		Help:      "A histogram of the response latency.",
+		Help:      defs.RequestDurationSecondsDesc,
 	})
 
 	p.requestSpanDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: config.Namespace,
 		Name:      defs.RequestSpanDurationSeconds,
-		Help:      "A histogram of the request spans duration separated by span name.",
+		Help:      defs.RequestSpanDurationSecondsDesc,
 	}, []string{"span"})
 
 	p.workers = prometheus.NewGauge(prometheus.GaugeOpts{
 		Namespace: config.Namespace,
 		Name:      defs.Workers,
-		Help:      "A gauge of the number of running workers.",
+		Help:      defs.WorkersDesc,
 	})
 	p.workers.Set(float64(stats.WorkersNumber))
 
 	requestsInProgress := prometheus.NewGaugeFunc(prometheus.GaugeOpts{
 		Namespace: config.Namespace,
 		Name:      defs.RequestsInProgress,
-		Help:      "A gauge of the number of requests currently being in progress.",
+		Help:      defs.RequestsInProgressDesc,
 	}, stats.RequestsInProgress)
 
 	imagesInProgress := prometheus.NewGaugeFunc(prometheus.GaugeOpts{
 		Namespace: config.Namespace,
 		Name:      defs.ImagesInProgress,
-		Help:      "A gauge of the number of images currently being in progress.",
+		Help:      defs.ImagesInProgressDesc,
 	}, stats.ImagesInProgress)
 
 	workersUtilization := prometheus.NewGaugeFunc(prometheus.GaugeOpts{
 		Namespace: config.Namespace,
 		Name:      defs.WorkersUtilization,
-		Help:      "A gauge of the workers utilization in percents.",
+		Help:      defs.WorkersUtilizationDesc,
 	}, stats.WorkersUtilization)
 
 	vipsMemoryBytes := prometheus.NewGaugeFunc(prometheus.GaugeOpts{
 		Namespace: config.Namespace,
 		Name:      defs.VipsMemoryBytes,
-		Help:      "A gauge of the vips tracked memory usage in bytes.",
+		Help:      defs.VipsMemoryBytesDesc,
 	}, vipsstats.Memory)
 
 	vipsMaxMemoryBytes := prometheus.NewGaugeFunc(prometheus.GaugeOpts{
 		Namespace: config.Namespace,
 		Name:      defs.VipsMaxMemoryBytes,
-		Help:      "A gauge of the max vips tracked memory usage in bytes.",
+		Help:      defs.VipsMaxMemoryBytesDesc,
 	}, vipsstats.MemoryHighwater)
 
 	vipsAllocs := prometheus.NewGaugeFunc(prometheus.GaugeOpts{
 		Namespace: config.Namespace,
 		Name:      defs.VipsAllocs,
-		Help:      "A gauge of the number of active vips allocations.",
+		Help:      defs.VipsAllocsDesc,
 	}, vipsstats.Allocs)
 
 	prometheus.MustRegister(
