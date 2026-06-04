@@ -2,6 +2,7 @@ package imagetype
 
 import (
 	"fmt"
+	"log/slog"
 )
 
 // Type represents an image type
@@ -55,6 +56,11 @@ func (t Type) MarshalJSON() ([]byte, error) {
 	}
 
 	return fmt.Appendf(nil, "%q", s), nil
+}
+
+// LogValue implements the slog.LogValuer interface for Type.
+func (t Type) LogValue() slog.Value {
+	return slog.StringValue(t.String())
 }
 
 // IsVector checks if the image type is a vector format.

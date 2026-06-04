@@ -1,6 +1,9 @@
 package processing
 
-import "fmt"
+import (
+	"fmt"
+	"log/slog"
+)
 
 type ResizeType int
 
@@ -36,4 +39,8 @@ func (rt ResizeType) MarshalJSON() ([]byte, error) {
 		}
 	}
 	return []byte("null"), nil
+}
+
+func (rt ResizeType) LogValue() slog.Value {
+	return slog.StringValue(rt.String())
 }
