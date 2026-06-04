@@ -1,6 +1,9 @@
 package processing
 
-import "fmt"
+import (
+	"fmt"
+	"log/slog"
+)
 
 type GravityType int
 
@@ -20,6 +23,10 @@ func (gt GravityType) MarshalJSON() ([]byte, error) {
 		}
 	}
 	return fmt.Appendf([]byte{}, "%s", "null"), nil
+}
+
+func (gt GravityType) LogValue() slog.Value {
+	return slog.StringValue(gt.String())
 }
 
 const (
