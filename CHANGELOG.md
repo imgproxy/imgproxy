@@ -1,6 +1,15 @@
 # Changelog
 
+## [4.0.9] - 2026-07-02
+### Added
+- `requests_total`, `status_codes_total`, `errors_total`, `request_duration_seconds`, `request_span_duration_seconds` metrics to OpenTelemetry.
+- (pro) `cache_hits_total`, `cache_misses_total` metrics to OpenTelemetry and Prometheus.
+
+### Changed
+- devcontainers are now using volumes for caching.
+
 ## [4.0.8] - 2026-06-29
+### Fixed
 - (docker) Fix loading HEIC/AVIF images with large number of items (for real this time).
 
 ## [4.0.7] - 2026-06-26

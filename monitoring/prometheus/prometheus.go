@@ -15,6 +15,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/imgproxy/imgproxy/v4/errctx"
+	"github.com/imgproxy/imgproxy/v4/monitoring/defs"
 	"github.com/imgproxy/imgproxy/v4/monitoring/format"
 	"github.com/imgproxy/imgproxy/v4/monitoring/stats"
 	vipsstats "github.com/imgproxy/imgproxy/v4/vips/stats"
@@ -52,75 +53,75 @@ func New(config *Config, stats *stats.Stats) (*Prometheus, error) {
 
 	p.requestsTotal = prometheus.NewCounter(prometheus.CounterOpts{
 		Namespace: config.Namespace,
-		Name:      "requests_total",
-		Help:      "A counter of the total number of HTTP requests imgproxy processed.",
+		Name:      defs.RequestsTotal,
+		Help:      defs.RequestsTotalDesc,
 	})
 
 	p.statusCodesTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: config.Namespace,
-		Name:      "status_codes_total",
-		Help:      "A counter of the response status codes.",
+		Name:      defs.StatusCodesTotal,
+		Help:      defs.StatusCodesTotalDesc,
 	}, []string{"status"})
 
 	p.errorsTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: config.Namespace,
-		Name:      "errors_total",
-		Help:      "A counter of the occurred errors separated by type.",
+		Name:      defs.ErrorsTotal,
+		Help:      defs.ErrorsTotalDesc,
 	}, []string{"type"})
 
 	p.requestDuration = prometheus.NewHistogram(prometheus.HistogramOpts{
 		Namespace: config.Namespace,
-		Name:      "request_duration_seconds",
-		Help:      "A histogram of the response latency.",
+		Name:      defs.RequestDurationSeconds,
+		Help:      defs.RequestDurationSecondsDesc,
 	})
 
 	p.requestSpanDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: config.Namespace,
-		Name:      "request_span_duration_seconds",
-		Help:      "A histogram of the request spans duration separated by span name.",
+		Name:      defs.RequestSpanDurationSeconds,
+		Help:      defs.RequestSpanDurationSecondsDesc,
 	}, []string{"span"})
 
 	p.workers = prometheus.NewGauge(prometheus.GaugeOpts{
 		Namespace: config.Namespace,
-		Name:      "workers",
-		Help:      "A gauge of the number of running workers.",
+		Name:      defs.Workers,
+		Help:      defs.WorkersDesc,
 	})
 	p.workers.Set(float64(stats.WorkersNumber))
 
 	requestsInProgress := prometheus.NewGaugeFunc(prometheus.GaugeOpts{
 		Namespace: config.Namespace,
-		Name:      "requests_in_progress",
-		Help:      "A gauge of the number of requests currently being in progress.",
+		Name:      defs.RequestsInProgress,
+		Help:      defs.RequestsInProgressDesc,
 	}, stats.RequestsInProgress)
 
 	imagesInProgress := prometheus.NewGaugeFunc(prometheus.GaugeOpts{
 		Namespace: config.Namespace,
-		Name:      "images_in_progress",
-		Help:      "A gauge of the number of images currently being in progress.",
+		Name:      defs.ImagesInProgress,
+		Help:      defs.ImagesInProgressDesc,
 	}, stats.ImagesInProgress)
 
 	workersUtilization := prometheus.NewGaugeFunc(prometheus.GaugeOpts{
 		Namespace: config.Namespace,
-		Name:      "workers_utilization",
-		Help:      "A gauge of the workers utilization in percents.",
+		Name:      defs.WorkersUtilization,
+		Help:      defs.WorkersUtilizationDesc,
 	}, stats.WorkersUtilization)
 
 	vipsMemoryBytes := prometheus.NewGaugeFunc(prometheus.GaugeOpts{
 		Namespace: config.Namespace,
-		Name:      "vips_memory_bytes",
-		Help:      "A gauge of the vips tracked memory usage in bytes.",
+		Name:      defs.VipsMemoryBytes,
+		Help:      defs.VipsMemoryBytesDesc,
 	}, vipsstats.Memory)
 
 	vipsMaxMemoryBytes := prometheus.NewGaugeFunc(prometheus.GaugeOpts{
 		Namespace: config.Namespace,
-		Name:      "vips_max_memory_bytes",
-		Help:      "A gauge of the max vips tracked memory usage in bytes.",
+		Name:      defs.VipsMaxMemoryBytes,
+		Help:      defs.VipsMaxMemoryBytesDesc,
 	}, vipsstats.MemoryHighwater)
 
 	vipsAllocs := prometheus.NewGaugeFunc(prometheus.GaugeOpts{
 		Namespace: config.Namespace,
-		Name:      "vips_allocs",
-		Help:      "A gauge of the number of active vips allocations.",
+		Name:      defs.VipsAllocs,
+		Help:      defs.VipsAllocsDesc,
 	}, vipsstats.Allocs)
 
 	prometheus.MustRegister(
