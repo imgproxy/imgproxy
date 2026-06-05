@@ -1,5 +1,9 @@
 # Changelog
 
+## [4.0.4] - TBA
+### Added
+- `requests_total`, `status_codes_total`, `errors_total`, `request_duration_seconds`, `request_span_duration_seconds` metrics to OpenTelemetry.
+
 ## [4.0.3] - 2026-04-21
 ### Fixed
 - (pro) Fixed a bug in the cache key generation
