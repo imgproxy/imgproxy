@@ -67,7 +67,10 @@ func New(config *Config, trans *http.Transport) (*Storage, error) {
 					o.ExternalID = aws.String(config.AssumeRoleExternalID)
 				}
 			})
-		conf.Credentials = creds
+		// Wrap in CredentialsCache so AssumeRole is called once per token
+		// lifetime (~15 min) rather than on every S3 request. Without this,
+		// AssumeRoleProvider has no caching and calls STS on every Retrieve().
+		conf.Credentials = aws.NewCredentialsCache(creds)
 	}
 
 	clientOptions := []func(*s3.Options){
