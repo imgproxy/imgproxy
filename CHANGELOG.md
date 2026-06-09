@@ -1,6 +1,6 @@
 # Changelog
 
-## [4.0.4] - TBA
+## [4.0.4] - 2026-06-09
 ### Fixed
 - Fix AWS credentials lifetime when `IMGPROXY_S3_ASSUME_ROLE_ARN` config is used.
 - (pro) Fix a rare deadlock during ML model inference.
