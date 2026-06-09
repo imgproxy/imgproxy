@@ -71,7 +71,7 @@ func New() (http.RoundTripper, error) {
 				o.ExternalID = aws.String(config.S3AssumeRoleExternalID)
 			}
 		})
-		conf.Credentials = creds
+		conf.Credentials = aws.NewCredentialsCache(creds)
 	}
 
 	clientOptions := []func(*s3.Options){

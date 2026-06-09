@@ -1,5 +1,9 @@
 # Changelog
 
+## [3.31.4] - 2026-06-09
+### Fixed
+- Fix AWS credentials lifetime when IMGPROXY_S3_ASSUME_ROLE_ARN config is used.
+
 ## [3.31.3] - 2026-04-28
 
 This is a maintenance release with updated dependencies
