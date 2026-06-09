@@ -110,7 +110,7 @@ func valDiff(a, b reflect.Value) (any, bool) {
 		return Diff(intA, intB), true
 	}
 
-	if typeB.Kind() == reflect.Ptr && typeB.Elem().Kind() == reflect.Struct {
+	if typeB.Kind() == reflect.Pointer && typeB.Elem().Kind() == reflect.Struct {
 		if !a.IsNil() && !b.IsNil() {
 			return Diff(intA, intB), true
 		}
