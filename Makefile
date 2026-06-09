@@ -47,6 +47,11 @@ ifeq (build-and-run,$(firstword $(MAKECMDGOALS)))
 	RUN_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
 endif
 
+# Get version to bump to in bump-version target
+ifeq (bump-version,$(firstword $(MAKECMDGOALS)))
+	NEW_VERSION := $(wordlist 2,2,$(MAKECMDGOALS))
+endif
+
 # Wrapper action to run commands in Docker
 .PHONY: _run-in-docker
 _run-in-docker:
@@ -163,6 +168,25 @@ ifneq ($(shell which pinact),)
 else
 	$(error pinact is not installed. See installation instructions at https://github.com/suzuki-shunsuke/pinact/blob/main/INSTALL.md)
 endif
+
+.PHONY: bump-version
+bump-version: NEW_VERSION ?= $(error NEW_VERSION variable is required)
+bump-version:
+	@echo "Bumping version to $(NEW_VERSION)\n"
+	@echo $(firstword $(MAKECMDGOALS))
+
+	@sed -i.bak "s/const Version = \".*\"/const Version = \"$(NEW_VERSION)\"/" version/version.go
+	@rm version/version.go.bak
+	@echo "✓ Updated version/version.go"
+
+	@sed -i.bak "s/## \[$(NEW_VERSION)] .*/## [$(NEW_VERSION)] - $(shell date +%Y-%m-%d)/" CHANGELOG.md
+	@rm CHANGELOG.md.bak
+	@echo "✓ Updated CHANGELOG.md"
+
+	@echo "\nTo complete the version bump:"
+	@echo "  git commit -am \"Bump version to $(NEW_VERSION)\""
+	@echo "  git tag v$(NEW_VERSION)"
+	@echo "  git push origin v$(NEW_VERSION)"
 
 # Make any unknown target do nothing to avoid "up to date" messages
 .PHONY: FORCE
