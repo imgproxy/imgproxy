@@ -38,7 +38,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	github.com/trimmer-io/go-xmp v1.0.0
 	github.com/urfave/cli/v3 v3.9.0
-	go.opentelemetry.io/contrib/bridges/otelslog v0.18.0
+	go.opentelemetry.io/contrib/bridges/otelslog v0.19.0
 	go.opentelemetry.io/contrib/detectors/aws/ec2/v2 v2.5.1
 	go.opentelemetry.io/contrib/detectors/aws/ecs v1.44.0
 	go.opentelemetry.io/contrib/detectors/aws/eks v1.44.0
