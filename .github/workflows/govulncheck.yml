@@ -1,0 +1,25 @@
+name: Go Vulnerability Check
+
+on:
+  workflow_dispatch:
+  workflow_call:
+  schedule:
+    - cron: "0 0 * * *" # Runs daily at midnight
+
+jobs:
+  govulncheck:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/imgproxy/imgproxy-base:v4.1.2
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Setup govulncheck
+        run: go install golang.org/x/vuln/cmd/govulncheck@latest
+
+      - name: Run govulncheck (module scan)
+        run: govulncheck -scan module
+
+      - name: Run govulncheck (symbol scan)
+        run: govulncheck -scan symbol ./...

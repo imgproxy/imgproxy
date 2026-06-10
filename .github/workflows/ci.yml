@@ -85,3 +85,6 @@ jobs:
         continue-on-error: true # TODO: remove this line in the future
         if: steps.linter.outputs.checks-failed > 0
         run: exit 1
+
+  vulncheck:
+    uses: ./.github/workflows/govulncheck.yml
