@@ -16,7 +16,9 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Setup govulncheck
-        run: go install golang.org/x/vuln/cmd/govulncheck@latest
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          echo "$HOME/go/bin" >> $GITHUB_PATH
 
       - name: Run govulncheck (module scan)
         run: govulncheck -scan module
