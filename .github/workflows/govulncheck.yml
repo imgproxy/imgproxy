@@ -20,8 +20,13 @@ jobs:
           go install golang.org/x/vuln/cmd/govulncheck@latest
           echo "$HOME/go/bin" >> $GITHUB_PATH
 
+      - name: Mark git workspace as safe
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
       - name: Run govulncheck (module scan)
         run: govulncheck -scan module
 
       - name: Run govulncheck (symbol scan)
         run: govulncheck -scan symbol ./...
+        env:
+          PKG_CONFIG_LIBDIR: /opt/imgproxy/lib/pkgconfig
