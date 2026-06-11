@@ -1,5 +1,9 @@
 # Changelog
 
+## [4.0.5] - TBA
+### Fixed
+- Fix handling of wide-gamut ICC profiles.
+
 ## [4.0.4] - 2026-06-09
 ### Fixed
 - Fix AWS credentials lifetime when `IMGPROXY_S3_ASSUME_ROLE_ARN` config is used.
