@@ -546,6 +546,28 @@ vips_icc_import_go(VipsImage *in, VipsImage **out)
   if (vips_image_get_typeof(in, IMGPROXY_ICC_IMPORTED) != 0)
     return vips_copy(in, out, NULL);
 
+  /* Skip import if the image has coded pixels
+   */
+  if (in->Coding != VIPS_CODING_NONE)
+    return vips_copy(in, out, NULL);
+
+  /* Only import profiles for 8 and 16 bit images
+   */
+  if (in->BandFmt != VIPS_FORMAT_UCHAR && in->BandFmt != VIPS_FORMAT_USHORT)
+    return vips_copy(in, out, NULL);
+
+  /* No profile – nothing to import
+   */
+  if (!vips_has_embedded_icc(in))
+    return vips_copy(in, out, NULL);
+
+  /* Skip importing sRGB IEC61966 2.1 profile since it's basically the same as
+   * no profile, so we can avoid an expensive color conversion
+   */
+  if (vips_image_guess_interpretation(in) == VIPS_INTERPRETATION_sRGB &&
+      vips_icc_is_srgb_iec61966(in))
+    return vips_copy(in, out, NULL);
+
   VipsImage *base = vips_image_new();
   VipsImage **t = (VipsImage **) vips_object_local_array(VIPS_OBJECT(base), 5);
 
@@ -655,12 +677,36 @@ vips_guard_colorspace(VipsImage *in, VipsImage **out, gboolean mustOutputRGB)
     break;
   }
 
-  return vips_colourspace(in, out, out_interp, NULL);
+  /* If the image is already in the desired colorspace, just copy it
+   */
+  if (out_interp == interp)
+    return vips_copy(in, out, NULL);
+
+  VipsImage *tmp = NULL;
+
+  int res = vips_icc_import_go(in, &tmp) ||
+      vips_colourspace(tmp, out, out_interp, NULL);
+
+  VIPS_UNREF(tmp);
+
+  return res;
 }
 
 int
 vips_icc_export_go(VipsImage *in, VipsImage **out)
 {
+  /* No profile – nothing to export
+   */
+  if (!vips_has_embedded_icc(in))
+    return vips_copy(in, out, NULL);
+
+  /* Skip exporting sRGB IEC61966 2.1 profile since it's basically the same as
+   * no profile, so we can avoid an expensive color conversion
+   */
+  if (vips_image_guess_interpretation(in) == VIPS_INTERPRETATION_sRGB &&
+      vips_icc_is_srgb_iec61966(in))
+    return vips_copy(in, out, NULL);
+
   return vips_icc_export(
       in, out,
       "pcs", vips_icc_get_pcs(in),
@@ -671,6 +717,18 @@ vips_icc_export_go(VipsImage *in, VipsImage **out)
 int
 vips_icc_transform_standard(VipsImage *in, VipsImage **out)
 {
+  /* No profile – nothing to transform
+   */
+  if (!vips_has_embedded_icc(in))
+    return vips_copy(in, out, NULL);
+
+  /* Skip transforming sRGB IEC61966 2.1 profile since it's basically the same as
+   * the standard profile, so we can avoid an expensive color conversion
+   */
+  if (vips_image_guess_interpretation(in) == VIPS_INTERPRETATION_sRGB &&
+      vips_icc_is_srgb_iec61966(in))
+    return vips_copy(in, out, NULL);
+
   const char *profile =
       (in->Type == VIPS_INTERPRETATION_B_W || in->Type == VIPS_INTERPRETATION_GREY16)
       ? "sGrey"

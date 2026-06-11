@@ -760,21 +760,6 @@ func (img *Image) RestoreColourProfile() {
 func (img *Image) ImportColourProfile() error {
 	var tmp *C.VipsImage
 
-	if img.VipsImage.Coding != C.VIPS_CODING_NONE {
-		return nil
-	}
-
-	if img.VipsImage.BandFmt != C.VIPS_FORMAT_UCHAR && img.VipsImage.BandFmt != C.VIPS_FORMAT_USHORT {
-		return nil
-	}
-
-	// Don't import is there's no embedded profile or embedded profile is sRGB
-	if C.vips_has_embedded_icc(img.VipsImage) == 0 ||
-		(C.vips_image_guess_interpretation(img.VipsImage) == C.VIPS_INTERPRETATION_sRGB &&
-			C.vips_icc_is_srgb_iec61966(img.VipsImage) == 1) {
-		return nil
-	}
-
 	if C.vips_icc_import_go(img.VipsImage, &tmp) == 0 {
 		img.swapAndUnref(tmp)
 	} else {
@@ -792,11 +777,6 @@ func (img *Image) ColourProfileImported() bool {
 func (img *Image) ExportColourProfile() error {
 	var tmp *C.VipsImage
 
-	// Don't export is there's no embedded profile or embedded profile is sRGB
-	if C.vips_has_embedded_icc(img.VipsImage) == 0 || C.vips_icc_is_srgb_iec61966(img.VipsImage) == 1 {
-		return nil
-	}
-
 	if C.vips_icc_export_go(img.VipsImage, &tmp) == 0 {
 		img.swapAndUnref(tmp)
 	} else {
@@ -808,13 +788,6 @@ func (img *Image) ExportColourProfile() error {
 
 func (img *Image) TransformColourProfileToStandard() error {
 	var tmp *C.VipsImage
-
-	// Don't transform is there's no embedded profile or embedded profile is sRGB
-	if C.vips_has_embedded_icc(img.VipsImage) == 0 ||
-		(C.vips_image_guess_interpretation(img.VipsImage) == C.VIPS_INTERPRETATION_sRGB &&
-			C.vips_icc_is_srgb_iec61966(img.VipsImage) == 1) {
-		return nil
-	}
 
 	if C.vips_icc_transform_standard(img.VipsImage, &tmp) == 0 {
 		img.swapAndUnref(tmp)
