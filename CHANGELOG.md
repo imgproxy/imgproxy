@@ -1,6 +1,6 @@
 # Changelog
 
-## [4.0.5] - TBA
+## [4.0.5] - 2026-06-12
 ### Fixed
 - Fix handling of wide-gamut ICC profiles.
 
