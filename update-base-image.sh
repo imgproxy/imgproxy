@@ -37,7 +37,7 @@ fi
 if [ -d "$WORKFLOWS_DIR" ]; then
     for workflow in $WORKFLOWS_DIR/*.yml $WORKFLOWS_DIR/*.yaml; do
         if [ -f "$workflow" ] && grep -q "$BASE_IMAGE" "$workflow"; then
-            sed -i.bak "s|\(image: .*$BASE_IMAGE:\).*|\1$NEW_VERSION|g" "$workflow"
+            sed -i.bak "s|\(CONTAINER_IMAGE_TAG: \).*|\1$NEW_VERSION|g" "$workflow"
             rm -f "${workflow}.bak"
             echo "✓ Updated $workflow"
             UPDATED_WORKFLOWS+=("$workflow")
