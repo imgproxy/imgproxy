@@ -11,6 +11,10 @@
 - OpenTelemetry logs exporter now exports logs in OpenTelemetry Log Data Model format instead of formatted strings.
 - (pro) Improved advanced smart crop.
 
+## [4.0.5] - 2026-06-12
+### Fixed
+- Fix handling of wide-gamut ICC profiles.
+
 ## [4.0.4] - 2026-06-09
 ### Fixed
 - Fix AWS credentials lifetime when `IMGPROXY_S3_ASSUME_ROLE_ARN` config is used.

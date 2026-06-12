@@ -185,6 +185,7 @@ bump-version:
 
 	@echo "\nTo complete the version bump:"
 	@echo "  git commit -am \"Bump version to $(NEW_VERSION)\""
+	@echo "  git push"
 	@echo "  git tag v$(NEW_VERSION)"
 	@echo "  git push origin v$(NEW_VERSION)"
 
