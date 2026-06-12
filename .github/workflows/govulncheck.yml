@@ -1,16 +1,23 @@
 name: Go Vulnerability Check
 
 on:
-  workflow_dispatch:
   workflow_call:
-  schedule:
-    - cron: "0 0 * * *" # Runs daily at midnight
+    inputs:
+      container_image:
+        required: true
+        type: string
+
+env:
+  CGO_LDFLAGS_ALLOW: "-s|-w"
+  PKG_CONFIG_LIBDIR: /opt/imgproxy/lib/pkgconfig
+  LD_LIBRARY_PATH: /opt/imgproxy/lib
+  GOFLAGS: -buildvcs=false
 
 jobs:
   govulncheck:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/imgproxy/imgproxy-base:v4.1.2
+      image: ${{ inputs.container_image }}
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -20,13 +27,8 @@ jobs:
           go install golang.org/x/vuln/cmd/govulncheck@latest
           echo "$HOME/go/bin" >> $GITHUB_PATH
 
-      - name: Mark git workspace as safe
-        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
-
       - name: Run govulncheck (module scan)
         run: govulncheck -scan module
 
       - name: Run govulncheck (symbol scan)
         run: govulncheck -scan symbol ./...
-        env:
-          PKG_CONFIG_LIBDIR: /opt/imgproxy/lib/pkgconfig

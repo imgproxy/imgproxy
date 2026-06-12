@@ -1,0 +1,26 @@
+name: Container Info
+
+on:
+  workflow_call:
+    outputs:
+      image:
+        value: ${{ jobs.container-info.outputs.image }}
+
+env:
+  CONTAINER_IMAGE_REPO: ghcr.io/imgproxy/imgproxy-base
+  CONTAINER_IMAGE_TAG: v4.1.2
+
+jobs:
+  container-info:
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.container-info.outputs.image }}
+    steps:
+      # GitHub Actions doesn't provide a way to define a constant in a file and
+      # share it across workflows.
+      # So we have to use this dummy step that just maps environment variables
+      # to the output.
+      - name: Container Info
+        id: container-info
+        run: |
+          echo "image=${{ env.CONTAINER_IMAGE_REPO }}:${{ env.CONTAINER_IMAGE_TAG }}" >> $GITHUB_OUTPUT

@@ -2,6 +2,10 @@ name: CI
 
 on:
   workflow_call:
+    inputs:
+      container_image:
+        required: true
+        type: string
 
 env:
   CGO_LDFLAGS_ALLOW: "-s|-w"
@@ -13,7 +17,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/imgproxy/imgproxy-base:v4.1.2
+      image: ${{ inputs.container_image }}
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -38,7 +42,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/imgproxy/imgproxy-base:v4.1.2
+      image: ${{ inputs.container_image }}
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -60,9 +64,6 @@ jobs:
         with:
           args: --timeout 10m0s
           install-mode: none
-        env:
-          PKG_CONFIG_LIBDIR: /opt/imgproxy/lib/pkgconfig
-          GOFLAGS: -buildvcs=false
 
   c-lint:
     runs-on: ubuntu-24.04
@@ -88,3 +89,5 @@ jobs:
 
   vulncheck:
     uses: ./.github/workflows/govulncheck.yml
+    with:
+      container_image: ${{ inputs.container_image }}

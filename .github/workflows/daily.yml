@@ -1,0 +1,23 @@
+name: Daily
+
+on:
+  schedule:
+    - cron: "0 3 * * *" # Run every day at 03:00 UTC
+  workflow_dispatch: # Allow manual runs
+    inputs:
+      run_govulncheck:
+        description: "Run govulncheck"
+        type: boolean
+        required: false
+        default: true
+
+jobs:
+  container-info:
+    uses: ./.github/workflows/container-info.yml
+
+  govulncheck:
+    if: ${{ github.event_name == 'schedule' || inputs.run_govulncheck }}
+    needs: [container-info]
+    uses: ./.github/workflows/govulncheck.yml
+    with:
+      container_image: ${{ needs.container-info.outputs.image }}

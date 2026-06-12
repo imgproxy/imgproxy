@@ -6,8 +6,14 @@ on:
   pull_request:
 
 jobs:
+  container-info:
+    uses: ./.github/workflows/container-info.yml
+
   ci:
+    needs: [container-info]
     uses: ./.github/workflows/ci.yml
+    with:
+      container_image: ${{ needs.container-info.outputs.image }}
 
   build:
     if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/test/'))
