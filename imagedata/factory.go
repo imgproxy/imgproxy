@@ -162,7 +162,12 @@ func (f *Factory) DownloadAsync(
 		return nil, h, wrapDownloadError(err, desc)
 	}
 
-	b := asyncbuffer.New(res.Body, int(res.ContentLength), cancelSpan)
+	b := asyncbuffer.New(
+		res.Body,
+		int(res.ContentLength),
+		cancelSpan, // Cancel the monitoring span when the buffer finishes reading
+		req.Cancel, // Cancel the request when the buffer finishes reading
+	)
 
 	ct := res.Header.Get(httpheaders.ContentType)
 	ext := strings.ToLower(filepath.Ext(res.Request.URL.Path))
@@ -180,7 +185,6 @@ func (f *Factory) DownloadAsync(
 
 	p := &asyncBufferProvider{b: b, desc: desc}
 	d := newImageData(p, format)
-	d.AddCancel(req.Cancel) // request will be closed when the image data is consumed
 
 	return d, h, nil
 }

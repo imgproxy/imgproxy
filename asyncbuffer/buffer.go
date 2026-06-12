@@ -234,14 +234,14 @@ func (ab *AsyncBuffer) Reader() *Reader {
 // If the reader is paused and we try to read data beyond the pause threshold,
 // it will wait till something could be returned.
 func (ab *AsyncBuffer) ReadAt(p []byte, off int64) (int, error) {
-	size := int64(len(p)) // total size of the data to read
+	size := len(p) // total size of the data to read
 
 	if off < 0 {
 		return 0, errors.New("asyncbuffer.AsyncBuffer.ReadAt: negative offset")
 	}
 
 	// If we plan to hit threshold while reading, release the paused reader
-	if int64(len(p))+off > PauseThreshold {
+	if int64(size)+off > PauseThreshold {
 		ab.paused.Release()
 	}
 
@@ -261,38 +261,27 @@ func (ab *AsyncBuffer) ReadAt(p []byte, off int64) (int, error) {
 		return 0, err
 	}
 
-	// Read data from the first chunk
-	n := ab.readChunkAt(p, off)
-	if n == 0 {
-		return 0, io.EOF // Failed to read any data: means we tried to read beyond the end of the stream
+	// Get the first chunk index and offset in that chunk for the given absolute offset.
+	chunkInd, chunkOff := ab.chunkIndexAndOffsetAt(off)
+	if chunkInd < 0 {
+		// No chunk available at the given offset: means we tried to read beyond the end of the stream
+		return 0, io.EOF
 	}
 
-	size -= int64(n)
-	off += int64(n) // Here and beyond off always points to the last read byte + 1
+	// Get chunks starting from the first chunk
+	chunks := ab.chunks[chunkInd:]
+
+	// Copy data from the first chunk
+	n := copy(p, chunks[0].data[chunkOff:])
 
 	// Now, let's try to read the rest of the data from next chunks while they are available
-	for size > 0 {
-		// If data is not available at the given offset, we can return data read so far.
-		ok, err := ab.offsetAvailable(off)
-		if !ok {
-			if errors.Is(err, io.EOF) {
-				return n, nil
-			}
-
-			return n, err
+	for _, chunk := range chunks[1:] {
+		if n >= size {
+			break // We have read enough data
 		}
 
 		// Read data from the next chunk
-		nX := ab.readChunkAt(p[n:], off)
-		n += nX
-		size -= int64(nX)
-		off += int64(nX)
-
-		// If we read data shorter than ChunkSize or, in case that was the last chunk, less than
-		// the size of the tail, return kind of EOF
-		if int64(nX) < min(size, int64(ChunkSize)) {
-			return n, nil
-		}
+		n += copy(p[n:], chunk.data)
 	}
 
 	return n, nil
@@ -469,28 +458,17 @@ func (ab *AsyncBuffer) offsetAvailable(off int64) (bool, error) {
 	return false, nil
 }
 
-// readChunkAt copies data from the chunk at the given absolute offset to the provided slice.
-// Chunk must be available when this method is called.
-// Returns the number of bytes copied to the slice or 0 if chunk has no data
-// (eg. offset is beyond the end of the stream).
-func (ab *AsyncBuffer) readChunkAt(p []byte, off int64) int {
-	// If the chunk is not available, we return 0
+// chunkIndexAndOffsetAt calculates the chunk index and the offset within that chunk
+// for the given absolute offset.
+// If the offset is beyond the end of the stream, it returns -1 for the index
+// and 0 for the offset.
+func (ab *AsyncBuffer) chunkIndexAndOffsetAt(off int64) (int, int64) {
 	if off >= ab.bytesRead.Load() {
-		return 0
+		return -1, 0
 	}
 
-	ind := off / ChunkSize // chunk index
-	chunk := ab.chunks[ind]
+	ind := off / ChunkSize         // chunk index
+	chunkOffset := off % ChunkSize // starting offset in the chunk
 
-	startOffset := off % ChunkSize // starting offset in the chunk
-
-	// If the offset in current chunk is greater than the data
-	// it has, we return 0
-	if startOffset >= int64(len(chunk.data)) {
-		return 0
-	}
-
-	// Copy data to the target slice. The number of bytes to copy is limited by the
-	// size of the target slice and the size of the data in the chunk.
-	return copy(p, chunk.data[startOffset:])
+	return int(ind), chunkOffset
 }

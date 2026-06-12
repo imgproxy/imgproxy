@@ -499,3 +499,46 @@ func TestAsyncBufferThresholdInstantBeyondAccess(t *testing.T) {
 		return bytesReader.BytesRead() >= asyncbuffer.PauseThreshold*2
 	}, 300*time.Millisecond, 10*time.Millisecond)
 }
+
+func BenchmarkAsyncBufferReadAt(b *testing.B) {
+	data := make([]byte, asyncbuffer.ChunkSize*100)
+	_, err := rand.Read(data)
+	if err != nil {
+		b.Fatalf("Failed to generate random data: %v", err)
+	}
+
+	r := io.NopCloser(bytes.NewReader(data))
+
+	ab, err := asyncbuffer.NewReadFull(r, -1)
+	if err != nil {
+		b.Fatalf("Failed to create AsyncBuffer: %v", err)
+	}
+	defer ab.Close()
+
+	p := make([]byte, asyncbuffer.ChunkSize*200)
+
+	b.ResetTimer()
+
+	for b.Loop() {
+		_, err := ab.ReadAt(p, 0)
+		if err != nil {
+			b.Fatalf("Failed to read from AsyncBuffer: %v", err)
+		}
+	}
+}
+
+func BenchmarkPlainCopy(b *testing.B) {
+	data := make([]byte, asyncbuffer.ChunkSize*100)
+	_, err := rand.Read(data)
+	if err != nil {
+		b.Fatalf("Failed to generate random data: %v", err)
+	}
+
+	p := make([]byte, asyncbuffer.ChunkSize*200)
+
+	b.ResetTimer()
+
+	for b.Loop() {
+		copy(p, data)
+	}
+}
