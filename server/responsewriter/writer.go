@@ -11,6 +11,8 @@ import (
 	"github.com/imgproxy/imgproxy/v4/httpheaders"
 )
 
+const ContentSecurityPolicy = "default-src 'none'; style-src 'unsafe-inline'; img-src data:; sandbox"
+
 // Just aliases for [http.ResponseWriter] and [http.ResponseController].
 // We need them to make them private in [Writer] so they can't be accessed directly.
 type httpResponseWriter = http.ResponseWriter
@@ -185,7 +187,7 @@ func (w *Writer) setCacheControlPassthrough() bool {
 
 // setCSP sets the Content-Security-Policy header to prevent script execution.
 func (w *Writer) setCSP() {
-	w.result.Set(httpheaders.ContentSecurityPolicy, "script-src 'none'")
+	w.result.Set(httpheaders.ContentSecurityPolicy, ContentSecurityPolicy)
 }
 
 // flushHeaders writes the headers to the response writer. It does not overwrite

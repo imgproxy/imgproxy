@@ -1,5 +1,10 @@
 # Changelog
 
+## [4.0.6] - TBA
+### Changed
+- Remove `form` tags from SVGs during sanitization.
+- Use more strict `Content-Security-Policy` header: `default-src 'none'; style-src 'unsafe-inline'; img-src data:; sandbox`.
+
 ## [4.0.5] - 2026-06-12
 ### Fixed
 - Fix handling of wide-gamut ICC profiles.
