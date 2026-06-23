@@ -278,6 +278,108 @@ func TestAsyncBufferReader(t *testing.T) {
 	require.ErrorIs(t, err, io.EOF)
 }
 
+// TestAsyncBufferBlocking tests that reading from AsyncBuffer blocks until data is available
+func TestAsyncBufferBlocking(t *testing.T) {
+	sourceData, _ := generateSourceData(t, asyncbuffer.ChunkSize)
+
+	pr, pw := io.Pipe()
+	ab := asyncbuffer.New(pr, -1)
+	defer ab.Close()
+
+	reader := ab.Reader()
+
+	var (
+		read int
+		rerr error
+		done atomic.Bool
+	)
+
+	readAsync := func(buf []byte) {
+		done.Store(false)
+
+		go func() {
+			defer func() {
+				done.Store(true)
+			}()
+
+			read, rerr = reader.Read(buf)
+		}()
+	}
+
+	for range 3 {
+		// Start a goroutine to read from the AsyncBuffer
+		buf := make([]byte, asyncbuffer.ChunkSize)
+		readAsync(buf)
+
+		require.Never(
+			t, done.Load, 100*time.Millisecond, 10*time.Millisecond,
+			"Read should block until data is available",
+		)
+
+		// Write data to the pipe
+		_, werr := pw.Write(sourceData)
+		require.NoError(t, werr)
+
+		require.Eventually(
+			t, done.Load, 100*time.Millisecond, 10*time.Millisecond,
+			"Read should complete after data is written",
+		)
+
+		require.Equal(t, sourceData, buf)
+		require.Equal(t, asyncbuffer.ChunkSize, read)
+		require.NoError(t, rerr)
+	}
+
+	// Write more data to the pipe
+	_, werr := pw.Write(sourceData)
+	require.NoError(t, werr)
+
+	// Read more data than available in the stream
+	buf := make([]byte, asyncbuffer.ChunkSize*2)
+	readAsync(buf)
+
+	// Reader should not block and read available data
+	require.Eventually(
+		t, done.Load, 100*time.Millisecond, 10*time.Millisecond,
+		"Read should complete after data is written",
+	)
+
+	require.Equal(t, sourceData, buf[:asyncbuffer.ChunkSize])
+	require.Equal(t, asyncbuffer.ChunkSize, read)
+	require.NoError(t, rerr)
+
+	// Write more data to the pipe and close it
+	_, werr = pw.Write(sourceData)
+	require.NoError(t, werr)
+	pw.Close()
+
+	// Read more data than available in the stream
+	buf = make([]byte, asyncbuffer.ChunkSize*2)
+	readAsync(buf)
+
+	// Reader should not block and read available data
+	require.Eventually(
+		t, done.Load, 100*time.Millisecond, 10*time.Millisecond,
+		"Read should complete after data is written",
+	)
+
+	require.Equal(t, sourceData, buf[:asyncbuffer.ChunkSize])
+	require.Equal(t, asyncbuffer.ChunkSize, read)
+	require.NoError(t, rerr)
+
+	// Read again after the pipe is closed
+	readAsync(buf)
+
+	// Reader should not block and return EOF
+	require.Eventually(
+		t, done.Load, 100*time.Millisecond, 10*time.Millisecond,
+		"Read should complete after data is written",
+	)
+
+	require.Equal(t, 0, read)
+	require.ErrorIs(t, rerr, io.EOF)
+}
+
 // TestAsyncBufferClose tests closing the AsyncBuffer
 func TestAsyncBufferClose(t *testing.T) {
 	_, bytesReader := generateSourceData(t, asyncbuffer.ChunkSize*4+halfChunkSize)
