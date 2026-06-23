@@ -71,8 +71,8 @@ func (c *Config) Validate() error {
 		return IMGPROXY_DOWNLOAD_TIMEOUT.ErrorZeroOrNegative()
 	}
 
-	if c.MaxRedirects <= 0 {
-		return IMGPROXY_MAX_REDIRECTS.ErrorZeroOrNegative()
+	if c.MaxRedirects < 0 {
+		return IMGPROXY_MAX_REDIRECTS.ErrorNegative()
 	}
 
 	return nil

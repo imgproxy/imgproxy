@@ -7,6 +7,7 @@
 
 ### Fixed
 - Don't write the `Cache-Control` header for error responses.
+- Allow zero `IMGPROXY_MAX_REDIRECTS` config value.
 
 ## [4.0.5] - 2026-06-12
 ### Fixed
