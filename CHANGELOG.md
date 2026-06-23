@@ -5,6 +5,9 @@
 - Remove `form` tags from SVGs during sanitization.
 - Use more strict `Content-Security-Policy` header: `default-src 'none'; style-src 'unsafe-inline'; img-src data:; sandbox`.
 
+### Fixed
+- Don't write the `Cache-Control` header for error responses.
+
 ## [4.0.5] - 2026-06-12
 ### Fixed
 - Fix handling of wide-gamut ICC profiles.
