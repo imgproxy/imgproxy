@@ -425,7 +425,10 @@ func (s *HandlerTestSuite) TestHandlerSecurityHeaders() {
 	defer res.Body.Close()
 
 	s.Require().Equal(http.StatusOK, res.StatusCode)
-	s.Require().Equal("script-src 'none'", res.Header.Get(httpheaders.ContentSecurityPolicy))
+	s.Require().Equal(
+		responsewriter.ContentSecurityPolicy,
+		res.Header.Get(httpheaders.ContentSecurityPolicy),
+	)
 }
 
 // TestHandlerErrorResponse tests the error responses from the streaming service.
