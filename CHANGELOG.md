@@ -11,7 +11,7 @@
 - OpenTelemetry logs exporter now exports logs in OpenTelemetry Log Data Model format instead of formatted strings.
 - (pro) Improved advanced smart crop.
 
-## [4.0.6] - TBA
+## [4.0.6] - 2026-06-24
 ### Changed
 - Remove `form` tags from SVGs during sanitization.
 - Use more strict `Content-Security-Policy` header: `default-src 'none'; style-src 'unsafe-inline'; img-src data:; sandbox`.

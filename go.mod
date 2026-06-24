@@ -6,38 +6,38 @@ require (
 	cloud.google.com/go/secretmanager v1.20.0
 	cloud.google.com/go/storage v1.62.3
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.22.0
-	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.13.1
-	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.7.0
+	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.14.0
+	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.8.0
 	github.com/DarthSim/godotenv v1.3.1
-	github.com/DataDog/datadog-go/v5 v5.8.3
-	github.com/DataDog/dd-trace-go/v2 v2.8.2
+	github.com/DataDog/datadog-go/v5 v5.9.0
+	github.com/DataDog/dd-trace-go/v2 v2.9.0
 	github.com/airbrake/gobrake/v5 v5.6.2
 	github.com/aws/amazon-s3-encryption-client-go/v4 v4.0.0
 	github.com/aws/aws-sdk-go-v2 v1.42.0
-	github.com/aws/aws-sdk-go-v2/config v1.32.24
-	github.com/aws/aws-sdk-go-v2/credentials v1.19.23
-	github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.58.3
+	github.com/aws/aws-sdk-go-v2/config v1.32.25
+	github.com/aws/aws-sdk-go-v2/credentials v1.19.24
+	github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.59.0
 	github.com/aws/aws-sdk-go-v2/service/kms v1.53.4
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.103.3
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.104.0
 	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.42.3
 	github.com/aws/aws-sdk-go-v2/service/ssm v1.69.3
 	github.com/aws/aws-sdk-go-v2/service/sts v1.43.3
 	github.com/bugsnag/bugsnag-go/v2 v2.6.4
-	github.com/felixge/httpsnoop v1.0.4
+	github.com/felixge/httpsnoop v1.1.0
 	github.com/fsouza/fake-gcs-server v1.54.0
-	github.com/getsentry/sentry-go v0.46.2
+	github.com/getsentry/sentry-go v0.47.0
 	github.com/honeybadger-io/honeybadger-go v0.9.0
 	github.com/johannesboyne/gofakes3 v0.0.0-20260208201424-4c385a1f6a73
 	github.com/matoous/go-nanoid/v2 v2.1.0
 	github.com/mattn/go-isatty v0.0.22
 	github.com/ncw/swift/v2 v2.0.5
-	github.com/newrelic/go-agent/v3 v3.43.3
+	github.com/newrelic/go-agent/v3 v3.44.1
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.23.2
 	github.com/shirou/gopsutil v3.21.11+incompatible
 	github.com/stretchr/testify v1.11.1
 	github.com/trimmer-io/go-xmp v1.0.0
-	github.com/urfave/cli/v3 v3.9.0
+	github.com/urfave/cli/v3 v3.10.0
 	go.opentelemetry.io/contrib/bridges/otelslog v0.19.0
 	go.opentelemetry.io/contrib/detectors/aws/ec2/v2 v2.5.1
 	go.opentelemetry.io/contrib/detectors/aws/ecs v1.44.0
@@ -58,10 +58,10 @@ require (
 	go.opentelemetry.io/otel/sdk/metric v1.44.0
 	go.opentelemetry.io/otel/trace v1.44.0
 	go.uber.org/automaxprocs v1.6.0
-	golang.org/x/net v0.55.0
+	golang.org/x/net v0.56.0
 	golang.org/x/sync v0.21.0
 	golang.org/x/sys v0.46.0
-	google.golang.org/api v0.283.0
+	google.golang.org/api v0.286.0
 	google.golang.org/grpc v1.81.1
 )
 
@@ -108,7 +108,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.9.22 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.29 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.19.29 // indirect
-	github.com/aws/aws-sdk-go-v2/service/signin v1.1.5 // indirect
+	github.com/aws/aws-sdk-go-v2/service/signin v1.2.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sso v1.31.3 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.36.6 // indirect
 	github.com/aws/smithy-go v1.27.1 // indirect
@@ -161,7 +161,7 @@ require (
 	github.com/jonboulle/clockwork v0.5.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
-	github.com/klauspost/compress v1.18.4 // indirect
+	github.com/klauspost/compress v1.18.6 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/linkdata/deadlock v0.5.5 // indirect
@@ -224,7 +224,7 @@ require (
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	google.golang.org/genproto v0.0.0-20260319201613-d00831a3d3e7 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260526163538-3dc84a4a5aaa // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260526163538-3dc84a4a5aaa // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260610212136-7ab31c22f7ad // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.13.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
