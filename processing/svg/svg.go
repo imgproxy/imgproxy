@@ -99,8 +99,8 @@ func (p *Processor) sanitizeElement(el *xmlparser.Node) bool {
 
 	tagName := el.Name.Local()
 
-	// Strip <script> and <iframe> tags
-	if tagName == "script" || tagName == "iframe" {
+	// Strip <script>, <iframe>, and <form> tags
+	if tagName == "script" || tagName == "iframe" || tagName == "form" {
 		return false
 	}
 

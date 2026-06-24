@@ -11,6 +11,8 @@ import (
 	"github.com/imgproxy/imgproxy/v4/httpheaders"
 )
 
+const ContentSecurityPolicy = "default-src 'none'; style-src 'unsafe-inline'; img-src data:; sandbox"
+
 // Just aliases for [http.ResponseWriter] and [http.ResponseController].
 // We need them to make them private in [Writer] so they can't be accessed directly.
 type httpResponseWriter = http.ResponseWriter
@@ -132,7 +134,7 @@ func (w *Writer) SetCanonical(url string) {
 //
 // It ensures that all headers are flushed before writing the status code.
 func (w *Writer) WriteHeader(statusCode int) {
-	w.beforeWrite()
+	w.beforeWrite(statusCode)
 
 	w.httpResponseWriter.WriteHeader(statusCode)
 }
@@ -141,7 +143,10 @@ func (w *Writer) WriteHeader(statusCode int) {
 //
 // It ensures that all headers are flushed before writing the body.
 func (w *Writer) Write(b []byte) (int, error) {
-	w.beforeWrite()
+	// It's okay to call beforeWrite with http.StatusOK here.
+	// If WriteHeader was called before, beforeWrite will not execute again due to sync.Once.
+	// If it wasn't called, we assume the status code is 200 OK, just like http.ResponseWriter does.
+	w.beforeWrite(http.StatusOK)
 
 	return w.httpResponseWriter.Write(b)
 }
@@ -185,15 +190,19 @@ func (w *Writer) setCacheControlPassthrough() bool {
 
 // setCSP sets the Content-Security-Policy header to prevent script execution.
 func (w *Writer) setCSP() {
-	w.result.Set(httpheaders.ContentSecurityPolicy, "script-src 'none'")
+	w.result.Set(httpheaders.ContentSecurityPolicy, ContentSecurityPolicy)
 }
 
 // flushHeaders writes the headers to the response writer. It does not overwrite
 // target headers, which were set outside the header writer.
-func (w *Writer) flushHeaders() {
+func (w *Writer) flushHeaders(statusCode int) {
 	// Then, let's try to set Cache-Control using priority order
 	switch {
 	case w.setCacheControl(w.maxAge): // First, try set explicit
+	case statusCode >= 400:
+		// Don't set Cache-Control for error responses, unless it was explicitly
+		// set before (e.g. for fallback image). Let the client handle it.
+		// TODO: We may want to add a config for error responses TTL.
 	case w.setCacheControlPassthrough(): // Try to pick up from request headers
 	case w.setCacheControl(w.config.DefaultTTL): // Fallback to default value
 	default:
@@ -207,13 +216,13 @@ func (w *Writer) flushHeaders() {
 }
 
 // beforeWrite is called before [WriteHeader] and [Write]
-func (w *Writer) beforeWrite() {
+func (w *Writer) beforeWrite(statusCode int) {
 	w.beforeWriteOnce.Do(func() {
 		// We're going to start writing response.
 		// Set write deadline.
 		w.SetWriteDeadline(time.Now().Add(w.config.WriteResponseTimeout))
 
 		// Flush headers before we write anything
-		w.flushHeaders()
+		w.flushHeaders(statusCode)
 	})
 }

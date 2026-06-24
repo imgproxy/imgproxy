@@ -42,7 +42,7 @@ func (s *ResponseWriterSuite) TestHeaderCases() {
 			req:  http.Header{},
 			res: http.Header{
 				httpheaders.CacheControl:          []string{"no-cache"},
-				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
+				httpheaders.ContentSecurityPolicy: []string{responsewriter.ContentSecurityPolicy},
 			},
 			config: responsewriter.Config{
 				SetCanonicalHeader:      false,
@@ -58,7 +58,7 @@ func (s *ResponseWriterSuite) TestHeaderCases() {
 			},
 			res: http.Header{
 				httpheaders.CacheControl:          []string{"no-cache, no-store, must-revalidate"},
-				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
+				httpheaders.ContentSecurityPolicy: []string{responsewriter.ContentSecurityPolicy},
 			},
 			config: responsewriter.Config{
 				CacheControlPassthrough: true,
@@ -73,7 +73,7 @@ func (s *ResponseWriterSuite) TestHeaderCases() {
 			},
 			res: http.Header{
 				httpheaders.CacheControl:          []string{fmt.Sprintf("max-age=%s, public", expiresSeconds)},
-				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
+				httpheaders.ContentSecurityPolicy: []string{responsewriter.ContentSecurityPolicy},
 			},
 			config: responsewriter.Config{
 				CacheControlPassthrough: true,
@@ -88,7 +88,7 @@ func (s *ResponseWriterSuite) TestHeaderCases() {
 			},
 			res: http.Header{
 				httpheaders.CacheControl:          []string{"max-age=3600, public"},
-				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
+				httpheaders.ContentSecurityPolicy: []string{responsewriter.ContentSecurityPolicy},
 			},
 			config: responsewriter.Config{
 				CacheControlPassthrough: true,
@@ -102,7 +102,7 @@ func (s *ResponseWriterSuite) TestHeaderCases() {
 			res: http.Header{
 				httpheaders.Link:                  []string{"<https://example.com/image.jpg>; rel=\"canonical\""},
 				httpheaders.CacheControl:          []string{"max-age=3600, public"},
-				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
+				httpheaders.ContentSecurityPolicy: []string{responsewriter.ContentSecurityPolicy},
 			},
 			config: responsewriter.Config{
 				SetCanonicalHeader:   true,
@@ -118,7 +118,7 @@ func (s *ResponseWriterSuite) TestHeaderCases() {
 			req:  http.Header{},
 			res: http.Header{
 				httpheaders.CacheControl:          []string{"max-age=3600, public"},
-				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
+				httpheaders.ContentSecurityPolicy: []string{responsewriter.ContentSecurityPolicy},
 			},
 			config: responsewriter.Config{
 				SetCanonicalHeader:   true,
@@ -131,7 +131,7 @@ func (s *ResponseWriterSuite) TestHeaderCases() {
 			req:  http.Header{},
 			res: http.Header{
 				httpheaders.CacheControl:          []string{"max-age=3600, public"},
-				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
+				httpheaders.ContentSecurityPolicy: []string{responsewriter.ContentSecurityPolicy},
 			},
 			config: responsewriter.Config{
 				SetCanonicalHeader:   false,
@@ -147,7 +147,7 @@ func (s *ResponseWriterSuite) TestHeaderCases() {
 			req:  http.Header{},
 			res: http.Header{
 				httpheaders.CacheControl:          []string{"max-age=1, public"},
-				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
+				httpheaders.ContentSecurityPolicy: []string{responsewriter.ContentSecurityPolicy},
 			},
 			config: responsewriter.Config{
 				DefaultTTL:           3600,
@@ -163,7 +163,7 @@ func (s *ResponseWriterSuite) TestHeaderCases() {
 			req:  http.Header{},
 			res: http.Header{
 				httpheaders.CacheControl:          []string{fmt.Sprintf("max-age=%s, public", expiresSeconds)},
-				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
+				httpheaders.ContentSecurityPolicy: []string{responsewriter.ContentSecurityPolicy},
 			},
 			config: responsewriter.Config{
 				DefaultTTL:           math.MaxInt32,
@@ -178,7 +178,7 @@ func (s *ResponseWriterSuite) TestHeaderCases() {
 			req:  http.Header{},
 			res: http.Header{
 				httpheaders.CacheControl:          []string{fmt.Sprintf("max-age=%s, public", shortExpiresSeconds)},
-				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
+				httpheaders.ContentSecurityPolicy: []string{responsewriter.ContentSecurityPolicy},
 			},
 			config: responsewriter.Config{
 				DefaultTTL:           math.MaxInt32,
@@ -198,7 +198,7 @@ func (s *ResponseWriterSuite) TestHeaderCases() {
 			res: http.Header{
 				"X-Test":                          []string{"foo", "bar"},
 				httpheaders.CacheControl:          []string{"no-cache"},
-				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
+				httpheaders.ContentSecurityPolicy: []string{responsewriter.ContentSecurityPolicy},
 			},
 			config: responsewriter.Config{
 				WriteResponseTimeout: writeResponseTimeout,
@@ -213,7 +213,7 @@ func (s *ResponseWriterSuite) TestHeaderCases() {
 			res: http.Header{
 				"X-From":                          []string{"baz"},
 				httpheaders.CacheControl:          []string{"no-cache"},
-				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
+				httpheaders.ContentSecurityPolicy: []string{responsewriter.ContentSecurityPolicy},
 			},
 			config: responsewriter.Config{
 				WriteResponseTimeout: writeResponseTimeout,
@@ -230,7 +230,7 @@ func (s *ResponseWriterSuite) TestHeaderCases() {
 			res: http.Header{
 				httpheaders.ContentLength:         []string{"123"},
 				httpheaders.CacheControl:          []string{"no-cache"},
-				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
+				httpheaders.ContentSecurityPolicy: []string{responsewriter.ContentSecurityPolicy},
 			},
 			config: responsewriter.Config{
 				WriteResponseTimeout: writeResponseTimeout,
@@ -245,7 +245,7 @@ func (s *ResponseWriterSuite) TestHeaderCases() {
 			res: http.Header{
 				httpheaders.ContentType:           []string{"image/png"},
 				httpheaders.CacheControl:          []string{"no-cache"},
-				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
+				httpheaders.ContentSecurityPolicy: []string{responsewriter.ContentSecurityPolicy},
 			},
 			config: responsewriter.Config{
 				WriteResponseTimeout: writeResponseTimeout,
@@ -259,7 +259,7 @@ func (s *ResponseWriterSuite) TestHeaderCases() {
 			req:  http.Header{},
 			res: http.Header{
 				httpheaders.CacheControl:          []string{"max-age=3600, public"},
-				httpheaders.ContentSecurityPolicy: []string{"script-src 'none'"},
+				httpheaders.ContentSecurityPolicy: []string{responsewriter.ContentSecurityPolicy},
 			},
 			config: responsewriter.Config{
 				DefaultTTL:           3600,
