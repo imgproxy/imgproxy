@@ -59,9 +59,10 @@ func (r *request) makeDownloadOptions(
 	}
 
 	return imagedata.DownloadOptions{
-		Header:         h,
-		MaxSrcFileSize: r.Security().MaxSrcFileSize(r.opts),
-		CookieJar:      jar,
+		Header:             h,
+		MaxSrcFileSize:     r.Security().MaxSrcFileSize(r.opts),
+		CookieJar:          jar,
+		PassUnsupportedType: r.config != nil && r.config.PassUnsupportedType,
 	}, nil
 }
 

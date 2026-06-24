@@ -13,6 +13,7 @@ var (
 	IMGPROXY_REPORT_IO_ERRORS          = env.Bool("IMGPROXY_REPORT_IO_ERRORS")
 	IMGPROXY_FALLBACK_IMAGE_HTTP_CODE  = env.Int("IMGPROXY_FALLBACK_IMAGE_HTTP_CODE")
 	IMGPROXY_ENABLE_DEBUG_HEADERS      = env.Bool("IMGPROXY_ENABLE_DEBUG_HEADERS")
+	IMGPROXY_PASS_UNSUPPORTED_TYPE     = env.Bool("IMGPROXY_PASS_UNSUPPORTED_TYPE")
 )
 
 // Config represents handler config
@@ -21,6 +22,7 @@ type Config struct {
 	ReportIOErrors          bool // Whether to report IO errors
 	FallbackImageHTTPCode   int  // Fallback image HTTP status code
 	EnableDebugHeaders      bool // Whether to enable debug headers
+	PassUnsupportedType     bool // Whether to pass original image data for unsupported formats
 }
 
 // NewDefaultConfig creates a new configuration with defaults
@@ -42,6 +44,7 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 		IMGPROXY_REPORT_IO_ERRORS.Parse(&c.ReportIOErrors),
 		IMGPROXY_FALLBACK_IMAGE_HTTP_CODE.Parse(&c.FallbackImageHTTPCode),
 		IMGPROXY_ENABLE_DEBUG_HEADERS.Parse(&c.EnableDebugHeaders),
+		IMGPROXY_PASS_UNSUPPORTED_TYPE.Parse(&c.PassUnsupportedType),
 	)
 
 	return c, err

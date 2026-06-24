@@ -236,6 +236,29 @@ func (s *ImageDataTestSuite) TestDownloadInvalidImage() {
 	s.Require().Nil(imgdata)
 }
 
+func (s *ImageDataTestSuite) TestAllowDownloadNoImage() {
+	body := []byte("text")
+
+	s.testServer().
+		SetBody(body).
+		SetHeaders(
+			httpheaders.ContentType, "text/plain",
+			httpheaders.ContentLength, strconv.Itoa(len(body)),
+		)
+
+	imgdata, _, err := s.factory().DownloadAsync(
+		context.Background(),
+		s.testServer().URL(),
+		"Test no image",
+		imagedata.DownloadOptions{PassUnsupportedType: true},
+	)
+
+	s.Require().NoError(err)
+	s.Require().NotNil(imgdata)
+	s.Require().Equal(imagetype.Unknown, imgdata.Format())
+	s.Require().True(testutil.ReadersEqual(s.T(), bytes.NewReader(body), imgdata.Reader()))
+}
+
 func (s *ImageDataTestSuite) TestDownloadSourceAddressNotAllowed() {
 	s.fetcherCfg().Transport.HTTP.AllowLoopbackSourceAddresses = false
 

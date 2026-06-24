@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"errors"
 	"io"
 	"net/http"
 	"os"
@@ -172,8 +173,9 @@ func (f *Factory) DownloadAsync(
 	ct := res.Header.Get(httpheaders.ContentType)
 	ext := strings.ToLower(filepath.Ext(res.Request.URL.Path))
 
+	var unknownFormatErr imagetype.UnknownFormatError
 	format, err := imagetype.Detect(b.Reader(), ct, ext)
-	if err != nil {
+	if err != nil && !(opts.PassUnsupportedType && errors.As(err, &unknownFormatErr)) {
 		b.Close()
 		req.Cancel()
 		return nil, h, wrapDownloadError(err, desc)

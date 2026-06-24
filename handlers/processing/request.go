@@ -108,6 +108,11 @@ func (r *request) execute() *server.Error {
 
 	// Check if image supports load from origin format
 	if !vips.SupportsLoad(originData.Format()) {
+		if r.config.PassUnsupportedType {
+			r.opts.DeleteByPrefix("")
+			r.opts.Set(keys.SkipProcessing, "true")
+			return r.respondWithImage(statusCode, originData)
+		}
 		return server.NewError(
 			handlers.NewCantLoadError(ctx, originData.Format()),
 			handlers.ErrCategoryPathParsing,

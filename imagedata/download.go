@@ -12,10 +12,11 @@ var (
 )
 
 type DownloadOptions struct {
-	Header           http.Header
-	CookieJar        http.CookieJar
-	MaxSrcFileSize   int
-	DownloadFinished context.CancelFunc
+	Header              http.Header
+	CookieJar           http.CookieJar
+	MaxSrcFileSize      int
+	DownloadFinished    context.CancelFunc
+	PassUnsupportedType bool
 }
 
 // RedirectAllRequestsTo TODO: get rid of this global variable
