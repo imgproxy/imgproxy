@@ -24,6 +24,11 @@ if [[ ! "$NEW_VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
     exit 1
 fi
 
+echo "Pulling new base image $BASE_IMAGE:$NEW_VERSION..."
+
+# Pull the new base image, as we'll need it anyway
+docker pull $BASE_IMAGE:$NEW_VERSION
+
 echo "Updating base image versions to $NEW_VERSION..."
 
 # Update Makefile
