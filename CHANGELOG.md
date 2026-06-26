@@ -11,6 +11,10 @@
 - OpenTelemetry logs exporter now exports logs in OpenTelemetry Log Data Model format instead of formatted strings.
 - (pro) Improved advanced smart crop.
 
+## [4.0.7] - 2026-06-26
+### Fixed
+- (docker) Fix loading HEIC/AVIF images with large number of items.
+
 ## [4.0.6] - 2026-06-24
 ### Changed
 - Remove `form` tags from SVGs during sanitization.
