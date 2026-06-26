@@ -8,7 +8,7 @@ on:
 
 env:
   CONTAINER_IMAGE_REPO: ghcr.io/imgproxy/imgproxy-base
-  CONTAINER_IMAGE_TAG: v4.0.4
+  CONTAINER_IMAGE_TAG: v4.0.5
 
 jobs:
   container-info:
