@@ -54,7 +54,7 @@ func (s *Suite) SetupSuite() {
 
 		c.OptionsParser.AllowSecurityOptions = true
 
-		c.Security.MaxSrcResolution = 10 * 1024 * 1024
+		c.Security.MaxSrcResolution = 50 * 1000 * 1000
 		c.Security.MaxSrcFileSize = 10 * 1024 * 1024
 		c.Security.MaxAnimationFrames = 100
 		c.Security.MaxAnimationFrameResolution = 10 * 1024 * 1024
