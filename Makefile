@@ -172,8 +172,10 @@ endif
 .PHONY: bump-version
 bump-version: NEW_VERSION ?= $(error NEW_VERSION variable is required)
 bump-version:
+	@echo "$(NEW_VERSION)" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$$' || \
+		{ echo "Error: invalid version format '$(NEW_VERSION)' (expected X.Y.Z)"; exit 1; }
+
 	@echo "Bumping version to $(NEW_VERSION)\n"
-	@echo $(firstword $(MAKECMDGOALS))
 
 	@sed -i.bak "s/const Version = \".*\"/const Version = \"$(NEW_VERSION)\"/" version/version.go
 	@rm version/version.go.bak
@@ -184,6 +186,7 @@ bump-version:
 	@echo "✓ Updated CHANGELOG.md"
 
 	@echo "\nTo complete the version bump:"
+	@echo "  git add ."
 	@echo "  git commit -am \"Bump version to $(NEW_VERSION)\""
 	@echo "  git push"
 	@echo "  git tag v$(NEW_VERSION)"
