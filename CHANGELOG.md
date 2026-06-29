@@ -1,5 +1,8 @@
 # Changelog
 
+## [4.0.8] - 2026-06-29
+- (docker) Fix loading HEIC/AVIF images with large number of items (for real this time).
+
 ## [4.0.7] - 2026-06-26
 ### Fixed
 - (docker) Fix loading HEIC/AVIF images with large number of items.
