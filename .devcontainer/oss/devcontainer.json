@@ -23,7 +23,8 @@
         "IMGPROXY_MAX_ANIMATION_FRAMES": "999",
         "IMGPROXY_VIPS_LEAK_CHECK": "true",
         "IMGPROXY_LOG_MEM_STATS": "true",
-        "IMGPROXY_DEVELOPMENT_ERRORS_MODE": "true"
+        "IMGPROXY_DEVELOPMENT_ERRORS_MODE": "true",
+        "HISTFILE": "/root/.cache/.bash_history"
     },
     "mounts": [
         {
@@ -31,21 +32,10 @@
             "target": "/images",
             "type": "bind"
         },
-        {
-            "source": "${localWorkspaceFolder}/.tmp/_dev-root/.cache",
-            "target": "/root/.cache",
-            "type": "bind"
-        },
-        {
-            "source": "${localWorkspaceFolder}/.tmp/_dev-root/go/pkg/mod",
-            "target": "/root/go/pkg/mod",
-            "type": "bind"
-        },
-        {
-            "source": "${localWorkspaceFolder}/.tmp/_dev-root/.bash_history",
-            "target": "/root/.bash_history",
-            "type": "bind"
-        }
+        // Unfortunately, devcontainer syntax doesn't support volume-subpath
+        // option when specified as an object, have to use string syntax instead.
+        "source=imgproxy-cache,target=/root/.cache,type=volume,volume-subpath=cache",
+        "source=imgproxy-cache,target=/root/go/pkg/mod,type=volume,volume-subpath=go-mod"
     ],
     "customizations": {
         "vscode": {
@@ -57,8 +47,10 @@
     },
     "postCreateCommand": "lefthook install",
     "initializeCommand": {
-        "createCacheDirs": "mkdir -p ${localWorkspaceFolder}/.tmp/_dev-root/.cache ${localWorkspaceFolder}/.tmp/_dev-root/go/pkg/mod",
-        "createBashHistory": "touch ${localWorkspaceFolder}/.tmp/_dev-root/.bash_history",
+        // volume-subpaths must be created before volume is mounted, hence we need to call mkdir.
+        // there's no way to reference ${image} of the devcontainer here, so, we use the smallest
+        // image possible (busybox) to create the volume subpaths.
+        "createCacheVolume": "docker run --rm -v imgproxy-cache:/data busybox sh -c 'mkdir -p /data/cache /data/go-mod && touch /data/cache/.bash_history'",
         "linkImagesDir": "if [ ! -e ${localWorkspaceFolder}/.devcontainer/images ]; then ln -s ${localWorkspaceFolder}/testdata/test-images ${localWorkspaceFolder}/.devcontainer/images; fi"
     }
 }
