@@ -11,6 +11,10 @@
 - OpenTelemetry logs exporter now exports logs in OpenTelemetry Log Data Model format instead of formatted strings.
 - (pro) Improved advanced smart crop.
 
+## [4.0.11] - 2026-07-02
+### Fixed
+- (pro) Non-essential cache errors are no longer reported.
+
 ## [4.0.10] - 2026-07-02
 ### Fixed
 - (pro) Non-essential cache errors are no longer reported.
