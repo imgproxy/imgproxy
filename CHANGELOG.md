@@ -1,5 +1,9 @@
 # Changelog
 
+## [4.0.11] - 2026-07-02
+### Fixed
+- (pro) Non-essential cache errors are no longer reported.
+
 ## [4.0.10] - 2026-07-02
 ### Fixed
 - (pro) Non-essential cache errors are no longer reported.
