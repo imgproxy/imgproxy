@@ -3,7 +3,7 @@
 ## [4.0.9] - 2026-07-02
 ### Added
 - `requests_total`, `status_codes_total`, `errors_total`, `request_duration_seconds`, `request_span_duration_seconds` metrics to OpenTelemetry.
-- (pro) `cache_hits_total`, `cache_misses_total` metrics to OpenTelemetry and Prometheus.
+- (pro) `cache_hits_total`, `cache_misses_total` metrics.
 
 ### Changed
 - devcontainers are now using volumes for caching.
