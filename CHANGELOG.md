@@ -11,6 +11,10 @@
 - OpenTelemetry logs exporter now exports logs in OpenTelemetry Log Data Model format instead of formatted strings.
 - (pro) Improved advanced smart crop.
 
+## [4.0.10] - 2026-07-02
+### Fixed
+- (pro) Non-essential cache errors are no longer reported.
+
 ## [4.0.9] - 2026-07-02
 ### Added
 - `requests_total`, `status_codes_total`, `errors_total`, `request_duration_seconds`, `request_span_duration_seconds` metrics to OpenTelemetry.
