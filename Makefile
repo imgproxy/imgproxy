@@ -14,7 +14,6 @@ GOTESTSUM := gotestsum
 SRCDIR := ./cli
 RCFILE := ./.imgproxyrc
 BREW_PREFIX :=
-DEVROOT_TMP_DIR ?= $(MAKEFILE_DIR).tmp/_dev-root
 BASE_IMAGE ?= ghcr.io/imgproxy/imgproxy-base:v4.0.5
 
 # Common environment setup for CGO builds
@@ -58,11 +57,12 @@ _run-in-docker:
 ifdef IMGPROXY_IN_BASE_CONTAINER
 	@$(MAKE) $(DOCKERCMD)
 else
-	@mkdir -p ${DEVROOT_TMP_DIR}/.cache ${DEVROOT_TMP_DIR}/go/pkg/mod
+	@docker volume create imgproxy-cache >/dev/null
+	@docker run --rm -v imgproxy-cache:/data busybox sh -c 'mkdir -p /data/cache /data/go-mod'
 	@docker run --init --rm -it \
 		-v "$(MAKEFILE_DIR):/workspaces/imgproxy" \
-		-v "${DEVROOT_TMP_DIR}/.cache:/root/.cache" \
-		-v "${DEVROOT_TMP_DIR}/go/pkg/mod:/root/go/pkg/mod" \
+		--mount type=volume,source=imgproxy-cache,target=/root/.cache,volume-subpath=cache \
+		--mount type=volume,source=imgproxy-cache,target=/root/go/pkg/mod,volume-subpath=go-mod \
 		-w /workspaces/imgproxy \
 		-e IMGPROXY_IN_BASE_CONTAINER=1 \
 		$(BASE_IMAGE) \
