@@ -133,9 +133,9 @@ _lint-go:
 	@$(GOLINT) run
 
 # Lint C code (requires clang-format installed)
-.PHONE: lint-clang _lint-clang
-ling-clang: DOCKERCMD := _lint-clang
-ling-clang: _run-in-docker
+.PHONY: lint-clang _lint-clang
+lint-clang: DOCKERCMD := _lint-clang
+lint-clang: _run-in-docker
 _lint-clang:
 	 @find . -not -path "./.tmp/*" -not -path "./.git/*" \( -iname "*.h" -o -iname "*.c" -o -iname "*.cpp" \) | xargs $(CLANG_FORMAT) --dry-run --Werror
 
