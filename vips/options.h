@@ -7,8 +7,9 @@ typedef struct _ImgproxyLoadOptions {
   int Page;  // Page number to load (for multi-page images).
   int Pages; // Number of pages to load (for multi-page images).
 
-  gboolean PngUnlimited; // Whether to disable vips_pngload limits.
-  gboolean SvgUnlimited; // Whether to disable vips_svgload limits.
+  gboolean PngUnlimited;  // Whether to disable vips_pngload limits.
+  gboolean SvgUnlimited;  // Whether to disable vips_svgload limits.
+  gboolean TiffUnlimited; // Whether to disable vips_tiffload limits.
 } ImgproxyLoadOptions;
 
 typedef struct _ImgproxySaveOptions {
