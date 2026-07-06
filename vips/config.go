@@ -22,6 +22,7 @@ var (
 	IMGPROXY_JXL_EFFORT              = env.Int("IMGPROXY_JXL_EFFORT")
 	IMGPROXY_PNG_UNLIMITED           = env.Bool("IMGPROXY_PNG_UNLIMITED")
 	IMGPROXY_SVG_UNLIMITED           = env.Bool("IMGPROXY_SVG_UNLIMITED")
+	IMGPROXY_TIFF_UNLIMITED          = env.Bool("IMGPROXY_TIFF_UNLIMITED")
 	IMGPROXY_VIPS_LEAK_CHECK         = env.Bool("IMGPROXY_VIPS_LEAK_CHECK")
 	IMGPROXY_VIPS_CACHE_TRACE        = env.Bool("IMGPROXY_VIPS_CACHE_TRACE")
 )
@@ -51,6 +52,8 @@ type Config struct {
 	PngUnlimited bool
 	// Whether to not apply any limits when loading JPEG
 	SvgUnlimited bool
+	// Whether to not apply any limits when loading TIFF
+	TiffUnlimited bool
 
 	// Whether to enable libvips memory leak check
 	LeakCheck bool
@@ -72,8 +75,9 @@ func NewDefaultConfig() Config {
 		WebpEffort: 4,
 		JxlEffort:  4,
 
-		PngUnlimited: false,
-		SvgUnlimited: false,
+		PngUnlimited:  false,
+		SvgUnlimited:  false,
+		TiffUnlimited: false,
 
 		LeakCheck:  false,
 		CacheTrace: false,
@@ -93,6 +97,7 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 		IMGPROXY_JXL_EFFORT.Parse(&c.JxlEffort),
 		IMGPROXY_PNG_UNLIMITED.Parse(&c.PngUnlimited),
 		IMGPROXY_SVG_UNLIMITED.Parse(&c.SvgUnlimited),
+		IMGPROXY_TIFF_UNLIMITED.Parse(&c.TiffUnlimited),
 
 		IMGPROXY_WEBP_PRESET.Parse(&c.WebpPreset),
 		IMGPROXY_VIPS_LEAK_CHECK.Parse(&c.LeakCheck),

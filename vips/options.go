@@ -16,8 +16,9 @@ func newLoadOptions(shrink float64, page, pages int) C.ImgproxyLoadOptions {
 		Page:  C.int(page),
 		Pages: C.int(pages),
 
-		PngUnlimited: gbool(config.PngUnlimited),
-		SvgUnlimited: gbool(config.SvgUnlimited),
+		PngUnlimited:  gbool(config.PngUnlimited),
+		SvgUnlimited:  gbool(config.SvgUnlimited),
+		TiffUnlimited: gbool(config.TiffUnlimited),
 	}
 }
 

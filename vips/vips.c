@@ -176,6 +176,7 @@ vips_tiffload_source_go(VipsImgproxySource *source, VipsImage **out, ImgproxyLoa
       "access", VIPS_ACCESS_SEQUENTIAL,
       "page", lo.Page,
       "n", lo.Pages,
+      "unlimited", lo.TiffUnlimited,
       NULL);
 }
 
