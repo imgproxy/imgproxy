@@ -45,7 +45,7 @@
             ]
         }
     },
-    "postCreateCommand": "lefthook install",
+    "postCreateCommand": "go tool lefthook install",
     "initializeCommand": {
         // volume-subpaths must be created before volume is mounted, hence we need to call mkdir.
         // there's no way to reference ${image} of the devcontainer here, so, we use the smallest

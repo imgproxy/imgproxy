@@ -2,12 +2,12 @@
 
 All `imgproxy` dependencies are included in the `imgproxy-base` container image. Using this image for development is recommended.
 
-If you want to develop locally without using Docker, please install: `vips`, `clang-format`,`lychee` and `lefthook`.
+If you want to develop locally without using Docker, please install: `vips`, `clang-format` and `lychee`.
 
 On MacOS:
 
 ```sh
-brew install vips clang-format lychee lefthook
+brew install vips clang-format lychee
 ```
 
 Then, run:
@@ -17,7 +17,7 @@ lefthook install
 
 # Start the devcontainer
 
-You can use [`air`](https://github.com/air-verse/air) for hot-reloading during development. Simply run: `air`.
+You can use [`air`](https://github.com/air-verse/air) for hot-reloading during development. Simply run: `go tool air`.
 
 Port `8081` is forwared to the host.
 

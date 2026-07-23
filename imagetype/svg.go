@@ -24,8 +24,7 @@ func IsSVG(r bufreader.ReadPeeker, _, _ string) (Type, error) {
 			return Unknown, nil
 		}
 		if err != nil {
-			var perr xmlparser.SyntaxError
-			if errors.As(err, &perr) {
+			if _, ok := errors.AsType[xmlparser.SyntaxError](err); ok {
 				// If the error is a parse error, we can assume that the data is not SVG
 				return Unknown, nil
 			}
