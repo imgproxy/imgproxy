@@ -6,8 +6,8 @@ import (
 
 // Stats holds statistics counters thread safely
 type Stats struct {
-	requestsInProgress int64
-	imagesInProgress   int64
+	requestsInProgress atomic.Int64
+	imagesInProgress   atomic.Int64
 	WorkersNumber      int
 }
 
@@ -20,32 +20,32 @@ func New(workersNumber int) *Stats {
 
 // RequestsInProgress returns the current number of requests in progress
 func (s *Stats) RequestsInProgress() float64 {
-	return float64(atomic.LoadInt64(&s.requestsInProgress))
+	return float64(s.requestsInProgress.Load())
 }
 
 // IncRequestsInProgress increments the requests in progress counter
 func (s *Stats) IncRequestsInProgress() {
-	atomic.AddInt64(&s.requestsInProgress, 1)
+	s.requestsInProgress.Add(1)
 }
 
 // DecRequestsInProgress decrements the requests in progress counter
 func (s *Stats) DecRequestsInProgress() {
-	atomic.AddInt64(&s.requestsInProgress, -1)
+	s.requestsInProgress.Add(-1)
 }
 
 // ImagesInProgress returns the current number of images being processed
 func (s *Stats) ImagesInProgress() float64 {
-	return float64(atomic.LoadInt64(&s.imagesInProgress))
+	return float64(s.imagesInProgress.Load())
 }
 
 // IncImagesInProgress increments the images in progress counter
 func (s *Stats) IncImagesInProgress() {
-	atomic.AddInt64(&s.imagesInProgress, 1)
+	s.imagesInProgress.Add(1)
 }
 
 // DecImagesInProgress decrements the images in progress counter
 func (s *Stats) DecImagesInProgress() {
-	atomic.AddInt64(&s.imagesInProgress, -1)
+	s.imagesInProgress.Add(-1)
 }
 
 // WorkersUtilization returns the current workers utilization percentage
