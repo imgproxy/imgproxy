@@ -231,10 +231,17 @@ vips_foreign_load_bmp_header(VipsForeignLoad *load)
     return -1;
   }
 
-  if (compression == COMPRESSION_BI_RGB) {
-    // go ahead: no compression
+  bool allowed_bpp =
+      bpp == 1 || bpp == 2 || bpp == 4 || bpp == 8 ||
+      bpp == 16 || bpp == 24 || bpp == 32;
+
+  if (!allowed_bpp) {
+    vips_error("vips_foreign_load_bmp_header",
+        "unsupported BMP image: unsupported bit depth %u", bpp);
+    return -1;
   }
-  else if (
+
+  if (
       ((compression == COMPRESSION_BI_RLE8) && (bpp == 8)) ||
       ((compression == COMPRESSION_BI_RLE4) && (bpp == 4))) {
     // rle compression is used for 8-bit or 4-bit images
@@ -288,7 +295,7 @@ vips_foreign_load_bmp_header(VipsForeignLoad *load)
       return -1;
     }
   }
-  else {
+  else if (compression != COMPRESSION_BI_RGB) {
     vips_error("vips_foreign_load_bmp_header", "unsupported BMP image: compression not supported");
     return -1;
   }
