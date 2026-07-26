@@ -285,6 +285,37 @@ func (s *ImageDataTestSuite) TestDownloadGzip() {
 	s.Require().Equal(imagetype.JPEG, imgdata.Format())
 }
 
+func (s *ImageDataTestSuite) TestDownloadAsyncGzip() {
+	buf := new(bytes.Buffer)
+
+	enc := gzip.NewWriter(buf)
+	_, err := enc.Write(s.data)
+	s.Require().NoError(err)
+	err = enc.Close()
+	s.Require().NoError(err)
+
+	s.testServer().
+		SetBody(buf.Bytes()).
+		SetHeaders(
+			httpheaders.ContentEncoding, "gzip",
+			httpheaders.ContentLength, strconv.Itoa(buf.Len()),
+		)
+
+	imgdata, _, err := s.factory().DownloadAsync(
+		context.Background(), s.testServer().URL(), "Test image", imagedata.DownloadOptions{},
+	)
+
+	s.Require().NoError(err)
+	s.Require().NotNil(imgdata)
+	defer imgdata.Close()
+
+	size, err := imgdata.Size()
+	s.Require().NoError(err)
+	s.Require().Equal(len(s.data), size)
+	s.Require().True(testutil.ReadersEqual(s.T(), bytes.NewReader(s.data), imgdata.Reader()))
+	s.Require().Equal(imagetype.JPEG, imgdata.Format())
+}
+
 func (s *ImageDataTestSuite) TestFromFile() {
 	imgdata, err := s.factory().NewFromPath("../testdata/test1.jpg")
 

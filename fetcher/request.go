@@ -170,7 +170,11 @@ func wrapGzipBody(res *http.Response) error {
 			Reader: gzipBody,
 			r:      res.Body,
 		}
+		// Content-Length describes the compressed body and is no longer valid.
 		res.Header.Del(httpheaders.ContentEncoding)
+		res.Header.Del(httpheaders.ContentLength)
+		res.ContentLength = -1
+		res.Uncompressed = true
 	}
 
 	return nil
