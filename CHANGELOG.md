@@ -1,5 +1,9 @@
 # Changelog
 
+## [4.0.12] - TBA
+### Fixed
+- Fixed the `Content-Length` header being ignored for S3, Google Cloud Storage, Azure Blob Storage, and Swift responses.
+
 ## [4.0.11] - 2026-07-02
 ### Fixed
 - (pro) Non-essential cache errors are no longer reported.
