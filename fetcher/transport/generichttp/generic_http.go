@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/imgproxy/imgproxy/v4/privatenet"
 	"golang.org/x/net/http2"
 )
 
@@ -78,15 +79,15 @@ func VerifySourceNetwork(addr string, config *Config) error {
 		return newSourceAddressError(fmt.Sprintf("Invalid source address: %s", addr))
 	}
 
-	if !config.AllowLoopbackSourceAddresses && (ip.IsLoopback() || ip.IsUnspecified()) {
+	if !config.AllowLoopbackSourceAddresses && privatenet.IsLoopback(ip) {
 		return newSourceAddressError(fmt.Sprintf("Loopback source address is not allowed: %s", addr))
 	}
 
-	if !config.AllowLinkLocalSourceAddresses && (ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast()) {
+	if !config.AllowLinkLocalSourceAddresses && privatenet.IsLinkLocal(ip) {
 		return newSourceAddressError(fmt.Sprintf("Link-local source address is not allowed: %s", addr))
 	}
 
-	if !config.AllowPrivateSourceAddresses && ip.IsPrivate() {
+	if !config.AllowPrivateSourceAddresses && privatenet.IsPrivate(ip) {
 		return newSourceAddressError(fmt.Sprintf("Private source address is not allowed: %s", addr))
 	}
 

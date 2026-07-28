@@ -96,6 +96,73 @@ func TestVerifySourceNetwork(t *testing.T) {
 			allowPrivate:   false,
 			expectErr:      false,
 		},
+		// RFC 6598 CGNAT shared address space
+		{
+			name:           "CGNAT 100.64.0.1 not allowed",
+			addr:           "100.64.0.1",
+			allowLoopback:  true,
+			allowLinkLocal: true,
+			allowPrivate:   false,
+			expectErr:      true,
+		},
+		{
+			name:           "CGNAT 100.64.0.1 allowed",
+			addr:           "100.64.0.1",
+			allowLoopback:  true,
+			allowLinkLocal: true,
+			allowPrivate:   true,
+			expectErr:      false,
+		},
+		// IPv6 embedding schemes with private IPv4 addresses
+		{
+			name:           "IPv4-compatible 10.0.0.1 not allowed",
+			addr:           "::10.0.0.1",
+			allowLoopback:  true,
+			allowLinkLocal: true,
+			allowPrivate:   false,
+			expectErr:      true,
+		},
+		{
+			name:           "6to4 embedding 192.168.1.1 not allowed",
+			addr:           "2002:c0a8:0101::",
+			allowLoopback:  true,
+			allowLinkLocal: true,
+			allowPrivate:   false,
+			expectErr:      true,
+		},
+		{
+			name:           "NAT64 well-known 172.16.0.1 not allowed",
+			addr:           "64:ff9b::172.16.0.1",
+			allowLoopback:  true,
+			allowLinkLocal: true,
+			allowPrivate:   false,
+			expectErr:      true,
+		},
+		{
+			name:           "NAT64 well-known CGNAT 100.64.0.1 not allowed",
+			addr:           "64:ff9b::100.64.0.1",
+			allowLoopback:  true,
+			allowLinkLocal: true,
+			allowPrivate:   false,
+			expectErr:      true,
+		},
+		// IPv6 embedding schemes with public IPv4 addresses should be allowed
+		{
+			name:           "IPv4-compatible 8.8.8.8 allowed",
+			addr:           "::8.8.8.8",
+			allowLoopback:  false,
+			allowLinkLocal: false,
+			allowPrivate:   false,
+			expectErr:      false,
+		},
+		{
+			name:           "NAT64 well-known 8.8.8.8 allowed",
+			addr:           "64:ff9b::8.8.8.8",
+			allowLoopback:  false,
+			allowLinkLocal: false,
+			allowPrivate:   false,
+			expectErr:      false,
+		},
 	}
 
 	for _, tc := range testCases {
