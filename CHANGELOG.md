@@ -2,6 +2,7 @@
 
 ## [4.0.12] - TBA
 ### Fixed
+- Fixed the `Content-Length` header being ignored for S3, Google Cloud Storage, Azure Blob Storage, and Swift responses.
 - Fixed truncated source image downloads when origins return gzip-compressed responses.
 
 ## [4.0.11] - 2026-07-02
