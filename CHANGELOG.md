@@ -1,6 +1,6 @@
 # Changelog
 
-## [4.0.12] - TBA
+## [4.0.12] - 2026-07-29
 ### Fixed
 - Fixed possible BMP loader heap buffer overflow.
 - (pro) Fixed SVG minifier failure on empty comments.
