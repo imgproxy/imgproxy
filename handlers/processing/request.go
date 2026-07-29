@@ -82,9 +82,7 @@ func (r *request) execute() *server.Error {
 	}
 
 	// Respond with NotModified if image was not modified
-	var nmErr fetcher.NotModifiedError
-
-	if errors.As(err, &nmErr) {
+	if nmErr, ok := errors.AsType[fetcher.NotModifiedError](err); ok {
 		r.rw.SetOriginHeaders(nmErr.Headers())
 		r.ch.SetOriginHeaders(nmErr.Headers())
 

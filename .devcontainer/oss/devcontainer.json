@@ -45,12 +45,12 @@
             ]
         }
     },
-    "postCreateCommand": "lefthook install",
+    "postCreateCommand": "go tool lefthook install",
     "initializeCommand": {
         // volume-subpaths must be created before volume is mounted, hence we need to call mkdir.
         // there's no way to reference ${image} of the devcontainer here, so, we use the smallest
         // image possible (busybox) to create the volume subpaths.
         "createCacheVolume": "docker run --rm -v imgproxy-cache:/data busybox sh -c 'mkdir -p /data/cache /data/go-mod && touch /data/cache/.bash_history'",
-        "linkImagesDir": "if [ ! -e ${localWorkspaceFolder}/.devcontainer/images ]; then ln -s ${localWorkspaceFolder}/testdata/test-images ${localWorkspaceFolder}/.devcontainer/images; fi"
+        "linkImagesDir": "if [ ! -e ${localWorkspaceFolder}/.devcontainer/images ] && [ ! -L ${localWorkspaceFolder}/.devcontainer/images ]; then ln -s ${localWorkspaceFolder}/testdata/test-images ${localWorkspaceFolder}/.devcontainer/images; fi"
     }
 }

@@ -101,7 +101,7 @@ func (r *ObjectReader) ContentLength() int64 {
 	h := r.Headers.Get(httpheaders.ContentLength)
 	if len(h) > 0 {
 		p, err := strconv.ParseInt(h, 10, 64)
-		if err != nil {
+		if err == nil {
 			return p
 		}
 	}

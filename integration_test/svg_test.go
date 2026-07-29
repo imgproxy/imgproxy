@@ -67,6 +67,8 @@ func (s *SvgTestSuite) SetupTest() {
 
 	// Enable SVG sanitization
 	s.Config().Processing.Svg.Sanitize = true
+
+	s.Config().Security.MaxSrcFileSize = 100 * 1024 * 1024
 }
 
 func (s *SvgTestSuite) SetupSubTest() {

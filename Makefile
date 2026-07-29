@@ -6,11 +6,10 @@ MAKEFILE_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 GOCMD := go
 GOBUILD := $(GOCMD) build
 GOCLEAN := $(GOCMD) clean
-GOTEST := $(GOCMD) test
 GOFMT := gofmt
-GOLINT := golangci-lint
+GOLINT := $(GOCMD) tool golangci-lint
 CLANG_FORMAT := clang-format
-GOTESTSUM := gotestsum
+GOTESTSUM := $(GOCMD) tool gotestsum
 SRCDIR := ./cli
 RCFILE := ./.imgproxyrc
 BREW_PREFIX :=
@@ -114,11 +113,7 @@ build-and-run: build run
 test: DOCKERCMD := _test
 test: _run-in-docker
 _test:
-ifneq ($(shell which $(GOTESTSUM)),)
 	@$(GOTESTSUM) ./...
-else
-	@$(GOTEST) -v ./...
-endif
 
 # Format code
 .PHONY: fmt

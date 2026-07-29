@@ -4,4 +4,7 @@
   <foreignObject>
     <div xmlns="http://www.w3.org/1999/xhtml"/>
   </foreignObject>
+  <a><rect width="10" height="10"/></a>
+  <a href="https://example.com/"><rect width="10" height="10"/></a>
+  <image href="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEAAAAALAAAAAABAAEAAAICTAEAOw=="/>
 </svg>

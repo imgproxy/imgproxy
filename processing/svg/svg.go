@@ -11,6 +11,8 @@ import (
 	"github.com/imgproxy/imgproxy/v4/xmlparser"
 )
 
+const href = "href"
+
 // pool represents temorary pool for svg sanitized data
 var pool = sync.Pool{
 	New: func() any {
@@ -110,15 +112,33 @@ func (p *Processor) sanitizeElement(el *xmlparser.Node) bool {
 		return !unsafe
 	})
 
-	// Special handling for <use> tags.
-	if tagName == "use" {
+	switch tagName {
+	case "use":
+		// <use> can import external/data content by reference; only allow
+		// same-document fragment references (e.g. href="#id").
 		el.Attrs.Filter(func(attr *xmlparser.Attribute) bool {
-			// Keep non-href attributes
-			if attr.Name.Local() != "href" {
+			if attr.Name.Local() != href {
 				return true
 			}
-			// Strip hrefs that are not internal references
 			return len(attr.Value) == 0 || attr.Value[0] == '#'
+		})
+	case "image":
+		// <image> commonly embeds raster/vector data via data: URIs; allow
+		// that in addition to http(s) and same-document/relative references.
+		el.Attrs.Filter(func(attr *xmlparser.Attribute) bool {
+			if attr.Name.Local() != href {
+				return true
+			}
+			return isSafeHref(attr.Value, imageHrefSchemes)
+		})
+	default:
+		// Any other element (e.g. <a>) may only reference http(s), the
+		// current document (fragment), or a relative resource.
+		el.Attrs.Filter(func(attr *xmlparser.Attribute) bool {
+			if attr.Name.Local() != href {
+				return true
+			}
+			return isSafeHref(attr.Value, hrefSchemes)
 		})
 	}
 
