@@ -4,6 +4,7 @@
 ### Fixed
 - Fixed the `Content-Length` header being ignored for S3, Google Cloud Storage, Azure Blob Storage, and Swift responses.
 - Fixed truncated source image downloads when origins return gzip-compressed responses.
+- SVG sanitizer (`IMGPROXY_SANITIZE_SVG`) now strips unsafe `href`/`xlink:href` attribute values (such as `javascript:`) from all elements, not just `<use>`, preventing script execution via crafted SVGs.
 
 ## [4.0.11] - 2026-07-02
 ### Fixed
