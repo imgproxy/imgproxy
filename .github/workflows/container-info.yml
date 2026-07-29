@@ -7,7 +7,8 @@ on:
         value: ${{ jobs.container-info.outputs.image }}
 
 env:
-  CONTAINER_IMAGE_REPO: ghcr.io/imgproxy/imgproxy-base
+  CONTAINER_IMAGE_REGISTRY: ghcr.io/imgproxy
+  CONTAINER_IMAGE_REPO: imgproxy-base/base
   CONTAINER_IMAGE_TAG: v4.1.4
 
 jobs:
@@ -23,4 +24,7 @@ jobs:
       - name: Container Info
         id: container-info
         run: |
-          echo "image=${{ env.CONTAINER_IMAGE_REPO }}:${{ env.CONTAINER_IMAGE_TAG }}" >> $GITHUB_OUTPUT
+          echo "registry=${{ env.CONTAINER_IMAGE_REGISTRY }}" >> $GITHUB_OUTPUT
+          echo "repo=${{ env.CONTAINER_IMAGE_REPO }}" >> $GITHUB_OUTPUT
+          echo "tag=${{ env.CONTAINER_IMAGE_TAG }}" >> $GITHUB_OUTPUT
+          echo "image=${{ env.CONTAINER_IMAGE_REGISTRY }}/${{ env.CONTAINER_IMAGE_REPO }}:${{ env.CONTAINER_IMAGE_TAG }}" >> $GITHUB_OUTPUT
