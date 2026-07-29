@@ -5,6 +5,7 @@
 - Fixed the `Content-Length` header being ignored for S3, Google Cloud Storage, Azure Blob Storage, and Swift responses.
 - Fixed truncated source image downloads when origins return gzip-compressed responses.
 - SVG sanitizer (`IMGPROXY_SANITIZE_SVG`) now strips unsafe `href`/`xlink:href` attribute values (such as `javascript:`) from all elements, not just `<use>`, preventing script execution via crafted SVGs.
+- Security: Fixed SSRF boundary bypass in private source address guard. The guard now correctly rejects RFC 6598 CGNAT addresses (100.64.0.0/10) and detects IPv6 addresses that carry embedded IPv4 payloads (IPv4-compatible, 6to4, NAT64 well-known, NAT64 local-use, Teredo, ISATAP), per RFC 3056, RFC 4291, RFC 4380, RFC 5214, RFC 6052, RFC 8215. When `IMGPROXY_ALLOW_PRIVATE_SOURCE_ADDRESSES=false`, such addresses are now consistently rejected before connection attempts.
 
 ## [4.0.11] - 2026-07-02
 ### Fixed
