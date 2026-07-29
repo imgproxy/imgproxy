@@ -22,6 +22,10 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       image: ${{ steps.container-info.outputs.image }}
+      registry: ${{ steps.container-info.outputs.registry }}
+      repo: ${{ steps.container-info.outputs.repo }}
+      tag: ${{ steps.container-info.outputs.tag }}
+
     steps:
       # GitHub Actions doesn't provide a way to define a constant in a file and
       # share it across workflows.
