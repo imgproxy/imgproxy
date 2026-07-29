@@ -79,7 +79,7 @@ func (r *Router) WithPanic(h RouteHandler) RouteHandler {
 			// let's recover error value from panic if it has panicked with error
 			err, ok := rerr.(error)
 			if !ok {
-				err = fmt.Errorf("panic: %w", err)
+				err = fmt.Errorf("panic: %v", err) //nolint:errorlint // err here is not an error, most likely plain string
 			}
 
 			retErr = NewError(errctx.WrapWithStackSkip(err, 1), errCategoryUnexpected)
