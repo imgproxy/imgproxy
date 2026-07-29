@@ -1,5 +1,9 @@
 # Changelog
 
+## [4.0.12] - TBA
+### Fixed
+- Fixed truncated source image downloads when origins return gzip-compressed responses.
+
 ## [4.0.11] - 2026-07-02
 ### Fixed
 - (pro) Non-essential cache errors are no longer reported.
