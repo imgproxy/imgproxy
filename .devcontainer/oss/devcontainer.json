@@ -1,5 +1,5 @@
 {
-    "image": "ghcr.io/imgproxy/imgproxy-base:v4.0.5",
+    "image": "ghcr.io/imgproxy/imgproxy-base:v4.0.6",
     "name": "imgproxy OSS",
     "portsAttributes": {
         "8081": {

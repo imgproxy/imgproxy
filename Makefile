@@ -13,7 +13,7 @@ GOTESTSUM := $(GOCMD) tool gotestsum
 SRCDIR := ./cli
 RCFILE := ./.imgproxyrc
 BREW_PREFIX :=
-BASE_IMAGE ?= ghcr.io/imgproxy/imgproxy-base:v4.0.5
+BASE_IMAGE ?= ghcr.io/imgproxy/imgproxy-base:v4.0.6
 
 # Common environment setup for CGO builds
 ifneq ($(shell which brew),)
