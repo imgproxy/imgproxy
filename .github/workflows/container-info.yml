@@ -5,6 +5,12 @@ on:
     outputs:
       image:
         value: ${{ jobs.container-info.outputs.image }}
+      registry:
+        value: ${{ jobs.container-info.outputs.registry }}
+      repo:
+        value: ${{ jobs.container-info.outputs.repo }}
+      tag:
+        value: ${{ jobs.container-info.outputs.tag }}
 
 env:
   CONTAINER_IMAGE_REGISTRY: ghcr.io

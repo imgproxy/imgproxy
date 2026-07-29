@@ -33,7 +33,7 @@ jobs:
     needs: [container-info]
     uses: ./.github/workflows/trivy.yml
     with:
-      container_image: ${{ needs.container-info.outputs.registry }}/imgproxy-pro:latest
+      container_image: ${{ needs.container-info.outputs.registry }}/imgproxy:latest
     permissions:
       contents: read
       id-token: write
