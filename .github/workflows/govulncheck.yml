@@ -22,13 +22,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: Setup govulncheck
-        run: |
-          go install golang.org/x/vuln/cmd/govulncheck@latest
-          echo "$HOME/go/bin" >> $GITHUB_PATH
+      - name: Setup cache
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
 
-      - name: Run govulncheck (module scan)
-        run: govulncheck -scan module
+      - name: Download mods
+        run: go mod download
+
+      - name: Mark git workspace as safe
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
       - name: Run govulncheck (symbol scan)
-        run: govulncheck -scan symbol ./...
+        run: go tool run govulncheck -scan symbol ./...

@@ -8,7 +8,7 @@ on:
 
 env:
   CONTAINER_IMAGE_REGISTRY: ghcr.io
-  CONTAINER_IMAGE_REPO: imgproxy-base/base
+  CONTAINER_IMAGE_REPO: imgproxy/imgproxy-base
   CONTAINER_IMAGE_TAG: v4.1.4
 
 jobs:
