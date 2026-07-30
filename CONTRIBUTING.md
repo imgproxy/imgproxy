@@ -10,16 +10,12 @@ imgproxy's dev workflow is built around `./run`, a small task dispatcher
 `.runrc`, and `bin/*.sh`) that most tasks run inside the project's pinned
 `imgproxy-base` Docker image, so you don't need every dependency installed locally.
 
-- **Recommended: Docker + the devcontainer.** You'll need Docker with the Compose
-  plugin (`docker compose`) on your host, since `guard_docker` (a `./run` helper)
-  uses `docker compose run` against `.devcontainer/docker-compose.yml` to
-  re-invoke a task inside the container. See
-  [`.devcontainer/README.md`](.devcontainer/README.md) for setup.
-- **Without Docker:** install `vips`, `clang-format`, and `lychee` locally (see
-  [`.devcontainer/README.md`](.devcontainer/README.md) for the exact packages).
-  `./run build`, `./run fmt`, and `./run upgrade-mod` run directly on your host either way.
+You'll need Docker with the Compose plugin (`docker compose`) on your host,
+since `guard_docker` (a `./run` helper) uses `docker compose run`
+against `.devcontainer/docker-compose.yml` to re-invoke a task inside the container. See
+[`.devcontainer/README.md`](.devcontainer/README.md) for setup.
 
-Either way, install the git hooks once:
+Install the git hooks once:
 
 ```sh
 go tool lefthook install
