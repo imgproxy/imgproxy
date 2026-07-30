@@ -2,16 +2,16 @@ pre-commit:
   commands:
     lint-go:
       tags: lint
-      run: make lint-go
+      run: ./run lint-go
     lint-clang:
       tags: lint
-      run: make lint-clang
+      run: ./run lint-clang
 
 pre-push:
   commands:
     test:
       tags: test
-      run: make test
+      run: ./run test
     lychee:
       tags: test
-      run: make lychee
+      run: ./run lychee

@@ -32,8 +32,9 @@
             "target": "/images",
             "type": "bind"
         },
-        // Unfortunately, devcontainer syntax doesn't support volume-subpath
-        // option when specified as an object, have to use string syntax instead.
+        // devcontainer syntax doesn't support volume-subpath option when specified as an object,
+        // we have to use string syntax instead. These definitions are used in bin/ scripts so keep them
+        // as strings, please.
         "source=imgproxy-cache,target=/root/.cache,type=volume,volume-subpath=cache",
         "source=imgproxy-cache,target=/root/go/pkg/mod,type=volume,volume-subpath=go-mod"
     ],
@@ -48,9 +49,9 @@
     "postCreateCommand": "go tool lefthook install",
     "initializeCommand": {
         // volume-subpaths must be created before volume is mounted, hence we need to call mkdir.
-        // there's no way to reference ${image} of the devcontainer here, so, we use the smallest
-        // image possible (busybox) to create the volume subpaths.
-        "createCacheVolume": "docker run --rm -v imgproxy-cache:/data busybox sh -c 'mkdir -p /data/cache /data/go-mod && touch /data/cache/.bash_history'",
+        // guard_docker (in .runrc) needs the same volumes, so this is a ./run task
+        // (bin/create-cache-volumes.sh) rather than a one-off command defined here.
+        "createCacheVolume": "${localWorkspaceFolder}/run create-cache-volumes",
         "linkImagesDir": "if [ ! -e ${localWorkspaceFolder}/.devcontainer/images ] && [ ! -L ${localWorkspaceFolder}/.devcontainer/images ]; then ln -s ${localWorkspaceFolder}/testdata/test-images ${localWorkspaceFolder}/.devcontainer/images; fi"
     }
 }

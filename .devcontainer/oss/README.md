@@ -10,6 +10,17 @@ On MacOS:
 brew install vips clang-format lychee
 ```
 
+If you'd rather use the devcontainer/Docker path, you'll need Docker and `jq` on your
+host machine. `jq` is required because the devcontainer's `initializeCommand` runs
+`./run create-cache-volumes` (see `.runrc`) before the container even starts, and that
+task shells out to `jq` to read `devcontainer.json`.
+
+On MacOS:
+
+```sh
+brew install jq
+```
+
 Then, run:
 ```sh
 lefthook install
@@ -25,6 +36,6 @@ Port `8081` is forwared to the host.
 
 [test images repo](https://github.com/imgproxy/test-images.git) will be automatically cloned or pulled to `.devcontainer/images` folder before the container starts.
 
-Use `make devcontainer` to attach to the running devcontainer instance.
+Use `./run devcontainer` to attach to the running devcontainer instance.
 
 [Try it](http://localhost:8081/insecure/rs:fit:300:200/plain/local:///kitten.jpg@png). -->

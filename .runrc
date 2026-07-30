@@ -1,0 +1,124 @@
+# .runrc — shared config and helpers for imgproxy's ./run tasks.
+# Sourced once by ./run before any task runs. See ./run for the public
+# run::* API available here and in bin/*.sh.
+
+BINARY="$PROJECT_ROOT/imgproxy"
+SRCDIR="$PROJECT_ROOT/cli"
+RCFILE="$PROJECT_ROOT/.imgproxyrc"
+
+# setup_cgo_env
+#   Export the CGO/pkg-config environment needed to build imgproxy locally
+#   on macOS against Homebrew-installed libvips dependencies. No-op if brew
+#   isn't on PATH (e.g. inside the Linux base container, which already has
+#   these libraries on the default pkg-config search path). Call this from
+#   any task that invokes `go build`.
+setup_cgo_env() {
+  export CGO_LDFLAGS_ALLOW="-s|-w"
+
+  command -v brew >/dev/null 2>&1 || return 0
+
+  PKG_CONFIG_PATH="${PKG_CONFIG_PATH:-}:$(brew --prefix libffi)/lib/pkgconfig"
+  PKG_CONFIG_PATH="$PKG_CONFIG_PATH:$(brew --prefix libarchive)/lib/pkgconfig"
+  PKG_CONFIG_PATH="$PKG_CONFIG_PATH:$(brew --prefix cfitsio)/lib/pkgconfig"
+  export PKG_CONFIG_PATH
+
+  export CGO_LDFLAGS="${CGO_LDFLAGS:-} -Wl,-no_warn_duplicate_libraries"
+}
+
+# require_tool_go / require_tool_docker
+#   Thin run::require_tool wrappers for tools required by more than one
+#   task, so each one's install-instructions message lives in a single
+#   place instead of being copy-pasted at every call site.
+require_tool_go() {
+  run::require_tool go "go is required, see https://go.dev/doc/install"
+}
+
+require_tool_docker() {
+  run::require_tool docker "docker is required, see https://docs.docker.com/get-docker/"
+}
+
+# devcontainer_json
+#   Print .devcontainer/devcontainer.json with its JSONC "//"-comment-only
+#   lines stripped, so it can be parsed with jq. devcontainer.json has no
+#   "://" value strings for that stripping to corrupt. Shared by anything
+#   that needs to read the devcontainer's config (guard_docker,
+#   create-cache-volumes, update-base-image) so it stays the single source
+#   of truth instead of each caller hardcoding a copy of its values.
+devcontainer_json() {
+  run::require_tool jq "jq is required, see https://jqlang.github.io/jq/download/"
+  sed -E '/^[[:space:]]*\/\//d' "$PROJECT_ROOT/.devcontainer/devcontainer.json"
+}
+
+# devcontainer_image
+#   Print the base image (name:tag) pinned in devcontainer.json's "image".
+devcontainer_image() {
+  jq -r '.image' <<< "$(devcontainer_json)"
+}
+
+# guard_docker ["$@"...]
+# Usage: guard_docker "$@"  (call from the top of a task's main())
+# No-op if already inside the pinned base container. Otherwise re-invokes
+# "$PROJECT_ROOT/run <task-name> $@" inside the base image (bind-mounting
+# the repo + a shared docker-volume cache) and exits the current process
+# with the container's exit code -- the caller's main() must never fall
+# through to its real logic on the host.
+#
+# The base image and cache mounts are read from .devcontainer/devcontainer.json
+# (via jq) rather than duplicated here, so the devcontainer stays the single
+# source of truth. devcontainer.json allows "//"-comments (JSONC), which jq
+# can't parse, so comment-only lines are stripped first; the file has no
+# "://" value strings for that stripping to corrupt.
+#
+# <task-name> is read off the bash call stack (BASH_SOURCE[1] is the file
+# that defines guard_docker's caller) rather than passed in, which relies
+# only on standard bash introspection -- not on any run.sh internal -- but
+# does mean guard_docker must be called directly from a task's main(), not
+# from a function it calls in turn.
+guard_docker() {
+  local task_name
+  task_name="$(basename "${BASH_SOURCE[1]}" .sh)"
+
+  if [ -n "${IMGPROXY_IN_BASE_CONTAINER:-}" ]; then
+    return 0
+  fi
+
+  require_tool_docker
+
+  run::msg_ok "switching to docker..."
+
+  local base_image
+  base_image="$(devcontainer_image)"
+
+  local -a mount_args=()
+  local mount
+  while IFS= read -r mount; do
+    [ -n "$mount" ] || continue
+    mount_args+=(--mount "$mount")
+  done < <(jq -r '.mounts[] | select(type == "string")' <<< "$(devcontainer_json)")
+
+  # Volume-subpaths (e.g. imgproxy-cache's "cache"/"go-mod") must already
+  # exist inside their volume before Docker will mount them -- see
+  # bin/create-cache-volumes.sh, shared with devcontainer.json's own
+  # initializeCommand so there's one place that creates them.
+  "$PROJECT_ROOT/run" create-cache-volumes
+
+  # -t needs a real terminal; without one docker hard-fails ("the input
+  # device is not a TTY"). Keep -i unconditionally (harmless without a
+  # terminal) and only add -t when both stdin and stdout are one, so this
+  # also works from non-interactive callers like lefthook hooks or CI.
+  local -a tty_flags=(-i)
+  if [ -t 0 ] && [ -t 1 ]; then
+    tty_flags+=(-t)
+  fi
+
+  local rc=0
+  docker run --init --rm "${tty_flags[@]}" \
+    -v "$PROJECT_ROOT:/workspaces/imgproxy" \
+    "${mount_args[@]}" \
+    -w /workspaces/imgproxy \
+    -e IMGPROXY_IN_BASE_CONTAINER=1 \
+    "$base_image" \
+    bash "/workspaces/imgproxy/run" "$task_name" "$@" || rc=$?
+
+  exit "$rc"
+}
