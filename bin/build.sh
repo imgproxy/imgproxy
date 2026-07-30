@@ -17,6 +17,5 @@ EOF
 
 main() {
   require_tool_go
-  setup_cgo_env
   go build -v -o "$BINARY" "$@" "$SRCDIR"
 }

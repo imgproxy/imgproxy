@@ -19,9 +19,9 @@ EOF
 main() {
   guard_docker "$@"
 
-  if [ -f "$RCFILE" ]; then
+  if [ -f "$IMGPROXY_RCFILE" ]; then
     # shellcheck disable=SC1090
-    . "$RCFILE"
+    . "$IMGPROXY_RCFILE"
   fi
   "$BINARY" "$@"
 }

@@ -26,7 +26,7 @@
             ]
         }
     },
-    "postCreateCommand": "go tool lefthook install",
+    "postCreateCommand": "go tool lefthook install && ./run install-global",
     "initializeCommand": {
         "linkImagesDir": "if [ ! -e ${localWorkspaceFolder}/.devcontainer/images ] && [ ! -L ${localWorkspaceFolder}/.devcontainer/images ]; then ln -s ${localWorkspaceFolder}/testdata/test-images ${localWorkspaceFolder}/.devcontainer/images; fi"
     },
