@@ -3,6 +3,7 @@
 ## [4.0.13] - TBA
 ## Fixed
 - Fixed inconsistent environment variable names between the code and documentation (`IMGPROXY_AIRBRAKE_ENVIRONMENT`, `IMGPROXY_S3_USE_DECRYPTION_CLIENT`, `IMGPROXY_USE_LAST_MODIFIED` and `IMGPROXY_USE_ETAG`).
+- Fixed recovered non-error panics still being logged and reported as `panic: <nil>` instead of the actual panic value.
 
 ## [4.0.12] - 2026-07-29
 ### Fixed

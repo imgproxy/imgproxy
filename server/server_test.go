@@ -16,6 +16,7 @@ import (
 	"github.com/imgproxy/imgproxy/v4/httpheaders"
 	"github.com/imgproxy/imgproxy/v4/monitoring"
 	"github.com/imgproxy/imgproxy/v4/server"
+	"github.com/imgproxy/imgproxy/v4/server/responsewriter"
 	"github.com/imgproxy/imgproxy/v4/testutil"
 )
 
@@ -270,6 +271,26 @@ func (s *ServerTestSuite) TestIntoPanicWithNonError() {
 	})
 
 	s.Equal(http.StatusInternalServerError, rw.Code)
+}
+
+func (s *ServerTestSuite) TestIntoPanicWithNonErrorPreservesValue() {
+	rwCfg := responsewriter.NewDefaultConfig()
+	rwf, err := responsewriter.NewFactory(&rwCfg)
+	s.Require().NoError(err)
+
+	handler := s.router().WithPanic(
+		func(reqID string, rw server.ResponseWriter, r *http.Request) *server.Error {
+			panic("string panic")
+		},
+	)
+
+	req := httptest.NewRequest(http.MethodGet, "/test", nil)
+	rww := rwf.NewWriter(httptest.NewRecorder())
+
+	retErr := handler("req-id", rww, req)
+
+	s.Require().NotNil(retErr)
+	s.Contains(retErr.Err.Error(), "string panic")
 }
 
 func (s *ServerTestSuite) mockHandler(reqID string, rw server.ResponseWriter, r *http.Request) *server.Error {
