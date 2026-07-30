@@ -5,9 +5,16 @@ on:
     outputs:
       image:
         value: ${{ jobs.container-info.outputs.image }}
+      registry:
+        value: ${{ jobs.container-info.outputs.registry }}
+      repo:
+        value: ${{ jobs.container-info.outputs.repo }}
+      tag:
+        value: ${{ jobs.container-info.outputs.tag }}
 
 env:
-  CONTAINER_IMAGE_REPO: ghcr.io/imgproxy/imgproxy-base
+  CONTAINER_IMAGE_REGISTRY: ghcr.io
+  CONTAINER_IMAGE_REPO: imgproxy/imgproxy-base
   CONTAINER_IMAGE_TAG: v4.0.6
 
 jobs:
@@ -15,6 +22,10 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       image: ${{ steps.container-info.outputs.image }}
+      registry: ${{ steps.container-info.outputs.registry }}
+      repo: ${{ steps.container-info.outputs.repo }}
+      tag: ${{ steps.container-info.outputs.tag }}
+
     steps:
       # GitHub Actions doesn't provide a way to define a constant in a file and
       # share it across workflows.
@@ -23,4 +34,7 @@ jobs:
       - name: Container Info
         id: container-info
         run: |
-          echo "image=${{ env.CONTAINER_IMAGE_REPO }}:${{ env.CONTAINER_IMAGE_TAG }}" >> $GITHUB_OUTPUT
+          echo "registry=${{ env.CONTAINER_IMAGE_REGISTRY }}" >> $GITHUB_OUTPUT
+          echo "repo=${{ env.CONTAINER_IMAGE_REPO }}" >> $GITHUB_OUTPUT
+          echo "tag=${{ env.CONTAINER_IMAGE_TAG }}" >> $GITHUB_OUTPUT
+          echo "image=${{ env.CONTAINER_IMAGE_REGISTRY }}/${{ env.CONTAINER_IMAGE_REPO }}:${{ env.CONTAINER_IMAGE_TAG }}" >> $GITHUB_OUTPUT

@@ -1,0 +1,86 @@
+# .runrc — shared config and helpers for imgproxy's ./run tasks.
+# Sourced once by ./run before any task runs. See ./run for the public
+# run::* API available here and in bin/*.sh.
+
+BINARY="$PROJECT_ROOT/imgproxy"
+SRCDIR="$PROJECT_ROOT/cli"
+IMGPROXY_RCFILE="$PROJECT_ROOT/.imgproxyrc"
+
+# require_tool_go / require_tool_docker
+#   Thin run::require_tool wrappers for tools required by more than one
+#   task, so each one's install-instructions message lives in a single
+#   place instead of being copy-pasted at every call site.
+require_tool_go() {
+  run::require_tool go "go is required, see https://go.dev/doc/install"
+}
+
+require_tool_docker() {
+  run::require_tool docker "docker is required, see https://docs.docker.com/get-docker/"
+}
+
+# compose_file
+#   Absolute path to the devcontainer's docker-compose.yml, the single
+#   source of truth for the base image and its mounts/env. Shared by
+#   anything that needs it (guard_docker, update-base-image) so it stays
+#   the single source of truth instead of each caller hardcoding a copy.
+compose_file() {
+  echo "$PROJECT_ROOT/.devcontainer/docker-compose.yml"
+}
+
+# devcontainer_image
+#   Print the base image (name:tag) pinned in docker-compose.yml's "image:"
+#   line. Plain sed rather than a YAML parser: the file's "image:" line is
+#   always written in this exact single-line form (see update-base-image.sh,
+#   which rewrites it the same way).
+devcontainer_image() {
+  sed -n -E 's/^[[:space:]]*image:[[:space:]]*"?([^"[:space:]]+)"?.*/\1/p' "$(compose_file)" | head -n1
+}
+
+# guard_docker ["$@"...]
+# Usage: guard_docker "$@"  (call from the top of a task's main())
+# No-op if already inside the pinned base container. Otherwise re-invokes
+# "$PROJECT_ROOT/run <task-name> $@" inside the base image (bind-mounting
+# the repo + a shared docker-volume cache) and exits the current process
+# with the container's exit code -- the caller's main() must never fall
+# through to its real logic on the host.
+#
+# The base image, mounts, and env are all defined in
+# .devcontainer/docker-compose.yml (the same file VS Code's devcontainer
+# attach uses via "dockerComposeFile"), so `docker compose run` picks them
+# up natively -- no separate parsing step needed here.
+#
+# IMGPROXY_IN_BASE_CONTAINER itself is baked into the base image, so it
+# doesn't need to be set here or in the compose file.
+#
+# <task-name> is read off the bash call stack (BASH_SOURCE[1] is the file
+# that defines guard_docker's caller) rather than passed in, which relies
+# only on standard bash introspection -- not on any run.sh internal -- but
+# does mean guard_docker must be called directly from a task's main(), not
+# from a function it calls in turn.
+guard_docker() {
+  local task_name
+  task_name="$(basename "${BASH_SOURCE[1]}" .sh)"
+
+  if [ -n "${IMGPROXY_IN_BASE_CONTAINER:-}" ]; then
+    return 0
+  fi
+
+  require_tool_docker
+
+  run::msg_ok "switching to docker..."
+
+  # -t needs a real terminal; without one docker hard-fails ("the input
+  # device is not a TTY"). Keep -i unconditionally (harmless without a
+  # terminal) and only add -t when both stdin and stdout are one, so this
+  # also works from non-interactive callers like lefthook hooks or CI.
+  local -a tty_flags=(-i)
+  if [ -t 0 ] && [ -t 1 ]; then
+    tty_flags+=(-t)
+  fi
+
+  local rc=0
+  docker compose -f "$(compose_file)" run --rm "${tty_flags[@]}" imgproxy \
+    bash "/workspaces/imgproxy/run" "$task_name" "$@" || rc=$?
+
+  exit "$rc"
+}
