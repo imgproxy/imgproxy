@@ -5,14 +5,14 @@ tmp_dir = "tmp"
 [build]
 args_bin = []
 entrypoint = "./imgproxy"
-cmd = "make build"
+cmd = "./run build"
 delay = 1000
 exclude_dir = ["assets", "tmp", "vendor", "testdata"]
 exclude_file = []
 exclude_regex = ["_test.go"]
 exclude_unchanged = false
 follow_symlink = false
-full_bin = "make run --"
+full_bin = "./run run"
 include_dir = []
 include_ext = ["go", "tpl", "tmpl", "html", "c", "h"]
 include_file = [".imgproxyrc"]

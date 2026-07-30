@@ -12,6 +12,10 @@ env:
   PKG_CONFIG_LIBDIR: /opt/imgproxy/lib/pkgconfig
   LD_LIBRARY_PATH: /opt/imgproxy/lib
   GOFLAGS: -buildvcs=false
+  # The job already runs inside inputs.container_image (the pinned base
+  # image) via the "container:" key below, so tell guard_docker (in .runrc)
+  # not to try to docker-in-docker its way into another copy of it.
+  IMGPROXY_IN_BASE_CONTAINER: "1"
 
 jobs:
   govulncheck:
@@ -39,4 +43,4 @@ jobs:
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
       - name: Run govulncheck (symbol scan)
-        run: go tool govulncheck -scan symbol ./...
+        run: ./run govulncheck

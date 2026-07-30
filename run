@@ -1,0 +1,482 @@
+#!/usr/bin/env bash
+# run — a tiny task dispatcher for bash scripts (a Makefile replacement).
+# Source: https://github.com/imgproxy/run.sh
+#
+# Usage:
+#   ./run                 list tasks found in bin/
+#   ./run <task> [args...]
+#   ./run help <task>     show a task's help text
+#   ./run install-global  add a global `run` shell function to your shell rc
+#
+# A task is a file at bin/<name>.sh defining three functions, e.g. bin/hello.sh:
+#
+#   #!/usr/bin/env bash
+#   description() { echo "One-line summary shown in ./run's task list"; }
+#   help()        { echo "Usage: ./run hello"; }
+#   main()        { echo "Hello from run.sh!"; }
+#
+# See examples/task.sh in the repo above for a fuller pattern (flags,
+# positional args, run::require_arg/run::require_tool, task composition via
+# run::depends_on) — copy it into bin/ and trim it down.
+#
+# .runrc, if present at the project root, is sourced once before any task
+# runs — put shared vars/helpers your tasks need there. Entirely optional.
+set -euo pipefail
+
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+TASK_DIR="$PROJECT_ROOT/bin"
+
+# ════════════════════════════════════════════════════════════════════════
+# Available to your tasks (bin/*.sh) and .runrc
+#
+# Everything below this line and above the next divider is part of run.sh's
+# public API: variables and functions your task files and .runrc can rely
+# on, all named run::<thing>. Nothing past the next divider is meant to be
+# called from a task — that's internal machinery, named run::_<thing>.
+# ════════════════════════════════════════════════════════════════════════
+
+# PROJECT_ROOT — absolute path to the project root (the directory
+#   containing ./run). Use it to build paths that work regardless of the
+#   caller's current directory, e.g. "$PROJECT_ROOT/config/app.yml".
+#
+# TASK_DIR — absolute path to the task directory ($PROJECT_ROOT/bin).
+
+# run::require_tool <cmd> <message>
+#   Exit the whole run with a friendly error if <cmd> is not found on PATH.
+#   Use it at the top of a task that shells out to an external program, so
+#   a missing dependency fails fast with a clear message instead of a raw
+#   "command not found".
+#
+#   Example:
+#     run::require_tool jq "jq is required (https://jqlang.github.io/jq/)"
+#     run::require_tool docker "docker is required to build images"
+run::require_tool() {
+  local cmd="$1" msg="$2"
+  command -v "$cmd" >/dev/null 2>&1 || { echo "error: $msg" >&2; exit 1; }
+}
+
+# run::require_arg <flag-name> "$value"
+#   Fail (return 1) with a friendly error if <value> is empty. Meant for
+#   validating flags/positional args parsed manually in a task's main().
+#   Unlike run::require_tool, this returns rather than exits, so callers
+#   can decide how to react (typically `return 1` right after).
+#
+#   Example:
+#     --env) run::require_arg --env "${2:-}"; env="$2"; shift 2 ;;
+run::require_arg() {
+  local name="$1" value="${2:-}"
+  if [ -z "$value" ]; then
+    echo "error: missing value for $name" >&2
+    return 1
+  fi
+}
+
+# run::prompt <color> <question> [choices]
+#   Single-keypress prompt. Prints <question> in <color>, waits for one
+#   key (no Enter needed), and echoes the matched choice to stdout.
+#
+#   - `choices`: "/"-separated single letters, default "y/n". Capitalize
+#     one letter to make it the default (picked by pressing Enter).
+#   - An unmatched key is ignored — no error, waits for another keypress.
+#   - 2-way choices (y/n-style): the exit code doubles as the answer — 0 if
+#     the match is the first-listed choice, 1 otherwise. That's what lets
+#     `run::prompt ... "y/N" && deploy` read as "if yes, do the thing," with
+#     no need to capture or compare stdout.
+#   - 3+-way choices: the exit code still follows the same rule (0 only for
+#     the first-listed choice) but isn't meaningful here — capture stdout and
+#     switch on it instead. Tasks run under `set -e`, so guard the capture
+#     with `|| true`; otherwise a non-first pick returns 1 and aborts the
+#     task before the `case` runs.
+#
+#   Examples:
+#     run::prompt cyan "Deploy to production?" "y/N" && deploy   # default: no
+#     if run::prompt cyan "Overwrite existing file?" "Y/n"; then ...; fi
+#     choice="$(run::prompt magenta "Deploy to: (s)taging/(p)roduction/(c)anary" "s/p/c")" || true
+#     case "$choice" in s) ... ;; p) ... ;; c) ... ;; esac
+run::prompt() {
+  local color="$1" question="$2" choices="${3:-y/n}" reply default="" o lower first rc
+  local -a opts
+  IFS='/' read -ra opts <<< "$choices"
+  first="$(printf '%s' "${opts[0]}" | tr '[:upper:]' '[:lower:]')"
+  for o in "${opts[@]}"; do
+    [[ "$o" =~ ^[A-Z] ]] && default="$(printf '%s' "$o" | tr '[:upper:]' '[:lower:]')"
+  done
+  run::color_echo "$color" "$question" >&2
+  printf ' (%s) ' "$choices" >&2
+  # An unrecognized keypress is silently ignored (no error, no re-prompt) —
+  # the loop just waits for another keypress rather than advancing.
+  while true; do
+    # Single keypress, no Enter needed (matched against opts by prefix below).
+    rc=0
+    IFS= read -rsn 1 reply || rc=$?
+    # Drain a stray Enter (or other trailing input) some users press out of
+    # habit, so it doesn't get silently consumed as the answer to the *next*
+    # prompt.
+    while IFS= read -rsn 1 -t 0.3 _ 2>/dev/null; do :; done
+    reply="${reply:-$default}"
+    reply="$(printf '%s' "$reply" | tr '[:upper:]' '[:lower:]')"
+    for o in "${opts[@]}"; do
+      lower="$(printf '%s' "$o" | tr '[:upper:]' '[:lower:]')"
+      if [ -n "$reply" ] && [[ "$reply" == "$lower"* ]]; then
+        printf '%s\n' "$lower" >&2   # visible echo of the accepted keypress
+        printf '%s\n' "$lower"
+        [ "$lower" = "$first" ] && return 0 || return 1
+      fi
+    done
+    # Can't get further input once stdin is exhausted; give up rather than loop forever.
+    [ "$rc" -ne 0 ] && return 1
+  done
+}
+
+# run::user_input <color> <label>
+#   Print <label> in <color> (to stderr) and read a line of free-form input
+#   from the user, echoing it to stdout so it can be captured. Use this for
+#   values run::prompt can't express (names, versions, free text), as
+#   opposed to run::prompt's fixed choice list.
+#
+#   Example:
+#     name="$(run::user_input cyan "Enter your name:")"
+#     echo "Hello, $name!"
+run::user_input() {
+  local color="$1" label="$2"
+  run::color_echo "$color" "$label" >&2
+  local reply
+  read -r reply
+  printf '%s\n' "$reply"
+}
+
+# run::colors_enabled
+#   Return 0 if colored output should be used: stdout is a terminal, the
+#   terminal supports at least 8 colors, and NO_COLOR is unset. Used
+#   internally by run::color_echo and the run::msg_* helpers; call it
+#   directly only if you're printing raw ANSI codes yourself.
+#
+#   Example:
+#     run::colors_enabled && printf '\033[1m%s\033[0m\n' "bold" || echo "bold"
+run::colors_enabled() {
+  [ -n "${NO_COLOR:-}" ] && return 1
+  [ -t 1 ] || return 1
+  local n
+  n="$(tput colors 2>/dev/null || echo 0)"
+  [ "$n" -ge 8 ] 2>/dev/null
+}
+
+# run::color_echo <color> <text>
+#   Print <text> in <color> (no trailing newline), or plain <text> when
+#   colors are disabled (see run::colors_enabled / NO_COLOR). Supported
+#   colors: red, green, blue, cyan, magenta, yellow, gray, neon. Unknown
+#   colors print the text uncolored.
+#
+#   Example:
+#     run::color_echo green "OK"; printf '\n'
+run::color_echo() {
+  local color="$1" text="$2"
+  if ! run::colors_enabled; then
+    printf '%s' "$text"
+    return
+  fi
+  local ncolors
+  ncolors="$(tput colors 2>/dev/null || echo 0)"
+  if [ "$ncolors" -ge 256 ]; then
+    case "$color" in
+      red)     printf '\033[38;5;196m%s' "$text" ;;
+      green)   printf '\033[38;5;34m%s'  "$text" ;;
+      blue)    printf '\033[38;5;21m%s'  "$text" ;;
+      cyan)    printf '\033[38;5;45m%s'  "$text" ;;
+      magenta) printf '\033[38;5;201m%s' "$text" ;;
+      yellow)  printf '\033[38;5;220m%s' "$text" ;;
+      gray)    printf '\033[38;5;242m%s' "$text" ;;
+      neon)    printf '\033[38;5;82m%s'  "$text" ;;
+      *)       printf '%s' "$text" ;;
+    esac
+  else
+    case "$color" in
+      red)     printf '\033[31m%s'  "$text" ;;
+      green)   printf '\033[32m%s'  "$text" ;;
+      blue)    printf '\033[34m%s'  "$text" ;;
+      cyan)    printf '\033[36m%s'  "$text" ;;
+      magenta) printf '\033[35m%s'  "$text" ;;
+      yellow)  printf '\033[33m%s'  "$text" ;;
+      gray)    printf '\033[90m%s'  "$text" ;;
+      neon)    printf '\033[1;32m%s' "$text" ;;
+      *)       printf '%s' "$text" ;;
+    esac
+  fi
+  printf '%s' "$(tput sgr0)"
+}
+
+# run::icon <name>
+#   Echo the glyph for a status kind, with no trailing newline: skip ◇,
+#   success ✓, error ✕, info ◆, warning ■. This is the single source of
+#   truth for the glyphs run::msg_skip/run::msg_ok/run::msg_info/
+#   run::msg_warn print — call it directly when you want the bare glyph
+#   instead of a full formatted message (e.g. embedded in your own printf).
+#
+#   Example:
+#     printf '%s deploy complete\n' "$(run::icon success)"
+#     run::color_echo green "$(run::icon success) done"; printf '\n'
+run::icon() {
+  case "$1" in
+    skip)    printf '◇' ;;
+    success) printf '✓' ;;
+    error)   printf '✕' ;;
+    info)    printf '◆' ;;
+    warning) printf '■' ;;
+    *) echo "error: unknown icon '$1'; expected skip, success, error, info, or warning" >&2; return 1 ;;
+  esac
+}
+
+# run::msg_ok/run::msg_skip/run::msg_info/run::msg_warn/run::msg_err <text>
+#   Print a status line prefixed with a colored icon (see run::icon): ✓
+#   green (ok), ◇ gray (skip), ◆ yellow (info), ■ yellow (warn), "error:"
+#   (run::msg_err) uncolored. Built on top of run::color_echo, so they pick
+#   up the same terminal/NO_COLOR detection. All but run::msg_err write to
+#   stdout; run::msg_err writes to stderr, matching the convention used by
+#   run::require_tool/run::require_arg errors.
+#
+#   Example:
+#     run::require_tool git "git is required" && run::msg_ok "git found"
+#     [ -f dist/app ] && run::msg_skip "already built" || run::msg_info "building..."
+run::msg_ok()   { run::color_echo green  "$(run::icon success)"; printf ' %s\n' "$1"; }
+run::msg_skip() { run::color_echo gray   "$(run::icon skip)";    printf ' %s\n' "$1"; }
+run::msg_info() { run::color_echo yellow "$(run::icon info)";    printf ' %s\n' "$1"; }
+run::msg_warn() { run::color_echo yellow "$(run::icon warning)"; printf ' %s\n' "$1"; }
+run::msg_err()  { printf 'error: %s\n' "$1" >&2; }
+
+# run::depends_on <task>...
+#   Run each named task in order (as `$PROJECT_ROOT/run <task>`), stopping
+#   and propagating the exit code at the first failure. Use it inside a
+#   task's main() to compose tasks, e.g. a "deploy" task that requires
+#   "build" and "test" to pass first.
+#
+#   Example:
+#     main() { run::depends_on build test; echo "deploying..."; }
+run::depends_on() {
+  local task
+  for task in "$@"; do
+    "$PROJECT_ROOT/run" "$task" || return $?
+  done
+}
+
+if [ -f "$PROJECT_ROOT/.runrc" ]; then
+  # shellcheck source=/dev/null
+  . "$PROJECT_ROOT/.runrc"
+fi
+
+# ════════════════════════════════════════════════════════════════════════
+# Run machinery — internal dispatch logic below this line.
+#
+# These functions implement `./run`'s own commands (listing tasks, help,
+# install-global) and the final case statement that routes to them or to
+# a task's main(). Tasks and .runrc should not call these directly — they
+# are named run::_<thing> to mark them private.
+# ════════════════════════════════════════════════════════════════════════
+
+run::_header() {
+  printf '\n'
+  run::color_echo neon "run.sh"
+  printf ' — tasks in '
+  run::color_echo cyan "$TASK_DIR"
+  printf ' (v0.0.1)\n\n'
+}
+
+run::_cmd_list() {
+  run::_header
+  local f name has_tasks=0
+  for f in "$TASK_DIR"/*.sh; do
+    [ -e "$f" ] || continue
+    has_tasks=1
+    name="$(basename "$f" .sh)"
+    # shellcheck disable=SC1090
+    if ! desc="$(
+      . "$f"
+      for fn in description help main; do
+        declare -f "$fn" >/dev/null 2>&1 || { echo "error: task '$name' (bin/$name.sh) must define a $fn() function" >&2; exit 1; }
+      done
+      description
+    )"; then
+      exit 1
+    fi
+    printf '  '
+    run::color_echo green "$name"
+    local width=$((17 - ${#name}))
+    [ $width -lt 1 ] && width=1
+    printf '%*s%s\n' $width " " "$desc"
+  done
+  if [ "$has_tasks" -eq 0 ]; then
+    printf '  No tasks yet.\n\n'
+    printf '  Create your first task by adding a file at %s/<name>.sh:\n\n' "$(basename "$TASK_DIR")"
+    printf '    #!/usr/bin/env bash\n'
+    printf '    description() { echo "One-line summary"; }\n'
+    printf '    help() { echo "Usage: ./run <name> [args...]"; }\n'
+    printf '    main() { echo "task logic goes here, receives \\"$@\\""; }\n\n'
+    printf '  Or download an example task:\n\n'
+    printf '    mkdir -p bin && curl -fsSL https://raw.githubusercontent.com/imgproxy/run.sh/main/examples/task.sh -o bin/example.sh\n\n'
+    printf '  Optionally, create a .runrc file at the project root to define shared\n'
+    printf '  functions and variables for your tasks.\n\n'
+    printf '  '
+    run::color_echo green "install-global"
+    # shellcheck disable=SC2016
+    printf '%*s%s\n' $((17 - 14)) " " "Add a global \`run\` shell function (arg: bash|zsh|fish)"
+  else
+    printf '  '
+    run::color_echo green "help"
+    printf '%*s%s\n' $((17 - 4)) " " "Show a <task>'s help message"
+  fi
+  printf '\n'
+}
+
+run::_cmd_help() {
+  local task="${1:-}"
+  if [ -z "$task" ]; then
+    echo "error: missing task name" >&2
+    echo "Usage: ./run help <task>" >&2
+    return 1
+  fi
+  if [ ! -f "$TASK_DIR/$task.sh" ]; then
+    echo "error: unknown task '$task'" >&2
+    return 1
+  fi
+  # shellcheck disable=SC1090
+  . "$TASK_DIR/$task.sh"
+  if ! declare -f help >/dev/null 2>&1; then
+    echo "error: task '$task' (bin/$task.sh) must define a help() function" >&2
+    return 1
+  fi
+  help
+}
+
+run::_cmd_install_global() {
+  run::_header
+  local shell_name rc_file force=0
+  local arg_shell="" a
+
+  # Scan all args so --force and the shell name work in either order
+  # (e.g. `install-global --force bash` and `install-global bash --force`).
+  for a in "$@"; do
+    if [ "$a" = "--force" ]; then
+      force=1
+    else
+      arg_shell="$a"
+    fi
+  done
+
+  # Determine shell: use argument if provided, otherwise detect from $SHELL
+  if [ -n "$arg_shell" ]; then
+    case "$arg_shell" in
+      bash) shell_name="bash"; rc_file="$HOME/.bashrc" ;;
+      zsh)  shell_name="zsh";  rc_file="$HOME/.zshrc" ;;
+      fish) shell_name="fish"; rc_file="$HOME/.config/fish/config.fish" ;;
+      *)
+        run::msg_err "unsupported shell '$arg_shell'; expected bash, zsh, or fish"
+        return 1
+        ;;
+    esac
+  else
+    case "${SHELL:-}" in
+      */bash) shell_name="bash"; rc_file="$HOME/.bashrc" ;;
+      */zsh)  shell_name="zsh";  rc_file="$HOME/.zshrc" ;;
+      */fish) shell_name="fish"; rc_file="$HOME/.config/fish/config.fish" ;;
+      *)
+        run::msg_err "unsupported or unset \$SHELL ('${SHELL:-<unset>}'); expected bash, zsh, or fish"
+        return 1
+        ;;
+    esac
+  fi
+  if [ -n "$arg_shell" ]; then
+    run::msg_info "using shell: $shell_name (specified)"
+  else
+    run::msg_info "detected shell: $shell_name (\$SHELL=${SHELL})"
+  fi
+  run::msg_info "target rc file: $rc_file"
+
+  local marker_begin="# >>> run.sh install-global >>>"
+  local marker_end="# <<< run.sh install-global <<<"
+
+  if [ $force -eq 0 ] && [ -f "$rc_file" ] && grep -qF "$marker_begin" "$rc_file" 2>/dev/null; then
+    if run::prompt cyan "run function already installed in $rc_file. Override?" "y/N" >/dev/null; then
+      force=1
+    else
+      run::msg_skip "run() function already installed in $rc_file"
+      return 0
+    fi
+  fi
+
+  if [ $force -eq 1 ] && [ -f "$rc_file" ]; then
+    # Force reinstall: remove old markers if present
+    sed -i.bak "/^${marker_begin//>/\\>}/,/^${marker_end//</\\<}/d" "$rc_file" 2>/dev/null || \
+    sed -i '' "/^${marker_begin//>/\\>}/,/^${marker_end//</\\<}/d" "$rc_file"
+    rm -f "$rc_file.bak"
+  fi
+
+  mkdir -p "$(dirname "$rc_file")"
+  if [ "$shell_name" = "fish" ]; then
+    {
+      printf '\n%s\n' "$marker_begin"
+      cat <<'EOF'
+function run
+    set -l dir (pwd)
+    while test "$dir" != "$HOME"; and test "$dir" != "/"
+        if test -x "$dir/run"
+            "$dir/run" $argv
+            return $status
+        end
+        set dir (dirname $dir)
+    end
+    echo "run: no run.sh project found in this directory or its parents" >&2
+    return 1
+end
+EOF
+      printf '%s\n' "$marker_end"
+    } >> "$rc_file"
+  else
+    {
+      printf '\n%s\n' "$marker_begin"
+      cat <<'EOF'
+run() {
+  local dir="$PWD" parent
+  while :; do
+    if [ "$dir" = "$HOME" ] || [ "$dir" = "/" ]; then
+      break
+    fi
+    if [ -x "$dir/run" ]; then
+      "$dir/run" "$@"
+      return $?
+    fi
+    parent="$(dirname "$dir")"
+    [ "$parent" = "$dir" ] && break
+    dir="$parent"
+  done
+  echo "run: no run.sh project found in this directory or its parents" >&2
+  return 1
+}
+EOF
+      printf '%s\n' "$marker_end"
+    } >> "$rc_file"
+  fi
+  run::msg_ok "wrote run() function to $rc_file"
+
+  printf '\n'
+  run::msg_info "next: run 'source $rc_file' (or open a new terminal), then 'run <task>' works from any subdirectory of a run.sh project"
+}
+
+case "${1:-}" in
+  "") run::_cmd_list ;;
+  install-global) shift; run::_cmd_install_global "$@" ;;
+  help) shift; run::_cmd_help "$@" ;;
+  *)
+    task="$1"; shift
+    if [ ! -f "$TASK_DIR/$task.sh" ]; then
+      echo "error: unknown task '$task'" >&2
+      run::_cmd_list >&2
+      exit 1
+    fi
+    # shellcheck disable=SC1090
+    . "$TASK_DIR/$task.sh"
+    if ! declare -f main >/dev/null 2>&1; then
+      echo "error: task '$task' (bin/$task.sh) must define a main() function" >&2
+      exit 1
+    fi
+    main "$@"
+    ;;
+esac

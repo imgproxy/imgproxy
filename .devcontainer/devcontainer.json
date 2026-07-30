@@ -1,1 +1,34 @@
-./oss/devcontainer.json
+{
+    "name": "imgproxy",
+    "dockerComposeFile": "docker-compose.yml",
+    "service": "imgproxy",
+    "workspaceFolder": "/workspaces/imgproxy",
+    "shutdownAction": "stopCompose",
+    "portsAttributes": {
+        "8081": {
+            "label": "imgproxy",
+            "onAutoForward": "notify"
+        },
+        "8091": {
+            "label": "Prometheus metrics",
+            "onAutoForward": "silent"
+        },
+        "8071": {
+            "label": "Utilities (pprof, etc.)",
+            "onAutoForward": "silent"
+        }
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "golang.go",
+                "ms-vscode.cpptools"
+            ]
+        }
+    },
+    "postCreateCommand": "go tool lefthook install && ./run install-global",
+    "initializeCommand": {
+        "linkImagesDir": "if [ ! -e ${localWorkspaceFolder}/.devcontainer/images ] && [ ! -L ${localWorkspaceFolder}/.devcontainer/images ]; then ln -s ${localWorkspaceFolder}/testdata/test-images ${localWorkspaceFolder}/.devcontainer/images; fi"
+    },
+    "overrideCommand": true
+}
