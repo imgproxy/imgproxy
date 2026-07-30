@@ -1,5 +1,5 @@
 {
-    "name": "imgproxy OSS",
+    "name": "imgproxy",
     "dockerComposeFile": "docker-compose.yml",
     "service": "imgproxy",
     "workspaceFolder": "/workspaces/imgproxy",
