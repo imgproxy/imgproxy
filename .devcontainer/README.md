@@ -2,23 +2,16 @@
 
 All `imgproxy` dependencies are included in the `imgproxy-base` container image. Using this image for development is recommended.
 
-If you want to develop locally without using Docker, please install: `vips`, `clang-format` and `lychee`.
-
-On MacOS:
-
-```sh
-brew install vips clang-format lychee
-```
-
-If you'd rather use the devcontainer/Docker path, you'll need Docker (with the
-Compose plugin, i.e. `docker compose`) on your host machine. `guard_docker`
+You'll need Docker (with the Compose plugin, i.e. `docker compose`) on your host machine. `guard_docker`
 (see `.runrc`) uses `docker compose run` against
 `.devcontainer/docker-compose.yml` to re-invoke a `./run` task inside the
 base container.
 
-Then, run:
+# Install git hooks
+
+Run:
 ```sh
-lefthook install
+go tool lefthook install
 ```
 
 # Start the devcontainer
