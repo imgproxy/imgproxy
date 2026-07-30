@@ -1,4 +1,4 @@
-name: Go Vulnerability Check
+name: SVG Test Suite
 
 on:
   workflow_call:
@@ -14,7 +14,7 @@ env:
   GOFLAGS: -buildvcs=false
 
 jobs:
-  govulncheck:
+  test-svg:
     runs-on: ubuntu-latest
     container:
       image: ${{ inputs.container_image }}
@@ -38,5 +38,5 @@ jobs:
       - name: Mark git workspace as safe
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
-      - name: Run govulncheck (symbol scan)
-        run: ./run govulncheck
+      - name: Run SVG test suite
+        run: ./run test-svg

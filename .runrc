@@ -52,6 +52,13 @@ devcontainer_image() {
 # IMGPROXY_IN_BASE_CONTAINER itself is baked into the base image, so it
 # doesn't need to be set here or in the compose file.
 #
+# CI is GitHub Actions' own default env var (set to "true" for every job,
+# including inside a job's "container:"), so any workflow that already runs
+# a task's job inside the pinned base image via "container: image: ..." is
+# recognized for free -- no need to also set IMGPROXY_IN_BASE_CONTAINER by
+# hand on that job, and other CI providers that set CI=true get the same
+# no-op-in-CI behavior without needing imgproxy-specific config.
+#
 # <task-name> is read off the bash call stack (BASH_SOURCE[1] is the file
 # that defines guard_docker's caller) rather than passed in, which relies
 # only on standard bash introspection -- not on any run.sh internal -- but
@@ -61,7 +68,7 @@ guard_docker() {
   local task_name
   task_name="$(basename "${BASH_SOURCE[1]}" .sh)"
 
-  if [ -n "${IMGPROXY_IN_BASE_CONTAINER:-}" ]; then
+  if [ -n "${IMGPROXY_IN_BASE_CONTAINER:-}" ] || [ -n "${CI:-}" ]; then
     return 0
   fi
 

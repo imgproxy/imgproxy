@@ -17,6 +17,12 @@ on:
         required: false
         default: true
 
+      run_test_svg:
+        description: "Run SVG test suite"
+        type: boolean
+        required: false
+        default: true
+
 jobs:
   container-info:
     uses: ./.github/workflows/container-info.yml
@@ -25,6 +31,13 @@ jobs:
     if: ${{ github.event_name == 'schedule' || inputs.run_govulncheck }}
     needs: [container-info]
     uses: ./.github/workflows/govulncheck.yml
+    with:
+      container_image: ${{ needs.container-info.outputs.image }}
+
+  test-svg:
+    if: ${{ github.event_name == 'schedule' || inputs.run_test_svg }}
+    needs: [container-info]
+    uses: ./.github/workflows/test-svg.yml
     with:
       container_image: ${{ needs.container-info.outputs.image }}
 

@@ -2,6 +2,7 @@
 imgproxy
 tmp/
 .tmp
+.test-data
 .vscode/
 .DS_Store
 

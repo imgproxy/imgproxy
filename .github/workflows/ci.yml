@@ -12,6 +12,7 @@ env:
   PKG_CONFIG_LIBDIR: /opt/imgproxy/lib/pkgconfig
   LD_LIBRARY_PATH: /opt/imgproxy/lib
   GOFLAGS: -buildvcs=false
+  TEST_IMAGEDATA_REFCOUNT_PANIC: "1"
 
 jobs:
   test:
