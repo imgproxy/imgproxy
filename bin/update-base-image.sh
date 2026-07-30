@@ -8,9 +8,9 @@ help() {
 Usage: ./run update-base-image <new-version>
 
 Pulls ghcr.io/imgproxy/imgproxy-base:<new-version> and updates every place
-that pins the base image version: Makefile, GitHub Actions workflows,
-.devcontainer/devcontainer.json, and docker/Dockerfile. guard_docker (in
-.runrc) reads the image straight from devcontainer.json, so it needs no
+that pins the base image version: GitHub Actions workflows,
+.devcontainer/docker-compose.yml, and docker/Dockerfile. guard_docker (in
+.runrc) reads the image straight from docker-compose.yml, so it needs no
 update of its own.
 
 Example:
@@ -34,7 +34,7 @@ main() {
 
   require_tool_docker
 
-  # Same image guard_docker uses (.devcontainer/devcontainer.json's "image"),
+  # Same image guard_docker uses (.devcontainer/docker-compose.yml's "image"),
   # minus its tag, so this stays in sync without hardcoding the repo path.
   local image
   image="$(devcontainer_image)"
@@ -63,16 +63,12 @@ main() {
     done
   fi
 
-  if [ -L "$PROJECT_ROOT/.devcontainer/devcontainer.json" ]; then
-    local devcontainer_file
-    devcontainer_file="$(readlink "$PROJECT_ROOT/.devcontainer/devcontainer.json")"
-    case "$devcontainer_file" in
-      /*) ;;
-      *) devcontainer_file="$PROJECT_ROOT/.devcontainer/$devcontainer_file" ;;
-    esac
-    sed -i.bak "s|\(\"image\": \".*$image:\).*\"|\1$new_version\"|" "$devcontainer_file"
-    rm -f "${devcontainer_file}.bak"
-    run::msg_ok "updated $devcontainer_file"
+  local compose_yml
+  compose_yml="$(compose_file)"
+  if [ -f "$compose_yml" ]; then
+    sed -i.bak "s|\(image: .*$image:\).*|\1$new_version|" "$compose_yml"
+    rm -f "${compose_yml}.bak"
+    run::msg_ok "updated $compose_yml"
   fi
 
   if [ -f "$dockerfile" ]; then

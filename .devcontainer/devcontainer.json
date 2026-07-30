@@ -1,6 +1,9 @@
 {
-    "image": "ghcr.io/imgproxy/imgproxy-base:v4.0.6",
     "name": "imgproxy OSS",
+    "dockerComposeFile": "docker-compose.yml",
+    "service": "imgproxy",
+    "workspaceFolder": "/workspaces/imgproxy",
+    "shutdownAction": "stopCompose",
     "portsAttributes": {
         "8081": {
             "label": "imgproxy",
@@ -15,29 +18,6 @@
             "onAutoForward": "silent"
         }
     },
-    "containerEnv": {
-        "PORT": "8081",
-        "IMGPROXY_PROMETHEUS_BIND": ":8091",
-        "IMGPROXY_LOCAL_FILESYSTEM_ROOT": "/images",
-        "IMGPROXY_ENABLE_VIDEO_THUMBNAILS": "true",
-        "IMGPROXY_MAX_ANIMATION_FRAMES": "999",
-        "IMGPROXY_VIPS_LEAK_CHECK": "true",
-        "IMGPROXY_LOG_MEM_STATS": "true",
-        "IMGPROXY_DEVELOPMENT_ERRORS_MODE": "true",
-        "HISTFILE": "/root/.cache/.bash_history"
-    },
-    "mounts": [
-        {
-            "source": "${localWorkspaceFolder}/.devcontainer/images",
-            "target": "/images",
-            "type": "bind"
-        },
-        // Kept as strings (rather than the object syntax used for the bind mount above) so
-        // guard_docker (in .runrc) can filter mounts by type == "string" to forward just these
-        // volume mounts when re-invoking a task inside the base container.
-        "source=imgproxy-cache,target=/root/.cache,type=volume",
-        "source=imgproxy-cache-go-mod,target=/root/go/pkg/mod,type=volume"
-    ],
     "customizations": {
         "vscode": {
             "extensions": [
@@ -49,5 +29,6 @@
     "postCreateCommand": "go tool lefthook install",
     "initializeCommand": {
         "linkImagesDir": "if [ ! -e ${localWorkspaceFolder}/.devcontainer/images ] && [ ! -L ${localWorkspaceFolder}/.devcontainer/images ]; then ln -s ${localWorkspaceFolder}/testdata/test-images ${localWorkspaceFolder}/.devcontainer/images; fi"
-    }
+    },
+    "overrideCommand": true
 }

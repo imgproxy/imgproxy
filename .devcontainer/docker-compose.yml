@@ -1,0 +1,28 @@
+name: imgproxy
+
+services:
+  imgproxy:
+    image: ghcr.io/imgproxy/imgproxy-base:v4.0.6
+    init: true
+    working_dir: /workspaces/imgproxy
+    environment:
+      PORT: "8081"
+      IMGPROXY_PROMETHEUS_BIND: ":8091"
+      IMGPROXY_LOCAL_FILESYSTEM_ROOT: "/images"
+      IMGPROXY_ENABLE_VIDEO_THUMBNAILS: "true"
+      IMGPROXY_MAX_ANIMATION_FRAMES: "999"
+      IMGPROXY_VIPS_LEAK_CHECK: "true"
+      IMGPROXY_LOG_MEM_STATS: "true"
+      IMGPROXY_DEVELOPMENT_ERRORS_MODE: "true"
+      HISTFILE: "/root/.cache/.bash_history"
+    volumes:
+      - ..:/workspaces/imgproxy
+      - ./images:/images
+      - imgproxy-cache:/root/.cache
+      - imgproxy-cache-go-mod:/root/go/pkg/mod
+
+volumes:
+  imgproxy-cache:
+    name: imgproxy-cache
+  imgproxy-cache-go-mod:
+    name: imgproxy-cache-go-mod

@@ -10,9 +10,10 @@ On MacOS:
 brew install vips clang-format lychee
 ```
 
-If you'd rather use the devcontainer/Docker path, you'll need Docker and Go on your
-host machine. Go is required because `guard_docker` (see `.runrc`) shells out to
-`go tool gojq` to read `devcontainer.json` when re-invoking a `./run` task inside the
+If you'd rather use the devcontainer/Docker path, you'll need Docker (with the
+Compose plugin, i.e. `docker compose`) on your host machine. `guard_docker`
+(see `.runrc`) uses `docker compose run` against
+`.devcontainer/docker-compose.yml` to re-invoke a `./run` task inside the
 base container.
 
 Then, run:
