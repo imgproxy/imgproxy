@@ -10,16 +10,10 @@ On MacOS:
 brew install vips clang-format lychee
 ```
 
-If you'd rather use the devcontainer/Docker path, you'll need Docker and `jq` on your
-host machine. `jq` is required because the devcontainer's `initializeCommand` runs
-`./run create-cache-volumes` (see `.runrc`) before the container even starts, and that
-task shells out to `jq` to read `devcontainer.json`.
-
-On MacOS:
-
-```sh
-brew install jq
-```
+If you'd rather use the devcontainer/Docker path, you'll need Docker and Go on your
+host machine. Go is required because `guard_docker` (see `.runrc`) shells out to
+`go tool gojq` to read `devcontainer.json` when re-invoking a `./run` task inside the
+base container.
 
 Then, run:
 ```sh

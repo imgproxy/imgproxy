@@ -39,20 +39,20 @@ require_tool_docker() {
 
 # devcontainer_json
 #   Print .devcontainer/devcontainer.json with its JSONC "//"-comment-only
-#   lines stripped, so it can be parsed with jq. devcontainer.json has no
-#   "://" value strings for that stripping to corrupt. Shared by anything
+#   lines stripped, so it can be parsed with gojq (via `go tool`). devcontainer.json
+#   has no "://" value strings for that stripping to corrupt. Shared by anything
 #   that needs to read the devcontainer's config (guard_docker,
-#   create-cache-volumes, update-base-image) so it stays the single source
-#   of truth instead of each caller hardcoding a copy of its values.
+#   update-base-image) so it stays the single source of truth instead of
+#   each caller hardcoding a copy of its values.
 devcontainer_json() {
-  run::require_tool jq "jq is required, see https://jqlang.github.io/jq/download/"
+  require_tool_go
   sed -E '/^[[:space:]]*\/\//d' "$PROJECT_ROOT/.devcontainer/devcontainer.json"
 }
 
 # devcontainer_image
 #   Print the base image (name:tag) pinned in devcontainer.json's "image".
 devcontainer_image() {
-  jq -r '.image' <<< "$(devcontainer_json)"
+  go tool gojq -r '.image' <<< "$(devcontainer_json)"
 }
 
 # guard_docker ["$@"...]
@@ -64,10 +64,11 @@ devcontainer_image() {
 # through to its real logic on the host.
 #
 # The base image and cache mounts are read from .devcontainer/devcontainer.json
-# (via jq) rather than duplicated here, so the devcontainer stays the single
-# source of truth. devcontainer.json allows "//"-comments (JSONC), which jq
-# can't parse, so comment-only lines are stripped first; the file has no
-# "://" value strings for that stripping to corrupt.
+# (via gojq, run through `go tool`) rather than duplicated here, so the
+# devcontainer stays the single source of truth. devcontainer.json allows
+# "//"-comments (JSONC), which gojq can't parse, so comment-only lines are
+# stripped first; the file has no "://" value strings for that stripping
+# to corrupt.
 #
 # <task-name> is read off the bash call stack (BASH_SOURCE[1] is the file
 # that defines guard_docker's caller) rather than passed in, which relies
@@ -94,13 +95,7 @@ guard_docker() {
   while IFS= read -r mount; do
     [ -n "$mount" ] || continue
     mount_args+=(--mount "$mount")
-  done < <(jq -r '.mounts[] | select(type == "string")' <<< "$(devcontainer_json)")
-
-  # Volume-subpaths (e.g. imgproxy-cache's "cache"/"go-mod") must already
-  # exist inside their volume before Docker will mount them -- see
-  # bin/create-cache-volumes.sh, shared with devcontainer.json's own
-  # initializeCommand so there's one place that creates them.
-  "$PROJECT_ROOT/run" create-cache-volumes
+  done < <(go tool gojq -r '.mounts[] | select(type == "string")' <<< "$(devcontainer_json)")
 
   # -t needs a real terminal; without one docker hard-fails ("the input
   # device is not a TTY"). Keep -i unconditionally (harmless without a

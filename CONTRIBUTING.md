@@ -10,9 +10,10 @@ imgproxy's dev workflow is built around `./run`, a small task dispatcher
 `.runrc`, and `bin/*.sh`) that most tasks run inside the project's pinned
 `imgproxy-base` Docker image, so you don't need every dependency installed locally.
 
-- **Recommended: Docker + the devcontainer.** You'll also need `jq` on your host, since
-  the devcontainer's `initializeCommand` runs a `./run` task before the container itself
-  exists. See [`.devcontainer/oss/README.md`](.devcontainer/oss/README.md) for setup.
+- **Recommended: Docker + the devcontainer.** You'll also need Go on your host, since
+  `guard_docker` (a `./run` helper) shells out to `go tool gojq` to read
+  `devcontainer.json` before re-invoking a task inside the container. See
+  [`.devcontainer/oss/README.md`](.devcontainer/oss/README.md) for setup.
 - **Without Docker:** install `vips`, `clang-format`, and `lychee` locally (see
   [`.devcontainer/oss/README.md`](.devcontainer/oss/README.md) for the exact packages).
   `./run build`, `./run fmt`, and `./run upgrade-mod` run directly on your host either way.
