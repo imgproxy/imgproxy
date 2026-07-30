@@ -1,5 +1,9 @@
 # Changelog
 
+## [4.0.13] - TBA
+### Fixed
+- Fixed recovered non-error panics still being logged and reported as `panic: <nil>` instead of the actual panic value.
+
 ## [4.0.12] - 2026-07-29
 ### Fixed
 - Fixed possible BMP loader heap buffer overflow.
