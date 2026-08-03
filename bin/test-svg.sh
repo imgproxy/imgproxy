@@ -36,7 +36,7 @@ main() {
     tmp_dir="$(mktemp -d "$data_dir/.svgo-test-suite.XXXXXX")"
 
     run::msg_ok "downloading svgo-test-suite..."
-    curl -fsSL "$SVGO_TEST_SUITE_URL" | tar -xz -C "$tmp_dir"
+    curl -fsSL "$SVGO_TEST_SUITE_URL" | tar -xz -C "$tmp_dir" --strip-components=1
     mv "$tmp_dir" "$suite_dir"
   fi
 
