@@ -180,6 +180,10 @@ func (s *ImageProviderTestSuite) TestNewProvider() {
 				s.Require().NotNil(provider)
 			}
 
+			if provider != nil {
+				defer provider.Close()
+			}
+
 			if tt.validateFunc != nil {
 				tt.validateFunc(provider)
 			}

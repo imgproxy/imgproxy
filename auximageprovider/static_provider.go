@@ -22,6 +22,11 @@ func (s *staticProvider) Get(_ context.Context, _ *options.Options) (imagedata.I
 	return s.data.Ref(), s.headers.Clone(), nil
 }
 
+// Close releases the static image data held by the provider.
+func (s *staticProvider) Close() error {
+	return s.data.Close()
+}
+
 // NewStaticProvider creates a new ImageProvider from either a base64 string, file path, or URL
 func NewStaticProvider(
 	ctx context.Context,

@@ -19,5 +19,5 @@ EOF
 main() {
   guard_docker "$@"
   require_tool_go
-  go tool gotestsum -- ./... "$@"
+  TEST_IMAGEDATA_REFCOUNT_PANIC=1 go tool gotestsum -- ./... "$@"
 }

@@ -15,4 +15,7 @@ import (
 // on options. It is used to retrieve WatermarkImage and FallbackImage.
 type Provider interface {
 	Get(ctx context.Context, opts *options.Options) (imagedata.ImageData, http.Header, error)
+
+	// Close releases the image data held by the provider.
+	Close() error
 }

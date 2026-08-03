@@ -85,6 +85,8 @@ func (s *ImageDataTestSuite) TestDownloadStatusOK() {
 
 	s.Require().NoError(err)
 	s.Require().NotNil(imgdata)
+	defer imgdata.Close()
+
 	s.Require().True(testutil.ReadersEqual(s.T(), bytes.NewReader(s.data), imgdata.Reader()))
 	s.Require().Equal(imagetype.JPEG, imgdata.Format())
 }
@@ -158,6 +160,8 @@ func (s *ImageDataTestSuite) TestDownloadStatusPartialContent() {
 			} else {
 				s.Require().NoError(err)
 				s.Require().NotNil(imgdata)
+				defer imgdata.Close()
+
 				s.Require().True(testutil.ReadersEqual(s.T(), bytes.NewReader(s.data), imgdata.Reader()))
 				s.Require().Equal(imagetype.JPEG, imgdata.Format())
 			}
@@ -283,6 +287,8 @@ func (s *ImageDataTestSuite) TestDownloadGzip() {
 
 	s.Require().NoError(err)
 	s.Require().NotNil(imgdata)
+	defer imgdata.Close()
+
 	s.Require().True(testutil.ReadersEqual(s.T(), bytes.NewReader(s.data), imgdata.Reader()))
 	s.Require().Equal(imagetype.JPEG, imgdata.Format())
 }
@@ -323,6 +329,8 @@ func (s *ImageDataTestSuite) TestFromFile() {
 
 	s.Require().NoError(err)
 	s.Require().NotNil(imgdata)
+	defer imgdata.Close()
+
 	s.Require().True(testutil.ReadersEqual(s.T(), bytes.NewReader(s.data), imgdata.Reader()))
 	s.Require().Equal(imagetype.JPEG, imgdata.Format())
 }
@@ -334,6 +342,8 @@ func (s *ImageDataTestSuite) TestFromBase64() {
 
 	s.Require().NoError(err)
 	s.Require().NotNil(imgdata)
+	defer imgdata.Close()
+
 	s.Require().True(testutil.ReadersEqual(s.T(), bytes.NewReader(s.data), imgdata.Reader()))
 	s.Require().Equal(imagetype.JPEG, imgdata.Format())
 }

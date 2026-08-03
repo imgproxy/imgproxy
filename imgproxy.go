@@ -224,6 +224,13 @@ func (i *Imgproxy) StartServer(ctx context.Context, hasStarted chan net.Addr) er
 func (i *Imgproxy) Close(ctx context.Context) {
 	i.monitoring.Stop(ctx)
 	i.errorReporter.Close()
+
+	if i.fallbackImage != nil {
+		i.fallbackImage.Close() //nolint:errcheck
+	}
+	if i.watermarkImage != nil {
+		i.watermarkImage.Close() //nolint:errcheck
+	}
 }
 
 func (i *Imgproxy) Fetcher() *fetcher.Fetcher {

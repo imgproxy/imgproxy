@@ -223,12 +223,14 @@ func (s *ProcessingHandlerTestSuite) TestSkipProcessingSVG() {
 	s.Require().Equal(http.StatusOK, res.StatusCode)
 
 	data := imagedata.NewFromBytesWithFormat(imagetype.SVG, s.TestData.Read("test1.svg"))
+	defer data.Close()
 
 	cfg := svg.NewDefaultConfig()
 	svgProc := svg.New(&cfg)
 
 	expected, err := svgProc.Process(&options.Options{}, data)
 	s.Require().NoError(err)
+	defer expected.Close()
 
 	s.Require().True(testutil.ReadersEqual(s.T(), expected.Reader(), res.Body))
 }
