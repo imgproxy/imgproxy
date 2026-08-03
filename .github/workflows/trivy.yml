@@ -15,33 +15,32 @@ jobs:
       id-token: write
     steps:
       - name: Run Trivy vulnerability scanner
-        id: trivy
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: ${{ inputs.container_image }}
-          format: table
-          output: trivy-report.txt
+          format: json
+          output: trivy-report.json
           severity: CRITICAL,HIGH,MEDIUM
           ignore-unfixed: true
           exit-code: "0"
           cache: "false"
 
+      # Renders the JSON report from the scan above back into the same table
+      # format the old table-format scan produced, without rescanning.
       - name: Write scan results to job summary
         if: always()
         run: |
           {
             echo "### Trivy scan: ${{ inputs.container_image }}"
             echo '```'
-            cat trivy-report.txt
+            trivy convert --format table trivy-report.json
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Fail on critical vulnerabilities
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-        with:
-          image-ref: ${{ inputs.container_image }}
-          format: table
-          severity: CRITICAL,HIGH
-          ignore-unfixed: true
-          exit-code: "1"
-          cache: "false"
+        run: |
+          count=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity == "CRITICAL" or .Severity == "HIGH")] | length' trivy-report.json)
+          if [ "$count" -gt 0 ]; then
+            echo "Found $count CRITICAL/HIGH severity vulnerabilit(y/ies) — see job summary." >&2
+            exit 1
+          fi
