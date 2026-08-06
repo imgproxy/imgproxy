@@ -1,6 +1,6 @@
 # Changelog
 
-## [4.0.14] - TBA
+## [4.0.13] - TBA
 ## Fixed
 - Fixed inconsistent environment variable names between the code and documentation (`IMGPROXY_AIRBRAKE_ENVIRONMENT`, `IMGPROXY_S3_USE_DECRYPTION_CLIENT`, `IMGPROXY_USE_LAST_MODIFIED` and `IMGPROXY_USE_ETAG`).
 
