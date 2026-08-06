@@ -46,7 +46,7 @@ var (
 		EndpointUsePathStyle:    env.Bool("IMGPROXY_S3_ENDPOINT_USE_PATH_STYLE"),
 		AssumeRoleArn:           env.String("IMGPROXY_S3_ASSUME_ROLE_ARN"),
 		AssumeRoleExternalID:    env.String("IMGPROXY_S3_ASSUME_ROLE_EXTERNAL_ID"),
-		DecryptionClientEnabled: env.Bool("IMGPROXY_S3_DECRYPTION_CLIENT_ENABLED"),
+		DecryptionClientEnabled: env.Bool("IMGPROXY_S3_USE_DECRYPTION_CLIENT"),
 		AllowedBuckets:          env.StringSlice("IMGPROXY_S3_ALLOWED_BUCKETS"),
 		DeniedBuckets:           env.StringSlice("IMGPROXY_S3_DENIED_BUCKETS"),
 	}
