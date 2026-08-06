@@ -10,7 +10,7 @@ import (
 var (
 	IMGPROXY_AIRBRAKE_PROJECT_ID  = env.Int("IMGPROXY_AIRBRAKE_PROJECT_ID")
 	IMGPROXY_AIRBRAKE_PROJECT_KEY = env.String("IMGPROXY_AIRBRAKE_PROJECT_KEY")
-	IMGPROXY_AIRBRAKE_ENV         = env.String("IMGPROXY_AIRBRAKE_ENV")
+	IMGPROXY_AIRBRAKE_ENVIRONMENT = env.String("IMGPROXY_AIRBRAKE_ENVIRONMENT")
 )
 
 // Config holds Airbrake-related configuration.
@@ -36,7 +36,7 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 	err := errors.Join(
 		IMGPROXY_AIRBRAKE_PROJECT_ID.Parse(&c.ProjectID),
 		IMGPROXY_AIRBRAKE_PROJECT_KEY.Parse(&c.ProjectKey),
-		IMGPROXY_AIRBRAKE_ENV.Parse(&c.Env),
+		IMGPROXY_AIRBRAKE_ENVIRONMENT.Parse(&c.Env),
 	)
 
 	return c, err

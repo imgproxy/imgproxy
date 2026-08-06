@@ -1,5 +1,9 @@
 # Changelog
 
+## [4.0.13] - TBA
+## Fixed
+- Fixed inconsistent environment variable names between the code and documentation (`IMGPROXY_AIRBRAKE_ENVIRONMENT`, `IMGPROXY_S3_USE_DECRYPTION_CLIENT`, `IMGPROXY_USE_LAST_MODIFIED` and `IMGPROXY_USE_ETAG`).
+
 ## [4.1.0] - TBA
 ### Added
 - `requests_total`, `status_codes_total`, `errors_total`, `request_duration_seconds`, `request_span_duration_seconds` metrics to OpenTelemetry.

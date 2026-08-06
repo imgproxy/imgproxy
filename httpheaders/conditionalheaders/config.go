@@ -9,10 +9,10 @@ import (
 )
 
 var (
-	IMGPROXY_LAST_MODIFIED_ENABLED = env.Bool("IMGPROXY_LAST_MODIFIED_ENABLED")
-	IMGPROXY_LAST_MODIFIED_BUSTER  = env.DateTime("IMGPROXY_LAST_MODIFIED_BUSTER")
-	IMGPROXY_ETAG_ENABLED          = env.Bool("IMGPROXY_ETAG_ENABLED")
-	IMGPROXY_ETAG_BUSTER           = env.String("IMGPROXY_ETAG_BUSTER")
+	IMGPROXY_USE_LAST_MODIFIED    = env.Bool("IMGPROXY_USE_LAST_MODIFIED")
+	IMGPROXY_LAST_MODIFIED_BUSTER = env.DateTime("IMGPROXY_LAST_MODIFIED_BUSTER")
+	IMGPROXY_USE_ETAG             = env.Bool("IMGPROXY_USE_ETAG")
+	IMGPROXY_ETAG_BUSTER          = env.String("IMGPROXY_ETAG_BUSTER")
 )
 
 // Config represents conditional headers config
@@ -38,8 +38,8 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 	c = ensure.Ensure(c, NewDefaultConfig)
 
 	err := errors.Join(
-		IMGPROXY_LAST_MODIFIED_ENABLED.Parse(&c.LastModifiedEnabled),
-		IMGPROXY_ETAG_ENABLED.Parse(&c.ETagEnabled),
+		IMGPROXY_USE_LAST_MODIFIED.Parse(&c.LastModifiedEnabled),
+		IMGPROXY_USE_ETAG.Parse(&c.ETagEnabled),
 		IMGPROXY_LAST_MODIFIED_BUSTER.Parse(&c.LastModifiedBuster),
 		IMGPROXY_ETAG_BUSTER.Parse(&c.ETagBuster),
 	)
