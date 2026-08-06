@@ -1,5 +1,9 @@
 # Changelog
 
+## [4.0.14] - TBA
+## Fixed
+- Fixed inconsistent environment variable names between the code and documentation (`IMGPROXY_AIRBRAKE_ENVIRONMENT`, `IMGPROXY_S3_USE_DECRYPTION_CLIENT`, `IMGPROXY_USE_LAST_MODIFIED` and `IMGPROXY_USE_ETAG`).
+
 ## [4.0.12] - 2026-07-29
 ### Fixed
 - Fixed possible BMP loader heap buffer overflow.
