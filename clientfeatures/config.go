@@ -45,6 +45,7 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 		IMGPROXY_ENFORCE_AVIF.Parse(&c.EnforceAvif),
 		IMGPROXY_AUTO_JXL.Parse(&c.AutoJxl),
 		IMGPROXY_ENFORCE_JXL.Parse(&c.EnforceJxl),
+		IMGPROXY_ENABLE_CLIENT_HINTS.Parse(&c.EnableClientHints),
 	)
 
 	return c, err
