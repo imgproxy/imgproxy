@@ -1,6 +1,6 @@
 module github.com/imgproxy/imgproxy/v4
 
-go 1.26.5
+go 1.26.6
 
 require (
 	cloud.google.com/go/secretmanager v1.21.0
