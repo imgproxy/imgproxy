@@ -8,6 +8,8 @@ import "C"
 import (
 	"log/slog"
 	"strconv"
+
+	"github.com/imgproxy/imgproxy/v4/env"
 )
 
 // WebpPreset represents WebP preset to use when saving WebP images
@@ -39,12 +41,7 @@ func (wp WebpPreset) C() C.VipsForeignWebpPreset {
 
 // String returns the string representation of the WebpPreset
 func (wp WebpPreset) String() string {
-	for k, v := range WebpPresets {
-		if v == wp {
-			return k
-		}
-	}
-	return "unknown"
+	return env.EnumName(WebpPresets, wp, "unknown")
 }
 
 // MarshalJSON implements the json.Marshaler interface

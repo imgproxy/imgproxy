@@ -11,7 +11,8 @@ Pulls ghcr.io/imgproxy/imgproxy-base:<new-version> and updates every place
 that pins the base image version: GitHub Actions workflows,
 .devcontainer/docker-compose.yml, and docker/Dockerfile. guard_docker (in
 .runrc) reads the image straight from docker-compose.yml, so it needs no
-update of its own.
+update of its own. Finally, greps the repo to confirm the old version
+string doesn't linger anywhere it shouldn't.
 
 Example:
   ./run update-base-image v4.2.0
@@ -36,8 +37,9 @@ main() {
 
   # Same image guard_docker uses (.devcontainer/docker-compose.yml's "image"),
   # minus its tag, so this stays in sync without hardcoding the repo path.
-  local image
+  local image old_version
   image="$(devcontainer_image)"
+  old_version="${image##*:}"
   image="${image%:*}"
 
   local workflows_dir="$PROJECT_ROOT/.github/workflows"
@@ -75,6 +77,18 @@ main() {
     sed -i.bak "s|\(ARG BASE_IMAGE_VERSION=\"\).*\"|\1$new_version\"|" "$dockerfile"
     rm -f "${dockerfile}.bak"
     run::msg_ok "updated $dockerfile"
+  fi
+
+  if [ "$old_version" != "$new_version" ]; then
+    run::msg_info "checking for leftover references to $old_version..."
+    local leftover
+    leftover="$(git -C "$PROJECT_ROOT" grep -F -l -- "$old_version" || true)"
+    if [ -n "$leftover" ]; then
+      run::msg_err "old version $old_version still referenced in:"
+      printf '%s\n' "$leftover" >&2
+      return 1
+    fi
+    run::msg_ok "no leftover references to $old_version"
   fi
 
   printf '\n'

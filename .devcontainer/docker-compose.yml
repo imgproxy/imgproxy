@@ -2,7 +2,7 @@ name: imgproxy
 
 services:
   imgproxy:
-    image: ghcr.io/imgproxy/imgproxy-base:v4.0.6
+    image: ghcr.io/imgproxy/imgproxy-base:v4.0.7
     init: true
     working_dir: /workspaces/imgproxy
     environment:

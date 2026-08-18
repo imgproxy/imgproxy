@@ -3,26 +3,21 @@ package processing
 import (
 	"fmt"
 	"log/slog"
+
+	"github.com/imgproxy/imgproxy/v4/env"
 )
 
 type GravityType int
 
 func (gt GravityType) String() string {
-	for k, v := range GravityTypes {
-		if v == gt {
-			return k
-		}
-	}
-	return ""
+	return env.EnumName(GravityTypes, gt, "")
 }
 
 func (gt GravityType) MarshalJSON() ([]byte, error) {
-	for k, v := range GravityTypes {
-		if v == gt {
-			return fmt.Appendf([]byte{}, "%q", k), nil
-		}
+	if s := gt.String(); s != "" {
+		return fmt.Appendf([]byte{}, "%q", s), nil
 	}
-	return fmt.Appendf([]byte{}, "%s", "null"), nil
+	return []byte("null"), nil
 }
 
 func (gt GravityType) LogValue() slog.Value {
