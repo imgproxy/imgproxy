@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"time"
 
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/log"
 	sdklog "go.opentelemetry.io/otel/sdk/log"
 
@@ -37,7 +38,7 @@ func (h *logHook) Fire(ctx context.Context, t time.Time, lvl slog.Level, msg []b
 	// Create log record
 	var logRecord log.Record
 	logRecord.SetTimestamp(t)
-	logRecord.SetBody(log.StringValue(string(msg)))
+	logRecord.SetBody(attribute.StringValue(string(msg)))
 	logRecord.SetSeverity(mapSeverity(lvl))
 	logRecord.SetSeverityText(lvl.String())
 
