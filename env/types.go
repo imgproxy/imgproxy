@@ -48,6 +48,18 @@ func Enum[T any](name string, m map[string]T) EnumVar[T] {
 	}
 }
 
+// EnumName returns the map key whose value equals v, or fallback if none matches.
+// Pair it with the same map passed to Enum to render a parsed enum value back to its name.
+func EnumName[T comparable](m map[string]T, v T, fallback string) string {
+	for name, val := range m {
+		if val == v {
+			return name
+		}
+	}
+
+	return fallback
+}
+
 // Bool defines boolean env var descriptor
 func Bool(name string) BoolVar {
 	return BoolVar{

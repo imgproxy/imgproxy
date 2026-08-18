@@ -1,6 +1,10 @@
 package processing
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/imgproxy/imgproxy/v4/env"
+)
 
 type ResizeType int
 
@@ -21,19 +25,12 @@ var ResizeTypes = map[string]ResizeType{
 }
 
 func (rt ResizeType) String() string {
-	for k, v := range ResizeTypes {
-		if v == rt {
-			return k
-		}
-	}
-	return ""
+	return env.EnumName(ResizeTypes, rt, "")
 }
 
 func (rt ResizeType) MarshalJSON() ([]byte, error) {
-	for k, v := range ResizeTypes {
-		if v == rt {
-			return fmt.Appendf([]byte{}, "%q", k), nil
-		}
+	if s := rt.String(); s != "" {
+		return fmt.Appendf([]byte{}, "%q", s), nil
 	}
 	return []byte("null"), nil
 }
