@@ -42,7 +42,7 @@ func signatureFor(str string, key, salt []byte, signatureSize int) []byte {
 
 	// It's supposed that path starts with '/'. However, if and input path comes with the
 	// leading slash split, let's re-add it here.
-	if str[0] != '/' {
+	if len(str) == 0 || str[0] != '/' {
 		mac.Write([]byte{'/'})
 	}
 

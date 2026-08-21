@@ -95,6 +95,13 @@ func (s *PathTestSuite) TestParsePath() {
 			expectedSig:   "",
 			expectedError: true,
 		},
+		{
+			name:          "EmptyPathAfterRedenormalization",
+			requestPath:   "/dummy_signature//",
+			expectedPath:  "",
+			expectedSig:   "",
+			expectedError: true,
+		},
 	}
 
 	for _, tc := range testCases {
