@@ -69,6 +69,11 @@ func (s *SignatureTestSuite) TestVerifySignatureMultiplePairs() {
 	s.Require().Error(err)
 }
 
+func (s *SignatureTestSuite) TestVerifySignatureEmptyPath() {
+	err := s.checker().VerifySignature(s.T().Context(), "oWaL7QoW5TsgbuiS9-5-DI8S3Ibbo1gdB2SteJh3a20", "")
+	s.Require().Error(err)
+}
+
 func (s *SignatureTestSuite) TestVerifySignatureTrusted() {
 	s.config().TrustedSignatures = []string{"truested"}
 
