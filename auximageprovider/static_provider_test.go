@@ -23,7 +23,7 @@ type ImageProviderTestSuite struct {
 	testDataB64 string
 
 	testServer testutil.LazyTestServer
-	idf        *imagedata.Factory
+	idf        imagedata.Factory
 }
 
 func (s *ImageProviderTestSuite) SetupSuite() {

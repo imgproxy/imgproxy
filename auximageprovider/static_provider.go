@@ -32,7 +32,7 @@ func NewStaticProvider(
 	ctx context.Context,
 	c *StaticConfig,
 	desc string,
-	idf *imagedata.Factory,
+	idf imagedata.Factory,
 ) (Provider, error) {
 	var (
 		data    imagedata.ImageData

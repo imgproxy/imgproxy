@@ -28,7 +28,7 @@ type HandlerContext interface {
 	Workers() *workers.Workers
 	ClientFeaturesDetector() *clientfeatures.Detector
 	FallbackImage() auximageprovider.Provider
-	ImageDataFactory() *imagedata.Factory
+	ImageDataFactory() imagedata.Factory
 	Security() *security.Checker
 	OptionsParser() *optionsparser.Parser
 	Processor() *processing.Processor

@@ -26,14 +26,23 @@ var bufPool = sync.Pool{
 }
 
 // Factory represents ImageData factory
-type Factory struct {
+type Factory interface {
+	NewFromBytes(b []byte) (ImageData, error)
+	NewFromPath(path string) (ImageData, error)
+	NewFromBase64(encoded string) (ImageData, error)
+	DownloadSync(ctx context.Context, imageURL, desc string, opts DownloadOptions) (ImageData, http.Header, error)
+	DownloadAsync(ctx context.Context, imageURL, desc string, opts DownloadOptions) (ImageData, http.Header, error)
+}
+
+// factory is the default implementation of the Factory interface.
+type factory struct {
 	fetcher    *fetcher.Fetcher
 	monitoring *monitoring.Monitoring
 }
 
-// NewFactory creates a new factory
-func NewFactory(fetcher *fetcher.Fetcher, monitoring *monitoring.Monitoring) *Factory {
-	return &Factory{
+// NewFactory creates a new default Factory implementation.
+func NewFactory(fetcher *fetcher.Fetcher, monitoring *monitoring.Monitoring) Factory {
+	return &factory{
 		fetcher:    fetcher,
 		monitoring: monitoring,
 	}
@@ -46,7 +55,7 @@ func NewFromBytesWithFormat(format imagetype.Type, b []byte) ImageData {
 }
 
 // NewFromBytes creates a new ImageData instance from the provided byte slice.
-func (f *Factory) NewFromBytes(b []byte) (ImageData, error) {
+func (f *factory) NewFromBytes(b []byte) (ImageData, error) {
 	r := bytes.NewReader(b)
 
 	format, err := imagetype.Detect(r, "", "")
@@ -58,7 +67,7 @@ func (f *Factory) NewFromBytes(b []byte) (ImageData, error) {
 }
 
 // NewFromPath creates a new ImageData from an os.File
-func (f *Factory) NewFromPath(path string) (ImageData, error) {
+func (f *factory) NewFromPath(path string) (ImageData, error) {
 	fl, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -74,7 +83,7 @@ func (f *Factory) NewFromPath(path string) (ImageData, error) {
 }
 
 // NewFromBase64 creates a new ImageData from a base64 encoded byte slice
-func (f *Factory) NewFromBase64(encoded string) (ImageData, error) {
+func (f *factory) NewFromBase64(encoded string) (ImageData, error) {
 	b, err := base64.StdEncoding.DecodeString(encoded)
 	if err != nil {
 		return nil, err
@@ -84,7 +93,7 @@ func (f *Factory) NewFromBase64(encoded string) (ImageData, error) {
 }
 
 // DownloadSync downloads the image synchronously and returns the ImageData and HTTP headers.
-func (f *Factory) DownloadSync(
+func (f *factory) DownloadSync(
 	ctx context.Context,
 	imageURL, desc string,
 	opts DownloadOptions,
@@ -147,7 +156,7 @@ func (f *Factory) DownloadSync(
 
 // DownloadAsync downloads the image asynchronously and returns the ImageData
 // backed by AsyncBuffer and HTTP headers.
-func (f *Factory) DownloadAsync(
+func (f *factory) DownloadAsync(
 	ctx context.Context,
 	imageURL, desc string,
 	opts DownloadOptions,
@@ -190,7 +199,7 @@ func (f *Factory) DownloadAsync(
 }
 
 // sendRequest is a common logic between sync and async download.
-func (f *Factory) sendRequest(
+func (f *factory) sendRequest(
 	ctx context.Context, url string, opts DownloadOptions,
 ) (*fetcher.Request, *http.Response, http.Header, error) {
 	h := make(http.Header)
@@ -240,7 +249,7 @@ func (f *Factory) sendRequest(
 	return req, res, h, nil
 }
 
-func (f *Factory) startMonitoringSpan(
+func (f *factory) startMonitoringSpan(
 	ctx context.Context,
 	imageURL, desc string,
 ) (context.Context, context.CancelFunc) {

@@ -27,7 +27,7 @@ type ImageDataTestSuite struct {
 	testutil.LazySuite
 
 	fetcherCfg testutil.LazyObj[*fetcher.Config]
-	factory    testutil.LazyObj[*imagedata.Factory]
+	factory    testutil.LazyObj[imagedata.Factory]
 	testServer testutil.LazyTestServer
 
 	data []byte
@@ -49,7 +49,7 @@ func (s *ImageDataTestSuite) SetupSuite() {
 
 	s.factory, _ = testutil.NewLazySuiteObj(
 		s,
-		func() (*imagedata.Factory, error) {
+		func() (imagedata.Factory, error) {
 			f, err := fetcher.New(s.fetcherCfg())
 			if err != nil {
 				return nil, err

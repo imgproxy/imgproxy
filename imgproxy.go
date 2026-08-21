@@ -45,7 +45,7 @@ type Imgproxy struct {
 	fallbackImage          auximageprovider.Provider
 	watermarkImage         auximageprovider.Provider
 	fetcher                *fetcher.Fetcher
-	imageDataFactory       *imagedata.Factory
+	imageDataFactory       imagedata.Factory
 	clientFeaturesDetector *clientfeatures.Detector
 	handlers               ImgproxyHandlers
 	securityChecker        *security.Checker
@@ -249,7 +249,7 @@ func (i *Imgproxy) WatermarkImage() auximageprovider.Provider {
 	return i.watermarkImage
 }
 
-func (i *Imgproxy) ImageDataFactory() *imagedata.Factory {
+func (i *Imgproxy) ImageDataFactory() imagedata.Factory {
 	return i.imageDataFactory
 }
 
