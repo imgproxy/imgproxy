@@ -1,11 +1,14 @@
 # Changelog
 
 ## [4.0.14] - TBA
+### Changed
+- Updated dependencies.
+
 ### Fixed
 - Fixed a panic on certain malformed request paths (such as a trailing double slash) that returned a 500 error instead of a proper 4xx response.
 
 ## [4.0.13] - 2026-08-18
-## Changed
+### Changed
 - Updated dependencies.
 
 ## Fixed
