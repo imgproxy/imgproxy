@@ -2,7 +2,7 @@ package errctx
 
 // WrappedError is an implementation of [Error] that wraps another error.
 //
-// It also implements the Unwrap and Cause methods to retrieve the wrapped error.
+// It also implements Unwrap to retrieve the wrapped error.
 //
 // When implementing a custom error type that wraps another error,
 // embed [WrappedError] to provide standard behavior.
@@ -87,11 +87,5 @@ func (e *WrappedError) Error() string {
 
 // Unwrap returns the wrapped error.
 func (e *WrappedError) Unwrap() error {
-	return e.error
-}
-
-// Cause returns the wrapped error.
-// This method is provided for compatibility with github.com/pkg/errors.
-func (e *WrappedError) Cause() error {
 	return e.error
 }

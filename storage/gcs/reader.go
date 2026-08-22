@@ -4,16 +4,17 @@ import (
 	"context"
 	"encoding/binary"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
 
 	gcs "cloud.google.com/go/storage"
+
 	"github.com/imgproxy/imgproxy/v4/httpheaders"
 	"github.com/imgproxy/imgproxy/v4/httprange"
 	"github.com/imgproxy/imgproxy/v4/storage"
 	"github.com/imgproxy/imgproxy/v4/storage/common"
-	"github.com/pkg/errors"
 )
 
 // GetObject retrieves an object from Azure cloud
