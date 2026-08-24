@@ -33,25 +33,18 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Prepare notes
-        id: notes
         run: |
           # Extract changelog entries between this and previous version headers
           escaped_version=$(echo ${GITHUB_REF_NAME#v} | sed -e 's/[]\/$*.^[]/\\&/g')
           awk "BEGIN{inrelease=0} /## \[${escaped_version}\]/{inrelease=1;next} /## \[[0-9]+\.[0-9]+\.[0-9]+.*\]/{inrelease=0;exit} {if (inrelease) print}" CHANGELOG.md \
             > RELEASE_NOTES.txt
 
-          # Write PRERELEASE="true" env if tag name has any suffix after vMAJOR.MINOR.PATCH
-          if [[ ${GITHUB_REF_NAME} =~ ^v[0-9]+\.[0-9]+\.[0-9]+.+ ]]; then
-            echo "prerelease=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "prerelease=false" >> "$GITHUB_OUTPUT"
-          fi
-
       - name: Release
         uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
         with:
           body_path: RELEASE_NOTES.txt
-          prerelease: ${{ fromJSON(steps.notes.outputs.prerelease) }}
+          # If the tag contains a hyphen, it is a pre-release (e.g. 1.2.3-rc1, 1.2.3-beta, etc.).
+          prerelease: ${{ contains(github.ref_name, '-') }}
 
   update-helm-chart:
     needs: [build]
