@@ -15,7 +15,7 @@ import (
 type HoneybadgerTestSuite struct {
 	suite.Suite
 
-	captured *honeybadgervendor.Notice
+	backend  *honeybadger.NotifyCapturingBackend
 	reporter *honeybadger.ReporterIface
 }
 
@@ -24,16 +24,12 @@ func TestHoneybadger(t *testing.T) {
 }
 
 func (s *HoneybadgerTestSuite) SetupTest() {
-	s.captured = nil
+	s.backend = &honeybadger.NotifyCapturingBackend{}
 
 	cfg := &honeybadger.Config{
 		Key:     "test",
 		Env:     "test",
-		Backend: &honeybadgervendor.TestBackend{},
-		BeforeNotify: func(n *honeybadgervendor.Notice) error {
-			s.captured = n
-			return nil
-		},
+		Backend: s.backend,
 	}
 
 	r, err := honeybadger.New(cfg)
@@ -94,9 +90,11 @@ func (s *HoneybadgerTestSuite) TestReport() {
 			s.Require().NotPanics(func() {
 				s.reporter.Report(errctx.NewTextError("boom", 0), req, tc.meta)
 			})
+			s.reporter.Close()
 
-			s.Require().NotNil(s.captured)
-			s.Require().Equal(tc.wantCGIData, s.captured.CGIData)
+			notice := s.backend.LastNotice()
+			s.Require().NotNil(notice)
+			s.Require().Equal(tc.wantCGIData, notice.CGIData)
 		})
 	}
 }
@@ -106,8 +104,10 @@ func (s *HoneybadgerTestSuite) TestReportOverridesWrappedErrorType() {
 	wrapped := errctx.Wrap(base)
 
 	s.reporter.Report(wrapped, nil, nil)
+	s.reporter.Close()
 
-	s.Require().NotNil(s.captured)
-	s.Require().Equal(errctx.ErrorType(wrapped), s.captured.ErrorClass)
-	s.Require().NotEqual("*errctx.WrappedError", s.captured.ErrorClass)
+	notice := s.backend.LastNotice()
+	s.Require().NotNil(notice)
+	s.Require().Equal(errctx.ErrorType(wrapped), notice.ErrorClass)
+	s.Require().NotEqual("*errctx.WrappedError", notice.ErrorClass)
 }

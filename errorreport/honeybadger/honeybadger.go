@@ -33,10 +33,6 @@ func New(config *Config) (*reporter, error) {
 		Backend: config.Backend,
 	})
 
-	if config.BeforeNotify != nil {
-		client.BeforeNotify(config.BeforeNotify)
-	}
-
 	return &reporter{client: client}, nil
 }
 

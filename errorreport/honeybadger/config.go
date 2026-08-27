@@ -21,19 +21,14 @@ type Config struct {
 	// Backend overrides the Honeybadger client's backend. Nil uses the
 	// client's default network backend. Intended for injecting a test double.
 	Backend honeybadger.Backend
-
-	// BeforeNotify, if set, is registered on the client via BeforeNotify.
-	// Intended for capturing notices in tests.
-	BeforeNotify func(*honeybadger.Notice) error
 }
 
 // NewDefaultConfig creates a new Config instance with default values.
 func NewDefaultConfig() Config {
 	return Config{
-		Key:          "",
-		Env:          "production",
-		Backend:      nil,
-		BeforeNotify: nil,
+		Key:     "",
+		Env:     "production",
+		Backend: nil,
 	}
 }
 
