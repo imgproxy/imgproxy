@@ -1,6 +1,7 @@
 package errorreport_test
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -29,7 +30,7 @@ func TestReportWithNilRequest(t *testing.T) {
 	err := errctx.NewTextError("boom", 0)
 
 	require.NotPanics(t, func() {
-		r.Report(err, nil)
+		r.Report(context.Background(), err, nil)
 	})
 
 	require.Nil(t, fake.gotReq)
@@ -43,7 +44,7 @@ func TestReportWithNilRequestAndDocsURL(t *testing.T) {
 	err := errctx.NewTextError("boom", 0, errctx.WithDocsURL("https://example.com/docs"))
 
 	require.NotPanics(t, func() {
-		r.Report(err, nil)
+		r.Report(context.Background(), err, nil)
 	})
 
 	require.Nil(t, fake.gotReq)
@@ -61,11 +62,28 @@ func TestReportWithRequestAndMetadata(t *testing.T) {
 
 	err := errctx.NewTextError("boom", 0, errctx.WithDocsURL("https://example.com/docs"))
 
-	r.Report(err, req)
+	r.Report(ctx, err, req)
 
 	require.Same(t, req, fake.gotReq)
 	require.Equal(t, map[string]any{
 		"Request ID":        "abc123",
 		"Documentation URL": "https://example.com/docs",
 	}, fake.gotMeta)
+}
+
+func TestReportWithNilRequestButContextMetadata(t *testing.T) {
+	fake := &fakeReporter{}
+	r := errorreport.NewWithReporters(fake)
+
+	req := httptest.NewRequest(http.MethodGet, "http://example.com/", nil)
+	ctx := errorreport.StartRequest(req)
+	req = req.WithContext(ctx)
+	errorreport.SetMetadata(req, "Request ID", "abc123")
+
+	err := errctx.NewTextError("boom", 0)
+
+	r.Report(ctx, err, nil)
+
+	require.Nil(t, fake.gotReq)
+	require.Equal(t, map[string]any{"Request ID": "abc123"}, fake.gotMeta)
 }
