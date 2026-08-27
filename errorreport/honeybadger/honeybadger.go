@@ -28,9 +28,14 @@ func New(config *Config) (*reporter, error) {
 	}
 
 	client := honeybadger.New(honeybadger.Configuration{
-		APIKey: config.Key,
-		Env:    config.Env,
+		APIKey:  config.Key,
+		Env:     config.Env,
+		Backend: config.Backend,
 	})
+
+	if config.BeforeNotify != nil {
+		client.BeforeNotify(config.BeforeNotify)
+	}
 
 	return &reporter{client: client}, nil
 }

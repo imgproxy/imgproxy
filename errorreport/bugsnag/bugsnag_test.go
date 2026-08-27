@@ -49,14 +49,17 @@ func TestBugsnag(t *testing.T) {
 func (s *BugsnagTestSuite) SetupTest() {
 	s.server, s.reports = bugsnagtestutil.Setup()
 
-	notifier := bugsnagvendor.New(bugsnagvendor.Configuration{
-		APIKey:       bugsnagtestutil.TestAPIKey,
-		Endpoints:    bugsnagvendor.Endpoints{Notify: s.server.URL},
-		Synchronous:  true,
-		PanicHandler: func() {},
-	})
+	cfg := &bugsnag.Config{
+		Key:       bugsnagtestutil.TestAPIKey,
+		Stage:     "test",
+		Endpoints: bugsnagvendor.Endpoints{Notify: s.server.URL},
+	}
 
-	s.reporter = bugsnag.NewWithNotifier(notifier)
+	r, err := bugsnag.New(cfg)
+	s.Require().NoError(err)
+	s.Require().NotNil(r)
+
+	s.reporter = r
 }
 
 func (s *BugsnagTestSuite) TearDownTest() {

@@ -3,6 +3,7 @@ package bugsnag
 import (
 	"errors"
 
+	"github.com/bugsnag/bugsnag-go/v2"
 	"github.com/imgproxy/imgproxy/v4/ensure"
 	"github.com/imgproxy/imgproxy/v4/env"
 )
@@ -16,13 +17,19 @@ var (
 type Config struct {
 	Key   string
 	Stage string
+
+	// Endpoints overrides the notifier's API endpoints. Zero value uses
+	// Bugsnag's default production endpoints. Intended for pointing tests
+	// at a local mock server.
+	Endpoints bugsnag.Endpoints
 }
 
 // NewDefaultConfig creates a new Config instance with default values.
 func NewDefaultConfig() Config {
 	return Config{
-		Key:   "",
-		Stage: "production",
+		Key:       "",
+		Stage:     "production",
+		Endpoints: bugsnag.Endpoints{},
 	}
 }
 

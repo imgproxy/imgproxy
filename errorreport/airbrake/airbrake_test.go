@@ -25,18 +25,22 @@ func TestAirbrake(t *testing.T) {
 }
 
 func (s *AirbrakeTestSuite) SetupTest() {
-	notifier := gobrake.NewNotifierWithOptions(&gobrake.NotifierOptions{
-		ProjectId:  1,
-		ProjectKey: "test",
-	})
-
 	s.captured = make(chan *gobrake.Notice, 1)
-	notifier.AddFilter(func(n *gobrake.Notice) *gobrake.Notice {
-		s.captured <- n
-		return nil
-	})
 
-	s.reporter = airbrake.NewWithNotifier(notifier)
+	cfg := &airbrake.Config{
+		ProjectID:  1,
+		ProjectKey: "test",
+		Filter: func(n *gobrake.Notice) *gobrake.Notice {
+			s.captured <- n
+			return nil
+		},
+	}
+
+	r, err := airbrake.New(cfg)
+	s.Require().NoError(err)
+	s.Require().NotNil(r)
+
+	s.reporter = r
 }
 
 func (s *AirbrakeTestSuite) SetupSubTest() {

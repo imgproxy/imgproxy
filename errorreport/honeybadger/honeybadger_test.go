@@ -12,8 +12,6 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-var errSkipSend = errors.New("skip send")
-
 type HoneybadgerTestSuite struct {
 	suite.Suite
 
@@ -28,13 +26,21 @@ func TestHoneybadger(t *testing.T) {
 func (s *HoneybadgerTestSuite) SetupTest() {
 	s.captured = nil
 
-	client := honeybadgervendor.New(honeybadgervendor.Configuration{APIKey: "test", Env: "test"})
-	client.BeforeNotify(func(n *honeybadgervendor.Notice) error {
-		s.captured = n
-		return errSkipSend
-	})
+	cfg := &honeybadger.Config{
+		Key:     "test",
+		Env:     "test",
+		Backend: &honeybadgervendor.TestBackend{},
+		BeforeNotify: func(n *honeybadgervendor.Notice) error {
+			s.captured = n
+			return nil
+		},
+	}
 
-	s.reporter = honeybadger.NewWithClient(client)
+	r, err := honeybadger.New(cfg)
+	s.Require().NoError(err)
+	s.Require().NotNil(r)
+
+	s.reporter = r
 }
 
 func (s *HoneybadgerTestSuite) SetupSubTest() {

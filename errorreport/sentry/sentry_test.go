@@ -1,12 +1,10 @@
 package sentry_test
 
 import (
-	"context"
 	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 
 	sentrygo "github.com/getsentry/sentry-go"
 	"github.com/imgproxy/imgproxy/v4/errctx"
@@ -14,32 +12,10 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type mockTransport struct {
-	events []*sentrygo.Event
-}
-
-func (m *mockTransport) Flush(timeout time.Duration) bool {
-	return true
-}
-
-func (m *mockTransport) FlushWithContext(ctx context.Context) bool {
-	return true
-}
-
-func (m *mockTransport) Configure(options sentrygo.ClientOptions) {
-}
-
-func (m *mockTransport) SendEvent(event *sentrygo.Event) {
-	m.events = append(m.events, event)
-}
-
-func (m *mockTransport) Close() {
-}
-
 type SentryTestSuite struct {
 	suite.Suite
 
-	transport *mockTransport
+	transport *sentrygo.MockTransport
 	reporter  *sentry.ReporterIface
 }
 
@@ -48,15 +24,16 @@ func TestSentry(t *testing.T) {
 }
 
 func (s *SentryTestSuite) SetupTest() {
-	s.transport = &mockTransport{}
+	s.transport = &sentrygo.MockTransport{}
 
-	client, err := sentrygo.NewClient(sentrygo.ClientOptions{
-		Dsn:       "https://public@example.com/1",
+	r, err := sentry.New(&sentry.Config{
+		DSN:       "https://public@example.com/1",
 		Transport: s.transport,
 	})
 	s.Require().NoError(err)
+	s.Require().NotNil(r)
 
-	s.reporter = sentry.NewWithClient(client)
+	s.reporter = r
 }
 
 func (s *SentryTestSuite) SetupSubTest() {
@@ -104,8 +81,8 @@ func (s *SentryTestSuite) TestReport() {
 				s.reporter.Report(errctx.NewTextError("boom", 0), req, tc.meta)
 			})
 
-			s.Require().Len(s.transport.events, 1)
-			event := s.transport.events[0]
+			s.Require().Len(s.transport.Events(), 1)
+			event := s.transport.Events()[0]
 
 			if tc.wantRequest {
 				s.Require().NotNil(event.Request)
@@ -129,8 +106,8 @@ func (s *SentryTestSuite) TestReportOverridesWrappedErrorType() {
 
 	s.reporter.Report(wrapped, nil, nil)
 
-	s.Require().Len(s.transport.events, 1)
-	event := s.transport.events[0]
+	s.Require().Len(s.transport.Events(), 1)
+	event := s.transport.Events()[0]
 
 	s.Require().NotEmpty(event.Exception)
 	s.Require().Equal(errctx.ErrorType(wrapped), event.Exception[len(event.Exception)-1].Type)

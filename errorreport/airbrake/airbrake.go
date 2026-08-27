@@ -31,6 +31,10 @@ func New(config *Config) (*reporter, error) {
 		Environment: config.Env,
 	})
 
+	if config.Filter != nil {
+		notifier.AddFilter(config.Filter)
+	}
+
 	return &reporter{notifier}, nil
 }
 

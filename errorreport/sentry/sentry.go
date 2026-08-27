@@ -32,6 +32,7 @@ func New(config *Config) (*reporter, error) {
 		Dsn:         config.DSN,
 		Release:     config.Release,
 		Environment: config.Environment,
+		Transport:   config.Transport,
 	})
 	if err != nil {
 		return nil, err

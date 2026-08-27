@@ -32,6 +32,7 @@ func New(config *Config) (*reporter, error) {
 	notifier := bugsnag.New(bugsnag.Configuration{
 		APIKey:       config.Key,
 		ReleaseStage: config.Stage,
+		Endpoints:    config.Endpoints,
 		PanicHandler: func() {}, // Disable forking the process
 		Logger:       logger{},
 		Synchronous:  true,
