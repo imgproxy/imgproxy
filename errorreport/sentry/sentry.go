@@ -13,13 +13,13 @@ const (
 	flushTimeout = 5 * time.Second
 )
 
-// reporter is a Sentry error reporter
-type reporter struct {
+// Reporter is a Sentry error reporter
+type Reporter struct {
 	hub *sentry.Hub
 }
 
 // New creates and configures a new Sentry reporter
-func New(config *Config) (*reporter, error) {
+func New(config *Config) (*Reporter, error) {
 	if err := config.Validate(); err != nil {
 		return nil, err
 	}
@@ -32,6 +32,7 @@ func New(config *Config) (*reporter, error) {
 		Dsn:         config.DSN,
 		Release:     config.Release,
 		Environment: config.Environment,
+		Transport:   config.Transport,
 	})
 	if err != nil {
 		return nil, err
@@ -39,10 +40,10 @@ func New(config *Config) (*reporter, error) {
 
 	hub := sentry.NewHub(client, sentry.NewScope())
 
-	return &reporter{hub: hub}, nil
+	return &Reporter{hub: hub}, nil
 }
 
-func (r *reporter) Report(err errctx.Error, req *http.Request, meta map[string]any) {
+func (r *Reporter) Report(err errctx.Error, req *http.Request, meta map[string]any) {
 	hub := r.hub.Clone()
 	hub.Scope().SetRequest(req)
 	hub.Scope().SetLevel(sentry.LevelError)
@@ -64,6 +65,6 @@ func (r *reporter) Report(err errctx.Error, req *http.Request, meta map[string]a
 	}
 }
 
-func (r *reporter) Close() {
+func (r *Reporter) Close() {
 	r.hub.Flush(flushTimeout)
 }

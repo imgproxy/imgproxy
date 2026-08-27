@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/imgproxy/imgproxy/v4/ensure"
 	"github.com/imgproxy/imgproxy/v4/env"
 	"github.com/imgproxy/imgproxy/v4/version"
@@ -20,6 +21,10 @@ type Config struct {
 	DSN         string
 	Release     string
 	Environment string
+
+	// Transport overrides the Sentry client's network transport. Nil uses
+	// Sentry's default HTTP transport. Intended for injecting a test double.
+	Transport sentry.Transport
 }
 
 // NewDefaultConfig creates a new Config instance with default values.
@@ -28,6 +33,7 @@ func NewDefaultConfig() Config {
 		DSN:         "",
 		Release:     fmt.Sprintf("imgproxy@%s", version.Version),
 		Environment: "production",
+		Transport:   nil,
 	}
 }
 

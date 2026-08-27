@@ -1,0 +1,148 @@
+package honeybadger_test
+
+import (
+	"errors"
+	"net/http"
+	"net/http/httptest"
+	"sync"
+	"testing"
+
+	honeybadgervendor "github.com/honeybadger-io/honeybadger-go"
+	"github.com/imgproxy/imgproxy/v4/errctx"
+	"github.com/imgproxy/imgproxy/v4/errorreport/honeybadger"
+	"github.com/stretchr/testify/suite"
+)
+
+// notifyCapturingBackend extends honeybadgervendor.TestBackend to also
+// capture notices sent through the classic Notify path, which TestBackend
+// itself ignores.
+type notifyCapturingBackend struct {
+	honeybadgervendor.TestBackend
+
+	mu      sync.Mutex
+	notices []*honeybadgervendor.Notice
+}
+
+func (b *notifyCapturingBackend) Notify(feature honeybadgervendor.Feature, payload honeybadgervendor.Payload) error {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	if notice, ok := payload.(*honeybadgervendor.Notice); ok {
+		b.notices = append(b.notices, notice)
+	}
+
+	return b.TestBackend.Notify(feature, payload)
+}
+
+// LastNotice returns the most recently captured notice, or nil if none was
+// captured yet.
+func (b *notifyCapturingBackend) LastNotice() *honeybadgervendor.Notice {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	if len(b.notices) == 0 {
+		return nil
+	}
+
+	return b.notices[len(b.notices)-1]
+}
+
+type HoneybadgerTestSuite struct {
+	suite.Suite
+
+	backend  *notifyCapturingBackend
+	reporter *honeybadger.Reporter
+}
+
+func TestHoneybadger(t *testing.T) {
+	suite.Run(t, new(HoneybadgerTestSuite))
+}
+
+func (s *HoneybadgerTestSuite) SetupTest() {
+	s.backend = &notifyCapturingBackend{}
+
+	cfg := &honeybadger.Config{
+		Key:     "test",
+		Env:     "test",
+		Backend: s.backend,
+	}
+
+	r, err := honeybadger.New(cfg)
+	s.Require().NoError(err)
+	s.Require().NotNil(r)
+
+	s.reporter = r
+}
+
+func (s *HoneybadgerTestSuite) SetupSubTest() {
+	s.SetupTest()
+}
+
+// Note: imgproxy's Honeybadger backend merges both request headers and meta
+// into a single honeybadger.CGIData map (headers get an "HTTP_" prefix, meta
+// keys don't), not into honeybadger.Notice.Context.
+func (s *HoneybadgerTestSuite) TestReport() {
+	cases := []struct {
+		name        string
+		withRequest bool
+		meta        map[string]any
+		wantCGIData honeybadgervendor.CGIData
+	}{
+		{
+			name:        "request and meta",
+			withRequest: true,
+			meta:        map[string]any{"Request ID": "abc123", "Documentation URL": "https://example.com/docs"},
+			wantCGIData: honeybadgervendor.CGIData{
+				"HTTP_X_REQUEST_ID": "req-1",
+				"REQUEST_ID":        "abc123",
+				"DOCUMENTATION_URL": "https://example.com/docs",
+			},
+		},
+		{
+			name:        "request and nil meta",
+			withRequest: true,
+			wantCGIData: honeybadgervendor.CGIData{"HTTP_X_REQUEST_ID": "req-1"},
+		},
+		{
+			name:        "nil request and meta",
+			meta:        map[string]any{"Request ID": "abc123"},
+			wantCGIData: honeybadgervendor.CGIData{"REQUEST_ID": "abc123"},
+		},
+		{
+			name:        "nil request and nil meta",
+			wantCGIData: honeybadgervendor.CGIData{},
+		},
+	}
+
+	for _, tc := range cases {
+		s.Run(tc.name, func() {
+			var req *http.Request
+			if tc.withRequest {
+				req = httptest.NewRequest(http.MethodGet, "http://example.com/image.jpg", nil)
+				req.Header.Set("X-Request-Id", "req-1")
+			}
+
+			s.Require().NotPanics(func() {
+				s.reporter.Report(errctx.NewTextError("boom", 0), req, tc.meta)
+			})
+			s.reporter.Close()
+
+			notice := s.backend.LastNotice()
+			s.Require().NotNil(notice)
+			s.Require().Equal(tc.wantCGIData, notice.CGIData)
+		})
+	}
+}
+
+func (s *HoneybadgerTestSuite) TestReportOverridesWrappedErrorType() {
+	base := errors.New("boom")
+	wrapped := errctx.Wrap(base)
+
+	s.reporter.Report(wrapped, nil, nil)
+	s.reporter.Close()
+
+	notice := s.backend.LastNotice()
+	s.Require().NotNil(notice)
+	s.Require().Equal(errctx.ErrorType(wrapped), notice.ErrorClass)
+	s.Require().NotEqual("*errctx.WrappedError", notice.ErrorClass)
+}

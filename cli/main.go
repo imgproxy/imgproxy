@@ -38,7 +38,10 @@ func run(ctx context.Context, cmd *cli.Command) error {
 	if err != nil {
 		return err
 	}
-	defer instance.Close(ctx)
+	// Use a fresh context here: ctx is cancelled by the signal that triggered
+	// this shutdown, and Close needs a live context to bound its own
+	// graceful-shutdown timeouts (e.g. monitoring/otel's Stop).
+	defer instance.Close(context.Background())
 
 	if err := instance.StartServer(ctx, nil); err != nil {
 		return err
