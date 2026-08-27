@@ -14,11 +14,11 @@ var (
 	metaReplacer = strings.NewReplacer("-", "_", " ", "_")
 )
 
-type reporter struct {
+type Reporter struct {
 	client *honeybadger.Client
 }
 
-func New(config *Config) (*reporter, error) {
+func New(config *Config) (*Reporter, error) {
 	if err := config.Validate(); err != nil {
 		return nil, err
 	}
@@ -33,10 +33,10 @@ func New(config *Config) (*reporter, error) {
 		Backend: config.Backend,
 	})
 
-	return &reporter{client: client}, nil
+	return &Reporter{client: client}, nil
 }
 
-func (r *reporter) Report(err errctx.Error, req *http.Request, meta map[string]any) {
+func (r *Reporter) Report(err errctx.Error, req *http.Request, meta map[string]any) {
 	var header http.Header
 	var reqURL *url.URL
 	if req != nil {
@@ -67,6 +67,6 @@ func (r *reporter) Report(err errctx.Error, req *http.Request, meta map[string]a
 	}
 }
 
-func (r *reporter) Close() {
+func (r *Reporter) Close() {
 	r.client.Flush()
 }

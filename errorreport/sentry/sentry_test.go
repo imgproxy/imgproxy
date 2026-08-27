@@ -16,7 +16,7 @@ type SentryTestSuite struct {
 	suite.Suite
 
 	transport *sentrygo.MockTransport
-	reporter  *sentry.ReporterIface
+	reporter  *sentry.Reporter
 }
 
 func TestSentry(t *testing.T) {

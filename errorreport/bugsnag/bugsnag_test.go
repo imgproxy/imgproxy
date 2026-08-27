@@ -39,7 +39,7 @@ type BugsnagTestSuite struct {
 
 	server   *httptest.Server
 	reports  chan []byte
-	reporter *bugsnag.ReporterIface
+	reporter *bugsnag.Reporter
 }
 
 func TestBugsnag(t *testing.T) {

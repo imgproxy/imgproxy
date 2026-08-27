@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
 
 	honeybadgervendor "github.com/honeybadger-io/honeybadger-go"
@@ -12,11 +13,45 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
+// notifyCapturingBackend extends honeybadgervendor.TestBackend to also
+// capture notices sent through the classic Notify path, which TestBackend
+// itself ignores.
+type notifyCapturingBackend struct {
+	honeybadgervendor.TestBackend
+
+	mu      sync.Mutex
+	notices []*honeybadgervendor.Notice
+}
+
+func (b *notifyCapturingBackend) Notify(feature honeybadgervendor.Feature, payload honeybadgervendor.Payload) error {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	if notice, ok := payload.(*honeybadgervendor.Notice); ok {
+		b.notices = append(b.notices, notice)
+	}
+
+	return b.TestBackend.Notify(feature, payload)
+}
+
+// LastNotice returns the most recently captured notice, or nil if none was
+// captured yet.
+func (b *notifyCapturingBackend) LastNotice() *honeybadgervendor.Notice {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	if len(b.notices) == 0 {
+		return nil
+	}
+
+	return b.notices[len(b.notices)-1]
+}
+
 type HoneybadgerTestSuite struct {
 	suite.Suite
 
-	backend  *honeybadger.NotifyCapturingBackend
-	reporter *honeybadger.ReporterIface
+	backend  *notifyCapturingBackend
+	reporter *honeybadger.Reporter
 }
 
 func TestHoneybadger(t *testing.T) {
@@ -24,7 +59,7 @@ func TestHoneybadger(t *testing.T) {
 }
 
 func (s *HoneybadgerTestSuite) SetupTest() {
-	s.backend = &honeybadger.NotifyCapturingBackend{}
+	s.backend = &notifyCapturingBackend{}
 
 	cfg := &honeybadger.Config{
 		Key:     "test",

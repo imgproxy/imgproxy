@@ -17,7 +17,7 @@ type AirbrakeTestSuite struct {
 	suite.Suite
 
 	captured chan *gobrake.Notice
-	reporter *airbrake.ReporterIface
+	reporter *airbrake.Reporter
 }
 
 func TestAirbrake(t *testing.T) {

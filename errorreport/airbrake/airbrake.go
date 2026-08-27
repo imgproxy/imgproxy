@@ -12,11 +12,11 @@ var (
 	metaReplacer = strings.NewReplacer(" ", "-")
 )
 
-type reporter struct {
+type Reporter struct {
 	notifier *gobrake.Notifier
 }
 
-func New(config *Config) (*reporter, error) {
+func New(config *Config) (*Reporter, error) {
 	if err := config.Validate(); err != nil {
 		return nil, err
 	}
@@ -35,10 +35,10 @@ func New(config *Config) (*reporter, error) {
 		notifier.AddFilter(config.Filter)
 	}
 
-	return &reporter{notifier}, nil
+	return &Reporter{notifier}, nil
 }
 
-func (r *reporter) Report(err errctx.Error, req *http.Request, meta map[string]any) {
+func (r *Reporter) Report(err errctx.Error, req *http.Request, meta map[string]any) {
 	notice := r.notifier.Notice(err, req, 2)
 
 	// imgproxy may wrap errors using errctx.WrappedError to add context, so Airbrake
@@ -55,6 +55,6 @@ func (r *reporter) Report(err errctx.Error, req *http.Request, meta map[string]a
 	r.notifier.SendNoticeAsync(notice)
 }
 
-func (r *reporter) Close() {
+func (r *Reporter) Close() {
 	r.notifier.Close()
 }
