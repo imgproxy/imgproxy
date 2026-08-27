@@ -3,6 +3,7 @@ package honeybadger
 import (
 	"log/slog"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/honeybadger-io/honeybadger-go"
@@ -35,9 +36,16 @@ func New(config *Config) (*reporter, error) {
 }
 
 func (r *reporter) Report(err errctx.Error, req *http.Request, meta map[string]any) {
-	extra := make(honeybadger.CGIData, len(req.Header)+len(meta))
+	var header http.Header
+	var reqURL *url.URL
+	if req != nil {
+		header = req.Header
+		reqURL = req.URL
+	}
 
-	for k, v := range req.Header {
+	extra := make(honeybadger.CGIData, len(header)+len(meta))
+
+	for k, v := range header {
 		key := "HTTP_" + metaReplacer.Replace(strings.ToUpper(k))
 		extra[key] = v[0]
 	}
@@ -53,7 +61,7 @@ func (r *reporter) Report(err errctx.Error, req *http.Request, meta map[string]a
 	// To avoid this, we provide error class information explicitly.
 	errClass := honeybadger.ErrorClass{Name: errctx.ErrorType(err)}
 
-	if _, repErr := r.client.Notify(err, errClass, req.URL, extra); repErr != nil {
+	if _, repErr := r.client.Notify(err, errClass, reqURL, extra); repErr != nil {
 		slog.Warn("Failed to report error to Honeybadger", "error", repErr)
 	}
 }

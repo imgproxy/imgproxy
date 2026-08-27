@@ -81,15 +81,21 @@ func SetMetadata(req *http.Request, key string, value any) {
 }
 
 // Report reports an error to all configured reporters with the request and its metadata.
+// req may be nil for errors that don't originate from an HTTP request (e.g. background work);
+// in that case no request-scoped data is attached.
 func (r *Reporter) Report(err errctx.Error, req *http.Request) {
-	meta, ok := req.Context().Value(metaCtxKey{}).(map[string]any)
-	if !ok {
-		meta = nil
+	var meta map[string]any
+	if req != nil {
+		if m, ok := req.Context().Value(metaCtxKey{}).(map[string]any); ok {
+			meta = m
+		}
 	}
 
 	if url := err.DocsURL(); url != "" {
-		meta = maps.Clone(meta)
-		meta["Documentation URL"] = url
+		merged := make(map[string]any, len(meta)+1)
+		maps.Copy(merged, meta)
+		merged["Documentation URL"] = url
+		meta = merged
 	}
 
 	for _, reporter := range r.reporters {
