@@ -16,11 +16,11 @@ func (l logger) Printf(format string, v ...any) {
 	slog.Debug(fmt.Sprintf(format, v...), "source", "bugsnag")
 }
 
-type reporter struct {
+type Reporter struct {
 	notifier *bugsnag.Notifier
 }
 
-func New(config *Config) (*reporter, error) {
+func New(config *Config) (*Reporter, error) {
 	if err := config.Validate(); err != nil {
 		return nil, err
 	}
@@ -32,15 +32,16 @@ func New(config *Config) (*reporter, error) {
 	notifier := bugsnag.New(bugsnag.Configuration{
 		APIKey:       config.Key,
 		ReleaseStage: config.Stage,
+		Endpoints:    config.Endpoints,
 		PanicHandler: func() {}, // Disable forking the process
 		Logger:       logger{},
 		Synchronous:  true,
 	})
 
-	return &reporter{notifier: notifier}, nil
+	return &Reporter{notifier: notifier}, nil
 }
 
-func (r *reporter) Report(err errctx.Error, req *http.Request, meta map[string]any) {
+func (r *Reporter) Report(err errctx.Error, req *http.Request, meta map[string]any) {
 	extra := make(bugsnag.MetaData)
 	for k, v := range meta {
 		extra.Add("Processing Context", k, v)
@@ -57,6 +58,6 @@ func (r *reporter) Report(err errctx.Error, req *http.Request, meta map[string]a
 	}
 }
 
-func (r *reporter) Close() {
+func (r *Reporter) Close() {
 	// noop
 }

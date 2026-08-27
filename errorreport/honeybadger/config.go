@@ -3,6 +3,7 @@ package honeybadger
 import (
 	"errors"
 
+	"github.com/honeybadger-io/honeybadger-go"
 	"github.com/imgproxy/imgproxy/v4/ensure"
 	"github.com/imgproxy/imgproxy/v4/env"
 )
@@ -16,13 +17,18 @@ var (
 type Config struct {
 	Key string
 	Env string
+
+	// Backend overrides the Honeybadger client's backend. Nil uses the
+	// client's default network backend. Intended for injecting a test double.
+	Backend honeybadger.Backend
 }
 
 // NewDefaultConfig creates a new Config instance with default values.
 func NewDefaultConfig() Config {
 	return Config{
-		Key: "",
-		Env: "production",
+		Key:     "",
+		Env:     "production",
+		Backend: nil,
 	}
 }
 

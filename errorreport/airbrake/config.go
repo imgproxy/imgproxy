@@ -3,6 +3,7 @@ package airbrake
 import (
 	"errors"
 
+	"github.com/airbrake/gobrake/v5"
 	"github.com/imgproxy/imgproxy/v4/ensure"
 	"github.com/imgproxy/imgproxy/v4/env"
 )
@@ -18,6 +19,11 @@ type Config struct {
 	ProjectID  int
 	ProjectKey string
 	Env        string
+
+	// Filter, if set, is registered on the notifier via AddFilter. Nil
+	// leaves the notifier without a filter. Intended for intercepting
+	// notices in tests.
+	Filter func(*gobrake.Notice) *gobrake.Notice
 }
 
 // NewDefaultConfig creates a new Config instance with default values.
@@ -26,6 +32,7 @@ func NewDefaultConfig() Config {
 		ProjectID:  0,
 		ProjectKey: "",
 		Env:        "production",
+		Filter:     nil,
 	}
 }
 

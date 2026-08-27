@@ -111,7 +111,7 @@ func (r *Router) WithReportError(h RouteHandler) RouteHandler {
 
 		// Report error to error collectors
 		if err.Err.ShouldReport() {
-			r.errorReporter.Report(err.Err, req)
+			r.errorReporter.Report(ctx, err.Err, req)
 		}
 
 		// Log response and format the error output

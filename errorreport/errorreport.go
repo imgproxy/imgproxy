@@ -81,15 +81,17 @@ func SetMetadata(req *http.Request, key string, value any) {
 }
 
 // Report reports an error to all configured reporters with the request and its metadata.
-func (r *Reporter) Report(err errctx.Error, req *http.Request) {
-	meta, ok := req.Context().Value(metaCtxKey{}).(map[string]any)
-	if !ok {
-		meta = nil
-	}
+// Metadata is read from ctx, so it's still attached even if req is nil. req may be nil for
+// errors that don't originate from an HTTP request (e.g. background work); in that case no
+// HTTP-specific data (headers, URL) is attached, but ctx-scoped metadata still is.
+func (r *Reporter) Report(ctx context.Context, err errctx.Error, req *http.Request) {
+	meta, _ := ctx.Value(metaCtxKey{}).(map[string]any)
 
 	if url := err.DocsURL(); url != "" {
-		meta = maps.Clone(meta)
-		meta["Documentation URL"] = url
+		merged := make(map[string]any, len(meta)+1)
+		maps.Copy(merged, meta)
+		merged["Documentation URL"] = url
+		meta = merged
 	}
 
 	for _, reporter := range r.reporters {
