@@ -25,7 +25,7 @@ func TestAirbrake(t *testing.T) {
 }
 
 func (s *AirbrakeTestSuite) SetupTest() {
-	s.captured = make(chan *gobrake.Notice, 1)
+	s.captured = make(chan *gobrake.Notice, 10)
 
 	cfg := &airbrake.Config{
 		ProjectID:  1,
