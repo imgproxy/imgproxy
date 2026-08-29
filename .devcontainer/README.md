@@ -18,7 +18,7 @@ go tool lefthook install
 
 You can use [`air`](https://github.com/air-verse/air) for hot-reloading during development. Simply run: `go tool air`.
 
-Port `8081` is forwared to the host.
+Port `8081` is forwarded to the host.
 
 # Test images
 
