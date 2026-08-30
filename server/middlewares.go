@@ -94,9 +94,9 @@ func (r *Router) WithPanic(h RouteHandler) RouteHandler {
 func (r *Router) WithReportError(h RouteHandler) RouteHandler {
 	return func(reqID string, rw ResponseWriter, req *http.Request) *Error {
 		// Open the error context
-		ctx := errorreport.StartRequest(req)
+		ctx := errorreport.StartRequest(req.Context())
 		req = req.WithContext(ctx)
-		errorreport.SetMetadata(req, "Request ID", reqID)
+		errorreport.SetMetadata(ctx, "Request ID", reqID)
 
 		// Call the underlying handler passing the context downwards
 		err := h(reqID, rw, req)

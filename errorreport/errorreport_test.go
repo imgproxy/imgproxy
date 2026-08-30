@@ -56,9 +56,9 @@ func TestReportWithRequestAndMetadata(t *testing.T) {
 	r := errorreport.NewWithReporters(fake)
 
 	req := httptest.NewRequest(http.MethodGet, "http://example.com/", nil)
-	ctx := errorreport.StartRequest(req)
+	ctx := errorreport.StartRequest(req.Context())
 	req = req.WithContext(ctx)
-	errorreport.SetMetadata(req, "Request ID", "abc123")
+	errorreport.SetMetadata(ctx, "Request ID", "abc123")
 
 	err := errctx.NewTextError("boom", 0, errctx.WithDocsURL("https://example.com/docs"))
 
@@ -76,9 +76,8 @@ func TestReportWithNilRequestButContextMetadata(t *testing.T) {
 	r := errorreport.NewWithReporters(fake)
 
 	req := httptest.NewRequest(http.MethodGet, "http://example.com/", nil)
-	ctx := errorreport.StartRequest(req)
-	req = req.WithContext(ctx)
-	errorreport.SetMetadata(req, "Request ID", "abc123")
+	ctx := errorreport.StartRequest(req.Context())
+	errorreport.SetMetadata(ctx, "Request ID", "abc123")
 
 	err := errctx.NewTextError("boom", 0)
 
