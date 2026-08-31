@@ -9,21 +9,12 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
 
-	"github.com/imgproxy/imgproxy/v4/asyncbuffer"
 	"github.com/imgproxy/imgproxy/v4/fetcher"
 	"github.com/imgproxy/imgproxy/v4/httpheaders"
 	"github.com/imgproxy/imgproxy/v4/imagetype"
-	"github.com/imgproxy/imgproxy/v4/imath"
 	"github.com/imgproxy/imgproxy/v4/monitoring"
 )
-
-var bufPool = sync.Pool{
-	New: func() any {
-		return new(bytes.Buffer)
-	},
-}
 
 // Factory represents ImageData factory
 type Factory interface {
@@ -114,42 +105,13 @@ func (f *factory) DownloadSync(
 		return nil, h, wrapDownloadError(err, desc)
 	}
 
-	buf := bufPool.Get().(*bytes.Buffer) //nolint:forcetypeassert
-	buf.Reset()
-
-	cancel := func() {
-		bufPool.Put(buf)
-	}
-
-	// Create a TeeReader to write to buffer while reading.
-	tr := io.TeeReader(res.Body, buf)
-
 	ct := res.Header.Get(httpheaders.ContentType)
 	ext := strings.ToLower(filepath.Ext(res.Request.URL.Path))
 
-	// Detect image type using the TeeReader.
-	format, err := imagetype.Detect(tr, ct, ext)
+	d, err := NewFromReaderSync(res.Body, int(res.ContentLength), opts.MaxSrcFileSize, ct, ext)
 	if err != nil {
-		cancel()
 		return nil, h, wrapDownloadError(err, desc)
 	}
-
-	// Preallocate buffer size if Content-Length is known.
-	growLen := imath.MinNonZero(int(res.ContentLength), opts.MaxSrcFileSize) - buf.Len()
-	if growLen > 0 {
-		buf.Grow(growLen)
-	}
-
-	// Read the rest of the data into the buffer
-	if _, err := buf.ReadFrom(res.Body); err != nil {
-		cancel()
-		return nil, h, wrapDownloadError(err, desc)
-	}
-
-	// Create ImageData from the buffer bytes and add the cancel function
-	// to return the buffer to the pool when done.
-	d := NewFromBytesWithFormat(format, buf.Bytes())
-	d.AddCancel(cancel)
 
 	return d, h, nil
 }
@@ -171,29 +133,19 @@ func (f *factory) DownloadAsync(
 		return nil, h, wrapDownloadError(err, desc)
 	}
 
-	b := asyncbuffer.New(
-		res.Body,
-		int(res.ContentLength),
-		cancelSpan, // Cancel the monitoring span when the buffer finishes reading
-		req.Cancel, // Cancel the request when the buffer finishes reading
-	)
-
 	ct := res.Header.Get(httpheaders.ContentType)
 	ext := strings.ToLower(filepath.Ext(res.Request.URL.Path))
 
-	format, err := imagetype.Detect(b.Reader(), ct, ext)
+	d, err := NewFromReaderAsync(
+		res.Body,
+		int(res.ContentLength),
+		ct, ext, desc,
+		cancelSpan, // Cancel the monitoring span when the buffer finishes reading
+		req.Cancel, // Cancel the request when the buffer finishes reading
+	)
 	if err != nil {
-		b.Close()
-		req.Cancel()
 		return nil, h, wrapDownloadError(err, desc)
 	}
-
-	// We successfully detected the image type, so we can release the pause
-	// and let the buffer read the rest of the data immediately.
-	b.ReleaseThreshold()
-
-	p := &asyncBufferProvider{b: b, desc: desc}
-	d := newImageData(p, format)
 
 	return d, h, nil
 }
