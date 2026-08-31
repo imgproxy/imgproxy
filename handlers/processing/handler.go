@@ -123,9 +123,9 @@ func (h *Handler) newRequest(req *http.Request) (*request, *server.Error) {
 	}
 
 	// set error reporting and monitoring context
-	errorreport.SetMetadata(req, "Source Image URL", imageURL)
-	errorreport.SetMetadata(req, "Source Image Origin", imageOrigin)
-	errorreport.SetMetadata(req, "Options", o.NestedMap())
+	errorreport.SetMetadata(req.Context(), "Source Image URL", imageURL)
+	errorreport.SetMetadata(req.Context(), "Source Image Origin", imageOrigin)
+	errorreport.SetMetadata(req.Context(), "Options", o.NestedMap())
 
 	h.Monitoring().SetMetadata(req.Context(), mm)
 

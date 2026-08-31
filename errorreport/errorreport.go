@@ -64,15 +64,15 @@ func New(config *Config) (*Reporter, error) {
 	}, nil
 }
 
-// StartRequest initializes metadata storage in the request context.
-func StartRequest(req *http.Request) context.Context {
+// StartRequest initializes metadata storage in the context.
+func StartRequest(ctx context.Context) context.Context {
 	meta := make(map[string]any)
-	return context.WithValue(req.Context(), metaCtxKey{}, meta)
+	return context.WithValue(ctx, metaCtxKey{}, meta)
 }
 
-// SetMetadata sets a metadata key-value pair in the request context.
-func SetMetadata(req *http.Request, key string, value any) {
-	meta, ok := req.Context().Value(metaCtxKey{}).(map[string]any)
+// SetMetadata sets a metadata key-value pair in the context.
+func SetMetadata(ctx context.Context, key string, value any) {
+	meta, ok := ctx.Value(metaCtxKey{}).(map[string]any)
 	if !ok || meta == nil {
 		return
 	}
