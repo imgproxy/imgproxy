@@ -40,7 +40,9 @@ func TestMap(t *testing.T) {
 	m.Set("a", 1)
 	m.Set("b", 2)
 
-	out := m.Map(func(key string, value any) (string, any) {
+	ctx := meta.NewContext(context.Background(), m, nil)
+
+	out := meta.Map(ctx, func(key string, value any) (string, any) {
 		if key == "a" {
 			return "", nil
 		}
@@ -48,6 +50,14 @@ func TestMap(t *testing.T) {
 	})
 
 	require.Equal(t, map[string]any{"b": 2}, out)
+}
+
+func TestMapNoMeta(t *testing.T) {
+	out := meta.Map(context.Background(), func(key string, value any) (string, any) {
+		return key, value
+	})
+
+	require.Equal(t, map[string]any{}, out)
 }
 
 func TestNewContextFromContext(t *testing.T) {
@@ -80,36 +90,9 @@ func TestRequestFromContextEmpty(t *testing.T) {
 	require.Nil(t, got)
 }
 
-func TestIsSimpleValue(t *testing.T) {
-	tests := []struct {
-		name  string
-		value any
-		want  bool
-	}{
-		{"string", "value", true},
-		{"bool", true, true},
-		{"int", 1, true},
-		{"float64", 1.5, true},
-		{"[]string", []string{"a", "b"}, true},
-		{"[]int", []int{1, 2}, true},
-		{"map[string]string", map[string]string{"a": "b"}, true},
-		{"map[string]int", map[string]int{"a": 1}, true},
-		{"[]any", []any{"a", 1}, false},
-		{"map[string]any", map[string]any{"a": 1}, false},
-		{"struct", struct{ X int }{X: 1}, false},
-		{"chan", make(chan int), false},
-		{"nil", nil, false},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			require.Equal(t, tt.want, meta.IsSimpleValue(tt.value))
-		})
-	}
-}
-
 func TestConcurrentAccess(t *testing.T) {
 	m := meta.New()
+	ctx := meta.NewContext(context.Background(), m, nil)
 
 	var wg sync.WaitGroup
 
@@ -123,7 +106,7 @@ func TestConcurrentAccess(t *testing.T) {
 
 		go func() {
 			defer wg.Done()
-			m.Map(func(key string, value any) (string, any) {
+			meta.Map(ctx, func(key string, value any) (string, any) {
 				return key, value
 			})
 		}()

@@ -11,7 +11,6 @@ import (
 	"github.com/imgproxy/imgproxy/v4/monitoring/otel"
 	"github.com/imgproxy/imgproxy/v4/monitoring/prometheus"
 	"github.com/imgproxy/imgproxy/v4/monitoring/stats"
-	"github.com/imgproxy/imgproxy/v4/server/meta"
 )
 
 // monitor is an interface for monitoring services
@@ -27,7 +26,6 @@ type monitor interface {
 		name string,
 		meta map[string]any,
 	) (context.Context, context.CancelFunc)
-	SetMetadata(ctx context.Context, key string, value any)
 	SendError(ctx context.Context, errType string, err errctx.Error)
 	InjectHeaders(ctx context.Context, headers http.Header)
 }
@@ -119,15 +117,14 @@ func (m *Monitoring) StartPrometheus(cancel context.CancelFunc) error {
 func (m *Monitoring) StartRequest(
 	ctx context.Context,
 	rw http.ResponseWriter,
+	req *http.Request,
 ) (context.Context, context.CancelFunc, http.ResponseWriter) {
-	r := meta.RequestFromContext(ctx)
-
 	cancels := make([]context.CancelFunc, 0, len(m.monitors))
 
 	for _, monitor := range m.monitors {
 		var cancel context.CancelFunc
 		//nolint:fatcontext
-		ctx, cancel, rw = monitor.StartRequest(ctx, rw, r)
+		ctx, cancel, rw = monitor.StartRequest(ctx, rw, req)
 		cancels = append(cancels, cancel)
 	}
 
@@ -138,15 +135,6 @@ func (m *Monitoring) StartRequest(
 	}
 
 	return ctx, cancel, rw
-}
-
-// SetMetadata sets metadata key-value pair for all monitoring services
-func (m *Monitoring) SetMetadata(ctx context.Context, meta Meta) {
-	for _, monitor := range m.monitors {
-		for key, value := range meta {
-			monitor.SetMetadata(ctx, key, value)
-		}
-	}
 }
 
 // StartSpan starts a new trace span as child of the current span

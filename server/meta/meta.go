@@ -56,8 +56,14 @@ func Get[T any](m *Meta, key string) (v T, ok bool) {
 	return v, ok
 }
 
-// Map returns a transformed copy of the metadata; fn returning an empty key drops it.
-func (m *Meta) Map(fn func(key string, value any) (string, any)) map[string]any {
+// Map returns a transformed copy of the metadata attached to ctx; fn returning an
+// empty key drops it. Returns an empty map if ctx carries no *Meta.
+func Map(ctx context.Context, fn func(key string, value any) (string, any)) map[string]any {
+	m := FromContext(ctx)
+	if m == nil {
+		return map[string]any{}
+	}
+
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -88,28 +94,4 @@ func FromContext(ctx context.Context) *Meta {
 func RequestFromContext(ctx context.Context) *http.Request {
 	req, _ := ctx.Value(requestCtxKey{}).(*http.Request)
 	return req
-}
-
-// IsSimpleValue reports whether v is a basic scalar type, or a slice/map of such,
-// safe to hand to external systems (loggers, error reporters, etc.) as-is.
-func IsSimpleValue(v any) bool {
-	switch v.(type) {
-	case string, bool,
-		int, int8, int16, int32, int64,
-		uint, uint8, uint16, uint32, uint64,
-		float32, float64,
-
-		[]string, []bool,
-		[]int, []int8, []int16, []int32, []int64,
-		[]uint, []uint8, []uint16, []uint32, []uint64,
-		[]float32, []float64,
-
-		map[string]string, map[string]bool,
-		map[string]int, map[string]int8, map[string]int16, map[string]int32, map[string]int64,
-		map[string]uint, map[string]uint8, map[string]uint16, map[string]uint32, map[string]uint64,
-		map[string]float32, map[string]float64:
-		return true
-	default:
-		return false
-	}
 }

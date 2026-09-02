@@ -9,7 +9,6 @@ import (
 	"github.com/imgproxy/imgproxy/v4/handlers"
 	"github.com/imgproxy/imgproxy/v4/httpheaders/conditionalheaders"
 	"github.com/imgproxy/imgproxy/v4/imagetype"
-	"github.com/imgproxy/imgproxy/v4/monitoring"
 	"github.com/imgproxy/imgproxy/v4/options"
 	"github.com/imgproxy/imgproxy/v4/options/keys"
 	"github.com/imgproxy/imgproxy/v4/server"
@@ -20,16 +19,15 @@ import (
 type request struct {
 	HandlerContext
 
-	reqID          string
-	req            *http.Request
-	rw             server.ResponseWriter
-	config         *Config
-	opts           *options.Options
-	imageURL       string
-	path           string
-	monitoringMeta monitoring.Meta
-	features       *clientfeatures.Features
-	ch             *conditionalheaders.Request
+	reqID    string
+	req      *http.Request
+	rw       server.ResponseWriter
+	config   *Config
+	opts     *options.Options
+	imageURL string
+	path     string
+	features *clientfeatures.Features
+	ch       *conditionalheaders.Request
 }
 
 // execute handles the actual processing logic

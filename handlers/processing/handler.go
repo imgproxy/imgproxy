@@ -124,10 +124,6 @@ func (h *Handler) newRequest(req *http.Request) (*request, *server.Error) {
 		m.Set(meta.KeyOptions, o)
 	}
 
-	mm := monitoring.NewMetaFromContext(req.Context())
-
-	h.Monitoring().SetMetadata(req.Context(), mm)
-
 	// verify that image URL came from the valid source
 	err = h.Security().VerifySourceURL(imageURL)
 	if err != nil {
@@ -137,11 +133,10 @@ func (h *Handler) newRequest(req *http.Request) (*request, *server.Error) {
 	return &request{
 		HandlerContext: h,
 
-		imageURL:       imageURL,
-		path:           path,
-		opts:           o,
-		features:       &features,
-		monitoringMeta: mm,
-		req:            req,
+		imageURL: imageURL,
+		path:     path,
+		opts:     o,
+		features: &features,
+		req:      req,
 	}, nil
 }

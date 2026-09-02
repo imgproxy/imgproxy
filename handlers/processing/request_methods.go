@@ -15,6 +15,7 @@ import (
 	"github.com/imgproxy/imgproxy/v4/options/keys"
 	"github.com/imgproxy/imgproxy/v4/processing"
 	"github.com/imgproxy/imgproxy/v4/server"
+	"github.com/imgproxy/imgproxy/v4/server/meta"
 )
 
 // makeImageRequestHeaders creates headers for the image request
@@ -153,9 +154,7 @@ func (r *request) processImage(
 	ctx, cancelSpan := r.Monitoring().StartSpan(
 		r.req.Context(),
 		"Processing image",
-		r.monitoringMeta.Filter(
-			monitoring.MetaOptions,
-		),
+		monitoring.NewMetaFromContext(r.req.Context(), meta.KeyOptions),
 	)
 	defer cancelSpan()
 

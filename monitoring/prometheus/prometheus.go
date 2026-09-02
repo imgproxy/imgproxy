@@ -201,11 +201,6 @@ func (p *Prometheus) StartSpan(
 	)
 }
 
-// SetMetadata sets metadata for Prometheus monitoring
-func (p *Prometheus) SetMetadata(ctx context.Context, key string, value any) {
-	// Prometheus does not support request tracing
-}
-
 // SendError records an error occurrence in Prometheus metrics
 func (p *Prometheus) SendError(ctx context.Context, errType string, err errctx.Error) {
 	p.errorsTotal.With(prometheus.Labels{"type": errType}).Inc()

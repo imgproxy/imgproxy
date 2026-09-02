@@ -73,9 +73,11 @@ func TestReportWithRequestAndMetadata(t *testing.T) {
 	}, fake.gotMeta)
 }
 
-func TestReportFiltersNonSimpleValues(t *testing.T) {
+func TestReportPassesThroughAllValues(t *testing.T) {
 	fake := &fakeReporter{}
 	r := errorreport.NewWithReporters(fake)
+
+	chanValue := make(chan int)
 
 	m := meta.New()
 	m.Set("String", "value")
@@ -83,7 +85,7 @@ func TestReportFiltersNonSimpleValues(t *testing.T) {
 	m.Set("Strings", []string{"a", "b"})
 	m.Set("Map", map[string]int{"a": 1, "b": 2})
 	m.Set("SliceOfStruct", []struct{ X int }{{X: 1}})
-	m.Set("Chan", make(chan int))
+	m.Set("Chan", chanValue)
 
 	ctx := meta.NewContext(context.Background(), m, nil)
 
@@ -92,10 +94,12 @@ func TestReportFiltersNonSimpleValues(t *testing.T) {
 	r.Report(ctx, err)
 
 	require.Equal(t, map[string]any{
-		"String":  "value",
-		"Ints":    []int{1, 2, 3},
-		"Strings": []string{"a", "b"},
-		"Map":     map[string]int{"a": 1, "b": 2},
+		"String":        "value",
+		"Ints":          []int{1, 2, 3},
+		"Strings":       []string{"a", "b"},
+		"Map":           map[string]int{"a": 1, "b": 2},
+		"SliceOfStruct": []struct{ X int }{{X: 1}},
+		"Chan":          chanValue,
 	}, fake.gotMeta)
 }
 

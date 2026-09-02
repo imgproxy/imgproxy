@@ -3,6 +3,7 @@ package monitoring
 import (
 	"context"
 	"net/url"
+	"slices"
 	"strings"
 
 	"github.com/imgproxy/imgproxy/v4/options"
@@ -20,25 +21,17 @@ const (
 // Meta represents a set of metadata key-value pairs.
 type Meta map[string]any
 
-// contextKeys maps server/meta context keys to their monitoring metadata key equivalents.
-var contextKeys = map[string]string{
-	meta.KeyImageURL:          MetaSourceImageURL,
-	meta.KeySourceImageOrigin: MetaSourceImageOrigin,
-	meta.KeyOptions:           MetaOptions,
-}
-
 // NewMetaFromContext builds a Meta from the values server/meta has stored in ctx,
-// translating each to its monitoring key name. Keys with no monitoring equivalent
-// are dropped. Returns nil if ctx carries no *meta.Meta.
-func NewMetaFromContext(ctx context.Context) Meta {
-	cm := meta.FromContext(ctx)
-	if cm == nil {
+// translating each key to its monitoring key name via MetaKey. meta.KeyReqID has
+// no monitoring equivalent and is always dropped. If keys is non-empty, only
+// server/meta keys named in it are included. Returns nil if ctx carries no *meta.Meta.
+func NewMetaFromContext(ctx context.Context, keys ...string) Meta {
+	if meta.FromContext(ctx) == nil {
 		return nil
 	}
 
-	return Meta(cm.Map(func(key string, value any) (string, any) {
-		mk, ok := contextKeys[key]
-		if !ok {
+	return Meta(meta.Map(ctx, func(key string, value any) (string, any) {
+		if (key == meta.KeyReqID) || (len(keys) > 0 && !slices.Contains(keys, key)) {
 			return "", nil
 		}
 
@@ -49,19 +42,8 @@ func NewMetaFromContext(ctx context.Context) Meta {
 			}
 		}
 
-		return mk, value
+		return MetaKey(key), value
 	}))
-}
-
-// Filter creates a copy of Meta with only the specified keys.
-func (m Meta) Filter(only ...string) Meta {
-	filtered := make(Meta)
-	for _, key := range only {
-		if value, ok := m[key]; ok {
-			filtered[key] = value
-		}
-	}
-	return filtered
 }
 
 // MetaKey formats a metadata key with the standard prefix.

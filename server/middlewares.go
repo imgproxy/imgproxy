@@ -18,7 +18,7 @@ func (r *Router) WithMonitoring(h RouteHandler) RouteHandler {
 	}
 
 	return func(reqID string, rw ResponseWriter, req *http.Request) *Error {
-		ctx, cancel, newRw := r.monitoring.StartRequest(req.Context(), rw.HTTPResponseWriter())
+		ctx, cancel, newRw := r.monitoring.StartRequest(req.Context(), rw.HTTPResponseWriter(), req)
 		defer cancel()
 
 		// Replace rw.ResponseWriter with new one returned from monitoring

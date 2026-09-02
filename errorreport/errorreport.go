@@ -69,23 +69,13 @@ func New(config *Config) (*Reporter, error) {
 func (r *Reporter) Report(ctx context.Context, err errctx.Error) {
 	req := meta.RequestFromContext(ctx)
 
-	extra := make(map[string]any)
+	extra := meta.Map(ctx, func(key string, value any) (string, any) {
+		if o, ok := value.(*options.Options); ok {
+			return key, o.NestedMap()
+		}
 
-	if m := meta.FromContext(ctx); m != nil {
-		extra = m.Map(func(key string, value any) (string, any) {
-			switch {
-			case key == meta.KeyOptions:
-				if o, ok := value.(*options.Options); ok {
-					return key, o.NestedMap()
-				}
-
-			case meta.IsSimpleValue(value):
-				return key, value
-			}
-
-			return "", nil
-		})
-	}
+		return key, value
+	})
 
 	if url := err.DocsURL(); url != "" {
 		extra["Documentation URL"] = url
