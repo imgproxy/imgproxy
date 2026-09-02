@@ -13,7 +13,8 @@ import (
 
 func TestSetGet(t *testing.T) {
 	m := meta.New()
-	m.Set("key", "value")
+	ctx := meta.NewContext(context.Background(), m, nil)
+	meta.Set(ctx, "key", "value")
 
 	v, ok := meta.Get[string](m, "key")
 	require.True(t, ok)
@@ -29,18 +30,24 @@ func TestGetMissingKey(t *testing.T) {
 
 func TestGetWrongType(t *testing.T) {
 	m := meta.New()
-	m.Set("key", 123)
+	ctx := meta.NewContext(context.Background(), m, nil)
+	meta.Set(ctx, "key", 123)
 
 	_, ok := meta.Get[string](m, "key")
 	require.False(t, ok)
 }
 
+func TestSetNoMeta(t *testing.T) {
+	require.NotPanics(t, func() {
+		meta.Set(context.Background(), "key", "value")
+	})
+}
+
 func TestMap(t *testing.T) {
 	m := meta.New()
-	m.Set("a", 1)
-	m.Set("b", 2)
-
 	ctx := meta.NewContext(context.Background(), m, nil)
+	meta.Set(ctx, "a", 1)
+	meta.Set(ctx, "b", 2)
 
 	out := meta.Map(ctx, func(key string, value any) (string, any) {
 		if key == "a" {
@@ -62,10 +69,10 @@ func TestMapNoMeta(t *testing.T) {
 
 func TestNewContextFromContext(t *testing.T) {
 	m := meta.New()
-	m.Set("key", "value")
 	req := httptest.NewRequest(http.MethodGet, "/test", nil)
 
 	ctx := meta.NewContext(context.Background(), m, req)
+	meta.Set(ctx, "key", "value")
 
 	require.Same(t, m, meta.FromContext(ctx))
 	require.Same(t, req, meta.RequestFromContext(ctx))
@@ -101,7 +108,7 @@ func TestConcurrentAccess(t *testing.T) {
 
 		go func(i int) {
 			defer wg.Done()
-			m.Set("key", i)
+			meta.Set(ctx, "key", i)
 		}(i)
 
 		go func() {

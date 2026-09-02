@@ -10,13 +10,8 @@ import (
 	"github.com/imgproxy/imgproxy/v4/server/meta"
 )
 
-// Metadata key names
-const (
-	MetaPrefix            = "imgproxy."
-	MetaSourceImageURL    = MetaPrefix + "source_image_url"
-	MetaSourceImageOrigin = MetaPrefix + "source_image_origin"
-	MetaOptions           = MetaPrefix + "options"
-)
+// MetaPrefix is prepended to every monitoring metadata key.
+const MetaPrefix = "imgproxy."
 
 // Meta represents a set of metadata key-value pairs.
 type Meta map[string]any
@@ -31,15 +26,13 @@ func NewMetaFromContext(ctx context.Context, keys ...string) Meta {
 	}
 
 	return Meta(meta.Map(ctx, func(key string, value any) (string, any) {
-		if (key == meta.KeyReqID) || (len(keys) > 0 && !slices.Contains(keys, key)) {
+		if len(keys) > 0 && !slices.Contains(keys, key) {
 			return "", nil
 		}
 
 		// meta.KeyOptions holds *options.Options; monitoring wants its flat map form.
-		if key == meta.KeyOptions {
-			if o, ok := value.(*options.Options); ok {
-				value = o.Map()
-			}
+		if o, ok := value.(*options.Options); ok {
+			value = o.Map()
 		}
 
 		return MetaKey(key), value

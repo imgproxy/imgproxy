@@ -122,9 +122,9 @@ func (r *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	reqID := r.getRequestID(req)
 
 	// Attach request-scoped metadata to the context
-	m := meta.New()
-	m.Set(meta.KeyReqID, reqID)
-	req = req.WithContext(meta.NewContext(req.Context(), m, req))
+	ctx := meta.NewContext(req.Context(), meta.New(), req)
+	meta.Set(ctx, meta.KeyReqID, reqID)
+	req = req.WithContext(ctx)
 
 	// Replace request IP from headers
 	r.replaceRemoteAddr(req)

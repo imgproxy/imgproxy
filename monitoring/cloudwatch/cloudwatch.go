@@ -99,6 +99,11 @@ func (cw *CloudWatch) StartSpan(
 	return ctx, func() {}
 }
 
+// SetMetadata sets metadata for the current span
+func (cw *CloudWatch) SetMetadata(ctx context.Context, key string, value any) {
+	// CloudWatch does not support request tracing
+}
+
 // SendError records an error in the current span
 func (cw *CloudWatch) SendError(ctx context.Context, errType string, err errctx.Error) {
 	// CloudWatch does not support request tracing

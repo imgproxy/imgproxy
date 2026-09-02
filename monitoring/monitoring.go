@@ -26,6 +26,7 @@ type monitor interface {
 		name string,
 		meta map[string]any,
 	) (context.Context, context.CancelFunc)
+	SetMetadata(ctx context.Context, key string, value any)
 	SendError(ctx context.Context, errType string, err errctx.Error)
 	InjectHeaders(ctx context.Context, headers http.Header)
 }
@@ -123,12 +124,21 @@ func (m *Monitoring) StartRequest(
 
 	for _, monitor := range m.monitors {
 		var cancel context.CancelFunc
+
 		//nolint:fatcontext
 		ctx, cancel, rw = monitor.StartRequest(ctx, rw, req)
 		cancels = append(cancels, cancel)
 	}
 
 	cancel := func() {
+		md := NewMetaFromContext(ctx)
+
+		for _, monitor := range m.monitors {
+			for key, value := range md {
+				monitor.SetMetadata(ctx, key, value)
+			}
+		}
+
 		for _, c := range cancels {
 			c()
 		}

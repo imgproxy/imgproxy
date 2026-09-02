@@ -19,32 +19,31 @@ func TestNewMetaFromContextTranslatesKnownKeys(t *testing.T) {
 	o := options.New()
 
 	cm := meta.New()
-	cm.Set(meta.KeyReqID, "abc123") // has no monitoring equivalent
-	cm.Set(meta.KeyImageURL, "http://example.com/image.jpg")
-	cm.Set(meta.KeySourceImageOrigin, "http://example.com")
-	cm.Set(meta.KeyOptions, o)
-
 	ctx := meta.NewContext(context.Background(), cm, nil)
+	meta.Set(ctx, meta.KeyReqID, "abc123") // has no monitoring equivalent
+	meta.Set(ctx, meta.KeyImageURL, "http://example.com/image.jpg")
+	meta.Set(ctx, meta.KeySourceImageOrigin, "http://example.com")
+	meta.Set(ctx, meta.KeyOptions, o)
 
 	m := monitoring.NewMetaFromContext(ctx)
 
 	require.Equal(t, monitoring.Meta{
-		monitoring.MetaSourceImageURL:    "http://example.com/image.jpg",
-		monitoring.MetaSourceImageOrigin: "http://example.com",
-		monitoring.MetaOptions:           o.Map(),
+		monitoring.MetaKey(meta.KeyReqID):             "abc123",
+		monitoring.MetaKey(meta.KeyImageURL):          "http://example.com/image.jpg",
+		monitoring.MetaKey(meta.KeySourceImageOrigin): "http://example.com",
+		monitoring.MetaKey(meta.KeyOptions):           o.Map(),
 	}, m)
 }
 
 func TestNewMetaFromContextSkipsUnsetKeys(t *testing.T) {
 	cm := meta.New()
-	cm.Set(meta.KeyImageURL, "http://example.com/image.jpg")
-
 	ctx := meta.NewContext(context.Background(), cm, nil)
+	meta.Set(ctx, meta.KeyImageURL, "http://example.com/image.jpg")
 
 	m := monitoring.NewMetaFromContext(ctx)
 
 	require.Equal(t, monitoring.Meta{
-		monitoring.MetaSourceImageURL: "http://example.com/image.jpg",
+		monitoring.MetaKey(meta.KeyImageURL): "http://example.com/image.jpg",
 	}, m)
 }
 
@@ -52,29 +51,28 @@ func TestNewMetaFromContextFiltersByKeys(t *testing.T) {
 	o := options.New()
 
 	cm := meta.New()
-	cm.Set(meta.KeyImageURL, "http://example.com/image.jpg")
-	cm.Set(meta.KeySourceImageOrigin, "http://example.com")
-	cm.Set(meta.KeyOptions, o)
-
 	ctx := meta.NewContext(context.Background(), cm, nil)
+	meta.Set(ctx, meta.KeyImageURL, "http://example.com/image.jpg")
+	meta.Set(ctx, meta.KeySourceImageOrigin, "http://example.com")
+	meta.Set(ctx, meta.KeyOptions, o)
 
 	m := monitoring.NewMetaFromContext(ctx, meta.KeyOptions)
 
 	require.Equal(t, monitoring.Meta{
-		monitoring.MetaOptions: o.Map(),
+		monitoring.MetaKey(meta.KeyOptions): o.Map(),
 	}, m)
 }
 
-func TestNewMetaFromContextFiltersOutReqIDEvenIfRequested(t *testing.T) {
+func TestNewMetaFromContextIncludesReqIDWhenRequested(t *testing.T) {
 	cm := meta.New()
-	cm.Set(meta.KeyReqID, "abc123")
-	cm.Set(meta.KeyImageURL, "http://example.com/image.jpg")
-
 	ctx := meta.NewContext(context.Background(), cm, nil)
+	meta.Set(ctx, meta.KeyReqID, "abc123")
+	meta.Set(ctx, meta.KeyImageURL, "http://example.com/image.jpg")
 
 	m := monitoring.NewMetaFromContext(ctx, meta.KeyReqID, meta.KeyImageURL)
 
 	require.Equal(t, monitoring.Meta{
-		monitoring.MetaSourceImageURL: "http://example.com/image.jpg",
+		monitoring.MetaKey(meta.KeyReqID):    "abc123",
+		monitoring.MetaKey(meta.KeyImageURL): "http://example.com/image.jpg",
 	}, m)
 }

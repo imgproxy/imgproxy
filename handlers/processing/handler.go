@@ -118,11 +118,9 @@ func (h *Handler) newRequest(req *http.Request) (*request, *server.Error) {
 	// request-scoped meta so error reporting and monitoring can pick them up
 	imageOrigin := monitoring.MetaURLOrigin(imageURL)
 
-	if m := meta.FromContext(req.Context()); m != nil {
-		m.Set(meta.KeyImageURL, imageURL)
-		m.Set(meta.KeySourceImageOrigin, imageOrigin)
-		m.Set(meta.KeyOptions, o)
-	}
+	meta.Set(req.Context(), meta.KeyImageURL, imageURL)
+	meta.Set(req.Context(), meta.KeySourceImageOrigin, imageOrigin)
+	meta.Set(req.Context(), meta.KeyOptions, o)
 
 	// verify that image URL came from the valid source
 	err = h.Security().VerifySourceURL(imageURL)

@@ -34,8 +34,13 @@ func New() *Meta {
 	}
 }
 
-// Set stores value under key.
-func (m *Meta) Set(key string, value any) {
+// Set stores value under key in the Meta attached to ctx. No-op if ctx carries no *Meta.
+func Set(ctx context.Context, key string, value any) {
+	m := FromContext(ctx)
+	if m == nil {
+		return
+	}
+
 	m.mu.Lock()
 	defer m.mu.Unlock()
 

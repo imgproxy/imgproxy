@@ -146,6 +146,13 @@ func setMetadata(span *tracer.Span, key string, value any) {
 	span.SetTag(key, value)
 }
 
+// SetMetadata sets metadata for the current span
+func (dd *DataDog) SetMetadata(ctx context.Context, key string, value any) {
+	if span, ok := tracer.SpanFromContext(ctx); ok {
+		setMetadata(span, key, value)
+	}
+}
+
 // StartSpan starts a new span for DataDog monitoring
 func (dd *DataDog) StartSpan(
 	ctx context.Context,

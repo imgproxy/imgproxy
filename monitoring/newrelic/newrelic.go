@@ -119,6 +119,13 @@ func setMetadata(span attributable, key string, value any) {
 	}
 }
 
+// SetMetadata sets metadata for the current transaction
+func (nl *NewRelic) SetMetadata(ctx context.Context, key string, value any) {
+	if txn := newrelic.FromContext(ctx); txn != nil {
+		setMetadata(txn, key, value)
+	}
+}
+
 // StartSpan starts a new span for New Relic monitoring
 func (nl *NewRelic) StartSpan(
 	ctx context.Context,

@@ -59,8 +59,8 @@ func TestReportWithRequestAndMetadata(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "http://example.com/", nil)
 
 	m := meta.New()
-	m.Set(meta.KeyReqID, "abc123")
 	ctx := meta.NewContext(req.Context(), m, req)
+	meta.Set(ctx, meta.KeyReqID, "abc123")
 
 	err := errctx.NewTextError("boom", 0, errctx.WithDocsURL("https://example.com/docs"))
 
@@ -80,14 +80,13 @@ func TestReportPassesThroughAllValues(t *testing.T) {
 	chanValue := make(chan int)
 
 	m := meta.New()
-	m.Set("String", "value")
-	m.Set("Ints", []int{1, 2, 3})
-	m.Set("Strings", []string{"a", "b"})
-	m.Set("Map", map[string]int{"a": 1, "b": 2})
-	m.Set("SliceOfStruct", []struct{ X int }{{X: 1}})
-	m.Set("Chan", chanValue)
-
 	ctx := meta.NewContext(context.Background(), m, nil)
+	meta.Set(ctx, "String", "value")
+	meta.Set(ctx, "Ints", []int{1, 2, 3})
+	meta.Set(ctx, "Strings", []string{"a", "b"})
+	meta.Set(ctx, "Map", map[string]int{"a": 1, "b": 2})
+	meta.Set(ctx, "SliceOfStruct", []struct{ X int }{{X: 1}})
+	meta.Set(ctx, "Chan", chanValue)
 
 	err := errctx.NewTextError("boom", 0)
 
@@ -110,8 +109,8 @@ func TestReportWithNilRequestButContextMetadata(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "http://example.com/", nil)
 
 	m := meta.New()
-	m.Set(meta.KeyReqID, "abc123")
 	ctx := meta.NewContext(req.Context(), m, nil)
+	meta.Set(ctx, meta.KeyReqID, "abc123")
 
 	err := errctx.NewTextError("boom", 0)
 

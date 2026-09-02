@@ -310,6 +310,15 @@ func setMetadata(span trace.Span, key string, value any) {
 	}
 }
 
+// SetMetadata sets metadata for the current span
+func (o *Otel) SetMetadata(ctx context.Context, key string, value any) {
+	if ctx.Value(hasSpanCtxKey{}) != nil {
+		if span := trace.SpanFromContext(ctx); span != nil {
+			setMetadata(span, key, value)
+		}
+	}
+}
+
 // StartSpan starts a new span for OpenTelemetry monitoring
 func (o *Otel) StartSpan(
 	ctx context.Context,
