@@ -11,6 +11,7 @@ import (
 	"github.com/imgproxy/imgproxy/v4/monitoring/otel"
 	"github.com/imgproxy/imgproxy/v4/monitoring/prometheus"
 	"github.com/imgproxy/imgproxy/v4/monitoring/stats"
+	"github.com/imgproxy/imgproxy/v4/server/meta"
 )
 
 // monitor is an interface for monitoring services
@@ -118,8 +119,9 @@ func (m *Monitoring) StartPrometheus(cancel context.CancelFunc) error {
 func (m *Monitoring) StartRequest(
 	ctx context.Context,
 	rw http.ResponseWriter,
-	r *http.Request,
 ) (context.Context, context.CancelFunc, http.ResponseWriter) {
+	r := meta.RequestFromContext(ctx)
+
 	cancels := make([]context.CancelFunc, 0, len(m.monitors))
 
 	for _, monitor := range m.monitors {

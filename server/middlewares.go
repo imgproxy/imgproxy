@@ -9,7 +9,6 @@ import (
 
 	"github.com/imgproxy/imgproxy/v4/errctx"
 	"github.com/imgproxy/imgproxy/v4/httpheaders"
-	"github.com/imgproxy/imgproxy/v4/server/meta"
 )
 
 // WithMonitoring wraps RouteHandler with monitoring handling.
@@ -19,7 +18,7 @@ func (r *Router) WithMonitoring(h RouteHandler) RouteHandler {
 	}
 
 	return func(reqID string, rw ResponseWriter, req *http.Request) *Error {
-		ctx, cancel, newRw := r.monitoring.StartRequest(req.Context(), rw.HTTPResponseWriter(), req)
+		ctx, cancel, newRw := r.monitoring.StartRequest(req.Context(), rw.HTTPResponseWriter())
 		defer cancel()
 
 		// Replace rw.ResponseWriter with new one returned from monitoring
@@ -93,17 +92,13 @@ func (r *Router) WithPanic(h RouteHandler) RouteHandler {
 // It should be placed after `WithMonitoring`, but before `WithPanic`.
 func (r *Router) WithReportError(h RouteHandler) RouteHandler {
 	return func(reqID string, rw ResponseWriter, req *http.Request) *Error {
-		m := meta.New()
-		m.Set(meta.KeyReqID, reqID)
-
-		ctx := meta.NewContext(req.Context(), m, req)
-		req = req.WithContext(ctx)
-
 		// Call the underlying handler passing the context downwards
 		err := h(reqID, rw, req)
 		if err == nil {
 			return nil
 		}
+
+		ctx := req.Context()
 
 		// We do not need to send any canceled context
 		if !errors.Is(err.Err, context.Canceled) {
