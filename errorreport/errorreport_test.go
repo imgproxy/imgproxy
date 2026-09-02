@@ -8,6 +8,7 @@ import (
 
 	"github.com/imgproxy/imgproxy/v4/errctx"
 	"github.com/imgproxy/imgproxy/v4/errorreport"
+	"github.com/imgproxy/imgproxy/v4/server/meta"
 	"github.com/stretchr/testify/require"
 )
 
@@ -30,11 +31,11 @@ func TestReportWithNilRequest(t *testing.T) {
 	err := errctx.NewTextError("boom", 0)
 
 	require.NotPanics(t, func() {
-		r.Report(context.Background(), err, nil)
+		r.Report(context.Background(), err)
 	})
 
 	require.Nil(t, fake.gotReq)
-	require.Nil(t, fake.gotMeta)
+	require.Empty(t, fake.gotMeta)
 }
 
 func TestReportWithNilRequestAndDocsURL(t *testing.T) {
@@ -44,7 +45,7 @@ func TestReportWithNilRequestAndDocsURL(t *testing.T) {
 	err := errctx.NewTextError("boom", 0, errctx.WithDocsURL("https://example.com/docs"))
 
 	require.NotPanics(t, func() {
-		r.Report(context.Background(), err, nil)
+		r.Report(context.Background(), err)
 	})
 
 	require.Nil(t, fake.gotReq)
@@ -56,13 +57,14 @@ func TestReportWithRequestAndMetadata(t *testing.T) {
 	r := errorreport.NewWithReporters(fake)
 
 	req := httptest.NewRequest(http.MethodGet, "http://example.com/", nil)
-	ctx := errorreport.StartRequest(req.Context())
-	req = req.WithContext(ctx)
-	errorreport.SetMetadata(ctx, "Request ID", "abc123")
+
+	m := meta.New()
+	m.Set(meta.KeyReqID, "abc123")
+	ctx := meta.NewContext(req.Context(), m, req)
 
 	err := errctx.NewTextError("boom", 0, errctx.WithDocsURL("https://example.com/docs"))
 
-	r.Report(ctx, err, req)
+	r.Report(ctx, err)
 
 	require.Same(t, req, fake.gotReq)
 	require.Equal(t, map[string]any{
@@ -71,17 +73,45 @@ func TestReportWithRequestAndMetadata(t *testing.T) {
 	}, fake.gotMeta)
 }
 
+func TestReportFiltersNonSimpleValues(t *testing.T) {
+	fake := &fakeReporter{}
+	r := errorreport.NewWithReporters(fake)
+
+	m := meta.New()
+	m.Set("String", "value")
+	m.Set("Ints", []int{1, 2, 3})
+	m.Set("Strings", []string{"a", "b"})
+	m.Set("Map", map[string]int{"a": 1, "b": 2})
+	m.Set("SliceOfStruct", []struct{ X int }{{X: 1}})
+	m.Set("Chan", make(chan int))
+
+	ctx := meta.NewContext(context.Background(), m, nil)
+
+	err := errctx.NewTextError("boom", 0)
+
+	r.Report(ctx, err)
+
+	require.Equal(t, map[string]any{
+		"String":  "value",
+		"Ints":    []int{1, 2, 3},
+		"Strings": []string{"a", "b"},
+		"Map":     map[string]int{"a": 1, "b": 2},
+	}, fake.gotMeta)
+}
+
 func TestReportWithNilRequestButContextMetadata(t *testing.T) {
 	fake := &fakeReporter{}
 	r := errorreport.NewWithReporters(fake)
 
 	req := httptest.NewRequest(http.MethodGet, "http://example.com/", nil)
-	ctx := errorreport.StartRequest(req.Context())
-	errorreport.SetMetadata(ctx, "Request ID", "abc123")
+
+	m := meta.New()
+	m.Set(meta.KeyReqID, "abc123")
+	ctx := meta.NewContext(req.Context(), m, nil)
 
 	err := errctx.NewTextError("boom", 0)
 
-	r.Report(ctx, err, nil)
+	r.Report(ctx, err)
 
 	require.Nil(t, fake.gotReq)
 	require.Equal(t, map[string]any{"Request ID": "abc123"}, fake.gotMeta)

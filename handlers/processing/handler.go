@@ -18,6 +18,7 @@ import (
 	"github.com/imgproxy/imgproxy/v4/processing"
 	"github.com/imgproxy/imgproxy/v4/security"
 	"github.com/imgproxy/imgproxy/v4/server"
+	"github.com/imgproxy/imgproxy/v4/server/meta"
 	"github.com/imgproxy/imgproxy/v4/workers"
 )
 
@@ -113,19 +114,17 @@ func (h *Handler) newRequest(req *http.Request) (*request, *server.Error) {
 		return nil, server.NewError(errctx.Wrap(err), handlers.ErrCategoryPathParsing)
 	}
 
-	// get image origin and create monitoring meta object
+	// get image origin and store it, along with the image URL and options, in the
+	// request-scoped meta so error reporting and monitoring can pick them up
 	imageOrigin := monitoring.MetaURLOrigin(imageURL)
 
-	mm := monitoring.Meta{
-		monitoring.MetaSourceImageURL:    imageURL,
-		monitoring.MetaSourceImageOrigin: imageOrigin,
-		monitoring.MetaOptions:           o.Map(),
+	if m := meta.FromContext(req.Context()); m != nil {
+		m.Set(meta.KeyImageURL, imageURL)
+		m.Set(meta.KeySourceImageOrigin, imageOrigin)
+		m.Set(meta.KeyOptions, o)
 	}
 
-	// set error reporting and monitoring context
-	errorreport.SetMetadata(req.Context(), "Source Image URL", imageURL)
-	errorreport.SetMetadata(req.Context(), "Source Image Origin", imageOrigin)
-	errorreport.SetMetadata(req.Context(), "Options", o.NestedMap())
+	mm := monitoring.NewMetaFromContext(req.Context())
 
 	h.Monitoring().SetMetadata(req.Context(), mm)
 

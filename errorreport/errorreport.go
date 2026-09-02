@@ -2,7 +2,6 @@ package errorreport
 
 import (
 	"context"
-	"maps"
 	"net/http"
 
 	"github.com/imgproxy/imgproxy/v4/errctx"
@@ -10,6 +9,8 @@ import (
 	"github.com/imgproxy/imgproxy/v4/errorreport/bugsnag"
 	"github.com/imgproxy/imgproxy/v4/errorreport/honeybadger"
 	"github.com/imgproxy/imgproxy/v4/errorreport/sentry"
+	"github.com/imgproxy/imgproxy/v4/options"
+	"github.com/imgproxy/imgproxy/v4/server/meta"
 )
 
 // reporter is an interface that all error reporters must implement.
@@ -18,9 +19,6 @@ type reporter interface {
 	Report(err errctx.Error, req *http.Request, meta map[string]any)
 	Close()
 }
-
-// metaCtxKey is the context.Context key for request metadata
-type metaCtxKey struct{}
 
 type Reporter struct {
 	// initialized reporters
@@ -64,38 +62,37 @@ func New(config *Config) (*Reporter, error) {
 	}, nil
 }
 
-// StartRequest initializes metadata storage in the context.
-func StartRequest(ctx context.Context) context.Context {
-	meta := make(map[string]any)
-	return context.WithValue(ctx, metaCtxKey{}, meta)
-}
+// Report reports an error to all configured reporters with the request and its metadata.
+// The request is read from ctx via meta.RequestFromContext and may be nil for errors that
+// don't originate from an HTTP request (e.g. background work); in that case no HTTP-specific
+// data (headers, URL) is attached, but ctx-scoped metadata still is.
+func (r *Reporter) Report(ctx context.Context, err errctx.Error) {
+	req := meta.RequestFromContext(ctx)
 
-// SetMetadata sets a metadata key-value pair in the context.
-func SetMetadata(ctx context.Context, key string, value any) {
-	meta, ok := ctx.Value(metaCtxKey{}).(map[string]any)
-	if !ok || meta == nil {
-		return
+	extra := make(map[string]any)
+
+	if m := meta.FromContext(ctx); m != nil {
+		extra = m.Map(func(key string, value any) (string, any) {
+			switch {
+			case key == meta.KeyOptions:
+				if o, ok := value.(*options.Options); ok {
+					return key, o.NestedMap()
+				}
+
+			case meta.IsSimpleValue(value):
+				return key, value
+			}
+
+			return "", nil
+		})
 	}
 
-	meta[key] = value
-}
-
-// Report reports an error to all configured reporters with the request and its metadata.
-// Metadata is read from ctx, so it's still attached even if req is nil. req may be nil for
-// errors that don't originate from an HTTP request (e.g. background work); in that case no
-// HTTP-specific data (headers, URL) is attached, but ctx-scoped metadata still is.
-func (r *Reporter) Report(ctx context.Context, err errctx.Error, req *http.Request) {
-	meta, _ := ctx.Value(metaCtxKey{}).(map[string]any)
-
 	if url := err.DocsURL(); url != "" {
-		merged := make(map[string]any, len(meta)+1)
-		maps.Copy(merged, meta)
-		merged["Documentation URL"] = url
-		meta = merged
+		extra["Documentation URL"] = url
 	}
 
 	for _, reporter := range r.reporters {
-		reporter.Report(err, req, meta)
+		reporter.Report(err, req, extra)
 	}
 }
 

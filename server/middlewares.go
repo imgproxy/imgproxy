@@ -8,8 +8,8 @@ import (
 	"net/http"
 
 	"github.com/imgproxy/imgproxy/v4/errctx"
-	"github.com/imgproxy/imgproxy/v4/errorreport"
 	"github.com/imgproxy/imgproxy/v4/httpheaders"
+	"github.com/imgproxy/imgproxy/v4/server/meta"
 )
 
 // WithMonitoring wraps RouteHandler with monitoring handling.
@@ -93,10 +93,11 @@ func (r *Router) WithPanic(h RouteHandler) RouteHandler {
 // It should be placed after `WithMonitoring`, but before `WithPanic`.
 func (r *Router) WithReportError(h RouteHandler) RouteHandler {
 	return func(reqID string, rw ResponseWriter, req *http.Request) *Error {
-		// Open the error context
-		ctx := errorreport.StartRequest(req.Context())
+		m := meta.New()
+		m.Set(meta.KeyReqID, reqID)
+
+		ctx := meta.NewContext(req.Context(), m, req)
 		req = req.WithContext(ctx)
-		errorreport.SetMetadata(ctx, "Request ID", reqID)
 
 		// Call the underlying handler passing the context downwards
 		err := h(reqID, rw, req)
@@ -111,7 +112,7 @@ func (r *Router) WithReportError(h RouteHandler) RouteHandler {
 
 		// Report error to error collectors
 		if err.Err.ShouldReport() {
-			r.errorReporter.Report(ctx, err.Err, req)
+			r.errorReporter.Report(ctx, err.Err)
 		}
 
 		// Log response and format the error output
