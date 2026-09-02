@@ -21,15 +21,15 @@ type metaCtxKey struct{}
 // requestCtxKey is the context key for the *http.Request value
 type requestCtxKey struct{}
 
-// Meta is generic request-scoped metadata carried via context.
-type Meta struct {
+// meta is generic request-scoped metadata carried via context.
+type meta struct {
 	mu     sync.Mutex
 	values map[string]any
 }
 
 // New creates a new empty Meta.
-func New() *Meta {
-	return &Meta{
+func New() *meta {
+	return &meta{
 		values: make(map[string]any),
 	}
 }
@@ -48,7 +48,7 @@ func Set(ctx context.Context, key string, value any) {
 }
 
 // Get retrieves a typed value stored under key.
-func Get[T any](m *Meta, key string) (v T, ok bool) {
+func Get[T any](m *meta, key string) (v T, ok bool) {
 	m.mu.Lock()
 	value, exists := m.values[key]
 	m.mu.Unlock()
@@ -84,14 +84,14 @@ func Map(ctx context.Context, fn func(key string, value any) (string, any)) map[
 }
 
 // NewContext returns a copy of ctx carrying m and req. req may be nil.
-func NewContext(ctx context.Context, m *Meta, req *http.Request) context.Context {
+func NewContext(ctx context.Context, m *meta, req *http.Request) context.Context {
 	ctx = context.WithValue(ctx, metaCtxKey{}, m)
 	return context.WithValue(ctx, requestCtxKey{}, req)
 }
 
 // FromContext returns the Meta attached to ctx, or nil.
-func FromContext(ctx context.Context) *Meta {
-	m, _ := ctx.Value(metaCtxKey{}).(*Meta)
+func FromContext(ctx context.Context) *meta {
+	m, _ := ctx.Value(metaCtxKey{}).(*meta)
 	return m
 }
 
