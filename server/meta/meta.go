@@ -2,6 +2,7 @@ package meta
 
 import (
 	"context"
+	"maps"
 	"net/http"
 	"net/url"
 	"sync"
@@ -28,11 +29,22 @@ type meta struct {
 	values map[string]any
 }
 
-// New creates a new empty meta.
-func New() *meta {
+// newMeta creates a new empty meta.
+func newMeta() *meta {
 	return &meta{
 		values: make(map[string]any),
 	}
+}
+
+// clone returns a copy of m backed by a new, independent values map.
+func (m *meta) clone() *meta {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	values := make(map[string]any, len(m.values))
+	maps.Copy(values, m.values)
+
+	return &meta{values: values}
 }
 
 // Set stores value under key in the meta attached to ctx. No-op if ctx carries no *meta.
@@ -99,10 +111,27 @@ func Map(ctx context.Context, fn func(key string, value any) (string, any)) map[
 	return out
 }
 
-// NewContext returns a copy of ctx carrying m and req. req may be nil.
-func NewContext(ctx context.Context, m *meta, req *http.Request) context.Context {
+// NewContext returns a copy of ctx carrying request-scoped metadata and req.
+//
+// If ctx already carries metadata, it is cloned into a new, independent meta so
+// mutations against the returned context don't leak back into ctx. Otherwise a new
+// empty meta is created. req may be nil, in which case any request already attached
+// to ctx is preserved; a non-nil req always overrides it.
+func NewContext(ctx context.Context, req *http.Request) context.Context {
+	var m *meta
+	if parent := fromContext(ctx); parent != nil {
+		m = parent.clone()
+	} else {
+		m = newMeta()
+	}
+
 	ctx = context.WithValue(ctx, metaCtxKey{}, m)
-	return context.WithValue(ctx, requestCtxKey{}, req)
+
+	if req != nil {
+		ctx = context.WithValue(ctx, requestCtxKey{}, req)
+	}
+
+	return ctx
 }
 
 // RequestFromContext returns the *http.Request attached to ctx, or nil.

@@ -58,8 +58,7 @@ func TestReportWithRequestAndMetadata(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodGet, "http://example.com/", nil)
 
-	m := meta.New()
-	ctx := meta.NewContext(req.Context(), m, req)
+	ctx := meta.NewContext(req.Context(), req)
 	meta.Set(ctx, meta.KeyReqID, "abc123")
 
 	err := errctx.NewTextError("boom", 0, errctx.WithDocsURL("https://example.com/docs"))
@@ -79,8 +78,7 @@ func TestReportPassesThroughAllValues(t *testing.T) {
 
 	chanValue := make(chan int)
 
-	m := meta.New()
-	ctx := meta.NewContext(context.Background(), m, nil)
+	ctx := meta.NewContext(context.Background(), nil)
 	meta.Set(ctx, "String", "value")
 	meta.Set(ctx, "Ints", []int{1, 2, 3})
 	meta.Set(ctx, "Strings", []string{"a", "b"})
@@ -108,8 +106,7 @@ func TestReportWithNilRequestButContextMetadata(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodGet, "http://example.com/", nil)
 
-	m := meta.New()
-	ctx := meta.NewContext(req.Context(), m, nil)
+	ctx := meta.NewContext(req.Context(), nil)
 	meta.Set(ctx, meta.KeyReqID, "abc123")
 
 	err := errctx.NewTextError("boom", 0)

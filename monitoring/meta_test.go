@@ -18,8 +18,7 @@ func TestNewMetaFromContextNoMeta(t *testing.T) {
 func TestNewMetaFromContextTranslatesKnownKeys(t *testing.T) {
 	o := options.New()
 
-	cm := meta.New()
-	ctx := meta.NewContext(context.Background(), cm, nil)
+	ctx := meta.NewContext(context.Background(), nil)
 	meta.Set(ctx, meta.KeyReqID, "abc123") // has no monitoring equivalent
 	meta.Set(ctx, meta.KeyImageURL, "http://example.com/image.jpg")
 	meta.Set(ctx, meta.KeySourceImageOrigin, "http://example.com")
@@ -36,8 +35,7 @@ func TestNewMetaFromContextTranslatesKnownKeys(t *testing.T) {
 }
 
 func TestNewMetaFromContextSkipsUnsetKeys(t *testing.T) {
-	cm := meta.New()
-	ctx := meta.NewContext(context.Background(), cm, nil)
+	ctx := meta.NewContext(context.Background(), nil)
 	meta.Set(ctx, meta.KeyImageURL, "http://example.com/image.jpg")
 
 	m := monitoring.NewMetaFromContext(ctx)
@@ -50,8 +48,7 @@ func TestNewMetaFromContextSkipsUnsetKeys(t *testing.T) {
 func TestNewMetaFromContextFiltersByKeys(t *testing.T) {
 	o := options.New()
 
-	cm := meta.New()
-	ctx := meta.NewContext(context.Background(), cm, nil)
+	ctx := meta.NewContext(context.Background(), nil)
 	meta.Set(ctx, meta.KeyImageURL, "http://example.com/image.jpg")
 	meta.Set(ctx, meta.KeySourceImageOrigin, "http://example.com")
 	meta.Set(ctx, meta.KeyOptions, o)
@@ -64,8 +61,7 @@ func TestNewMetaFromContextFiltersByKeys(t *testing.T) {
 }
 
 func TestNewMetaFromContextIncludesReqIDWhenRequested(t *testing.T) {
-	cm := meta.New()
-	ctx := meta.NewContext(context.Background(), cm, nil)
+	ctx := meta.NewContext(context.Background(), nil)
 	meta.Set(ctx, meta.KeyReqID, "abc123")
 	meta.Set(ctx, meta.KeyImageURL, "http://example.com/image.jpg")
 

@@ -122,7 +122,7 @@ func (r *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	reqID := r.getRequestID(req)
 
 	// Attach request-scoped metadata to the context
-	ctx := meta.NewContext(req.Context(), meta.New(), req)
+	ctx := meta.NewContext(req.Context(), req)
 	meta.Set(ctx, meta.KeyReqID, reqID)
 	req = req.WithContext(ctx)
 

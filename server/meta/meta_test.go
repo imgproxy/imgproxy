@@ -12,8 +12,7 @@ import (
 )
 
 func TestSetGet(t *testing.T) {
-	m := meta.New()
-	ctx := meta.NewContext(context.Background(), m, nil)
+	ctx := meta.NewContext(context.Background(), nil)
 	meta.Set(ctx, "key", "value")
 
 	v, ok := meta.Get[string](ctx, "key")
@@ -22,16 +21,14 @@ func TestSetGet(t *testing.T) {
 }
 
 func TestGetMissingKey(t *testing.T) {
-	m := meta.New()
-	ctx := meta.NewContext(context.Background(), m, nil)
+	ctx := meta.NewContext(context.Background(), nil)
 
 	_, ok := meta.Get[string](ctx, "missing")
 	require.False(t, ok)
 }
 
 func TestGetWrongType(t *testing.T) {
-	m := meta.New()
-	ctx := meta.NewContext(context.Background(), m, nil)
+	ctx := meta.NewContext(context.Background(), nil)
 	meta.Set(ctx, "key", 123)
 
 	_, ok := meta.Get[string](ctx, "key")
@@ -50,8 +47,7 @@ func TestSetNoMeta(t *testing.T) {
 }
 
 func TestMap(t *testing.T) {
-	m := meta.New()
-	ctx := meta.NewContext(context.Background(), m, nil)
+	ctx := meta.NewContext(context.Background(), nil)
 	meta.Set(ctx, "a", 1)
 	meta.Set(ctx, "b", 2)
 
@@ -74,10 +70,9 @@ func TestMapNoMeta(t *testing.T) {
 }
 
 func TestNewContextFromContext(t *testing.T) {
-	m := meta.New()
 	req := httptest.NewRequest(http.MethodGet, "/test", nil)
 
-	ctx := meta.NewContext(context.Background(), m, req)
+	ctx := meta.NewContext(context.Background(), req)
 	meta.Set(ctx, "key", "value")
 
 	v, ok := meta.Get[string](ctx, "key")
@@ -87,11 +82,28 @@ func TestNewContextFromContext(t *testing.T) {
 }
 
 func TestNewContextNilRequest(t *testing.T) {
-	m := meta.New()
-
-	ctx := meta.NewContext(context.Background(), m, nil)
+	ctx := meta.NewContext(context.Background(), nil)
 
 	require.Nil(t, meta.RequestFromContext(ctx))
+}
+
+func TestNewContextPreservesRequestWhenNil(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/test", nil)
+
+	ctx := meta.NewContext(context.Background(), req)
+	child := meta.NewContext(ctx, nil)
+
+	require.Same(t, req, meta.RequestFromContext(child))
+}
+
+func TestNewContextOverridesRequestWhenNonNil(t *testing.T) {
+	req1 := httptest.NewRequest(http.MethodGet, "/first", nil)
+	req2 := httptest.NewRequest(http.MethodGet, "/second", nil)
+
+	ctx := meta.NewContext(context.Background(), req1)
+	child := meta.NewContext(ctx, req2)
+
+	require.Same(t, req2, meta.RequestFromContext(child))
 }
 
 func TestRequestFromContextEmpty(t *testing.T) {
@@ -100,8 +112,7 @@ func TestRequestFromContextEmpty(t *testing.T) {
 }
 
 func TestConcurrentAccess(t *testing.T) {
-	m := meta.New()
-	ctx := meta.NewContext(context.Background(), m, nil)
+	ctx := meta.NewContext(context.Background(), nil)
 
 	var wg sync.WaitGroup
 
@@ -129,10 +140,32 @@ func TestFromContextEmpty(t *testing.T) {
 	require.Nil(t, got)
 }
 
-func TestNewContextFromContextIdentity(t *testing.T) {
-	m := meta.New()
+func TestNewContextCreatesMetaWhenNoneInParent(t *testing.T) {
+	ctx := meta.NewContext(context.Background(), nil)
 
-	ctx := meta.NewContext(context.Background(), m, nil)
+	require.NotNil(t, meta.FromContext(ctx))
+}
 
-	require.Same(t, m, meta.FromContext(ctx))
+func TestNewContextClonesParentMeta(t *testing.T) {
+	ctx := meta.NewContext(context.Background(), nil)
+	meta.Set(ctx, "key", "value")
+
+	child := meta.NewContext(ctx, nil)
+
+	require.NotSame(t, meta.FromContext(ctx), meta.FromContext(child))
+
+	v, ok := meta.Get[string](child, "key")
+	require.True(t, ok)
+	require.Equal(t, "value", v)
+}
+
+func TestNewContextCloneIsIndependent(t *testing.T) {
+	ctx := meta.NewContext(context.Background(), nil)
+	meta.Set(ctx, "key", "value")
+
+	child := meta.NewContext(ctx, nil)
+	meta.Set(child, "key2", "value2")
+
+	_, ok := meta.Get[string](ctx, "key2")
+	require.False(t, ok)
 }
