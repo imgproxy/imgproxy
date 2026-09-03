@@ -13,6 +13,7 @@ import (
 	"github.com/imgproxy/imgproxy/v4/errorreport"
 	"github.com/imgproxy/imgproxy/v4/httpheaders"
 	"github.com/imgproxy/imgproxy/v4/monitoring"
+	"github.com/imgproxy/imgproxy/v4/server/meta"
 	"github.com/imgproxy/imgproxy/v4/server/responsewriter"
 )
 
@@ -119,6 +120,11 @@ func (r *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	// Get/create request ID
 	reqID := r.getRequestID(req)
+
+	// Attach request-scoped metadata to the context
+	ctx := meta.NewContext(req.Context(), meta.New(), req)
+	meta.Set(ctx, meta.KeyReqID, reqID)
+	req = req.WithContext(ctx)
 
 	// Replace request IP from headers
 	r.replaceRemoteAddr(req)

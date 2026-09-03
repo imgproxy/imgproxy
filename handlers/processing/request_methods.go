@@ -15,6 +15,7 @@ import (
 	"github.com/imgproxy/imgproxy/v4/options/keys"
 	"github.com/imgproxy/imgproxy/v4/processing"
 	"github.com/imgproxy/imgproxy/v4/server"
+	"github.com/imgproxy/imgproxy/v4/server/meta"
 )
 
 // makeImageRequestHeaders creates headers for the image request
@@ -93,7 +94,7 @@ func (r *request) handleDownloadError(
 
 	// We didn't return, so we have to report error
 	if err.ShouldReport() {
-		r.ErrorReporter().Report(r.req.Context(), err, r.req)
+		r.ErrorReporter().Report(r.req.Context(), err)
 	}
 
 	//nolint:gosec
@@ -137,7 +138,7 @@ func (r *request) getFallbackImage() (imagedata.ImageData, http.Header) {
 		slog.Warn(err.Error())
 
 		if ierr := r.wrapDownloadingErr(err); ierr.ShouldReport() {
-			r.ErrorReporter().Report(r.req.Context(), ierr, r.req)
+			r.ErrorReporter().Report(r.req.Context(), ierr)
 		}
 
 		return nil, nil
@@ -153,9 +154,7 @@ func (r *request) processImage(
 	ctx, cancelSpan := r.Monitoring().StartSpan(
 		r.req.Context(),
 		"Processing image",
-		r.monitoringMeta.Filter(
-			monitoring.MetaOptions,
-		),
+		monitoring.NewMetaFromContext(r.req.Context(), meta.KeyOptions),
 	)
 	defer cancelSpan()
 

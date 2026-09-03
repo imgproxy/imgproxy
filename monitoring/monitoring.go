@@ -118,33 +118,36 @@ func (m *Monitoring) StartPrometheus(cancel context.CancelFunc) error {
 func (m *Monitoring) StartRequest(
 	ctx context.Context,
 	rw http.ResponseWriter,
-	r *http.Request,
+	req *http.Request,
 ) (context.Context, context.CancelFunc, http.ResponseWriter) {
 	cancels := make([]context.CancelFunc, 0, len(m.monitors))
 
 	for _, monitor := range m.monitors {
 		var cancel context.CancelFunc
+
 		//nolint:fatcontext
-		ctx, cancel, rw = monitor.StartRequest(ctx, rw, r)
+		ctx, cancel, rw = monitor.StartRequest(ctx, rw, req)
 		cancels = append(cancels, cancel)
 	}
 
 	cancel := func() {
+		// When request starts, we do not have the required metadata yet. It is set later in
+		// the request handling process, so we need to fetch it from the context here when
+		// request has finished and context has been enriched with the metadata.
+		md := NewMetaFromContext(ctx)
+
+		for _, monitor := range m.monitors {
+			for key, value := range md {
+				monitor.SetMetadata(ctx, key, value)
+			}
+		}
+
 		for _, c := range cancels {
 			c()
 		}
 	}
 
 	return ctx, cancel, rw
-}
-
-// SetMetadata sets metadata key-value pair for all monitoring services
-func (m *Monitoring) SetMetadata(ctx context.Context, meta Meta) {
-	for _, monitor := range m.monitors {
-		for key, value := range meta {
-			monitor.SetMetadata(ctx, key, value)
-		}
-	}
 }
 
 // StartSpan starts a new trace span as child of the current span

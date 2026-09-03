@@ -1,38 +1,78 @@
 package monitoring_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/imgproxy/imgproxy/v4/monitoring"
+	"github.com/imgproxy/imgproxy/v4/options"
+	"github.com/imgproxy/imgproxy/v4/server/meta"
 	"github.com/stretchr/testify/require"
 )
 
-func TestMetaFilter(t *testing.T) {
-	// Create a Meta with some test data
-	meta := monitoring.Meta{
-		"key1": "value1",
-		"key2": "value2",
-		"key3": "value3",
-		"key4": 42,
-	}
+func TestNewMetaFromContextNoMeta(t *testing.T) {
+	m := monitoring.NewMetaFromContext(context.Background())
+	require.Equal(t, monitoring.Meta{}, m)
+}
 
-	// Test filtering with existing keys
-	filtered := meta.Filter("key1", "key3")
+func TestNewMetaFromContextTranslatesKnownKeys(t *testing.T) {
+	o := options.New()
 
-	// Check that filtered meta has the correct keys
-	require.Len(t, filtered, 2)
-	require.Equal(t, "value1", filtered["key1"])
-	require.Equal(t, "value3", filtered["key3"])
+	cm := meta.New()
+	ctx := meta.NewContext(context.Background(), cm, nil)
+	meta.Set(ctx, meta.KeyReqID, "abc123") // has no monitoring equivalent
+	meta.Set(ctx, meta.KeyImageURL, "http://example.com/image.jpg")
+	meta.Set(ctx, meta.KeySourceImageOrigin, "http://example.com")
+	meta.Set(ctx, meta.KeyOptions, o)
 
-	// Check that non-requested keys are not present
-	require.NotContains(t, filtered, "key2")
-	require.NotContains(t, filtered, "key4")
+	m := monitoring.NewMetaFromContext(ctx)
 
-	// Test filtering with non-existing keys
-	filtered2 := meta.Filter("nonexistent")
-	require.Empty(t, filtered2)
+	require.Equal(t, monitoring.Meta{
+		monitoring.MetaKey(meta.KeyReqID):             "abc123",
+		monitoring.MetaKey(meta.KeyImageURL):          "http://example.com/image.jpg",
+		monitoring.MetaKey(meta.KeySourceImageOrigin): "http://example.com",
+		monitoring.MetaKey(meta.KeyOptions):           o.Map(),
+	}, m)
+}
 
-	// Test filtering with empty parameters
-	filtered3 := meta.Filter()
-	require.Empty(t, filtered3)
+func TestNewMetaFromContextSkipsUnsetKeys(t *testing.T) {
+	cm := meta.New()
+	ctx := meta.NewContext(context.Background(), cm, nil)
+	meta.Set(ctx, meta.KeyImageURL, "http://example.com/image.jpg")
+
+	m := monitoring.NewMetaFromContext(ctx)
+
+	require.Equal(t, monitoring.Meta{
+		monitoring.MetaKey(meta.KeyImageURL): "http://example.com/image.jpg",
+	}, m)
+}
+
+func TestNewMetaFromContextFiltersByKeys(t *testing.T) {
+	o := options.New()
+
+	cm := meta.New()
+	ctx := meta.NewContext(context.Background(), cm, nil)
+	meta.Set(ctx, meta.KeyImageURL, "http://example.com/image.jpg")
+	meta.Set(ctx, meta.KeySourceImageOrigin, "http://example.com")
+	meta.Set(ctx, meta.KeyOptions, o)
+
+	m := monitoring.NewMetaFromContext(ctx, meta.KeyOptions)
+
+	require.Equal(t, monitoring.Meta{
+		monitoring.MetaKey(meta.KeyOptions): o.Map(),
+	}, m)
+}
+
+func TestNewMetaFromContextIncludesReqIDWhenRequested(t *testing.T) {
+	cm := meta.New()
+	ctx := meta.NewContext(context.Background(), cm, nil)
+	meta.Set(ctx, meta.KeyReqID, "abc123")
+	meta.Set(ctx, meta.KeyImageURL, "http://example.com/image.jpg")
+
+	m := monitoring.NewMetaFromContext(ctx, meta.KeyReqID, meta.KeyImageURL)
+
+	require.Equal(t, monitoring.Meta{
+		monitoring.MetaKey(meta.KeyReqID):    "abc123",
+		monitoring.MetaKey(meta.KeyImageURL): "http://example.com/image.jpg",
+	}, m)
 }

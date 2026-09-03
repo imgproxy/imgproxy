@@ -18,6 +18,7 @@ import (
 	"github.com/imgproxy/imgproxy/v4/processing"
 	"github.com/imgproxy/imgproxy/v4/security"
 	"github.com/imgproxy/imgproxy/v4/server"
+	"github.com/imgproxy/imgproxy/v4/server/meta"
 	"github.com/imgproxy/imgproxy/v4/workers"
 )
 
@@ -113,21 +114,13 @@ func (h *Handler) newRequest(req *http.Request) (*request, *server.Error) {
 		return nil, server.NewError(errctx.Wrap(err), handlers.ErrCategoryPathParsing)
 	}
 
-	// get image origin and create monitoring meta object
-	imageOrigin := monitoring.MetaURLOrigin(imageURL)
+	// get image origin and store it, along with the image URL and options, in the
+	// request-scoped meta so error reporting and monitoring can pick them up
+	imageOrigin := meta.URLOrigin(imageURL)
 
-	mm := monitoring.Meta{
-		monitoring.MetaSourceImageURL:    imageURL,
-		monitoring.MetaSourceImageOrigin: imageOrigin,
-		monitoring.MetaOptions:           o.Map(),
-	}
-
-	// set error reporting and monitoring context
-	errorreport.SetMetadata(req.Context(), "Source Image URL", imageURL)
-	errorreport.SetMetadata(req.Context(), "Source Image Origin", imageOrigin)
-	errorreport.SetMetadata(req.Context(), "Options", o.NestedMap())
-
-	h.Monitoring().SetMetadata(req.Context(), mm)
+	meta.Set(req.Context(), meta.KeyImageURL, imageURL)
+	meta.Set(req.Context(), meta.KeySourceImageOrigin, imageOrigin)
+	meta.Set(req.Context(), meta.KeyOptions, o)
 
 	// verify that image URL came from the valid source
 	err = h.Security().VerifySourceURL(imageURL)
@@ -138,11 +131,10 @@ func (h *Handler) newRequest(req *http.Request) (*request, *server.Error) {
 	return &request{
 		HandlerContext: h,
 
-		imageURL:       imageURL,
-		path:           path,
-		opts:           o,
-		features:       &features,
-		monitoringMeta: mm,
-		req:            req,
+		imageURL: imageURL,
+		path:     path,
+		opts:     o,
+		features: &features,
+		req:      req,
 	}, nil
 }
