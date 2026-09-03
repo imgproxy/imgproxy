@@ -78,7 +78,7 @@ func URLOrigin(fullURL string) string {
 }
 
 // Map returns a transformed copy of the metadata attached to ctx; fn returning an
-// empty key drops it. Returns an empty map if ctx carries no *Meta.
+// empty key drops it. Returns an empty map if ctx carries no *meta.
 func Map(ctx context.Context, fn func(key string, value any) (string, any)) map[string]any {
 	m := fromContext(ctx)
 	if m == nil {

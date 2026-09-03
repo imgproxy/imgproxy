@@ -25,7 +25,7 @@ func NewMetaFromContext(ctx context.Context, keys ...string) Meta {
 			return "", nil
 		}
 
-		// meta.KeyOptions holds *options.Options; monitoring wants its flat map form.
+		// monitoring wants options in its flat map form.
 		if o, ok := value.(*options.Options); ok {
 			value = o.Map()
 		}
