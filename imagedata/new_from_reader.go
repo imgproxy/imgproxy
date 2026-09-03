@@ -28,6 +28,14 @@ func NewFromReaderAsync(
 ) (ImageData, error) {
 	b := asyncbuffer.New(r, dataLen, finishFn...)
 
+	return NewFromAsyncBuffer(b, ct, ext, desc)
+}
+
+// NewFromAsyncBuffer creates an ImageData backed by an already-created
+// AsyncBuffer b. The caller only blocks until enough data is available to
+// detect the image format, the rest is read in the background as it's
+// consumed. desc is used to annotate errors surfaced from b.
+func NewFromAsyncBuffer(b *asyncbuffer.AsyncBuffer, ct, ext, desc string) (ImageData, error) {
 	format, err := imagetype.Detect(b.Reader(), ct, ext)
 	if err != nil {
 		b.Close()
