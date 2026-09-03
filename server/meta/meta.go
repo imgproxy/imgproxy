@@ -41,10 +41,7 @@ func (m *meta) clone() *meta {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	values := make(map[string]any, len(m.values))
-	maps.Copy(values, m.values)
-
-	return &meta{values: values}
+	return &meta{values: maps.Clone(m.values)}
 }
 
 // Set stores value under key in the meta attached to ctx. No-op if ctx carries no *meta.
