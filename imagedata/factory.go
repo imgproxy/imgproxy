@@ -14,6 +14,7 @@ import (
 	"github.com/imgproxy/imgproxy/v4/httpheaders"
 	"github.com/imgproxy/imgproxy/v4/imagetype"
 	"github.com/imgproxy/imgproxy/v4/monitoring"
+	"github.com/imgproxy/imgproxy/v4/server/meta"
 )
 
 // Factory represents ImageData factory
@@ -209,10 +210,10 @@ func (f *factory) startMonitoringSpan(
 		return ctx, func() {}
 	}
 
-	meta := monitoring.Meta{
+	spanMeta := monitoring.Meta{
 		monitoring.MetaKey(desc + " URL"):    imageURL,
-		monitoring.MetaKey(desc + " Origin"): monitoring.MetaURLOrigin(imageURL),
+		monitoring.MetaKey(desc + " Origin"): meta.URLOrigin(imageURL),
 	}
 
-	return f.monitoring.StartSpan(ctx, "Downloading "+desc, meta)
+	return f.monitoring.StartSpan(ctx, "Downloading "+desc, spanMeta)
 }

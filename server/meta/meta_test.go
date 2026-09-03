@@ -16,15 +16,16 @@ func TestSetGet(t *testing.T) {
 	ctx := meta.NewContext(context.Background(), m, nil)
 	meta.Set(ctx, "key", "value")
 
-	v, ok := meta.Get[string](m, "key")
+	v, ok := meta.Get[string](ctx, "key")
 	require.True(t, ok)
 	require.Equal(t, "value", v)
 }
 
 func TestGetMissingKey(t *testing.T) {
 	m := meta.New()
+	ctx := meta.NewContext(context.Background(), m, nil)
 
-	_, ok := meta.Get[string](m, "missing")
+	_, ok := meta.Get[string](ctx, "missing")
 	require.False(t, ok)
 }
 
@@ -33,7 +34,12 @@ func TestGetWrongType(t *testing.T) {
 	ctx := meta.NewContext(context.Background(), m, nil)
 	meta.Set(ctx, "key", 123)
 
-	_, ok := meta.Get[string](m, "key")
+	_, ok := meta.Get[string](ctx, "key")
+	require.False(t, ok)
+}
+
+func TestGetNoMeta(t *testing.T) {
+	_, ok := meta.Get[string](context.Background(), "key")
 	require.False(t, ok)
 }
 
@@ -74,7 +80,9 @@ func TestNewContextFromContext(t *testing.T) {
 	ctx := meta.NewContext(context.Background(), m, req)
 	meta.Set(ctx, "key", "value")
 
-	require.Same(t, m, meta.FromContext(ctx))
+	v, ok := meta.Get[string](ctx, "key")
+	require.True(t, ok)
+	require.Equal(t, "value", v)
 	require.Same(t, req, meta.RequestFromContext(ctx))
 }
 
@@ -83,13 +91,7 @@ func TestNewContextNilRequest(t *testing.T) {
 
 	ctx := meta.NewContext(context.Background(), m, nil)
 
-	require.Same(t, m, meta.FromContext(ctx))
 	require.Nil(t, meta.RequestFromContext(ctx))
-}
-
-func TestFromContextEmpty(t *testing.T) {
-	got := meta.FromContext(context.Background())
-	require.Nil(t, got)
 }
 
 func TestRequestFromContextEmpty(t *testing.T) {
@@ -120,4 +122,17 @@ func TestConcurrentAccess(t *testing.T) {
 	}
 
 	wg.Wait()
+}
+
+func TestFromContextEmpty(t *testing.T) {
+	got := meta.FromContext(context.Background())
+	require.Nil(t, got)
+}
+
+func TestNewContextFromContextIdentity(t *testing.T) {
+	m := meta.New()
+
+	ctx := meta.NewContext(context.Background(), m, nil)
+
+	require.Same(t, m, meta.FromContext(ctx))
 }

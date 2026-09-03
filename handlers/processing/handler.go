@@ -116,7 +116,7 @@ func (h *Handler) newRequest(req *http.Request) (*request, *server.Error) {
 
 	// get image origin and store it, along with the image URL and options, in the
 	// request-scoped meta so error reporting and monitoring can pick them up
-	imageOrigin := monitoring.MetaURLOrigin(imageURL)
+	imageOrigin := meta.URLOrigin(imageURL)
 
 	meta.Set(req.Context(), meta.KeyImageURL, imageURL)
 	meta.Set(req.Context(), meta.KeySourceImageOrigin, imageOrigin)

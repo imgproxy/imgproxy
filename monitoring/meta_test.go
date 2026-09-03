@@ -12,7 +12,7 @@ import (
 
 func TestNewMetaFromContextNoMeta(t *testing.T) {
 	m := monitoring.NewMetaFromContext(context.Background())
-	require.Nil(t, m)
+	require.Equal(t, monitoring.Meta{}, m)
 }
 
 func TestNewMetaFromContextTranslatesKnownKeys(t *testing.T) {
