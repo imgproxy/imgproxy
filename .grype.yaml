@@ -1,0 +1,7 @@
+ignore:
+  - vulnerability: CVE-2021-30473
+    reason: "False positive. A weird version 2021-04-07 is specified in the CVE"
+  - vulnerability: CVE-2021-30474
+    reason: "False positive. A weird version 2021-03-30 is specified in the CVE"
+  - vulnerability: CVE-2021-30475
+    reason: "False positive. A weird version 2021-03-24 is specified in the CVE"

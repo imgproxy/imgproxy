@@ -1,0 +1,47 @@
+name: Docker image scan
+
+on:
+  workflow_call:
+    inputs:
+      docker_repo:
+        required: true
+        type: string
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    strategy:
+      matrix:
+        docker_tag:
+          - v4
+          - latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      # Grype doesn't allow selecting specific catalogers.
+      # So we build an SBOM first and then scan it separately.
+      - name: Build SBOM
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
+        with:
+          image: ${{ inputs.docker_repo }}:${{ matrix.docker_tag }}
+          output-file: "${{ github.event.repository.name }}-${{ matrix.docker_tag }}-sbom.cdx.json"
+          format: cyclonedx-json
+        env:
+          # Add the SBOM cataloger to grab CDX files from the image.
+          # Remove the binary cataloger to avoid unnecessary data in the SBOM.
+          # (For some reason, the action doesn't have an input for catalogers,
+          #  so we have to set it via environment variable instead.)
+          SYFT_SELECT_CATALOGERS: "+sbom-cataloger,-binary"
+
+      - name: Scan SBOM
+        uses: anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2 # v7.4.0
+        with:
+          sbom: "${{ github.event.repository.name }}-${{ matrix.docker_tag }}-sbom.cdx.json"
+          fail-build: true
+          output-format: table
+          severity-cutoff: low
+          only-fixed: true
