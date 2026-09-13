@@ -23,10 +23,10 @@ var (
 	}
 
 	protocolMap = map[string]string{
-		"grpc":          "grpc",
-		"http/protobuf": "http/protobuf",
-		"http":          "http/protobuf",
-		"https":         "http/protobuf",
+		"grpc":          grpcProtocol,
+		"http/protobuf": protobufProtocol,
+		"http":          protobufProtocol,
+		"https":         protobufProtocol,
 	}
 
 	IMGPROXY_OPEN_TELEMETRY_ENABLE             = env.Bool("IMGPROXY_OPEN_TELEMETRY_ENABLE")
@@ -91,7 +91,7 @@ func NewDefaultConfig() Config {
 		ClientKey:          nil,
 		TraceIDGenerator:   "xray",
 		PropagateExt:       false,
-		Protocol:           "grpc",
+		Protocol:           grpcProtocol,
 		TracesProtocol:     "",
 		MetricsProtocol:    "",
 		LogsProtocol:       "",

@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/imgproxy/imgproxy/v4/privatenet"
-	"golang.org/x/net/http2"
 )
 
 func New(verifyNetworks bool, config *Config) (*http.Transport, error) {
@@ -21,7 +20,6 @@ func New(verifyNetworks bool, config *Config) (*http.Transport, error) {
 	dialer := &net.Dialer{
 		Timeout:   30 * time.Second,
 		KeepAlive: 30 * time.Second,
-		DualStack: true,
 	}
 
 	if verifyNetworks {
@@ -43,6 +41,9 @@ func New(verifyNetworks bool, config *Config) (*http.Transport, error) {
 
 		HTTP2: &http.HTTP2Config{
 			MaxReceiveBufferPerStream: 128 * 1024,
+			MaxReadFrameSize:          16 * 1024,
+			PingTimeout:               5 * time.Second,
+			SendPingTimeout:           time.Second,
 		},
 	}
 
@@ -54,16 +55,6 @@ func New(verifyNetworks bool, config *Config) (*http.Transport, error) {
 	if config.IgnoreSslVerification {
 		transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true} //nolint:gosec
 	}
-
-	transport2, err := http2.ConfigureTransports(transport)
-	if err != nil {
-		return nil, err
-	}
-
-	// TODO: Move this to transport.HTTP2 when https://go.dev/issue/67813 is closed
-	transport2.MaxReadFrameSize = 16 * 1024
-	transport2.PingTimeout = 5 * time.Second
-	transport2.ReadIdleTimeout = time.Second
 
 	return transport, nil
 }

@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
 )
@@ -40,9 +39,7 @@ func New(config *Config, trans *http.Transport) (*Storage, error) {
 	}
 
 	opts := azblob.ClientOptions{
-		ClientOptions: policy.ClientOptions{
-			Transport: &http.Client{Transport: trans},
-		},
+		Transport: &http.Client{Transport: trans},
 	}
 
 	if len(config.Key) > 0 {

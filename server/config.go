@@ -13,7 +13,7 @@ import (
 var (
 	// networks defines allowed network types
 	networks = map[string]string{
-		"tcp":        "tcp",
+		"tcp":        "tcp", //nolint:goconst
 		"tcp4":       "tcp4",
 		"tcp6":       "tcp6",
 		"unix":       "unix",

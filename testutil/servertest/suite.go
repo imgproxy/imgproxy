@@ -112,7 +112,6 @@ func (s *Suite) GET(path string, header ...http.Header) *http.Response {
 // startServer starts imgproxy instance's server for the tests.
 // Returns [TestServer] that contains the server address and shutdown function
 func (s *Suite) startServer(ctx context.Context, i *imgproxy.Imgproxy) *TestServer {
-	//nolint:gosec // TestServer will deal with cancellation
 	ctx, cancel := context.WithCancel(ctx)
 
 	addrCh := make(chan net.Addr)

@@ -96,7 +96,6 @@ func (r *request) handleDownloadError(
 		r.ErrorReporter().Report(r.req.Context(), err, r.req)
 	}
 
-	//nolint:gosec
 	slog.Warn(
 		"Could not load image. Using fallback image",
 		"request_id", r.reqID,

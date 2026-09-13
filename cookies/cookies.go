@@ -53,6 +53,7 @@ func (j *cookieJar) SetCookies(u *url.URL, cookies []*http.Cookie) {
 
 	// Remove all unimportant cookie params
 	for _, c := range cookies {
+		//nolint:gosec // We are intentionally ignoring cookie security attributes here to pass through everything
 		j.entries = append(j.entries, &http.Cookie{
 			Name:   c.Name,
 			Value:  c.Value,

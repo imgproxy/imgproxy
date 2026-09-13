@@ -31,7 +31,7 @@ const (
 	Date                            = "Date"
 	Dnt                             = "Dnt"
 	Dpr                             = "Dpr"
-	Etag                            = "Etag"
+	Etag                            = "ETag"
 	Expect                          = "Expect"
 	ExpectCt                        = "Expect-Ct"
 	Expires                         = "Expires"

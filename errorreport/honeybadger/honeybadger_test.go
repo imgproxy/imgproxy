@@ -10,6 +10,7 @@ import (
 	honeybadgervendor "github.com/honeybadger-io/honeybadger-go"
 	"github.com/imgproxy/imgproxy/v4/errctx"
 	"github.com/imgproxy/imgproxy/v4/errorreport/honeybadger"
+	"github.com/imgproxy/imgproxy/v4/httpheaders"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -119,7 +120,7 @@ func (s *HoneybadgerTestSuite) TestReport() {
 			var req *http.Request
 			if tc.withRequest {
 				req = httptest.NewRequest(http.MethodGet, "http://example.com/image.jpg", nil)
-				req.Header.Set("X-Request-Id", "req-1")
+				req.Header.Set(httpheaders.XRequestID, "req-1")
 			}
 
 			s.Require().NotPanics(func() {
