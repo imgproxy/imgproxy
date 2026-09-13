@@ -1,4 +1,4 @@
-ARG BASE_IMAGE_VERSION="v4.0.7"
+ARG BASE_IMAGE_VERSION="v4.0.8"
 
 FROM ghcr.io/imgproxy/imgproxy-base:${BASE_IMAGE_VERSION} AS build
 
@@ -39,6 +39,7 @@ RUN apt-get update \
 
 COPY --from=build /opt/imgproxy/bin/imgproxy /opt/imgproxy/bin/
 COPY --from=build /opt/imgproxy/lib /opt/imgproxy/lib
+COPY --from=build /opt/imgproxy/share/sbom /opt/imgproxy/share/sbom
 RUN ln -s /opt/imgproxy/bin/imgproxy /usr/local/bin/imgproxy
 
 COPY docker/entrypoint.sh /usr/local/bin/
