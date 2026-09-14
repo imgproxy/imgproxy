@@ -1,5 +1,9 @@
 # Changelog
 
+## [4.0.15] - TBA
+### Fixed
+- `IMGPROXY_GRACEFUL_STOP_TIMEOUT` now defaults to twice `IMGPROXY_TIMEOUT` again, as documented. This had regressed to a static 20s default in the 4.x config rewrite.
+
 ## [4.0.14] - 2026-08-24
 ### Changed
 - Updated dependencies.
