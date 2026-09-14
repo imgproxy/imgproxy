@@ -87,7 +87,7 @@ guard_docker() {
 
   local rc=0
   docker compose -f "$(compose_file)" run --rm "${tty_flags[@]}" imgproxy \
-    bash "/workspaces/imgproxy/run" "$task_name" "$@" || rc=$?
+    bash "./run" "$task_name" "$@" || rc=$?
 
   exit "$rc"
 }
