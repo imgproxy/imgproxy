@@ -23,12 +23,20 @@
             "extensions": [
                 "golang.go",
                 "ms-vscode.cpptools"
-            ]
+            ],
+            "settings": {
+                "go.lintTool": "golangci-lint-v2",
+                "go.alternateTools": {
+                    "golangci-lint-v2": "/usr/local/bin/golangci-lint"
+                }
+            }
         }
     },
     "postCreateCommand": {
         "installLefthook": "go tool lefthook install",
-        "installGlobalRun": "./run install-global"
+        "installGlobalRun": "./run install-global",
+        // Add a wrapper over `go tool` for golangci-lint so that VS Code can use it
+        "golangCiBin": "echo '#!/bin/bash\ngo tool golangci-lint $@' > /usr/local/bin/golangci-lint && chmod +x /usr/local/bin/golangci-lint"
     },
     "initializeCommand": {
         "linkImagesDir": "if [ ! -e ${localWorkspaceFolder}/.devcontainer/images ] && [ ! -L ${localWorkspaceFolder}/.devcontainer/images ]; then ln -s ${localWorkspaceFolder}/testdata/test-images ${localWorkspaceFolder}/.devcontainer/images; fi"
