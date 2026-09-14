@@ -71,6 +71,12 @@ func (f *Fetcher) BuildRequest(
 	return &Request{f, req, cancel}, nil
 }
 
+// RegisterProtocol registers a custom protocol with the fetcher's transport.
+// Intended mainly for tests.
+func (f *Fetcher) RegisterProtocol(scheme string, rt http.RoundTripper) {
+	f.transport.RegisterProtocol(scheme, rt)
+}
+
 // checkRedirect is a method that checks if the number of redirects exceeds the maximum allowed
 func (f *Fetcher) checkRedirect(req *http.Request, via []*http.Request) error {
 	redirects := len(via)

@@ -1,6 +1,7 @@
 package stream
 
 import (
+	"errors"
 	"io"
 	"log/slog"
 	"net/http"
@@ -180,6 +181,11 @@ func (s *request) streamData(res *http.Response) {
 	defer streamBufPool.Put(buf)
 
 	_, copyerr := io.CopyBuffer(s.rw, res.Body, *buf)
+	if errors.Is(copyerr, http.ErrBodyNotAllowed) {
+		// We can hit this for some statuses like 304 Not Modified.
+		// We can ignore this error.
+		copyerr = nil
+	}
 
 	server.LogResponse(
 		s.reqID, s.imageRequest, res.StatusCode, nil,

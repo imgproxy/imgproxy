@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strconv"
 	"testing"
 	"time"
@@ -22,6 +23,8 @@ import (
 	"github.com/imgproxy/imgproxy/v4/server/responsewriter"
 	"github.com/imgproxy/imgproxy/v4/testutil"
 )
+
+const testURL = "http://example.com"
 
 type Ctx struct {
 	fetcher    *fetcher.Fetcher
@@ -56,7 +59,7 @@ type HandlerTestSuite struct {
 	config  testutil.LazyObj[*stream.Config]
 	handler testutil.LazyObj[*stream.Handler]
 
-	testServer testutil.LazyTestServer
+	testRoundTripper testutil.LazyObj[*testutil.TestRoundTripper]
 }
 
 func (s *HandlerTestSuite) SetupSuite() {
@@ -130,7 +133,14 @@ func (s *HandlerTestSuite) SetupSuite() {
 		},
 	)
 
-	s.testServer, _ = testutil.NewLazySuiteTestServer(s)
+	s.testRoundTripper, _ = testutil.NewLazySuiteObj(
+		s,
+		func() (*testutil.TestRoundTripper, error) {
+			rt := testutil.NewTestRoundTripper()
+			s.ctx().fetcher.RegisterProtocol("http", rt)
+			return rt, nil
+		},
+	)
 
 	// Silence logs during tests
 	logger.Mute()
@@ -150,15 +160,17 @@ func (s *HandlerTestSuite) execute(
 	header http.Header,
 	o *options.Options,
 ) *http.Response {
-	imageURL = s.testServer().URL() + imageURL
+	imageURL, err := url.JoinPath(testURL, imageURL)
+	s.Require().NoError(err)
+
 	req := httptest.NewRequest(http.MethodGet, "/", nil).WithContext(s.T().Context())
 	httpheaders.CopyAll(header, req.Header, true)
 
 	rw := httptest.NewRecorder()
 	rww := s.rwFactory().NewWriter(rw)
 
-	err := s.handler().Execute(req, imageURL, "test-req-id", o, rww)
-	s.Require().Nil(err)
+	serr := s.handler().Execute(req, imageURL, "test-req-id", o, rww)
+	s.Require().Nil(serr)
 
 	return rw.Result()
 }
@@ -167,7 +179,7 @@ func (s *HandlerTestSuite) execute(
 func (s *HandlerTestSuite) TestHandlerBasicRequest() {
 	data := s.testData.Read("test1.png")
 
-	s.testServer().SetHeaders(httpheaders.ContentType, "image/png").SetBody(data)
+	s.testRoundTripper().SetHeaders(httpheaders.ContentType, "image/png").SetBody(data)
 
 	res := s.execute("", nil, options.New())
 	defer res.Body.Close()
@@ -187,7 +199,7 @@ func (s *HandlerTestSuite) TestHandlerResponseHeadersPassthrough() {
 	data := s.testData.Read("test1.png")
 	contentLength := len(data)
 
-	s.testServer().SetHeaders(
+	s.testRoundTripper().SetHeaders(
 		httpheaders.ContentType, "image/png",
 		httpheaders.ContentLength, strconv.Itoa(contentLength),
 		httpheaders.AcceptRanges, "bytes",
@@ -212,10 +224,10 @@ func (s *HandlerTestSuite) TestHandlerRequestHeadersPassthrough() {
 	etag := `"test-etag-123"`
 	data := s.testData.Read("test1.png")
 
-	s.testServer().
+	s.testRoundTripper().
 		SetBody(data).
 		SetHeaders(httpheaders.Etag, etag).
-		SetHook(func(r *http.Request, rw http.ResponseWriter) {
+		SetHook(func(r *http.Request, res *http.Response) {
 			// Verify that If-None-Match header is passed through
 			s.Equal(etag, r.Header.Get(httpheaders.IfNoneMatch))
 			s.Equal("gzip", r.Header.Get(httpheaders.AcceptEncoding))
@@ -238,7 +250,7 @@ func (s *HandlerTestSuite) TestHandlerRequestHeadersPassthrough() {
 func (s *HandlerTestSuite) TestHandlerContentDisposition() {
 	data := s.testData.Read("test1.png")
 
-	s.testServer().SetHeaders(httpheaders.ContentType, "image/png").SetBody(data)
+	s.testRoundTripper().SetHeaders(httpheaders.ContentType, "image/png").SetBody(data)
 
 	o := options.New()
 	o.Set(keys.Filename, "custom_name")
@@ -280,7 +292,7 @@ func (s *HandlerTestSuite) TestHandlerCacheControl() {
 			name:                    "Passthrough",
 			cacheControlPassthrough: true,
 			setupOriginHeaders: func() {
-				s.testServer().SetHeaders(httpheaders.CacheControl, "max-age=3600, public")
+				s.testRoundTripper().SetHeaders(httpheaders.CacheControl, "max-age=3600, public")
 			},
 			timestampOffset:    nil,
 			expectedStatusCode: 200,
@@ -293,7 +305,9 @@ func (s *HandlerTestSuite) TestHandlerCacheControl() {
 			name:                    "ExpiresPassthrough",
 			cacheControlPassthrough: true,
 			setupOriginHeaders: func() {
-				s.testServer().SetHeaders(httpheaders.Expires, time.Now().Add(oneHour).UTC().Format(http.TimeFormat))
+				s.testRoundTripper().SetHeaders(
+					httpheaders.Expires, time.Now().Add(oneHour).UTC().Format(http.TimeFormat),
+				)
 			},
 			timestampOffset:    nil,
 			expectedStatusCode: 200,
@@ -308,7 +322,7 @@ func (s *HandlerTestSuite) TestHandlerCacheControl() {
 			name:                    "PassthroughDisabled",
 			cacheControlPassthrough: false,
 			setupOriginHeaders: func() {
-				s.testServer().SetHeaders(httpheaders.CacheControl, "max-age=3600, public")
+				s.testRoundTripper().SetHeaders(httpheaders.CacheControl, "max-age=3600, public")
 			},
 			timestampOffset:    nil,
 			expectedStatusCode: 200,
@@ -333,7 +347,7 @@ func (s *HandlerTestSuite) TestHandlerCacheControl() {
 			cacheControlPassthrough: true,
 			setupOriginHeaders: func() {
 				// Origin has a longer cache time
-				s.testServer().SetHeaders(httpheaders.CacheControl, "max-age=7200, public")
+				s.testRoundTripper().SetHeaders(httpheaders.CacheControl, "max-age=7200, public")
 			},
 			timestampOffset:    &thirtyMinutes,
 			expectedStatusCode: 200,
@@ -348,8 +362,10 @@ func (s *HandlerTestSuite) TestHandlerCacheControl() {
 			cacheControlPassthrough: true,
 			setupOriginHeaders: func() {
 				// Origin has both Cache-Control and Expires headers
-				s.testServer().SetHeaders(httpheaders.CacheControl, "max-age=1800, public")
-				s.testServer().SetHeaders(httpheaders.Expires, time.Now().Add(oneHour).UTC().Format(http.TimeFormat))
+				s.testRoundTripper().SetHeaders(httpheaders.CacheControl, "max-age=1800, public")
+				s.testRoundTripper().SetHeaders(
+					httpheaders.Expires, time.Now().Add(oneHour).UTC().Format(http.TimeFormat),
+				)
 			},
 			timestampOffset:    nil,
 			expectedStatusCode: 200,
@@ -366,8 +382,10 @@ func (s *HandlerTestSuite) TestHandlerCacheControl() {
 			cacheControlPassthrough: true,
 			setupOriginHeaders: func() {
 				// Origin has both Cache-Control and Expires headers with longer cache times
-				s.testServer().SetHeaders(httpheaders.CacheControl, "max-age=7200, public")
-				s.testServer().SetHeaders(httpheaders.Expires, time.Now().Add(twoHours).UTC().Format(http.TimeFormat))
+				s.testRoundTripper().SetHeaders(httpheaders.CacheControl, "max-age=7200, public")
+				s.testRoundTripper().SetHeaders(
+					httpheaders.Expires, time.Now().Add(twoHours).UTC().Format(http.TimeFormat),
+				)
 			},
 			timestampOffset:    &fortyFiveMinutes, // Shorter than origin headers
 			expectedStatusCode: 200,
@@ -396,7 +414,7 @@ func (s *HandlerTestSuite) TestHandlerCacheControl() {
 				tc.setupOriginHeaders()
 			}
 
-			s.testServer().SetHeaders(httpheaders.ContentType, "image/png").SetBody(data)
+			s.testRoundTripper().SetHeaders(httpheaders.ContentType, "image/png").SetBody(data)
 
 			s.rwConf().CacheControlPassthrough = tc.cacheControlPassthrough
 			s.rwConf().DefaultTTL = 4242
@@ -419,7 +437,7 @@ func (s *HandlerTestSuite) TestHandlerCacheControl() {
 func (s *HandlerTestSuite) TestHandlerSecurityHeaders() {
 	data := s.testData.Read("test1.png")
 
-	s.testServer().SetHeaders(httpheaders.ContentType, "image/png").SetBody(data)
+	s.testRoundTripper().SetHeaders(httpheaders.ContentType, "image/png").SetBody(data)
 
 	res := s.execute("", nil, options.New())
 	defer res.Body.Close()
@@ -433,7 +451,7 @@ func (s *HandlerTestSuite) TestHandlerSecurityHeaders() {
 
 // TestHandlerErrorResponse tests the error responses from the streaming service.
 func (s *HandlerTestSuite) TestHandlerErrorResponse() {
-	s.testServer().SetStatusCode(http.StatusNotFound).SetBody([]byte("Not Found"))
+	s.testRoundTripper().SetStatusCode(http.StatusNotFound).SetBody([]byte("Not Found"))
 
 	res := s.execute("", nil, options.New())
 	defer res.Body.Close()
@@ -447,9 +465,9 @@ func (s *HandlerTestSuite) TestHandlerCookiePassthrough() {
 
 	data := s.testData.Read("test1.png")
 
-	s.testServer().
+	s.testRoundTripper().
 		SetHeaders(httpheaders.Cookie, "test_cookie=test_value").
-		SetHook(func(r *http.Request, rw http.ResponseWriter) {
+		SetHook(func(r *http.Request, res *http.Response) {
 			// Verify cookies are passed through
 			cookie, cerr := r.Cookie("test_cookie")
 			if cerr == nil {
@@ -470,7 +488,7 @@ func (s *HandlerTestSuite) TestHandlerCookiePassthrough() {
 func (s *HandlerTestSuite) TestHandlerCanonicalHeader() {
 	data := s.testData.Read("test1.png")
 
-	s.testServer().SetHeaders(httpheaders.ContentType, "image/png").SetBody(data)
+	s.testRoundTripper().SetHeaders(httpheaders.ContentType, "image/png").SetBody(data)
 
 	for _, sc := range []bool{true, false} {
 		s.rwConf().SetCanonicalHeader = sc
@@ -481,11 +499,20 @@ func (s *HandlerTestSuite) TestHandlerCanonicalHeader() {
 		s.Require().Equal(200, res.StatusCode)
 
 		if sc {
-			s.Require().Contains(res.Header.Get(httpheaders.Link), fmt.Sprintf(`<%s>; rel="canonical"`, s.testServer().URL()))
+			s.Require().Contains(res.Header.Get(httpheaders.Link), fmt.Sprintf(`<%s>; rel="canonical"`, testURL))
 		} else {
 			s.Require().Empty(res.Header.Get(httpheaders.Link))
 		}
 	}
+}
+
+func (s *HandlerTestSuite) TestHandlerNotModifiedResponse() {
+	s.testRoundTripper().SetStatusCode(http.StatusNotModified).SetBody([]byte("Not Modified"))
+
+	res := s.execute("", nil, options.New())
+	defer res.Body.Close()
+
+	s.Require().Equal(http.StatusNotModified, res.StatusCode)
 }
 
 // maxAgeValue parses max-age from cache-control
