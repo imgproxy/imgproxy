@@ -9,12 +9,12 @@
   "env": {
     "IMGPROXY_KEY": {
       "description": "Hex-encoded secret key for signing URLs.",
-      "value": "",
+      "generator": "secret",
       "required": false
     },
     "IMGPROXY_SALT": {
       "description": "Hex-encoded secret salt for signing URLs.",
-      "value": "",
+      "generator": "secret",
       "required": false
     }
   }
