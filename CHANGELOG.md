@@ -1,5 +1,13 @@
 # Changelog
 
+## [4.0.15] - TBA
+### Changed
+- Updated dependencies.
+
+### Fixed
+- `IMGPROXY_GRACEFUL_STOP_TIMEOUT` now defaults to twice `IMGPROXY_TIMEOUT` again, as documented. This had regressed to a static 20s default in the 4.x config rewrite.
+- Fixed the panic during streaming a 304 Not Modified response with a body.
+
 ## [4.0.14] - 2026-08-24
 ### Changed
 - Updated dependencies.

@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
 
 	"github.com/imgproxy/imgproxy/v4/fetcher/transport/generichttp"
@@ -77,9 +76,7 @@ func NewLazySuiteStorage(
 			}
 
 			clientOpts := &azblob.ClientOptions{
-				ClientOptions: policy.ClientOptions{
-					Transport: &http.Client{Transport: trans},
-				},
+				Transport: &http.Client{Transport: trans},
 			}
 
 			client, err := azblob.NewClientWithSharedKeyCredential(absServer.URL(), sharedKeyCredential, clientOpts)

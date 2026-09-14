@@ -26,12 +26,10 @@ func (s *ReaderTestSuite) SetupSuite() {
 	// Prepare GCS storage with initial objects
 	gcsInitialObjects := []fakestorage.Object{
 		{
-			ObjectAttrs: fakestorage.ObjectAttrs{
-				BucketName: s.TestContainer,
-				Name:       s.TestObjectKey,
-				Updated:    time.Now(),
-			},
-			Content: s.TestData,
+			BucketName: s.TestContainer,
+			Name:       s.TestObjectKey,
+			Updated:    time.Now(),
+			Content:    s.TestData,
 		},
 	}
 

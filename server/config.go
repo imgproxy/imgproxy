@@ -13,7 +13,7 @@ import (
 var (
 	// networks defines allowed network types
 	networks = map[string]string{
-		"tcp":        "tcp",
+		"tcp":        "tcp", //nolint:goconst
 		"tcp4":       "tcp4",
 		"tcp6":       "tcp6",
 		"unix":       "unix",
@@ -93,14 +93,21 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 	port := -1
 	bind := ""
 
+	timeoutErr := IMGPROXY_TIMEOUT.Parse(&c.RequestTimeout)
+
+	// The graceful stop timeout defaults to twice the request timeout, so it
+	// must be derived after IMGPROXY_TIMEOUT is resolved but before
+	// IMGPROXY_GRACEFUL_STOP_TIMEOUT is applied as an explicit override.
+	c.GracefulStopTimeout = c.RequestTimeout * 2
+
 	err := errors.Join(
 		rwErr,
+		timeoutErr,
 		PORT.Parse(&port),
 		IMGPROXY_BIND.Parse(&bind),
 		IMGPROXY_NETWORK.Parse(&c.Network),
 		IMGPROXY_PATH_PREFIX.Parse(&c.PathPrefix),
 		IMGPROXY_MAX_CLIENTS.Parse(&c.MaxClients),
-		IMGPROXY_TIMEOUT.Parse(&c.RequestTimeout),
 		IMGPROXY_READ_REQUEST_TIMEOUT.Parse(&c.ReadRequestTimeout),
 		IMGPROXY_KEEP_ALIVE_TIMEOUT.Parse(&c.KeepAliveTimeout),
 		IMGPROXY_GRACEFUL_STOP_TIMEOUT.Parse(&c.GracefulStopTimeout),

@@ -7,6 +7,7 @@ linters:
     - err113 # we are OK with untyped errors
     - exhaustive # this is not Rust yet
     - exhaustruct # we often use partial struct literals
+    - exhaustruct_v5 # we often use partial struct literals
     - gocritic # mostly false positives
     - godot # too noisy
     - godox # we use TODOs intentionally
@@ -21,6 +22,7 @@ linters:
     - paralleltest # we can't always use t.Parallel()
     - varnamelen # that's not for linter to decide
     - wsl # deprecated
+    - gomodguard # deprecated, replaced with gomodguard_v2
 
     # NOTE: this is legit, but too much conflicts with existing codebase
     - perfsprint
