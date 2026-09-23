@@ -4,6 +4,7 @@
     "service": "imgproxy",
     "workspaceFolder": "/workspaces/imgproxy",
     "shutdownAction": "stopCompose",
+    "forwardPorts": [8081, 8091, 8071],
     "portsAttributes": {
         "8081": {
             "label": "imgproxy",
