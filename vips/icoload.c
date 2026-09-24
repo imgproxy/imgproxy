@@ -8,6 +8,14 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+// Maximum size of an ICO entry data block.
+// Maximum image size in ICO is 256x256 pixels,
+// which gives a maximum of 256 * 256 * 4 bytes for raw RGBA data.
+// 10 MB should be enough for any ICO entry data block,
+// even if an embedded PNG contains metadata.
+// Data blocks larger than this should be considered malicious.
+#define MAX_ICO_ENTRY_DATA_SIZE 10 * 1024 * 1024
+
 /**
  * ICO ForeignLoad VIPS class implementation (generic)
  */
@@ -153,13 +161,26 @@ vips_foreign_load_ico_header(VipsForeignLoad *load)
   // ICO files are usually small, and we can read them into memory without any issues.
   uint32_t data_size = GUINT32_FROM_LE(largest_image_header.data_size);
 
+  // Check if the data size exceeds the maximum allowed ICO entry data size.
+  if (data_size > MAX_ICO_ENTRY_DATA_SIZE) {
+    vips_error("vips_foreign_load_ico_header", "ICO image data is too large");
+    return -1;
+  }
+
   // BMP file explicitly excludes BITMAPFILEHEADER, so we need to add it manually. We reserve
   // space for it at the beginning of the data buffer.
-  VipsPel *data = (VipsPel *) VIPS_MALLOC(NULL, data_size + BMP_FILE_HEADER_LEN);
+  uint32_t full_data_size = data_size + BMP_FILE_HEADER_LEN;
+  VipsPel *data = (VipsPel *) VIPS_MALLOC(NULL, full_data_size);
+  if (!data) {
+    vips_error("vips_foreign_load_ico_header", "unable to allocate memory for ICO image data");
+    return -1;
+  }
+
   void *actual_data = data + BMP_FILE_HEADER_LEN;
 
   if (vips_foreign_load_read_full(ico->source, actual_data, data_size) <= 0) {
     vips_error("vips_foreign_load_ico_header", "unable to read ICO image data from the source");
+    VIPS_FREE(data);
     return -1;
   }
 
@@ -182,6 +203,13 @@ vips_foreign_load_ico_header(VipsForeignLoad *load)
     // Otherwise, we assume it's a BMP image.
     // According to ICO file format, it explicitly excludes BITMAPFILEHEADER (why???),
     // hence, we need to restore it to make bmp loader work.
+
+    // Ensure the data buffer is large enough to contain the BMP header.
+    if (full_data_size < BMP_BITMAP_INFO_HEADER_LEN) {
+      vips_error("vips_foreign_load_ico_header", "ICO image data is too small to contain a valid BMP header");
+      VIPS_FREE(data);
+      return -1;
+    }
 
     // Read num_colors and bpp from the BITMAPINFOHEADER
     uint32_t num_colors = GUINT32_FROM_LE(*(uint32_t *) (actual_data + 32));
@@ -208,14 +236,14 @@ vips_foreign_load_ico_header(VipsForeignLoad *load)
     data[1] = 'M';
 
     // Size of the BMP file (data size + BMP file header length)
-    (*(uint32_t *) (data + 2)) = GUINT32_TO_LE(data_size + BMP_FILE_HEADER_LEN);
+    (*(uint32_t *) (data + 2)) = GUINT32_TO_LE(full_data_size);
     (*(uint32_t *) (data + 6)) = 0;                          // reserved
     (*(uint32_t *) (data + 10)) = GUINT32_TO_LE(pix_offset); // offset to the pixel data
     (*(int32_t *) (actual_data + 8)) = GINT32_TO_LE(height); // height
 
     if (
         vips_bmpload_buffer(
-            data, data_size + BMP_FILE_HEADER_LEN,
+            data, full_data_size,
             &ico->internal[0],
             "access", VIPS_ACCESS_SEQUENTIAL,
             NULL) < 0) {
