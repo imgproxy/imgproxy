@@ -1,5 +1,9 @@
 # Changelog
 
+## [4.0.16] - TBA
+### Fix
+- Fixed several vulnerabilities in ICO image loader.
+
 ## [4.0.15] - 2026-09-14
 ### Changed
 - Updated dependencies.
