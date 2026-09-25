@@ -5,7 +5,7 @@ FROM ghcr.io/imgproxy/imgproxy-base:${BASE_IMAGE_VERSION} AS build
 ENV CGO_ENABLED=1
 
 COPY . .
-RUN bash -c 'go build -v -ldflags "-s -w" -o /opt/imgproxy/bin/imgproxy ./cli'
+RUN bash -c 'go build -v -buildmode=pie -ldflags "-s -w" -o /opt/imgproxy/bin/imgproxy ./cli'
 
 # Remove unnecessary files
 RUN rm -rf /opt/imgproxy/lib/pkgconfig /opt/imgproxy/lib/cmake
