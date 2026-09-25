@@ -16,6 +16,7 @@ package asyncbuffer
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"log/slog"
 	"sync"
@@ -209,7 +210,7 @@ func (ab *AsyncBuffer) Close() error {
 
 	// Return all chunks to the pool
 	for _, chunk := range ab.chunks {
-		chunkPool.Put(chunk)
+		putChunkToPool(chunk)
 	}
 
 	// Release the paused latch so that no goroutines are waiting for it
@@ -328,7 +329,7 @@ func (ab *AsyncBuffer) addChunk(chunk *byteChunk) {
 
 	if ab.closed.Load() {
 		// If the reader is closed, we return the chunk to the pool
-		chunkPool.Put(chunk)
+		putChunkToPool(chunk)
 		return
 	}
 
@@ -385,9 +386,9 @@ func (ab *AsyncBuffer) readChunks() {
 
 		// Get a chunk from the pool
 		// If the pool is empty, it will create a new byteChunk with ChunkSize
-		chunk, ok := chunkPool.Get().(*byteChunk)
-		if !ok {
-			ab.setErr(errors.New("asyncbuffer.AsyncBuffer.readChunks: failed to get chunk from pool"))
+		chunk, err := getChunkFromPool()
+		if err != nil {
+			ab.setErr(fmt.Errorf("asyncbuffer.AsyncBuffer.readChunks: %w", err))
 			return
 		}
 
@@ -399,13 +400,13 @@ func (ab *AsyncBuffer) readChunks() {
 		// If it's not the EOF, we need to store the error
 		if err != nil && !errors.Is(err, io.EOF) {
 			ab.setErr(err)
-			chunkPool.Put(chunk)
+			putChunkToPool(chunk)
 			return
 		}
 
 		// No bytes were read (n == 0), we can return the chunk to the pool
 		if n == 0 {
-			chunkPool.Put(chunk)
+			putChunkToPool(chunk)
 			return
 		}
 
@@ -493,4 +494,18 @@ func (ab *AsyncBuffer) readChunkAt(p []byte, off int64) int {
 	// Copy data to the target slice. The number of bytes to copy is limited by the
 	// size of the target slice and the size of the data in the chunk.
 	return copy(p, chunk.data[startOffset:])
+}
+
+func getChunkFromPool() (*byteChunk, error) {
+	chunk, ok := chunkPool.Get().(*byteChunk)
+	if !ok {
+		return nil, errors.New("failed to get chunk from pool")
+	}
+	return chunk, nil
+}
+
+func putChunkToPool(chunk *byteChunk) {
+	// Zero out the chunk's buffer before putting it back to the pool
+	clear(chunk.buf)
+	chunkPool.Put(chunk)
 }

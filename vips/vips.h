@@ -108,4 +108,5 @@ void vips_cleanup();
 void vips_error_go(const char *function, const char *message);
 
 int vips_foreign_load_read_full(VipsSource *source, void *buf, size_t len);
+void vips_ref_target(VipsTarget *target);
 void vips_unref_target(VipsTarget *target);

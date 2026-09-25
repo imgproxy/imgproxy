@@ -339,10 +339,9 @@ func (img *Image) Save(
 	o *options.Options,
 ) (imagedata.ImageData, error) {
 	target := C.vips_target_new_to_memory()
-
-	cancel := func() {
+	defer func() {
 		C.vips_unref_target(target)
-	}
+	}()
 
 	so := newSaveOptions(o)
 
@@ -371,19 +370,22 @@ func (img *Image) Save(
 	case imagetype.ICO:
 		err = C.vips_icosave_target_go(img.VipsImage, target, so)
 	default:
-		// NOTE: probably, it would be better to use defer unref + additionally ref the target
-		// before passing it to the imagedata.ImageData
-		cancel()
 		return nil, newVipsError("Usupported image type to save")
 	}
 	if err != 0 {
-		cancel()
 		return nil, Error()
 	}
 
+	C.vips_ref_target(target)
 	var ptr = C.vips_blob_get(target.blob, &imgsize)
 
 	b := unsafe.Slice((*byte)(ptr), int(imgsize))
+
+	cancel := func() {
+		// Zero out the blob before freeing
+		clear(b)
+		C.vips_unref_target(target)
+	}
 
 	i := imagedata.NewFromBytesWithFormat(imgtype, b)
 	i.AddCancel(cancel)

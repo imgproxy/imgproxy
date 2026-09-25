@@ -1373,6 +1373,12 @@ vips_foreign_load_read_full(VipsSource *source, void *buf, size_t len)
 }
 
 void
+vips_ref_target(VipsTarget *target)
+{
+  g_object_ref(target);
+}
+
+void
 vips_unref_target(VipsTarget *target)
 {
   VIPS_UNREF(target);

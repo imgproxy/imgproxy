@@ -113,6 +113,8 @@ func (f *Factory) DownloadSync(
 	buf.Reset()
 
 	cancel := func() {
+		// Zero out the buffer before returning it to the pool.
+		clear(buf.Bytes())
 		bufPool.Put(buf)
 	}
 
