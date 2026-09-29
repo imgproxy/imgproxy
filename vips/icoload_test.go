@@ -20,6 +20,7 @@ func TestIcoLoadInvalid(t *testing.T) {
 		{"ico-bad1.ico", "ICO image data is too large"},
 		{"ico-bad2.ico", "ICO image data is too small"},
 		{"ico-bad3.ico", "ICO image data is too large"},
+		{"ico-bad4.ico", "ICO image data is too small"},
 	}
 
 	for _, tc := range testCases {

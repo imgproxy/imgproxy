@@ -205,7 +205,7 @@ vips_foreign_load_ico_header(VipsForeignLoad *load)
     // hence, we need to restore it to make bmp loader work.
 
     // Ensure the data buffer is large enough to contain the BMP header.
-    if (full_data_size < BMP_BITMAP_INFO_HEADER_LEN) {
+    if (data_size < BMP_BITMAP_INFO_HEADER_LEN) {
       vips_error("vips_foreign_load_ico_header", "ICO image data is too small to contain a valid BMP header");
       VIPS_FREE(data);
       return -1;
