@@ -1,6 +1,6 @@
 # Changelog
 
-## [4.0.17] - TBA
+## [4.0.17] - 2026-09-30
 ### Fix
 - Fixed a possible out-of-bounds read in the ICO image loader.
 
