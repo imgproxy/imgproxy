@@ -1,5 +1,9 @@
 # Changelog
 
+## [4.0.17] - 2026-09-30
+### Fix
+- Fixed a possible out-of-bounds read in the ICO image loader.
+
 ## [4.0.16] - 2026-09-28
 ### Fix
 - Fixed several vulnerabilities in ICO image loader.
