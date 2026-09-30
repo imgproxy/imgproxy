@@ -34,6 +34,7 @@ main() {
     # looks cached (and gets silently skipped) but is actually incomplete.
     local tmp_dir
     tmp_dir="$(mktemp -d "$data_dir/.svgo-test-suite.XXXXXX")"
+    chmod 755 "$tmp_dir"
 
     run::msg_ok "downloading svgo-test-suite..."
     curl -fsSL "$SVGO_TEST_SUITE_URL" | tar -xz -C "$tmp_dir" --strip-components=1
