@@ -127,10 +127,10 @@ vips_dct2_hash(void *in_buf, size_t in_buf_size, float **dct_array, size_t *leng
   // Calculate DCT II matrix for all channels
   calc_raw_dct2(source, *dct_array, width, height, in->Bands);
 
+  *length = in->Bands * DCT_SIZE * DCT_SIZE;
+
   VIPS_FREE(source);
   VIPS_UNREF(base);
-
-  *length = in->Bands * DCT_SIZE * DCT_SIZE;
 
   return 0;
 }

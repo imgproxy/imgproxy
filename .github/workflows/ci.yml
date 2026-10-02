@@ -35,7 +35,7 @@ jobs:
       - name: Mark git workspace as safe
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - name: Test
-        run: ./run test
+        run: ./run test -asan
 
   lint:
     runs-on: ubuntu-latest
