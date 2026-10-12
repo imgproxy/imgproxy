@@ -86,13 +86,13 @@ func Parse(data []byte, m IptcMap) error {
 				if err := binary.Read(buf, binary.BigEndian, &dataSize32); err != nil {
 					return newIptcError("invalid IPTC data size: %s", err)
 				}
-				dataSize = int(dataSize32)
+				dataSize = int(min(uint64(dataSize32), uint64(len(buf.Bytes()))))
 			case 8:
 				dataSize64 := uint64(0)
 				if err := binary.Read(buf, binary.BigEndian, &dataSize64); err != nil {
 					return newIptcError("invalid IPTC data size: %s", err)
 				}
-				dataSize = int(dataSize64)
+				dataSize = int(min(dataSize64, uint64(len(buf.Bytes()))))
 			default:
 				return newIptcError("invalid IPTC data size")
 			}
