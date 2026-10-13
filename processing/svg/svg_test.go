@@ -58,6 +58,49 @@ func (s *SvgTestSuite) TestSanitize() {
 	s.compare(expected, actual)
 }
 
+func (s *SvgTestSuite) TestSanitizeAnimation() {
+	config := svg.NewDefaultConfig()
+	svgProc := svg.New(&config)
+
+	tests := []struct {
+		name     string
+		in       string
+		expected string
+	}{
+		{
+			name:     "animate href",
+			in:       `<svg><a href="#"><animate attributeName="href" to="javascript:alert(1)"/><text>x</text></a></svg>`,
+			expected: `<svg><a href="#"><text>x</text></a></svg>`,
+		},
+		{
+			name:     "set xlink:href",
+			in:       `<svg><a href="#"><set attributeName="xlink:href" to="javascript:alert(1)"/></a></svg>`,
+			expected: `<svg><a href="#"/></svg>`,
+		},
+		{
+			name:     "uppercase with spaces",
+			in:       `<svg><a href="#"><animate attributeName=" HREF " to="x"/></a></svg>`,
+			expected: `<svg><a href="#"/></svg>`,
+		},
+		{
+			name:     "other attribute kept",
+			in:       `<svg><rect><animate attributeName="opacity" to="0"/></rect></svg>`,
+			expected: `<svg><rect><animate attributeName="opacity" to="0"/></rect></svg>`,
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			in := imagedata.NewFromBytesWithFormat(imagetype.SVG, []byte(tt.in))
+			actual, err := svgProc.Process(options.New(), in)
+			s.Require().NoError(err)
+
+			expected := imagedata.NewFromBytesWithFormat(imagetype.SVG, []byte(tt.expected))
+			s.compare(expected, actual)
+		})
+	}
+}
+
 func TestSvg(t *testing.T) {
 	suite.Run(t, new(SvgTestSuite))
 }

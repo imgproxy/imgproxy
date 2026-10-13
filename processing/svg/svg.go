@@ -3,6 +3,7 @@ package svg
 import (
 	"bytes"
 	"errors"
+	"strings"
 	"sync"
 
 	"github.com/imgproxy/imgproxy/v4/imagedata"
@@ -12,6 +13,13 @@ import (
 )
 
 const href = "href"
+
+// animationTargetAttrs lists attributes that SMIL animations must not target,
+// since animating them can turn a safe link into a javascript: one.
+var animationTargetAttrs = map[string]struct{}{
+	href:  {},
+	"src": {},
+}
 
 // pool represents temorary pool for svg sanitized data
 var pool = sync.Pool{
@@ -103,6 +111,11 @@ func (p *Processor) sanitizeElement(el *xmlparser.Node) bool {
 		return false
 	}
 
+	// Strip SMIL animations that mutate link attributes
+	if isUnsafeAnimation(el) {
+		return false
+	}
+
 	// Filter out unsafe attributes (such as on* events)
 	el.Attrs.Filter(func(attr *xmlparser.Attribute) bool {
 		_, unsafe := unsafeAttrs[attr.Name.Local()]
@@ -144,4 +157,23 @@ func (p *Processor) sanitizeElement(el *xmlparser.Node) bool {
 
 	// Keep this element
 	return true
+}
+
+// isUnsafeAnimation reports whether el is a SMIL animation element that targets
+// a link attribute (href, src). The animated value is not inspected.
+func isUnsafeAnimation(el *xmlparser.Node) bool {
+	tagName := el.Name.Local()
+	if tagName != "animate" && tagName != "set" {
+		return false
+	}
+
+	target, ok := el.Attrs.GetByString("attributeName")
+	if !ok {
+		return false
+	}
+
+	local := xmlparser.Name(strings.TrimSpace(target)).Local()
+	_, unsafe := animationTargetAttrs[strings.ToLower(local)]
+
+	return unsafe
 }
