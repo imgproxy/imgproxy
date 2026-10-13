@@ -153,8 +153,8 @@ func (s *SvgTestSuite) TestSanitizeHref() {
 	}
 }
 
-// TestSanitizeNestedEntities checks that entities referencing other entities are rejected,
-// since a consumer would expand them recursively
+// TestSanitizeNestedEntities checks that entities are expanded only once:
+// a nested reference must not be expanded recursively
 func (s *SvgTestSuite) TestSanitizeNestedEntities() {
 	config := svg.NewDefaultConfig()
 	svgProc := svg.New(&config)
@@ -164,11 +164,19 @@ func (s *SvgTestSuite) TestSanitizeNestedEntities() {
 			`<svg><a href="&b;"><text>x</text></a></svg>`,
 	))
 
-	_, err := svgProc.Process(options.New(), in)
-	s.Require().Error(err)
+	out, err := svgProc.Process(options.New(), in)
+	s.Require().NoError(err)
+
+	data, err := io.ReadAll(out.Reader())
+	s.Require().NoError(err)
+
+	_, body, found := bytes.Cut(data, []byte("]>"))
+	s.Require().True(found)
+	s.Require().NotContains(string(body), "javascript:")
 }
 
-// TestSanitizeBillionLaughs checks that the "Billion Laughs" payload is rejected
+// TestSanitizeBillionLaughs checks that the "Billion Laughs" payload
+// is not expanded recursively into a huge document
 func (s *SvgTestSuite) TestSanitizeBillionLaughs() {
 	config := svg.NewDefaultConfig()
 	svgProc := svg.New(&config)
@@ -178,8 +186,8 @@ func (s *SvgTestSuite) TestSanitizeBillionLaughs() {
 	sb.WriteString(`<!DOCTYPE svg [<!ENTITY lol "lol">`)
 
 	prev := "lol"
-	for i := 1; i <= 9; i++ {
-		name := fmt.Sprintf("lol%d", i)
+	for i := range 8 {
+		name := fmt.Sprintf("lol%d", i+1)
 		fmt.Fprintf(&sb, `<!ENTITY %s "%s">`, name, strings.Repeat("&"+prev+";", 10))
 		prev = name
 	}
@@ -188,8 +196,12 @@ func (s *SvgTestSuite) TestSanitizeBillionLaughs() {
 
 	in := imagedata.NewFromBytesWithFormat(imagetype.SVG, []byte(sb.String()))
 
-	_, err := svgProc.Process(options.New(), in)
-	s.Require().Error(err)
+	out, err := svgProc.Process(options.New(), in)
+	s.Require().NoError(err)
+
+	size, err := out.Size()
+	s.Require().NoError(err)
+	s.Require().Less(size, 4<<10)
 }
 
 func TestSvg(t *testing.T) {

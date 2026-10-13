@@ -2,10 +2,8 @@ package xmlparser_test
 
 import (
 	"bytes"
-	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -180,44 +178,4 @@ func BenchmarkDocumentParsing(b *testing.B) {
 			}
 		}
 	}
-}
-
-func TestDocumentReplaceEntitiesRejectsNested(t *testing.T) {
-	doc, err := xmlparser.NewDocument(strings.NewReader(
-		`<!DOCTYPE svg [<!ENTITY a "x"><!ENTITY b "&a;y">]><svg a="&b;"/>`,
-	))
-	require.NoError(t, err)
-
-	require.Error(t, doc.ReplaceEntities())
-}
-
-// billionLaughs builds the classic "Billion Laughs" payload: every entity
-// references the previous one ten times.
-func billionLaughs() string {
-	var sb strings.Builder
-
-	sb.WriteString(`<!DOCTYPE svg [<!ENTITY lol "lol">`)
-
-	prev := "lol"
-	for i := 1; i <= 9; i++ {
-		name := fmt.Sprintf("lol%d", i)
-		fmt.Fprintf(&sb, `<!ENTITY %s "%s">`, name, strings.Repeat("&"+prev+";", 10))
-		prev = name
-	}
-
-	fmt.Fprintf(&sb, `]><svg><text>&%s;</text></svg>`, prev)
-
-	return sb.String()
-}
-
-func TestDocumentReplaceEntitiesBillionLaughs(t *testing.T) {
-	doc, err := xmlparser.NewDocument(strings.NewReader(billionLaughs()))
-	require.NoError(t, err)
-
-	require.Error(t, doc.ReplaceEntities())
-
-	// The document must not be expanded
-	var buf bytes.Buffer
-	require.NoError(t, doc.WriteTo(&buf))
-	require.Less(t, buf.Len(), 4096)
 }

@@ -30,6 +30,8 @@ var schemeRe = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9+.-]*:`)
 func normalizeHref(value string) string {
 	decoded := html.UnescapeString(value)
 
+	// Remove control characters from the contents string.
+	// By WHATWG URL spec, only tab, and cr/lf are removed.
 	decoded = strings.Map(func(r rune) rune {
 		if r == '\t' || r == '\n' || r == '\r' {
 			return -1
@@ -37,6 +39,7 @@ func normalizeHref(value string) string {
 		return r
 	}, decoded)
 
+	// Remove any remaining control characters / spaces from the beginning/end of the string.
 	return strings.TrimFunc(decoded, func(r rune) bool {
 		return r <= 0x20
 	})
