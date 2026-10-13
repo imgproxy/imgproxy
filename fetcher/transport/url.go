@@ -67,3 +67,21 @@ func GetBucketAndKey(u *url.URL, sep string) (string, string, string) {
 
 	return bucket, key, query
 }
+
+// SourcePath returns the path part of the source URL (without query string and fragment),
+// using the same parsing rules as the fetcher.
+// It returns an empty string if the URL can't be parsed.
+func SourcePath(u, sep string) string {
+	parsedUrl, err := url.Parse(EscapeURL(u))
+	if err != nil {
+		return ""
+	}
+
+	if parsedUrl.Scheme == "http" || parsedUrl.Scheme == "https" {
+		return parsedUrl.EscapedPath()
+	}
+
+	_, key, _ := GetBucketAndKey(parsedUrl, sep)
+
+	return key
+}
