@@ -5,6 +5,9 @@
 - Fix the source URL's query string leaking into the `Content-Disposition` header filename.
 - Fixed SVG sanitization bypasses via control-character entities in `href`, SMIL animations of link attributes, and DOCTYPE entities.
 
+### Changed
+- Updated dependencies.
+
 ## [4.0.17] - 2026-09-30
 ### Fixed
 - Fixed a possible out-of-bounds read in the ICO image loader.
