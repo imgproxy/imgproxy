@@ -74,6 +74,13 @@ func (p *Processor) sanitize(data imagedata.ImageData) (imagedata.ImageData, err
 		return nil, newSanitizeError(err)
 	}
 
+	// Entities are already expanded, so the DOCTYPE is no longer needed.
+	// Strip it to prevent various attacks like "Billion laughs".
+	doc.FilterChildren(func(child xmlparser.Token) bool {
+		_, isDoctype := child.(*xmlparser.Directive)
+		return !isDoctype
+	})
+
 	// Sanitize the document's children
 	doc.FilterChildNodes(p.sanitizeElement)
 

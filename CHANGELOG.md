@@ -3,7 +3,7 @@
 ## [4.0.18] - TBA
 ### Fixed
 - Fix the source URL's query string leaking into the `Content-Disposition` header filename.
-- Fixed SVG sanitization bypasses via control-character entities in `href`, SMIL animations of link attributes, and DOCTYPE entities (nested entities are now rejected).
+- Fixed SVG sanitization bypasses via control-character entities in `href`, SMIL animations of link attributes, and DOCTYPE entities.
 
 ## [4.0.17] - 2026-09-30
 ### Fixed

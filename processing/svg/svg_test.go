@@ -120,15 +120,14 @@ func (s *SvgTestSuite) TestSanitizeHref() {
 		{
 			name:     "DOCTYPE entity expanding to javascript",
 			in:       `<!DOCTYPE svg [<!ENTITY j "javascript:alert(1)">]><svg><a href="&j;"><text>x</text></a></svg>`,
-			expected: `<!DOCTYPE svg [<!ENTITY j "javascript:alert(1)">]><svg><a><text>x</text></a></svg>`,
+			expected: `<svg><a><text>x</text></a></svg>`,
 		},
 		{
 			name: "DOCTYPE entity with the reported payload",
 			in: `<!DOCTYPE svg [<!ENTITY x "javascript:console.log('PWNED_DTD_REALIMGPROXY');void(0)">]>` +
 				`<svg xmlns="http://www.w3.org/2000/svg" width="200" height="100">` +
 				`<a href="&x;"><text x="10" y="50">click dtd</text></a></svg>`,
-			expected: `<!DOCTYPE svg [<!ENTITY x "javascript:console.log('PWNED_DTD_REALIMGPROXY');void(0)">]>` +
-				`<svg xmlns="http://www.w3.org/2000/svg" width="200" height="100">` +
+			expected: `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="100">` +
 				`<a><text x="10" y="50">click dtd</text></a></svg>`,
 		},
 		{
@@ -136,8 +135,7 @@ func (s *SvgTestSuite) TestSanitizeHref() {
 			in: `<!DOCTYPE svg [<!ENTITY j "javascript:alert(1)">]>` +
 				`<svg xmlns:xlink="http://www.w3.org/1999/xlink">` +
 				`<a xlink:href="&j;"><text>x</text></a></svg>`,
-			expected: `<!DOCTYPE svg [<!ENTITY j "javascript:alert(1)">]>` +
-				`<svg xmlns:xlink="http://www.w3.org/1999/xlink"><a><text>x</text></a></svg>`,
+			expected: `<svg xmlns:xlink="http://www.w3.org/1999/xlink"><a><text>x</text></a></svg>`,
 		},
 	}
 
@@ -170,9 +168,8 @@ func (s *SvgTestSuite) TestSanitizeNestedEntities() {
 	data, err := io.ReadAll(out.Reader())
 	s.Require().NoError(err)
 
-	_, body, found := bytes.Cut(data, []byte("]>"))
-	s.Require().True(found)
-	s.Require().NotContains(string(body), "javascript:")
+	s.Require().NotContains(string(data), "javascript:")
+	s.Require().NotContains(string(data), "DOCTYPE")
 }
 
 // TestSanitizeBillionLaughs checks that the "Billion Laughs" payload
