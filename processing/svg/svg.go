@@ -68,6 +68,12 @@ func (p *Processor) sanitize(data imagedata.ImageData) (imagedata.ImageData, err
 		return nil, newSanitizeError(err)
 	}
 
+	// Expand DOCTYPE-declared entities so that the checks below see the
+	// same values a consumer expanding them would.
+	if err := doc.ReplaceEntities(); err != nil {
+		return nil, newSanitizeError(err)
+	}
+
 	// Sanitize the document's children
 	doc.FilterChildNodes(p.sanitizeElement)
 

@@ -2,9 +2,11 @@ package svg_test
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -99,6 +101,95 @@ func (s *SvgTestSuite) TestSanitizeAnimation() {
 			s.compare(expected, actual)
 		})
 	}
+}
+
+func (s *SvgTestSuite) TestSanitizeHref() {
+	config := svg.NewDefaultConfig()
+	svgProc := svg.New(&config)
+
+	tests := []struct {
+		name     string
+		in       string
+		expected string
+	}{
+		{
+			name:     "tab entity in scheme",
+			in:       `<svg><a href="java&#9;script:alert(1)"><text>x</text></a></svg>`,
+			expected: `<svg><a><text>x</text></a></svg>`,
+		},
+		{
+			name:     "DOCTYPE entity expanding to javascript",
+			in:       `<!DOCTYPE svg [<!ENTITY j "javascript:alert(1)">]><svg><a href="&j;"><text>x</text></a></svg>`,
+			expected: `<!DOCTYPE svg [<!ENTITY j "javascript:alert(1)">]><svg><a><text>x</text></a></svg>`,
+		},
+		{
+			name: "DOCTYPE entity with the reported payload",
+			in: `<!DOCTYPE svg [<!ENTITY x "javascript:console.log('PWNED_DTD_REALIMGPROXY');void(0)">]>` +
+				`<svg xmlns="http://www.w3.org/2000/svg" width="200" height="100">` +
+				`<a href="&x;"><text x="10" y="50">click dtd</text></a></svg>`,
+			expected: `<!DOCTYPE svg [<!ENTITY x "javascript:console.log('PWNED_DTD_REALIMGPROXY');void(0)">]>` +
+				`<svg xmlns="http://www.w3.org/2000/svg" width="200" height="100">` +
+				`<a><text x="10" y="50">click dtd</text></a></svg>`,
+		},
+		{
+			name: "DOCTYPE entity in xlink:href",
+			in: `<!DOCTYPE svg [<!ENTITY j "javascript:alert(1)">]>` +
+				`<svg xmlns:xlink="http://www.w3.org/1999/xlink">` +
+				`<a xlink:href="&j;"><text>x</text></a></svg>`,
+			expected: `<!DOCTYPE svg [<!ENTITY j "javascript:alert(1)">]>` +
+				`<svg xmlns:xlink="http://www.w3.org/1999/xlink"><a><text>x</text></a></svg>`,
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			in := imagedata.NewFromBytesWithFormat(imagetype.SVG, []byte(tt.in))
+			actual, err := svgProc.Process(options.New(), in)
+			s.Require().NoError(err)
+
+			expected := imagedata.NewFromBytesWithFormat(imagetype.SVG, []byte(tt.expected))
+			s.compare(expected, actual)
+		})
+	}
+}
+
+// TestSanitizeNestedEntities checks that entities referencing other entities are rejected,
+// since a consumer would expand them recursively
+func (s *SvgTestSuite) TestSanitizeNestedEntities() {
+	config := svg.NewDefaultConfig()
+	svgProc := svg.New(&config)
+
+	in := imagedata.NewFromBytesWithFormat(imagetype.SVG, []byte(
+		`<!DOCTYPE svg [<!ENTITY a "javascript:"><!ENTITY b "&a;alert(1)">]>`+
+			`<svg><a href="&b;"><text>x</text></a></svg>`,
+	))
+
+	_, err := svgProc.Process(options.New(), in)
+	s.Require().Error(err)
+}
+
+// TestSanitizeBillionLaughs checks that the "Billion Laughs" payload is rejected
+func (s *SvgTestSuite) TestSanitizeBillionLaughs() {
+	config := svg.NewDefaultConfig()
+	svgProc := svg.New(&config)
+
+	var sb strings.Builder
+
+	sb.WriteString(`<!DOCTYPE svg [<!ENTITY lol "lol">`)
+
+	prev := "lol"
+	for i := 1; i <= 9; i++ {
+		name := fmt.Sprintf("lol%d", i)
+		fmt.Fprintf(&sb, `<!ENTITY %s "%s">`, name, strings.Repeat("&"+prev+";", 10))
+		prev = name
+	}
+
+	fmt.Fprintf(&sb, `]><svg><text>&%s;</text></svg>`, prev)
+
+	in := imagedata.NewFromBytesWithFormat(imagetype.SVG, []byte(sb.String()))
+
+	_, err := svgProc.Process(options.New(), in)
+	s.Require().Error(err)
 }
 
 func TestSvg(t *testing.T) {

@@ -1,6 +1,7 @@
 package xmlparser
 
 import (
+	"bytes"
 	"io"
 )
 
@@ -27,10 +28,20 @@ func NewDocument(r io.Reader) (*Document, error) {
 // It modifies the document in place.
 //
 // Entities are replaced only once to avoid attacks like the
-// "Billion Laughs" XML entity expansion attack.
+// "Billion Laughs" XML entity expansion attack. Since consumers expand
+// nested entities recursively, a declaration that references another declared
+// entity can't be represented by a single pass, so it is rejected with an error.
 func (doc *Document) ReplaceEntities() error {
-	if em := ParseEntityMap(doc.Children); em != nil {
-		return doc.replaceEntities(em)
+	em := ParseEntityMap(doc.Children)
+	if em == nil {
+		return nil
 	}
-	return nil
+
+	for name, value := range em {
+		if !bytes.Equal(ReplaceEntitiesBytes(value, em), value) {
+			return newSyntaxError("entity %q references another entity", name)
+		}
+	}
+
+	return doc.replaceEntities(em)
 }
