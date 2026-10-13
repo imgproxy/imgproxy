@@ -60,11 +60,13 @@ func TestEntityReplacement(t *testing.T) {
 <!DOCTYPE svg [
 	<!ENTITY myEntity1 "EntityValue1">
 	<!ENTITY myEntity2 'EntityValue2'>
+	<!ENTITY myEntity3 '<g>EntityValue3</g>'>
 ]>
 <svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
 	<text x="10" y="20" arg1="Value with &myEntity1;" arg2='&myEntity2;'>
 		&myEntity1; and &myEntity2;
 	</text>
+	&myEntity3;
 	<style>
 		<![CDATA[
 			.textClass { content: "&myEntity1;"; }
@@ -76,11 +78,13 @@ func TestEntityReplacement(t *testing.T) {
 <!DOCTYPE svg [
 	<!ENTITY myEntity1 "EntityValue1">
 	<!ENTITY myEntity2 'EntityValue2'>
+	<!ENTITY myEntity3 '<g>EntityValue3</g>'>
 ]>
 <svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
 	<text x="10" y="20" arg1="Value with EntityValue1" arg2="EntityValue2">
 		EntityValue1 and EntityValue2
 	</text>
+	<g>EntityValue3</g>
 	<style>
 		<![CDATA[
 			.textClass { content: "&myEntity1;"; }
@@ -98,6 +102,30 @@ func TestEntityReplacement(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, string(expectedData), buf.String())
+
+	// Check that the <g> element from the entity replacement is re-parsed as a proper node
+	var svgNode, gNode *xmlparser.Node
+
+	for n := range doc.ChildNodes() {
+		if n.Name == "svg" {
+			svgNode = n
+			break
+		}
+	}
+	require.NotNil(t, svgNode, "SVG node not found")
+
+	for n := range svgNode.ChildNodes() {
+		if n.Name == "g" {
+			gNode = n
+			break
+		}
+	}
+	require.NotNil(t, gNode, "G node not found after entity replacement")
+
+	textNode, ok := gNode.Children[0].(*xmlparser.Text)
+	require.True(t, ok, "First child of <g> node is not a text node")
+	require.Equal(t, "EntityValue3", string(textNode.Data),
+		"Text node inside <g> does not have the expected content")
 }
 
 func BenchmarkDocumentParsing(b *testing.B) {
@@ -141,8 +169,11 @@ func BenchmarkDocumentParsing(b *testing.B) {
 
 	for b.Loop() {
 		for _, sample := range samples {
-			_, err := xmlparser.NewDocument(bytes.NewReader(sample))
+			d, err := xmlparser.NewDocument(bytes.NewReader(sample))
 			if err != nil {
+				b.Fatal(err)
+			}
+			if err = d.ReplaceEntities(); err != nil {
 				b.Fatal(err)
 			}
 		}
