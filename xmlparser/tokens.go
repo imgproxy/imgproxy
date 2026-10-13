@@ -51,8 +51,16 @@ func (e *StartElement) writeAttrsTo(w TokenWriter) error {
 		}
 
 		quote := byte('"')
-		if strings.IndexByte(attr.Value, quote) != -1 {
-			quote = '\''
+		val := attr.Value
+
+		if strings.IndexByte(val, '"') >= 0 {
+			if strings.IndexByte(val, '\'') >= 0 {
+				// Value contains both single and double quotes, so escape double quotes
+				val = strings.ReplaceAll(val, `"`, "&quot;")
+			} else {
+				// Value contains double quotes but not single quotes, so use single quotes
+				quote = '\''
+			}
 		}
 
 		if _, err := w.WriteString(attr.Name.String()); err != nil {
@@ -64,7 +72,7 @@ func (e *StartElement) writeAttrsTo(w TokenWriter) error {
 		if err := w.WriteByte(quote); err != nil {
 			return err
 		}
-		if _, err := w.WriteString(attr.Value); err != nil {
+		if _, err := w.WriteString(val); err != nil {
 			return err
 		}
 		if err := w.WriteByte(quote); err != nil {
