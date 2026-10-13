@@ -62,9 +62,16 @@ func (s *Suite) SetupSuite() {
 		return &c, nil
 	})
 
-	s.Imgproxy, _ = testutil.NewLazySuiteObj(s, func() (*imgproxy.Imgproxy, error) {
-		return imgproxy.New(s.T().Context(), s.Config())
-	})
+	s.Imgproxy, _ = testutil.NewLazySuiteObj(
+		s,
+		func() (*imgproxy.Imgproxy, error) {
+			return imgproxy.New(s.T().Context(), s.Config())
+		},
+		func(i *imgproxy.Imgproxy) error {
+			i.Close(s.T().Context())
+			return nil
+		},
+	)
 
 	// NOTE: if we used s.T().Context() in startServer, server would have been stopped
 	// after the first subtest because s.T().Context() is cancelled after subtest.

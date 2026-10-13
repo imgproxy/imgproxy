@@ -1,0 +1,8 @@
+# LSan (Leak Sanitizer) suppression file
+# https://clang.llvm.org/docs/LeakSanitizer.html
+
+# Vips creates a global PangoFontMap and never frees it.
+# It's not a leak per se, but it will be reported by LSan
+leak:pango_layout_get_pixel_extents
+leak:FcFontSetMatch
+leak:FcFontSetList
