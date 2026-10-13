@@ -3,6 +3,7 @@ package svg
 import (
 	"bytes"
 	"errors"
+	"strings"
 	"sync"
 
 	"github.com/imgproxy/imgproxy/v4/imagedata"
@@ -12,6 +13,13 @@ import (
 )
 
 const href = "href"
+
+// animationTargetAttrs lists attributes that SMIL animations must not target,
+// since animating them can turn a safe link into a javascript: one.
+var animationTargetAttrs = map[string]struct{}{
+	href:  {},
+	"src": {},
+}
 
 // pool represents temorary pool for svg sanitized data
 var pool = sync.Pool{
@@ -60,6 +68,19 @@ func (p *Processor) sanitize(data imagedata.ImageData) (imagedata.ImageData, err
 		return nil, newSanitizeError(err)
 	}
 
+	// Expand DOCTYPE-declared entities so that the checks below see the
+	// same values a consumer expanding them would.
+	if err := doc.ReplaceEntities(); err != nil {
+		return nil, newSanitizeError(err)
+	}
+
+	// Entities are already expanded, so the DOCTYPE is no longer needed.
+	// Strip it to prevent various attacks like "Billion laughs".
+	doc.FilterChildren(func(child xmlparser.Token) bool {
+		_, isDoctype := child.(*xmlparser.Directive)
+		return !isDoctype
+	})
+
 	// Sanitize the document's children
 	doc.FilterChildNodes(p.sanitizeElement)
 
@@ -100,6 +121,11 @@ func (p *Processor) sanitizeElement(el *xmlparser.Node) bool {
 
 	// Strip <script>, <iframe>, and <form> tags
 	if tagName == "script" || tagName == "iframe" || tagName == "form" {
+		return false
+	}
+
+	// Strip SMIL animations that mutate link attributes
+	if isUnsafeAnimation(el) {
 		return false
 	}
 
@@ -144,4 +170,23 @@ func (p *Processor) sanitizeElement(el *xmlparser.Node) bool {
 
 	// Keep this element
 	return true
+}
+
+// isUnsafeAnimation reports whether el is a SMIL animation element that targets
+// a link attribute (href, src). The animated value is not inspected.
+func isUnsafeAnimation(el *xmlparser.Node) bool {
+	tagName := el.Name.Local()
+	if tagName != "animate" && tagName != "set" {
+		return false
+	}
+
+	target, ok := el.Attrs.GetByString("attributeName")
+	if !ok {
+		return false
+	}
+
+	local := xmlparser.Name(strings.TrimSpace(target)).Local()
+	_, unsafe := animationTargetAttrs[strings.ToLower(local)]
+
+	return unsafe
 }

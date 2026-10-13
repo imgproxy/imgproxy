@@ -194,7 +194,9 @@ func (n *Node) replaceEntities(em map[string][]byte) error {
 	for i, child := range n.Children {
 		switch c := child.(type) {
 		case *Node:
-			c.replaceEntities(em)
+			if err := c.replaceEntities(em); err != nil {
+				return err
+			}
 
 		case *Text:
 			// Skip entity replacement for CDATA sections
