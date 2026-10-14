@@ -34,6 +34,11 @@ func New(config *Config) (*Fetcher, error) {
 	return &Fetcher{transport, config}, nil
 }
 
+// SourcePath returns the path part of the source URL without query string and fragment
+func (f *Fetcher) SourcePath(rawURL string) string {
+	return transport.SourcePath(rawURL, f.config.Transport.SourceURLQuerySeparator)
+}
+
 // BuildRequest creates a new [Request] with the provided context, URL, headers, and cookie jar
 func (f *Fetcher) BuildRequest(
 	ctx context.Context, url string, header http.Header, jar http.CookieJar,

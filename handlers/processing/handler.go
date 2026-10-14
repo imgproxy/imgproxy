@@ -8,6 +8,7 @@ import (
 	"github.com/imgproxy/imgproxy/v4/cookies"
 	"github.com/imgproxy/imgproxy/v4/errctx"
 	"github.com/imgproxy/imgproxy/v4/errorreport"
+	"github.com/imgproxy/imgproxy/v4/fetcher"
 	"github.com/imgproxy/imgproxy/v4/handlers"
 	"github.com/imgproxy/imgproxy/v4/handlers/stream"
 	"github.com/imgproxy/imgproxy/v4/httpheaders/conditionalheaders"
@@ -37,6 +38,7 @@ type HandlerContext interface {
 	Monitoring() *monitoring.Monitoring
 	ErrorReporter() *errorreport.Reporter
 	ConditionalHeaders() *conditionalheaders.Factory
+	Fetcher() *fetcher.Fetcher
 }
 
 // Handler handles image processing requests

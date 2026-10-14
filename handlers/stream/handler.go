@@ -132,7 +132,7 @@ func (s *request) execute() *server.Error {
 	s.rw.SetExpires(s.opts.GetTime(keys.Expires))
 
 	// Set the Content-Disposition header
-	s.setContentDisposition(r.URL().Path, res)
+	s.setContentDisposition(s.Fetcher().SourcePath(s.imageURL), res)
 
 	// Copy the status code from the original response
 	s.rw.WriteHeader(res.StatusCode)

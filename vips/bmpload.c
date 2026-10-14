@@ -687,10 +687,11 @@ vips_foreign_load_bmp_load(VipsForeignLoad *load)
   VipsForeignLoadBmp *bmp = (VipsForeignLoadBmp *) load;
 
   // For a case when we encounter buggy BMP image which has RLE command to read next
-  // 255 bytes, and our buffer is smaller than that, we need it to be at least 255 bytes.
+  // 255 bytes, and our buffer is smaller than that, we need it to be at least 256 bytes
+  // (255 bytes + 1 byte of padding).
   int row_buffer_length = (bmp->width * 4) + 4;
-  if (row_buffer_length < 255) {
-    row_buffer_length = 255;
+  if (row_buffer_length < 256) {
+    row_buffer_length = 256;
   }
 
   // Allocate a row buffer for the current row in all generate* functions.

@@ -163,6 +163,15 @@ func (s *HandlerTestSuite) execute(
 	imageURL, err := url.JoinPath(testURL, imageURL)
 	s.Require().NoError(err)
 
+	return s.executeURL(imageURL, header, o)
+}
+
+// executeURL runs the handler with the already built source URL
+func (s *HandlerTestSuite) executeURL(
+	imageURL string,
+	header http.Header,
+	o *options.Options,
+) *http.Response {
 	req := httptest.NewRequest(http.MethodGet, "/", nil).WithContext(s.T().Context())
 	httpheaders.CopyAll(header, req.Header, true)
 
@@ -263,6 +272,24 @@ func (s *HandlerTestSuite) TestHandlerContentDisposition() {
 	s.Require().Equal(200, res.StatusCode)
 	s.Require().Contains(res.Header.Get(httpheaders.ContentDisposition), "custom_name.png")
 	s.Require().Contains(res.Header.Get(httpheaders.ContentDisposition), "attachment")
+}
+
+// TestHandlerContentDispositionIgnoresQuery checks that the source URL query string
+// doesn't leak into the Content-Disposition file name
+func (s *HandlerTestSuite) TestHandlerContentDispositionIgnoresQuery() {
+	data := s.testData.Read("test1.png")
+
+	s.testRoundTripper().SetHeaders(httpheaders.ContentType, "image/png").SetBody(data)
+
+	// url.JoinPath would escape "?", so build the URL with a real query string
+	res := s.executeURL(testURL+"/test.png?X-Amz-Signature=a/b.jpg", nil, options.New())
+	defer res.Body.Close()
+
+	s.Require().Equal(200, res.StatusCode)
+	s.Require().Equal(
+		`inline; filename="test.png"`,
+		res.Header.Get(httpheaders.ContentDisposition),
+	)
 }
 
 // TestHandlerCacheControl checks that Cache-Control header is set correctly in different cases

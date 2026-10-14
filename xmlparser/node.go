@@ -1,6 +1,7 @@
 package xmlparser
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -10,7 +11,6 @@ import (
 
 // Node represents an XML node with a name, attributes, and child tokens.
 type Node struct {
-	Parent   *Node
 	Name     Name
 	Attrs    *Attributes
 	Children []Token
@@ -91,15 +91,15 @@ func (n *Node) WriteTo(w TokenWriter) error {
 // readFrom reads XML data from the provided reader
 // and populates the node and its children accordingly.
 func (n *Node) readFrom(r io.Reader) error {
-	if n.Parent != nil {
-		return errors.New("cannot read child node")
-	}
-
 	dec := NewDecoder(r)
 	defer dec.Close()
 
-	curNode := n
+	return n.readFromDecoder(dec)
+}
 
+// readFromDecoder reads XML data from the provided decoder
+// and populates the node and its children accordingly.
+func (n *Node) readFromDecoder(dec *Decoder) error {
 	for {
 		// Read raw token so decoder doesn't mess with attributes and namespaces.
 		tok, err := dec.Token()
@@ -113,49 +113,50 @@ func (n *Node) readFrom(r io.Reader) error {
 		switch t := tok.(type) {
 		case *StartElement:
 			// An element is opened, create a node for it
-			el := &Node{
-				Parent: curNode,
-				Name:   t.Name,
-				Attrs:  t.Attrs,
+			nn := &Node{
+				Name:  t.Name,
+				Attrs: t.Attrs,
 			}
 			// Append the node to the current node's children and make it current
-			curNode.Children = append(curNode.Children, el)
+			n.Children = append(n.Children, nn)
 
 			if !t.SelfClosing {
-				curNode = el
+				if err := nn.readFromDecoder(dec); err != nil {
+					return err
+				}
 			}
 
 		case *EndElement:
-			// If the current node has no parent, then we are at the root,
+			// If the current node has no name, then we are at the root,
 			// which can't be closed.
-			if curNode.Parent == nil {
+			if len(n.Name) == 0 {
 				return fmt.Errorf(
 					"malformed XML: unexpected closing tag </%s> while no elements are opened",
 					t.Name,
 				)
 			}
 			// Closing tag name should match opened node name (which is current)
-			if curNode.Name != t.Name {
+			if n.Name != t.Name {
 				return fmt.Errorf(
 					"malformed XML: unexpected closing tag </%s> for opened <%s> element",
 					t.Name,
-					curNode.Name,
+					n.Name,
 				)
 			}
 			// The node is closed, return to its parent
-			curNode = curNode.Parent
+			return nil
 
 		case *Text:
-			curNode.Children = append(curNode.Children, t.Clone())
+			n.Children = append(n.Children, t.Clone())
 
 		case *Directive:
-			curNode.Children = append(curNode.Children, t.Clone())
+			n.Children = append(n.Children, t.Clone())
 
 		case *Comment:
-			curNode.Children = append(curNode.Children, t.Clone())
+			n.Children = append(n.Children, t.Clone())
 
 		case *ProcInst:
-			curNode.Children = append(curNode.Children, t.Clone())
+			n.Children = append(n.Children, t.Clone())
 		}
 	}
 
@@ -175,24 +176,70 @@ func (n *Node) writeChildrenTo(w TokenWriter) error {
 
 // replaceEntities replaces XML entities in the node
 // according to the provided entity map.
-func (n *Node) replaceEntities(em map[string][]byte) {
+func (n *Node) replaceEntities(em map[string][]byte) error {
 	// Replace in attributes
 	for attr := range n.Attrs.Iter() {
 		attr.Value = ReplaceEntitiesString(attr.Value, em)
 	}
 
+	// newChildren contains the updated list of child tokens after entity replacement
+	// and re-parsing of any embedded XML.
+	// If newChldren is nil, it means the original children slice is still valid
+	// and no re-parsing has occurred.
+	var newChldren []Token
+
 	// Replace in children.
 	// Only Text nodes are processed, other Node children
 	// are processed recursively.
-	for _, child := range n.Children {
+	for i, child := range n.Children {
 		switch c := child.(type) {
 		case *Node:
-			c.replaceEntities(em)
+			if err := c.replaceEntities(em); err != nil {
+				return err
+			}
 
 		case *Text:
-			if !c.CData {
-				c.Data = ReplaceEntitiesBytes(c.Data, em)
+			// Skip entity replacement for CDATA sections
+			if c.CData {
+				break
 			}
+
+			c.Data = ReplaceEntitiesBytes(c.Data, em)
+
+			// Check if the new text contains any XML markup
+			if !slices.Contains(c.Data, '<') {
+				break
+			}
+
+			// It seems like the text contains XML markup, so we parse it into a new node.
+			nn := new(Node)
+			if err := nn.readFrom(bytes.NewReader(c.Data)); err != nil {
+				return err
+			}
+
+			// If we have no newChildren yet, initialize the slice and copy previous children into it
+			if newChldren == nil {
+				newChldren = make([]Token, 0, len(n.Children)+len(nn.Children))
+				newChldren = append(newChldren, n.Children[:i]...)
+			}
+
+			// Append the newly parsed node's children to the newChldren slice
+			newChldren = append(newChldren, nn.Children...)
+
+			// Skip adding the original text node since it has been replaced by parsed children.
+			continue
+		}
+
+		// If we have started building a new children slice, append the current child to it.
+		if newChldren != nil {
+			newChldren = append(newChldren, child)
 		}
 	}
+
+	// If we have built a new children slice, replace the node's children with it.
+	if newChldren != nil {
+		n.Children = newChldren
+	}
+
+	return nil
 }

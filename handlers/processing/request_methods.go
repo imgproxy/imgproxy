@@ -216,7 +216,7 @@ func (r *request) respondWithImage(statusCode int, resultData imagedata.ImageDat
 	r.rw.SetContentType(resultData.Format().Mime())
 	r.rw.SetContentLength(resultSize)
 	r.rw.SetContentDisposition(
-		r.imageURL,
+		r.Fetcher().SourcePath(r.imageURL),
 		r.opts.GetString(keys.Filename, ""),
 		resultData.Format().Ext(),
 		"",

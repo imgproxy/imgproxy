@@ -1,11 +1,19 @@
 # Changelog
 
+## [4.0.18] - TBA
+### Changed
+- Updated dependencies.
+
+### Fixed
+- Fix the source URL's query string leaking into the `Content-Disposition` header filename.
+- Fixed SVG sanitization bypasses via control-character entities in `href`, SMIL animations of link attributes, and DOCTYPE entities.
+
 ## [4.0.17] - 2026-09-30
-### Fix
+### Fixed
 - Fixed a possible out-of-bounds read in the ICO image loader.
 
 ## [4.0.16] - 2026-09-28
-### Fix
+### Fixed
 - Fixed several vulnerabilities in ICO image loader.
 
 ## [4.0.15] - 2026-09-14
