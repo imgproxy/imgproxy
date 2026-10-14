@@ -1,6 +1,6 @@
 # Changelog
 
-## [4.0.18] - TBA
+## [4.0.18] - 2026-10-14
 ### Changed
 - Updated dependencies.
 
