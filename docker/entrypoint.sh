@@ -1,6 +1,6 @@
 #!/bin/bash
 
-case "$IMGPROXY_MALLOC" in
+case "${IMGPROXY_MALLOC:-malloc}" in
 
   malloc)
     # Do nothing
