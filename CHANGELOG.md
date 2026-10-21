@@ -1,5 +1,14 @@
 # Changelog
 
+## [4.0.19] - 2026-10-21
+### Changed
+- Updated dependencies.
+- (docker) AWS Lambda adapter is updated to version 1.1.0.
+- (docker) Base image is changed to ubuntu:26.04.
+
+### Fixed
+- (docker) Untrust compromised eMudhra CA certificates.
+
 ## [4.0.18] - 2026-10-14
 ### Changed
 - Updated dependencies.
