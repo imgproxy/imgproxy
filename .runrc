@@ -6,6 +6,9 @@ BINARY="$PROJECT_ROOT/imgproxy"
 SRCDIR="$PROJECT_ROOT/cli"
 IMGPROXY_RCFILE="$PROJECT_ROOT/.imgproxyrc"
 
+# Export LSan (Leak Sanitizer) configuration to be used by all run tasks.
+export LSAN_OPTIONS=${LSAN_OPTIONS:-"suppressions=$PROJECT_ROOT/lsan.supp"}
+
 # require_tool_go / require_tool_docker
 #   Thin run::require_tool wrappers for tools required by more than one
 #   task, so each one's install-instructions message lives in a single

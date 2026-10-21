@@ -13,12 +13,12 @@ RUN rm -rf /opt/imgproxy/lib/pkgconfig /opt/imgproxy/lib/cmake
 # ==================================================================================================
 # AWS Lambda adapter
 
-FROM public.ecr.aws/awsguru/aws-lambda-adapter:0.9.1 AS lambda-adapter
+FROM public.ecr.aws/awsguru/aws-lambda-adapter:1.1.0 AS lambda-adapter
 
 # ==================================================================================================
 # Final image
 
-FROM public.ecr.aws/ubuntu/ubuntu:noble
+FROM public.ecr.aws/ubuntu/ubuntu:26.04
 LABEL maintainer="Sergey Alexandrovich <darthsim@gmail.com>"
 
 RUN apt-get update \

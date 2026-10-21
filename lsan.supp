@@ -1,0 +1,8 @@
+# LSan (Leak Sanitizer) suppression file
+# https://clang.llvm.org/docs/LeakSanitizer.html
+
+# Vips creates a global PangoFontMap and never frees it.
+# It's not a leak per se, but it will be reported by LSan.
+# We don't use fontconfig directly, only via libvips,
+# so it should be safe to suppress all leaks from libfontconfig completely.
+leak:libfontconfig.so
