@@ -36,6 +36,9 @@ jobs:
           # (For some reason, the action doesn't have an input for catalogers,
           #  so we have to set it via environment variable instead.)
           SYFT_SELECT_CATALOGERS: "+sbom-cataloger"
+          # Exclude Pebble from the SBOM scan.
+          # We don't use it, and will eventually remove it from the image.
+          SYFT_EXCLUDE: "/usr/bin/pebble"
 
       - name: Scan SBOM
         id: scan
