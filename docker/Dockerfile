@@ -37,6 +37,9 @@ RUN apt-get update \
   && rm -rf /var/lib/apt/lists/* \
   && rm -rf /etc/fonts/conf.d/10-sub-pixel-rgb.conf /etc/fonts/conf.d/11-lcdfilter-default.conf
 
+# Remove Pebble. We don't need it, yet scanners may find vilnerabilities in it
+RUN rm -rf /usr/bin/pebble /var/lib/pebble
+
 COPY --from=build /opt/imgproxy/bin/imgproxy /opt/imgproxy/bin/
 COPY --from=build /opt/imgproxy/lib /opt/imgproxy/lib
 COPY --from=build /opt/imgproxy/share/sbom /opt/imgproxy/share/sbom
