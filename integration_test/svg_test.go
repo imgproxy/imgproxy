@@ -28,6 +28,9 @@ var (
 
 		// glib: encoding 'UTF-16' doesn't match auto-detected 'UTF-8'
 		"oxygen-icons-5.116.0/scalable/apps/kalarm.svg",
+
+		// sanitizer: custom attribute `foo` is dropped, but a CSS attribute selector depends on it
+		"W3C_SVG_11_TestSuite/svg/struct-use-11-f.svg",
 	}
 )
 
