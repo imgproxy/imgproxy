@@ -20,6 +20,9 @@ type watermarkTestCase struct {
 	scale      float64
 	dpr        float64
 	format     imagetype.Type
+
+	// explicitScale sends the scale argument even when it is 0
+	explicitScale bool
 }
 
 func (w watermarkTestCase) ImagePath() string {
@@ -38,7 +41,8 @@ func (w watermarkTestCase) URLOptions() string {
 	if w.yOffset != 0 {
 		wmArgs.Set(3, w.yOffset)
 	}
-	if w.scale != 0 {
+
+	if w.scale != 0 || w.explicitScale {
 		wmArgs.Set(4, w.scale)
 	}
 
@@ -63,7 +67,7 @@ func (w watermarkTestCase) String() string {
 		fmt.Fprintf(&b, "_offset_%g_%g", w.xOffset, w.yOffset)
 	}
 
-	if w.scale != 0 {
+	if w.scale != 0 || w.explicitScale {
 		fmt.Fprintf(&b, "_scale_%g", w.scale)
 	}
 
@@ -242,6 +246,16 @@ func (s *WatermarkTestSuite) TestWatermark() {
 				position: processing.GravityReplicate,
 				opacity:  1,
 				scale:    0,
+			},
+			outSize: outSize,
+		},
+		{
+			// Explicit scale=0 must keep the watermark size unchanged
+			opts: watermarkTestCase{
+				position:      processing.GravityReplicate,
+				opacity:       1,
+				scale:         0,
+				explicitScale: true,
 			},
 			outSize: outSize,
 		},

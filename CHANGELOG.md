@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.0.20] - 2026-10-26
+### Changed
+- Updated dependencies.
+
+### Fixed
+- Fix `watermark` processing option rejecting `0` as a `scale` value.
+
 ## [4.0.19] - 2026-10-21
 ### Changed
 - Updated dependencies.
