@@ -441,6 +441,22 @@ func (s *ProcessingOptionsTestSuite) TestParsePathWatermark() {
 	s.Require().InDelta(0.6, o.GetFloat(keys.WatermarkScale, 0.0), 0.0001)
 }
 
+func (s *ProcessingOptionsTestSuite) TestParsePathWatermarkZeroScale() {
+	path := "/watermark:1:ce:0:0:0/plain/http://images.dev/lorem/ipsum.jpg"
+	o, _, err := s.parser().ParsePath(s.T().Context(), path, nil)
+
+	s.Require().NoError(err)
+
+	s.Require().InDelta(0.0, o.GetFloat(keys.WatermarkScale, -1.0), 0.0001)
+}
+
+func (s *ProcessingOptionsTestSuite) TestParsePathWatermarkNegativeScale() {
+	path := "/watermark:1:ce:0:0:-1/plain/http://images.dev/lorem/ipsum.jpg"
+	_, _, err := s.parser().ParsePath(s.T().Context(), path, nil)
+
+	s.Require().Error(err)
+}
+
 func (s *ProcessingOptionsTestSuite) TestParsePathPreset() {
 	s.config().Presets = []string{
 		"test1=resizing_type:fill",

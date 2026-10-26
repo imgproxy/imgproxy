@@ -372,7 +372,7 @@ func (p *Parser) applyWatermarkOption(ctx context.Context, o *options.Options, a
 	}
 
 	if len(args) > 4 && len(args[4]) > 0 {
-		if err := p.parsePositiveNonZeroFloat(ctx, o, keys.WatermarkScale, args[4]); err != nil {
+		if err := p.parsePositiveFloat(ctx, o, keys.WatermarkScale, args[4]); err != nil {
 			return err
 		}
 	}
