@@ -153,6 +153,99 @@ func (s *SvgTestSuite) TestSanitizeHref() {
 
 // TestSanitizeNestedEntities checks that entities are expanded only once:
 // a nested reference must not be expanded recursively
+func (s *SvgTestSuite) TestSanitizeLists() {
+	tests := []struct {
+		name     string
+		tags     []string
+		attrs    []string
+		in       string
+		expected string
+	}{
+		{
+			name:     "remove tag",
+			tags:     []string{"-circle"},
+			in:       `<svg><circle r="1"/><rect width="1"/></svg>`,
+			expected: `<svg><rect width="1"/></svg>`,
+		},
+		{
+			name:     "replace tags",
+			tags:     []string{"svg", "g", "rect"},
+			in:       `<svg><g><circle r="1"/><rect width="1"/></g></svg>`,
+			expected: `<svg><g><rect width="1"/></g></svg>`,
+		},
+		{
+			name:     "replace tags and add",
+			tags:     []string{"svg", "rect", "+circle"},
+			in:       `<svg><circle r="1"/><rect width="1"/><path d="M0 0"/></svg>`,
+			expected: `<svg><circle r="1"/><rect width="1"/></svg>`,
+		},
+		{
+			name:     "script is removed by default",
+			in:       `<svg><script>alert(1)</script><rect/></svg>`,
+			expected: `<svg><rect/></svg>`,
+		},
+		{
+			name:     "script can be explicitly allowed",
+			tags:     []string{"+script"},
+			in:       `<svg><script>alert(1)</script><rect/></svg>`,
+			expected: `<svg><script>alert(1)</script><rect/></svg>`,
+		},
+		{
+			name:     "event handler can't be allowed",
+			attrs:    []string{"+onclick"},
+			in:       `<svg><rect onclick="alert(1)" width="1"/></svg>`,
+			expected: `<svg><rect width="1"/></svg>`,
+		},
+		{
+			name:     "unsafe attribute value dropped",
+			in:       `<svg><rect id="x-->y" width="1"/></svg>`,
+			expected: `<svg><rect width="1"/></svg>`,
+		},
+		{
+			name:     "remove attr",
+			attrs:    []string{"-fill"},
+			in:       `<svg><rect fill="red" stroke="blue"/></svg>`,
+			expected: `<svg><rect stroke="blue"/></svg>`,
+		},
+		{
+			name:     "replace attrs",
+			attrs:    []string{"width", "height"},
+			in:       `<svg><rect fill="red" width="1" height="2"/></svg>`,
+			expected: `<svg><rect width="1" height="2"/></svg>`,
+		},
+		{
+			name:     "add attr",
+			attrs:    []string{"+foo"},
+			in:       `<svg><rect foo="1" bar="2"/></svg>`,
+			expected: `<svg><rect foo="1"/></svg>`,
+		},
+		{
+			name:     "replace attrs with modifiers",
+			attrs:    []string{"width", "fill", "+height", "-fill"},
+			in:       `<svg><rect fill="red" width="1" height="2" stroke="blue"/></svg>`,
+			expected: `<svg><rect width="1" height="2"/></svg>`,
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			config := svg.NewDefaultConfig()
+			config.Tags = tt.tags
+			config.Attrs = tt.attrs
+			s.Require().NoError(config.Validate())
+
+			svgProc := svg.New(&config)
+
+			in := imagedata.NewFromBytesWithFormat(imagetype.SVG, []byte(tt.in))
+			actual, err := svgProc.Process(options.New(), in)
+			s.Require().NoError(err)
+
+			expected := imagedata.NewFromBytesWithFormat(imagetype.SVG, []byte(tt.expected))
+			s.compare(expected, actual)
+		})
+	}
+}
+
 func (s *SvgTestSuite) TestSanitizeNestedEntities() {
 	config := svg.NewDefaultConfig()
 	svgProc := svg.New(&config)

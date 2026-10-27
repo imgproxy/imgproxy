@@ -11,9 +11,15 @@ import (
 
 // Node represents an XML node with a name, attributes, and child tokens.
 type Node struct {
-	Name     Name
+	Name Name
+	// NSURI is the resolved namespace URI of the element ("" if none or unresolved)
+	NSURI    string
 	Attrs    *Attributes
 	Children []Token
+
+	// bindings is the xmlns bindings in effect for this node's children
+	// (the parent's bindings plus this node's own xmlns declarations)
+	bindings nsBindings
 }
 
 // FilterChildren removes all child nodes that do not satisfy the given predicate function.
@@ -113,9 +119,17 @@ func (n *Node) readFromDecoder(dec *Decoder) error {
 		switch t := tok.(type) {
 		case *StartElement:
 			// An element is opened, create a node for it
+			bindings := n.bindings.with(t.Attrs)
+
+			for attr := range t.Attrs.Iter() {
+				attr.NSURI = bindings.attrNS(attr.Name)
+			}
+
 			nn := &Node{
-				Name:  t.Name,
-				Attrs: t.Attrs,
+				Name:     t.Name,
+				NSURI:    bindings.elementNS(t.Name),
+				Attrs:    t.Attrs,
+				bindings: bindings,
 			}
 			// Append the node to the current node's children and make it current
 			n.Children = append(n.Children, nn)
@@ -212,7 +226,8 @@ func (n *Node) replaceEntities(em map[string][]byte) error {
 			}
 
 			// It seems like the text contains XML markup, so we parse it into a new node.
-			nn := new(Node)
+			// The new nodes inherit the xmlns bindings in effect at this node
+			nn := &Node{bindings: n.bindings}
 			if err := nn.readFrom(bytes.NewReader(c.Data)); err != nil {
 				return err
 			}
