@@ -40,6 +40,9 @@ TASK_DIR="$PROJECT_ROOT/bin"
 #   caller's current directory, e.g. "$PROJECT_ROOT/config/app.yml".
 #
 # TASK_DIR — absolute path to the task directory ($PROJECT_ROOT/bin).
+#
+# TASK_NAME — name of the task being run or sourced (bin/<name>.sh → <name>).
+#   Not set while .runrc is sourced.
 
 # run::require_tool <cmd> <message>
 #   Exit the whole run with a friendly error if <cmd> is not found on PATH.
@@ -258,6 +261,36 @@ run::depends_on() {
   done
 }
 
+# run::friday_deploy
+#   Extra confirmation gate for deploy-like tasks: if today is Friday,
+#   Saturday, or Sunday, shows a colored warning banner and requires an
+#   explicit "REALLY sure?" confirmation before continuing (returns 1 if
+#   declined). On any other day it's a silent no-op that returns 0
+#   immediately. Ported from imgproxy/license-server's Makefile.
+#
+#   Example:
+#     main() { run::friday_deploy || return 1; run::depends_on build; ... }
+run::friday_deploy() {
+  local dow dow_name
+  dow="$(date +%u)"
+  [ "$dow" -le 4 ] && return 0
+  dow_name="$(date +%A)"
+  run::prompt red "It's $dow_name. Are you REALLY sure?" "y/N" >/dev/null || return 1
+  printf '\n'
+  run::color_echo green "Ok, you're the boss..."; printf '\n\n'
+  run::color_echo blue "┓┏┓┏┓┃"; printf '\n'
+  run::color_echo blue "┛┗┛┗┛┃"; printf '⟍ ○⟋   '; run::color_echo green "$dow_name"; printf '\n'
+  run::color_echo blue "┓┏┓┏┓┃"; printf '  ∕    '; run::color_echo green "deploy,"; printf '\n'
+  run::color_echo blue "┛┗┛┗┛┃"; printf 'ノ)    '; run::color_echo green "good"; printf '\n'
+  run::color_echo blue "┓┏┓┏┓┃"; printf '       '; run::color_echo green "luck!"; printf '\n'
+  run::color_echo blue "┛┗┛┗┛┃"; printf '\n'
+  run::color_echo blue "┓┏┓┏┓┃"; printf '\n'
+  run::color_echo blue "┛┗┛┗┛┃"; printf '\n'
+  run::color_echo blue "┓┏┓┏┓┃"; printf '\n'
+  run::color_echo blue "┃┃┃┃┃┃"; printf '\n'
+  run::color_echo blue "┻┻┻┻┻┻"; printf '\n'
+}
+
 if [ -f "$PROJECT_ROOT/.runrc" ]; then
   # shellcheck source=/dev/null
   . "$PROJECT_ROOT/.runrc"
@@ -282,6 +315,7 @@ run::_header() {
 
 run::_cmd_list() {
   run::_header
+  local col_width=22
   local f name has_tasks=0
   for f in "$TASK_DIR"/*.sh; do
     [ -e "$f" ] || continue
@@ -289,6 +323,9 @@ run::_cmd_list() {
     name="$(basename "$f" .sh)"
     # shellcheck disable=SC1090
     if ! desc="$(
+      # shellcheck disable=SC2034,SC1090
+      TASK_NAME="$name"
+      # shellcheck disable=SC1090
       . "$f"
       for fn in description help main; do
         declare -f "$fn" >/dev/null 2>&1 || { echo "error: task '$name' (bin/$name.sh) must define a $fn() function" >&2; exit 1; }
@@ -299,7 +336,7 @@ run::_cmd_list() {
     fi
     printf '  '
     run::color_echo green "$name"
-    local width=$((17 - ${#name}))
+    local width=$((col_width - ${#name}))
     [ $width -lt 1 ] && width=1
     printf '%*s%s\n' $width " " "$desc"
   done
@@ -317,11 +354,11 @@ run::_cmd_list() {
     printf '  '
     run::color_echo green "install-global"
     # shellcheck disable=SC2016
-    printf '%*s%s\n' $((17 - 14)) " " "Add a global \`run\` shell function (arg: bash|zsh|fish)"
+    printf '%*s%s\n' $((col_width - 14)) " " "Add a global \`run\` shell function (arg: bash|zsh|fish)"
   else
     printf '  '
     run::color_echo green "help"
-    printf '%*s%s\n' $((17 - 4)) " " "Show a <task>'s help message"
+    printf '%*s%s\n' $((col_width - 4)) " " "Show a <task>'s help message"
   fi
   printf '\n'
 }
@@ -337,6 +374,8 @@ run::_cmd_help() {
     echo "error: unknown task '$task'" >&2
     return 1
   fi
+  # shellcheck disable=SC2034
+  TASK_NAME="$task"
   # shellcheck disable=SC1090
   . "$TASK_DIR/$task.sh"
   if ! declare -f help >/dev/null 2>&1; then
@@ -426,6 +465,25 @@ function run
     echo "run: no run.sh project found in this directory or its parents" >&2
     return 1
 end
+
+# Tab completion: task names come from globbing bin/*.sh — nothing is sourced.
+function __run_tasks
+    set -l dir (pwd)
+    while test "$dir" != "$HOME"; and test "$dir" != "/"
+        if test -x "$dir/run"
+            for f in $dir/bin/*.sh
+                string replace -r '.*/(.*)\.sh$' '$1' -- $f
+            end
+            return 0
+        end
+        set dir (dirname $dir)
+    end
+end
+complete -c run -f
+complete -c run -n '__fish_use_subcommand' -a '(__run_tasks)'
+complete -c run -n '__fish_use_subcommand' -a 'help install-global'
+complete -c run -n '__fish_seen_subcommand_from help' -a '(__run_tasks)'
+complete -c run -n '__fish_seen_subcommand_from install-global' -a 'bash zsh fish --force'
 EOF
       printf '%s\n' "$marker_end"
     } >> "$rc_file"
@@ -451,6 +509,56 @@ run() {
   return 1
 }
 EOF
+      # Tab completion: task names come from globbing bin/*.sh — nothing is sourced.
+      if [ "$shell_name" = "zsh" ]; then
+        cat <<'EOF'
+
+_run() {
+  local dir="$PWD" f
+  local -a tasks
+  while :; do
+    [[ "$dir" == "$HOME" || "$dir" == "/" ]] && return 0
+    [[ -x "$dir/run" ]] && break
+    dir="${dir:h}"
+  done
+  for f in "$dir"/bin/*.sh(N); do tasks+=("${${f:t}%.sh}"); done
+  case $CURRENT in
+    2) compadd -a tasks; compadd help install-global ;;
+    3) case "$words[2]" in
+         help) compadd -a tasks ;;
+         install-global) compadd bash zsh fish -- --force ;;
+       esac ;;
+  esac
+}
+if (( ! $+functions[compdef] )); then autoload -Uz compinit && compinit; fi
+compdef _run run
+EOF
+      else
+        cat <<'EOF'
+
+_run_complete() {
+  local dir="$PWD" cur="${COMP_WORDS[COMP_CWORD]}" f
+  local -a words=()
+  while :; do
+    { [ "$dir" = "$HOME" ] || [ "$dir" = "/" ]; } && return 0
+    [ -x "$dir/run" ] && break
+    dir="${dir%/*}"; dir="${dir:-/}"
+  done
+  if [ "$COMP_CWORD" -eq 1 ] || { [ "$COMP_CWORD" -eq 2 ] && [ "${COMP_WORDS[1]}" = "help" ]; }; then
+    for f in "$dir"/bin/*.sh; do
+      [ -e "$f" ] || continue
+      f="${f##*/}"; words+=("${f%.sh}")
+    done
+    [ "$COMP_CWORD" -eq 1 ] && words+=(help install-global)
+  elif [ "$COMP_CWORD" -eq 2 ] && [ "${COMP_WORDS[1]}" = "install-global" ]; then
+    words=(bash zsh fish --force)
+  fi
+  local IFS=$'\n'
+  COMPREPLY=($(compgen -W "${words[*]}" -- "$cur"))
+}
+complete -F _run_complete run
+EOF
+      fi
       printf '%s\n' "$marker_end"
     } >> "$rc_file"
   fi
@@ -471,6 +579,8 @@ case "${1:-}" in
       run::_cmd_list >&2
       exit 1
     fi
+    # shellcheck disable=SC2034
+    TASK_NAME="$task"
     # shellcheck disable=SC1090
     . "$TASK_DIR/$task.sh"
     if ! declare -f main >/dev/null 2>&1; then
