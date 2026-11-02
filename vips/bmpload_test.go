@@ -59,3 +59,26 @@ func TestBMPLoadInvalidDimensions(t *testing.T) {
 		})
 	}
 }
+
+// Regression test for a heap-buffer-overflow caused by an unvalidated bpp.
+// For uncompressed (BI_RGB) BMP input, any bpp >= 24 used to be routed into the
+// 24/32-bit row generator, which read a row sized from the unvalidated bpp into
+// a row buffer allocated for a 4-byte-per-pixel maximum.
+// bmp-invalid-bpp.bmp declares bpp=40 at width=512, which used to read a
+// 2560-byte row into a 2052-byte allocation (a 508-byte overflow).
+func TestBMPLoadUnsupportedBitDepth(t *testing.T) {
+	testData := testutil.NewTestDataProvider(func() *testing.T { return t })
+	id := imagedata.NewFromBytesWithFormat(imagetype.BMP, testData.Read("bmp-invalid-bpp.bmp"))
+	defer id.Close()
+
+	img := new(vips.Image)
+	defer img.Clear()
+
+	err := img.Load(id, 1.0, 0, 1)
+	if err == nil {
+		// The loader is lazy: force pixel decoding if the header was accepted
+		err = img.CopyMemory()
+	}
+
+	require.ErrorContains(t, err, "unsupported bit depth")
+}
