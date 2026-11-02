@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.0.21] - 2026-11-02
+## Changed
+- Updated dependencies.
+
+## Fixed
+- Fixed several vulnerabilities in BMP and ICO loaders.
+
 ## [4.0.20] - 2026-10-26
 ### Changed
 - Updated dependencies.
