@@ -11,8 +11,8 @@ on:
         required: false
         default: true
 
-      run_trivy_scan:
-        description: "Run Trivy Docker image scan"
+      run_docker_scan:
+        description: "Run Docker image scan"
         type: boolean
         required: false
         default: true
@@ -41,24 +41,13 @@ jobs:
     with:
       container_image: ${{ needs.container-info.outputs.image }}
 
-  trivy-latest:
-    if: ${{ github.event_name == 'schedule' || inputs.run_trivy_scan }}
+  docker-scan:
+    if: ${{ github.event_name == 'schedule' || inputs.run_docker_scan }}
     needs: [container-info]
-    uses: ./.github/workflows/trivy.yml
+    uses: ./.github/workflows/docker-scan.yml
     with:
-      container_image: ${{ needs.container-info.outputs.registry }}/imgproxy/imgproxy:latest
+      docker_repo: ${{ needs.container-info.outputs.registry }}/imgproxy/imgproxy
     permissions:
-      contents: read
-      id-token: write
-    secrets: inherit
-
-  trivy-v4:
-    if: ${{ github.event_name == 'schedule' || inputs.run_trivy_scan }}
-    needs: [container-info]
-    uses: ./.github/workflows/trivy.yml
-    with:
-      container_image: ${{ needs.container-info.outputs.registry }}/imgproxy/imgproxy:v4
-    permissions:
-      contents: read
+      contents: write
       id-token: write
     secrets: inherit

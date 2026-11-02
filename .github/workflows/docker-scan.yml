@@ -1,0 +1,66 @@
+name: Docker image scan
+
+on:
+  workflow_call:
+    inputs:
+      docker_repo:
+        required: true
+        type: string
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    strategy:
+      matrix:
+        docker_tag:
+          - v4
+          - latest
+      fail-fast: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      # Grype doesn't allow selecting specific catalogers.
+      # So we build an SBOM first and then scan it separately.
+      - name: Build SBOM
+        uses: anchore/sbom-action@3ad7283483fc7af8ff2b4ea19663c2d5ca935e26 # v0.24.2
+        with:
+          image: ${{ inputs.docker_repo }}:${{ matrix.docker_tag }}
+          output-file: "${{ github.event.repository.name }}-${{ matrix.docker_tag }}-sbom.cdx.json"
+          format: cyclonedx-json
+        env:
+          # Add the SBOM cataloger to grab CDX files from the image.
+          # (For some reason, the action doesn't have an input for catalogers,
+          #  so we have to set it via environment variable instead.)
+          SYFT_SELECT_CATALOGERS: "+sbom-cataloger"
+          # Exclude Pebble from the SBOM scan.
+          # We don't use it, and will eventually remove it from the image.
+          SYFT_EXCLUDE: "/usr/bin/pebble"
+
+      - name: Scan SBOM
+        id: scan
+        uses: anchore/scan-action@27805bf3b4e84b4a5c980df22ed233c00390a439 # v7.4.2
+        with:
+          sbom: "${{ github.event.repository.name }}-${{ matrix.docker_tag }}-sbom.cdx.json"
+          fail-build: true
+          output-format: table
+          severity-cutoff: high
+          only-fixed: true
+          by-cve: true
+        env:
+          GRYPE_SORT_BY: severity
+
+      - name: Generate job summary
+        if: '!cancelled()'
+        run: |
+          {
+            IFS=$'\n'
+            echo "## Vulnerability Report Summary"
+            echo "### ${{ inputs.docker_repo }}:${{ matrix.docker_tag }}"
+            echo '```'
+            cat ${{ steps.scan.outputs.table }}
+            echo '```'
+          } >> $GITHUB_STEP_SUMMARY
