@@ -194,7 +194,10 @@ vips_foreign_save_bmp_build(VipsObject *object)
       gs_palette[i * BMP_PALETTE_ITEM_SIZE + 3] = 0;        // not used
     }
 
-    vips_target_write(bmp->target, gs_palette, BMP_GS_PALETTE_SIZE);
+    if (vips_target_write(bmp->target, gs_palette, BMP_GS_PALETTE_SIZE) < 0) {
+      vips_error("vips_foreign_save_bmp_build", "unable to write BMP palette to target");
+      return -1;
+    }
   }
 
   // Allocate a line buffer for the target image

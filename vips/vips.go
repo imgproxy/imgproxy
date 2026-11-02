@@ -525,6 +525,9 @@ func (img *Image) GetBlob(name string) ([]byte, error) {
 	if C.vips_image_get_blob(img.VipsImage, cachedCString(name), &tmp, &size) != 0 {
 		return nil, Error()
 	}
+	if size > math.MaxInt32 {
+		return nil, newVipsError("blob is too large")
+	}
 	return C.GoBytes(tmp, C.int(size)), nil
 }
 
@@ -545,6 +548,10 @@ func (img *Image) SetDouble(name string, value float64) {
 }
 
 func (img *Image) SetBlob(name string, value []byte) {
+	if len(value) == 0 {
+		return
+	}
+
 	defer runtime.KeepAlive(value)
 	C.vips_image_set_blob_copy(img.VipsImage, cachedCString(name), unsafe.Pointer(&value[0]), C.size_t(len(value)))
 }

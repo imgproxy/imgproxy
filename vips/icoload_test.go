@@ -21,6 +21,9 @@ func TestIcoLoadInvalid(t *testing.T) {
 		{"ico-bad2.ico", "ICO image data is too small"},
 		{"ico-bad3.ico", "ICO image data is too large"},
 		{"ico-bad4.ico", "ICO image data is too small"},
+		{"ico-bmp-bad-header-len.ico", "unexpected BMP header length"},
+		{"ico-bmp-width-overflow.ico", "unable to load ICO image as BMP"},
+		{"ico-bmp-numcolors-overflow.ico", "invalid BMP palette size"},
 	}
 
 	for _, tc := range testCases {
