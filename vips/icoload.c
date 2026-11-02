@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
 
 // Maximum size of an ICO entry data block.
 // Maximum image size in ICO is 256x256 pixels,
@@ -14,7 +15,7 @@
 // 10 MB should be enough for any ICO entry data block,
 // even if an embedded PNG contains metadata.
 // Data blocks larger than this should be considered malicious.
-#define MAX_ICO_ENTRY_DATA_SIZE 10 * 1024 * 1024
+#define MAX_ICO_ENTRY_DATA_SIZE (10 * 1024 * 1024)
 
 /**
  * ICO ForeignLoad VIPS class implementation (generic)
@@ -211,35 +212,74 @@ vips_foreign_load_ico_header(VipsForeignLoad *load)
       return -1;
     }
 
-    // Read num_colors and bpp from the BITMAPINFOHEADER
-    uint32_t num_colors = GUINT32_FROM_LE(*(uint32_t *) (actual_data + 32));
-    uint16_t bpp = GUINT16_FROM_LE(*(uint16_t *) (actual_data + 14));
-    uint32_t pix_offset;
+    // The BMP header reconstruction below assumes a plain BITMAPINFOHEADER
+    uint32_t info_header_len;
+    memcpy(&info_header_len, (uint8_t *) actual_data, sizeof(info_header_len));
+
+    if (GUINT32_FROM_LE(info_header_len) != BMP_BITMAP_INFO_HEADER_LEN) {
+      vips_error("vips_foreign_load_ico_header", "unexpected BMP header length");
+      VIPS_FREE(data);
+      return -1;
+    }
+
+    // Read height, bpp and num_colors from the BITMAPINFOHEADER.
+    // Use memcpy since the data is not guaranteed to be aligned.
+    int32_t height;
+    uint16_t bpp;
+    uint32_t num_colors;
+    memcpy(&height, (uint8_t *) actual_data + 8, sizeof(height));
+    memcpy(&bpp, (uint8_t *) actual_data + 14, sizeof(bpp));
+    memcpy(&num_colors, (uint8_t *) actual_data + 32, sizeof(num_colors));
+
+    height = GINT32_FROM_LE(height);
+    bpp = GUINT16_FROM_LE(bpp);
+    num_colors = GUINT32_FROM_LE(num_colors);
+
+    uint64_t palette_colors;
 
     if ((num_colors == 0) && (bpp <= 8)) {
       // If there are no colors and bpp is <= 8, we assume it's a palette image
-      pix_offset = BMP_FILE_HEADER_LEN + BMP_BITMAP_INFO_HEADER_LEN + 4 * (1 << bpp);
+      palette_colors = (uint64_t) 1 << bpp;
     }
     else {
       // Otherwise, we use the number of colors
-      pix_offset = BMP_FILE_HEADER_LEN + BMP_BITMAP_INFO_HEADER_LEN + 4 * num_colors;
+      palette_colors = num_colors;
+    }
+
+    // The palette must fit into the data we have
+    if (palette_colors > 256 && bpp <= 8) {
+      vips_error("vips_foreign_load_ico_header", "invalid BMP palette size");
+      VIPS_FREE(data);
+      return -1;
+    }
+
+    uint64_t pix_offset = BMP_FILE_HEADER_LEN + BMP_BITMAP_INFO_HEADER_LEN + 4 * palette_colors;
+
+    if (pix_offset > full_data_size) {
+      vips_error("vips_foreign_load_ico_header", "invalid BMP palette size");
+      VIPS_FREE(data);
+      return -1;
     }
 
     // ICO file used to store alpha mask. By historical reasons, height of the ICO bmp
     // is still stored doubled to cover the alpha mask data even if they're zero
     // or not present.
-    int32_t height = GINT32_FROM_LE(*(int32_t *) (actual_data + 8));
     height = height / 2;
+
+    uint32_t file_size_le = GUINT32_TO_LE(full_data_size);
+    uint32_t reserved = 0;
+    uint32_t pix_offset_le = GUINT32_TO_LE((uint32_t) pix_offset);
+    int32_t height_le = GINT32_TO_LE(height);
 
     // Magic bytes
     data[0] = 'B';
     data[1] = 'M';
 
     // Size of the BMP file (data size + BMP file header length)
-    (*(uint32_t *) (data + 2)) = GUINT32_TO_LE(full_data_size);
-    (*(uint32_t *) (data + 6)) = 0;                          // reserved
-    (*(uint32_t *) (data + 10)) = GUINT32_TO_LE(pix_offset); // offset to the pixel data
-    (*(int32_t *) (actual_data + 8)) = GINT32_TO_LE(height); // height
+    memcpy(data + 2, &file_size_le, sizeof(file_size_le));
+    memcpy(data + 6, &reserved, sizeof(reserved));                      // reserved
+    memcpy(data + 10, &pix_offset_le, sizeof(pix_offset_le));           // offset to the pixel data
+    memcpy((uint8_t *) actual_data + 8, &height_le, sizeof(height_le)); // height
 
     if (
         vips_bmpload_buffer(

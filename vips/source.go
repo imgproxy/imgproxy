@@ -58,10 +58,15 @@ func imgproxyReaderRead(handle C.uintptr_t, pointer unsafe.Pointer, size C.int64
 		return -1
 	}
 
+	if size <= 0 {
+		return 0
+	}
+
 	buf := unsafe.Slice((*byte)(pointer), size)
 	n, err := r.Read(buf)
 	if errors.Is(err, io.EOF) {
-		return 0
+		// Read may return both n > 0 and io.EOF: don't drop the data we've got
+		return C.int64_t(n)
 	} else if err != nil {
 		vipsError("imgproxyReaderRead", "error reading from imgproxy source: %v", err)
 		return -1

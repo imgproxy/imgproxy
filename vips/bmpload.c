@@ -7,6 +7,16 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <limits.h>
+
+// Maximum width/height of a BMP image. This bounds all the row size arithmetic
+// (width * 4 + 4 etc.) so it cannot overflow a signed 32-bit integer.
+// It also keeps the bottom-up height within vips_sequential's "tile_height"
+// maximum (1000000); GLib silently ignores bigger values.
+#define BMP_MAX_DIMENSION 1000000
+
+// Maximum number of pixels in a BMP image (the same limit we use for GIF).
+#define BMP_MAX_PIXELS ((int64_t) (INT_MAX / 4))
 
 #define BMP_ROW_ADDR(BMP, OR, R, Y) \
   VIPS_REGION_ADDR(OR, 0, R->top + (BMP->top_down ? Y : R->height - 1 - Y))
@@ -215,12 +225,21 @@ vips_foreign_load_bmp_header(VipsForeignLoad *load)
   // Source image bytes per pixel. It does not depend on the alpha mask, just on the bpp.
   int bytes_per_pixel = bpp >= 8 ? bpp / 8 : 1; // bytes per pixel in the source image
 
+  // -INT32_MIN will overflow
+  if (height == INT32_MIN) {
+    vips_error("vips_foreign_load_bmp_header", "unsupported BMP image dimensions");
+    return -1;
+  }
+
   if (height < 0) {
     height = -height;
     top_down = TRUE;
   }
 
-  if ((width <= 0) || (height <= 0)) {
+  if (
+      (width <= 0) || (height <= 0) ||
+      (width > BMP_MAX_DIMENSION) || (height > BMP_MAX_DIMENSION) ||
+      ((int64_t) width * (int64_t) height > BMP_MAX_PIXELS)) {
     vips_error("vips_foreign_load_bmp_header", "unsupported BMP image dimensions");
     return -1;
   }
@@ -375,7 +394,7 @@ static int
 vips_foreign_load_bmp_24_32_generate_strip(VipsRect *r, VipsRegion *out_region, VipsForeignLoadBmp *bmp)
 {
   // Align the row size to 4 bytes, as BMP rows are 4-byte aligned.
-  int row_size = (bmp->bytes_per_pixel * r->width + 3) & (~3);
+  size_t row_size = ((size_t) bmp->bytes_per_pixel * r->width + 3) & (~(size_t) 3);
 
   VipsPel *src;
   VipsPel *dest;
@@ -416,7 +435,7 @@ static int
 vips_foreign_load_bmp_16_generate_strip(VipsRect *r, VipsRegion *out_region, VipsForeignLoadBmp *bmp)
 {
   // Align the row size to 4 bytes, as BMP rows are 4-byte aligned, 16 bpp = 2 bytes per pixel
-  int row_size = (bmp->bytes_per_pixel * r->width + 3) & (~3);
+  size_t row_size = ((size_t) bmp->bytes_per_pixel * r->width + 3) & (~(size_t) 3);
 
   VipsPel *src;
   VipsPel *dest;
@@ -497,7 +516,7 @@ vips_foreign_load_bmp_1_8_generate_strip(VipsRect *r, VipsRegion *out_region, Vi
 {
   // Align the row size to 4 bytes, as BMP rows are 4-byte aligned
   char cap = 8 / bmp->bpp;
-  int row_size = ((r->width + cap - 1) / cap + 3) & (~3);
+  size_t row_size = ((size_t) (r->width + cap - 1) / cap + 3) & (~(size_t) 3);
 
   VipsPel *src = bmp->row_buffer; // just a shortcut
   VipsPel *dest;
@@ -570,7 +589,7 @@ vips_foreign_load_bmp_rle_generate_strip(VipsRect *r, VipsRegion *out_region, Vi
         }
 
         else if (cmd[1] == BMP_RLE_EOF) {
-          bmp->dy = G_MAXUINT32; // set dy to max, so all the leftover lines will be skipped
+          bmp->dy = INT_MAX; // set dy to max, so all the leftover lines will be skipped
           bmp->dx = 0;
 
           break; // exit the loop, we reached EOF
@@ -648,16 +667,16 @@ vips_foreign_load_bmp_rgb_generate(VipsRegion *out_region,
    * We use sequential access + thinstrip demand style which means that image would
    * be read in strips, where each strip represents image-wide set of rows.
    */
-  g_assert(r->left == 0);                                 // Strip starts at the left edge of the image
-  g_assert(r->width == out_region->im->Xsize);            // Has width of the image
-  g_assert(VIPS_RECT_BOTTOM(r) <= out_region->im->Ysize); // Equals or less of image height
-
-  // Equals to the maximum height of the strip or less (last strip)
-  if (bmp->top_down)
-    g_assert(r->height ==
-        VIPS_MIN(VIPS__FATSTRIP_HEIGHT, out_region->im->Ysize - r->top));
-  else
-    g_assert(r->height == out_region->im->Ysize);
+  if (r->left != 0 ||                                // Strip starts at the left edge of the image
+      r->width != out_region->im->Xsize ||           // Has width of the image
+      VIPS_RECT_BOTTOM(r) > out_region->im->Ysize || // Equals or less of image height
+      r->height != (bmp->top_down
+                           // Equals to the maximum height of the strip or less (last strip)
+                           ? VIPS_MIN(VIPS__FATSTRIP_HEIGHT, out_region->im->Ysize - r->top)
+                           : out_region->im->Ysize)) {
+    vips_error("vips_foreign_load_bmp_generate", "unexpected strip geometry");
+    return -1;
+  }
 
   // Check if the requested strip is in order
   if (r->top != bmp->y_pos) {
@@ -689,7 +708,8 @@ vips_foreign_load_bmp_load(VipsForeignLoad *load)
   // For a case when we encounter buggy BMP image which has RLE command to read next
   // 255 bytes, and our buffer is smaller than that, we need it to be at least 256 bytes
   // (255 bytes + 1 byte of padding).
-  int row_buffer_length = (bmp->width * 4) + 4;
+  // Width is validated in the header (see BMP_MAX_DIMENSION), so this can't overflow.
+  size_t row_buffer_length = ((size_t) bmp->width * 4) + 4;
   if (row_buffer_length < 256) {
     row_buffer_length = 256;
   }
@@ -711,6 +731,7 @@ vips_foreign_load_bmp_load(VipsForeignLoad *load)
       // For bottom-up BMP images we need to flip the image vertically.
       // We do this in vips_image_generate callback, so we need to be sure that
       // we generate regions size of the whole image.
+      // Ysize <= BMP_MAX_DIMENSION is checked in the header.
       vips_sequential(t[0], &t[1],
           "tile_height", bmp->top_down ? VIPS__FATSTRIP_HEIGHT : t[0]->Ysize,
           NULL) ||
