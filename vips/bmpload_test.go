@@ -37,6 +37,8 @@ func TestBMPLoadInvalidDimensions(t *testing.T) {
 		"bmp-height-int-min.bmp",  // height INT32_MIN
 		"bmp-area-too-large.bmp",  // 100000x100000, 24 bpp
 		"bmp-32bpp-overflow.bmp",  // width 0x20000000, 32 bpp
+		// bottom-up, height 1000001: over the vips_sequential tile_height maximum
+		"bmp-height-bottom-up-too-tall.bmp",
 	}
 
 	for _, filename := range testCases {

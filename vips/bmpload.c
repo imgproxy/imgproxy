@@ -13,6 +13,10 @@
 // (width * 4 + 4 etc.) so it cannot overflow a signed 32-bit integer.
 #define BMP_MAX_DIMENSION 10000000
 
+// Maximum height of a bottom-up BMP image. We pass the height as vips_sequential's
+// "tile_height", whose maximum is 1000000. GLib silently ignores bigger values.
+#define BMP_MAX_BOTTOM_UP_HEIGHT 1000000
+
 // Maximum number of pixels in a BMP image (the same limit we use for GIF).
 #define BMP_MAX_PIXELS ((int64_t) (INT_MAX / 4))
 
@@ -238,6 +242,12 @@ vips_foreign_load_bmp_header(VipsForeignLoad *load)
       (width <= 0) || (height <= 0) ||
       (width > BMP_MAX_DIMENSION) || (height > BMP_MAX_DIMENSION) ||
       ((int64_t) width * (int64_t) height > BMP_MAX_PIXELS)) {
+    vips_error("vips_foreign_load_bmp_header", "unsupported BMP image dimensions");
+    return -1;
+  }
+
+  // See BMP_MAX_BOTTOM_UP_HEIGHT for details
+  if (!top_down && height > BMP_MAX_BOTTOM_UP_HEIGHT) {
     vips_error("vips_foreign_load_bmp_header", "unsupported BMP image dimensions");
     return -1;
   }
@@ -729,6 +739,7 @@ vips_foreign_load_bmp_load(VipsForeignLoad *load)
       // For bottom-up BMP images we need to flip the image vertically.
       // We do this in vips_image_generate callback, so we need to be sure that
       // we generate regions size of the whole image.
+      // Ysize <= BMP_MAX_BOTTOM_UP_HEIGHT is checked in the header.
       vips_sequential(t[0], &t[1],
           "tile_height", bmp->top_down ? VIPS__FATSTRIP_HEIGHT : t[0]->Ysize,
           NULL) ||
