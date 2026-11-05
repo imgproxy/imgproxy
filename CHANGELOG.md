@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.0.22] - 2026-11-05
+## Changed
+- Updated dependencies.
+
+## Fixed
+- Minor bugs in bmp image loader.
+
 ## [4.0.21] - 2026-11-02
 ## Changed
 - Updated dependencies.

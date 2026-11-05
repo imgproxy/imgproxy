@@ -5,13 +5,3 @@ ignore:
     reason: "False positive. A weird version 2021-03-30 is specified in the CVE"
   - vulnerability: CVE-2021-30475
     reason: "False positive. A weird version 2021-03-24 is specified in the CVE"
-
-# TEMPORARY: published images still ship go-jose v4.1.4 (does not affect us).
-# Fixed in v4.1.7. Remove these entries once the next release image is published.
-# Ignored on version/4.0 until 2026-11-16.
-  - vulnerability: CVE-2026-116587
-    reason: "go-jose fixed in v4.1.7, waiting for release"
-  - vulnerability: CVE-2026-116586
-    reason: "go-jose fixed in v4.1.7, waiting for release"
-  - vulnerability: CVE-2026-116585
-    reason: "go-jose fixed in v4.1.7, waiting for release"

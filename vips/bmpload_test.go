@@ -1,10 +1,12 @@
 package vips_test
 
 import (
+	"image/png"
 	"testing"
 
 	"github.com/imgproxy/imgproxy/v4/imagedata"
 	"github.com/imgproxy/imgproxy/v4/imagetype"
+	"github.com/imgproxy/imgproxy/v4/options"
 	"github.com/imgproxy/imgproxy/v4/testutil"
 	"github.com/imgproxy/imgproxy/v4/vips"
 	"github.com/stretchr/testify/require"
@@ -81,4 +83,74 @@ func TestBMPLoadUnsupportedBitDepth(t *testing.T) {
 	}
 
 	require.ErrorContains(t, err, "unsupported bit depth")
+}
+
+// 16-bit BMPs: BI_RGB defaults to RGB555 and BITFIELDS may declare 5-5-5 masks.
+// Both used to decode incorrectly (black / halved channel range). The source
+// pixels are 0x7FFF (white in RGB555), so the result must be near-white.
+func TestBMPLoad16bitRGB555(t *testing.T) {
+	testData := testutil.NewTestDataProvider(func() *testing.T { return t })
+
+	testCases := []string{
+		"bmp-16bpp-rgb555-bi_rgb.bmp",
+		"bmp-16bpp-rgb555-bitfields.bmp",
+	}
+
+	for _, filename := range testCases {
+		t.Run(filename, func(t *testing.T) {
+			id := imagedata.NewFromBytesWithFormat(imagetype.BMP, testData.Read(filename))
+			defer id.Close()
+
+			img := new(vips.Image)
+			defer img.Clear()
+			require.NoError(t, img.Load(id, 1.0, 0, 1))
+
+			out, err := img.Save(imagetype.PNG, 0, options.New())
+			require.NoError(t, err)
+			defer out.Close()
+
+			r := out.Reader()
+
+			decoded, err := png.Decode(r)
+			require.NoError(t, err)
+
+			bounds := decoded.Bounds()
+			for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+				for x := bounds.Min.X; x < bounds.Max.X; x++ {
+					cr, cg, cb, _ := decoded.At(x, y).RGBA()
+					require.GreaterOrEqual(t, cr>>8, uint32(248))
+					require.GreaterOrEqual(t, cg>>8, uint32(248))
+					require.GreaterOrEqual(t, cb>>8, uint32(248))
+				}
+			}
+		})
+	}
+}
+
+// RLE8 MOVE_TO with dy > 0 must move exactly dy lines down from the current one.
+// Stream: run(idx1); EOL; MOVE_TO(0, 1); run(idx2); EOL; EOF.
+// The image is bottom-up (4 rows), so stream rows 0 and 2 are image rows 3 and 1.
+func TestBMPLoadRLE8MoveToDy(t *testing.T) {
+	testData := testutil.NewTestDataProvider(func() *testing.T { return t })
+	id := imagedata.NewFromBytesWithFormat(imagetype.BMP, testData.Read("bmp-rle8-move-to.bmp"))
+	defer id.Close()
+
+	img := new(vips.Image)
+	defer img.Clear()
+	require.NoError(t, img.Load(id, 1.0, 0, 1))
+
+	out, err := img.Save(imagetype.PNG, 0, options.New())
+	require.NoError(t, err)
+	defer out.Close()
+
+	decoded, err := png.Decode(out.Reader())
+	require.NoError(t, err)
+
+	// Expected red channel (8-bit) per image row, top to bottom
+	expected := []uint32{0x00, 0x50, 0x00, 0x38}
+
+	for y, want := range expected {
+		cr, _, _, _ := decoded.At(0, y).RGBA()
+		require.Equal(t, want, cr>>8, "row %d", y)
+	}
 }

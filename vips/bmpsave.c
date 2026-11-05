@@ -202,6 +202,11 @@ vips_foreign_save_bmp_build(VipsObject *object)
 
   // Allocate a line buffer for the target image
   bmp->line_buffer = VIPS_MALLOC(save, line_size);
+  if (bmp->line_buffer == NULL) {
+    vips_error("vips_foreign_save_bmp_build", "unable to allocate line buffer");
+    return -1;
+  }
+
   bmp->bands = bands;
   bmp->line_size = line_size;
 
