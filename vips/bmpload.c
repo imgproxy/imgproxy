@@ -304,7 +304,7 @@ vips_foreign_load_bmp_header(VipsForeignLoad *load)
       bmp565 = TRUE;
     }
     else if ((bpp == 16) && (rmask == 0x7C00) && (gmask == 0x3E0) && (bmask == 0x1F)) {
-      // Go ahead, it's a regular 16 bit image
+      // Go ahead, it's a regular 555 16 bit image
     }
     else if ((bpp == 32) && (rmask == 0xff0000) && (gmask == 0xff00) && (bmask == 0xff) && (amask == 0xff000000)) {
       // Go ahead, it's a regular 32-bit image
@@ -317,6 +317,12 @@ vips_foreign_load_bmp_header(VipsForeignLoad *load)
   else if (compression != COMPRESSION_BI_RGB) {
     vips_error("vips_foreign_load_bmp_header", "unsupported BMP image: compression not supported");
     return -1;
+  }
+  else if (bpp == 16) {
+    // Per the BMP spec, 16-bit BI_RGB images use the RGB555 layout by default
+    rmask = 0x7C00;
+    gmask = 0x03E0;
+    bmask = 0x001F;
   }
 
   // BMP images with 1, 2, 4 or 8 bits per pixel
@@ -341,6 +347,10 @@ vips_foreign_load_bmp_header(VipsForeignLoad *load)
     // Please note, that BMP images are stored in BGR order rather than RGB order.
     // Every 4th byte is padding.
     bmp->palette = VIPS_MALLOC(load, max_colors * BMP_PALETTE_ITEM_SIZE);
+    if (bmp->palette == NULL) {
+      vips_error("vips_foreign_load_bmp_header", "unable to allocate BMP palette");
+      return -1;
+    }
 
     if (vips_foreign_load_read_full(bmp->source, bmp->palette, num_colors * BMP_PALETTE_ITEM_SIZE) <= 0) {
       vips_error("vips_foreign_load_bmp_header", "unable to read BMP palette");
@@ -452,10 +462,18 @@ vips_foreign_load_bmp_16_generate_strip(VipsRect *r, VipsRegion *out_region, Vip
     for (int x = 0; x < r->width; x++) {
       uint16_t pixel = GUINT16_FROM_LE(*(uint16_t *) src);
 
-      // 565 and non-565 formats both are handled here: they differ by the masks
-      dest[0] = (uint8_t) ((pixel & bmp->rmask) >> 11) << 3;
-      dest[1] = (uint8_t) ((pixel & bmp->gmask) >> 5) << 2;
-      dest[2] = (uint8_t) (pixel & bmp->bmask) << 3;
+      if (bmp->bmp565) {
+        // RGB565: 5 bits red, 6 bits green, 5 bits blue
+        dest[0] = (uint8_t) ((pixel & bmp->rmask) >> 11) << 3;
+        dest[1] = (uint8_t) ((pixel & bmp->gmask) >> 5) << 2;
+        dest[2] = (uint8_t) (pixel & bmp->bmask) << 3;
+      }
+      else {
+        // RGB555: 5 bits per channel
+        dest[0] = (uint8_t) ((pixel & bmp->rmask) >> 10) << 3;
+        dest[1] = (uint8_t) ((pixel & bmp->gmask) >> 5) << 3;
+        dest[2] = (uint8_t) (pixel & bmp->bmask) << 3;
+      }
 
       dest += bmp->bands;
       src += bmp->bytes_per_pixel; // 2 bytes per pixel for 16 bpp
@@ -603,10 +621,11 @@ vips_foreign_load_bmp_rle_generate_strip(VipsRect *r, VipsRegion *out_region, Vi
           int dx = dxdy[0]; // relative X offset
           int dy = dxdy[1]; // relative Y offset
 
-          // We treat movement by Y as EOL
+          // We treat movement by Y as EOL: breaking out of the loop already moves us one line down,
+          // so only dy - 1 more lines need to be skipped.
           if (dy > 0) {
             bmp->dx = MIN(x + dx, r->width); // New X position must not exceed the width of the image
-            bmp->dy = dy;                    // We do not care if Y pos is outside of the impage, it's a separate check
+            bmp->dy = dy - 1;                // We do not care if Y pos is outside of the impage, it's a separate check
 
             break; // we need to skip lines, so we exit the loop
           }
