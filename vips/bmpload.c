@@ -617,12 +617,11 @@ vips_foreign_load_bmp_rle_generate_strip(VipsRect *r, VipsRegion *out_region, Vi
           }
         }
         else { // Directly read next n bytes
-          int pixels_count = cmd[1];
-          int bytes_count = ((pixels_count + cap - 1) / cap + 1) & ~1;
+          int byte_count = cmd[1];                    // number of literal bytes in the run
+          int bytes_on_disk = (byte_count + 1) & ~1;  // runs are stored padded to an even number of bytes
+          int pixels_count = MIN(byte_count * cap, r->width - x);
 
-          pixels_count = MIN(pixels_count, r->width - x);
-
-          if (vips_foreign_load_read_full(bmp->source, src, bytes_count) <= 0) {
+          if (vips_foreign_load_read_full(bmp->source, src, bytes_on_disk) <= 0) {
             vips_error("vips_foreign_load_bmp_rle_generate_strip", "failed to read RLE data");
             return -1;
           }
