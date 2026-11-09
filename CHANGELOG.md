@@ -4,6 +4,9 @@
 ### Changed
 - Updated dependencies.
 
+### Fixed
+- Video and audio responses are now served with a browser-friendly `Content-Security-Policy` header.
+
 ## [4.0.22] - 2026-11-05
 ### Changed
 - Updated dependencies.
