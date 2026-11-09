@@ -1,14 +1,21 @@
 # Changelog
 
+## [4.0.23] - 2026-11-09
+### Changed
+- Updated dependencies.
+
+### Fixed
+- Video and audio responses are now served with a browser-friendly `Content-Security-Policy` header.
+
 ## [4.0.22] - 2026-11-05
-## Changed
+### Changed
 - Updated dependencies.
 
 ## Fixed
 - Minor bugs in bmp image loader.
 
 ## [4.0.21] - 2026-11-02
-## Changed
+### Changed
 - Updated dependencies.
 
 ## Fixed

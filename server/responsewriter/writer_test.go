@@ -269,6 +269,51 @@ func (s *ResponseWriterSuite) TestHeaderCases() {
 				w.SetExpires(time.Time{})
 			},
 		},
+		{
+			name: "MediaCSPVideo",
+			req:  http.Header{},
+			res: http.Header{
+				httpheaders.CacheControl:          []string{"no-cache"},
+				httpheaders.ContentType:           []string{"video/mp4"},
+				httpheaders.ContentSecurityPolicy: []string{responsewriter.ContentSecurityPolicyMedia},
+			},
+			config: responsewriter.Config{
+				WriteResponseTimeout: writeResponseTimeout,
+			},
+			fn: func(w *responsewriter.Writer) {
+				w.SetContentType("video/mp4")
+			},
+		},
+		{
+			name: "MediaCSPAudio",
+			req:  http.Header{},
+			res: http.Header{
+				httpheaders.CacheControl:          []string{"no-cache"},
+				httpheaders.ContentType:           []string{"audio/mpeg"},
+				httpheaders.ContentSecurityPolicy: []string{responsewriter.ContentSecurityPolicyMedia},
+			},
+			config: responsewriter.Config{
+				WriteResponseTimeout: writeResponseTimeout,
+			},
+			fn: func(w *responsewriter.Writer) {
+				w.SetContentType("audio/mpeg")
+			},
+		},
+		{
+			name: "DefaultCSPImage",
+			req:  http.Header{},
+			res: http.Header{
+				httpheaders.CacheControl:          []string{"no-cache"},
+				httpheaders.ContentType:           []string{"image/png"},
+				httpheaders.ContentSecurityPolicy: []string{responsewriter.ContentSecurityPolicy},
+			},
+			config: responsewriter.Config{
+				WriteResponseTimeout: writeResponseTimeout,
+			},
+			fn: func(w *responsewriter.Writer) {
+				w.SetContentType("image/png")
+			},
+		},
 	}
 
 	for _, tc := range tt {
