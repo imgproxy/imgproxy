@@ -13,6 +13,9 @@ import (
 
 const ContentSecurityPolicy = "default-src 'none'; style-src 'unsafe-inline'; img-src data:; sandbox"
 
+// ContentSecurityPolicyMedia is used for video/ and audio/ responses
+const ContentSecurityPolicyMedia = "default-src 'none'; media-src 'self'; sandbox allow-same-origin"
+
 // Just aliases for [http.ResponseWriter] and [http.ResponseController].
 // We need them to make them private in [Writer] so they can't be accessed directly.
 type httpResponseWriter = http.ResponseWriter
@@ -189,7 +192,18 @@ func (w *Writer) setCacheControlPassthrough() bool {
 }
 
 // setCSP sets the Content-Security-Policy header to prevent script execution.
+// For video/ and audio/ content types, a media-friendly policy is used.
+//
+// NOTE: CSP is set last (see [Writer.flushHeaders]), so the Content-Type
+// header must already be set by the time this is called.
 func (w *Writer) setCSP() {
+	contentType := w.result.Get(httpheaders.ContentType)
+
+	if strings.HasPrefix(contentType, "video/") || strings.HasPrefix(contentType, "audio/") {
+		w.result.Set(httpheaders.ContentSecurityPolicy, ContentSecurityPolicyMedia)
+		return
+	}
+
 	w.result.Set(httpheaders.ContentSecurityPolicy, ContentSecurityPolicy)
 }
 
