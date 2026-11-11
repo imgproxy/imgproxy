@@ -97,6 +97,18 @@ func (s *ProcessingHandlerTestSuite) TestSourceValidation() {
 			requestPath:    "/unsafe/plain/http://a-1.b-2.mycdn.dev/lorem/ipsum.jpg",
 		},
 		{
+			name:           "no match http URL with query string in wildcard",
+			allowedSources: []string{"local://", "http://*.mycdn.dev/"},
+			requestPath:    "/unsafe/plain/http://images.dev%3F.mycdn.dev/lorem/ipsum.jpg",
+			expectedError:  true,
+		},
+		{
+			name:           "no match http URL with hash in wildcard",
+			allowedSources: []string{"local://", "http://*.mycdn.dev/"},
+			requestPath:    "/unsafe/plain/http://images.dev%23.mycdn.dev/lorem/ipsum.jpg",
+			expectedError:  true,
+		},
+		{
 			name:           "no match s3 URL with allowed local and http URLs",
 			allowedSources: []string{"local://", "http://images.dev/"},
 			requestPath:    "/unsafe/plain/s3://images/lorem/ipsum.jpg",
