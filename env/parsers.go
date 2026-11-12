@@ -236,9 +236,9 @@ func RegexpFromPattern(pattern string) *regexp.Regexp {
 	// Perform prefix matching
 	result.WriteString("^")
 	for i, part := range strings.Split(pattern, "*") {
-		// Add a regexp match all without slashes for each wildcard character
+		// Add a regexp match all without slashes, question mark, or hash for each wildcard character
 		if i > 0 {
-			result.WriteString("([^/]*)")
+			result.WriteString("([^/?#]*)")
 		}
 		// Quote other parts of the pattern
 		result.WriteString(regexp.QuoteMeta(part))

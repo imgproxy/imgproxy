@@ -1,5 +1,26 @@
 # Changelog
 
+## [4.1.0] - TBA
+### Added
+- `requests_total`, `status_codes_total`, `errors_total`, `request_duration_seconds`, `request_span_duration_seconds` metrics to OpenTelemetry.
+- [IMGPROXY_S3_ACCESS_POINTS](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_S3_ACCESS_POINTS) config to configure S3 access points.
+- [IMGPROXY_TIFF_UNLIMITED](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_TIFF_UNLIMITED) config.
+- (pro) [progressive_blur](https://docs.imgproxy.net/latest/usage/processing#progressive-blur) processing option.
+- (pro) [IMGPROXY_MAX_ML_CONCURRENCY](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_MAX_ML_CONCURRENCY) config to limit the number of concurrent ML tasks.
+- (pro) Added `bypass_cache` option.
+
+### Changed
+- OpenTelemetry logs exporter now exports logs in OpenTelemetry Log Data Model format instead of formatted strings.
+- (pro) Improved advanced smart crop.
+
+## [4.0.24] - 2026-11-12
+### Changed
+- Updated dependencies.
+
+### Fixed
+- Exclude question marks (`?`) and hash symbols (`#`) from wildcard matching in URL patterns, such as in `IMGPROXY_ALLOWED_SOURCES`. Fixes potential security bypasses.
+- (pro) Fixed autoquality for animated images.
+
 ## [4.0.23] - 2026-11-09
 ### Changed
 - Updated dependencies.
@@ -77,19 +98,6 @@
 - Fixed inconsistent environment variable names between the code and documentation (`IMGPROXY_AIRBRAKE_ENVIRONMENT`, `IMGPROXY_S3_USE_DECRYPTION_CLIENT`, `IMGPROXY_USE_LAST_MODIFIED` and `IMGPROXY_USE_ETAG`).
 - Fixed recovered non-error panics still being logged and reported as `panic: <nil>` instead of the actual panic value.
 - Fix `IMGPROXY_ENABLE_CLIENT_HINTS` never being parsed from env.
-
-## [4.1.0] - TBA
-### Added
-- `requests_total`, `status_codes_total`, `errors_total`, `request_duration_seconds`, `request_span_duration_seconds` metrics to OpenTelemetry.
-- [IMGPROXY_S3_ACCESS_POINTS](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_S3_ACCESS_POINTS) config to configure S3 access points.
-- [IMGPROXY_TIFF_UNLIMITED](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_TIFF_UNLIMITED) config.
-- (pro) [progressive_blur](https://docs.imgproxy.net/latest/usage/processing#progressive-blur) processing option.
-- (pro) [IMGPROXY_MAX_ML_CONCURRENCY](https://docs.imgproxy.net/latest/configuration/options#IMGPROXY_MAX_ML_CONCURRENCY) config to limit the number of concurrent ML tasks.
-- (pro) Added `bypass_cache` option.
-
-### Changed
-- OpenTelemetry logs exporter now exports logs in OpenTelemetry Log Data Model format instead of formatted strings.
-- (pro) Improved advanced smart crop.
 
 ## [4.0.12] - 2026-07-29
 ### Fixed
