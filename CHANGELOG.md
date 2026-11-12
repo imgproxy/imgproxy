@@ -1,6 +1,9 @@
 # Changelog
 
 ## [4.0.24] - TBA
+### Changed
+- Updated dependencies.
+
 ### Fixed
 - Exclude question marks (`?`) and hash symbols (`#`) from wildcard matching in URL patterns, such as in `IMGPROXY_ALLOWED_SOURCES`. Fixes potential security bypasses.
 - (pro) Fixed autoquality for animated images.
