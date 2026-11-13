@@ -108,6 +108,10 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 
 // Validate checks if the configuration is valid
 func (c *Config) Validate() error {
+	if err := c.Svg.Validate(); err != nil {
+		return err
+	}
+
 	if c.WatermarkOpacity <= 0 || c.WatermarkOpacity > 1 {
 		return IMGPROXY_WATERMARK_OPACITY.Errorf("must be between 0 and 1")
 	}

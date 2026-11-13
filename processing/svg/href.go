@@ -4,6 +4,8 @@ import (
 	"html"
 	"regexp"
 	"strings"
+
+	"github.com/imgproxy/imgproxy/v4/xmlparser"
 )
 
 // hrefSchemes lists schemes allowed in href/xlink:href on generic elements.
@@ -64,4 +66,47 @@ func isSafeHref(value string, allowedSchemes map[string]struct{}) bool {
 	_, allowed := allowedSchemes[scheme]
 
 	return allowed
+}
+
+// hrefRule is the href policy of an element.
+type hrefRule int
+
+const (
+	// hrefRuleDefault allows http(s) and relative references (e.g. <a>).
+	hrefRuleDefault hrefRule = iota
+	// hrefRuleFragment allows only same-document references (<use>), since it
+	// can import external/data content by reference.
+	hrefRuleFragment
+	// hrefRuleImage allows data: URIs in addition to the default (<image>),
+	// since it commonly embeds raster/vector data that way.
+	hrefRuleImage
+)
+
+// hrefRuleFor returns the href policy for the element name.
+func hrefRuleFor(tagName string) hrefRule {
+	switch {
+	case strings.EqualFold(tagName, "use"):
+		return hrefRuleFragment
+	case strings.EqualFold(tagName, "image"):
+		return hrefRuleImage
+	default:
+		return hrefRuleDefault
+	}
+}
+
+// isAllowedHref reports whether the attribute is not an href, or is one with a
+// value permitted by the rule.
+func isAllowedHref(attr *xmlparser.Attribute, rule hrefRule) bool {
+	if attr.Name.Local() != href {
+		return true
+	}
+
+	switch rule {
+	case hrefRuleFragment:
+		return len(attr.Value) == 0 || attr.Value[0] == '#'
+	case hrefRuleImage:
+		return isSafeHref(attr.Value, imageHrefSchemes)
+	default:
+		return isSafeHref(attr.Value, hrefSchemes)
+	}
 }
