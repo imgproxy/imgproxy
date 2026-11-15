@@ -25,10 +25,9 @@ func stripPS3(img *vips.Image) []byte {
 	}
 
 	iptcMap := make(iptc.IptcMap)
-	err = iptc.Parse(iptcData, iptcMap)
-	if err != nil {
-		return nil
-	}
+	// Parse adds datasets as it goes.
+	// On error, keep the complete ones parsed before the malformed dataset.
+	iptc.Parse(iptcData, iptcMap)
 
 	for key := range iptcMap {
 		if key.RecordID == 2 && key.TagID != 80 && key.TagID != 110 && key.TagID != 116 {
