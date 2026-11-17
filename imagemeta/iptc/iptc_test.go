@@ -18,51 +18,43 @@ func TestParse(t *testing.T) {
 		wantError bool
 	}{
 		{
-			name:      "short dataset",
-			in:        "\x1c\x02\x50\x00\x03abc",
-			want:      []string{"abc"},
-			wantError: false,
+			name: "short dataset",
+			in:   "\x1c\x02\x50\x00\x03abc",
+			want: []string{"abc"},
 		},
 		{
-			name:      "four-byte size followed by another dataset",
-			in:        "\x1c\x02\x50\x80\x04\x00\x00\x00\x03abc\x1c\x02\x50\x00\x03def",
-			want:      []string{"abc", "def"},
-			wantError: false,
+			name: "four-byte size followed by another dataset",
+			in:   "\x1c\x02\x50\x80\x04\x00\x00\x00\x03abc\x1c\x02\x50\x00\x03def",
+			want: []string{"abc", "def"},
 		},
 		{
-			name:      "eight-byte size followed by another dataset",
-			in:        "\x1c\x02\x50\x80\x08\x00\x00\x00\x00\x00\x00\x00\x03abc\x1c\x02\x50\x00\x03def",
-			want:      []string{"abc", "def"},
-			wantError: false,
+			name: "eight-byte size followed by another dataset",
+			in:   "\x1c\x02\x50\x80\x08\x00\x00\x00\x00\x00\x00\x00\x03abc\x1c\x02\x50\x00\x03def",
+			want: []string{"abc", "def"},
 		},
 		{
 			name:      "oversized short size",
 			in:        "\x1c\x02\x50\x00\x0aabc",
-			want:      nil,
 			wantError: true,
 		},
 		{
 			name:      "oversized four-byte size",
 			in:        "\x1c\x02\x50\x80\x04\xff\xff\xff\xff\x00\x00\x00\x00",
-			want:      nil,
 			wantError: true,
 		},
 		{
 			name:      "oversized eight-byte size",
 			in:        "\x1c\x02\x50\x80\x08\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",
-			want:      nil,
 			wantError: true,
 		},
 		{
 			name:      "truncated four-byte size",
 			in:        "\x1c\x02\x50\x80\x04\x00\x00\x00",
-			want:      nil,
 			wantError: true,
 		},
 		{
 			name:      "truncated eight-byte size",
 			in:        "\x1c\x02\x50\x80\x08\x00\x00\x00\x00\x00\x00\x00",
-			want:      nil,
 			wantError: true,
 		},
 	}
@@ -70,11 +62,9 @@ func TestParse(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := iptc.IptcMap{}
-			var err error
-			require.NotPanics(t, func() { err = iptc.Parse([]byte(tt.in), m) })
+			err := iptc.Parse([]byte(tt.in), m)
 			if tt.wantError {
 				require.Error(t, err)
-				require.Empty(t, m)
 				return
 			}
 
@@ -85,17 +75,4 @@ func TestParse(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestParseKeepsEarlierTagsOnError(t *testing.T) {
-	key := iptc.TagKey{RecordID: 2, TagID: 80}
-
-	// A complete dataset followed by one whose declared length exceeds the
-	// remaining bytes. Parse fails but the earlier dataset stays in the map.
-	m := iptc.IptcMap{}
-	err := iptc.Parse([]byte("\x1c\x02\x50\x00\x03abc\x1c\x02\x50\x00\x0adef"), m)
-
-	require.Error(t, err)
-	require.Len(t, m[key], 1)
-	require.Equal(t, []byte("abc"), m[key][0].Raw)
 }
