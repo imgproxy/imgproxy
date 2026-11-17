@@ -73,10 +73,10 @@ func Parse(data []byte, m IptcMap) error {
 		tagID, _ := buf.ReadByte()
 		dataSize16 := binary.BigEndian.Uint16(buf.Next(2))
 
-		var dataSize int
+		var dataSize uint64
 
 		if dataSize16 < 32768 {
-			dataSize = int(dataSize16)
+			dataSize = uint64(dataSize16)
 		} else {
 			dataSizeSize := dataSize16 & 32767
 
@@ -86,20 +86,22 @@ func Parse(data []byte, m IptcMap) error {
 				if err := binary.Read(buf, binary.BigEndian, &dataSize32); err != nil {
 					return newIptcError("invalid IPTC data size: %s", err)
 				}
-				dataSize = int(dataSize32)
+				dataSize = uint64(dataSize32)
 			case 8:
-				dataSize64 := uint64(0)
-				if err := binary.Read(buf, binary.BigEndian, &dataSize64); err != nil {
+				if err := binary.Read(buf, binary.BigEndian, &dataSize); err != nil {
 					return newIptcError("invalid IPTC data size: %s", err)
 				}
-				dataSize = int(dataSize64)
 			default:
 				return newIptcError("invalid IPTC data size")
 			}
 		}
 
+		if dataSize > uint64(len(buf.Bytes())) {
+			return newIptcError("invalid IPTC data size: %d exceeds remaining %d bytes", dataSize, buf.Len())
+		}
+
 		// Ignore errors here. If tag is invalid, just don't add it
-		m.AddTag(TagKey{recordID, tagID}, buf.Next(dataSize))
+		m.AddTag(TagKey{recordID, tagID}, buf.Next(int(dataSize)))
 	}
 
 	return nil
