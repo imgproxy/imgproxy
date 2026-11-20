@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/imgproxy/imgproxy/v4/fetcher/transport"
 	"github.com/imgproxy/imgproxy/v4/httpheaders"
 )
 
@@ -33,7 +34,7 @@ func (r *Request) Send() (*http.Response, error) {
 
 	// Let's add a cookie jar to the client if the request URL is HTTP or HTTPS
 	// This is necessary to pass cookie challenge for some servers.
-	if r.request.URL.Scheme == "http" || r.request.URL.Scheme == "https" {
+	if transport.IsUrlSchemeHTTP(r.request.URL) {
 		jar, err := cookiejar.New(nil)
 		if err != nil {
 			return nil, err

@@ -9,6 +9,7 @@ import (
 	"net/url"
 
 	"github.com/imgproxy/imgproxy/v4/errctx"
+	"github.com/imgproxy/imgproxy/v4/fetcher/transport"
 	"github.com/imgproxy/imgproxy/v4/fetcher/transport/generichttp"
 )
 
@@ -41,11 +42,11 @@ func newRequestError(err error) error {
 }
 
 var schemeEnvVars = map[string]string{
-	"local": "IMGPROXY_LOCAL_FILESYSTEM_ROOT",
-	"s3":    "IMGPROXY_USE_S3",
-	"gs":    "IMGPROXY_USE_GCS",
-	"abs":   "IMGPROXY_USE_ABS",
-	"swift": "IMGPROXY_USE_SWIFT",
+	transport.SchemeLocal: "IMGPROXY_LOCAL_FILESYSTEM_ROOT",
+	transport.SchemeS3:    "IMGPROXY_USE_S3",
+	transport.SchemeGCS:   "IMGPROXY_USE_GCS",
+	transport.SchemeAzure: "IMGPROXY_USE_ABS",
+	transport.SchemeSwift: "IMGPROXY_USE_SWIFT",
 }
 
 const schemeDocsUrl = "https://docs.imgproxy.net/configuration/options#"

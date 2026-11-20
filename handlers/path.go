@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+
+	"github.com/imgproxy/imgproxy/v4/fetcher/transport"
 )
 
 // fixPathRe is used in path re-denormalization
@@ -69,7 +71,7 @@ func RedenormalizePath(path string) string {
 	// in the plain URL part, so we need to fix it back.
 	if match := fixPathRe.FindStringSubmatch(plainURL); match != nil {
 		repl := fmt.Sprintf("%s://", match[1])
-		if match[1] == "local" {
+		if match[1] == transport.SchemeLocal {
 			repl += "/"
 		}
 		repl += match[2]
