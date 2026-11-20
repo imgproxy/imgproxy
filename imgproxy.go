@@ -60,84 +60,77 @@ type Imgproxy struct {
 
 // New creates a new imgproxy instance.
 func New(ctx context.Context, config *Config) (*Imgproxy, error) {
-	if err := config.Validate(); err != nil {
-		return nil, err
-	}
+	var err error
 
-	monitoring, err := monitoring.New(ctx, &config.Monitoring, config.Workers.WorkersNumber)
-	if err != nil {
-		return nil, err
-	}
-
-	errorReporter, err := errorreport.New(&config.ErrorReport)
-	if err != nil {
-		return nil, err
-	}
-
-	securityChecker, err := security.New(&config.Security)
-	if err != nil {
-		return nil, err
-	}
-
-	fetcher, err := fetcher.New(&config.Fetcher)
-	if err != nil {
-		return nil, err
-	}
-
-	idf := imagedata.NewFactory(fetcher, monitoring)
-
-	clientFeaturesDetector := clientfeatures.NewDetector(&config.ClientFeatures)
-
-	fallbackImage, err := auximageprovider.NewStaticProvider(ctx, &config.FallbackImage, "fallback", idf)
-	if err != nil {
-		return nil, err
-	}
-
-	watermarkImage, err := auximageprovider.NewStaticProvider(ctx, &config.WatermarkImage, "watermark", idf)
-	if err != nil {
-		return nil, err
-	}
-
-	workers, err := workers.New(&config.Workers)
-	if err != nil {
-		return nil, err
-	}
-
-	processor, err := processing.New(&config.Processing, securityChecker, watermarkImage)
-	if err != nil {
-		return nil, err
-	}
-
-	optionsParser, err := optionsparser.New(ctx, &config.OptionsParser)
-	if err != nil {
-		return nil, err
-	}
-
-	cookies, err := cookies.New(&config.Cookies)
-	if err != nil {
-		return nil, err
-	}
-
-	conditionalHeaders, err := conditionalheaders.NewFactory(&config.ConditionalHeaders)
-	if err != nil {
+	if err = config.Validate(); err != nil {
 		return nil, err
 	}
 
 	imgproxy := &Imgproxy{
-		workers:                workers,
-		fallbackImage:          fallbackImage,
-		watermarkImage:         watermarkImage,
-		fetcher:                fetcher,
-		imageDataFactory:       idf,
-		clientFeaturesDetector: clientFeaturesDetector,
-		config:                 config,
-		securityChecker:        securityChecker,
-		optionsParser:          optionsParser,
-		processor:              processor,
-		cookies:                cookies,
-		monitoring:             monitoring,
-		errorReporter:          errorReporter,
-		conditionalHeaders:     conditionalHeaders,
+		config: config,
+	}
+
+	imgproxy.monitoring, err = monitoring.New(ctx, &config.Monitoring, config.Workers.WorkersNumber)
+	if err != nil {
+		return nil, err
+	}
+
+	imgproxy.errorReporter, err = errorreport.New(&config.ErrorReport)
+	if err != nil {
+		return nil, err
+	}
+
+	imgproxy.securityChecker, err = security.New(&config.Security)
+	if err != nil {
+		return nil, err
+	}
+
+	imgproxy.fetcher, err = fetcher.New(&config.Fetcher)
+	if err != nil {
+		return nil, err
+	}
+
+	imgproxy.imageDataFactory = imagedata.NewFactory(imgproxy.fetcher, imgproxy.monitoring)
+
+	imgproxy.conditionalHeaders, err = conditionalheaders.NewFactory(&config.ConditionalHeaders)
+	if err != nil {
+		return nil, err
+	}
+
+	imgproxy.clientFeaturesDetector = clientfeatures.NewDetector(&config.ClientFeatures)
+
+	imgproxy.fallbackImage, err = auximageprovider.NewStaticProvider(
+		ctx, &config.FallbackImage, "fallback", imgproxy.imageDataFactory,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	imgproxy.watermarkImage, err = auximageprovider.NewStaticProvider(
+		ctx, &config.WatermarkImage, "watermark", imgproxy.imageDataFactory,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	imgproxy.workers, err = workers.New(&config.Workers)
+	if err != nil {
+		return nil, err
+	}
+
+	imgproxy.processor, err = processing.New(&config.Processing, imgproxy.securityChecker, imgproxy.watermarkImage)
+	if err != nil {
+		return nil, err
+	}
+
+	imgproxy.optionsParser, err = optionsparser.New(ctx, &config.OptionsParser)
+	if err != nil {
+		return nil, err
+	}
+
+	imgproxy.cookies, err = cookies.New(&config.Cookies)
+	if err != nil {
+		return nil, err
 	}
 
 	imgproxy.handlers.Health = healthhandler.New()

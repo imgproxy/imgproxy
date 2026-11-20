@@ -12,21 +12,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type fakeReporter struct {
-	gotReq  *http.Request
-	gotMeta map[string]any
-}
-
-func (f *fakeReporter) Report(err errctx.Error, req *http.Request, meta map[string]any) {
-	f.gotReq = req
-	f.gotMeta = meta
-}
-
-func (f *fakeReporter) Close() {}
-
 func TestReportWithNilRequest(t *testing.T) {
-	fake := &fakeReporter{}
-	r := errorreport.NewWithReporters(fake)
+	r, tr := errorreport.NewTestReporter()
 
 	err := errctx.NewTextError("boom", 0)
 
@@ -34,13 +21,12 @@ func TestReportWithNilRequest(t *testing.T) {
 		r.Report(context.Background(), err)
 	})
 
-	require.Nil(t, fake.gotReq)
-	require.Empty(t, fake.gotMeta)
+	require.Nil(t, tr.Reports()[0].Req)
+	require.Empty(t, tr.Reports()[0].Meta)
 }
 
 func TestReportWithNilRequestAndDocsURL(t *testing.T) {
-	fake := &fakeReporter{}
-	r := errorreport.NewWithReporters(fake)
+	r, tr := errorreport.NewTestReporter()
 
 	err := errctx.NewTextError("boom", 0, errctx.WithDocsURL("https://example.com/docs"))
 
@@ -48,13 +34,12 @@ func TestReportWithNilRequestAndDocsURL(t *testing.T) {
 		r.Report(context.Background(), err)
 	})
 
-	require.Nil(t, fake.gotReq)
-	require.Equal(t, map[string]any{"Documentation URL": "https://example.com/docs"}, fake.gotMeta)
+	require.Nil(t, tr.Reports()[0].Req)
+	require.Equal(t, map[string]any{"Documentation URL": "https://example.com/docs"}, tr.Reports()[0].Meta)
 }
 
 func TestReportWithRequestAndMetadata(t *testing.T) {
-	fake := &fakeReporter{}
-	r := errorreport.NewWithReporters(fake)
+	r, tr := errorreport.NewTestReporter()
 
 	req := httptest.NewRequest(http.MethodGet, "http://example.com/", nil)
 
@@ -65,16 +50,15 @@ func TestReportWithRequestAndMetadata(t *testing.T) {
 
 	r.Report(ctx, err)
 
-	require.Same(t, req, fake.gotReq)
+	require.Same(t, req, tr.Reports()[0].Req)
 	require.Equal(t, map[string]any{
 		"Request ID":        "abc123",
 		"Documentation URL": "https://example.com/docs",
-	}, fake.gotMeta)
+	}, tr.Reports()[0].Meta)
 }
 
 func TestReportPassesThroughAllValues(t *testing.T) {
-	fake := &fakeReporter{}
-	r := errorreport.NewWithReporters(fake)
+	r, tr := errorreport.NewTestReporter()
 
 	chanValue := make(chan int)
 
@@ -97,12 +81,11 @@ func TestReportPassesThroughAllValues(t *testing.T) {
 		"Map":           map[string]int{"a": 1, "b": 2},
 		"SliceOfStruct": []struct{ X int }{{X: 1}},
 		"Chan":          chanValue,
-	}, fake.gotMeta)
+	}, tr.Reports()[0].Meta)
 }
 
 func TestReportWithNilRequestButContextMetadata(t *testing.T) {
-	fake := &fakeReporter{}
-	r := errorreport.NewWithReporters(fake)
+	r, tr := errorreport.NewTestReporter()
 
 	req := httptest.NewRequest(http.MethodGet, "http://example.com/", nil)
 
@@ -113,6 +96,6 @@ func TestReportWithNilRequestButContextMetadata(t *testing.T) {
 
 	r.Report(ctx, err)
 
-	require.Nil(t, fake.gotReq)
-	require.Equal(t, map[string]any{"Request ID": "abc123"}, fake.gotMeta)
+	require.Nil(t, tr.Reports()[0].Req)
+	require.Equal(t, map[string]any{"Request ID": "abc123"}, tr.Reports()[0].Meta)
 }
