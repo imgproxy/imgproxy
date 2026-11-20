@@ -77,7 +77,7 @@ func SourcePath(u, sep string) string {
 		return ""
 	}
 
-	if parsedUrl.Scheme == "http" || parsedUrl.Scheme == "https" {
+	if IsUrlSchemeHTTP(parsedUrl) {
 		return parsedUrl.EscapedPath()
 	}
 

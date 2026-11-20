@@ -37,8 +37,8 @@ func New(config *Config) (*Transport, error) {
 
 	// http and https are always registered
 	schemes := map[string]struct{}{
-		"http":  {},
-		"https": {},
+		SchemeHTTP:  {},
+		SchemeHTTPS: {},
 	}
 
 	t := &Transport{
@@ -87,7 +87,7 @@ func (t *Transport) registerAllProtocols() error {
 		if err != nil {
 			return err
 		}
-		t.RegisterProtocol("local", NewRoundTripper(tr, sep))
+		t.RegisterProtocol(SchemeLocal, NewRoundTripper(tr, sep))
 	}
 
 	if t.config.S3Enabled {
@@ -95,7 +95,7 @@ func (t *Transport) registerAllProtocols() error {
 		if err != nil {
 			return err
 		}
-		t.RegisterProtocol("s3", NewRoundTripper(tr, sep))
+		t.RegisterProtocol(SchemeS3, NewRoundTripper(tr, sep))
 	}
 
 	if t.config.GCSEnabled {
@@ -103,7 +103,7 @@ func (t *Transport) registerAllProtocols() error {
 		if err != nil {
 			return err
 		}
-		t.RegisterProtocol("gs", NewRoundTripper(tr, sep))
+		t.RegisterProtocol(SchemeGCS, NewRoundTripper(tr, sep))
 	}
 
 	if t.config.ABSEnabled {
@@ -111,7 +111,7 @@ func (t *Transport) registerAllProtocols() error {
 		if err != nil {
 			return err
 		}
-		t.RegisterProtocol("abs", NewRoundTripper(tr, sep))
+		t.RegisterProtocol(SchemeAzure, NewRoundTripper(tr, sep))
 	}
 
 	if t.config.SwiftEnabled {
@@ -124,7 +124,7 @@ func (t *Transport) registerAllProtocols() error {
 			return err
 		}
 
-		t.RegisterProtocol("swift", NewRoundTripper(tr, sep))
+		t.RegisterProtocol(SchemeSwift, NewRoundTripper(tr, sep))
 	}
 
 	return nil
