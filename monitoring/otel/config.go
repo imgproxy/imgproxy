@@ -11,7 +11,8 @@ import (
 )
 
 const (
-	otelDocsUrl = "https://opentelemetry.io/docs/languages/sdk-configuration/otlp-exporter/"
+	otelDocsUrl        = "https://opentelemetry.io/docs/languages/sdk-configuration/otlp-exporter/"
+	otelMetricsDocsUrl = "https://opentelemetry.io/docs/specs/otel/configuration/sdk-environment-variables/"
 )
 
 var (
@@ -51,6 +52,7 @@ var (
 	OTEL_PROPAGATORS                    = env.StringSlice("OTEL_PROPAGATORS").WithDocsURL(otelDocsUrl)
 	OTEL_SERVICE_NAME                   = env.String("OTEL_SERVICE_NAME").WithDocsURL(otelDocsUrl)
 	OTEL_LOG_LEVEL                      = env.Enum("OTEL_LOG_LEVEL", logLevelMap).WithDocsURL(otelDocsUrl)
+	OTEL_METRIC_EXPORT_INTERVAL         = env.DurationMillis("OTEL_METRIC_EXPORT_INTERVAL").WithDocsURL(otelMetricsDocsUrl)
 )
 
 // Config holds the configuration for OpenTelemetry monitoring
@@ -130,6 +132,7 @@ func LoadConfigFromEnv(c *Config) (*Config, error) {
 		OTEL_EXPORTER_OTLP_LOGS_TIMEOUT.Parse(&c.LogsConnTimeout),
 		OTEL_PROPAGATORS.Parse(&c.Propagators),
 		OTEL_LOG_LEVEL.Parse(&c.LogLevel),
+		OTEL_METRIC_EXPORT_INTERVAL.Parse(&c.MetricsInterval),
 	)
 
 	c.ServerCert = prepareKeyCert(serverCert)
@@ -152,6 +155,11 @@ func (c *Config) Validate() error {
 	// Timeout should be valid
 	if c.ConnTimeout <= 0 {
 		return OTEL_EXPORTER_OTLP_TIMEOUT.ErrorZeroOrNegative()
+	}
+
+	// Metrics export interval should be valid
+	if c.MetricsInterval <= 0 {
+		return OTEL_METRIC_EXPORT_INTERVAL.ErrorZeroOrNegative()
 	}
 
 	// Protocol must be set
