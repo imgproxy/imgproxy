@@ -1,5 +1,13 @@
 # Changelog
 
+## [4.0.25] - 2026-11-23
+### Changed
+- Updated dependencies.
+
+### Fixed
+- Fix handling of IPTC datasets whose declared length exceeds the available data.
+- (pro) Fixed OOM errors in the SVG minifier caused by invalid paths.
+
 ## [4.0.24] - 2026-11-12
 ### Changed
 - Updated dependencies.
@@ -19,14 +27,14 @@
 ### Changed
 - Updated dependencies.
 
-## Fixed
+### Fixed
 - Minor bugs in bmp image loader.
 
 ## [4.0.21] - 2026-11-02
 ### Changed
 - Updated dependencies.
 
-## Fixed
+### Fixed
 - Fixed several vulnerabilities in BMP and ICO loaders.
 
 ## [4.0.20] - 2026-10-26
