@@ -45,6 +45,13 @@ func (s *Storage) GetObject(
 		return nil, err
 	}
 
+	keepFile := false
+	defer func() {
+		if !keepFile {
+			f.Close()
+		}
+	}()
+
 	// check that file is not a directory
 	fi, err := f.Stat()
 	if err != nil {
@@ -74,8 +81,7 @@ func (s *Storage) GetObject(
 	start, end, err := httprange.Parse(reqHeader.Get(httpheaders.Range))
 	switch {
 	case err != nil:
-		f.Close()
-		return storage.NewObjectInvalidRange(), nil //nolint:nilerr
+		return storage.NewObjectInvalidRange(), nil
 
 	// Range requested: partial content should be returned
 	case end != 0:
@@ -91,6 +97,7 @@ func (s *Storage) GetObject(
 		header.Set(httpheaders.ContentLength, strconv.Itoa(int(size)))
 		header.Set(httpheaders.ContentRange, fmt.Sprintf("bytes %d-%d/%d", start, end, fi.Size()))
 
+		keepFile = true
 		return storage.NewObjectPartialContent(header, body), nil
 
 	// Full object requested
@@ -104,10 +111,10 @@ func (s *Storage) GetObject(
 
 	// In case file was not modified, let's not return reader
 	if common.IsNotModified(reqHeader, header) {
-		f.Close()
 		return storage.NewObjectNotModified(header), nil
 	}
 
+	keepFile = true
 	return storage.NewObjectOK(header, body), nil
 }
 
