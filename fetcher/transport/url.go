@@ -78,7 +78,7 @@ func SourcePath(u, sep string) string {
 	}
 
 	if parsedUrl.Scheme == "http" || parsedUrl.Scheme == "https" {
-		return parsedUrl.EscapedPath()
+		return parsedUrl.Path
 	}
 
 	_, key, _ := GetBucketAndKey(parsedUrl, sep)
