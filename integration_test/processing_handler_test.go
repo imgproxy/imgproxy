@@ -82,6 +82,11 @@ func (s *ProcessingHandlerTestSuite) TestSourceValidation() {
 		expectedError  bool
 	}{
 		{
+			name:           "no allowed sources",
+			allowedSources: []string{},
+			requestPath:    "/unsafe/plain/local:///test1.png",
+		},
+		{
 			name:           "match http URL without wildcard",
 			allowedSources: []string{"local://", "http://images.dev/"},
 			requestPath:    "/unsafe/plain/http://images.dev/lorem/ipsum.jpg",
@@ -119,6 +124,61 @@ func (s *ProcessingHandlerTestSuite) TestSourceValidation() {
 			allowedSources: []string{"local://", "http://*.mycdn.dev/"},
 			requestPath:    "/unsafe/plain/http://other.dev/.mycdn.dev/lorem/ipsum.jpg",
 			expectedError:  true,
+		},
+		{
+			name:           "dot-only segment in path (http)",
+			allowedSources: []string{},
+			requestPath:    "/unsafe/plain/http://images.dev/../ipsum.jpg",
+			expectedError:  true,
+		},
+		{
+			name:           "dot-only segment in path (non-http)",
+			allowedSources: []string{},
+			requestPath:    "/unsafe/plain/s3://images/../ipsum.jpg",
+			expectedError:  true,
+		},
+		{
+			name:           "dot-only segment in path (http, escaped)",
+			allowedSources: []string{},
+			requestPath:    "/unsafe/plain/http://images.dev/%2E%2E/ipsum.jpg",
+			expectedError:  true,
+		},
+		{
+			name:           "dot-only segment in path (non-http, escaped)",
+			allowedSources: []string{},
+			requestPath:    "/unsafe/plain/s3://images/%2E%2E/ipsum.jpg",
+			expectedError:  true,
+		},
+		{
+			name:           "dot-only segment in path (http, double escaped)",
+			allowedSources: []string{},
+			requestPath:    "/unsafe/plain/http://images.dev/%252E%252E/ipsum.jpg",
+			expectedError:  true,
+		},
+		{
+			name:           "dot-only segment in path (non-http, double escaped)",
+			allowedSources: []string{},
+			requestPath:    "/unsafe/plain/s3://images/%252E%252E/ipsum.jpg",
+			// non-http URLs are not unescaped in round-tripper, so %2e remains as is
+			expectedError: false,
+		},
+		{
+			name:           "dot-only segment surrounded by escaped slashes (http)",
+			allowedSources: []string{},
+			requestPath:    "/unsafe/plain/http://images.dev/lorem/%252F..%252Fipsum.jpg",
+			expectedError:  true,
+		},
+		{
+			name:           "dot-only segment surrounded by escaped slashes (non-http)",
+			allowedSources: []string{},
+			requestPath:    "/unsafe/plain/s3://images/lorem/%252F..%252Fipsum.jpg",
+			// non-http URLs are not unescaped in round-tripper, so %2f remains as is
+			expectedError: false,
+		},
+		{
+			name:           "segment with double dot in path",
+			allowedSources: []string{},
+			requestPath:    "/unsafe/plain/http://images.dev/lorem/..ipsum.jpg",
 		},
 	}
 

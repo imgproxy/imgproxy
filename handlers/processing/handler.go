@@ -132,7 +132,7 @@ func (h *Handler) newRequest(req *http.Request) (*request, *server.Error) {
 	h.Monitoring().SetMetadata(req.Context(), mm)
 
 	// verify that image URL came from the valid source
-	err = h.Security().VerifySourceURL(imageURL)
+	err = h.Security().VerifySourceURL(imageURL, h.Fetcher().SourcePath(imageURL))
 	if err != nil {
 		return nil, server.NewError(errctx.Wrap(err), handlers.ErrCategorySecurity)
 	}

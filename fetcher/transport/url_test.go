@@ -25,7 +25,7 @@ func TestSourcePath(t *testing.T) {
 			name: "https with fragment and escaped chars",
 			url:  "https://h/a%20b.jpg#frag",
 			sep:  "?",
-			want: "/a%20b.jpg",
+			want: "/a b.jpg",
 		},
 		{
 			name: "s3 key with percent",

@@ -49,9 +49,9 @@ func newImageResolutionError(msg string) error {
 	)}
 }
 
-func newSourceURLError(imageURL string) error {
+func newSourceURLError(imageURL string, reason string) error {
 	return SourceURLError{errctx.NewTextError(
-		fmt.Sprintf("Source URL is not allowed: %s", imageURL),
+		fmt.Sprintf("Source URL is not allowed: %s (%s)", imageURL, reason),
 		1,
 		errctx.WithStatusCode(http.StatusNotFound),
 		errctx.WithPublicMessage("Invalid source URL"),

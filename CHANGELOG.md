@@ -1,5 +1,9 @@
 # Changelog
 
+## [4.0.26] - TBA
+### Changed
+- Forbid source URLs containing dot-only path segments (e.g., `/../`) for security reasons.
+
 ## [4.0.25] - 2026-11-23
 ### Changed
 - Updated dependencies.
