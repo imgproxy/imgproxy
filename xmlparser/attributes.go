@@ -7,7 +7,9 @@ import (
 
 // Attribute represents a single XML attribute.
 type Attribute struct {
-	Name  Name
+	Name Name
+	// NSURI is the resolved namespace URI ("" for unprefixed or unresolved names)
+	NSURI string
 	Value string
 }
 

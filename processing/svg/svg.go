@@ -12,7 +12,12 @@ import (
 	"github.com/imgproxy/imgproxy/v4/xmlparser"
 )
 
-const href = "href"
+const (
+	href = "href"
+
+	svgNS   = "http://www.w3.org/2000/svg"
+	xlinkNS = "http://www.w3.org/1999/xlink"
+)
 
 // animationTargetAttrs lists attributes that SMIL animations must not target,
 // since animating them can turn a safe link into a javascript: one.
@@ -31,13 +36,30 @@ var pool = sync.Pool{
 // Processor provides SVG processing capabilities
 type Processor struct {
 	config *Config
+
+	// tags and attrs are the effective allowlists (lowercase names)
+	tags  map[string]struct{}
+	attrs map[string]struct{}
 }
 
 // New creates a new SVG processor instance
 func New(config *Config) *Processor {
-	return &Processor{
+	p := &Processor{
 		config: config,
+		tags:   defaultTagSet,
+		attrs:  defaultAttrSet,
 	}
+
+	// Invalid entries are rejected by Config.Validate before we get here
+	if len(config.Tags) > 0 {
+		p.tags, _ = applyListOverrides(defaultTags, config.Tags)
+	}
+
+	if len(config.Attrs) > 0 {
+		p.attrs, _ = applyListOverrides(defaultAttrs, config.Attrs)
+	}
+
+	return p
 }
 
 // Process processes the given image data.
@@ -85,7 +107,9 @@ func (p *Processor) sanitize(data imagedata.ImageData) (imagedata.ImageData, err
 	})
 
 	// Sanitize the document's children
-	doc.FilterChildNodes(p.sanitizeElement)
+	doc.FilterChildNodes(func(el *xmlparser.Node) bool {
+		return p.sanitizeElement(el)
+	})
 
 	buf, ok := pool.Get().(*bytes.Buffer)
 	if !ok {
@@ -122,8 +146,17 @@ func (p *Processor) sanitizeElement(el *xmlparser.Node) bool {
 
 	tagName := el.Name.Local()
 
-	// Strip <script>, <iframe>, and <form> tags
-	if tagName == "script" || tagName == "iframe" || tagName == "form" {
+	// Strip <script>, <iframe>, <form>, <object> and <embed> in any namespace,
+	// unless the user explicitly allowed them
+	if inSet(deniedTags, tagName) && !inSet(p.tags, tagName) {
+		return false
+	}
+
+	// Elements in the SVG namespace must be allowlisted.
+	// Elements in other namespaces (editor data, XHTML inside <foreignObject>, ...)
+	// are kept, only their attributes are filtered.
+	isSVG := el.NSURI == "" || el.NSURI == svgNS
+	if isSVG && !inSet(p.tags, tagName) {
 		return false
 	}
 
@@ -132,47 +165,55 @@ func (p *Processor) sanitizeElement(el *xmlparser.Node) bool {
 		return false
 	}
 
-	// Filter out unsafe attributes (such as on* events)
+	rule := hrefRuleFor(tagName)
+
+	// Keep only allowlisted attributes with safe values
 	el.Attrs.Filter(func(attr *xmlparser.Attribute) bool {
-		_, unsafe := unsafeAttrs[attr.Name.Local()]
-		return !unsafe
+		return p.isAllowedAttr(attr, isSVG) && isAllowedHref(attr, rule)
 	})
 
-	switch tagName {
-	case "use":
-		// <use> can import external/data content by reference; only allow
-		// same-document fragment references (e.g. href="#id").
-		el.Attrs.Filter(func(attr *xmlparser.Attribute) bool {
-			if attr.Name.Local() != href {
-				return true
-			}
-			return len(attr.Value) == 0 || attr.Value[0] == '#'
-		})
-	case "image":
-		// <image> commonly embeds raster/vector data via data: URIs; allow
-		// that in addition to http(s) and same-document/relative references.
-		el.Attrs.Filter(func(attr *xmlparser.Attribute) bool {
-			if attr.Name.Local() != href {
-				return true
-			}
-			return isSafeHref(attr.Value, imageHrefSchemes)
-		})
-	default:
-		// Any other element (e.g. <a>) may only reference http(s), the
-		// current document (fragment), or a relative resource.
-		el.Attrs.Filter(func(attr *xmlparser.Attribute) bool {
-			if attr.Name.Local() != href {
-				return true
-			}
-			return isSafeHref(attr.Value, hrefSchemes)
-		})
-	}
-
 	// Recurse into children
-	el.FilterChildNodes(p.sanitizeElement)
+	el.FilterChildNodes(func(child *xmlparser.Node) bool {
+		return p.sanitizeElement(child)
+	})
 
 	// Keep this element
 	return true
+}
+
+// isAllowedAttr reports whether the attribute is allowed on an element.
+// isSVG tells whether the element is in the SVG namespace.
+func (p *Processor) isAllowedAttr(attr *xmlparser.Attribute, isSVG bool) bool {
+	prefix, local := attr.Name.Split()
+
+	var allowed bool
+
+	switch {
+	case prefix == "" && local == "xmlns", prefix == "xmlns":
+		// Namespace declarations
+		allowed = true
+	case prefix == "":
+		if isEventAttr(local) {
+			break
+		}
+
+		if isSVG {
+			allowed = inSet(p.attrs, local) || isDataOrAriaAttr(local)
+		} else {
+			allowed = true
+		}
+	default:
+		switch attr.NSURI {
+		case xlinkNS:
+			allowed = inSet(xlinkAttrs, local)
+		case xmlparser.NamespaceXML:
+			allowed = inSet(xmlAttrs, local)
+		default:
+			allowed = !isEventAttr(local)
+		}
+	}
+
+	return allowed && !hasUnsafeValue(attr.Value)
 }
 
 // isUnsafeAnimation reports whether el is a SMIL animation element that targets
