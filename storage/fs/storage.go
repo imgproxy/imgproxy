@@ -4,7 +4,7 @@ import "net/http"
 
 // Storage represents fs file storage
 type Storage struct {
-	fs     http.Dir
+	fs     http.FileSystem
 	config *Config
 }
 
